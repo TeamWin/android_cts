@@ -60,7 +60,7 @@ final class StorageManagerHelper {
     static void removeVirtualDisk() throws Exception {
         executeShellCommand("sm set-virtual-disk false");
         //sleep to make sure that it is unmounted
-        Thread.sleep(2000);
+        Thread.sleep(5000);
     }
 
     /**
@@ -72,7 +72,7 @@ final class StorageManagerHelper {
         String existingPublicVolume = getPublicVolumeExcluding(null);
         executeShellCommand("sm set-force-adoptable " + (visible ? "on" : "off"));
         executeShellCommand("sm set-virtual-disk true");
-        Thread.sleep(2000);
+        Thread.sleep(10000);
         pollForCondition(StorageManagerHelper::partitionDisks,
                 "Could not create public volume in time");
         return getPublicVolumeExcluding(existingPublicVolume);
