@@ -5343,20 +5343,28 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="audio_general_clear_results">Clear Results</string>
 
+    <string name="audio_general_test_not_run">Test Not Run</string>
+
     <!-- Audio Loopback Latency Test -->
     <string name="audio_loopback_latency_test">Audio Loopback Latency Test</string>
-    <string name="audio_loopback_info">
-        This test verifies that the device can achieve the required or recommended loopback latency.
-        To pass the test, the device need only achieve this on one of the following audio paths:\n
-          - a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>  connected to a 3.5mm headset jack.\n
-          - a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>  connected to a USB audio adapter.\n
-          - a USB interface with patch cords connecting the input and output jacks.
-          \nPlease connect one of these Loopback mechanisms, and proceed with the instructions
-          on the screen. The required &amp; recommended latencies will be displayed.
-          The system will measure the input-output audio latency by injecting an audio signal to
+    <string name="audio_loopback_info">This test verifies that the DUT can achieve the required or
+        recommended loopback latency as defined by CDD § 5.6 (Audio Latency) and
+        § 5.10 (Professional Audio).
+        \nTo pass the test, the DUT needs to meet the latency requirement on ALL 3 of the
+        following audio paths (if present):
+          \n- the internal speaker and microphone.
+          \n- a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>  connected to a 3.5mm headset jack.
+          \n- a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>  connected to a USB audio adapter.
+          (or alternatively USB interface with patch cords connecting the input and output jacks).
+          \nPlease connect these Loopback mechanisms (the same Loopback Plug can be used at different times
+          for the headset jack and USB audio adapter) and proceed with the instructions
+          on the screen. The volume may need to be adjusted for each audio path.
+          \nThe system will measure the input-output audio latency by injecting an audio signal into
           the output and compute the time between generating the signal and recording it back.
           You can vary the Audio Level slider to ensure the pulse will feed back at adequate levels.
-          Repeat until a confidence level >= 0.6 is achieved.
+          Repeat until a confidence level >= 0.6 is achieved. When each route test is completed the
+          measured and required latencies will be displayed.
+          \nWhen all test routes have passed, the test as a whole can be passed.
     </string>
     <string name="audio_loopback_instructions">
           Please connect a "Loopback Plug" and press "Loopback Plug Ready".
@@ -5369,6 +5377,16 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_loopback_level_text">Audio Level</string>
     <string name="audio_loopback_test_btn">Test</string>
     <string name="audio_loopback_results_text">Results...</string>
+
+    <string name="audio_loopback_speakermicpath_instructions">Place the DUT flat on a table
+    in a quiet room. Press the Start button and allow the test to proceed.</string>
+
+    <string name="audio_loopback_headsetpath_instructions">Insert the loopback plug in the
+    headset jack.  Press the Start button and allow the test to proceed.</string>
+
+    <string name="audio_loopback_usbpath_instructions">Connect the USB port to an appropriate
+        USB audio test peripheral with loopback set up. Press the Start button and
+        allow the test to proceed.</string>
 
     <string name="audio_loopback_failure">FAILURE - Could not allocate analyzer thread.</string>
 
