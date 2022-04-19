@@ -2774,6 +2774,19 @@
                        android:value="android.hardware.type.automotive"/>
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest" android:value="android.hardware.Camera#getParameters|
+                                android.hardware.Camera#setParameters|
+                                android.hardware.Camera#setDisplayOrientation|
+                                android.hardware.Camera#setPreviewCallback|
+                                android.hardware.Camera#stopPreview|
+                                android.hardware.Camera#release|
+                                android.hardware.Camera#setPreviewTexture|
+                                android.hardware.Camera#startPreview|
+                                android.hardware.Camera.Parameters#setPreviewFormat|
+                                android.hardware.Camera.Parameters#setPreviewSize|
+                                android.hardware.Camera.Parameters#getSupportedPreviewFormats|
+                                android.hardware.Camera.Parameters#getSupportedPreviewSizes|
+                                android.hardware.Camera.PreviewCallback#onPreviewFrame" />
         </activity>
 
         <activity android:name=".camera.intents.CameraIntentsActivity"
