@@ -19,6 +19,7 @@
 <configuration description="Config for CTS Permission3 test cases">
 
     <option name="test-suite-tag" value="cts" />
+    <option name="test-suite-tag" value="gts" />
 
     <option name="config-descriptor:metadata" key="component" value="framework" />
     <option name="config-descriptor:metadata" key="parameter" value="no_foldable_states" />
