@@ -175,6 +175,7 @@ public class BluetoothLeBroadcastReceiveStateTest {
         out.writeInt(numSubgroups);
         out.writeList(bisSyncState);
         out.writeTypedList(subgroupMetadata);
+        out.setDataPosition(0); // reset position of parcel before passing to constructor
         return BluetoothLeBroadcastReceiveState.CREATOR.createFromParcel(out);
     }
 }
