@@ -164,15 +164,6 @@ public class ManifestTestListAdapter extends TestListAdapter {
         for (int i = 0; i < disabledTestArray.length; i++) {
             mDisabledTests.add(disabledTestArray[i]);
         }
-
-        // Configs to distinct that the adapter is for top-level tests or subtests.
-        if (testParent == null) {
-            // For top-level tests.
-            hasTestParentInManifestAdapter = false;
-        } else {
-            hasTestParentInManifestAdapter = true;
-        }
-        adapterFromManifest = true;
     }
 
     public ManifestTestListAdapter(Context context, String testParent) {
@@ -564,5 +555,30 @@ public class ManifestTestListAdapter extends TestListAdapter {
             }
         }
         return filteredTests;
+    }
+
+    @Override
+    public int getCount() {
+        if (!sInitialLaunch && mTestParent == null) {
+            return mDisplayModesTests.getOrDefault(sCurrentDisplayMode, new ArrayList<>()).size();
+        }
+        return super.getCount();
+    }
+
+    @Override
+    public TestListItem getItem(int position) {
+        if (mTestParent == null) {
+            return mDisplayModesTests.get(sCurrentDisplayMode).get(position);
+        }
+        return super.getItem(position);
+    }
+
+    @Override
+    public void loadTestResults() {
+        if (mTestParent == null) {
+            new RefreshTestResultsTask(true).execute();
+        } else {
+            super.loadTestResults();
+        }
     }
 }
