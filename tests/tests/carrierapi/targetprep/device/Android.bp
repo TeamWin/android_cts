@@ -1,4 +1,4 @@
-// Copyright (C) 2016 The Android Open Source Project
+// Copyright (C) 2022 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,34 +16,23 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsCarrierApiTestCases",
+android_test_helper_app {
+    name: "CtsCarrierApiTargetPrepApp",
     defaults: ["cts_defaults"],
+    srcs: ["src/**/*.java"],
     static_libs: [
-        "androidx.test.uiautomator_uiautomator",
+        "androidx.annotation_annotation",
+        "androidx.test.runner",
         "compatibility-device-util-axt",
-        "ctstestrunner-axt",
         "junit",
         "truth-prebuilt",
     ],
-    srcs: ["src/**/*.java"],
-    sdk_version: "test_current",
+    libs: [],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
     ],
-    libs: [
-        "android.test.base",
-        "android.test.runner",
-    ],
-    host_required: [
-        "CtsCarrierApiTargetPrep",
-        "cts-tradefed",
-    ],
-    // This APK must be signed to match the test SIM's cert whitelist. While
-    // "testkey" is the default, there are different per-device testkeys, so
-    // hard-code the AOSP default key to ensure it is used regardless of build
-    // environment.
-    certificate: ":aosp-testkey",
+    sdk_version: "test_current",
+    certificate: ":cts-uicc-2021-testkey",
 }
