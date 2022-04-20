@@ -32,24 +32,24 @@ import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Versions;
 
-/** APIs related to {@link Settings.Global}. */
-public final class GlobalSettings {
+/** APIs related to {@link Settings.System}. */
+public final class SystemSettings {
 
-    public static final GlobalSettings sInstance = new GlobalSettings();
+    public static final SystemSettings sInstance = new SystemSettings();
 
-    private GlobalSettings() {
+    private SystemSettings() {
 
     }
 
     /**
-     * See {@link Settings.Global#putInt(ContentResolver, String, int)}
+     * See {@link Settings.System#putInt(ContentResolver, String, int)}
      */
     @RequiresApi(Build.VERSION_CODES.S)
     public void putInt(ContentResolver contentResolver, String key, int value) {
         Versions.requireMinimumVersion(Build.VERSION_CODES.S);
         try (PermissionContext p = TestApis.permissions().withPermission(
                 INTERACT_ACROSS_USERS_FULL, WRITE_SECURE_SETTINGS)) {
-            Settings.Global.putInt(contentResolver, key, value);
+            Settings.System.putInt(contentResolver, key, value);
         }
     }
 
@@ -78,20 +78,20 @@ public final class GlobalSettings {
      */
     public void putInt(String key, int value) {
         try (PermissionContext p = TestApis.permissions().withPermission(WRITE_SECURE_SETTINGS)) {
-            Settings.Global.putInt(
+            Settings.System.putInt(
                     TestApis.context().instrumentedContext().getContentResolver(), key, value);
         }
     }
 
     /**
-     * See {@link Settings.Global#putString(ContentResolver, String, String)}
+     * See {@link Settings.System#putString(ContentResolver, String, String)}
      */
     @RequiresApi(Build.VERSION_CODES.S)
     public void putString(ContentResolver contentResolver, String key, String value) {
         Versions.requireMinimumVersion(Build.VERSION_CODES.S);
         try (PermissionContext p = TestApis.permissions().withPermission(
                 INTERACT_ACROSS_USERS_FULL, WRITE_SECURE_SETTINGS)) {
-            Settings.Global.putString(contentResolver, key, value);
+            Settings.System.putString(contentResolver, key, value);
         }
     }
 
@@ -120,13 +120,13 @@ public final class GlobalSettings {
      */
     public void putString(String key, String value) {
         try (PermissionContext p = TestApis.permissions().withPermission(WRITE_SECURE_SETTINGS)) {
-            Settings.Global.putString(
+            Settings.System.putString(
                     TestApis.context().instrumentedContext().getContentResolver(), key, value);
         }
     }
 
     /**
-     * See {@link Settings.Global#getInt(ContentResolver, String)}
+     * See {@link Settings.System#getInt(ContentResolver, String)}
      */
     @RequiresApi(Build.VERSION_CODES.S)
     public int getInt(ContentResolver contentResolver, String key) {
@@ -138,7 +138,7 @@ public final class GlobalSettings {
     }
 
     /**
-     * See {@link Settings.Global#getInt(ContentResolver, String, int)}
+     * See {@link Settings.System#getInt(ContentResolver, String, int)}
      */
     @RequiresApi(Build.VERSION_CODES.S)
     public int getInt(ContentResolver contentResolver, String key, int defaultValue) {
@@ -151,18 +151,18 @@ public final class GlobalSettings {
 
     private int getIntInner(ContentResolver contentResolver, String key) {
         try {
-            return Settings.Global.getInt(contentResolver, key);
+            return Settings.System.getInt(contentResolver, key);
         } catch (Settings.SettingNotFoundException e) {
             throw new NeneException("Error getting int setting", e);
         }
     }
 
     private int getIntInner(ContentResolver contentResolver, String key, int defaultValue) {
-        return Settings.Global.getInt(contentResolver, key, defaultValue);
+        return Settings.System.getInt(contentResolver, key, defaultValue);
     }
 
     /**
-     * Get int from global settings for the given {@link UserReference}.
+     * Get int from System settings for the given {@link UserReference}.
      *
      * <p>If the user is not the instrumented user, this will only succeed when running on Android S
      * and above.
@@ -178,7 +178,7 @@ public final class GlobalSettings {
     }
 
     /**
-     * Get int from global settings for the given {@link UserReference}, or the default value.
+     * Get int from System settings for the given {@link UserReference}, or the default value.
      *
      * <p>If the user is not the instrumented user, this will only succeed when running on Android S
      * and above.
@@ -196,7 +196,7 @@ public final class GlobalSettings {
     }
 
     /**
-     * Get int from global settings for the instrumented user.
+     * Get int from System settings for the instrumented user.
      *
      * <p>See {@link #getInt(ContentResolver, String)}
      */
@@ -205,7 +205,7 @@ public final class GlobalSettings {
     }
 
     /**
-     * Get int from global settings for the instrumented user, or the default value.
+     * Get int from System settings for the instrumented user, or the default value.
      *
      * <p>See {@link #getInt(ContentResolver, String)}
      */
@@ -215,7 +215,7 @@ public final class GlobalSettings {
     }
 
     /**
-     * See {@link Settings.Global#getString(ContentResolver, String)}
+     * See {@link Settings.System#getString(ContentResolver, String)}
      */
     @RequiresApi(Build.VERSION_CODES.S)
     public String getString(ContentResolver contentResolver, String key) {
@@ -227,11 +227,11 @@ public final class GlobalSettings {
     }
 
     private String getStringInner(ContentResolver contentResolver, String key) {
-        return Settings.Global.getString(contentResolver, key);
+        return Settings.System.getString(contentResolver, key);
     }
 
     /**
-     * Get string from global settings for the given {@link UserReference}.
+     * Get string from System settings for the given {@link UserReference}.
      *
      * <p>If the user is not the instrumented user, this will only succeed when running on Android S
      * and above.
@@ -247,57 +247,11 @@ public final class GlobalSettings {
     }
 
     /**
-     * Get string from global settings for the instrumented user.
+     * Get string from System settings for the instrumented user.
      *
      * <p>See {@link #getString(ContentResolver, String)}
      */
     public String getString(String key) {
         return getStringInner(TestApis.context().instrumentedContext().getContentResolver(), key);
-    }
-
-    /**
-     * Reset all global settings set by this package.
-     *
-     * See {@link Settings.Global#resetToDefaults(ContentResolver, String)}.
-     *
-     * <p>The {@code tag} argument is always set to null.
-     */
-    @RequiresApi(Build.VERSION_CODES.S)
-    public void reset(ContentResolver contentResolver) {
-        Versions.requireMinimumVersion(Build.VERSION_CODES.S);
-        try (PermissionContext p = TestApis.permissions().withPermission(
-                WRITE_SECURE_SETTINGS, INTERACT_ACROSS_USERS_FULL)) {
-            Settings.Global.resetToDefaults(contentResolver, /* tag= */ null);
-        }
-    }
-
-    /**
-     * Reset all global settings set by this package for the given user.
-     *
-     * <p>If the user is not the instrumented user, this will only succeed when running on Android S
-     * and above.
-     *
-     * See {@link #reset(ContentResolver)}.
-     */
-    @SuppressLint("NewApi")
-    public void reset(UserReference user) {
-        if (user.equals(TestApis.users().instrumented())) {
-            reset();
-            return;
-        }
-        reset(TestApis.context().androidContextAsUser(user).getContentResolver());
-    }
-
-    /**
-     * Reset all global settings set by this package for the instrumented user.
-     *
-     * See {@link #reset(ContentResolver)}.
-     */
-    public void reset() {
-        try (PermissionContext p = TestApis.permissions().withPermission(WRITE_SECURE_SETTINGS)) {
-            Settings.Global.resetToDefaults(
-                    TestApis.context().instrumentedContext().getContentResolver(),
-                    /* tag= */null);
-        }
     }
 }

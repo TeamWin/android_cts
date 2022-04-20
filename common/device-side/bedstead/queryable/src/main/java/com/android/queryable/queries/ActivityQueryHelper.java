@@ -33,6 +33,7 @@ public final class ActivityQueryHelper<E extends Queryable> implements ActivityQ
     private final BooleanQueryHelper<E> mExportedQueryHelper;
     private final SetQueryHelper<E, IntentFilter, IntentFilterQuery<?>>
             mIntentFiltersQueryHelper;
+    private StringQueryHelper<E> mPermission;
 
     ActivityQueryHelper() {
         mQuery = (E) this;
@@ -71,10 +72,25 @@ public final class ActivityQueryHelper<E extends Queryable> implements ActivityQ
     }
 
     @Override
+    public StringQuery<E> permission() {
+        if (mPermission == null) {
+            mPermission = new StringQueryHelper<>(mQuery);
+        }
+        return mPermission;
+    }
+
+    @Override
     public boolean matches(ActivityInfo value) {
+        if (mPermission == null) {
+            if (value.permission() != null) {
+                return false;
+            }
+        }
+
         return mActivityClassQueryHelper.matches(value)
                 && mExportedQueryHelper.matches(value.exported())
-                && mIntentFiltersQueryHelper.matches(value.intentFilters());
+                && mIntentFiltersQueryHelper.matches(value.intentFilters())
+                && (mPermission == null || mPermission.matches(value.permission()));
     }
 
     @Override
