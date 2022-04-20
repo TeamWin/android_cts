@@ -2779,6 +2779,9 @@
                        android:value="android.hardware.type.automotive:android.hardware.type.television:android.software.leanback"/>
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.hardware.Camera#ACTION_NEW_PICTURE|
+                               android.hardware.Camera#ACTION_NEW_VIDEO" />
         </activity>
 
         <service android:name=".camera.intents.CameraContentJobService"
