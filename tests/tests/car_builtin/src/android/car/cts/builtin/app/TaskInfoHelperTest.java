@@ -62,13 +62,17 @@ public final class TaskInfoHelperTest extends ActivityManagerTestBase {
     private ActivityManager mAm = null;
 
     @Before
-    public void setup() throws Exception {
+    public void setUp() throws Exception {
+        // Home was launched in ActivityManagerTestBase#setUp, wait until it is stable,
+        // in order not to mix the event of its TaskView Activity with the TestActivity.
+        mWmState.waitForHomeActivityVisible();
+
         mAm = mTargetContext.getSystemService(ActivityManager.class);
         mTestActivity = launchTestActivity();
     }
 
     @After
-    public void teardown() throws Exception {
+    public void tearDown() throws Exception {
         if (mTestActivity != null) {
             mTestActivity.finish();
         }
