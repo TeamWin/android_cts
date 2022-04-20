@@ -1105,27 +1105,34 @@ public class KeyAttestationTest {
 
     private void checkValidityPeriod(Attestation attestation, Date startTime,
             boolean includesValidityDates) {
-        AuthorizationList validityPeriodList;
-        AuthorizationList nonValidityPeriodList;
-        if (attestation.getTeeEnforced().getCreationDateTime() != null) {
-            validityPeriodList = attestation.getTeeEnforced();
-            nonValidityPeriodList = attestation.getSoftwareEnforced();
-        } else {
-            validityPeriodList = attestation.getSoftwareEnforced();
-            nonValidityPeriodList = attestation.getTeeEnforced();
-        }
+        AuthorizationList validityPeriodList = attestation.getSoftwareEnforced();
+        AuthorizationList nonValidityPeriodList = attestation.getTeeEnforced();
 
-        if (attestation.getKeymasterVersion() == 2) {
-            Date creationDateTime = validityPeriodList.getCreationDateTime();
+        // A bug in Android S leads Android S devices with KeyMint1 not to add a creationDateTime.
+        boolean creationDateTimeBroken =
+            Build.VERSION.SDK_INT == Build.VERSION_CODES.S &&
+            attestation.getKeymasterVersion() == Attestation.KM_VERSION_KEYMINT_1;
 
-            assertNotNull(creationDateTime);
+        if (!creationDateTimeBroken) {
             assertNull(nonValidityPeriodList.getCreationDateTime());
 
-            // We allow a little slop on creation times because the TEE/HAL may not be quite synced
-            // up with the system.
-            assertTrue("Test start time (" + startTime.getTime() + ") and key creation time (" +
-                    creationDateTime.getTime() + ") should be close",
-                    Math.abs(creationDateTime.getTime() - startTime.getTime()) <= 2000);
+            Date creationDateTime = validityPeriodList.getCreationDateTime();
+
+            boolean requireCreationDateTime =
+                attestation.getKeymasterVersion() >= Attestation.KM_VERSION_KEYMINT_1;
+
+            if (requireCreationDateTime || creationDateTime != null) {
+                assertNotNull(creationDateTime);
+
+                assertTrue("Test start time (" + startTime.getTime() + ") and key creation time (" +
+                        creationDateTime.getTime() + ") should be close",
+                        Math.abs(creationDateTime.getTime() - startTime.getTime()) <= 2000);
+
+                Date now = new Date();
+                assertTrue("Key creation time (" + creationDateTime.getTime() + ") must be now (" +
+                        now.getTime() + ") or earlier.",
+                        now.getTime() >= creationDateTime.getTime());
+            }
         }
 
         if (includesValidityDates) {
