@@ -42,7 +42,7 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
     private static final int LATCH_WAIT = 0;
     private static final int LATCH_MAX = 1;
     private static final int WAIT_FOR_STATE_CHANGE = 1500;
-    private static final int WAIT_FOR_ESTABLISHING = 2500;
+    private static final int WAIT_FOR_ESTABLISHING = 2000;
 
     private final String mCallId = String.valueOf(this.hashCode());
     private final Object mLock = new Object();
