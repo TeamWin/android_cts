@@ -120,6 +120,7 @@ android_test {
         ":PackagePropertyTestApp1",
         ":PackagePropertyTestApp2",
         ":PackagePropertyTestApp3",
+        ":TestInstallerApp",
     ],
     platform_apis: true,
     // Tag this module as a cts test artifact
