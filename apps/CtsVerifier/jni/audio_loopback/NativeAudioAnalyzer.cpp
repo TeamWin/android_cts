@@ -210,7 +210,10 @@ int NativeAudioAnalyzer::getSampleRate() {
     return mOutputSampleRate;
 }
 
-aaudio_result_t NativeAudioAnalyzer::openAudio() {
+aaudio_result_t NativeAudioAnalyzer::openAudio(int inputDeviceId, int outputDeviceId) {
+    mInputDeviceId = inputDeviceId;
+    mOutputDeviceId = outputDeviceId;
+
     AAudioStreamBuilder *builder = nullptr;
 
     mLoopbackProcessor = &mPulseLatencyAnalyzer; // for latency test
@@ -231,6 +234,7 @@ aaudio_result_t NativeAudioAnalyzer::openAudio() {
     AAudioStreamBuilder_setChannelCount(builder, 2); // stereo
     AAudioStreamBuilder_setDataCallback(builder, s_MyDataCallbackProc, this);
     AAudioStreamBuilder_setErrorCallback(builder, s_MyErrorCallbackProc, this);
+    AAudioStreamBuilder_setDeviceId(builder, mOutputDeviceId);
 
     result = AAudioStreamBuilder_openStream(builder, &mOutputStream);
     if (result != AAUDIO_OK) {
@@ -256,6 +260,8 @@ aaudio_result_t NativeAudioAnalyzer::openAudio() {
     AAudioStreamBuilder_setChannelCount(builder, 1); // mono
     AAudioStreamBuilder_setDataCallback(builder, nullptr, nullptr);
     AAudioStreamBuilder_setErrorCallback(builder, nullptr, nullptr);
+    AAudioStreamBuilder_setDeviceId(builder, mInputDeviceId);
+
     result = AAudioStreamBuilder_openStream(builder, &mInputStream);
     if (result != AAUDIO_OK) {
         ALOGE("NativeAudioAnalyzer::openAudio() INPUT error %s",

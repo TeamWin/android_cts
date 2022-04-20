@@ -21,6 +21,8 @@ import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.utils.Poll;
@@ -54,6 +56,26 @@ public final class Device {
                 .toBeEqualTo(true)
                 .errorOnFail()
                 .await();
+    }
+
+    /**
+     * Set the screen on setting.
+     *
+     * <p>When enabled, the device will never sleep.
+     */
+    @Experimental
+    public void keepScreenOn(boolean stayOn) {
+        // one day vs default
+        TestApis.settings().system().putInt("screen_off_timeout", stayOn ? 86400000 : 121000);
+        ShellCommand.builder("svc power stayon")
+                .addOperand(stayOn ? "true" : "false")
+                .allowEmptyOutput(true)
+                .validate(String::isEmpty)
+                .executeOrThrowNeneException("Error setting stayOn");
+        ShellCommand.builder("wm dismiss-keyguard")
+                .allowEmptyOutput(true)
+                .validate(String::isEmpty)
+                .executeOrThrowNeneException("Error dismissing keyguard");
     }
 
     /**

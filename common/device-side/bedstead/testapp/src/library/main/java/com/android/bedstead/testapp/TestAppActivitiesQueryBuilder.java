@@ -17,7 +17,6 @@
 package com.android.bedstead.testapp;
 
 import android.content.ComponentName;
-import android.util.Log;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.queryable.Queryable;
@@ -32,6 +31,7 @@ import java.util.Iterator;
 public final class TestAppActivitiesQueryBuilder implements Queryable {
 
     private final TestAppActivities mTestAppActivities;
+
     private ActivityQueryHelper<TestAppActivitiesQueryBuilder> mActivity =
             new ActivityQueryHelper<>(this);
 

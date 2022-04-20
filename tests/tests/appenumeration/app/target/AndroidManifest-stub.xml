@@ -20,6 +20,10 @@
     <application>
         <uses-library android:name="android.test.runner" />
         <activity android:name="android.appenumeration.cts.TestActivity"
-                  android:exported="true" />
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.appenumeration.action.CrossUserTest"/>
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

@@ -5343,20 +5343,28 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="audio_general_clear_results">Clear Results</string>
 
+    <string name="audio_general_test_not_run">Test Not Run</string>
+
     <!-- Audio Loopback Latency Test -->
     <string name="audio_loopback_latency_test">Audio Loopback Latency Test</string>
-    <string name="audio_loopback_info">
-        This test verifies that the device can achieve the required or recommended loopback latency.
-        To pass the test, the device need only achieve this on one of the following audio paths:\n
-          - a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>  connected to a 3.5mm headset jack.\n
-          - a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>  connected to a USB audio adapter.\n
-          - a USB interface with patch cords connecting the input and output jacks.
-          \nPlease connect one of these Loopback mechanisms, and proceed with the instructions
-          on the screen. The required &amp; recommended latencies will be displayed.
-          The system will measure the input-output audio latency by injecting an audio signal to
+    <string name="audio_loopback_info">This test verifies that the DUT can achieve the required or
+        recommended loopback latency as defined by CDD § 5.6 (Audio Latency) and
+        § 5.10 (Professional Audio).
+        \nTo pass the test, the DUT needs to meet the latency requirement on ALL 3 of the
+        following audio paths (if present):
+          \n- the internal speaker and microphone.
+          \n- a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>  connected to a 3.5mm headset jack.
+          \n- a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>  connected to a USB audio adapter.
+          (or alternatively USB interface with patch cords connecting the input and output jacks).
+          \nPlease connect these Loopback mechanisms (the same Loopback Plug can be used at different times
+          for the headset jack and USB audio adapter) and proceed with the instructions
+          on the screen. The volume may need to be adjusted for each audio path.
+          \nThe system will measure the input-output audio latency by injecting an audio signal into
           the output and compute the time between generating the signal and recording it back.
           You can vary the Audio Level slider to ensure the pulse will feed back at adequate levels.
-          Repeat until a confidence level >= 0.6 is achieved.
+          Repeat until a confidence level >= 0.6 is achieved. When each route test is completed the
+          measured and required latencies will be displayed.
+          \nWhen all test routes have passed, the test as a whole can be passed.
     </string>
     <string name="audio_loopback_instructions">
           Please connect a "Loopback Plug" and press "Loopback Plug Ready".
@@ -5369,6 +5377,16 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_loopback_level_text">Audio Level</string>
     <string name="audio_loopback_test_btn">Test</string>
     <string name="audio_loopback_results_text">Results...</string>
+
+    <string name="audio_loopback_speakermicpath_instructions">Place the DUT flat on a table
+    in a quiet room. Press the Start button and allow the test to proceed.</string>
+
+    <string name="audio_loopback_headsetpath_instructions">Insert the loopback plug in the
+    headset jack.  Press the Start button and allow the test to proceed.</string>
+
+    <string name="audio_loopback_usbpath_instructions">Connect the USB port to an appropriate
+        USB audio test peripheral with loopback set up. Press the Start button and
+        allow the test to proceed.</string>
 
     <string name="audio_loopback_failure">FAILURE - Could not allocate analyzer thread.</string>
 
@@ -6432,19 +6450,60 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="uwb_precision_instruction">
         1. Take 1000 measurements with DUT at any distance from the reference device. We recommend 1m.
         \n2. Sort the 1000 measurements.
-        \n3. Compute the range as range = 975th measurement - 25th measurement.
+        \n3. Compute the range as range = 975th measurement - 25th measurement
         \n4. Report the range below - Must be less than 10cm for distance measurements and 5 degrees for angle of arrival measurements (if supported) for tests to pass.
         \n5. Distance range is a compulsory input for this test to pass. Angle of arrival (Aoa) is optional.
     </string>
     <string name="report_distance_range_cm">Report Range (cm)</string>
     <string name="report_aoa_range_degrees">Report Range (degrees)</string>
     <string name="uwb_short_range_instruction">
-        1. Take 1000 measurements with DUT being 10cm apart from the reference device.
+        1. Take 1000 measurements with DUT being 10cm apart from the reference device
         \n2. Sort the values.
-        \n3. Report the median (500th value) in CTS-V (must be within 8cm - 12cm to pass).
+        \n3. Report the median (500th value) in CTS-V (must be within 8cm - 12cm to pass)
         \n4. Report the reference device used.
     </string>
     <string name="report_distance_median_cm">Report Median (cm)</string>
     <string name="report_reference_device">Report Reference Device</string>
     <string name="uwb_not_supported">Uwb is not supported on device. Finishing activity. </string>
+
+    <string name="ble">BLE</string>
+
+    <!-- Strings for BLE RSSI Precision Test -->
+    <string name="ble_rssi_precision_name">BLE RSSI Precision Test</string>
+    <string name="ble_rssi_precision_test_instructions">
+        1. Take 1000 scan measurements with the DUT
+        \n2. Sort the values
+        \n3. Compute the range as range = 975th measurement - 25th measurement
+        \n4. Report the range; must be less than or equal to 12dBm to pass
+        \n5. Report the reference device used
+    </string>
+    <string name="report_ble_rssi_range">Report RSSI Range (dBm)</string>
+
+    <!-- Strings for BLE Rx/Tx Calibration Test -->
+    <string name="ble_rx_tx_calibration_name">BLE Rx/Tx Calibration Test</string>
+    <string name="ble_rx_tx_calibration_test_instructions">
+        To verify this requirement, work with your chip vendor. The chip vendor can measure the
+        channel flatness and identify the differences between cores and channels.
+    </string>
+    <string name="report_channels_ble_rssi_range">Report RSSI Range Across Channels (dBm)</string>
+    <string name="report_cores_ble_rssi_range">[Optional] Report RSSI Range Across Cores (dBm)</string>
+
+    <!-- Strings for BLE Rx Offset Test -->
+    <string name="ble_rx_offset_name">BLE Rx Offset Test</string>
+    <string name="ble_rx_offset_test_instructions">
+        1. Take 1000 scan measurements with the DUT
+        \n2. Sort the values
+        \n3. Report the median (500th value); must be within [-57, -63] dBm to pass
+        \n4. Report the reference device used
+    </string>
+    <string name="report_ble_rssi_median">Report RSSI Median (dBm)</string>
+
+    <!-- Strings for BLE Tx Offset Test -->
+    <string name="ble_tx_offset_name">BLE Tx Offset Test</string>
+    <string name="ble_tx_offset_test_instructions">
+        1. Start BLE advertisement on DUT and take 1000 scan measurements with the reference device
+        \n2. Sort the values
+        \n3. Report the median (500th value); must be within [-57, -63] dBm to pass
+        \n4. Report the reference device used
+    </string>
 </resources>

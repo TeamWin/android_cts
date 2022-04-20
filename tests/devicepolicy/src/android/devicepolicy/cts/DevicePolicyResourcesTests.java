@@ -56,7 +56,7 @@ import java.util.function.Supplier;
 //  the new APIs in the test sdk.
 @RunWith(BedsteadJUnit4.class)
 public class DevicePolicyResourcesTests {
-    private static final String TAG = "EnterpriseResourcesTests";
+    private static final String TAG = "DevicePolicyResourcesTests";
 
     private static final Context sContext = TestApis.context().instrumentedContext();
     private static final DevicePolicyManager sDpm =

@@ -37,18 +37,22 @@ import com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
 
+import org.junit.AssumptionViolatedException;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.UnknownHostException;
 
 // These tests currently only cover checking that the appropriate methods are callable. They should
 // be replaced with more complete tests once the other network logging tests are ready to be
 // migrated to the new infrastructure
 @RunWith(BedsteadJUnit4.class)
 public final class NetworkLoggingTest {
+
+    private static final String TAG = "NetworkLoggingTest";
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
@@ -135,6 +139,8 @@ public final class NetworkLoggingTest {
                 urlConnection.setConnectTimeout(2000);
                 urlConnection.setReadTimeout(2000);
                 urlConnection.getResponseCode();
+            } catch (UnknownHostException e) {
+                throw new AssumptionViolatedException("Could not resolve host " + server);
             } finally {
                 urlConnection.disconnect();
             }

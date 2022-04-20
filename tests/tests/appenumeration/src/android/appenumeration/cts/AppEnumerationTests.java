@@ -952,6 +952,16 @@ public class AppEnumerationTests {
     }
 
     @Test
+    public void broadcastRestarted_visibleReceives() throws Exception {
+        assertBroadcastRestartedVisible(QUERIES_PACKAGE, TARGET_NO_API, TARGET_NO_API);
+    }
+
+    @Test
+    public void broadcastRestarted_notVisibleDoesNotReceive() throws Exception {
+        assertBroadcastRestartedVisible(QUERIES_NOTHING, /* expectedPackage */ null, TARGET_NO_API);
+    }
+
+    @Test
     public void broadcastSuspended_visibleReceives() throws Exception {
         assertBroadcastSuspendedVisible(QUERIES_PACKAGE,
                 Arrays.asList(TARGET_NO_API, TARGET_SYNCADAPTER),
@@ -2192,6 +2202,20 @@ public class AppEnumerationTests {
                 packageNames, not(hasItemInArray(targetPackageName)));
     }
 
+    private void assertBroadcastRestartedVisible(String sourcePackageName,
+            String expectedPackage, String packageToRestart) throws Exception {
+        final Bundle extras = new Bundle();
+        extras.putString(Intent.EXTRA_PACKAGE_NAME, packageToRestart);
+        final Result result = sendCommand(sourcePackageName, /* targetPackageName */ null,
+                /* targetUid */ INVALID_UID, extras, Constants.ACTION_AWAIT_PACKAGE_RESTARTED,
+                /* waitForReady */ true);
+        forceStopPackage(packageToRestart);
+        final String restartedPackages = result.await().getString(Intent.EXTRA_PACKAGE_NAME,
+                null /* defaultValue */);
+        assertThat(restartedPackages, expectedPackage == null ? IsNull.nullValue()
+                : equalTo(expectedPackage));
+    }
+
     private void assertBroadcastSuspendedVisible(String sourcePackageName,
             List<String> expectedVisiblePackages, List<String> packagesToSuspend)
             throws Exception {
@@ -2401,6 +2425,10 @@ public class AppEnumerationTests {
         final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
                 extraData, ACTION_REQUEST_SYNC_AND_AWAIT_STATUS);
         return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private void forceStopPackage(String packageName) {
+        runShellCommand("am force-stop --user cur " + packageName);
     }
 
     private void setPackagesSuspended(boolean suspend, List<String> packages) {

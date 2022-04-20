@@ -257,6 +257,8 @@ public class Constants {
             PKG_BASE + "cts.action.GRANT_URI_PERMISSION";
     public static final String ACTION_REVOKE_URI_PERMISSION =
             PKG_BASE + "cts.action.REVOKE_URI_PERMISSION";
+    public static final String ACTION_AWAIT_PACKAGE_RESTARTED =
+            PKG_BASE + "cts.action.AWAIT_PACKAGE_RESTARTED";
 
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_REMOTE_READY_CALLBACK = "remoteReadyCallback";

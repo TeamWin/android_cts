@@ -121,6 +121,8 @@ public final class TestAppProvider {
                     .exported(activityEntry.getExported())
                     .intentFilters(intentFilterSetFromProtoList(
                             activityEntry.getIntentFiltersList()))
+                    .permission(activityEntry.getPermission().equals("") ? null
+                            : activityEntry.getPermission())
                     .build());
         }
 

@@ -13,34 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.android.cts.verifier.presence;
-
-
 import android.app.Activity;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
-
-/** Checks if a device supports BLE, UWB, or NAN feature. */
+/**
+ * Checks if a device supports a hardware feature needed for a test, and passes the test
+ * automatically otherwise.
+ */
 public class DeviceFeatureChecker {
-
-    /** Checks if device supports UWB and passes calling test automatically if not. */
-    public static void checkUwbFeature(Context context, View passButton, String toastMessage) {
-        if (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_UWB)) {
-            Toast.makeText(context, toastMessage, Toast.LENGTH_SHORT).show();
-            finishUnsupportedTestActivity(context, passButton);
-            Log.e(context.getClass().getName(),
-                    "Device does not support UWB, automatically passing test");
+    /**
+     * Checks if a feature is supported.
+     *
+     * @param feature must be a string defined in PackageManager
+     */
+    public static void checkFeatureSupported(Context context, View passButton, String feature) {
+        if (!context.getPackageManager().hasSystemFeature(feature)) {
+            String message = String.format("Device does not support %s, automatically passing test",
+                    feature);
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+            Log.e(context.getClass().getName(), message);
+            passButton.performClick();
+            Activity activity = (Activity) (context);
+            activity.finish();
         }
-    }
-
-    /** Finishes an unsupported test activity and automatically passes the test. */
-    private static void finishUnsupportedTestActivity(Context context, View passButton) {
-        passButton.performClick();
-        Activity activity = (Activity) (context);
-        activity.finish();
     }
 }

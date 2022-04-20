@@ -3949,17 +3949,150 @@
             <meta-data
                 android:name="test_parent"
                 android:value="com.android.cts.verifier.presence.PresenceTestActivity" />
-            <meta-data android:name="display_mode"
-                       android:value="single_display_mode" />
-            <meta-data android:name="CddTest"
-                       android:value="7.4.9/C-1-2" />
+            <meta-data
+                android:name="display_mode"
+                android:value="single_display_mode" />
+            <meta-data
+                android:name="CddTest"
+                android:value="7.4.9/C-1-2" />
         </activity>
 
-        <activity-alias android:name=".CtsVerifierActivity" android:label="@string/app_name"
-                android:exported="true"
-                android:targetActivity=".TestListActivity">
+        <!--
+            CTS Verifier BLE RSSI Precision Test Screen
+                test category : BLE
+                test parent : PresenceTestActivity
+        -->
+        <activity
+            android:name=".presence.BleRssiPrecisionActivity"
+            android:exported="true"
+            android:label="@string/ble_rssi_precision_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/ble" />
+            <meta-data
+                android:name="test_parent"
+                android:value="com.android.cts.verifier.presence.PresenceTestActivity" />
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.bluetooth_le" />
+            <meta-data
+                android:name="display_mode"
+                android:value="single_display_mode" />
+            <meta-data
+                android:name="CddText"
+                android:value="7.4.3/C-7-1" />
+        </activity>
+
+        <!--
+            CTS Verifier BLE Rx/Tx Calibration Test Screen
+                test category : BLE
+                test parent : PresenceTestActivity
+        -->
+        <activity
+            android:name=".presence.BleRxTxCalibrationActivity"
+            android:exported="true"
+            android:label="@string/ble_rx_tx_calibration_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/ble" />
+            <meta-data
+                android:name="test_parent"
+                android:value="com.android.cts.verifier.presence.PresenceTestActivity" />
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.bluetooth_le" />
+            <meta-data
+                android:name="display_mode"
+                android:value="single_display_mode" />
+            <meta-data
+                android:name="CddText"
+                android:value="7.4.3/C-7-2" />
+        </activity>
+
+        <!--
+            CTS Verifier BLE Rx Offset Test Screen
+                test category : BLE
+                test parent : PresenceTestActivity
+        -->
+        <activity
+            android:name=".presence.BleRxOffsetActivity"
+            android:exported="true"
+            android:label="@string/ble_rx_offset_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/ble" />
+            <meta-data
+                android:name="test_parent"
+                android:value="com.android.cts.verifier.presence.PresenceTestActivity" />
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.bluetooth_le" />
+            <meta-data
+                android:name="display_mode"
+                android:value="single_display_mode" />
+            <meta-data
+                android:name="CddText"
+                android:value="7.4.3/C-7-3" />
+        </activity>
+
+        <!--
+            CTS Verifier BLE Tx Offset Test Screen
+                test category : BLE
+                test parent : PresenceTestActivity
+        -->
+        <activity
+            android:name=".presence.BleTxOffsetActivity"
+            android:exported="true"
+            android:label="@string/ble_tx_offset_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/ble" />
+            <meta-data
+                android:name="test_parent"
+                android:value="com.android.cts.verifier.presence.PresenceTestActivity" />
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.bluetooth_le" />
+            <meta-data
+                android:name="display_mode"
+                android:value="single_display_mode" />
+            <meta-data
+                android:name="CddText"
+                android:value="7.4.3/C-7-4" />
+        </activity>
+
+        <activity-alias
+            android:name=".CtsVerifierActivity"
+            android:label="@string/app_name"
+            android:exported="true"
+            android:targetActivity=".TestListActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>

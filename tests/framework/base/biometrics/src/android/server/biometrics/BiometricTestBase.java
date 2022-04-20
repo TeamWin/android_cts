@@ -72,7 +72,7 @@ import java.util.concurrent.Executor;
 /**
  * Base class containing useful functionality. Actual tests should be done in subclasses.
  */
-abstract class BiometricTestBase extends ActivityManagerTestBase {
+abstract class BiometricTestBase extends ActivityManagerTestBase implements TestSessionList.Idler {
 
     private static final String TAG = "BiometricTestBase";
     private static final String DUMPSYS_BIOMETRIC = Utils.DUMPSYS_BIOMETRIC;
@@ -108,7 +108,8 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
         super.launchActivity(componentName);
     }
 
-    void waitForIdleSensors() {
+    @Override
+    public void waitForIdleSensors() {
         try {
             Utils.waitForIdleService(this::getSensorStates);
         } catch (Exception e) {

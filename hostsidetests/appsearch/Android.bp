@@ -36,6 +36,11 @@ java_test_host {
         "general-tests",
         "mts-appsearch",
     ],
+    data: [
+        ":CtsAppSearchHostTestHelperA",
+        ":CtsAppSearchHostTestHelperB",
+    ],
+    per_testcase_directory: true,
 }
 
 android_test_helper_app {

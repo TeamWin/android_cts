@@ -213,7 +213,7 @@ android_test_helper_app {
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
     target_sdk_version: "30",
-    min_sdk_version: "30",
+    min_sdk_version: "29",
 }
 
 android_test {

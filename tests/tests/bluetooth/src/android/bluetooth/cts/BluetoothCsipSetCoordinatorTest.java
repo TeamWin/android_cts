@@ -27,6 +27,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothCsipSetCoordinator;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.BluetoothStatusCodes;
 import android.bluetooth.BluetoothUuid;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -129,6 +130,7 @@ public class BluetoothCsipSetCoordinatorTest extends AndroidTestCase {
                 mIsProfileReady = false;
                 mTestDevice = null;
                 mIsLocked = false;
+                mTestOperationStatus = 0;
                 mTestCallback = null;
                 mTestExecutor = null;
             }
@@ -211,9 +213,19 @@ public class BluetoothCsipSetCoordinatorTest extends AndroidTestCase {
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
 
         // Lock group
+        mIsLocked = false;
+        mTestOperationStatus = BluetoothStatusCodes.ERROR_CSIP_INVALID_GROUP_ID;
         try {
-            UUID uuid = mBluetoothCsipSetCoordinator.lockGroup(mTestGroupId,
+            mBluetoothCsipSetCoordinator.lockGroup(mTestGroupId,
                     mTestExecutor, mTestCallback);
+        } catch (Exception e) {
+            fail("Exception caught from register(): " + e.toString());
+        }
+
+        long uuidLsb = 0x01;
+        long uuidMsb = 0x01;
+        UUID uuid = new UUID(uuidMsb, uuidLsb);
+        try {
             mBluetoothCsipSetCoordinator.unlockGroup(uuid);
         } catch (Exception e) {
             fail("Exception caught from register(): " + e.toString());

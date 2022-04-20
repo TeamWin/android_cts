@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
  *
  * <p>This can be used on host or device side code.
  */
-@Target({ElementType.LOCAL_VARIABLE, ElementType.FIELD, ElementType.PARAMETER})
+@Target({ElementType.LOCAL_VARIABLE, ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
 @Retention(RetentionPolicy.SOURCE)
 public @interface Nullable {
 }

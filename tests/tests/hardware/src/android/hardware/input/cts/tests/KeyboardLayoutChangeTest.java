@@ -22,8 +22,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
 
 import android.Manifest;
 import android.hardware.cts.R;
@@ -40,6 +40,7 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -51,6 +52,7 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
 
     private InputManager mInputManager;
     @Mock private InputManager.InputDeviceListener mInputDeviceChangedListener;
+    private InOrder mInOrderInputDeviceChangedListener;
 
 
     // this test needs any physical keyboard to test the keyboard layout change
@@ -66,6 +68,7 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
         assertNotNull(mInputManager);
         mInputManager.registerInputDeviceListener(mInputDeviceChangedListener,
                 new Handler(Looper.getMainLooper()));
+        mInOrderInputDeviceChangedListener = inOrder(mInputDeviceChangedListener);
     }
 
     @Test
@@ -194,8 +197,8 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
         }, Manifest.permission.SET_KEYBOARD_LAYOUT);
         // The input devices will be reconfigured (async) after changing the keyboard layout.
         // Once the device state is updated, the callback should be called
-        verify(mInputDeviceChangedListener,
-                timeout(KEYBOARD_LAYOUT_CHANGE_TIMEOUT).atLeastOnce()).onInputDeviceChanged(
+        mInOrderInputDeviceChangedListener.verify(mInputDeviceChangedListener,
+                timeout(KEYBOARD_LAYOUT_CHANGE_TIMEOUT)).onInputDeviceChanged(
                 eq(device.getId()));
     }
 }

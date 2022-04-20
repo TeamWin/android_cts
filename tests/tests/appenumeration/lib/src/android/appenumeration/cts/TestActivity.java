@@ -352,6 +352,11 @@ public class TestActivity extends Activity {
                 final String sourceAuthority = intent.getBundleExtra(EXTRA_DATA)
                         .getString(EXTRA_AUTHORITY);
                 sendRevokeUriPermission(remoteCallback, sourceAuthority);
+            } else if (Constants.ACTION_AWAIT_PACKAGE_RESTARTED.equals(action)) {
+                final String packageName = intent.getBundleExtra(EXTRA_DATA).getString(
+                        Intent.EXTRA_PACKAGE_NAME);
+                awaitPackageRestartedBroadcast(remoteCallback, packageName,
+                        Intent.ACTION_PACKAGE_RESTARTED, TIMEOUT_MS);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -397,6 +402,28 @@ public class TestActivity extends Activity {
                 () -> sendError(remoteCallback,
                         new MissingBroadcastException(action, timeoutMs)),
                 token, timeoutMs);
+    }
+
+    private void awaitPackageRestartedBroadcast(RemoteCallback remoteCallback,
+            String expectedPkgName, String action, long timeoutMs) {
+        final IntentFilter filter = new IntentFilter(action);
+        filter.addDataScheme(IntentFilter.SCHEME_PACKAGE);
+        final Object token = new Object();
+        final Bundle result = new Bundle();
+        final Uri expectedData = Uri.fromParts("package", expectedPkgName, null /* fragment */);
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                final String intentData = intent.getDataString();
+                if (expectedData.toString().equals(intentData)) {
+                    mainHandler.removeCallbacksAndMessages(token);
+                    result.putString(Intent.EXTRA_PACKAGE_NAME, expectedPkgName);
+                    remoteCallback.sendResult(result);
+                    finish();
+                }
+            }
+        }, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
+        mainHandler.postDelayed(() -> remoteCallback.sendResult(result), token, timeoutMs);
     }
 
     private void awaitSuspendedPackagesBroadcast(RemoteCallback remoteCallback,

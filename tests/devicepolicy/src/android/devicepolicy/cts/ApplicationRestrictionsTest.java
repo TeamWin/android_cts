@@ -323,9 +323,13 @@ public final class ApplicationRestrictionsTest {
                     .getApplicationRestrictionsManagingPackage(sDeviceState.dpc().componentName()))
                     .isEqualTo(sTestApp.packageName());
         } finally {
-            sDeviceState.dpc().devicePolicyManager().setApplicationRestrictionsManagingPackage(
-                    sDeviceState.dpc().componentName(),
-                    originalApplicationRestrictionsManagingPackage);
+            try {
+                sDeviceState.dpc().devicePolicyManager().setApplicationRestrictionsManagingPackage(
+                        sDeviceState.dpc().componentName(),
+                        originalApplicationRestrictionsManagingPackage);
+            } catch (Throwable expected) {
+                // If the original has been removed this can throw
+            }
         }
     }
 
@@ -406,6 +410,7 @@ public final class ApplicationRestrictionsTest {
     }
 
     private void assertBooleanKey(Bundle bundle, String key, boolean expectedValue) {
+
         boolean value = bundle.getBoolean(key);
         Log.v(TAG, "assertBooleanKey(): " + key + "=" + value);
         assertWithMessage("bundle's '%s' key", key)

@@ -37,6 +37,7 @@ import android.net.NetworkScore;
 import android.os.HandlerExecutor;
 import android.os.HandlerThread;
 import android.os.Process;
+import android.os.UserHandle;
 import android.util.Range;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -218,17 +219,19 @@ public final class PreferentialNetworkServiceTest {
 
     @CanSetPolicyTest(policy = PreferentialNetworkService.class)
     public void setPreferentialNetworkServiceConfigs_enabled_isSet_excludedUids_set() {
+        UserHandle user = UserHandle.of(sContext.getUserId());
+        final int currentUid = user.getUid(0 /* appId */);
         PreferentialNetworkServiceConfig slice1Config =
                 (new PreferentialNetworkServiceConfig.Builder())
                         .setEnabled(true)
                         .setNetworkId(PreferentialNetworkServiceConfig.PREFERENTIAL_NETWORK_ID_1)
-                        .setExcludedUids(new int[]{1})
+                        .setExcludedUids(new int[]{currentUid})
                         .build();
         PreferentialNetworkServiceConfig slice2Config =
                 (new PreferentialNetworkServiceConfig.Builder())
                         .setEnabled(true)
                         .setNetworkId(PreferentialNetworkServiceConfig.PREFERENTIAL_NETWORK_ID_2)
-                        .setIncludedUids(new int[]{1})
+                        .setIncludedUids(new int[]{currentUid})
                         .build();
         try {
             sDeviceState.dpc().devicePolicyManager().setPreferentialNetworkServiceConfigs(
@@ -238,12 +241,12 @@ public final class PreferentialNetworkServiceTest {
                     .getPreferentialNetworkServiceConfigs().get(0).isEnabled()).isTrue();
             assertThat(sDeviceState.dpc().devicePolicyManager()
                     .getPreferentialNetworkServiceConfigs().get(0)
-                    .getExcludedUids()).isEqualTo(new int[]{1});
+                    .getExcludedUids()).isEqualTo(new int[]{currentUid});
             assertThat(sDeviceState.dpc().devicePolicyManager()
                     .getPreferentialNetworkServiceConfigs().get(1).isEnabled()).isTrue();
             assertThat(sDeviceState.dpc().devicePolicyManager()
                     .getPreferentialNetworkServiceConfigs().get(1)
-                    .getIncludedUids()).isEqualTo(new int[]{1});
+                    .getIncludedUids()).isEqualTo(new int[]{currentUid});
         } finally {
             sDeviceState.dpc().devicePolicyManager().setPreferentialNetworkServiceConfigs(
                     List.of(PreferentialNetworkServiceConfig.DEFAULT));

@@ -16,6 +16,7 @@
 
 package android.devicepolicy.cts;
 
+import static android.Manifest.permission.LAUNCH_DEVICE_MANAGER_SETUP;
 import static android.app.admin.DevicePolicyManager.ACTION_ROLE_HOLDER_PROVISION_FINALIZATION;
 import static android.app.admin.DevicePolicyManager.ACTION_ROLE_HOLDER_PROVISION_MANAGED_DEVICE_FROM_TRUSTED_SOURCE;
 import static android.app.admin.DevicePolicyManager.ACTION_ROLE_HOLDER_PROVISION_MANAGED_PROFILE;
@@ -76,17 +77,23 @@ public class DevicePolicyManagementRoleHolderTest {
     private static final DevicePolicyManager sDevicePolicyManager =
             sContext.getSystemService(DevicePolicyManager.class);
     private static final ActivityQuery<?> sQueryForRoleHolderTrustedSourceAction =
+            (ActivityQuery<?>)
             activity().intentFilters().contains(
                 intentFilter().actions().contains(
-                        ACTION_ROLE_HOLDER_PROVISION_MANAGED_DEVICE_FROM_TRUSTED_SOURCE));
+                        ACTION_ROLE_HOLDER_PROVISION_MANAGED_DEVICE_FROM_TRUSTED_SOURCE))
+                    .permission().isEqualTo(LAUNCH_DEVICE_MANAGER_SETUP);
     private static final ActivityQuery<?> sQueryForRoleHolderManagedProfileAction =
+            (ActivityQuery<?>)
             activity().intentFilters().contains(
                 intentFilter().actions().contains(
-                        ACTION_ROLE_HOLDER_PROVISION_MANAGED_PROFILE));
+                        ACTION_ROLE_HOLDER_PROVISION_MANAGED_PROFILE))
+                    .permission().isEqualTo(LAUNCH_DEVICE_MANAGER_SETUP);
     private static final ActivityQuery<?> sQueryForRoleHolderFinalizationAction =
+            (ActivityQuery<?>)
             activity().intentFilters().contains(
                 intentFilter().actions().contains(
-                        ACTION_ROLE_HOLDER_PROVISION_FINALIZATION));
+                        ACTION_ROLE_HOLDER_PROVISION_FINALIZATION))
+                    .permission().isEqualTo(LAUNCH_DEVICE_MANAGER_SETUP);
     private static final TestApp sRoleHolderApp = sDeviceState.testApps()
             .query()
             .whereActivities()

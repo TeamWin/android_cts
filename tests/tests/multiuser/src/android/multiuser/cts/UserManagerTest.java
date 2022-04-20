@@ -29,6 +29,7 @@ import static android.os.UserManager.USER_TYPE_PROFILE_MANAGED;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
@@ -146,15 +147,19 @@ public final class UserManagerTest {
     // TODO(b/179163496): add testIsUserForeground_ tests for profile users
 
     @Test
-    @SystemUserOnly(reason = "Profiles are only supported on system user.")
     public void testCloneProfile() throws Exception {
         UserHandle userHandle = null;
 
         // Need CREATE_USERS permission to create user in test
         try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
-            Set<String> disallowedPackages = new HashSet<String>();
-            userHandle = mUserManager.createProfile(
-                    "Clone profile", UserManager.USER_TYPE_PROFILE_CLONE, disallowedPackages);
+            try {
+                userHandle = mUserManager.createProfile(
+                    "Clone profile", UserManager.USER_TYPE_PROFILE_CLONE, new HashSet<>());
+            } catch (UserManager.UserOperationException e) {
+                // Not all devices and user types support these profiles; skip if this one doesn't.
+                assumeNoException("Couldn't create clone profile", e);
+                return;
+            }
             assertThat(userHandle).isNotNull();
 
             final Context userContext = sContext.createPackageContextAsUser("system", 0,
@@ -185,11 +190,15 @@ public final class UserManagerTest {
         UserHandle userHandle = null;
 
         try {
-            userHandle = mUserManager.createProfile(
+            try {
+                userHandle = mUserManager.createProfile(
                     "Managed profile", UserManager.USER_TYPE_PROFILE_MANAGED, new HashSet<>());
-
-            // Not all devices and user types support managed profiles; skip if this one doesn't.
-            assumeTrue("Couldn't create a managed profile", userHandle != null);
+            } catch (UserManager.UserOperationException e) {
+                // Not all devices and user types support these profiles; skip if this one doesn't.
+                assumeNoException("Couldn't create managed profile", e);
+                return;
+            }
+            assertThat(userHandle).isNotNull();
 
             final UserManager umOfProfile = sContext
                     .createPackageContextAsUser("android", 0, userHandle)
