@@ -24,6 +24,7 @@ android_test_helper_app {
     resource_dirs: ["testapp/res_v1"],
     apex_available: [ "com.android.apex.apkrollback.test_v1" ],
     min_sdk_version: "28",
+    target_sdk_version: "28",
 }
 
 android_test_helper_app {
@@ -33,6 +34,7 @@ android_test_helper_app {
     resource_dirs: ["testapp/res_v2"],
     apex_available: [ "com.android.apex.apkrollback.test_v2" ],
     min_sdk_version: "28",
+    target_sdk_version: "28",
 }
 
 android_test_helper_app {
@@ -41,6 +43,7 @@ android_test_helper_app {
     srcs: ["testapp/src/**/*.java"],
     resource_dirs: ["testapp/res_v3"],
     min_sdk_version: "28",
+    target_sdk_version: "28",
 }
 
 android_test_helper_app {
@@ -58,6 +61,7 @@ android_test_helper_app {
     srcs: ["testapp/src/**/*.java"],
     resource_dirs: ["testapp/res_v1"],
     min_sdk_version: "28",
+    target_sdk_version: "28",
 }
 
 android_test_helper_app {
@@ -66,6 +70,7 @@ android_test_helper_app {
     srcs: ["testapp/src/**/*.java"],
     resource_dirs: ["testapp/res_v2"],
     min_sdk_version: "28",
+    target_sdk_version: "28",
 }
 
 android_test_helper_app {
@@ -74,6 +79,7 @@ android_test_helper_app {
     srcs: ["testapp/src/**/*.java"],
     resource_dirs: ["testapp/res_v3"],
     min_sdk_version: "28",
+    target_sdk_version: "28",
 }
 
 android_test_helper_app {
@@ -82,6 +88,7 @@ android_test_helper_app {
     srcs: ["testapp/src/**/*.java"],
     resource_dirs: ["testapp/res_v1"],
     min_sdk_version: "28",
+    target_sdk_version: "28",
 }
 
 android_test_helper_app {
@@ -90,6 +97,7 @@ android_test_helper_app {
     srcs: ["testapp/src/**/*.java"],
     resource_dirs: ["testapp/res_v2"],
     min_sdk_version: "28",
+    target_sdk_version: "28",
 }
 
 android_test_helper_app {
