@@ -110,8 +110,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
 
         mDisplayMetricsSession =
                 createManagedDisplayMetricsSession(DEFAULT_DISPLAY);
-        createManagedLetterboxAspectRatioSession(DEFAULT_DISPLAY,
-                FIXED_ORIENTATION_MIN_ASPECT_RATIO);
+        createManagedLetterboxAspectRatioSession(FIXED_ORIENTATION_MIN_ASPECT_RATIO);
         createManagedConstrainDisplayApisFlagsSession();
     }
 

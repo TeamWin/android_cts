@@ -1375,7 +1375,7 @@ public abstract class ActivityManagerTestBase {
 
     /** Allows requesting orientation in case ignore_orientation_request is set to true. */
     protected void disableIgnoreOrientationRequest() {
-        mObjectTracker.manage(new IgnoreOrientationRequestSession(DEFAULT_DISPLAY, false));
+        mObjectTracker.manage(new IgnoreOrientationRequestSession(false /* enable */));
     }
 
     /**
@@ -2722,37 +2722,6 @@ public abstract class ActivityManagerTestBase {
 
     /** Activity that can handle all config changes. */
     public static class ConfigChangeHandlingActivity extends CommandSession.BasicTestActivity {
-    }
-
-    public static class IgnoreOrientationRequestSession implements AutoCloseable {
-        private static final String WM_SET_IGNORE_ORIENTATION_REQUEST =
-                "wm set-ignore-orientation-request ";
-        private static final String WM_GET_IGNORE_ORIENTATION_REQUEST =
-                "wm get-ignore-orientation-request";
-        private static final Pattern IGNORE_ORIENTATION_REQUEST_PATTERN =
-                Pattern.compile("ignoreOrientationRequest (true|false) for displayId=\\d+");
-
-        final int mDisplayId;
-        final boolean mInitialIgnoreOrientationRequest;
-
-        public IgnoreOrientationRequestSession(int displayId, boolean enable) {
-            mDisplayId = displayId;
-            Matcher matcher = IGNORE_ORIENTATION_REQUEST_PATTERN.matcher(
-                    executeShellCommand(WM_GET_IGNORE_ORIENTATION_REQUEST + " -d " + mDisplayId));
-            assertTrue("get-ignore-orientation-request should match pattern",
-                    matcher.find());
-            mInitialIgnoreOrientationRequest = Boolean.parseBoolean(matcher.group(1));
-
-            executeShellCommand("wm set-ignore-orientation-request " + (enable ? "true" : "false")
-                    + " -d " + mDisplayId);
-        }
-
-        @Override
-        public void close() {
-            executeShellCommand(
-                    WM_SET_IGNORE_ORIENTATION_REQUEST + mInitialIgnoreOrientationRequest + " -d "
-                            + mDisplayId);
-        }
     }
 
     public static class ReportedDisplayMetrics {
