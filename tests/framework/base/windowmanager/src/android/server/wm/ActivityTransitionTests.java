@@ -108,12 +108,9 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         AtomicLong transitionStartTime = new AtomicLong();
         AtomicLong transitionEndTime = new AtomicLong();
 
-        final ActivityOptions.OnAnimationStartedListener startedListener = () -> {
-            transitionStartTime.set(SystemClock.elapsedRealtime());
-        };
-
-        final ActivityOptions.OnAnimationFinishedListener finishedListener = () -> {
-            transitionEndTime.set(SystemClock.elapsedRealtime());
+        final ActivityOptions.OnAnimationStartedListener startedListener = transitionStartTime::set;
+        final ActivityOptions.OnAnimationFinishedListener finishedListener = (t) -> {
+            transitionEndTime.set(t);
             latch.countDown();
         };
 
@@ -148,12 +145,9 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         AtomicLong transitionStartTime = new AtomicLong();
         AtomicLong transitionEndTime = new AtomicLong();
 
-        final ActivityOptions.OnAnimationStartedListener startedListener = () -> {
-            transitionStartTime.set(SystemClock.elapsedRealtime());
-        };
-
-        final ActivityOptions.OnAnimationFinishedListener finishedListener = () -> {
-            transitionEndTime.set(SystemClock.elapsedRealtime());
+        final ActivityOptions.OnAnimationStartedListener startedListener = transitionStartTime::set;
+        final ActivityOptions.OnAnimationFinishedListener finishedListener = (t) -> {
+            transitionEndTime.set(t);
             latch.countDown();
         };
 
@@ -186,12 +180,9 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         AtomicLong transitionStartTime = new AtomicLong();
         AtomicLong transitionEndTime = new AtomicLong();
 
-        final ActivityOptions.OnAnimationStartedListener startedListener = () -> {
-            transitionStartTime.set(SystemClock.elapsedRealtime());
-        };
-
-        final ActivityOptions.OnAnimationFinishedListener finishedListener = () -> {
-            transitionEndTime.set(SystemClock.elapsedRealtime());
+        final ActivityOptions.OnAnimationStartedListener startedListener = transitionStartTime::set;
+        final ActivityOptions.OnAnimationFinishedListener finishedListener = (t) -> {
+            transitionEndTime.set(t);
             latch.countDown();
         };
 
