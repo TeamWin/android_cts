@@ -23,6 +23,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Range;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -98,6 +99,7 @@ public class SystemClockSntpTest {
         }
     }
 
+    @AppModeFull(reason = "Cannot bind socket in instant app mode")
     @Test
     public void testCurrentNetworkTimeClock() throws Exception {
         // Start a local SNTP test server. But does not setup a fake response.

@@ -40,6 +40,7 @@ public final class ActivityInfo extends ClassInfo {
 
     private final boolean mExported;
     private final Set<IntentFilter> mIntentFilters;
+    private final String mPermission;
 
     public static Builder builder() {
         return new Builder();
@@ -48,11 +49,12 @@ public final class ActivityInfo extends ClassInfo {
     public static Builder builder(android.content.pm.ActivityInfo activityInfo) {
         return builder()
                 .activityClass(activityInfo.name)
-                .exported(activityInfo.exported);
+                .exported(activityInfo.exported)
+                .permission(activityInfo.permission);
     }
 
     private ActivityInfo(String activityClass, boolean exported,
-            Set<IntentFilter> intentFilters) {
+            Set<IntentFilter> intentFilters, String permission) {
         super(activityClass);
         mExported = exported;
         if (intentFilters == null) {
@@ -60,6 +62,7 @@ public final class ActivityInfo extends ClassInfo {
         } else {
             mIntentFilters = intentFilters;
         }
+        mPermission = permission;
     }
 
     private ActivityInfo(Parcel parcel) {
@@ -68,10 +71,16 @@ public final class ActivityInfo extends ClassInfo {
         List<IntentFilter> intentList = new ArrayList<>();
         parcel.readList(intentList, IntentFilter.class.getClassLoader());
         mIntentFilters = new HashSet<>(intentList);
+        mPermission = parcel.readString();
     }
 
     public boolean exported() {
         return mExported;
+    }
+
+    /** Return the permission required to launch this activity. */
+    public String permission() {
+        return mPermission;
     }
 
     /** Return the intent filters of this activity.*/
@@ -85,6 +94,7 @@ public final class ActivityInfo extends ClassInfo {
                 + "class=" + super.toString()
                 + ", exported=" + mExported
                 + ", intentFilters=" + mIntentFilters
+                + ", permission=" + mPermission
                 + "}";
     }
 
@@ -92,6 +102,7 @@ public final class ActivityInfo extends ClassInfo {
         String mActivityClass;
         boolean mExported;
         Set<IntentFilter> mIntentFilters;
+        String mPermission;
 
         public Builder activityClass(String activityClassName) {
             mActivityClass = activityClassName;
@@ -117,11 +128,18 @@ public final class ActivityInfo extends ClassInfo {
             return this;
         }
 
+        /** Set the permission for the activity. */
+        public Builder permission(String permission) {
+            mPermission = permission;
+            return this;
+        }
+
         public ActivityInfo build() {
             return new ActivityInfo(
                     mActivityClass,
                     mExported,
-                    mIntentFilters
+                    mIntentFilters,
+                    mPermission
             );
         }
     }
@@ -136,6 +154,7 @@ public final class ActivityInfo extends ClassInfo {
         super.writeToParcel(out, flags);
         writeBoolean(out, mExported);
         out.writeList(new ArrayList<>(mIntentFilters));
+        out.writeString(mPermission);
     }
 
     public static final Parcelable.Creator<ActivityInfo> CREATOR =
@@ -155,11 +174,12 @@ public final class ActivityInfo extends ClassInfo {
         if (!(o instanceof ActivityInfo)) return false;
         if (!super.equals(o)) return false;
         ActivityInfo that = (ActivityInfo) o;
-        return mExported == that.mExported && mIntentFilters.equals(that.mIntentFilters);
+        return mExported == that.mExported && mIntentFilters.equals(that.mIntentFilters)
+                && Objects.equals(mPermission, ((ActivityInfo) o).mPermission);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), mExported, mIntentFilters);
+        return Objects.hash(super.hashCode(), mExported, mIntentFilters, mPermission);
     }
 }

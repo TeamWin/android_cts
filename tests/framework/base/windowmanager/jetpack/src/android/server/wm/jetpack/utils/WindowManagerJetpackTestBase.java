@@ -122,11 +122,13 @@ public class WindowManagerJetpackTestBase {
      * Starts a specified activity class from {@param activityToLaunchFrom}.
      */
     public static void startActivityFromActivity(@NonNull Activity activityToLaunchFrom,
-            @NonNull ComponentName activityToLaunchComponent, @NonNull String newActivityId) {
+            @NonNull ComponentName activityToLaunchComponent, @NonNull String newActivityId,
+            @NonNull Bundle extras) {
         Intent intent = new Intent();
         intent.setClassName(activityToLaunchComponent.getPackageName(),
                 activityToLaunchComponent.getClassName());
         intent.putExtra(ACTIVITY_ID_LABEL, newActivityId);
+        intent.putExtras(extras);
         activityToLaunchFrom.startActivity(intent);
     }
 

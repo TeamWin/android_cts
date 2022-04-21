@@ -34,4 +34,8 @@ java_test_host {
         "truth-prebuilt",
         "platformprotos",
     ],
+    data: [
+        ":CtsHostsideTestsFullBackupApp",
+    ],
+    per_testcase_directory: true,
 }

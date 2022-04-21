@@ -56,7 +56,7 @@ public class BluetoothA2dpTest extends AndroidTestCase {
         mHasBluetooth = TestUtils.hasBluetooth();
         if (!mHasBluetooth) return;
 
-        mIsA2dpSupported = TestUtils.isProfileEnabled(BluetoothProfile.A2DP_SINK);
+        mIsA2dpSupported = TestUtils.isProfileEnabled(BluetoothProfile.A2DP);
         if (!mIsA2dpSupported) return;
 
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();

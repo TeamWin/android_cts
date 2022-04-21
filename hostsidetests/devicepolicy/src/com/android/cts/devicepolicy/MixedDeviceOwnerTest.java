@@ -262,6 +262,10 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         executeDeviceTestMethodOnDeviceOwnerUser(".systemupdate.InstallUpdateTest", testName);
     }
 
+    // This test sometimes fail on headless system user mode because the DO app doesn't have
+    // INTERACT_ACROSS_USERS to use DpmWrapper - given that it will be refactored to use the new
+    // test infra, it's not worth to figure out why...
+    @FlakyTest(bugId = 137088260)
     @Test
     public void testSecurityLoggingWithSingleUser() throws Exception {
         // Backup stay awake setting because testGenerateLogs() will turn it off.

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,30 @@
  * limitations under the License.
  */
 
-
 package android.security.cts;
 
 import android.platform.test.annotations.AsbSecurityTest;
+
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import org.junit.runner.RunWith;
+
 import org.junit.Test;
-import static org.junit.Assume.*;
+import org.junit.runner.RunWith;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2021_6685 extends SecurityTestCase {
+public class CVE_2022_20127 extends SecurityTestCase {
 
     /**
-     * b/190286685
-     * Vulnerability Behaviour: SIGSEGV in self
+     * b/221862119
+     * Vulnerability Behavior: EXIT_VULNERABLE (113)
      */
-    @AsbSecurityTest(cveBugId = 190286685)
+    @AsbSecurityTest(cveBugId = 221862119)
     @Test
-    public void testPocCVE_2021_6685() throws Exception {
-      assumeFalse(moduleIsPlayManaged("com.google.android.media"));
-      AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2021-6685", null, getDevice());
+    public void testPocCVE_2022_20127() throws Exception {
+        ITestDevice device = getDevice();
+        AdbUtils.assumeHasNfc(device);
+        assumeIsSupportedNfcDevice(device);
+        pocPusher.only64();
+        AdbUtils.runPocAssertExitStatusNotVulnerable("CVE-2022-20127", device, 300);
     }
 }
