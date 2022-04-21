@@ -900,6 +900,21 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 Boolean.class).build().verify(mCarPropertyManager);
     }
 
+    @Test
+    public void testEvChargeTimeRemainingIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.EV_CHARGE_TIME_REMAINING,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                Integer.class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    assertWithMessage(
+                            "FUEL_LEVEL Integer value must be greater than or equal 0").that(
+                            (Integer) carPropertyValue.getValue()).isAtLeast(0);
+
+                }).build().verify(mCarPropertyManager);
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void testGetProperty() {
