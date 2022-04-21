@@ -2929,6 +2929,12 @@
                        android:value="android.hardware.type.automotive"/>
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.hardware.camera2.CameraMetadata#controlExtendedSceneModeBokehStillCapture|
+                               android.hardware.camera2.CameraMetadata#controlExtendedSceneModeBokehContinuous|
+                               android.hardware.camera2.CameraCharacteristics#controlAvailableExtendedSceneModeCapabilities|
+                               android.hardware.camera2.CameraCharacteristics#scalerStreamConfigurationMap|
+                               android.hardware.camera2.CaptureRequest#controlExtendedSceneMode" />
         </activity>
 
         <activity android:name=".usb.accessory.UsbAccessoryTestActivity"
