@@ -286,6 +286,24 @@ android_test_helper_app {
     sdk_version: "current",
 }
 
+// This is the third companion package signed using the V3 signature scheme
+// with a rotated key and part of a sharedUid. The capabilities of this lineage
+// grant access to the previous key in the lineage to join the sharedUid.
+android_test_helper_app {
+    name: "v3-ec-p256-with-por_1_2-default-caps-sharedUid-companion3",
+    manifest: "AndroidManifest-companion3-shareduid.xml",
+    certificate: ":ec-p256_2",
+    additional_certificates: [":ec-p256"],
+    lineage: ":ec-p256-por_1_2-default-caps",
+    srcs: ["src/**/*.java"],
+    // resource_dirs is the default value: ["res"]
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "current",
+}
+
 // This is a version of the test package that declares a signature permission.
 // The lineage used to sign this test package does not trust the first signing
 // key but grants default capabilities to the second signing key.
