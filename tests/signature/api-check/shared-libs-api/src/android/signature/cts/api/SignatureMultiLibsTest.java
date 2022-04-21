@@ -105,6 +105,9 @@ public class SignatureMultiLibsTest extends AbstractSignatureTest {
             ApiComplianceChecker complianceChecker =
                     new ApiComplianceChecker(mResultObserver, mClassProvider);
 
+            // Load classes from any API files that form the base which the expected APIs extend.
+            loadBaseClasses(complianceChecker);
+
             ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
 
             parseActiveSharedLibraryApis(apiDocumentParser, EXPECTED_API_FILES.get())

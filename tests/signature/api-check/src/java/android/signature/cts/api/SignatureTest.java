@@ -43,8 +43,6 @@ public class SignatureTest extends AbstractSignatureTest {
 
     private static final Supplier<String[]> EXPECTED_API_FILES =
             getSupplierOfAnOptionalCommaSeparatedListArgument(EXPECTED_API_FILES_ARG);
-    private static final Supplier<String[]> BASE_API_FILES =
-            getSupplierOfAnOptionalCommaSeparatedListArgument("base-api-files");
     private static final Supplier<String[]> UNEXPECTED_API_FILES =
             getSupplierOfAnOptionalCommaSeparatedListArgument(UNEXPECTED_API_FILES_ARG);
     private static final Supplier<String[]> PREVIOUS_API_FILES =
@@ -159,12 +157,6 @@ public class SignatureTest extends AbstractSignatureTest {
 
     private static TreeSet<JDiffClassDescription> newSetOfClassDescriptions() {
         return new TreeSet<>(Comparator.comparing(JDiffClassDescription::getAbsoluteClassName));
-    }
-
-    private void loadBaseClasses(ApiComplianceChecker complianceChecker) {
-        ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
-        parseApiResourcesAsStream(apiDocumentParser, BASE_API_FILES.get())
-                .forEach(complianceChecker::addBaseClass);
     }
 
     private void checkClassesSignatureCompliance(ApiComplianceChecker complianceChecker,
