@@ -53,12 +53,15 @@ import androidx.annotation.GuardedBy;
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresPermission;
 
 import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.AssumptionViolatedException;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -84,6 +87,8 @@ public class MockImeSession implements AutoCloseable {
     private final AtomicBoolean mActive = new AtomicBoolean(true);
 
     private final HandlerThread mHandlerThread = new HandlerThread("EventReceiver");
+
+    private final List<Intent> mStickyBroadcasts = new ArrayList<>();
 
     private static final class EventStore {
         private static final int INITIAL_ARRAY_SIZE = 32;
@@ -319,6 +324,9 @@ public class MockImeSession implements AutoCloseable {
     public void close() throws Exception {
         mActive.set(false);
 
+        mStickyBroadcasts.forEach(mContext::removeStickyBroadcast);
+        mStickyBroadcasts.clear();
+
         executeShellCommand(mUiAutomation, "ime reset");
 
         PollingCheck.check("Make sure that MockIME becomes unavailable", TIMEOUT, () ->
@@ -345,13 +353,42 @@ public class MockImeSession implements AutoCloseable {
     private ImeCommand callCommandInternal(@NonNull String commandName, @NonNull Bundle params) {
         final ImeCommand command = new ImeCommand(
                 commandName, SystemClock.elapsedRealtimeNanos(), true, params);
+        final Intent intent = createCommandIntent(command);
+        mContext.sendBroadcast(intent);
+        return command;
+    }
+
+    /**
+     * A variant of {@link #callCommandInternal} that uses
+     * {@link Context#sendStickyBroadcast(android.content.Intent) sendStickyBroadcast} to ensure
+     * that the command is received even if the IME is not running at the time of sending
+     * (e.g. when {@code config_preventImeStartupUnlessTextEditor} is set).
+     * <p>
+     * The caller requires the {@link android.Manifest.permission#BROADCAST_STICKY BROADCAST_STICKY}
+     * permission.
+     */
+    @NonNull
+    @RequiresPermission(android.Manifest.permission.BROADCAST_STICKY)
+    private ImeCommand callCommandInternalSticky(
+            @NonNull String commandName,
+            @NonNull Bundle params) {
+        final ImeCommand command = new ImeCommand(
+                commandName, SystemClock.elapsedRealtimeNanos(), true, params);
+        final Intent intent = createCommandIntent(command);
+        mStickyBroadcasts.add(intent);
+        mContext.sendStickyBroadcast(intent);
+        return command;
+    }
+
+    @NonNull
+    private Intent createCommandIntent(@NonNull ImeCommand command) {
         final Intent intent = new Intent();
         intent.setPackage(MockIme.getComponentName().getPackageName());
         intent.setAction(MockIme.getCommandActionName(mImeEventActionName));
         intent.putExtras(command.toBundle());
-        mContext.sendBroadcast(intent);
-        return command;
+        return intent;
     }
+
 
     /**
      * Lets {@link MockIme} suspend {@link MockIme.AbstractInputMethodImpl#createSession(
@@ -1395,8 +1432,9 @@ public class MockImeSession implements AutoCloseable {
     }
 
     @NonNull
+    @RequiresPermission(android.Manifest.permission.BROADCAST_STICKY)
     public ImeCommand callSetInlineSuggestionsExtras(@NonNull Bundle bundle) {
-        return callCommandInternal("setInlineSuggestionsExtras", bundle);
+        return callCommandInternalSticky("setInlineSuggestionsExtras", bundle);
     }
 
     @NonNull
