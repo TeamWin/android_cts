@@ -82,18 +82,23 @@ public final class UiccUtil {
         public static final String SW1_OK_PROACTIVE_COMMAND = "91";
     }
 
-    /** The hashes of all supported CTS UICC test keys and their corresponding specification. */
+    /**
+     * The hashes of all supported CTS UICC test keys and their corresponding specification.
+     *
+     * <p>For up-to-date information about the CTS SIM specification, please see
+     * https://source.android.com/devices/tech/config/uicc#validation.
+     */
     @StringDef({UiccCertificate.CTS_UICC_LEGACY, UiccCertificate.CTS_UICC_2021})
     public @interface UiccCertificate {
 
         /**
          * Indicates compliance with the "legacy" CTS UICC specification (prior to 2021).
          *
-         * <p>Deprecated as of 2021, support to be removed in 2022.
-         *
          * <p>Corresponding certificate: {@code aosp-testkey}.
+         *
+         * @deprecated as of 2021, and no longer supported as of 2022.
          */
-        String CTS_UICC_LEGACY = "61ED377E85D386A8DFEE6B864BD85B0BFAA5AF81";
+        @Deprecated String CTS_UICC_LEGACY = "61ED377E85D386A8DFEE6B864BD85B0BFAA5AF81";
 
         /**
          * Indicates compliance with the 2021 CTS UICC specification.
