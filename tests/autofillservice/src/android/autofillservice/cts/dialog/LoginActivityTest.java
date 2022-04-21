@@ -461,6 +461,54 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
         mUiBot.selectFillDialogDataset("Dialog Presentation");
     }
 
+    @Test
+    public void testHints_passwordAuto_showFillDialog() throws Exception {
+        // Set hints and test service
+        setFillDialogHints(sContext, "passwordAuto");
+        enableService();
+
+        // Set response with a dataset > fill dialog should have two buttons
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("Dropdown Presentation"))
+                        .setDialogPresentation(createPresentation("Dialog Presentation"))
+                        .build())
+                .setDialogHeader(createPresentation("Dialog Header"))
+                .setDialogTriggerIds(ID_PASSWORD);
+        sReplier.addResponse(builder.build());
+
+        // Start activity and autofill
+        LoginActivity activity = startLoginActivity();
+        mUiBot.waitForIdleSync();
+
+        // Check onFillRequest has the flag: FLAG_SUPPORTS_FILL_DIALOG
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
+        assertHasFlags(fillRequest.flags, FLAG_SUPPORTS_FILL_DIALOG);
+        mUiBot.waitForIdleSync();
+
+        // Click on password field to trigger fill dialog
+        mUiBot.selectByRelativeIdFromUiDevice(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+
+        // Verify IME is not shown
+        assertThat(isImeShowing(activity.getRootWindowInsets())).isFalse();
+
+        // Verify the content of fill dialog, and then select dataset in fill dialog
+        mUiBot.assertFillDialogHeader("Dialog Header");
+        mUiBot.assertFillDialogRejectButton();
+        mUiBot.assertFillDialogAcceptButton();
+        final UiObject2 picker = mUiBot.assertFillDialogDatasets("Dialog Presentation");
+
+        // Set expected value, then select dataset
+        activity.expectAutoFill("dude", "sweet");
+        mUiBot.selectDataset(picker, "Dialog Presentation");
+
+        // Check the results.
+        activity.assertAutoFilled();
+    }
+
     private FieldsNoPasswordActivity startNoPasswordActivity() throws Exception {
         final Intent intent = new Intent(mContext, FieldsNoPasswordActivity.class)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
