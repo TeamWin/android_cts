@@ -56,6 +56,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
@@ -736,6 +737,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
             .put("/apex/com.android.cellbroadcast/priv-app/CellBroadcastServiceModule/CellBroadcastServiceModule.apk",
                 CELLBROADCAST_APK_IN_APEX_BURNDOWN_LIST)
             .build();
+
     /**
      * Fetch all jar files in BCP, SSCP and shared libs and extract all the classes.
      *
@@ -978,6 +980,45 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     }
                 });
         assertThat(perApkClasspathDuplicates).isEmpty();
+    }
+
+    /**
+     * Ensure that there are no androidx dependencies in BOOTCLASSPATH, SYSTEMSERVERCLASSPATH
+     * and shared library jars.
+     */
+    @Test
+    public void testBootClasspathAndSystemServerClasspathAndSharedLibs_noAndroidxDependencies() {
+        // WARNING: Do not add more exceptions here, no androidx should be in bootclasspath.
+        // See go/androidx-api-guidelines#module-naming for more details.
+        final ImmutableMap<String, ImmutableSet<String>>
+                LegacyExemptAndroidxSharedLibsJarToClasses =
+                new ImmutableMap.Builder<String, ImmutableSet<String>>()
+                .put("/vendor/framework/androidx.camera.extensions.impl.jar",
+                    ImmutableSet.of("Landroidx/camera/extensions/impl/"))
+                .put("/system_ext/framework/androidx.window.extensions.jar",
+                    ImmutableSet.of("Landroidx/window/common/", "Landroidx/window/extensions/",
+                        "Landroidx/window/util/"))
+                .put("/system_ext/framework/androidx.window.sidecar.jar",
+                    ImmutableSet.of("Landroidx/window/common/", "Landroidx/window/sidecar",
+                        "Landroidx/window/util"))
+                .build();
+        assertWithMessage("There must not be any androidx classes on the "
+            + "bootclasspath. Please use alternatives provided by the platform instead. "
+            + "See go/androidx-api-guidelines#module-naming.")
+                .that(sJarsToClasses.entries().stream()
+                        .filter(e -> e.getValue().startsWith("Landroidx/"))
+                        .filter(e -> !isLegacyAndroidxDependency(
+                            LegacyExemptAndroidxSharedLibsJarToClasses, e.getKey(), e.getValue()))
+                        .collect(Collectors.toList())
+                ).isEmpty();
+    }
+
+    private boolean isLegacyAndroidxDependency(
+            ImmutableMap<String, ImmutableSet<String>> legacyExemptAndroidxSharedLibsJarToClasses,
+            String jar, String className) {
+        return legacyExemptAndroidxSharedLibsJarToClasses.containsKey(jar)
+                && legacyExemptAndroidxSharedLibsJarToClasses.get(jar).stream().anyMatch(
+                        v -> className.startsWith(v));
     }
 
     private String[] collectApkInApexPaths() {
