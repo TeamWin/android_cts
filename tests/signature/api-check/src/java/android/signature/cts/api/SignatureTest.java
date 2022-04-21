@@ -35,24 +35,22 @@ import org.junit.Test;
 /**
  * Performs the signature check via a JUnit test.
  */
-public class SignatureTest extends AbstractApiTest {
+public class SignatureTest extends AbstractSignatureTest {
 
     private static final String TAG = SignatureTest.class.getSimpleName();
 
-    private static final String EXPECTED_API_FILES_ARG = "expected-api-files";
-
     private static final String UNEXPECTED_API_FILES_ARG = "unexpected-api-files";
 
-    protected static final Supplier<String[]> EXPECTED_API_FILES =
+    private static final Supplier<String[]> EXPECTED_API_FILES =
             getSupplierOfAnOptionalCommaSeparatedListArgument(EXPECTED_API_FILES_ARG);
-    protected static final Supplier<String[]> BASE_API_FILES =
+    private static final Supplier<String[]> BASE_API_FILES =
             getSupplierOfAnOptionalCommaSeparatedListArgument("base-api-files");
-    protected static final Supplier<String[]> UNEXPECTED_API_FILES =
+    private static final Supplier<String[]> UNEXPECTED_API_FILES =
             getSupplierOfAnOptionalCommaSeparatedListArgument(UNEXPECTED_API_FILES_ARG);
-    protected static final Supplier<String[]> PREVIOUS_API_FILES =
-            getSupplierOfAnOptionalCommaSeparatedListArgument("previous-api-files");
+    private static final Supplier<String[]> PREVIOUS_API_FILES =
+            getSupplierOfAnOptionalCommaSeparatedListArgument(PREVIOUS_API_FILES_ARG);
 
-    protected static final Supplier<Set<JDiffClassDescription>> UNEXPECTED_CLASSES =
+    private static final Supplier<Set<JDiffClassDescription>> UNEXPECTED_CLASSES =
             Suppliers.memoize(SignatureTest::loadUnexpectedClasses)::get;
 
     @Override
