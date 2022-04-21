@@ -42,6 +42,7 @@ import android.support.test.uiautomator.UiDevice
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
+import com.android.compatibility.common.util.SystemUtil.eventually
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Assert
@@ -137,12 +138,14 @@ class ForegroundModeAndActiveTest {
     }
 
     private fun withTopActivity(code: (Activity) -> Unit) {
-        wakeUpScreen()
+        eventually({
+            wakeUpScreen()
 
-        context.startActivity(Intent(context, UidStateForceActivity::class.java)
-                .setFlags(FLAG_ACTIVITY_NEW_TASK))
+            context.startActivity(Intent(context, UidStateForceActivity::class.java)
+                    .setFlags(FLAG_ACTIVITY_NEW_TASK))
 
-        UidStateForceActivity.waitForResumed()
+            UidStateForceActivity.waitForResumed()
+        }, 300000)
         try {
             code(UidStateForceActivity.instance!!)
         } finally {

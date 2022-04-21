@@ -16,6 +16,7 @@
 
 package android.server.wm.jetpack;
 
+import static android.server.wm.jetpack.second.Components.EXTRA_LAUNCH_NON_EMBEDDABLE_ACTIVITY;
 import static android.server.wm.jetpack.second.Components.SECOND_ACTIVITY;
 import static android.server.wm.jetpack.second.Components.SECOND_ACTIVITY_UNKNOWN_EMBEDDING_CERTS;
 import static android.server.wm.jetpack.second.Components.SECOND_UNTRUSTED_EMBEDDING_ACTIVITY;
@@ -25,12 +26,14 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.EMBEDDED_ACT
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityCrossUidInSplit;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityCrossUidInSplit_expectFail;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitForVisible;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.os.Bundle;
 import android.server.wm.NestedShellPermission;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
@@ -146,9 +149,43 @@ public class ActivityEmbeddingCrossUidTests extends ActivityEmbeddingTestBase {
                 .setSplitRatio(DEFAULT_SPLIT_RATIO).build();
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
-        // Launch an activity from a different UID and verify that it is split with the primary
-        // activity.
+        // Launch an embeddable activity from a different UID and verify that it is split with the
+        // primary activity.
         startActivityCrossUidInSplit(primaryActivity, SECOND_UNTRUSTED_EMBEDDING_ACTIVITY,
                 splitPairRule, mSplitInfoConsumer, "id", true /* verify */);
+    }
+
+    /**
+     * Tests that launching a non-embeddable activity in the embedded container will not be allowed,
+     * and the activity will be launched in full task bounds.
+     */
+    @Test
+    public void testUntrustedCrossUidActivityEmbedding_notAllowedForNonEmbeddable() {
+        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+
+        // Only the primary activity can be in a split with another activity
+        final Predicate<Pair<Activity, Activity>> activityActivityPredicate =
+                activityActivityPair -> primaryActivity.equals(activityActivityPair.first);
+
+        SplitPairRule splitPairRule = new SplitPairRule.Builder(
+                activityActivityPredicate, activityIntentPair -> true /* activityIntentPredicate */,
+                parentWindowMetrics -> true /* parentWindowMetricsPredicate */)
+                .setSplitRatio(DEFAULT_SPLIT_RATIO).build();
+        mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
+
+        // First launch an embeddable activity to setup a split
+        startActivityCrossUidInSplit(primaryActivity, SECOND_UNTRUSTED_EMBEDDING_ACTIVITY,
+                splitPairRule, mSplitInfoConsumer, "id", true /* verify */);
+
+        // Launch an embeddable activity from a different UID and request to launch another one that
+        // is not embeddable.
+        Bundle extras = new Bundle();
+        extras.putBoolean(EXTRA_LAUNCH_NON_EMBEDDABLE_ACTIVITY, true);
+        startActivityFromActivity(primaryActivity, SECOND_UNTRUSTED_EMBEDDING_ACTIVITY, "id",
+                extras);
+
+        // Verify that the original split was covered by the non-embeddable activity that was
+        // launched outside the embedded container and expanded to full task size.
+        assertTrue(waitForVisible(primaryActivity, false));
     }
 }

@@ -22,7 +22,6 @@ import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCA
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
 import static android.server.wm.RoundedCornerTests.TestActivity.EXTRA_ORIENTATION;
-import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.RoundedCorner.POSITION_BOTTOM_LEFT;
 import static android.view.RoundedCorner.POSITION_BOTTOM_RIGHT;
 import static android.view.RoundedCorner.POSITION_TOP_LEFT;
@@ -89,7 +88,7 @@ public class RoundedCornerTests extends ActivityManagerTestBase {
         // On devices with ignore_orientation_request set to true, the test activity will be
         // letterboxed in a landscape display which make the activity not a fullscreen one.
         // We should set it to false while testing.
-        mObjectTracker.manage(new IgnoreOrientationRequestSession(DEFAULT_DISPLAY, false));
+        mObjectTracker.manage(new IgnoreOrientationRequestSession(false /* enable */));
     }
 
     @After

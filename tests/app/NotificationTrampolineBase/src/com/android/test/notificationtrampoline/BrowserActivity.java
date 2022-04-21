@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.test.notificationtrampoline.current;
+package com.android.test.notificationtrampoline;
 
 import android.app.Activity;
 

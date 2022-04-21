@@ -250,8 +250,8 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         private static final String WM_RESET_LETTERBOX_STYLE_ASPECT_RATIO =
                 "wm reset-letterbox-style aspectRatio";
 
-        LetterboxAspectRatioSession(int displayId, float aspectRatio) {
-            super(displayId, true);
+        LetterboxAspectRatioSession(float aspectRatio) {
+            super(true);
             executeShellCommand(WM_SET_LETTERBOX_STYLE_ASPECT_RATIO + aspectRatio);
         }
 
@@ -263,9 +263,9 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
     }
 
     /** @see ObjectTracker#manage(AutoCloseable) */
-    protected LetterboxAspectRatioSession createManagedLetterboxAspectRatioSession(int displayId,
+    protected LetterboxAspectRatioSession createManagedLetterboxAspectRatioSession(
             float aspectRatio) {
-        return mObjectTracker.manage(new LetterboxAspectRatioSession(displayId, aspectRatio));
+        return mObjectTracker.manage(new LetterboxAspectRatioSession(aspectRatio));
     }
 
     void waitForDisplayGone(Predicate<DisplayContent> displayPredicate) {

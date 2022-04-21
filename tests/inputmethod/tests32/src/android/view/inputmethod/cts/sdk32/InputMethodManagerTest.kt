@@ -43,7 +43,8 @@ class InputMethodManagerTest : EndToEndImeTestBase() {
     fun getInputMethodWindowVisibleHeight_returnsZeroIfNotFocused() {
         val imm = context.getSystemService(InputMethodManager::class.java)!!
         MockImeSession.create(context, uiAutomation, ImeSettings.Builder()).use { session ->
-            MockTestActivityUtil.launchSync(false /* instant */, TIMEOUT).use {
+            MockTestActivityUtil.launchSync(
+                    context.getPackageManager().isInstantApp(), TIMEOUT).use {
                 session.callRequestShowSelf(0)
                 expectImeVisible(TIMEOUT)
                 assertEquals(

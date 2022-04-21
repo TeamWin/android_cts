@@ -312,7 +312,9 @@ public class BuildTest extends TestCase {
                     // should at least be a conscious decision.
                     assertEquals(10000, fieldValue);
                 } else {
-                    if (activeCodenames.contains(fieldName)) {
+                    // Remove all underscores to match build level codenames, e.g. S_V2 is Sv2.
+                    String fieldNameWithoutUnderscores = fieldName.replaceAll("_", "");
+                    if (activeCodenames.contains(fieldNameWithoutUnderscores)) {
                         // This is the current development version. Note that fieldName can
                         // become < CUR_DEVELOPMENT before CODENAME becomes "REL", so we
                         // can't assertEquals(CUR_DEVELOPMENT, fieldValue) here.
@@ -322,12 +324,10 @@ public class BuildTest extends TestCase {
                         assertTrue("Expected " + fieldName + " value to be < " + CUR_DEVELOPMENT
                                 + ", got " + fieldValue, fieldValue < CUR_DEVELOPMENT);
                     }
-                    // Remove all underscores to match build level codenames, e.g. S_V2 is Sv2.
-                    String name = fieldName.replaceAll("_", "");
-                    declaredCodenames.add(name);
-                    assertTrue("Expected " + name
+                    declaredCodenames.add(fieldNameWithoutUnderscores);
+                    assertTrue("Expected " + fieldNameWithoutUnderscores
                                         + " to be declared in Build.VERSION.KNOWN_CODENAMES",
-                            knownCodenames.contains(name));
+                            knownCodenames.contains(fieldNameWithoutUnderscores));
                 }
             }
         }

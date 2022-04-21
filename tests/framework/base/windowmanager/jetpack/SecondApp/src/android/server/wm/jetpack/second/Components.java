@@ -29,6 +29,8 @@ public class Components extends ComponentsBase {
     public static final ComponentName SECOND_UNTRUSTED_EMBEDDING_ACTIVITY =
             component("SecondActivityAllowsUntrustedEmbedding");
 
+    public static final String EXTRA_LAUNCH_NON_EMBEDDABLE_ACTIVITY = "launch_non_embeddable";
+
     private static ComponentName component(String className) {
         return component(Components.class, className);
     }

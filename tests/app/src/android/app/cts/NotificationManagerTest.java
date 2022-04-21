@@ -163,11 +163,16 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             "com.android.test.notificationtrampoline.current";
     private static final String TRAMPOLINE_APP_API_30 =
             "com.android.test.notificationtrampoline.api30";
+    private static final String TRAMPOLINE_APP_API_32 =
+            "com.android.test.notificationtrampoline.api32";
     private static final ComponentName TRAMPOLINE_SERVICE =
             new ComponentName(TRAMPOLINE_APP,
                     "com.android.test.notificationtrampoline.NotificationTrampolineTestService");
     private static final ComponentName TRAMPOLINE_SERVICE_API_30 =
             new ComponentName(TRAMPOLINE_APP_API_30,
+                    "com.android.test.notificationtrampoline.NotificationTrampolineTestService");
+    private static final ComponentName TRAMPOLINE_SERVICE_API_32 =
+            new ComponentName(TRAMPOLINE_APP_API_32,
                     "com.android.test.notificationtrampoline.NotificationTrampolineTestService");
 
     private static final String STUB_PACKAGE_NAME = "android.app.stubs";
@@ -206,6 +211,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         PermissionUtils.grantPermission(STUB_PACKAGE_NAME, POST_NOTIFICATIONS);
         PermissionUtils.grantPermission(TEST_APP, POST_NOTIFICATIONS);
         PermissionUtils.grantPermission(TRAMPOLINE_APP, POST_NOTIFICATIONS);
+        PermissionUtils.grantPermission(TRAMPOLINE_APP_API_30, POST_NOTIFICATIONS);
+        PermissionUtils.grantPermission(TRAMPOLINE_APP_API_32, POST_NOTIFICATIONS);
         PermissionUtils.grantPermission(NOTIFICATIONPROVIDER, POST_NOTIFICATIONS);
         // This will leave a set of channels on the device with each test run.
         mId = UUID.randomUUID().toString();
@@ -3453,7 +3460,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
     }
 
-    public void testActivityStartOnBroadcastTrampoline_whenDefaultBrowser_isAllowed()
+    public void testActivityStartOnBroadcastTrampoline_whenDefaultBrowser_isBlocked()
             throws Exception {
         deactivateGracePeriod();
         setDefaultBrowser(TRAMPOLINE_APP);
@@ -3471,11 +3478,33 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
         assertTrue("Broadcast not received on time",
                 callback.waitFor(EventCallback.BROADCAST_RECEIVED, TIMEOUT_LONG_MS));
+        assertFalse("Activity started",
+                callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
+    }
+
+    public void testActivityStartOnBroadcastTrampoline_whenDefaultBrowserApi32_isAllowed()
+            throws Exception {
+        deactivateGracePeriod();
+        setDefaultBrowser(TRAMPOLINE_APP_API_32);
+        setUpNotifListener();
+        mListener.addTestPackage(TRAMPOLINE_APP_API_32);
+        EventCallback callback = new EventCallback();
+        int notificationId = 6005;
+
+        // Post notification and fire its pending intent
+        sendTrampolineMessage(TRAMPOLINE_SERVICE_API_32, MESSAGE_BROADCAST_NOTIFICATION,
+                notificationId, callback);
+        StatusBarNotification statusBarNotification = findPostedNotification(notificationId, true);
+        assertNotNull("Notification not posted on time", statusBarNotification);
+        statusBarNotification.getNotification().contentIntent.send();
+
+        assertTrue("Broadcast not received on time",
+                callback.waitFor(EventCallback.BROADCAST_RECEIVED, TIMEOUT_LONG_MS));
         assertTrue("Activity not started",
                 callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
     }
 
-    public void testActivityStartOnServiceTrampoline_whenDefaultBrowser_isAllowed()
+    public void testActivityStartOnServiceTrampoline_whenDefaultBrowser_isBlocked()
             throws Exception {
         deactivateGracePeriod();
         setDefaultBrowser(TRAMPOLINE_APP);
@@ -3487,6 +3516,28 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         // Post notification and fire its pending intent
         sendTrampolineMessage(TRAMPOLINE_SERVICE, MESSAGE_SERVICE_NOTIFICATION, notificationId,
                 callback);
+        StatusBarNotification statusBarNotification = findPostedNotification(notificationId, true);
+        assertNotNull("Notification not posted on time", statusBarNotification);
+        statusBarNotification.getNotification().contentIntent.send();
+
+        assertTrue("Service not started on time",
+                callback.waitFor(EventCallback.SERVICE_STARTED, TIMEOUT_MS));
+        assertFalse("Activity started",
+                callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
+    }
+
+    public void testActivityStartOnServiceTrampoline_whenDefaultBrowserApi32_isAllowed()
+            throws Exception {
+        deactivateGracePeriod();
+        setDefaultBrowser(TRAMPOLINE_APP_API_32);
+        setUpNotifListener();
+        mListener.addTestPackage(TRAMPOLINE_APP_API_32);
+        EventCallback callback = new EventCallback();
+        int notificationId = 6006;
+
+        // Post notification and fire its pending intent
+        sendTrampolineMessage(TRAMPOLINE_SERVICE_API_32, MESSAGE_SERVICE_NOTIFICATION,
+                notificationId, callback);
         StatusBarNotification statusBarNotification = findPostedNotification(notificationId, true);
         assertNotNull("Notification not posted on time", statusBarNotification);
         statusBarNotification.getNotification().contentIntent.send();

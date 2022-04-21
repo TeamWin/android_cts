@@ -33,6 +33,7 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.Rect;
+import android.os.Bundle;
 import android.util.LayoutDirection;
 import android.util.Log;
 import android.util.Pair;
@@ -157,7 +158,8 @@ public class ActivityEmbeddingUtil {
             @NonNull ComponentName secondActivityComponent, @NonNull SplitPairRule splitPairRule,
             @NonNull TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer,
             @NonNull String secondActivityId, boolean verifySplitState) {
-        startActivityFromActivity(primaryActivity, secondActivityComponent, secondActivityId);
+        startActivityFromActivity(primaryActivity, secondActivityComponent, secondActivityId,
+                Bundle.EMPTY);
         if (!verifySplitState) {
             return;
         }
@@ -194,13 +196,22 @@ public class ActivityEmbeddingUtil {
             @NonNull TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer) {
         boolean startExceptionObserved = false;
         try {
-            startActivityFromActivity(primaryActivity, secondActivityComponent, "secondActivityId");
+            startActivityFromActivity(primaryActivity, secondActivityComponent, "secondActivityId",
+                    Bundle.EMPTY);
         } catch (SecurityException e) {
             startExceptionObserved = true;
         }
         assertTrue(startExceptionObserved);
 
         // No split should be active, primary activity should be covered by the new one.
+        assertNoSplit(primaryActivity, splitInfoConsumer);
+    }
+
+    /**
+     * Asserts that there is no split with the provided primary activity.
+     */
+    public static void assertNoSplit(@NonNull Activity primaryActivity,
+            @NonNull TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer) {
         waitForVisible(primaryActivity, false /* visible */);
         List<SplitInfo> activeSplitStates = splitInfoConsumer.getLastReportedValue();
         assertTrue(activeSplitStates == null || activeSplitStates.isEmpty());
@@ -327,7 +338,7 @@ public class ActivityEmbeddingUtil {
                 waitForResumed(activityId));
     }
 
-    private static boolean waitForVisible(@NonNull Activity activity, boolean visible) {
+    public static boolean waitForVisible(@NonNull Activity activity, boolean visible) {
         final long startTime = System.currentTimeMillis();
         while (System.currentTimeMillis() - startTime < WAIT_FOR_LIFECYCLE_TIMEOUT_MS) {
             if (WindowManagerJetpackTestBase.isActivityVisible(activity) == visible) {
