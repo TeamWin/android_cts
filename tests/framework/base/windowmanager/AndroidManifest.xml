@@ -58,8 +58,8 @@
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$SecondTranslucentActivity"
              android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
 
-        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$CallbackTrackingActivity"
-                  android:configChanges="keyboard|keyboardHidden|navigation"/>
+        <activity android:name="android.server.wm.lifecycle.CallbackTrackingActivity"
+             android:configChanges="keyboard|keyboardHidden|navigation"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$SecondCallbackTrackingActivity"/>
 
@@ -87,7 +87,7 @@
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$SingleTopActivity"
              android:launchMode="singleTop"/>
 
-        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$ConfigChangeHandlingActivity"
+        <activity android:name="android.server.wm.lifecycle.LifecycleConfigChangeHandlingActivity"
              android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$PipActivity"

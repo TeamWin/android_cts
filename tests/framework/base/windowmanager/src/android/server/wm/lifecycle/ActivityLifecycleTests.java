@@ -29,19 +29,30 @@ import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.Launch
 import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.LaunchForResultActivity.EXTRA_LAUNCH_ON_RESUME_AFTER_RESULT;
 import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.NoDisplayActivity.EXTRA_LAUNCH_ACTIVITY;
 import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.NoDisplayActivity.EXTRA_NEW_TASK;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_CREATE;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_DESTROY;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_NEW_INTENT;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_PAUSE;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_POST_CREATE;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_RESTART;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_START;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_GAINED;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_USER_LEAVE_HINT;
+import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_ACTIVITY_ON_USER_LEAVE_HINT;
+import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_CREATE;
+import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_PAUSE;
+import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_RESUME;
+import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_START;
+import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_STOP;
+import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_RECREATE;
+import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_SKIP_TOP_RESUMED_STATE;
+import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_START_ACTIVITY_IN_ON_CREATE;
+import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_START_ACTIVITY_WHEN_IDLE;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_ACTIVITY_RESULT;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_CREATE;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_DESTROY;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_NEW_INTENT;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_PAUSE;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_POST_CREATE;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_RESTART;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_RESUME;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_START;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_STOP;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_TOP_POSITION_GAINED;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_TOP_POSITION_LOST;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_USER_LEAVE_HINT;
+import static android.server.wm.lifecycle.LifecycleConstants.getComponentName;
 import static android.server.wm.lifecycle.LifecycleVerifier.transition;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
@@ -530,7 +541,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
                 Arrays.asList(ON_DESTROY, ON_CREATE, ON_START, ON_RESUME,
                         ON_PAUSE), "becomingVisiblePaused");
-        final List<LifecycleLog.ActivityCallback> expectedSequence =
+        final List<String> expectedSequence =
                 Arrays.asList(ON_DESTROY, ON_CREATE, ON_START, ON_RESUME);
         LifecycleVerifier.assertSequence(TranslucentActivity.class, getLifecycleLog(),
                 expectedSequence, "becomingVisibleResumed");
@@ -553,7 +564,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 ON_TOP_POSITION_GAINED));
 
         // verify the result have sent back to original activity
-        final List<LifecycleLog.ActivityCallback> expectedSequence =
+        final List<String> expectedSequence =
                 Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
                         ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP,
                         ON_RESTART, ON_START, ON_ACTIVITY_RESULT, ON_RESUME,
@@ -565,18 +576,19 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testOnActivityResult() throws Exception {
         new Launcher(LaunchForResultActivity.class)
-                .customizeIntent(LaunchForResultActivity.forwardFlag(EXTRA_FINISH_IN_ON_RESUME,
+                .customizeIntent(LaunchForResultActivity.forwardFlag(
+                        EXTRA_FINISH_IN_ON_RESUME,
                         EXTRA_SKIP_TOP_RESUMED_STATE))
                 .setSkipTopResumedStateCheck()
                 .launch();
 
-        final List<LifecycleLog.ActivityCallback> expectedSequence =
+        final List<String> expectedSequence =
                 Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
                         ON_PAUSE, ON_ACTIVITY_RESULT, ON_RESUME);
         waitForActivityTransitions(LaunchForResultActivity.class, expectedSequence);
 
         // TODO(b/79218023): First activity might also be stopped before getting result.
-        final List<LifecycleLog.ActivityCallback> sequenceWithStop =
+        final List<String> sequenceWithStop =
                 Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
                         ON_PAUSE, ON_STOP, ON_RESTART, ON_START, ON_ACTIVITY_RESULT, ON_RESUME);
         LifecycleVerifier.assertSequenceMatchesOneOf(LaunchForResultActivity.class,
@@ -607,7 +619,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
         final boolean isTranslucent = isTranslucent(activity);
 
-        final List<LifecycleLog.ActivityCallback> expectedSequences;
+        final List<String> expectedSequences;
         if (isTranslucent) {
             expectedSequences = Arrays.asList(ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
                     ON_PAUSE, ON_ACTIVITY_RESULT, ON_RESUME);
@@ -673,7 +685,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         getInstrumentation().runOnMainSync(trackingActivity::recreate);
         waitAndAssertActivityStates(state(trackingActivity, ON_STOP));
 
-        final List<LifecycleLog.ActivityCallback> callbacks;
+        final List<String> callbacks;
         if (isTranslucent(secondActivity)) {
             callbacks = Arrays.asList(ON_STOP, ON_DESTROY, ON_CREATE, ON_START,
                     ON_POST_CREATE, ON_RESUME, ON_PAUSE);
@@ -752,7 +764,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 .launch();
 
         // Wait for activity to relaunch and resume
-        final List<LifecycleLog.ActivityCallback> expectedRelaunchSequence;
+        final List<String> expectedRelaunchSequence;
         if (isTranslucent(secondActivity)) {
             expectedRelaunchSequence = Arrays.asList(ON_NEW_INTENT, ON_RESUME,
                     ON_PAUSE, ON_STOP, ON_DESTROY, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME);
@@ -808,7 +820,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 .launch();
 
         // Verify that the first activity was restarted, new intent was delivered and resumed again
-        final List<LifecycleLog.ActivityCallback> expectedSequence;
+        final List<String> expectedSequence;
         if (isTranslucent(singleTopActivity)) {
             expectedSequence = Arrays.asList(ON_NEW_INTENT, ON_RESUME, ON_TOP_POSITION_GAINED);
         } else {
@@ -840,7 +852,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
         // Wait for the activity to resume again
         // Verify that the new intent was delivered and resumed again
-        final List<LifecycleLog.ActivityCallback> expectedSequence =
+        final List<String> expectedSequence =
                 Arrays.asList(ON_NEW_INTENT, ON_RESUME, ON_TOP_POSITION_GAINED);
         waitForActivityTransitions(SingleTopActivity.class, expectedSequence);
         LifecycleVerifier.assertSequence(SingleTopActivity.class, getLifecycleLog(),
@@ -890,7 +902,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     private void verifyFinishAtStage(Class<? extends Activity> activityClass,
-            String finishStageExtra, List<LifecycleLog.ActivityCallback> expectedSequence,
+            String finishStageExtra, List<String> expectedSequence,
             String stageName) throws Exception {
         verifyFinishAtStage(activityClass, finishStageExtra, false /* skipTopResumedState */,
                 expectedSequence, stageName);
@@ -898,7 +910,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
     private void verifyFinishAtStage(Class<? extends Activity> activityClass,
             String finishStageExtra, boolean skipTopResumedState,
-            List<LifecycleLog.ActivityCallback> expectedSequence,
+            List<String> expectedSequence,
             String stageName) throws Exception {
         final Launcher launcher = new Launcher(activityClass)
                 .setExpectedState(ON_DESTROY)
@@ -943,7 +955,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         // Launch an activity on top, which will make the first one paused or stopped.
         launchActivityAndWait(launchOnTopClass);
 
-        final List<LifecycleLog.ActivityCallback> expectedSequence =
+        final List<String> expectedSequence =
                 LifecycleVerifier.getLaunchAndDestroySequence(activityClass);
         waitAndAssertActivityTransitions(activityClass, expectedSequence, "finish in " + stageName);
     }

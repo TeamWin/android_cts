@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,7 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
 
 package android.server.wm.lifecycle;
@@ -22,6 +22,7 @@ import android.app.Activity;
 import android.content.ContentProvider;
 import android.content.ContentProviderClient;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -36,23 +37,6 @@ import java.util.List;
  * prevent concurrent modification of the log store.
  */
 public class LifecycleLog extends ContentProvider {
-
-    public enum ActivityCallback {
-        ON_CREATE,
-        ON_START,
-        ON_RESUME,
-        ON_PAUSE,
-        ON_STOP,
-        ON_RESTART,
-        ON_DESTROY,
-        ON_ACTIVITY_RESULT,
-        ON_POST_CREATE,
-        ON_NEW_INTENT,
-        ON_MULTI_WINDOW_MODE_CHANGED,
-        ON_TOP_POSITION_GAINED,
-        ON_TOP_POSITION_LOST,
-        ON_USER_LEAVE_HINT
-    }
 
     interface LifecycleTrackerCallback {
         void onActivityLifecycleChanged();
@@ -69,7 +53,7 @@ public class LifecycleLog extends ContentProvider {
      * Log for encountered activity callbacks. Note that methods accessing or modifying this
      * list should be synchronized as it can be accessed from different threads.
      */
-    private final static List<Pair<String, ActivityCallback>> sLog = new ArrayList<>();
+    private static final List<Pair<String, String>> sLog = new ArrayList<>();
 
     /**
      * Lifecycle tracker interface that waits for correct states or sequences.
@@ -77,8 +61,8 @@ public class LifecycleLog extends ContentProvider {
     private static LifecycleTrackerCallback sLifecycleTracker;
 
     /** Clear the entire transition log. */
-    void clear() {
-        synchronized(sLog) {
+    public void clear() {
+        synchronized (sLog) {
             sLog.clear();
         }
     }
@@ -88,8 +72,7 @@ public class LifecycleLog extends ContentProvider {
     }
 
     /** Add activity callback to the log. */
-    private void onActivityCallback(String activityCanonicalName,
-            ActivityCallback callback) {
+    private void onActivityCallback(String activityCanonicalName, String callback) {
         synchronized (sLog) {
             sLog.add(new Pair<>(activityCanonicalName, callback));
         }
@@ -101,20 +84,20 @@ public class LifecycleLog extends ContentProvider {
     }
 
     /** Get logs for all recorded transitions. */
-    List<Pair<String, ActivityCallback>> getLog() {
+    List<Pair<String, String>> getLog() {
         // Wrap in a new list to prevent concurrent modification
-        synchronized(sLog) {
+        synchronized (sLog) {
             return new ArrayList<>(sLog);
         }
     }
 
     /** Get transition logs for the specified activity. */
-    List<ActivityCallback> getActivityLog(Class<? extends Activity> activityClass) {
+    List<String> getActivityLog(Class<? extends Activity> activityClass) {
         final String activityName = activityClass.getCanonicalName();
         log("Looking up log for activity: " + activityName);
-        final List<ActivityCallback> activityLog = new ArrayList<>();
-        synchronized(sLog) {
-            for (Pair<String, ActivityCallback> transition : sLog) {
+        final List<String> activityLog = new ArrayList<>();
+        synchronized (sLog) {
+            for (Pair<String, String> transition : sLog) {
                 if (transition.first.equals(activityName)) {
                     activityLog.add(transition.second);
                 }
@@ -131,15 +114,23 @@ public class LifecycleLog extends ContentProvider {
         private final ContentProviderClient mClient;
         private final String mOwner;
 
-        LifecycleLogClient(ContentProviderClient client, Activity owner) {
+        public LifecycleLogClient(ContentProviderClient client, String owner) {
             mClient = client;
-            mOwner = owner.getClass().getCanonicalName();
+            mOwner = owner;
         }
 
-        void onActivityCallback(ActivityCallback callback) {
+        public void onActivityCallback(String callback) {
+            onActivityCallback(callback, mOwner);
+        }
+
+        public void onActivityCallback(String callback, Activity owner) {
+            onActivityCallback(callback, owner.getClass().getCanonicalName());
+        }
+
+        public void onActivityCallback(String callback, String owner) {
             final Bundle extras = new Bundle();
-            extras.putInt(METHOD_ADD_CALLBACK, callback.ordinal());
-            extras.putString(EXTRA_KEY_ACTIVITY, mOwner);
+            extras.putString(METHOD_ADD_CALLBACK, callback);
+            extras.putString(EXTRA_KEY_ACTIVITY, owner);
             try {
                 mClient.call(METHOD_ADD_CALLBACK, EMPTY_ARG, extras);
             } catch (RemoteException e) {
@@ -152,8 +143,8 @@ public class LifecycleLog extends ContentProvider {
             mClient.close();
         }
 
-        static LifecycleLogClient create(Activity owner) {
-            final ContentProviderClient client = owner.getContentResolver()
+        public static LifecycleLogClient create(String owner, Context context) {
+            final ContentProviderClient client = context.getContentResolver()
                     .acquireContentProviderClient(URI);
             if (client == null) {
                 throw new RuntimeException("Unable to acquire " + URI);
@@ -167,8 +158,7 @@ public class LifecycleLog extends ContentProvider {
         if (!METHOD_ADD_CALLBACK.equals(method)) {
             throw new UnsupportedOperationException();
         }
-        onActivityCallback(extras.getString(EXTRA_KEY_ACTIVITY),
-                ActivityCallback.values()[extras.getInt(method)]);
+        onActivityCallback(extras.getString(EXTRA_KEY_ACTIVITY), extras.getString(method));
         return null;
     }
 
