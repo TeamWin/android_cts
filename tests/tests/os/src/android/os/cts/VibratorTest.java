@@ -19,10 +19,11 @@ package android.os.cts;
 import static android.os.VibrationEffect.VibrationParameter.targetAmplitude;
 import static android.os.VibrationEffect.VibrationParameter.targetFrequency;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.eq;
@@ -39,20 +40,23 @@ import android.os.VibrationAttributes;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.os.Vibrator.OnVibratorStateChangedListener;
+import android.os.VibratorManager;
 import android.os.vibrator.VibratorFrequencyProfile;
 
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+
+import com.google.common.collect.Range;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
@@ -62,11 +66,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 
-@RunWith(AndroidJUnit4.class)
+/**
+ * Verifies the Vibrator API for all surfaces that present it, as enumerated by the {@link #data()}
+ * method.
+ */
+@RunWith(Parameterized.class)
 public class VibratorTest {
+    private static final String SYSTEM_VIBRATOR_LABEL = "SystemVibrator";
+
     @Rule
-    public ActivityTestRule<SimpleTestActivity> mActivityRule = new ActivityTestRule<>(
-            SimpleTestActivity.class);
+    public ActivityScenarioRule<SimpleTestActivity> mActivityRule =
+            new ActivityScenarioRule<>(SimpleTestActivity.class);
 
     @Rule
     public final AdoptShellPermissionsRule mAdoptShellPermissionsRule =
@@ -76,6 +86,43 @@ public class VibratorTest {
 
     @Rule
     public final MockitoRule mMockitoRule = MockitoJUnit.rule();
+
+    /**
+     *  Provides the vibrator accessed with the given vibrator ID, at the time of test running.
+     *  A vibratorId of -1 indicates to use the system default vibrator.
+     */
+    private interface VibratorProvider {
+        Vibrator getVibrator();
+    }
+
+    /** Helper to add test parameters more readably and without explicit casting. */
+    private static void addTestParameter(ArrayList<Object[]> data, String testLabel,
+            VibratorProvider vibratorProvider) {
+        data.add(new Object[] { testLabel, vibratorProvider });
+    }
+
+    @Parameterized.Parameters(name = "{0}")
+    public static Iterable<Object[]> data() {
+        // Test params are Name,Vibrator pairs. All vibrators on the system should conform to this
+        // test.
+        ArrayList<Object[]> data = new ArrayList<>();
+        // These vibrators should be identical, but verify both APIs explicitly.
+        addTestParameter(data, SYSTEM_VIBRATOR_LABEL,
+                () -> InstrumentationRegistry.getInstrumentation().getContext()
+                        .getSystemService(Vibrator.class));
+        // VibratorManager also presents getDefaultVibrator, but in VibratorManagerTest
+        // it is asserted that the Vibrator system service and getDefaultVibrator are
+        // the same object, so we don't test it twice here.
+
+        VibratorManager vibratorManager = InstrumentationRegistry.getInstrumentation().getContext()
+                .getSystemService(VibratorManager.class);
+        for (int vibratorId : vibratorManager.getVibratorIds()) {
+            addTestParameter(data, "vibratorId:" + vibratorId,
+                    () -> InstrumentationRegistry.getInstrumentation().getContext()
+                            .getSystemService(VibratorManager.class).getVibrator(vibratorId));
+        }
+        return data;
+    }
 
     private static final float TEST_TOLERANCE = 1e-5f;
 
@@ -125,6 +172,9 @@ public class VibratorTest {
             VibrationAttributes.USAGE_TOUCH,
     };
 
+    private final String mVibratorLabel;
+    private final Vibrator mVibrator;
+
     /**
      * This listener is used for test helper methods like asserting it starts/stops vibrating.
      * It's not strongly required that the interactions with this mock are validated by all tests.
@@ -132,15 +182,18 @@ public class VibratorTest {
     @Mock
     private OnVibratorStateChangedListener mStateListener;
 
-    private Vibrator mVibrator;
     /** Keep track of any listener created to be added to the vibrator, for cleanup purposes. */
     private List<OnVibratorStateChangedListener> mStateListenersCreated = new ArrayList<>();
 
+    // vibratorLabel is used by the parameterized test infrastructure.
+    public VibratorTest(String vibratorLabel, VibratorProvider vibratorProvider) {
+        mVibratorLabel = vibratorLabel;
+        mVibrator = vibratorProvider.getVibrator();
+        assertThat(mVibrator).isNotNull();
+    }
+
     @Before
     public void setUp() {
-        mVibrator = InstrumentationRegistry.getInstrumentation().getContext().getSystemService(
-                Vibrator.class);
-
         mVibrator.addVibratorStateListener(mStateListener);
         // Adding a listener to the Vibrator should trigger the callback once with the current
         // vibrator state, so reset mocks to clear it for tests.
@@ -168,17 +221,36 @@ public class VibratorTest {
     }
 
     @Test
+    public void testSystemVibratorGetIdAndMaybeHasVibrator() {
+        assumeTrue(isSystemVibrator());
+
+        // The system vibrator should not be mapped to any physical vibrator and use a default id.
+        assertThat(mVibrator.getId()).isEqualTo(-1);
+        // The system vibrator always exists, but may not actually have a vibrator. Just make sure
+        // the API doesn't throw.
+        mVibrator.hasVibrator();
+    }
+
+    @Test
+    public void testNonSystemVibratorGetIdAndAlwaysHasVibrator() {
+        assumeFalse(isSystemVibrator());
+        assertThat(mVibrator.hasVibrator()).isTrue();
+    }
+
+    @Test
     public void getDefaultVibrationIntensity_returnsValidIntensityForAllUsages() {
         for (int usage : VIBRATION_USAGES) {
             int intensity = mVibrator.getDefaultVibrationIntensity(usage);
-            assertTrue("Error for usage " + usage + " with default intensity " + intensity,
-                    (intensity >= Vibrator.VIBRATION_INTENSITY_OFF)
-                            && (intensity <= Vibrator.VIBRATION_INTENSITY_HIGH));
+            assertWithMessage("Default intensity invalid for usage " + usage)
+                    .that(intensity)
+                    .isIn(Range.closed(
+                            Vibrator.VIBRATION_INTENSITY_OFF, Vibrator.VIBRATION_INTENSITY_HIGH));
         }
 
-        assertEquals("Invalid usage expected to have same default as USAGE_UNKNOWN",
-                mVibrator.getDefaultVibrationIntensity(VibrationAttributes.USAGE_UNKNOWN),
-                mVibrator.getDefaultVibrationIntensity(-1));
+        assertWithMessage("Invalid usage expected to have same default as USAGE_UNKNOWN")
+                .that(mVibrator.getDefaultVibrationIntensity(-1))
+                .isEqualTo(
+                    mVibrator.getDefaultVibrationIntensity(VibrationAttributes.USAGE_UNKNOWN));
     }
 
     @Test
@@ -196,31 +268,23 @@ public class VibratorTest {
         mVibrator.vibrate(pattern, 3);
         assertStartsVibrating();
 
-        try {
-            mVibrator.vibrate(pattern, 10);
-            fail("Should throw ArrayIndexOutOfBoundsException");
-        } catch (ArrayIndexOutOfBoundsException expected) {
-        }
+        // Repeat index is invalid.
+        assertThrows(ArrayIndexOutOfBoundsException.class, () -> mVibrator.vibrate(pattern, 10));
     }
 
     @Test
-    public void testVibrateMultiThread() {
-        new Thread(() -> {
-            try {
-                mVibrator.vibrate(500);
-            } catch (Exception e) {
-                fail("MultiThread fail1");
-            }
+    public void testVibrateMultiThread() throws Exception {
+        ThreadHelper thread1 = new ThreadHelper(() -> {
+            mVibrator.vibrate(200);
         }).start();
-        new Thread(() -> {
-            try {
-                // This test only get two threads to run vibrator at the same time for a functional
-                // test, but it can not verify if the second thread get the precedence.
-                mVibrator.vibrate(1000);
-            } catch (Exception e) {
-                fail("MultiThread fail2");
-            }
+        ThreadHelper thread2 = new ThreadHelper(() -> {
+            // This test only get two threads to run vibrator at the same time for a functional
+            // test, but can't assert ordering.
+            mVibrator.vibrate(100);
         }).start();
+        thread1.joinSafely();
+        thread2.joinSafely();
+
         assertStartsVibrating();
     }
 
@@ -270,7 +334,7 @@ public class VibratorTest {
         assertStartsVibrating();
 
         SystemClock.sleep(2000);
-        assertTrue(!mVibrator.hasVibrator() || mVibrator.isVibrating());
+        assertIsVibrating(true);
 
         mVibrator.cancel();
         assertStopsVibrating();
@@ -283,12 +347,17 @@ public class VibratorTest {
         VibratorFrequencyProfile frequencyProfile = mVibrator.getFrequencyProfile();
         assumeNotNull(frequencyProfile);
 
-        float minFrequency = Math.max(1f, frequencyProfile.getMinFrequency());
+        float minFrequency = frequencyProfile.getMinFrequency();
         float maxFrequency = frequencyProfile.getMaxFrequency();
         float resonantFrequency = mVibrator.getResonantFrequency();
         float sustainFrequency = Float.isNaN(resonantFrequency)
-                ? (maxFrequency - minFrequency) / 2
+                ? (maxFrequency + minFrequency) / 2
                 : resonantFrequency;
+
+        // Ensure the values can be used as a targetFrequency.
+        assertThat(minFrequency).isAtLeast(MINIMUM_ACCEPTED_FREQUENCY);
+        assertThat(maxFrequency).isAtLeast(minFrequency);
+        assertThat(maxFrequency).isAtMost(MAXIMUM_ACCEPTED_FREQUENCY);
 
         // Ramp from min to max frequency and from zero to max amplitude.
         // Then ramp to a fixed frequency at max amplitude.
@@ -349,19 +418,6 @@ public class VibratorTest {
     }
 
     @Test
-    public void testGetId() {
-        // The system vibrator should not be mapped to any physical vibrator and use a default id.
-        assertEquals(-1, mVibrator.getId());
-    }
-
-    @Test
-    public void testHasVibrator() {
-        // Just make sure it doesn't crash when this is called; we don't really have a way to test
-        // if the device has vibrator or not.
-        mVibrator.hasVibrator();
-    }
-
-    @Test
     public void testVibratorHasAmplitudeControl() {
         // Just make sure it doesn't crash when this is called; we don't really have a way to test
         // if the amplitude control works or not.
@@ -372,16 +428,25 @@ public class VibratorTest {
     public void testVibratorHasFrequencyControl() {
         // Just make sure it doesn't crash when this is called; we don't really have a way to test
         // if the frequency control works or not.
-        mVibrator.hasFrequencyControl();
+        if (mVibrator.hasFrequencyControl()) {
+            // If it's a multi-vibrator device, the system vibrator presents a merged frequency
+            // profile, which may in turn be empty, and hence null. But otherwise, it should not
+            // be null.
+            if (!isMultiVibratorDevice() || !isSystemVibrator()) {
+                assertThat(mVibrator.getFrequencyProfile()).isNotNull();
+            }
+        } else {
+            assertThat(mVibrator.getFrequencyProfile()).isNull();
+        }
     }
 
     @Test
     public void testVibratorEffectsAreSupported() {
         // Just make sure it doesn't crash when this is called and that it returns all queries;
         // We don't really have a way to test if the device supports each effect or not.
-        assertEquals(PREDEFINED_EFFECTS.length,
-                mVibrator.areEffectsSupported(PREDEFINED_EFFECTS).length);
-        assertEquals(0, mVibrator.areEffectsSupported().length);
+        assertThat(mVibrator.areEffectsSupported(PREDEFINED_EFFECTS))
+                .hasLength(PREDEFINED_EFFECTS.length);
+        assertThat(mVibrator.areEffectsSupported()).isEmpty();
     }
 
     @Test
@@ -389,16 +454,17 @@ public class VibratorTest {
         // Just make sure it doesn't crash when this is called;
         // We don't really have a way to test if the device supports each effect or not.
         mVibrator.areAllEffectsSupported(PREDEFINED_EFFECTS);
-        assertEquals(Vibrator.VIBRATION_EFFECT_SUPPORT_YES, mVibrator.areAllEffectsSupported());
+        assertThat(mVibrator.areAllEffectsSupported())
+                .isEqualTo(Vibrator.VIBRATION_EFFECT_SUPPORT_YES);
     }
 
     @Test
     public void testVibratorPrimitivesAreSupported() {
         // Just make sure it doesn't crash when this is called;
         // We don't really have a way to test if the device supports each effect or not.
-        assertEquals(PRIMITIVE_EFFECTS.length,
-                mVibrator.arePrimitivesSupported(PRIMITIVE_EFFECTS).length);
-        assertEquals(0, mVibrator.arePrimitivesSupported().length);
+        assertThat(mVibrator.arePrimitivesSupported(PRIMITIVE_EFFECTS)).hasLength(
+                PRIMITIVE_EFFECTS.length);
+        assertThat(mVibrator.arePrimitivesSupported()).isEmpty();
     }
 
     @Test
@@ -406,29 +472,36 @@ public class VibratorTest {
         // Just make sure it doesn't crash when this is called;
         // We don't really have a way to test if the device supports each effect or not.
         mVibrator.areAllPrimitivesSupported(PRIMITIVE_EFFECTS);
-        assertTrue(mVibrator.areAllPrimitivesSupported());
+        assertThat(mVibrator.areAllPrimitivesSupported()).isTrue();
     }
 
     @Test
     public void testVibratorPrimitivesDurations() {
         int[] durations = mVibrator.getPrimitiveDurations(PRIMITIVE_EFFECTS);
         boolean[] supported = mVibrator.arePrimitivesSupported(PRIMITIVE_EFFECTS);
-        assertEquals(PRIMITIVE_EFFECTS.length, durations.length);
+        assertThat(durations).hasLength(PRIMITIVE_EFFECTS.length);
         for (int i = 0; i < durations.length; i++) {
-            assertEquals("Primitive " + PRIMITIVE_EFFECTS[i]
-                            + " expected to have " + (supported[i] ? "positive" : "zero")
-                            + " duration, found " + durations[i] + "ms",
-                    supported[i], durations[i] > 0);
+            if (supported[i]) {
+                assertWithMessage("Supported primitive " + PRIMITIVE_EFFECTS[i]
+                        + " should have positive duration")
+                        .that(durations[i]).isGreaterThan(0);
+            } else {
+                assertWithMessage("Unsupported primitive " + PRIMITIVE_EFFECTS[i]
+                        + " should have zero duration")
+                        .that(durations[i]).isEqualTo(0);
+
+            }
         }
-        assertEquals(0, mVibrator.getPrimitiveDurations().length);
+        assertThat(mVibrator.getPrimitiveDurations()).isEmpty();
     }
 
     @Test
     public void testVibratorResonantFrequency() {
         // Check that the resonant frequency provided is NaN, or if it's a reasonable value.
         float resonantFrequency = mVibrator.getResonantFrequency();
-        assertTrue(Float.isNaN(resonantFrequency)
-                || (resonantFrequency > 0 && resonantFrequency < MAXIMUM_ACCEPTED_FREQUENCY));
+        if (!Float.isNaN(resonantFrequency)) {
+            assertThat(resonantFrequency).isIn(Range.open(0f, MAXIMUM_ACCEPTED_FREQUENCY));
+        }
     }
 
     @Test
@@ -444,7 +517,7 @@ public class VibratorTest {
 
         // If the frequency profile is present then the vibrator must have frequency control.
         // The other implication is not true if the default vibrator represents multiple vibrators.
-        assertTrue(mVibrator.hasFrequencyControl());
+        assertThat(mVibrator.hasFrequencyControl()).isTrue();
     }
 
     @Test
@@ -453,7 +526,8 @@ public class VibratorTest {
         assumeNotNull(frequencyProfile);
 
         float measurementIntervalHz = frequencyProfile.getMaxAmplitudeMeasurementInterval();
-        assertTrue(measurementIntervalHz >= MINIMUM_ACCEPTED_MEASUREMENT_INTERVAL_FREQUENCY);
+        assertThat(measurementIntervalHz)
+                .isAtLeast(MINIMUM_ACCEPTED_MEASUREMENT_INTERVAL_FREQUENCY);
     }
 
     @Test
@@ -465,15 +539,15 @@ public class VibratorTest {
         float minFrequencyHz = frequencyProfile.getMinFrequency();
         float maxFrequencyHz = frequencyProfile.getMaxFrequency();
 
-        assertTrue(minFrequencyHz >= MINIMUM_ACCEPTED_FREQUENCY);
-        assertTrue(maxFrequencyHz > minFrequencyHz);
-        assertTrue(maxFrequencyHz <= MAXIMUM_ACCEPTED_FREQUENCY);
+        assertThat(minFrequencyHz).isAtLeast(MINIMUM_ACCEPTED_FREQUENCY);
+        assertThat(maxFrequencyHz).isGreaterThan(minFrequencyHz);
+        assertThat(maxFrequencyHz).isAtMost(MAXIMUM_ACCEPTED_FREQUENCY);
 
         if (!Float.isNaN(resonantFrequency)) {
             // If the device has a resonant frequency, then it should be within the supported
             // frequency range described by the profile.
-            assertTrue(resonantFrequency >= minFrequencyHz);
-            assertTrue(resonantFrequency <= maxFrequencyHz);
+            assertThat(resonantFrequency).isAtLeast(minFrequencyHz);
+            assertThat(resonantFrequency).isAtMost(maxFrequencyHz);
         }
     }
 
@@ -488,33 +562,31 @@ public class VibratorTest {
         float[] measurements = frequencyProfile.getMaxAmplitudeMeasurements();
 
         // There should be at least 3 points for a valid profile: min, center and max frequencies.
-        assertTrue(measurements.length > 2);
-        assertEquals(maxFrequencyHz,
-                minFrequencyHz + ((measurements.length - 1) * measurementIntervalHz),
-                TEST_TOLERANCE);
+        assertThat(measurements.length).isAtLeast(3);
+        assertThat(minFrequencyHz + ((measurements.length - 1) * measurementIntervalHz))
+                .isWithin(TEST_TOLERANCE).of(maxFrequencyHz);
 
         boolean hasPositiveMeasurement = false;
         for (float measurement : measurements) {
-            assertTrue(measurement >= 0);
-            assertTrue(measurement <= 1);
+            assertThat(measurement).isIn(Range.closed(0f, 1f));
             hasPositiveMeasurement |= measurement > 0;
         }
-        assertTrue(hasPositiveMeasurement);
+        assertThat(hasPositiveMeasurement).isTrue();
     }
 
     @Test
     public void testVibratorIsVibrating() {
         assumeTrue(mVibrator.hasVibrator());
 
-        assertFalse(mVibrator.isVibrating());
+        assertThat(mVibrator.isVibrating()).isFalse();
 
         mVibrator.vibrate(5000);
         assertStartsVibrating();
-        assertTrue(mVibrator.isVibrating());
+        assertThat(mVibrator.isVibrating()).isTrue();
 
         mVibrator.cancel();
         assertStopsVibrating();
-        assertFalse(mVibrator.isVibrating());
+        assertThat(mVibrator.isVibrating()).isFalse();
     }
 
     @LargeTest
@@ -526,7 +598,7 @@ public class VibratorTest {
         assertStartsVibrating();
 
         SystemClock.sleep(1500);
-        assertFalse(mVibrator.isVibrating());
+        assertThat(mVibrator.isVibrating()).isFalse();
     }
 
     @LargeTest
@@ -580,6 +652,15 @@ public class VibratorTest {
         verify(listener2, never()).onVibratorStateChanged(true);
     }
 
+    private boolean isSystemVibrator() {
+        return mVibratorLabel.equals(SYSTEM_VIBRATOR_LABEL);
+    }
+
+    private boolean isMultiVibratorDevice() {
+        return InstrumentationRegistry.getInstrumentation().getContext()
+                .getSystemService(VibratorManager.class).getVibratorIds().length > 1;
+    }
+
     private OnVibratorStateChangedListener newMockStateListener() {
         OnVibratorStateChangedListener listener = mock(OnVibratorStateChangedListener.class);
         mStateListenersCreated.add(listener);
@@ -591,6 +672,12 @@ public class VibratorTest {
             assertVibratorState(true);
             SystemClock.sleep(duration);
             assertVibratorState(false);
+        }
+    }
+
+    private void assertIsVibrating(boolean expectedIsVibrating) {
+        if (mVibrator.hasVibrator()) {
+            assertThat(mVibrator.isVibrating()).isEqualTo(expectedIsVibrating);
         }
     }
 
@@ -606,6 +693,56 @@ public class VibratorTest {
         if (mVibrator.hasVibrator()) {
             verify(mStateListener, timeout(CALLBACK_TIMEOUT_MILLIS).atLeastOnce())
                     .onVibratorStateChanged(eq(expected));
+        }
+    }
+
+    /**
+     * Supervises a thread execution with a custom uncaught exception handler.
+     *
+     * <p>{@link #joinSafely()} should be called for all threads to ensure that the thread didn't
+     * have an uncaught exception. Without this custom handler, the default uncaught handler kills
+     * the whole test instrumentation, causing all tests to appear failed, making debugging harder.
+     */
+    private class ThreadHelper implements Thread.UncaughtExceptionHandler {
+        private final Thread mThread;
+        private boolean mStarted;
+        private volatile Throwable mUncaughtException;
+
+        /**
+         * Creates the thread with the {@link Runnable}. {@link #start()} should still be called
+         * after this.
+         */
+        ThreadHelper(Runnable runnable) {
+            mThread = new Thread(runnable);
+            mThread.setUncaughtExceptionHandler(this);
+        }
+
+        /** Start the thread. This is mainly so the helper usage looks more thread-like. */
+        ThreadHelper start() {
+            assertThat(mStarted).isFalse();
+            mThread.start();
+            mStarted = true;
+            return this;
+        }
+
+        /** Join the thread and assert that there was no uncaught exception in it. */
+        void joinSafely() throws InterruptedException {
+            assertThat(mStarted).isTrue();
+            mThread.join();
+            assertThat(mUncaughtException).isNull();
+        }
+
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+            // The default android handler kills the whole test instrumentation, which is
+            // why this class implements a softer version.
+            if (t != mThread || mUncaughtException != null) {
+                // The thread should always match, but we propagate if it doesn't somehow.
+                // We can't throw an exception here directly, as it would be ignored.
+                Thread.getDefaultUncaughtExceptionHandler().uncaughtException(t, e);
+            } else {
+                mUncaughtException = e;
+            }
         }
     }
 }

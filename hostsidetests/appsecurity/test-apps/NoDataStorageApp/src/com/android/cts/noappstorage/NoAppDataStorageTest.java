@@ -21,6 +21,7 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
+import android.os.Environment;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,6 +53,26 @@ public class NoAppDataStorageTest {
         assertDirDoesNotExist(mDeContext.getFilesDir());
         assertDirDoesNotExist(mDeContext.getCacheDir());
         assertDirDoesNotExist(mDeContext.getCodeCacheDir());
+    }
+
+    @Test
+    public void testNoExternalStorage() throws Exception {
+        final String[] types = new String[] {
+                Environment.DIRECTORY_MUSIC,
+                Environment.DIRECTORY_PODCASTS,
+                Environment.DIRECTORY_RINGTONES,
+                Environment.DIRECTORY_ALARMS,
+                Environment.DIRECTORY_NOTIFICATIONS,
+                Environment.DIRECTORY_PICTURES,
+                Environment.DIRECTORY_MOVIES,
+                Environment.DIRECTORY_DOWNLOADS,
+                Environment.DIRECTORY_DCIM,
+                Environment.DIRECTORY_DOCUMENTS
+        };
+        for (String type : types) {
+            File dir = mCeContext.getExternalFilesDir(type);
+            assertThat(dir).isNull();
+        }
     }
 
     private void assertDirDoesNotExist(File dir) throws Exception {

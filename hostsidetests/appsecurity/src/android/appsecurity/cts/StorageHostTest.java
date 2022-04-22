@@ -238,6 +238,13 @@ public class StorageHostTest extends BaseHostJUnit4Test {
         }
     }
 
+    @Test
+    public void testNoExternalAppStorage() throws Exception {
+        for (int user : mUsers) {
+            runDeviceTests(PKG_NO_APP_STORAGE, CLASS_NO_APP_STORAGE, "testNoExternalStorage", user);
+        }
+    }
+
     public void waitForIdle() throws Exception {
         // Try getting all pending events flushed out
         for (int i = 0; i < 4; i++) {

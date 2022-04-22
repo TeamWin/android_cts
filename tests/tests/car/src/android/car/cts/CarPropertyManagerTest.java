@@ -891,6 +891,15 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 }).build().verify(mCarPropertyManager);
     }
 
+    @Test
+    public void testEvChargeSwitchIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.EV_CHARGE_SWITCH,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                Boolean.class).build().verify(mCarPropertyManager);
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void testGetProperty() {
