@@ -101,7 +101,8 @@
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
 
     <!-- Needed for sensor tests -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
     <!-- Needed for Wi-Fi Direct tests from T -->
     <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
