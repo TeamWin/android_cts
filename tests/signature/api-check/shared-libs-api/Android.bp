@@ -24,6 +24,7 @@ java_library {
     static_libs: [
         "cts-api-signature-test",
         "compatibility-device-util-axt",
+        "junit-params",
     ],
 }
 
@@ -37,6 +38,7 @@ android_test {
 
     java_resources: [
         ":cts-current-api-gz",
+        ":cts-shared-libs-names.txt",
         ":CtsSharedLibsApiSignatureTestCases_cts-shared-libs-all-current.api",
         ":CtsSharedLibsApiSignatureTestCases_cts-shared-libs-all-previous.api",
     ],
@@ -59,6 +61,17 @@ android_test {
     },
     use_embedded_native_libs: false,
     srcs: ["src/**/*.java"],
+}
+
+genrule {
+    name: "cts-shared-libs-names.txt",
+    srcs: [
+        "AndroidManifest.xml",
+    ],
+    out: [
+        "shared-libs-names.txt",
+    ],
+    cmd: "grep 'uses-library' $(in) | cut -f2 -d\\\" | sort > $(out)",
 }
 
 // Generates a zip file containing the current public and system API files for shared libraries.
