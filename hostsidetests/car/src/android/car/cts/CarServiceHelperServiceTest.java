@@ -16,7 +16,7 @@
 
 package android.car.cts;
 
-import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
 
@@ -26,7 +26,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class CarServiceHelperServiceTest extends CarHostJUnit4TestCase {
@@ -48,48 +47,26 @@ public final class CarServiceHelperServiceTest extends CarHostJUnit4TestCase {
 
         doNotSwitchToInitialUserAfterTest();
 
-        removeAllUsersExceptSystem();
+        removeAllUsersExceptSystem(); // it will make the current user ephemeral
 
         restartSystemServer();
 
-        assertFullUserCreated();
-    }
-
-    private void assertFullUserCreated() throws Exception {
-        List<Integer> users = getAllUsers();
-
-        // Wait for full user. It takes time for system to restart and create full user
-        long startTime = System.currentTimeMillis();
-        long waitTime = System.currentTimeMillis() - startTime;
-        if (users.size() < 2 && waitTime < RESTART_AND_CREATE_USER_WAIT_TIME_MS) {
-            sleep(RETRY_WAIT_TIME_MS);
-            users = getAllUsers();
-            waitTime = System.currentTimeMillis() - startTime;
-        }
-
-        // Confirm that at least two users exists and current user is not system user
-        assertThat(users.size()).isAtLeast(2);
-        assertThat(getCurrentUserId()).isNotEqualTo(SYSTEM_USER_ID);
+        // Makes sure new user was created and switched to
+        waitUntilAtLeastNPersistentUsersAreAvailable(2);
+        assertWithMessage("Current user id").that(getCurrentUserId()).isNotEqualTo(SYSTEM_USER_ID);
     }
 
     private void removeAllUsersExceptSystem() throws Exception {
-        List<Integer> users = getAllUsers();
+        List<Integer> users = getAllPersistentUsers();
         for (int i = 0; i < users.size(); i++) {
             int userId = users.get(i);
             if (userId == SYSTEM_USER_ID) {
                 continue;
             }
-            assertThat(removeUser(userId)).isTrue();
+            assertWithMessage("removeUser(%s)", userId).that(removeUser(userId)).isTrue();
         }
 
-        users = getAllUsers();
-        assertThat(users).containsExactly(SYSTEM_USER_ID);
-    }
-
-    private List<Integer> getAllUsers() throws Exception {
-        return onAllUsers((allUsers) -> allUsers.stream()
-                .filter((u) -> !u.flags.contains("DISABLED") && !u.flags.contains("EPHEMERAL")
-                        && !u.otherState.contains("pre-created"))
-                .map((u) -> u.id).collect(Collectors.toList()));
+        users = getAllPersistentUsers();
+        assertWithMessage("Users").that(users).containsExactly(SYSTEM_USER_ID);
     }
 }
