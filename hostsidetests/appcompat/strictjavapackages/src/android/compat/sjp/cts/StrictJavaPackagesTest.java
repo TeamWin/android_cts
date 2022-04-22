@@ -769,6 +769,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 .filter(file -> doesFileExist(file, testInfo.getDevice()))
                 // GmsCore should not contribute to *classpath.
                 .filter(file -> !file.contains("GmsCore"))
+                .filter(file -> !file.contains("com.google.android.gms"))
                 .collect(ImmutableList.toImmutableList());
 
         final ImmutableSetMultimap.Builder<String, String> jarsToClasses =
