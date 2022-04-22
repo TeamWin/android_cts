@@ -1403,24 +1403,29 @@ public class TelephonyManagerTest {
             final int networkType = nri.getAccessNetworkTechnology();
             final CellIdentity cid = nri.getCellIdentity();
             if (!nri.isRegistered() && !nri.isEmergencyEnabled()) {
-                assertEquals(networkType, TelephonyManager.NETWORK_TYPE_UNKNOWN);
+                assertEquals(
+                        "Network type cannot be known unless it is providing some service",
+                        TelephonyManager.NETWORK_TYPE_UNKNOWN, networkType);
                 assertNull(cid);
                 continue;
             }
             if (nri.getTransportType() == AccessNetworkConstants.TRANSPORT_TYPE_WLAN) {
-                assertTrue(networkType == TelephonyManager.NETWORK_TYPE_UNKNOWN
-                        || networkType == TelephonyManager.NETWORK_TYPE_IWLAN);
-                assertNull(cid);
+                assertTrue("NetworkType for WLAN transport must be IWLAN if registered or"
+                                + " UNKNOWN if unregistered",
+                        networkType == TelephonyManager.NETWORK_TYPE_UNKNOWN
+                                || networkType == TelephonyManager.NETWORK_TYPE_IWLAN);
+                assertNull("There is no valid cell type for WLAN", cid);
                 continue;
             }
 
             assertEquals(nri.getTransportType(), AccessNetworkConstants.TRANSPORT_TYPE_WWAN);
             if (nri.isRegistered() || (nri.isEmergencyEnabled() && !nri.isSearching())) {
-                assertNotEquals(networkType, TelephonyManager.NETWORK_TYPE_UNKNOWN);
-                assertNotNull(cid);
+                assertNotEquals("Network type must be known if it is providing some service",
+                        TelephonyManager.NETWORK_TYPE_UNKNOWN, networkType);
+                assertNotNull("The cid must be known for a cell providing service", cid);
                 // The network type must roughly match the CellIdentity type
-                assertTrue(sNetworkTypes.get(cid.getClass())
-                        .contains(networkType));
+                assertTrue("The network type must be valid for the current cell",
+                        sNetworkTypes.get(cid.getClass()).contains(networkType));
             }
         }
     }

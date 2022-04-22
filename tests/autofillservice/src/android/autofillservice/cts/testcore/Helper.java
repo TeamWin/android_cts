@@ -143,6 +143,8 @@ public final class Helper {
             "SETTINGS_SHELL_CMD_TIMEOUT", OneTimeSettingsListener.DEFAULT_TIMEOUT_MS / 2, 2,
             OneTimeSettingsListener.DEFAULT_TIMEOUT_MS);
 
+    public static final String DEVICE_CONFIG_AUTOFILL_DIALOG_HINTS = "autofill_dialog_hints";
+
     /**
      * Helper interface used to filter nodes.
      *
@@ -1320,6 +1322,11 @@ public final class Helper {
                 .that(actualFlags & expectedFlags).isEqualTo(expectedFlags);
     }
 
+    public static void assertNoFlags(int actualFlags, int expectedFlags) {
+        assertWithMessage("Flags %s in %s", expectedFlags, actualFlags)
+                .that(actualFlags & expectedFlags).isEqualTo(0);
+    }
+
     public static String callbackEventAsString(int event) {
         switch (event) {
             case AutofillCallback.EVENT_INPUT_HIDDEN:
@@ -1628,11 +1635,33 @@ public final class Helper {
     /**
      * Enable fill dialog feature
      */
-    public static  void enableFillDialogFeature(@NonNull Context context) {
+    public static void enableFillDialogFeature(@NonNull Context context) {
         DeviceConfigStateManager deviceConfigStateManager =
                 new DeviceConfigStateManager(context, DeviceConfig.NAMESPACE_AUTOFILL,
                         AutofillManager.DEVICE_CONFIG_AUTOFILL_DIALOG_ENABLED);
-        deviceConfigStateManager.set("true");
+        setDeviceConfig(deviceConfigStateManager, "true");
+    }
+
+    /**
+     * Set hints list for fill dialog
+     */
+    public static void setFillDialogHints(@NonNull Context context, @Nullable String hints) {
+        DeviceConfigStateManager deviceConfigStateManager =
+                new DeviceConfigStateManager(context, DeviceConfig.NAMESPACE_AUTOFILL,
+                        DEVICE_CONFIG_AUTOFILL_DIALOG_HINTS);
+        setDeviceConfig(deviceConfigStateManager, hints);
+    }
+
+    public static void setDeviceConfig(@NonNull DeviceConfigStateManager deviceConfigStateManager,
+            @Nullable String value) {
+        final String previousValue = deviceConfigStateManager.get();
+        if (TextUtils.isEmpty(value) && TextUtils.isEmpty(previousValue)
+                || TextUtils.equals(previousValue, value)) {
+            Log.v(TAG, "No changed in config: " + deviceConfigStateManager);
+            return;
+        }
+
+        deviceConfigStateManager.set(value);
     }
 
     /**

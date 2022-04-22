@@ -41,6 +41,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 import org.junit.Before;
@@ -191,10 +192,10 @@ public abstract class AbstractApiTest {
         return argument.split(",");
     }
 
-    private Stream<VirtualPath> readResource(String resourceName) {
+    private static Stream<VirtualPath> readResource(ClassLoader classLoader, String resourceName) {
         try {
             ResourcePath resourcePath =
-                    VirtualPath.get(getClass().getClassLoader(), resourceName);
+                    VirtualPath.get(classLoader, resourceName);
             if (resourceName.endsWith(".zip")) {
                 // Extract to a temporary file and read from there.
                 Path file = extractResourceToFile(resourceName, resourcePath.newInputStream());
@@ -207,7 +208,7 @@ public abstract class AbstractApiTest {
         }
     }
 
-    Path extractResourceToFile(String resourceName, InputStream is) throws IOException {
+    private static Path extractResourceToFile(String resourceName, InputStream is) throws IOException {
         Path tempDirectory = Files.createTempDirectory("signature");
         Path file = tempDirectory.resolve(resourceName);
         Log.i(TAG, "extractResourceToFile: extracting " + resourceName + " to " + file);
@@ -220,7 +221,7 @@ public abstract class AbstractApiTest {
      * Given a path in the local file system (possibly of a zip file) flatten it into a stream of
      * virtual paths.
      */
-    private Stream<VirtualPath> flattenPaths(LocalFilePath path) {
+    private static Stream<VirtualPath> flattenPaths(LocalFilePath path) {
         try {
             if (path.toString().endsWith(".zip")) {
                 return getZipEntryFiles(path);
@@ -232,11 +233,37 @@ public abstract class AbstractApiTest {
         }
     }
 
+    /**
+     * Create a stream of {@link JDiffClassDescription} by parsing a set of API resource files.
+     *
+     * @param apiDocumentParser the parser to use.
+     * @param apiResources the list of API resource files.
+     *
+     * @return the stream of {@link JDiffClassDescription}.
+     */
     Stream<JDiffClassDescription> parseApiResourcesAsStream(
             ApiDocumentParser apiDocumentParser, String[] apiResources) {
-        return Stream.of(apiResources)
-                .flatMap(this::readResource)
+        return retrieveApiResourcesAsStream(getClass().getClassLoader(), apiResources)
                 .flatMap(apiDocumentParser::parseAsStream);
+    }
+
+    /**
+     * Retrieve a stream of {@link VirtualPath} from a list of API resource files.
+     *
+     * <p>Any zip files are flattened, i.e. if a resource name ends with {@code .zip} then it is
+     * unpacked into a temporary directory and the paths to the unpacked files are returned instead
+     * of the path to the zip file.</p>
+     *
+     * @param classLoader the {@link ClassLoader} from which the resources will be loaded.
+     * @param apiResources the list of API resource files.
+     *
+     * @return the stream of {@link VirtualPath}.
+     */
+    static Stream<VirtualPath> retrieveApiResourcesAsStream(
+            ClassLoader classLoader,
+            String[] apiResources) {
+        return Stream.of(apiResources)
+                .flatMap(resourceName -> readResource(classLoader, resourceName));
     }
 
     /**
@@ -245,7 +272,7 @@ public abstract class AbstractApiTest {
      * @param path the path to the zip file.
      * @return paths to zip entries
      */
-    protected Stream<VirtualPath> getZipEntryFiles(LocalFilePath path) throws IOException {
+    private static Stream<VirtualPath> getZipEntryFiles(LocalFilePath path) throws IOException {
         @SuppressWarnings("resource")
         ZipFile zip = new ZipFile(path.toFile());
         return zip.stream().map(entry -> VirtualPath.get(zip, entry));

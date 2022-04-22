@@ -65,6 +65,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
+import java.lang.Throwable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -177,21 +178,36 @@ public class VideoEncoderTest extends MediaTestBase {
                 }
                 public void onInputBufferAvailable(MediaCodec codec, int ix) {
                     if (it.hasNext()) {
-                        Pair<ByteBuffer, BufferInfo> el = it.next();
-                        el.first.clear();
                         try {
-                            codec.getInputBuffer(ix).put(el.first);
-                        } catch (java.nio.BufferOverflowException e) {
-                            Log.e(TAG, "cannot fit " + el.first.limit()
-                                    + "-byte encoded buffer into "
-                                    + codec.getInputBuffer(ix).remaining()
-                                    + "-byte input buffer of " + codec.getName()
-                                    + " configured for " + codec.getInputFormat());
-                            throw e;
+                            Pair<ByteBuffer, BufferInfo> el = it.next();
+                            el.first.clear();
+                            try {
+                                codec.getInputBuffer(ix).put(el.first);
+                            } catch (java.nio.BufferOverflowException e) {
+                                String diagnostic = "cannot fit " + el.first.limit()
+                                        + "-byte encoded buffer into "
+                                        + codec.getInputBuffer(ix).remaining()
+                                        + "-byte input buffer of " + codec.getName()
+                                        + " configured for " + codec.getInputFormat();
+                                Log.e(TAG, diagnostic);
+                                errorMsg.set(diagnostic + e);
+                                synchronized (condition) {
+                                    condition.notifyAll();
+                                }
+                                // no sense trying to enqueue the failed buffer
+                                return;
+                            }
+                            BufferInfo info = el.second;
+                                codec.queueInputBuffer(
+                                    ix, 0, info.size, info.presentationTimeUs, info.flags);
+                        } catch (Throwable t) {
+                          errorMsg.set("exception in onInputBufferAvailable( "
+                                       +  codec.getName() + "," + ix
+                                       + "): " + t);
+                          synchronized (condition) {
+                              condition.notifyAll();
+                          }
                         }
-                        BufferInfo info = el.second;
-                        codec.queueInputBuffer(
-                                ix, 0, info.size, info.presentationTimeUs, info.flags);
                     }
                 }
                 public void onError(MediaCodec codec, MediaCodec.CodecException e) {

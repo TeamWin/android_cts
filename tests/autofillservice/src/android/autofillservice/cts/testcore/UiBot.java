@@ -1379,4 +1379,11 @@ public class UiBot {
     private UiObject2 findFillDialogHeaderPicker() throws Exception {
         return waitForObject(FILL_DIALOG_HEADER_SELECTOR, UI_DATASET_PICKER_TIMEOUT);
     }
+
+    /**
+     * Asserts the fill dialog is not shown.
+     */
+    public void assertNoFillDialog() throws Exception {
+        assertNeverShown("Fill dialog", FILL_DIALOG_SELECTOR, DATASET_PICKER_NOT_SHOWN_NAPTIME_MS);
+    }
 }

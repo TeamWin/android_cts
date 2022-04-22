@@ -14,6 +14,9 @@
      limitations under the License.
 -->
 <configuration description="Configuration for Virtual Device Manager Tests">
+    <!-- Only run tests if the device under test is SDK version 33 (Android 13) or above. -->
+    <object type="module_controller" class="com.android.tradefed.testtype.suite.module.Sdk33ModuleController" />
+
     <option name="config-descriptor:metadata" key="component" value="framework" />
     <option name="config-descriptor:metadata" key="parameter" value="instant_app" />
     <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
@@ -26,6 +29,7 @@
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsVirtualDevicesTestCases.apk" />
         <option name="test-file-name" value="CtsVirtualDeviceStreamedTestApp.apk" />
+        <option name="check-min-sdk" value="true" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">

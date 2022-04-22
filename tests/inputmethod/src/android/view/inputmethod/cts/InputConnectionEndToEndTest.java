@@ -18,6 +18,9 @@ package android.view.inputmethod.cts;
 
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 
+import static com.android.cts.mocka11yime.MockA11yImeEventStreamUtils.editorMatcherForA11yIme;
+import static com.android.cts.mocka11yime.MockA11yImeEventStreamUtils.expectA11yImeCommand;
+import static com.android.cts.mocka11yime.MockA11yImeEventStreamUtils.expectA11yImeEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
@@ -31,6 +34,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.content.ClipDescription;
 import android.net.Uri;
 import android.os.Bundle;
@@ -68,6 +73,9 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.cts.inputmethod.LegacyImeClientTestUtils;
+import com.android.cts.mocka11yime.MockA11yImeEventStream;
+import com.android.cts.mocka11yime.MockA11yImeSession;
+import com.android.cts.mocka11yime.MockA11yImeSettings;
 import com.android.cts.mockime.ImeCommand;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
@@ -293,6 +301,42 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     }
 
     /**
+     * A test procedure definition for
+     * {@link #testA11yInputConnection(Function, TestProcedureForAccessibilityIme)}
+     */
+    @FunctionalInterface
+    interface TestProcedureForAccessibilityIme {
+        /**
+         * The test body of {@link #testInputConnection(Function, TestProcedure, AutoCloseable)}
+         *
+         * @param a11yImeSession {@link MockA11yImeSession} to be used during this test.
+         * @param stream {@link MockA11yImeEventStream} associated with {@code session}.
+         */
+        void run(@NonNull MockA11yImeSession a11yImeSession, @NonNull MockA11yImeEventStream stream)
+                throws Exception;
+    }
+
+    /**
+     * A test procedure definition for
+     * {@link #testInputConnection(Function, TestProcedureForMixedImes, AutoCloseable)}.
+     */
+    @FunctionalInterface
+    interface TestProcedureForMixedImes {
+        /**
+         * The test body of {@link #testInputConnection(Function, TestProcedure, AutoCloseable)}
+         *
+         * @param imeSession {@link MockImeSession} to be used during this test.
+         * @param imeStream {@link ImeEventStream} associated with {@code session}.
+         * @param a11yImeSession {@link MockA11yImeSession} to be used during this test.
+         * @param a11yImeStream {@link MockA11yImeEventStream} associated with {@code session}.
+         */
+        void run(@NonNull MockImeSession imeSession, @NonNull ImeEventStream imeStream,
+                @NonNull MockA11yImeSession a11yImeSession,
+                @NonNull MockA11yImeEventStream a11yImeStream)
+                throws Exception;
+    }
+
+    /**
      * Tries to trigger {@link com.android.cts.mockime.MockIme#onUnbindInput()} by showing another
      * Activity in a different process.
      */
@@ -319,6 +363,46 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     }
 
     /**
+     * A utility method to run a unit test for {@link InputConnection} with
+     * {@link android.accessibilityservice.InputMethod}.
+     *
+     * <p>This utility method enables you to avoid boilerplate code when writing unit tests for
+     * {@link InputConnection}.</p>
+     *
+     * @param inputConnectionWrapperProvider {@link Function} to install custom hooks to the
+     *                                       original {@link InputConnection}.
+     * @param testProcedure Test body.
+     */
+    private void testA11yInputConnection(
+            Function<InputConnection, InputConnection> inputConnectionWrapperProvider,
+            TestProcedureForAccessibilityIme testProcedure) throws Exception {
+        testInputConnection(inputConnectionWrapperProvider,
+                (imeSession, imeStream, a11ySession, a11yStream)
+                        -> testProcedure.run(a11ySession, a11yStream), null);
+    }
+
+    /**
+     * A utility method to run a unit test for {@link InputConnection} with
+     * {@link android.accessibilityservice.InputMethod}.
+     *
+     * <p>This utility method enables you to avoid boilerplate code when writing unit tests for
+     * {@link InputConnection}.</p>
+     *
+     * @param inputConnectionWrapperProvider {@link Function} to install custom hooks to the
+     *                                       original {@link InputConnection}.
+     * @param testProcedure Test body.
+     * @param closeable {@link AutoCloseable} object to be cleaned up after running test.
+     **/
+    private void testA11yInputConnection(
+            Function<InputConnection, InputConnection> inputConnectionWrapperProvider,
+            TestProcedureForAccessibilityIme testProcedure,
+            @Nullable AutoCloseable closeable) throws Exception {
+        testInputConnection(inputConnectionWrapperProvider,
+                (imeSession, imeStream, a11ySession, a11yStream)
+                        -> testProcedure.run(a11ySession, a11yStream), closeable);
+    }
+
+    /**
      * A utility method to run a unit test for {@link InputConnection} that is as-if built with
      * {@link android.os.Build.VERSION_CODES#CUPCAKE} SDK.
      *
@@ -333,6 +417,24 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
         testInputConnection(
                 ic -> LegacyImeClientTestUtils.createMinimallyImplementedNoOpInputConnection(),
                 testProcedure, null);
+    }
+
+    /**
+     * A utility method to run a unit test for {@link InputConnection} that is as-if built with
+     * {@link android.os.Build.VERSION_CODES#CUPCAKE} SDK.
+     *
+     * <p>This helps you to test the situation where IMEs' calling newly added
+     * {@link InputConnection} APIs would be fallen back to its default interface method or could be
+     * causing {@link java.lang.AbstractMethodError} unless specially handled.
+     *
+     * @param testProcedure Test body.
+     */
+    private void testMinimallyImplementedInputConnectionForA11y(
+            TestProcedureForAccessibilityIme testProcedure)
+            throws Exception {
+        testA11yInputConnection(
+                ic -> LegacyImeClientTestUtils.createMinimallyImplementedNoOpInputConnection(),
+                testProcedure);
     }
 
     /**
@@ -395,6 +497,80 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
 
             testProcedure.run(imeSession, stream);
+        }
+    }
+
+    /**
+     * A utility method to run a unit test for {@link InputConnection}.
+     *
+     * <p>This utility method enables you to avoid boilerplate code when writing unit tests for
+     * {@link InputConnection}.</p>
+     *
+     * @param inputConnectionWrapperProvider {@link Function} to install custom hooks to the
+     *                                       original {@link InputConnection}.
+     * @param testProcedure Test body.
+     * @param closeable {@link AutoCloseable} object to be cleaned up after running test.
+     */
+    private void testInputConnection(
+            Function<InputConnection, InputConnection> inputConnectionWrapperProvider,
+            TestProcedureForMixedImes testProcedure,
+            @Nullable AutoCloseable closeable) throws Exception {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        final UiAutomation uiAutomation = instrumentation.getUiAutomation(
+                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        try (AutoCloseable closeableHolder = closeable;
+             MockImeSession imeSession = MockImeSession.create(instrumentation.getContext(),
+                     uiAutomation, new ImeSettings.Builder())) {
+            final ImeEventStream imeStream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+
+            TestActivity.startSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                // Just to be conservative, we explicitly check MockImeSession#isActive() here when
+                // injecting our custom InputConnection implementation.
+                final EditText editText = new EditText(activity) {
+                    @Override
+                    public boolean onCheckIsTextEditor() {
+                        return imeSession.isActive();
+                    }
+
+                    @Override
+                    public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+                        if (imeSession.isActive()) {
+                            final InputConnection ic = super.onCreateInputConnection(outAttrs);
+                            return inputConnectionWrapperProvider.apply(ic);
+                        }
+                        return null;
+                    }
+                };
+
+                editText.setPrivateImeOptions(marker);
+                editText.setHint("editText");
+                editText.requestFocus();
+
+                layout.addView(editText);
+                activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+                return layout;
+            });
+
+            // Wait until "onStartInput" gets called for the EditText.
+            expectEvent(imeStream, editorMatcher("onStartInput", marker), TIMEOUT);
+
+            try (MockA11yImeSession a11yImeSession = MockA11yImeSession.create(
+                    instrumentation.getContext(), uiAutomation, MockA11yImeSettings.DEFAULT,
+                    TIMEOUT)) {
+                final MockA11yImeEventStream a11yImeEventStream = a11yImeSession.openEventStream();
+
+                // Wait until "onStartInput" gets called for the EditText.
+                expectA11yImeEvent(a11yImeEventStream,
+                        editorMatcherForA11yIme("onStartInput", marker), TIMEOUT);
+
+                // Now everything is stable and ready to start testing.
+                testProcedure.run(imeSession, imeStream, a11yImeSession, a11yImeEventStream);
+            }
         }
     }
 
@@ -1137,6 +1313,198 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     }
 
     /**
+     * Test {@link InputConnection#getSurroundingText(int, int, int)} works as expected for
+     * {@link android.accessibilityservice.InputMethod}.
+     */
+    @Test
+    public void testGetSurroundingTextForA11y() throws Exception {
+        final int expectedBeforeLength = 3;
+        final int expectedAfterLength = 4;
+        final int expectedFlags = InputConnection.GET_TEXT_WITH_STYLES;
+        final CharSequence expectedText =
+                createTestCharSequence("012345", new Annotation("command", "getSurroundingText"));
+        final SurroundingText expectedResult = new SurroundingText(expectedText, 1, 2, 0);
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public SurroundingText getSurroundingText(int beforeLength, int afterLength,
+                    int flags) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("beforeLength", beforeLength);
+                    args.putInt("afterLength", afterLength);
+                    args.putInt("flags", flags);
+                });
+                return expectedResult;
+            }
+        }
+
+        testA11yInputConnection(Wrapper::new, (session, stream) -> {
+            final var command = session.callGetSurroundingText(expectedBeforeLength,
+                    expectedAfterLength, expectedFlags);
+            final var result = expectA11yImeCommand(stream, command, TIMEOUT)
+                    .<SurroundingText>getReturnParcelableValue();
+            assertEqualsForTestCharSequence(expectedResult.getText(), result.getText());
+            assertEquals(expectedResult.getSelectionStart(), result.getSelectionStart());
+            assertEquals(expectedResult.getSelectionEnd(), result.getSelectionEnd());
+            assertEquals(expectedResult.getOffset(), result.getOffset());
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEquals(expectedBeforeLength, args.get("beforeLength"));
+                assertEquals(expectedAfterLength, args.get("afterLength"));
+                assertEquals(expectedFlags, args.get("flags"));
+            });
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#getSurroundingText(int, int, int)} fails when a negative
+     * {@code afterLength} is passed for {@link android.accessibilityservice.InputMethod}.
+     * See Bug 169114026 for background.
+     */
+    @Test
+    public void testGetSurroundingTextFailWithNegativeAfterLengthForA11y() throws Exception {
+        final SurroundingText unexpectedResult = new SurroundingText("012345", 1, 2, 0);
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public SurroundingText getSurroundingText(int beforeLength, int afterLength,
+                    int flags) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("beforeLength", beforeLength);
+                    args.putInt("afterLength", afterLength);
+                    args.putInt("flags", flags);
+                });
+                return unexpectedResult;
+            }
+        }
+
+        testA11yInputConnection(Wrapper::new, (session, stream) -> {
+            final var command = session.callGetSurroundingText(1, -1, 0);
+            final var result = expectA11yImeCommand(stream, command, TIMEOUT);
+            assertTrue("IC#getSurroundingText() returns null for a negative afterLength.",
+                    result.isNullReturnValue());
+            methodCallVerifier.expectNotCalled(
+                    "IC#getSurroundingText() will not be triggered with a negative afterLength.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#getSurroundingText(int, int, int)} fails when a negative
+     * {@code beforeLength} is passed for {@link android.accessibilityservice.InputMethod}.
+     * See Bug 169114026 for background.
+     */
+    @Test
+    public void testGetSurroundingTextFailWithNegativeBeforeLengthForA11y() throws Exception {
+        final SurroundingText unexpectedResult = new SurroundingText("012345", 1, 2, 0);
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public SurroundingText getSurroundingText(int beforeLength, int afterLength,
+                    int flags) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("beforeLength", beforeLength);
+                    args.putInt("afterLength", afterLength);
+                    args.putInt("flags", flags);
+                });
+                return unexpectedResult;
+            }
+        }
+
+        testA11yInputConnection(Wrapper::new, (session, stream) -> {
+            final var command = session.callGetSurroundingText(-1, 1, 0);
+            final var result = expectA11yImeCommand(stream, command, TIMEOUT);
+            assertTrue("IC#getSurroundingText() returns null for a negative beforeLength.",
+                    result.isNullReturnValue());
+            methodCallVerifier.expectNotCalled(
+                    "IC#getSurroundingText() will not be triggered with a negative beforeLength.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#getSurroundingText(int, int, int)} fails for
+     * {@link android.accessibilityservice.InputMethod} after a system-defined time-out even if the
+     * target app does not respond.
+     */
+    @Test
+    public void testGetSurroundingTextFailWithTimeoutForA11y() throws Exception {
+        final int expectedBeforeLength = 3;
+        final int expectedAfterLength = 4;
+        final int expectedFlags = InputConnection.GET_TEXT_WITH_STYLES;
+        final SurroundingText unexpectedResult = new SurroundingText("012345", 1, 2, 0);
+
+        final BlockingMethodVerifier blocker = new BlockingMethodVerifier();
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public SurroundingText getSurroundingText(int beforeLength, int afterLength,
+                    int flags) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("beforeLength", beforeLength);
+                    args.putInt("afterLength", afterLength);
+                    args.putInt("flags", flags);
+                });
+                blocker.onMethodCalled();
+                return unexpectedResult;
+            }
+        }
+
+        testA11yInputConnection(Wrapper::new, (session, stream) -> {
+            final var command = session.callGetSurroundingText(expectedBeforeLength,
+                    expectedAfterLength, expectedFlags);
+            blocker.expectMethodCalled("IC#getSurroundingText() must be called back", TIMEOUT);
+            final var result = expectA11yImeCommand(stream, command, TIMEOUT);
+            assertTrue("When timeout happens, IC#getSurroundingText() returns null",
+                    result.isNullReturnValue());
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEquals(expectedBeforeLength, args.get("beforeLength"));
+                assertEquals(expectedAfterLength, args.get("afterLength"));
+                assertEquals(expectedFlags, args.get("flags"));
+            });
+        }, blocker);
+    }
+
+    /**
+     * Verify that the default implementation of
+     * {@link InputConnection#getSurroundingText(int, int, int)} returns {@code null} without any
+     * crash even when the target app does not override it for
+     * {@link android.accessibilityservice.InputMethod}.
+     */
+    @Test
+    public void testGetSurroundingTextDefaultMethodForA11y() throws Exception {
+        testMinimallyImplementedInputConnectionForA11y((session, stream) -> {
+            final var command = session.callGetSurroundingText(1, 2, 0);
+            final var result = expectA11yImeCommand(stream, command, TIMEOUT);
+            assertTrue("Default IC#getSurroundingText() returns null.",
+                    result.isNullReturnValue());
+        });
+    }
+
+    /**
      * Test {@link InputConnection#getCursorCapsMode(int)} works as expected.
      */
     @Test
@@ -1251,6 +1619,84 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             methodCallVerifier.assertNotCalled(
                     "Once unbindInput() happened, IC#getCursorCapsMode() fails fast.");
         });
+    }
+
+    /**
+     * Test {@link InputConnection#getCursorCapsMode(int)} works as expected for
+     * {@link android.accessibilityservice.InputMethod}.
+     */
+    @Test
+    public void testGetCursorCapsModeForA11y() throws Exception {
+        final int expectedReqMode = TextUtils.CAP_MODE_SENTENCES | TextUtils.CAP_MODE_CHARACTERS
+                | TextUtils.CAP_MODE_WORDS;
+        final int expectedResult = EditorInfo.TYPE_TEXT_FLAG_CAP_SENTENCES;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public int getCursorCapsMode(int reqModes) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("reqModes", reqModes);
+                });
+                return expectedResult;
+            }
+        }
+
+        testA11yInputConnection(Wrapper::new, (session, stream) -> {
+            final var command = session.callGetCursorCapsMode(expectedReqMode);
+            final int result = expectA11yImeCommand(stream, command, TIMEOUT)
+                    .getReturnIntegerValue();
+            assertEquals(expectedResult, result);
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEquals(expectedReqMode, args.getInt("reqModes"));
+            });
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#getCursorCapsMode(int)} fails for
+     * {@link android.accessibilityservice.InputMethod} after a system-defined time-out even if the
+     * target app does not respond.
+     */
+    @Test
+    public void testGetCursorCapsModeFailWithTimeoutForA11y() throws Exception {
+        final int expectedReqMode = TextUtils.CAP_MODE_SENTENCES | TextUtils.CAP_MODE_CHARACTERS
+                | TextUtils.CAP_MODE_WORDS;
+        final int unexpectedResult = EditorInfo.TYPE_TEXT_FLAG_CAP_WORDS;
+        final BlockingMethodVerifier blocker = new BlockingMethodVerifier();
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public int getCursorCapsMode(int reqModes) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("reqModes", reqModes);
+                });
+                blocker.onMethodCalled();
+                return unexpectedResult;
+            }
+        }
+
+        testA11yInputConnection(Wrapper::new, (session, stream) -> {
+            final var command = session.callGetCursorCapsMode(expectedReqMode);
+            blocker.expectMethodCalled("IC#getCursorCapsMode() must be called back", TIMEOUT);
+            final var result = expectA11yImeCommand(stream, command, LONG_TIMEOUT);
+            assertEquals("When timeout happens, IC#getCursorCapsMode() returns 0",
+                    0, result.getReturnIntegerValue());
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEquals(expectedReqMode, args.getInt("reqModes"));
+            });
+        }, blocker);
     }
 
     /**
@@ -1776,6 +2222,45 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     }
 
     /**
+     * Test {@link InputConnection#deleteSurroundingText(int, int)} works as expected for
+     * {@link android.accessibilityservice.InputMethod}.
+     */
+    @Test
+    public void testDeleteSurroundingTextForA11y() throws Exception {
+        final int expectedBeforeLength = 5;
+        final int expectedAfterLength = 4;
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean deleteSurroundingText(int beforeLength, int afterLength) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("beforeLength", beforeLength);
+                    args.putInt("afterLength", afterLength);
+                });
+                return returnedResult;
+            }
+        }
+
+        testA11yInputConnection(Wrapper::new, (session, stream) -> {
+            final var command =
+                    session.callDeleteSurroundingText(expectedBeforeLength, expectedAfterLength);
+            expectA11yImeCommand(stream, command, TIMEOUT);
+            methodCallVerifier.expectCalledOnce(args -> {
+                assertEquals(expectedBeforeLength, args.getInt("beforeLength"));
+                assertEquals(expectedAfterLength, args.getInt("afterLength"));
+            }, TIMEOUT);
+        });
+    }
+
+    /**
      * Test {@link InputConnection#deleteSurroundingTextInCodePoints(int, int)} works as expected.
      */
     @Test
@@ -2067,6 +2552,57 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             methodCallVerifier.expectNotCalled(
                     "Once unbindInput() happened, IC#commitText() fails fast.",
                     EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#commitText(CharSequence, int, TextAttribute)} works as expected
+     * for {@link android.accessibilityservice.InputMethod}.
+     */
+    @Test
+    public void testCommitTextWithTextAttributeForA11y() throws Exception {
+        final Annotation expectedSpan = new Annotation("expectedKey", "expectedValue");
+        final CharSequence expectedText = createTestCharSequence("expectedText", expectedSpan);
+        final int expectedNewCursorPosition = 123;
+        final ArrayList<String> expectedSuggestions = new ArrayList<>();
+        expectedSuggestions.add("test");
+        final TextAttribute expectedTextAttribute = new TextAttribute.Builder()
+                .setTextConversionSuggestions(expectedSuggestions).build();
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean commitText(
+                    CharSequence text, int newCursorPosition, TextAttribute textAttribute) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putCharSequence("text", text);
+                    args.putInt("newCursorPosition", newCursorPosition);
+                    args.putParcelable("textAttribute", textAttribute);
+                });
+
+                return returnedResult;
+            }
+        }
+
+        testA11yInputConnection(Wrapper::new, (session, stream) -> {
+            final var command = session.callCommitText(
+                    expectedText, expectedNewCursorPosition, expectedTextAttribute);
+            expectA11yImeCommand(stream, command, TIMEOUT);
+            methodCallVerifier.expectCalledOnce(args -> {
+                assertEqualsForTestCharSequence(expectedText, args.getCharSequence("text"));
+                assertEquals(expectedNewCursorPosition, args.getInt("newCursorPosition"));
+                final var textAttribute = args.getParcelable("textAttribute", TextAttribute.class);
+                assertThat(textAttribute).isNotNull();
+                assertThat(textAttribute.getTextConversionSuggestions())
+                        .containsExactlyElementsIn(expectedSuggestions);
+            }, TIMEOUT);
         });
     }
 
@@ -2836,6 +3372,44 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     }
 
     /**
+     * Test {@link InputConnection#setSelection(int, int)} works as expected for
+     * {@link android.accessibilityservice.InputMethod}.
+     */
+    @Test
+    public void testSetSelectionForA11y() throws Exception {
+        final int expectedStart = 123;
+        final int expectedEnd = 456;
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean setSelection(int start, int end) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("start", start);
+                    args.putInt("end", end);
+                });
+                return returnedResult;
+            }
+        }
+
+        testA11yInputConnection(Wrapper::new, (session, stream) -> {
+            final var command = session.callSetSelection(expectedStart, expectedEnd);
+            expectA11yImeCommand(stream, command, TIMEOUT);
+            methodCallVerifier.expectCalledOnce(args -> {
+                assertEquals(expectedStart, args.getInt("start"));
+                assertEquals(expectedEnd, args.getInt("end"));
+            }, TIMEOUT);
+        });
+    }
+
+    /**
      * Test {@link InputConnection#performEditorAction(int)} works as expected.
      */
     @Test
@@ -2914,6 +3488,41 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             methodCallVerifier.expectNotCalled(
                     "Once unbindInput() happened, IC#performEditorAction() fails fast.",
                     EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#performEditorAction(int)} works as expected for
+     * {@link android.accessibilityservice.InputMethod}.
+     */
+    @Test
+    public void testPerformEditorActionForA11y() throws Exception {
+        final int expectedEditorAction = EditorInfo.IME_ACTION_GO;
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean performEditorAction(int editorAction) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("editorAction", editorAction);
+                });
+                return returnedResult;
+            }
+        }
+
+        testA11yInputConnection(Wrapper::new, (session, stream) -> {
+            final var command = session.callPerformEditorAction(expectedEditorAction);
+            expectA11yImeCommand(stream, command, TIMEOUT);
+            methodCallVerifier.expectCalledOnce(args -> {
+                assertEquals(expectedEditorAction, args.getInt("editorAction"));
+            }, TIMEOUT);
         });
     }
 
@@ -2997,6 +3606,41 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             methodCallVerifier.expectNotCalled(
                     "Once unbindInput() happened, IC#performContextMenuAction() fails fast.",
                     EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#performContextMenuAction(int)} works as expected
+     * for {@link android.accessibilityservice.InputMethod}.
+     */
+    @Test
+    public void testPerformContextMenuActionForA11y() throws Exception {
+        final int expectedId = android.R.id.selectAll;
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean performContextMenuAction(int id) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("id", id);
+                });
+                return returnedResult;
+            }
+        }
+
+        testA11yInputConnection(Wrapper::new, (session, stream) -> {
+            final var command = session.callPerformContextMenuAction(expectedId);
+            expectA11yImeCommand(stream, command, TIMEOUT);
+            methodCallVerifier.expectCalledOnce(args -> {
+                assertEquals(expectedId, args.getInt("id"));
+            }, TIMEOUT);
         });
     }
 
@@ -3237,6 +3881,44 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     }
 
     /**
+     * Test {@link InputConnection#sendKeyEvent(KeyEvent)} works as expected for
+     * {@link android.accessibilityservice.InputMethod}.
+     */
+    @Test
+    public void testSendKeyEventForA11y() throws Exception {
+        final KeyEvent expectedKeyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_X);
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean sendKeyEvent(KeyEvent event) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putParcelable("event", event);
+                });
+                return returnedResult;
+            }
+        }
+
+        testA11yInputConnection(Wrapper::new, (session, stream) -> {
+            final var command = session.callSendKeyEvent(expectedKeyEvent);
+            expectA11yImeCommand(stream, command, TIMEOUT);
+            methodCallVerifier.expectCalledOnce(args -> {
+                final KeyEvent actualKeyEvent = args.getParcelable("event");
+                assertNotNull(actualKeyEvent);
+                assertEquals(expectedKeyEvent.getAction(), actualKeyEvent.getAction());
+                assertEquals(expectedKeyEvent.getKeyCode(), actualKeyEvent.getKeyCode());
+            }, TIMEOUT);
+        });
+    }
+
+    /**
      * Test {@link InputConnection#clearMetaKeyStates(int)} works as expected.
      */
     @Test
@@ -3316,6 +3998,42 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             methodCallVerifier.expectNotCalled(
                     "Once unbindInput() happened, IC#clearMetaKeyStates() fails fast.",
                     EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#clearMetaKeyStates(int)} works as expected for
+     * {@link android.accessibilityservice.InputMethod}.
+     */
+    @Test
+    public void testClearMetaKeyStatesForA11y() throws Exception {
+        final int expectedStates = KeyEvent.META_ALT_MASK;
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean clearMetaKeyStates(int states) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("states", states);
+                });
+                return returnedResult;
+            }
+        }
+
+        testA11yInputConnection(Wrapper::new, (session, stream) -> {
+            final var command = session.callClearMetaKeyStates(expectedStates);
+            expectA11yImeCommand(stream, command, TIMEOUT);
+            methodCallVerifier.expectCalledOnce(args -> {
+                final int actualStates = args.getInt("states");
+                assertEquals(expectedStates, actualStates);
+            }, TIMEOUT);
         });
     }
 

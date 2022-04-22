@@ -21,6 +21,7 @@ import android.companion.CompanionDeviceService
 import android.content.Intent
 import android.os.Handler
 import android.util.Log
+import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Collections.synchronizedMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -44,6 +45,9 @@ sealed class CompanionService<T : CompanionService<T>>(
 
     private val _connectedDevices: MutableMap<Int, AssociationInfo> =
             synchronizedMap(mutableMapOf())
+
+    val dispatchSystemMessageRequestTracker: InvocationTracker<DispatchSystemMessageRequest> =
+            InvocationContainer()
 
     override fun onCreate() {
         Log.d(TAG, "$this.onCreate()")
@@ -71,6 +75,20 @@ sealed class CompanionService<T : CompanionService<T>>(
         super.onDeviceDisappeared(associationInfo)
     }
 
+    override fun onMessageDispatchedFromSystem(
+        messageId: Int,
+        associationId: Int,
+        message: ByteArray
+    ) {
+        Log.d(TAG, """
+            $this.onMessageDispatchedFromSystem(), associationId=$associationId
+              id|content= $messageId|${message.toUtf8String()}}
+            """.trimIndent())
+
+        dispatchSystemMessageRequestTracker.recordInvocation(
+                DispatchSystemMessageRequest(associationId, message))
+    }
+
     // For now, we need to "post" a Runnable that sets isBound to false to the Main Thread's
     // Handler, because this may be called between invocations of
     // CompanionDeviceService.Stub.onDeviceAppeared() and the "real"
@@ -85,6 +103,27 @@ sealed class CompanionService<T : CompanionService<T>>(
         Log.d(TAG, "$this.onDestroy()")
         instanceHolder.instance = null
         super.onDestroy()
+    }
+}
+
+data class DispatchSystemMessageRequest(val associationId: Int, val message: ByteArray) {
+    val utf8StringMessage
+        get() = message.toUtf8String()
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is DispatchSystemMessageRequest) return false
+
+        if (associationId != other.associationId) return false
+        if (!message.contentEquals(other.message)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = associationId.hashCode()
+        result = 31 * result + message.contentHashCode()
+        return result
     }
 }
 
@@ -104,12 +143,15 @@ sealed class InstanceHolder<T : CompanionService<T>> {
     val associationIdsForConnectedDevices: Collection<Int>
         get() = instance?.associationIdsForConnectedDevices ?: emptySet()
 
+    val dispatchSystemMessageRequestTracker: InvocationTracker<DispatchSystemMessageRequest>?
+        get() = instance?.dispatchSystemMessageRequestTracker
+
     fun waitForBind(timeout: Duration = 1.seconds) {
         if (!waitFor(timeout) { isBound })
             throw AssertionError("Service hasn't been bound")
     }
 
-    fun waitForUnbind(timeout: Duration) {
+    fun waitForUnbind(timeout: Duration = 1.seconds) {
         if (!waitFor(timeout) { !isBound })
             throw AssertionError("Service hasn't been unbound")
     }
@@ -146,3 +188,5 @@ class MissingIntentFilterActionCompanionService
     : CompanionService<MissingIntentFilterActionCompanionService>(Companion) {
     companion object : InstanceHolder<MissingIntentFilterActionCompanionService>()
 }
+
+fun ByteArray.toUtf8String() = String(this, UTF_8)

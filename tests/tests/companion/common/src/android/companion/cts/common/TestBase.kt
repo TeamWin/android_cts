@@ -135,6 +135,8 @@ abstract class TestBase {
         return callbackInvocation.associationInfo.id
     }
 
+    protected fun runShellCommand(cmd: String) = instrumentation.runShellCommand(cmd)
+
     private fun CompanionDeviceManager.disassociateAll() =
             allAssociations.forEach { disassociate(it.id) }
 }

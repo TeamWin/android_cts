@@ -322,14 +322,14 @@ public class AudioManagerTest extends InstrumentationTestCase {
             }
             synchronized (mLock) {
                 mIntentReceived = true;
-                mLock.safeNotify();
+                mLock.notify();
             }
         }
 
         public boolean waitForExpectedAction(long timeOutMs) {
             synchronized (mLock) {
                 try {
-                    mLock.safeWait(timeOutMs);
+                    mLock.waitFor(timeOutMs, () -> mIntentReceived);
                 } catch (InterruptedException e) { }
                 return mIntentReceived;
             }

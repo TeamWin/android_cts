@@ -672,6 +672,65 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallFromBuildFails("v3-por_Z_1_2-default-caps-sharedUid-companion.apk");
     }
 
+    public void testInstallV3WithRestoredCapabilityInSharedUserId() throws Exception {
+        // A sharedUserId contains the shared signing lineage for all packages in the UID; this
+        // shared lineage contain the full signing history for all packages along with the merged
+        // capabilities for each signer shared between the packages. This test verifies if one
+        // package revokes a capability from a previous signer, but subsequently restores that
+        // capability, then since all packages have granted the capability, it is restored to the
+        // previous signer in the shared lineage.
+
+        // Install a package with the SHARED_USER_ID capability revoked for the original signer
+        // in the lineage; verify that a package signed with only the original signer cannot join
+        // the sharedUserId.
+        assertInstallFromBuildSucceeds(
+                "v3-ec-p256-with-por_1_2-default-caps-sharedUid-companion.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-no-shUid-cap-sharedUid.apk");
+        assertInstallFromBuildFails("v3-ec-p256-1-sharedUid-companion2.apk");
+
+        // Update the package that revoked the SHARED_USER_ID with an updated lineage that restores
+        // this capability to the original signer; verify the package signed with the original
+        // signing key can now join the sharedUserId since all existing packages in the UID grant
+        // this capability to the original signer.
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-default-caps-sharedUid.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-1-sharedUid-companion2.apk");
+    }
+
+    public void testInstallV3WithRevokedCapabilityInSharedUserId() throws Exception {
+        // While a capability can be restored to a common signer in the shared signing lineage, if
+        // one package has revoked a capability from a common signer and another package is
+        // installed / updated which restores the capability to that signer, the revocation of
+        // the capability by the existing package should take precedence. A capability can only
+        // be restored to a common signer if all packages in the sharedUserId have granted this
+        // capability to the signer.
+
+        // Install a package with the SHARED_USER_ID capability revoked from the original signer,
+        // then install another package in the sharedUserId that grants this capability to the
+        // original signer. Since a package exists in the sharedUserId that has revoked this
+        // capability, another package signed with this capability shouldn't be able to join the
+        // sharedUserId.
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-no-shUid-cap-sharedUid.apk");
+        assertInstallFromBuildSucceeds(
+                "v3-ec-p256-with-por_1_2-default-caps-sharedUid-companion.apk");
+        assertInstallFromBuildFails("v3-ec-p256-1-sharedUid-companion2.apk");
+
+        // Install the same package that grants the SHARED_USER_ID capability to the original
+        // signer; when iterating over the existing packages in the packages in the sharedUserId,
+        // the original version of this package should be skipped since the lineage from the
+        // updated package is used when merging with the shared lineage.
+        assertInstallFromBuildSucceeds(
+                "v3-ec-p256-with-por_1_2-default-caps-sharedUid-companion.apk");
+        assertInstallFromBuildFails("v3-ec-p256-1-sharedUid-companion2.apk");
+
+        // Install another package that has granted the SHARED_USER_ID to the original signer; this
+        // should trigger another merge with all packages in the sharedUserId. Since one still
+        // remains that revokes the capability, the capability should be revoked in the shared
+        // lineage.
+        assertInstallFromBuildSucceeds(
+                "v3-ec-p256-with-por_1_2-default-caps-sharedUid-companion3.apk");
+        assertInstallFromBuildFails("v3-ec-p256-1-sharedUid-companion2.apk");
+    }
+
     public void testInstallV3UpdateAfterRotation() throws Exception {
         // This test performs an end to end verification of the update of an app with a rotated
         // key. The app under test exports a bound service that performs its own PackageManager key

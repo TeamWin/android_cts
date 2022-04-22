@@ -42,7 +42,6 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
 
     private static final int BUFFER_SIZE_SEC = 3;
     private static final long DATA_REQUEST_TIMEOUT_MS = 6 * 1000; // 6s
-    private static final long DATA_REQUEST_POLL_PERIOD_MS = 1 * 1000; // 1s
     private static final long PRESENTATION_END_TIMEOUT_MS = 8 * 1000; // 8s
     private static final int AUDIOTRACK_DEFAULT_SAMPLE_RATE = 44100;
     private static final int AUDIOTRACK_DEFAULT_CHANNEL_MASK = AudioFormat.CHANNEL_OUT_STEREO;
@@ -177,13 +176,14 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                     track.setOffloadEndOfStream();
 
                     track.stop();
-                    mPresEndLock.safeWait(PRESENTATION_END_TIMEOUT_MS - elapsed);
+                    mPresEndLock.waitFor(PRESENTATION_END_TIMEOUT_MS - elapsed,
+                            () -> mCallback.mPresentationEndedCount > 0);
                 }
             } catch (InterruptedException e) {
                 fail("Error while sleeping");
             }
             synchronized (mPresEndLock) {
-                // we are at most PRESENTATION_END_TIMEOUT_MS + 1s after about 3s of data was
+                // We are at most PRESENTATION_END_TIMEOUT_MS + 1s after about 3s of data was
                 // supplied, presentation should have ended
                 assertEquals("onPresentationEnded not called one time",
                         1, mCallback.mPresentationEndedCount);
@@ -212,19 +212,12 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
         }
     }
 
-    private long checkDataRequest(long timeout) throws Exception {
+    private long checkDataRequest(long timeoutMs) throws Exception {
         long checkStart = SystemClock.uptimeMillis();
-        boolean calledback = false;
-        while (SystemClock.uptimeMillis() - checkStart < timeout) {
-            synchronized (mEventCallbackLock) {
-                if (mCallback.mDataRequestCount > 0) {
-                    calledback = true;
-                    break;
-                }
-            }
-            Thread.sleep(DATA_REQUEST_POLL_PERIOD_MS);
+        synchronized (mEventCallbackLock) {
+            mEventCallbackLock.waitFor(timeoutMs, () -> mCallback.mDataRequestCount > 0);
+            assertTrue("onDataRequest not called", mCallback.mDataRequestCount > 0);
         }
-        assertTrue("onDataRequest not called", calledback);
         return (SystemClock.uptimeMillis() - checkStart);
     }
 
@@ -290,7 +283,7 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
         AudioTrack nonOffloadTrack = allocNonOffloadAudioTrack();
         assertFalse(nonOffloadTrack.isOffloadedPlayback());
         org.testng.Assert.assertThrows(IllegalStateException.class,
-                () -> nonOffloadTrack.setOffloadEndOfStream());
+                nonOffloadTrack::setOffloadEndOfStream);
     }
 
     private static AudioFormat getAudioFormatWithEncoding(int encoding) {
@@ -301,17 +294,12 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
             .build();
     }
 
-    private Executor mExec = new Executor() {
-        @Override
-        public void execute(Runnable command) {
-            command.run();
-        }
-    };
+    private final Executor mExec = Runnable::run;
 
-    private final Object mEventCallbackLock = new Object();
+    private final SafeWaitObject mEventCallbackLock = new SafeWaitObject();
     private final SafeWaitObject mPresEndLock = new SafeWaitObject();
 
-    private EventCallback mCallback = new EventCallback();
+    private final EventCallback mCallback = new EventCallback();
 
     private class EventCallback extends AudioTrack.StreamEventCallback {
         @GuardedBy("mEventCallbackLock")
@@ -334,7 +322,7 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
             synchronized (mPresEndLock) {
                 Log.i(TAG, "onPresentationEnded");
                 mPresentationEndedCount++;
-                mPresEndLock.safeNotify();
+                mPresEndLock.notify();
             }
         }
 
@@ -343,6 +331,7 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
             synchronized (mEventCallbackLock) {
                 Log.i(TAG, "onDataRequest size:"+size);
                 mDataRequestCount++;
+                mEventCallbackLock.notify();
             }
         }
     }
