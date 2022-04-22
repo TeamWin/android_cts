@@ -22,8 +22,10 @@ import android.content.ComponentName
 import android.content.Intent
 import android.location.LocationManager
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import android.support.test.uiautomator.By
+import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.AppOpsUtils.setOpMode
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.eventually
@@ -37,6 +39,7 @@ import org.junit.Before
 import org.junit.Test
 
 @CtsDownstreamingTest
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 class PermissionAllServicesTest : BasePermissionTest() {
 
     // "All services" screen is not supported on Auto in T
