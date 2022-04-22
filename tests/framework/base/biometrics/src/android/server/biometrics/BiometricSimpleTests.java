@@ -46,6 +46,7 @@ import com.android.server.biometrics.nano.SensorStateProto;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.io.File;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -98,9 +99,12 @@ public class BiometricSimpleTests extends BiometricTestBase {
         if (mSensorProperties.isEmpty()) {
             assertTrue(state.mSensorStates.sensorStates.isEmpty());
 
-            assertFalse(pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT));
-            assertFalse(pm.hasSystemFeature(PackageManager.FEATURE_FACE));
-            assertFalse(pm.hasSystemFeature(PackageManager.FEATURE_IRIS));
+            final File initGsiRc = new File("/system/system_ext/etc/init/init.gsi.rc");
+            if (!initGsiRc.exists()) {
+                assertFalse(pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT));
+                assertFalse(pm.hasSystemFeature(PackageManager.FEATURE_FACE));
+                assertFalse(pm.hasSystemFeature(PackageManager.FEATURE_IRIS));
+            }
 
             assertTrue(state.mSensorStates.sensorStates.isEmpty());
         } else {
