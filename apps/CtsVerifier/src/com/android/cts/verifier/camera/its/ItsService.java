@@ -32,16 +32,21 @@ import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
+import android.hardware.HardwareBuffer;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.hardware.SensorPrivacyManager;
-import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
-import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.DngCreator;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.cts.CameraTestUtils;
@@ -51,21 +56,18 @@ import android.hardware.camera2.params.InputConfiguration;
 import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.SessionConfiguration;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.AudioAttributes;
 import android.media.CamcorderProfile;
+import android.media.Image;
+import android.media.ImageReader;
+import android.media.ImageWriter;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.media.MediaRecorder;
-import android.media.Image;
-import android.media.ImageReader;
-import android.media.ImageWriter;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.ConditionVariable;
@@ -74,23 +76,24 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.os.Vibrator;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Rational;
 import android.util.Size;
 import android.util.SparseArray;
 import android.view.Surface;
+import android.view.SurfaceHolder;
 
 import androidx.test.InstrumentationRegistry;
 
-import com.android.ex.camera2.blocking.BlockingCameraManager;
-import com.android.ex.camera2.blocking.BlockingCameraManager.BlockingOpenException;
-import com.android.ex.camera2.blocking.BlockingStateCallback;
-import com.android.ex.camera2.blocking.BlockingSessionCallback;
-
 import com.android.compatibility.common.util.ReportLog.Metric;
+import com.android.cts.verifier.R;
 import com.android.cts.verifier.camera.performance.CameraTestInstrumentation;
 import com.android.cts.verifier.camera.performance.CameraTestInstrumentation.MetricListener;
-import com.android.cts.verifier.R;
+import com.android.ex.camera2.blocking.BlockingCameraManager;
+import com.android.ex.camera2.blocking.BlockingCameraManager.BlockingOpenException;
+import com.android.ex.camera2.blocking.BlockingSessionCallback;
+import com.android.ex.camera2.blocking.BlockingStateCallback;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -112,6 +115,7 @@ import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -126,6 +130,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ItsService extends Service implements SensorEventListener {
@@ -251,11 +256,13 @@ public class ItsService extends Service implements SensorEventListener {
         public float values[];
     }
 
-    class VideoRecordingObject {
+    static class VideoRecordingObject {
+        private static final int INVALID_FRAME_RATE = -1;
+
         public String recordedOutputPath;
         public String quality;
         public Size videoSize;
-        public int videoFrameRate;
+        public int videoFrameRate; // -1 implies video framerate was not set by the test
         public int fileFormat;
 
         public VideoRecordingObject(String recordedOutputPath,
@@ -265,6 +272,15 @@ public class ItsService extends Service implements SensorEventListener {
             this.videoSize = videoSize;
             this.videoFrameRate = videoFrameRate;
             this.fileFormat = fileFormat;
+        }
+
+        VideoRecordingObject(String recordedOutputPath, String quality, Size videoSize,
+                int fileFormat) {
+            this(recordedOutputPath, quality, videoSize, INVALID_FRAME_RATE, fileFormat);
+        }
+
+        public boolean isFrameRateValid() {
+            return videoFrameRate != INVALID_FRAME_RATE;
         }
     }
 
@@ -782,6 +798,9 @@ public class ItsService extends Service implements SensorEventListener {
                 } else if ("getSupportedVideoQualities".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
                     doGetSupportedVideoQualities(cameraId);
+                } else if ("getSupportedPreviewSizes".equals(cmdObj.getString("cmdName"))) {
+                    String cameraId = cmdObj.getString("cameraId");
+                    doGetSupportedPreviewSizes(cameraId);
                 } else if ("doBasicRecording".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
                     int profileId = cmdObj.getInt("profileId");
@@ -791,6 +810,12 @@ public class ItsService extends Service implements SensorEventListener {
                     boolean hlg10Enabled = cmdObj.getBoolean("hlg10Enabled");
                     doBasicRecording(cameraId, profileId, quality, recordingDuration,
                             videoStabilizationMode, hlg10Enabled);
+                } else if ("doPreviewRecording".equals(cmdObj.getString("cmdName"))) {
+                    String cameraId = cmdObj.getString("cameraId");
+                    String videoSize = cmdObj.getString("videoSize");
+                    int recordingDuration = cmdObj.getInt("recordingDuration");
+                    boolean stabilize = cmdObj.getBoolean("stabilize");
+                    doBasicPreviewRecording(cameraId, videoSize, recordingDuration, stabilize);
                 } else if ("isHLG10Supported".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
                     int profileId = cmdObj.getInt("profileId");
@@ -901,7 +926,9 @@ public class ItsService extends Service implements SensorEventListener {
                 JSONObject videoJson = new JSONObject();
                 videoJson.put("recordedOutputPath", obj.recordedOutputPath);
                 videoJson.put("quality", obj.quality);
-                videoJson.put("videoFrameRate", obj.videoFrameRate);
+                if (obj.isFrameRateValid()) {
+                    videoJson.put("videoFrameRate", obj.videoFrameRate);
+                }
                 videoJson.put("videoSize", obj.videoSize);
                 sendResponse("recordingResponse", null, videoJson, null);
             } catch (org.json.JSONException e) {
@@ -1805,6 +1832,44 @@ public class ItsService extends Service implements SensorEventListener {
         return arrList.contains(mode);
     }
 
+    private void doGetSupportedPreviewSizes(String id) throws ItsException {
+        StreamConfigurationMap configMap = mCameraCharacteristics.get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        if (!StreamConfigurationMap.isOutputSupportedFor(SurfaceHolder.class)) {
+            mSocketRunnableObj.sendResponse("supportedPreviewSizes", "");
+            return;
+        }
+
+        Size maxPreviewSize = getMaxPreviewSize();
+        Size[] outputSizes = configMap.getOutputSizes(ImageFormat.YUV_420_888);
+        if (outputSizes == null) {
+            mSocketRunnableObj.sendResponse("supportedPreviewSizes", "");
+            return;
+        }
+
+        String response = Arrays.stream(outputSizes)
+                .distinct()
+                .filter(s -> s.getWidth() * s.getHeight()
+                        <= maxPreviewSize.getWidth() * maxPreviewSize.getHeight())
+                .sorted(Comparator.comparingInt(s -> s.getWidth() * s.getHeight()))
+                .map(Size::toString)
+                .collect(Collectors.joining(";"));
+
+        mSocketRunnableObj.sendResponse("supportedPreviewSizes", response);
+    }
+
+    private Size getMaxPreviewSize() {
+        // Android guarantees preview resolutions up to 1080p or the screen resolution, whichever
+        // is lower.
+        Size maxGuaranteedPreviewSize = new Size(1920, 1080);
+        DisplayMetrics displayMetrics = getApplicationContext().getResources().getDisplayMetrics();
+        if (maxGuaranteedPreviewSize.getHeight() * maxGuaranteedPreviewSize.getWidth()
+                < displayMetrics.heightPixels * displayMetrics.widthPixels) {
+            return maxGuaranteedPreviewSize;
+        }
+        return new Size(displayMetrics.widthPixels, displayMetrics.heightPixels);
+    }
+
     private class MediaCodecListener extends MediaCodec.Callback {
         private final MediaMuxer mMediaMuxer;
         private final Object mCondition;
@@ -1879,7 +1944,9 @@ public class ItsService extends Service implements SensorEventListener {
                 camcorderProfile.videoFrameHeight);
         int fileFormat = camcorderProfile.fileFormat;
         String outputFilePath = getOutputMediaFile(cameraDeviceId, videoSize, quality, fileFormat,
-                true);
+                /* hlg10Enabled= */ true,
+                /* stabilized= */
+                videoStabilizationMode != CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF);
         assert (outputFilePath != null);
 
         MediaCodecList list = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
@@ -1926,9 +1993,9 @@ public class ItsService extends Service implements SensorEventListener {
                 CameraCaptureSession.StateCallback.class);
         // Configure and create capture session.
         try {
-            configureAndCreateCaptureSession(mRecordSurface, videoStabilizationMode,
-                    DynamicRangeProfiles.HLG10, mockCallback);
-        } catch (android.hardware.camera2.CameraAccessException e) {
+            configureAndCreateCaptureSession(CameraDevice.TEMPLATE_RECORD, mRecordSurface,
+                    videoStabilizationMode, DynamicRangeProfiles.HLG10, mockCallback);
+        } catch (CameraAccessException e) {
             throw new ItsException("Access error: ", e);
         }
 
@@ -1984,7 +2051,9 @@ public class ItsService extends Service implements SensorEventListener {
         Size videoSize = new Size(camcorderProfile.videoFrameWidth,
                 camcorderProfile.videoFrameHeight);
         int fileFormat = camcorderProfile.fileFormat;
-        String outputFilePath = getOutputMediaFile(cameraDeviceId, videoSize, quality, fileFormat);
+        String outputFilePath = getOutputMediaFile(cameraDeviceId, videoSize, quality,
+                fileFormat, /* stabilized= */
+                videoStabilizationMode != CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF);
         assert(outputFilePath != null);
         Log.i(TAG, "Video recording outputFilePath:"+ outputFilePath);
         setupMediaRecorderWithProfile(cameraDeviceId, camcorderProfile, outputFilePath);
@@ -1998,7 +2067,8 @@ public class ItsService extends Service implements SensorEventListener {
         mRecordSurface = mMediaRecorder.getSurface();
         // Configure and create capture session.
         try {
-            configureAndCreateCaptureSession(mRecordSurface, videoStabilizationMode);
+            configureAndCreateCaptureSession(CameraDevice.TEMPLATE_RECORD, mRecordSurface,
+                    videoStabilizationMode);
         } catch (android.hardware.camera2.CameraAccessException e) {
             throw new ItsException("Access error: ", e);
         }
@@ -2032,31 +2102,159 @@ public class ItsService extends Service implements SensorEventListener {
         mSocketRunnableObj.sendVideoRecordingObject(obj);
     }
 
-    private void configureAndCreateCaptureSession(Surface recordSurface, int videoStabilizationMode)
-            throws CameraAccessException {
-        configureAndCreateCaptureSession(recordSurface, videoStabilizationMode,
-                DynamicRangeProfiles.STANDARD, null /*stateCallback*/);
+    /**
+     * Records a video of a surface set up as a preview.
+     *
+     * This method sets up 2 surfaces: an {@link ImageReader} surface and a
+     * {@link MediaRecorder} surface. The ImageReader surface is set up with
+     * {@link HardwareBuffer#USAGE_COMPOSER_OVERLAY} and set as the target of a capture request
+     * created with {@link CameraDevice#TEMPLATE_PREVIEW}. This should force the HAL to use the
+     * Preview pipeline and output to the ImageReader. An {@link ImageWriter} pipes the images from
+     * ImageReader to the MediaRecorder surface which is encoded into a video.
+     */
+    private void doBasicPreviewRecording(String cameraId, String videoSizeString,
+            int recordingDuration, boolean stabilize)
+            throws ItsException {
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            throw new ItsException("Cannot record preview before API level 33");
+        }
+
+        boolean stabilizationSupported = !isVideoStabilizationModeSupported(
+                CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION);
+        if (stabilize && !stabilizationSupported) {
+            throw new ItsException("Preview stabilization requested, but not supported by device.");
+        }
+
+        int cameraDeviceId = Integer.parseInt(cameraId);
+        Size videoSize = Size.parseSize(videoSizeString);
+
+        // Set up MediaRecorder to accept Images from ImageWriter
+        int fileFormat = MediaRecorder.OutputFormat.DEFAULT;
+
+        String outputFilePath = getOutputMediaFile(cameraDeviceId, videoSize,
+                /* quality= */"preview", fileFormat, /* stabilized= */ true);
+        assert outputFilePath != null;
+
+        mMediaRecorder = new MediaRecorder(this);
+        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
+
+        mMediaRecorder.setOutputFormat(fileFormat);
+        mMediaRecorder.setVideoSize(videoSize.getWidth(), videoSize.getHeight());
+        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT);
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
+        mMediaRecorder.setOutputFile(outputFilePath);
+
+        try {
+            mMediaRecorder.prepare();
+            mRecordSurface = mMediaRecorder.getSurface();
+        } catch (IOException e) {
+            throw new ItsException("Error preparing MediaRecorder", e);
+        }
+
+        // Image writer to write to mMediaRecorder
+        ImageWriter imageWriter = ImageWriter.newInstance(mRecordSurface, /* maxImages= */ 5,
+                ImageFormat.YUV_420_888);
+
+        // ImageReader to read preview frames from camera HAL
+        // HardwareBuffer.USAGE_COMPOSER_OVERLAY should indicate to the HAL that this surface is
+        // meant for preview
+        ImageReader imageReader = ImageReader.newInstance(videoSize.getWidth(),
+                videoSize.getHeight(), ImageFormat.YUV_420_888, /* maxImages= */ 5, /* usage= */
+                HardwareBuffer.USAGE_COMPOSER_OVERLAY | HardwareBuffer.USAGE_CPU_READ_OFTEN);
+        imageReader.setOnImageAvailableListener(reader -> {
+            Image image = reader.acquireNextImage();
+            if (image != null) {
+                imageWriter.queueInputImage(image); // redirect the frame to mMediaRecorder
+            }
+            // no need to call `image.close()` as imageWriter does it for us.
+        }, mCameraHandler);
+        Surface imageReaderSurface = imageReader.getSurface();
+
+        try {
+            int stabilizationMode = stabilize
+                    ? CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION
+                    : CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF;
+            configureAndCreateCaptureSession(CameraDevice.TEMPLATE_PREVIEW, imageReaderSurface,
+                    stabilizationMode);
+        } catch (CameraAccessException e) {
+            throw new ItsException("Error configuring and creating capture request", e);
+        }
+
+        mMediaRecorder.start();
+        try {
+            Thread.sleep(recordingDuration * 1000L); // recordingDuration is in seconds
+        } catch (InterruptedException e) {
+            throw new ItsException("Unexpected InterruptException while recording", e);
+        }
+        mSession.close();
+
+        // close imageReader and imageWriter before stopping mMediaRecorder, otherwise they might
+        // attempt to access closed surfaces.
+        imageReader.close();
+        imageWriter.close();
+        mMediaRecorder.stop();
+
+        mMediaRecorder.reset();
+        mMediaRecorder.release();
+
+
+        mMediaRecorder = null;
+        if (mRecordSurface != null) {
+            mRecordSurface.release();
+            mRecordSurface = null;
+        }
+
+        Log.i(TAG, "Preview recording complete: " + outputFilePath);
+
+        // Send VideoRecordingObject for further processing.
+        VideoRecordingObject obj = new VideoRecordingObject(outputFilePath, /* quality= */"preview",
+                videoSize, fileFormat);
+        mSocketRunnableObj.sendVideoRecordingObject(obj);
     }
 
-    private void configureAndCreateCaptureSession(Surface recordSurface, int videoStabilizationMode,
-            long dynamicRangeProfile, CameraCaptureSession.StateCallback stateCallback)
-            throws CameraAccessException{
-        assert(recordSurface != null);
+    private void configureAndCreateCaptureSession(int requestTemplate, Surface recordSurface,
+            int videoStabilizationMode) throws CameraAccessException {
+        configureAndCreateCaptureSession(requestTemplate, recordSurface, videoStabilizationMode,
+                DynamicRangeProfiles.STANDARD, /* stateCallback= */ null);
+    }
+
+    private void configureAndCreateCaptureSession(int requestTemplate, Surface recordSurface,
+            int videoStabilizationMode, long dynamicRangeProfile,
+            CameraCaptureSession.StateCallback stateCallback) throws CameraAccessException {
+        assert (recordSurface != null);
         // Create capture request builder
-        mCaptureRequestBuilder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
-        if (videoStabilizationMode == CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON) {
-            mCaptureRequestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON);
-            Log.i(TAG, "Turned ON video stabilization.");
+        mCaptureRequestBuilder = mCamera.createCaptureRequest(requestTemplate);
+
+        switch (videoStabilizationMode) {
+            case CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON:
+                mCaptureRequestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON);
+                Log.i(TAG, "Turned ON video stabilization.");
+                break;
+            case CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION:
+                mCaptureRequestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION);
+                Log.i(TAG, "Turned ON preview stabilization.");
+                break;
+            case CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF:
+                mCaptureRequestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                        CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF);
+                Log.i(TAG, "Turned OFF video stabilization.");
+                break;
+            default:
+                Log.w(TAG, "Invalid video stabilization mode " + videoStabilizationMode
+                        + ". Leaving unchanged.");
+                break;
         }
+
         mCaptureRequestBuilder.addTarget(recordSurface);
-        ArrayList<OutputConfiguration> outputList = new ArrayList<>(1);
         OutputConfiguration outConfig = new OutputConfiguration(recordSurface);
         outConfig.setDynamicRangeProfile(dynamicRangeProfile);
-        outputList.add(outConfig);
 
         SessionConfiguration sessionConfiguration = new SessionConfiguration(
-                SessionConfiguration.SESSION_REGULAR, outputList,
+                SessionConfiguration.SESSION_REGULAR, List.of(outConfig),
                 new HandlerExecutor(mCameraHandler),
                 new CameraCaptureSession.StateCallback() {
                     @Override
@@ -2108,12 +2306,13 @@ public class ItsService extends Service implements SensorEventListener {
     }
 
     private String getOutputMediaFile(int cameraId, Size videoSize, String quality,
-            int fileFormat) {
-        return getOutputMediaFile(cameraId, videoSize, quality, fileFormat, false /*hlg10Enabled*/);
+            int fileFormat, boolean stabilized) {
+        return getOutputMediaFile(cameraId, videoSize, quality, fileFormat,
+                /* hlg10Enabled= */false, stabilized);
     }
 
     private String getOutputMediaFile(int cameraId, Size videoSize, String quality,
-            int fileFormat, boolean hlg10Enabled) {
+            int fileFormat, boolean hlg10Enabled, boolean stabilized) {
         // If any quality has file format other than 3gp and webm then the
         // recording file will have mp4 as default extension.
         String fileExtension = "";
@@ -2141,6 +2340,9 @@ public class ItsService extends Service implements SensorEventListener {
                 "VID_" + timestamp + '_' + cameraId + '_' + quality + '_' + videoSize;
         if (hlg10Enabled) {
             fileName += "_hlg10";
+        }
+        if (stabilized) {
+            fileName += "_stabilized";
         }
         File mediaFile = new File(fileName);
         return mediaFile + fileExtension;
