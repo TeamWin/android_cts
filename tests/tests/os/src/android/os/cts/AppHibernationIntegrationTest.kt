@@ -61,6 +61,7 @@ import org.junit.Assert.assertThat
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
 import org.junit.Before
+import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -83,6 +84,12 @@ class AppHibernationIntegrationTest {
         const val HIBERNATION_ENABLED_KEY = "app_hibernation_enabled"
 
         const val CMD_KILL = "am kill %s"
+
+        @JvmStatic
+        @BeforeClass
+        fun beforeAllTests() {
+            runBootCompleteReceiver(InstrumentationRegistry.getTargetContext(), LOG_TAG)
+        }
     }
     private val context: Context = InstrumentationRegistry.getTargetContext()
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
