@@ -17,21 +17,21 @@
 package android.signature.cts.api;
 
 import android.app.Instrumentation;
+import android.content.Context;
+import android.content.pm.SharedLibraryInfo;
 import android.signature.cts.ApiComplianceChecker;
 import android.signature.cts.ApiDocumentParser;
 import android.signature.cts.JDiffClassDescription;
 import android.signature.cts.VirtualPath;
+import android.util.Log;
 import androidx.test.platform.app.InstrumentationRegistry;
 import com.google.common.base.Suppliers;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.Test;
-
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 /**
  * Verifies that any shared library provided by this device and for which this test has a
@@ -57,17 +57,20 @@ public class SignatureMultiLibsTest extends SignatureTest {
      * @return The set of shared library names.
      */
     private static Set<String> retrieveActiveSharedLibraries() {
-        try {
-            Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-            String result = runShellCommand(instrumentation, "cmd package list libraries");
-            return Arrays.stream(result.split("\n")).map(line -> line.split(":")[1])
-                    .peek(library -> System.out.printf("%s: Found library: %s%n",
-                            SignatureMultiLibsTest.class.getSimpleName(), library))
-                    .collect(Collectors.toCollection(TreeSet::new));
-        } catch (Exception e) {
-            throw new IllegalStateException(
-                    "could not retrieve the list of shared libraries", e);
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        Context context = instrumentation.getTargetContext();
+
+        List<SharedLibraryInfo> sharedLibraries =
+                context.getPackageManager().getSharedLibraries(0);
+
+        Set<String> sharedLibraryNames = new TreeSet<>();
+        for (SharedLibraryInfo sharedLibrary : sharedLibraries) {
+            String name = sharedLibrary.getName();
+            sharedLibraryNames.add(name);
+            Log.d(TAG, String.format("Found library: %s%n", name));
         }
+
+        return sharedLibraryNames;
     }
 
     /**
