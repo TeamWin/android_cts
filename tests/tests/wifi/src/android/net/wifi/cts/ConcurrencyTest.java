@@ -989,6 +989,8 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
             return;
         }
 
+        if (!mWifiP2pManager.isSetVendorElementsSupported()) return;
+
         List<ScanResult.InformationElement> ies = new ArrayList<>();
         ies.add(new ScanResult.InformationElement(221, 0,
                 new byte[WifiP2pManager.getP2pMaxAllowedVendorElementsLengthBytes() + 1]));
