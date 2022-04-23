@@ -102,6 +102,17 @@ public final class InputMethodVisibilityVerifier {
     }
 
     /**
+     * Asserts that {@link com.android.cts.mockime.MockIme} is visible to the user.
+     *
+     * @param timeout timeout in milliseconds.
+     * @param message error message shown on failure.
+     * @see #expectImeVisible(long)
+     */
+    public static void expectImeVisible(long timeout, String message) {
+        assertTrue(message, waitUntil(timeout, InputMethodVisibilityVerifier::containsWatermark));
+    }
+
+    /**
      * Asserts that {@link com.android.cts.mockime.MockIme} is not visible to the user.
      *
      * <p>This always succeeds when

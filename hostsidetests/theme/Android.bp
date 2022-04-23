@@ -39,4 +39,8 @@ java_test_host {
         "cts",
         "general-tests",
     ],
+    data: [
+        ":CtsThemeDeviceApp",
+    ],
+    per_testcase_directory: true,
 }

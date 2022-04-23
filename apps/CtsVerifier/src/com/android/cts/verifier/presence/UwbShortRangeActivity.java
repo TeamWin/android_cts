@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 package com.android.cts.verifier.presence;
+
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.Editable;
 import android.util.Log;
 import android.widget.EditText;
+
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
+
 /**
  * Activity for testing that UWB distance measurements are within the acceptable median.
  */
@@ -36,14 +39,17 @@ public class UwbShortRangeActivity extends PassFailButtons.Activity {
     private static final int MAX_MEDIAN = 12;
     private EditText mMedianInput;
     private EditText mReferenceDeviceInput;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.uwb_short_range);
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
+
         DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
                 PackageManager.FEATURE_UWB);
+
         mMedianInput = (EditText) findViewById(R.id.distance_median_cm);
         mReferenceDeviceInput = (EditText) findViewById(R.id.reference_device);
         mMedianInput.addTextChangedListener(
@@ -51,9 +57,11 @@ public class UwbShortRangeActivity extends PassFailButtons.Activity {
         mReferenceDeviceInput.addTextChangedListener(
                 InputTextHandler.getOnTextChangedHandler((Editable s) -> checkTestInputs()));
     }
+
     private void checkTestInputs() {
         getPassButton().setEnabled(checkMedianInput() && checkReferenceDeviceInput());
     }
+
     private boolean checkMedianInput() {
         String medianInput = mMedianInput.getText().toString();
         if (!medianInput.isEmpty()) {
@@ -62,9 +70,11 @@ public class UwbShortRangeActivity extends PassFailButtons.Activity {
         }
         return false;
     }
+
     private boolean checkReferenceDeviceInput() {
         return !mReferenceDeviceInput.getText().toString().isEmpty();
     }
+
     @Override
     public void recordTestResults() {
         String medianInput = mMedianInput.getText().toString();

@@ -104,6 +104,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -332,6 +334,40 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
             expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
             expectImeVisible(TIMEOUT);
+        }
+    }
+
+    @Test
+    public void testShowHideKeyboardWithInterval() throws Exception {
+        final InputMethodManager imm = InstrumentationRegistry.getInstrumentation()
+                .getTargetContext().getSystemService(InputMethodManager.class);
+
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+            expectImeInvisible(TIMEOUT);
+
+            runOnMainSync(() -> imm.showSoftInput(editText, 0));
+            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectImeVisible(TIMEOUT);
+
+            // Intervals = 10, 20, 30, ..., 100, 150, 200, ...
+            final List<Integer> intervals = new ArrayList<>();
+            for (int i = 10; i < 100; i += 10) intervals.add(i);
+            for (int i = 100; i < 500; i += 50) intervals.add(i);
+            // Regression test for b/221483132.
+            // WindowInsetsController tries to clean up IME window after IME hide animation is done.
+            // Makes sure that IMM#showSoftInput during IME hide animation cancels the cleanup.
+            for (int intervalMillis : intervals) {
+                runOnMainSync(() -> imm.hideSoftInputFromWindow(editText.getWindowToken(), 0));
+                SystemClock.sleep(intervalMillis);
+                runOnMainSync(() -> imm.showSoftInput(editText, 0));
+                expectImeVisible(TIMEOUT, "IME should be visible. Interval = " + intervalMillis);
+            }
         }
     }
 
