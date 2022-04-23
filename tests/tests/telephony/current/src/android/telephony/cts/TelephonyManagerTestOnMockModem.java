@@ -56,6 +56,7 @@ public class TelephonyManagerTestOnMockModem {
     private static TelephonyManager sTelephonyManager;
     private static final String ALLOW_MOCK_MODEM_PROPERTY = "persist.radio.allow_mock_modem";
     private static final boolean DEBUG = !"user".equals(Build.TYPE);
+    private static boolean sIsMultiSimDevice;
 
     @BeforeClass
     public static void beforeAllTests() throws Exception {
@@ -68,6 +69,14 @@ public class TelephonyManagerTestOnMockModem {
         enforceMockModemDeveloperSetting();
         sTelephonyManager =
                 (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
+
+        sIsMultiSimDevice = isMultiSim(sTelephonyManager);
+
+        //TODO: Support DSDS b/210073692
+        if (sIsMultiSimDevice) {
+            Log.d(TAG, "Not support MultiSIM");
+            return;
+        }
 
         sMockModemManager = new MockModemManager();
         assertNotNull(sMockModemManager);
@@ -82,6 +91,11 @@ public class TelephonyManagerTestOnMockModem {
             return;
         }
 
+        //TODO: Support DSDS b/210073692
+        if (sIsMultiSimDevice) {
+            return;
+        }
+
         // Rebind all interfaces which is binding to MockModemService to default.
         assertNotNull(sMockModemManager);
         assertTrue(sMockModemManager.disconnectMockModemService());
@@ -91,6 +105,8 @@ public class TelephonyManagerTestOnMockModem {
     @Before
     public void beforeTest() {
         assumeTrue(hasTelephonyFeature());
+        //TODO: Support DSDS b/210073692
+        assumeTrue(!sIsMultiSimDevice);
     }
 
     private static Context getContext() {
@@ -104,6 +120,10 @@ public class TelephonyManagerTestOnMockModem {
             return false;
         }
         return true;
+    }
+
+    private static boolean isMultiSim(TelephonyManager tm) {
+        return tm != null && tm.getPhoneCount() > 1;
     }
 
     private static void enforceMockModemDeveloperSetting() throws Exception {
