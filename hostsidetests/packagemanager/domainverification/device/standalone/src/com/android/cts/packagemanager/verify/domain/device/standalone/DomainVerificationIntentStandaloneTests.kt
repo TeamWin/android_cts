@@ -90,34 +90,39 @@ class DomainVerificationIntentStandaloneTests : DomainVerificationIntentTestBase
     @CtsDownstreamingTest
     @Test
     fun launchSelectedPreservedOnUpdate() {
-        setAppLinks(DECLARING_PKG_NAME_1, false, DOMAIN_1, DOMAIN_2)
-        setAppLinksUserSelection(DECLARING_PKG_NAME_1, userId, true, DOMAIN_1, DOMAIN_2)
+        try {
+            setAppLinks(DECLARING_PKG_NAME_1, false, DOMAIN_1, DOMAIN_2)
+            setAppLinksUserSelection(DECLARING_PKG_NAME_1, userId, true, DOMAIN_1, DOMAIN_2)
 
-        val hostToStateMapBefore = manager.getDomainVerificationUserState(DECLARING_PKG_NAME_1)
-            ?.hostToStateMap
+            val hostToStateMapBefore = manager.getDomainVerificationUserState(DECLARING_PKG_NAME_1)
+                ?.hostToStateMap
 
-        assertThat(hostToStateMapBefore?.get(DOMAIN_1))
-            .isEqualTo(DomainVerificationUserState.DOMAIN_STATE_SELECTED)
-        assertThat(hostToStateMapBefore?.get(DOMAIN_2))
-            .isEqualTo(DomainVerificationUserState.DOMAIN_STATE_SELECTED)
+            assertThat(hostToStateMapBefore?.get(DOMAIN_1))
+                .isEqualTo(DomainVerificationUserState.DOMAIN_STATE_SELECTED)
+            assertThat(hostToStateMapBefore?.get(DOMAIN_2))
+                .isEqualTo(DomainVerificationUserState.DOMAIN_STATE_SELECTED)
 
-        assertResolvesTo(DECLARING_PKG_1_COMPONENT)
+            assertResolvesTo(DECLARING_PKG_1_COMPONENT)
 
-        assertThat(
-            SystemUtil.runShellCommand(
-                "pm install -r -t /data/local/tmp/CtsDomainVerificationTestDeclaringApp1.apk"
-            ).trim()
-        ).isEqualTo("Success")
+            assertThat(
+                SystemUtil.runShellCommand(
+                    "pm install -r -t /data/local/tmp/CtsDomainVerificationTestDeclaringApp1.apk"
+                ).trim()
+            ).isEqualTo("Success")
 
-        val hostToStateMapAfter = manager.getDomainVerificationUserState(DECLARING_PKG_NAME_1)
-            ?.hostToStateMap
+            val hostToStateMapAfter = manager.getDomainVerificationUserState(DECLARING_PKG_NAME_1)
+                ?.hostToStateMap
 
-        assertThat(hostToStateMapAfter?.get(DOMAIN_1))
-            .isEqualTo(DomainVerificationUserState.DOMAIN_STATE_SELECTED)
-        assertThat(hostToStateMapAfter?.get(DOMAIN_2))
-            .isEqualTo(DomainVerificationUserState.DOMAIN_STATE_SELECTED)
+            assertThat(hostToStateMapAfter?.get(DOMAIN_1))
+                .isEqualTo(DomainVerificationUserState.DOMAIN_STATE_SELECTED)
+            assertThat(hostToStateMapAfter?.get(DOMAIN_2))
+                .isEqualTo(DomainVerificationUserState.DOMAIN_STATE_SELECTED)
 
-        assertResolvesTo(DECLARING_PKG_1_COMPONENT)
+            assertResolvesTo(DECLARING_PKG_1_COMPONENT)
+        } catch(e: AssertionError) {
+            throw AssertionError(
+                    "Device may be missing patch I2c864a34f356e32948cbc4e5d249e12c691a5726", e)
+        }
     }
 
     @Test
@@ -179,21 +184,26 @@ class DomainVerificationIntentStandaloneTests : DomainVerificationIntentTestBase
     @CtsDownstreamingTest
     @Test
     fun disableHandlingWhenVerifiedPreservedOnUpdate() {
-        setAppLinks(DECLARING_PKG_NAME_1, true, DOMAIN_1, DOMAIN_2)
+        try {
+            setAppLinks(DECLARING_PKG_NAME_1, true, DOMAIN_1, DOMAIN_2)
 
-        assertResolvesTo(DECLARING_PKG_1_COMPONENT)
+            assertResolvesTo(DECLARING_PKG_1_COMPONENT)
 
-        setAppLinksAllowed(DECLARING_PKG_NAME_1, userId, false)
+            setAppLinksAllowed(DECLARING_PKG_NAME_1, userId, false)
 
-        assertResolvesTo(browsers)
+            assertResolvesTo(browsers)
 
-        assertThat(
-            SystemUtil.runShellCommand(
-                "pm install -r -t /data/local/tmp/CtsDomainVerificationTestDeclaringApp1.apk"
-            ).trim()
-        ).isEqualTo("Success")
+            assertThat(
+                SystemUtil.runShellCommand(
+                    "pm install -r -t /data/local/tmp/CtsDomainVerificationTestDeclaringApp1.apk"
+                ).trim()
+            ).isEqualTo("Success")
 
-        assertResolvesTo(browsers)
+            assertResolvesTo(browsers)
+        } catch(e: AssertionError) {
+            throw AssertionError(
+                    "Device may be missing patch I2c864a34f356e32948cbc4e5d249e12c691a5726", e)
+        }
     }
 
     @Test
@@ -210,20 +220,25 @@ class DomainVerificationIntentStandaloneTests : DomainVerificationIntentTestBase
     @CtsDownstreamingTest
     @Test
     fun disableHandlingWhenSelectedPreservedOnUpdate() {
-        setAppLinksUserSelection(DECLARING_PKG_NAME_1, userId, true, DOMAIN_1, DOMAIN_2)
+        try {
+            setAppLinksUserSelection(DECLARING_PKG_NAME_1, userId, true, DOMAIN_1, DOMAIN_2)
 
-        assertResolvesTo(DECLARING_PKG_1_COMPONENT)
+            assertResolvesTo(DECLARING_PKG_1_COMPONENT)
 
-        setAppLinksAllowed(DECLARING_PKG_NAME_1, userId, false)
+            setAppLinksAllowed(DECLARING_PKG_NAME_1, userId, false)
 
-        assertResolvesTo(browsers)
+            assertResolvesTo(browsers)
 
-        assertThat(
-            SystemUtil.runShellCommand(
-                "pm install -r -t /data/local/tmp/CtsDomainVerificationTestDeclaringApp1.apk"
-            ).trim()
-        ).isEqualTo("Success")
+            assertThat(
+                SystemUtil.runShellCommand(
+                    "pm install -r -t /data/local/tmp/CtsDomainVerificationTestDeclaringApp1.apk"
+                ).trim()
+            ).isEqualTo("Success")
 
-        assertResolvesTo(browsers)
+            assertResolvesTo(browsers)
+        } catch(e: AssertionError) {
+            throw AssertionError(
+                    "Device may be missing patch I2c864a34f356e32948cbc4e5d249e12c691a5726", e)
+        }
     }
 }
