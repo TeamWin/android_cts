@@ -17,6 +17,9 @@
 
 package android.media.audio.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import android.annotation.Nullable;
 import android.annotation.RawRes;
 import android.content.res.AssetFileDescriptor;
@@ -30,8 +33,15 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 
+import org.junit.AssumptionViolatedException;
+
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.annotation.concurrent.GuardedBy;
 
@@ -43,6 +53,8 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
     private static final int BUFFER_SIZE_SEC = 3;
     private static final long DATA_REQUEST_TIMEOUT_MS = 6 * 1000; // 6s
     private static final long PRESENTATION_END_TIMEOUT_MS = 8 * 1000; // 8s
+    /** Minimum duration of a gap in gapless playback that can be mesured. */
+    private static final int PRESENTATION_END_PRECISION_MS = 1000; // 1s
     private static final int AUDIOTRACK_DEFAULT_SAMPLE_RATE = 44100;
     private static final int AUDIOTRACK_DEFAULT_CHANNEL_MASK = AudioFormat.CHANNEL_OUT_STEREO;
 
@@ -114,6 +126,17 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                 getAudioFormatWithEncoding(AudioFormat.ENCODING_OPUS));
     }
 
+    public void testGaplessMP3AudioTrackOffload() throws Exception {
+        // sine882hz3s has a gapless delay of 576 and padding of 756.
+        // To speed up the test, trim additionally 1000 samples each (20 periods at 882hz, 22ms).
+        testGaplessAudioTrackOffload(R.raw.sine882hz3s,
+                /* bitRateInkbps= */ 192,
+                getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3),
+                /* delay= */ 576 + 1000,
+                /* padding= */ 756 + 1000,
+                /* durationUs= */ 3000 - 44);
+    }
+
     private @Nullable AudioTrack getOffloadAudioTrack(int bitRateInkbps, AudioFormat audioFormat) {
         if (!AudioManager.isOffloadedPlaybackSupported(audioFormat, DEFAULT_ATTR)) {
             Log.i(TAG, "skipping testAudioTrackOffload as offload encoding "
@@ -177,7 +200,7 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
 
                     track.stop();
                     mPresEndLock.waitFor(PRESENTATION_END_TIMEOUT_MS - elapsed,
-                            () -> mCallback.mPresentationEndedCount > 0);
+                            () -> !mCallback.mPresentationEndedTimes.isEmpty());
                 }
             } catch (InterruptedException e) {
                 fail("Error while sleeping");
@@ -186,9 +209,8 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                 // We are at most PRESENTATION_END_TIMEOUT_MS + 1s after about 3s of data was
                 // supplied, presentation should have ended
                 assertEquals("onPresentationEnded not called one time",
-                        1, mCallback.mPresentationEndedCount);
+                        1, mCallback.mPresentationEndedTimes.size());
             }
-
         } finally {
             if (track != null) {
                 Log.i(TAG, "pause");
@@ -219,6 +241,103 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
             assertTrue("onDataRequest not called", mCallback.mDataRequestCount > 0);
         }
         return (SystemClock.uptimeMillis() - checkStart);
+    }
+
+    /**
+     * Test gapless offload playback by measuring the duration of the playback.
+     *
+     * The audio resource is played multiple time in a loop with the beginning and end trimmed.
+     * This is tested by measuring the duration of each playback as reported by
+     * {@link AudioTrack.StreamEventCallback#onPresentationEnded}, the average should be within 10%
+     * of the expected duration of the playback.
+     *
+     * @param audioRes The audio resource to play.
+     * @param bitRateInkbps The average bitrate of the resource.
+     * @param audioFormat The format of the resource.
+     * @param delay The delay in frames to pass to {@link AudioTrack#setOffloadDelayPadding}.
+     * @param padding The padding in frames to pass to {@link AudioTrack#setOffloadDelayPadding}.
+     * @param durationMs The duration of the resource (excluding the delay and padding).
+     */
+    private void testGaplessAudioTrackOffload(@RawRes int audioRes, int bitRateInkbps,
+            AudioFormat audioFormat, int delay, int padding, int durationMs) throws Exception {
+        skipTestIfGaplessOffloadPlaybackIsNotSupported(audioFormat);
+
+        AudioTrack offloadTrack = getOffloadAudioTrack(bitRateInkbps, audioFormat);
+        assertNotNull(offloadTrack);
+        offloadTrack.registerStreamEventCallback(mExec, mCallback);
+
+        try {
+            byte[] audioInput = readResource(audioRes);
+            int significantSampleNumber =
+                    (PRESENTATION_END_PRECISION_MS * audioFormat.getSampleRate()) / 1000;
+            // How many times to loop the track so that the sum of gapless delay and padding from
+            // the first presentation end to the last is at least PRESENTATION_END_PRECISION_MS.
+            final int playbackNumber =
+                    (int) Math.ceil(significantSampleNumber / ((float) delay + padding)) + 1;
+
+            offloadTrack.play();
+            for (int i = 0; i <= playbackNumber; i++) {
+                offloadTrack.setOffloadDelayPadding(delay, padding);
+                writeAllBlocking(offloadTrack, audioInput);
+                offloadTrack.setOffloadEndOfStream();
+            }
+            offloadTrack.stop();
+
+            synchronized (mPresEndLock) {
+                ArrayList<Long> presentationEndedTimes = mCallback.mPresentationEndedTimes;
+                mPresEndLock.waitFor(PRESENTATION_END_TIMEOUT_MS,
+                        () -> presentationEndedTimes.size() >= playbackNumber);
+
+                assertWithMessage("Unexpected onPresentationEnded call number")
+                        .that(presentationEndedTimes).hasSize(playbackNumber);
+
+
+                long[] playbackDurationsMs = IntStream.range(0, playbackNumber - 1)
+                        .mapToLong(i -> presentationEndedTimes.get(i + 1)
+                                - presentationEndedTimes.get(i)).toArray();
+                double averageDuration = Arrays.stream(playbackDurationsMs).average().orElse(0);
+                String playbackDurationsMsString = Arrays.stream(playbackDurationsMs)
+                        .mapToObj(Long::toString)
+                        .collect(Collectors.joining(", "));
+                assertWithMessage("Unexpected playback durations average"
+                        + ", measured playback durations (ms): [" + playbackDurationsMsString + "]")
+                        .that(averageDuration)
+                        // Allow 10% tolerance for scheduling jitter.
+                        .isWithin(PRESENTATION_END_PRECISION_MS * 0.1)
+                        .of(durationMs);
+            }
+        } finally {
+            offloadTrack.pause();
+            offloadTrack.unregisterStreamEventCallback(mCallback);
+            offloadTrack.release();
+        }
+    }
+
+    private void skipTestIfGaplessOffloadPlaybackIsNotSupported(AudioFormat audioFormat) {
+        int directSupport = AudioManager.getDirectPlaybackSupport(audioFormat, DEFAULT_ATTR);
+        boolean gaplessSupported =
+                (directSupport & AudioManager.DIRECT_PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED) != 0;
+        if (!gaplessSupported) {
+            String msg = "skipping testGaplessAudioTrackOffload as gapless offload playback of "
+                    + audioFormat.getEncoding() + " is not supported";
+            Log.i(TAG, msg);
+            // Skip test if gapless is not supported
+            throw new AssumptionViolatedException(msg);
+        }
+    }
+
+
+    private byte[] readResource(@RawRes int audioRes) throws IOException {
+        try (AssetFileDescriptor audioToOffload = getContext().getResources()
+                .openRawResourceFd(audioRes);
+            InputStream inputStream = audioToOffload.createInputStream()) {
+
+            long resourceLength = audioToOffload.getLength();
+            byte[] resourceContent = new byte[(int) resourceLength];
+            int read = inputStream.read(resourceContent);
+            assertThat(read).isEqualTo(resourceLength);
+            return resourceContent;
+        }
     }
 
     private AudioTrack allocNonOffloadAudioTrack() {
@@ -305,7 +424,7 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
         @GuardedBy("mEventCallbackLock")
         int mTearDownCount;
         @GuardedBy("mPresEndLock")
-        int mPresentationEndedCount;
+        ArrayList<Long> mPresentationEndedTimes = new ArrayList<>();
         @GuardedBy("mEventCallbackLock")
         int mDataRequestCount;
 
@@ -319,9 +438,10 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
 
         @Override
         public void onPresentationEnded(AudioTrack track) {
+            long uptimeMillis = SystemClock.uptimeMillis();
             synchronized (mPresEndLock) {
                 Log.i(TAG, "onPresentationEnded");
-                mPresentationEndedCount++;
+                mPresentationEndedTimes.add(uptimeMillis);
                 mPresEndLock.notify();
             }
         }

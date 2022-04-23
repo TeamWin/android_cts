@@ -22,6 +22,7 @@ import static android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED;
 import android.app.job.JobInfo;
 import android.content.ClipData;
 import android.content.Intent;
+import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.Uri;
 import android.os.Bundle;
@@ -495,6 +496,7 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .build();
         assertEquals(JobInfo.NETWORK_TYPE_NONE, ji.getNetworkType());
+        assertNull(ji.getRequiredNetwork());
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
 
@@ -502,6 +504,14 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .build();
         assertEquals(JobInfo.NETWORK_TYPE_ANY, ji.getNetworkType());
+        assertTrue(ji.getRequiredNetwork()
+                .hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET));
+        assertTrue(ji.getRequiredNetwork()
+                .hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED));
+        assertFalse(ji.getRequiredNetwork()
+                .hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED));
+        assertFalse(ji.getRequiredNetwork()
+                .hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN));
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
 
@@ -509,6 +519,14 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
                 .build();
         assertEquals(JobInfo.NETWORK_TYPE_UNMETERED, ji.getNetworkType());
+        assertTrue(ji.getRequiredNetwork()
+                .hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET));
+        assertTrue(ji.getRequiredNetwork()
+                .hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED));
+        assertFalse(ji.getRequiredNetwork()
+                .hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED));
+        assertFalse(ji.getRequiredNetwork()
+                .hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN));
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
 
@@ -516,6 +534,14 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_NOT_ROAMING)
                 .build();
         assertEquals(JobInfo.NETWORK_TYPE_NOT_ROAMING, ji.getNetworkType());
+        assertTrue(ji.getRequiredNetwork()
+                .hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET));
+        assertTrue(ji.getRequiredNetwork()
+                .hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED));
+        assertFalse(ji.getRequiredNetwork()
+                .hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED));
+        assertFalse(ji.getRequiredNetwork()
+                .hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN));
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
 
@@ -523,6 +549,14 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_CELLULAR)
                 .build();
         assertEquals(JobInfo.NETWORK_TYPE_CELLULAR, ji.getNetworkType());
+        assertTrue(ji.getRequiredNetwork()
+                .hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET));
+        assertTrue(ji.getRequiredNetwork()
+                .hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED));
+        assertFalse(ji.getRequiredNetwork()
+                .hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED));
+        assertFalse(ji.getRequiredNetwork()
+                .hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN));
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
 
@@ -530,6 +564,7 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_NONE)
                 .build();
         assertEquals(JobInfo.NETWORK_TYPE_NONE, ji.getNetworkType());
+        assertNull(ji.getRequiredNetwork());
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
     }

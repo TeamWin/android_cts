@@ -5316,6 +5316,10 @@ public class TelephonyManagerTest {
             Log.i(TAG, "testSetVoiceServiceStateOverride: originalSS = " + originalServiceState);
             assertNotEquals(ServiceState.STATE_IN_SERVICE, originalServiceState);
 
+            // Wait for device to finish processing RADIO_POWER_OFF.
+            // Otherwise, Telecom will clear the voice state override before SST processes it.
+            waitForMs(10000);
+
             // We should see the override reflected by both ServiceStateListener and getServiceState
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                     mTelephonyManager,

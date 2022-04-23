@@ -43,6 +43,7 @@ public class AppOpsTests extends DeviceTestCase implements IBuildReceiver {
 
     private static final int APP_OP_RECORD_AUDIO = 27;
     private static final int APP_OP_RECORD_AUDIO_HOTWORD = 102;
+    private static final int APP_OP_ACCESS_RESTRICTED_SETTINGS = 119;
 
     private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
     private static final String FEATURE_LEANBACK_ONLY = "android.software.leanback_only";
@@ -102,6 +103,10 @@ public class AppOpsTests extends DeviceTestCase implements IBuildReceiver {
         ArrayList<Integer> expectedOps = new ArrayList<>();
         Set<Integer> transformedOps = new HashSet<>(mTransformedFromOp.values());
         for (int i = 0; i < NUM_APP_OPS; i++) {
+            // Ignore access restricted setting as it cannot be read by normal app.
+            if (i == APP_OP_ACCESS_RESTRICTED_SETTINGS) {
+                continue;
+            }
             if (!transformedOps.contains(i)) {
                 expectedOps.add(i);
             }

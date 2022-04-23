@@ -102,8 +102,8 @@ public class BluetoothHapPresetInfoTest {
         Parcel out = Parcel.obtain();
         out.writeInt(presetIndex);
         out.writeString(presetName);
-        out.writeBoolean(isAvailable);
         out.writeBoolean(isWritable);
+        out.writeBoolean(isAvailable);
         out.setDataPosition(0); // reset position of parcel before passing to constructor
         return BluetoothHapPresetInfo.CREATOR.createFromParcel(out);
     }

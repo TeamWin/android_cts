@@ -85,7 +85,7 @@ public class ImsCallingTest {
     public static final int WAIT_FOR_CALL_STATE = 10000;
     public static final int WAIT_FOR_CALL_DISCONNECT = 1000;
     public static final int WAIT_FOR_CALL_CONNECT = 5000;
-    public static final int WAIT_FOR_CALL_STATE_HOLD = 2000;
+    public static final int WAIT_FOR_CALL_STATE_HOLD = 1000;
     public static final int WAIT_FOR_CALL_STATE_RESUME = 1000;
     public static final int WAIT_FOR_CALL_STATE_ACTIVE = 15000;
     public static final int LATCH_WAIT = 0;
@@ -380,8 +380,10 @@ public class ImsCallingTest {
         }
 
         if (sServiceConnector != null && sIsBound) {
+            TestImsService imsService = sServiceConnector.getCarrierService();
             sServiceConnector.disconnectCarrierImsService();
             sIsBound = false;
+            imsService.waitForExecutorFinish();
         }
     }
 

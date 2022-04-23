@@ -64,14 +64,10 @@ const val EXPECTED_TIMEOUT_MS = 2000L
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 class NotificationPermissionTest : BaseUsePermissionTest() {
 
-    // b/220968160: Notification permission is not enabled on TV devices.
-    @Before
-    fun assumeNotTv() = assumeFalse(isTv)
-
     private val cr = callWithShellPermissionIdentity {
         context.createContextAsUser(UserHandle.SYSTEM, 0).contentResolver
     }
-    private var previousEnableState = 0
+    private var previousEnableState = -1
     private var countDown: CountDownLatch = CountDownLatch(1)
     private var allowedGroups = listOf<String>()
     private val receiver: BroadcastReceiver = object : BroadcastReceiver() {
@@ -84,6 +80,8 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
 
     @Before
     fun setLatchAndEnablePermission() {
+        // b/220968160: Notification permission is not enabled on TV devices.
+        assumeFalse(isTv)
         runWithShellPermissionIdentity {
             previousEnableState = Settings.Secure.getInt(cr, NOTIFICATION_PERMISSION_ENABLED, 0)
             Settings.Secure.putInt(cr, NOTIFICATION_PERMISSION_ENABLED, 1)
@@ -95,10 +93,12 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
 
     @After
     fun resetPermissionAndRemoveReceiver() {
-        runWithShellPermissionIdentity {
-            Settings.Secure.putInt(cr, NOTIFICATION_PERMISSION_ENABLED, previousEnableState)
+        if (previousEnableState >= 0) {
+            runWithShellPermissionIdentity {
+                Settings.Secure.putInt(cr, NOTIFICATION_PERMISSION_ENABLED, previousEnableState)
+            }
+            context.unregisterReceiver(receiver)
         }
-        context.unregisterReceiver(receiver)
     }
 
     @Test

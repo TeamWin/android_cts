@@ -26,7 +26,6 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -488,7 +487,7 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
 
         mDevice.waitForIdle();
 
-        // save button is enabled for for the storage root
+        // save button is enabled for the storage root
         assertTrue(findSaveButton().isEnabled());
 
         // We should always have Android directory available
@@ -528,6 +527,36 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         mDevice.waitForIdle();
         // save button is enabled for dir2
         assertTrue(findSaveButton().isEnabled());
+    }
+
+    public void testScopeStorageAtInitLocationRootWithDot_blockFromTree() throws Exception {
+        if (!supportedHardware()) return;
+
+        launchOpenDocumentTreeAtInitialLocation(STORAGE_AUTHORITY, "primary:.");
+
+        // save button is disabled for the directory
+        assertFalse(findSaveButton().isEnabled());
+
+        // The Android directory is available
+        assertTrue(findDocument("Android").exists());
+    }
+
+    public void testScopeStorageAtInitLocationAndroidData_blockFromTree() throws Exception {
+        if (!supportedHardware()) return;
+
+        launchOpenDocumentTreeAtInitialLocation(STORAGE_AUTHORITY, "primary:Android/data");
+
+        // save button is disabled for the directory
+        assertFalse(findSaveButton().isEnabled());
+    }
+
+    public void testScopeStorageAtInitLocationAndroidObb_blockFromTree() throws Exception {
+        if (!supportedHardware()) return;
+
+        launchOpenDocumentTreeAtInitialLocation(STORAGE_AUTHORITY, "primary:Android/obb");
+
+        // save button is disabled for the directory
+        assertFalse(findSaveButton().isEnabled());
     }
 
     public void testGetContent_rootsShowing() throws Exception {
@@ -799,15 +828,7 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
     public void testOpenDocumentTreeAtInitialLocation() throws Exception {
         if (!supportedHardware()) return;
 
-        // Clear DocsUI's storage to avoid it opening stored last location.
-        clearDocumentsUi();
-
-        final Uri docUri = DocumentsContract.buildDocumentUri(PROVIDER_PACKAGE, "doc:dir2");
-        final Intent intent = new Intent();
-        intent.setAction(Intent.ACTION_OPEN_DOCUMENT_TREE);
-        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, docUri);
-        mActivity.startActivityForResult(intent, REQUEST_CODE);
-        mDevice.waitForIdle();
+        launchOpenDocumentTreeAtInitialLocation(PROVIDER_PACKAGE, "doc:dir2");
 
         assertTrue(findDocument("FILE4").exists());
     }
@@ -968,6 +989,19 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
 
         assertEquals(PackageManager.PERMISSION_DENIED,
                 context.checkCallingOrSelfUriPermission(targetUri, permissionFlag));
+    }
+
+    private void launchOpenDocumentTreeAtInitialLocation(@NonNull String authority,
+            @NonNull String docId) throws Exception {
+        // Clear DocsUI's storage to avoid it opening stored last location.
+        clearDocumentsUi();
+
+        final Uri initUri = DocumentsContract.buildDocumentUri(authority, docId);
+        final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, initUri);
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+
+        mDevice.waitForIdle();
     }
 
     private Uri assertCreateDocumentSuccess(@Nullable Uri initUri, @NonNull String displayName,

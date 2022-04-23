@@ -525,7 +525,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
         // Test managed profile. This should not be disabled when screen capture is disabled on
         // the parent by the profile owner of an organization-owned device.
-        takeScreenCaptureAsUser(mUserId, "testScreenCapturePossible");
+        takeScreenCaptureAsUser(mUserId, testMethodName);
     }
 
     private void assertHasNoUser(int userId) throws DeviceNotAvailableException {

@@ -69,7 +69,7 @@ class TestUtils {
             case BluetoothProfile.CSIP_SET_COORDINATOR:
                 return BluetoothProperties.isProfileCsipSetCoordinatorEnabled().orElse(false);
             case BluetoothProfile.GATT:
-                return BluetoothProperties.isProfileGattEnabled().orElse(false);
+                return BluetoothProperties.isProfileGattEnabled().orElse(true);
             case BluetoothProfile.HAP_CLIENT:
                 return BluetoothProperties.isProfileHapClientEnabled().orElse(false);
             case BluetoothProfile.HEADSET:

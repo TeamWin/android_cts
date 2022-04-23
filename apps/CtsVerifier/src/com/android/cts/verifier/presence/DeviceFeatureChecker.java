@@ -19,13 +19,14 @@ import android.content.Context;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
+
 /**
  * Checks if a device supports a hardware feature needed for a test, and passes the test
  * automatically otherwise.
  */
 public class DeviceFeatureChecker {
-    /**
-     * Checks if a feature is supported.
+
+    /** Checks if a feature is supported.
      *
      * @param feature must be a string defined in PackageManager
      */

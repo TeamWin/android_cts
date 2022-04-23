@@ -83,7 +83,9 @@ public class TestImsService extends Service {
     public static final int LATCH_UCE_LISTENER_SET = 11;
     public static final int LATCH_UCE_REQUEST_PUBLISH = 12;
     public static final int LATCH_ON_UNBIND = 13;
-    private static final int LATCH_MAX = 14;
+    public static final int LATCH_LAST_MESSAGE_EXECUTE = 14;
+    private static final int LATCH_MAX = 15;
+    private static final int WAIT_FOR_EXIT_TEST = 2000;
     protected static final CountDownLatch[] sLatches = new CountDownLatch[LATCH_MAX];
     static {
         for (int i = 0; i < LATCH_MAX; i++) {
@@ -587,7 +589,7 @@ public class TestImsService extends Service {
             }
 
             if (sMessageExecutor != null) {
-                sMessageExecutor.getLooper().quit();
+                sMessageExecutor.getLooper().quitSafely();
                 sMessageExecutor = null;
             }
             mSubIDs.clear();
@@ -605,6 +607,14 @@ public class TestImsService extends Service {
                 sMessageExecutor = new MessageExecutor("TestImsService");
             }
             mExecutor = sMessageExecutor;
+        }
+    }
+
+    public void waitForExecutorFinish() {
+        if (mIsTestTypeExecutor && sMessageExecutor != null) {
+            sMessageExecutor.postDelayed(() -> countDownLatch(LATCH_LAST_MESSAGE_EXECUTE), null ,
+                    WAIT_FOR_EXIT_TEST);
+            waitForLatchCountdown(LATCH_LAST_MESSAGE_EXECUTE);
         }
     }
 

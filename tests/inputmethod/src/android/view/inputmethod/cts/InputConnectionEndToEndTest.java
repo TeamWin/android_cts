@@ -92,6 +92,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -359,6 +360,22 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     private void testInputConnection(
             Function<InputConnection, InputConnection> inputConnectionWrapperProvider,
             TestProcedure testProcedure) throws Exception {
+        testInputConnection(inputConnectionWrapperProvider, testProcedure, null);
+    }
+
+    /**
+     * A utility method to run a unit test for {@link InputConnection}.
+     *
+     * <p>This utility method enables you to avoid boilerplate code when writing unit tests for
+     * {@link InputConnection}.</p>
+     *
+     * @param inputConnectionWrapperProvider {@link Function} to install custom hooks to the
+     *                                       original {@link InputConnection}.
+     * @param testProcedure Test body.
+     */
+    private void testInputConnection(
+            Function<InputConnection, InputConnection> inputConnectionWrapperProvider,
+            TestProcedureForMixedImes testProcedure) throws Exception {
         testInputConnection(inputConnectionWrapperProvider, testProcedure, null);
     }
 
@@ -2603,6 +2620,75 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
                 assertThat(textAttribute.getTextConversionSuggestions())
                         .containsExactlyElementsIn(expectedSuggestions);
             }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link android.accessibilityservice.InputMethod.AccessibilityInputConnection#commitText(
+     * CharSequence, int, TextAttribute)} finishes any existing composing text.
+     */
+    @Test
+    public void testCommitTextFromA11yFinishesExistingComposition() throws Exception {
+        final MethodCallVerifier endBatchEditVerifier = new MethodCallVerifier();
+        final CopyOnWriteArrayList<String> callHistory = new CopyOnWriteArrayList<>();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private int mBatchEditCount = 0;
+
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean setComposingText(CharSequence text, int newCursorPosition,
+                    TextAttribute textAttribute) {
+                callHistory.add("setComposingText");
+                return true;
+            }
+
+            @Override
+            public boolean beginBatchEdit() {
+                callHistory.add("beginBatchEdit");
+                ++mBatchEditCount;
+                return true;
+            }
+
+            @Override
+            public boolean finishComposingText() {
+                callHistory.add("finishComposingText");
+                return true;
+            }
+
+            @Override
+            public boolean commitText(
+                    CharSequence text, int newCursorPosition, TextAttribute textAttribute) {
+                callHistory.add("commitText");
+                return true;
+            }
+
+            @Override
+            public boolean endBatchEdit() {
+                callHistory.add("endBatchEdit");
+                --mBatchEditCount;
+                final boolean batchEditStillInProgress = mBatchEditCount > 0;
+                if (!batchEditStillInProgress) {
+                    endBatchEditVerifier.onMethodCalled(args -> { });
+                }
+                return batchEditStillInProgress;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (imeSession, imeStream, a11ySession, a11yStream) -> {
+            expectCommand(imeStream, imeSession.callSetComposingText("fromIme", 1, null), TIMEOUT);
+            expectA11yImeCommand(a11yStream, a11ySession.callCommitText("fromA11y", 1, null),
+                    TIMEOUT);
+            endBatchEditVerifier.expectCalledOnce(args -> { }, TIMEOUT);
+            assertThat(callHistory).containsExactly(
+                    "setComposingText",
+                    "beginBatchEdit",
+                    "finishComposingText",
+                    "commitText",
+                    "endBatchEdit").inOrder();
         });
     }
 

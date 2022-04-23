@@ -15,7 +15,18 @@
  */
 package android.media.recorder.cts;
 
-import static android.media.MediaCodecInfo.CodecProfileLevel.*;
+import static android.media.MediaCodecInfo.CodecProfileLevel.AVCLevel1;
+import static android.media.MediaCodecInfo.CodecProfileLevel.AVCLevel1b;
+import static android.media.MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline;
+import static android.media.MediaCodecInfo.CodecProfileLevel.AVCProfileConstrainedBaseline;
+import static android.media.MediaCodecInfo.CodecProfileLevel.AVCProfileConstrainedHigh;
+import static android.media.MediaCodecInfo.CodecProfileLevel.AVCProfileHigh;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.pm.PackageManager;
 import android.graphics.Canvas;
@@ -24,7 +35,6 @@ import android.graphics.Paint;
 import android.hardware.Camera;
 import android.media.AudioFormat;
 import android.media.AudioManager;
-import android.media.AudioRecord;
 import android.media.AudioRecordingConfiguration;
 import android.media.CamcorderProfile;
 import android.media.EncoderCapabilities;
@@ -41,12 +51,11 @@ import android.media.MediaRecorder.OnErrorListener;
 import android.media.MediaRecorder.OnInfoListener;
 import android.media.MicrophoneDirection;
 import android.media.MicrophoneInfo;
+import android.media.cts.InputSurface;
+import android.media.cts.MediaTestBase;
 import android.media.metrics.LogSessionId;
 import android.media.metrics.MediaMetricsManager;
 import android.media.metrics.RecordingSession;
-import android.media.cts.InputSurface;
-import android.media.cts.MediaStubActivity;
-import android.media.cts.NonMediaMainlineTest;
 import android.opengl.GLES20;
 import android.os.Build;
 import android.os.ConditionVariable;
@@ -55,24 +64,28 @@ import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
-import android.test.ActivityInstrumentationTestCase2;
-import android.test.UiThreadTest;
 import android.util.Log;
 import android.view.Surface;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.annotation.UiThreadTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.lang.Runnable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -83,7 +96,8 @@ import java.util.concurrent.TimeUnit;
 @SmallTest
 @RequiresDevice
 @AppModeFull(reason = "TODO: evaluate and port to instant")
-public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStubActivity> {
+@RunWith(AndroidJUnit4.class)
+public class MediaRecorderTest extends MediaTestBase {
     private final String TAG = "MediaRecorderTest";
     private final String OUTPUT_PATH;
     private final String OUTPUT_PATH2;
@@ -120,7 +134,6 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     private File mOutFile;
     private File mOutFile2;
     private Camera mCamera;
-    private MediaStubActivity mActivity = null;
     private int mFileIndex;
 
     private MediaRecorder mMediaRecorder;
@@ -146,7 +159,6 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     private boolean mIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
     public MediaRecorderTest() {
-        super("android.media.recorder.cts", MediaStubActivity.class);
         OUTPUT_PATH = new File(Environment.getExternalStorageDirectory(),
                 "record.out").getAbsolutePath();
         OUTPUT_PATH2 = new File(Environment.getExternalStorageDirectory(),
@@ -170,9 +182,10 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         }
     }
 
+    @Before
     @Override
-    protected void setUp() throws Exception {
-        mActivity = getActivity();
+    public void setUp() throws Throwable {
+        super.setUp();
         completeOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -209,11 +222,11 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
                 });
             }
         });
-        super.setUp();
     }
 
+    @After
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() {
         if (mMediaRecorder != null) {
             mMediaRecorder.release();
             mMediaRecorder = null;
@@ -240,6 +253,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         super.tearDown();
     }
 
+    @Test
     public void testRecorderCamera() throws Exception {
         int width;
         int height;
@@ -310,6 +324,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         checkOutputExist();
     }
 
+    @Test
     public void testRecorderMPEG2TS() throws Exception {
         int width;
         int height;
@@ -384,19 +399,23 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         checkOutputExist();
     }
 
+    @Test
     @UiThreadTest
     public void testSetCamera() throws Exception {
         recordVideoUsingCamera(false, false);
     }
 
+    @Test
     public void testRecorderTimelapsedVideo() throws Exception {
         recordVideoUsingCamera(true, false);
     }
 
+    @Test
     public void testRecorderPauseResume() throws Exception {
         recordVideoUsingCamera(false, true);
     }
 
+    @Test
     public void testRecorderPauseResumeOnTimeLapse() throws Exception {
         recordVideoUsingCamera(true, true);
     }
@@ -556,6 +575,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         assertTrue(mOutFile.delete());
     }
 
+    @Test
     public void testRecorderVideo() throws Exception {
         if (!hasCamera()) {
             MediaUtils.skipTest("no camera");
@@ -581,6 +601,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         fos.close();
     }
 
+    @Test
     public void testSetOutputFile() throws Exception {
         if (!hasCamera()) {
             MediaUtils.skipTest("no camera");
@@ -611,6 +632,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         recordMedia(maxFileSize, mOutFile);
     }
 
+    @Test
     public void testRecordingAudioInRawFormats() throws Exception {
         int testsRun = 0;
         if (hasAmrNb()) {
@@ -658,6 +680,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         mMediaRecorder.setMaxFileSize(MAX_FILE_SIZE * 10);
     }
 
+    @Test
     @CddTest(requirement="5.4.1/C-1-4")
     public void testGetActiveMicrophones() throws Exception {
         if (!hasMicrophone() || !hasAac()) {
@@ -697,6 +720,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         Log.i(TAG, "******");
     }
 
+    @Test
     public void testRecordAudioFromAudioSourceUnprocessed() throws Exception {
         if (!hasMicrophone() || !hasAmrNb()) {
             MediaUtils.skipTest("no audio codecs or microphone");
@@ -709,6 +733,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         recordMedia(MAX_FILE_SIZE, mOutFile);
     }
 
+    @Test
     public void testGetAudioSourceMax() throws Exception {
         final int max = MediaRecorder.getAudioSourceMax();
         assertTrue(MediaRecorder.AudioSource.DEFAULT <= max);
@@ -723,6 +748,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         assertTrue(MediaRecorder.AudioSource.VOICE_PERFORMANCE <= max);
     }
 
+    @Test
     public void testRecorderAudio() throws Exception {
         if (!hasMicrophone() || !hasAac()) {
             MediaUtils.skipTest("no audio codecs or microphone");
@@ -739,6 +765,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         recordMedia(MAX_FILE_SIZE, mOutFile);
     }
 
+    @Test
     public void testOnInfoListener() throws Exception {
         if (!hasMicrophone() || !hasAac()) {
             MediaUtils.skipTest("no audio codecs or microphone");
@@ -754,6 +781,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         assertTrue(mOnInfoCalled);
     }
 
+    @Test
     public void testSetMaxDuration() throws Exception {
         if (!hasMicrophone() || !hasAac()) {
             MediaUtils.skipTest("no audio codecs or microphone");
@@ -793,6 +821,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         return Integer.parseInt(durationStr);
     }
 
+    @Test
     public void testSetMaxFileSize() throws Exception {
         testSetMaxFileSize(512 * 1024, 50 * 1024);
     }
@@ -986,6 +1015,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         return 1;
     }
 
+    @Test
     public void testProfileAvcBaselineLevel1() throws Exception {
         int testsRun = 0;
         int profile = AVCProfileBaseline;
@@ -1010,7 +1040,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         }
     }
 
-
+    @Test
     public void testRecordExceedFileSizeLimit() throws Exception {
         if (!hasMicrophone() || !hasCamera() || !hasAmrNb() || !hasH264()) {
             MediaUtils.skipTest("no microphone, camera, or codecs");
@@ -1175,6 +1205,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         assertTrue(file.delete());
     }
 
+    @Test
     public void testOnErrorListener() throws Exception {
         if (!hasMicrophone() || !hasAac()) {
             MediaUtils.skipTest("no audio codecs or microphone");
@@ -1403,6 +1434,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         return success;
     }
 
+    @Test
     public void testGetSurfaceApi() {
         if (!hasH264()) {
             MediaUtils.skipTest("no codecs");
@@ -1418,6 +1450,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         assertTrue(validateGetSurface(true /* useSurface */));
     }
 
+    @Test
     public void testPersistentSurfaceApi() {
         if (!hasH264()) {
             MediaUtils.skipTest("no codecs");
@@ -1614,21 +1647,25 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     }
 
     // Test recording from surface source with/without audio)
+    @Test
     public void testSurfaceRecording() {
         assertTrue(testRecordFromSurface(false /* persistent */, false /* timelapse */));
     }
 
     // Test recording from persistent surface source with/without audio
+    @Test
     public void testPersistentSurfaceRecording() {
         assertTrue(testRecordFromSurface(true /* persistent */, false /* timelapse */));
     }
 
     // Test timelapse recording from surface without audio
+    @Test
     public void testSurfaceRecordingTimeLapse() {
         assertTrue(testRecordFromSurface(false /* persistent */, true /* timelapse */));
     }
 
     // Test timelapse recording from persisent surface without audio
+    @Test
     public void testPersistentSurfaceRecordingTimeLapse() {
         assertTrue(testRecordFromSurface(true /* persistent */, true /* timelapse */));
     }
@@ -1673,6 +1710,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         return MediaUtils.hasEncoder(MediaFormat.MIMETYPE_VIDEO_AVC);
     }
 
+    @Test
     public void testSetCaptureRate() throws Exception {
         // No exception expected for 30fps
         mMediaRecorder.setCaptureRate(30.0);
@@ -1698,6 +1736,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         }
     }
 
+    @Test
     public void testAudioRecordInfoCallback() throws Exception {
         if (!hasMicrophone() || !hasAac()) {
             MediaUtils.skipTest("no audio codecs or microphone");
@@ -1720,6 +1759,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         mMediaRecorder.unregisterAudioRecordingCallback(callback);
     }
 
+    @Test
     public void testGetActiveRecordingConfiguration() throws Exception {
         if (!hasMicrophone() || !hasAac()) {
             MediaUtils.skipTest("no audio codecs or microphone");
@@ -1757,6 +1797,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     /*
      * Microphone Direction API tests
      */
+    @Test
     public void testSetPreferredMicrophoneDirection() {
         if (!hasMicrophone()) {
             return;
@@ -1777,6 +1818,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         return;
     }
 
+    @Test
     public void testSetPreferredMicrophoneFieldDimension() {
         if (!hasMicrophone()) {
             return;
@@ -1795,6 +1837,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         return;
     }
 
+    @Test
     public void testPrivacySensitive() throws Exception {
         if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         if (!hasMicrophone() || !hasAac()) {
@@ -1809,6 +1852,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         }
     }
 
+    @Test
     public void testPrivacySensitiveDefaults() throws Exception {
         if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         if (!hasMicrophone() || !hasAac()) {
@@ -1823,6 +1867,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         assertTrue(mMediaRecorder.isPrivacySensitive());
     }
 
+    @Test
     public void testSetGetLogSessionId() {
         if (!MediaUtils.check(mIsAtLeastS, "test needs Android 12")) return;
         MediaRecorder recorder = new MediaRecorder();
