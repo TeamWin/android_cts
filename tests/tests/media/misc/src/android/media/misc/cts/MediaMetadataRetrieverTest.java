@@ -1101,7 +1101,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
 
     public void testGetImageAtIndexAvif() throws Exception {
         if (!MediaUtils.check(mIsAtLeastS, "test needs Android 12")) return;
-        if (!MediaUtils.canDecodeVideo("AV1", 1920, 1080, 30)) {
+        if (!MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_AV1, 1920, 1080, 30)) {
             MediaUtils.skipTest("No AV1 codec for 1080p");
             return;
         }
@@ -1111,7 +1111,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
 
     public void testGetImageAtIndexAvifGrid() throws Exception {
         if (!MediaUtils.check(mIsAtLeastS, "test needs Android 12")) return;
-        if (!MediaUtils.canDecodeVideo("AV1", 512, 512, 30)) {
+        if (!MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_AV1, 512, 512, 30)) {
             MediaUtils.skipTest("No AV1 codec for 512p");
             return;
         }

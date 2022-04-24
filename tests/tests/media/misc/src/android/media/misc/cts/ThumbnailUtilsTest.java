@@ -23,6 +23,7 @@ import android.annotation.ColorInt;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_HEVC;
+import static android.media.MediaFormat.MIMETYPE_VIDEO_AV1;
 import android.media.ThumbnailUtils;
 import android.media.cts.Preconditions;
 import android.os.Build;
@@ -184,7 +185,7 @@ public class ThumbnailUtilsTest {
     @Test
     public void testCreateImageThumbnailAvif() throws Exception {
         if (!MediaUtils.check(mIsAtLeastS, "test needs Android 12")) return;
-        if (!MediaUtils.canDecodeVideo("AV1", 1920, 1080, 30)) {
+        if (!MediaUtils.canDecodeVideo(MIMETYPE_VIDEO_AV1, 1920, 1080, 30)) {
             MediaUtils.skipTest("No AV1 codec for 1080p");
             return;
         }

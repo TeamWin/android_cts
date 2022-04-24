@@ -916,6 +916,25 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 }).build().verify(mCarPropertyManager);
     }
 
+    @Test
+    public void testEvRegenerativeBrakingStateIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.EV_REGENERATIVE_BRAKING_STATE,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                Integer.class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    Integer evRegenerativeBrakingState = (Integer) carPropertyValue.getValue();
+                    assertWithMessage("EV_REGENERATIVE_BRAKING_STATE must be a defined state: "
+                            + evRegenerativeBrakingState).that(evRegenerativeBrakingState).isIn(
+                            ImmutableSet.of(/*EvRegenerativeBrakingState.UNKNOWN=*/0,
+                                    /*EvRegenerativeBrakingState.DISABLED=*/1,
+                                    /*EvRegenerativeBrakingState.PARTIALLY_ENABLED=*/2,
+                                    /*EvRegenerativeBrakingState.FULLY_ENABLED=*/3));
+                }).build().verify(mCarPropertyManager);
+    }
+
+
     @SuppressWarnings("unchecked")
     @Test
     public void testGetProperty() {
