@@ -582,6 +582,26 @@ def get_best_alignment_offset(cam_times, cam_rots, gyro_events):
   return exact_best_shift, fit_coeffs, shift_candidates, spatial_distances
 
 
+def plot_camera_rotations(cam_rots, start_frame, video_quality,
+                          plot_name_stem):
+  """Plot the camera rotations.
+
+  Args:
+   cam_rots: np array of camera rotations angle per frame
+   start_frame: int value of start frame
+   video_quality: str for video quality identifier
+   plot_name_stem: str (with path) of what to call plot
+  """
+
+  pylab.figure(video_quality)
+  frames = range(start_frame, len(cam_rots)+start_frame)
+  pylab.title(f'Camera rotation vs frame {video_quality}')
+  pylab.plot(frames, cam_rots*_RADS_TO_DEGS, '-ro', label='x')
+  pylab.xlabel('frame #')
+  pylab.ylabel('camera rotation (degrees)')
+  matplotlib.pyplot.savefig(f'{plot_name_stem}_{video_quality}_cam_rots.png')
+
+
 def plot_gyro_events(gyro_events, plot_name, log_path):
   """Plot x, y, and z on the gyro events.
 
