@@ -50,6 +50,7 @@ import androidx.test.filters.RequiresDevice;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
+import com.android.compatibility.common.util.DisableAnimationRule;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -70,6 +71,10 @@ public final class HotwordDetectionServiceBasicTest
 
     @Rule
     public RequiredFeatureRule REQUIRES_MIC_RULE = new RequiredFeatureRule(FEATURE_MICROPHONE);
+
+    // TODO(b/230321933): Use active/noted RECORD_AUDIO app ops instead of checking the Mic icon.
+    @Rule
+    public DisableAnimationRule mDisableAnimationRule = new DisableAnimationRule();
 
     private static final String INDICATORS_FLAG = "camera_mic_icons_enabled";
     private static final String PRIVACY_CHIP_PKG = "com.android.systemui";
