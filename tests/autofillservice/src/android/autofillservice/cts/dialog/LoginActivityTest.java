@@ -22,11 +22,16 @@ import static android.autofillservice.cts.activities.FieldsNoPasswordActivity.ST
 import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
 import static android.autofillservice.cts.testcore.Helper.ID_USERNAME_LABEL;
+import static android.autofillservice.cts.testcore.Helper.NULL_DATASET_ID;
+import static android.autofillservice.cts.testcore.Helper.assertFillEventForDatasetSelected;
+import static android.autofillservice.cts.testcore.Helper.assertFillEventForDatasetShown;
 import static android.autofillservice.cts.testcore.Helper.assertHasFlags;
+import static android.autofillservice.cts.testcore.Helper.assertNoDeprecatedClientState;
 import static android.autofillservice.cts.testcore.Helper.assertNoFlags;
 import static android.autofillservice.cts.testcore.Helper.enableFillDialogFeature;
 import static android.autofillservice.cts.testcore.Helper.isImeShowing;
 import static android.autofillservice.cts.testcore.Helper.setFillDialogHints;
+import static android.service.autofill.FillEventHistory.Event.UI_TYPE_DIALOG;
 import static android.service.autofill.FillRequest.FLAG_SUPPORTS_FILL_DIALOG;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -36,12 +41,16 @@ import android.autofillservice.cts.activities.LoginActivity;
 import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
 import android.content.Intent;
+import android.service.autofill.FillEventHistory;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 
 import org.junit.Test;
+
+import java.util.List;
 
 
 /**
@@ -153,6 +162,13 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
 
         // Check the results.
         activity.assertAutoFilled();
+
+        // Verify events history
+        final FillEventHistory selection = InstrumentedAutoFillService.getFillEventHistory(2);
+        assertNoDeprecatedClientState(selection);
+        final List<FillEventHistory.Event> events = selection.getEvents();
+        assertFillEventForDatasetShown(events.get(0), UI_TYPE_DIALOG);
+        assertFillEventForDatasetSelected(events.get(1), NULL_DATASET_ID, UI_TYPE_DIALOG);
     }
 
     @Test
