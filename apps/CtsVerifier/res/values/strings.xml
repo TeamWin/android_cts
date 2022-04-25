@@ -5344,6 +5344,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_clear_results">Clear Results</string>
 
     <string name="audio_general_test_not_run">Test Not Run</string>
+    <string name="audio_general_testnotcompleted">Test not completed.</string>
 
     <!-- Audio Loopback Latency Test -->
     <string name="audio_loopback_latency_test">Audio Loopback Latency Test</string>
@@ -5605,16 +5606,18 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="audio_tap2tone">Audio Tap To Tone Test</string>
     <string name="audio_tap2tone_info">This tests the latency from a screen interaction to a
         resulting tone. This time is a combination of touch screen latency and audio latency.\nThis
-        test is best conducted in a quiet room with the device laying on a table. Select
-        the Audio API to test (\"Native\" has the lowest latency) and press the \"Start\" button.
-        Use your fingernail to tap ONCE on the field below to trigger the test tone. DO NOT leave
+        test is best conducted in a quiet room with the device laying on a table.
+        \n\nTo execute test:
+        \n1. Select the Audio API to test (\"Native\" has the lowest latency) and press the \"Start\" button.
+        \n2. Use your fingernail to tap ONCE on the field below to trigger the test tone. DO NOT leave
         the finger resting on the test field. A strong "tick" sound from the fingernail striking
-        the display is necessary to register the start of the test process. After tapping ONCE,
-        wait until the results are displayed in the field above the waveform display before
-        tapping for the next test run.\nFive successful tests runs are required to determine
-        if the test as a whole succeeds.
+        the display is necessary to register the start of the test process.
+        \n3. After tapping ONCE, wait until the results are displayed in the field above the
+        waveform display before tapping for the next test run.
+        \nFive successful tests runs are required to determine if the test as a whole succeeds.
+        \n4. Press the \"Stop"\ button to conclude the test. The results will be displayed along with the passing/failing measurement and requirement.
+        \n\n(see <a href="https://source.android.com/compatibility/12/android-12-cdd#56_audio_latency">Android CDD § 5.6. Audio Latency</a>)
     </string>
-    <string name="audio_tap2tone_spec">80ms or less average latency is STRONGLY RECOMMENDED to pass.</string>
     <string name="audio_tap2tone_too_few">Not enough edges. Use fingernail.</string>
     <string name="audio_tap2tone_too_many">Too many edges. Use fingernail. Ensure there is
     no background noise.</string>
