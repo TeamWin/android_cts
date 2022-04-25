@@ -20,7 +20,7 @@ import static android.Manifest.permission.BLUETOOTH_CONNECT;
 import static android.bluetooth.BluetoothStatusCodes.FEATURE_SUPPORTED;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.bluetooth.BluetoothAdapter;
@@ -116,7 +116,8 @@ public class BluetoothLeBroadcastChannelTest {
         assertEquals(TEST_CHANNEL_INDEX, channel.getChannelIndex());
         assertEquals(codecMetadata, channel.getCodecMetadata());
         assertEquals(TEST_AUDIO_LOCATION_FRONT_LEFT, channel.getCodecMetadata().getAudioLocation());
-        assertNull(channel.getCodecMetadata());
+        assertNotNull(channel.getCodecMetadata());
+        assertEquals(codecMetadata, channel.getCodecMetadata());
     }
 
     @Test
@@ -140,7 +141,8 @@ public class BluetoothLeBroadcastChannelTest {
         assertEquals(codecMetadata, channelCopy.getCodecMetadata());
         assertEquals(TEST_AUDIO_LOCATION_FRONT_LEFT,
                 channelCopy.getCodecMetadata().getAudioLocation());
-        assertNull(channelCopy.getCodecMetadata());
+        assertNotNull(channelCopy.getCodecMetadata());
+        assertEquals(channel.getCodecMetadata(), channelCopy.getCodecMetadata());
     }
 
     private boolean shouldSkipTest() {
