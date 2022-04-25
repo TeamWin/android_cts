@@ -247,8 +247,8 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
 
         style.bigPicture(bitmap)
         builder.build().let {
-            assertThat(it.extras.getParcelable<Bitmap>(Notification.EXTRA_PICTURE))
-                    .isSameInstanceAs(bitmap)
+            assertThat(it.extras.getParcelable<Bitmap>(Notification.EXTRA_PICTURE)
+                    !!.sameAs(bitmap)).isTrue()
             assertThat(it.extras.get(Notification.EXTRA_PICTURE_ICON)).isNull()
         }
 
@@ -261,8 +261,8 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
 
         style.bigPicture(iconWithBitmap)
         builder.build().let {
-            assertThat(it.extras.getParcelable<Bitmap>(Notification.EXTRA_PICTURE))
-                    .isSameInstanceAs(bitmap)
+            assertThat(it.extras.getParcelable<Bitmap>(Notification.EXTRA_PICTURE)
+                    !!.sameAs(bitmap)).isTrue()
             assertThat(it.extras.get(Notification.EXTRA_PICTURE_ICON)).isNull()
         }
     }
@@ -380,8 +380,8 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
             assertThat(iconView.drawable.intrinsicWidth).isEqualTo(80)
             assertThat(iconView.drawable.intrinsicHeight).isEqualTo(75)
         }
-        assertThat(builder.build().extras.getParcelable<Bitmap>(Notification.EXTRA_PICTURE))
-                .isSameInstanceAs(picture)
+        assertThat(builder.build().extras.getParcelable<Bitmap>(Notification.EXTRA_PICTURE)
+                !!.sameAs(picture)).isTrue()
     }
 
     fun testBigPicture_withBigLargeIcon_withContentUri() {
