@@ -74,6 +74,7 @@ import com.google.common.collect.Lists;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -192,6 +193,11 @@ public class WindowInsetsBehaviorTests {
 
     private Context mTargetContext;
     private int mClickCount;
+
+    @BeforeClass
+    public static void assumeAtLeastSVTwo() {
+        assumeTrue(ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S_V2));
+    }
 
     private void mainThreadRun(Runnable runnable) {
         getInstrumentation().runOnMainSync(runnable);
