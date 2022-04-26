@@ -67,15 +67,15 @@ public class NanPrecisionAndBiasTestActivity extends PassFailButtons.Activity {
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
 
-        DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
-                PackageManager.FEATURE_WIFI_AWARE);
-
         mMeasurementRange1mGt = (EditText) findViewById(R.id.distance_range_1m_gt);
         mMeasurementRange3mGt = (EditText) findViewById(R.id.distance_range_3m_gt);
         mMeasurementRange5mGt = (EditText) findViewById(R.id.distance_range_5m_gt);
         mBiasInput = (EditText) findViewById(R.id.bias_meters);
         mSlopeInput = (EditText) findViewById(R.id.slope);
         mReferenceDeviceInput = (EditText) findViewById(R.id.reference_device);
+
+        DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
+                PackageManager.FEATURE_WIFI_AWARE);
 
         mMeasurementRange1mGt.addTextChangedListener(
                 InputTextHandler.getOnTextChangedHandler((Editable s) -> checkTestInputs()));
