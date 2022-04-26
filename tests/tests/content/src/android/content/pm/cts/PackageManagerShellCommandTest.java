@@ -1217,7 +1217,10 @@ public class PackageManagerShellCommandTest {
             onBroadcastThread.set(thread);
         });
 
-        onBroadcastThread.get().join();
+        final Thread thread = onBroadcastThread.get();
+        if (thread != null) {
+            thread.join();
+        }
     }
 
     private void runPackageVerifierTestSync(String expectedResultStartsWith,
