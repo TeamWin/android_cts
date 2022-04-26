@@ -259,6 +259,8 @@ public class TextureViewTest {
     }
 
     // TODO(b/229173479): understand why DCI_P3 and BT2020 do not match with certain colors.
+    // TODO(b/230400473): Add in BT2020 and BT709 and BT601 once SurfaceFlinger reliably color
+    // converts.
     private static Object[] testDataSpaces() {
         return new Integer[]{
             DataSpace.DATASPACE_SCRGB_LINEAR,
@@ -266,8 +268,6 @@ public class TextureViewTest {
             DataSpace.DATASPACE_SCRGB,
             DataSpace.DATASPACE_DISPLAY_P3,
             DataSpace.DATASPACE_ADOBE_RGB,
-            DataSpace.DATASPACE_BT2020,
-            DataSpace.DATASPACE_BT709,
             DataSpace.DATASPACE_DCI_P3,
             DataSpace.DATASPACE_SRGB_LINEAR
         };
