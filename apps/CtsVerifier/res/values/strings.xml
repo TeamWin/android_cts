@@ -5404,6 +5404,7 @@ You should be prompted to select credentials; choose the ones you just installed
           \nPlease connect these Loopback mechanisms (the same Loopback Plug can be used at different times
           for the headset jack and USB audio adapter) and proceed with the instructions
           on the screen. The volume may need to be adjusted for each audio path.
+          \nNote that for the Speaker/Microphone path, it may be necessary to remove any phone case on the device.
           \nThe system will measure the input-output audio latency by injecting an audio signal into
           the output and compute the time between generating the signal and recording it back.
           You can vary the Audio Level slider to ensure the pulse will feed back at adequate levels.
