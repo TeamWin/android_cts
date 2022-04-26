@@ -29,6 +29,7 @@ import android.content.res.Resources
 import android.net.Uri
 import android.os.Build
 import android.platform.test.annotations.AppModeFull
+import android.provider.DeviceConfig
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiObject2
@@ -38,6 +39,7 @@ import android.widget.Switch
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnit4
+import com.android.compatibility.common.util.DeviceConfigStateChangerRule
 import com.android.compatibility.common.util.DisableAnimationRule
 import com.android.compatibility.common.util.FreezeRotationRule
 import com.android.compatibility.common.util.MatcherUtils.hasTextThat
@@ -82,7 +84,6 @@ private const val BLUETOOTH_CONNECT = "android.permission.BLUETOOTH_CONNECT"
  */
 @RunWith(AndroidJUnit4::class)
 class AutoRevokeTest {
-
     private val context: Context = InstrumentationRegistry.getTargetContext()
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
 
@@ -94,8 +95,14 @@ class AutoRevokeTest {
     private lateinit var preMinVersionApkPath: String
     private lateinit var preMinVersionAppPackageName: String
 
+    @Rule
+    @JvmField
+    val storeExactTimeRule = DeviceConfigStateChangerRule(context,
+        DeviceConfig.NAMESPACE_PERMISSIONS, STORE_EXACT_TIME_KEY, "true")
+
     companion object {
         const val LOG_TAG = "AutoRevokeTest"
+        private const val STORE_EXACT_TIME_KEY = "permission_changes_store_exact_time"
 
         @JvmStatic
         @BeforeClass
@@ -246,6 +253,32 @@ class AutoRevokeTest {
                 Thread.sleep(1000)
 
                 // Verify
+                assertPermission(PERMISSION_GRANTED)
+            }
+        }
+    }
+
+    @AppModeFull(reason = "Uses separate apps for testing")
+    @Test
+    fun testAppWithPermissionsChangedRecently_doesNotGetPermissionRevoked() {
+        val unusedThreshold = 10_000L
+        withUnusedThresholdMs(unusedThreshold) {
+            withDummyApp {
+                // Setup
+                // Ensure app is considered unused and then change permission
+                Thread.sleep(unusedThreshold)
+                goToPermissions()
+                click("Calendar")
+                click("Allow")
+                goBack()
+                goBack()
+                goBack()
+
+                // Run
+                runAppHibernationJob(context, LOG_TAG)
+
+                // Verify that permission is not revoked because the permission was changed
+                // within the unused threshold even though the app itself is unused
                 assertPermission(PERMISSION_GRANTED)
             }
         }
