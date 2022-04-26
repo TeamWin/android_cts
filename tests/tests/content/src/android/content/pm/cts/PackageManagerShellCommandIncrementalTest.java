@@ -16,6 +16,8 @@
 
 package android.content.pm.cts;
 
+import static android.Manifest.permission.WRITE_DEVICE_CONFIG;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -1341,7 +1343,7 @@ public class PackageManagerShellCommandIncrementalTest {
     }
 
     static void setDeviceProperty(String name, String value) {
-        getUiAutomation().adoptShellPermissionIdentity();
+        getUiAutomation().adoptShellPermissionIdentity(WRITE_DEVICE_CONFIG);
         try {
             DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PACKAGE_MANAGER_SERVICE, name, value,
                     false);
