@@ -24,11 +24,13 @@ import static org.junit.Assert.fail;
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.Settings;
 import android.provider.Settings.Secure;
 import android.provider.Settings.SettingNotFoundException;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
@@ -203,6 +205,7 @@ public class Settings_SecureTest {
      * available to non-privileged apps, such as the CTS test app in the context of which this test
      * runs.
      */
+    @SdkSuppress(maxSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testBluetoothAddressNotAvailable() {
         assertNull(Settings.Secure.getString(cr, BLUETOOTH_MAC_ADDRESS_SETTING_NAME));
