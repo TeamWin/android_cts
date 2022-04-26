@@ -26,6 +26,7 @@ import static android.autofillservice.cts.testcore.Helper.NULL_DATASET_ID;
 import static android.autofillservice.cts.testcore.Helper.assertFillEventForDatasetSelected;
 import static android.autofillservice.cts.testcore.Helper.assertFillEventForDatasetShown;
 import static android.autofillservice.cts.testcore.Helper.assertHasFlags;
+import static android.autofillservice.cts.testcore.Helper.assertMockImeStatus;
 import static android.autofillservice.cts.testcore.Helper.assertNoDeprecatedClientState;
 import static android.autofillservice.cts.testcore.Helper.assertNoFlags;
 import static android.autofillservice.cts.testcore.Helper.enableFillDialogFeature;
@@ -113,7 +114,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
         mUiBot.waitForIdleSync();
 
         // Verify IME is shown
-        assertThat(isImeShowing(activity.getRootWindowInsets())).isTrue();
+        assertMockImeStatus(activity.getRootWindowInsets(), true);
     }
 
     @Test
