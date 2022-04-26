@@ -16,8 +16,13 @@
 
 package android.appenumeration.cts;
 
+import static android.Manifest.permission.CHANGE_COMPONENT_ENABLED_STATE;
+import static android.Manifest.permission.SUSPEND_APPS;
 import static android.appenumeration.cts.Constants.TARGET_STUB;
 import static android.appenumeration.cts.Constants.TARGET_STUB_APK;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+import static android.content.pm.PackageManager.SYSTEM_APP_STATE_HIDDEN_UNTIL_INSTALLED_HIDDEN;
+import static android.content.pm.PackageManager.SYSTEM_APP_STATE_HIDDEN_UNTIL_INSTALLED_VISIBLE;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
@@ -25,6 +30,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.UserHandle;
@@ -53,6 +59,7 @@ import java.io.File;
 @EnsureHasSecondaryUser
 @RunWith(BedsteadJUnit4.class)
 public class CrossUserPackageVisibilityTests {
+    private static final String CTS_SHIM_PACKAGE_NAME = "com.android.cts.ctsshim";
 
     @ClassRule
     @Rule
@@ -60,6 +67,7 @@ public class CrossUserPackageVisibilityTests {
 
     private Context mContext;
     private PackageManager mPackageManager;
+    private UserReference mCurrentUser;
     private UserReference mOtherUser;
 
     @Before
@@ -67,11 +75,13 @@ public class CrossUserPackageVisibilityTests {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mPackageManager = mContext.getPackageManager();
 
-        // Get another user
+        // Get users
         final UserReference primaryUser = sDeviceState.primaryUser();
         if (primaryUser.id() == UserHandle.myUserId()) {
+            mCurrentUser = primaryUser;
             mOtherUser = sDeviceState.secondaryUser();
         } else {
+            mCurrentUser = sDeviceState.secondaryUser();
             mOtherUser = primaryUser;
         }
 
@@ -81,6 +91,8 @@ public class CrossUserPackageVisibilityTests {
     @After
     public void tearDown() {
         uninstallPackage(TARGET_STUB);
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
     }
 
     @Test
@@ -152,6 +164,83 @@ public class CrossUserPackageVisibilityTests {
                 () -> mPackageManager.getInstallSourceInfo(TARGET_STUB));
     }
 
+    @Test
+    public void testGetApplicationEnabledSetting_cannotDetectStubPkg() {
+        final IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class,
+                () -> mPackageManager.getApplicationEnabledSetting(TARGET_STUB));
+
+        installPackageForUser(TARGET_STUB_APK, mOtherUser);
+
+        final IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class,
+                () -> mPackageManager.getApplicationEnabledSetting(TARGET_STUB));
+        assertThat(e1.getMessage()).isEqualTo(e2.getMessage());
+    }
+
+    @Test
+    public void testGetApplicationEnabledSetting_canSeeHiddenUntilInstalled() {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(SUSPEND_APPS);
+        uninstallPackageForUser(CTS_SHIM_PACKAGE_NAME, mCurrentUser);
+        mPackageManager.setSystemAppState(
+                CTS_SHIM_PACKAGE_NAME, SYSTEM_APP_STATE_HIDDEN_UNTIL_INSTALLED_HIDDEN);
+        try {
+            // no throw exception
+            mPackageManager.getApplicationEnabledSetting(CTS_SHIM_PACKAGE_NAME);
+        } finally {
+            mPackageManager.setSystemAppState(
+                    CTS_SHIM_PACKAGE_NAME, SYSTEM_APP_STATE_HIDDEN_UNTIL_INSTALLED_VISIBLE);
+            installExistPackageForUser(CTS_SHIM_PACKAGE_NAME, mCurrentUser);
+        }
+    }
+
+    @Test
+    public void testGetComponentEnabledSetting_cannotDetectStubPkg() {
+        final ComponentName componentName = ComponentName.createRelative(
+                TARGET_STUB, "android.appenumeration.cts.TestActivity");
+        final IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class,
+                () -> mPackageManager.getComponentEnabledSetting(componentName));
+
+        installPackageForUser(TARGET_STUB_APK, mOtherUser);
+
+        final IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class,
+                () -> mPackageManager.getComponentEnabledSetting(componentName));
+        assertThat(e1.getMessage()).isEqualTo(e2.getMessage());
+    }
+
+    @Test
+    public void testSetApplicationEnabledSetting_cannotDetectStubPkg() {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(CHANGE_COMPONENT_ENABLED_STATE);
+        final IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class,
+                () -> mPackageManager.setApplicationEnabledSetting(
+                        TARGET_STUB, COMPONENT_ENABLED_STATE_ENABLED, 0));
+
+        installPackageForUser(TARGET_STUB_APK, mOtherUser);
+
+        final IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class,
+                () -> mPackageManager.setApplicationEnabledSetting(
+                        TARGET_STUB, COMPONENT_ENABLED_STATE_ENABLED, 0));
+        assertThat(e1.getMessage()).isEqualTo(e2.getMessage());
+    }
+
+    @Test
+    public void testSetComponentEnabledSetting_cannotDetectStubPkg() {
+        final ComponentName componentName = ComponentName.createRelative(
+                TARGET_STUB, "android.appenumeration.cts.TestActivity");
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(CHANGE_COMPONENT_ENABLED_STATE);
+        final IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class,
+                () -> mPackageManager.setComponentEnabledSetting(
+                        componentName, COMPONENT_ENABLED_STATE_ENABLED, 0));
+
+        installPackageForUser(TARGET_STUB_APK, mOtherUser);
+
+        final IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class,
+                () -> mPackageManager.setComponentEnabledSetting(
+                        componentName, COMPONENT_ENABLED_STATE_ENABLED, 0));
+        assertThat(e1.getMessage()).isEqualTo(e2.getMessage());
+    }
+
     private static void installPackageForUser(String apkPath, UserReference user) {
         installPackageForUser(apkPath, user,
                 InstrumentationRegistry.getInstrumentation().getContext().getPackageName());
@@ -168,7 +257,24 @@ public class CrossUserPackageVisibilityTests {
         assertThat(result.trim()).contains("Success");
     }
 
+    private static void installExistPackageForUser(String apkPath, UserReference user) {
+        final StringBuilder cmd = new StringBuilder("pm install-existing --user ");
+        cmd.append(user.id()).append(" ");
+        cmd.append(apkPath);
+        final String result = runShellCommand(cmd.toString());
+        assertThat(result.trim()).contains("installed");
+    }
+
     private static void uninstallPackage(String packageName) {
-        runShellCommand("pm uninstall " + packageName);
+        uninstallPackageForUser(packageName, null /* user */);
+    }
+
+    private static void uninstallPackageForUser(String packageName, UserReference user) {
+        final StringBuilder cmd = new StringBuilder("pm uninstall ");
+        if (user != null) {
+            cmd.append("--user ").append(user.id()).append(" ");
+        }
+        cmd.append(packageName);
+        runShellCommand(cmd.toString());
     }
 }

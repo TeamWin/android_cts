@@ -507,6 +507,18 @@
             </meta-data>
         </service>
 
+        <service android:name=".InteractiveLiveWallpaper"
+                 android:permission="android.permission.BIND_WALLPAPER"
+                 android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService">
+                </action>
+            </intent-filter>
+            <meta-data android:name="android.service.wallpaper"
+                       android:resource="@xml/wallpaper">
+            </meta-data>
+        </service>
+
         <service android:name=".TestDream"
              android:exported="true"
              android:permission="android.permission.BIND_DREAM_SERVICE">

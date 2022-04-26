@@ -18,6 +18,8 @@ package android.car.cts.builtin.util;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.Instrumentation;
 import android.car.builtin.util.AssistUtilsHelper;
 import android.content.Context;
@@ -59,7 +61,10 @@ public final class AssistUtilsHelperTest {
     @Test
     public void testOnShownCallback() throws Exception {
         SessionShowCallbackHelperImpl callbackHelperImpl = new SessionShowCallbackHelperImpl();
-        AssistUtilsHelper.showPushToTalkSessionForActiveService(mContext, callbackHelperImpl);
+        boolean isAssistantComponentAvailable = AssistUtilsHelper
+                .showPushToTalkSessionForActiveService(mContext, callbackHelperImpl);
+        assumeTrue(isAssistantComponentAvailable);
+
         callbackHelperImpl.waitForCallback();
 
         assertWithMessage("Voice session shown")
@@ -77,7 +82,10 @@ public final class AssistUtilsHelperTest {
     @Test
     public void isSessionRunning_whenSessionIsShown_succeeds() throws Exception {
         SessionShowCallbackHelperImpl callbackHelperImpl = new SessionShowCallbackHelperImpl();
-        AssistUtilsHelper.showPushToTalkSessionForActiveService(mContext, callbackHelperImpl);
+        boolean isAssistantComponentAvailable = AssistUtilsHelper
+                .showPushToTalkSessionForActiveService(mContext, callbackHelperImpl);
+        assumeTrue(isAssistantComponentAvailable);
+
         callbackHelperImpl.waitForCallback();
 
         assertWithMessage("Voice interaction session running")
@@ -92,7 +100,10 @@ public final class AssistUtilsHelperTest {
         AssistUtilsHelper.registerVoiceInteractionSessionListenerHelper(mContext, listener);
 
         SessionShowCallbackHelperImpl callbackHelperImpl = new SessionShowCallbackHelperImpl();
-        AssistUtilsHelper.showPushToTalkSessionForActiveService(mContext, callbackHelperImpl);
+        boolean isAssistantComponentAvailable = AssistUtilsHelper
+                .showPushToTalkSessionForActiveService(mContext, callbackHelperImpl);
+        assumeTrue(isAssistantComponentAvailable);
+
         callbackHelperImpl.waitForCallback();
 
         listener.waitForSessionChange();
@@ -110,7 +121,10 @@ public final class AssistUtilsHelperTest {
         AssistUtilsHelper.registerVoiceInteractionSessionListenerHelper(mContext, listener);
 
         SessionShowCallbackHelperImpl callbackHelperImpl = new SessionShowCallbackHelperImpl();
-        AssistUtilsHelper.showPushToTalkSessionForActiveService(mContext, callbackHelperImpl);
+        boolean isAssistantComponentAvailable = AssistUtilsHelper
+                .showPushToTalkSessionForActiveService(mContext, callbackHelperImpl);
+        assumeTrue(isAssistantComponentAvailable);
+
         callbackHelperImpl.waitForCallback();
 
         listener.waitForSessionChange();

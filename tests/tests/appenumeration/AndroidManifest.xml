@@ -27,6 +27,7 @@
         <package android:name="android.appenumeration.queries.activity.action" />
         <package android:name="android.appenumeration.queries.nothing" />
         <package android:name="android.appenumeration.stub" />
+        <package android:name="com.android.cts.ctsshim" />
     </queries>
 
     <!-- It's merged from Harrier library. Remove it since this test should not hold it. -->

@@ -16,15 +16,21 @@
 
 package com.android.bedstead.nene.devicepolicy;
 
+import static android.os.Build.VERSION_CODES.TIRAMISU;
+
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.ComponentName;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
+import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.nene.TestApis;
@@ -42,7 +48,8 @@ import org.junit.runner.RunWith;
 @RunWith(BedsteadJUnit4.class)
 public class ProfileOwnerTest {
 
-    @ClassRule @Rule
+    @ClassRule
+    @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
     private static final ComponentName DPC_COMPONENT_NAME = RemoteDpc.DPC_COMPONENT_NAME;
@@ -126,5 +133,32 @@ public class ProfileOwnerTest {
         TestApis.devicePolicy().getProfileOwner().remove();
 
         assertThat(TestApis.devicePolicy().getProfileOwner()).isNull();
+    }
+
+    @Test
+    @RequireSdkVersion(min = TIRAMISU)
+    @RequireRunOnWorkProfile
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void setIsOrganizationOwned_becomesOrganizationOwned() {
+        ProfileOwner profileOwner = (ProfileOwner) sDeviceState.profileOwner(
+                sDeviceState.workProfile()).devicePolicyController();
+
+        profileOwner.setIsOrganizationOwned(true);
+
+        assertThat(profileOwner.isOrganizationOwned()).isTrue();
+    }
+
+    @Test
+    @RequireSdkVersion(min = TIRAMISU)
+    @RequireRunOnWorkProfile
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void unsetIsOrganizationOwned_becomesNotOrganizationOwned() {
+        ProfileOwner profileOwner = (ProfileOwner) sDeviceState.profileOwner(
+                sDeviceState.workProfile()).devicePolicyController();
+        profileOwner.setIsOrganizationOwned(true);
+
+        profileOwner.setIsOrganizationOwned(false);
+
+        assertThat(profileOwner.isOrganizationOwned()).isFalse();
     }
 }

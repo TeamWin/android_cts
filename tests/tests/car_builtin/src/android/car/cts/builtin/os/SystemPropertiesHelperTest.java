@@ -16,11 +16,9 @@
 
 package android.car.cts.builtin.os;
 
-import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import android.car.builtin.os.SystemPropertiesHelper;
-import android.os.SystemProperties;
-import android.util.Log;
 
 import androidx.test.runner.AndroidJUnit4;
 
@@ -31,15 +29,17 @@ import org.junit.runner.RunWith;
 public final class SystemPropertiesHelperTest {
     private static final String TAG = SystemPropertiesHelperTest.class.getSimpleName();
 
-    // a temporary SystemProperty for CTS. it will be cleared after device reboot.
-    private static final String CTS_TEST_PROPERTY_KEY = "cts.car.builtin_property_helper.String";
+    // a temporary SystemProperty for CTS.
+    private static final String CTS_TEST_PROPERTY_KEY = "dev.android.car.test.cts.builtin_test";
     private static final String CTS_TEST_PROPERTY_VAL = "SystemPropertiesHelperTest";
 
     @Test
-    public void testSet() {
-        SystemPropertiesHelper.set(CTS_TEST_PROPERTY_KEY, CTS_TEST_PROPERTY_VAL);
-        String val = SystemProperties.get(CTS_TEST_PROPERTY_KEY);
-        Log.d(TAG, val);
-        assertThat(val).isEqualTo(CTS_TEST_PROPERTY_VAL);
+    public void testSet_throwsException() {
+        // system properties are protected by SELinux policies. Though properties with "dev."
+        // prefix are accessible via the shell domain and car shell (carservice_app) domain,
+        // they are not accessible via CTS. The java RuntimeException is expected due to access
+        // permission deny.
+        assertThrows(RuntimeException.class,
+                () -> SystemPropertiesHelper.set(CTS_TEST_PROPERTY_KEY, CTS_TEST_PROPERTY_VAL));
     }
 }

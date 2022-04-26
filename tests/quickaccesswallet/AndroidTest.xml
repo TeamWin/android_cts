@@ -30,6 +30,7 @@
         <option name="test-file-name" value="CtsQuickAccessWalletTestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="android.quickaccesswallet.cts" />
+       <option name="package" value="android.quickaccesswallet.cts" />
+       <option name="test-timeout" value="300000" />
     </test>
 </configuration>
