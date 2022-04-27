@@ -109,6 +109,20 @@ public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
         testCodec(720, 1280, 4000000, requiredMinInstances);
     }
 
+    /**
+     * This test calculates the number of 1080p 30 fps encoder instances that the given two
+     * (mime - encoder) pairs can support. Assigns the same number of instances to the two pairs
+     * (if max instances are even), or one more to one pair (if odd) and ensures that all the
+     * concurrent sessions succeed in encoding.
+     */
+    @LargeTest
+    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    @CddTest(requirement = "2.2.7.1/5.1/H-1-3,H-1-4")
+    public void test1080p() throws Exception {
+        Assume.assumeTrue(Utils.isTPerfClass() || !Utils.isPerfClass());
+        testCodec(1080, 1920, 10000000, REQUIRED_MIN_CONCURRENT_INSTANCES);
+    }
+
     private void testCodec(int height, int width, int bitrate, int requiredMinInstances)
             throws Exception {
         ArrayList<Pair<String, String>> mimeEncoderPairs = new ArrayList<>();
