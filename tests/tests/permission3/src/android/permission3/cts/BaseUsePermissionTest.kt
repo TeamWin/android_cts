@@ -67,6 +67,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             "$APK_DIRECTORY/CtsCreateNotificationChannelsApp31.apk"
         const val APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_33 =
             "$APK_DIRECTORY/CtsCreateNotificationChannelsApp33.apk"
+        const val APP_APK_PATH_MEDIA_PERMISSION_33_WITH_STORAGE =
+            "$APK_DIRECTORY/CtsMediaPermissionApp33WithStorage.apk"
         const val APP_APK_PATH_OTHER_APP =
             "$APK_DIRECTORY/CtsDifferentPkgNameApp.apk"
         const val APP_PACKAGE_NAME = "android.permission3.cts.usepermission"

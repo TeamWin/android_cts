@@ -18,8 +18,6 @@ package android.permission3.cts
 
 import android.os.Build
 import androidx.test.filters.SdkSuppress
-import org.junit.Assume.assumeFalse
-import org.junit.Before
 import org.junit.Test
 
 /**
@@ -28,85 +26,88 @@ import org.junit.Test
  * treats them as one group and therefore their permission state must always be equal.
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
-class PermissionTestMediaPermissions : BaseUsePermissionTest() {
-    private fun assertAllPermissionState(state: Boolean) {
+class MediaPermissionTest : BaseUsePermissionTest() {
+    private fun assertStorageAndMediaPermissionState(state: Boolean) {
         for (permission in STORAGE_AND_MEDIA_PERMISSIONS) {
             assertAppHasPermission(permission, state)
         }
     }
 
-    @Before
-    fun assumeNotTvOrWatch() {
-        assumeFalse(isTv)
-        assumeFalse(isWatch)
-    }
-
-    @Before
-    fun installApp23() {
-        installPackage(APP_APK_PATH_23)
-    }
-
-    @Before
-    fun assertAppStartsWithNoPermissions() {
-        assertAllPermissionState(false)
-    }
-
     @Test
     fun testWhenRESIsGrantedFromGrantDialogThenShouldGrantAllPermissions() {
+        installPackage(APP_APK_PATH_23)
         requestAppPermissionsAndAssertResult(
             android.Manifest.permission.READ_EXTERNAL_STORAGE to true
         ) {
             clickPermissionRequestAllowButton()
         }
-        assertAllPermissionState(true)
+        assertStorageAndMediaPermissionState(true)
     }
 
     @Test
     fun testWhenRESIsGrantedManuallyThenShouldGrantAllPermissions() {
+        installPackage(APP_APK_PATH_23)
         grantAppPermissions(android.Manifest.permission.READ_EXTERNAL_STORAGE, targetSdk = 23)
-        assertAllPermissionState(true)
+        assertStorageAndMediaPermissionState(true)
     }
 
     @Test
     fun testWhenAuralIsGrantedManuallyThenShouldGrantAllPermissions() {
+        installPackage(APP_APK_PATH_23)
         grantAppPermissions(android.Manifest.permission.READ_MEDIA_AUDIO, targetSdk = 23)
-        assertAllPermissionState(true)
+        assertStorageAndMediaPermissionState(true)
     }
 
     @Test
     fun testWhenVisualIsGrantedManuallyThenShouldGrantAllPermissions() {
+        installPackage(APP_APK_PATH_23)
         grantAppPermissions(android.Manifest.permission.READ_MEDIA_VIDEO, targetSdk = 23)
-        assertAllPermissionState(true)
+        assertStorageAndMediaPermissionState(true)
     }
 
     @Test
     fun testWhenRESIsDeniedFromGrantDialogThenShouldDenyAllPermissions() {
+        installPackage(APP_APK_PATH_23)
         requestAppPermissionsAndAssertResult(
             android.Manifest.permission.READ_EXTERNAL_STORAGE to false
         ) {
             clickPermissionRequestDenyButton()
         }
-        assertAllPermissionState(false)
+        assertStorageAndMediaPermissionState(false)
     }
 
     @Test
     fun testWhenRESIsDeniedManuallyThenShouldDenyAllPermissions() {
+        installPackage(APP_APK_PATH_23)
         grantAppPermissions(android.Manifest.permission.READ_EXTERNAL_STORAGE, targetSdk = 23)
         revokeAppPermissions(android.Manifest.permission.READ_EXTERNAL_STORAGE, targetSdk = 23)
-        assertAllPermissionState(false)
+        assertStorageAndMediaPermissionState(false)
     }
 
     @Test
     fun testWhenAuralIsDeniedManuallyThenShouldDenyAllPermissions() {
+        installPackage(APP_APK_PATH_23)
         grantAppPermissions(android.Manifest.permission.READ_MEDIA_AUDIO, targetSdk = 23)
         revokeAppPermissions(android.Manifest.permission.READ_MEDIA_AUDIO, targetSdk = 23)
-        assertAllPermissionState(false)
+        assertStorageAndMediaPermissionState(false)
     }
 
     @Test
     fun testWhenVisualIsDeniedManuallyThenShouldDenyAllPermissions() {
+        installPackage(APP_APK_PATH_23)
         grantAppPermissions(android.Manifest.permission.READ_MEDIA_VIDEO, targetSdk = 23)
         revokeAppPermissions(android.Manifest.permission.READ_MEDIA_VIDEO, targetSdk = 23)
-        assertAllPermissionState(false)
+        assertStorageAndMediaPermissionState(false)
+    }
+
+    @Test
+    fun testWhenA33AppRequestsStorageThenNoDialogAndNoGrant() {
+        installPackage(APP_APK_PATH_MEDIA_PERMISSION_33_WITH_STORAGE)
+        requestAppPermissions(
+            android.Manifest.permission.READ_EXTERNAL_STORAGE,
+            android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ) {
+        }
+        assertStorageAndMediaPermissionState(false)
     }
 }
