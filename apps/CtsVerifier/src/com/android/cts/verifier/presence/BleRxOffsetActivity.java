@@ -52,6 +52,10 @@ public class BleRxOffsetActivity extends PassFailButtons.Activity {
         setContentView(R.layout.ble_rx_offset);
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
+
+        reportMedianRssiEditText = findViewById(R.id.report_ble_rssi_median);
+        reportReferenceDeviceEditText = findViewById(R.id.report_reference_device);
+
         DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
                 PackageManager.FEATURE_BLUETOOTH_LE);
 
@@ -64,9 +68,6 @@ public class BleRxOffsetActivity extends PassFailButtons.Activity {
                     .setOnCancelListener(dialog -> finish())
                     .create().show();
         }
-
-        reportMedianRssiEditText = findViewById(R.id.report_ble_rssi_median);
-        reportReferenceDeviceEditText = findViewById(R.id.report_reference_device);
 
         reportMedianRssiEditText.addTextChangedListener(
                 InputTextHandler.getOnTextChangedHandler((Editable s) -> checkTestInputs()));
