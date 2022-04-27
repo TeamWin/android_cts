@@ -28,6 +28,7 @@ import android.os.Looper;
 import android.service.games.GameSession.ScreenshotCallback;
 import android.service.games.TestGameSessionService.TestGameSession;
 import android.service.games.testing.ActivityResult;
+import android.service.games.testing.GameSessionEventInfo;
 import android.service.games.testing.IGameServiceTestService;
 import android.service.games.testing.OnSystemBarVisibilityChangedInfo;
 
@@ -71,8 +72,14 @@ public final class GameServiceTestService extends Service {
         }
 
         @Override
+        public List<GameSessionEventInfo> getGameSessionEventHistory() {
+            return ImmutableList.copyOf(TestGameSessionService.getGameSessionEventHistory());
+        }
+
+        @Override
         public void resetState() {
             TestGameService.reset();
+            TestGameSessionService.reset();
             mLastActivityResult = null;
 
             setGameServiceComponentEnabled(true);
