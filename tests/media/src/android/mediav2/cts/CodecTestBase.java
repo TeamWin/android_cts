@@ -61,6 +61,8 @@ import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import java.util.zip.CRC32;
 
@@ -72,6 +74,7 @@ import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420F
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
 import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -599,6 +602,8 @@ abstract class CodecTestBase {
         CODEC_DEFAULT, // Default codec must support
         CODEC_OPTIONAL // Codec support is optional
     }
+    static final String HDR_STATIC_INFO =
+            "00 d0 84 80 3e c2 33 c4 86 4c 1d b8 0b 13 3d 42 40 e8 03 64 00 e8 03 2c 01";
 
     static final String CODEC_PREFIX_KEY = "codec-prefix";
     static final String MEDIA_TYPE_PREFIX_KEY = "media-type-prefix";
@@ -1290,6 +1295,21 @@ abstract class CodecTestBase {
         return height;
     }
 
+    byte[] loadByteArrayFromString(final String str) {
+        if (str == null) {
+            return null;
+        }
+        Pattern pattern = Pattern.compile("[0-9a-fA-F]{2}");
+        Matcher matcher = pattern.matcher(str);
+        // allocate a large enough byte array first
+        byte[] tempArray = new byte[str.length() / 2];
+        int i = 0;
+        while (matcher.find()) {
+            tempArray[i++] = (byte) Integer.parseInt(matcher.group(), 16);
+        }
+        return Arrays.copyOfRange(tempArray, 0, i);
+    }
+
     boolean isFormatSimilar(MediaFormat inpFormat, MediaFormat outFormat) {
         if (inpFormat == null || outFormat == null) return false;
         String inpMime = inpFormat.getString(MediaFormat.KEY_MIME);
@@ -1345,6 +1365,25 @@ abstract class CodecTestBase {
         }
         if (transfer > UNSPECIFIED) {
             assertEquals("color transfer mismatch ", transfer, colorTransfer);
+        }
+    }
+
+    void validateHDRStaticMetaData(MediaFormat fmt, ByteBuffer hdrStaticRef) {
+        ByteBuffer hdrStaticInfo = fmt.getByteBuffer(MediaFormat.KEY_HDR_STATIC_INFO, null);
+        assertNotNull("No HDR metadata present in format : " + fmt, hdrStaticInfo);
+        if (!hdrStaticRef.equals(hdrStaticInfo)) {
+            StringBuilder refString = new StringBuilder("");
+            StringBuilder testString = new StringBuilder("");
+            byte[] ref = new byte[hdrStaticRef.capacity()];
+            hdrStaticRef.get(ref);
+            byte[] test = new byte[hdrStaticInfo.capacity()];
+            hdrStaticInfo.get(test);
+            for (int i = 0; i < Math.min(ref.length, test.length); i++) {
+                refString.append(String.format("%2x ", ref[i]));
+                testString.append(String.format("%2x ", test[i]));
+            }
+            fail("hdr static info mismatch" + "\n" + "ref static info : " + refString + "\n" +
+                    "test static info : " + testString);
         }
     }
 
@@ -1674,6 +1713,26 @@ class CodecDecoderTestBase extends CodecTestBase {
         queueEOS();
         waitForAllOutputs();
         validateColorAspects(mCodec.getOutputFormat(), range, standard, transfer);
+        mCodec.stop();
+        mCodec.release();
+        mExtractor.release();
+    }
+
+    void validateHDRStaticMetaData(String parent, String name, ByteBuffer HDRStatic,
+                                   boolean ignoreContainerStaticInfo)
+            throws IOException, InterruptedException {
+        mOutputBuff = new OutputManager();
+        MediaFormat format = setUpSource(parent, name);
+        if (ignoreContainerStaticInfo) {
+            format.removeKey(MediaFormat.KEY_HDR_STATIC_INFO);
+        }
+        mCodec = MediaCodec.createByCodecName(mCodecName);
+        configureCodec(format, true, true, false);
+        mCodec.start();
+        doWork(10);
+        queueEOS();
+        waitForAllOutputs();
+        validateHDRStaticMetaData(mCodec.getOutputFormat(), HDRStatic);
         mCodec.stop();
         mCodec.release();
         mExtractor.release();
