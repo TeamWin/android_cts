@@ -29,7 +29,6 @@ import image_processing_utils
 import its_session_utils
 import sensor_fusion_utils
 
-_ANDROID13_API_LEVEL = 32
 _ARDUINO_ANGLES = (10, 25)  # degrees
 _ARDUINO_MOVE_TIME = 0.30  # seconds
 _ARDUINO_SERVO_SPEED = 10
@@ -142,7 +141,7 @@ class VideoStabilityTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
       camera_properties_utils.skip_unless(
-          first_api_level >= _ANDROID13_API_LEVEL)
+          first_api_level >= its_session_utils.ANDROID13_API_LEVEL)
 
       # Raise error if not FRONT or REAR facing camera
       facing = props['android.lens.facing']

@@ -35,6 +35,7 @@ import error_util
 import image_processing_utils
 import opencv_processing_utils
 
+ANDROID13_API_LEVEL = 33
 LOAD_SCENE_DELAY_SEC = 3
 SUB_CAMERA_SEPARATOR = '.'
 _VALIDATE_LIGHTING_PATCH_H = 0.05
