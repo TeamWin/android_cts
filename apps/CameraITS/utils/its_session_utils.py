@@ -452,8 +452,28 @@ class ItsSession(object):
     self.sock.settimeout(self.SOCK_TIMEOUT)
     return data['objValue']
 
+  def is_hlg10_recording_supported(self, profile_id):
+    """Query whether the camera device supports HLG10 video recording.
+
+    Args:
+      profile_id: int; profile id corresponding to the quality level.
+    Returns:
+      Boolean: True, if device supports HLG10 video recording, False in
+      all other cases.
+    """
+    cmd = {}
+    cmd['cmdName'] = 'isHLG10Supported'
+    cmd['cameraId'] = self._camera_id
+    cmd['profileId'] = profile_id
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+
+    data, _ = self.__read_response_from_socket()
+    if data['tag'] != 'hlg10Response':
+      raise error_util.CameraItsError('Failed to query HLG10 support')
+    return data['strValue'] == 'true'
+
   def do_basic_recording(self, profile_id, quality, duration,
-                         video_stabilization_mode=0):
+                         video_stabilization_mode=0, hlg10_enabled=False):
     """Issue a recording request and read back the video recording object.
 
     The recording will be done with the format specified in quality. These
@@ -467,19 +487,21 @@ class ItsSession(object):
       quality: Video recording quality such as High, Low, VGA.
       duration: The time in seconds for which the video will be recorded.
       video_stabilization_mode: Video stabilization mode ON/OFF. Value can be
-      0: 'OFF'
-      1: 'ON'
-      2: 'PREVIEW'
+      0: 'OFF', 1: 'ON', 2: 'PREVIEW'
+      hlg10_enabled: boolean: True Enable 10-bit HLG video recording, False
+      record using the regular SDR profile
     Returns:
       video_recorded_object: The recorded object returned from ItsService which
-      contains path at which the recording is saved on the device, quality of the
-      recorded video, video size of the recorded video, video frame rate.
+      contains path at which the recording is saved on the device, quality of
+      the recorded video, video size of the recorded video, video frame rate
+      and 'hlg10' if 'hlg10_enabled' is set to True.
       Ex:
       VideoRecordingObject: {
         'tag': 'recordingResponse',
         'objValue': {
-          'recordedOutputPath': '/storage/emulated/0/Android/data/com.android.cts.verifier'
-                                '/files/VideoITS/VID_20220324_080414_0_CIF_352x288.mp4',
+          'recordedOutputPath':
+            '/storage/emulated/0/Android/data/com.android.cts.verifier'
+            '/files/VideoITS/VID_20220324_080414_0_CIF_352x288.mp4',
           'quality': 'CIF',
           'videoFrameRate': 30,
           'videoSize': '352x288'
@@ -487,14 +509,17 @@ class ItsSession(object):
       }
     """
     cmd = {'cmdName': 'doBasicRecording', 'cameraId': self._camera_id,
-        'profileId': profile_id, 'quality': quality, 'recordingDuration': duration,
-        'videoStabilizationMode': video_stabilization_mode}
+           'profileId': profile_id, 'quality': quality,
+           'recordingDuration': duration,
+           'videoStabilizationMode': video_stabilization_mode,
+           'hlg10Enabled': hlg10_enabled}
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
     self.sock.settimeout(timeout)
     data, _ = self.__read_response_from_socket()
     if data['tag'] != 'recordingResponse':
-      raise error_util.CameraItsError(f'Invalid response for command: {cmd[cmdName]}')
+        raise error_util.CameraItsError(
+            f'Invalid response for command: {cmd[cmdName]}')
     logging.debug('VideoRecordingObject: %s' % data)
     return data['objValue']
 

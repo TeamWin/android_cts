@@ -16,6 +16,13 @@
 
 package com.android.cts.verifier.camera.its;
 
+import static android.media.MediaCodecInfo.CodecProfileLevel.HEVCProfileMain10;
+
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -39,6 +46,7 @@ import android.hardware.camera2.DngCreator;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.cts.CameraTestUtils;
 import android.hardware.camera2.cts.PerformanceTest;
+import android.hardware.camera2.params.DynamicRangeProfiles;
 import android.hardware.camera2.params.InputConfiguration;
 import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.OutputConfiguration;
@@ -49,19 +57,21 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioAttributes;
 import android.media.CamcorderProfile;
+import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
+import android.media.MediaCodecList;
+import android.media.MediaFormat;
+import android.media.MediaMuxer;
 import android.media.MediaRecorder;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.ImageWriter;
-import android.media.Image.Plane;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
-import android.os.Message;
 import android.os.SystemClock;
 import android.os.Vibrator;
 import android.util.Log;
@@ -78,7 +88,6 @@ import com.android.ex.camera2.blocking.BlockingStateCallback;
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 
 import com.android.compatibility.common.util.ReportLog.Metric;
-import com.android.cts.verifier.camera.its.StatsImage;
 import com.android.cts.verifier.camera.performance.CameraTestInstrumentation;
 import com.android.cts.verifier.camera.performance.CameraTestInstrumentation.MetricListener;
 import com.android.cts.verifier.R;
@@ -90,21 +99,16 @@ import org.junit.runner.Request;
 import org.junit.runner.Result;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.charset.Charset;
-import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -116,13 +120,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 public class ItsService extends Service implements SensorEventListener {
     public static final String TAG = ItsService.class.getSimpleName();
@@ -784,8 +788,13 @@ public class ItsService extends Service implements SensorEventListener {
                     String quality = cmdObj.getString("quality");
                     int recordingDuration = cmdObj.getInt("recordingDuration");
                     int videoStabilizationMode = cmdObj.getInt("videoStabilizationMode");
+                    boolean hlg10Enabled = cmdObj.getBoolean("hlg10Enabled");
                     doBasicRecording(cameraId, profileId, quality, recordingDuration,
-                            videoStabilizationMode);
+                            videoStabilizationMode, hlg10Enabled);
+                } else if ("isHLG10Supported".equals(cmdObj.getString("cmdName"))) {
+                    String cameraId = cmdObj.getString("cameraId");
+                    int profileId = cmdObj.getInt("profileId");
+                    doCheckHLG10Support(cameraId, profileId);
                 } else {
                     throw new ItsException("Unknown command: " + cmd);
                 }
@@ -1172,6 +1181,59 @@ public class ItsService extends Service implements SensorEventListener {
 
         mSocketRunnableObj.sendResponse("primaryCamera",
                 isPrimaryCamera ? "true" : "false");
+    }
+
+    private static MediaFormat initializeHLG10Format(Size videoSize, int videoBitRate,
+            int videoFrameRate) {
+        MediaFormat format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_HEVC,
+                videoSize.getWidth(), videoSize.getHeight());
+        format.setInteger(MediaFormat.KEY_PROFILE, HEVCProfileMain10);
+        format.setInteger(MediaFormat.KEY_BIT_RATE, videoBitRate);
+        format.setInteger(MediaFormat.KEY_FRAME_RATE, videoFrameRate);
+        format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+                MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+        format.setInteger(MediaFormat.KEY_COLOR_STANDARD, MediaFormat.COLOR_STANDARD_BT2020);
+        format.setInteger(MediaFormat.KEY_COLOR_RANGE, MediaFormat.COLOR_RANGE_FULL);
+        format.setInteger(MediaFormat.KEY_COLOR_TRANSFER, MediaFormat.COLOR_TRANSFER_HLG);
+        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+        return format;
+    }
+
+    private void doCheckHLG10Support(String cameraId, int profileId) throws ItsException {
+        if (mItsCameraIdList == null) {
+            mItsCameraIdList = ItsUtils.getItsCompatibleCameraIds(mCameraManager);
+        }
+        if (mItsCameraIdList.mCameraIds.size() == 0) {
+            throw new ItsException("No camera devices");
+        }
+        if (!mItsCameraIdList.mCameraIds.contains(cameraId)) {
+            throw new ItsException("Invalid cameraId " + cameraId);
+        }
+        boolean cameraHLG10OutputSupported = false;
+        try {
+            CameraCharacteristics c = mCameraManager.getCameraCharacteristics(cameraId);
+            int[] caps = c.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+            cameraHLG10OutputSupported = IntStream.of(caps).anyMatch(x -> x ==
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT);
+        } catch (CameraAccessException e) {
+            throw new ItsException("Failed to get camera characteristics", e);
+        }
+
+        int cameraDeviceId = Integer.parseInt(cameraId);
+        CamcorderProfile camcorderProfile = getCamcorderProfile(cameraDeviceId, profileId);
+        assert (camcorderProfile != null);
+
+        Size videoSize = new Size(camcorderProfile.videoFrameWidth,
+                camcorderProfile.videoFrameHeight);
+        MediaCodecList list = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        MediaFormat format = initializeHLG10Format(videoSize, camcorderProfile.videoBitRate,
+                camcorderProfile.videoFrameRate);
+        boolean codecSupported = (list.findEncoderForFormat(format) != null);
+        Log.v(TAG, "codecSupported: " + codecSupported + "cameraHLG10OutputSupported: " +
+                cameraHLG10OutputSupported);
+
+        mSocketRunnableObj.sendResponse("hlg10Response",
+                codecSupported && cameraHLG10OutputSupported ? "true" : "false");
     }
 
     private void doCheckPerformanceClass() throws ItsException {
@@ -1743,6 +1805,170 @@ public class ItsService extends Service implements SensorEventListener {
         return arrList.contains(mode);
     }
 
+    private class MediaCodecListener extends MediaCodec.Callback {
+        private final MediaMuxer mMediaMuxer;
+        private final Object mCondition;
+        private int mTrackId = -1;
+        private boolean mEndOfStream = false;
+
+        private MediaCodecListener(MediaMuxer mediaMuxer, Object condition) {
+            mMediaMuxer = mediaMuxer;
+            mCondition = condition;
+        }
+
+        @Override
+        public void onInputBufferAvailable(MediaCodec codec, int index) {
+            Log.e(TAG, "Unexpected input buffer available callback!");
+        }
+
+        @Override
+        public void onOutputBufferAvailable(MediaCodec codec, int index,
+                MediaCodec.BufferInfo info) {
+            synchronized (mCondition) {
+                if (mTrackId < 0) {
+                    return;
+                }
+
+                if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                    mEndOfStream = true;
+                    mCondition.notifyAll();
+                }
+
+                if (!mEndOfStream) {
+                    mMediaMuxer.writeSampleData(mTrackId, codec.getOutputBuffer(index), info);
+                    codec.releaseOutputBuffer(index, false);
+                }
+            }
+        }
+
+        @Override
+        public void onError(MediaCodec codec, MediaCodec.CodecException e) {
+            Log.e(TAG, "Codec error: " + e.getDiagnosticInfo());
+        }
+
+        @Override
+        public void onOutputFormatChanged(MediaCodec codec, MediaFormat format) {
+            synchronized (mCondition) {
+                mTrackId = mMediaMuxer.addTrack(format);
+                mMediaMuxer.start();
+            }
+        }
+    }
+
+    private void doBasicRecording(String cameraId, int profileId, String quality,
+            int recordingDuration, int videoStabilizationMode, boolean hlg10Enabled)
+            throws ItsException {
+        final long SESSION_CLOSE_TIMEOUT_MS  = 3000;
+
+        if (!hlg10Enabled) {
+            doBasicRecording(cameraId, profileId, quality, recordingDuration,
+                    videoStabilizationMode);
+            return;
+        }
+
+        int cameraDeviceId = Integer.parseInt(cameraId);
+        CamcorderProfile camcorderProfile = getCamcorderProfile(cameraDeviceId, profileId);
+        assert (camcorderProfile != null);
+        boolean supportsVideoStabilizationMode = isVideoStabilizationModeSupported(
+                videoStabilizationMode);
+        if (!supportsVideoStabilizationMode) {
+            throw new ItsException("Device does not support video stabilization mode: " +
+                    videoStabilizationMode);
+        }
+        Size videoSize = new Size(camcorderProfile.videoFrameWidth,
+                camcorderProfile.videoFrameHeight);
+        int fileFormat = camcorderProfile.fileFormat;
+        String outputFilePath = getOutputMediaFile(cameraDeviceId, videoSize, quality, fileFormat,
+                true);
+        assert (outputFilePath != null);
+
+        MediaCodecList list = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        MediaFormat format = initializeHLG10Format(videoSize, camcorderProfile.videoBitRate,
+                camcorderProfile.videoFrameRate);
+
+        String codecName = list.findEncoderForFormat(format);
+        assert (codecName != null);
+
+        int[] caps = mCameraCharacteristics.get(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+        assert ((caps != null) && IntStream.of(caps).anyMatch(x -> x ==
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT));
+
+        DynamicRangeProfiles profiles = mCameraCharacteristics.get(
+                CameraCharacteristics.REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES);
+        assert ((profiles != null) &&
+                profiles.getSupportedProfiles().contains(DynamicRangeProfiles.HLG10));
+
+        MediaCodec mediaCodec = null;
+        MediaMuxer muxer = null;
+        Log.i(TAG, "Video recording outputFilePath:"+ outputFilePath);
+        try {
+            muxer = new MediaMuxer(outputFilePath,
+                    MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+        } catch (IOException e) {
+            throw new ItsException("Error preparing the MediaMuxer.");
+        }
+        try {
+            mediaCodec = MediaCodec.createByCodecName(codecName);
+        } catch (IOException e) {
+            throw new ItsException("Error preparing the MediaCodec.");
+        }
+
+        mediaCodec.configure(format, null, null,
+                MediaCodec.CONFIGURE_FLAG_ENCODE);
+        Object condition = new Object();
+        mediaCodec.setCallback(new MediaCodecListener(muxer, condition), mCameraHandler);
+
+        mRecordSurface = mediaCodec.createInputSurface();
+        assert(mRecordSurface != null);
+
+        CameraCaptureSession.StateCallback mockCallback = mock(
+                CameraCaptureSession.StateCallback.class);
+        // Configure and create capture session.
+        try {
+            configureAndCreateCaptureSession(mRecordSurface, videoStabilizationMode,
+                    DynamicRangeProfiles.HLG10, mockCallback);
+        } catch (android.hardware.camera2.CameraAccessException e) {
+            throw new ItsException("Access error: ", e);
+        }
+
+        Log.i(TAG, "Now recording video for quality: " + quality + " profile id: " +
+                profileId + " cameraId: " + cameraDeviceId + " size: " + videoSize + " in HLG10!");
+        mediaCodec.start();
+        try {
+            Thread.sleep(recordingDuration * 1000); // recordingDuration is in seconds
+        } catch (InterruptedException e) {
+            throw new ItsException("Unexpected InterruptedException: ", e);
+        }
+
+        mediaCodec.signalEndOfInputStream();
+        mSession.close();
+        verify(mockCallback, timeout(SESSION_CLOSE_TIMEOUT_MS).
+                times(1)).onClosed(eq(mSession));
+
+        synchronized (condition) {
+            try {
+                condition.wait(SESSION_CLOSE_TIMEOUT_MS);
+            } catch (InterruptedException e) {
+                throw new ItsException("Unexpected InterruptedException: ", e);
+            }
+        }
+
+        muxer.stop();
+        mediaCodec.stop();
+        mediaCodec.release();
+        muxer.release();
+        mRecordSurface.release();
+        mRecordSurface = null;
+
+        Log.i(TAG, "10-bit Recording Done for quality: " + quality);
+
+        // Send VideoRecordingObject for further processing.
+        VideoRecordingObject obj = new VideoRecordingObject(outputFilePath,
+                quality, videoSize, camcorderProfile.videoFrameRate, fileFormat);
+        mSocketRunnableObj.sendVideoRecordingObject(obj);
+    }
+
     private void doBasicRecording(String cameraId, int profileId, String quality,
             int recordingDuration, int videoStabilizationMode) throws ItsException {
         int cameraDeviceId = Integer.parseInt(cameraId);
@@ -1807,6 +2033,13 @@ public class ItsService extends Service implements SensorEventListener {
     }
 
     private void configureAndCreateCaptureSession(Surface recordSurface, int videoStabilizationMode)
+            throws CameraAccessException {
+        configureAndCreateCaptureSession(recordSurface, videoStabilizationMode,
+                DynamicRangeProfiles.STANDARD, null /*stateCallback*/);
+    }
+
+    private void configureAndCreateCaptureSession(Surface recordSurface, int videoStabilizationMode,
+            long dynamicRangeProfile, CameraCaptureSession.StateCallback stateCallback)
             throws CameraAccessException{
         assert(recordSurface != null);
         // Create capture request builder
@@ -1817,24 +2050,40 @@ public class ItsService extends Service implements SensorEventListener {
             Log.i(TAG, "Turned ON video stabilization.");
         }
         mCaptureRequestBuilder.addTarget(recordSurface);
-        // Create capture session
-        mCamera.createCaptureSession(Arrays.asList(recordSurface),
-            new CameraCaptureSession.StateCallback() {
-                @Override
-                public void onConfigured(CameraCaptureSession session) {
-                    mSession = session;
-                    try {
-                        mSession.setRepeatingRequest(mCaptureRequestBuilder.build(), null, null);
-                    } catch (CameraAccessException e) {
-                        e.printStackTrace();
-                    }
-                }
+        ArrayList<OutputConfiguration> outputList = new ArrayList<>(1);
+        OutputConfiguration outConfig = new OutputConfiguration(recordSurface);
+        outConfig.setDynamicRangeProfile(dynamicRangeProfile);
+        outputList.add(outConfig);
 
-                @Override
-                public void onConfigureFailed(CameraCaptureSession session) {
-                    Log.i(TAG, "CameraCaptureSession configuration failed.");
-                }
-            }, mCameraHandler);
+        SessionConfiguration sessionConfiguration = new SessionConfiguration(
+                SessionConfiguration.SESSION_REGULAR, outputList,
+                new HandlerExecutor(mCameraHandler),
+                new CameraCaptureSession.StateCallback() {
+                    @Override
+                    public void onConfigured(CameraCaptureSession session) {
+                        mSession = session;
+                        try {
+                            mSession.setRepeatingRequest(mCaptureRequestBuilder.build(), null, null);
+                        } catch (CameraAccessException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void onConfigureFailed(CameraCaptureSession session) {
+                        Log.i(TAG, "CameraCaptureSession configuration failed.");
+                    }
+
+                    @Override
+                    public void onClosed(CameraCaptureSession session) {
+                        if (stateCallback != null) {
+                            stateCallback.onClosed(session);
+                        }
+                    }
+                });
+
+        // Create capture session
+        mCamera.createCaptureSession(sessionConfiguration);
     }
 
     // Returns the default camcorder profile for the given camera at the given quality level
@@ -1860,6 +2109,11 @@ public class ItsService extends Service implements SensorEventListener {
 
     private String getOutputMediaFile(int cameraId, Size videoSize, String quality,
             int fileFormat) {
+        return getOutputMediaFile(cameraId, videoSize, quality, fileFormat, false /*hlg10Enabled*/);
+    }
+
+    private String getOutputMediaFile(int cameraId, Size videoSize, String quality,
+            int fileFormat, boolean hlg10Enabled) {
         // If any quality has file format other than 3gp and webm then the
         // recording file will have mp4 as default extension.
         String fileExtension = "";
@@ -1883,8 +2137,12 @@ public class ItsService extends Service implements SensorEventListener {
             }
         }
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        File mediaFile = new File(mediaStorageDir.getPath() + File.separator +
-            "VID_" + timestamp + '_' + cameraId + '_' + quality + '_' + videoSize);
+        String fileName = mediaStorageDir.getPath() + File.separator +
+                "VID_" + timestamp + '_' + cameraId + '_' + quality + '_' + videoSize;
+        if (hlg10Enabled) {
+            fileName += "_hlg10";
+        }
+        File mediaFile = new File(fileName);
         return mediaFile + fileExtension;
     }
 
