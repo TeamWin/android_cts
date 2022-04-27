@@ -90,7 +90,7 @@ public class ResourcesHardeningTest {
         setDeviceProperty("incfs_default_timeouts", "1:1:1");
         setDeviceProperty("known_digesters_list", TestUtils.TEST_APP_PACKAGE);
         setSystemProperty("debug.incremental.always_enable_read_timeouts_for_system_dataloaders",
-                "0");
+                "1");
         setSystemProperty("debug.incremental.enable_read_timeouts_after_install", "0");
 
         // Set up the blocks that need to be restricted in order to test resource hardening.
