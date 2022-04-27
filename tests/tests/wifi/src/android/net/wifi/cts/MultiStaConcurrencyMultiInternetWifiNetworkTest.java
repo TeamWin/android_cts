@@ -75,7 +75,7 @@ import java.util.concurrent.ScheduledExecutorService;
  *
  * Assumes that all the saved networks is either open/WPA1/WPA2/WPA3 authenticated network.
  */
-@SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 @LargeTest
 @RunWith(AndroidJUnit4.class)
