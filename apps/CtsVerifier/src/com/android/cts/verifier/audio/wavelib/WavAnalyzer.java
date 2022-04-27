@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.verifier.audio.wavlib;
+package com.android.cts.verifier.audio.wavelib;
 
 import com.android.cts.verifier.audio.audiolib.AudioCommon;
 import com.android.cts.verifier.audio.Util;
@@ -27,6 +27,8 @@ import java.nio.ByteOrder;
  * Class contains the analysis to calculate frequency response.
  */
 public class WavAnalyzer {
+  final double SILENCE_THRESHOLD = Short.MAX_VALUE / 100.0f;
+
   private final Listener listener;
   private final int sampleRate;  // Recording sampling rate.
   private double[] data;  // Whole recording data.
@@ -271,6 +273,15 @@ public class WavAnalyzer {
 
   public boolean getResult() {
     return result;
+  }
+
+  public boolean isSilence() {
+    for (int i = 0; i < data.length; i++) {
+      if (Math.abs(data[i]) > SILENCE_THRESHOLD) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
