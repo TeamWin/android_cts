@@ -1,4 +1,3 @@
-
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
@@ -42,24 +41,22 @@ android_test {
     srcs: [
         "src/**/*.java",
         "app/GalleryTestApp/src/**/*.java",
-        "app/MultiAuthorityApp/src/**/*.java"],
+        "app/MultiAuthorityApp/src/**/*.java",
+    ],
 
-    // uncomment when b/140885436 is fixed
-    // sdk_version: "test_current",
     min_sdk_version: "21",
-    //TODO(b/227617884): Change target_sdk_version to 33 after T SDK finalization is complete
-    target_sdk_version: "10000",
-
-    platform_apis: true,
+    target_sdk_version: "test_current",
 
     data: [
         ":CtsProviderGalleryTestApp",
-        ":CtsProviderMultiAuthorityApp"
+        ":CtsProviderMultiAuthorityApp",
     ],
 }
 
 filegroup {
     name: "CtsProviderTestUtils",
-    srcs: ["src/android/provider/cts/ProviderTestUtils.java",
-           "src/android/provider/cts/media/MediaStoreUtils.java"],
+    srcs: [
+        "src/android/provider/cts/ProviderTestUtils.java",
+        "src/android/provider/cts/media/MediaStoreUtils.java",
+    ],
 }
