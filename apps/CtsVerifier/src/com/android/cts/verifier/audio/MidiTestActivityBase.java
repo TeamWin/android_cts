@@ -48,7 +48,7 @@ public abstract class MidiTestActivityBase
         implements View.OnClickListener {
 
     private static final String TAG = "MidiTestActivityBase";
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     protected MidiManager mMidiManager;
 
@@ -212,7 +212,13 @@ public abstract class MidiTestActivityBase
             Log.i(TAG, "scanMidiDevices()....");
         }
 
+        // Get the list of all MIDI devices attached
         MidiDeviceInfo[] devInfos = mMidiManager.getDevices();
+        if (DEBUG) {
+            Log.i(TAG, "  numDevices:" + devInfos.length);
+        }
+
+        // Let each module select (if available) the associated device for their type
         mUSBTestModule.scanDevices(devInfos);
         mVirtualTestModule.scanDevices(devInfos);
         mBTTestModule.scanDevices(devInfos);
@@ -378,7 +384,7 @@ public abstract class MidiTestActivityBase
         protected boolean             mTestRunning;
 
         // Timeout handling
-        protected static final int    TEST_TIMEOUT_MS = 1000;
+        protected static final int    TEST_TIMEOUT_MS = 5000; // 1000;
         protected final Timer         mTimeoutTimer = new Timer();
 
         public MidiTestModule(int deviceType) {
