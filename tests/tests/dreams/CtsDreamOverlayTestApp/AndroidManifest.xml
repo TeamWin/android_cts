@@ -19,7 +19,7 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.app.dream.cts.app">
-    <application android:label="CtsDreamTestApp">
+    <application android:label="CtsDreamTestApp" android:debuggable="true">
         <service
             android:name=".DreamOverlayService"
             android:exported="true">
