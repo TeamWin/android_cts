@@ -156,7 +156,8 @@ public class PackageManagerShellCommandTest {
 
     private static final String PACKAGE_MIME_TYPE = "application/vnd.android.package-archive";
 
-    static final long DEFAULT_STREAMING_VERIFICATION_TIMEOUT = 3 * 1000;
+    static final long DEFAULT_STREAMING_VERIFICATION_TIMEOUT_MS = 3 * 1000;
+    static final long VERIFICATION_BROADCAST_RECEIVED_TIMEOUT_MS = 10 * 1000;
 
     @Rule
     public AbandonAllPackageSessionsRule mAbandonSessionsRule = new AbandonAllPackageSessionsRule();
@@ -175,7 +176,7 @@ public class PackageManagerShellCommandTest {
     private String mInstall = "";
     private String mPackageVerifier = null;
     private String mUnusedStaticSharedLibsMinCachePeriod = null;
-    private long mStreamingVerificationTimeoutMs = DEFAULT_STREAMING_VERIFICATION_TIMEOUT;
+    private long mStreamingVerificationTimeoutMs = DEFAULT_STREAMING_VERIFICATION_TIMEOUT_MS;
     private int mSecondUser = -1;
 
     private static PackageInstaller getPackageInstaller() {
@@ -1232,12 +1233,15 @@ public class PackageManagerShellCommandTest {
         getUiAutomation().adoptShellPermissionIdentity(
                 android.Manifest.permission.PACKAGE_VERIFICATION_AGENT);
 
+        final CompletableFuture<Boolean> broadcastReceived = new CompletableFuture<>();
+
         // Create a single-use broadcast receiver
         BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 context.unregisterReceiver(this);
                 onBroadcast.accept(context, intent);
+                broadcastReceived.complete(true);
             }
         };
         // Create an intent-filter and register the receiver
@@ -1253,6 +1257,9 @@ public class PackageManagerShellCommandTest {
 
         // Update the package, should trigger verifier override.
         installPackage(TEST_HW7, expectedResultStartsWith);
+
+        // Wait for broadcast.
+        broadcastReceived.get(VERIFICATION_BROADCAST_RECEIVED_TIMEOUT_MS, TimeUnit.MILLISECONDS);
     }
 
     @Test
