@@ -19,8 +19,6 @@
      xmlns:tools="http://schemas.android.com/tools"
      package="android.provider.cts">
 
-    <uses-sdk android:targetSdkVersion="28"/>
-
     <!-- This is required for android.provider.cts.media.MediaStore_MetadataKeysTest
             when upgrading targetSdkVersion to R+
     <queries>

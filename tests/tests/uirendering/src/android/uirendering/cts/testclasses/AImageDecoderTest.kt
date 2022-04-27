@@ -964,6 +964,9 @@ class AImageDecoderTest {
     }
 
     private fun handleRotation(original: Bitmap, image: String): Bitmap {
+        // ExifInterface does not support GIF.
+        if (image.endsWith("gif")) return original
+
         val inputStream = getAssets().open(image)
         val exifInterface = ExifInterface(inputStream)
         var rotation = 0
