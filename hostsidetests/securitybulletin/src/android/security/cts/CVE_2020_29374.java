@@ -26,10 +26,10 @@ import static org.junit.Assert.*;
 public class CVE_2020_29374 extends SecurityTestCase {
 
    /**
-     * b/174738029
+     * b/174737879
      *
      */
-    @AsbSecurityTest(cveBugId = 174738029)
+    @AsbSecurityTest(cveBugId = 174737879)
     @Test
     public void testPocCVE_2020_29374() throws Exception {
         AdbUtils.runPocAssertExitStatusNotVulnerable("CVE-2020-29374", getDevice(),60);
