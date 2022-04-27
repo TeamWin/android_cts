@@ -46,7 +46,6 @@ import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -116,7 +115,6 @@ public class CreateVirtualDisplayTest {
                 .isNotEqualTo(0);
     }
 
-    @Ignore("Need allow_always_unlocked_virtual_displays flag to be on by default")
     @Test
     public void createVirtualDisplay_alwaysUnlocked_shouldSpecifyFlagInVirtualDisplays() {
         mVirtualDevice =
