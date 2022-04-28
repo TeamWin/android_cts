@@ -4733,25 +4733,29 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         assertThrows("No permission should trigger SecurityException", SecurityException.class,
                 () -> mWifiManager.queryAutojoinGlobal(mExecutor, listener));
 
-        // Test get/set autojoin global enabled
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.allowAutojoinGlobal(true));
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.queryAutojoinGlobal(mExecutor, listener));
-        synchronized (mLock) {
-            mLock.wait(TEST_WAIT_DURATION_MS);
-        }
-        assertTrue(enabled.get());
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            // Test get/set autojoin global enabled
+            mWifiManager.allowAutojoinGlobal(true);
+            mWifiManager.queryAutojoinGlobal(mExecutor, listener);
+            synchronized (mLock) {
+                mLock.wait(TEST_WAIT_DURATION_MS);
+            }
+            assertTrue(enabled.get());
 
-        // Test get/set autojoin global disabled
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.allowAutojoinGlobal(false));
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.queryAutojoinGlobal(mExecutor, listener));
-        synchronized (mLock) {
-            mLock.wait(TEST_WAIT_DURATION_MS);
+            // Test get/set autojoin global disabled
+            mWifiManager.allowAutojoinGlobal(false);
+            mWifiManager.queryAutojoinGlobal(mExecutor, listener);
+            synchronized (mLock) {
+                mLock.wait(TEST_WAIT_DURATION_MS);
+            }
+            assertFalse(enabled.get());
+        } finally {
+            // Re-enable auto join if the test fails for some reason.
+            mWifiManager.allowAutojoinGlobal(true);
+            uiAutomation.dropShellPermissionIdentity();
         }
-        assertFalse(enabled.get());
     }
 
     /**
