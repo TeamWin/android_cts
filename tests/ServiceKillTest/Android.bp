@@ -33,4 +33,8 @@ android_test {
         "general-tests",
     ],
     platform_apis: true,
+    data: [
+        ":CtsServiceKillTestApp",
+    ],
+    per_testcase_directory: true,
 }
