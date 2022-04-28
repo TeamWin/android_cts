@@ -800,7 +800,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         assertTrue(mMyResponse.success);
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     public void testRemoveClient() {
         if (!setupWifiP2p()) {
             return;
@@ -836,7 +836,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         assertTrue(mMyResponse.success);
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     public void testDiscoverPeersOnSpecificFreq() {
         if (!setupWifiP2p()) {
             return;
@@ -898,7 +898,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, null);
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     public void testDiscoverPeersOnSocialChannelsOnly() {
         if (!setupWifiP2p()) {
             return;
@@ -983,7 +983,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
     }
 
     /** Test IEs whose size is greater than the maximum allowed size. */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     public void testP2pSetVendorElementsOverMaximumAllowedSize() {
         if (!setupWifiP2p()) {
             return;
@@ -1007,7 +1007,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
     }
 
     /** Test that external approver APIs. */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     public void testP2pExternalApprover() {
         final MacAddress peer = MacAddress.fromString("11:22:33:44:55:66");
         if (!setupWifiP2p()) {

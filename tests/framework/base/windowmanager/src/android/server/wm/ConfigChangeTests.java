@@ -324,6 +324,8 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
      */
     @Test
     public void testResizeWithoutCrossingSizeBucket() {
+        assumeTrue(supportsSplitScreenMultiWindow());
+
         launchActivity(NO_RELAUNCH_ACTIVITY);
 
         waitAndAssertResumedActivity(NO_RELAUNCH_ACTIVITY, "Activity must be resumed");
