@@ -26,7 +26,6 @@ import image_processing_utils
 import opencv_processing_utils
 import image_fov_utils
 
-_ANDROID13_API_LEVEL = 32
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _VIDEO_RECORDING_DURATION_SECONDS = 3
 _FOV_PERCENT_RTOL = 0.15  # Relative tolerance on circle FoV % to expected.
@@ -140,7 +139,7 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
       # Check SKIP conditions.
       first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
       camera_properties_utils.skip_unless(
-          first_api_level >= _ANDROID13_API_LEVEL)
+          first_api_level >= its_session_utils.ANDROID13_API_LEVEL)
 
       # Load scene.
       its_session_utils.load_scene(cam, props, self.scene,
