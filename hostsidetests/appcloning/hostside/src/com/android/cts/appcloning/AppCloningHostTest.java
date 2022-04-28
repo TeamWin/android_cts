@@ -22,15 +22,16 @@ import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.AppModeFull;
 
-import com.android.tradefed.device.contentprovider.ContentProviderHandler;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.util.CommandResult;
+import com.android.tradefed.util.FileUtil;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,15 +48,15 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
 
     private static final String IMAGE_NAME_TO_BE_CREATED_KEY = "imageNameToBeCreated";
     private static final String IMAGE_NAME_TO_BE_DISPLAYED_KEY = "imageNameToBeDisplayed";
+    private static final String EXTERNAL_STORAGE_PATH = "/storage/emulated/%d/";
     private static final String IMAGE_NAME_TO_BE_VERIFIED_IN_OWNER_PROFILE_KEY =
             "imageNameToBeVerifiedInOwnerProfile";
     private static final String IMAGE_NAME_TO_BE_VERIFIED_IN_CLONE_PROFILE_KEY =
             "imageNameToBeVerifiedInCloneProfile";
     private static final String CLONE_USER_ID = "cloneUserId";
     private static final String MEDIA_PROVIDER_IMAGES_PATH = "/external/images/media/";
-    private static final String CONTENT_PROVIDER_SETUP_FAILURE =
-            "ContentProviderHandler Setup Failure";
-    private ContentProviderHandler mContentProviderHandler;
+    private static final String CLONE_DIRECTORY_CREATION_FAILURE =
+            "Failed to setup and user clone directories";
 
     /**
      * To help avoid flaky tests, give ourselves a unique nonce to be used for
@@ -64,21 +65,13 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
      */
     private static final String NONCE = String.valueOf(System.nanoTime());
 
-    private void contentProviderHandlerSetup() throws Exception {
-        mContentProviderHandler = new ContentProviderHandler(mDevice);
-        eventually(() -> mContentProviderHandler.setUp(), CONTENT_PROVIDER_SETUP_TIMEOUT_MS,
-                CONTENT_PROVIDER_SETUP_FAILURE);
-    }
+    private String mCloneUserStoragePath;
 
     @Before
     public void setup() throws Exception {
         super.baseHostSetup();
-    }
-
-    private void contentProviderHandlerTearDown() throws Exception {
-        if (mContentProviderHandler != null) {
-            mContentProviderHandler.tearDown();
-        }
+        mCloneUserStoragePath = String.format(EXTERNAL_STORAGE_PATH,
+                Integer.parseInt(mCloneUserId));
     }
 
     @After
@@ -88,48 +81,33 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
 
     @Test
     public void testCreateCloneUserFile() throws Exception {
+        // When we use ITestDevice APIs, they take care of setting up the TradefedContentProvider.
+        // TradefedContentProvider has INTERACT_ACROSS_USERS permission which allows it to access
+        // clone user's storage as well
+        // We retry in all the calls below to overcome the ContentProvider setup issues we sometimes
+        // run into. With a retry, the setup usually succeeds.
+
+        Integer mCloneUserIdInt = Integer.parseInt(mCloneUserId);
+        // Check that the clone user directories have been created
+        eventually(() -> mDevice.doesFileExist(mCloneUserStoragePath, mCloneUserIdInt),
+                CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS,
+                CLONE_DIRECTORY_CREATION_FAILURE);
+
+        File tmpFile = FileUtil.createTempFile("tmpFileToPush" + NONCE, ".txt");
+        String filePathOnClone = mCloneUserStoragePath + tmpFile.getName();
         try {
-            contentProviderHandlerSetup();
+            eventually(() -> mDevice.pushFile(tmpFile, filePathOnClone),
+                    CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS,
+                    CLONE_DIRECTORY_CREATION_FAILURE);
 
-            // createCloneUserFile Test Logic
-            createCloneUserFileTest();
+            eventually(() -> mDevice.doesFileExist(filePathOnClone, mCloneUserIdInt),
+                    CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS,
+                    CLONE_DIRECTORY_CREATION_FAILURE);
+
+            mDevice.deleteFile(filePathOnClone);
         } finally {
-
-            contentProviderHandlerTearDown();
+            tmpFile.delete();
         }
-    }
-
-    private void createCloneUserFileTest() throws Exception {
-        CommandResult out;
-
-        // Check that the clone user directories exist
-        eventually(() -> {
-            // Wait for finish.
-            assertThat(isSuccessful(
-                    runContentProviderCommand("query", mCloneUserId,
-                            CONTENT_PROVIDER_URL, "/sdcard", ""))).isTrue();
-        }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
-
-        // Create a file on the clone user storage
-        out = executeShellV2Command("touch /sdcard/testFile.txt");
-        assertThat(isSuccessful(out)).isTrue();
-        eventually(() -> {
-            // Wait for finish.
-            assertThat(isSuccessful(
-                    runContentProviderCommand("write", mCloneUserId,
-                            CONTENT_PROVIDER_URL, "/sdcard/testFile.txt",
-                            "< /sdcard/testFile.txt"))).isTrue();
-        }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
-
-        // Check that the above created file exists on the clone user storage
-        out = runContentProviderCommand("query", mCloneUserId,
-                CONTENT_PROVIDER_URL, "/sdcard/testFile.txt", "");
-        assertThat(isSuccessful(out)).isTrue();
-
-        // Cleanup the created file
-        out = runContentProviderCommand("delete", mCloneUserId,
-                CONTENT_PROVIDER_URL, "/sdcard/testFile.txt", "");
-        assertThat(isSuccessful(out)).isTrue();
     }
 
     /**
