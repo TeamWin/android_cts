@@ -68,7 +68,7 @@ public class StartActivityAsUserTests {
 
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         final String output = runShellCommand(
-                "pm create-user --user-type android.os.usertype.profile.TEST --profileOf "
+                "pm create-user --user-type android.os.usertype.profile.MANAGED --profileOf "
                         + context.getUserId() + " user2");
         sSecondUserId = Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
         if (sSecondUserId == 0) {
