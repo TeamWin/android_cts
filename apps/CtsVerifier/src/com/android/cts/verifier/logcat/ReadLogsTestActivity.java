@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.logcat;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
@@ -24,12 +25,15 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
-import java.io.File;
-import java.nio.file.Files;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -49,7 +53,12 @@ public class ReadLogsTestActivity extends PassFailButtons.Activity {
 
     private static final String PERMISSION = "android.permission.READ_LOGS";
 
-    private static final int NUM_OF_LINES = 10;
+    private static final String ALLOW_LOGD_ACCESS = "Allow logd access";
+    private static final String DENY_LOGD_ACCESS = "Decline logd access";
+    private static final String SYSTEM_LOG_START = "--------- beginning of system";
+
+    private static final int NUM_OF_LINES_FG = 10;
+    private static final int NUM_OF_LINES_BG = 0;
 
     private static Context sContext;
     private static ActivityManager sActivityManager;
@@ -62,38 +71,145 @@ public class ReadLogsTestActivity extends PassFailButtons.Activity {
 
         sContext = this;
         sActivityManager = sContext.getSystemService(ActivityManager.class);
-        sAppPackageName = sContext.getPackageName();
 
         // Setup the UI.
         setContentView(R.layout.logcat_read_logs);
         setPassFailButtonClickListeners();
         setInfoResources(R.string.read_logs_text, R.string.read_logs_test_info, -1);
 
+        createView();
+    }
+
+    private void createView() {
+
         // Get the run test button and attach the listener.
-        Button runBtn = (Button) findViewById(R.id.run_read_logs_btn);
-        runBtn.setOnClickListener(new View.OnClickListener() {
+        Button runFgAllowBtn = (Button) findViewById(R.id.run_read_logs_fg_allow_btn);
+        runFgAllowBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try {
-                    // Dump the logcat most recent 10 lines before the compile command,
-                    // and check if there are logs about compiling the test package.
-                    File logcatFile = File.createTempFile("logcat", ".txt");
-                    logcatFile.deleteOnExit();
-                    ProcessBuilder pb = new ProcessBuilder(Arrays.asList("logcat", "-b", "system",
-                            "-t", "10"));
-                    pb.redirectOutput(logcatFile);
-                    Process proc = pb.start();
-                    proc.waitFor();
+                runLogcatInForegroundAllowOnlyOnce();
+            }
+        });
 
-                    List<String> logcat = Files.readAllLines(logcatFile.toPath());
-                    int numOfLines = logcat.size();
-                    assertTrue("Number of lines is equal to 10",
-                            numOfLines == NUM_OF_LINES);
-                } catch (Exception e) {
-                    Log.e(TAG, "User Consent Testing failed");
-                }
+        Button runFgDenyBtn = (Button) findViewById(R.id.run_read_logs_fg_deny_btn);
+        runFgDenyBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                runLogcatInForegroundDontAllow();
             }
         });
 
     }
+
+    /**
+     * Responsible for running the logcat in foreground and testing the allow button
+     */
+    public void runLogcatInForegroundAllowOnlyOnce() {
+        Log.d(TAG, "Inside runLogcatInForeground()");
+        BufferedReader reader = null;
+        try {
+            // Dump the logcat most recent 10 lines before the compile command,
+            // and check if there are logs about compiling the test package.
+            java.lang.Process logcat = new ProcessBuilder(
+                    Arrays.asList("logcat", "-b", "system", "-t",
+                        Integer.toString(NUM_OF_LINES_FG))).start();
+            reader = new BufferedReader(new InputStreamReader(logcat.getInputStream()));
+            logcat.waitFor();
+
+            List<String> logcatOutput = new ArrayList<>();
+            String current;
+            Integer lineCount = 0;
+            while ((current = reader.readLine()) != null) {
+                logcatOutput.add(current);
+                lineCount++;
+            }
+
+            Log.d(TAG, "Logcat system allow line count: " + lineCount);
+            Log.d(TAG, "Logcat system allow output: " + logcatOutput);
+
+            try {
+
+                assertTrue("System log output is null", logcatOutput.size() != 0);
+
+                // Check if the logcatOutput is not null. If logcatOutput is null,
+                // it throws an assertion error
+                assertNotNull(logcatOutput.get(0), "logcat output should not be null");
+
+                boolean allowLog = logcatOutput.get(0).contains(SYSTEM_LOG_START);
+                assertTrue("Allow system log access containe log", allowLog);
+
+                boolean allowLineCount = lineCount > NUM_OF_LINES_FG;
+                assertTrue("Allow system log access count", allowLineCount);
+
+                Log.d(TAG, "Logcat system allow log contains: " + allowLog + " lineCount: "
+                        + lineCount + " larger than: " + allowLineCount);
+
+            } catch (AssertionError e) {
+                fail("User Consent Allow Testing failed");
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "User Consent Testing failed");
+        } finally {
+            try {
+                if (reader != null) {
+                    reader.close();
+                }
+            } catch (IOException e) {
+                Log.d(TAG, "Could not close reader: " + e.getMessage());
+            }
+        }
+    }
+
+    private void fail(CharSequence reason) {
+        Toast.makeText(this, reason, Toast.LENGTH_LONG).show();
+        Log.e(TAG, reason.toString());
+        setTestResultAndFinish(false);
+    }
+
+    /**
+     * Responsible for running the logcat in foreground and testing the deny button
+     */
+    public void runLogcatInForegroundDontAllow() {
+        Log.d(TAG, "Inside runLogcatInForeground()");
+        BufferedReader reader = null;
+        try {
+            java.lang.Process logcat = new ProcessBuilder(
+                    Arrays.asList("logcat", "-b", "system", "-t",
+                        Integer.toString(NUM_OF_LINES_FG))).start();
+            logcat.waitFor();
+
+            // Merge several logcat streams, and take the last N lines
+            reader = new BufferedReader(new InputStreamReader(logcat.getInputStream()));
+            assertNotNull(reader);
+
+            List<String> logcatOutput = new ArrayList<>();
+            String current;
+            int lineCount = 0;
+            while ((current = reader.readLine()) != null) {
+                logcatOutput.add(current);
+                lineCount++;
+            }
+
+            Log.d(TAG, "Logcat system deny line count:" + lineCount);
+
+            try {
+                assertTrue("Deny System log access", lineCount == NUM_OF_LINES_BG);
+            }  catch (AssertionError e) {
+                fail("User Consent Deny Testing failed");
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "User Consent Testing failed");
+        } finally {
+            try {
+                if (reader != null) {
+                    reader.close();
+                }
+            } catch (IOException e) {
+                Log.d(TAG, "Could not close reader: " + e.getMessage());
+            }
+        }
+    }
+
 }
