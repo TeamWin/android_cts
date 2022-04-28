@@ -20,10 +20,11 @@ import static android.Manifest.permission.BLUETOOTH_CONNECT;
 import static android.bluetooth.BluetoothStatusCodes.FEATURE_SUPPORTED;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothLeAudioCodecConfigMetadata;
 import android.bluetooth.BluetoothLeBroadcastChannel;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
@@ -43,6 +44,7 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 public class BluetoothLeBroadcastChannelTest {
+    private static final long TEST_AUDIO_LOCATION_FRONT_LEFT = 0x01;
     private static final int TEST_CHANNEL_INDEX = 42;
 
     private Context mContext;
@@ -101,15 +103,21 @@ public class BluetoothLeBroadcastChannelTest {
         if (shouldSkipTest()) {
             return;
         }
+        BluetoothLeAudioCodecConfigMetadata codecMetadata =
+                new BluetoothLeAudioCodecConfigMetadata.Builder()
+                        .setAudioLocation(TEST_AUDIO_LOCATION_FRONT_LEFT).build();
         BluetoothLeBroadcastChannel channel =
                 new BluetoothLeBroadcastChannel.Builder()
                         .setSelected(true)
                         .setChannelIndex(TEST_CHANNEL_INDEX)
-                        .setCodecMetadata(null)
+                        .setCodecMetadata(codecMetadata)
                         .build();
         assertTrue(channel.isSelected());
         assertEquals(TEST_CHANNEL_INDEX, channel.getChannelIndex());
-        assertNull(channel.getCodecMetadata());
+        assertEquals(codecMetadata, channel.getCodecMetadata());
+        assertEquals(TEST_AUDIO_LOCATION_FRONT_LEFT, channel.getCodecMetadata().getAudioLocation());
+        assertNotNull(channel.getCodecMetadata());
+        assertEquals(codecMetadata, channel.getCodecMetadata());
     }
 
     @Test
@@ -117,17 +125,24 @@ public class BluetoothLeBroadcastChannelTest {
         if (shouldSkipTest()) {
             return;
         }
+        BluetoothLeAudioCodecConfigMetadata codecMetadata =
+                new BluetoothLeAudioCodecConfigMetadata.Builder()
+                        .setAudioLocation(TEST_AUDIO_LOCATION_FRONT_LEFT).build();
         BluetoothLeBroadcastChannel channel =
                 new BluetoothLeBroadcastChannel.Builder()
                         .setSelected(true)
                         .setChannelIndex(TEST_CHANNEL_INDEX)
-                        .setCodecMetadata(null)
+                        .setCodecMetadata(codecMetadata)
                         .build();
         BluetoothLeBroadcastChannel channelCopy =
                 new BluetoothLeBroadcastChannel.Builder(channel).build();
         assertTrue(channelCopy.isSelected());
         assertEquals(TEST_CHANNEL_INDEX, channelCopy.getChannelIndex());
-        assertNull(channelCopy.getCodecMetadata());
+        assertEquals(codecMetadata, channelCopy.getCodecMetadata());
+        assertEquals(TEST_AUDIO_LOCATION_FRONT_LEFT,
+                channelCopy.getCodecMetadata().getAudioLocation());
+        assertNotNull(channelCopy.getCodecMetadata());
+        assertEquals(channel.getCodecMetadata(), channelCopy.getCodecMetadata());
     }
 
     private boolean shouldSkipTest() {
