@@ -48,6 +48,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
 
+import java.time.Duration;
+
 @SmallTest
 @RunWith(BlockJUnit4ClassRunner.class)
 public class EGL15Test {
@@ -234,6 +236,59 @@ public class EGL15Test {
         assertEquals(EGL14.EGL_SUCCESS, EGL14.eglGetError());
 
         assertTrue(nativeFence.awaitForever());
+        signaledTime = nativeFence.getSignalTime();
+        assertNotEquals(SyncFence.SIGNAL_TIME_INVALID, signaledTime);
+        assertThat("getSignalTime after waiting", signaledTime, greaterThan(before));
+
+        nativeFence.close();
+        assertFalse(nativeFence.isValid());
+        assertEquals(SyncFence.SIGNAL_TIME_INVALID, nativeFence.getSignalTime());
+    }
+
+    @Test
+    public void testEGL15AndroidNativeFenceWithAwaitDuration() {
+        if (mEglVersion < 15) {
+            return;
+        }
+        String eglExtensions = EGL14.eglQueryString(mEglDisplay, EGL14.EGL_EXTENSIONS);
+        if (!eglExtensions.contains("EGL_ANDROID_native_fence_sync")) {
+            return;
+        }
+        long before = System.nanoTime();
+        EGLSync sync = EGL15.eglCreateSync(mEglDisplay, EGLExt.EGL_SYNC_NATIVE_FENCE_ANDROID,
+                new long[] {
+                        EGL14.EGL_NONE },
+                0);
+        assertNotEquals(sync, EGL15.EGL_NO_SYNC);
+        assertEquals(EGL14.EGL_SUCCESS, EGL14.eglGetError());
+
+        SyncFence nativeFence = EGLExt.eglDupNativeFenceFDANDROID(mEglDisplay, sync);
+        assertNotNull(nativeFence);
+        assertEquals(EGL14.EGL_SUCCESS, EGL14.eglGetError());
+        // If the fence isn't valid, trigger a flush & try again
+        if (!nativeFence.isValid()) {
+            GLES20.glFlush();
+            assertEquals(GLES20.GL_NO_ERROR, GLES20.glGetError());
+
+            // Have flushed, native fence should be populated
+            nativeFence = EGLExt.eglDupNativeFenceFDANDROID(mEglDisplay, sync);
+            assertNotNull(nativeFence);
+            assertTrue(nativeFence.isValid());
+            assertEquals(EGL14.EGL_SUCCESS, EGL14.eglGetError());
+        }
+
+        long signaledTime = nativeFence.getSignalTime();
+        // We don't know if the fence has or hasn't signaled yet. But either way it must be
+        // greater than before the fence was created (either signaled, or PENDING which is LONG_MAX)
+        assertThat("getSignalTime before waiting", signaledTime, greaterThan(before));
+        // Similarly, if the fence has signaled it must be less than now
+        assertThat("getSignalTime before waiting", signaledTime,
+                anyOf(equalTo(SyncFence.SIGNAL_TIME_PENDING), lessThan(System.nanoTime())));
+
+        assertTrue(EGL15.eglDestroySync(mEglDisplay, sync));
+        assertEquals(EGL14.EGL_SUCCESS, EGL14.eglGetError());
+
+        assertTrue(nativeFence.await(Duration.ofMillis(3000)));
         signaledTime = nativeFence.getSignalTime();
         assertNotEquals(SyncFence.SIGNAL_TIME_INVALID, signaledTime);
         assertThat("getSignalTime after waiting", signaledTime, greaterThan(before));
