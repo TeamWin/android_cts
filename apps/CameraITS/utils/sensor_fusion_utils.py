@@ -648,11 +648,13 @@ def plot_gyro_events(gyro_events, plot_name, log_path):
   file_name = os.path.join(log_path, plot_name)
   matplotlib.pyplot.savefig(f'{file_name}_gyro_events.png')
 
+
 def conv_acceleration_to_movement(gyro_events, video_delay_time):
   """Convert gyro_events time and speed to movement during video time.
 
   Args:
     gyro_events: sorted dict of entries with 'time', 'x', 'y', and 'z'
+    video_delay_time: time at which video starts
 
   Returns:
     'z' acceleration converted to movement for times around VIDEO playing.

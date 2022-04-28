@@ -196,8 +196,8 @@ class ItsSession(object):
     """
     if check_port not in used_ports:
       # Try to run "adb forward" with the port
-      command = '%s forward tcp:%d tcp:%d' % \
-                       (self.adb, check_port, self.REMOTE_PORT)
+      command = ('%s forward tcp:%d tcp:%d' %
+                 (self.adb, check_port, self.REMOTE_PORT))
       proc = subprocess.Popen(
           command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
       error = proc.communicate()[1]
@@ -519,9 +519,9 @@ class ItsSession(object):
     self.sock.settimeout(timeout)
     data, _ = self.__read_response_from_socket()
     if data['tag'] != 'recordingResponse':
-        raise error_util.CameraItsError(
-            f'Invalid response for command: {cmd[cmdName]}')
-    logging.debug('VideoRecordingObject: %s' % data)
+      raise error_util.CameraItsError(
+          f'Invalid response for command: {cmd["cmdName"]}')
+    logging.debug('VideoRecordingObject: %s', data)
     return data['objValue']
 
   def do_preview_recording(self, video_size, duration, stabilize):
@@ -538,8 +538,8 @@ class ItsSession(object):
       stabilize: boolean; Whether the preview should be stabilized or not
     Returns:
       video_recorded_object: The recorded object returned from ItsService which
-      contains path at which the recording is saved on the device, quality of the
-      recorded video which is always set to "preview", video size of the
+      contains path at which the recording is saved on the device, quality of
+      the recorded video which is always set to "preview", video size of the
       recorded video, video frame rate.
       Ex:
       VideoRecordingObject: {
@@ -565,18 +565,22 @@ class ItsSession(object):
     self.sock.settimeout(timeout)
 
     data, _ = self.__read_response_from_socket()
-    logging.debug(f'VideoRecordingObject: {data}')
+    logging.debug('VideoRecordingObject: %s', str(data))
     if data['tag'] != 'recordingResponse':
-      raise error_util.CameraItsError(f'Invalid response from command{cmd["cmdName"]}')
+      raise error_util.CameraItsError(
+          f'Invalid response from command{cmd["cmdName"]}')
     return data['objValue']
 
   def get_supported_video_qualities(self, camera_id):
     """Get all supported video qualities for this camera device.
-      Args:
-        camera_id: device id
-      Returns:
-        List of all supported video qualities and corresponding profileIds.
-        Ex: ['480:4', '1080:6', '2160:8', '720:5', 'CIF:3', 'HIGH:1', 'LOW:0', 'QCIF:2', 'QVGA:7']
+
+    ie. ['480:4', '1080:6', '2160:8', '720:5', 'CIF:3', 'HIGH:1', 'LOW:0',
+         'QCIF:2', 'QVGA:7']
+
+    Args:
+      camera_id: device id
+    Returns:
+      List of all supported video qualities and corresponding profileIds.
     """
     cmd = {}
     cmd['cmdName'] = 'getSupportedVideoQualities'
@@ -585,16 +589,17 @@ class ItsSession(object):
     data, _ = self.__read_response_from_socket()
     if data['tag'] != 'supportedVideoQualities':
       raise error_util.CameraItsError('Invalid command response')
-    return data['strValue'].split(';')[:-1] # remove the last appended ';'
+    return data['strValue'].split(';')[:-1]  # remove the last appended ';'
 
   def get_supported_preview_sizes(self, camera_id):
     """Get all supported preview resolutions for this camera device.
 
-      Args:
-        camera_id: int; device id
-      Returns:
-        List of all supported video resolutions in ascending order.
-        Ex: ['640x480', '800x600', '1280x720', '1440x1080', '1920x1080']
+    ie. ['640x480', '800x600', '1280x720', '1440x1080', '1920x1080']
+
+    Args:
+      camera_id: int; device id
+    Returns:
+      List of all supported video resolutions in ascending order.
     """
     cmd = {
         'cmdName': 'getSupportedPreviewSizes',
