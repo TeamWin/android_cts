@@ -6564,4 +6564,41 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="report_slope">Report Slope</string>
     <string name="nan_precision_and_bias">Nan Precision and Bias Test</string>
     <string name="wifi_nan">WiFi NAN</string>
+
+    <!-- Strings for AudioMicrophoneMuteToggleActivity -->
+    <string name="audio_mic_toggle_test">Audio Microphone Hardware Toggle Mute Test</string>
+    <string name="audio_mic_toggle_test_info">
+        This test verifies that devices which implement microphone hardware privacy toggles enforce sensor privacy when toggles are enabled.
+        \nTo pass the test:
+        \n  - <a href="https://source.android.com/compatibility/android-cdd#9813_sensorprivacymanager">The audio stream should be muted</a>.
+        \n  - A dialog or notification should be shown that informs the user that the sensor privacy is enabled.
+    </string>
+    <string name="audio_mic_toggle_test_instruction1">
+        Mute the microphone using the hardware privacy toggle.
+        \nPress the RECORD button.
+        \nObserve a dialog with information regarding the microphone being blocked
+        \nIgnore/cancel the dialog and wait for the recording to complete.
+        \nThe pass button will be enabled if the test succeeded.</string>
+    <string name="audio_mic_toggle_test_analyzing">Analyzing, please wait...\n</string>
+
+    <!-- Strings for CameraMuteToggleActivity -->
+    <string name="camera_hw_toggle_test">Camera Hardware Toggle Mute Test</string>
+    <string name="camera_hw_toggle_test_info">
+        This test verifies that devices which implement camera hardware privacy toggles enforce sensor privacy when toggles are enabled.
+        \nTo pass the test:
+        \n  - <a href="https://source.android.com/compatibility/android-cdd#9813_sensorprivacymanager">The video stream should be muted</a>.
+        \n  - A dialog or notification should be shown that informs the user that the sensor privacy is enabled.
+    </string>
+    <string name="camera_hw_toggle_test_instruction">
+        Mute the camera using the hardware privacy toggle.
+        \nObserve a dialog with information regarding the camera being blocked.
+        \nCamera preview should show a blank feed.
+        \nPress the Take Photo button.
+        \nCaptured image should be black.
+        \nMark the test as passing if the above conditions are met.</string>
+    <string name="camera_hw_toggle_test_no_camera">
+        No available camera found.
+        \nAdd or enable a camera and re-run this test.
+    </string>
+
 </resources>

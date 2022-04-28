@@ -2906,6 +2906,24 @@
                                android.hardware.camera2.CaptureRequest#controlExtendedSceneMode" />
         </activity>
 
+        <activity android:name=".camera.its.CameraMuteToggleActivity"
+                 android:label="@string/camera_hw_toggle_test"
+                 android:exported="true"
+                 android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_camera" />
+            <meta-data android:name="test_required_configs" android:value="config_has_camera_toggle"/>
+            <meta-data android:name="test_required_features" android:value="android.hardware.camera.any"/>
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="single_display_mode" />
+            <meta-data android:name="CddTest" android:value="9.8.13/C-1-3" />
+        </activity>
+
         <activity android:name=".usb.accessory.UsbAccessoryTestActivity"
                 android:label="@string/usb_accessory_test"
                 android:exported="true"
@@ -5594,6 +5612,20 @@
             <meta-data android:name="ApiTest"
                 android:value="android.hardware.usb.UsbManager#getDeviceList|
                     android.hardware.usb.UsbManager#requestPermission"/>
+        </activity>
+
+        <activity android:name=".audio.AudioMicrophoneMuteToggleActivity"
+                android:label="@string/audio_mic_toggle_test"
+                android:exported="true"
+                android:screenOrientation="locked">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_required_configs" android:value="config_has_mic_toggle"/>
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
+            <meta-data android:name="CddTest" android:value="9.8.13/C-1-3" />
         </activity>
 
         <service android:name=".tv.MockTvInputService"
