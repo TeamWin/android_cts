@@ -139,6 +139,16 @@ public class CloudSearchManagerTest implements CloudSearchManager.CallBack {
     }
 
     @Test
+    public void testInvalidServiceSearch() {
+        setService(Cts1CloudSearchService.SERVICE_NAME + ";"
+                + "Invalid" + Cts2CloudSearchService.SERVICE_NAME);
+        assertNotNull(mManager);
+        mManager.search(CloudSearchTestUtils.getBasicSearchRequest("Successful1", ""),
+                Executors.newSingleThreadExecutor(), this);
+        await(mWatcher1.succeeded, "Waiting for successful search");
+    }
+
+    @Test
     public void testMultipleCallbacksSearch() {
         assertNotNull(mManager);
         mManager.search(CloudSearchTestUtils.getBasicSearchRequest(
