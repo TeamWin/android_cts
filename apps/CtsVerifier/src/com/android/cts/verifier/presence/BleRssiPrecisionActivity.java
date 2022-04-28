@@ -49,6 +49,10 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
         setContentView(R.layout.ble_rssi_precision);
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
+
+        reportRssiRangeEditText = findViewById(R.id.report_rssi_range);
+        reportReferenceDeviceEditText = findViewById(R.id.report_reference_device);
+
         DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
                 PackageManager.FEATURE_BLUETOOTH_LE);
 
@@ -61,9 +65,6 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
                     .setOnCancelListener(dialog -> finish())
                     .create().show();
         }
-
-        reportRssiRangeEditText = findViewById(R.id.report_rssi_range);
-        reportReferenceDeviceEditText = findViewById(R.id.report_reference_device);
 
         reportRssiRangeEditText.addTextChangedListener(InputTextHandler.getOnTextChangedHandler((Editable s) -> checkTestInputs()));
         reportReferenceDeviceEditText.addTextChangedListener(InputTextHandler.getOnTextChangedHandler((Editable s) -> checkTestInputs()));

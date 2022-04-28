@@ -29,10 +29,12 @@ import android.os.Process
 import android.permission.PermissionManager
 import android.provider.DeviceConfig
 import android.provider.Settings
+import android.safetycenter.SafetyCenterManager
 import android.server.wm.WindowManagerStateHelper
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiSelector
+import androidx.annotation.RequiresApi
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.DisableAnimationRule
@@ -50,7 +52,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
@@ -207,9 +208,7 @@ class CameraMicIndicatorsPermissionTest {
         testCameraAndMicIndicator(useMic = false, useCamera = true, chainUsage = true)
     }
 
-    // Enable when safety center sends a broadcast on safety center flag value change
     @Test
-    @Ignore
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     fun testSafetyCenterCameraIndicator() {
         assumeFalse(isTv)
@@ -217,28 +216,27 @@ class CameraMicIndicatorsPermissionTest {
         val manager = context.getSystemService(CameraManager::class.java)!!
         assumeTrue(manager.cameraIdList.isNotEmpty())
         changeSafetyCenterFlag(true.toString())
+        assumeSafetyCenterEnabled()
         testCameraAndMicIndicator(useMic = false, useCamera = true, safetyCenterEnabled = true)
     }
 
-    // Enable when safety center sends a broadcast on safety center flag value change
     @Test
-    @Ignore
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     fun testSafetyCenterMicIndicator() {
         assumeFalse(isTv)
         assumeFalse(isCar)
         changeSafetyCenterFlag(true.toString())
+        assumeSafetyCenterEnabled()
         testCameraAndMicIndicator(useMic = true, useCamera = false, safetyCenterEnabled = true)
     }
 
-    // Enable when safety center sends a broadcast on safety center flag value change
     @Test
-    @Ignore
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     fun testSafetyCenterHotwordIndicatorBehavior() {
         assumeFalse(isTv)
         assumeFalse(isCar)
         changeSafetyCenterFlag(true.toString())
+        assumeSafetyCenterEnabled()
         testCameraAndMicIndicator(
             useMic = false,
             useCamera = false,
@@ -247,14 +245,13 @@ class CameraMicIndicatorsPermissionTest {
         )
     }
 
-    // Enable when safety center sends a broadcast on safety center flag value change
     @Test
-    @Ignore
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     fun testSafetyCenterChainUsageWithOtherUsage() {
         assumeFalse(isTv)
         assumeFalse(isCar)
         changeSafetyCenterFlag(true.toString())
+        assumeSafetyCenterEnabled()
         testCameraAndMicIndicator(
             useMic = false,
             useCamera = true,
@@ -473,5 +470,15 @@ class CameraMicIndicatorsPermissionTest {
             DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY,
                     SAFETY_CENTER_ENABLED, safetyCenterEnabled, false)
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun assumeSafetyCenterEnabled() {
+        val safetyCenterManager = context.getSystemService(SafetyCenterManager::class.java)!!
+        val isSafetyCenterEnabled: Boolean = runWithShellPermissionIdentity<Boolean> {
+            safetyCenterManager.isSafetyCenterEnabled
+        }
+
+        assumeTrue(isSafetyCenterEnabled)
     }
 }

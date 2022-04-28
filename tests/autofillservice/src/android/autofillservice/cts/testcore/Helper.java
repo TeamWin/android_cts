@@ -26,7 +26,6 @@ import static android.service.autofill.FillEventHistory.Event.TYPE_DATASETS_SHOW
 import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_AUTHENTICATION_SELECTED;
 import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_SELECTED;
 import static android.service.autofill.FillEventHistory.Event.TYPE_SAVE_SHOWN;
-import static android.service.autofill.FillEventHistory.Event.UI_TYPE_UNKNOWN;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
@@ -1097,8 +1096,6 @@ public final class Helper {
 
     private static void assertFillEventPresentationType(FillEventHistory.Event event,
             int expectedType) {
-        // TODO: assert UI_TYPE_UNKNOWN in other event type
-        assertThat(event.getUiType()).isNotEqualTo(UI_TYPE_UNKNOWN);
         assertThat(event.getUiType()).isEqualTo(expectedType);
     }
 
@@ -1179,8 +1176,9 @@ public final class Helper {
      * @param datasetId dataset set id expected in the event
      */
     public static void assertFillEventForDatasetSelected(@NonNull FillEventHistory.Event event,
-            @Nullable String datasetId) {
+            @Nullable String datasetId, int uiType) {
         assertFillEvent(event, TYPE_DATASET_SELECTED, datasetId, null, null, null);
+        assertFillEventPresentationType(event, uiType);
     }
 
     /**
@@ -1193,8 +1191,9 @@ public final class Helper {
      * @param value the only value expected in the client state bundle
      */
     public static void assertFillEventForDatasetSelected(@NonNull FillEventHistory.Event event,
-            @Nullable String datasetId, @Nullable String key, @Nullable String value) {
+            @Nullable String datasetId, @Nullable String key, @Nullable String value, int uiType) {
         assertFillEvent(event, TYPE_DATASET_SELECTED, datasetId, key, value, null);
+        assertFillEventPresentationType(event, uiType);
     }
 
     /**

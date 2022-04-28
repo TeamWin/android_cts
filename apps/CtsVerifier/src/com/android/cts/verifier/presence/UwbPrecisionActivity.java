@@ -51,12 +51,13 @@ public class UwbPrecisionActivity extends PassFailButtons.Activity {
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
 
-        DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
-                PackageManager.FEATURE_UWB);
-
         mDistanceRangeInput = (EditText) findViewById(R.id.distance_range_cm);
         mAoaRangeInput = (EditText) findViewById(R.id.aoa_range_degrees);
         mReferenceDeviceInput = (EditText) findViewById(R.id.reference_device);
+
+        DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
+                PackageManager.FEATURE_UWB);
+
         mDistanceRangeInput.addTextChangedListener(
                 InputTextHandler.getOnTextChangedHandler((Editable s) -> checkTestInputs()));
         mAoaRangeInput.addTextChangedListener(

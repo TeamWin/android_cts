@@ -54,6 +54,11 @@ public class BleRxTxCalibrationActivity extends PassFailButtons.Activity {
         setContentView(R.layout.ble_rx_tx_calibration);
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
+
+        reportChannelsRssiRangeEditText = findViewById(R.id.report_channels_rssi_range);
+        reportCoresRssiRangeEditText = findViewById(R.id.report_cores_rssi_range);
+        reportReferenceDeviceEditText = findViewById(R.id.report_reference_device);
+
         DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
                 PackageManager.FEATURE_BLUETOOTH_LE);
 
@@ -66,10 +71,6 @@ public class BleRxTxCalibrationActivity extends PassFailButtons.Activity {
                     .setOnCancelListener(dialog -> finish())
                     .create().show();
         }
-
-        reportChannelsRssiRangeEditText = findViewById(R.id.report_channels_rssi_range);
-        reportCoresRssiRangeEditText = findViewById(R.id.report_cores_rssi_range);
-        reportReferenceDeviceEditText = findViewById(R.id.report_reference_device);
 
         reportChannelsRssiRangeEditText.addTextChangedListener(
                 InputTextHandler.getOnTextChangedHandler((Editable s) -> checkTestInputs()));

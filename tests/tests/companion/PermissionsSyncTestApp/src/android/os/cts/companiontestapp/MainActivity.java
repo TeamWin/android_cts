@@ -16,7 +16,12 @@
 
 package android.os.cts.companiontestapp;
 
+
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
+import android.Manifest;
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -30,6 +35,9 @@ import android.widget.Toast;
 public class MainActivity extends Activity implements ContextProvider {
     private static final int REQUEST_CODE_CDM = 2;
     private static final int REQUEST_CODE_PERMISSIONS = 3;
+    private static final int REQUEST_CODE_BLUETOOTH_DISCOVERY = 4;
+    private static final int REQUEST_CODE_BLUETOOTH_PERMISSIONS = 5;
+    private static final int BLUETOOTH_DISCOVERY_DURATION_SECONDS = 100;
 
     private CDMController mCDMController;
 
@@ -44,17 +52,49 @@ public class MainActivity extends Activity implements ContextProvider {
         Button disassociateButton = findViewById(R.id.disassociateButton);
         Button permissionRequestButton = findViewById(R.id.permissionsRequestButton);
         Button transferDataButton = findViewById(R.id.transferDataButton);
+        Button startAdvertisingButton = findViewById(R.id.startAdvertisingButton);
 
         associateButton.setOnClickListener(v -> mCDMController.associate());
         disassociateButton.setOnClickListener(v -> mCDMController.disassociate());
         permissionRequestButton.setOnClickListener(v -> mCDMController.requestUserConsentForTransfer());
         transferDataButton.setOnClickListener(v -> mCDMController.beginDataTransfer());
+        startAdvertisingButton.setOnClickListener(v -> checkBluetoothPermissions());
+    }
+
+    private void checkBluetoothPermissions() {
+        if (checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PERMISSION_GRANTED) {
+            Toast.makeText(this, "permission already granted, advertising", Toast.LENGTH_SHORT).show();
+            advertise();
+        } else {
+            requestPermissions(new String[] { Manifest.permission.BLUETOOTH_CONNECT}, REQUEST_CODE_BLUETOOTH_PERMISSIONS);
+        }
+    }
+
+    private void advertise() {
+        Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+        discoverableIntent.putExtra(
+                BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, BLUETOOTH_DISCOVERY_DURATION_SECONDS);
+        startActivityForResult(discoverableIntent, REQUEST_CODE_BLUETOOTH_DISCOVERY);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         Toast.makeText(this, "onActivityResult: " + requestCode + " , " + resultCode, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_CODE_BLUETOOTH_PERMISSIONS:
+                if (grantResults.length > 0 && grantResults[0] == PERMISSION_GRANTED) {
+                    Toast.makeText(this, "permission granted, advertising", Toast.LENGTH_SHORT).show();
+                    advertise();
+                }  else {
+                    Toast.makeText(this, "permission denied", Toast.LENGTH_SHORT).show();
+                }
+        }
     }
 
     @Override

@@ -692,8 +692,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 DiscoverySessionCallbackTest.ON_SESSION_DISCOVERED_LOST));
         assertEquals(numOfAllPublishSessions - 1, mWifiAwareManager
                     .getAvailableAwareResources().getAvailablePublishSessionsCount());
-        //TODO(211696926): Change to isAtLeast() when SDK finalize.
-        if (ApiLevelUtil.codenameStartsWith("T")) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
             assertTrue("Time out waiting for resource change", receiver.waitForStateChange());
             assertEquals(numOfAllPublishSessions - 1, receiver.getResources()
                     .getAvailablePublishSessionsCount());
@@ -717,8 +716,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 DiscoverySessionCallbackTest.ON_SESSION_CONFIG_UPDATED));
         assertEquals(numOfAllPublishSessions, mWifiAwareManager
                 .getAvailableAwareResources().getAvailablePublishSessionsCount());
-        //TODO(211696926): Change to isAtLeast() when SDK finalize.
-        if (ApiLevelUtil.codenameStartsWith("T")) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
             assertTrue("Time out waiting for resource change", receiver.waitForStateChange());
             assertEquals(numOfAllPublishSessions, receiver.getResources()
                     .getAvailablePublishSessionsCount());
@@ -836,7 +834,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     /**
      * Validate success publish with instant communacation enabled.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     public void testPublishWithInstantCommunicationModeSuccess() {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
@@ -908,8 +906,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 DiscoverySessionCallbackTest.ON_SESSION_DISCOVERED_LOST));
         assertEquals(numOfAllSubscribeSessions - 1, mWifiAwareManager
                 .getAvailableAwareResources().getAvailableSubscribeSessionsCount());
-        //TODO(211696926): Change to isAtLeast() when SDK finalize.
-        if (ApiLevelUtil.codenameStartsWith("T")) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
             assertTrue("Time out waiting for resource change", receiver.waitForStateChange());
             assertEquals(numOfAllSubscribeSessions - 1, receiver.getResources()
                     .getAvailableSubscribeSessionsCount());
@@ -941,8 +938,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 DiscoverySessionCallbackTest.ON_SESSION_CONFIG_UPDATED));
         assertEquals(numOfAllSubscribeSessions, mWifiAwareManager
                 .getAvailableAwareResources().getAvailableSubscribeSessionsCount());
-        //TODO(211696926): Change to isAtLeast() when SDK finalize.
-        if (ApiLevelUtil.codenameStartsWith("T")) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
             assertTrue("Time out waiting for resource change", receiver.waitForStateChange());
             assertEquals(numOfAllSubscribeSessions, receiver.getResources()
                     .getAvailableSubscribeSessionsCount());
@@ -954,7 +950,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     /**
      * Validate success subscribe with instant communication enabled.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     public void testSubscribeWithInstantCommunicationModeSuccess() {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
@@ -1242,8 +1238,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         assertEquals(1000, params.getMacRandomizationIntervalSeconds());
         assertEquals(1, params.getNumSpatialStreamsInDiscovery());
         assertTrue(params.isDwEarlyTerminationEnabled());
-        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
-                || ApiLevelUtil.codenameStartsWith("T")) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
             ShellIdentityUtils.invokeWithShellPermissions(
                     () -> mWifiAwareManager.setAwareParams(params)
             );

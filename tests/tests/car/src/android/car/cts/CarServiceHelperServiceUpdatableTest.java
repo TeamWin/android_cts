@@ -35,12 +35,13 @@ import android.os.SystemClock;
 import android.os.UserManager;
 import android.util.Log;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -64,39 +65,85 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     }
 
     @Test
-    public void testCarServiceHelperServiceDump() throws Exception {
-        assumeThat("System_server_dumper not implemented.",
-                executeShellCommand("service check system_server_dumper"),
-                containsStringIgnoringCase("system_server_dumper: found"));
+    public void testCarServiceHelperServiceDump_list() throws Exception {
+        assumeSystemServerDumpSupported();
 
         assertWithMessage("System server dumper")
                 .that(executeShellCommand("dumpsys system_server_dumper --list"))
                 .contains("CarServiceHelper");
+    }
+
+    @Test
+    public void testCarServiceHelperServiceDump_carServiceProxy() throws Exception {
+        assumeSystemServerDumpSupported();
 
         assertWithMessage("CarServiceHelperService dump")
                 .that(executeShellCommand("dumpsys system_server_dumper --name CarServiceHelper"))
                 .contains("CarServiceProxy");
+    }
 
-        // Test setSafeMode
+    @Test
+    public void testCarServiceHelperServiceDump_safeMode() throws Exception {
+        assumeSystemServerDumpSupported();
+
+        // Should be parked already, but it doesn't hurt to make sure
+        executeShellCommand("cmd car_service emulate-driving-state park");
+
+        assertWithMessage("CarServiceHelperService dump")
+                .that(dumpCarServiceHelper())
+                .contains("Safe to run device policy operations: true");
+    }
+
+    @Ignore("TODO(b/230030584):  emulate-driving-state is not triggering changes")
+    @Test
+    public void testCarServiceHelperServiceDump_unsafeMode() throws Exception {
+        assumeSystemServerDumpSupported();
+
         try {
             executeShellCommand("cmd car_service emulate-driving-state drive");
 
             assertWithMessage("CarServiceHelperService dump")
-                    .that(executeShellCommand(
-                            "dumpsys system_server_dumper --name CarServiceHelper"))
+            .that(dumpCarServiceHelper())
                     .contains("Safe to run device policy operations: false");
         } finally {
             executeShellCommand("cmd car_service emulate-driving-state park");
         }
+    }
+
+    @Test
+    public void testCarServiceHelperServiceDump_safeOperation() throws Exception {
+        assumeSystemServerDumpSupported();
+
+        // Should be parked already, but it doesn't hurt to make sure
+        executeShellCommand("cmd car_service emulate-driving-state park");
 
         assertWithMessage("CarServiceHelperService dump")
-                .that(executeShellCommand("dumpsys system_server_dumper --name CarServiceHelper"))
-                .contains("Safe to run device policy operations: true");
+                .that(dumpCarServiceHelper("--is-operation-safe", "7"))
+                .contains("Operation REBOOT is SAFE. Reason: NONE");
+    }
 
-        // Test dumpServiceStacks
+    @Ignore("TODO(b/230030584):  emulate-driving-state is not triggering changes")
+    @Test
+    public void testCarServiceHelperServiceDump_unsafeOperation() throws Exception {
+        assumeSystemServerDumpSupported();
+
+        try {
+            executeShellCommand("cmd car_service emulate-driving-state drive");
+
+            assertWithMessage("CarServiceHelperService dump")
+                    .that(dumpCarServiceHelper("--is-operation-safe", "7"))
+                    .contains("Operation REBOOT is UNSAFE. Reason: DRIVING_DISTRACTION");
+        } finally {
+            executeShellCommand("cmd car_service emulate-driving-state park");
+        }
+    }
+
+    @Test
+    public void testCarServiceHelperServiceDump_serviceStacks() throws Exception {
+        assumeSystemServerDumpSupported();
+
         assertWithMessage("CarServiceHelperService dump")
-                .that(executeShellCommand("dumpsys system_server_dumper --name CarServiceHelper"
-                        + " --dump-service-stacks"))
+                .that(dumpCarServiceHelper("--dump-service-stacks"))
                 .contains("dumpServiceStacks ANR file path=/data/anr/anr_");
     }
 
@@ -140,6 +187,15 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
         }
     }
 
+    private String dumpCarServiceHelper(String...args) throws IOException {
+        StringBuilder cmd = new StringBuilder(
+                "dumpsys system_server_dumper --name CarServiceHelper");
+        for (String arg : args) {
+            cmd.append(' ').append(arg);
+        }
+        return executeShellCommand(cmd.toString());
+    }
+
     private void assertLastUserRemoved(int userId) throws Exception {
         // check for the logcat
         // TODO(b/210874444): Use logcat helper from
@@ -167,6 +223,12 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
             fail("match '" + match + "' was not found, IO exception: " + e);
         }
 
+    }
+
+    protected static void assumeSystemServerDumpSupported() throws IOException {
+        assumeThat("System_server_dumper not implemented.",
+                executeShellCommand("service check system_server_dumper"),
+                containsStringIgnoringCase("system_server_dumper: found"));
     }
 
     // TODO(214100537): Improve listener by removing sleep.

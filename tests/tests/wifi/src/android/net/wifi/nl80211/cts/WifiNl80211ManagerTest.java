@@ -131,7 +131,7 @@ public class WifiNl80211ManagerTest {
         } catch (Exception ignore) {}
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     @Test
     public void testGetMaxSsidsPerScan() {
         try {

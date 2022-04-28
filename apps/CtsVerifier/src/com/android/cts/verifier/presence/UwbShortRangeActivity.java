@@ -47,11 +47,12 @@ public class UwbShortRangeActivity extends PassFailButtons.Activity {
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
 
+        mMedianInput = (EditText) findViewById(R.id.distance_median_cm);
+        mReferenceDeviceInput = (EditText) findViewById(R.id.reference_device);
+
         DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
                 PackageManager.FEATURE_UWB);
 
-        mMedianInput = (EditText) findViewById(R.id.distance_median_cm);
-        mReferenceDeviceInput = (EditText) findViewById(R.id.reference_device);
         mMedianInput.addTextChangedListener(
                 InputTextHandler.getOnTextChangedHandler((Editable s) -> checkTestInputs()));
         mReferenceDeviceInput.addTextChangedListener(

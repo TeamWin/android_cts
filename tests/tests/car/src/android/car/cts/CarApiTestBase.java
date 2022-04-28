@@ -16,7 +16,7 @@
 
 package android.car.cts;
 
-import static org.junit.Assert.assertTrue;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.UiAutomation;
 import android.car.Car;
@@ -64,7 +64,8 @@ public abstract class CarApiTestBase {
     private Car mCar;
 
     protected void assertMainThread() {
-        assertTrue(Looper.getMainLooper().isCurrentThread());
+        assertWithMessage("Looper.getMainLooper().isCurrentThread()")
+                .that(Looper.getMainLooper().isCurrentThread()).isTrue();
     }
 
     protected void setUp() throws Exception {
