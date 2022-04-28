@@ -57,6 +57,13 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
             "ContentProviderHandler Setup Failure";
     private ContentProviderHandler mContentProviderHandler;
 
+    /**
+     * To help avoid flaky tests, give ourselves a unique nonce to be used for
+     * all filesystem paths, so that we don't risk conflicting with previous
+     * test runs.
+     */
+    private static final String NONCE = String.valueOf(System.nanoTime());
+
     private void contentProviderHandlerSetup() throws Exception {
         mContentProviderHandler = new ContentProviderHandler(mDevice);
         eventually(() -> mContentProviderHandler.setUp(), CONTENT_PROVIDER_SETUP_TIMEOUT_MS,
@@ -134,8 +141,7 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
      */
     @Test
     public void testRemoveClonedProfileMediaProviderCleanup() throws Exception {
-        CommandResult out;
-        String cloneProfileImage = "cloneProfileImage.png";
+        String cloneProfileImage = NONCE + "cloneProfileImage.png";
 
         // Inserting blank image in clone profile
         eventually(() -> {
@@ -145,15 +151,15 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
                             String.format("--bind _data:s:/storage/emulated/%s/Pictures/%s",
                                     mCloneUserId, cloneProfileImage),
                             String.format("--bind _user_id:s:%s", mCloneUserId)))).isTrue();
+            //Querying to see if image was successfully inserted
+            CommandResult queryResult = runContentProviderCommand("query", mCloneUserId,
+                    MEDIA_PROVIDER_URL, MEDIA_PROVIDER_IMAGES_PATH,
+                    "--projection _id",
+                    String.format("--where \"_display_name=\\'%s\\'\"", cloneProfileImage));
+            assertThat(isSuccessful(queryResult)).isTrue();
+            assertThat(queryResult.getStdout()).doesNotContain("No result found.");
         }, CLONE_PROFILE_MEDIA_PROVIDER_OPERATION_TIMEOUT_MS);
 
-        //Ensuring that image is added to media provider
-        out = runContentProviderCommand("query", mCloneUserId,
-                MEDIA_PROVIDER_URL, MEDIA_PROVIDER_IMAGES_PATH,
-                "--projection _id",
-                String.format("--where \"_display_name=\\'%s\\'\"", cloneProfileImage));
-        assertThat(isSuccessful(out)).isTrue();
-        assertThat(out.getStdout()).doesNotContain("No result found.");
 
         //Removing the clone profile
         eventually(() -> {
