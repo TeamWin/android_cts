@@ -141,6 +141,7 @@ public class UiTranslationManagerTest {
     private VirtualContainerView mVirtualContainerView;
     private ResponseNotSetTextView mResponseNotSetTextView;
     private CustomTextView mCustomTextView;
+    private SimpleActivity mSimpleActivity;
     private TextView mTextView;
     private static String sOriginalLogTag;
 
@@ -188,6 +189,51 @@ public class UiTranslationManagerTest {
         }
         Helper.resetTemporaryContentCaptureService();
         Helper.resetTemporaryTranslationService();
+    }
+
+    @Test
+    public void testTranslationAfterStartActivityOnSameTask() throws Throwable {
+        final Pair<List<AutofillId>, ContentCaptureContext> result =
+                enableServicesAndStartActivityForTranslation();
+
+        final List<AutofillId> views = result.first;
+        final ContentCaptureContext contentCaptureContext = result.second;
+
+        // Register callback
+        UiTranslationManager manager =
+                sContext.getSystemService(UiTranslationManager.class);
+        final Executor executor = Executors.newSingleThreadExecutor();
+        UiTranslationStateCallback mockCallback = Mockito.mock(UiTranslationStateCallback.class);
+        manager.registerUiTranslationStateCallback(executor, mockCallback);
+
+        final String translatedText = "success";
+        // Set response
+        final TranslationResponse response =
+                createViewsTranslationResponse(views, translatedText);
+        sTranslationReplier.addResponse(response);
+
+        // Start an Activity in the same task then call translation APIs
+        mSimpleActivity.startEmptyActivity();
+
+        startUiTranslation(/* shouldPadContent */ false, views, contentCaptureContext);
+
+        Mockito.verify(mockCallback, Mockito.times(1))
+            .onStarted(any(ULocale.class), any(ULocale.class), any(String.class));
+
+        pauseUiTranslation(contentCaptureContext);
+
+        Mockito.verify(mockCallback, Mockito.times(1)).onPaused(any(String.class));
+
+        resumeUiTranslation(contentCaptureContext);
+
+        Mockito.verify(mockCallback, Mockito.times(1))
+            .onResumed(any(ULocale.class), any(ULocale.class), any(String.class));
+
+        finishUiTranslation(contentCaptureContext);
+
+        Mockito.verify(mockCallback, Mockito.times(1)).onFinished(any(String.class));
+
+        manager.unregisterUiTranslationStateCallback(mockCallback);
     }
 
     @Test
@@ -1284,6 +1330,7 @@ public class UiTranslationManagerTest {
 
         mActivityScenario = ActivityScenario.launch(intent);
         mActivityScenario.onActivity(activity -> {
+            mSimpleActivity = activity;
             mTextView = activity.getHelloText();
             originalTextRef.set(activity.getHelloText().getText());
             viewAutofillIdsRef.set(activity.getViewsForTranslation());
