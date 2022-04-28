@@ -246,6 +246,7 @@ public abstract class ActivityManagerTestBase {
     private static Boolean sSupportsInsecureLockScreen = null;
     private static Boolean sIsAssistantOnTop = null;
     private static Boolean sIsTablet = null;
+    private static Boolean sDismissDreamOnActivityStart = null;
     private static boolean sIllegalTaskStateFound;
 
     protected static final int INVALID_DEVICE_ROTATION = -1;
@@ -1251,6 +1252,19 @@ public abstract class ActivityManagerTestBase {
                     android.R.bool.config_assistantOnTopOfDream);
         }
         return sIsAssistantOnTop;
+    }
+
+    protected boolean dismissDreamOnActivityStart() {
+        if (sDismissDreamOnActivityStart == null) {
+            try {
+                sDismissDreamOnActivityStart = mContext.getResources().getBoolean(
+                        Resources.getSystem().getIdentifier(
+                                "config_dismissDreamOnActivityStart", "bool", "android"));
+            } catch (Resources.NotFoundException e) {
+                sDismissDreamOnActivityStart = true;
+            }
+        }
+        return sDismissDreamOnActivityStart;
     }
 
     /**
