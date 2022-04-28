@@ -4060,6 +4060,66 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         Use the Back button to return to this page.
     </string>
+    <string name="device_owner_disallow_add_wifi_config">Disallow adding WiFi config</string>
+    <string name="device_owner_disallow_add_wifi_config_info">
+        Please press the Set restriction button to set the user restriction.
+        Then press Go to open the WiFi page in Settings.
+        Confirm that:\n\n
+        - You cannot add a new WiFi configuration.\n
+        - Trying to add any new WiFi configs triggers a support message.\n
+        \n
+        Use the Back button to return to this page.
+    </string>
+    <string name="device_owner_disallow_sharing_admin_configure_wifi">Disallow sharing admin configured WiFi config</string>
+    <string name="device_owner_disallow_sharing_admin_configure_wifi_info">
+        Please press the Set restriction button to set the user restriction.
+        Then press Go to open the WiFi page in Settings.
+        Confirm that:\n\n
+        - You cannot share an admin configured WiFi config.\n
+        - Sharing option is disabled in Settings.\n
+        \n
+        Use the Back button to return to this page.
+    </string>
+    <string name="device_owner_wifi_security_level_restriction">Set WiFi security level restriction</string>
+    <string name="device_owner_wifi_security_level_restriction_info">
+        This test verifies that minimum WiFi security level restriction can be set by the device owner.
+        The levels below are listed in an increasing order of security.\n
+        1. Connect to any network.\n
+        2. Pick a security level greater than the currently connected network (if unsure pick Enterprise 192).\n
+        3. Verify that current network gets disconnected.\n
+        4. Press Go to open the WiFi page in Settings.\n
+        5. Confirm that you cannot connect to any network that does not meet the security level restriction.\n
+        6. Use the Back button to return to this page.\n
+        7. Set the security level to Open to remove the restriction.\n
+        8. Press Go to open the WiFi page in Settings.\n
+        9. Confirm that you can connect to any network.
+    </string>
+    <string name="set_wifi_security_level_open">Set WiFi security level to Open</string>
+    <string name="set_wifi_security_level_personal">Set WiFi security level to Personal</string>
+    <string name="set_wifi_security_level_enterprise_eap">Set WiFi security level to Enterprise EAP</string>
+    <string name="set_wifi_security_level_enterprise_192">Set WiFi security level to Enterprise 192</string>
+    <string name="device_owner_ssid_restriction">Set WiFi SSID restriction</string>
+    <string name="device_owner_ssid_restriction_info">
+        This test verifies that WiFi SSID restriction can be set by the device owner.\n
+        1. Connect to any network.\n
+        2. Enter the SSID of the network you are currently connected to.\n
+        3. Set the SSID denylist.\n
+        4. Verify that current network gets disconnected.\n
+        5. Press Go to open the WiFi page in Settings.\n
+        6. Confirm that only the SSID from the denylist is restricted from connection.\n
+        7. Use the Back button to return to this page.\n
+        8. Enter the same SSID and set the SSID allowlist.\n
+        9. Press Go to open the WiFi page in Settings.\n
+        10. Confirm that you can only connect to the SSID from the allowlist.\n
+        11. Use the Back button to return to this page.\n
+        12. Leave the SSID field blank and set the allowlist to remove restriction.\n
+        13. Press Go to open the WiFi page in Settings.\n
+        14. Confirm that you can connect to any network.
+    </string>
+    <string name="device_owner_ssid_restriction_hint">Enter SSID</string>
+    <string name="device_owner_set_ssid_allowlist_button">Set SSID allowlist</string>
+    <string name="device_owner_set_ssid_denylist_button">Set SSID denylist</string>
+    <string name="device_owner_ssid_restriction_removing_toast">Removing SSID restriction</string>
     <string name="device_owner_disallow_ambient_display">Disallow ambient display</string>
     <string name="device_owner_disallow_ambient_display_info">
         Please press the Set restriction button to set the user restriction.

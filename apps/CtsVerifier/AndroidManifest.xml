@@ -6102,6 +6102,12 @@
                        android:value="single_display_mode" />
         </activity>
 
+        <activity android:name=".managedprovisioning.SsidRestrictionTestActivity"
+                  android:label="@string/device_owner_ssid_restriction" >
+            <meta-data android:name="display_mode"
+                       android:value="single_display_mode" />
+        </activity>
+
         <service android:name="com.android.cts.verifier.telecom.CtsConnectionService"
                 android:exported="true"
             android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE" >
