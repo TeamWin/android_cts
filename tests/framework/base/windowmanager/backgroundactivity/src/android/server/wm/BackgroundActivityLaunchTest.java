@@ -90,6 +90,7 @@ import androidx.test.uiautomator.Until;
 import com.android.compatibility.common.util.AppOpsUtils;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -711,6 +712,9 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     }
 
     private void clickAllowBindWidget(ResultReceiver resultReceiver) throws Exception {
+        // Test on non-auto devices only as auto doesn't support appwidget bind.
+        Assume.assumeFalse(mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUTOMOTIVE));
         // Create appWidgetId so we can send it to appA, to request bind widget and start config
         // activity.
         UiDevice device = UiDevice.getInstance(mInstrumentation);
