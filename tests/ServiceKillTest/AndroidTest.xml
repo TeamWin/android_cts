@@ -27,6 +27,10 @@
         <option name="test-file-name" value="CtsServiceKillTestCases.apk" />
     </target_preparer>
 
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="setprop log.tag.ServiceKillTest DEBUG" />
+    </target_preparer>
+
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="com.android.cts.servicekilltest" />
         <option name="runtime-hint" value="180m" />
