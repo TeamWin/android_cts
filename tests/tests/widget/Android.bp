@@ -50,4 +50,10 @@ android_test {
         "general-tests",
     ],
 
+    data: [
+        ":TestIme",
+        ":CtsMockInputMethod",
+        ":CtsWidgetApp",
+    ],
+    per_testcase_directory: true,
 }
