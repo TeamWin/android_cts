@@ -73,6 +73,10 @@ android_test {
     // TODO(b/211264986) Change both SDK versions to T (33) once it's formally defined.
     min_sdk_version: "current",
     target_sdk_version: "current",
+    data: [
+        ":CtsCompanionTestApp",
+    ],
+    per_testcase_directory: true,
 }
 
 android_test {
