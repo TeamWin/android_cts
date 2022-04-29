@@ -19,7 +19,7 @@ package android.view.cts;
 import android.app.Activity;
 import android.os.Bundle;
 
-public class AutoHandwritingActivity extends Activity {
+public class HandwritingActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

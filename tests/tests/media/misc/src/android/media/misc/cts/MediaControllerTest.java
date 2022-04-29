@@ -18,8 +18,15 @@ package android.media.misc.cts;
 import static android.media.cts.Utils.compareRemoteUserInfo;
 import static android.media.session.PlaybackState.STATE_PLAYING;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.Rating;
@@ -37,14 +44,22 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Process;
 import android.os.ResultReceiver;
-import android.test.AndroidTestCase;
 import android.view.KeyEvent;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test {@link android.media.session.MediaController}.
  */
 @NonMediaMainlineTest
-public class MediaControllerTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaControllerTest {
     // The maximum time to wait for an operation.
     private static final long TIME_OUT_MS = 3000L;
     private static final String SESSION_TAG = "test-session";
@@ -59,9 +74,12 @@ public class MediaControllerTest extends AndroidTestCase {
     private MediaController mController;
     private RemoteUserInfo mControllerInfo;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    private Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
+    @Before
+    public void setUp() throws Exception {
         mSessionInfo = new Bundle();
         mSessionInfo.putString(EXTRAS_KEY, EXTRAS_VALUE);
         mSession = new MediaSession(getContext(), SESSION_TAG, mSessionInfo);
@@ -71,19 +89,20 @@ public class MediaControllerTest extends AndroidTestCase {
                 getContext().getPackageName(), Process.myPid(), Process.myUid());
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @After
+    public void tearDown() throws Exception {
         if (mSession != null) {
             mSession.release();
             mSession = null;
         }
     }
 
+    @Test
     public void testGetPackageName() {
         assertEquals(getContext().getPackageName(), mController.getPackageName());
     }
 
+    @Test
     public void testGetPlaybackState() {
         final int testState = STATE_PLAYING;
         final long testPosition = 100000L;
@@ -124,6 +143,7 @@ public class MediaControllerTest extends AndroidTestCase {
         assertEquals(EXTRAS_VALUE, stateOut.getExtras().get(EXTRAS_KEY));
     }
 
+    @Test
     public void testGetRatingType() {
         assertEquals("Default rating type of a session must be Rating.RATING_NONE",
                 Rating.RATING_NONE, mController.getRatingType());
@@ -133,10 +153,12 @@ public class MediaControllerTest extends AndroidTestCase {
         assertEquals(Rating.RATING_5_STARS, mController.getRatingType());
     }
 
+    @Test
     public void testGetSessionToken() {
         assertEquals(mSession.getSessionToken(), mController.getSessionToken());
     }
 
+    @Test
     public void testGetSessionInfo() {
         Bundle sessionInfo = mController.getSessionInfo();
         assertNotNull(sessionInfo);
@@ -146,6 +168,7 @@ public class MediaControllerTest extends AndroidTestCase {
         assertEquals(EXTRAS_VALUE, cachedSessionInfo.getString(EXTRAS_KEY));
     }
 
+    @Test
     public void testGetSessionInfoReturnsAnEmptyBundleWhenNotSet() {
         MediaSession session = new MediaSession(getContext(), "test_tag", /*sessionInfo=*/ null);
         try {
@@ -155,10 +178,12 @@ public class MediaControllerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetTag() {
         assertEquals(SESSION_TAG, mController.getTag());
     }
 
+    @Test
     public void testSendCommand() throws Exception {
         synchronized (mWaitLock) {
             mCallback.reset();
@@ -175,6 +200,7 @@ public class MediaControllerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testSendCommandWithIllegalArgumentsThrowsIAE() {
         Bundle args = new Bundle();
         ResultReceiver resultReceiver = new ResultReceiver(mHandler);
@@ -194,6 +220,7 @@ public class MediaControllerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testSetPlaybackSpeed() throws Exception {
         synchronized (mWaitLock) {
             mCallback.reset();
@@ -208,11 +235,13 @@ public class MediaControllerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAdjustVolumeWithIllegalDirection() {
         // Call the method with illegal direction. System should not reboot.
         mController.adjustVolume(37, 0);
     }
 
+    @Test
     public void testVolumeControl() throws Exception {
         VolumeProvider vp = new VolumeProvider(VolumeProvider.VOLUME_CONTROL_ABSOLUTE, 11, 5) {
             @Override
@@ -257,6 +286,7 @@ public class MediaControllerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testTransportControlsAndMediaSessionCallback() throws Exception {
         MediaController.TransportControls controls = mController.getTransportControls();
         final MediaSession.Callback callback = (MediaSession.Callback) mCallback;
@@ -318,7 +348,7 @@ public class MediaControllerTest extends AndroidTestCase {
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnSetRatingCalled);
             assertEquals(rating.getRatingStyle(), mCallback.mRating.getRatingStyle());
-            assertEquals(rating.getStarRating(), mCallback.mRating.getStarRating());
+            assertEquals(rating.getStarRating(), mCallback.mRating.getStarRating(), 0d);
             assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
@@ -451,6 +481,7 @@ public class MediaControllerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testRegisterCallbackWithNullThrowsIAE() {
         try {
             mController.registerCallback(/*handler=*/ null);
@@ -467,6 +498,7 @@ public class MediaControllerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testRegisteringSameCallbackWithDifferentHandlerHasNoEffect() {
         MediaController.Callback callback = new MediaController.Callback() {};
         mController.registerCallback(callback, mHandler);
@@ -489,6 +521,7 @@ public class MediaControllerTest extends AndroidTestCase {
         handlerThread.quitSafely();
     }
 
+    @Test
     public void testUnregisterCallbackWithNull() {
         try {
             mController.unregisterCallback(/*handler=*/ null);
@@ -498,6 +531,7 @@ public class MediaControllerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testUnregisterCallbackShouldRemoveCallback() {
         MediaController.Callback callback = new MediaController.Callback() {};
         mController.registerCallback(callback, mHandler);
@@ -507,6 +541,7 @@ public class MediaControllerTest extends AndroidTestCase {
         assertNull(mController.getHandlerForCallback(callback));
     }
 
+    @Test
     public void testDispatchMediaButtonEventWithNullKeyEvent() {
         try {
             mController.dispatchMediaButtonEvent(/*keyEvent=*/ null);
@@ -516,11 +551,13 @@ public class MediaControllerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testDispatchMediaButtonEventWithNonMediaKeyEventReturnsFalse() {
         KeyEvent keyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_CAPS_LOCK);
         assertFalse(mController.dispatchMediaButtonEvent(keyEvent));
     }
 
+    @Test
     public void testPlaybackInfoCreatorNewArray() {
         final int arrayLength = 5;
         MediaController.PlaybackInfo[] playbackInfoArrayInitializedWithNulls
@@ -532,6 +569,7 @@ public class MediaControllerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testTransportControlsPlayAndPrepareFromMediaIdWithIllegalArgumentsThrowsIAE() {
         MediaController.TransportControls transportControls = mController.getTransportControls();
 
@@ -564,6 +602,7 @@ public class MediaControllerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testTransportControlsPlayAndPrepareFromUriWithIllegalArgumentsThrowsIAE() {
         MediaController.TransportControls transportControls = mController.getTransportControls();
 
@@ -596,6 +635,7 @@ public class MediaControllerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testTransportControlsPlayAndPrepareFromSearchWithNullDoesNotCrash()
             throws Exception {
         MediaController.TransportControls transportControls = mController.getTransportControls();
@@ -612,6 +652,7 @@ public class MediaControllerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testSendCustomActionWithIllegalArgumentsThrowsIAE() {
         MediaController.TransportControls transportControls = mController.getTransportControls();
 

@@ -15,7 +15,16 @@
  */
 package android.media.misc.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.Manifest;
+import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -38,14 +47,21 @@ import android.os.Looper;
 import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
-import android.test.InstrumentationTestCase;
-import android.test.UiThreadTest;
 import android.text.TextUtils;
 import android.view.KeyEvent;
+
+import androidx.test.annotation.UiThreadTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.SystemUtil;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -56,7 +72,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @AppModeFull(reason = "TODO: evaluate and port to instant")
-public class MediaSessionManagerTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaSessionManagerTest {
     private static final String TAG = "MediaSessionManagerTest";
     private static final int TIMEOUT_MS = 3000;
     private static final int WAIT_MS = 500;
@@ -69,22 +86,25 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
     private static boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
     private static boolean sIsAtLeastT = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mContext = getInstrumentation().getTargetContext();
+    private Instrumentation getInstrumentation() {
+        return InstrumentationRegistry.getInstrumentation();
+    }
+
+    @Before
+    public void setUp() {
+        mContext = getInstrumentation().getContext();
         mAudioManager = (AudioManager) getInstrumentation().getTargetContext()
                 .getSystemService(Context.AUDIO_SERVICE);
         mSessionManager = (MediaSessionManager) getInstrumentation().getTargetContext()
                 .getSystemService(Context.MEDIA_SESSION_SERVICE);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
-        super.tearDown();
     }
 
+    @Test
     public void testGetActiveSessions() throws Exception {
         try {
             List<MediaController> controllers = mSessionManager.getActiveSessions(null);
@@ -95,6 +115,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         // TODO enable a notification listener, test again, disable, test again
     }
 
+    @Test
     public void testGetMediaKeyEventSession_throwsSecurityException() {
         if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
         try {
@@ -105,6 +126,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testGetMediaKeyEventSessionPackageName_throwsSecurityException() {
         if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
         try {
@@ -115,6 +137,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testOnMediaKeyEventSessionChangedListener() throws Exception {
         // The permission can be held only on S+
         if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
@@ -144,6 +167,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         assertFalse(keyEventSessionListener.mCountDownLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
     }
 
+    @Test
     public void testOnMediaKeyEventSessionChangedListener_whenSessionIsReleased() throws Exception {
         // The permission can be held only on S+
         if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
@@ -184,6 +208,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         return session;
     }
 
+    @Test
     public void testOnMediaKeyEventSessionChangedListener_noPermission_throwsSecurityException() {
         if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
         MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
@@ -197,6 +222,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testOnMediaKeyEventDispatchedListener() throws Exception {
         // The permission can be held only on S+
         if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
@@ -241,6 +267,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         session.release();
     }
 
+    @Test
     @UiThreadTest
     public void testAddOnActiveSessionsListener() throws Exception {
         if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
@@ -279,6 +306,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         SystemUtil.runShellCommand(getInstrumentation(), command);
     }
 
+    @Test
     public void testSetOnVolumeKeyLongPressListener() throws Exception {
         Context context = getInstrumentation().getTargetContext();
         if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)
@@ -320,6 +348,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         removeHandler(handler);
     }
 
+    @Test
     public void testSetOnMediaKeyListener() throws Exception {
         Handler handler = createHandler();
         MediaSession session = null;
@@ -385,6 +414,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testRemoteUserInfo() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
         Handler handler = createHandler();
@@ -438,6 +468,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testGetSession2Tokens() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
         Handler handler = createHandler();
@@ -459,6 +490,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testGetSession2TokensWithTwoSessions() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
         Handler handler = createHandler();
@@ -500,6 +532,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testAddAndRemoveSession2TokensListener() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
         Handler handler = createHandler();
@@ -528,6 +561,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testSession2TokensNotChangedBySession1() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
         Handler handler = createHandler();
@@ -552,6 +586,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testCustomClassConfigValuesAreValid() throws Exception {
         if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
         final Context context = getInstrumentation().getTargetContext();
@@ -571,6 +606,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testIsTrustedForMediaControl_withEnabledNotificationListener() throws Exception {
         List<String> packageNames = getEnabledNotificationListenerPackages();
         for (String packageName : packageNames) {
@@ -582,6 +618,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     @NonMediaMainlineTest
     public void testIsTrustedForMediaControl_withInvalidUid() throws Exception {
         List<String> packageNames = getEnabledNotificationListenerPackages();

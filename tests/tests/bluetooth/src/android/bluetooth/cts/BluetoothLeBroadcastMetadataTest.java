@@ -58,7 +58,11 @@ public class BluetoothLeBroadcastMetadataTest {
     private static final int TEST_PRESENTATION_DELAY_MS = 345;
 
     private static final int TEST_CODEC_ID = 42;
-    private static final BluetoothLeBroadcastChannel[] TEST_CHANNELS = {};
+    private static final BluetoothLeBroadcastChannel[] TEST_CHANNELS = {
+        new BluetoothLeBroadcastChannel.Builder().setChannelIndex(42).setSelected(true)
+                .setCodecMetadata(new BluetoothLeAudioCodecConfigMetadata.Builder().build())
+                .build()
+    };
 
     // For BluetoothLeAudioCodecConfigMetadata
     private static final long TEST_AUDIO_LOCATION_FRONT_LEFT = 0x01;

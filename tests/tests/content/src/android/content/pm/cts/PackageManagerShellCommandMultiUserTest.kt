@@ -87,7 +87,7 @@ class PackageManagerShellCommandMultiUserTest {
 
     private var mPackageVerifier: String? = null
     private var mStreamingVerificationTimeoutMs =
-        PackageManagerShellCommandTest.DEFAULT_STREAMING_VERIFICATION_TIMEOUT
+        PackageManagerShellCommandTest.DEFAULT_STREAMING_VERIFICATION_TIMEOUT_MS
 
     @Before
     fun setup() {
@@ -102,7 +102,7 @@ class PackageManagerShellCommandMultiUserTest {
             "settings get global streaming_verifier_timeout"
         )
             .toLongOrNull()
-            ?: PackageManagerShellCommandTest.DEFAULT_STREAMING_VERIFICATION_TIMEOUT
+            ?: PackageManagerShellCommandTest.DEFAULT_STREAMING_VERIFICATION_TIMEOUT_MS
     }
 
     @After

@@ -39,7 +39,7 @@ public class OnDevicePersonalizationServiceTest {
     @Before
     public void setup() throws Exception {
         mContext = ApplicationProvider.getApplicationContext();
-        mService = new OnDevicePersonalizationManager(mContext);
+        mService = mContext.getSystemService(OnDevicePersonalizationManager.class);
     }
 
     @Test

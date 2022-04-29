@@ -16,6 +16,7 @@
 package android.media.misc.cts;
 
 import static android.media.AudioAttributes.USAGE_GAME;
+import static android.media.cts.Utils.compareRemoteUserInfo;
 import static android.media.misc.cts.MediaSessionTestService.KEY_EXPECTED_QUEUE_SIZE;
 import static android.media.misc.cts.MediaSessionTestService.KEY_EXPECTED_TOTAL_NUMBER_OF_ITEMS;
 import static android.media.misc.cts.MediaSessionTestService.KEY_SESSION_TOKEN;
@@ -24,7 +25,13 @@ import static android.media.misc.cts.MediaSessionTestService.STEP_CLEAN_UP;
 import static android.media.misc.cts.MediaSessionTestService.STEP_SET_UP;
 import static android.media.misc.cts.MediaSessionTestService.TEST_SERIES_OF_SET_QUEUE;
 import static android.media.misc.cts.MediaSessionTestService.TEST_SET_QUEUE;
-import static android.media.cts.Utils.compareRemoteUserInfo;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.app.PendingIntent;
 import android.content.ComponentName;
@@ -51,9 +58,16 @@ import android.os.Looper;
 import android.os.Parcel;
 import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
-import android.test.AndroidTestCase;
 import android.text.TextUtils;
 import android.view.KeyEvent;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,7 +77,8 @@ import java.util.concurrent.TimeUnit;
 
 @NonMediaMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
-public class MediaSessionTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaSessionTest {
     // The maximum time to wait for an operation that is expected to succeed.
     private static final long TIME_OUT_MS = 3000L;
     // The maximum time to wait for an operation that is expected to fail.
@@ -86,30 +101,35 @@ public class MediaSessionTest extends AndroidTestCase {
     private MediaControllerCallback mCallback = new MediaControllerCallback();
     private MediaSession mSession;
     private RemoteUserInfo mKeyDispatcherInfo;
+    private Context mContext;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    private Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
+    @Before
+    public void setUp() {
+        mContext = getContext();
         mAudioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
         mSession = new MediaSession(getContext(), TEST_SESSION_TAG);
         mKeyDispatcherInfo = new MediaSessionManager.RemoteUserInfo(
                 getContext().getPackageName(), Process.myPid(), Process.myUid());
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         // It is OK to call release() twice.
         if (mSession != null) {
             mSession.release();
             mSession = null;
         }
-        super.tearDown();
     }
 
     /**
      * Tests that a session can be created and that all the fields are
      * initialized correctly.
      */
+    @Test
     public void testCreateSession() throws Exception {
         assertNotNull(mSession.getSessionToken());
         assertFalse("New session should not be active", mSession.isActive());
@@ -120,6 +140,7 @@ public class MediaSessionTest extends AndroidTestCase {
         verifyNewSession(controller);
     }
 
+    @Test
     public void testSessionTokenEquals() {
         MediaSession anotherSession = null;
         try {
@@ -141,6 +162,7 @@ public class MediaSessionTest extends AndroidTestCase {
     /**
      * Tests MediaSession.Token created in the constructor of MediaSession.
      */
+    @Test
     public void testSessionToken() throws Exception {
         MediaSession.Token sessionToken = mSession.getSessionToken();
 
@@ -168,6 +190,7 @@ public class MediaSessionTest extends AndroidTestCase {
      * Tests that the various configuration bits on a session get passed to the
      * controller.
      */
+    @Test
     public void testConfigureSession() throws Exception {
         MediaController controller = mSession.getController();
         controller.registerCallback(mCallback, mHandler);
@@ -311,6 +334,7 @@ public class MediaSessionTest extends AndroidTestCase {
      * Test whether media button receiver can be a explicit broadcast receiver via
      * MediaSession.setMediaButtonReceiver(PendingIntent).
      */
+    @Test
     public void testSetMediaButtonReceiver_broadcastReceiver() throws Exception {
         Intent intent = new Intent(mContext.getApplicationContext(),
                 MediaButtonBroadcastReceiver.class);
@@ -356,6 +380,7 @@ public class MediaSessionTest extends AndroidTestCase {
     /**
      * Test whether media button receiver can be a explicit service.
      */
+    @Test
     public void testSetMediaButtonReceiver_service() throws Exception {
         Intent intent = new Intent(mContext.getApplicationContext(),
                 MediaButtonReceiverService.class);
@@ -402,6 +427,7 @@ public class MediaSessionTest extends AndroidTestCase {
      * Test whether system doesn't crash by
      * {@link MediaSession#setMediaButtonReceiver(PendingIntent)} with implicit intent.
      */
+    @Test
     public void testSetMediaButtonReceiver_implicitIntent() throws Exception {
         // Note: No such broadcast receiver exists.
         Intent intent = new Intent("android.media.misc.cts.ACTION_MEDIA_TEST");
@@ -428,6 +454,7 @@ public class MediaSessionTest extends AndroidTestCase {
      * Test whether media button receiver can be a explicit broadcast receiver via
      * MediaSession.setMediaButtonBroadcastReceiver(ComponentName)
      */
+    @Test
     public void testSetMediaButtonBroadcastReceiver_broadcastReceiver() throws Exception {
         // Play a sound so this session can get the priority.
         Utils.assertMediaPlaybackStarted(getContext());
@@ -469,6 +496,7 @@ public class MediaSessionTest extends AndroidTestCase {
     /**
      * Test public APIs of {@link VolumeProvider}.
      */
+    @Test
     public void testVolumeProvider() {
         VolumeProvider vp = new VolumeProvider(VolumeProvider.VOLUME_CONTROL_RELATIVE,
                 TEST_MAX_VOLUME, TEST_CURRENT_VOLUME, TEST_VOLUME_CONTROL_ID) {};
@@ -481,6 +509,7 @@ public class MediaSessionTest extends AndroidTestCase {
     /**
      * Test {@link MediaSession#setPlaybackToLocal} and {@link MediaSession#setPlaybackToRemote}.
      */
+    @Test
     public void testPlaybackToLocalAndRemote() throws Exception {
         MediaController controller = mSession.getController();
         controller.registerCallback(mCallback, mHandler);
@@ -544,6 +573,7 @@ public class MediaSessionTest extends AndroidTestCase {
     /**
      * Test {@link MediaSession.Callback#onMediaButtonEvent}.
      */
+    @Test
     public void testCallbackOnMediaButtonEvent() throws Exception {
         MediaSessionCallback sessionCallback = new MediaSessionCallback();
         mSession.setCallback(sessionCallback, new Handler(Looper.getMainLooper()));
@@ -657,6 +687,7 @@ public class MediaSessionTest extends AndroidTestCase {
      * Tests {@link MediaSession#setCallback} with {@code null}. No callbacks will be called
      * once {@code setCallback(null)} is done.
      */
+    @Test
     public void testSetCallbackWithNull() throws Exception {
         MediaSessionCallback sessionCallback = new MediaSessionCallback();
         mSession.setCallback(sessionCallback, mHandler);
@@ -691,6 +722,7 @@ public class MediaSessionTest extends AndroidTestCase {
      * which receives the media key events.
      * See: b/36669550
      */
+    @Test
     public void testReleaseNoCrashWithMultipleSessions() throws Exception {
         // Start a media playback for this app to receive media key events.
         Utils.assertMediaPlaybackStarted(getContext());
@@ -727,6 +759,7 @@ public class MediaSessionTest extends AndroidTestCase {
     /**
      * Tests {@link MediaSession.QueueItem}.
      */
+    @Test
     public void testQueueItem() {
         MediaDescription.Builder descriptionBuilder = new MediaDescription.Builder()
                 .setMediaId("media-id")
@@ -763,6 +796,7 @@ public class MediaSessionTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testQueueItemEquals() {
         MediaDescription.Builder descriptionBuilder = new MediaDescription.Builder()
                 .setMediaId("media-id")
@@ -789,6 +823,7 @@ public class MediaSessionTest extends AndroidTestCase {
         assertFalse(item.equals(differentDescription));
     }
 
+    @Test
     public void testSessionInfoWithFrameworkParcelable() {
         final String testKey = "test_key";
         final AudioAttributes frameworkParcelable = new AudioAttributes.Builder().build();
@@ -811,6 +846,7 @@ public class MediaSessionTest extends AndroidTestCase {
 
     }
 
+    @Test
     public void testSessionInfoWithCustomParcelable() {
         final String testKey = "test_key";
         final MediaSession2Test.CustomParcelable customParcelable =
@@ -837,6 +873,7 @@ public class MediaSessionTest extends AndroidTestCase {
      * An app should not be able to create too many sessions.
      * See MediaSessionService#SESSION_CREATION_LIMIT_PER_UID
      */
+    @Test
     public void testSessionCreationLimit() {
         List<MediaSession> sessions = new ArrayList<>();
         try {
@@ -857,6 +894,7 @@ public class MediaSessionTest extends AndroidTestCase {
      * Check that calling {@link MediaSession#release()} multiple times for the same session
      * does not decrement current session count multiple times.
      */
+    @Test
     public void testSessionCreationLimitWithMediaSessionRelease() {
         List<MediaSession> sessions = new ArrayList<>();
         MediaSession sessionToReleaseMultipleTimes = null;
@@ -885,6 +923,7 @@ public class MediaSessionTest extends AndroidTestCase {
     /**
      * Check that calling {@link MediaSession2#close()} does not decrement current session count.
      */
+    @Test
     public void testSessionCreationLimitWithMediaSession2Release() {
         List<MediaSession> sessions = new ArrayList<>();
         try {
@@ -910,6 +949,7 @@ public class MediaSessionTest extends AndroidTestCase {
      * Check that a series of {@link MediaSession#setQueue} does not break {@link MediaController}
      * on the remote process due to binder buffer overflow.
      */
+    @Test
     public void testSeriesOfSetQueue() throws Exception {
         int numberOfCalls = 100;
         int queueSize = 1_000;
@@ -934,6 +974,7 @@ public class MediaSessionTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testSetQueueWithLargeNumberOfItems() throws Exception {
         int queueSize = 500_000;
         List<QueueItem> queue = new ArrayList<>();
@@ -955,6 +996,7 @@ public class MediaSessionTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testSetQueueWithEmptyQueue() throws Exception {
         try (RemoteService.Invoker invoker = new RemoteService.Invoker(mContext,
                 MediaSessionTestService.class, TEST_SET_QUEUE)) {

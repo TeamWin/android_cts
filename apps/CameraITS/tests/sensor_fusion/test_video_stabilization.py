@@ -29,19 +29,18 @@ import image_processing_utils
 import its_session_utils
 import sensor_fusion_utils
 
-_ANDROID13_API_LEVEL = 32
 _ARDUINO_ANGLES = (10, 25)  # degrees
 _ARDUINO_MOVE_TIME = 0.30  # seconds
 _ARDUINO_SERVO_SPEED = 10
 _IMG_FORMAT = 'png'
 _MIN_PHONE_MOVEMENT_ANGLE = 5  # degrees
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
-_NUM_ROTATIONS = 30
+_NUM_ROTATIONS = 25
 _RADS_TO_DEGS = 180/math.pi
 _SEC_TO_NSEC = 1E9
-_START_FRAME = 10  # give 3A some frames to warm up
-_VIDEO_DELAY_TIME = 5  # seconds
-_VIDEO_DURATION = 5  # seconds
+_START_FRAME = 30  # give 3A 1s to warm up
+_VIDEO_DELAY_TIME = 5.5  # seconds
+_VIDEO_DURATION = 5.5  # seconds
 _VIDEO_QUALITIES_TESTED = ('QCIF:2', 'CIF:3', '480P:4', '720P:5', '1080P:6',
                            'QVGA:7', 'VGA:9')
 _VIDEO_STABILIZATION_FACTOR = 0.6  # 60% of gyro movement allowed
@@ -142,7 +141,7 @@ class VideoStabilityTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
       camera_properties_utils.skip_unless(
-          first_api_level >= _ANDROID13_API_LEVEL)
+          first_api_level >= its_session_utils.ANDROID13_API_LEVEL)
 
       # Raise error if not FRONT or REAR facing camera
       facing = props['android.lens.facing']
@@ -202,8 +201,8 @@ class VideoStabilityTest(its_base_test.ItsBaseTest):
         # Create frame array
         frames = []
         file_list = sorted(
-            [_ for _ in os.listdir(log_path) if (_.endswith(_IMG_FORMAT)
-                                                 and video_quality in _)])
+            [_ for _ in os.listdir(log_path) if
+             (_.endswith(_IMG_FORMAT) and f'_{video_quality}_' in _)])
         logging.debug('Number of frames %d', len(file_list))
         for file in file_list:
           img = image_processing_utils.convert_image_to_numpy_array(
@@ -214,9 +213,12 @@ class VideoStabilityTest(its_base_test.ItsBaseTest):
 
         # Extract camera rotations
         img_h = frames[0].shape[0]
+        file_name_stem = os.path.join(log_path, _NAME)
         cam_rots = sensor_fusion_utils.get_cam_rotations(
             frames[_START_FRAME:len(frames)], facing, img_h,
-            os.path.join(log_path, _NAME), _START_FRAME)
+            file_name_stem, _START_FRAME)
+        sensor_fusion_utils.plot_camera_rotations(
+            cam_rots, _START_FRAME, video_quality, file_name_stem)
         max_camera_angles.append(sensor_fusion_utils.calc_max_rotation_angle(
             cam_rots, 'Camera'))
 
@@ -236,13 +238,17 @@ class VideoStabilityTest(its_base_test.ItsBaseTest):
               f'THRESH: {_MIN_PHONE_MOVEMENT_ANGLE} degrees')
 
       # Assert PASS/FAIL criteria
+      test_failures = []
       for i, max_camera_angle in enumerate(max_camera_angles):
         if max_camera_angle >= max_gyro_angles[i] * _VIDEO_STABILIZATION_FACTOR:
-          raise AssertionError(
+          test_failures.append(
               f'{tested_video_qualities[i]} video not stabilized enough! '
               f'Max gyro angle: {max_gyro_angles[i]:.2f}, Max camera angle: '
               f'{max_camera_angle:.2f}, stabilization factor THRESH: '
               f'{_VIDEO_STABILIZATION_FACTOR}.')
+      if test_failures:
+        raise AssertionError(test_failures)
+
 
 if __name__ == '__main__':
   test_runner.main()

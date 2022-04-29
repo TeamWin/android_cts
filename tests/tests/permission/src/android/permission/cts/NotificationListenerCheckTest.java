@@ -43,6 +43,7 @@ import static java.lang.Math.max;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.Context;
@@ -107,9 +108,6 @@ public class NotificationListenerCheckTest {
     private static final String PROPERTY_NOTIFICATION_LISTENER_CHECK_ENABLED =
             "notification_listener_check_enabled";
 
-    /** Name of the flag that determines whether SafetyCenter is enabled. */
-    private static final String PROPERTY_SAFETY_CENTER_ENABLED = "safety_center_is_enabled";
-
     /**
      * Device config property for time period in milliseconds after which current enabled
      * notification
@@ -129,7 +127,7 @@ public class NotificationListenerCheckTest {
 
     /**
      * ID for notification shown by
-     * {@link com.android.permissioncontroller.permission.service.v33.NotificationListenerCheck}.
+     * {@link com.android.permissioncontroller.privacysources.NotificationListenerCheck}.
      */
     public static final int NOTIFICATION_LISTENER_CHECK_NOTIFICATION_ID = 3;
 
@@ -151,7 +149,7 @@ public class NotificationListenerCheckTest {
     public DeviceConfigStateChangerRule sPrivacyDeviceConfigSafetyCenterEnabled =
             new DeviceConfigStateChangerRule(sContext,
                     DeviceConfig.NAMESPACE_PRIVACY,
-                    PROPERTY_SAFETY_CENTER_ENABLED,
+                    SafetyCenterUtils.PROPERTY_SAFETY_CENTER_ENABLED,
                     Boolean.toString(true));
 
     // Override NlsCheck enabled flag
@@ -197,15 +195,6 @@ public class NotificationListenerCheckTest {
                 throw new  IllegalStateException("Could not set " + propertyName + " to " + value);
             }
         }, WRITE_DEVICE_CONFIG);
-    }
-
-    /**
-     * Enabled or disable Safety Center
-     */
-    private static void setSafetyCenterEnabled(boolean enabled) {
-        setDeviceConfigPrivacyProperty(
-                PROPERTY_SAFETY_CENTER_ENABLED,
-                /* value = */ String.valueOf(enabled));
     }
 
     /**
@@ -444,7 +433,7 @@ public class NotificationListenerCheckTest {
     public void tearDown() throws Throwable {
         // Disallow and uninstall the app with NLS for testing
         disallowTestAppNotificationListenerService();
-        uninstallApp(TEST_APP_NOTIFICATION_LISTENER_APK);
+        uninstallApp(TEST_APP_PKG);
 
         clearNotifications();
     }
@@ -561,7 +550,7 @@ public class NotificationListenerCheckTest {
 
     @Test
     public void noNotificationIfSafetyCenterDisabled() throws Throwable {
-        setSafetyCenterEnabled(false);
+        SafetyCenterUtils.setSafetyCenterEnabled(false);
 
         runNotificationListenerCheck();
 
@@ -647,5 +636,23 @@ public class NotificationListenerCheckTest {
         // We don't expect a notification, but try to trigger one anyway
         ensure(() -> assertNull("Expected no notifications", getNotification(false)),
                 EXPECTED_TIMEOUT_MILLIS);
+    }
+
+    @Test
+    public void notificationOnClick_opensSafetyCenter() throws Throwable {
+        runNotificationListenerCheck();
+
+        StatusBarNotification currentNotification = eventually(
+                () -> {
+                    StatusBarNotification notification = getNotification(false);
+                    assertNotNull(notification);
+                    return notification;
+                }, EXPECTED_TIMEOUT_MILLIS);
+
+        // Verify content intent
+        PendingIntent contentIntent = currentNotification.getNotification().contentIntent;
+        contentIntent.send();
+
+        SafetyCenterUtils.assertSafetyCenterStarted();
     }
 }

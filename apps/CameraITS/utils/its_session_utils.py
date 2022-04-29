@@ -35,6 +35,7 @@ import error_util
 import image_processing_utils
 import opencv_processing_utils
 
+ANDROID13_API_LEVEL = 33
 LOAD_SCENE_DELAY_SEC = 3
 SUB_CAMERA_SEPARATOR = '.'
 _VALIDATE_LIGHTING_PATCH_H = 0.05
@@ -452,8 +453,28 @@ class ItsSession(object):
     self.sock.settimeout(self.SOCK_TIMEOUT)
     return data['objValue']
 
+  def is_hlg10_recording_supported(self, profile_id):
+    """Query whether the camera device supports HLG10 video recording.
+
+    Args:
+      profile_id: int; profile id corresponding to the quality level.
+    Returns:
+      Boolean: True, if device supports HLG10 video recording, False in
+      all other cases.
+    """
+    cmd = {}
+    cmd['cmdName'] = 'isHLG10Supported'
+    cmd['cameraId'] = self._camera_id
+    cmd['profileId'] = profile_id
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+
+    data, _ = self.__read_response_from_socket()
+    if data['tag'] != 'hlg10Response':
+      raise error_util.CameraItsError('Failed to query HLG10 support')
+    return data['strValue'] == 'true'
+
   def do_basic_recording(self, profile_id, quality, duration,
-                         video_stabilization_mode=0):
+                         video_stabilization_mode=0, hlg10_enabled=False):
     """Issue a recording request and read back the video recording object.
 
     The recording will be done with the format specified in quality. These
@@ -467,19 +488,21 @@ class ItsSession(object):
       quality: Video recording quality such as High, Low, VGA.
       duration: The time in seconds for which the video will be recorded.
       video_stabilization_mode: Video stabilization mode ON/OFF. Value can be
-      0: 'OFF'
-      1: 'ON'
-      2: 'PREVIEW'
+      0: 'OFF', 1: 'ON', 2: 'PREVIEW'
+      hlg10_enabled: boolean: True Enable 10-bit HLG video recording, False
+      record using the regular SDR profile
     Returns:
       video_recorded_object: The recorded object returned from ItsService which
-      contains path at which the recording is saved on the device, quality of the
-      recorded video, video size of the recorded video, video frame rate.
+      contains path at which the recording is saved on the device, quality of
+      the recorded video, video size of the recorded video, video frame rate
+      and 'hlg10' if 'hlg10_enabled' is set to True.
       Ex:
       VideoRecordingObject: {
         'tag': 'recordingResponse',
         'objValue': {
-          'recordedOutputPath': '/storage/emulated/0/Android/data/com.android.cts.verifier'
-                                '/files/VideoITS/VID_20220324_080414_0_CIF_352x288.mp4',
+          'recordedOutputPath':
+            '/storage/emulated/0/Android/data/com.android.cts.verifier'
+            '/files/VideoITS/VID_20220324_080414_0_CIF_352x288.mp4',
           'quality': 'CIF',
           'videoFrameRate': 30,
           'videoSize': '352x288'
@@ -487,15 +510,64 @@ class ItsSession(object):
       }
     """
     cmd = {'cmdName': 'doBasicRecording', 'cameraId': self._camera_id,
-        'profileId': profile_id, 'quality': quality, 'recordingDuration': duration,
-        'videoStabilizationMode': video_stabilization_mode}
+           'profileId': profile_id, 'quality': quality,
+           'recordingDuration': duration,
+           'videoStabilizationMode': video_stabilization_mode,
+           'hlg10Enabled': hlg10_enabled}
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
     self.sock.settimeout(timeout)
     data, _ = self.__read_response_from_socket()
     if data['tag'] != 'recordingResponse':
-      raise error_util.CameraItsError(f'Invalid response for command: {cmd[cmdName]}')
+        raise error_util.CameraItsError(
+            f'Invalid response for command: {cmd[cmdName]}')
     logging.debug('VideoRecordingObject: %s' % data)
+    return data['objValue']
+
+  def do_preview_recording(self, video_size, duration, stabilize):
+    """Issue a preview request and read back the preview recording object.
+
+    The resolution of the preview and its recording will be determined by
+    video_size. The duration is the time in seconds for which the preview will
+    be recorded. The recorded object consists of a path on the device at
+    which the recorded video is saved.
+
+    Args:
+      video_size: str; Preview resolution at which to record. ex. "1920x1080"
+      duration: int; The time in seconds for which the video will be recorded.
+      stabilize: boolean; Whether the preview should be stabilized or not
+    Returns:
+      video_recorded_object: The recorded object returned from ItsService which
+      contains path at which the recording is saved on the device, quality of the
+      recorded video which is always set to "preview", video size of the
+      recorded video, video frame rate.
+      Ex:
+      VideoRecordingObject: {
+        'tag': 'recordingResponse',
+        'objValue': {
+          'recordedOutputPath': '/storage/emulated/0/Android/data/com.android.cts.verifier'
+                                '/files/VideoITS/VID_20220324_080414_0_CIF_352x288.mp4',
+          'quality': 'preview',
+          'videoSize': '352x288'
+        }
+      }
+    """
+
+    cmd = {
+        'cmdName': 'doPreviewRecording',
+        'cameraId': self._camera_id,
+        'videoSize': video_size,
+        'recordingDuration': duration,
+        'stabilize': stabilize
+    }
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
+    self.sock.settimeout(timeout)
+
+    data, _ = self.__read_response_from_socket()
+    logging.debug(f'VideoRecordingObject: {data}')
+    if data['tag'] != 'recordingResponse':
+      raise error_util.CameraItsError(f'Invalid response from command{cmd["cmdName"]}')
     return data['objValue']
 
   def get_supported_video_qualities(self, camera_id):
@@ -514,6 +586,29 @@ class ItsSession(object):
     if data['tag'] != 'supportedVideoQualities':
       raise error_util.CameraItsError('Invalid command response')
     return data['strValue'].split(';')[:-1] # remove the last appended ';'
+
+  def get_supported_preview_sizes(self, camera_id):
+    """Get all supported preview resolutions for this camera device.
+
+      Args:
+        camera_id: int; device id
+      Returns:
+        List of all supported video resolutions in ascending order.
+        Ex: ['640x480', '800x600', '1280x720', '1440x1080', '1920x1080']
+    """
+    cmd = {
+        'cmdName': 'getSupportedPreviewSizes',
+        'cameraId': camera_id
+    }
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
+    self.sock.settimeout(timeout)
+    data, _ = self.__read_response_from_socket()
+    if data['tag'] != 'supportedPreviewSizes':
+      raise error_util.CameraItsError('Invalid command response')
+    if not data['strValue']:
+      raise error_util.CameraItsError('No supported preview sizes')
+    return data['strValue'].split(';')
 
   def do_capture(self,
                  cap_request,

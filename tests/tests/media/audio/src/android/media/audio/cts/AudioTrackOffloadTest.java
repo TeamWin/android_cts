@@ -260,7 +260,12 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
      */
     private void testGaplessAudioTrackOffload(@RawRes int audioRes, int bitRateInkbps,
             AudioFormat audioFormat, int delay, int padding, int durationMs) throws Exception {
-        skipTestIfGaplessOffloadPlaybackIsNotSupported(audioFormat);
+        if (!isGaplessOffloadPlaybackSupported(audioFormat)) {
+            Log.i(TAG, "skipping testGaplessAudioTrackOffload as gapless offload playback of "
+                    + audioFormat.getEncoding() + " is not supported");
+            // Skip test if gapless is not supported
+            return;
+        }
 
         AudioTrack offloadTrack = getOffloadAudioTrack(bitRateInkbps, audioFormat);
         assertNotNull(offloadTrack);
@@ -313,17 +318,9 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
         }
     }
 
-    private void skipTestIfGaplessOffloadPlaybackIsNotSupported(AudioFormat audioFormat) {
+    private boolean isGaplessOffloadPlaybackSupported(AudioFormat audioFormat) {
         int directSupport = AudioManager.getDirectPlaybackSupport(audioFormat, DEFAULT_ATTR);
-        boolean gaplessSupported =
-                (directSupport & AudioManager.DIRECT_PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED) != 0;
-        if (!gaplessSupported) {
-            String msg = "skipping testGaplessAudioTrackOffload as gapless offload playback of "
-                    + audioFormat.getEncoding() + " is not supported";
-            Log.i(TAG, msg);
-            // Skip test if gapless is not supported
-            throw new AssumptionViolatedException(msg);
-        }
+        return (directSupport & AudioManager.DIRECT_PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED) != 0;
     }
 
 

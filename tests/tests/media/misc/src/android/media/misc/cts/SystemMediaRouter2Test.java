@@ -55,8 +55,8 @@ import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.LargeTest;
 import android.text.TextUtils;
 
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
 
@@ -111,7 +111,7 @@ public class SystemMediaRouter2Test {
 
     @Before
     public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getTargetContext();
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.MEDIA_CONTENT_CONTROL,
                 Manifest.permission.MODIFY_AUDIO_ROUTING,

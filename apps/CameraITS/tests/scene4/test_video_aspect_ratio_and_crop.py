@@ -26,12 +26,13 @@ import image_processing_utils
 import opencv_processing_utils
 import image_fov_utils
 
-_ANDROID13_API_LEVEL = 32
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _VIDEO_RECORDING_DURATION_SECONDS = 3
 _FOV_PERCENT_RTOL = 0.15  # Relative tolerance on circle FoV % to expected.
 _AR_CHECKED_PRE_API_30 = ('4:3', '16:9', '18:9')
 _AR_DIFF_ATOL = 0.01
+_MAX_8BIT_IMGS = 255
+_MAX_10BIT_IMGS = 1023
 
 
 def _print_failed_test_results(failed_ar, failed_fov, failed_crop,
@@ -66,6 +67,9 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
     2. Crop: center of images is not shifted
     3. FOV: images cropped to keep maximum possible FOV with only 1 dimension
        (horizontal or veritical) cropped.
+
+  Video recording will be done using the SDR profile as well as HLG10
+  if available.
 
   The test video is a black circle on a white background.
 
@@ -135,7 +139,7 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
       # Check SKIP conditions.
       first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
       camera_properties_utils.skip_unless(
-          first_api_level >= _ANDROID13_API_LEVEL)
+          first_api_level >= its_session_utils.ANDROID13_API_LEVEL)
 
       # Load scene.
       its_session_utils.load_scene(cam, props, self.scene,
@@ -170,84 +174,95 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
         # Check if we support testing this quality.
         if quality in video_processing_utils.ITS_SUPPORTED_QUALITIES:
           logging.debug('Testing video recording for quality: %s', quality)
-          video_recording_obj = cam.do_basic_recording(
-              profile_id, quality, _VIDEO_RECORDING_DURATION_SECONDS)
-          logging.debug('video_recording_obj: %s', video_recording_obj)
-          # TODO(ruchamk): Modify video recording object to send videoFrame
-          # width and height instead of videoSize to avoid string operation
-          # here.
-          video_size = video_recording_obj['videoSize']
-          width = int(video_size.split('x')[0])
-          height = int(video_size.split('x')[-1])
+          hlg10_params = [False]
+          hlg10_supported = cam.is_hlg10_recording_supported(profile_id)
+          logging.debug('HLG10 supported: %s', hlg10_supported)
+          if hlg10_supported:
+            hlg10_params.append(hlg10_supported)
 
-          # Pull the video recording file from the device.
-          self.dut.adb.pull([video_recording_obj['recordedOutputPath'],
-                             self.log_path])
-          logging.debug('Recorded video is available at: %s',
-                        self.log_path)
-          video_file_name = video_recording_obj['recordedOutputPath'].split('/')[-1]
-          logging.debug('video_file_name: %s', video_file_name)
+          for hlg10_param in hlg10_params:
+            video_recording_obj = cam.do_basic_recording(
+                profile_id, quality, _VIDEO_RECORDING_DURATION_SECONDS, 0, hlg10_param)
+            logging.debug('video_recording_obj: %s', video_recording_obj)
+            # TODO(ruchamk): Modify video recording object to send videoFrame
+            # width and height instead of videoSize to avoid string operation
+            # here.
+            video_size = video_recording_obj['videoSize']
+            width = int(video_size.split('x')[0])
+            height = int(video_size.split('x')[-1])
 
-          key_frame_files = []
-          key_frame_files = video_processing_utils.extract_key_frames_from_video(
-              self.log_path, video_file_name)
-          logging.debug('key_frame_files:%s', key_frame_files)
+            # Pull the video recording file from the device.
+            self.dut.adb.pull([video_recording_obj['recordedOutputPath'],
+                               self.log_path])
+            logging.debug('Recorded video is available at: %s',
+                          self.log_path)
+            video_file_name = video_recording_obj['recordedOutputPath'].split('/')[-1]
+            logging.debug('video_file_name: %s', video_file_name)
 
-          # Get the key frame file to process.
-          last_key_frame_file = video_processing_utils.get_key_frame_to_process(
-              key_frame_files)
-          logging.debug('last_key_frame: %s', last_key_frame_file)
-          last_key_frame_path = os.path.join(self.log_path, last_key_frame_file)
+            key_frame_files = []
+            key_frame_files = video_processing_utils.extract_key_frames_from_video(
+                self.log_path, video_file_name)
+            logging.debug('key_frame_files:%s', key_frame_files)
 
-          # Convert lastKeyFrame to numpy array
-          np_image = image_processing_utils.convert_image_to_numpy_array(
-              last_key_frame_path)
-          logging.debug('numpy image shape: %s', np_image.shape)
+            # Get the key frame file to process.
+            last_key_frame_file = video_processing_utils.get_key_frame_to_process(
+                key_frame_files)
+            logging.debug('last_key_frame: %s', last_key_frame_file)
+            last_key_frame_path = os.path.join(self.log_path, last_key_frame_file)
 
-          # Check fov
-          circle = opencv_processing_utils.find_circle(
-              np_image, ref_img_name_stem, image_fov_utils.CIRCLE_MIN_AREA,
-              image_fov_utils.CIRCLE_COLOR)
+            # Convert lastKeyFrame to numpy array
+            np_image = image_processing_utils.convert_image_to_numpy_array(
+                last_key_frame_path)
+            logging.debug('numpy image shape: %s', np_image.shape)
 
-          # Check pass/fail for fov coverage for all fmts in AR_CHECKED
-          fov_chk_msg = image_fov_utils.check_fov(
-              circle, ref_fov, width, height)
-          if fov_chk_msg:
-            img_name = '%s_%s_w%d_h%d_fov.png' % (
-                os.path.join(self.log_path, _NAME), quality, width, height)
-            fov_chk_quality_msg = f'Quality: {quality} {fov_chk_msg}'
-            failed_fov.append(fov_chk_quality_msg)
-            image_processing_utils.write_image(np_image/255, img_name, True)
+            # Check fov
+            circle = opencv_processing_utils.find_circle(
+                np_image, ref_img_name_stem, image_fov_utils.CIRCLE_MIN_AREA,
+                image_fov_utils.CIRCLE_COLOR)
 
-          # Check pass/fail for aspect ratio.
-          ar_chk_msg = image_fov_utils.check_ar(
-              circle, aspect_ratio_gt, width, height,
-              f'{quality}')
-          if ar_chk_msg:
-            img_name = '%s_%s_w%d_h%d_ar.png' % (
-                os.path.join(self.log_path, _NAME), quality, width, height)
-            failed_ar.append(ar_chk_msg)
-            image_processing_utils.write_image(np_image/255, img_name, True)
+            max_img_value = _MAX_8BIT_IMGS
+            if hlg10_param:
+                max_img_value = _MAX_10BIT_IMGS
 
-          # Check pass/fail for crop.
-          if run_crop_test:
-            # Normalize the circle size to 1/4 of the image size, so that
-            # circle size won't affect the crop test result
-            crop_thresh_factor = ((min(ref_fov['w'], ref_fov['h']) / 4.0) /
-                                  max(ref_fov['circle_w'], ref_fov['circle_h']))
-            crop_chk_msg = image_fov_utils.check_crop(
-                circle, cc_ct_gt, width, height,
-                f'{quality}', crop_thresh_factor)
-            if crop_chk_msg:
-              crop_img_name = '%s_%s_w%d_h%d_crop.png' % (
+            # Check pass/fail for fov coverage for all fmts in AR_CHECKED
+            fov_chk_msg = image_fov_utils.check_fov(
+                circle, ref_fov, width, height)
+            if fov_chk_msg:
+              img_name = '%s_%s_w%d_h%d_fov.png' % (
                   os.path.join(self.log_path, _NAME), quality, width, height)
-              opencv_processing_utils.append_circle_center_to_img(
-                  circle, np_image*255, crop_img_name)
-              failed_crop.append(crop_chk_msg)
-              image_processing_utils.write_image(np_image/255,
-                                                 crop_img_name, True)
-          else:
-            logging.debug('Crop test skipped')
+              fov_chk_quality_msg = f'Quality: {quality} {fov_chk_msg}'
+              failed_fov.append(fov_chk_quality_msg)
+              image_processing_utils.write_image(np_image/max_img_value, img_name, True)
+
+            # Check pass/fail for aspect ratio.
+            ar_chk_msg = image_fov_utils.check_ar(
+                circle, aspect_ratio_gt, width, height,
+                f'{quality}')
+            if ar_chk_msg:
+              img_name = '%s_%s_w%d_h%d_ar.png' % (
+                  os.path.join(self.log_path, _NAME), quality, width, height)
+              failed_ar.append(ar_chk_msg)
+              image_processing_utils.write_image(np_image/max_img_value, img_name, True)
+
+            # Check pass/fail for crop.
+            if run_crop_test:
+              # Normalize the circle size to 1/4 of the image size, so that
+              # circle size won't affect the crop test result
+              crop_thresh_factor = ((min(ref_fov['w'], ref_fov['h']) / 4.0) /
+                                    max(ref_fov['circle_w'], ref_fov['circle_h']))
+              crop_chk_msg = image_fov_utils.check_crop(
+                  circle, cc_ct_gt, width, height,
+                  f'{quality}', crop_thresh_factor)
+              if crop_chk_msg:
+                crop_img_name = '%s_%s_w%d_h%d_crop.png' % (
+                    os.path.join(self.log_path, _NAME), quality, width, height)
+                opencv_processing_utils.append_circle_center_to_img(
+                    circle, np_image*max_img_value, crop_img_name)
+                failed_crop.append(crop_chk_msg)
+                image_processing_utils.write_image(np_image/max_img_value,
+                                                   crop_img_name, True)
+            else:
+              logging.debug('Crop test skipped')
 
       # Print any failed test results.
       _print_failed_test_results(failed_ar, failed_fov, failed_crop, quality)

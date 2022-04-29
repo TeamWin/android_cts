@@ -16,10 +16,9 @@
 
 package android.media.misc.cts;
 
-import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -33,20 +32,20 @@ import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.cts.NonMediaMainlineTest;
 import android.media.session.MediaSession;
+import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.KeyEvent;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
-import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -82,6 +81,9 @@ public class MediaActivityTest {
 
     private Instrumentation mInstrumentation;
     private Context mContext;
+    private ActivityScenario<MediaSessionTestActivity> mActivityScenario;
+    private Activity mActivity;
+
     private boolean mUseFixedVolume;
     private AudioManager mAudioManager;
     private Map<Integer, Integer> mStreamVolumeMap = new HashMap<>();
@@ -90,15 +92,14 @@ public class MediaActivityTest {
     private HdmiControlManager mHdmiControlManager;
     private int mHdmiEnableStatus;
 
-    @Rule
-    public ActivityTestRule<MediaSessionTestActivity> mActivityRule =
-            new ActivityTestRule<>(MediaSessionTestActivity.class, false, false);
-
     @Before
     public void setUp() throws Exception {
-        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
-            Manifest.permission.HDMI_CEC);
+
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
+                Manifest.permission.HDMI_CEC);
+
         mContext = mInstrumentation.getContext();
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         mUseFixedVolume = mAudioManager.isVolumeFixed();
@@ -121,22 +122,22 @@ public class MediaActivityTest {
         mSession.setPlaybackToLocal(new AudioAttributes.Builder()
                 .setLegacyStreamType(AudioManager.STREAM_RING).build());
 
-        Intent intent = new Intent(Intent.ACTION_MAIN);
+        Intent intent = new Intent(mContext, MediaSessionTestActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(MediaSessionTestActivity.KEY_SESSION_TOKEN, mSession.getSessionToken());
 
-        mActivityRule.launchActivity(intent);
-
-        assertTrue(
-            "Failed to bring MediaSessionTestActivity due to the screen lock setting."
-                    + " Ensure screen lock isn't set before running CTS test.",
-            pollingCheck(() -> {
-                Activity activity = mActivityRule.getActivity();
-                if (activity == null) {
-                    return false;
-                }
-                return activity.getMediaController() != null;
-            }));
+        mActivityScenario = ActivityScenario.launch(intent);
+        ConditionVariable activityReferenceObtained = new ConditionVariable();
+        mActivityScenario.onActivity(activity -> {
+            mActivity = activity;
+            activityReferenceObtained.open();
+        });
+        activityReferenceObtained.block(/* timeoutMs= */ 10000);
+        assertNotNull("Failed to acquire activity reference.", mActivity);
+        assertNotNull("Failed to bring MediaSessionTestActivity due to the screen lock setting."
+                + " Ensure screen lock isn't set before running CTS test.",
+                mActivity.getMediaController());
+        mInstrumentation.waitForIdleSync();
     }
 
     @After
@@ -150,7 +151,7 @@ public class MediaActivityTest {
         }
 
         try {
-            mActivityRule.finishActivity();
+            mActivityScenario.close();
         } catch (IllegalStateException e) {
         }
 

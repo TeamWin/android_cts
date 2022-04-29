@@ -15,14 +15,27 @@
  */
 package android.media.misc.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.media.browse.MediaBrowser;
 import android.media.browse.MediaBrowser.MediaItem;
 import android.media.cts.NonMediaMainlineTest;
 import android.os.Bundle;
-import android.test.InstrumentationTestCase;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
+
+import org.junit.After;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +45,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * Test {@link android.media.browse.MediaBrowser}.
  */
 @NonMediaMainlineTest
-public class MediaBrowserTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaBrowserTest {
     // The maximum time to wait for an operation.
     private static final long TIME_OUT_MS = 3000L;
 
@@ -56,7 +70,11 @@ public class MediaBrowserTest extends InstrumentationTestCase {
 
     private MediaBrowser mMediaBrowser;
 
-    @Override
+    private Instrumentation getInstrumentation() {
+        return InstrumentationRegistry.getInstrumentation();
+    }
+
+    @After
     public void tearDown() {
         if (mMediaBrowser != null) {
             try {
@@ -68,17 +86,14 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testMediaBrowser() throws Throwable {
         resetCallbacks();
         createMediaBrowser(TEST_BROWSER_SERVICE);
-        runOnMainThread(() -> {
-            assertEquals(false, mMediaBrowser.isConnected());
-        });
+        runOnMainThread(() -> assertFalse(mMediaBrowser.isConnected()));
 
         connectMediaBrowserService();
-        runOnMainThread(() -> {
-            assertEquals(true, mMediaBrowser.isConnected());
-        });
+        runOnMainThread(() -> assertTrue(mMediaBrowser.isConnected()));
 
         runOnMainThread(() -> {
             assertEquals(TEST_BROWSER_SERVICE, mMediaBrowser.getServiceComponent());
@@ -90,22 +105,19 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         });
 
         disconnectMediaBrowser();
-        runOnMainThread(() -> {
-            new PollingCheck(TIME_OUT_MS) {
-                @Override
-                protected boolean check() {
-                    return !mMediaBrowser.isConnected();
-                }
-            }.run();
-        });
+        runOnMainThread(() -> new PollingCheck(TIME_OUT_MS) {
+            @Override
+            protected boolean check() {
+                return !mMediaBrowser.isConnected();
+            }
+        }.run());
     }
 
+    @Test
     public void testThrowingISEWhileNotConnected() throws Throwable {
         resetCallbacks();
         createMediaBrowser(TEST_BROWSER_SERVICE);
-        runOnMainThread(() -> {
-            assertEquals(false, mMediaBrowser.isConnected());
-        });
+        runOnMainThread(() -> assertFalse(mMediaBrowser.isConnected()));
 
         runOnMainThread(() -> {
             try {
@@ -138,6 +150,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         });
     }
 
+    @Test
     public void testConnectTwice() throws Throwable {
         resetCallbacks();
         createMediaBrowser(TEST_BROWSER_SERVICE);
@@ -152,13 +165,12 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         });
     }
 
+    @Test
     public void testConnectionFailed() throws Throwable {
         resetCallbacks();
         createMediaBrowser(TEST_INVALID_BROWSER_SERVICE);
 
-        runOnMainThread(() -> {
-            mMediaBrowser.connect();
-        });
+        runOnMainThread(() -> mMediaBrowser.connect());
 
         new PollingCheck(TIME_OUT_MS) {
             @Override
@@ -170,6 +182,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         }.run();
     }
 
+    @Test
     public void testReconnection() throws Throwable {
         createMediaBrowser(TEST_BROWSER_SERVICE);
 
@@ -183,9 +196,8 @@ public class MediaBrowserTest extends InstrumentationTestCase {
 
         // Test subscribe.
         resetCallbacks();
-        runOnMainThread(() -> {
-            mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, mSubscriptionCallback);
-        });
+        runOnMainThread(() -> mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT,
+                mSubscriptionCallback));
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
@@ -195,9 +207,8 @@ public class MediaBrowserTest extends InstrumentationTestCase {
 
         // Test getItem.
         resetCallbacks();
-        runOnMainThread(() -> {
-            mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_CHILDREN[0], mItemCallback);
-        });
+        runOnMainThread(() -> mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_CHILDREN[0],
+                mItemCallback));
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
@@ -212,9 +223,8 @@ public class MediaBrowserTest extends InstrumentationTestCase {
 
         // Test getItem.
         resetCallbacks();
-        runOnMainThread(() -> {
-            mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_CHILDREN[0], mItemCallback);
-        });
+        runOnMainThread(() -> mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_CHILDREN[0],
+                mItemCallback));
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
@@ -223,6 +233,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         }.run();
     }
 
+    @Test
     public void testConnectionCallbackNotCalledAfterDisconnect() throws Throwable {
         createMediaBrowser(TEST_BROWSER_SERVICE);
         runOnMainThread(() -> {
@@ -240,13 +251,13 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         assertEquals(0, mConnectionCallback.mConnectionSuspendedCount);
     }
 
+    @Test
     public void testSubscribe() throws Throwable {
         resetCallbacks();
         createMediaBrowser(TEST_BROWSER_SERVICE);
         connectMediaBrowserService();
-        runOnMainThread(() -> {
-            mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, mSubscriptionCallback);
-        });
+        runOnMainThread(() -> mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT,
+                mSubscriptionCallback));
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
@@ -264,9 +275,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
 
         // Test unsubscribe.
         resetCallbacks();
-        runOnMainThread(() -> {
-            mMediaBrowser.unsubscribe(StubMediaBrowserService.MEDIA_ID_ROOT);
-        });
+        runOnMainThread(() -> mMediaBrowser.unsubscribe(StubMediaBrowserService.MEDIA_ID_ROOT));
 
         // After unsubscribing, make StubMediaBrowserService notify that the children are changed.
         StubMediaBrowserService.sInstance.notifyChildrenChanged(
@@ -280,6 +289,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         assertEquals(0, mSubscriptionCallback.mChildrenLoadedCount);
     }
 
+    @Test
     public void testSubscribeWithIllegalArguments() throws Throwable {
         createMediaBrowser(TEST_BROWSER_SERVICE);
 
@@ -319,6 +329,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         });
     }
 
+    @Test
     public void testSubscribeWithOptions() throws Throwable {
         createMediaBrowser(TEST_BROWSER_SERVICE);
         connectMediaBrowserService();
@@ -329,10 +340,8 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         for (int page = 0; page <= lastPage; ++page) {
             resetCallbacks();
             options.putInt(MediaBrowser.EXTRA_PAGE, page);
-            runOnMainThread(() -> {
-                mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, options,
-                        mSubscriptionCallback);
-            });
+            runOnMainThread(() -> mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT,
+                    options, mSubscriptionCallback));
             new PollingCheck(TIME_OUT_MS) {
                 @Override
                 protected boolean check() {
@@ -356,9 +365,8 @@ public class MediaBrowserTest extends InstrumentationTestCase {
 
         // Test unsubscribe with callback argument.
         resetCallbacks();
-        runOnMainThread(() -> {
-            mMediaBrowser.unsubscribe(StubMediaBrowserService.MEDIA_ID_ROOT, mSubscriptionCallback);
-        });
+        runOnMainThread(() -> mMediaBrowser.unsubscribe(StubMediaBrowserService.MEDIA_ID_ROOT,
+                mSubscriptionCallback));
 
         // After unsubscribing, make StubMediaBrowserService notify that the children are changed.
         StubMediaBrowserService.sInstance.notifyChildrenChanged(
@@ -372,14 +380,13 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         assertEquals(0, mSubscriptionCallback.mChildrenLoadedCount);
     }
 
+    @Test
     public void testSubscribeInvalidItem() throws Throwable {
         resetCallbacks();
         createMediaBrowser(TEST_BROWSER_SERVICE);
         connectMediaBrowserService();
-        runOnMainThread(() -> {
-            mMediaBrowser.subscribe(
-                    StubMediaBrowserService.MEDIA_ID_INVALID, mSubscriptionCallback);
-        });
+        runOnMainThread(() -> mMediaBrowser.subscribe(
+                StubMediaBrowserService.MEDIA_ID_INVALID, mSubscriptionCallback));
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
@@ -390,6 +397,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         assertEquals(StubMediaBrowserService.MEDIA_ID_INVALID, mSubscriptionCallback.mLastErrorId);
     }
 
+    @Test
     public void testSubscribeInvalidItemWithOptions() throws Throwable {
         resetCallbacks();
         createMediaBrowser(TEST_BROWSER_SERVICE);
@@ -400,10 +408,8 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         Bundle options = new Bundle();
         options.putInt(MediaBrowser.EXTRA_PAGE_SIZE, pageSize);
         options.putInt(MediaBrowser.EXTRA_PAGE, page);
-        runOnMainThread(() -> {
-            mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_INVALID, options,
-                    mSubscriptionCallback);
-        });
+        runOnMainThread(() -> mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_INVALID,
+                options, mSubscriptionCallback));
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
@@ -417,6 +423,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
                 mSubscriptionCallback.mLastOptions.getInt(MediaBrowser.EXTRA_PAGE_SIZE));
     }
 
+    @Test
     public void testSubscriptionCallbackNotCalledAfterDisconnect() throws Throwable {
         createMediaBrowser(TEST_BROWSER_SERVICE);
         connectMediaBrowserService();
@@ -437,6 +444,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         assertNull(mSubscriptionCallback.mLastParentId);
     }
 
+    @Test
     public void testUnsubscribeWithIllegalArguments() throws Throwable {
         createMediaBrowser(TEST_BROWSER_SERVICE);
         runOnMainThread(() -> {
@@ -466,6 +474,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         });
     }
 
+    @Test
     public void testUnsubscribeForMultipleSubscriptions() throws Throwable {
         createMediaBrowser(TEST_BROWSER_SERVICE);
         connectMediaBrowserService();
@@ -480,9 +489,8 @@ public class MediaBrowserTest extends InstrumentationTestCase {
             Bundle options = new Bundle();
             options.putInt(MediaBrowser.EXTRA_PAGE, page);
             options.putInt(MediaBrowser.EXTRA_PAGE_SIZE, pageSize);
-            runOnMainThread(() -> {
-                mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, options, callback);
-            });
+            runOnMainThread(() -> mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT,
+                    options, callback));
 
             // Each onChildrenLoaded() must be called.
             new PollingCheck(TIME_OUT_MS) {
@@ -497,9 +505,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         for (StubSubscriptionCallback callback : subscriptionCallbacks) {
             callback.reset();
         }
-        runOnMainThread(() -> {
-            mMediaBrowser.unsubscribe(StubMediaBrowserService.MEDIA_ID_ROOT);
-        });
+        runOnMainThread(() -> mMediaBrowser.unsubscribe(StubMediaBrowserService.MEDIA_ID_ROOT));
 
         // After unsubscribing, make StubMediaBrowserService notify that the children are changed.
         StubMediaBrowserService.sInstance.notifyChildrenChanged(
@@ -516,6 +522,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testUnsubscribeWithSubscriptionCallbackForMultipleSubscriptions() throws Throwable {
         createMediaBrowser(TEST_BROWSER_SERVICE);
         connectMediaBrowserService();
@@ -530,9 +537,8 @@ public class MediaBrowserTest extends InstrumentationTestCase {
             Bundle options = new Bundle();
             options.putInt(MediaBrowser.EXTRA_PAGE, page);
             options.putInt(MediaBrowser.EXTRA_PAGE_SIZE, pageSize);
-            runOnMainThread(() -> {
-                mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, options, callback);
-            });
+            runOnMainThread(() -> mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT,
+                    options, callback));
 
             // Each onChildrenLoaded() must be called.
             new PollingCheck(TIME_OUT_MS) {
@@ -580,14 +586,14 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testGetItem() throws Throwable {
         resetCallbacks();
         createMediaBrowser(TEST_BROWSER_SERVICE);
         connectMediaBrowserService();
 
-        runOnMainThread(() -> {
-            mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_CHILDREN[0], mItemCallback);
-        });
+        runOnMainThread(() -> mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_CHILDREN[0],
+                mItemCallback));
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
@@ -599,6 +605,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
                 mItemCallback.mLastMediaItem.getMediaId());
     }
 
+    @Test
     public void testGetItemThrowsIAE() throws Throwable {
         resetCallbacks();
         createMediaBrowser(TEST_BROWSER_SERVICE);
@@ -630,14 +637,13 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         });
     }
 
+    @Test
     public void testGetItemWhileNotConnected() throws Throwable {
         resetCallbacks();
         createMediaBrowser(TEST_BROWSER_SERVICE);
 
         final String mediaId = "test_media_id";
-        runOnMainThread(() -> {
-            mMediaBrowser.getItem(mediaId, mItemCallback);
-        });
+        runOnMainThread(() -> mMediaBrowser.getItem(mediaId, mItemCallback));
 
         // Calling getItem while not connected will invoke ItemCallback.onError().
         new PollingCheck(TIME_OUT_MS) {
@@ -650,13 +656,13 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         assertEquals(mItemCallback.mLastErrorId, mediaId);
     }
 
+    @Test
     public void testGetItemFailure() throws Throwable {
         resetCallbacks();
         createMediaBrowser(TEST_BROWSER_SERVICE);
         connectMediaBrowserService();
-        runOnMainThread(() -> {
-            mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_INVALID, mItemCallback);
-        });
+        runOnMainThread(() -> mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_INVALID,
+                mItemCallback));
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
@@ -667,6 +673,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         assertEquals(StubMediaBrowserService.MEDIA_ID_INVALID, mItemCallback.mLastErrorId);
     }
 
+    @Test
     public void testItemCallbackNotCalledAfterDisconnect() throws Throwable {
         createMediaBrowser(TEST_BROWSER_SERVICE);
         connectMediaBrowserService();
@@ -685,16 +692,12 @@ public class MediaBrowserTest extends InstrumentationTestCase {
     }
 
     private void createMediaBrowser(final ComponentName component) throws Throwable {
-        runOnMainThread(() -> {
-            mMediaBrowser = new MediaBrowser(getInstrumentation().getTargetContext(),
-                    component, mConnectionCallback, null);
-        });
+        runOnMainThread(() -> mMediaBrowser = new MediaBrowser(
+                getInstrumentation().getTargetContext(), component, mConnectionCallback, null));
     }
 
     private void connectMediaBrowserService() throws Throwable {
-        runOnMainThread(() -> {
-            mMediaBrowser.connect();
-        });
+        runOnMainThread(() -> mMediaBrowser.connect());
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
@@ -704,9 +707,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
     }
 
     private void disconnectMediaBrowser() throws Throwable {
-        runOnMainThread(() -> {
-            mMediaBrowser.disconnect();
-        });
+        runOnMainThread(() -> mMediaBrowser.disconnect());
     }
 
     private void resetCallbacks() {

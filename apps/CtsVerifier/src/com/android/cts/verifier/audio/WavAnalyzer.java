@@ -9,6 +9,8 @@ import java.nio.ByteOrder;
  * Class contains the analysis to calculate frequency response.
  */
 public class WavAnalyzer {
+  final double SILENCE_THRESHOLD = Short.MAX_VALUE / 100.0f;
+
   private final Listener listener;
   private final int sampleRate;  // Recording sampling rate.
   private double[] data;  // Whole recording data.
@@ -251,6 +253,15 @@ public class WavAnalyzer {
 
   boolean getResult() {
     return result;
+  }
+
+  boolean isSilence() {
+    for (int i = 0; i < data.length; i++) {
+      if (Math.abs(data[i]) > SILENCE_THRESHOLD) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**

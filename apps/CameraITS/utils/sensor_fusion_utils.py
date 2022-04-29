@@ -582,6 +582,26 @@ def get_best_alignment_offset(cam_times, cam_rots, gyro_events):
   return exact_best_shift, fit_coeffs, shift_candidates, spatial_distances
 
 
+def plot_camera_rotations(cam_rots, start_frame, video_quality,
+                          plot_name_stem):
+  """Plot the camera rotations.
+
+  Args:
+   cam_rots: np array of camera rotations angle per frame
+   start_frame: int value of start frame
+   video_quality: str for video quality identifier
+   plot_name_stem: str (with path) of what to call plot
+  """
+
+  pylab.figure(video_quality)
+  frames = range(start_frame, len(cam_rots)+start_frame)
+  pylab.title(f'Camera rotation vs frame {video_quality}')
+  pylab.plot(frames, cam_rots*_RADS_TO_DEGS, '-ro', label='x')
+  pylab.xlabel('frame #')
+  pylab.ylabel('camera rotation (degrees)')
+  matplotlib.pyplot.savefig(f'{plot_name_stem}_{video_quality}_cam_rots.png')
+
+
 def plot_gyro_events(gyro_events, plot_name, log_path):
   """Plot x, y, and z on the gyro events.
 
@@ -627,6 +647,32 @@ def plot_gyro_events(gyro_events, plot_name, log_path):
   pylab.legend()
   file_name = os.path.join(log_path, plot_name)
   matplotlib.pyplot.savefig(f'{file_name}_gyro_events.png')
+
+def conv_acceleration_to_movement(gyro_events, video_delay_time):
+  """Convert gyro_events time and speed to movement during video time.
+
+  Args:
+    gyro_events: sorted dict of entries with 'time', 'x', 'y', and 'z'
+
+  Returns:
+    'z' acceleration converted to movement for times around VIDEO playing.
+  """
+  gyro_times = np.array([e['time'] for e in gyro_events])
+  gyro_speed = np.array([e['z'] for e in gyro_events])
+  gyro_time_min = gyro_times[0]
+  logging.debug('gyro start time: %dns', gyro_time_min)
+  logging.debug('gyro stop time: %dns', gyro_times[-1])
+  gyro_rotations = []
+  video_time_start = gyro_time_min + video_delay_time *_SEC_TO_NSEC
+  video_time_stop = video_time_start + video_delay_time *_SEC_TO_NSEC
+  logging.debug('video start time: %dns', video_time_start)
+  logging.debug('video stop time: %dns', video_time_stop)
+
+  for i, t in enumerate(gyro_times):
+    if video_time_start <= t <= video_time_stop:
+      gyro_rotations.append((gyro_times[i]-gyro_times[i-1])/_SEC_TO_NSEC *
+                            gyro_speed[i])
+  return np.array(gyro_rotations)
 
 
 class SensorFusionUtilsTests(unittest.TestCase):

@@ -39,9 +39,9 @@ import android.os.Bundle;
 import android.os.HandlerThread;
 import android.os.Process;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -96,7 +96,7 @@ public class MediaSession2ServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getContext();
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mToken = new Session2Token(mContext,
                 new ComponentName(mContext, StubMediaSession2Service.class));
     }

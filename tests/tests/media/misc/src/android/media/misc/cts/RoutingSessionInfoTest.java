@@ -29,11 +29,11 @@ import android.media.cts.NonMediaMainlineTest;
 import android.os.Bundle;
 import android.os.Parcel;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SmallTest;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 /**
  * Tests {@link RoutingSessionInfo} and its {@link RoutingSessionInfo.Builder builder}.

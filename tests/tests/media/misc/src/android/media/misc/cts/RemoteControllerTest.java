@@ -16,21 +16,31 @@
 
 package android.media.misc.cts;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.Context;
 import android.media.RemoteController;
 import android.media.RemoteController.OnClientUpdateListener;
 import android.media.cts.NonMediaMainlineTest;
 import android.platform.test.annotations.AppModeFull;
-import android.test.InstrumentationTestCase;
-import android.test.UiThreadTest;
 import android.view.KeyEvent;
-import android.util.Log;
+
+import androidx.test.annotation.UiThreadTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +50,8 @@ import java.util.Set;
  */
 @NonMediaMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
-public class RemoteControllerTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class RemoteControllerTest {
 
     private static final Set<Integer> MEDIA_KEY_EVENT = new HashSet<Integer>();
     static {
@@ -73,10 +84,9 @@ public class RemoteControllerTest extends InstrumentationTestCase {
 
     private Context mContext;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mContext = getInstrumentation().getTargetContext();
+    @Before
+    public void setUp() {
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
     }
 
     private RemoteController createRemoteController() {
@@ -84,11 +94,13 @@ public class RemoteControllerTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testGetEstimatedMediaPosition() {
         assertTrue(createRemoteController().getEstimatedMediaPosition() < 0);
     }
 
     @UiThreadTest
+    @Test
     public void testSendMediaKeyEvent() {
         RemoteController remoteController = createRemoteController();
         for (Integer mediaKeyEvent : MEDIA_KEY_EVENT) {
@@ -98,6 +110,7 @@ public class RemoteControllerTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testSeekTo_negativeValues() {
         try {
             createRemoteController().seekTo(-1);
@@ -106,21 +119,25 @@ public class RemoteControllerTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testSeekTo() {
         assertTrue(createRemoteController().seekTo(0));
     }
 
     @UiThreadTest
+    @Test
     public void testSetArtworkConfiguration() {
         assertTrue(createRemoteController().setArtworkConfiguration(1, 1));
     }
 
     @UiThreadTest
+    @Test
     public void testClearArtworkConfiguration() {
         assertTrue(createRemoteController().clearArtworkConfiguration());
     }
 
     @UiThreadTest
+    @Test
     public void testSetSynchronizationMode_unregisteredRemoteController() {
         RemoteController remoteController = createRemoteController();
         assertFalse(remoteController.setSynchronizationMode(
@@ -130,11 +147,13 @@ public class RemoteControllerTest extends InstrumentationTestCase {
     }
 
     @UiThreadTest
+    @Test
     public void testEditMetadata() {
         assertNotNull(createRemoteController().editMetadata());
     }
 
     @UiThreadTest
+    @Test
     public void testOnClientUpdateListenerUnchanged() throws Exception {
         Map<String, List<Method>> methodMap = new HashMap<String, List<Method>>();
         for (Method method : listener.getClass().getDeclaredMethods()) {

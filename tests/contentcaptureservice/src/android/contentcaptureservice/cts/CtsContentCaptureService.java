@@ -198,6 +198,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
             if (sServiceWatcher != null) {
                 if (sServiceWatcher.mReadyToClear) {
                     sServiceWatcher.mService = null;
+                    sServiceWatcher.mWhitelist = null;
                     sServiceWatcher = null;
                 } else {
                     sServiceWatcher.mReadyToClear = true;
@@ -233,6 +234,14 @@ public class CtsContentCaptureService extends ContentCaptureService {
         }
 
         sw.mService = this;
+        // TODO(b/230554011): onConnected after onDisconnected immediately that cause the whitelist
+        // is clear. This is a workaround to fix the test failure, we should find the reason in the
+        // service infra to fix it and remove this workaround.
+        if (sw.mDestroyed.getCount() == 0 && sw.mWhitelist != null) {
+            Log.d(TAG, "Whitelisting after reconnected again: " + sw.mWhitelist);
+            setContentCaptureWhitelist(sw.mWhitelist.first, sw.mWhitelist.second);
+        }
+
         sw.mCreated.countDown();
         sw.mReadyToClear = false;
 
@@ -631,6 +640,8 @@ public class CtsContentCaptureService extends ContentCaptureService {
             if (mWhitelist != null) {
                 Log.d(TAG, "Whitelisting after created: " + mWhitelist);
                 mService.setContentCaptureWhitelist(mWhitelist.first, mWhitelist.second);
+                ServiceWatcher sw = getServiceWatcher();
+                sw.mWhitelist = mWhitelist;
             }
 
             return mService;

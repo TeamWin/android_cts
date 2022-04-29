@@ -15,6 +15,14 @@
  */
 package android.media.misc.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -23,24 +31,32 @@ import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaRouter;
-import android.media.MediaRouter.RouteGroup;
 import android.media.MediaRouter.RouteCategory;
+import android.media.MediaRouter.RouteGroup;
 import android.media.MediaRouter.RouteInfo;
 import android.media.MediaRouter.UserRouteInfo;
 import android.media.RemoteControlClient;
 import android.media.cts.NonMediaMainlineTest;
 import android.platform.test.annotations.AppModeFull;
-import android.test.InstrumentationTestCase;
 
-import java.util.List;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Test {@link android.media.MediaRouter}.
  */
 @NonMediaMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
-public class MediaRouterTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaRouterTest {
 
     private static final int TEST_ROUTE_NAME_RESOURCE_ID = R.string.test_user_route_name;
     private static final int TEST_CATEGORY_NAME_RESOURCE_ID = R.string.test_route_category_name;
@@ -62,10 +78,9 @@ public class MediaRouterTest extends InstrumentationTestCase {
     private Drawable mTestIconDrawable;
     private Context mContext;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mContext = getInstrumentation().getContext();
+    @Before
+    public void setUp() {
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mMediaRouter = (MediaRouter) mContext.getSystemService(Context.MEDIA_ROUTER_SERVICE);
         mTestCategory = mMediaRouter.createRouteCategory(TEST_CATEGORY_NAME_RESOURCE_ID, false);
         mTestGroupableCategory = mMediaRouter.createRouteCategory(TEST_GROUPABLE_CATEGORY_NAME,
@@ -74,14 +89,15 @@ public class MediaRouterTest extends InstrumentationTestCase {
         mTestIconDrawable = mContext.getDrawable(TEST_ICON_RESOURCE_ID);
     }
 
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() {
         mMediaRouter.clearUserRoutes();
-        super.tearDown();
     }
 
     /**
      * Test {@link MediaRouter#selectRoute(int, RouteInfo)}.
      */
+    @Test
     public void testSelectRoute() {
         RouteInfo prevSelectedRoute = mMediaRouter.getSelectedRoute(
                 MediaRouter.ROUTE_TYPE_LIVE_AUDIO | MediaRouter.ROUTE_TYPE_LIVE_VIDEO
@@ -102,6 +118,7 @@ public class MediaRouterTest extends InstrumentationTestCase {
     /**
      * Test {@link MediaRouter#getRouteCount()}.
      */
+    @Test
     public void testGetRouteCount() {
         final int count = mMediaRouter.getRouteCount();
         assertTrue("By default, a media router has at least one route.", count > 0);
@@ -125,6 +142,7 @@ public class MediaRouterTest extends InstrumentationTestCase {
     /**
      * Test {@link MediaRouter#getRouteAt(int)}.
      */
+    @Test
     public void testGetRouteAt() throws Exception {
         UserRouteInfo userRoute0 = mMediaRouter.createUserRoute(mTestCategory);
         UserRouteInfo userRoute1 = mMediaRouter.createUserRoute(mTestCategory);
@@ -139,6 +157,7 @@ public class MediaRouterTest extends InstrumentationTestCase {
     /**
      * Test {@link MediaRouter.UserRouteInfo} with the default route.
      */
+    @Test
     public void testDefaultRouteInfo() {
         RouteInfo route = mMediaRouter.getDefaultRoute();
 
@@ -167,6 +186,7 @@ public class MediaRouterTest extends InstrumentationTestCase {
     /**
      * Test {@link MediaRouter.UserRouteInfo}.
      */
+    @Test
     public void testUserRouteInfo() {
         UserRouteInfo userRoute = mMediaRouter.createUserRoute(mTestCategory);
         assertTrue(userRoute.isEnabled());
@@ -236,6 +256,7 @@ public class MediaRouterTest extends InstrumentationTestCase {
     /**
      * Test {@link MediaRouter.RouteGroup}.
      */
+    @Test
     public void testRouteGroup() {
         // Create a route with a groupable category.
         // A route does not belong to any group until it is added to a media router or to a group.
@@ -308,6 +329,7 @@ public class MediaRouterTest extends InstrumentationTestCase {
     /**
      * Test {@link MediaRouter.RouteCategory}.
      */
+    @Test
     public void testRouteCategory() {
         // Test getName() for category whose name is set with resource ID.
         RouteCategory routeCategory = mMediaRouter.createRouteCategory(
@@ -345,6 +367,7 @@ public class MediaRouterTest extends InstrumentationTestCase {
         assertEquals(categoryName, newRouteCategory.getName());
     }
 
+    @Test
     public void testCallback() {
         MediaRouterCallback callback = new MediaRouterCallback();
         MediaRouter.Callback mrc = (MediaRouter.Callback) callback;
@@ -514,6 +537,7 @@ public class MediaRouterTest extends InstrumentationTestCase {
     /**
      * Test {@link MediaRouter#addCallback(int, MediaRouter.Callback, int)}.
      */
+    @Test
     public void testAddCallbackWithFlags() {
         MediaRouterCallback callback = new MediaRouterCallback();
         mMediaRouter.addCallback(MediaRouter.ROUTE_TYPE_USER, callback);
@@ -544,6 +568,7 @@ public class MediaRouterTest extends InstrumentationTestCase {
     /**
      * Test {@link MediaRouter.VolumeCallback)}.
      */
+    @Test
     public void testVolumeCallback() {
         UserRouteInfo userRoute = mMediaRouter.createUserRoute(mTestCategory);
         userRoute.setVolumeHandling(RouteInfo.PLAYBACK_VOLUME_VARIABLE);

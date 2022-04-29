@@ -16,6 +16,7 @@
 package android.media.misc.cts;
 
 import static android.media.browse.MediaBrowser.MediaItem.FLAG_PLAYABLE;
+import static android.media.cts.Utils.compareRemoteUserInfo;
 import static android.media.misc.cts.MediaBrowserServiceTestService.KEY_PARENT_MEDIA_ID;
 import static android.media.misc.cts.MediaBrowserServiceTestService.KEY_SERVICE_COMPONENT_NAME;
 import static android.media.misc.cts.MediaBrowserServiceTestService.TEST_SERIES_OF_NOTIFY_CHILDREN_CHANGED;
@@ -23,8 +24,14 @@ import static android.media.misc.cts.MediaSessionTestService.KEY_EXPECTED_TOTAL_
 import static android.media.misc.cts.MediaSessionTestService.STEP_CHECK;
 import static android.media.misc.cts.MediaSessionTestService.STEP_CLEAN_UP;
 import static android.media.misc.cts.MediaSessionTestService.STEP_SET_UP;
-import static android.media.cts.Utils.compareRemoteUserInfo;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.media.MediaDescription;
 import android.media.browse.MediaBrowser;
@@ -35,9 +42,15 @@ import android.os.Bundle;
 import android.os.Process;
 import android.service.media.MediaBrowserService;
 import android.service.media.MediaBrowserService.BrowserRoot;
-import android.test.InstrumentationTestCase;
 
 import androidx.test.core.app.ApplicationProvider;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +61,8 @@ import java.util.concurrent.TimeUnit;
  * Test {@link android.service.media.MediaBrowserService}.
  */
 @NonMediaMainlineTest
-public class MediaBrowserServiceTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaBrowserServiceTest {
     // The maximum time to wait for an operation.
     private static final long TIME_OUT_MS = 3000L;
     private static final long WAIT_TIME_FOR_NO_RESPONSE_MS = 500L;
@@ -96,7 +110,11 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
     private StubMediaBrowserService mMediaBrowserService;
     private Bundle mRootHints;
 
-    @Override
+    private Instrumentation getInstrumentation() {
+        return InstrumentationRegistry.getInstrumentation();
+    }
+
+    @Before
     public void setUp() throws Exception {
         mRootHints = new Bundle();
         mRootHints.putBoolean(BrowserRoot.EXTRA_RECENT, true);
@@ -126,7 +144,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
         assertNotNull(mMediaBrowserService);
     }
 
-    @Override
+    @After
     public void tearDown() {
         getInstrumentation().runOnMainSync(()-> {
             if (mMediaBrowser != null) {
@@ -136,11 +154,13 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
         });
     }
 
+    @Test
     public void testGetSessionToken() {
         assertEquals(StubMediaBrowserService.sSession.getSessionToken(),
                 mMediaBrowserService.getSessionToken());
     }
 
+    @Test
     public void testNotifyChildrenChanged() throws Exception {
         getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, mSubscriptionCallback);
@@ -152,6 +172,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
         assertTrue(mOnChildrenLoadedLatch.await(TIME_OUT_MS));
     }
 
+    @Test
     public void testNotifyChildrenChangedWithNullOptionsThrowsIAE() {
         try {
             mMediaBrowserService.notifyChildrenChanged(
@@ -162,6 +183,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testNotifyChildrenChangedWithPagination() {
         final int pageSize = 5;
         final int page = 2;
@@ -200,6 +222,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
         assertFalse(mOnChildrenLoadedWithOptionsLatch.await(WAIT_TIME_FOR_NO_RESPONSE_MS));
     }
 
+    @Test
     public void testDelayedNotifyChildrenChanged() throws Exception {
         getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_CHILDREN_DELAYED,
@@ -219,6 +242,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
         assertTrue(mOnChildrenLoadedLatch.await(TIME_OUT_MS));
     }
 
+    @Test
     public void testDelayedItem() throws Exception {
         getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_CHILDREN_DELAYED,
@@ -230,6 +254,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
         assertTrue(mOnItemLoadedLatch.await(TIME_OUT_MS));
     }
 
+    @Test
     public void testGetBrowserInfo() throws Exception {
         // StubMediaBrowserService stores the browser info in its onGetRoot().
         assertTrue(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo));
@@ -249,6 +274,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
         assertTrue(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo));
     }
 
+    @Test
     public void testBrowserRoot() {
         final String id = "test-id";
         final String key = "test-key";
@@ -265,6 +291,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
      * Check that a series of {@link MediaBrowserService#notifyChildrenChanged} does not break
      * {@link MediaBrowser} on the remote process due to binder buffer overflow.
      */
+    @Test
     public void testSeriesOfNotifyChildrenChanged() throws Exception {
         String parentMediaId = "testSeriesOfNotifyChildrenChanged";
         int numberOfCalls = 100;

@@ -46,8 +46,8 @@ import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.LargeTest;
 
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
 
@@ -89,7 +89,7 @@ public class MediaRoute2ProviderServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getTargetContext();
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mRouter2 = MediaRouter2.getInstance(mContext);
         mExecutor = Executors.newSingleThreadExecutor();
 

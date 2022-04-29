@@ -25,7 +25,6 @@ import static org.junit.Assert.fail;
 import android.content.ComponentName;
 import android.content.Context;
 import android.media.MediaController2;
-import android.media.MediaMetadata;
 import android.media.MediaSession2;
 import android.media.Session2Command;
 import android.media.Session2CommandGroup;
@@ -35,9 +34,9 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Process;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -127,7 +126,7 @@ public class MediaController2Test {
 
     @Before
     public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getContext();
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mSessionCallback = new Session2Callback();
         mExtras = new Bundle();
         mExtras.putString(TEST_KEY, TEST_VALUE);

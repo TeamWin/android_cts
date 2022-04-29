@@ -22,6 +22,10 @@
     <application android:label="Translation TestCase">
         <uses-library android:name="android.test.runner"/>
 
+        <activity android:name=".EmptyActivity"
+                  android:label="EmptyActivity"
+                  android:exported="true">
+        </activity>
         <activity android:name=".SimpleActivity"
                   android:label="SimpleActivity"
                   android:exported="true">

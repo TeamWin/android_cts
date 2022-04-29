@@ -376,6 +376,11 @@ public final class DeviceState extends HarrierRule {
                         ensureHasProfileAnnotation.value(), installInstrumentedApp,
                         forUser, ensureHasProfileAnnotation.hasProfileOwner(),
                         dpcIsPrimary, useParentInstance, switchedToParentUser);
+
+                ((ProfileOwner) profileOwner(
+                        workProfile()).devicePolicyController()).setIsOrganizationOwned(
+                        isOrganizationOwned(annotation));
+
                 continue;
             }
 
@@ -445,6 +450,11 @@ public final class DeviceState extends HarrierRule {
                         requireRunOnProfileAnnotation.hasProfileOwner(),
                         dpcIsPrimary, /* useParentInstance= */ false,
                         switchedToParentUser, affiliationIds);
+
+                ((ProfileOwner) profileOwner(
+                        workProfile()).devicePolicyController()).setIsOrganizationOwned(
+                        isOrganizationOwned(annotation));
+
                 continue;
             }
 
@@ -2501,5 +2511,19 @@ public final class DeviceState extends HarrierRule {
             mOriginalBluetoothEnabled = TestApis.bluetooth().isEnabled();
         }
         TestApis.bluetooth().setEnabled(false);
+    }
+
+    private boolean isOrganizationOwned(Annotation annotation)
+            throws InvocationTargetException, IllegalAccessException {
+        Method isOrganizationOwnedMethod;
+
+        try {
+            isOrganizationOwnedMethod = annotation.annotationType().getMethod(
+                    "isOrganizationOwned");
+        } catch (NoSuchMethodException ignored) {
+            return false;
+        }
+
+        return (boolean) isOrganizationOwnedMethod.invoke(annotation);
     }
 }
