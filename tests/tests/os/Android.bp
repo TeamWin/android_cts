@@ -74,4 +74,11 @@ android_test {
     // Do not compress minijail policy files.
     aaptflags: ["-0 .policy"],
     min_sdk_version: "29",
+    data: [
+        ":CtsAutoRevokeQApp",
+        ":CtsAutoRevokeSApp",
+        ":CtsAutoRevokeRApp",
+        ":CtsCompanionTestApp",
+    ],
+    per_testcase_directory: true,
 }
