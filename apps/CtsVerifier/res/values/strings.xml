@@ -2304,7 +2304,7 @@
 
     <string name="shortcut_reset_test">Shortcut Reset Rate-limiting Test</string>
     <string name="shortcut_reset_info">This test checks that when an inline-reply happens, ShortcutManager\'s rate-limiting
-        is reset.</string>
+        is reset. Please grant access to show notification when prompted.</string>
     <string name="shortcut_reset_bot">Verifying that the CTS Robot helper package is installed.</string>
     <string name="shortcut_reset_start">Showing the notification.</string>
     <string name="shortcut_reset_prompt_inline_reply">Open the notification shade,
