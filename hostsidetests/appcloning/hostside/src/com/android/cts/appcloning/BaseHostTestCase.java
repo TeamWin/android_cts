@@ -56,6 +56,10 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
         return "true".equalsIgnoreCase(result);
     }
 
+    protected boolean supportsMultipleUsers() throws DeviceNotAvailableException {
+        return mDevice.getMaxNumberOfUsersSupported() > 1;
+    }
+
     protected boolean isAtLeastS() throws DeviceNotAvailableException {
         DeviceSdkLevel deviceSdkLevel = new DeviceSdkLevel(mDevice);
         return deviceSdkLevel.isDeviceAtLeastS();

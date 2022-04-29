@@ -59,6 +59,7 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
     public void baseHostSetup() throws Exception {
         setDevice();
 
+        assumeTrue("Device doesn't support multiple users", supportsMultipleUsers());
         assumeFalse("Device is in headless system user mode", isHeadlessSystemUserMode());
         assumeTrue(isAtLeastS());
         assumeFalse("Device uses sdcardfs", usesSdcardFs());
@@ -67,7 +68,9 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
     }
 
     public void baseHostTeardown() throws Exception {
-        if (isHeadlessSystemUserMode() || !isAtLeastS() || usesSdcardFs()) return;
+        if (!supportsMultipleUsers() || isHeadlessSystemUserMode() || !isAtLeastS()
+                || usesSdcardFs())
+            return;
 
         // remove the clone user
         executeShellCommand("pm remove-user %s", mCloneUserId);
