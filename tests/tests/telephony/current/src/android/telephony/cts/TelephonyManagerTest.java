@@ -4457,7 +4457,8 @@ public class TelephonyManagerTest {
     }
 
     private boolean hasMultipleRegisteredSubscriptions() {
-        final int[] activeSubIds = mSubscriptionManager.getActiveSubscriptionIdList();
+        final int[] activeSubIds = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mSubscriptionManager, (sm) ->sm.getActiveSubscriptionIdList());
         int registeredSubscriptions = 0;
         for (int subId : activeSubIds) {
             ServiceState ss = mTelephonyManager.createForSubscriptionId(subId).getServiceState();

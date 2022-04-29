@@ -19,6 +19,8 @@ package android.security.cts;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.Manifest;
 import android.app.WallpaperManager;
 import android.content.Context;
@@ -33,6 +35,7 @@ import android.view.Display;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+
 import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import org.junit.After;
@@ -66,6 +69,7 @@ public class WallpaperManagerTest extends StsExtraBusinessLogicTestCase {
                         Manifest.permission.SET_WALLPAPER);
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mWallpaperManager = WallpaperManager.getInstance(mContext);
+        assumeTrue("Device does not support wallpapers", mWallpaperManager.isWallpaperSupported());
     }
 
     @After

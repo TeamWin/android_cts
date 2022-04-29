@@ -29,7 +29,6 @@ AE_MODES = {0: 'OFF', 1: 'ON', 2: 'ON_AUTO_FLASH', 3: 'ON_ALWAYS_FLASH',
             4: 'ON_AUTO_FLASH_REDEYE', 5: 'ON_EXTERNAL_FLASH'}
 AE_STATES = {0: 'INACTIVE', 1: 'SEARCHING', 2: 'CONVERGED', 3: 'LOCKED',
              4: 'FLASH_REQUIRED', 5: 'PRECAPTURE'}
-_FLASH_CHECK_FIRST_API_LEVEL = 32
 _GRAD_DELTA_ATOL = 100  # gradiant for tablets as screen aborbs energy
 _MEAN_DELTA_ATOL = 100  # mean used for reflective charts
 _NUM_FRAMES = 8
@@ -68,7 +67,7 @@ class AutoFlashTest(its_base_test.ItsBaseTest):
       first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
       camera_properties_utils.skip_unless(
           camera_properties_utils.flash(props) and
-          first_api_level >= _FLASH_CHECK_FIRST_API_LEVEL)
+          first_api_level >= its_session_utils.ANDROID13_API_LEVEL)
 
       # establish connection with lighting controller
       arduino_serial_port = lighting_control_utils.lighting_control(

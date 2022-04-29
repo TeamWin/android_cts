@@ -1693,6 +1693,20 @@ public final class Helper {
         return false;
     }
 
+    /**
+     * Asserts whether mock IME is showing
+     */
+    public static void assertMockImeStatus(WindowInsets rootWindowInsets,
+            boolean expectedImeShow) throws Exception {
+        Timeouts.MOCK_IME_TIMEOUT.run("assertMockImeStatus(" + expectedImeShow + ")",
+                () -> {
+                    final boolean actual = isImeShowing(rootWindowInsets);
+                    Log.v(TAG, "assertMockImeStatus(): expected=" + expectedImeShow + ", actual="
+                            + actual);
+                    return actual == expectedImeShow ? "expected" : null;
+                });
+    }
+
     private Helper() {
         throw new UnsupportedOperationException("contain static methods only");
     }

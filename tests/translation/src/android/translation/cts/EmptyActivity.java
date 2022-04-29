@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.app.stubs;
+
+package android.translation.cts;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.widget.Toolbar;
 
-public class ToolbarActivity extends Activity {
-    private Toolbar mToolbar;
+/**
+ * A empty activity for translation testing.
+ */
+public class EmptyActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.toolbar_activity);
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        setActionBar(mToolbar);
-    }
-
-    public Toolbar getToolbar() {
-        return mToolbar;
     }
 }

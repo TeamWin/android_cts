@@ -19,7 +19,6 @@
 import logging
 import os.path
 import subprocess
-import time
 
 
 ITS_SUPPORTED_QUALITIES = (
@@ -37,8 +36,7 @@ ITS_SUPPORTED_QUALITIES = (
 
 
 def extract_key_frames_from_video(log_path, video_file_name):
-  """
-  Returns a list of extracted key frames.
+  """Returns a list of extracted key frames.
 
   Ffmpeg tool is used to extract key frames from the video at path
   os.path.join(log_path, video_file_name).
@@ -51,26 +49,26 @@ def extract_key_frames_from_video(log_path, video_file_name):
   Args:
     log_path: path for video file directory
     video_file_name: name of the video file.
-    Ex: VID_20220325_050918_0_CIF_352x288.mp4
   Returns:
     key_frame_files: A list of paths for each key frame extracted from the
-    video.
+    video. Ex: VID_20220325_050918_0_CIF_352x288.mp4
   """
   ffmpeg_image_name = f"{video_file_name.split('.')[0]}_key_frame"
-  ffmpeg_image_file_path = os.path.join(log_path, ffmpeg_image_name + '_%02d.png')
+  ffmpeg_image_file_path = os.path.join(
+      log_path, ffmpeg_image_name + '_%02d.png')
   cmd = ['ffmpeg',
-    '-skip_frame',
-    'nokey',
-    '-i',
-    os.path.join(log_path, video_file_name),
-    '-vsync',
-    'vfr',
-    '-frame_pts',
-    'true' ,
-    ffmpeg_image_file_path,
-  ]
-  logging.debug('Extracting key frames from: %s' % video_file_name)
-  output = subprocess.call(cmd)
+         '-skip_frame',
+         'nokey',
+         '-i',
+         os.path.join(log_path, video_file_name),
+         '-vsync',
+         'vfr',
+         '-frame_pts',
+         'true',
+         ffmpeg_image_file_path,
+        ]
+  logging.debug('Extracting key frames from: %s', video_file_name)
+  _ = subprocess.call(cmd)
   arr = os.listdir(os.path.join(log_path))
   key_frame_files = []
   for file in arr:
@@ -80,8 +78,7 @@ def extract_key_frames_from_video(log_path, video_file_name):
 
 
 def get_key_frame_to_process(key_frame_files):
-  """
-  Returns the key frame file from the list of key_frame_files.
+  """Returns the key frame file from the list of key_frame_files.
 
   If the size of the list is 1 then the file in the list will be returned else
   the file with highest frame_index will be returned for further processing.
@@ -93,3 +90,38 @@ def get_key_frame_to_process(key_frame_files):
   """
   key_frame_files.sort()
   return key_frame_files[-1]
+
+
+def extract_all_frames_from_video(log_path, video_file_name, img_format):
+  """Extracts and returns a list of all extracted frames.
+
+  Ffmpeg tool is used to extract all frames from the video at path
+  <log_path>/<video_file_name>. The extracted key frames will have the name
+  video_file_name with "_frame" suffix to identify the frames for video of each
+  size. Each frame image will be differentiated with its frame index. All
+  extracted key frames will be available in the provided img_format format at
+  the same path as the video file.
+
+  Args:
+    log_path: str; path for video file directory
+    video_file_name: str; name of the video file.
+    img_format: str; type of image to export frames into. ex. 'png'
+  Returns:
+    key_frame_files: An ordered list of paths for each frame extracted from the
+                     video
+  """
+  logging.debug('Extracting all frames')
+  ffmpeg_image_name = f"{video_file_name.split('.')[0]}_frame"
+  logging.debug('ffmpeg_image_name: %s', ffmpeg_image_name)
+  ffmpeg_image_file_names = (
+      f'{os.path.join(log_path, ffmpeg_image_name)}_%03d.{img_format}')
+  cmd = [
+      'ffmpeg', '-i', os.path.join(log_path, video_file_name),
+      ffmpeg_image_file_names
+  ]
+  _ = subprocess.call(cmd)
+
+  file_list = sorted(
+      [_ for _ in os.listdir(log_path) if (_.endswith(img_format)
+                                           and ffmpeg_image_name in _)])
+  return file_list

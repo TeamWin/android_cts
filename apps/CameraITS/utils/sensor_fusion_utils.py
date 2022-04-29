@@ -649,6 +649,34 @@ def plot_gyro_events(gyro_events, plot_name, log_path):
   matplotlib.pyplot.savefig(f'{file_name}_gyro_events.png')
 
 
+def conv_acceleration_to_movement(gyro_events, video_delay_time):
+  """Convert gyro_events time and speed to movement during video time.
+
+  Args:
+    gyro_events: sorted dict of entries with 'time', 'x', 'y', and 'z'
+    video_delay_time: time at which video starts
+
+  Returns:
+    'z' acceleration converted to movement for times around VIDEO playing.
+  """
+  gyro_times = np.array([e['time'] for e in gyro_events])
+  gyro_speed = np.array([e['z'] for e in gyro_events])
+  gyro_time_min = gyro_times[0]
+  logging.debug('gyro start time: %dns', gyro_time_min)
+  logging.debug('gyro stop time: %dns', gyro_times[-1])
+  gyro_rotations = []
+  video_time_start = gyro_time_min + video_delay_time *_SEC_TO_NSEC
+  video_time_stop = video_time_start + video_delay_time *_SEC_TO_NSEC
+  logging.debug('video start time: %dns', video_time_start)
+  logging.debug('video stop time: %dns', video_time_stop)
+
+  for i, t in enumerate(gyro_times):
+    if video_time_start <= t <= video_time_stop:
+      gyro_rotations.append((gyro_times[i]-gyro_times[i-1])/_SEC_TO_NSEC *
+                            gyro_speed[i])
+  return np.array(gyro_rotations)
+
+
 class SensorFusionUtilsTests(unittest.TestCase):
   """Run a suite of unit tests on this module."""
 

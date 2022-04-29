@@ -39,7 +39,7 @@ import java.util.Arrays;
 
 import com.android.cts.verifier.audio.audiolib.AudioCommon;
 import com.android.cts.verifier.audio.soundio.SoundGenerator;
-import com.android.cts.verifier.audio.wavlib.WavAnalyzer;
+import com.android.cts.verifier.audio.wavelib.WavAnalyzer;
 
 import com.androidplot.xy.PointLabelFormatter;
 import com.androidplot.xy.LineAndPointFormatter;

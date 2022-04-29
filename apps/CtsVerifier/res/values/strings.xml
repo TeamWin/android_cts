@@ -464,7 +464,6 @@
     <string name="bt_le">Bluetooth LE</string>
     <string name="bt_hid">Bluetooth HID</string>
     <string name="bt_le_coc">Bluetooth LE CoC</string>
-    <string name="bt_background_rfcomm">Bluetooth Background RFCOMM</string>
 
     <string name="bt_toggle_bluetooth">Toggle Bluetooth</string>
     <string name="bt_toggle_instructions">Disable and enable Bluetooth to successfully complete this test.</string>
@@ -510,19 +509,6 @@
         \n\nTap \"01 Bluetooth LE CoC Server Test\" on this device, then tap \"01 Bluetooth LE CoC Client Test\" on the other device.
         \nWhen the test is complete, move to the next item. You must complete all tests.
     </string>
-    <string name="bt_background_rfcomm_test_name">Bluetooth Background RFCOMM Test</string>
-    <string name="bt_background_rfcomm_test_info">
-        This test verifies that system applications can register RFCOMM listeners via the
-        BluetoothAdapter without needing a foreground service.
-    </string>
-    <string name="bt_background_rfcomm_test_client_name">Bluetooth Background RFCOMM Test Client</string>
-    <string name="bt_background_rfcomm_test_client_info">
-        Run by a second phone which acts as the RFCOMM client to connect to the rfcomm listener.
-        This phone should be paired with the primary phone which runs the Bluetooth Background
-        RFCOMM Test.
-    </string>
-    <string name="bt_background_rfcomm_test_uuid">1bd18454-462a-4117-bd58-77cb4d81ddbe</string>
-    <string name="bt_background_rfcomm_test_message">Test Message</string>
 
     <!-- BLE CoC client side strings -->
     <string name="ble_coc_client_test_name">01 Bluetooth LE CoC Client Test</string>
@@ -640,13 +626,6 @@
     <string name="bt_scanning">Scanning...</string>
     <string name="bt_unpair">Device must be unpaired via Bluetooth settings before completing the test.\n\nUnpair the device in settings, make the server discoverable, and rescan to pick this device.</string>
     <string name="bt_settings">Bluetooth Settings</string>
-
-    <string name="bt_background_rfcomm_test_start_client">On the client device: enable (or toggle) Bluetooth and connect to this device, then start the client test.</string>
-    <string name="bt_background_rfcomm_test_socket_received">Received client connection.</string>
-    <string name="bt_background_rfcomm_test_sending_message">Sending test message.</string>
-    <string name="bt_background_rfcomm_test_waiting_for_message">Waiting for message.</string>
-    <string name="bt_background_rfcomm_test_connecting_to_server">Connecting to server.</string>
-    <string name="bt_background_rfcomm_test_doing_sdp">Doing service discovery of server.</string>
 
     <!-- BLE client side strings -->
     <string name="ble_client_service_name">Bluetooth LE GATT Client Handler Service</string>
@@ -4081,6 +4060,66 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         Use the Back button to return to this page.
     </string>
+    <string name="device_owner_disallow_add_wifi_config">Disallow adding WiFi config</string>
+    <string name="device_owner_disallow_add_wifi_config_info">
+        Please press the Set restriction button to set the user restriction.
+        Then press Go to open the WiFi page in Settings.
+        Confirm that:\n\n
+        - You cannot add a new WiFi configuration.\n
+        - Trying to add any new WiFi configs triggers a support message.\n
+        \n
+        Use the Back button to return to this page.
+    </string>
+    <string name="device_owner_disallow_sharing_admin_configure_wifi">Disallow sharing admin configured WiFi config</string>
+    <string name="device_owner_disallow_sharing_admin_configure_wifi_info">
+        Please press the Set restriction button to set the user restriction.
+        Then press Go to open the WiFi page in Settings.
+        Confirm that:\n\n
+        - You cannot share an admin configured WiFi config.\n
+        - Sharing option is disabled in Settings.\n
+        \n
+        Use the Back button to return to this page.
+    </string>
+    <string name="device_owner_wifi_security_level_restriction">Set WiFi security level restriction</string>
+    <string name="device_owner_wifi_security_level_restriction_info">
+        This test verifies that minimum WiFi security level restriction can be set by the device owner.
+        The levels below are listed in an increasing order of security.\n
+        1. Connect to any network.\n
+        2. Pick a security level greater than the currently connected network (if unsure pick Enterprise 192).\n
+        3. Verify that current network gets disconnected.\n
+        4. Press Go to open the WiFi page in Settings.\n
+        5. Confirm that you cannot connect to any network that does not meet the security level restriction.\n
+        6. Use the Back button to return to this page.\n
+        7. Set the security level to Open to remove the restriction.\n
+        8. Press Go to open the WiFi page in Settings.\n
+        9. Confirm that you can connect to any network.
+    </string>
+    <string name="set_wifi_security_level_open">Set WiFi security level to Open</string>
+    <string name="set_wifi_security_level_personal">Set WiFi security level to Personal</string>
+    <string name="set_wifi_security_level_enterprise_eap">Set WiFi security level to Enterprise EAP</string>
+    <string name="set_wifi_security_level_enterprise_192">Set WiFi security level to Enterprise 192</string>
+    <string name="device_owner_ssid_restriction">Set WiFi SSID restriction</string>
+    <string name="device_owner_ssid_restriction_info">
+        This test verifies that WiFi SSID restriction can be set by the device owner.\n
+        1. Connect to any network.\n
+        2. Enter the SSID of the network you are currently connected to.\n
+        3. Set the SSID denylist.\n
+        4. Verify that current network gets disconnected.\n
+        5. Press Go to open the WiFi page in Settings.\n
+        6. Confirm that only the SSID from the denylist is restricted from connection.\n
+        7. Use the Back button to return to this page.\n
+        8. Enter the same SSID and set the SSID allowlist.\n
+        9. Press Go to open the WiFi page in Settings.\n
+        10. Confirm that you can only connect to the SSID from the allowlist.\n
+        11. Use the Back button to return to this page.\n
+        12. Leave the SSID field blank and set the allowlist to remove restriction.\n
+        13. Press Go to open the WiFi page in Settings.\n
+        14. Confirm that you can connect to any network.
+    </string>
+    <string name="device_owner_ssid_restriction_hint">Enter SSID</string>
+    <string name="device_owner_set_ssid_allowlist_button">Set SSID allowlist</string>
+    <string name="device_owner_set_ssid_denylist_button">Set SSID denylist</string>
+    <string name="device_owner_ssid_restriction_removing_toast">Removing SSID restriction</string>
     <string name="device_owner_disallow_ambient_display">Disallow ambient display</string>
     <string name="device_owner_disallow_ambient_display_info">
         Please press the Set restriction button to set the user restriction.
@@ -6525,4 +6564,41 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="report_slope">Report Slope</string>
     <string name="nan_precision_and_bias">Nan Precision and Bias Test</string>
     <string name="wifi_nan">WiFi NAN</string>
+
+    <!-- Strings for AudioMicrophoneMuteToggleActivity -->
+    <string name="audio_mic_toggle_test">Audio Microphone Hardware Toggle Mute Test</string>
+    <string name="audio_mic_toggle_test_info">
+        This test verifies that devices which implement microphone hardware privacy toggles enforce sensor privacy when toggles are enabled.
+        \nTo pass the test:
+        \n  - <a href="https://source.android.com/compatibility/android-cdd#9813_sensorprivacymanager">The audio stream should be muted</a>.
+        \n  - A dialog or notification should be shown that informs the user that the sensor privacy is enabled.
+    </string>
+    <string name="audio_mic_toggle_test_instruction1">
+        Mute the microphone using the hardware privacy toggle.
+        \nPress the RECORD button.
+        \nObserve a dialog with information regarding the microphone being blocked
+        \nIgnore/cancel the dialog and wait for the recording to complete.
+        \nThe pass button will be enabled if the test succeeded.</string>
+    <string name="audio_mic_toggle_test_analyzing">Analyzing, please wait...\n</string>
+
+    <!-- Strings for CameraMuteToggleActivity -->
+    <string name="camera_hw_toggle_test">Camera Hardware Toggle Mute Test</string>
+    <string name="camera_hw_toggle_test_info">
+        This test verifies that devices which implement camera hardware privacy toggles enforce sensor privacy when toggles are enabled.
+        \nTo pass the test:
+        \n  - <a href="https://source.android.com/compatibility/android-cdd#9813_sensorprivacymanager">The video stream should be muted</a>.
+        \n  - A dialog or notification should be shown that informs the user that the sensor privacy is enabled.
+    </string>
+    <string name="camera_hw_toggle_test_instruction">
+        Mute the camera using the hardware privacy toggle.
+        \nObserve a dialog with information regarding the camera being blocked.
+        \nCamera preview should show a blank feed.
+        \nPress the Take Photo button.
+        \nCaptured image should be black.
+        \nMark the test as passing if the above conditions are met.</string>
+    <string name="camera_hw_toggle_test_no_camera">
+        No available camera found.
+        \nAdd or enable a camera and re-run this test.
+    </string>
+
 </resources>

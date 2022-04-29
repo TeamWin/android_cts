@@ -57,6 +57,11 @@ public class OutOfProcessDataSharingService extends Service {
                     getApplicationContext().getSystemService(ContentCaptureManager.class);
             return manager != null && manager.isContentCaptureEnabled();
         }
+
+        @Override
+        public boolean isApplicationContentCaptureManagerAvailable() {
+            return getApplicationContext().getSystemService(ContentCaptureManager.class) != null;
+        }
     };
 
     @Override

@@ -41,4 +41,9 @@ android_test {
         "cts",
         "general-tests",
     ],
+    data: [
+        ":CtsBackgroundActivityAppA",
+        ":CtsBackgroundActivityAppB",
+    ],
+    per_testcase_directory: true,
 }
