@@ -178,6 +178,8 @@ public class AppCloningDeviceTest {
         // remove volumes that belong to owner profile
         volumeListIncludingShared.removeAll(volumeList);
 
+        assertThat(volumeListIncludingShared.size()).isGreaterThan(0);
+
         // remaining volumes should belong to the clone user.
         for (StorageVolume vol : volumeListIncludingShared) {
             assertThat(vol.getOwner().getIdentifier()).isEqualTo(cloneUserId);
