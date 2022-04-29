@@ -80,16 +80,25 @@ public final class HotwordDetectionServiceBasicTest
     private static final String PRIVACY_CHIP_PKG = "com.android.systemui";
     private static final String PRIVACY_CHIP_ID = "privacy_chip";
     private static final Long PERMISSION_INDICATORS_NOT_PRESENT = 162547999L;
-    private static final Long CLEAR_CHIP_MS = 5000L;
+    private static final Long CLEAR_CHIP_MS = 10000L;
 
     private static Instrumentation sInstrumentation = InstrumentationRegistry.getInstrumentation();
     private static UiDevice sUiDevice = UiDevice.getInstance(sInstrumentation);
     private static PackageManager sPkgMgr = sInstrumentation.getContext().getPackageManager();
     private static boolean wasIndicatorEnabled = false;
+    private static String sDefaultScreenOffTimeoutValue;
 
     @BeforeClass
     public static void enableIndicators() {
         wasIndicatorEnabled = setIndicatorEnabledStateIfNeeded(true);
+    }
+
+    @BeforeClass
+    public static void extendScreenOffTimeout() throws Exception {
+        // Change screen off timeout to 10 minutes.
+        sDefaultScreenOffTimeoutValue = SystemUtil.runShellCommand(
+                "settings get system screen_off_timeout");
+        SystemUtil.runShellCommand("settings put system screen_off_timeout 600000");
     }
 
     @AfterClass
@@ -97,6 +106,12 @@ public final class HotwordDetectionServiceBasicTest
         if (!wasIndicatorEnabled) {
             setIndicatorEnabledStateIfNeeded(false);
         }
+    }
+
+    @AfterClass
+    public static void restoreScreenOffTimeout() {
+        SystemUtil.runShellCommand(
+                "settings put system screen_off_timeout " + sDefaultScreenOffTimeoutValue);
     }
 
     // Checks if the privacy indicators are enabled on this device. Sets the state to the parameter,
