@@ -31,8 +31,10 @@ import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
@@ -80,9 +82,14 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
+import android.os.NewUserRequest;
 import android.os.Parcel;
+import android.os.Process;
 import android.os.RemoteException;
 import android.os.SystemClock;
+import android.os.UserHandle;
+import android.os.UserManager;
+import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.RestrictedBuildTest;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
@@ -1943,6 +1950,110 @@ public class ActivityManagerTest {
 
             forEach(watchers, watcher -> watcher.finish());
         }
+    }
+
+    @Test
+    public void testGetUidProcessState_checkAccess() throws Exception {
+        PermissionUtils.grantPermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
+        int newUserId = UserHandle.USER_NULL;
+        try {
+            // Verify that calling the API doesn't trigger any exceptions.
+            mActivityManager.getUidProcessState(Process.myUid());
+
+            assumeTrue(UserManager.supportsMultipleUsers());
+            newUserId = createNewUser();
+            assertNotEquals(UserHandle.USER_NULL, newUserId);
+            startUser(newUserId);
+            installExistingPackageAsUser(STUB_PACKAGE_NAME, newUserId);
+            final int uidFromNewUser = UserHandle.getUid(newUserId, Process.myUid());
+            // Verify that calling the API for a uid on a different user results in an exception.
+            assertThrows(SecurityException.class, () -> mActivityManager.getUidProcessState(
+                    uidFromNewUser));
+
+            // Verify that calling the API with shell identity (which has
+            // INTERACT_ACROSS_USERS_FULL permission) for a uid on a different user works.
+            SystemUtil.runWithShellPermissionIdentity(() -> mActivityManager.getUidProcessState(
+                    uidFromNewUser));
+        } finally {
+            if (newUserId != UserHandle.USER_NULL) {
+                removeUser(newUserId);
+            }
+            PermissionUtils.revokePermission(
+                    STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
+        }
+    }
+
+    @Test
+    public void testGetUidProcessCapabilities_checkAccess() throws Exception {
+        PermissionUtils.grantPermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
+        int newUserId = UserHandle.USER_NULL;
+        try {
+            // Verify that calling the API doesn't trigger any exceptions.
+            mActivityManager.getUidProcessCapabilities(Process.myUid());
+
+            assumeTrue(UserManager.supportsMultipleUsers());
+            newUserId = createNewUser();
+            assertNotEquals(UserHandle.USER_NULL, newUserId);
+            startUser(newUserId);
+            installExistingPackageAsUser(STUB_PACKAGE_NAME, newUserId);
+            final int uidFromNewUser = UserHandle.getUid(newUserId, Process.myUid());
+            // Verify that calling the API for a uid on a different user results in an exception.
+            assertThrows(SecurityException.class, () -> mActivityManager.getUidProcessState(
+                    uidFromNewUser));
+
+            // Verify that calling the API with shell identity (which has
+            // INTERACT_ACROSS_USERS_FULL permission) for a uid on a different user works.
+            SystemUtil.runWithShellPermissionIdentity(() -> mActivityManager.getUidProcessState(
+                    uidFromNewUser));
+        } finally {
+            if (newUserId != UserHandle.USER_NULL) {
+                removeUser(newUserId);
+            }
+            PermissionUtils.revokePermission(
+                    STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
+        }
+    }
+
+    private int createNewUser() throws Exception {
+        final UserManager userManager = mTargetContext.getSystemService(UserManager.class);
+        return SystemUtil.runWithShellPermissionIdentity(() -> {
+            final NewUserRequest newUserRequest = new NewUserRequest.Builder()
+                    .setName("test_user")
+                    .setUserType(UserManager.USER_TYPE_FULL_SECONDARY)
+                    .build();
+            final UserHandle newUser = userManager.createUser(newUserRequest)
+                    .getUser();
+            return newUser == null ? UserHandle.USER_NULL : newUser.getIdentifier();
+        });
+    }
+
+    private void startUser(int userId) throws Exception {
+        final String cmd = "cmd activity start-user -w " + userId;
+        final String output = executeShellCommand(cmd);
+        if (output.startsWith("Error")) {
+            fail("Error starting the new user u" + userId + ": " + output);
+        }
+        final String state = executeShellCommand("am get-started-user-state " + userId);
+        if (!state.contains("RUNNING_UNLOCKED")) {
+            fail("Unexpected state for the new user u" + userId + ": " + state);
+        }
+    }
+
+    private void removeUser(int userId) throws Exception {
+        final String cmd = "cmd package remove-user " + userId;
+        final String output = executeShellCommand(cmd);
+        if (output.startsWith("Error")) {
+            fail("Error removing the user u" + userId + ": " + output);
+        }
+    }
+
+    private void installExistingPackageAsUser(String packageName, int userId)
+            throws Exception {
+        final String cmd = String.format("cmd package install-existing --user %d --wait %s",
+                userId, packageName);
+        executeShellCommand(cmd);
     }
 
     private int[] getLruPositions(String[] packageNames) throws Exception {
