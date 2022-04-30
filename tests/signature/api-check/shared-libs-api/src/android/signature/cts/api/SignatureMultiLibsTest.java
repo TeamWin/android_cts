@@ -41,7 +41,13 @@ import org.junit.Test;
  * {@code <uses-library>} entry for every shared library that provides an API that is contained
  * within the shared-libs-all.api.zip supplied to this test.
  */
-public class SignatureMultiLibsTest extends SignatureTest {
+public class SignatureMultiLibsTest extends AbstractSignatureTest {
+
+    protected static final Supplier<String[]> EXPECTED_API_FILES =
+            getSupplierOfAMandatoryCommaSeparatedListArgument(EXPECTED_API_FILES_ARG);
+
+    protected static final Supplier<String[]> PREVIOUS_API_FILES =
+            getSupplierOfAMandatoryCommaSeparatedListArgument(PREVIOUS_API_FILES_ARG);
 
     private static final String TAG = SignatureMultiLibsTest.class.getSimpleName();
 
@@ -98,6 +104,9 @@ public class SignatureMultiLibsTest extends SignatureTest {
         runWithTestResultObserver(mResultObserver -> {
             ApiComplianceChecker complianceChecker =
                     new ApiComplianceChecker(mResultObserver, mClassProvider);
+
+            // Load classes from any API files that form the base which the expected APIs extend.
+            loadBaseClasses(complianceChecker);
 
             ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
 

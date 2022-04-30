@@ -57,6 +57,26 @@ android_test {
     jacoco: {
         exclude_filter: ["**"],
     },
+    data: [
+        ":CtsSimpleApp",
+        ":CtsAppTestStubs",
+        ":CtsAppTestStubsApp1",
+        ":CtsAppTestStubsApp3",
+        ":CtsAppTestStubsApp2",
+        ":CtsAppTestStubsApi30",
+        ":CtsBadProviderStubs",
+        ":CtsCantSaveState1",
+        ":CtsCantSaveState2",
+        ":NotificationApp",
+        ":NotificationProvider",
+        ":NotificationListener",
+        ":StorageDelegator",
+        ":CtsActivityManagerApi29",
+        ":NotificationTrampoline",
+        ":NotificationTrampolineApi30",
+        ":NotificationTrampolineApi32",
+    ],
+    per_testcase_directory: true,
 }
 
 android_test {
@@ -166,4 +186,10 @@ android_test {
     manifest: "AppExitTest/AndroidManifest.xml",
     test_config: "AppExitTest/AndroidTest.xml",
     platform_apis: true,
+    data: [
+        ":CtsSimpleApp",
+        ":CtsExternalServiceService",
+        ":CtsAppTestStubs",
+    ],
+    per_testcase_directory: true,
 }

@@ -49,4 +49,9 @@ android_test {
         local_include_dirs: ["src"],
     },
     sdk_version: "test_current",
+    data: [
+        ":CtsMockInputMethod",
+        ":CtsInputMethodStandaloneTestApp",
+    ],
+    per_testcase_directory: true,
 }

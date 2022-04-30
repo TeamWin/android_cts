@@ -30,10 +30,13 @@ public class CDMController {
     private CompanionDeviceManager mCompanionDeviceManager;
     private ContextProvider mContextProvider;
     private AssociationCallback mAssociationCallback;
+    private CommunicationManager mCommunicationManager;
+
     private int associationId = -1;
 
-    public CDMController(ContextProvider contextProvider) {
+    public CDMController(ContextProvider contextProvider, CommunicationManager communicationManager) {
         mContextProvider = contextProvider;
+        mCommunicationManager = communicationManager;
         mCompanionDeviceManager =
                 mContextProvider.getContext().getSystemService(CompanionDeviceManager.class);
         mAssociationCallback = new AssociationCallback();
@@ -42,7 +45,7 @@ public class CDMController {
     public void associate() {
         mCompanionDeviceManager.associate(
                 new AssociationRequest.Builder()
-                        .setDisplayName("Device 1")
+                        .setDisplayName("Test Device")
                         .build(), mAssociationCallback, null);
     }
 
@@ -72,6 +75,7 @@ public class CDMController {
         public void onAssociationCreated(@NonNull AssociationInfo associationInfo) {
             Toast.makeText(mContextProvider.getContext(), "onAssociationCreated: " + associationInfo.getId(), Toast.LENGTH_SHORT).show();
             associationId = associationInfo.getId();
+            mCommunicationManager.onRemoteDeviceAssociated(associationInfo.getDeviceMacAddress());
         }
 
         @Override

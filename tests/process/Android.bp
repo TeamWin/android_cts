@@ -54,6 +54,13 @@ android_test {
         "CtsProcessTest_default",
     ],
     manifest: "AndroidManifest_main.xml",
+    data: [
+        ":CtsProcessTestHelper4",
+        ":CtsProcessTestHelper1",
+        ":CtsProcessTestHelper2",
+        ":CtsProcessTestHelper3",
+    ],
+    per_testcase_directory: true,
 }
 
 android_test_helper_app {

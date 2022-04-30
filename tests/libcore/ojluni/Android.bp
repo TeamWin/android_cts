@@ -45,4 +45,8 @@ android_test {
         "general-tests",
         "mts-art",
     ],
+    data: [
+        ":CtsLibcoreTestRunner",
+    ],
+    per_testcase_directory: true,
 }

@@ -59,9 +59,6 @@ public @interface EnsureHasWorkProfile {
      */
     boolean dpcIsPrimary() default false;
 
-    /** Whether the work profile device will be in COPE mode. */
-    boolean isOrganizationOwned() default false;
-
     /**
      * If true, uses the {@code DevicePolicyManager#getParentProfileInstance(ComponentName)}
      * instance of the dpc when calling to .dpc()

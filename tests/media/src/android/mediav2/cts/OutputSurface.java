@@ -64,12 +64,12 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
      * EGL context and surface will be made current.  Creates a Surface that can be passed
      * to MediaCodec.configure().
      */
-    public OutputSurface(int width, int height) {
+    public OutputSurface(int width, int height, boolean useHighBitDepth) {
         if (width <= 0 || height <= 0) {
             throw new IllegalArgumentException();
         }
 
-        eglSetup(width, height);
+        eglSetup(width, height, useHighBitDepth);
         makeCurrent();
 
         setup(this);
@@ -125,7 +125,7 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
     /**
      * Prepares EGL.  We want a GLES 2.0 context and a surface that supports pbuffer.
      */
-    private void eglSetup(int width, int height) {
+    private void eglSetup(int width, int height, boolean useHighBitDepth) {
         mEGLDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
         if (mEGLDisplay == EGL14.EGL_NO_DISPLAY) {
             throw new RuntimeException("unable to get EGL14 display");
@@ -138,10 +138,13 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
 
         // Configure EGL for pbuffer and OpenGL ES 2.0.  We want enough RGB bits
         // to be able to tell if the frame is reasonable.
+        int eglColorSize = useHighBitDepth ? 10: 8;
+        int eglAlphaSize = useHighBitDepth ? 2: 0;
         int[] attribList = {
-                EGL14.EGL_RED_SIZE, 8,
-                EGL14.EGL_GREEN_SIZE, 8,
-                EGL14.EGL_BLUE_SIZE, 8,
+                EGL14.EGL_RED_SIZE, eglColorSize,
+                EGL14.EGL_GREEN_SIZE, eglColorSize,
+                EGL14.EGL_BLUE_SIZE, eglColorSize,
+                EGL14.EGL_ALPHA_SIZE, eglAlphaSize,
                 EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
                 EGL14.EGL_SURFACE_TYPE, EGL14.EGL_PBUFFER_BIT,
                 EGL14.EGL_NONE

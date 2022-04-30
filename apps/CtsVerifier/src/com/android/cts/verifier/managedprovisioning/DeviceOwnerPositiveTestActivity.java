@@ -93,6 +93,9 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     private static final String DISABLE_USB_DATA_SIGNALING_TEST_ID = "DISABLE_USB_DATA_SIGNALING";
     private static final String SET_REQUIRED_PASSWORD_COMPLEXITY_ID =
             "SET_REQUIRED_PASSWORD_COMPLEXITY";
+    private static final String DISALLOW_ADD_WIFI_CONFIG_ID = "DISALLOW_ADD_WIFI_CONFIG";
+    private static final String WIFI_SECURITY_LEVEL_RESTRICTION_ID =
+            "WIFI_SECURITY_LEVEL_RESTRICTION";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -256,6 +259,56 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                     CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                                             UserManager.DISALLOW_CONFIG_WIFI, false))
                     }));
+
+            // DISALLOW_ADD_WIFI_CONFIG
+            adapter.add(createInteractiveTestItem(this, DISALLOW_ADD_WIFI_CONFIG_ID,
+                    R.string.device_owner_disallow_add_wifi_config,
+                    R.string.device_owner_disallow_add_wifi_config_info,
+                    new ButtonInfo[] {
+                            new ButtonInfo(
+                                    R.string.device_owner_user_restriction_set,
+                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
+                                            UserManager.DISALLOW_ADD_WIFI_CONFIG, true)),
+                            new ButtonInfo(
+                                    R.string.device_owner_settings_go,
+                                    new Intent(Settings.ACTION_WIFI_SETTINGS)),
+                            new ButtonInfo(
+                                    R.string.device_owner_user_restriction_unset,
+                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
+                                            UserManager.DISALLOW_ADD_WIFI_CONFIG, false))
+                    }));
+
+            // WIFI_SECURITY_LEVEL_RESTRICTION
+            adapter.add(createInteractiveTestItem(this, WIFI_SECURITY_LEVEL_RESTRICTION_ID,
+                    R.string.device_owner_wifi_security_level_restriction,
+                    R.string.device_owner_wifi_security_level_restriction_info,
+                    new ButtonInfo[]{
+                            new ButtonInfo(
+                                    R.string.set_wifi_security_level_open,
+                                    createSetWifiSecurityLevelIntent(
+                                            DevicePolicyManager.WIFI_SECURITY_OPEN)),
+                            new ButtonInfo(
+                                    R.string.set_wifi_security_level_personal,
+                                    createSetWifiSecurityLevelIntent(
+                                            DevicePolicyManager.WIFI_SECURITY_PERSONAL)),
+                            new ButtonInfo(
+                                    R.string.set_wifi_security_level_enterprise_eap,
+                                    createSetWifiSecurityLevelIntent(
+                                            DevicePolicyManager.WIFI_SECURITY_ENTERPRISE_EAP)),
+                            new ButtonInfo(
+                                    R.string.set_wifi_security_level_enterprise_192,
+                                    createSetWifiSecurityLevelIntent(
+                                            DevicePolicyManager.WIFI_SECURITY_ENTERPRISE_192)),
+                            new ButtonInfo(
+                                    R.string.device_owner_settings_go,
+                                    new Intent(Settings.ACTION_WIFI_SETTINGS))}));
+
+            // WIFI_SSID_RESTRICTION
+            adapter.add(TestListItem.newTest(this,
+                    R.string.device_owner_ssid_restriction,
+                    SsidRestrictionTestActivity.class.getName(),
+                    new Intent(this, SsidRestrictionTestActivity.class),
+                    /* requiredFeatures */ null));
         }
 
         // DISALLOW_AMBIENT_DISPLAY.
@@ -714,6 +767,13 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
                         CommandReceiverActivity.COMMAND_SET_REQUIRED_PASSWORD_COMPLEXITY)
                 .putExtra(CommandReceiverActivity.EXTRA_VALUE, complexity);
+    }
+
+    private Intent createSetWifiSecurityLevelIntent(int level) {
+        return new Intent(this, CommandReceiverActivity.class)
+                .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
+                        CommandReceiverActivity.COMMAND_SET_WIFI_SECURITY_LEVEL)
+                .putExtra(CommandReceiverActivity.EXTRA_VALUE, level);
     }
 
     private boolean isStatusBarEnabled() {

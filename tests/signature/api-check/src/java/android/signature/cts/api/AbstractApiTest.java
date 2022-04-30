@@ -192,6 +192,13 @@ public abstract class AbstractApiTest {
         return argument.split(",");
     }
 
+    static Supplier<String[]> getSupplierOfAMandatoryCommaSeparatedListArgument(String key) {
+        return Suppliers.memoize(() -> {
+            Bundle arguments = InstrumentationRegistry.getArguments();
+            return getCommaSeparatedListRequired(arguments, key);
+        })::get;
+    }
+
     static String[] getCommaSeparatedListRequired(Bundle instrumentationArgs, String key) {
         String argument = instrumentationArgs.getString(key);
         if (argument == null) {

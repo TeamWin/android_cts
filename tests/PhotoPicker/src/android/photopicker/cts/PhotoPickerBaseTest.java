@@ -16,12 +16,16 @@
 
 package android.photopicker.cts;
 
+import android.Manifest;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
+import android.provider.DeviceConfig;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.uiautomator.UiDevice;
+
+import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.Before;
 

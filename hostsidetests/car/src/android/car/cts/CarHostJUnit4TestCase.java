@@ -26,6 +26,7 @@ import android.service.pm.PackageProto.UserPermissionsProto;
 import android.service.pm.PackageServiceDumpProto;
 
 import com.android.compatibility.common.util.CommonTestUtils;
+import com.android.compatibility.common.util.CommonTestUtils.BooleanSupplierWithThrow;
 import com.android.tradefed.device.CollectingByteOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -49,6 +50,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Base class for all test cases.
@@ -245,8 +247,8 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
     }
 
     /**
-     * Executes the shell command that returns all users and returns {@code function} applied to
-     * them.
+     * Executes the shell command that returns all users (including pre-created and partial)
+     * and returns {@code function} applied to them.
      */
     public <T> T onAllUsers(Function<List<UserInfo>, T> function) throws Exception {
         ArrayList<UserInfo> allUsers = executeAndParseCommand(USER_PATTERN, (matcher) -> {
@@ -266,6 +268,17 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
         return onAllUsers((allUsers) -> allUsers.stream()
                 .filter((u) -> u.id == userId))
                         .findFirst().get();
+    }
+
+    /**
+     * Gets all persistent (i.e., non-ephemeral) users.
+     */
+    protected List<Integer> getAllPersistentUsers() throws Exception {
+        return onAllUsers((allUsers) -> allUsers.stream()
+                .filter((u) -> !u.flags.contains("DISABLED") && !u.flags.contains("EPHEMERAL")
+                        && !u.otherState.contains("pre-created")
+                        && !u.otherState.contains("partial"))
+                .map((u) -> u.id).collect(Collectors.toList()));
     }
 
     /**
@@ -372,6 +385,15 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
     }
 
     /**
+     * Checks if the given user is ephemeral.
+     */
+    protected boolean isUserEphemeral(int userId) throws Exception {
+        UserInfo userInfo = getUserInfo(userId);
+        CLog.v("isUserEphemeral(%d): %s", userId, userInfo);
+        return userInfo.flags.contains("EPHEMERAL");
+    }
+
+    /**
      * Switches the current user.
      */
     protected void switchUser(int userId) throws Exception {
@@ -389,9 +411,41 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
     protected void waitUntilCurrentUser(int userId) throws Exception {
         CommonTestUtils.waitUntil("timed out (" + DEFAULT_TIMEOUT_SEC
                 + "s) waiting for current user to be " + userId
-                + " (it is " + getCurrentUserId() + ")",
-                DEFAULT_TIMEOUT_SEC,
+                + " (it is " + getCurrentUserId() + ")", DEFAULT_TIMEOUT_SEC,
                 () -> (getCurrentUserId() == userId));
+    }
+
+    /**
+     * Waits until the current user is ephemeral.
+     */
+    protected void waitUntilCurrentUserIsEphemeral() throws Exception {
+        waitUntil(() -> isUserEphemeral(getCurrentUserId()), "current user %d (to be ephemeral)",
+                getCurrentUserId());
+    }
+
+    /**
+     * Waits until {@code n} persistent (i.e., non-ephemeral) users are available.
+     */
+    protected void waitUntilAtLeastNPersistentUsersAreAvailable(int n) throws Exception {
+        waitUntil(() -> getAllPersistentUsers().size() >= n, "%d persistent users", n);
+    }
+
+    /**
+     * Waits until the given condition is reached.
+     */
+    protected void waitUntil(long timeoutSeconds, BooleanSupplierWithThrow<Exception> predicate,
+            String msgPattern, Object... msgArgs) throws Exception {
+        CommonTestUtils.waitUntil("timed out (" + timeoutSeconds + "s) waiting for "
+                + String.format(msgPattern, msgArgs), timeoutSeconds, predicate);
+    }
+
+    // TODO(b/230500604): refactor other CommonTestUtils.waitUntil() calls to use this one insteads
+    /**
+     * Waits until the given condition is reached, using the default timeout.
+     */
+    protected void waitUntil(BooleanSupplierWithThrow<Exception> predicate,
+            String msgPattern, Object... msgArgs) throws Exception {
+        waitUntil(DEFAULT_TIMEOUT_SEC, predicate, msgPattern, msgArgs);
     }
 
     /**

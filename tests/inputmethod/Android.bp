@@ -51,4 +51,13 @@ android_test {
         local_include_dirs: ["src"],
     },
     sdk_version: "test_current",
+    data: [
+        ":CtsMockSpellChecker",
+        ":CtsHiddenFromPickerIme",
+        ":CtsMockA11yInputMethod",
+        ":CtsMockInputMethod",
+        ":CtsSpellCheckingIme",
+        ":CtsInputMethodStandaloneTestApp",
+    ],
+    per_testcase_directory: true,
 }

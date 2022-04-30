@@ -99,6 +99,7 @@ import android.util.Log;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.cts.install.lib.TestApp;
+import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -300,6 +301,8 @@ public class ScopedStorageTest {
 
     @Test
     public void testAccess_OnlyImageFile() throws Exception {
+        assumeTrue(SdkLevel.isAtLeastT());
+
         pollForPermission(Manifest.permission.READ_MEDIA_IMAGES, /*granted*/ true);
 
         final File otherAppImage = new File(getDcimDir(), "other-" + IMAGE_FILE_NAME);
@@ -325,6 +328,8 @@ public class ScopedStorageTest {
 
     @Test
     public void testAccess_OnlyVideoFile() throws Exception {
+        assumeTrue(SdkLevel.isAtLeastT());
+
         pollForPermission(Manifest.permission.READ_MEDIA_VIDEO, /*granted*/ true);
 
         final File otherAppImage = new File(getDcimDir(), "other-" + IMAGE_FILE_NAME);
@@ -350,6 +355,8 @@ public class ScopedStorageTest {
 
     @Test
     public void testAccess_OnlyAudioFile() throws Exception {
+        assumeTrue(SdkLevel.isAtLeastT());
+
         pollForPermission(Manifest.permission.READ_MEDIA_AUDIO, /*granted*/ true);
 
         final File otherAppImage = new File(getDcimDir(), "other-" + IMAGE_FILE_NAME);
@@ -375,6 +382,8 @@ public class ScopedStorageTest {
 
     @Test
     public void testAccess_MediaFile() throws Exception {
+        assumeTrue(SdkLevel.isAtLeastT());
+
         pollForPermission(Manifest.permission.READ_MEDIA_IMAGES, /*granted*/ true);
         pollForPermission(Manifest.permission.READ_MEDIA_AUDIO, /*granted*/ true);
         pollForPermission(Manifest.permission.READ_MEDIA_VIDEO, /*granted*/ true);
@@ -409,6 +418,8 @@ public class ScopedStorageTest {
     /** R_E_S can't give access to media files anymore. */
     @Test
     public void testAccess_MediaFileWithRES() throws Exception {
+        assumeTrue(SdkLevel.isAtLeastT());
+
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
 
         final File otherAppImage = new File(getDcimDir(), "other-" + IMAGE_FILE_NAME);
@@ -459,7 +470,10 @@ public class ScopedStorageTest {
     @Test
     public void testAccess_file() throws Exception {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
-        pollForPermission(Manifest.permission.READ_MEDIA_IMAGES, /*granted*/ true);
+
+        if (SdkLevel.isAtLeastT()) {
+            pollForPermission(Manifest.permission.READ_MEDIA_IMAGES, /*granted*/ true);
+        }
 
         final File downloadDir = getDownloadDir();
         final File otherAppPdf = new File(downloadDir, "other-" + NONMEDIA_FILE_NAME);

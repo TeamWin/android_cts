@@ -100,8 +100,6 @@ class CompanionDeviceManagerTest {
     @Before
     fun assumeHasFeature() {
         assumeTrue(hasFeatureCompanionDeviceSetup)
-        // TODO(b/191699828) test does not work in automotive due to accessibility issue
-        assumeFalse(isAuto)
     }
 
     @After

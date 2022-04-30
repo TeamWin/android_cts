@@ -582,6 +582,7 @@ def private_reprocess(props):
   return 'android.request.availableCapabilities' in props and 4 in props[
       'android.request.availableCapabilities']
 
+
 def stream_use_case(props):
   """Returns whether a device has stream use case capability.
 
@@ -593,6 +594,7 @@ def stream_use_case(props):
   """
   return 'android.request.availableCapabilities' in props and 19 in props[
       'android.request.availableCapabilities']
+
 
 def intrinsic_calibration(props):
   """Returns whether a device supports android.lens.intrinsicCalibration.
@@ -750,7 +752,8 @@ def post_raw_sensitivity_boost(props):
     Boolean. True if android.control.postRawSensitivityBoost is supported.
   """
   return (
-      'android.control.postRawSensitivityBoostRange' in props['camera.characteristics.keys'] and
+      'android.control.postRawSensitivityBoostRange' in
+      props['camera.characteristics.keys'] and
       props.get('android.control.postRawSensitivityBoostRange') != [100, 100])
 
 
@@ -848,8 +851,8 @@ def linear_tonemap(props):
              CONTRAST_CURVE (0) or GAMMA_VALUE (3).
   """
   return ('android.tonemap.availableToneMapModes' in props and
-         (0 in props.get('android.tonemap.availableToneMapModes') or
-          3 in props.get('android.tonemap.availableToneMapModes')))
+          (0 in props.get('android.tonemap.availableToneMapModes') or
+           3 in props.get('android.tonemap.availableToneMapModes')))
 
 
 if __name__ == '__main__':

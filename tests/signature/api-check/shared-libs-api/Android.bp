@@ -36,6 +36,7 @@ android_test {
     jarjar_rules: ":cts-android-test-jarjar-rules",
 
     java_resources: [
+        ":cts-current-api-gz",
         ":CtsSharedLibsApiSignatureTestCases_cts-shared-libs-all-current.api",
         ":CtsSharedLibsApiSignatureTestCases_cts-shared-libs-all-previous.api",
     ],
@@ -66,6 +67,12 @@ genrule {
     srcs: [
         ":android.net.ipsec.ike{.public.api.txt}",
         ":android.net.ipsec.ike{.system.api.txt}",
+        ":android.test.base{.public.api.txt}",
+        ":android.test.base{.system.api.txt}",
+        ":android.test.runner{.public.api.txt}",
+        ":android.test.runner{.system.api.txt}",
+        ":android.test.mock{.public.api.txt}",
+        ":android.test.mock{.system.api.txt}",
         ":com.android.future.usb.accessory{.public.api.txt}",
         ":com.android.future.usb.accessory{.system.api.txt}",
         ":com.android.libraries.tv.tvsystem{.public.api.txt}",
@@ -82,6 +89,8 @@ genrule {
         ":com.android.nfc_extras{.system.api.txt}",
         ":javax.obex{.public.api.txt}",
         ":javax.obex{.system.api.txt}",
+        ":org.apache.http.legacy{.public.api.txt}",
+        ":org.apache.http.legacy{.system.api.txt}",
     ],
     tools: [
         "soong_zip",

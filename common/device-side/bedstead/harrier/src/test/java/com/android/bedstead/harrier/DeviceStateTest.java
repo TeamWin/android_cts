@@ -106,7 +106,6 @@ import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecond
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnUnaffiliatedDeviceOwnerSecondaryUser;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.devicepolicy.DeviceOwnerType;
-import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.users.UserReference;
@@ -985,37 +984,5 @@ public class DeviceStateTest {
     public void ensureTestAppHasAppOpAnnotation_testAppHasAppOp() {
         assertThat(sDeviceState.testApp()
                 .testApp().pkg().appOps().get(OPSTR_START_FOREGROUND)).isEqualTo(ALLOWED);
-    }
-
-    @Test
-    @RequireRunOnWorkProfile(isOrganizationOwned = true)
-    public void requireRunOnWorkProfile_isOrganizationOwned_organizationOwnedisTrue() {
-        assertThat(((ProfileOwner) sDeviceState.profileOwner(
-                sDeviceState.workProfile()).devicePolicyController()).isOrganizationOwned())
-                .isTrue();
-    }
-
-    @Test
-    @RequireRunOnWorkProfile(isOrganizationOwned = false)
-    public void requireRunOnWorkProfile_isNotOrganizationOwned_organizationOwnedIsFalse() {
-        assertThat(((ProfileOwner) sDeviceState.profileOwner(
-                sDeviceState.workProfile()).devicePolicyController()).isOrganizationOwned())
-                .isFalse();
-    }
-
-    @Test
-    @EnsureHasWorkProfile(isOrganizationOwned = true)
-    public void ensureHasWorkProfile_isOrganizationOwned_organizationOwnedIsTrue() {
-        assertThat(((ProfileOwner) sDeviceState.profileOwner(
-                sDeviceState.workProfile()).devicePolicyController()).isOrganizationOwned())
-                .isTrue();
-    }
-
-    @Test
-    @EnsureHasWorkProfile(isOrganizationOwned = false)
-    public void ensureHasWorkProfile_isNotOrganizationOwned_organizationOwnedIsFalse() {
-        assertThat(((ProfileOwner) sDeviceState.profileOwner(
-                sDeviceState.workProfile()).devicePolicyController()).isOrganizationOwned())
-                .isFalse();
     }
 }

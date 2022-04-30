@@ -44,6 +44,13 @@ android_test {
         "cts",
         "general-tests",
     ],
+    data: [
+        ":CtsUsageStatsTestApp4",
+        ":CtsUsageStatsTestApp2",
+        ":CtsUsageStatsTestApp3",
+        ":CtsUsageStatsTestApp1",
+    ],
+    per_testcase_directory: true,
 }
 
 java_defaults {

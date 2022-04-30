@@ -42,9 +42,6 @@ import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
 public class CodecEncoderValidationTest extends CodecEncoderTestBase {
-    private static final String INPUT_AUDIO_FILE_HBD = "audio/sd_2ch_48kHz_f32le.raw";
-    private static final String INPUT_VIDEO_FILE_HBD = "cosmat_cif_24fps_yuv420p16le.yuv";
-
     private final boolean mUseHBD;
     // Key: mediaType, Value: tolerance duration in ms
     private static final Map<String, Integer> toleranceMap = new HashMap<>();

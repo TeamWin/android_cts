@@ -218,6 +218,11 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         }
     }
 
+    @Test
+    public void testInvalidMustNotBeImplemented() {
+        assertThat(mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.INVALID)).isNull();
+    }
+
     @CddTest(requirement = "2.5.1")
     @Test
     public void testMustSupportGearSelection() {

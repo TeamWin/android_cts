@@ -73,7 +73,7 @@ public abstract class RequiredMeasurement<T> {
         public abstract RequiredMeasurement<T> build();
     }
 
-    private final RequirementConstants.Result meetsPerformanceClass(int mediaPerformanceClass) {
+    public final RequirementConstants.Result meetsPerformanceClass(int mediaPerformanceClass) {
         if (!this.expectedValues().containsKey(mediaPerformanceClass)) {
             return RequirementConstants.Result.NA;
         } else if (this.measuredValue == null || !this.predicate().test(this.measuredValue,

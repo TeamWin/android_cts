@@ -1375,8 +1375,10 @@ public class SurfaceControlTest {
         assertTrue(caughtException.get());
     }
 
-    @Test
-    public void testReleaseBufferCallback() throws InterruptedException {
+    /**
+     * @param delayMs delay between calling setBuffer
+     */
+    private void releaseBufferCallbackHelper(long delayMs) throws InterruptedException {
         final int setBufferCount = 3;
         CountDownLatch releaseCounter = new CountDownLatch(setBufferCount);
         long[] bufferIds = new long[setBufferCount];
@@ -1403,6 +1405,10 @@ public class SurfaceControlTest {
                                             })
                                     .apply();
                             buffer.close();
+                            try {
+                                Thread.sleep(delayMs);
+                            } catch (InterruptedException e) {
+                            }
                         }
                         setSolidBuffer(surfaceControl,
                                 DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT, PixelColor.YELLOW);
@@ -1431,6 +1437,27 @@ public class SurfaceControlTest {
                 fence.close();
             }
         }
+    }
+
+    @Test
+    public void testReleaseBufferCallback() throws InterruptedException {
+        releaseBufferCallbackHelper(0 /* delayMs */);
+    }
+
+    /**
+     * This test is different than above {@link #testReleaseBufferCallback} since it's testing the
+     * scenario where the buffers are sent a bit slower. This helps test a more real case where
+     * we're more likely not to overwrite the buffers before latched. The delay isn't to fix
+     * flakiness, but to actually try to test the case where buffers are latched and not just
+     * directly overwritten. We could pace with commit callback, but that creates behavior that
+     * users of setBuffer may not do, which could result in different output.
+     *
+     * Instead set 100ms delay between each buffer since that should help give time to SF to latch
+     * a buffer before sending another one.
+     */
+    @Test
+    public void testReleaseBufferCallback_Slow() throws InterruptedException {
+        releaseBufferCallbackHelper(100 /* delayMs */);
     }
 
     @Test

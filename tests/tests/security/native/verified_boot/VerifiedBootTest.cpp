@@ -76,6 +76,12 @@ TEST(VerifiedBootTest, avbHashtreeNotUsingSha1) {
       continue;
     }
 
+    if (mount_points.find(entry.mount_point) == mount_points.end()) {
+      GTEST_LOG_(INFO) << entry.mount_point << " isn't mounted, skipping"
+          << " hashtree algorithm verification";
+      continue;
+    }
+
     if (android::base::EqualsIgnoreCase(entry.fs_type, "emmc")) {
       GTEST_LOG_(INFO) << entry.mount_point << " has emmc fs_type, skipping"
           << " hashtree algorithm verification";

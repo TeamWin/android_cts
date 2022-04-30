@@ -36,6 +36,11 @@ android_test {
         "general-tests",
         "mts-appsearch",
     ],
+    data: [
+        ":CtsAppSearchTestHelperA",
+        ":CtsAppSearchTestHelperB",
+    ],
+    per_testcase_directory: true,
 }
 
 android_test_helper_app {

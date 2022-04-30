@@ -20,7 +20,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.text.format.DateUtils;
 
-import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject;
 import androidx.test.uiautomator.UiObjectNotFoundException;
 import androidx.test.uiautomator.UiScrollable;
@@ -92,10 +91,5 @@ public class PhotoPickerUiUtils {
     public static UiObject findProfileButton() {
         return new UiObject(new UiSelector().resourceIdMatches(
                 REGEX_PACKAGE_NAME + ":id/profile_button"));
-    }
-
-    public static void clickAndWait(UiDevice uiDevice, UiObject uiObject) throws Exception {
-        uiObject.click();
-        uiDevice.waitForIdle();
     }
 }

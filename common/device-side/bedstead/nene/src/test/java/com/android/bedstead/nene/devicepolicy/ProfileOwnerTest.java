@@ -18,12 +18,15 @@ package com.android.bedstead.nene.devicepolicy;
 
 import static android.os.Build.VERSION_CODES.TIRAMISU;
 
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.ComponentName;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
@@ -135,6 +138,7 @@ public class ProfileOwnerTest {
     @Test
     @RequireSdkVersion(min = TIRAMISU)
     @RequireRunOnWorkProfile
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void setIsOrganizationOwned_becomesOrganizationOwned() {
         ProfileOwner profileOwner = (ProfileOwner) sDeviceState.profileOwner(
                 sDeviceState.workProfile()).devicePolicyController();
@@ -147,6 +151,7 @@ public class ProfileOwnerTest {
     @Test
     @RequireSdkVersion(min = TIRAMISU)
     @RequireRunOnWorkProfile
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void unsetIsOrganizationOwned_becomesNotOrganizationOwned() {
         ProfileOwner profileOwner = (ProfileOwner) sDeviceState.profileOwner(
                 sDeviceState.workProfile()).devicePolicyController();

@@ -25,6 +25,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.VideoCapabilities.PerformancePoint;
 import android.media.MediaFormat;
 import android.mediapc.cts.common.Utils;
+import android.os.Build;
 import android.util.Log;
 import android.util.Pair;
 
@@ -49,6 +50,7 @@ public class MultiCodecPerfTestBase {
     static ArrayList<String> mMimeList = new ArrayList<>();
     static Map<String, String> mTestFiles = new HashMap<>();
     static Map<String, String> m720pTestFiles = new HashMap<>();
+    static Map<String, String> m1080pTestFiles = new HashMap<>();
 
     static {
         mMimeList.add(MediaFormat.MIMETYPE_VIDEO_AVC);
@@ -57,14 +59,18 @@ public class MultiCodecPerfTestBase {
         m720pTestFiles.put(MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_1280x720_3mbps_30fps_avc.mp4");
         m720pTestFiles.put(MediaFormat.MIMETYPE_VIDEO_HEVC, "bbb_1280x720_3mbps_30fps_hevc.mp4");
 
-        // Test VP9 and AV1 as well for Build.VERSION_CODES.S
-        if (Utils.isSPerfClass()) {
+        // Test VP9 and AV1 as well for Build.VERSION_CODES.S and beyond
+        if (Utils.getPerfClass() >= Build.VERSION_CODES.S) {
             mMimeList.add(MediaFormat.MIMETYPE_VIDEO_VP9);
             mMimeList.add(MediaFormat.MIMETYPE_VIDEO_AV1);
 
             m720pTestFiles.put(MediaFormat.MIMETYPE_VIDEO_VP9, "bbb_1280x720_3mbps_30fps_vp9.webm");
             m720pTestFiles.put(MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_1280x720_3mbps_30fps_av1.mp4");
         }
+        m1080pTestFiles.put(MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_1920x1080_6mbps_30fps_avc.mp4");
+        m1080pTestFiles.put(MediaFormat.MIMETYPE_VIDEO_HEVC, "bbb_1920x1080_4mbps_30fps_hevc.mp4");
+        m1080pTestFiles.put(MediaFormat.MIMETYPE_VIDEO_VP9, "bbb_1920x1080_4mbps_30fps_vp9.webm");
+        m1080pTestFiles.put(MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_1920x1080_4mbps_30fps_av1.mp4");
     }
 
     String mMime;

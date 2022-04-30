@@ -18,6 +18,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="android.compat.sjp.app"
           android:targetSandboxVersion="2">
+
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+
     <application android:requestLegacyExternalStorage="true">
         <uses-library android:name="android.test.runner" />
     </application>

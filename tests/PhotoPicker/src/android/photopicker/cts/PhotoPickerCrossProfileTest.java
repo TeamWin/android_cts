@@ -33,6 +33,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.provider.MediaStore;
 
+import androidx.test.filters.LargeTest;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.uiautomator.UiObject;
 import androidx.test.uiautomator.UiSelector;
@@ -55,6 +56,7 @@ import java.util.List;
  * Photo Picker Device only tests for cross profile interaction flows.
  */
 @RunWith(BedsteadJUnit4.class)
+@LargeTest
 public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();

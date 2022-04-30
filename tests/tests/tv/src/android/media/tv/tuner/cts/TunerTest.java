@@ -565,7 +565,7 @@ public class TunerTest {
                         TunerVersionChecker.TUNER_VERSION_2_0)) {
                 fail("Get Frontend Status Readiness should throw IllegalStateException.");
             } else {
-                assertFalse(readiness.isEmpty());
+                assertTrue(readiness.isEmpty());
             }
         } catch (IllegalStateException e) {
             // pass
@@ -600,7 +600,7 @@ public class TunerTest {
                     }
                 }
             } else {
-                assertNull(readiness);
+                assertTrue(readiness.isEmpty());
             }
             tuner.cancelTuning();
             tuner.close();

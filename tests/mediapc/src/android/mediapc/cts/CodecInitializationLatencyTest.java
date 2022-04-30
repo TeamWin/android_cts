@@ -63,12 +63,12 @@ import java.util.List;
 
 /**
  * The following test class validates the codec initialization latency (time for codec create +
- * configure) for the audio encoders and hardware video encoders available in the device, under the
+ * configure) for the audio codecs and hardware video codecs available in the device, under the
  * load condition (Transcode + MediaRecorder session Audio(Microphone) and 1080p Video(Camera)).
  */
 @RunWith(Parameterized.class)
-public class EncoderInitializationLatencyTest {
-    private static final String LOG_TAG = EncoderInitializationLatencyTest.class.getSimpleName();
+public class CodecInitializationLatencyTest {
+    private static final String LOG_TAG = CodecInitializationLatencyTest.class.getSimpleName();
     private static final boolean[] boolStates = {false, true};
     private static final int MAX_AUDIOENC_INITIALIZATION_LATENCY_PC_R_MS = 50;
     private static final int MAX_VIDEOENC_INITIALIZATION_LATENCY_PC_R_MS = 65;
@@ -100,7 +100,7 @@ public class EncoderInitializationLatencyTest {
     }
 
     private final String mMime;
-    private final String mEncoderName;
+    private final String mCodecName;
 
     private LoadStatus mTranscodeLoadStatus = null;
     private Thread mTranscodeLoadThread = null;
@@ -139,9 +139,9 @@ public class EncoderInitializationLatencyTest {
         releaseSurface();
     }
 
-    public EncoderInitializationLatencyTest(String mimeType, String encoderName) {
+    public CodecInitializationLatencyTest(String mimeType, String codecName) {
         mMime = mimeType;
-        mEncoderName = encoderName;
+        mCodecName = codecName;
     }
 
     @Rule
@@ -311,7 +311,7 @@ public class EncoderInitializationLatencyTest {
         for (int i = 0; i < NUM_MEASUREMENTS; i++) {
             for (boolean isAsync : boolStates) {
                 EncoderInitializationLatency encoderInitializationLatency =
-                        new EncoderInitializationLatency(mMime, mEncoderName, isAsync);
+                        new EncoderInitializationLatency(mMime, mCodecName, isAsync);
                 long latency = encoderInitializationLatency.calculateEncoderInitializationLatency();
                 encoderInitializationLatencyMs[count] = latency;
                 sumOfEncoderInitializationLatencyMs += latency;
@@ -321,15 +321,15 @@ public class EncoderInitializationLatencyTest {
         Arrays.sort(encoderInitializationLatencyMs);
 
         String statsLog = String.format("CodecInitialization latency for mime: %s, " +
-                "Encoder: %s, in Ms :: ", mMime, mEncoderName);
+                "Encoder: %s, in Ms :: ", mMime, mCodecName);
         Log.i(LOG_TAG, "Min " + statsLog + encoderInitializationLatencyMs[0]);
         Log.i(LOG_TAG, "Max " + statsLog + encoderInitializationLatencyMs[count - 1]);
         Log.i(LOG_TAG, "Avg " + statsLog + (sumOfEncoderInitializationLatencyMs / count));
         long initializationLatency = encoderInitializationLatencyMs[percentile * count / 100];
         if (Utils.isPerfClass()) {
             String errorLog = String.format(
-                    "CodecInitialization latency for mime: %s, Encoder: %s is not as expected. "
-                            + "act/exp in Ms :: %d/%d", mMime, mEncoderName, initializationLatency,
+                    "CodecInitialization latency for mime: %s, Codec: %s is not as expected."
+                            + "act/exp in Ms :: %d/%d", mMime, mCodecName, initializationLatency,
                     expectedMaxCodecInitializationLatencyMs);
             assertTrue(errorLog, initializationLatency <= expectedMaxCodecInitializationLatencyMs);
         } else {
@@ -350,8 +350,8 @@ public class EncoderInitializationLatencyTest {
                                 Build.VERSION_CODES.R : 0;
             }
             DeviceReportLog log = new DeviceReportLog("MediaPerformanceClassLogs",
-                    "InitializationLatency_" + mEncoderName);
-            log.addValue("encoder", mEncoderName, ResultType.NEUTRAL, ResultUnit.NONE);
+                    "InitializationLatency_" + mCodecName);
+            log.addValue("codec", mCodecName, ResultType.NEUTRAL, ResultUnit.NONE);
             log.addValue("initialization_latency", initializationLatency, ResultType.LOWER_BETTER,
                     ResultUnit.NONE);
             log.setSummary("CDD 2.2.7.1/5.1/H-1-7,H-1-8 performance_class", pc, ResultType.NEUTRAL,

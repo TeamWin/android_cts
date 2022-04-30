@@ -39,6 +39,7 @@ import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.window.extensions.embedding.SplitPlaceholderRule;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -139,6 +140,7 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
      * activity it launched with is not finished.
      */
     @Test
+    @Ignore
     public void testPlaceholderFinishPrimaryWithSecondary_FinishNever() {
         // Set embedding rules with finishPrimaryWithSecondary set to FINISH_NEVER
         final SplitPlaceholderRule splitPlaceholderRule =

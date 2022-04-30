@@ -116,10 +116,6 @@ public class WindowUntrustedTouchTest {
     private static final int OVERLAY_COLOR = 0xFFFF0000;
     private static final int ACTIVITY_COLOR = 0xFFFFFFFF;
 
-    private static final int FEATURE_MODE_DISABLED = 0;
-    private static final int FEATURE_MODE_PERMISSIVE = 1;
-    private static final int FEATURE_MODE_BLOCK = 2;
-
     private static final String APP_SELF =
             WindowUntrustedTouchTest.class.getPackage().getName() + ".cts";
     private static final String APP_A =
@@ -153,7 +149,6 @@ public class WindowUntrustedTouchTest {
     private View mContainer;
     private Toast mToast;
     private float mPreviousTouchOpacity;
-    private int mPreviousMode;
     private int mPreviousSawAppOp;
     private final Set<String> mSawWindowsAdded = new ArraySet<>();
     private final AtomicInteger mTouchesReceived = new AtomicInteger(0);
@@ -204,7 +199,6 @@ public class WindowUntrustedTouchTest {
         mPreviousSawAppOp = AppOpsUtils.getOpMode(APP_SELF, OPSTR_SYSTEM_ALERT_WINDOW);
         AppOpsUtils.setOpMode(APP_SELF, OPSTR_SYSTEM_ALERT_WINDOW, MODE_ALLOWED);
         mPreviousTouchOpacity = setMaximumObscuringOpacityForTouch(MAXIMUM_OBSCURING_OPACITY);
-        mPreviousMode = setBlockUntrustedTouchesMode(FEATURE_MODE_BLOCK);
         SystemUtil.runWithShellPermissionIdentity(
                 () -> mNotificationManager.setToastRateLimitingEnabled(false));
 
@@ -226,42 +220,8 @@ public class WindowUntrustedTouchTest {
         }
         SystemUtil.runWithShellPermissionIdentity(
                 () -> mNotificationManager.setToastRateLimitingEnabled(true));
-        setBlockUntrustedTouchesMode(mPreviousMode);
         setMaximumObscuringOpacityForTouch(mPreviousTouchOpacity);
         AppOpsUtils.setOpMode(APP_SELF, OPSTR_SYSTEM_ALERT_WINDOW, mPreviousSawAppOp);
-    }
-
-    @Test
-    public void testWhenFeatureInDisabledModeAndOneSawWindowAbove_allowsTouch()
-            throws Throwable {
-        setBlockUntrustedTouchesMode(FEATURE_MODE_DISABLED);
-        addSawOverlay(APP_A, WINDOW_1, /* opacity */ .9f);
-
-        mTouchHelper.tapOnViewCenter(mContainer);
-
-        assertTouchReceived();
-    }
-
-    @Test
-    public void testWhenFeatureInPermissiveModeAndOneSawWindowAbove_allowsTouch()
-            throws Throwable {
-        setBlockUntrustedTouchesMode(FEATURE_MODE_PERMISSIVE);
-        addSawOverlay(APP_A, WINDOW_1, /* opacity */ .9f);
-
-        mTouchHelper.tapOnViewCenter(mContainer);
-
-        assertTouchReceived();
-    }
-
-    @Test
-    public void testWhenFeatureInBlockModeAndActivityWindowAbove_blocksTouch()
-            throws Throwable {
-        setBlockUntrustedTouchesMode(FEATURE_MODE_BLOCK);
-        addActivityOverlay(APP_A, /* opacity */ .9f);
-
-        mTouchHelper.tapOnViewCenter(mContainer);
-
-        assertTouchNotReceived();
     }
 
     @Test
@@ -279,17 +239,6 @@ public class WindowUntrustedTouchTest {
         setMaximumObscuringOpacityForTouch(threshold);
 
         assertEquals(threshold, mInputManager.getMaximumObscuringOpacityForTouch());
-    }
-
-    @Test
-    public void testAfterSettingFeatureMode_returnsModeSet()
-            throws Throwable {
-        // Make sure the previous mode is different
-        setBlockUntrustedTouchesMode(FEATURE_MODE_BLOCK);
-        assertEquals(FEATURE_MODE_BLOCK, mInputManager.getBlockUntrustedTouchesMode(mContext));
-        setBlockUntrustedTouchesMode(FEATURE_MODE_PERMISSIVE);
-
-        assertEquals(FEATURE_MODE_PERMISSIVE, mInputManager.getBlockUntrustedTouchesMode(mContext));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -1074,14 +1023,6 @@ public class WindowUntrustedTouchTest {
     private void stopPackage(String packageName) {
         SystemUtil.runWithShellPermissionIdentity(
                 () -> mActivityManager.forceStopPackage(packageName));
-    }
-
-    private int setBlockUntrustedTouchesMode(int mode) throws Exception {
-        return SystemUtil.callWithShellPermissionIdentity(() -> {
-            int previous = mInputManager.getBlockUntrustedTouchesMode(mContext);
-            mInputManager.setBlockUntrustedTouchesMode(mContext, mode);
-            return previous;
-        });
     }
 
     private float setMaximumObscuringOpacityForTouch(float opacity) throws Exception {

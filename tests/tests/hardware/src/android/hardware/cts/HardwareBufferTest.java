@@ -22,6 +22,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.hardware.HardwareBuffer;
+import android.os.Build;
+import android.os.SystemProperties;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -125,18 +127,29 @@ public class HardwareBufferTest {
 
     @Test
     public void testInvalidUsage() {
+        if (SystemProperties.getInt("ro.vendor.build.version.sdk", 0)
+                < Build.VERSION_CODES.TIRAMISU) {
+            // Legacy grallocs may have a mismatch here.
+            return;
+        }
+
         final int dimen = 100;
         final long usage = HardwareBuffer.USAGE_CPU_READ_RARELY | (1L << 46);
+        final boolean supported = HardwareBuffer.isSupported(dimen, dimen, HardwareBuffer.RGBA_8888,
+                1, usage);
 
         try {
             HardwareBuffer buffer = HardwareBuffer.create(dimen, dimen, HardwareBuffer.RGBA_8888,
                     1, usage);
-            fail("Allocation should have failed; instead got " + buffer);
+            if (!supported) {
+                fail("Allocation should have failed (isSupported returned false); instead got "
+                        + buffer);
+            }
         } catch (IllegalArgumentException ex) {
-            // Pass
+            if (supported) {
+                fail("Allocation should have succeeded (isSupported returned true)");
+            }
         }
 
-        assertFalse("Cannot claim a buffer is supported that was unable to be allocated.",
-                HardwareBuffer.isSupported(dimen, dimen, HardwareBuffer.RGBA_8888, 1, usage));
     }
 }

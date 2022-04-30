@@ -38,7 +38,7 @@ public class BluetoothRestrictionTest extends BaseDeviceOwnerTest {
     private static final boolean VERBOSE = false;
 
     private static final int DISABLE_TIMEOUT_MS = 8000;   // ms timeout for BT disable
-    private static final int ENABLE_TIMEOUT_MS = 10_000;  // ms timeout for BT enable
+    private static final int ENABLE_TIMEOUT_MS = 20_000;  // ms timeout for BT enable
     private static final int POLL_TIME_MS = 400;          // ms to poll BT state
     private static final int CHECK_WAIT_TIME_MS = 1_000;  // ms to wait before enable/disable
     private static final int COMPONENT_STATE_TIMEOUT_MS = 10_000;

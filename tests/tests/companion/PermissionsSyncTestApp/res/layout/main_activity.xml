@@ -21,13 +21,23 @@
     android:orientation="vertical">
 
     <Button
+        android:id="@+id/startAdvertisingButton"
+        android:layout_width="wrap_content"
+        android:layout_marginTop="80dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:text="Start Advertising Device" />
+
+
+    <Button
         android:id="@+id/associateButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginTop="80dp"
+        android:layout_marginTop="50dp"
         android:gravity="center"
-        android:text="Link Now" />
+        android:text="Associate Device" />
 
 
     <Button
@@ -37,7 +47,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:gravity="center"
-        android:text="Unlink Now" />
+        android:text="Disassociate Device" />
 
     <Button
         android:id="@+id/permissionsRequestButton"
@@ -56,14 +66,5 @@
         android:layout_gravity="center"
         android:gravity="center"
         android:text="Transfer Data" />
-
-    <Button
-        android:id="@+id/startAdvertisingButton"
-        android:layout_width="wrap_content"
-        android:layout_marginTop="50dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center"
-        android:text="Start Advertising Device" />
 
 </LinearLayout>

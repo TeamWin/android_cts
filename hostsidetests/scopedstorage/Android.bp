@@ -223,6 +223,7 @@ android_test {
     static_libs: [
         "truth-prebuilt",
         "cts-scopedstorage-lib",
+        "modules-utils-build_system",
     ],
     compile_multilib: "both",
     test_suites: [
