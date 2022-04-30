@@ -58,4 +58,15 @@ android_test {
         "general-tests",
     ],
     sdk_version: "test_current",
+    data: [
+        ":CtsCarPermissionReadCarDisplayUnitsTest",
+        ":CtsCarPermissionCarPowertrainTest",
+        ":CtsCarPermissionCarInfoTest",
+        ":CtsCarPermissionCarExteriorEnvironmentTest",
+        ":CtsCarPermissionCarEnergyTest",
+        ":CtsCarNoPropertyPermissionsTest",
+        ":CtsCarPermissionCarEnergyPortsTest",
+        ":CtsCarPermissionCarSpeedTest",
+    ],
+    per_testcase_directory: true,
 }

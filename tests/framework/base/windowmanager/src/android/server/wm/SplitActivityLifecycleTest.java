@@ -69,6 +69,12 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     private final Intent mIntent = new Intent().setComponent(mActivityC);
 
     @Override
+    public void setUp() throws Exception {
+        assumeTrue(supportsMultiWindow());
+        super.setUp();
+    }
+
+    @Override
     Activity setUpOwnerActivity() {
         // Launch activities in fullscreen, otherwise, some tests fail on devices which use freeform
         // as the default windowing mode, because tests' prerequisite are that activity A, B, and C

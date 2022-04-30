@@ -45,4 +45,8 @@ android_test {
 
     platform_apis: true,
     sdk_version: "module_current",
+    data: [
+        ":CtsCarBuiltinSimpleApp",
+    ],
+    per_testcase_directory: true,
 }
