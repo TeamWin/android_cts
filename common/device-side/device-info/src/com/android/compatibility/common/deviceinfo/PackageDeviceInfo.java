@@ -55,7 +55,7 @@ public class PackageDeviceInfo extends DeviceInfo {
     private static final String NAME = "name";
     private static final String VERSION_NAME = "version_name";
     private static final String SYSTEM_PRIV = "system_priv";
-    private static final String PRIV_APP_DIR = "/system/priv-app";
+    private static final String [] PRIV_APP_DIRS = {"/system/priv-app", "/system_ext/priv-app", "/product/priv-app", "/vendor/priv-app"};
     private static final String MIN_SDK = "min_sdk";
     private static final String TARGET_SDK = "target_sdk";
 
@@ -226,7 +226,17 @@ public class PackageDeviceInfo extends DeviceInfo {
         final ApplicationInfo appInfo = pkg.applicationInfo;
         if (appInfo != null) {
             String dir = appInfo.sourceDir;
-            store.addResult(SYSTEM_PRIV, dir != null && dir.startsWith(PRIV_APP_DIR));
+            boolean isSystemPriv = false;
+
+            if(dir != null) {
+              for(String privAppDir: PRIV_APP_DIRS) {
+                if(dir.startsWith(privAppDir)) {
+                  isSystemPriv = true;
+                  break;
+                }
+              }
+            }
+            store.addResult(SYSTEM_PRIV, isSystemPriv);
 
             store.addResult(MIN_SDK, appInfo.minSdkVersion);
             store.addResult(TARGET_SDK, appInfo.targetSdkVersion);
