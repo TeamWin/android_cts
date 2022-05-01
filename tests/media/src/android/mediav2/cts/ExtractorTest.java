@@ -1603,6 +1603,7 @@ public class ExtractorTest {
             for (String file : mInpFiles) {
                 MediaFormat format = null;
                 MediaExtractor extractor = new MediaExtractor();
+                Preconditions.assertTestFileExists(mInpPrefix + file);
                 extractor.setDataSource(mInpPrefix + file);
                 for (int trackID = 0; trackID < extractor.getTrackCount(); trackID++) {
                     MediaFormat fmt = extractor.getTrackFormat(trackID);
@@ -1740,6 +1741,7 @@ public class ExtractorTest {
                 strTok.parseNumbers();
 
                 MediaExtractor extractor = new MediaExtractor();
+                Preconditions.assertTestFileExists(mInpPrefix + mRefFile);
                 extractor.setDataSource(mInpPrefix + mRefFile);
                 assertTrue(mTrackIndex < extractor.getTrackCount());
                 extractor.selectTrack(mTrackIndex);
