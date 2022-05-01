@@ -53,8 +53,8 @@ public class MainActivity extends Activity implements ContextProvider {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
 
-        mCommunicationManager = new CommunicationManager(this, mHandler);
-        mCDMController = new CDMController(this, mCommunicationManager);
+        mCommunicationManager = CommunicationManager.createInstance(this, mHandler);
+        mCDMController = new CDMController(this);
 
         Button associateButton = findViewById(R.id.associateButton);
         Button disassociateButton = findViewById(R.id.disassociateButton);
@@ -85,11 +85,7 @@ public class MainActivity extends Activity implements ContextProvider {
     }
 
     private void transferData() {
-        // TODO (b/230383170): transfer permission data between devices
-        // mCDMController.beginDataTransfer();
-        // Currently we are sending a test message
-        String message = "test message";
-        mCommunicationManager.sendMessage(message);
+        mCDMController.beginDataTransfer();
     }
 
     /**
@@ -192,6 +188,7 @@ public class MainActivity extends Activity implements ContextProvider {
                     String readMessage = new String(readBuf, 0, msg.arg1);
                     Toast.makeText(activity, "Message Received:  "
                             + readMessage, Toast.LENGTH_SHORT).show();
+                    // TODO call dispatchMessageToSystem()
                     break;
                 case BluetoothCommunicationService.MESSAGE_DEVICE_NAME:
                     // save the connected device's name

@@ -22,9 +22,12 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 
 public class PermissionsTransferCompanionService extends CompanionDeviceService {
+
     @Override
     public void onMessageDispatchedFromSystem(int messageId, int associationId,
             @NonNull byte[] message) {
         Toast.makeText(this, "onMessageDispatchedFromSystem", Toast.LENGTH_LONG).show();
+
+        CommunicationManager.getInstance().sendData(message);
     }
 }

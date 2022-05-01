@@ -29,12 +29,23 @@ import android.widget.Toast;
  */
 public class CommunicationManager {
 
+    private static CommunicationManager sCommunicationManager;
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothDevice mBluetoothDevice;
     private BluetoothCommunicationService mBluetoothCommunicationService;
     private Context mContext;
 
-    public CommunicationManager(Context context, Handler handler) {
+    public static CommunicationManager createInstance(Context context, Handler handler) {
+        sCommunicationManager = new CommunicationManager(context, handler);
+        return sCommunicationManager;
+    }
+
+    // TODO consider making it a service to avoid the singleton pattern
+    public static CommunicationManager getInstance() {
+        return sCommunicationManager;
+    }
+
+    private CommunicationManager(Context context, Handler handler) {
         mContext = context;
 
         BluetoothManager bluetoothManager = context.getSystemService(BluetoothManager.class);
@@ -53,9 +64,8 @@ public class CommunicationManager {
         mBluetoothCommunicationService.stop();
     }
 
-    public void sendMessage(String message) {
-        byte[] messageBytes = message.getBytes();
-        mBluetoothCommunicationService.write(messageBytes);
+    public void sendData(byte[] message) {
+        mBluetoothCommunicationService.write(message);
     }
 
     public void onRemoteDeviceAssociated(MacAddress macAddress) {
