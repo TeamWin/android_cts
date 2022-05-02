@@ -76,6 +76,7 @@ android_test {
     certificate: ":security_cts_test_certificate",
     data: [
         ":RolePermissionOverrideTestApp",
+        ":SplitBluetoothPermissionTestApp",
     ],
 }
 
