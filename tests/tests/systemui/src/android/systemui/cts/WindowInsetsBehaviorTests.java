@@ -194,11 +194,6 @@ public class WindowInsetsBehaviorTests {
     private Context mTargetContext;
     private int mClickCount;
 
-    @BeforeClass
-    public static void assumeAtLeastSVTwo() {
-        assumeTrue(ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S_V2));
-    }
-
     private void mainThreadRun(Runnable runnable) {
         getInstrumentation().runOnMainSync(runnable);
         mDevice.waitForIdle();
@@ -288,6 +283,8 @@ public class WindowInsetsBehaviorTests {
      */
     @Before
     public void setUp() throws Exception {
+        assumeTrue("Skipping test intended for SV2 devices",
+                Build.VERSION.SDK_INT == Build.VERSION_CODES.S_V2);
         mDevice = UiDevice.getInstance(getInstrumentation());
         mTouchHelper = new TouchHelper(getInstrumentation());
         mTargetContext = getInstrumentation().getTargetContext();
@@ -351,6 +348,9 @@ public class WindowInsetsBehaviorTests {
      */
     @After
     public void tearDown() {
+        if (Build.VERSION.SDK_INT != Build.VERSION_CODES.S_V2) {
+            return;
+        }
         if (!hasSystemGestureFeature()) {
             return;
         }
