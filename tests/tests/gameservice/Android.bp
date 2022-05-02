@@ -24,6 +24,7 @@ android_test {
     ],
     data: [
         ":CtsGameServiceFalsePositiveGame",
+        ":CtsGameServiceFinishOnBackGame",
         ":CtsGameServiceGame",
         ":CtsGameServiceNotGame",
         ":CtsGameServiceRestartGameVerifier",

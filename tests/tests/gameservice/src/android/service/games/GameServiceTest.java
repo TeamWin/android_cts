@@ -73,6 +73,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -91,6 +93,8 @@ public final class GameServiceTest {
     private static final String GAME_PACKAGE_NAME = "android.service.games.cts.game";
     private static final String FALSE_POSITIVE_GAME_PACKAGE_NAME =
             "android.service.games.cts.falsepositive";
+    private static final String FINISH_ON_BACK_GAME_PACKAGE_NAME =
+            "android.service.games.cts.finishonbackgame";
     private static final String NOT_GAME_PACKAGE_NAME = "android.service.games.cts.notgame";
     private static final String RESTART_GAME_VERIFIER_PACKAGE_NAME =
             "android.service.games.cts.restartgameverifier";
@@ -122,6 +126,7 @@ public final class GameServiceTest {
 
         getTestService().setGamePackageNames(
                 ImmutableList.of(
+                        FINISH_ON_BACK_GAME_PACKAGE_NAME,
                         GAME_PACKAGE_NAME,
                         RESTART_GAME_VERIFIER_PACKAGE_NAME,
                         SYSTEM_BAR_VERIFIER_PACKAGE_NAME,
@@ -146,6 +151,7 @@ public final class GameServiceTest {
         forceStop(GAME_PACKAGE_NAME);
         forceStop(NOT_GAME_PACKAGE_NAME);
         forceStop(FALSE_POSITIVE_GAME_PACKAGE_NAME);
+        forceStop(FINISH_ON_BACK_GAME_PACKAGE_NAME);
         forceStop(RESTART_GAME_VERIFIER_PACKAGE_NAME);
         forceStop(START_ACTIVITY_VERIFIER_PACKAGE_NAME);
         forceStop(SYSTEM_BAR_VERIFIER_PACKAGE_NAME);
@@ -391,6 +397,58 @@ public final class GameServiceTest {
 
         UiAutomatorUtils.waitFindObject(
                 By.res(RESTART_GAME_VERIFIER_PACKAGE_NAME, "times_started").text("3"));
+    }
+
+    @Test
+    public void gamePutInBackgroundAndRestoredViaRecentsUi_gameSessionRestarted() throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        // The test game finishes its activity when it is put in the background by a press of the
+        // back button.
+        launchAndWaitForPackage(FINISH_ON_BACK_GAME_PACKAGE_NAME);
+
+        assertThat(getTestService().getActiveSessions()).containsExactly(
+                FINISH_ON_BACK_GAME_PACKAGE_NAME);
+
+        // Close the game by pressing the back button.
+        UiAutomatorUtils.getUiDevice().pressBack();
+        UiAutomatorUtils.getUiDevice().waitForIdle();
+
+        // With the game closed the game session should be destroyed
+        PollingCheck.waitFor(TimeUnit.SECONDS.toMillis(20),
+                () -> {
+                    try {
+                        return getTestService().getActiveSessions().isEmpty();
+                    } catch (RemoteException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                "Timed out waiting for game session to be destroyed.");
+
+        // Restore the game via the Recents UI
+        UiAutomatorUtils.getUiDevice().pressRecentApps();
+        UiAutomatorUtils.getUiDevice().waitForIdle();
+
+        logWindowHierarchy("after pressing recent apps");
+
+        // Don't specify the full name of the test game "CtsGameServiceFinishOnBackGame" because it
+        // may be ellipsized in the Recents UI.
+        UiAutomatorUtils.waitFindObject(By.textStartsWith("CtsGameService")).click();
+
+        logWindowHierarchy("after clicking on recent app");
+
+        // There should again be an active game session for the restored game.
+        PollingCheck.waitFor(TimeUnit.SECONDS.toMillis(20),
+                () -> {
+                    try {
+                        return getTestService().getActiveSessions().size() == 1
+                                && getTestService().getActiveSessions().get(0).equals(
+                                FINISH_ON_BACK_GAME_PACKAGE_NAME);
+                    } catch (RemoteException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                "Timed out waiting for game session to be re-created.");
     }
 
     @Test
@@ -658,6 +716,20 @@ public final class GameServiceTest {
         WindowMetrics windowMetrics = wm.getCurrentWindowMetrics();
         Rect windowBounds = windowMetrics.getBounds();
         return new Size(windowBounds.width(), windowBounds.height());
+    }
+
+    private void logWindowHierarchy(String state) {
+        try {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            UiAutomatorUtils.getUiDevice().dumpWindowHierarchy(os);
+
+            Log.d(TAG, "Window hierarchy: " + state);
+            for (String line : os.toString("UTF-8").split("\n")) {
+                Log.d(TAG, line);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static final class ServiceConnection implements android.content.ServiceConnection {
