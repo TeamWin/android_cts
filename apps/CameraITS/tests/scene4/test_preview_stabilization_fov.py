@@ -27,8 +27,6 @@ import its_session_utils
 import opencv_processing_utils
 import video_processing_utils
 
-# TODO(arakesh): use constant from its_session_utils instead
-_ANDROID13_API_LEVEL = 33
 _PREVIEW_STABILIZATION_MODE_PREVIEW = 2
 _VIDEO_DURATION = 3  # seconds
 
@@ -148,9 +146,9 @@ class PreviewStabilizationFoVTest(its_base_test.ItsBaseTest):
       # Check skip condition
       first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
       camera_properties_utils.skip_unless(
-          first_api_level >= _ANDROID13_API_LEVEL,
-          f'First API level should be {_ANDROID13_API_LEVEL} or higher. '
-          'Found {first_api_level}.')
+          first_api_level >= its_session_utils.ANDROID13_API_LEVEL,
+          'First API level should be {} or higher. Found {}.'.format(
+            its_session_utils.ANDROID13_API_LEVEL, first_api_level))
 
       supported_stabilization_modes = props[
           'android.control.availableVideoStabilizationModes'

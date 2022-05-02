@@ -1377,6 +1377,7 @@ class CodecDecoderTestBase extends CodecTestBase {
     MediaFormat setUpSource(String prefix, String srcFile) throws IOException {
         Preconditions.assertTestFileExists(prefix + srcFile);
         mExtractor = new MediaExtractor();
+        Preconditions.assertTestFileExists(prefix + srcFile);
         mExtractor.setDataSource(prefix + srcFile);
         for (int trackID = 0; trackID < mExtractor.getTrackCount(); trackID++) {
             MediaFormat format = mExtractor.getTrackFormat(trackID);

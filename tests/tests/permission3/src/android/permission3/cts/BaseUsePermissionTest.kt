@@ -67,6 +67,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             "$APK_DIRECTORY/CtsCreateNotificationChannelsApp31.apk"
         const val APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_33 =
             "$APK_DIRECTORY/CtsCreateNotificationChannelsApp33.apk"
+        const val APP_APK_PATH_MEDIA_PERMISSION_33_WITH_STORAGE =
+            "$APK_DIRECTORY/CtsMediaPermissionApp33WithStorage.apk"
         const val APP_APK_PATH_OTHER_APP =
             "$APK_DIRECTORY/CtsDifferentPkgNameApp.apk"
         const val APP_PACKAGE_NAME = "android.permission3.cts.usepermission"
@@ -292,7 +294,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         )
         waitForIdle()
         // Notification permission prompt is shown first, so get it out of the way
-        clickNotificationPermissionRequestAllowButton()
+        clickNotificationPermissionRequestAllowButtonIfAvailable()
         // Perform the post-request action
         block()
         return future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
@@ -343,9 +345,13 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     }
 
     /**
-     * Only for use in tests that are not testing the notification permission popup
+     * Only for use in tests that are not testing the notification permission popup, on T devices
      */
-    protected fun clickNotificationPermissionRequestAllowButton() {
+    protected fun clickNotificationPermissionRequestAllowButtonIfAvailable() {
+        if (!SdkLevel.isAtLeastT()) {
+            return
+        }
+
         if (waitFindObjectOrNull(By.text(getPermissionControllerString(
                 NOTIF_CONTINUE_TEXT, APP_PACKAGE_NAME)), 1000) != null ||
                 waitFindObjectOrNull(By.text(getPermissionControllerString(
@@ -697,7 +703,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             }
         )
         waitForIdle()
-        clickNotificationPermissionRequestAllowButton()
+        clickNotificationPermissionRequestAllowButtonIfAvailable()
         val result = future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
         assertEquals(Activity.RESULT_OK, result.resultCode)
         assertTrue(result.resultData!!.hasExtra("$APP_PACKAGE_NAME.HAS_ACCESS"))
