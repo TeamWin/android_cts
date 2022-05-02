@@ -14,15 +14,22 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License
   -->
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:padding="10dip"
 >
 
-  <Button android:id="@+id/run_read_logs_btn"
-      android:text="@string/read_logs_text"
-      android:layout_width="wrap_content"
+  <Button android:id="@+id/run_read_logs_fg_allow_btn"
+      android:text="@string/read_logs_fg_allow_text"
+      android:layout_marginBottom="20dp"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content" />
+
+  <Button android:id="@+id/run_read_logs_fg_deny_btn"
+      android:text="@string/read_logs_fg_deny_text"
+      android:layout_width="match_parent"
       android:layout_height="wrap_content" />
 
   <include android:layout_width="match_parent"
@@ -31,5 +38,5 @@
       layout="@layout/pass_fail_buttons"
   />
 
-</RelativeLayout>
+</LinearLayout>
 
