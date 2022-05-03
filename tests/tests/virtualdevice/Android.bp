@@ -46,6 +46,10 @@ android_test {
         "cts",
         "general-tests",
     ],
+    data: [
+        ":CtsVirtualDeviceStreamedTestApp",
+    ],
+    per_testcase_directory: true,
 }
 
 filegroup {
