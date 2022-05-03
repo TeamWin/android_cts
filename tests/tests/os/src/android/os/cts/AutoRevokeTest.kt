@@ -64,7 +64,8 @@ import org.junit.Assert.assertThat
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
 import org.junit.Before
-import org.junit.Ignore;
+import org.junit.BeforeClass
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -95,6 +96,12 @@ class AutoRevokeTest {
 
     companion object {
         const val LOG_TAG = "AutoRevokeTest"
+
+        @JvmStatic
+        @BeforeClass
+        fun beforeAllTests() {
+            runBootCompleteReceiver(InstrumentationRegistry.getTargetContext(), LOG_TAG)
+        }
     }
 
     @get:Rule
