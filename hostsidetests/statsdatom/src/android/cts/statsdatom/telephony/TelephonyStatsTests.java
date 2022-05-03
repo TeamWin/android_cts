@@ -123,7 +123,9 @@ public class TelephonyStatsTests extends DeviceTestCase implements IBuildReceive
         assertThat(atom.getSimCount()).isAtMost(getActiveSimCountUpperBound());
         assertThat(atom.getEsimCount()).isAtMost(getActiveEsimCountUpperBound());
         // Above assertions do no necessarily enforce the following, since some are upper bounds
-        assertThat(atom.getActiveSlotCount()).isAtLeast(atom.getSimCount());
+        if (!isEuiccSupportsMultipleEnabledProfiles()) {
+            assertThat(atom.getActiveSlotCount()).isAtLeast(atom.getSimCount());
+        }
         assertThat(atom.getSimCount()).isAtLeast(atom.getEsimCount());
         assertThat(atom.getEsimCount()).isAtLeast(0);
         // For GSM phones, at least one slot should be active even if there is no card
@@ -326,6 +328,16 @@ public class TelephonyStatsTests extends DeviceTestCase implements IBuildReceive
                         && "CARDSTATE_PRESENT".equals(slot.get("mCardState"))
                         && "true".equals(slot.get("mIsEuicc"))).count();
         return Math.toIntExact(count);
+    }
+
+    /**
+     * Returns if the device as an eUICC with multiple enable profile support.
+     */
+    private boolean isEuiccSupportsMultipleEnabledProfiles() throws Exception {
+        List<Map<String, String>> slots = getTelephonyDumpEntries("UiccSlot");
+        return slots.stream().anyMatch(slot ->
+                "true".equals(slot.get("isEuiccSupportsMultipleEnabledProfiles"))
+                        && "true".equals(slot.get("mIsEuicc")));
     }
 
     private Queue<String> getTelephonyDumpEntries() throws Exception {
