@@ -1128,10 +1128,11 @@ public class KeyAttestationTest {
                         creationDateTime.getTime() + ") should be close",
                         Math.abs(creationDateTime.getTime() - startTime.getTime()) <= 2000);
 
+                // Allow 1 second leeway in case of nearest-second rounding.
                 Date now = new Date();
                 assertTrue("Key creation time (" + creationDateTime.getTime() + ") must be now (" +
                         now.getTime() + ") or earlier.",
-                        now.getTime() >= creationDateTime.getTime());
+                        now.getTime() >= (creationDateTime.getTime() - 1000));
             }
         }
 
