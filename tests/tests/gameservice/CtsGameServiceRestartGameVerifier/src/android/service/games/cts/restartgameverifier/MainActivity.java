@@ -27,6 +27,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public final class MainActivity extends AppCompatActivity {
 
     private static final String TIMES_STARTED_KEY = "times_started_key";
+    private static final String HAS_SAVED_INSTANCE_STATE_KEY = "has_saved_instance_state_key";
 
     private int incrementTimesStarted() {
         SharedPreferences sharedPrefs = getPreferences(Context.MODE_PRIVATE);
@@ -46,5 +47,19 @@ public final class MainActivity extends AppCompatActivity {
 
         final TextView timesStartedView = findViewById(R.id.times_started);
         timesStartedView.setText(Integer.toString(incrementTimesStarted()));
+
+
+        boolean hasSavedInstanceState = false;
+        if (savedInstanceState != null) {
+            hasSavedInstanceState = savedInstanceState.getBoolean(HAS_SAVED_INSTANCE_STATE_KEY);
+        }
+        final TextView hasSavedInstanceStateView = findViewById(R.id.has_saved_instance_state);
+        hasSavedInstanceStateView.setText(Boolean.toString(hasSavedInstanceState));
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(HAS_SAVED_INSTANCE_STATE_KEY, true);
     }
 }
