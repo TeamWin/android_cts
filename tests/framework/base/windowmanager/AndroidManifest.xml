@@ -431,7 +431,9 @@
         <activity android:name="android.server.wm.ForceRelayoutTestBase$TestActivity"
              android:exported="true"/>
 
-        <activity android:name="android.server.wm.ActivityTransitionTests$LauncherActivity"/>
+        <activity android:name="android.server.wm.ActivityTransitionTests$LauncherActivity"
+            android:theme="@style/Theme.TranslucentBars"
+            android:fitsSystemWindows="true" />
 
         <activity android:name="android.server.wm.ActivityTransitionTests$TransitionActivity"/>
 
@@ -441,6 +443,12 @@
             android:theme="@style/Theme.WhiteBackground"
             android:exported="true"
             android:colorMode="wideColorGamut"/>
+
+        <activity android:name="android.server.wm.ActivityTransitionTests$EdgeExtensionActivity"
+            android:theme="@style/Theme.EdgeExtensions"
+            android:exported="true"
+            android:colorMode="wideColorGamut"
+            android:fitsSystemWindows="true" />
 
         <activity android:name="android.server.wm.WindowUntrustedTouchTest$TestActivity"
                   android:exported="true"
