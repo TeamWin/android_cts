@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  ~ Copyright (C) 2021 The Android Open Source Project
+  ~ Copyright (C) 2022 The Android Open Source Project
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -14,13 +14,16 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<manifest
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.permission3.cts.usepermission">
-    <uses-permission android:name="android.permission.BODY_SENSORS" />
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="android.permission3.cts.usepermission"
+          android:versionCode="1">
+
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
     <application>
+        <activity android:name=".FinishOnCreateActivity" android:exported="true" />
         <activity android:name=".RequestPermissionsActivity" android:exported="true" />
     </application>
 </manifest>

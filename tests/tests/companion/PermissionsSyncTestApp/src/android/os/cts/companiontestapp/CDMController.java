@@ -61,6 +61,9 @@ public class CDMController {
         mCompanionDeviceManager.disassociate(associationId);
     }
 
+    public int getAssociationId() {
+        return associationId;
+    }
 
     private class AssociationCallback extends CompanionDeviceManager.Callback {
         @Override

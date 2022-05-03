@@ -27,8 +27,6 @@ import its_session_utils
 import sensor_fusion_utils
 import video_processing_utils
 
-# TODO(arakesh): use constant from its_session_utils instead
-_ANDROID13_API_LEVEL = 33
 _ARDUINO_ANGLES = (10, 25)  # degrees
 _ARDUINO_MOVE_TIME = 0.30  # seconds
 _ARDUINO_SERVO_SPEED = 10
@@ -115,9 +113,9 @@ class PreviewStabilityTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
       camera_properties_utils.skip_unless(
-          first_api_level >= _ANDROID13_API_LEVEL,
-          f'First API level should be {_ANDROID13_API_LEVEL} or higher. '
-          'Found {first_api_level}.')
+          first_api_level >= its_session_utils.ANDROID13_API_LEVEL,
+          'First API level should be {} or higher. Found {}.'.format(
+            its_session_utils.ANDROID13_API_LEVEL, first_api_level))
 
       supported_stabilization_modes = props[
           'android.control.availableVideoStabilizationModes'

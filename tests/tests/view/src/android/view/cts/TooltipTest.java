@@ -820,6 +820,7 @@ public class TooltipTest {
 
         final int tooltipTimeout = ViewConfiguration.getHoverTooltipShowTimeout();
         final long halfTimeout = tooltipTimeout / 2;
+        final long quaterTimeout = tooltipTimeout / 4;
         assertTrue(halfTimeout + WAIT_MARGIN < tooltipTimeout);
 
         // Imitate strong jitter (above hoverSlop threshold). No tooltip should be shown.
@@ -828,28 +829,29 @@ public class TooltipTest {
         assertTrue(jitterHigh <= mTooltipView.getHeight());
 
         injectHoverMove(source, mTooltipView, 0, 0);
-        waitOut(halfTimeout);
+        waitOut(quaterTimeout);
         assertFalse(hasTooltip(mTooltipView));
 
         injectHoverMove(source, mTooltipView, jitterHigh, 0);
-        waitOut(halfTimeout);
+        waitOut(quaterTimeout);
         assertFalse(hasTooltip(mTooltipView));
 
         injectShortClick(mTooltipView);
         injectHoverMove(source, mTooltipView, 0, 0);
-        waitOut(halfTimeout);
+        waitOut(quaterTimeout);
         assertFalse(hasTooltip(mTooltipView));
 
         injectShortClick(mTooltipView);
         injectHoverMove(source, mTooltipView, 0, jitterHigh);
-        waitOut(halfTimeout);
+        waitOut(quaterTimeout);
         assertFalse(hasTooltip(mTooltipView));
 
         // Jitter below threshold should be ignored and the tooltip should be shown.
         injectShortClick(mTooltipView);
         injectHoverMove(source, mTooltipView, 0, 0);
-        waitOut(halfTimeout);
+        waitOut(quaterTimeout);
         assertFalse(hasTooltip(mTooltipView));
+        waitOut(quaterTimeout);
 
         int jitterLow = hoverSlop - 1;
         injectHoverMove(source, mTooltipView, jitterLow, 0);
@@ -862,8 +864,9 @@ public class TooltipTest {
 
         injectShortClick(mTooltipView);
         injectHoverMove(source, mTooltipView, 0, 0);
-        waitOut(halfTimeout);
+        waitOut(quaterTimeout);
         assertFalse(hasTooltip(mTooltipView));
+        waitOut(quaterTimeout);
 
         injectHoverMove(source, mTooltipView, 0, jitterLow);
         waitOut(halfTimeout);

@@ -94,6 +94,17 @@
     <permission android:name="android.content.cts.REQUIRED_MULTI_GRANT_3"
                 android:protectionLevel="normal"/>
 
+    <permission android:name="android.content.cts.permission.NO_MAX_SDK"
+        android:protectionLevel="normal"/>
+
+    <permission android:name="android.content.cts.permission.MAX_SDK_IGNORE"
+        android:maxSdkVersion="29"
+        android:protectionLevel="normal"/>
+
+    <permission android:name="android.content.cts.permission.MAX_SDK_CREATE"
+        android:maxSdkVersion="10001"
+        android:protectionLevel="normal"/>
+
     <uses-permission android:name="android.content.cts.REQUIRED_FEATURE_DEFINED"
          android:requiredFeature="android.software.cts"/>
 

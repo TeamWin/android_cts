@@ -1368,7 +1368,7 @@ public class StagedInstallTest {
 
         InstallUtils.commitExpectingFailure(
                 AssertionError.class,
-                "APK container signature of .+ is not compatible with currently installed",
+                "APK container signature of .+ is not compatible with the one currently installed",
                 Install.single(Apex2DifferentCertificate));
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
     }

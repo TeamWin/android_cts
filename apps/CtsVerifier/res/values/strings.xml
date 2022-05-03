@@ -379,7 +379,10 @@
 
     <!-- Strings for user consent for logs test -->
     <string name="read_logs_text">User Consent for Device Logs Test</string>
-    <string name="read_logs_test_info">"This test verifies that user consent for per-use prompt is working properly.\nThe test assumes READ_LOGS permission is granted to the app.\nStart this test by clicking User Consent for Device Logs Test button.\nWhen the process becomes foreground, a user will see a prompt. Once a user clicks the prompt, users have an option to choose \"Only this time\" or \"Don\'t Allow\"."</string>
+    <string name="read_logs_fg_allow_text">User Consent for Device Logs Allow in Foreground Test</string>
+    <string name="read_logs_fg_deny_text">User Consent for Device Logs Deny in Foreground Test</string>
+    <string name="read_logs_bg_text">User Consent for Device Logs in Instrumentation Test</string>
+    <string name="read_logs_test_info">"This test verifies that user consent for per-use prompt is working properly.\nThe test assumes READ_LOGS permission is granted to the app.\nStart this test by clicking User Consent for Device Logs Allow(Deny) in Foreground Test button.\nWhen the process is running in foreground, a user will see a prompt. Once a user clicks the prompt, users have an option to choose \"Allow one-time access\" or \"Don\'t Allow\". Please proceed with one option. "When the process is running in background, logd access will be denied.</string>
 
     <!-- Strings for lock bound keys test -->
     <string name="sec_lock_bound_key_test">Lock Bound Keys Test</string>

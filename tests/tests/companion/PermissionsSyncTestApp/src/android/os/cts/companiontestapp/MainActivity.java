@@ -188,7 +188,16 @@ public class MainActivity extends Activity implements ContextProvider {
                     String readMessage = new String(readBuf, 0, msg.arg1);
                     Toast.makeText(activity, "Message Received:  "
                             + readMessage, Toast.LENGTH_SHORT).show();
-                    // TODO call dispatchMessageToSystem()
+
+                    Intent intent = new Intent(activity, PermissionsTransferCompanionService.class);
+                    intent.putExtra(PermissionsTransferCompanionService.EXTRA_MESSAGE_BYTES,
+                            readBuf);
+                    intent.putExtra(PermissionsTransferCompanionService.EXTRA_ASSOCIATION_ID,
+                            mCDMController.getAssociationId());
+                    intent.putExtra(PermissionsTransferCompanionService.EXTRA_HAS_RECEIVED_MESSAGE,
+                            true);
+                    activity.startService(intent);
+
                     break;
                 case BluetoothCommunicationService.MESSAGE_DEVICE_NAME:
                     // save the connected device's name

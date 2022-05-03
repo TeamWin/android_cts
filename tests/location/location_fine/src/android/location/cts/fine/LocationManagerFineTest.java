@@ -81,7 +81,6 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.SystemClock;
-import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.util.ArraySet;
@@ -174,22 +173,6 @@ public class LocationManagerFineTest {
     @Test
     public void testIsLocationEnabled() {
         assertThat(mManager.isLocationEnabled()).isTrue();
-
-        try {
-            mContext.createContextAsUser(UserHandle.CURRENT, 0).getSystemService(
-                    LocationManager.class).isLocationEnabled();
-            fail();
-        } catch (SecurityException e) {
-            // pass
-        }
-
-        try {
-            mContext.createContextAsUser(UserHandle.ALL, 0).getSystemService(
-                    LocationManager.class).isLocationEnabled();
-            fail();
-        } catch (SecurityException e) {
-            // pass
-        }
     }
 
     @Test

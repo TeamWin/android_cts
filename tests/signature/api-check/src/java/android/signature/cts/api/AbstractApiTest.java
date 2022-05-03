@@ -26,25 +26,16 @@ import android.signature.cts.FailureType;
 import android.signature.cts.JDiffClassDescription;
 import android.signature.cts.ResultObserver;
 import android.signature.cts.VirtualPath;
-import android.signature.cts.VirtualPath.LocalFilePath;
-import android.signature.cts.VirtualPath.ResourcePath;
 import android.util.Log;
-
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
-
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
-
 import com.google.common.base.Suppliers;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-import java.util.zip.ZipFile;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 
@@ -63,8 +54,6 @@ public abstract class AbstractApiTest {
      */
     private static final String DYNAMIC_CONFIG_NAME_OPTION = "dynamic-config-name";
 
-    private static final String TAG = "SignatureTest";
-
     private TestResultObserver mResultObserver;
 
     ClassProvider mClassProvider;
@@ -73,6 +62,11 @@ public abstract class AbstractApiTest {
      * The list of expected failures.
      */
     private Collection<String> expectedFailures = Collections.emptyList();
+
+    @AfterClass
+    public static void closeResourceStore() {
+        ResourceStore.close();
+    }
 
     public Instrumentation getInstrumentation() {
         return InstrumentationRegistry.getInstrumentation();
@@ -207,47 +201,6 @@ public abstract class AbstractApiTest {
         return argument.split(",");
     }
 
-    private static Stream<VirtualPath> readResource(ClassLoader classLoader, String resourceName) {
-        try {
-            ResourcePath resourcePath =
-                    VirtualPath.get(classLoader, resourceName);
-            if (resourceName.endsWith(".zip")) {
-                // Extract to a temporary file and read from there.
-                Path file = extractResourceToFile(resourceName, resourcePath.newInputStream());
-                return flattenPaths(VirtualPath.get(file.toString()));
-            } else {
-                return Stream.of(resourcePath);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static Path extractResourceToFile(String resourceName, InputStream is) throws IOException {
-        Path tempDirectory = Files.createTempDirectory("signature");
-        Path file = tempDirectory.resolve(resourceName);
-        Log.i(TAG, "extractResourceToFile: extracting " + resourceName + " to " + file);
-        Files.copy(is, file);
-        is.close();
-        return file;
-    }
-
-    /**
-     * Given a path in the local file system (possibly of a zip file) flatten it into a stream of
-     * virtual paths.
-     */
-    private static Stream<VirtualPath> flattenPaths(LocalFilePath path) {
-        try {
-            if (path.toString().endsWith(".zip")) {
-                return getZipEntryFiles(path);
-            } else {
-                return Stream.of(path);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     /**
      * Create a stream of {@link JDiffClassDescription} by parsing a set of API resource files.
      *
@@ -278,18 +231,6 @@ public abstract class AbstractApiTest {
             ClassLoader classLoader,
             String[] apiResources) {
         return Stream.of(apiResources)
-                .flatMap(resourceName -> readResource(classLoader, resourceName));
-    }
-
-    /**
-     * Get the zip entries that are files.
-     *
-     * @param path the path to the zip file.
-     * @return paths to zip entries
-     */
-    private static Stream<VirtualPath> getZipEntryFiles(LocalFilePath path) throws IOException {
-        @SuppressWarnings("resource")
-        ZipFile zip = new ZipFile(path.toFile());
-        return zip.stream().map(entry -> VirtualPath.get(zip, entry));
+                .flatMap(resourceName -> ResourceStore.readResource(classLoader, resourceName));
     }
 }
