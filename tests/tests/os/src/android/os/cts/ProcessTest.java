@@ -16,6 +16,8 @@
 
 package android.os.cts;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -260,7 +262,12 @@ public class ProcessTest {
         PackageManager pm = mContext.getPackageManager();
         final String name = pm.getNameForUid(Process.SDK_SANDBOX_VIRTUAL_UID);
         assertNull(name);
-        final String[] packages = pm.getPackagesForUid(Process.SDK_SANDBOX_VIRTUAL_UID);
-        assertNull(packages);
+
+        // PackageManager#getPackagesForUid requires android.permission.INTERACT_ACROSS_USERS for
+        // cross-user calls.
+        runWithShellPermissionIdentity(() -> {
+            final String[] packages = pm.getPackagesForUid(Process.SDK_SANDBOX_VIRTUAL_UID);
+            assertNull(packages);
+        });
     }
 }

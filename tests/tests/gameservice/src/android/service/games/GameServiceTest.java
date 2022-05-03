@@ -45,11 +45,13 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.provider.MediaStore;
 import android.service.games.testing.ActivityResult;
+import android.service.games.testing.GameSessionEventInfo;
 import android.service.games.testing.GetResultActivity;
 import android.service.games.testing.IGameServiceTestService;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
+import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 import android.util.Log;
@@ -73,6 +75,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -91,6 +95,8 @@ public final class GameServiceTest {
     private static final String GAME_PACKAGE_NAME = "android.service.games.cts.game";
     private static final String FALSE_POSITIVE_GAME_PACKAGE_NAME =
             "android.service.games.cts.falsepositive";
+    private static final String FINISH_ON_BACK_GAME_PACKAGE_NAME =
+            "android.service.games.cts.finishonbackgame";
     private static final String NOT_GAME_PACKAGE_NAME = "android.service.games.cts.notgame";
     private static final String RESTART_GAME_VERIFIER_PACKAGE_NAME =
             "android.service.games.cts.restartgameverifier";
@@ -122,6 +128,7 @@ public final class GameServiceTest {
 
         getTestService().setGamePackageNames(
                 ImmutableList.of(
+                        FINISH_ON_BACK_GAME_PACKAGE_NAME,
                         GAME_PACKAGE_NAME,
                         RESTART_GAME_VERIFIER_PACKAGE_NAME,
                         SYSTEM_BAR_VERIFIER_PACKAGE_NAME,
@@ -146,6 +153,7 @@ public final class GameServiceTest {
         forceStop(GAME_PACKAGE_NAME);
         forceStop(NOT_GAME_PACKAGE_NAME);
         forceStop(FALSE_POSITIVE_GAME_PACKAGE_NAME);
+        forceStop(FINISH_ON_BACK_GAME_PACKAGE_NAME);
         forceStop(RESTART_GAME_VERIFIER_PACKAGE_NAME);
         forceStop(START_ACTIVITY_VERIFIER_PACKAGE_NAME);
         forceStop(SYSTEM_BAR_VERIFIER_PACKAGE_NAME);
@@ -204,6 +212,78 @@ public final class GameServiceTest {
 
         assertThat(getTestService().getActiveSessions()).containsExactly(
                 GAME_PACKAGE_NAME);
+    }
+
+    @Test
+    public void gameService_multipleGames_startsGameSessionsForGames() throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        launchAndWaitForPackage(NOT_GAME_PACKAGE_NAME);
+        launchAndWaitForPackage(GAME_PACKAGE_NAME);
+        int gameTaskId = getActivityTaskId(
+                GAME_PACKAGE_NAME,
+                GAME_PACKAGE_NAME + ".MainActivity");
+        launchAndWaitForPackage(FALSE_POSITIVE_GAME_PACKAGE_NAME);
+        launchAndWaitForPackage(RESTART_GAME_VERIFIER_PACKAGE_NAME);
+        int restartGameTaskId = getActivityTaskId(
+                RESTART_GAME_VERIFIER_PACKAGE_NAME,
+                RESTART_GAME_VERIFIER_PACKAGE_NAME + ".MainActivity");
+
+        assertThat(getTestService().getActiveSessions()).containsExactly(
+                GAME_PACKAGE_NAME, RESTART_GAME_VERIFIER_PACKAGE_NAME);
+
+        List<GameSessionEventInfo> gameSessionEventHistory =
+                getTestService().getGameSessionEventHistory();
+        assertThat(gameSessionEventHistory)
+                .containsExactly(
+                        GameSessionEventInfo.create(
+                                GAME_PACKAGE_NAME,
+                                gameTaskId,
+                                GameSessionEventInfo.GAME_SESSION_EVENT_CREATED),
+                        GameSessionEventInfo.create(
+                                RESTART_GAME_VERIFIER_PACKAGE_NAME,
+                                restartGameTaskId,
+                                GameSessionEventInfo.GAME_SESSION_EVENT_CREATED))
+                .inOrder();
+    }
+
+    @Test
+    public void gameService_multipleGamesIncludingStops_startsGameSessionsForGames()
+            throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        launchAndWaitForPackage(NOT_GAME_PACKAGE_NAME);
+        launchAndWaitForPackage(GAME_PACKAGE_NAME);
+        int gameTaskId = getActivityTaskId(
+                GAME_PACKAGE_NAME,
+                GAME_PACKAGE_NAME + ".MainActivity");
+        launchAndWaitForPackage(FALSE_POSITIVE_GAME_PACKAGE_NAME);
+        launchAndWaitForPackage(RESTART_GAME_VERIFIER_PACKAGE_NAME);
+        int restartGameTaskId = getActivityTaskId(
+                RESTART_GAME_VERIFIER_PACKAGE_NAME,
+                RESTART_GAME_VERIFIER_PACKAGE_NAME + ".MainActivity");
+        forceStop(GAME_PACKAGE_NAME);
+
+        assertThat(getTestService().getActiveSessions()).containsExactly(
+                RESTART_GAME_VERIFIER_PACKAGE_NAME);
+
+        List<GameSessionEventInfo> gameSessionEventHistory =
+                getTestService().getGameSessionEventHistory();
+        assertThat(gameSessionEventHistory)
+                .containsExactly(
+                        GameSessionEventInfo.create(
+                                GAME_PACKAGE_NAME,
+                                gameTaskId,
+                                GameSessionEventInfo.GAME_SESSION_EVENT_CREATED),
+                        GameSessionEventInfo.create(
+                                RESTART_GAME_VERIFIER_PACKAGE_NAME,
+                                restartGameTaskId,
+                                GameSessionEventInfo.GAME_SESSION_EVENT_CREATED),
+                        GameSessionEventInfo.create(
+                                GAME_PACKAGE_NAME,
+                                gameTaskId,
+                                GameSessionEventInfo.GAME_SESSION_EVENT_DESTROYED))
+                .inOrder();
     }
 
     @Test
@@ -309,18 +389,18 @@ public final class GameServiceTest {
 
         launchAndWaitForPackage(GAME_PACKAGE_NAME);
 
-        getTestService().startGameSessionActivity(
-                new Intent("android.service.games.cts.startactivityverifier.START"), null);
+        StartActivityVerifierPage.launch(getTestService());
 
-        setText(START_ACTIVITY_VERIFIER_PACKAGE_NAME, "result_code_edit_text", "10");
-        setText(START_ACTIVITY_VERIFIER_PACKAGE_NAME, "result_data_edit_text", "foobar");
-        click(START_ACTIVITY_VERIFIER_PACKAGE_NAME, "send_result_button");
+        StartActivityVerifierPage.setResultCode(10);
+        StartActivityVerifierPage.setResultData("foobar");
+        StartActivityVerifierPage.clickSendResultButton();
 
         ActivityResult result = getTestService().getLastActivityResult();
 
         assertThat(result.getGameSessionPackageName()).isEqualTo(GAME_PACKAGE_NAME);
         assertThat(result.getSuccess().getResultCode()).isEqualTo(10);
-        assertThat(result.getSuccess().getData().getStringExtra("data")).isEqualTo("foobar");
+        String resultData = StartActivityVerifierPage.getResultData(result.getSuccess().getData());
+        assertThat(resultData).isEqualTo("foobar");
     }
 
     @Test
@@ -330,11 +410,10 @@ public final class GameServiceTest {
 
         launchAndWaitForPackage(GAME_PACKAGE_NAME);
 
-        getTestService().startGameSessionActivity(
-                new Intent("android.service.games.cts.startactivityverifier.START"), null);
+        StartActivityVerifierPage.launch(getTestService());
 
-        setText(START_ACTIVITY_VERIFIER_PACKAGE_NAME, "result_code_edit_text", "10");
-        click(START_ACTIVITY_VERIFIER_PACKAGE_NAME, "send_result_button");
+        StartActivityVerifierPage.setResultCode(10);
+        StartActivityVerifierPage.clickSendResultButton();
 
         ActivityResult result = getTestService().getLastActivityResult();
 
@@ -377,20 +456,149 @@ public final class GameServiceTest {
         assumeGameServiceFeaturePresent();
 
         clearCache(RESTART_GAME_VERIFIER_PACKAGE_NAME);
-        launchAndWaitForPackage(RESTART_GAME_VERIFIER_PACKAGE_NAME);
+        RestartGameVerifierPage.launch();
 
-        UiAutomatorUtils.waitFindObject(
-                By.res(RESTART_GAME_VERIFIER_PACKAGE_NAME, "times_started").text("1"));
-
-        getTestService().restartFocusedGameSession();
-
-        UiAutomatorUtils.waitFindObject(
-                By.res(RESTART_GAME_VERIFIER_PACKAGE_NAME, "times_started").text("2"));
+        RestartGameVerifierPage.assertTimesStarted(1);
+        RestartGameVerifierPage.assertHasSavedInstanceState(false);
 
         getTestService().restartFocusedGameSession();
 
-        UiAutomatorUtils.waitFindObject(
-                By.res(RESTART_GAME_VERIFIER_PACKAGE_NAME, "times_started").text("3"));
+        RestartGameVerifierPage.assertTimesStarted(2);
+        RestartGameVerifierPage.assertHasSavedInstanceState(true);
+
+        getTestService().restartFocusedGameSession();
+
+        RestartGameVerifierPage.assertTimesStarted(3);
+        RestartGameVerifierPage.assertHasSavedInstanceState(true);
+    }
+
+    @Test
+    public void restartGame_gameSessionIsPersisted() throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        clearCache(RESTART_GAME_VERIFIER_PACKAGE_NAME);
+        RestartGameVerifierPage.launch();
+
+        int gameTaskId = getActivityTaskId(
+                RESTART_GAME_VERIFIER_PACKAGE_NAME,
+                RESTART_GAME_VERIFIER_PACKAGE_NAME + ".MainActivity");
+
+        RestartGameVerifierPage.assertTimesStarted(1);
+        RestartGameVerifierPage.assertHasSavedInstanceState(false);
+
+        getTestService().restartFocusedGameSession();
+
+        RestartGameVerifierPage.assertTimesStarted(2);
+        RestartGameVerifierPage.assertHasSavedInstanceState(true);
+
+        List<GameSessionEventInfo> gameSessionEventHistory =
+                getTestService().getGameSessionEventHistory();
+
+        assertThat(gameSessionEventHistory)
+                .containsExactly(
+                        GameSessionEventInfo.create(
+                                RESTART_GAME_VERIFIER_PACKAGE_NAME,
+                                gameTaskId,
+                                GameSessionEventInfo.GAME_SESSION_EVENT_CREATED))
+                .inOrder();
+    }
+
+    @Test
+    public void restartGame_withNonGameActivityAbove_gameSessionIsPersisted() throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        clearCache(RESTART_GAME_VERIFIER_PACKAGE_NAME);
+        RestartGameVerifierPage.launch();
+
+        int gameTaskId = getActivityTaskId(
+                RESTART_GAME_VERIFIER_PACKAGE_NAME,
+                RESTART_GAME_VERIFIER_PACKAGE_NAME + ".MainActivity");
+
+        RestartGameVerifierPage.assertTimesStarted(1);
+        RestartGameVerifierPage.assertHasSavedInstanceState(false);
+
+        StartActivityVerifierPage.launch(getTestService());
+        StartActivityVerifierPage.setResultCode(0x1337);
+        StartActivityVerifierPage.setResultData("hello mom!");
+
+        getTestService().restartFocusedGameSession();
+
+        StartActivityVerifierPage.assertLaunched();
+        StartActivityVerifierPage.clickSendResultButton();
+
+        RestartGameVerifierPage.assertTimesStarted(2);
+        RestartGameVerifierPage.assertHasSavedInstanceState(true);
+
+        List<GameSessionEventInfo> gameSessionEventHistory =
+                getTestService().getGameSessionEventHistory();
+
+        assertThat(gameSessionEventHistory)
+                .containsExactly(
+                        GameSessionEventInfo.create(
+                                RESTART_GAME_VERIFIER_PACKAGE_NAME,
+                                gameTaskId,
+                                GameSessionEventInfo.GAME_SESSION_EVENT_CREATED))
+                .inOrder();
+
+        ActivityResult result = getTestService().getLastActivityResult();
+
+        assertThat(result.getGameSessionPackageName()).isEqualTo(
+                RESTART_GAME_VERIFIER_PACKAGE_NAME);
+        assertThat(result.getSuccess().getResultCode()).isEqualTo(0x1337);
+        String resultData = StartActivityVerifierPage.getResultData(result.getSuccess().getData());
+        assertThat(resultData).isEqualTo("hello mom!");
+    }
+
+    @Test
+    public void gamePutInBackgroundAndRestoredViaRecentsUi_gameSessionRestarted() throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        // The test game finishes its activity when it is put in the background by a press of the
+        // back button.
+        launchAndWaitForPackage(FINISH_ON_BACK_GAME_PACKAGE_NAME);
+
+        assertThat(getTestService().getActiveSessions()).containsExactly(
+                FINISH_ON_BACK_GAME_PACKAGE_NAME);
+
+        // Close the game by pressing the back button.
+        UiAutomatorUtils.getUiDevice().pressBack();
+        UiAutomatorUtils.getUiDevice().waitForIdle();
+
+        // With the game closed the game session should be destroyed
+        PollingCheck.waitFor(TimeUnit.SECONDS.toMillis(20),
+                () -> {
+                    try {
+                        return getTestService().getActiveSessions().isEmpty();
+                    } catch (RemoteException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                "Timed out waiting for game session to be destroyed.");
+
+        // Restore the game via the Recents UI
+        UiAutomatorUtils.getUiDevice().pressRecentApps();
+        UiAutomatorUtils.getUiDevice().waitForIdle();
+
+        logWindowHierarchy("after pressing recent apps");
+
+        // Don't specify the full name of the test game "CtsGameServiceFinishOnBackGame" because it
+        // may be ellipsized in the Recents UI.
+        UiAutomatorUtils.waitFindObject(By.textStartsWith("CtsGameService")).click();
+
+        logWindowHierarchy("after clicking on recent app");
+
+        // There should again be an active game session for the restored game.
+        PollingCheck.waitFor(TimeUnit.SECONDS.toMillis(20),
+                () -> {
+                    try {
+                        return getTestService().getActiveSessions().size() == 1
+                                && getTestService().getActiveSessions().get(0).equals(
+                                FINISH_ON_BACK_GAME_PACKAGE_NAME);
+                    } catch (RemoteException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                "Timed out waiting for game session to be re-created.");
     }
 
     @Test
@@ -649,6 +857,57 @@ public final class GameServiceTest {
         return -1;
     }
 
+    private static class RestartGameVerifierPage {
+        private RestartGameVerifierPage() {
+        }
+
+        public static void launch() throws Exception {
+            launchAndWaitForPackage(RESTART_GAME_VERIFIER_PACKAGE_NAME);
+        }
+
+        public static void assertTimesStarted(int times) throws UiObjectNotFoundException {
+            UiAutomatorUtils.waitFindObject(
+                    By.res(RESTART_GAME_VERIFIER_PACKAGE_NAME, "times_started").text(
+                            String.valueOf(times)));
+        }
+
+        public static void assertHasSavedInstanceState(boolean hasSavedInstanceState)
+                throws UiObjectNotFoundException {
+            UiAutomatorUtils.waitFindObject(
+                    By.res(RESTART_GAME_VERIFIER_PACKAGE_NAME, "has_saved_instance_state").text(
+                            String.valueOf(hasSavedInstanceState)));
+        }
+    }
+
+    private static class StartActivityVerifierPage {
+
+        public static void launch(IGameServiceTestService testService) throws Exception {
+            testService.startGameSessionActivity(
+                    new Intent("android.service.games.cts.startactivityverifier.START"), null);
+        }
+
+        public static void assertLaunched() throws UiObjectNotFoundException {
+            UiAutomatorUtils.waitFindObject(By.pkg(START_ACTIVITY_VERIFIER_PACKAGE_NAME).depth(0));
+        }
+
+        public static void setResultCode(int resultCode) throws Exception {
+            setText(START_ACTIVITY_VERIFIER_PACKAGE_NAME, "result_code_edit_text",
+                    String.valueOf(resultCode));
+        }
+
+        public static void setResultData(String resultData) throws Exception {
+            setText(START_ACTIVITY_VERIFIER_PACKAGE_NAME, "result_data_edit_text", resultData);
+        }
+
+        public static void clickSendResultButton() throws Exception {
+            click(START_ACTIVITY_VERIFIER_PACKAGE_NAME, "send_result_button");
+        }
+
+        public static String getResultData(Intent data) {
+            return data.getStringExtra("data");
+        }
+    }
+
     private static Size getScreenSize() {
         WindowManager wm =
                 (WindowManager)
@@ -658,6 +917,20 @@ public final class GameServiceTest {
         WindowMetrics windowMetrics = wm.getCurrentWindowMetrics();
         Rect windowBounds = windowMetrics.getBounds();
         return new Size(windowBounds.width(), windowBounds.height());
+    }
+
+    private void logWindowHierarchy(String state) {
+        try {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            UiAutomatorUtils.getUiDevice().dumpWindowHierarchy(os);
+
+            Log.d(TAG, "Window hierarchy: " + state);
+            for (String line : os.toString("UTF-8").split("\n")) {
+                Log.d(TAG, line);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static final class ServiceConnection implements android.content.ServiceConnection {
