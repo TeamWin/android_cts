@@ -16,6 +16,7 @@
 
 package android.mediapc.cts;
 
+import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_SecurePlayback;
 import static android.mediapc.cts.CodecTestBase.selectHardwareCodecs;
 
 import static org.junit.Assert.assertTrue;
@@ -29,6 +30,7 @@ import android.os.Build;
 import android.util.Log;
 import android.util.Pair;
 
+import org.junit.Assume;
 import org.junit.Before;
 
 import java.io.IOException;
@@ -92,6 +94,11 @@ public class MultiCodecPerfTestBase {
 
     // Returns the list of hardware codecs for given mime
     public static ArrayList<String> getHardwareCodecsForMime(String mime, boolean isEncoder) {
+        return getHardwareCodecsForMime(mime, isEncoder, false);
+    }
+
+    public static ArrayList<String> getHardwareCodecsForMime(String mime, boolean isEncoder,
+            boolean allCodecs) {
         // All the multi-instance tests are limited to codecs that support at least 1280x720 @ 30fps
         // This will exclude hevc constant quality encoders that are limited to max resolution of
         // 512x512
@@ -99,7 +106,7 @@ public class MultiCodecPerfTestBase {
         fmt.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
         ArrayList<MediaFormat> formatsList = new ArrayList<>();
         formatsList.add(fmt);
-        return selectHardwareCodecs(mime, formatsList, null, isEncoder);
+        return selectHardwareCodecs(mime, formatsList, null, isEncoder, allCodecs);
     }
 
     // Returns the max number of 30 fps instances that the given list of mimeCodecPairs
@@ -165,5 +172,31 @@ public class MultiCodecPerfTestBase {
             return REQUIRED_MIN_CONCURRENT_INSTANCES_FOR_VP9;
         }
         return REQUIRED_MIN_CONCURRENT_INSTANCES;
+    }
+
+    boolean isSecureSupportedCodec(String codecName, String mime) throws IOException {
+        boolean isSecureSupported;
+        MediaCodec codec = MediaCodec.createByCodecName(codecName);
+        isSecureSupported = codec.getCodecInfo().getCapabilitiesForType(mime).isFeatureSupported(
+                FEATURE_SecurePlayback);
+        codec.release();
+        return isSecureSupported;
+    }
+
+    boolean codecSupportsPP(String codecName, String mime, PerformancePoint reqPP)
+            throws IOException {
+        MediaCodec codec = MediaCodec.createByCodecName(codecName);
+        List<PerformancePoint> suppPPs =
+                codec.getCodecInfo().getCapabilitiesForType(mime).getVideoCapabilities()
+                        .getSupportedPerformancePoints();
+        assertTrue("Performance point not published by codec: " + codecName, suppPPs != null);
+        boolean codecSupportsReqPP = false;
+        for (PerformancePoint pp : suppPPs) {
+            if (pp.covers(reqPP)) {
+                codecSupportsReqPP = true;
+            }
+        }
+        codec.release();
+        return codecSupportsReqPP;
     }
 }
