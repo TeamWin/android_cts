@@ -127,7 +127,8 @@ public final class CtsTestIme extends InputMethodService {
     }
 
     private void notifyCommandDone(Intent sourceIntent, Intent resultIntent) {
-        final PendingIntent pendingIntent = sourceIntent.getParcelableExtra(EXTRA_FINISH_COMMAND);
+        final PendingIntent pendingIntent = sourceIntent.getParcelableExtra(EXTRA_FINISH_COMMAND,
+                PendingIntent.class);
         if (pendingIntent != null) {
             try {
                 final String action = sourceIntent.getAction();
