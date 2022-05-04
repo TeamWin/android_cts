@@ -34,6 +34,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * Tests for APK signature verification during installation.
@@ -45,6 +47,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     private static final String TEST_PKG2 = "android.appsecurity.cts.tinyapp2";
     private static final String COMPANION_TEST_PKG = "android.appsecurity.cts.tinyapp_companion";
     private static final String COMPANION2_TEST_PKG = "android.appsecurity.cts.tinyapp_companion2";
+    private static final String COMPANION3_TEST_PKG = "android.appsecurity.cts.tinyapp_companion3";
     private static final String DEVICE_TESTS_APK = "CtsV3SigningSchemeRotationTest.apk";
     private static final String DEVICE_TESTS_PKG = "android.appsecurity.cts.v3rotationtests";
     private static final String DEVICE_TESTS_CLASS = DEVICE_TESTS_PKG + ".V3RotationTest";
@@ -585,7 +588,6 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     }
 
     public void testInstallV3KeyRotationOlderSharedUid() throws Exception {
-
         // tests that a sharedUid APK can still install with another app that is signed by a newer
         // signing certificate, but which allows sharedUid with the older one
         assertInstallSucceeds(
@@ -1907,7 +1909,11 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     private String uninstallCompanionPackages() throws DeviceNotAvailableException {
         String result1 = getDevice().uninstallPackage(COMPANION_TEST_PKG);
         String result2 = getDevice().uninstallPackage(COMPANION2_TEST_PKG);
-        return result1 != null ? result1 : result2;
+        String result3 = getDevice().uninstallPackage(COMPANION3_TEST_PKG);
+        return Stream.of(result1, result2, result3)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
     }
 
     private String uninstallDeviceTestPackage() throws DeviceNotAvailableException {
