@@ -16,6 +16,7 @@
 
 package com.android.bedstead.harrier.annotations.enterprise;
 
+import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.EARLY;
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.PRECEDENCE_NOT_IMPORTANT;
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
@@ -53,5 +54,5 @@ public @interface PolicyAppliesTest {
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default PRECEDENCE_NOT_IMPORTANT;
+    int weight() default EARLY;
 }

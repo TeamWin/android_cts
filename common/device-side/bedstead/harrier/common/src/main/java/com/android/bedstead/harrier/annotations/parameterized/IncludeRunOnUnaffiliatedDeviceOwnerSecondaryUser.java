@@ -16,6 +16,7 @@
 
 package com.android.bedstead.harrier.annotations.parameterized;
 
+import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.EARLY;
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.LATE;
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
@@ -48,5 +49,5 @@ public @interface IncludeRunOnUnaffiliatedDeviceOwnerSecondaryUser {
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default LATE;
+    int weight() default EARLY;
 }
