@@ -27,6 +27,8 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.platform.test.annotations.FlakyTest;
+import android.platform.test.annotations.Presubmit;
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
@@ -52,6 +54,7 @@ import java.util.Set;
  * Build/Install/Run:
  *     atest CtsWindowManagerJetpackTestCases:ActivityEmbeddingBoundsTests
  */
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
 
@@ -160,6 +163,7 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
      * {@link SplitPairRule}, and is not assumed to be 0.5 or match the split ratio of the previous
      * top-most activity split.
      */
+    @FlakyTest(bugId = 213322133)
     @Test
     public void testSplitRatio() {
         final String activityAId = "activityA";

@@ -33,6 +33,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
+import android.platform.test.annotations.Presubmit;
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
@@ -58,7 +59,7 @@ import java.util.function.Predicate;
  * Build/Install/Run:
  *     atest CtsWindowManagerJetpackTestCases:ActivityEmbeddingFinishTests
  */
-
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
 
