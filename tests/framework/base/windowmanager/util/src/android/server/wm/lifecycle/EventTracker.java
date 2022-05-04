@@ -29,13 +29,13 @@ import java.util.function.BooleanSupplier;
  * Gets notified about activity lifecycle updates and provides blocking mechanism to wait until
  * expected activity states are reached.
  */
-public class LifecycleTracker implements LifecycleLog.LifecycleTrackerCallback {
+public class EventTracker implements EventLog.EventTrackerCallback {
     private static final int TIMEOUT = 5 * 1000;
-    private LifecycleLog mLifecycleLog;
+    private EventLog mEventLog;
 
-    public LifecycleTracker(LifecycleLog lifecycleLog) {
-        mLifecycleLog = lifecycleLog;
-        mLifecycleLog.setLifecycleTracker(this);
+    public EventTracker(EventLog eventLog) {
+        mEventLog = eventLog;
+        mEventLog.setEventTracker(this);
     }
 
     void waitAndAssertActivityStates(
@@ -51,14 +51,14 @@ public class LifecycleTracker implements LifecycleLog.LifecycleTrackerCallback {
     void waitAndAssertActivityCurrentState(Class<? extends Activity> activityClass,
             String expectedState) {
         final boolean waitResult = waitForConditionWithTimeout(() -> {
-            List<String> activityLog = mLifecycleLog.getActivityLog(activityClass);
+            List<String> activityLog = mEventLog.getActivityLog(activityClass);
             String currentState = activityLog.get(activityLog.size() - 1);
             return expectedState.equals(currentState);
         });
 
         if (!waitResult) {
             fail("Lifecycle state did not settle with the expected current state of "
-                    + expectedState + " : " + mLifecycleLog.getActivityLog(activityClass));
+                    + expectedState + " : " + mEventLog.getActivityLog(activityClass));
         }
     }
 
@@ -71,11 +71,11 @@ public class LifecycleTracker implements LifecycleLog.LifecycleTrackerCallback {
     public void waitForActivityTransitions(Class<? extends Activity> activityClass,
             List<String> expectedTransitions) {
         waitForConditionWithTimeout(
-                () -> mLifecycleLog.getActivityLog(activityClass).equals(expectedTransitions));
+                () -> mEventLog.getActivityLog(activityClass).equals(expectedTransitions));
     }
 
     @Override
-    public synchronized void onActivityLifecycleChanged() {
+    public synchronized void onEventObserved() {
         notify();
     }
 
@@ -88,7 +88,7 @@ public class LifecycleTracker implements LifecycleLog.LifecycleTrackerCallback {
         for (Pair<Class<? extends Activity>, String> callbackPair : activityCallbacks) {
             final Class<? extends Activity> activityClass = callbackPair.first;
             final List<String> transitionList =
-                    mLifecycleLog.getActivityLog(activityClass);
+                    mEventLog.getActivityLog(activityClass);
             if (transitionList.isEmpty()
                     || !transitionList.get(transitionList.size() - 1).equals(callbackPair.second)) {
                 // The activity either hasn't got any state transitions yet or the current state is
