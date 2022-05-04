@@ -30,6 +30,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
+import android.permission.cts.PermissionUtils
 import android.service.quicksettings.TileService
 import androidx.test.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -163,8 +164,10 @@ class RequestTileServiceAddTest {
         // This test is never run in foreground, so it's a good candidate for testing this
         val componentName = TestTileService.getComponentName()
         val activityManager = context.getSystemService(ActivityManager::class.java)!!
-        assertThat(activityManager.getPackageImportance(context.packageName))
-                .isNotEqualTo(IMPORTANCE_FOREGROUND)
+        withPermission(context.packageName, android.Manifest.permission.PACKAGE_USAGE_STATS) {
+            assertThat(activityManager.getPackageImportance(context.packageName))
+                    .isNotEqualTo(IMPORTANCE_FOREGROUND)
+        }
 
         statusBarService.requestAddTileService(
                 componentName,
@@ -214,6 +217,18 @@ class RequestTileServiceAddTest {
         )
 
         activity.finish()
+    }
+
+    private inline fun withPermission(packageName: String, permission: String, block: () -> Unit) {
+        val isPermissionGranted = PermissionUtils.isPermissionGranted(packageName, permission)
+        try {
+            PermissionUtils.grantPermission(packageName, permission)
+            block()
+        } finally {
+            if (!isPermissionGranted) {
+                PermissionUtils.revokePermission(packageName, permission)
+            }
+        }
     }
 
     private fun setUpForActivity(): Activity {
