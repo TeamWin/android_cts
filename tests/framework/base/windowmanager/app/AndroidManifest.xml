@@ -350,6 +350,7 @@
 
         <activity android:name=".AssistantActivity"
              android:exported="true"
+             android:configChanges="orientation|screenSize|screenLayout"
              android:screenOrientation="locked"/>
         <activity android:name=".TranslucentAssistantActivity"
              android:exported="true"
