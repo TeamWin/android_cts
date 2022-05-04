@@ -172,6 +172,7 @@ java_library {
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "cts-shim-lib",
+        "modules-utils-build",
         "truth-prebuilt"
     ],
     sdk_version: "test_current",
