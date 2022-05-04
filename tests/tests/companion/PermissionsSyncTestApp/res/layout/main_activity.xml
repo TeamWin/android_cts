@@ -39,32 +39,23 @@
         android:gravity="center"
         android:text="Associate Device" />
 
+    <Button
+        android:id="@+id/beginPermissionsSyncButton"
+        android:layout_width="wrap_content"
+        android:layout_marginTop="50dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:text="Begin Permissions Sync" />
+
 
     <Button
         android:id="@+id/disassociateButton"
         android:layout_width="wrap_content"
-        android:layout_marginTop="50dp"
+        android:layout_marginTop="150dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:gravity="center"
         android:text="Disassociate Device" />
-
-    <Button
-        android:id="@+id/permissionsRequestButton"
-        android:layout_width="wrap_content"
-        android:layout_marginTop="50dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center"
-        android:text="Allow Permissions Sync" />
-
-    <Button
-        android:id="@+id/transferDataButton"
-        android:layout_width="wrap_content"
-        android:layout_marginTop="50dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center"
-        android:text="Transfer Data" />
 
 </LinearLayout>

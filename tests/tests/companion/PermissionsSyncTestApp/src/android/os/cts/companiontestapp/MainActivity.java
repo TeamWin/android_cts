@@ -40,7 +40,7 @@ public class MainActivity extends Activity implements ContextProvider {
     private static final String TAG = "MainActivity";
 
     private static final int REQUEST_CODE_CDM = 2;
-    private static final int REQUEST_CODE_PERMISSIONS = 3;
+    private static final int REQUEST_CODE_PERMISSIONS_SYNC = 3;
     private static final int REQUEST_CODE_BLUETOOTH_DISCOVERY = 4;
     private static final int REQUEST_CODE_BLUETOOTH_PERMISSIONS = 5;
     private static final int BLUETOOTH_DISCOVERY_DURATION_SECONDS = 100;
@@ -58,14 +58,12 @@ public class MainActivity extends Activity implements ContextProvider {
 
         Button associateButton = findViewById(R.id.associateButton);
         Button disassociateButton = findViewById(R.id.disassociateButton);
-        Button permissionRequestButton = findViewById(R.id.permissionsRequestButton);
-        Button transferDataButton = findViewById(R.id.transferDataButton);
+        Button beginPermissionsSyncButton = findViewById(R.id.beginPermissionsSyncButton);
         Button startAdvertisingButton = findViewById(R.id.startAdvertisingButton);
 
         associateButton.setOnClickListener(v -> mCDMController.associate());
         disassociateButton.setOnClickListener(v -> mCDMController.disassociate());
-        permissionRequestButton.setOnClickListener(v -> mCDMController.requestUserConsentForTransfer());
-        transferDataButton.setOnClickListener(v -> transferData());
+        beginPermissionsSyncButton.setOnClickListener(v -> mCDMController.requestUserConsentForTransfer());
         startAdvertisingButton.setOnClickListener(v -> startAdvertisingDevice());
     }
 
@@ -85,7 +83,12 @@ public class MainActivity extends Activity implements ContextProvider {
     }
 
     private void transferData() {
-        mCDMController.beginDataTransfer();
+        if (mCommunicationManager.hasCommunicationChannel()) {
+            mCDMController.beginDataTransfer();
+        } else {
+            Toast.makeText(this,
+                    "Cannot begin data transfer. Devices are not connected", Toast.LENGTH_SHORT).show();
+        }
     }
 
     /**
@@ -115,6 +118,17 @@ public class MainActivity extends Activity implements ContextProvider {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         Log.i(TAG, "onActivityResult called with requestCode: " + requestCode + " and resultCode: " + resultCode);
+
+        switch (requestCode) {
+            case REQUEST_CODE_PERMISSIONS_SYNC:
+                if(resultCode == Activity.RESULT_OK) {
+                    Toast.makeText(this, "permissions sync accepted; begin transfer", Toast.LENGTH_SHORT).show();
+                    transferData();
+                } else {
+                    Toast.makeText(this, "permissions sync declined", Toast.LENGTH_SHORT).show();
+                }
+                break;
+        }
     }
 
     @Override
@@ -148,7 +162,7 @@ public class MainActivity extends Activity implements ContextProvider {
     @Override
     public void processPermissionsSyncUserConsentIntentSender(IntentSender intentSender) {
         try {
-            startIntentSenderForResult(intentSender, REQUEST_CODE_PERMISSIONS, null, 0, 0, 0);
+            startIntentSenderForResult(intentSender, REQUEST_CODE_PERMISSIONS_SYNC, null, 0, 0, 0);
         } catch (IntentSender.SendIntentException e) {
             Toast.makeText(this, "IntentSender exception", Toast.LENGTH_LONG).show();
         }

@@ -904,6 +904,16 @@ abstract class CodecTestBase {
         return isDefault;
     }
 
+    static boolean isVendorCodec(String codecName) {
+        MediaCodecList mcl = new MediaCodecList(MediaCodecList.ALL_CODECS);
+        for (MediaCodecInfo codecInfo : mcl.getCodecInfos()) {
+            if (codecName.equals(codecInfo.getName())) {
+                return codecInfo.isVendor();
+            }
+        }
+        return false;
+    }
+
     static ArrayList<String> compileRequiredMimeList(boolean isEncoder, boolean needAudio,
             boolean needVideo) {
         Set<String> list = new HashSet<>();

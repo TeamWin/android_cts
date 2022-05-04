@@ -426,6 +426,7 @@ public class MockImeSession implements AutoCloseable {
         return callCommandInternal("resumeCreateSession", new Bundle());
     }
 
+
     /**
      * Lets {@link MockIme} to call
      * {@link android.inputmethodservice.InputMethodService#getCurrentInputConnection()} and

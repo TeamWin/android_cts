@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.service.games.testing.ActivityResult;
+import android.service.games.testing.GameSessionEventInfo;
 import android.service.games.testing.OnSystemBarVisibilityChangedInfo;
 
 interface IGameServiceTestService {
@@ -27,6 +28,8 @@ interface IGameServiceTestService {
     void setGamePackageNames(in List<String> packageNames);
 
     List<String> getActiveSessions();
+
+    List<GameSessionEventInfo> getGameSessionEventHistory();
 
     void resetState();
 

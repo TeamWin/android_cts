@@ -50,4 +50,10 @@ android_test {
         "general-tests",
     ],
     sdk_version: "test_current",
+    data: [
+        ":CtsNoRecognitionVoiceInteractionService",
+        ":CtsVoiceInteractionApp",
+        ":CtsVoiceInteractionService",
+    ],
+    per_testcase_directory: true,
 }

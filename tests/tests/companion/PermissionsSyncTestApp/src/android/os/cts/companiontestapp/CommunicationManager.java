@@ -77,4 +77,8 @@ public class CommunicationManager {
             Toast.makeText(mContext, "mBluetoothDevice: " + mBluetoothDevice.getAddress() + " already connected", Toast.LENGTH_SHORT).show();
         }
     }
+
+    public boolean hasCommunicationChannel() {
+        return mBluetoothCommunicationService.getState() == BluetoothCommunicationService.STATE_CONNECTED;
+    }
 }

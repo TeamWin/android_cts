@@ -20,6 +20,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Region;
+import android.service.games.testing.GameSessionEventInfo;
 import android.service.games.testing.OnSystemBarVisibilityChangedInfo;
 import android.view.Gravity;
 import android.view.View;
@@ -30,6 +31,7 @@ import android.widget.TextView;
 import androidx.annotation.GuardedBy;
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -44,6 +46,9 @@ public final class TestGameSessionService extends GameSessionService {
     @GuardedBy("sLock")
     @Nullable
     private static TestGameSession sFocusedSession;
+    @GuardedBy("sLock")
+    @Nullable
+    private static ArrayList<GameSessionEventInfo> sGameSessionEventHistory = new ArrayList<>();
 
     @Override
     public GameSession onNewSession(CreateGameSessionRequest createGameSessionRequest) {
@@ -51,9 +56,23 @@ public final class TestGameSessionService extends GameSessionService {
                 createGameSessionRequest.getTaskId());
     }
 
+    static void reset() {
+        synchronized (sLock) {
+            sActiveSessions.clear();
+            sFocusedSession = null;
+            sGameSessionEventHistory.clear();
+        }
+    }
+
     static Set<String> getActiveSessions() {
         synchronized (sLock) {
             return sActiveSessions;
+        }
+    }
+
+    static ArrayList<GameSessionEventInfo> getGameSessionEventHistory() {
+        synchronized (sLock) {
+            return sGameSessionEventHistory;
         }
     }
 
@@ -100,6 +119,11 @@ public final class TestGameSessionService extends GameSessionService {
         public void onCreate() {
             synchronized (sLock) {
                 sActiveSessions.add(mPackageName);
+                sGameSessionEventHistory.add(
+                        GameSessionEventInfo.create(
+                                mPackageName,
+                                mTaskId,
+                                GameSessionEventInfo.GAME_SESSION_EVENT_CREATED));
             }
 
             final TextView textView = new TextView(mContext);
@@ -168,6 +192,11 @@ public final class TestGameSessionService extends GameSessionService {
         public void onDestroy() {
             synchronized (sLock) {
                 sActiveSessions.remove(mPackageName);
+                sGameSessionEventHistory.add(
+                        GameSessionEventInfo.create(
+                                mPackageName,
+                                mTaskId,
+                                GameSessionEventInfo.GAME_SESSION_EVENT_DESTROYED));
             }
         }
     }

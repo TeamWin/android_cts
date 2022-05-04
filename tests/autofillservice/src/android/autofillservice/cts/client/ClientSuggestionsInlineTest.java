@@ -28,6 +28,7 @@ import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.ClientAutofillRequestCallback;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeFull;
 
 import com.android.cts.mockime.MockImeSession;
 
@@ -47,7 +48,9 @@ public class ClientSuggestionsInlineTest extends ClientSuggestionsCommonTestCase
         return true;
     }
 
+    // TODO(b/230853028) do not use sticky broadcasts, so that this test can run in instant mode
     @Test
+    @AppModeFull(reason = "BROADCAST_STICKY permission cannot be granted to instant apps")
     public void testImeDisableClientSuggestions_showDropdownUi() throws Exception {
         // Set service.
         enableService();
@@ -79,7 +82,9 @@ public class ClientSuggestionsInlineTest extends ClientSuggestionsCommonTestCase
         getDropdownUiBot().assertDatasets("The Dude");
     }
 
+    // TODO(b/230853028) do not use sticky broadcasts, so that this test can run in instant mode
     @Test
+    @AppModeFull(reason = "BROADCAST_STICKY permission cannot be granted to instant apps")
     public void testImeDisableClientSuggestions_fallbackThenShowInline() throws Exception {
         // Set service.
         enableService();
@@ -123,7 +128,9 @@ public class ClientSuggestionsInlineTest extends ClientSuggestionsCommonTestCase
         mActivity.assertAutoFilled();
     }
 
+    // TODO(b/230853028) do not use sticky broadcasts, so that this test can run in instant mode
     @Test
+    @AppModeFull(reason = "BROADCAST_STICKY permission cannot be granted to instant apps")
     public void testImeDisableServiceSuggestions_fallbackThenShowDropdownUi() throws Exception {
         // Set service.
         enableService();
