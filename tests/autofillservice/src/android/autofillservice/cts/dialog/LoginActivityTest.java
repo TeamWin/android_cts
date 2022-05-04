@@ -173,6 +173,69 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
     }
 
     @Test
+    public void testShowFillDialog_onlyShowOnce() throws Exception {
+        // Enable feature and test service
+        enableFillDialogFeature(sContext);
+        enableService();
+
+        // Set response with a dataset, there are two ids to trigger fill dialog.
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("Dropdown Presentation"))
+                        .setDialogPresentation(createPresentation("Dialog Presentation"))
+                        .build())
+                .setDialogHeader(createPresentation("Dialog Header"))
+                .setDialogTriggerIds(ID_USERNAME, ID_PASSWORD);
+        sReplier.addResponse(builder.build());
+
+        // Start activity and autofill
+        LoginActivity activity = startLoginActivity();
+        mUiBot.waitForIdleSync();
+
+        sReplier.getNextFillRequest();
+        mUiBot.waitForIdleSync();
+
+        // Click on password field to trigger fill dialog
+        mUiBot.selectByRelativeIdFromUiDevice(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+
+        mUiBot.assertFillDialogDatasets("Dialog Presentation");
+
+        // Hide fill dialog via touch outside, but ime will appear. to hide IME before next test.
+        mUiBot.touchOutsideDialog();
+        mUiBot.waitForIdleSync();
+
+        assertMockImeStatus(activity, true);
+
+        activity.hideSoftInput();
+
+        assertMockImeStatus(activity, false);
+
+        // Click on the username field to trigger autofill. Although the username field supports
+        // a fill dialog, the fill dialog only shown once, so shows the dropdown UI.
+        mUiBot.selectByRelativeIdFromUiDevice(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+
+        mUiBot.assertNoFillDialog();
+        mUiBot.assertDatasets("Dropdown Presentation");
+
+        // Focus on password field to trigger dropdown UI
+        // Note: It will click on dropdown UI if click the password field via UiDevice, so just
+        // switch focus via activity.
+        activity.onPassword(View::requestFocus);
+        mUiBot.waitForIdleSync();
+
+        // Set expected value, then select dataset
+        activity.expectAutoFill("dude", "sweet");
+        mUiBot.selectDataset("Dropdown Presentation");
+
+        // Check the results.
+        activity.assertAutoFilled();
+    }
+
+    @Test
     public void testShowFillDialog_twoSuggestions_oneButton() throws Exception {
         // Enable feature and test service
         enableFillDialogFeature(sContext);
