@@ -39,4 +39,8 @@ android_test {
         "general-tests",
         "mts-permission",
     ],
+    data: [
+        ":CtsAppThatAccessesMicAndCameraPermission",
+    ],
+    per_testcase_directory: true,
 }

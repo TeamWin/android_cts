@@ -29,6 +29,8 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.platform.test.annotations.FlakyTest;
+import android.platform.test.annotations.Presubmit;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
 import android.util.Pair;
@@ -59,6 +61,7 @@ import java.util.function.Predicate;
  * Build/Install/Run:
  *     atest CtsWindowManagerJetpackTestCases:ActivityEmbeddingLaunchTests
  */
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class ActivityEmbeddingLaunchTests extends ActivityEmbeddingTestBase {
 
@@ -270,6 +273,7 @@ public class ActivityEmbeddingLaunchTests extends ActivityEmbeddingTestBase {
      * Tests launching an activity that is set to always expand when it is launched over an existing
      * split from the current secondary activity.
      */
+    @FlakyTest(bugId = 213322133)
     @Test
     public void testAlwaysExpandOverSplit_launchFromSecondary() {
         // Create activity rule that sets the target activity to always expand

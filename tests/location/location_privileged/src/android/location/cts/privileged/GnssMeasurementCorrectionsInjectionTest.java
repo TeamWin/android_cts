@@ -16,6 +16,8 @@
 
 package android.location.cts.privileged;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.Manifest;
 import android.content.Context;
 import android.location.GnssMeasurementCorrections;
@@ -41,8 +43,6 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assume.assumeTrue;
-
 /**
  * Tests for {@link GnssMeasurementCorrections} injection.
  *
@@ -66,6 +66,9 @@ public class GnssMeasurementCorrectionsInjectionTest {
                 .getUiAutomation()
                 .adoptShellPermissionIdentity(Manifest.permission.LOCATION_HARDWARE);
         assumeTrue(TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, TAG));
+        assumeTrue(
+                mTestLocationManager.getLocationManager().getGnssCapabilities()
+                        .hasMeasurementCorrections());
     }
 
     @After
