@@ -22,4 +22,7 @@
     <!-- CTS multi device test cases only-->
     <option name="multi-devices-modules" value="ONLY_MULTI_DEVICES" />
 
+    <!-- Enable multi-devices automatically, and limit CTS to 2 devices -->
+    <option name="replicate-parent-setup" value="true" />
+    <option name="multi-device-count" value="2" />
 </configuration>
