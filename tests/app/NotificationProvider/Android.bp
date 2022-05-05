@@ -19,7 +19,10 @@ package {
 android_test_helper_app {
     name: "NotificationProvider",
     defaults: ["cts_support_defaults"],
-    srcs: ["**/*.java", "**/*.kt"],
+    srcs: [
+        "**/*.java",
+        "**/*.kt",
+    ],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
@@ -27,6 +30,5 @@ android_test_helper_app {
         "general-tests",
         "sts",
     ],
-    platform_apis: true,
     sdk_version: "current",
 }

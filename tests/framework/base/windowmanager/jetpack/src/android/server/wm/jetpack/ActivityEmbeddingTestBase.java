@@ -19,8 +19,10 @@ package android.server.wm.jetpack;
 import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
 import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNotNull;
 
+import android.os.SystemProperties;
 import android.server.wm.ActivityManagerTestBase.ReportedDisplayMetrics;
 import android.server.wm.jetpack.utils.TestValueCountConsumer;
 import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
@@ -45,11 +47,15 @@ public class ActivityEmbeddingTestBase extends WindowManagerJetpackTestBase {
     protected TestValueCountConsumer<List<SplitInfo>> mSplitInfoConsumer;
     protected ReportedDisplayMetrics mReportedDisplayMetrics =
             ReportedDisplayMetrics.getDisplayMetrics(Display.DEFAULT_DISPLAY);
+    private static final boolean ENABLE_SHELL_TRANSITIONS =
+            SystemProperties.getBoolean("persist.wm.debug.shell_transit", false);
 
     @Override
     @Before
     public void setUp() {
         super.setUp();
+        // TODO(b/207070762): remove the assumption after shell transition enabled.
+        assumeFalse(ENABLE_SHELL_TRANSITIONS);
         assumeExtensionSupportedDevice();
         WindowExtensions windowExtensions = getWindowExtensions();
         assumeNotNull(windowExtensions);

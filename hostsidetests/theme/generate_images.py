@@ -225,7 +225,7 @@ def main(argv):
                             'cts/hostsidetests/theme/assets')
     os.system("mkdir -p %s" % out_path)
 
-    if len(argv) is 2:
+    if len(argv) == 2:
         for density in CTS_THEME_dict.keys():
             emulator = start_emulator(argv[1], density)
             result = do_capture(setup=(theme_apk, out_path), device_serial=emulator.get_serial())

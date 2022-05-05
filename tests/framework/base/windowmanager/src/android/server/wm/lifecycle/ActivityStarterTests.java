@@ -31,7 +31,8 @@ import static android.server.wm.app.Components.ALIAS_TEST_ACTIVITY;
 import static android.server.wm.app.Components.NO_HISTORY_ACTIVITY;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_STOP;
+import static android.server.wm.lifecycle.LifecycleConstants.getComponentName;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;

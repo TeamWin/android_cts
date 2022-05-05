@@ -604,7 +604,28 @@ abstract class CodecTestBase {
     }
     static final String HDR_STATIC_INFO =
             "00 d0 84 80 3e c2 33 c4 86 4c 1d b8 0b 13 3d 42 40 e8 03 64 00 e8 03 2c 01";
+    static final String[] HDR_DYNAMIC_INFO = new String[]{
+            "b5 00 3c 00 01 04 00 40  00 0c 80 4e 20 27 10 00" +
+            "0a 00 00 24 08 00 00 28  00 00 50 00 28 c8 00 c9" +
+            "90 02 aa 58 05 ca d0 0c  0a f8 16 83 18 9c 18 00" +
+            "40 78 13 64 d5 7c 2e 2c  c3 59 de 79 6e c3 c2 00",
 
+            "b5 00 3c 00 01 04 00 40  00 0c 80 4e 20 27 10 00" +
+            "0a 00 00 24 08 00 00 28  00 00 50 00 28 c8 00 c9" +
+            "90 02 aa 58 05 ca d0 0c  0a f8 16 83 18 9c 18 00" +
+            "40 78 13 64 d5 7c 2e 2c  c3 59 de 79 6e c3 c2 00",
+
+            "b5 00 3c 00 01 04 00 40  00 0c 80 4e 20 27 10 00" +
+            "0e 80 00 24 08 00 00 28  00 00 50 00 28 c8 00 c9" +
+            "90 02 aa 58 05 ca d0 0c  0a f8 16 83 18 9c 18 00" +
+            "40 78 13 64 d5 7c 2e 2c  c3 59 de 79 6e c3 c2 00",
+
+            "b5 00 3c 00 01 04 00 40  00 0c 80 4e 20 27 10 00" +
+            "0e 80 00 24 08 00 00 28  00 00 50 00 28 c8 00 c9" +
+            "90 02 aa 58 05 ca d0 0c  0a f8 16 83 18 9c 18 00" +
+            "40 78 13 64 d5 7c 2e 2c  c3 59 de 79 6e c3 c2 00",
+    };
+    boolean mTestDynamicMetadata = false;
     static final String CODEC_PREFIX_KEY = "codec-prefix";
     static final String MEDIA_TYPE_PREFIX_KEY = "media-type-prefix";
     static final String MIME_SEL_KEY = "mime-sel";
@@ -1380,7 +1401,7 @@ abstract class CodecTestBase {
 
     void validateHDRStaticMetaData(MediaFormat fmt, ByteBuffer hdrStaticRef) {
         ByteBuffer hdrStaticInfo = fmt.getByteBuffer(MediaFormat.KEY_HDR_STATIC_INFO, null);
-        assertNotNull("No HDR metadata present in format : " + fmt, hdrStaticInfo);
+        assertNotNull("No HDR static metadata present in format : " + fmt, hdrStaticInfo);
         if (!hdrStaticRef.equals(hdrStaticInfo)) {
             StringBuilder refString = new StringBuilder("");
             StringBuilder testString = new StringBuilder("");
@@ -1394,6 +1415,25 @@ abstract class CodecTestBase {
             }
             fail("hdr static info mismatch" + "\n" + "ref static info : " + refString + "\n" +
                     "test static info : " + testString);
+        }
+    }
+
+    void validateHDRDynamicMetaData(MediaFormat fmt, ByteBuffer hdrDynamicRef) {
+        ByteBuffer hdrDynamicInfo = fmt.getByteBuffer(MediaFormat.KEY_HDR10_PLUS_INFO, null);
+        assertNotNull("No HDR dynamic metadata present in format : " + fmt, hdrDynamicInfo);
+        if (!hdrDynamicRef.equals(hdrDynamicInfo)) {
+            StringBuilder refString = new StringBuilder("");
+            StringBuilder testString = new StringBuilder("");
+            byte[] ref = new byte[hdrDynamicRef.capacity()];
+            hdrDynamicRef.get(ref);
+            byte[] test = new byte[hdrDynamicInfo.capacity()];
+            hdrDynamicInfo.get(test);
+            for (int i = 0; i < Math.min(ref.length, test.length); i++) {
+                refString.append(String.format("%2x ", ref[i]));
+                testString.append(String.format("%2x ", test[i]));
+            }
+            fail("hdr dynamic info mismatch" + "\n" + "ref dynamic info : " + refString + "\n" +
+                    "test dynamic info : " + testString);
         }
     }
 
@@ -1607,8 +1647,15 @@ class CodecDecoderTestBase extends CodecTestBase {
                 int height = format.getInteger(MediaFormat.KEY_HEIGHT);
                 int stride = format.getInteger(MediaFormat.KEY_STRIDE);
                 mOutputBuff.checksum(buf, info.size, width, height, stride, bytesPerSample);
+
+                if (mTestDynamicMetadata) {
+                    validateHDRDynamicMetaData(mCodec.getOutputFormat(), ByteBuffer
+                            .wrap(loadByteArrayFromString(HDR_DYNAMIC_INFO[mOutputCount])));
+
+                }
             }
         }
+
         if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
             mSawOutputEOS = true;
         }
@@ -1744,6 +1791,24 @@ class CodecDecoderTestBase extends CodecTestBase {
         queueEOS();
         waitForAllOutputs();
         validateHDRStaticMetaData(mCodec.getOutputFormat(), HDRStatic);
+        mCodec.stop();
+        mCodec.release();
+        mExtractor.release();
+    }
+
+    void validateHDRDynamicMetaData(String parent, String name, boolean ignoreContainerDynamicInfo)
+            throws IOException, InterruptedException {
+        mOutputBuff = new OutputManager();
+        MediaFormat format = setUpSource(parent, name);
+        if (ignoreContainerDynamicInfo) {
+            format.removeKey(MediaFormat.KEY_HDR10_PLUS_INFO);
+        }
+        mCodec = MediaCodec.createByCodecName(mCodecName);
+        configureCodec(format, true, true, false);
+        mCodec.start();
+        doWork(10);
+        queueEOS();
+        waitForAllOutputs();
         mCodec.stop();
         mCodec.release();
         mExtractor.release();

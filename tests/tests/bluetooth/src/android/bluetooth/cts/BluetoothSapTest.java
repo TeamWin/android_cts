@@ -44,7 +44,7 @@ public class BluetoothSapTest extends AndroidTestCase {
 
     private boolean mHasBluetooth;
     private BluetoothAdapter mAdapter;
-    private UiAutomation mUiAutomation;;
+    private UiAutomation mUiAutomation;
 
     private BluetoothSap mBluetoothSap;
     private boolean mIsProfileReady;
@@ -71,7 +71,7 @@ public class BluetoothSapTest extends AndroidTestCase {
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
 
         mProfileConnectedlock = new ReentrantLock();
-        mConditionProfileIsConnected  = mProfileConnectedlock.newCondition();
+        mConditionProfileIsConnected = mProfileConnectedlock.newCondition();
         mIsProfileReady = false;
         mBluetoothSap = null;
 
@@ -139,7 +139,8 @@ public class BluetoothSapTest extends AndroidTestCase {
                 BluetoothProfile.STATE_DISCONNECTED);
 
         mUiAutomation.dropShellPermissionIdentity();
-        assertThrows(SecurityException.class, () -> mBluetoothSap.getConnectionState(testDevice));
+        assertEquals(mBluetoothSap.getConnectionState(testDevice),
+                BluetoothProfile.STATE_DISCONNECTED);
     }
 
     @MediumTest
@@ -155,7 +156,7 @@ public class BluetoothSapTest extends AndroidTestCase {
         mUiAutomation.dropShellPermissionIdentity();
         BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
         assertThrows(SecurityException.class, () -> mBluetoothSap.setConnectionPolicy(testDevice,
-                    BluetoothProfile.CONNECTION_POLICY_FORBIDDEN));
+                BluetoothProfile.CONNECTION_POLICY_FORBIDDEN));
         assertThrows(SecurityException.class, () -> mBluetoothSap.getConnectionPolicy(testDevice));
     }
 

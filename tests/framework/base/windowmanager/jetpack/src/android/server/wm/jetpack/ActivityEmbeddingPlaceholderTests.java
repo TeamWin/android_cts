@@ -29,6 +29,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.platform.test.annotations.Presubmit;
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.util.Pair;
@@ -58,6 +59,7 @@ import java.util.function.Predicate;
  * Build/Install/Run:
  *     atest CtsWindowManagerJetpackTestCases:ActivityEmbeddingPlaceholderTests
  */
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase {
 
@@ -140,7 +142,7 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
      * activity it launched with is not finished.
      */
     @Test
-    @Ignore
+    @Ignore("b/222188067")
     public void testPlaceholderFinishPrimaryWithSecondary_FinishNever() {
         // Set embedding rules with finishPrimaryWithSecondary set to FINISH_NEVER
         final SplitPlaceholderRule splitPlaceholderRule =

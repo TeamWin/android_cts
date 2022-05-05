@@ -18,9 +18,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.android.cts.verifier"
           android:versionCode="5"
-          android:versionName="12.1_r1">
+          android:versionName="13_r1">
 
-    <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="31"/>
+    <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="33"/>
 
     <uses-permission android:name="android.car.permission.CAR_POWERTRAIN" />
     <uses-permission android:name="android.car.permission.READ_CAR_POWER_POLICY" />

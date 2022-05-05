@@ -46,4 +46,12 @@
         <item name="android:windowBackground">#ffffff</item>
         <item name="android:colorBackground">#ffffff</item>
     </style>
+    <style name="Theme.EdgeExtensions" parent="Theme.WhiteBackground">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+    <style name="Theme.TranslucentBars" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
 </resources>

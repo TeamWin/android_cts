@@ -19,7 +19,7 @@ package android.ondevicepersonalization.cts;
 import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
-import android.ondevicepersonalization.OnDevicePersonalizationManager;
+import android.ondevicepersonalization.OnDevicePersonalizationManaging;
 
 import androidx.test.core.app.ApplicationProvider;
 
@@ -29,17 +29,17 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /**
- * Test of {@link OnDevicePersonalizationManager}
+ * Test of {@link OnDevicePersonalizationManaging}
  */
 @RunWith(JUnit4.class)
 public class OnDevicePersonalizationServiceTest {
     private Context mContext;
-    private OnDevicePersonalizationManager mService;
+    private OnDevicePersonalizationManaging mService;
 
     @Before
     public void setup() throws Exception {
         mContext = ApplicationProvider.getApplicationContext();
-        mService = mContext.getSystemService(OnDevicePersonalizationManager.class);
+        mService = mContext.getSystemService(OnDevicePersonalizationManaging.class);
     }
 
     @Test

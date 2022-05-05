@@ -144,7 +144,10 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         mLocationTimeZoneManagerShellHelper.stop();
 
         // Reset settings and server flags as best we can.
-        mTimeZoneDetectorShellHelper.setAutoDetectionEnabled(mOriginalAutoDetectionEnabled);
+        if (mTimeZoneDetectorShellHelper.isAutoDetectionEnabled()
+                != mOriginalAutoDetectionEnabled) {
+            mTimeZoneDetectorShellHelper.setAutoDetectionEnabled(mOriginalAutoDetectionEnabled);
+        }
         mLocationShellHelper.setLocationEnabledForCurrentUser(mOriginalLocationEnabled);
         mDeviceConfigShellHelper.restoreDeviceConfigStateForTest(mDeviceConfigPreTestState);
 

@@ -105,7 +105,11 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
     protected static final int NUM_TEST_PHASES = 5;
     protected int mTestPhase = 0;
 
-    protected static final double CONFIDENCE_THRESHOLD = 0.6;
+    // There is more distortion/variance with the Speaker/Mic path, so lower confidence is needed
+    private static final double CONFIDENCE_THRESHOLD_AMBIENT = 0.2;
+    // A cleaner signal for wired or USB loopback, so higher confidence is possible
+    private static final double CONFIDENCE_THRESHOLD_WIRED = 0.6;
+
     // impossibly low latencies (indicating something in the test went wrong).
     protected static final float LOWEST_REASONABLE_LATENCY_MILLIS = 1.0f;
     protected static final double PROAUDIO_MUST_LATENCY_MS = 20.0;
@@ -137,16 +141,19 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         double mMeanLatencyMS;
         double mMeanAbsoluteDeviation;
         double mMeanConfidence;
+        double mRequiredConfidence;
 
         boolean mRouteAvailable; // Have we seen this route/device at any time
         boolean mRouteConnected; // is the route available NOW
         boolean mTestRun;
         boolean mTestPass;
 
-        TestSpec(int routeId, double mustLatency, double recommendedLatency) {
+        TestSpec(int routeId, double mustLatency, double recommendedLatency,
+                 double requiredConfidence) {
             mRouteId = routeId;
             mMustLatencyMS = mustLatency;
             mRecommendedLatencyMS = recommendedLatency;
+            mRequiredConfidence = requiredConfidence;
 
             mInputDeviceId = DEVICEID_NONE;
             mOutputDeviceId = DEVICEID_NONE;
@@ -170,7 +177,7 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
                     StatUtils.calculateMeanAbsoluteDeviation(mMeanLatencyMS, mLatencyMS);
             mMeanConfidence = StatUtils.calculateMean(mConfidence);
 
-            mTestPass = mMeanConfidence >= CONFIDENCE_THRESHOLD
+            mTestPass = mMeanConfidence >= mRequiredConfidence
                     && mMeanLatencyMS > LOWEST_REASONABLE_LATENCY_MILLIS
                     && mMeanLatencyMS < mMustLatencyMS;
         }
@@ -194,10 +201,10 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
                 result = "Route Not Available";
             } else if (!mTestRun) {
                 result = "Test Not Run";
-            } else if (mMeanConfidence < CONFIDENCE_THRESHOLD) {
+            } else if (mMeanConfidence < mRequiredConfidence) {
                 result = String.format(
                         "Test Finished\nInsufficient Confidence (%.2f < %.2f). No Results.",
-                        mMeanConfidence, CONFIDENCE_THRESHOLD);
+                        mMeanConfidence, mRequiredConfidence);
             } else if (mMeanLatencyMS <= LOWEST_REASONABLE_LATENCY_MILLIS) {
                 result = String.format(
                         "Test Finished\nLatency unrealistically low (%.2f < %.2f). No Results.",
@@ -317,7 +324,8 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
             mustLatency = BASIC_MUST_LATENCY_MS;
         }
         mTestSpecs[TESTROUTE_DEVICE] =
-                new TestSpec(TESTROUTE_DEVICE, recommendedLatency, mustLatency);
+                new TestSpec(TESTROUTE_DEVICE, recommendedLatency, mustLatency,
+                        CONFIDENCE_THRESHOLD_AMBIENT);
 
         if (mClaimsProAudio) {
             recommendedLatency = PROAUDIO_MUST_LATENCY_MS;
@@ -330,7 +338,8 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
             mustLatency = BASIC_MUST_LATENCY_MS;
         }
         mTestSpecs[TESTROUTE_ANALOG_JACK] =
-                new TestSpec(TESTROUTE_ANALOG_JACK, recommendedLatency, mustLatency);
+                new TestSpec(TESTROUTE_ANALOG_JACK, recommendedLatency, mustLatency,
+                        CONFIDENCE_THRESHOLD_WIRED);
 
         if (mClaimsProAudio) {
             recommendedLatency = USB_MUST_LATENCY_MS;
@@ -343,7 +352,8 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
             mustLatency = BASIC_MUST_LATENCY_MS;
         }
         mTestSpecs[TESTROUTE_USB] =
-                new TestSpec(TESTROUTE_USB, recommendedLatency, mustLatency);
+                new TestSpec(TESTROUTE_USB, recommendedLatency, mustLatency,
+                        CONFIDENCE_THRESHOLD_WIRED);
 
         // Setup UI
         mYesString = getResources().getString(R.string.audio_general_yes);

@@ -37,6 +37,9 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.Intent;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.provider.MediaStore;
 
@@ -440,6 +443,72 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    public void testVideoPreviewAudioFocus() throws Exception {
+        final int[] focusStateForTest = new int[1];
+        final AudioManager audioManager = mContext.getSystemService(AudioManager.class);
+        AudioFocusRequest audioFocusRequest =
+                new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                .setAudioAttributes(new AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.USAGE_MEDIA)
+                        .setUsage(AudioAttributes.CONTENT_TYPE_MOVIE)
+                        .build())
+                .setWillPauseWhenDucked(true)
+                .setAcceptsDelayedFocusGain(false)
+                .setOnAudioFocusChangeListener(focusChange -> {
+                    if (focusChange == AudioManager.AUDIOFOCUS_LOSS
+                            || focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT
+                            || focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
+                        focusStateForTest[0] = focusChange;
+                    }
+                })
+                .build();
+
+        // Request AudioFocus
+        assertWithMessage("Expected requestAudioFocus result")
+                .that(audioManager.requestAudioFocus(audioFocusRequest))
+                .isEqualTo(AudioManager.AUDIOFOCUS_REQUEST_GRANTED);
+
+        // Launch Preview
+        launchPreviewMultipleWithVideos(/* videoCount */ 2);
+        // Video preview launches in mute mode, hence, test's audio focus shouldn't be lost when
+        // video preview starts
+        assertThat(focusStateForTest[0]).isEqualTo(0);
+
+        final UiObject muteButton = findMuteButton();
+        // unmute the audio of video preview
+        clickAndWait(muteButton);
+        assertMuteButtonState(muteButton, /* isMuted */ false);
+
+        // Verify that test lost the audio focus because PhotoPicker has requested audio focus now.
+        assertThat(focusStateForTest[0]).isEqualTo(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT);
+
+        // Reset the focusStateForTest to verify test loses audio focus when video preview is
+        // launched with unmute state
+        focusStateForTest[0] = 0;
+        // Abandon the audio focus before requesting again. This is necessary to reduce test flakes
+        audioManager.abandonAudioFocusRequest(audioFocusRequest);
+        // Request AudioFocus from test again
+        assertWithMessage("Expected requestAudioFocus result")
+                .that(audioManager.requestAudioFocus(audioFocusRequest))
+                        .isEqualTo(AudioManager.AUDIOFOCUS_REQUEST_GRANTED);
+
+        // Wait for PhotoPicker to lose Audio Focus
+        findPlayButton().waitForExists(SHORT_TIMEOUT);
+        // Test requesting audio focus will make PhotoPicker lose audio focus, Verify video is
+        // paused when PhotoPicker loses audio focus.
+        assertWithMessage("PlayPause button's content description")
+                .that(findPlayPauseButton().getContentDescription())
+                .isEqualTo("Play");
+
+        // Swipe to next video and verify preview gains audio focus
+        swipeLeftAndWait();
+        findPauseButton().waitForExists(SHORT_TIMEOUT);
+        // Video preview is now in unmute mode. Hence, PhotoPicker will request audio focus. Verify
+        // that test lost the audio focus.
+        assertThat(focusStateForTest[0]).isEqualTo(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT);
+    }
+
+    @Test
     @Ignore("Re-enable once we find work around for b/226318844")
     public void testMultiSelect_previewVideoControlsVisibility() throws Exception {
         launchPreviewMultipleWithVideos(/* videoCount */ 3);
@@ -642,6 +711,14 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     private static UiObject findPlayPauseButton() {
         return new UiObject(new UiSelector().resourceIdMatches(
                 REGEX_PACKAGE_NAME + ":id/exo_play_pause"));
+    }
+
+    private static UiObject findPauseButton() {
+        return new UiObject(new UiSelector().descriptionContains("Pause"));
+    }
+
+    private static UiObject findPlayButton() {
+        return new UiObject(new UiSelector().descriptionContains("Play"));
     }
 
     private static UiObject findPreviewVideoImageView() {

@@ -240,6 +240,40 @@ public class GlobalSearchSessionPlatformCtsTest {
     }
 
     @Test
+    public void testRemoveVisibilitySetting_noRemainingSettings() throws Exception {
+        // Set schema and allow PKG_A to access.
+        mDb.setSchema(
+                new SetSchemaRequest.Builder()
+                        .addSchemas(AppSearchEmail.SCHEMA)
+                        .setSchemaTypeVisibilityForPackage(
+                                AppSearchEmail.SCHEMA_TYPE,
+                                /*visible=*/ true,
+                                new PackageIdentifier(PKG_A, PKG_A_CERT_SHA256))
+                        .build())
+                .get();
+        checkIsBatchResultSuccess(
+                mDb.put(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocuments(EMAIL_DOCUMENT)
+                                .build()));
+
+        // PKG_A can access.
+        assertPackageCanAccess(EMAIL_DOCUMENT, PKG_A);
+        assertPackageCannotAccess(PKG_B);
+
+        // Remove the schema.
+        mDb.setSchema(new SetSchemaRequest.Builder().setForceOverride(true).build()).get();
+
+        // Add the schema back with default visibility setting.
+        mDb.setSchema(new SetSchemaRequest.Builder()
+                .addSchemas(AppSearchEmail.SCHEMA).build()).get();
+
+        // No pcakage can access.
+        assertPackageCannotAccess(PKG_A);
+        assertPackageCannotAccess(PKG_B);
+    }
+
+    @Test
     public void testAllowMultiplePackageAccess() throws Exception {
         mDb.setSchema(
                         new SetSchemaRequest.Builder()

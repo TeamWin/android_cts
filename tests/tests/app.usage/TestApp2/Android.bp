@@ -19,7 +19,6 @@ package {
 android_test_helper_app {
     name: "CtsUsageStatsTestApp2",
     defaults: ["cts_defaults"],
-    platform_apis: true,
     static_libs: [
         "androidx.test.rules",
         "compatibility-device-util-axt",
@@ -32,12 +31,15 @@ android_test_helper_app {
         "android.test.base",
         "android.test.runner",
     ],
-    srcs: ["src/**/*.java", "aidl/**/*.aidl"],
+    srcs: [
+        "src/**/*.java",
+        "aidl/**/*.aidl",
+    ],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
-        "mts"
+        "mts",
     ],
-    sdk_version: "test_current"
+    sdk_version: "test_current",
 }

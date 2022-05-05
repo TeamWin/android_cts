@@ -19,13 +19,13 @@ package android.server.wm.lifecycle;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_CREATE;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_DESTROY;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_PAUSE;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_RESTART;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_START;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_CREATE;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_DESTROY;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_PAUSE;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_RESTART;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_RESUME;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_START;
+import static android.server.wm.lifecycle.LifecycleConstants.ON_STOP;
 
 import static org.junit.Assume.assumeTrue;
 
@@ -93,9 +93,9 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
         // Wait and assert lifecycle
         waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
 
-        final List<LifecycleLog.ActivityCallback> expectedSequence =
+        final List<String> expectedSequence =
                 Arrays.asList(ON_PAUSE, ON_RESUME);
-        final List<LifecycleLog.ActivityCallback> extraCycleSequence =
+        final List<String> extraCycleSequence =
                 Arrays.asList(ON_PAUSE, ON_STOP, ON_RESTART, ON_START, ON_RESUME);
         LifecycleVerifier.assertSequenceMatchesOneOf(FirstActivity.class,
                 getLifecycleLog(), Arrays.asList(expectedSequence, extraCycleSequence),
@@ -171,11 +171,11 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
         waitAndAssertActivityStates(state(PipActivity.class, ON_STOP));
 
         // TODO(b/123013403): sometimes extra one or even more relaunches happen
-        //final List<LifecycleLog.ActivityCallback> extraDestroySequence =
+        //final List<String> extraDestroySequence =
         //        Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE, ON_STOP,
         //                ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE);
         //waitForActivityTransitions(FirstActivity.class, extraDestroySequence);
-        //final List<LifecycleLog.ActivityCallback> expectedSequence =
+        //final List<String> expectedSequence =
         //        Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE);
         //LifecycleVerifier.assertSequenceMatchesOneOf(FirstActivity.class, getLifecycleLog(),
         //        Arrays.asList(extraDestroySequence, expectedSequence),
@@ -277,9 +277,9 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
                 "launchAndEnterPip");
         LifecycleVerifier.assertEmptySequence(FirstActivity.class, getLifecycleLog(),
                 "launchPipOnTop");
-        final List<LifecycleLog.ActivityCallback> expectedSequence =
+        final List<String> expectedSequence =
                 Arrays.asList(ON_PAUSE, ON_RESUME);
-        final List<LifecycleLog.ActivityCallback> extraCycleSequence =
+        final List<String> extraCycleSequence =
                 Arrays.asList(ON_PAUSE, ON_STOP, ON_RESTART, ON_START, ON_RESUME);
         // TODO(b/123013403): sometimes extra destroy is observed
         LifecycleVerifier.assertSequenceMatchesOneOf(SecondActivity.class,

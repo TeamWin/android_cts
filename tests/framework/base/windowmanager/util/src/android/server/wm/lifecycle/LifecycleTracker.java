@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,7 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
 
 package android.server.wm.lifecycle;
@@ -19,7 +19,6 @@ package android.server.wm.lifecycle;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
-import android.server.wm.lifecycle.LifecycleLog.ActivityCallback;
 import android.util.Pair;
 
 import java.util.ArrayList;
@@ -31,18 +30,18 @@ import java.util.function.BooleanSupplier;
  * expected activity states are reached.
  */
 public class LifecycleTracker implements LifecycleLog.LifecycleTrackerCallback {
-
+    private static final int TIMEOUT = 5 * 1000;
     private LifecycleLog mLifecycleLog;
 
-    LifecycleTracker(LifecycleLog lifecycleLog) {
+    public LifecycleTracker(LifecycleLog lifecycleLog) {
         mLifecycleLog = lifecycleLog;
         mLifecycleLog.setLifecycleTracker(this);
     }
 
     void waitAndAssertActivityStates(
-            Pair<Class<? extends Activity>, ActivityCallback>[] activityCallbacks) {
+            Pair<Class<? extends Activity>, String>[] activityCallbacks) {
         final boolean waitResult = waitForConditionWithTimeout(
-                () -> pendingCallbacks(activityCallbacks).isEmpty(), 5 * 1000);
+                () -> pendingCallbacks(activityCallbacks).isEmpty());
 
         if (!waitResult) {
             fail("Expected lifecycle states not achieved: " + pendingCallbacks(activityCallbacks));
@@ -50,12 +49,12 @@ public class LifecycleTracker implements LifecycleLog.LifecycleTrackerCallback {
     }
 
     void waitAndAssertActivityCurrentState(Class<? extends Activity> activityClass,
-            ActivityCallback expectedState) {
+            String expectedState) {
         final boolean waitResult = waitForConditionWithTimeout(() -> {
-            List<ActivityCallback> activityLog = mLifecycleLog.getActivityLog(activityClass);
-            ActivityCallback currentState = activityLog.get(activityLog.size() - 1);
-            return currentState == expectedState;
-        }, 5 * 1000);
+            List<String> activityLog = mLifecycleLog.getActivityLog(activityClass);
+            String currentState = activityLog.get(activityLog.size() - 1);
+            return expectedState.equals(currentState);
+        });
 
         if (!waitResult) {
             fail("Lifecycle state did not settle with the expected current state of "
@@ -69,30 +68,29 @@ public class LifecycleTracker implements LifecycleLog.LifecycleTrackerCallback {
      * it is better to use this method instead of {@link #waitAndAssertActivityStates(Pair[])}.
      * Otherwise we might stop tracking too early.
      */
-    void waitForActivityTransitions(Class<? extends Activity> activityClass,
-            List<ActivityCallback> expectedTransitions) {
+    public void waitForActivityTransitions(Class<? extends Activity> activityClass,
+            List<String> expectedTransitions) {
         waitForConditionWithTimeout(
-                () -> mLifecycleLog.getActivityLog(activityClass).equals(expectedTransitions),
-                5 * 1000);
+                () -> mLifecycleLog.getActivityLog(activityClass).equals(expectedTransitions));
     }
 
     @Override
-    synchronized public void onActivityLifecycleChanged() {
+    public synchronized void onActivityLifecycleChanged() {
         notify();
     }
 
     /** Get a list of activity states that were not reached yet. */
-    private List<Pair<Class<? extends Activity>, ActivityCallback>> pendingCallbacks(
-            Pair<Class<? extends Activity>, ActivityCallback>[] activityCallbacks) {
-        final List<Pair<Class<? extends Activity>, ActivityCallback>> notReachedActivityCallbacks =
+    private List<Pair<Class<? extends Activity>, String>> pendingCallbacks(
+            Pair<Class<? extends Activity>, String>[] activityCallbacks) {
+        final List<Pair<Class<? extends Activity>, String>> notReachedActivityCallbacks =
                 new ArrayList<>();
 
-        for (Pair<Class<? extends Activity>, ActivityCallback> callbackPair : activityCallbacks) {
+        for (Pair<Class<? extends Activity>, String> callbackPair : activityCallbacks) {
             final Class<? extends Activity> activityClass = callbackPair.first;
-            final List<ActivityCallback> transitionList =
+            final List<String> transitionList =
                     mLifecycleLog.getActivityLog(activityClass);
             if (transitionList.isEmpty()
-                    || transitionList.get(transitionList.size() - 1) != callbackPair.second) {
+                    || !transitionList.get(transitionList.size() - 1).equals(callbackPair.second)) {
                 // The activity either hasn't got any state transitions yet or the current state is
                 // not the one we expect.
                 notReachedActivityCallbacks.add(callbackPair);
@@ -101,8 +99,12 @@ public class LifecycleTracker implements LifecycleLog.LifecycleTrackerCallback {
         return notReachedActivityCallbacks;
     }
 
+    public boolean waitForConditionWithTimeout(BooleanSupplier waitCondition) {
+        return waitForConditionWithTimeout(waitCondition, TIMEOUT);
+    }
+
     /** Blocking call to wait for a condition to become true with max timeout. */
-    synchronized private boolean waitForConditionWithTimeout(BooleanSupplier waitCondition,
+    private synchronized boolean waitForConditionWithTimeout(BooleanSupplier waitCondition,
             long timeoutMs) {
         final long timeout = System.currentTimeMillis() + timeoutMs;
         while (!waitCondition.getAsBoolean()) {

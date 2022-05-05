@@ -35,6 +35,8 @@ import android.os.SystemClock;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.modules.utils.build.SdkLevel;
+
 import com.google.common.annotations.VisibleForTesting;
 
 import java.io.IOException;
@@ -83,9 +85,14 @@ public class InstallUtils {
         Context context = InstrumentationRegistry.getTargetContext();
         PackageManager pm = context.getPackageManager();
         try {
-            PackageInfo info = pm.getPackageInfo(packageName,
-                    PackageManager.PackageInfoFlags.of(PackageManager.MATCH_APEX));
-            return info.getLongVersionCode();
+            if (SdkLevel.isAtLeastT()) {
+                PackageInfo info = pm.getPackageInfo(packageName,
+                        PackageManager.PackageInfoFlags.of(PackageManager.MATCH_APEX));
+                return info.getLongVersionCode();
+            } else {
+                PackageInfo info = pm.getPackageInfo(packageName, PackageManager.MATCH_APEX);
+                return info.getLongVersionCode();
+            }
         } catch (PackageManager.NameNotFoundException e) {
             return -1;
         }
@@ -98,8 +105,12 @@ public class InstallUtils {
         Context context = InstrumentationRegistry.getTargetContext();
         PackageManager pm = context.getPackageManager();
         try {
-            return pm.getPackageInfo(packageName,
-                    PackageManager.PackageInfoFlags.of(PackageManager.MATCH_APEX));
+            if (SdkLevel.isAtLeastT()) {
+                return pm.getPackageInfo(packageName,
+                        PackageManager.PackageInfoFlags.of(PackageManager.MATCH_APEX));
+            } else {
+                return pm.getPackageInfo(packageName, PackageManager.MATCH_APEX);
+            }
         } catch (PackageManager.NameNotFoundException e) {
             return null;
         }

@@ -884,7 +884,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
-    @Ignore("b/204508654")
+    @Ignore("b/230738884")
     public void testSetUserControlDisabledPackages_multiUser_reboot_verifyPackageNotStopped()
             throws Exception {
         assumeCanCreateAdditionalUsers(1);
