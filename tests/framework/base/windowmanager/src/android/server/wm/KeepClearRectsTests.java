@@ -314,10 +314,7 @@ public class KeepClearRectsTests extends WindowManagerTestBase {
 
     @Test
     public void testFocusedViewDeclaredAsKeepClearArea() throws Exception {
-        int preferKeepClearForFocusDelay = ViewConfiguration.get(
-                mContext).getPreferKeepClearForFocusDelay();
-
-        assumeTrue(preferKeepClearForFocusDelay >= 0);
+        assumeTrue(ViewConfiguration.get(mContext).isPreferKeepClearForFocusEnabled());
 
         mTestSession.launchTestActivityOnDisplaySync(TestActivity.class, DEFAULT_DISPLAY);
         final TestActivity activity = mTestSession.getActivity();
