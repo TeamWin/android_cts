@@ -1954,8 +1954,13 @@ public class ActivityManagerTest {
 
     @Test
     public void testGetUidProcessState_checkAccess() throws Exception {
-        PermissionUtils.grantPermission(
-                STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
+        boolean hasPermissionGrantChanged = false;
+        if (!PermissionUtils.isPermissionGranted(STUB_PACKAGE_NAME,
+                android.Manifest.permission.PACKAGE_USAGE_STATS)) {
+            PermissionUtils.grantPermission(
+                    STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
+            hasPermissionGrantChanged = true;
+        }
         int newUserId = UserHandle.USER_NULL;
         try {
             // Verify that calling the API doesn't trigger any exceptions.
@@ -1979,15 +1984,22 @@ public class ActivityManagerTest {
             if (newUserId != UserHandle.USER_NULL) {
                 removeUser(newUserId);
             }
-            PermissionUtils.revokePermission(
-                    STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
+            if (hasPermissionGrantChanged) {
+                PermissionUtils.revokePermission(
+                        STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
+            }
         }
     }
 
     @Test
     public void testGetUidProcessCapabilities_checkAccess() throws Exception {
-        PermissionUtils.grantPermission(
-                STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
+        boolean hasPermissionGrantChanged = false;
+        if (!PermissionUtils.isPermissionGranted(STUB_PACKAGE_NAME,
+                android.Manifest.permission.PACKAGE_USAGE_STATS)) {
+            PermissionUtils.grantPermission(
+                    STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
+            hasPermissionGrantChanged = true;
+        }
         int newUserId = UserHandle.USER_NULL;
         try {
             // Verify that calling the API doesn't trigger any exceptions.
@@ -2011,8 +2023,10 @@ public class ActivityManagerTest {
             if (newUserId != UserHandle.USER_NULL) {
                 removeUser(newUserId);
             }
-            PermissionUtils.revokePermission(
-                    STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
+            if (hasPermissionGrantChanged) {
+                PermissionUtils.revokePermission(
+                        STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
+            }
         }
     }
 
