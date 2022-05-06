@@ -1405,6 +1405,13 @@ public class MockImeSession implements AutoCloseable {
     }
 
     @NonNull
+    public ImeCommand callSetEnableOnBackInvokedCallback(Boolean isEnabled) {
+        final Bundle params = new Bundle();
+        params.putBoolean("isEnabled", isEnabled);
+        return callCommandInternal("setEnableOnBackInvokedCallback", params);
+    }
+
+    @NonNull
     public ImeCommand callGetDisplayId() {
         final Bundle params = new Bundle();
         return callCommandInternal("getDisplayId", params);
