@@ -44,12 +44,11 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
-import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -69,14 +68,11 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
     private static final String GRANTED_PERMISSION_INTERACT_ACROSS_USERS =
             "android.permission.INTERACT_ACROSS_USERS";
     private static final String PERMISSION_REMOVE_TASKS = "android.permission.REMOVE_TASKS";
-    private static final String PERMISSION_GET_TASKS = "android.permission.GET_TASKS";
     private static final String PERMISSION_MANAGE_ACTIVITY_TASKS =
             "android.permission.MANAGE_ACTIVITY_TASKS";
 
     private static final String SIMPLE_APP_PACKAGE_NAME = "android.car.cts.builtin.apps.simple";
-    private static final String SIMPLE_ACTIVITY_NAME = "SimpleActivity";
-    private static final String START_SIMPLE_ACTIVITY_COMMAND = "am start -W -n "
-            + SIMPLE_APP_PACKAGE_NAME + "/." + SIMPLE_ACTIVITY_NAME;
+    private static final String SIMPLE_ACTIVITY_NAME = SIMPLE_APP_PACKAGE_NAME + ".SimpleActivity";
 
     private static final int OWNING_UID = UserHandle.ALL.getIdentifier();
     private static final int MAX_NUM_TASKS = 1_000;
@@ -99,6 +95,13 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
 
     private final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
     private final Context mContext = mInstrumentation.getContext();
+
+    @Before
+    public void setUp() throws Exception {
+        // Home was launched in ActivityManagerTestBase#setUp, wait until it is stable,
+        // in order not to mix the event of its TaskView Activity with the TestActivity.
+        mWmState.waitForHomeActivityVisible();
+    }
 
     @Test
     public void testCheckComponentPermission() throws Exception {
@@ -183,20 +186,18 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
     public void testProcessObserverCallback() throws Exception {
         // setup
         ProcessObserverCallbackTestImpl callbackImpl = new ProcessObserverCallbackTestImpl();
-        launchSimpleActivity();
 
         // execute
         try {
             mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
-                        PERMISSION_SET_ACTIVITY_WATCHER);
+                    PERMISSION_SET_ACTIVITY_WATCHER);  // for registerProcessObserverCallback
 
             ActivityManagerHelper.registerProcessObserverCallback(callbackImpl);
 
-            ArrayList<Integer> appTasks = getAppTasks(SIMPLE_APP_PACKAGE_NAME);
-            appTasks.forEach((taskId) -> ActivityManagerHelper.removeTask(taskId));
+            launchSimpleActivity();
 
             // assert
-            assertThat(callbackImpl.isProcessDiedObserved()).isTrue();
+            assertThat(callbackImpl.waitForForegroundActivitiesChanged()).isTrue();
         } finally {
             // teardown
             ActivityManagerHelper.unregisterProcessObserverCallback(callbackImpl);
@@ -249,45 +250,27 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
     private static final class ProcessObserverCallbackTestImpl extends ProcessObserverCallback {
         private final CountDownLatch mLatch = new CountDownLatch(1);
 
-        private int mObservedPid = -1;
-        private int mObservedUid = -1;
-        private boolean mProcessDiedObserved;
-
+        // Use onForegroundActivitiesChanged(), because onProcessDied() can be called
+        // in very long time later even if the task was removed.
         @Override
-        public void onProcessDied(int pid, int uid) {
-            mProcessDiedObserved = true;
-            Log.d(TAG, "ProcessDied: pid " + pid + " uid " + uid);
+        public void onForegroundActivitiesChanged(int pid, int uid, boolean foregroundActivities) {
+            Log.d(TAG, "onForegroundActivitiesChanged: pid " + pid + " uid " + uid);
             mLatch.countDown();
         }
 
-        public boolean isProcessDiedObserved() throws Exception {
-            if (!mLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                throw new Exception("process died is not observed in " + TIMEOUT_MS + " ms)");
-            }
-            return mProcessDiedObserved;
+        public boolean waitForForegroundActivitiesChanged() throws Exception {
+            return mLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS);
         }
     }
 
     private void launchSimpleActivity() {
-        SystemUtil.runShellCommand(START_SIMPLE_ACTIVITY_COMMAND);
-    }
-
-    private ArrayList<Integer> getAppTasks(String pkgName) {
-        ActivityManager am = mContext.getSystemService(ActivityManager.class);
-
-        List<ActivityManager.RunningTaskInfo> runningTasks = am.getRunningTasks(MAX_NUM_TASKS);
-        ArrayList<Integer> appTasks = new ArrayList<>();
-        for (ActivityManager.RunningTaskInfo taskInfo : runningTasks) {
-            String taskPackageName = taskInfo.baseActivity.getPackageName();
-            int taskId = taskInfo.taskId;
-            Log.d(TAG, "tasks package name: " + taskPackageName);
-            if (taskPackageName.equals(pkgName)) {
-                Log.d(TAG, "getAppTask(): adding " + SIMPLE_APP_PACKAGE_NAME + " task " + taskId);
-                appTasks.add(taskId);
-            }
-        }
-
-        return appTasks;
+        ComponentName simpleActivity = new ComponentName(
+                SIMPLE_APP_PACKAGE_NAME, SIMPLE_ACTIVITY_NAME);
+        Intent intent = new Intent()
+                .setComponent(simpleActivity)
+                .addFlags(FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent, /* options = */ null);
+        waitAndAssertTopResumedActivity(simpleActivity, DEFAULT_DISPLAY, "Activity isn't resumed");
     }
 
     private <T> T launchTestActivity(Class<T> type) {
