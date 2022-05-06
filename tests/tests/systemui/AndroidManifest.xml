@@ -19,7 +19,7 @@
      package="android.systemui.cts"
      android:targetSandboxVersion="2">
 
-    <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="17" />
+    <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="32" />
 
     <uses-permission android:name="android.permission.INJECT_EVENTS"/>
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
