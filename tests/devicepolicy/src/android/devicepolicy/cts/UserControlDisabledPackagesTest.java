@@ -40,6 +40,7 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.UserControlDisabledPackages;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.TestApis;
@@ -175,15 +176,46 @@ public final class UserControlDisabledPackagesTest {
                         DPC_COMPONENT_NAME);
         String testAppPackageName = sTestApp.packageName();
 
-        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(DPC_COMPONENT_NAME,
-                Arrays.asList(testAppPackageName));
         try (TestAppInstance instance = sTestApp.install()) {
+            sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
+                    DPC_COMPONENT_NAME, Arrays.asList(testAppPackageName));
+
             instance.activities().any().start();
 
             sActivityManager.forceStopPackage(testAppPackageName);
 
             try {
                 assertPackageNotStopped(testAppPackageName);
+            } finally {
+                stopPackage(sTestApp.pkg());
+            }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
+                    DPC_COMPONENT_NAME,
+                    originalDisabledPackages);
+        }
+    }
+
+    @EnsureHasPermission(value = permission.FORCE_STOP_PACKAGES)
+    @PolicyDoesNotApplyTest(policy = UserControlDisabledPackages.class)
+    @Postsubmit(reason = "new test")
+    public void setUserControlDisabledPackages_launchActivity_verifyPackageStopped()
+            throws Exception {
+        List<String> originalDisabledPackages =
+                sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
+                        DPC_COMPONENT_NAME);
+        String testAppPackageName = sTestApp.packageName();
+
+        try (TestAppInstance instance = sTestApp.install()) {
+            sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
+                    DPC_COMPONENT_NAME, Arrays.asList(testAppPackageName));
+
+            instance.activities().any().start();
+
+            sActivityManager.forceStopPackage(testAppPackageName);
+
+            try {
+                assertPackageStopped(testAppPackageName);
             } finally {
                 stopPackage(sTestApp.pkg());
             }
@@ -201,9 +233,15 @@ public final class UserControlDisabledPackagesTest {
         pkg.forceStop();
     }
 
+    private void assertPackageStopped(String packageName)
+            throws Exception {
+        assertWithMessage("Package %s not stopped", packageName)
+                .that(isPackageStopped(packageName)).isTrue();
+    }
+
     private void assertPackageNotStopped(String packageName)
             throws Exception {
-        assertWithMessage("Package %s not stopped for", packageName)
+        assertWithMessage("Package %s stopped", packageName)
                 .that(isPackageStopped(packageName)).isFalse();
     }
 
