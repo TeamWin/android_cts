@@ -46,10 +46,6 @@ public class InstalledIncrementalPackageStatsTests extends PackageManagerStatsTe
         if (!Utils.hasIncrementalFeature(getDevice())) {
             return;
         }
-        // TODO(b/197784344): remove when the metrics supports multi-user
-        if (getDevice().isUserSecondary(getDevice().getCurrentUser())) {
-            return;
-        }
         ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.INSTALLED_INCREMENTAL_PACKAGE_FIELD_NUMBER);
         installPackageUsingIncremental(new String[]{TEST_INSTALL_APK});
