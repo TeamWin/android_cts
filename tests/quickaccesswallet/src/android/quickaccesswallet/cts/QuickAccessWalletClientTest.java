@@ -28,6 +28,7 @@ import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.quickaccesswallet.NoPermissionQuickAccessWalletService;
 import android.quickaccesswallet.QuickAccessWalletActivity;
@@ -69,6 +70,7 @@ import java.util.concurrent.TimeUnit;
  * Tests parceling of the {@link WalletCard}
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull
 public class QuickAccessWalletClientTest {
 
     private static final String SETTING_KEY = "lockscreen_show_wallet";
