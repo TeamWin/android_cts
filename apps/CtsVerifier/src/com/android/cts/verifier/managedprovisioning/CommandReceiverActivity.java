@@ -135,6 +135,7 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_SET_WIFI_SECURITY_LEVEL = "set-wifi-security-level";
     public static final String COMMAND_SET_SSID_ALLOWLIST = "set-ssid-allowlist";
     public static final String COMMAND_SET_SSID_DENYLIST = "set-ssid-denylist";
+    public static final String COMMAND_CHECK_NEW_USER_DISCLAIMER = "check-new-user-disclaimer";
 
     public static final String EXTRA_USER_RESTRICTION =
             "com.android.cts.verifier.managedprovisioning.extra.USER_RESTRICTION";

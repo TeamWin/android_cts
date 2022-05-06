@@ -128,12 +128,12 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         final ActivityOptions options = ActivityOptions.makeCustomAnimation(mContext,
                 R.anim.alpha, 0 /* exitResId */, 0 /* backgroundColor */,
                 new Handler(Looper.getMainLooper()), startedListener, finishedListener);
-        launcherActivity.startTransitionActivity(options);
+        launcherActivity.startActivity(options, TransitionActivity.class);
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         waitAndAssertTopResumedActivity(new ComponentName(mContext, TransitionActivity.class),
                 DEFAULT_DISPLAY, "Activity must be launched");
 
-        latch.await(3, TimeUnit.SECONDS);
+        latch.await(5, TimeUnit.SECONDS);
         final long totalTime = transitionEndTime.get() - transitionStartTime.get();
         assertTrue("Actual transition duration should be in the range "
                 + "<" + CUSTOM_ANIMATION_DURATION_RANGE.getLower() + ", "
@@ -163,6 +163,41 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         mContext.startActivity(intent, bundle);
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
+                "Activity must be launched");
+
+        latch.await(5, TimeUnit.SECONDS);
+        final long totalTime = transitionEndTime.get() - transitionStartTime.get();
+        assertTrue("Actual transition duration should be out of the range "
+                + "<" + CUSTOM_ANIMATION_DURATION_RANGE.getLower() + ", "
+                + CUSTOM_ANIMATION_DURATION_RANGE.getUpper() + "> ms, "
+                + "actual=" + totalTime, !CUSTOM_ANIMATION_DURATION_RANGE.contains(totalTime));
+    }
+
+    @Test
+    public void testTaskWindowAnimationOverrideDisabled() throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        AtomicLong transitionStartTime = new AtomicLong();
+        AtomicLong transitionEndTime = new AtomicLong();
+
+        final ActivityOptions.OnAnimationStartedListener startedListener = transitionStartTime::set;
+        final ActivityOptions.OnAnimationFinishedListener finishedListener = (t) -> {
+            transitionEndTime.set(t);
+            latch.countDown();
+        };
+
+        // Overriding task transit animation is disabled, so default wallpaper close animation
+        // is played.
+        final Bundle bundle = ActivityOptions.makeCustomAnimation(mContext,
+                R.anim.alpha, 0 /* exitResId */, 0 /* backgroundColor */,
+                new Handler(Looper.getMainLooper()), startedListener, finishedListener).toBundle();
+
+        final ComponentName customWindowAnimationActivity = new ComponentName(
+                mContext, CustomWindowAnimationActivity.class);
+        final Intent intent = new Intent().setComponent(customWindowAnimationActivity)
+                .addFlags(FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent, bundle);
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+        waitAndAssertTopResumedActivity(customWindowAnimationActivity, DEFAULT_DISPLAY,
                 "Activity must be launched");
 
         latch.await(5, TimeUnit.SECONDS);
@@ -388,7 +423,7 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         final LauncherActivity launcherActivity =
                 (LauncherActivity) instrumentation.startActivitySync(intent);
 
-        launcherActivity.startTransitionActivity(activityOptions, klass, extras);
+        launcherActivity.startActivity(activityOptions, klass, extras);
         SystemClock.sleep(1000);
         final Bitmap screenshot = mInstrumentation.getUiAutomation().takeScreenshot();
 
@@ -573,19 +608,15 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
             getWindow().setDecorFitsSystemWindows(false);
         }
 
-        public void startTransitionActivity(ActivityOptions activityOptions) {
-            startTransitionActivity(activityOptions, TransitionActivity.class);
+        public void startActivity(ActivityOptions activityOptions, Class<?> klass) {
+            startActivity(activityOptions, klass, new Bundle());
         }
 
-        public void startTransitionActivity(ActivityOptions activityOptions, Class<?> klass) {
-            startTransitionActivity(activityOptions, klass, new Bundle());
-        }
-
-        public void startTransitionActivity(ActivityOptions activityOptions, Class<?> klass,
+        public void startActivity(ActivityOptions activityOptions, Class<?> klass,
                 Bundle extras) {
             final Intent i = new Intent(this, klass);
             i.putExtras(extras);
-            startActivity(i, activityOptions.toBundle());
+            startActivity(i, activityOptions != null ? activityOptions.toBundle() : null);
         }
     }
 
@@ -655,4 +686,6 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
             overridePendingTransition(enterAnim, R.anim.alpha_0);
         }
     }
+
+    public static class CustomWindowAnimationActivity extends Activity { }
 }

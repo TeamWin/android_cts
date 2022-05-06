@@ -37,7 +37,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import static java.lang.Math.max;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -63,8 +63,6 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
 import com.android.compatibility.common.util.ProtoUtils;
-import com.android.compatibility.common.util.mainline.MainlineModule;
-import com.android.compatibility.common.util.mainline.ModuleDetector;
 import com.android.server.job.nano.JobPackageHistoryProto;
 import com.android.server.job.nano.JobSchedulerServiceDumpProto;
 import com.android.server.job.nano.JobSchedulerServiceDumpProto.RegisteredJob;
@@ -411,7 +409,9 @@ public class NotificationListenerCheckTest {
 
     @Before
     public void setup() throws Throwable {
-        assumeNotPlayManaged();
+        // Skip tests if safety center not allowed
+        assumeDeviceSupportsSafetyCenter();
+
         wakeUpAndDismissKeyguard();
         resetPermissionControllerBeforeEachTest();
 
@@ -439,11 +439,10 @@ public class NotificationListenerCheckTest {
     }
 
     /**
-     * Skip each test for play managed module
+     * Skip tests for if Safety Center not supported
      */
-    private void assumeNotPlayManaged() throws Exception {
-        assumeFalse(ModuleDetector.moduleIsPlayManaged(
-                sContext.getPackageManager(), MainlineModule.PERMISSION_CONTROLLER));
+    private void assumeDeviceSupportsSafetyCenter() {
+        assumeTrue(SafetyCenterUtils.deviceSupportsSafetyCenter(sContext));
     }
 
     private void wakeUpAndDismissKeyguard() {

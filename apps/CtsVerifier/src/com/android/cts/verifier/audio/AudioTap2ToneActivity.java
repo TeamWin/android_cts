@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.audio;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -30,6 +31,7 @@ import com.android.compatibility.common.util.ResultUnit;
 import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.audio.audiolib.AudioSystemFlags;
 import com.android.cts.verifier.audio.audiolib.CircularBufferFloat;
 import com.android.cts.verifier.audio.audiolib.StatUtils;
 import com.android.cts.verifier.audio.audiolib.TapLatencyAnalyser;
@@ -104,8 +106,17 @@ public class AudioTap2ToneActivity
     private TapLatencyAnalyser mTapLatencyAnalyser;
 
     // Stats for latency
-    // STRONGLY RECOMMENDED in CDD 5.6
-    private static final int MAX_TAP_2_TONE_LATENCY = 80;   // ms
+    private double mMaxRequiredLatency;
+
+    // REQUIRED CDD  5.6/H-1-1
+    private static final int MAX_TAP_2_TONE_LATENCY_BASIC = 500;  // ms
+    // Requirement for "R" and "S"
+    private static final int MAX_TAP_2_TONE_LATENCY_RS = 100;  // ms
+    // Requirement for "T"
+    private static final int MAX_TAP_2_TONE_LATENCY_T     = 80;   // ms
+    // Requirement for any builds declaring "ProAudio" and "LowLatency"
+    private static final int MAX_TAP_2_TONE_LATENCY_PRO     = 80;   // ms
+    private static final int MAX_TAP_2_TONE_LATENCY_LOW     = 80;   // ms
 
     // Test API (back-end) IDs
     private static final int NUM_TEST_APIS = 2;
@@ -113,8 +124,8 @@ public class AudioTap2ToneActivity
     private static final int TEST_API_JAVA = 1;
     private int mActiveTestAPI = TEST_API_NATIVE;
 
-    private int[] mNumMeasurements = new int[NUM_TEST_APIS];    // ms
-    private int[] mLatencySumSamples = new int[NUM_TEST_APIS];  // ms
+    private int[] mNumMeasurements = new int[NUM_TEST_APIS];
+    private int[] mLatencySumSamples = new int[NUM_TEST_APIS];
     private double[] mLatencyMin = new double[NUM_TEST_APIS];   // ms
     private double[] mLatencyMax = new double[NUM_TEST_APIS];   // ms
     private double[] mLatencyAve = new double[NUM_TEST_APIS];   // ms
@@ -138,6 +149,48 @@ public class AudioTap2ToneActivity
         super.onCreate(savedInstanceState);
 
         // Setup UI
+        String yesString = getResources().getString(R.string.audio_general_yes);
+        String noString = getResources().getString(R.string.audio_general_no);
+
+        boolean claimsProAudio = AudioSystemFlags.claimsProAudio(this);
+        boolean claimsLowLatencyAudio = AudioSystemFlags.claimsLowLatencyAudio(this);
+
+        ((TextView) findViewById(R.id.audio_t2t_pro_audio))
+                .setText(claimsProAudio ? yesString : noString);
+        ((TextView) findViewById(R.id.audio_t2t_low_latency))
+                .setText(claimsLowLatencyAudio ? yesString : noString);
+
+        String mediaPerformanceClassString;
+        if (Build.VERSION.MEDIA_PERFORMANCE_CLASS == Build.VERSION_CODES.TIRAMISU) {
+            mediaPerformanceClassString = "T";
+        } else if (Build.VERSION.MEDIA_PERFORMANCE_CLASS == Build.VERSION_CODES.S)  {
+            mediaPerformanceClassString = "S";
+        } else if (Build.VERSION.MEDIA_PERFORMANCE_CLASS == Build.VERSION_CODES.R) {
+            mediaPerformanceClassString = "R";
+        } else {
+            mediaPerformanceClassString = "none";
+        }
+        ((TextView) findViewById(R.id.audio_t2t_mpc)).setText(mediaPerformanceClassString);
+
+        // Note: These tests need to be ordered such that we find the LOWEST allowable latency
+        mMaxRequiredLatency = MAX_TAP_2_TONE_LATENCY_BASIC;
+        if (claimsProAudio) {
+            mMaxRequiredLatency = Math.min(mMaxRequiredLatency, MAX_TAP_2_TONE_LATENCY_PRO);
+        }
+        if (claimsLowLatencyAudio) {
+            mMaxRequiredLatency = Math.min(mMaxRequiredLatency, MAX_TAP_2_TONE_LATENCY_LOW);
+        }
+        if (Build.VERSION.MEDIA_PERFORMANCE_CLASS == Build.VERSION_CODES.TIRAMISU) {
+            mMaxRequiredLatency = Math.min(mMaxRequiredLatency, MAX_TAP_2_TONE_LATENCY_T);
+        }
+        if (Build.VERSION.MEDIA_PERFORMANCE_CLASS == Build.VERSION_CODES.R
+                || Build.VERSION.MEDIA_PERFORMANCE_CLASS == Build.VERSION_CODES.S) {
+            mMaxRequiredLatency = Math.min(mMaxRequiredLatency, MAX_TAP_2_TONE_LATENCY_RS);
+        }
+
+        ((TextView) findViewById(R.id.audio_t2t_required_latency))
+                .setText("" + mMaxRequiredLatency + "ms");
+
         mStartBtn = (Button) findViewById(R.id.tap2tone_startBtn);
         mStartBtn.setOnClickListener(this);
         mStopBtn = (Button) findViewById(R.id.tap2tone_stopBtn);
@@ -237,7 +290,7 @@ public class AudioTap2ToneActivity
 
     private void clearResults() {
         resetStats();
-        mSpecView.setText(getResources().getString(R.string.audio_tap2tone_spec));
+        mSpecView.setText("");
         mResultsView.setText("");
         mStatsView.setText("");
     }
@@ -248,21 +301,24 @@ public class AudioTap2ToneActivity
     }
 
     private void calculateTestPass() {
-        // 80ms is currently STRONGLY RECOMMENDED, so pass the test as long as they have run it.
         boolean testCompleted = mTestPhase >= NUM_TEST_PHASES;
-        boolean pass = mLatencyAve[mActiveTestAPI] != 0
-                && mLatencyAve[mActiveTestAPI] <= MAX_TAP_2_TONE_LATENCY;
-
-        if (testCompleted) {
-            if (pass) {
-                mSpecView.setText("Ave: " + mLatencyAve[mActiveTestAPI] + " ms <= "
-                        + MAX_TAP_2_TONE_LATENCY + " ms -- PASS");
-            } else {
-                mSpecView.setText("Ave: " + mLatencyAve[mActiveTestAPI] + " ms > "
-                        + MAX_TAP_2_TONE_LATENCY + " ms -- DOES NOT MEET STRONGLY RECOMMENDED");
-            }
+        if (!testCompleted) {
+            mSpecView.setText(getResources().getString(R.string.audio_general_testnotcompleted));
+            getPassButton().setEnabled(false);
+            return;
         }
-        getPassButton().setEnabled(testCompleted);
+
+        double averageLatency = mLatencyAve[mActiveTestAPI];
+        boolean pass = averageLatency != 0 && averageLatency <= mMaxRequiredLatency;
+
+        if (pass) {
+            mSpecView.setText("Average: " + averageLatency + " ms <= "
+                    + mMaxRequiredLatency + " ms -- PASS");
+        } else {
+            mSpecView.setText("Average: " + averageLatency + " ms > "
+                    + mMaxRequiredLatency + " ms -- FAIL");
+        }
+        getPassButton().setEnabled(pass);
     }
 
     private void recordTestStatus() {

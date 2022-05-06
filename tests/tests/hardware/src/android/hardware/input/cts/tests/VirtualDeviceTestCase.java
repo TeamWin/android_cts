@@ -16,8 +16,6 @@
 
 package android.hardware.input.cts.tests;
 
-import static android.content.pm.PackageManager.FEATURE_COMPANION_DEVICE_SETUP;
-
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
@@ -35,6 +33,7 @@ import android.hardware.input.InputManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Process;
 import android.os.SystemClock;
 import android.view.MotionEvent;
 import android.view.Surface;
@@ -165,9 +164,10 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
             if (mVirtualDevice != null) {
                 mVirtualDevice.close();
             }
-            InstrumentationRegistry.getTargetContext().getSystemService(InputManager.class)
-                    .unregisterInputDeviceListener(mInputDeviceListener);
-            disassociateCompanionDevice();
+            final Context context = InstrumentationRegistry.getTargetContext();
+            context.getSystemService(InputManager.class).unregisterInputDeviceListener(
+                    mInputDeviceListener);
+            disassociateCompanionDevice(context.getPackageName());
         }
     }
 
@@ -181,13 +181,14 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
     private void associateCompanionDevice(String packageName) {
         // Associate this package for user 0 with a zeroed-out MAC address (not used in this test)
         SystemUtil.runShellCommand(
-                String.format("cmd companiondevice associate 0 %s 00:00:00:00:00:00", packageName));
+                String.format("cmd companiondevice associate %d %s 00:00:00:00:00:00",
+                        Process.myUserHandle().getIdentifier(), packageName));
     }
 
-    private void disassociateCompanionDevice() {
-        SystemUtil.runShellCommand("cmd companiondevice disassociate 0 "
-                + InstrumentationRegistry.getTargetContext().getPackageName()
-                + " 00:00:00:00:00:00");
+    private void disassociateCompanionDevice(String packageName) {
+        SystemUtil.runShellCommand(
+                String.format("cmd companiondevice disassociate %d %s 00:00:00:00:00:00",
+                        Process.myUserHandle().getIdentifier(), packageName));
     }
 
     private void tapActivityToFocus() {

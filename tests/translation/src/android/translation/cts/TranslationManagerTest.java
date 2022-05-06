@@ -245,11 +245,6 @@ public class TranslationManagerTest {
 
         translator.destroy();
         assertThat(translator.isDestroyed()).isTrue();
-        try {
-            mServiceWatcher.waitOnDisconnected();
-        } catch (InterruptedException e) {
-            Log.w(TAG, "Exception waiting for onDisconnected");
-        }
 
         // Wait for translation to finish
         translationLatch.await();
@@ -326,11 +321,6 @@ public class TranslationManagerTest {
 
         translator.destroy();
         assertThat(translator.isDestroyed()).isTrue();
-        try {
-            mServiceWatcher.waitOnDisconnected();
-        } catch (InterruptedException e) {
-            Log.w(TAG, "Exception waiting for onDisconnected");
-        }
 
         // Wait for translation to finish
         translationLatch.await();
@@ -415,11 +405,6 @@ public class TranslationManagerTest {
 
         translator.destroy();
         assertThat(translator.isDestroyed()).isTrue();
-        try {
-            mServiceWatcher.waitOnDisconnected();
-        } catch (InterruptedException e) {
-            Log.w(TAG, "Exception waiting for onDisconnected");
-        }
     }
 
     @Test

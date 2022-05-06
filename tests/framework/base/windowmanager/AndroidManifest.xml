@@ -450,6 +450,10 @@
             android:colorMode="wideColorGamut"
             android:fitsSystemWindows="true" />
 
+        <activity android:name="android.server.wm.ActivityTransitionTests$CustomWindowAnimationActivity"
+            android:theme="@style/window_task_animation"
+            android:exported="true"/>
+
         <activity android:name="android.server.wm.WindowUntrustedTouchTest$TestActivity"
                   android:exported="true"
                   android:configChanges="screenSize|screenLayout|orientation"

@@ -18,6 +18,7 @@ package android.permission.cts
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.Resources
 import android.os.Build
 import android.provider.DeviceConfig
 import android.support.test.uiautomator.By
@@ -28,6 +29,13 @@ import com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject
 object SafetyCenterUtils {
     /** Name of the flag that determines whether SafetyCenter is enabled.  */
     const val PROPERTY_SAFETY_CENTER_ENABLED = "safety_center_is_enabled"
+
+    /** Returns whether the device supports Safety Center. */
+    @JvmStatic
+    fun deviceSupportsSafetyCenter(context: Context): Boolean {
+        return context.resources.getBoolean(
+            Resources.getSystem().getIdentifier("config_enableSafetyCenter", "bool", "android"))
+    }
 
     /**
      * Enabled or disable Safety Center

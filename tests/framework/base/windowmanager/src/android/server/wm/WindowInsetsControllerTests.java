@@ -62,6 +62,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -77,7 +78,6 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.PollingCheck;
-import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
@@ -844,8 +844,10 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     }
 
     private void sendPointerSync(MotionEvent event) {
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> getInstrumentation().sendPointerSync(event));
+        event.setSource(event.getSource() | InputDevice.SOURCE_CLASS_POINTER);
+        // Use UiAutomation to inject into TestActivity because it is started and owned by the
+        // Shell, which has a different uid than this instrumentation.
+        getInstrumentation().getUiAutomation().injectInputEvent(event, true);
     }
 
     private static class AnimationCallback extends WindowInsetsAnimation.Callback {

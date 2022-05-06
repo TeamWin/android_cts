@@ -25,6 +25,7 @@ android_test {
     test_suites: ["general-tests", "mts-mediaprovider", "cts"],
     sdk_version: "core_current",
     min_sdk_version: "30",
+    target_sdk_version: "33",
     libs: [
             "android.test.base",
             "android.test.runner",

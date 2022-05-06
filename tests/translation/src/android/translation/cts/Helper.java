@@ -67,6 +67,8 @@ public final class Helper {
 
     public static final String CUSTOM_TRANSLATION_ID_MY_TAG = "myTag";
     public static final String LOCAL_TEST_FILES_DIR = "/sdcard/CtsTranslationTestCases";
+    public static final int TEMP_SERVICE_DURATION_MS = 30_000;
+
     private static final String LOG_TAG = "log.tag.UiTranslation";
 
     /**
@@ -77,7 +79,8 @@ public final class Helper {
     public static void setTemporaryTranslationService(String service) {
         Log.d(TAG, "Setting translation service to " + service);
         final int userId = UserHandle.myUserId();
-        runShellCommand("cmd translation set temporary-service %d %s 12000", userId, service);
+        runShellCommand("cmd translation set temporary-service %d %s %d", userId, service,
+                TEMP_SERVICE_DURATION_MS);
     }
 
     /**
@@ -97,7 +100,8 @@ public final class Helper {
     public static void setTemporaryContentCaptureService(String service) {
         Log.d(TAG, "Setting content capture service to " + service);
         final int userId = UserHandle.myUserId();
-        runShellCommand("cmd content_capture set temporary-service %d %s 12000", userId, service);
+        runShellCommand("cmd content_capture set temporary-service %d %s %d", userId, service,
+                TEMP_SERVICE_DURATION_MS);
     }
 
     /**
