@@ -23,7 +23,11 @@ import android.hardware.radio.messaging.IRadioMessaging;
 import android.hardware.radio.messaging.IRadioMessagingIndication;
 import android.hardware.radio.messaging.IRadioMessagingResponse;
 import android.os.RemoteException;
+import android.support.annotation.GuardedBy;
+import android.util.ArraySet;
 import android.util.Log;
+
+import java.util.Set;
 
 public class IRadioMessagingImpl extends IRadioMessaging.Stub {
     private static final String TAG = "MRMSG";
@@ -31,6 +35,10 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
     private final MockModemService mService;
     private IRadioMessagingResponse mRadioMessagingResponse;
     private IRadioMessagingIndication mRadioMessagingIndication;
+    @GuardedBy("mGsmBroadcastConfigSet")
+    private final Set<Integer> mGsmBroadcastConfigSet = new ArraySet<Integer>();
+    @GuardedBy("mCdmaBroadcastConfigSet")
+    private final Set<Integer> mCdmaBroadcastConfigSet = new ArraySet<Integer>();
 
     public IRadioMessagingImpl(MockModemService service) {
         Log.d(TAG, "Instantiated");
@@ -244,7 +252,20 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
             int serial, android.hardware.radio.messaging.CdmaBroadcastSmsConfigInfo[] configInfo) {
         Log.d(TAG, "setCdmaBroadcastConfig");
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        int error = RadioError.NONE;
+        if (configInfo == null || configInfo.length == 0) {
+            error = RadioError.INVALID_ARGUMENTS;
+        } else {
+            synchronized (mCdmaBroadcastConfigSet) {
+                mCdmaBroadcastConfigSet.clear();
+                for (int i = 0; i < configInfo.length; i++) {
+                    Log.d(TAG, "configInfo serviceCategory"
+                            + configInfo[i].serviceCategory);
+                    mCdmaBroadcastConfigSet.add(configInfo[i].serviceCategory);
+                }
+            }
+        }
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, error);
         try {
             mRadioMessagingResponse.setCdmaBroadcastConfigResponse(rsp);
         } catch (RemoteException ex) {
@@ -269,7 +290,27 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
             int serial, android.hardware.radio.messaging.GsmBroadcastSmsConfigInfo[] configInfo) {
         Log.d(TAG, "setGsmBroadcastConfig");
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        int error = RadioError.NONE;
+        if (configInfo == null || configInfo.length == 0) {
+            error = RadioError.INVALID_ARGUMENTS;
+        } else {
+            synchronized (mGsmBroadcastConfigSet) {
+                mGsmBroadcastConfigSet.clear();
+                for (int i = 0; i < configInfo.length; i++) {
+                    int startId = configInfo[i].fromServiceId;
+                    int endId = configInfo[i].toServiceId;
+                    boolean selected  = configInfo[i].selected;
+                    Log.d(TAG, "configInfo from: " + startId + ", to: " + endId
+                            + ", selected: " + selected);
+                    if (selected) {
+                        for (int j = startId; j <= endId; j++) {
+                            mGsmBroadcastConfigSet.add(j);
+                        }
+                    }
+                }
+            }
+        }
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, error);
         try {
             mRadioMessagingResponse.setGsmBroadcastConfigResponse(rsp);
         } catch (RemoteException ex) {
@@ -424,5 +465,19 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
     @Override
     public int getInterfaceVersion() {
         return IRadioMessaging.VERSION;
+    }
+
+    public Set<Integer> getGsmBroadcastConfigSet() {
+        synchronized (mGsmBroadcastConfigSet) {
+            Log.d(TAG, "getBroadcastConfigSet. " + mGsmBroadcastConfigSet);
+            return mGsmBroadcastConfigSet;
+        }
+    }
+
+    public Set<Integer> getCdmaBroadcastConfigSet() {
+        synchronized (mCdmaBroadcastConfigSet) {
+            Log.d(TAG, "getBroadcastConfigSet. " + mCdmaBroadcastConfigSet);
+            return mCdmaBroadcastConfigSet;
+        }
     }
 }
