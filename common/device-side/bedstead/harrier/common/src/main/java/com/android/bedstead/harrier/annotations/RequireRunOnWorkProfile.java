@@ -58,6 +58,9 @@ public @interface RequireRunOnWorkProfile {
      */
     boolean dpcIsPrimary() default false;
 
+    /** Whether the work profile device will be in COPE mode. */
+    boolean isOrganizationOwned() default false;
+
     /**
      * Affiliation ids to be set for the profile owner.
      */

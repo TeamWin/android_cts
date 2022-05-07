@@ -697,6 +697,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         final String SECURE_SETTING_CATEGORY = "secure";
         final String GLOBAL_SETTING_CATEGORY = "global";
         final File apk = mBuildHelper.getTestFile(TEST_APP_APK);
+
+        // Needed to access dpm.getPolicyExemptApps()
+        allowTestApiAccess(DEVICE_ADMIN_PKG);
+
         try {
             // Install the test and prepare the test apk.
             installAppAsUser(PACKAGE_INSTALLER_APK, mUserId);

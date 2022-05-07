@@ -1368,6 +1368,26 @@ public class UiBot {
         selectDataset(picker, dataset);
     }
 
+    /**
+     * Touch outside the fill dialog.
+     */
+    public void touchOutsideDialog() throws Exception {
+        Log.v(TAG, "touchOutsideDialog()");
+        final UiObject2 picker = findFillDialogPicker();
+        mDevice.click(1, picker.getVisibleBounds().top - 1);
+    }
+
+    /**
+     * click dismiss button the fill dialog.
+     */
+    public void clickFillDialogDismiss() throws Exception {
+        Log.v(TAG, "dismissedFillDialog()");
+        final UiObject2 picker = findFillDialogPicker();
+        final UiObject2 noButton =
+                picker.findObject(By.res("android", RESOURCE_ID_FILL_DIALOG_BUTTON_NO));
+        noButton.click();
+    }
+
     private UiObject2 findFillDialogPicker() throws Exception {
         return waitForObject(FILL_DIALOG_SELECTOR, UI_DATASET_PICKER_TIMEOUT);
     }

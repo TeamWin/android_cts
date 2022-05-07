@@ -199,3 +199,7 @@ fun Instrumentation.runShellCommand(cmd: String): String {
 
 fun Instrumentation.setSystemProp(name: String, value: String) =
         runShellCommand("setprop $name $value")
+
+fun MacAddress.toUpperCaseString() = toString().toUpperCase()
+
+fun sleepFor(duration: Duration) = sleep(duration.inWholeMilliseconds)

@@ -18,8 +18,10 @@ package android.sensorprivacy.cts
 
 import android.app.AppOpsManager
 import android.app.KeyguardManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Resources.NotFoundException
 import android.hardware.SensorPrivacyManager
 import android.hardware.SensorPrivacyManager.OnSensorPrivacyChangedListener
 import android.hardware.SensorPrivacyManager.TOGGLE_TYPE_HARDWARE
@@ -315,6 +317,18 @@ abstract class SensorPrivacyBaseTest(
     fun testCantChangeWhenLocked() {
         Assume.assumeTrue(packageManager
                 .hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN))
+
+//      TODO use actual test api when it can be added
+//      Assume.assumeTrue(callWithShellPermissionIdentity { spm.requiresAuthentication() })
+        val packageContext: Context = context.createPackageContext("android", 0)
+        try {
+            Assume.assumeTrue(packageContext.resources.getBoolean(packageContext.resources
+                    .getIdentifier("config_sensorPrivacyRequiresAuthentication", "bool", "android"))
+            )
+        } catch (e: NotFoundException) {
+        // Since by default we want authentication to be required we
+        // continue the test if the OEM has removed this resource.
+        }
 
         setSensor(false)
         assertFalse(isSensorPrivacyEnabled())

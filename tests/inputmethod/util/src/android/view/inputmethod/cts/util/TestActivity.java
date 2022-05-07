@@ -31,6 +31,8 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
@@ -56,6 +58,10 @@ public class TestActivity extends Activity {
     private long mOnBackPressedCallCount;
 
     private TextView mOverlayView;
+    private OnBackInvokedCallback mIgnoreBackKeyCallback = () -> {
+        // Ignore back.
+    };
+    private Boolean mIgnoreBackKeyCallbackRegistered = false;
 
     /**
      * Controls how {@link #onBackPressed()} behaves.
@@ -69,6 +75,19 @@ public class TestActivity extends Activity {
     @AnyThread
     public void setIgnoreBackKey(boolean ignore) {
         mIgnoreBackKey.set(ignore);
+        if (ignore) {
+            if (!mIgnoreBackKeyCallbackRegistered) {
+                getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                        OnBackInvokedDispatcher.PRIORITY_DEFAULT, mIgnoreBackKeyCallback);
+                mIgnoreBackKeyCallbackRegistered = true;
+            }
+        } else {
+            if (mIgnoreBackKeyCallbackRegistered) {
+                getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(
+                        mIgnoreBackKeyCallback);
+                mIgnoreBackKeyCallbackRegistered = false;
+            }
+        }
     }
 
     @UiThread
@@ -101,6 +120,10 @@ public class TestActivity extends Activity {
             mOverlayView.getContext()
                     .getSystemService(WindowManager.class).removeView(mOverlayView);
             mOverlayView = null;
+        }
+        if (mIgnoreBackKeyCallbackRegistered) {
+            getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(mIgnoreBackKeyCallback);
+            mIgnoreBackKeyCallbackRegistered = false;
         }
     }
 

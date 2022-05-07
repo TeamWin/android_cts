@@ -117,6 +117,21 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     }
 
     @Test
+    public void testIsStylusHandwritingAvailable() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            imeSession.openEventStream();
+
+            launchTestActivity(getTestMarker());
+            assertTrue("Mock IME should return true for isStylusHandwritingAvailable() ",
+                    mContext.getSystemService(
+                            InputMethodManager.class).isStylusHandwritingAvailable());
+        }
+    }
+
+    @Test
     public void testHandwritingDoesNotStartWhenNoStylusDown() throws Exception {
         final InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
         try (MockImeSession imeSession = MockImeSession.create(

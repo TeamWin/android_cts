@@ -25,6 +25,7 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class MockModemManager {
@@ -285,5 +286,23 @@ public class MockModemManager {
 
         waitForTelephonyFrameworkDone(1);
         return result;
+    }
+
+    /**
+     * get GSM CellBroadcastConfig outputs from IRadioMessagingImpl
+     *
+     * @return Set of broadcast configs
+     */
+    public Set<Integer> getGsmBroadcastConfig() {
+        return mMockModemService.getIRadioMessaging().getGsmBroadcastConfigSet();
+    }
+
+    /**
+     * get CDMA CellBroadcastConfig outputs from IRadioMessagingImpl
+     *
+     * @return Set of broadcast configs
+     */
+    public Set<Integer> getCdmaBroadcastConfig() {
+        return mMockModemService.getIRadioMessaging().getCdmaBroadcastConfigSet();
     }
 }

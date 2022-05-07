@@ -23,6 +23,7 @@ android_library {
         ":cts-telephony-utils",
     ],
     libs: [
+        "android-support-annotations",
     ],
     static_libs: [
         "androidx.test.rules",

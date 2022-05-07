@@ -244,6 +244,76 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
         }
     }
 
+    private void verifyHideImeBackPressed(
+            boolean appRequestsLegacy, boolean imeRequestsLegacy) throws Exception {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        final InputMethodManager imm = InstrumentationRegistry.getInstrumentation()
+                .getTargetContext().getSystemService(InputMethodManager.class);
+
+        try (MockImeSession imeSession = MockImeSession.create(
+                instrumentation.getContext(),
+                instrumentation.getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+            final TestActivity testActivity = (TestActivity) editText.getContext();
+            if (appRequestsLegacy) {
+                testActivity.getApplicationInfo().setEnableOnBackInvokedCallback(true);
+                testActivity.setIgnoreBackKey(true);
+            }
+            if (imeRequestsLegacy) {
+                imeSession.callSetEnableOnBackInvokedCallback(true);
+            }
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectImeInvisible(TIMEOUT);
+
+            assertTrue("isActive() must return true if the View has IME focus",
+                    getOnMainSync(() -> imm.isActive(editText)));
+
+            // Test showSoftInput() flow
+            assertTrue("showSoftInput must success if the View has IME focus",
+                    getOnMainSync(() -> imm.showSoftInput(editText, 0)));
+
+            expectEvent(stream, showSoftInputMatcher(InputMethod.SHOW_EXPLICIT), TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                    View.VISIBLE, TIMEOUT);
+            expectImeVisible(TIMEOUT);
+
+            // Pressing back key, expect soft-keyboard will become invisible.
+            instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
+            expectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
+            expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
+            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                    View.GONE, TIMEOUT);
+            expectImeInvisible(TIMEOUT);
+        }
+    }
+
+    @Test
+    public void testHideImeAfterBackPressed_legacyAppLegacyIme() throws Exception {
+        verifyHideImeBackPressed(true /* appRequestsLegacy */, true /* imeRequestsLegacy */);
+    }
+
+    @Test
+    public void testHideImeAfterBackPressed_migratedAppLegacyIme() throws Exception {
+        verifyHideImeBackPressed(false /* appRequestsLegacy */, true /* imeRequestsLegacy */);
+    }
+
+    @Test
+    public void testHideImeAfterBackPressed_migratedAppMigratedIme() throws Exception {
+        verifyHideImeBackPressed(false /* appRequestsLegacy */, false /* imeRequestsLegacy */);
+    }
+
+    @Test
+    public void testHideImeAfterBackPressed_legacyAppMigratedIme() throws Exception {
+        verifyHideImeBackPressed(true /* appRequestsLegacy */, false /* imeRequestsLegacy */);
+    }
+
     @Test
     public void testShowHideSoftInputShouldBeIgnoredOnNonFocusedView() throws Exception {
         final InputMethodManager imm = InstrumentationRegistry.getInstrumentation()

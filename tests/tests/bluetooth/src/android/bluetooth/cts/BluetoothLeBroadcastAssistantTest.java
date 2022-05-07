@@ -17,6 +17,8 @@
 package android.bluetooth.cts;
 
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
+import static android.Manifest.permission.BLUETOOTH_PRIVILEGED;
+import static android.Manifest.permission.BLUETOOTH_SCAN;
 import static android.bluetooth.BluetoothStatusCodes.FEATURE_SUPPORTED;
 
 import static org.junit.Assert.assertEquals;
@@ -114,7 +116,7 @@ public class BluetoothLeBroadcastAssistantTest {
         }
         MockitoAnnotations.initMocks(this);
         mExecutor = mContext.getMainExecutor();
-        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT,BLUETOOTH_PRIVILEGED,BLUETOOTH_SCAN);
         mAdapter = TestUtils.getBluetoothAdapterOrDie();
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
 

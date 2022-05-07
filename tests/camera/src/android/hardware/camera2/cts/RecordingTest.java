@@ -1234,8 +1234,29 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
 
                         mOutMediaFileName = mDebugFileNameBase + "/test_cslowMo_video_" +
                             captureRate + "fps_" + id + "_" + size.toString() + ".mp4";
+
                         Log.v(TAG, "previewFrameRate:" + previewFrameRate);
-                        prepareRecording(size, previewFrameRate, captureRate);
+
+                        int cameraId = Integer.valueOf(mCamera.getId());
+                        int videoEncoder = MediaRecorder.VideoEncoder.H264;
+                        for (int profileId : mCamcorderProfileList) {
+                            if (CamcorderProfile.hasProfile(cameraId, profileId)) {
+                                CamcorderProfile profile =
+                                        CamcorderProfile.get(cameraId, profileId);
+
+                                if (profile.videoFrameHeight == size.getHeight() &&
+                                        profile.videoFrameWidth == size.getWidth() &&
+                                        profile.videoFrameRate == previewFrameRate) {
+                                    videoEncoder = profile.videoCodec;
+                                    // Since mCamcorderProfileList is a list representing different
+                                    // resolutions, we can break when a profile with the same
+                                    // dimensions as size is found
+                                    break;
+                                }
+                            }
+                        }
+
+                        prepareRecording(size, previewFrameRate, captureRate, videoEncoder);
 
                         SystemClock.sleep(PREVIEW_DURATION_MS);
 
@@ -1267,7 +1288,8 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                         stopCameraStreaming();
                     }
                 }
-
+            } catch (NumberFormatException e) {
+                fail("Cannot convert cameraId " + mCamera.getId() + " to int");
             } finally {
                 closeDevice();
                 releaseRecorder();
@@ -2177,6 +2199,17 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
     private void prepareRecording(Size sz, int videoFrameRate, int captureRate)
             throws Exception {
         // Prepare MediaRecorder.
+        prepareRecording(sz, videoFrameRate, captureRate, MediaRecorder.VideoEncoder.H264);
+    }
+
+    /**
+     * Configure MediaRecorder recording session with CamcorderProfile, prepare
+     * the recording surface. Use AAC for audio compression as required for
+     * android devices by android CDD.
+     */
+    private void prepareRecording(Size sz, int videoFrameRate, int captureRate,
+            int videoEncoder) throws Exception {
+        // Prepare MediaRecorder.
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
@@ -2185,7 +2218,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         mMediaRecorder.setVideoFrameRate(videoFrameRate);
         mMediaRecorder.setCaptureRate(captureRate);
         mMediaRecorder.setVideoSize(sz.getWidth(), sz.getHeight());
-        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+        mMediaRecorder.setVideoEncoder(videoEncoder);
         mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
         if (mPersistentSurface != null) {
             mMediaRecorder.setInputSurface(mPersistentSurface);

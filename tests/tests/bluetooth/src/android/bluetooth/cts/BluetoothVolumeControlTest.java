@@ -21,19 +21,16 @@ import static android.Manifest.permission.BLUETOOTH_PRIVILEGED;
 
 import static org.junit.Assert.assertThrows;
 
-import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothVolumeControl;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.BluetoothStatusCodes;
+import android.bluetooth.BluetoothVolumeControl;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.os.Build;
 import android.test.AndroidTestCase;
 import android.util.Log;
-
-import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 
@@ -96,6 +93,7 @@ public class BluetoothVolumeControlTest extends AndroidTestCase {
             boolean isVolumeControlEnabledInConfig =
                      TestUtils.isProfileEnabled(BluetoothProfile.VOLUME_CONTROL);
             if (isLeAudioSupportedInConfig) {
+                assertEquals(BluetoothStatusCodes.FEATURE_SUPPORTED, mAdapter.isLeAudioSupported());
                 /* If Le Audio is supported then Volume Control shall be supported */
                 assertTrue("Config must be true when profile is supported",
                         isVolumeControlEnabledInConfig);

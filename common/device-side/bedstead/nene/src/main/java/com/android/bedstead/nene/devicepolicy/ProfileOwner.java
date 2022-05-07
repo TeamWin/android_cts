@@ -84,8 +84,20 @@ public final class ProfileOwner extends DevicePolicyController {
         DevicePolicyManager devicePolicyManager =
                 TestApis.context().androidContextAsUser(mUser).getSystemService(
                         DevicePolicyManager.class);
-        devicePolicyManager.setProfileOwnerOnOrganizationOwnedDevice(mComponentName,
-                isOrganizationOwned);
+
+        UserReference user = TestApis.users().system();
+        boolean userSetupComplete = user.getSetupComplete();
+        try {
+            user.setSetupComplete(false);
+
+            try (PermissionContext p = TestApis.permissions().withPermission(
+                    MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
+                devicePolicyManager.setProfileOwnerOnOrganizationOwnedDevice(mComponentName,
+                        isOrganizationOwned);
+            }
+        } finally {
+            user.setSetupComplete(userSetupComplete);
+        }
     }
 
     @Override

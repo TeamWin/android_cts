@@ -422,6 +422,15 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     public void testPermissionPrompts() throws Exception {
     }
 
+
+    @Override
+    @LargeTest
+    @Test
+    @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't have UI")
+    public void testPackageInstallUserRestrictions() throws Exception {
+        super.testPackageInstallUserRestrictions();
+    }
+
     @Override
     @Test
     @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't launch activities")
