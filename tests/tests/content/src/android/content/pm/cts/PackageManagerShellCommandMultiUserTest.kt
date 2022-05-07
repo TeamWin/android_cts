@@ -74,6 +74,15 @@ class PackageManagerShellCommandMultiUserTest {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
 
         private var backgroundThread = HandlerThread("PackageManagerShellCommandMultiUserTest")
+
+        fun skipTheInstallType(installTypeString: String): Boolean {
+            if (installTypeString == "install-incremental" &&
+                !context.packageManager.hasSystemFeature(
+                    PackageManager.FEATURE_INCREMENTAL_DELIVERY)) {
+                return true
+            }
+            return false
+        }
     }
 
     private lateinit var primaryUser: UserReference
@@ -130,6 +139,9 @@ class PackageManagerShellCommandMultiUserTest {
             "install-incremental"
         ) installTypeString: String
     ) {
+        if (skipTheInstallType(installTypeString)) {
+            return
+        }
         val startTimeMillisForPrimaryUser = System.currentTimeMillis()
         installPackageAsUser(TEST_HW5, primaryUser, installTypeString)
         assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser))
@@ -205,6 +217,9 @@ class PackageManagerShellCommandMultiUserTest {
             "install-incremental"
         ) installTypeString: String
     ) {
+        if (skipTheInstallType(installTypeString)) {
+            return
+        }
         if (!backgroundThread.isAlive) {
             backgroundThread.start()
         }
@@ -264,6 +279,9 @@ class PackageManagerShellCommandMultiUserTest {
             "install-incremental"
         ) installTypeString: String
     ) {
+        if (skipTheInstallType(installTypeString)) {
+            return
+        }
         installPackageAsUser(TEST_HW5, primaryUser, installTypeString)
         assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser))
         assertFalse(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser))

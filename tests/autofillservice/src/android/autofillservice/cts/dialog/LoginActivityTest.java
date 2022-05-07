@@ -114,7 +114,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
         mUiBot.waitForIdleSync();
 
         // Verify IME is shown
-        assertMockImeStatus(activity.getRootWindowInsets(), true);
+        assertMockImeStatus(activity, true);
     }
 
     @Test
@@ -524,6 +524,93 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
 
         // Check the results.
         activity.assertAutoFilled();
+    }
+
+    @Test
+    public void testCancelFillDialog_showDropdown() throws Exception {
+        // Enable feature and test service
+        enableFillDialogFeature(sContext);
+        enableService();
+
+        // Set response with a dataset > fill dialog should have two buttons
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("Dropdown Presentation"))
+                        .setDialogPresentation(createPresentation("Dialog Presentation"))
+                        .build())
+                .setDialogHeader(createPresentation("Dialog Header"))
+                .setDialogTriggerIds(ID_PASSWORD);
+        sReplier.addResponse(builder.build());
+
+        // Start activity and autofill
+        LoginActivity activity = startLoginActivity();
+        mUiBot.waitForIdleSync();
+
+        sReplier.getNextFillRequest();
+        mUiBot.waitForIdleSync();
+
+        // Click on password field to trigger fill dialog
+        mUiBot.selectByRelativeIdFromUiDevice(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+
+        // Verify the fill dialog shown
+        mUiBot.assertFillDialogDatasets("Dialog Presentation");
+
+        // Touch outside to cancel the fill dialog, should back to dropdown UI
+        mUiBot.touchOutsideDialog();
+        mUiBot.waitForIdleSync();
+
+        mUiBot.assertDatasets("Dropdown Presentation");
+        assertMockImeStatus(activity, true);
+
+        // Set expected value, then select dataset
+        activity.expectAutoFill("dude", "sweet");
+        mUiBot.selectDataset("Dropdown Presentation");
+
+        // Check the results.
+        activity.assertAutoFilled();
+    }
+
+    @Test
+    public void testDismissedFillDialog_showIme() throws Exception {
+        // Enable feature and test service
+        enableFillDialogFeature(sContext);
+        enableService();
+
+        // Set response with a dataset
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("Dropdown Presentation"))
+                        .setDialogPresentation(createPresentation("Dialog Presentation"))
+                        .build())
+                .setDialogHeader(createPresentation("Dialog Header"))
+                .setDialogTriggerIds(ID_PASSWORD);
+        sReplier.addResponse(builder.build());
+
+        // Start activity and autofill
+        LoginActivity activity = startLoginActivity();
+        mUiBot.waitForIdleSync();
+
+        sReplier.getNextFillRequest();
+        mUiBot.waitForIdleSync();
+
+        // Click on password field to trigger fill dialog
+        mUiBot.selectByRelativeIdFromUiDevice(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+
+        // Verify the fill dialog shown
+        mUiBot.assertFillDialogDatasets("Dialog Presentation");
+
+        // Touch "No thanks" button to dismiss the fill dialog
+        mUiBot.clickFillDialogDismiss();
+        mUiBot.waitForIdleSync();
+
+        // Verify IME is shown
+        assertMockImeStatus(activity, true);
     }
 
     private FieldsNoPasswordActivity startNoPasswordActivity() throws Exception {
