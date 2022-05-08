@@ -398,6 +398,15 @@ public class LoginActivity extends AbstractAutoFillActivity {
     }
 
     /**
+     * Request to hide soft input
+     */
+    public void hideSoftInput() {
+        final InputMethodManager imm = (InputMethodManager) getSystemService(
+                Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(mUsernameEditText.getWindowToken(), 0);
+    }
+
+    /**
      * Holder for the expected auto-fill values.
      */
     private final class FillExpectation {
