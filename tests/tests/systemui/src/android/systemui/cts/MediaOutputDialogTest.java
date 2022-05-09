@@ -73,6 +73,9 @@ public class MediaOutputDialogTest {
         ResolveInfo resolveInfo = packageManager.resolveActivity(launcherIntent,
                 PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY));
         assumeFalse("Skipping test: can't get resolve info", resolveInfo == null);
+        assumeFalse("Skipping test: not supported on automotive yet",
+                packageManager.hasSystemFeature(
+                        PackageManager.FEATURE_AUTOMOTIVE));
         mLauncherPackage = resolveInfo.activityInfo.packageName;
     }
 
