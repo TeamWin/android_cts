@@ -17,6 +17,7 @@
 package android.mediav2.cts;
 
 import android.media.MediaCodec;
+import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.os.Build;
@@ -38,6 +39,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -50,6 +53,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
     private int mRange;
     private int mStandard;
     private int mTransferCurve;
+    private boolean mUseHighBitDepth;
     private MediaFormat mConfigFormat;
 
     private MediaMuxer mMuxer;
@@ -60,11 +64,12 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
     private static boolean sIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
 
     public EncoderColorAspectsTest(String encoderName, String mime, int width, int height,
-            int range, int standard, int transferCurve) {
+            int range, int standard, int transferCurve, boolean useHighBitDepth) {
         super(encoderName, mime, new int[]{64000}, new int[]{width}, new int[]{height});
         mRange = range;
         mStandard = standard;
         mTransferCurve = transferCurve;
+        mUseHighBitDepth = useHighBitDepth;
         mWidth = width;
         mHeight = height;
         setUpParams(1);
@@ -94,6 +99,29 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
         super.dequeueOutput(bufferIndex, info);
     }
 
+    private static void prepareArgsList(List<Object[]> exhaustiveArgsList,
+            List<String> stringArgsList, String[] mediaTypes, int[] ranges, int[] standards,
+            int[] transfers, boolean useHighBitDepth) {
+        // Assuming all combinations are supported by the standard which is true for AVC, HEVC, AV1,
+        // VP8 and VP9.
+        for (String mediaType : mediaTypes) {
+            for (int range : ranges) {
+                for (int standard : standards) {
+                    for (int transfer : transfers) {
+                        String currentObject =
+                                mediaType + "_" + range + "_" + standard + "_" + transfer;
+                        if (!stringArgsList.contains(currentObject)) {
+                            exhaustiveArgsList
+                                    .add(new Object[]{mediaType, 176, 144, range, standard,
+                                            transfer, useHighBitDepth});
+                            stringArgsList.add(currentObject);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     @Parameterized.Parameters(name = "{index}({0}_{1}_{4}_{5}_{6})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
@@ -111,25 +139,33 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                 UNSPECIFIED,
                 MediaFormat.COLOR_STANDARD_BT709,
                 MediaFormat.COLOR_STANDARD_BT601_PAL,
-                MediaFormat.COLOR_STANDARD_BT601_NTSC,
-                MediaFormat.COLOR_STANDARD_BT2020};
+                MediaFormat.COLOR_STANDARD_BT601_NTSC};
         int[] transfers = {-1,
                 UNSPECIFIED,
                 MediaFormat.COLOR_TRANSFER_LINEAR,
                 MediaFormat.COLOR_TRANSFER_SDR_VIDEO};
-        // TODO: COLOR_TRANSFER_ST2084, COLOR_TRANSFER_HLG are for 10 bit and above. Should these
-        //  be tested as well?
+
+        String[] mediaTypesHighBitDepth = {MediaFormat.MIMETYPE_VIDEO_AVC,
+                MediaFormat.MIMETYPE_VIDEO_HEVC,
+                MediaFormat.MIMETYPE_VIDEO_VP9,
+                MediaFormat.MIMETYPE_VIDEO_AV1};
+        int[] standardsHighBitDepth = {-1,
+                UNSPECIFIED,
+                MediaFormat.COLOR_STANDARD_BT2020};
+        int[] transfersHighBitDepth = {-1,
+                UNSPECIFIED,
+                MediaFormat.COLOR_TRANSFER_HLG,
+                MediaFormat.COLOR_TRANSFER_ST2084};
+
         List<Object[]> exhaustiveArgsList = new ArrayList<>();
-        // Assumes all combinations are supported by the standard
-        for (String mime : mimes) {
-            for (int range : ranges) {
-                for (int standard : standards) {
-                    for (int transfer : transfers) {
-                        exhaustiveArgsList
-                                .add(new Object[]{mime, 176, 144, range, standard, transfer});
-                    }
-                }
-            }
+        List<String> stringArgsList = new ArrayList<>();
+        prepareArgsList(exhaustiveArgsList, stringArgsList, mimes, ranges, standards, transfers,
+                false);
+        // P010 support was added in Android T, hence limit the following tests to Android T and
+        // above
+        if (IS_AT_LEAST_T) {
+            prepareArgsList(exhaustiveArgsList, stringArgsList, mediaTypesHighBitDepth, ranges,
+                    standardsHighBitDepth, transfersHighBitDepth, true);
         }
         return CodecTestBase
                 .prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
@@ -139,7 +175,14 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testColorAspects() throws IOException, InterruptedException {
         Assume.assumeTrue("Test introduced with Android 11", sIsAtLeastR);
-        setUpSource(mInputFile);
+        String inputTestFile = mInputFile;
+        if (mUseHighBitDepth) {
+            Assume.assumeTrue(hasSupportForColorFormat(mCodecName, mMime, COLOR_FormatYUVP010));
+            mConfigFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUVP010);
+            mBytesPerSample = 2;
+            inputTestFile = INPUT_VIDEO_FILE_HBD;
+        }
+        setUpSource(inputTestFile);
         mOutputBuff = new OutputManager();
         {
             mCodec = MediaCodec.createByCodecName(mCodecName);
@@ -156,10 +199,10 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
             if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP8) ||
                     mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP9)) {
                 muxerFormat = MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM;
-                tmpFile = File.createTempFile("tmp", ".webm");
+                tmpFile = File.createTempFile("tmp" + (mUseHighBitDepth ? "10bit" : ""), ".webm");
             } else {
                 muxerFormat = MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4;
-                tmpFile = File.createTempFile("tmp", ".mp4");
+                tmpFile = File.createTempFile("tmp" + (mUseHighBitDepth ? "10bit" : ""), ".mp4");
             }
             mMuxer = new MediaMuxer(tmpFile.getAbsolutePath(), muxerFormat);
             configureCodec(mConfigFormat, true, true, true);
@@ -185,19 +228,25 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
             mCodec.release();
 
             // verify if the muxed file contains color aspects as expected
-            CodecDecoderTestBase cdtb = new CodecDecoderTestBase(null, mMime, null);
+            MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+            String decoder = codecList.findDecoderForFormat(mConfigFormat);
+            assertNotNull("Device advertises support for encoding " + mConfigFormat.toString() +
+                    " but not decoding it", decoder);
+            CodecDecoderTestBase cdtb = new CodecDecoderTestBase(decoder, mMime,
+                    tmpFile.getAbsolutePath());
             String parent = tmpFile.getParent();
             if (parent != null) parent += File.separator;
             else parent = "";
-            cdtb.validateColorAspects(null, parent, tmpFile.getName(), mRange, mStandard,
+            cdtb.validateColorAspects(decoder, parent, tmpFile.getName(), mRange, mStandard,
                     mTransferCurve, false);
 
             // if color metadata can also be signalled via elementary stream then verify if the
             // elementary stream contains color aspects as expected
             if (mCheckESList.contains(mMime)) {
-                cdtb.validateColorAspects(null, parent, tmpFile.getName(), mRange, mStandard,
+                cdtb.validateColorAspects(decoder, parent, tmpFile.getName(), mRange, mStandard,
                         mTransferCurve, true);
             }
+            tmpFile.delete();
         }
     }
 }
