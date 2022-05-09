@@ -4390,6 +4390,34 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_outgoing_beam">Disallow outgoing beam</string>
     <string name="disallow_outgoing_beam_action">Switching on android beam</string>
     <string name="disallow_remove_user">Disallow remove user</string>
+    <string name="check_new_user_disclaimer">Check new user disclaimer</string>
+    <string name="check_new_user_disclaimer_info">
+        Please do the following: \n\n
+        1. Check persistent notification for managed device \n\n
+        a). Open the notification UI, verify that there is a notification saying the device is managed.\n
+        b). Tap the notification\n
+        c). It should show a dialog explaining the device is managed and asking the user to accept \n
+        d). Don\'t accept initially and tap outside the dialog \n
+        e). Open the notification UI again, verify that the managed device notification is still shown \n
+        \n
+        f). Click \"Set Org\", and open the notification UI again, verify that the organization name
+        \"Foo, Inc\" is shown on the dialog \n
+        \n\n
+        2. Check adding account is restricted\n\n
+        a) Click \"Go\" to launch the \"Profiles &amp; accounts\" setting \n
+        b) navigate to \"Add account\" \n
+        \n
+        Expected: \n
+        - \"Add account\" is disabled \n
+        - Click the button will launch the new user disclaimer dialog\n
+        \n
+        c) Click accept button\n
+        \n
+        Expected: \n
+        - the screen will be dismissed \n
+        - \"Add account\" will be enabled\n
+        - Click the button will take user to the screen to add account \n
+    </string>
     <string name="device_owner_disallow_remove_user_info">
         Please press \'Create uninitialized user\' to create a user that is not set up. Then press the
         \'Set restriction\' button to set the user restriction.
