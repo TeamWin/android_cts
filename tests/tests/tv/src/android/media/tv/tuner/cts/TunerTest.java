@@ -2431,6 +2431,51 @@ public class TunerTest {
                 assertEquals(Tuner.RESULT_UNAVAILABLE, status);
             }
         }
+        // validate the behavior of tune
+        FrontendInfo info1 = mTuner.getFrontendInfoById(ids.get(0));
+        FrontendSettings feSettings1 = createFrontendSettings(info1);
+        int type1 = info1.getType();
+        if (ids.size() >= 1) {
+            int originalMax1 = mTuner.getMaxNumberOfFrontends(type1);
+            assertEquals(Tuner.RESULT_SUCCESS, mTuner.tune(feSettings1));
+            assertNotNull(mTuner.getFrontendInfo());
+
+            // validate that set max cannot be set to lower value than current usage
+            assertEquals(Tuner.RESULT_INVALID_ARGUMENT,
+                    mTuner.setMaxNumberOfFrontends(type1, 0));
+
+            // validate max value is reflected in the tune behavior
+            mTuner.closeFrontend();
+            assertEquals(Tuner.RESULT_SUCCESS,
+                    mTuner.setMaxNumberOfFrontends(type1, 0));
+            assertEquals(Tuner.RESULT_UNAVAILABLE,
+                    mTuner.tune(feSettings1));
+
+            assertEquals(Tuner.RESULT_SUCCESS,
+                    mTuner.setMaxNumberOfFrontends(type1, originalMax1));
+            assertEquals(Tuner.RESULT_SUCCESS, mTuner.tune(feSettings1));
+            assertNotNull(mTuner.getFrontendInfo());
+            mTuner.closeFrontend();
+        }
+
+        // validate max number on one frontend type has no impact on other
+        if (ids.size() >= 2) {
+            FrontendInfo info2 = mTuner.getFrontendInfoById(ids.get(1));
+            int type2 = info2.getType();
+            int originalMax2 = mTuner.getMaxNumberOfFrontends(type2);
+
+            assertEquals(Tuner.RESULT_SUCCESS,
+                    mTuner.setMaxNumberOfFrontends(type2, 0));
+            assertEquals(Tuner.RESULT_SUCCESS,
+                    mTuner.tune(feSettings1));
+            assertNotNull(mTuner.getFrontendInfo());
+
+            // set it back to the original max
+            assertEquals(Tuner.RESULT_SUCCESS,
+                    mTuner.setMaxNumberOfFrontends(type2, originalMax2));
+            mTuner.closeFrontend();
+
+        }
     }
 
     public static Filter createTsSectionFilter(
