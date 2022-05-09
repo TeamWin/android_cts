@@ -89,6 +89,10 @@ class DirectAudioProfilesForAttributesTest {
         audioProfile: AudioProfile,
         expectedCreationSuccess: Boolean
     ) {
+        if (audioProfile.format == AudioFormat.ENCODING_INVALID) {
+            fail("Found INVALID audio format in audio profile ($audioProfile) " +
+                    "when trying to create audio tracks with it!")
+        }
         for (audioFormat in audioProfile.getAllAudioFormats()) {
             try {
                 AudioTrack.Builder()
