@@ -135,6 +135,8 @@ abstract class TestBase {
         return callbackInvocation.associationInfo.id
     }
 
+    protected fun runShellCommand(cmd: String) = instrumentation.runShellCommand(cmd)
+
     private fun CompanionDeviceManager.disassociateAll() =
             allAssociations.forEach { disassociate(it.id) }
 }
@@ -197,3 +199,7 @@ fun Instrumentation.runShellCommand(cmd: String): String {
 
 fun Instrumentation.setSystemProp(name: String, value: String) =
         runShellCommand("setprop $name $value")
+
+fun MacAddress.toUpperCaseString() = toString().toUpperCase()
+
+fun sleepFor(duration: Duration) = sleep(duration.inWholeMilliseconds)
