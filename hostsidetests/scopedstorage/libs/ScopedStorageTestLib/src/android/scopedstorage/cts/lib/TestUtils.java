@@ -64,6 +64,7 @@ import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
 import com.android.cts.install.lib.TestApp;
 import com.android.cts.install.lib.Uninstall;
+import com.android.modules.utils.build.SdkLevel;
 
 import com.google.common.io.ByteStreams;
 
@@ -588,9 +589,11 @@ public class TestUtils {
             assertThat(InstallUtils.getInstalledVersion(packageName)).isEqualTo(1);
             if (grantStoragePermission) {
                 grantPermission(packageName, Manifest.permission.READ_EXTERNAL_STORAGE);
-                grantPermission(packageName, Manifest.permission.READ_MEDIA_IMAGES);
-                grantPermission(packageName, Manifest.permission.READ_MEDIA_AUDIO);
-                grantPermission(packageName, Manifest.permission.READ_MEDIA_VIDEO);
+                if (SdkLevel.isAtLeastT()) {
+                    grantPermission(packageName, Manifest.permission.READ_MEDIA_IMAGES);
+                    grantPermission(packageName, Manifest.permission.READ_MEDIA_AUDIO);
+                    grantPermission(packageName, Manifest.permission.READ_MEDIA_VIDEO);
+                }
             }
         } finally {
             uiAutomation.dropShellPermissionIdentity();
