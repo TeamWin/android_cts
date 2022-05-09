@@ -90,10 +90,10 @@ public class CellInfoTest {
     // Maximum and minimum possible RSSI values(in dbm).
     private static final int MAX_RSSI = -10;
     private static final int MIN_RSSI = -150;
-    // Maximum and minimum possible RSSP values(in dbm).
+    // Maximum and minimum possible RSRP values(in dbm).
     private static final int MAX_RSRP = -44;
     private static final int MIN_RSRP = -140;
-    // Maximum and minimum possible RSSQ values.
+    // Maximum and minimum possible RSRQ values.
     private static final int MAX_RSRQ = -3;
     private static final int MIN_RSRQ = -35;
     // Maximum and minimum possible RSSNR values.
@@ -692,8 +692,9 @@ public class CellInfoTest {
         assertTrue("getTac() out of range [0,65535], tac=" + tac,
                 (tac == CellInfo.UNAVAILABLE) || (tac >= 0 && tac <= TAC));
 
+        // Bandwidth ranges from 1400 to 20000
         int bw = lte.getBandwidth();
-        assertTrue("getBandwidth out of range [1400, 20000] | Integer.Max_Value, bw=",
+        assertTrue("getBandwidth out of range [1400, 20000] | Integer.Max_Value, bw=" + bw,
                 bw == CellInfo.UNAVAILABLE || bw >= BANDWIDTH_LOW && bw <= BANDWIDTH_HIGH);
 
         int earfcn = lte.getEarfcn();
