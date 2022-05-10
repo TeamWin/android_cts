@@ -26,10 +26,13 @@ import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXT
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_LOCALE;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_LOCAL_TIME;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_ROLE_HOLDER_EXTRAS_BUNDLE;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_SKIP_EDUCATION_SCREENS;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_TIME_ZONE;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_TRIGGER;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_PASSWORD;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_PROXY_PORT;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SECURITY_TYPE;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SSID;
 import static android.app.admin.DevicePolicyManager.MIME_TYPE_PROVISIONING_NFC;
@@ -199,13 +202,12 @@ public final class DevicePolicyManagerTest {
     private static final PersistableBundle ADMIN_EXTRAS_BUNDLE = createAdminExtrasBundle();
     private static final PersistableBundle ROLE_HOLDER_EXTRAS_BUNDLE =
             createRoleHolderExtrasBundle();
-    private static final String ADMIN_EXTRAS_PROPERTIES = createAdminExtrasProperties();
-    private static final String ROLE_HOLDER_EXTRAS_PROPERTIES =
-            createRoleHolderExtrasProperties();
     private static final String TEST_KEY = "test_key";
     private static final String TEST_VALUE = "test_value";
     private static final UserType MANAGED_PROFILE_USER_TYPE =
             TestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME);
+    private static final long NFC_INTENT_LOCAL_TIME = 123456;
+    private static final int NFC_INTENT_WIFI_PROXY_PORT = 1234;
 
     @Before
     public void setUp() {
@@ -1009,17 +1011,22 @@ public final class DevicePolicyManagerTest {
 
     private static HashMap<String, String> createNfcIntentData() {
         HashMap<String, String> nfcIntentInput = new HashMap<>();
-        nfcIntentInput.putAll(
-                Map.of(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, NFC_INTENT_COMPONENT_NAME,
-                EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, NFC_INTENT_PACKAGE_NAME,
-                EXTRA_PROVISIONING_LOCALE, NFC_INTENT_LOCALE,
-                EXTRA_PROVISIONING_TIME_ZONE, NFC_INTENT_TIMEZONE,
-                EXTRA_PROVISIONING_WIFI_SSID, NFC_INTENT_WIFI_SSID,
-                EXTRA_PROVISIONING_WIFI_SECURITY_TYPE, NFC_INTENT_WIFI_SECURITY_TYPE,
-                EXTRA_PROVISIONING_WIFI_PASSWORD, NFC_INTENT_WIFI_PASSWORD,
-                EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE, createAdminExtrasProperties(),
-                EXTRA_PROVISIONING_ROLE_HOLDER_EXTRAS_BUNDLE, createRoleHolderExtrasProperties())
-        );
+        nfcIntentInput.put(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
+                NFC_INTENT_COMPONENT_NAME);
+        nfcIntentInput.put(EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, NFC_INTENT_PACKAGE_NAME);
+        nfcIntentInput.put(EXTRA_PROVISIONING_LOCALE, NFC_INTENT_LOCALE);
+        nfcIntentInput.put(EXTRA_PROVISIONING_TIME_ZONE, NFC_INTENT_TIMEZONE);
+        nfcIntentInput.put(EXTRA_PROVISIONING_WIFI_SSID, NFC_INTENT_WIFI_SSID);
+        nfcIntentInput.put(EXTRA_PROVISIONING_WIFI_SECURITY_TYPE, NFC_INTENT_WIFI_SECURITY_TYPE);
+        nfcIntentInput.put(EXTRA_PROVISIONING_WIFI_PASSWORD, NFC_INTENT_WIFI_PASSWORD);
+        nfcIntentInput.put(EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE,
+                createAdminExtrasProperties());
+        nfcIntentInput.put(EXTRA_PROVISIONING_ROLE_HOLDER_EXTRAS_BUNDLE,
+                createRoleHolderExtrasProperties());
+        nfcIntentInput.put(EXTRA_PROVISIONING_SKIP_EDUCATION_SCREENS, "true");
+        nfcIntentInput.put(EXTRA_PROVISIONING_LOCAL_TIME, String.valueOf(NFC_INTENT_LOCAL_TIME));
+        nfcIntentInput.put(EXTRA_PROVISIONING_WIFI_PROXY_PORT,
+                String.valueOf(NFC_INTENT_WIFI_PROXY_PORT));
         return nfcIntentInput;
     }
 
@@ -1111,6 +1118,9 @@ public final class DevicePolicyManagerTest {
         bundle.putParcelable(EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE, ADMIN_EXTRAS_BUNDLE);
         bundle.putParcelable(EXTRA_PROVISIONING_ROLE_HOLDER_EXTRAS_BUNDLE,
                 ROLE_HOLDER_EXTRAS_BUNDLE);
+        bundle.putBoolean(EXTRA_PROVISIONING_SKIP_EDUCATION_SCREENS, true);
+        bundle.putLong(EXTRA_PROVISIONING_LOCAL_TIME, NFC_INTENT_LOCAL_TIME);
+        bundle.putInt(EXTRA_PROVISIONING_WIFI_PROXY_PORT, NFC_INTENT_WIFI_PROXY_PORT);
         bundle.putInt(EXTRA_PROVISIONING_TRIGGER, PROVISIONING_TRIGGER_NFC);
         return bundle;
     }
