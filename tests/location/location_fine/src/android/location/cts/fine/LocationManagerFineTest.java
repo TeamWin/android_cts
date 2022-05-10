@@ -77,10 +77,12 @@ import android.location.cts.common.gnss.GnssAntennaInfoCapture;
 import android.location.cts.common.gnss.GnssMeasurementsCapture;
 import android.location.cts.common.gnss.GnssNavigationMessageCapture;
 import android.location.provider.ProviderProperties;
+import android.os.Build;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.util.ArraySet;
@@ -1199,6 +1201,8 @@ public class LocationManagerFineTest {
 
     @Test
     public void testRequestFlush_Gnss() throws Exception {
+        assumeTrue(SystemProperties.getInt("ro.product.first_api_level", 0)
+                >= Build.VERSION_CODES.S);
         assumeTrue(mManager.hasProvider(GPS_PROVIDER));
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {

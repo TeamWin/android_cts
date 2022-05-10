@@ -42,7 +42,6 @@ import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraCharacteristics.Key;
-import android.hardware.camera2.CameraExtensionCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
@@ -2874,7 +2873,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
      * in CDD camera section 7.5
      */
     @Test
-    @CddTest(requirement = "7.5/H-1-1,H-1-2,H-1-3,H-1-4,H-1-8,H-1-9,H-1-10,H-1-11,H-1-12,H-1-13,H-1-14,H-1-15")
+    @CddTest(requirement = "7.5/H-1-1,H-1-2,H-1-3,H-1-4,H-1-8,H-1-9,H-1-10,H-1-11,H-1-12,H-1-13,H-1-14")
     public void testCameraPerfClassCharacteristics() throws Exception {
         if (mAdoptShellPerm) {
             // Skip test for system camera. Performance class is only applicable for public camera
@@ -2900,7 +2899,6 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
         int perfClassLevelH112 = CameraTestUtils.PERFORMANCE_CLASS_CURRENT;
         int perfClassLevelH113 = CameraTestUtils.PERFORMANCE_CLASS_CURRENT;
         int perfClassLevelH114 = CameraTestUtils.PERFORMANCE_CLASS_CURRENT;
-        int perfClassLevelH115 = CameraTestUtils.PERFORMANCE_CLASS_CURRENT;
 
         DeviceReportLog reportLog = new DeviceReportLog(MPC_REPORT_LOG_NAME, MPC_STREAM_NAME);
 
@@ -2961,7 +2959,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                     }
                 }
 
-                // H-1-10
+                // H-1-9
                 boolean supportHighSpeed = staticInfo.isCapabilitySupported(CONSTRAINED_HIGH_SPEED);
                 mCollector.expectTrue("Primary rear camera should support high speed recording",
                         !assertTPerfClass || supportHighSpeed);
@@ -2987,8 +2985,8 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                     mCollector.expectTrue("Primary rear camera should support HD or FULLHD @ 240",
                             !assertTPerfClass || support240Fps);
                 }
-                perfClassLevelH110 = updatePerfClassLevel(support240Fps,
-                        perfClassLevelH110, CameraTestUtils.PERFORMANCE_CLASS_S);
+                perfClassLevelH19 = updatePerfClassLevel(support240Fps,
+                        perfClassLevelH19, CameraTestUtils.PERFORMANCE_CLASS_S);
                 reportLog.addValue("rear camera 720p/1080p @ 240fps support", support240Fps,
                         ResultType.NEUTRAL, ResultUnit.NONE);
             } else {
@@ -3081,67 +3079,49 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                         CameraTestUtils.PERFORMANCE_CLASS_R);
             }
 
-            // H-1-9
-            CameraExtensionCharacteristics extensionChars =
-                    mCameraManager.getCameraExtensionCharacteristics(cameraId);
-            List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
-            boolean supportBokeh =
-                    supportedExtensions.contains(CameraExtensionCharacteristics.EXTENSION_BOKEH);
-            boolean supportNight =
-                    supportedExtensions.contains(CameraExtensionCharacteristics.EXTENSION_NIGHT);
-            mCollector.expectTrue(
-                    "Primary rear/front camera must support BOKEH and NIGHT camera2 extensions",
-                    !assertTPerfClass || (supportBokeh && supportNight));
-            perfClassLevelH19 = updatePerfClassLevel(supportBokeh && supportNight,
-                    perfClassLevelH19, CameraTestUtils.PERFORMANCE_CLASS_S);
-            reportLog.addValue(facingString + " camera extension bokeh mode support", supportBokeh,
-                    ResultType.NEUTRAL, ResultUnit.NONE);
-            reportLog.addValue(facingString + " camera extension night mode support", supportNight,
-                    ResultType.NEUTRAL, ResultUnit.NONE);
-
-            // H-1-11
+            // H-1-10
             final double FOV_THRESHOLD = 0.001f;
             double primaryToMaxFovRatio = getPrimaryToMaxFovRatio(cameraId, staticInfo);
             Range<Float> zoomRatioRange = staticInfo.getZoomRatioRangeChecked();
-            boolean meetH111 = (primaryToMaxFovRatio >= 1.0f - FOV_THRESHOLD)
+            boolean meetH110 = (primaryToMaxFovRatio >= 1.0f - FOV_THRESHOLD)
                     || (zoomRatioRange.getLower() < 1.0f - FOV_THRESHOLD);
             mCollector.expectTrue("Primary " + facingString + " camera must support zoomRatio < "
                     + "1.0f if there is an ultrawide lens with the same facing",
-                    !assertTPerfClass || meetH111);
-            perfClassLevelH111 = updatePerfClassLevel(meetH111, perfClassLevelH111,
+                    !assertTPerfClass || meetH110);
+            perfClassLevelH110 = updatePerfClassLevel(meetH110, perfClassLevelH110,
                     CameraTestUtils.PERFORMANCE_CLASS_S);
             reportLog.addValue(facingString + " camera supports maximum FOV using zoom ratio",
-                    meetH111, ResultType.NEUTRAL, ResultUnit.NONE);
+                    meetH110, ResultType.NEUTRAL, ResultUnit.NONE);
 
-            // H-1-13
-            boolean meetH113 = staticInfo.isPreviewStabilizationSupported();
+            // H-1-12
+            boolean meetH112 = staticInfo.isPreviewStabilizationSupported();
             mCollector.expectTrue("Primary " + facingString + " camera must support preview "
-                    + "stabilization", !assertTPerfClass || meetH113);
-            perfClassLevelH113 = updatePerfClassLevel(meetH113, perfClassLevelH113,
+                    + "stabilization", !assertTPerfClass || meetH112);
+            perfClassLevelH112 = updatePerfClassLevel(meetH112, perfClassLevelH112,
                     CameraTestUtils.PERFORMANCE_CLASS_S);
-            reportLog.addValue(facingString + " camera preview stabilization", meetH113,
+            reportLog.addValue(facingString + " camera preview stabilization", meetH112,
                     ResultType.NEUTRAL, ResultUnit.NONE);
 
-            // H-1-14
+            // H-1-13
             int facing = staticInfo.getLensFacingChecked();
             int numOfPhysicalRgbCameras = getNumberOfRgbPhysicalCameras(facing);
-            boolean meetH114 = (numOfPhysicalRgbCameras <= 1) || staticInfo.isLogicalMultiCamera();
+            boolean meetH113 = (numOfPhysicalRgbCameras <= 1) || staticInfo.isLogicalMultiCamera();
             mCollector.expectTrue("Primary " + facingString + " camera must be LOGICAL_MULTI_CAMERA"
                     + " in case of multiple RGB cameras with same facing",
-                    !assertTPerfClass || meetH114);
-            perfClassLevelH114 = updatePerfClassLevel(meetH114, perfClassLevelH114,
+                    !assertTPerfClass || meetH113);
+            perfClassLevelH113 = updatePerfClassLevel(meetH113, perfClassLevelH113,
                     CameraTestUtils.PERFORMANCE_CLASS_S);
             reportLog.addValue(facingString + " camera is LOGICAL_MULTI_CAMERA in case of multiple "
-                    + "RGB cameras with same facing", meetH114, ResultType.NEUTRAL,
+                    + "RGB cameras with same facing", meetH113, ResultType.NEUTRAL,
                     ResultUnit.NONE);
 
-            // H-1-15
-            boolean meetH115 = staticInfo.isStreamUseCaseSupported();
+            // H-1-14
+            boolean meetH114 = staticInfo.isStreamUseCaseSupported();
             mCollector.expectTrue("Primary " + facingString + " camera must support stream "
-                    + "use case", !assertTPerfClass || meetH115);
-            perfClassLevelH115 = updatePerfClassLevel(meetH115, perfClassLevelH115,
+                    + "use case", !assertTPerfClass || meetH114);
+            perfClassLevelH114 = updatePerfClassLevel(meetH114, perfClassLevelH114,
                     CameraTestUtils.PERFORMANCE_CLASS_S);
-            reportLog.addValue(facingString + " camera stream use case", meetH115,
+            reportLog.addValue(facingString + " camera stream use case", meetH114,
                     ResultType.NEUTRAL, ResultUnit.NONE);
         }
         HashSet<String> primaryCameras = new HashSet<String>();
@@ -3160,13 +3140,13 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             primaryCameras.add(primaryFrontId);
         }
 
-        // H-1-12
+        // H-1-11
         Set<Set<String>> concurrentCameraIds = mCameraManager.getConcurrentCameraIds();
         boolean supportPrimaryFrontBack = concurrentCameraIds.contains(primaryCameras);
         mCollector.expectTrue("Concurrent primary front and primary back streaming must be "
                 + "supported", !assertTPerfClass || supportPrimaryFrontBack);
-        perfClassLevelH112 = updatePerfClassLevel(supportPrimaryFrontBack,
-                perfClassLevelH112, CameraTestUtils.PERFORMANCE_CLASS_S);
+        perfClassLevelH111 = updatePerfClassLevel(supportPrimaryFrontBack,
+                perfClassLevelH111, CameraTestUtils.PERFORMANCE_CLASS_S);
         reportLog.addValue("concurrent front back support", supportPrimaryFrontBack,
                  ResultType.NEUTRAL, ResultUnit.NONE);
 
@@ -3194,8 +3174,6 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 perfClassLevelH113, ResultType.NEUTRAL, ResultUnit.NONE);
         reportLog.addValue(PERF_CLASS_REQ_NUM_PREFIX + "H-1-14",
                 perfClassLevelH114, ResultType.NEUTRAL, ResultUnit.NONE);
-        reportLog.addValue(PERF_CLASS_REQ_NUM_PREFIX + "H-1-15",
-                perfClassLevelH115, ResultType.NEUTRAL, ResultUnit.NONE);
         reportLog.submit(InstrumentationRegistry.getInstrumentation());
     }
 
@@ -3214,6 +3192,9 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 continue;
             }
             if (!staticInfo.isColorOutputSupported()) {
+                continue;
+            }
+            if (staticInfo.isMonochromeCamera()) {
                 continue;
             }
             numOfRgbPhysicalCameras++;

@@ -90,6 +90,7 @@ public class ViewConfigurationTest {
         vc.getScaledHorizontalScrollFactor();
         vc.getScaledVerticalScrollFactor();
         vc.getScaledTouchSlop();
+        vc.getScaledHandwritingSlop();
         vc.getScaledWindowTouchSlop();
         vc.hasPermanentMenuKey();
 
