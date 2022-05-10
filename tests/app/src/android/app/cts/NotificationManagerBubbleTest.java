@@ -158,8 +158,8 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         boolean notificationFound = false;
         boolean bubbleStateMatches = false;
         try {
-            // Wait up to 2 seconds for the notification
-            for (int i = 0; i < 20; i++) {
+            // Wait up to 5 seconds for the notification
+            for (int i = 0; i < 50; i++) {
                 // FLAG_BUBBLE relies on notification being posted, wait for notification listener
                 Thread.sleep(100);
                 for (StatusBarNotification sbn : mListener.mPosted) {

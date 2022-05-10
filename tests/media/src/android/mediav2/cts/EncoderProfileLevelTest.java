@@ -38,6 +38,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
 import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -52,12 +53,15 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
     private static final String LOG_TAG = EncoderProfileLevelTest.class.getSimpleName();
     private static final HashMap<String, Pair<int[], Integer>> mProfileLevelCdd = new HashMap<>();
 
+    private final boolean mUseHighBitDepth;
+
     private MediaFormat mConfigFormat;
     private MediaMuxer mMuxer;
 
     public EncoderProfileLevelTest(String encoder, String mime, int bitrate, int encoderInfo1,
-            int encoderInfo2, int frameRate) {
+            int encoderInfo2, int frameRate, boolean useHighBitDepth) {
         super(encoder, mime, new int[]{bitrate}, new int[]{encoderInfo1}, new int[]{encoderInfo2});
+        mUseHighBitDepth = useHighBitDepth;
         if (mIsAudio) {
             mSampleRate = encoderInfo1;
             mChannels = encoderInfo2;
@@ -70,7 +74,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
         mConfigFormat = mFormats.get(0);
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{2}_{3}_{4}_{6})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = true;
@@ -185,8 +189,25 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                 {MediaFormat.MIMETYPE_VIDEO_VP8, 512000, 176, 144, 20},
                 {MediaFormat.MIMETYPE_VIDEO_VP8, 512000, 480, 360, 20},
         });
-
-        return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
+        final List<Object[]> argsList = new ArrayList<>();
+        for (Object[] arg : exhaustiveArgsList) {
+            int argLength = exhaustiveArgsList.get(0).length;
+            Object[] testArgs = new Object[argLength + 1];
+            System.arraycopy(arg, 0, testArgs, 0, argLength);
+            testArgs[argLength] = false;
+            argsList.add(testArgs);
+            // P010 support was added in Android T, hence limit the following tests to Android T and
+            // above
+            if (IS_AT_LEAST_T) {
+                if (mProfileHdrMap.get(arg[0]) != null) {
+                    Object[] testArgsHighBitDepth = new Object[argLength + 1];
+                    System.arraycopy(arg, 0, testArgsHighBitDepth, 0, argLength);
+                    testArgsHighBitDepth[argLength] = true;
+                    argsList.add(testArgsHighBitDepth);
+                }
+            }
+        }
+        return prepareParamList(argsList, isEncoder, needAudio, needVideo, false);
     }
 
     static {
@@ -649,8 +670,26 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
      */
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testValidateProfileLevel() throws IOException, InterruptedException {
-        int[] profiles = mProfileSdrMap.get(mMime);
+        int[] profiles;
+        String inputTestFile = mInputFile;
+        MediaFormat format = mConfigFormat;
+        String outputFilePrefix = "tmp";
+        if (mIsAudio) {
+            profiles = mProfileMap.get(mMime);
+        } else {
+            if (mUseHighBitDepth) {
+                Assume.assumeTrue(hasSupportForColorFormat(mCodecName, mMime, COLOR_FormatYUVP010));
+                format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUVP010);
+                mBytesPerSample = 2;
+                inputTestFile = INPUT_VIDEO_FILE_HBD;
+                outputFilePrefix += "_10bit";
+                profiles = mProfileHlgMap.get(mMime);
+            } else {
+                profiles = mProfileSdrMap.get(mMime);
+            }
+        }
         assertTrue("no profile entry found for mime" + mMime, profiles != null);
+
         // cdd check initialization
         boolean cddSupportedMime = mProfileLevelCdd.get(mMime) != null;
         int[] profileCdd = new int[0];
@@ -660,11 +699,11 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
             profileCdd = cddProfileLevel.first;
             levelCdd = cddProfileLevel.second;
         }
-        MediaFormat format = mConfigFormat;
         mOutputBuff = new OutputManager();
-        setUpSource(mInputFile);
+        setUpSource(inputTestFile);
         mSaveToMem = true;
-        String tempMuxedFile = File.createTempFile("tmp", ".out").getAbsolutePath();
+
+        String tempMuxedFile = File.createTempFile(outputFilePrefix, ".bin").getAbsolutePath();
         {
             mCodec = MediaCodec.createByCodecName(mCodecName);
             MediaCodecInfo.CodecCapabilities codecCapabilities =

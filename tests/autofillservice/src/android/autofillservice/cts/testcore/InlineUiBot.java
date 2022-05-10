@@ -145,7 +145,13 @@ public final class InlineUiBot extends UiBot {
         Resources resources = mContext.getResources();
         int resId = resources.getIdentifier("config_backGestureInset", "dimen", "android");
         try {
-            return resources.getDimensionPixelSize(resId) + 1;
+            int width = resources.getDimensionPixelSize(resId) + 1;
+            if (width >= defaultWidth) {
+                return width;
+            }
+            Log.i(TAG, "Got edge sensitivity width of " + width
+                    + ", which is less than the default of " + defaultWidth + ". Using default");
+            return defaultWidth;
         } catch (Resources.NotFoundException e) {
             Log.e(TAG, "Failed to get edge sensitivity width. Defaulting to " + defaultWidth, e);
             return defaultWidth;

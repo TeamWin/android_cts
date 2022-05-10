@@ -712,9 +712,11 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     }
 
     private void clickAllowBindWidget(ResultReceiver resultReceiver) throws Exception {
-        // Test on non-auto devices only as auto doesn't support appwidget bind.
-        Assume.assumeFalse(mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_AUTOMOTIVE));
+        PackageManager pm = mContext.getPackageManager();
+        // Skip on auto and TV devices only as they don't support appwidget bind.
+        Assume.assumeFalse(pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+        Assume.assumeFalse(pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY));
+
         // Create appWidgetId so we can send it to appA, to request bind widget and start config
         // activity.
         UiDevice device = UiDevice.getInstance(mInstrumentation);
@@ -734,7 +736,6 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
         // Find settings package and bind widget activity and click the create button.
         String settingsPkgName = "";
-        PackageManager pm = mContext.getPackageManager();
         List<ResolveInfo> ris = pm.queryIntentActivities(appWidgetIntent,
                 PackageManager.MATCH_DEFAULT_ONLY);
         for (ResolveInfo ri : ris) {
