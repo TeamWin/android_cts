@@ -97,16 +97,12 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.devicepolicy.DeviceOwner;
-import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.users.UserType;
 import com.android.bedstead.remotedpc.RemoteDpc;
-import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.bedstead.testapp.TestAppProvider;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.eventlib.events.broadcastreceivers.BroadcastReceivedEvent;
 
@@ -200,12 +196,6 @@ public final class DevicePolicyManagerTest {
     private static final Bundle EXPECTED_BUNDLE_WITH_PACKAGE_NAME =
             createExpectedBundleWithPackageName();
 
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
-    private static final TestApp sDpcApp = sTestAppProvider.query()
-            .whereIsDeviceAdmin().isTrue()
-            .whereTestOnly().isFalse()
-            .get();
-
     private static final PersistableBundle ADMIN_EXTRAS_BUNDLE = createAdminExtrasBundle();
     private static final PersistableBundle ROLE_HOLDER_EXTRAS_BUNDLE =
             createRoleHolderExtrasBundle();
@@ -230,40 +220,6 @@ public final class DevicePolicyManagerTest {
         try (PermissionContext p = TestApis.permissions()
                 .withPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
             sDevicePolicyManager.setDpcDownloaded(false);
-        }
-    }
-
-    @Test
-    @EnsureHasNoDpc
-    public void setAndRemoveDeviceOwnerRepeatedly_doesNotThrowError() {
-        try (TestAppInstance dpcInstance = sDpcApp.install()) {
-            ComponentName dpcComponentName = new ComponentName(sDpcApp.packageName(),
-                    sDpcApp.packageName() + ".DeviceAdminReceiver");
-
-            for (int i = 0; i < 100; i++) {
-                DeviceOwner deviceOwner = TestApis.devicePolicy().setDeviceOwner(dpcComponentName);
-                deviceOwner.remove();
-            }
-        }
-    }
-
-    @Test
-    @EnsureHasNoDpc
-    @EnsureHasNoWorkProfile
-    @RequireRunOnPrimaryUser
-    public void setAndRemoveProfileOwnerRepeatedly_doesNotThrowError() {
-        try (UserReference profile = TestApis.users().createUser().createAndStart()) {
-            try (TestAppInstance dpcInstance = sDpcApp.install(profile)) {
-                ComponentName dpcComponentName = new ComponentName(sDpcApp.packageName(),
-                        sDpcApp.packageName() + ".DeviceAdminReceiver");
-
-                for (int i = 0; i < 100; i++) {
-                    ProfileOwner profileOwner = TestApis.devicePolicy().setProfileOwner(
-                            profile, dpcComponentName);
-
-                    profileOwner.remove();
-                }
-            }
         }
     }
 
