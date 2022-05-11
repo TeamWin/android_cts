@@ -94,6 +94,18 @@ public class MultiEncoderPerfTest extends MultiCodecPerfTestBase {
         testCodec(720, 1280, 4000000, requiredMinInstances);
     }
 
+    /**
+     * This test validates that the encoder can support at least 6 concurrent 1080p 30fps
+     * encoder instances. Also ensures that all the concurrent sessions succeed in encoding.
+     */
+    @LargeTest
+    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    @CddTest(requirement = "2.2.7.1/5.1/H-1-3,H-1-4")
+    public void test1080p() throws Exception {
+        Assume.assumeTrue(Utils.isTPerfClass() || !Utils.isPerfClass());
+        testCodec(1080, 1920, 10000000, REQUIRED_MIN_CONCURRENT_INSTANCES);
+    }
+
     private void testCodec(int height, int width, int bitrate, int requiredMinInstances)
             throws Exception {
         ArrayList<Pair<String, String>> mimeEncoderPairs = new ArrayList<>();

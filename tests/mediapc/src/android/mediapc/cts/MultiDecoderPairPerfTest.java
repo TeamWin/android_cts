@@ -109,6 +109,20 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
         testCodec(m720pTestFiles, 720, 1280, requiredMinInstances);
     }
 
+    /**
+     * This test calculates the number of 1080p 30 fps decoder instances that the given two
+     * (mime - decoder) pairs can support. Assigns the same number of instances to the two pairs
+     * (if max instances are even), or one more to one pair (if odd) and ensures that all the
+     * concurrent sessions succeed in decoding with meeting the expected frame rate.
+     */
+    @LargeTest
+    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    @CddTest(requirement = "2.2.7.1/5.1/H-1-1,H-1-2")
+    public void test1080p() throws Exception {
+        Assume.assumeTrue(Utils.isTPerfClass() || !Utils.isPerfClass());
+        testCodec(m1080pTestFiles, 1080, 1920, REQUIRED_MIN_CONCURRENT_INSTANCES);
+    }
+
     private void testCodec(Map<String, String> testFiles, int height, int width,
             int requiredMinInstances) throws Exception {
         mTestFiles = testFiles;
