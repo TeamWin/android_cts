@@ -22,14 +22,18 @@ import static android.Manifest.permission.PROVISION_DEMO_DEVICE;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.admin.DevicePolicyManager.ACTION_MANAGED_PROFILE_PROVISIONED;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_ACCOUNT_TO_MIGRATE;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_LOCALE;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_ROLE_HOLDER_EXTRAS_BUNDLE;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_TIME_ZONE;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_TRIGGER;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_PASSWORD;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SECURITY_TYPE;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SSID;
 import static android.app.admin.DevicePolicyManager.MIME_TYPE_PROVISIONING_NFC;
+import static android.app.admin.DevicePolicyManager.PROVISIONING_TRIGGER_NFC;
 import static android.app.admin.ProvisioningException.ERROR_PRE_CONDITION_FAILED;
 import static android.content.Intent.EXTRA_USER;
 import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
@@ -186,11 +190,15 @@ public final class DevicePolicyManagerTest {
     private static final String NFC_INTENT_PROVISIONING_SAMPLE = "NFC provisioning sample";
     private static final Intent NFC_INTENT_NO_NDEF_RECORD = new Intent(ACTION_NDEF_DISCOVERED);
     private static final HashMap<String, String> NFC_DATA_VALID = createNfcIntentData();
-    private static final HashMap<String, String> NFC_DATA_EMPTY = new HashMap();
+    private static final HashMap<String, String> NFC_DATA_EMPTY = new HashMap<>();
     private static final Map<String, String> NFC_DATA_WITH_COMPONENT_NAME =
             Map.of(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, NFC_INTENT_COMPONENT_NAME);
+    private static final Bundle EXPECTED_BUNDLE_WITH_COMPONENT_NAME =
+            createExpectedBundleWithComponentName();
     private static final Map<String, String> NFC_DATA_WITH_ADMIN_PACKAGE_NAME =
             Map.of(EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, NFC_INTENT_PACKAGE_NAME);
+    private static final Bundle EXPECTED_BUNDLE_WITH_PACKAGE_NAME =
+            createExpectedBundleWithPackageName();
 
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
     private static final TestApp sDpcApp = sTestAppProvider.query()
@@ -199,6 +207,11 @@ public final class DevicePolicyManagerTest {
             .get();
 
     private static final PersistableBundle ADMIN_EXTRAS_BUNDLE = createAdminExtrasBundle();
+    private static final PersistableBundle ROLE_HOLDER_EXTRAS_BUNDLE =
+            createRoleHolderExtrasBundle();
+    private static final String ADMIN_EXTRAS_PROPERTIES = createAdminExtrasProperties();
+    private static final String ROLE_HOLDER_EXTRAS_PROPERTIES =
+            createRoleHolderExtrasProperties();
     private static final String TEST_KEY = "test_key";
     private static final String TEST_VALUE = "test_value";
     private static final UserType MANAGED_PROFILE_USER_TYPE =
@@ -933,8 +946,9 @@ public final class DevicePolicyManagerTest {
                 sDevicePolicyManager.createProvisioningIntentFromNfcIntent(nfcIntent);
 
         assertThat(provisioningIntent).isNotNull();
-        assertThat(provisioningBundleToMap(provisioningIntent.getExtras()))
-                .containsAtLeastEntriesIn(NFC_DATA_VALID);
+        assertThat(provisioningIntent.getAction())
+                .isEqualTo(DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE_FROM_TRUSTED_SOURCE);
+        assertBundlesEqual(provisioningIntent.getExtras(), createExpectedValidBundle());
     }
 
     @Test
@@ -957,8 +971,9 @@ public final class DevicePolicyManagerTest {
                 sDevicePolicyManager.createProvisioningIntentFromNfcIntent(nfcIntent);
 
         assertThat(provisioningIntent).isNotNull();
-        assertThat(provisioningBundleToMap(provisioningIntent.getExtras()))
-                .containsAtLeastEntriesIn(NFC_DATA_WITH_COMPONENT_NAME);
+        assertThat(provisioningIntent.getAction())
+                .isEqualTo(DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE_FROM_TRUSTED_SOURCE);
+        assertBundlesEqual(provisioningIntent.getExtras(), EXPECTED_BUNDLE_WITH_COMPONENT_NAME);
     }
 
     @Test
@@ -970,8 +985,9 @@ public final class DevicePolicyManagerTest {
                 sDevicePolicyManager.createProvisioningIntentFromNfcIntent(nfcIntent);
 
         assertThat(provisioningIntent).isNotNull();
-        assertThat(provisioningBundleToMap(provisioningIntent.getExtras()))
-                .containsAtLeastEntriesIn(NFC_DATA_WITH_ADMIN_PACKAGE_NAME);
+        assertThat(provisioningIntent.getAction())
+                .isEqualTo(DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE_FROM_TRUSTED_SOURCE);
+        assertBundlesEqual(provisioningIntent.getExtras(), EXPECTED_BUNDLE_WITH_PACKAGE_NAME);
     }
 
     @Test
@@ -1036,7 +1052,7 @@ public final class DevicePolicyManagerTest {
     }
 
     private static HashMap<String, String> createNfcIntentData() {
-        HashMap<String, String> nfcIntentInput = new HashMap<String, String>();
+        HashMap<String, String> nfcIntentInput = new HashMap<>();
         nfcIntentInput.putAll(
                 Map.of(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME, NFC_INTENT_COMPONENT_NAME,
                 EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, NFC_INTENT_PACKAGE_NAME,
@@ -1044,9 +1060,10 @@ public final class DevicePolicyManagerTest {
                 EXTRA_PROVISIONING_TIME_ZONE, NFC_INTENT_TIMEZONE,
                 EXTRA_PROVISIONING_WIFI_SSID, NFC_INTENT_WIFI_SSID,
                 EXTRA_PROVISIONING_WIFI_SECURITY_TYPE, NFC_INTENT_WIFI_SECURITY_TYPE,
-                EXTRA_PROVISIONING_WIFI_PASSWORD, NFC_INTENT_WIFI_PASSWORD)
+                EXTRA_PROVISIONING_WIFI_PASSWORD, NFC_INTENT_WIFI_PASSWORD,
+                EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE, createAdminExtrasProperties(),
+                EXTRA_PROVISIONING_ROLE_HOLDER_EXTRAS_BUNDLE, createRoleHolderExtrasProperties())
         );
-
         return nfcIntentInput;
     }
 
@@ -1075,22 +1092,6 @@ public final class DevicePolicyManagerTest {
         return nfcIntent;
     }
 
-    private Map<String, String> provisioningBundleToMap(Bundle bundle) {
-        Map<String, String> map = new HashMap();
-
-        for (String key : bundle.keySet()) {
-            if(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME.equals(key)) {
-                ComponentName componentName = bundle.getParcelable(key);
-                map.put(key, componentName.getPackageName() + "/" + componentName.getClassName());
-            }
-            else {
-                map.put(key, bundle.getString(key));
-            }
-        }
-
-        return map;
-    }
-
     private NdefMessage createNdefMessage(Map<String, String> provisioningValues, String mime)
             throws IOException {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -1104,6 +1105,58 @@ public final class DevicePolicyManagerTest {
         NdefRecord record = NdefRecord.createMime(mime, stream.toByteArray());
 
         return new NdefMessage(new NdefRecord[]{record});
+    }
+
+    private static PersistableBundle createAdminExtrasBundle() {
+        PersistableBundle result = new PersistableBundle();
+        result.putString("admin-extras-key", "admin extras value");
+        return result;
+    }
+
+    private static String createAdminExtrasProperties() {
+        return "admin-extras-key=admin extras value\n";
+    }
+
+    private static PersistableBundle createRoleHolderExtrasBundle() {
+        PersistableBundle result = new PersistableBundle();
+        result.putString("role-holder-extras-key", "role holder extras value");
+        return result;
+    }
+
+    private static String createRoleHolderExtrasProperties() {
+        return "role-holder-extras-key=role holder extras value\n";
+    }
+
+    private static Bundle createExpectedBundleWithComponentName() {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
+                ComponentName.unflattenFromString(NFC_INTENT_COMPONENT_NAME));
+        bundle.putInt(EXTRA_PROVISIONING_TRIGGER, PROVISIONING_TRIGGER_NFC);
+        return bundle;
+    }
+
+    private static Bundle createExpectedBundleWithPackageName() {
+        Bundle bundle = new Bundle();
+        bundle.putString(EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, NFC_INTENT_PACKAGE_NAME);
+        bundle.putInt(EXTRA_PROVISIONING_TRIGGER, PROVISIONING_TRIGGER_NFC);
+        return bundle;
+    }
+
+    private static Bundle createExpectedValidBundle() {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable(EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
+                ComponentName.unflattenFromString(NFC_INTENT_COMPONENT_NAME));
+        bundle.putString(EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME, NFC_INTENT_PACKAGE_NAME);
+        bundle.putString(EXTRA_PROVISIONING_LOCALE, NFC_INTENT_LOCALE);
+        bundle.putString(EXTRA_PROVISIONING_TIME_ZONE, NFC_INTENT_TIMEZONE);
+        bundle.putString(EXTRA_PROVISIONING_WIFI_SSID, NFC_INTENT_WIFI_SSID);
+        bundle.putString(EXTRA_PROVISIONING_WIFI_SECURITY_TYPE, NFC_INTENT_WIFI_SECURITY_TYPE);
+        bundle.putString(EXTRA_PROVISIONING_WIFI_PASSWORD, NFC_INTENT_WIFI_PASSWORD);
+        bundle.putParcelable(EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE, ADMIN_EXTRAS_BUNDLE);
+        bundle.putParcelable(EXTRA_PROVISIONING_ROLE_HOLDER_EXTRAS_BUNDLE,
+                ROLE_HOLDER_EXTRAS_BUNDLE);
+        bundle.putInt(EXTRA_PROVISIONING_TRIGGER, PROVISIONING_TRIGGER_NFC);
+        return bundle;
     }
 
     @Postsubmit(reason = "New test")
@@ -1559,14 +1612,6 @@ public final class DevicePolicyManagerTest {
         sDevicePolicyManager.getDevicePolicyManagementRoleHolderPackage();
     }
 
-    private static PersistableBundle createAdminExtrasBundle() {
-        PersistableBundle result = new PersistableBundle();
-        result.putString("key1", "value1");
-        result.putInt("key2", 2);
-        result.putBoolean("key3", true);
-        return result;
-    }
-
     private static void assertBundlesEqual(BaseBundle bundle1, BaseBundle bundle2) {
         if (bundle1 != null) {
             assertWithMessage("Intent bundles are not equal")
@@ -1574,9 +1619,19 @@ public final class DevicePolicyManagerTest {
             assertWithMessage("Intent bundles are not equal")
                     .that(bundle1.keySet().size()).isEqualTo(bundle2.keySet().size());
             for (String key : bundle1.keySet()) {
-                assertWithMessage("Intent bundles are not equal")
-                        .that(bundle1.get(key))
-                        .isEqualTo(bundle2.get(key));
+                if (bundle1.get(key) != null && bundle1.get(key) instanceof PersistableBundle) {
+                    assertWithMessage("Intent bundles are not equal")
+                            .that(bundle2.containsKey(key)).isTrue();
+                    assertWithMessage("Intent bundles are not equal")
+                            .that(bundle2.get(key)).isInstanceOf(PersistableBundle.class);
+                    assertBundlesEqual(
+                            (PersistableBundle) bundle1.get(key),
+                            (PersistableBundle) bundle2.get(key));
+                } else {
+                    assertWithMessage("Intent bundles are not equal")
+                            .that(bundle1.get(key))
+                            .isEqualTo(bundle2.get(key));
+                }
             }
         } else {
             assertWithMessage("Intent bundles are not equal").that(bundle2).isNull();
