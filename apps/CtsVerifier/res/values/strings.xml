@@ -6574,6 +6574,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="ble_rx_tx_calibration_test_instructions">
         To verify this requirement, work with your chip vendor. The chip vendor can measure the
         channel flatness and identify the differences between cores and channels.
+        \nThe RSSI range must be less than or equal to 6 dBm to pass.
     </string>
     <string name="report_channels_ble_rssi_range">Report RSSI Range Across Channels (dBm)</string>
     <string name="report_cores_ble_rssi_range">[Optional] Report RSSI Range Across Cores (dBm)</string>
