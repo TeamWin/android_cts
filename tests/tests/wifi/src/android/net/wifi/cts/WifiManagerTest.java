@@ -5492,9 +5492,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 network.setBssidAllowlist(Collections.emptyList());
                 mWifiManager.updateNetwork(network);
             }
-            // trigger a disconnect and wait for disconnect.
-            mWifiManager.disconnect();
-            waitForDisconnection();
+
+            // Disable and re-enable Wifi to avoid reconnect to the secondary candidate
+            setWifiEnabled(false);
+            setWifiEnabled(true);
 
             // Now trigger scan and ensure that the device does not connect to any networks.
             mWifiManager.startScan();
