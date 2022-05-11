@@ -21,6 +21,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.DreamCoordinator;
 import android.view.Display;
@@ -31,6 +32,7 @@ import androidx.test.runner.AndroidJUnit4;
 import static com.google.common.truth.Truth.assertThat;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -84,6 +86,9 @@ public class DreamOverlayTest extends ActivityManagerTestBase {
 
     @Test
     public void testDreamOverlayAppearance() throws InterruptedException {
+        Assume.assumeFalse(mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUTOMOTIVE));
+
         // Listen for the overlay to be shown
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         mContext.registerReceiver(
