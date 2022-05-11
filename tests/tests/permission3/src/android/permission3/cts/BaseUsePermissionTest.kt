@@ -598,7 +598,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                 button.click()
             }
 
-            val shouldShowStorageWarning = !isTv && !isWatch &&
+            val shouldShowStorageWarning = !isWatch &&
                 SdkLevel.isAtLeastT() && targetSdk <= Build.VERSION_CODES.S_V2 &&
                 permission in MEDIA_PERMISSIONS
             if (shouldShowStorageWarning) {
