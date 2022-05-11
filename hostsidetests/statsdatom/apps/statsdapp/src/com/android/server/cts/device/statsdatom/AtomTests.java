@@ -226,6 +226,7 @@ public class AtomTests {
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_ESTABLISH_VPN_SERVICE, 117);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_ESTABLISH_VPN_MANAGER, 118);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_ACCESS_RESTRICTED_SETTINGS, 119);
+        APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_RECEIVE_AMBIENT_TRIGGER_AUDIO, 120);
     }
 
     @Test
