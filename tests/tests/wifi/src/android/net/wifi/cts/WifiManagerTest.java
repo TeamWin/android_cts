@@ -1184,6 +1184,27 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Verify setting the screen-on connectivity scan delay.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    public void testSetOneShotScreenOnConnectivityScanDelayMillis() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        assertThrows(SecurityException.class,
+                () -> mWifiManager.setOneShotScreenOnConnectivityScanDelayMillis(100));
+        assertThrows(IllegalArgumentException.class, () -> {
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.setOneShotScreenOnConnectivityScanDelayMillis(-1));
+        });
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setOneShotScreenOnConnectivityScanDelayMillis(10000));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setOneShotScreenOnConnectivityScanDelayMillis(0));
+    }
+
+    /**
      * Verify setting the scan schedule.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)

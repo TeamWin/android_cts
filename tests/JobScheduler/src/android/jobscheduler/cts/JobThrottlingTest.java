@@ -1054,6 +1054,7 @@ public class JobThrottlingTest {
 
     @Test
     public void testRestrictingStopReason_Quota() throws Exception {
+        assumeTrue("app standby not enabled", mAppStandbyEnabled);
         assumeFalse("not testable in automotive device", mAutomotiveDevice); // Test needs battery
         assumeFalse("not testable in leanback device", mLeanbackOnly); // Test needs battery
 
@@ -1082,6 +1083,7 @@ public class JobThrottlingTest {
 
     @Test
     public void testRestrictingStopReason_ExpeditedQuota_startOnCharging() throws Exception {
+        assumeTrue("app standby not enabled", mAppStandbyEnabled);
         assumeFalse("not testable in automotive device", mAutomotiveDevice); // Test needs battery
         assumeFalse("not testable in leanback device", mLeanbackOnly); // Test needs battery
 
@@ -1112,6 +1114,7 @@ public class JobThrottlingTest {
 
     @Test
     public void testRestrictingStopReason_ExpeditedQuota_noCharging() throws Exception {
+        assumeTrue("app standby not enabled", mAppStandbyEnabled);
         assumeFalse("not testable in automotive device", mAutomotiveDevice); // Test needs battery
         assumeFalse("not testable in leanback device", mLeanbackOnly); // Test needs battery
 

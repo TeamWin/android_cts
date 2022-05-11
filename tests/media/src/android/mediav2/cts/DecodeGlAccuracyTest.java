@@ -45,14 +45,15 @@ import javax.microedition.khronos.opengles.GL10;
  * data in compressed YUV format. The output of the decoders is shared with OpenGL
  * as external textures. And OpenGL outputs RGB pixels. The class validates whether
  * the conversion of input YUV to output RGB is in accordance with the chosen color
- * aspects.
+ * aspects. Video files used in the test do not have any color aspects info coded in
+ * the bitstreams
  */
 @RunWith(Parameterized.class)
 public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
-    private final String LOG_TAG = DecodeGlAccuracyTest.class.getSimpleName();
+    private static final String LOG_TAG = DecodeGlAccuracyTest.class.getSimpleName();
 
     // Allowed color tolerance to account for differences in the conversion process
-    private final int ALLOWED_COLOR_DELTA = 8;
+    private static final int ALLOWED_COLOR_DELTA = 8;
 
     // The test video assets were generated with a set of color bars.
     // Depending on the color aspects, the values from OpenGL pbuffer
@@ -95,7 +96,7 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
     // LVL_OFFSET_FR = Transpose({0, 128, 128})
 
     // Reference RGB values for 601 Limited Range
-    private final int[][] mColorBars601LR = new int[][]{
+    private static final int[][] COLOR_BARS_601LR = new int[][]{
             {255, 17, 252},
             {219, 40, 44},
             {255, 196, 0},
@@ -109,7 +110,7 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
             {127, 219, 82},
     };
     // Reference RGB values for 601 Full Range
-    private final int[][] mColorBars601FR = new int[][]{
+    private static final int[][] COLOR_BARS_601FR = new int[][]{
             {255, 31, 237},
             {204, 51, 55},
             {236, 188, 0},
@@ -123,7 +124,7 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
             {125, 208, 88},
     };
     // Reference RGB values for 709 Limited Range
-    private final int[][] mColorBars709LR = new int[][]{
+    private static final int[][] COLOR_BARS_709LR = new int[][]{
             {255, 57, 255},
             {234, 57, 42},
             {255, 188, 0},
@@ -137,6 +138,11 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
             {120, 202, 78},
     };
 
+    // The test videos were generated with the above color bars. Each bar is of width 16.
+    private static final int COLOR_BAR_WIDTH = 16;
+    private static final int COLOR_BAR_OFFSET_X = 8;
+    private static final int COLOR_BAR_OFFSET_Y = 64;
+
     private int[][] mColorBars;
 
     private final String mCompName;
@@ -148,12 +154,6 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
     private final int mTransferCurve;
 
     private OutputSurface mEGLWindowOutSurface;
-
-    // The test videos were generated with the above color bars. Each bar is of
-    // width 16.
-    private final int mColorBarWidth = 16;
-    private final int xOffset = 8;
-    private final int yOffset = 64;
     private int mBadFrames = 0;
 
     public DecodeGlAccuracyTest(String decoder, String mediaType, String fileName, int range,
@@ -165,16 +165,16 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
         mStandard = standard;
         mTransferCurve = transfer;
 
-        mColorBars = mColorBars601LR;
+        mColorBars = COLOR_BARS_601LR;
         if ((mStandard == MediaFormat.COLOR_STANDARD_BT601_NTSC) &&
                 (mRange == MediaFormat.COLOR_RANGE_LIMITED)) {
-            mColorBars = mColorBars601LR;
+            mColorBars = COLOR_BARS_601LR;
         } else if ((mStandard == MediaFormat.COLOR_STANDARD_BT601_NTSC) &&
                 (mRange == MediaFormat.COLOR_RANGE_FULL)) {
-            mColorBars = mColorBars601FR;
+            mColorBars = COLOR_BARS_601FR;
         } else if ((mStandard == MediaFormat.COLOR_STANDARD_BT709) &&
                 (mRange == MediaFormat.COLOR_RANGE_LIMITED)) {
-            mColorBars = mColorBars709LR;
+            mColorBars = COLOR_BARS_709LR;
         } else {
             Log.e(LOG_TAG, "Unsupported Color Aspects.");
         }
@@ -185,6 +185,7 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
         final boolean isEncoder = false;
         final boolean needAudio = false;
         final boolean needVideo = true;
+
         final List<Object[]> argsList = Arrays.asList(new Object[][]{
                 // mediaType, asset, range, standard, transfer
                 // 601LR
@@ -268,8 +269,8 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
         ByteBuffer pixelBuf = ByteBuffer.allocateDirect(4);
         boolean frameFailed = false;
         for (int i = 0; i < mColorBars.length; i++) {
-            int x = mColorBarWidth * i + xOffset;
-            int y = yOffset;
+            int x = COLOR_BAR_WIDTH * i + COLOR_BAR_OFFSET_X;
+            int y = COLOR_BAR_OFFSET_Y;
             GLES20.glReadPixels(x, y, 1, 1, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, pixelBuf);
             int r = pixelBuf.get(0) & 0xff;
             int g = pixelBuf.get(1) & 0xff;

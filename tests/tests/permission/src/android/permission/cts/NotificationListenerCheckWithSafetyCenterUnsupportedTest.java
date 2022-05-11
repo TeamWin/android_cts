@@ -72,7 +72,7 @@ public class NotificationListenerCheckWithSafetyCenterUnsupportedTest
         runNotificationListenerCheck();
 
         ensure(() -> assertNull("Expected no notifications", getNotification(false)),
-                EXPECTED_TIMEOUT_MILLIS);
+                ENSURE_NOTIFICATION_NOT_SHOWN_EXPECTED_TIMEOUT_MILLIS);
     }
 
     @Test
@@ -82,7 +82,7 @@ public class NotificationListenerCheckWithSafetyCenterUnsupportedTest
         runNotificationListenerCheck();
 
         ensure(() -> assertNull("Expected no notifications", getNotification(false)),
-                EXPECTED_TIMEOUT_MILLIS);
+                ENSURE_NOTIFICATION_NOT_SHOWN_EXPECTED_TIMEOUT_MILLIS);
     }
 
     @Test
@@ -92,7 +92,7 @@ public class NotificationListenerCheckWithSafetyCenterUnsupportedTest
         runNotificationListenerCheck();
 
         ensure(() -> assertNull("Expected no notifications", getNotification(false)),
-                EXPECTED_TIMEOUT_MILLIS);
+                ENSURE_NOTIFICATION_NOT_SHOWN_EXPECTED_TIMEOUT_MILLIS);
     }
 
     @Test
@@ -103,6 +103,6 @@ public class NotificationListenerCheckWithSafetyCenterUnsupportedTest
         runNotificationListenerCheck();
 
         ensure(() -> assertNull("Expected no notifications", getNotification(false)),
-                EXPECTED_TIMEOUT_MILLIS);
+                ENSURE_NOTIFICATION_NOT_SHOWN_EXPECTED_TIMEOUT_MILLIS);
     }
 }

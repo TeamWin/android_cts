@@ -28,8 +28,8 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 import static com.android.server.job.nano.JobPackageHistoryProto.START_PERIODIC_JOB;
 import static com.android.server.job.nano.JobPackageHistoryProto.STOP_PERIODIC_JOB;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -68,8 +68,6 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -86,7 +84,6 @@ public class BaseNotificationListenerCheckTest {
 
     protected static final String TEST_APP_PKG =
             "android.permission.cts.appthathasnotificationlistener";
-    private static final String TEST_APP_LABEL = "CtsLocationAccess";
     private static final String TEST_APP_NOTIFICATION_SERVICE =
             TEST_APP_PKG + ".CtsNotificationListenerService";
     protected static final String TEST_APP_NOTIFICATION_LISTENER_APK =
@@ -123,8 +120,8 @@ public class BaseNotificationListenerCheckTest {
      */
     public static final int NOTIFICATION_LISTENER_CHECK_NOTIFICATION_ID = 3;
 
-    private static final long UNEXPECTED_TIMEOUT_MILLIS = 10000;
-    protected static final long EXPECTED_TIMEOUT_MILLIS = 15000;
+    protected static final long UNEXPECTED_TIMEOUT_MILLIS = 10000;
+    protected static final long ENSURE_NOTIFICATION_NOT_SHOWN_EXPECTED_TIMEOUT_MILLIS = 5000;
 
     private static final Context sContext = InstrumentationRegistry.getTargetContext();
     private static final PackageManager sPackageManager = sContext.getPackageManager();
@@ -176,22 +173,18 @@ public class BaseNotificationListenerCheckTest {
                     PROPERTY_JOB_SCHEDULER_RATE_LIMIT_WINDOW_MILLIS,
                     Integer.toString(30000));
 
+    @Rule
+    public CtsNotificationListenerHelperRule ctsNotificationListenerHelper =
+            new CtsNotificationListenerHelperRule(sContext);
+
     @BeforeClass
     public static void beforeClassSetup() throws Exception {
         // Disallow any OEM enabled NLS
         disallowPreexistingNotificationListeners();
-
-        // Allow NLS used to verify notifications sent
-        setNotificationListenerServiceAllowed(
-                new ComponentName(sContext, NotificationListener.class), true);
     }
 
     @AfterClass
     public static void afterClassTearDown() throws Throwable {
-        // Disallow NLS used to verify notifications sent
-        setNotificationListenerServiceAllowed(
-                new ComponentName(sContext, NotificationListener.class), false);
-
         // Reallow any previously OEM allowed NLS
         reallowPreexistingNotificationListeners();
     }
@@ -318,87 +311,14 @@ public class BaseNotificationListenerCheckTest {
         eventually(() -> {
             long startTime = getLastJobTime(START_PERIODIC_JOB);
             assertTrue(startTime + " !> " + beforeJob, startTime > beforeJob);
-        }, EXPECTED_TIMEOUT_MILLIS);
+        }, UNEXPECTED_TIMEOUT_MILLIS);
 
         // We can't simply require startTime <= endTime because the time being reported isn't
         // accurate, and sometimes the end time may come before the start time by around 100 ms.
         eventually(() -> {
             long stopTime = getLastJobTime(STOP_PERIODIC_JOB);
             assertTrue(stopTime + " !> " + beforeJob, stopTime > beforeJob);
-        }, EXPECTED_TIMEOUT_MILLIS);
-    }
-
-    /**
-     * Get a notifications thrown by the permission controller that are currently visible.
-     *
-     * @return {@link List} of {@link StatusBarNotification}
-     */
-    private List<StatusBarNotification> getPermissionControllerNotifications() throws Exception {
-        NotificationListenerService notificationService = NotificationListener.getInstance();
-        List<StatusBarNotification> permissionControllerNotifications = new ArrayList<>();
-
-        for (StatusBarNotification notification : notificationService.getActiveNotifications()) {
-            if (notification.getPackageName().equals(PERMISSION_CONTROLLER_PKG)) {
-                permissionControllerNotifications.add(notification);
-            }
-        }
-
-        return permissionControllerNotifications;
-    }
-
-    /**
-     * Get a notification listener notification that is currently visible.
-     *
-     * @param cancelNotification if {@code true} the notification is canceled inside this method
-     * @return The notification or {@code null} if there is none
-     */
-    protected StatusBarNotification getNotification(boolean cancelNotification) throws Throwable {
-        NotificationListenerService notificationService = NotificationListener.getInstance();
-
-        List<StatusBarNotification> notifications = getPermissionControllerNotifications();
-        if (notifications.isEmpty()) {
-            return null;
-        }
-
-        for (StatusBarNotification notification : notifications) {
-            // There may be multiple notification listeners on device that are already allowed. Just
-            // check for a notification posted from the NotificationListenerCheck
-            if (notification.getId() == NOTIFICATION_LISTENER_CHECK_NOTIFICATION_ID) {
-                if (cancelNotification) {
-                    notificationService.cancelNotification(notification.getKey());
-
-                    // Wait for notification to get canceled
-                    eventually(() -> assertFalse(
-                            Arrays.asList(notificationService.getActiveNotifications()).contains(
-                                    notification)), UNEXPECTED_TIMEOUT_MILLIS);
-                }
-
-                return notification;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Clears all permission controller notifications that are currently visible.
-     */
-    private void clearPermissionControllerNotifications() throws Throwable {
-        NotificationListenerService notificationService = NotificationListener.getInstance();
-
-        List<StatusBarNotification> notifications = getPermissionControllerNotifications();
-        if (notifications.isEmpty()) {
-            return;
-        }
-
-        for (StatusBarNotification notification : notifications) {
-            notificationService.cancelNotification(notification.getKey());
-
-            // Wait for notification to get canceled
-            eventually(() -> assertFalse(
-                    Arrays.asList(notificationService.getActiveNotifications()).contains(
-                            notification)), UNEXPECTED_TIMEOUT_MILLIS);
-        }
+        }, UNEXPECTED_TIMEOUT_MILLIS);
     }
 
     /**
@@ -490,13 +410,27 @@ public class BaseNotificationListenerCheckTest {
      * Preshow/dismiss cts NotificationListener notification as it negatively affects test results
      * (can result in unexpected test pass/failures)
      */
-    protected void showAndDismissCtsNotificationListener() throws Throwable {
+    protected void triggerAndDismissCtsNotificationListenerNotification() throws Throwable {
         // CtsNotificationListenerService isn't enabled at this point, but NotificationListener
         // should be. Mark as notified by showing and dismissing
         runNotificationListenerCheck();
 
-        // Sleep a little to avoid raciness in time keeping
-        Thread.sleep(1000);
+        // Ensure notification shows and dismiss
+        eventually(() -> assertNotNull(getNotification(true)),
+                UNEXPECTED_TIMEOUT_MILLIS);
+    }
+
+    /**
+     * Get a notification listener notification that is currently visible.
+     *
+     * @param cancelNotification if `true` the notification is canceled inside this method
+     * @return The notification or `null` if there is none
+     */
+    protected StatusBarNotification getNotification(boolean cancelNotification) throws Throwable {
+        return NotificationUtils.getNotificationForPackageAndId(
+                PERMISSION_CONTROLLER_PKG,
+                NOTIFICATION_LISTENER_CHECK_NOTIFICATION_ID,
+                cancelNotification);
     }
 
     /**
@@ -504,6 +438,6 @@ public class BaseNotificationListenerCheckTest {
      */
     protected void clearNotifications() throws Throwable {
         // Clear notification if present
-        clearPermissionControllerNotifications();
+        NotificationUtils.clearNotificationsForPackage(PERMISSION_CONTROLLER_PKG);
     }
 }

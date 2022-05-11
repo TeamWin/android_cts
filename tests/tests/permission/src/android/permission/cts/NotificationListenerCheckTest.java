@@ -57,12 +57,9 @@ public class NotificationListenerCheckTest extends BaseNotificationListenerCheck
 
         // Cts NLS is required to verify sent Notifications, however, we don't want it to show up in
         // testing
-        showAndDismissCtsNotificationListener();
+        triggerAndDismissCtsNotificationListenerNotification();
 
         clearNotifications();
-
-        // Sleep a little to avoid raciness in time keeping
-        Thread.sleep(1000);
 
         // Install and allow the app with NLS for testing
         install(TEST_APP_NOTIFICATION_LISTENER_APK);
@@ -85,7 +82,7 @@ public class NotificationListenerCheckTest extends BaseNotificationListenerCheck
         runNotificationListenerCheck();
 
         ensure(() -> assertNull("Expected no notifications", getNotification(false)),
-                EXPECTED_TIMEOUT_MILLIS);
+                ENSURE_NOTIFICATION_NOT_SHOWN_EXPECTED_TIMEOUT_MILLIS);
     }
 
     @Test
@@ -95,7 +92,7 @@ public class NotificationListenerCheckTest extends BaseNotificationListenerCheck
         runNotificationListenerCheck();
 
         ensure(() -> assertNull("Expected no notifications", getNotification(false)),
-                EXPECTED_TIMEOUT_MILLIS);
+                ENSURE_NOTIFICATION_NOT_SHOWN_EXPECTED_TIMEOUT_MILLIS);
     }
 
     @Test
@@ -103,42 +100,42 @@ public class NotificationListenerCheckTest extends BaseNotificationListenerCheck
         runNotificationListenerCheck();
 
         eventually(() -> assertNotNull("Expected notification, none found", getNotification(false)),
-                EXPECTED_TIMEOUT_MILLIS);
+                UNEXPECTED_TIMEOUT_MILLIS);
     }
 
     @Test
     public void notificationIsShownOnlyOnce() throws Throwable {
         runNotificationListenerCheck();
-        eventually(() -> assertNotNull(getNotification(true)), EXPECTED_TIMEOUT_MILLIS);
+        eventually(() -> assertNotNull(getNotification(true)), UNEXPECTED_TIMEOUT_MILLIS);
 
         runNotificationListenerCheck();
 
         ensure(() -> assertNull("Expected no notifications", getNotification(false)),
-                EXPECTED_TIMEOUT_MILLIS);
+                ENSURE_NOTIFICATION_NOT_SHOWN_EXPECTED_TIMEOUT_MILLIS);
     }
 
     @Test
     public void notificationIsShownAgainAfterClear() throws Throwable {
         runNotificationListenerCheck();
 
-        eventually(() -> assertNotNull(getNotification(true)), EXPECTED_TIMEOUT_MILLIS);
+        eventually(() -> assertNotNull(getNotification(true)), UNEXPECTED_TIMEOUT_MILLIS);
 
         clearAppState(TEST_APP_PKG);
 
         // Wait until package is cleared and permission controller has cleared the state
-        Thread.sleep(10000);
+        Thread.sleep(2000);
 
         allowTestAppNotificationListenerService();
         runNotificationListenerCheck();
 
-        eventually(() -> assertNotNull(getNotification(true)), EXPECTED_TIMEOUT_MILLIS);
+        eventually(() -> assertNotNull(getNotification(true)), UNEXPECTED_TIMEOUT_MILLIS);
     }
 
     @Test
     public void notificationIsShownAgainAfterUninstallAndReinstall() throws Throwable {
         runNotificationListenerCheck();
 
-        eventually(() -> assertNotNull(getNotification(true)), EXPECTED_TIMEOUT_MILLIS);
+        eventually(() -> assertNotNull(getNotification(true)), UNEXPECTED_TIMEOUT_MILLIS);
 
         uninstallApp(TEST_APP_PKG);
 
@@ -150,21 +147,21 @@ public class NotificationListenerCheckTest extends BaseNotificationListenerCheck
         allowTestAppNotificationListenerService();
         runNotificationListenerCheck();
 
-        eventually(() -> assertNotNull(getNotification(true)), EXPECTED_TIMEOUT_MILLIS);
+        eventually(() -> assertNotNull(getNotification(true)), UNEXPECTED_TIMEOUT_MILLIS);
     }
 
     @Test
     public void removeNotificationOnUninstall() throws Throwable {
         runNotificationListenerCheck();
 
-        eventually(() -> assertNotNull(getNotification(false)), EXPECTED_TIMEOUT_MILLIS);
+        eventually(() -> assertNotNull(getNotification(false)), UNEXPECTED_TIMEOUT_MILLIS);
 
         uninstallApp(TEST_APP_PKG);
 
         // Wait until package permission controller has cleared the state
         Thread.sleep(2000);
 
-        eventually(() -> assertNull(getNotification(false)), EXPECTED_TIMEOUT_MILLIS);
+        eventually(() -> assertNull(getNotification(false)), UNEXPECTED_TIMEOUT_MILLIS);
     }
 
     @Test
@@ -175,7 +172,7 @@ public class NotificationListenerCheckTest extends BaseNotificationListenerCheck
 
         // We don't expect a notification, but try to trigger one anyway
         ensure(() -> assertNull("Expected no notifications", getNotification(false)),
-                EXPECTED_TIMEOUT_MILLIS);
+                ENSURE_NOTIFICATION_NOT_SHOWN_EXPECTED_TIMEOUT_MILLIS);
     }
 
     @Test
@@ -187,7 +184,7 @@ public class NotificationListenerCheckTest extends BaseNotificationListenerCheck
                     StatusBarNotification notification = getNotification(false);
                     assertNotNull(notification);
                     return notification;
-                }, EXPECTED_TIMEOUT_MILLIS);
+                }, UNEXPECTED_TIMEOUT_MILLIS);
 
         // Verify content intent
         PendingIntent contentIntent = currentNotification.getNotification().contentIntent;
