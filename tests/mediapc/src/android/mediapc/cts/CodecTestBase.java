@@ -42,7 +42,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -178,6 +180,8 @@ abstract class CodecTestBase {
     static final int SELECT_ALL = 0; // Select all codecs
     static final int SELECT_HARDWARE = 1; // Select Hardware codecs only
     static final int SELECT_SOFTWARE = 2; // Select Software codecs only
+    static final int SELECT_AUDIO = 3; // Select Audio codecs only
+    static final int SELECT_VIDEO = 4; // Select Video codecs only
     // Maintain Timeouts in sync with their counterpart in NativeMediaCommon.h
     static final long Q_DEQ_TIMEOUT_US = 5000; // block at most 5ms while looking for io buffers
     static final int RETRY_LIMIT = 100; // max poll counter before test aborts and returns error
@@ -381,6 +385,31 @@ abstract class CodecTestBase {
             }
         }
         return listOfCodecs;
+    }
+
+    static Set<String> getMimesOfAvailableCodecs(int codecAV, int codecType) {
+        MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
+        Set<String> listOfMimes = new HashSet<>();
+        for (MediaCodecInfo codecInfo : codecInfos) {
+            if (codecType == SELECT_HARDWARE && !codecInfo.isHardwareAccelerated()) {
+                continue;
+            }
+            if (codecType == SELECT_SOFTWARE && !codecInfo.isSoftwareOnly()) {
+                continue;
+            }
+            String[] types = codecInfo.getSupportedTypes();
+            for (String type : types) {
+                if (codecAV == SELECT_AUDIO && !type.startsWith("audio/")) {
+                    continue;
+                }
+                if (codecAV == SELECT_VIDEO && !type.startsWith("video/")) {
+                    continue;
+                }
+                listOfMimes.add(type);
+            }
+        }
+        return listOfMimes;
     }
 }
 
