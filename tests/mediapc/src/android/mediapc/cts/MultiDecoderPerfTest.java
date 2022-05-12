@@ -18,6 +18,7 @@ package android.mediapc.cts;
 
 import static org.junit.Assert.assertTrue;
 
+import android.media.MediaCodecInfo.VideoCapabilities.PerformancePoint;
 import android.media.MediaFormat;
 import android.mediapc.cts.common.Utils;
 import android.os.Build;
@@ -53,6 +54,7 @@ import java.util.concurrent.Future;
 @RunWith(Parameterized.class)
 public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
     private static final String LOG_TAG = MultiDecoderPerfTest.class.getSimpleName();
+    private static final int REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES = 2;
 
     private final String mDecoderName;
 
@@ -68,7 +70,7 @@ public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
     public static Collection<Object[]> inputParams() {
         final List<Object[]> argsList = new ArrayList<>();
         for (String mime : mMimeList) {
-            ArrayList<String> listOfDecoders = getHardwareCodecsForMime(mime, false);
+            ArrayList<String> listOfDecoders = getHardwareCodecsForMime(mime, false, true);
             for (String decoder : listOfDecoders) {
                 for (boolean isAsync : boolStates) {
                     argsList.add(new Object[]{mime, decoder, isAsync});
@@ -88,7 +90,8 @@ public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
     @CddTest(requirement = "2.2.7.1/5.1/H-1-1,H-1-2")
     public void test720p() throws Exception {
         Assume.assumeTrue(Utils.isSPerfClass() || Utils.isRPerfClass() || !Utils.isPerfClass());
-
+        Assume.assumeFalse("Skipping regular performance tests for secure codecs",
+                isSecureSupportedCodec(mDecoderName, mMime));
         boolean hasVP9 = mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP9);
         int requiredMinInstances = getRequiredMinConcurrentInstances(hasVP9);
         testCodec(m720pTestFiles, 720, 1280, requiredMinInstances);
@@ -104,7 +107,41 @@ public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
     @CddTest(requirement = "2.2.7.1/5.1/H-1-1,H-1-2")
     public void test1080p() throws Exception {
         Assume.assumeTrue(Utils.isTPerfClass() || !Utils.isPerfClass());
+        Assume.assumeFalse("Skipping regular performance tests for secure codecs",
+                isSecureSupportedCodec(mDecoderName, mMime));
         testCodec(m1080pTestFiles, 1080, 1920, REQUIRED_MIN_CONCURRENT_INSTANCES);
+    }
+
+    /**
+     * Validates if hardware decoder that supports required secure decode perf is present
+     */
+    @LargeTest
+    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    // TODO(b/218771970) Add @CddTest annotation
+    public void testReqSecureDecodeSupport() throws Exception {
+        Assume.assumeTrue(Utils.isTPerfClass() || !Utils.isPerfClass());
+        Assume.assumeTrue("Skipping secure decode support tests for non-secure codecs",
+                isSecureSupportedCodec(mDecoderName, mMime));
+
+        PerformancePoint reqPP =
+                new PerformancePoint(1920, 1080, 30 * REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES);
+
+        boolean codecSupportsReqPP = codecSupportsPP(mDecoderName, mMime, reqPP);
+
+        if (Utils.isTPerfClass()) {
+            assertTrue(
+                    "Required Secure Decode Support required for MPC >= Android T, unsupported " +
+                            "codec: " + mDecoderName, codecSupportsReqPP);
+        } else {
+            DeviceReportLog log =
+                    new DeviceReportLog("MediaPerformanceClassLogs", "SecureDecodeSupport");
+            log.addValue("Req Secure Decode Support: " + mDecoderName, codecSupportsReqPP,
+                    ResultType.NEUTRAL, ResultUnit.NONE);
+            // TODO(b/218771970) Log CDD sections
+            log.setSummary("MPC 13: Secure Decode requirements", 0, ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+            log.submit(InstrumentationRegistry.getInstrumentation());
+        }
     }
 
     private void testCodec(Map<String, String> testFiles, int height, int width,
