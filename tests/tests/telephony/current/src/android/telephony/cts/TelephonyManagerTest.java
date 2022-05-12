@@ -5165,6 +5165,37 @@ public class TelephonyManagerTest {
             // expected
         }
     }
+
+    @Test
+    public void testIgnoreInvalidNetworkType() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        // NETWORK_TYPE_BITMASK_LTE_CA is invalid, should be converted into NETWORK_TYPE_BITMASK_LTE
+        long invalidAllowedNetworkTypes = TelephonyManager.NETWORK_TYPE_BITMASK_NR
+                | TelephonyManager.NETWORK_TYPE_BITMASK_LTE_CA;
+        long expectedAllowedNetworkTypes = TelephonyManager.NETWORK_TYPE_BITMASK_NR
+                | TelephonyManager.NETWORK_TYPE_BITMASK_LTE;
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.setAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER,
+                            invalidAllowedNetworkTypes));
+
+            long deviceAllowedNetworkTypes = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> {
+                        return tm.getAllowedNetworkTypesForReason(
+                                TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER);
+                    }
+            );
+            assertEquals(expectedAllowedNetworkTypes, deviceAllowedNetworkTypes);
+        } catch (SecurityException se) {
+            fail("testIgnoreInvalidNetworkType: SecurityException not expected");
+        }
+    }
+
     @Test
     public void getSimSlotMappingTest() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
