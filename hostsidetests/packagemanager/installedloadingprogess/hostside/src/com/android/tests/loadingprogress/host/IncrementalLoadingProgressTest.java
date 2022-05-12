@@ -34,6 +34,7 @@ import com.android.tradefed.util.RunUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -147,6 +148,7 @@ public class IncrementalLoadingProgressTest extends BaseHostJUnit4Test {
 
     @LargeTest
     @Test
+    @Ignore("b/229901433")
     public void testOnPackageLoadingProgressChangedCalledWithPartialLoaded() throws Exception {
         assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME, TEST_CLASS_NAME,
                 "testOnPackageLoadingProgressChangedCalledWithPartialLoaded"));

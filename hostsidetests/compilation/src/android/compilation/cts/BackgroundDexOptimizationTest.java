@@ -88,6 +88,7 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
     @Before
     public void setUp() throws Exception {
         mDevice = getDevice();
+        assertThat(mDevice.waitForBootComplete(REBOOT_TIMEOUT_MS)).isTrue();
     }
 
     @Test

@@ -565,7 +565,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     public void testDisallowPipLaunchFromStoppedActivity() {
         // Launch the bottom pip activity which will launch a new activity on top and attempt to
         // enter pip when it is stopped
-        launchActivity(PIP_ON_STOP_ACTIVITY);
+        launchActivityNoWait(PIP_ON_STOP_ACTIVITY);
 
         // Wait for the bottom pip activity to be stopped
         mWmState.waitForActivityState(PIP_ON_STOP_ACTIVITY, STATE_STOPPED);
@@ -694,7 +694,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         // Launch the PIP activity on pause, and have it start another activity on
         // top of itself.  Wait for the new activity to be visible and ensure that the pinned stack
         // was not created in the process
-        launchActivity(PIP_ACTIVITY,
+        launchActivityNoWait(PIP_ACTIVITY,
                 extraString(EXTRA_ENTER_PIP_ON_PAUSE, "true"),
                 extraString(EXTRA_START_ACTIVITY, getActivityName(NON_RESIZEABLE_ACTIVITY)));
         mWmState.computeState(
@@ -714,9 +714,11 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         // Launch the PIP activity on pause, and set it to finish itself after
         // some period.  Wait for the previous activity to be visible, and ensure that the pinned
         // stack was not created in the process
-        launchActivity(PIP_ACTIVITY,
+        launchActivityNoWait(PIP_ACTIVITY,
                 extraString(EXTRA_ENTER_PIP_ON_PAUSE, "true"),
                 extraString(EXTRA_FINISH_SELF_ON_RESUME, "true"));
+        mWmState.computeState(
+                new WaitForValidActivityState(TEST_ACTIVITY));
         assertPinnedStackDoesNotExist();
     }
 
@@ -1016,7 +1018,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
      */
     @Test
     public void testPipFromTaskWithAnotherFinishingActivity() {
-        launchActivity(LAUNCH_ENTER_PIP_ACTIVITY,
+        launchActivityNoWait(LAUNCH_ENTER_PIP_ACTIVITY,
                 extraString(EXTRA_FINISH_SELF_ON_RESUME, "true"));
 
         waitForEnterPip(PIP_ACTIVITY);
@@ -1108,8 +1110,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                 waitForOrFail("Task in lock mode", () -> {
                     return mAm.getLockTaskModeState() != LOCK_TASK_MODE_NONE;
                 });
-                mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
-                waitForEnterPip(PIP_ACTIVITY);
+                mBroadcastActionTrigger.enterPipAndWait();
                 assertPinnedStackDoesNotExist();
                 launchHomeActivityNoWait();
                 mWmState.computeState();

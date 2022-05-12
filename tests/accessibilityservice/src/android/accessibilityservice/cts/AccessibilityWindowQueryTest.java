@@ -27,8 +27,6 @@ import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.support
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 import static android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplaySession;
 import static android.accessibilityservice.cts.utils.DisplayUtils.getStatusBarHeight;
-import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
-import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED;
@@ -59,12 +57,10 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
-import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.activities.AccessibilityWindowQueryActivity;
 import android.accessibilityservice.cts.activities.NonDefaultDisplayActivity;
 import android.app.Activity;
-import android.app.ActivityTaskManager;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.graphics.Rect;
@@ -88,7 +84,6 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SystemUtil;
-import com.android.compatibility.common.util.TestUtils;
 
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;

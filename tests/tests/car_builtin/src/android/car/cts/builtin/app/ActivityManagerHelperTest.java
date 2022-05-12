@@ -38,12 +38,14 @@ import android.graphics.Rect;
 import android.os.Process;
 import android.os.UserHandle;
 import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.WindowManagerState;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -52,9 +54,17 @@ import org.junit.runner.RunWith;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RunWith(AndroidJUnit4.class)
 public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
+
+    // type values from frameworks/base/core/java/android/app/WindowConfiguration
+    enum ActivityType {
+        ACTIVITY_TYPE_UNDEFINED,
+        ACTIVITY_TYPE_STANDARD
+    }
 
     private static final String TAG = ActivityManagerHelperTest.class.getSimpleName();
 
@@ -67,16 +77,39 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
 
     private static final String GRANTED_PERMISSION_INTERACT_ACROSS_USERS =
             "android.permission.INTERACT_ACROSS_USERS";
+
+    // ActivityManagerHelper.removeTask needs this permission
     private static final String PERMISSION_REMOVE_TASKS = "android.permission.REMOVE_TASKS";
+    // IActivityManager.getAllRootTaskInfos called in ActivityManagerHelper.stopAllTaskForUser
+    // needs this permission.
     private static final String PERMISSION_MANAGE_ACTIVITY_TASKS =
             "android.permission.MANAGE_ACTIVITY_TASKS";
+    // ActivityManager.getRunningAppProcess called in isAppRunning needs this permission
+    private static final String PERMISSION_INTERACT_ACROSS_USERS_FULL =
+            "android.permission.INTERACT_ACROSS_USERS_FULL";
 
     private static final String SIMPLE_APP_PACKAGE_NAME = "android.car.cts.builtin.apps.simple";
-    private static final String SIMPLE_ACTIVITY_NAME = SIMPLE_APP_PACKAGE_NAME + ".SimpleActivity";
+    private static final String SIMPLE_ACTIVITY_RELATIVE_NAME = ".SimpleActivity";
+    private static final String SIMPLE_ACTIVITY_NAME = SIMPLE_APP_PACKAGE_NAME
+            + SIMPLE_ACTIVITY_RELATIVE_NAME;
+    private static final String START_SIMPLE_ACTIVITY_COMMAND = "am start -W -n "
+            + SIMPLE_APP_PACKAGE_NAME + "/" + SIMPLE_ACTIVITY_RELATIVE_NAME;
+    private static final ComponentName SIMPLE_ACTIVITY_COMPONENT_NAME =
+            new ComponentName(SIMPLE_APP_PACKAGE_NAME, SIMPLE_ACTIVITY_RELATIVE_NAME);
+
+    // TODO(b/230757942): replace following shell commands with direct API calls
+    private static final String CREATE_USER_COMMAND = "cmd car_service create-user ";
+    private static final String SWITCH_USER_COMMAND = "cmd car_service switch-user ";
+    private static final String REMOVE_USER_COMMAND = "cmd car_service remove-user ";
+    private static final String START_USER_COMMAND = "am start-user -w ";
+    private static final String GET_CURRENT_USER_COMMAND = "am get-current-user ";
+    private static final String CTS_CAR_TEST_USER_NAME = "CtsCarTestUser";
+    // the value from UserHandle.USER_NULL
+    private static final int INVALID_USER_ID = -10_000;
 
     private static final int OWNING_UID = UserHandle.ALL.getIdentifier();
     private static final int MAX_NUM_TASKS = 1_000;
-    private static final int TIMEOUT_MS = 20_000;
+    private static final int TIMEOUT_MS = 4_000;
 
     // x coordinate of the left boundary line of the animation rectangle
     private static final int ANIMATION_RECT_LEFT = 0;
@@ -235,6 +268,59 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
                 .isEqualTo(expectedLaunchAllowed);
     }
 
+    @Test
+    public void testStopAllTasksForUser() throws Exception {
+        int initialCurrentUserId = getCurrentUserId();
+        int testUserId = INVALID_USER_ID;
+
+        try {
+            mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
+                    PERMISSION_MANAGE_ACTIVITY_TASKS,
+                    PERMISSION_REMOVE_TASKS,
+                    PERMISSION_INTERACT_ACROSS_USERS_FULL);
+
+            testUserId = createUser(CTS_CAR_TEST_USER_NAME);
+            startUser(testUserId);
+
+            switchUser(testUserId);
+            waitUntilUserCurrent(testUserId);
+
+            installPackageForUser(testUserId);
+
+            launchSimpleActivityInCurrentUser();
+            waitUntilSimpleActivityExistenceStatusIs(true);
+            assertThat(isAppRunning(SIMPLE_APP_PACKAGE_NAME)).isTrue();
+
+            switchUser(initialCurrentUserId);
+            waitUntilUserCurrent(initialCurrentUserId);
+
+            stopAllTasksForUser(testUserId);
+            waitUntilSimpleActivityExistenceStatusIs(false);
+            assertThat(isAppRunning(SIMPLE_APP_PACKAGE_NAME)).isFalse();
+
+            removeUser(testUserId);
+            testUserId = INVALID_USER_ID;
+        } finally {
+            mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
+
+            deepCleanTestStopAllTasksForUser(testUserId, initialCurrentUserId);
+        }
+    }
+
+    private void deepCleanTestStopAllTasksForUser(int testUserId, int initialCurrentUserId)
+            throws Exception {
+        try {
+            if (initialCurrentUserId != getCurrentUserId()) {
+                switchUser(initialCurrentUserId);
+                waitUntilUserCurrent(initialCurrentUserId);
+            }
+        } finally {
+            if (testUserId != INVALID_USER_ID) {
+                removeUser(testUserId);
+            }
+        }
+    }
+
     private void assertComponentPermissionGranted(String permission) throws Exception {
         assertThat(ActivityManagerHelper.checkComponentPermission(permission,
                 Process.myUid(), /* owningUid= */ OWNING_UID, /* exported= */ true))
@@ -271,6 +357,37 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
                 .addFlags(FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent, /* options = */ null);
         waitAndAssertTopResumedActivity(simpleActivity, DEFAULT_DISPLAY, "Activity isn't resumed");
+    }
+
+    // launchSimpleActivity in the current user space via the car shell instead of the calling user.
+    // The calling user could be in the background.
+    private static void launchSimpleActivityInCurrentUser() {
+        Log.d(TAG, "launchSimpleActivityInCurrentUser: " + START_SIMPLE_ACTIVITY_COMMAND);
+        String retStr = SystemUtil.runShellCommand(START_SIMPLE_ACTIVITY_COMMAND);
+        Log.d(TAG, "launchSimpleActivityInCurrentUser return: " + retStr);
+    }
+
+    private static void installPackageForUser(int userId) {
+        String fullCommand = String.format("pm install-existing --user %d %s",
+                userId, SIMPLE_APP_PACKAGE_NAME);
+        Log.d(TAG, "installPackageForUser: " + fullCommand);
+        String retStr = SystemUtil.runShellCommand(fullCommand);
+        Log.d(TAG, "installPackageForUser return: " + retStr);
+    }
+
+    private boolean isAppRunning(String pkgName) {
+        ActivityManager am = mContext.getSystemService(ActivityManager.class);
+
+        List<ActivityManager.RunningAppProcessInfo> runningAppProcesses =
+                am.getRunningAppProcesses();
+
+        for (ActivityManager.RunningAppProcessInfo procInfo : runningAppProcesses) {
+            if (pkgName.equals(procInfo.processName)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private <T> T launchTestActivity(Class<T> type) {
@@ -323,5 +440,105 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
     }
 
     public static final class ActivityC extends ActivityManagerTestActivityBase {
+    }
+
+    private static int createUser(String userName) throws Exception {
+        Log.d(TAG, "createUser: " + userName);
+        String retStr = SystemUtil.runShellCommand(CREATE_USER_COMMAND + userName);
+        Pattern userIdPattern = Pattern.compile("id=(\\d+)");
+        Matcher matcher = userIdPattern.matcher(retStr);
+        if (!matcher.find()) {
+            throw new Exception("failed to create user: " + userName);
+        }
+        return Integer.parseInt(matcher.group(1));
+    }
+
+    private static void switchUser(int userId) throws Exception {
+        Log.d(TAG, "switchUser: " + userId);
+        String retStr = SystemUtil.runShellCommand(SWITCH_USER_COMMAND + userId);
+        if (!retStr.contains("STATUS_SUCCESSFUL")) {
+            throw new Exception("failed to switch to user: " + userId);
+        }
+        Log.d(TAG, "switchUser: " + retStr);
+    }
+
+    private static void removeUser(int userId) throws Exception {
+        Log.d(TAG, "removeUser: " + userId);
+        String retStr = SystemUtil.runShellCommand(REMOVE_USER_COMMAND + userId);
+        if (!retStr.contains("STATUS_SUCCESSFUL")) {
+            throw new Exception("failed to remove user: " + userId);
+        }
+        Log.d(TAG, "removeUser: " + retStr);
+    }
+
+    private static void startUser(int userId) throws Exception {
+        String retStr = SystemUtil.runShellCommand(START_USER_COMMAND + userId);
+        if (!retStr.contains("Success: user started")) {
+            throw new Exception("failed to start user: " + userId + " with return: " + retStr);
+        }
+        Log.d(TAG, "startUser: " + retStr);
+    }
+
+    private static int getCurrentUserId() {
+        String retStr = SystemUtil.runShellCommand(GET_CURRENT_USER_COMMAND);
+        Log.d(TAG, "getCurrentUserId: " + retStr);
+        return Integer.parseInt(retStr.trim());
+    }
+
+    private static void waitUntilUserCurrent(int userId) throws Exception {
+        PollingCheck.waitFor(TIMEOUT_MS, () -> userId == getCurrentUserId());
+    }
+
+    // need to get the permission in the same user
+    private static void stopAllTasksForUser(int userId) {
+        ActivityManagerHelper.stopAllTasksForUser(userId);
+    }
+
+    private static void waitUntilSimpleActivityExistenceStatusIs(boolean expectedStatus) {
+        PollingCheck.waitFor(TIMEOUT_MS,
+                () -> (checkSimpleActivityExistence() == expectedStatus));
+    }
+
+    private static boolean checkSimpleActivityExistence() {
+        boolean foundSimpleActivity = false;
+
+        Log.d(TAG, "checkSimpleActivityExistence --- Begin");
+        WindowManagerState wmState = new WindowManagerState();
+        wmState.computeState();
+        for (ActivityType activityType : ActivityType.values()) {
+            if (findSimpleActivityInType(activityType, wmState)) {
+                foundSimpleActivity = true;
+                break;
+            }
+        }
+        Log.d(TAG, "checkSimpleActivityExistence --- End with --- " + foundSimpleActivity);
+
+        return foundSimpleActivity;
+    }
+
+    private static boolean findSimpleActivityInType(ActivityType activityType,
+            WindowManagerState wmState) {
+        boolean foundRootTask = false;
+        boolean foundSimpleActivity = false;
+
+        WindowManagerState.Task rootTask =
+                wmState.getRootTaskByActivityType(activityType.ordinal());
+        if (rootTask != null) {
+            foundRootTask = true;
+            List<WindowManagerState.Activity> allActivities = rootTask.getActivities();
+            if (rootTask.getActivity(SIMPLE_ACTIVITY_COMPONENT_NAME) != null) {
+                foundSimpleActivity = true;
+            }
+
+            // for debugging purpose only
+            for (WindowManagerState.Activity act : allActivities) {
+                Log.d(TAG, activityType.name() + ": activity name -- " + act.getName());
+            }
+        }
+
+        Log.d(TAG, activityType.name() + " has simple activity root task:" + foundRootTask);
+        Log.d(TAG, activityType.name() + " has simple activity: " + foundSimpleActivity);
+
+        return foundSimpleActivity;
     }
 }

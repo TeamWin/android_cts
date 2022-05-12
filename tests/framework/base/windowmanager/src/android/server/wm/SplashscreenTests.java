@@ -559,6 +559,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
 
     @Test
     public void testLaunchAppWithIconOptions() throws Exception {
+        assumeFalse(isLeanBack());
         final Bundle bundle = ActivityOptions.makeBasic()
                 .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_ICON).toBundle();
         TestJournalProvider.TestJournalContainer.start();

@@ -110,7 +110,7 @@ public class SystemGestureExclusionRectsTest {
         mActivityRule.runOnUiThread(() -> {
             final View v = activity.findViewById(R.id.animating_view);
             final ViewTreeObserver vto = v.getViewTreeObserver();
-            v.getLocationOnScreen(location);
+            v.getLocationInWindow(location);
             vto.addOnSystemGestureExclusionRectsChangedListener(vtoListener);
 
             v.setSystemGestureExclusionRects(

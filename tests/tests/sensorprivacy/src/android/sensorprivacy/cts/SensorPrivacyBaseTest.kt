@@ -230,7 +230,9 @@ abstract class SensorPrivacyBaseTest(
         val latchEnabled = CountDownLatch(1)
         val listenerSensorEnabled = object : OnSensorPrivacyChangedListener {
             override fun onSensorPrivacyChanged(params: SensorPrivacyChangedParams) {
-                if (params.isEnabled && params.sensor == sensor) {
+                if (params.isEnabled &&
+                        params.sensor == sensor &&
+                        params.toggleType == TOGGLE_TYPE_SOFTWARE) {
                     latchEnabled.countDown()
                 }
             }
@@ -250,7 +252,9 @@ abstract class SensorPrivacyBaseTest(
         val latchDisabled = CountDownLatch(1)
         val listenerSensorDisabled = object : OnSensorPrivacyChangedListener {
             override fun onSensorPrivacyChanged(params: SensorPrivacyChangedParams) {
-                if (!params.isEnabled && params.sensor == sensor) {
+                if (!params.isEnabled &&
+                        params.sensor == sensor &&
+                        params.toggleType == TOGGLE_TYPE_SOFTWARE) {
                     latchDisabled.countDown()
                 }
             }

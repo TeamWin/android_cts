@@ -91,7 +91,13 @@ public class PipActivity extends AbstractLifecycleLogActivity {
             if (intent != null) {
                 switch (intent.getAction()) {
                     case ACTION_ENTER_PIP:
-                        enterPictureInPictureMode();
+                        enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
+                        if (intent.getExtras() != null) {
+                            mCb = (RemoteCallback) intent.getExtras().get(EXTRA_SET_PIP_CALLBACK);
+                            if (mCb != null) {
+                                mCb.sendResult(new Bundle());
+                            }
+                        }
                         break;
                     case ACTION_MOVE_TO_BACK:
                         moveTaskToBack(false /* nonRoot */);

@@ -2454,16 +2454,36 @@ public class DecoderTest extends MediaTestBase {
     }
 
     @Test
-    public void testDecodeWithEOSOnLastBuffer() throws Exception {
+    public void testDecodeM4aWithEOSOnLastBuffer() throws Exception {
         testDecodeWithEOSOnLastBuffer("sinesweepm4a.m4a");
+    }
+
+    @Test
+    public void testDecodeMp3WithEOSOnLastBuffer() throws Exception {
         testDecodeWithEOSOnLastBuffer("sinesweepmp3lame.mp3");
         testDecodeWithEOSOnLastBuffer("sinesweepmp3smpb.mp3");
+    }
+
+    @Test
+    public void testDecodeOpusWithEOSOnLastBuffer() throws Exception {
         testDecodeWithEOSOnLastBuffer("sinesweepopus.mkv");
         testDecodeWithEOSOnLastBuffer("sinesweepopusmp4.mp4");
+    }
+
+    @Test
+    public void testDecodeWavWithEOSOnLastBuffer() throws Exception {
         testDecodeWithEOSOnLastBuffer("sinesweepwav.wav");
+    }
+
+    @Test
+    public void testDecodeFlacWithEOSOnLastBuffer() throws Exception {
         testDecodeWithEOSOnLastBuffer("sinesweepflacmkv.mkv");
         testDecodeWithEOSOnLastBuffer("sinesweepflac.flac");
         testDecodeWithEOSOnLastBuffer("sinesweepflacmp4.mp4");
+    }
+
+    @Test
+    public void testDecodeOggWithEOSOnLastBuffer() throws Exception {
         testDecodeWithEOSOnLastBuffer("sinesweepogg.ogg");
         testDecodeWithEOSOnLastBuffer("sinesweepoggmkv.mkv");
         testDecodeWithEOSOnLastBuffer("sinesweepoggmp4.mp4");

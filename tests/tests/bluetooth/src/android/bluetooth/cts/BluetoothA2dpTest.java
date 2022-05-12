@@ -41,7 +41,7 @@ public class BluetoothA2dpTest extends AndroidTestCase {
 
     private boolean mHasBluetooth;
     private BluetoothAdapter mAdapter;
-    private UiAutomation mUiAutomation;;
+    private UiAutomation mUiAutomation;
 
     private BluetoothA2dp mBluetoothA2dp;
     private boolean mIsA2dpSupported;

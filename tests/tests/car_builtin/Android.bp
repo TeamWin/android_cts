@@ -43,7 +43,6 @@ android_test {
         "testng",
     ],
 
-    platform_apis: true,
     sdk_version: "module_current",
     data: [
         ":CtsCarBuiltinSimpleApp",

@@ -39,7 +39,11 @@ cc_test {
         "libopencsd_decoder",
         "libc++fs",
     ],
-    data: [":system-extras-simpleperf-testdata"],
+    per_testcase_directory: true,
+    data: [
+        ":CtsSimpleperfProfileableApp",
+        ":CtsSimpleperfDebuggableApp",
+        ":system-extras-simpleperf-testdata"],
     test_suites: [
         "cts",
         "general-tests",

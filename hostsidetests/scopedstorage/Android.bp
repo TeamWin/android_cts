@@ -283,6 +283,15 @@ java_test_host {
         "cts",
     ],
     test_config: "CoreTest.xml",
+    data: [
+        ":CtsScopedStorageTestAppA31",
+        ":CtsScopedStorageTestAppA",
+        ":CtsScopedStorageTestAppB",
+        ":CtsScopedStorageTestAppDLegacy",
+        ":ScopedStorageTest",
+        ":LegacyStorageTest",
+    ],
+    per_testcase_directory: true,
 }
 
 java_test_host {
@@ -303,7 +312,13 @@ java_test_host {
         "cts",
     ],
     test_config: "AndroidTest.xml",
+    per_testcase_directory: true,
     data: [
+        ":CtsScopedStorageTestAppA",
+        ":CtsScopedStorageTestAppB",
+        ":CtsScopedStorageTestAppDLegacy",
+        ":ScopedStorageTest",
+        ":LegacyStorageTest",
         ":CtsLegacyStorageTestAppRequestLegacy",
         ":CtsLegacyStorageTestAppPreserveLegacy",
     ],
@@ -391,4 +406,11 @@ android_test {
         ":CtsScopedStorageTestAppSystemGalleryBypassDB",
         ":CtsScopedStorageTestAppSystemGallery30BypassDB",
     ],
+    data: [
+        ":CtsScopedStorageTestAppFileManager",
+        ":CtsScopedStorageTestAppA",
+        ":CtsScopedStorageTestAppB",
+        ":CtsScopedStorageTestAppDLegacy",
+    ],
+    per_testcase_directory: true,
 }

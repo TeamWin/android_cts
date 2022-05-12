@@ -90,6 +90,7 @@ import static android.server.wm.app.Components.BroadcastReceiverActivity.EXTRA_M
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.LaunchingActivity.KEY_FINISH_BEFORE_LAUNCH;
 import static android.server.wm.app.Components.PipActivity.ACTION_CHANGE_ASPECT_RATIO;
+import static android.server.wm.app.Components.PipActivity.ACTION_ENTER_PIP;
 import static android.server.wm.app.Components.PipActivity.ACTION_EXPAND_PIP;
 import static android.server.wm.app.Components.PipActivity.ACTION_SET_REQUESTED_ORIENTATION;
 import static android.server.wm.app.Components.PipActivity.ACTION_UPDATE_PIP_STATE;
@@ -190,6 +191,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -425,6 +428,19 @@ public abstract class ActivityManagerTestBase {
         void dismissKeyguardByMethod() {
             mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
                     .putExtra(EXTRA_DISMISS_KEYGUARD_METHOD, true));
+        }
+
+        void enterPipAndWait() {
+            try {
+                final CompletableFuture<Boolean> future = new CompletableFuture<>();
+                final RemoteCallback remoteCallback = new RemoteCallback(
+                        (Bundle result) -> future.complete(true));
+                mContext.sendBroadcast(createIntentWithAction(ACTION_ENTER_PIP)
+                        .putExtra(EXTRA_SET_PIP_CALLBACK, remoteCallback));
+                assertTrue(future.get(5000, TimeUnit.MILLISECONDS));
+            } catch (Exception e) {
+                logE("enterPipAndWait failed", e);
+            }
         }
 
         void expandPip() {

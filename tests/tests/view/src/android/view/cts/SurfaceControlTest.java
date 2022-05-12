@@ -1193,10 +1193,10 @@ public class SurfaceControlTest {
     }
 
     @Test
-    public void testSurfaceTransaction_setDataSpace_bt2020() {
+    public void testSurfaceTransaction_setDataSpace_display_p3() {
         final int darkRed = 0xFF00006F;
         long converted = Color.convert(0x6F / 255.f, 0f, 0f, 1f,
-                ColorSpace.get(ColorSpace.Named.BT2020), ColorSpace.get(ColorSpace.Named.SRGB));
+                ColorSpace.get(ColorSpace.Named.DISPLAY_P3), ColorSpace.get(ColorSpace.Named.SRGB));
         assertTrue(Color.isSrgb(converted));
         int argb = Color.toArgb(converted);
         // PixelChecker uses a ABGR for some reason (endian mismatch with native?), swizzle to match
@@ -1207,7 +1207,7 @@ public class SurfaceControlTest {
                     public void surfaceCreated(SurfaceHolder holder) {
                         SurfaceControl surfaceControl = createFromWindow(holder);
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                darkRed, DataSpace.DATASPACE_BT2020);
+                                darkRed, DataSpace.DATASPACE_DISPLAY_P3);
                     }
                 },
                 new PixelChecker(asABGR) { //10000

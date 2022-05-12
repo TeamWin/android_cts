@@ -117,16 +117,15 @@ public class BleAdvertisingSetTestActivity extends PassFailButtons.Activity {
                     @Override
                     public void run() {
                         if (!mBluetoothAdapter.isEnabled()) {
-                            assertTrue(BtAdapterUtils.enableAdapter(mBluetoothAdapter,
-                                    BleAdvertisingSetTestActivity.this));
                             // If BluetoothAdapter was previously not enabled, we need to get the
                             // BluetoothLeAdvertiser instance again.
+                            mBluetoothAdapter.enable();
                             mAdvertiser = mBluetoothAdapter.getBluetoothLeAdvertiser();
                         }
 
                         try {
                             startAdvertisingSet();
-                            testEnableAndDisableAdvertising();
+                            testDisableAndEnableAdvertising();
                             testSetAdvertisingData();
                             testSetAdvertisingParameters();
                             testPeriodicAdvertising();
@@ -139,8 +138,7 @@ public class BleAdvertisingSetTestActivity extends PassFailButtons.Activity {
                         }
 
                         // Disable bluetooth adapter
-                        assertTrue(BtAdapterUtils.disableAdapter(mBluetoothAdapter,
-                                BleAdvertisingSetTestActivity.this));
+                        mBluetoothAdapter.disable();
 
                         BleAdvertisingSetTestActivity.this.runOnUiThread(new Runnable() {
                             @Override
@@ -182,18 +180,18 @@ public class BleAdvertisingSetTestActivity extends PassFailButtons.Activity {
         mTestAdapter.setTestPass(TEST_ADAPTER_INDEX_START);
     }
 
-    private void testEnableAndDisableAdvertising() throws InterruptedException {
+    private void testDisableAndEnableAdvertising() throws InterruptedException {
         mCallback.reset();
-
-        mCallback.mAdvertisingSet.get().enableAdvertising(/* enable= */ true, /* duration= */ 1,
-                /* maxExtendedAdvertisingEvents= */ 1);
-        assertTrue(mCallback.mAdvertisingEnabledLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-        assertEquals(ADVERTISE_SUCCESS, mCallback.mAdvertisingEnabledStatus.get());
 
         mCallback.mAdvertisingSet.get().enableAdvertising(/* enable= */ false, /* duration= */ 1,
                 /* maxExtendedAdvertisingEvents= */ 1);
         assertTrue(mCallback.mAdvertisingDisabledLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         assertEquals(ADVERTISE_SUCCESS, mCallback.mAdvertisingDisabledStatus.get());
+
+        mCallback.mAdvertisingSet.get().enableAdvertising(/* enable= */ true, /* duration= */ 1,
+                /* maxExtendedAdvertisingEvents= */ 1);
+        assertTrue(mCallback.mAdvertisingEnabledLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(ADVERTISE_SUCCESS, mCallback.mAdvertisingEnabledStatus.get());
 
         mAllTestsPassed |= PASS_FLAG_ENABLE_DISABLE;
         mTestAdapter.setTestPass(TEST_ADAPTER_INDEX_ENABLE_DISABLE);
@@ -225,7 +223,7 @@ public class BleAdvertisingSetTestActivity extends PassFailButtons.Activity {
         mCallback.reset();
 
         mCallback.mAdvertisingSet.get().enableAdvertising(false, /* duration= */ 1,
-                /* maxExtendedAdvertisingEvents= */1);
+                /* maxExtendedAdvertisingEvents= */ 1);
         assertTrue(mCallback.mAdvertisingDisabledLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         assertEquals(ADVERTISE_SUCCESS, mCallback.mAdvertisingDisabledStatus.get());
 
@@ -253,6 +251,11 @@ public class BleAdvertisingSetTestActivity extends PassFailButtons.Activity {
                 TimeUnit.MILLISECONDS));
         assertEquals(ADVERTISE_SUCCESS, mCallback.mAdvertisingParametersUpdatedStatus.get());
 
+        // Let's make sure we disable periodic advertising
+        mCallback.mAdvertisingSet.get().setPeriodicAdvertisingEnabled(false);
+        assertTrue(mCallback.mPeriodicAdvertisingDisabledLatch.await(TIMEOUT_MS,
+                TimeUnit.MILLISECONDS));
+        assertEquals(ADVERTISE_SUCCESS, mCallback.mPeriodicAdvertisingDisabledStatus.get());
         mCallback.mAdvertisingSet.get().setPeriodicAdvertisingParameters(
                 new PeriodicAdvertisingParameters.Builder().build());
         assertTrue(mCallback.mPeriodicAdvertisingParamsUpdatedLatch.await(TIMEOUT_MS,
@@ -282,6 +285,7 @@ public class BleAdvertisingSetTestActivity extends PassFailButtons.Activity {
         assertEquals(ADVERTISE_SUCCESS, mCallback.mPeriodicAdvertisingDisabledStatus.get());
 
         mAllTestsPassed |= PASS_FLAG_SET_PERIODIC_ADVERTISING_ENABLED_DISABLED;
+
         mTestAdapter.setTestPass(TEST_ADAPTER_INDEX_SET_PERIODIC_ADVERTISING_ENABLED_DISABLED);
     }
 

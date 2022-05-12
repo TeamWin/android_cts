@@ -134,6 +134,8 @@ android_test {
         "android.test.runner",
     ],
     static_libs: [
+        "bouncycastle-bcpkix-unbundled",
+        "bouncycastle-unbundled",
         "cts-core-test-runner-axt",
         "wycheproof-keystore",
         "wycheproof-gson",
