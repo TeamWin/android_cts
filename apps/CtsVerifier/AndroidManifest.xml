@@ -6014,8 +6014,6 @@
             <intent-filter>
                 <action android:name="android.telephony.VisualVoicemailService"/>
             </intent-filter>
-            <meta-data android:name="ApiTest"
-                android:value="android.telephony.VisualVoicemailService#onCellServiceConnected|android.telephony.VisualVoicemailService#onSimRemoved"/>
         </service>
 
         <activity
