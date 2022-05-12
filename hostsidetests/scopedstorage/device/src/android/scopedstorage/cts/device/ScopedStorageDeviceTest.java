@@ -143,6 +143,7 @@ import androidx.annotation.Nullable;
 import androidx.test.filters.SdkSuppress;
 
 import com.android.cts.install.lib.TestApp;
+import com.android.modules.utils.build.SdkLevel;
 
 import com.google.common.io.Files;
 
@@ -1263,12 +1264,18 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
 
     @Test
     public void testReadStorageInvalidation() throws Exception {
-        testAppOpInvalidation(
+        if (SdkLevel.isAtLeastT()) {
+            testAppOpInvalidation(
                 APP_C,
                 new File(getDcimDir(), "read_storage.jpg"),
                 Manifest.permission.READ_MEDIA_IMAGES,
                 AppOpsManager.OPSTR_READ_MEDIA_IMAGES,
                 /* forWrite */ false);
+        } else {
+            testAppOpInvalidation(APP_C, new File(getDcimDir(), "read_storage.jpg"),
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                AppOpsManager.OPSTR_READ_EXTERNAL_STORAGE, /* forWrite */ false);
+        }
     }
 
     @Test
