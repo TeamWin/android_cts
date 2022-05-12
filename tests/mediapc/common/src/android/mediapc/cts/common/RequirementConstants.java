@@ -35,6 +35,7 @@ public class RequirementConstants {
     public static final String R5_1__H_1_6 = "r5_1__h_1_6"; // 5.1/H-1-6
     public static final String R5_1__H_1_7 = "r5_1__h_1_7"; // 5.1/H-1-7
     public static final String R5_1__H_1_8 = "r5_1__h_1_8"; // 5.1/H-1-8
+    public static final String R5_1__H_1_TBD = "r5_1__h_1_?"; // 5.1/H-1-?
     public static final String R5_3__H_1_1 = "r5_3__h_1_1"; // 5.3/H-1-1
     public static final String R5_3__H_1_2 = "r5_3__h_1_2"; // 5.3/H-1-2
     public static final String R5_6__H_1_1 = "r5_6__h_1_1"; // 5.6/H-1-1
@@ -70,12 +71,14 @@ public class RequirementConstants {
     public static final String SHORT_RESOLUTION = "short_resolution_pixels";
     public static final String DISPLAY_DENSITY = "display_density_dpi";
     public static final String PHYSICAL_MEMORY = "physical_memory_mb";
+    public static final String CODEC_INIT_LATENCY = "codec_initialization_latency_ms";
 
     public enum Result {
         NA, MET, UNMET
     }
 
     public static final BiPredicate<Long, Long> LONG_GTE = RequirementConstants.gte();
+    public static final BiPredicate<Long, Long> LONG_LTE = RequirementConstants.lte();
     public static final BiPredicate<Integer, Integer> INTEGER_GTE = RequirementConstants.gte();
     public static final BiPredicate<Integer, Integer> INTEGER_LTE = RequirementConstants.lte();
 
