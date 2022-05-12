@@ -32,6 +32,7 @@ import androidx.test.InstrumentationRegistry;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
+import com.android.bedstead.harrier.annotations.EnsureUnlocked;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.SlowApiTest;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
@@ -124,6 +125,7 @@ public final class ScreenCaptureDisabledTest {
     @PolicyDoesNotApplyTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
     @EnsureScreenIsOn
+    @EnsureUnlocked
     public void setScreenCaptureDisabled_true_screenCaptureWorks() {
         mDevicePolicyManager.setScreenCaptureDisabled(mAdmin, true);
 
@@ -134,6 +136,7 @@ public final class ScreenCaptureDisabledTest {
     @Postsubmit(reason = "new test")
     @SlowApiTest("Screenshot policy can take minutes to propagate")
     @EnsureScreenIsOn
+    @EnsureUnlocked
     public void setScreenCaptureDisabled_true_screenCaptureFails() {
         mDevicePolicyManager.setScreenCaptureDisabled(mAdmin, true);
 
@@ -143,6 +146,7 @@ public final class ScreenCaptureDisabledTest {
     @PolicyAppliesTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
     @EnsureScreenIsOn
+    @EnsureUnlocked
     public void setScreenCaptureDisabled_false_screenCaptureWorks() {
         mDevicePolicyManager.setScreenCaptureDisabled(mAdmin, false);
 

@@ -59,6 +59,7 @@ import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
 import com.android.bedstead.harrier.annotations.EnsureTestAppHasAppOp;
 import com.android.bedstead.harrier.annotations.EnsureTestAppHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
+import com.android.bedstead.harrier.annotations.EnsureUnlocked;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.OtherUser;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
@@ -776,6 +777,11 @@ public final class DeviceState extends HarrierRule {
 
             if (annotation instanceof EnsureScreenIsOn) {
                 ensureScreenIsOn();
+                continue;
+            }
+
+            if (annotation instanceof EnsureUnlocked) {
+                ensureUnlocked();
                 continue;
             }
 
@@ -2414,6 +2420,10 @@ public final class DeviceState extends HarrierRule {
 
     private void ensureScreenIsOn() {
         TestApis.device().wakeUp();
+    }
+
+    private void ensureUnlocked() {
+        TestApis.device().unlock();
     }
 
     private void ensurePasswordSet(UserType forUser, String password) {
