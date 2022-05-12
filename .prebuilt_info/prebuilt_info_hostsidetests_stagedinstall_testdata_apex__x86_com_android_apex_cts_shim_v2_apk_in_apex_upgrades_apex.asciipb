@@ -2,9 +2,9 @@ drops {
   android_build_drop {
     build_id: "8572644"
     target: "CtsShim"
-    source_file: "aosp_x86_64/com.android.apex.cts.shim.v3_signed_bob_rot.apex"
+    source_file: "aosp_x86_64/com.android.apex.cts.shim.v2_apk_in_apex_upgrades.apex"
   }
-  dest_file: "hostsidetests/stagedinstall/testdata/apex//x86/com.android.apex.cts.shim.v3_signed_bob_rot.apex"
+  dest_file: "hostsidetests/stagedinstall/testdata/apex//x86/com.android.apex.cts.shim.v2_apk_in_apex_upgrades.apex"
   version: ""
   version_group: ""
   git_project: "platform/cts"
