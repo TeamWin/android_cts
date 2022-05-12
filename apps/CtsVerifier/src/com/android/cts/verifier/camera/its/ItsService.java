@@ -2120,7 +2120,7 @@ public class ItsService extends Service implements SensorEventListener {
             throw new ItsException("Cannot record preview before API level 33");
         }
 
-        boolean stabilizationSupported = !isVideoStabilizationModeSupported(
+        boolean stabilizationSupported = isVideoStabilizationModeSupported(
                 CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION);
         if (stabilize && !stabilizationSupported) {
             throw new ItsException("Preview stabilization requested, but not supported by device.");
