@@ -179,6 +179,7 @@ public class TelephonyManagerTestOnMockModem {
 
         // Remove the SIM
         assertTrue(sMockModemManager.removeSimCard(slotId));
+        TimeUnit.SECONDS.sleep(2);
         simCardState = sTelephonyManager.getSimCardState();
         assertEquals(TelephonyManager.SIM_STATE_ABSENT, simCardState);
     }
