@@ -20,6 +20,7 @@ import static android.os.Build.VERSION_CODES.R;
 
 import static com.android.bedstead.nene.permissions.CommonPermissions.BLUETOOTH;
 import static com.android.bedstead.nene.permissions.CommonPermissions.BLUETOOTH_CONNECT;
+import static com.android.bedstead.nene.permissions.CommonPermissions.BLUETOOTH_PRIVILEGED;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS_FULL;
 import static com.android.bedstead.nene.permissions.CommonPermissions.NETWORK_SETTINGS;
 import static com.android.bedstead.nene.utils.Versions.T;
@@ -65,7 +66,8 @@ public final class Bluetooth {
     private void enable() {
             try (PermissionContext p =
                          TestApis.permissions()
-                                 .withPermission(BLUETOOTH_CONNECT, INTERACT_ACROSS_USERS_FULL)
+                                 .withPermission(BLUETOOTH_CONNECT, INTERACT_ACROSS_USERS_FULL,
+                                         BLUETOOTH_PRIVILEGED)
                                  .withPermissionOnVersionAtLeast(T, NETWORK_SETTINGS)) {
                 BlockingBroadcastReceiver r = BlockingBroadcastReceiver.create(
                         sContext,
@@ -73,12 +75,13 @@ public final class Bluetooth {
                         this::isStateEnabled).register();
 
                 try {
-                    assertThat(sBluetoothAdapter.enable()).isTrue();
+                    boolean returnValue = sBluetoothAdapter.enable();
 
                     r.awaitForBroadcast();
                     Poll.forValue("Bluetooth Enabled", this::isEnabled)
                             .toBeEqualTo(true)
-                            .errorOnFail()
+                            .errorOnFail("Waited for bluetooth to be enabled."
+                                    + " .enable() returned " + returnValue)
                             .await();
                 } finally {
                     r.unregisterQuietly();
@@ -90,7 +93,8 @@ public final class Bluetooth {
     private void disable() {
             try (PermissionContext p =
                          TestApis.permissions()
-                                 .withPermission(BLUETOOTH_CONNECT, INTERACT_ACROSS_USERS_FULL)
+                                 .withPermission(BLUETOOTH_CONNECT, INTERACT_ACROSS_USERS_FULL,
+                                         BLUETOOTH_PRIVILEGED)
                                  .withPermissionOnVersionAtLeast(T, NETWORK_SETTINGS)) {
                 BlockingBroadcastReceiver r = BlockingBroadcastReceiver.create(
                         sContext,
@@ -98,12 +102,13 @@ public final class Bluetooth {
                         this::isStateDisabled).register();
 
                 try {
-                    assertThat(sBluetoothAdapter.disable()).isTrue();
+                    boolean returnValue = sBluetoothAdapter.disable();
 
                     r.awaitForBroadcast();
                     Poll.forValue("Bluetooth Enabled", this::isEnabled)
                             .toBeEqualTo(false)
-                            .errorOnFail()
+                            .errorOnFail("Waited for bluetooth to be disabled."
+                                    + " .disable() returned " + returnValue)
                             .await();
                 } finally {
                     r.unregisterQuietly();
