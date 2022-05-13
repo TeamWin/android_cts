@@ -92,16 +92,16 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         // Track transitions and allow waiting for pending activity states.
         mLifecycleTracker = new LifecycleTracker(mLifecycleLog);
         mLifecycleCallbacks = new LifecycleCallbacks();
-        ((Application) mInstrumentation.getContext().getApplicationContext())
-                .registerActivityLifecycleCallbacks(mLifecycleCallbacks);
+        mApplication.registerActivityLifecycleCallbacks(mLifecycleCallbacks);
     }
 
     @Override
     public void tearDown() {
         super.tearDown();
-        ((Application) mInstrumentation.getContext().getApplicationContext())
-                .unregisterActivityLifecycleCallbacks(mLifecycleCallbacks);
-        mLifecycleLogClient.close();
+        mApplication.unregisterActivityLifecycleCallbacks(mLifecycleCallbacks);
+        if (mLifecycleLogClient != null) {
+            mLifecycleLogClient.close();
+        }
     }
 
     /**

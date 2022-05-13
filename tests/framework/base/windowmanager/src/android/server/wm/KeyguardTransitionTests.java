@@ -106,9 +106,9 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testDismissKeyguardIfInsecure() {
+    public void testDismissKeyguard() {
         createManagedLockScreenSession().gotoKeyguard();
-        launchActivityWithDismissKeyguardIfInsecure(SHOW_WHEN_LOCKED_NO_PREVIEW_ACTIVITY);
+        launchActivityWithDismissKeyguard(SHOW_WHEN_LOCKED_NO_PREVIEW_ACTIVITY);
         mWmState.computeState(SHOW_WHEN_LOCKED_NO_PREVIEW_ACTIVITY);
         assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_GOING_AWAY,
                 mWmState.getDefaultDisplayLastTransition());
@@ -126,11 +126,11 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testNewDismissKeyguardIfInsecureActivityDuringOccluded() {
+    public void testNewDismissKeyguardActivityDuringOccluded() {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         launchActivity(SHOW_WHEN_LOCKED_NO_PREVIEW_ACTIVITY);
         lockScreenSession.gotoKeyguard(SHOW_WHEN_LOCKED_NO_PREVIEW_ACTIVITY);
-        launchActivityWithDismissKeyguardIfInsecure(
+        launchActivityWithDismissKeyguard(
                 SHOW_WHEN_LOCKED_WITH_DIALOG_NO_PREVIEW_ACTIVITY);
         mWmState.computeState(SHOW_WHEN_LOCKED_WITH_DIALOG_NO_PREVIEW_ACTIVITY);
         assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,

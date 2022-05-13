@@ -34,6 +34,7 @@ import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.AppOpsManager;
 import android.app.PendingIntent;
+import android.app.compat.CompatChanges;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -142,6 +143,7 @@ public class ExactAlarmsTest {
                 .with("allow_while_idle_quota", ALLOW_WHILE_IDLE_QUOTA)
                 .with("allow_while_idle_compat_quota", ALLOW_WHILE_IDLE_COMPAT_QUOTA)
                 .with("allow_while_idle_window", ALLOW_WHILE_IDLE_WINDOW)
+                .with("kill_on_schedule_exact_alarm_revoked", false)
                 .commitAndAwaitPropagation();
     }
 
@@ -155,8 +157,6 @@ public class ExactAlarmsTest {
     public void enableChanges() {
         Utils.enableChangeForSelf(AlarmManager.REQUIRE_EXACT_ALARM_PERMISSION);
         Utils.enableChangeForSelf(AlarmManager.ENABLE_USE_EXACT_ALARM);
-        Utils.enableChange(AlarmManager.SCHEDULE_EXACT_ALARM_DENIED_BY_DEFAULT, TEST_APP_PACKAGE,
-                sContext.getUserId());
     }
 
     @After
@@ -191,14 +191,13 @@ public class ExactAlarmsTest {
                         PackageManager.DONT_KILL_APP));
     }
 
-    private void resetAppOps() throws IOException {
+    @After
+    public void resetAppOps() throws IOException {
         AppOpsUtils.reset(TEST_APP_PACKAGE);
     }
 
     @After
     public void restoreAlarmManagerConstants() throws IOException {
-        // App ops must be reset while kill_on_schedule_exact_alarm_revoked=false
-        resetAppOps();
         mDeviceConfigHelper.restoreAll();
     }
 
@@ -247,21 +246,25 @@ public class ExactAlarmsTest {
     }
 
     @Test
+    public void scheduleExactAlarmChangeDisabled() {
+        assertFalse(CompatChanges.isChangeEnabled(
+                AlarmManager.SCHEDULE_EXACT_ALARM_DENIED_BY_DEFAULT));
+    }
+
+    @Test
     public void defaultBehaviorWhenChangeDisabled() throws Exception {
         setAppOp(TEST_APP_PACKAGE, AppOpsManager.MODE_DEFAULT);
-        mDeviceConfigHelper.with("schedule_exact_alarm_denied_by_default", false)
-                .commitAndAwaitPropagation();
         assertTrue(getCanScheduleExactAlarmFromTestApp(TEST_APP_PACKAGE));
 
         mDeviceConfigHelper.with("exact_alarm_deny_list", TEST_APP_PACKAGE)
                 .commitAndAwaitPropagation();
-        // Just to give some time for the app kill to complete.
-        Thread.sleep(1000);
         assertFalse(getCanScheduleExactAlarmFromTestApp(TEST_APP_PACKAGE));
     }
 
     @Test
-    public void noPermissionByDefault() throws Exception {
+    public void defaultBehaviorWhenChangeEnabled() throws Exception {
+        Utils.enableChange(AlarmManager.SCHEDULE_EXACT_ALARM_DENIED_BY_DEFAULT, TEST_APP_PACKAGE,
+                sContext.getUserId());
         setAppOp(TEST_APP_PACKAGE, AppOpsManager.MODE_DEFAULT);
         assertFalse(getCanScheduleExactAlarmFromTestApp(TEST_APP_PACKAGE));
     }

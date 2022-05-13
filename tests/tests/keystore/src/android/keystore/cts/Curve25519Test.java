@@ -30,14 +30,20 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.ProviderException;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.security.interfaces.EdECPublicKey;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.NamedParameterSpec;
+import java.util.Base64;
 
 @RunWith(AndroidJUnit4.class)
 public class Curve25519Test {
@@ -74,23 +80,34 @@ public class Curve25519Test {
     @Test
     public void ed25519KeyGenerationAndSigningTest()
             throws NoSuchAlgorithmException, NoSuchProviderException,
-            InvalidAlgorithmParameterException {
+            InvalidAlgorithmParameterException, InvalidKeyException, SignatureException {
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC", "AndroidKeyStore");
         final String alias = "ed25519-alias";
         deleteEntry(alias);
 
         KeyGenParameterSpec keySpec = new KeyGenParameterSpec.Builder(alias,
                 KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
-                .setAlgorithmParameterSpec(new ECGenParameterSpec("ed25519")).build();
+                .setAlgorithmParameterSpec(new ECGenParameterSpec("ed25519"))
+                .setDigests(KeyProperties.DIGEST_NONE).build();
         kpg.initialize(keySpec);
 
-        //TODO(b/214203951): Remove this try/catch once Conscrypt class are available.
-        try {
-            kpg.generateKeyPair();
-            fail("Should not be supported yet");
-        } catch (ProviderException e) {
-            assertThat(e.getMessage()).isEqualTo("Curve 1.3.101.112 not supported yet");
-        }
+        KeyPair kp = kpg.generateKeyPair();
+        assertThat(kp.getPublic()).isInstanceOf(EdECPublicKey.class);
+
+        byte[] data = "helloxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx".getBytes();
+        Signature signer = Signature.getInstance("Ed25519");
+        signer.initSign(kp.getPrivate());
+        signer.update(data);
+        byte[] sigBytes = signer.sign();
+        assertThat(sigBytes.length).isEqualTo(64);
+        EdECPublicKey publicKey = (EdECPublicKey) kp.getPublic();
+        android.util.Log.i("Curve25519Test", "Manually validate: Payload "
+                + Base64.getEncoder().encodeToString(data) + " encoded key: "
+                + Base64.getEncoder().encodeToString(kp.getPublic().getEncoded())
+                + " signature: " + Base64.getEncoder().encodeToString(sigBytes));
+
+        //TODO: Verify signature over the data when Conscrypt supports validating Ed25519
+        // signatures.
     }
 
     @Test

@@ -21,7 +21,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 /**
- * A simple activity which triggers libneuralnetworks.so to push WestWorld atoms.
+ * A simple activity which triggers libneuralnetworks.so to push statsd atoms.
  */
 public class NnapiDeviceActivity extends Activity {
     private static final String TAG = NnapiDeviceActivity.class.getSimpleName();
@@ -33,7 +33,7 @@ public class NnapiDeviceActivity extends Activity {
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-        Log.i(TAG, "Triggering libneuralnetworks.so to push WestWorld atoms.");
+        Log.i(TAG, "Triggering libneuralnetworks.so to push statsd atoms.");
         trigger_libneuralnetworks_atoms();
     }
 

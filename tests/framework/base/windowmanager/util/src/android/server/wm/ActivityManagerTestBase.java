@@ -336,9 +336,9 @@ public abstract class ActivityManagerTestBase {
         return "am start --activity-task-on-home -n " + getActivityName(activityName);
     }
 
-    protected static String getAmStartCmdWithDismissKeyguardIfInsecure(
+    protected static String getAmStartCmdWithDismissKeyguard(
             final ComponentName activityName) {
-        return "am start --dismiss-keyguard-if-insecure -n " + getActivityName(activityName);
+        return "am start --dismiss-keyguard -n " + getActivityName(activityName);
     }
 
     protected static String getAmStartCmdWithNoUserAction(final ComponentName activityName,
@@ -807,6 +807,12 @@ public abstract class ActivityManagerTestBase {
         return mInstrumentation.getUiAutomation().takeScreenshot();
     }
 
+    protected Bitmap takeScreenshotForBounds(Rect rect) {
+        Bitmap fullBitmap = takeScreenshot();
+        return Bitmap.createBitmap(fullBitmap, rect.left, rect.top,
+                rect.width(), rect.height());
+    }
+
     protected void launchActivity(final ComponentName activityName,
             final CliIntentExtra... extras) {
         launchActivityNoWait(activityName, extras);
@@ -828,8 +834,8 @@ public abstract class ActivityManagerTestBase {
         mWmState.waitForValidState(activityName);
     }
 
-    protected void launchActivityWithDismissKeyguardIfInsecure(final ComponentName activityName) {
-        executeShellCommand(getAmStartCmdWithDismissKeyguardIfInsecure(activityName));
+    protected void launchActivityWithDismissKeyguard(final ComponentName activityName) {
+        executeShellCommand(getAmStartCmdWithDismissKeyguard(activityName));
         mWmState.waitForValidState(activityName);
     }
 

@@ -483,6 +483,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         // Start a portrait activity first to ensure that the orientation will change.
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
         mWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
+        final int prevRotation = mWmState.getRotation();
 
         getLaunchActivityBuilder()
                 .setUseInstrumentation()
@@ -508,29 +509,34 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
                 reportedSizes, onCreateConfigInfo.sizeInfo);
 
         final WindowManagerState.DisplayContent dc = mWmState.getDisplay(Display.DEFAULT_DISPLAY);
-        final Point expectedRealDisplaySize =
+        final Point realDisplaySize =
                 new Point(dc.getDisplayRect().width(), dc.getDisplayRect().height());
-        final int expectedRotation = mWmState.getRotation();
+        final int currentRotation = mWmState.getRotation();
+        // Some devices may launch the activity in a letterboxed area so the display won't rotate.
+        final boolean displayRotationChanged = prevRotation != currentRotation;
+
         assertEquals("The activity should get the final display rotation in onCreate",
-                expectedRotation, onCreateConfigInfo.rotation);
+                currentRotation, onCreateConfigInfo.rotation);
         assertEquals("The application should get the final display rotation in onCreate",
-                expectedRotation, appConfigInfo.rotation);
+                currentRotation, appConfigInfo.rotation);
         assertEquals("The orientation of application must be landscape",
                 ORIENTATION_LANDSCAPE, appConfigInfo.sizeInfo.orientation);
         assertEquals("The orientation of system resources must be landscape",
                 ORIENTATION_LANDSCAPE, globalSizeInfo.orientation);
-        assertEquals("The activity should get the final display size in onCreate",
-                expectedRealDisplaySize, onCreateRealDisplaySize);
 
-        final boolean isLandscape = expectedRealDisplaySize.x > expectedRealDisplaySize.y;
-        assertEquals("The app size of activity should have the same orientation", isLandscape,
-                onCreateSize.displayWidth > onCreateSize.displayHeight);
+        final boolean isLandscape = onCreateSize.displayWidth > onCreateSize.displayHeight;
+        if (displayRotationChanged) {
+            assertEquals("The activity should get the final display size in onCreate",
+                    realDisplaySize, onCreateRealDisplaySize);
+            assertEquals("The app size of activity should have the same orientation", isLandscape,
+                    realDisplaySize.x > realDisplaySize.y);
+            assertEquals("The display metrics of system resources must be landscape", isLandscape,
+                    globalSizeInfo.metricsWidth > globalSizeInfo.metricsHeight);
+        }
         assertEquals("The application should get the same orientation", isLandscape,
                 appConfigInfo.sizeInfo.displayWidth > appConfigInfo.sizeInfo.displayHeight);
         assertEquals("The app display metrics must be landscape", isLandscape,
                 appConfigInfo.sizeInfo.metricsWidth > appConfigInfo.sizeInfo.metricsHeight);
-        assertEquals("The display metrics of system resources must be landscape", isLandscape,
-                globalSizeInfo.metricsWidth > globalSizeInfo.metricsHeight);
     }
 
     @Test

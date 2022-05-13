@@ -61,8 +61,7 @@ public final class HdmiCecLogicalAddressTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_10_2_5_1_RebootLogicalAddress() throws Exception {
         ITestDevice device = getDevice();
-        device.executeShellCommand("reboot");
-        device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
+        device.reboot();
         String message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_PHYSICAL_ADDRESS);
         assertThat(CecMessage.getSource(message)).isEqualTo(AUDIO_DEVICE);
     }

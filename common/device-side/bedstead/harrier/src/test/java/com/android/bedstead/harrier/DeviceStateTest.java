@@ -99,6 +99,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnBackgroundDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnFinancedDeviceOwnerUser;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnOrganizationOwnedManagedProfile;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwnerUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwnerWithNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerProfileWithNoDeviceOwner;
@@ -1017,5 +1018,13 @@ public class DeviceStateTest {
         assertThat(((ProfileOwner) sDeviceState.profileOwner(
                 sDeviceState.workProfile()).devicePolicyController()).isOrganizationOwned())
                 .isFalse();
+    }
+
+    @Test
+    @IncludeRunOnOrganizationOwnedManagedProfile
+    public void includeRunOnOrganizationOwnedManagedProfile_isOrganizationOwned() {
+        assertThat(((ProfileOwner) sDeviceState.profileOwner(
+                sDeviceState.workProfile()).devicePolicyController()).isOrganizationOwned())
+                .isTrue();
     }
 }
