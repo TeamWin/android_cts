@@ -96,7 +96,6 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val DENY_RADIO_BUTTON = "com.android.permissioncontroller:id/deny_radio_button"
 
         const val NOTIF_TEXT = "permgrouprequest_notifications"
-        const val NOTIF_CONTINUE_TEXT = "permgrouprequestcontinue_notifications"
         const val ALLOW_BUTTON_TEXT = "grant_dialog_button_allow"
         const val ALLOW_FOREGROUND_BUTTON_TEXT = "grant_dialog_button_allow_foreground"
         const val ALLOW_FOREGROUND_PREFERENCE_TEXT = "permission_access_only_foreground"
@@ -353,9 +352,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         }
 
         if (waitFindObjectOrNull(By.text(getPermissionControllerString(
-                NOTIF_CONTINUE_TEXT, APP_PACKAGE_NAME)), 1000) != null ||
-                waitFindObjectOrNull(By.text(getPermissionControllerString(
-                        NOTIF_TEXT, APP_PACKAGE_NAME)), 1000) != null) {
+                NOTIF_TEXT, APP_PACKAGE_NAME)), 1000) != null) {
             if (isAutomotive) {
                 click(By.text(getPermissionControllerString(ALLOW_BUTTON_TEXT)))
             } else {

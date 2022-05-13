@@ -55,7 +55,6 @@ const val ACTIVITY_NAME = "CreateNotificationChannelsActivity"
 const val ACTIVITY_LABEL = "CreateNotif"
 const val SECOND_ACTIVITY_LABEL = "EmptyActivity"
 const val ALLOW = "to send you"
-const val CONTINUE_ALLOW = "to continue sending you"
 const val INTENT_ACTION = "usepermission.createchannels.MAIN"
 const val BROADCAST_ACTION = "usepermission.createchannels.BROADCAST"
 const val NOTIFICATION_PERMISSION_ENABLED = "notification_permission_enabled"
@@ -124,18 +123,8 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun reviewRequiredClearedForTAppsOnLaunch() {
-        installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_33, expectSuccess = true)
-        setReviewRequired()
-        assertNotificationReviewRequiredState(shouldBeSet = true)
-        launchApp()
-        assertNotificationReviewRequiredState(shouldBeSet = false)
-    }
-
-    @Test
     fun notificationPromptShowsForLegacyAppAfterCreatingNotificationChannels() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
-        setReviewRequired()
         launchApp()
         clickPermissionRequestAllowButton()
     }
@@ -143,21 +132,12 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     @Test
     fun notificationPromptShowsForLegacyAppWithNotificationChannelsOnStart() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
-        setReviewRequired()
         // create channels, then leave the app
         launchApp()
         killTestApp()
         launchApp()
-        waitFindObject(By.textContains(CONTINUE_ALLOW))
-        clickPermissionRequestAllowButton()
-    }
-
-    @Test
-    fun nonReviewRequiredLegacyAppsDontShowContinuePrompt() {
-        installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
-        setReviewRequired(false)
-        launchApp()
         waitFindObject(By.textContains(ALLOW))
+        clickPermissionRequestAllowButton()
     }
 
     @Test
@@ -254,49 +234,11 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun reviewRequiredNotClearedOnNonLauncherIntentCategoryLaunches() {
-        installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_33, expectSuccess = true)
-        setReviewRequired()
-        launchApp(launcherCategory = false)
-        assertNotificationReviewRequiredState(true)
-    }
-
-    @Test
-    fun reviewRequiredNotClearedOnNonMainIntentActionLaunches() {
-        installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_33, expectSuccess = true)
-        setReviewRequired()
-        launchApp(mainIntent = false)
-        assertNotificationReviewRequiredState(true)
-    }
-
-    @Test
-    fun reviewRequiredClearedIfActivityOptionSet() {
-        installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_33, expectSuccess = true)
-        setReviewRequired()
-        launchApp(isEligibleForPromptOption = true)
-        assertNotificationReviewRequiredState(false)
-    }
-
-    @Test
-    fun notificationGrantedAndReviewRequiredClearedOnLegacyGrant() {
+    fun notificationGrantedOnLegacyGrant() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
-        setReviewRequired()
         launchApp()
         clickPermissionRequestAllowButton()
         assertAppPermissionGrantedState(POST_NOTIFICATIONS, granted = true)
-        assertNotificationReviewRequiredState(shouldBeSet = false)
-    }
-
-    @Test
-    fun notificationReviewRequiredClearedOnLegacyDeny() {
-        installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
-        setReviewRequired()
-        launchApp()
-        clickPermissionRequestDenyButton()
-        waitForIdle()
-        SystemUtil.eventually {
-            assertNotificationReviewRequiredState(shouldBeSet = false)
-        }
     }
 
     @Test
@@ -367,23 +309,6 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun reviewRequiredTAppsShowContinueMessage() {
-        installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_33, expectSuccess = true)
-        setReviewRequired(true)
-        assertNotificationReviewRequiredState(true)
-        launchApp(requestPermissions = true)
-        waitFindObject(By.textContains(CONTINUE_ALLOW))
-    }
-
-    @Test
-    fun nonReviewRequiredTAppsShowAllowMessage() {
-        installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_33, expectSuccess = true)
-        assertNotificationReviewRequiredState(false)
-        launchApp(requestPermissions = true)
-        waitFindObject(By.textContains(ALLOW))
-    }
-
-    @Test
     fun legacyAppCannotExplicitlyRequestNotifications() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
         launchApp(createChannels = false, requestNotificationPermission = true)
@@ -401,27 +326,6 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
                 Assert.assertEquals("Expected $permission to be granted", context.packageManager
                         .checkPermission(permission, APP_PACKAGE_NAME), PERMISSION_GRANTED)
             }
-        }
-    }
-
-    private fun assertNotificationReviewRequiredState(shouldBeSet: Boolean) {
-        val flagSet = callWithShellPermissionIdentity {
-            (context.packageManager.getPermissionFlags(POST_NOTIFICATIONS,
-                APP_PACKAGE_NAME, Process.myUserHandle()) and FLAG_PERMISSION_REVIEW_REQUIRED) != 0
-        }
-        Assert.assertEquals("Unexpected REVIEW_REQUIRED state for POST_NOTIFICATIONS: ",
-            shouldBeSet, flagSet)
-    }
-
-    private fun setReviewRequired(set: Boolean = true) {
-        val flag = if (set) {
-            FLAG_PERMISSION_REVIEW_REQUIRED
-        } else {
-            0
-        }
-        runWithShellPermissionIdentity {
-            context.packageManager.updatePermissionFlags(POST_NOTIFICATIONS, APP_PACKAGE_NAME,
-                FLAG_PERMISSION_REVIEW_REQUIRED, flag, Process.myUserHandle())
         }
     }
 
