@@ -208,6 +208,8 @@ import org.junit.runner.RunWith;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -1969,6 +1971,25 @@ public class AppEnumerationTests {
         assertThrows(PackageManager.NameNotFoundException.class,
                 () -> canPackageQuery(
                         QUERIES_NOTHING_SHARED_USER, QUERIES_PACKAGE, TARGET_SHARED_USER));
+    }
+
+    @Test
+    public void canPackageQuery_cannotDetectPackageExistence() {
+        ensurePackageIsNotInstalled(TARGET_STUB);
+        final Exception ex1 = assertThrows(PackageManager.NameNotFoundException.class,
+                () -> canPackageQuery(QUERIES_NOTHING, TARGET_STUB, ""));
+        final StringWriter stackTrace1 = new StringWriter();
+        ex1.printStackTrace(new PrintWriter(stackTrace1));
+
+        ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
+
+        final Exception ex2 = assertThrows(PackageManager.NameNotFoundException.class,
+                () -> canPackageQuery(QUERIES_NOTHING, TARGET_STUB, ""));
+        final StringWriter stackTrace2 = new StringWriter();
+        ex1.printStackTrace(new PrintWriter(stackTrace2));
+
+        assertThat(ex1.getMessage(), is(ex2.getMessage()));
+        assertThat(stackTrace1.toString(), is(stackTrace2.toString()));
     }
 
     @Test
