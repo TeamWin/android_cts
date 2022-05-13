@@ -40,7 +40,6 @@ import java.util.Collections;
 public class ContactsIndexerMultiUserTest extends AppSearchHostTestBase {
 
     private static int sSecondaryUserId;
-    private static int sTertiaryUserId;
 
     @BeforeClassWithInfo
     public static void setUpClass(TestInformation testInfo) throws Exception {
@@ -49,8 +48,6 @@ public class ContactsIndexerMultiUserTest extends AppSearchHostTestBase {
 
         sSecondaryUserId = testInfo.getDevice().createUser("Test User #1");
         assertThat(testInfo.getDevice().startUser(sSecondaryUserId)).isTrue();
-        sTertiaryUserId = testInfo.getDevice().createUser("Test User #2");
-        assertThat(testInfo.getDevice().startUser(sTertiaryUserId)).isTrue();
     }
 
     @Before
@@ -58,20 +55,13 @@ public class ContactsIndexerMultiUserTest extends AppSearchHostTestBase {
         if (!getDevice().isUserRunning(sSecondaryUserId)) {
             getDevice().startUser(sSecondaryUserId, /*waitFlag=*/ true);
         }
-        if (!getDevice().isUserRunning(sTertiaryUserId)) {
-            getDevice().startUser(sTertiaryUserId, /*waitFlag=*/ true);
-        }
         installPackageAsUser(TARGET_APK_A, /*grantPermission=*/ true, sSecondaryUserId);
-        installPackageAsUser(TARGET_APK_A, /*grantPermission=*/ true, sTertiaryUserId);
     }
 
     @AfterClassWithInfo
     public static void tearDownClass(TestInformation testInfo) throws Exception {
         if (sSecondaryUserId > 0) {
             testInfo.getDevice().removeUser(sSecondaryUserId);
-        }
-        if (sTertiaryUserId > 0) {
-            testInfo.getDevice().removeUser(sTertiaryUserId);
         }
     }
 
@@ -80,8 +70,5 @@ public class ContactsIndexerMultiUserTest extends AppSearchHostTestBase {
         runContactsIndexerDeviceTestAsUserInPkgA("testFullUpdateJobIsScheduled",
                 sSecondaryUserId,
                 Collections.singletonMap(USER_ID_KEY, String.valueOf(sSecondaryUserId)));
-        runContactsIndexerDeviceTestAsUserInPkgA("testFullUpdateJobIsScheduled",
-                sTertiaryUserId,
-                Collections.singletonMap(USER_ID_KEY, String.valueOf(sTertiaryUserId)));
     }
 }
