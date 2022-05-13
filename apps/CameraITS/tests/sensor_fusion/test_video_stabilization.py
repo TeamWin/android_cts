@@ -23,9 +23,9 @@ import time
 from mobly import test_runner
 import numpy as np
 
-import its_base_test
 import camera_properties_utils
 import image_processing_utils
+import its_base_test
 import its_session_utils
 import sensor_fusion_utils
 
@@ -41,8 +41,8 @@ _SEC_TO_NSEC = 1E9
 _START_FRAME = 30  # give 3A 1s to warm up
 _VIDEO_DELAY_TIME = 5.5  # seconds
 _VIDEO_DURATION = 5.5  # seconds
-_VIDEO_QUALITIES_TESTED = ('QCIF:2', 'CIF:3', '480P:4', '720P:5', '1080P:6',
-                           'QVGA:7', 'VGA:9')
+_VIDEO_QUALITIES_TESTED = ('CIF:3', '480P:4', '720P:5', '1080P:6', 'QVGA:7',
+                           'VGA:9')
 _VIDEO_STABILIZATION_FACTOR = 0.6  # 60% of gyro movement allowed
 _VIDEO_STABILIZATION_MODE = 1
 
@@ -213,7 +213,7 @@ class VideoStabilityTest(its_base_test.ItsBaseTest):
 
         # Extract camera rotations
         img_h = frames[0].shape[0]
-        file_name_stem = os.path.join(log_path, _NAME)
+        file_name_stem = f'{os.path.join(log_path, _NAME)}_{video_profile}'
         cam_rots = sensor_fusion_utils.get_cam_rotations(
             frames[_START_FRAME:len(frames)], facing, img_h,
             file_name_stem, _START_FRAME)
