@@ -36,32 +36,32 @@ public class CallbackTrackingActivity extends LifecycleTrackingActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        mLifecycleLogClient.onActivityCallback(ON_ACTIVITY_RESULT);
+        mEventLogClient.onCallback(ON_ACTIVITY_RESULT);
     }
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-        mLifecycleLogClient.onActivityCallback(ON_POST_CREATE);
+        mEventLogClient.onCallback(ON_POST_CREATE);
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        mLifecycleLogClient.onActivityCallback(ON_NEW_INTENT);
+        mEventLogClient.onCallback(ON_NEW_INTENT);
         setIntent(intent);
     }
 
     @Override
     public void onTopResumedActivityChanged(boolean isTopResumedActivity) {
         if (!getIntent().getBooleanExtra(EXTRA_SKIP_TOP_RESUMED_STATE, false)) {
-            mLifecycleLogClient.onActivityCallback(
+            mEventLogClient.onCallback(
                     isTopResumedActivity ? ON_TOP_POSITION_GAINED : ON_TOP_POSITION_LOST);
         }
     }
 
     @Override
     public void onMultiWindowModeChanged(boolean isInMultiWindowMode, Configuration newConfig) {
-        mLifecycleLogClient.onActivityCallback(ON_MULTI_WINDOW_MODE_CHANGED);
+        mEventLogClient.onCallback(ON_MULTI_WINDOW_MODE_CHANGED);
     }
 }

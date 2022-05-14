@@ -24,8 +24,10 @@ import android.content.ComponentName;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
@@ -106,6 +108,22 @@ public class ProfileOwnerTest {
             profileOwner.remove();
 
             assertThat(TestApis.devicePolicy().getProfileOwner()).isNull();
+        }
+    }
+
+    @Test
+    @EnsureHasNoDpc
+    @EnsureHasNoWorkProfile
+    @RequireRunOnPrimaryUser
+    public void setAndRemoveProfileOwnerRepeatedly_doesNotThrowError() {
+        try (UserReference profile = TestApis.users().createUser().createAndStart()) {
+            try (TestAppInstance dpc = sNonTestOnlyDpc.install()) {
+                for (int i = 0; i < 100; i++) {
+                    ProfileOwner profileOwner = TestApis.devicePolicy().setProfileOwner(
+                            TestApis.users().instrumented(), NON_TEST_ONLY_DPC_COMPONENT_NAME);
+                    profileOwner.remove();
+                }
+            }
         }
     }
 

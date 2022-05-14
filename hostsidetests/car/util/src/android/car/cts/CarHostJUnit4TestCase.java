@@ -58,7 +58,10 @@ import java.util.stream.Collectors;
 // NOTE: must be public because of @Rules
 public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
 
+    private static final int SYSTEM_USER_ID = 0;
+
     private static final int DEFAULT_TIMEOUT_SEC = 20;
+    protected static final int SYSTEM_RESTART_TIMEOUT_SEC = 120;
 
     private static final Pattern CREATE_USER_OUTPUT_PATTERN = Pattern.compile("id=(\\d+)");
 
@@ -351,7 +354,7 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      * Waits until the system server is ready.
      */
     protected void waitForCarServiceReady() throws Exception {
-        CommonTestUtils.waitUntil("timed out waiting for system server ",
+        CommonTestUtils.waitUntil("timed out waiting for car service",
                 DEFAULT_TIMEOUT_SEC, () -> isCarServiceReady());
     }
 
@@ -416,18 +419,19 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
     }
 
     /**
-     * Waits until the current user is ephemeral.
+     * Waits until the current user is not the system user.
      */
-    protected void waitUntilCurrentUserIsEphemeral() throws Exception {
-        waitUntil(() -> isUserEphemeral(getCurrentUserId()), "current user %d (to be ephemeral)",
-                getCurrentUserId());
+    protected  void waitUntilCurrentUserIsNotSystem(int timeoutSec) throws Exception {
+        CommonTestUtils.waitUntil("timed out (" + timeoutSec + "s) waiting for current user to NOT "
+                + "be the system user", timeoutSec,  () -> getCurrentUserId() != SYSTEM_USER_ID);
     }
 
     /**
      * Waits until {@code n} persistent (i.e., non-ephemeral) users are available.
      */
-    protected void waitUntilAtLeastNPersistentUsersAreAvailable(int n) throws Exception {
-        waitUntil(() -> getAllPersistentUsers().size() >= n, "%d persistent users", n);
+    protected void waitUntilAtLeastNPersistentUsersAreAvailable(int timeoutSec, int n)
+            throws Exception {
+        waitUntil(timeoutSec, () -> getAllPersistentUsers().size() >= n, "%d persistent users", n);
     }
 
     /**
@@ -509,29 +513,51 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      * {@link ITestDevice#reboot()} would reset them.
      */
     protected void restartSystemServer() throws Exception {
-        // Root should be enabled to restart systemServer
-        boolean isRoot = getDevice().isAdbRoot();
+        long uptimeBefore = getSystemServerUptime();
+        CLog.d("Uptime before restart: %d", uptimeBefore);
 
-        try {
-            if (!isRoot) {
-                getDevice().enableAdbRoot();
-            }
-            final ITestDevice device = getDevice();
+        restartOrReboot();
+
+        getDevice().waitForDeviceAvailable();
+
+        // Also checks for uptime - it might be an overkill, but at least it will add more logs,
+        // which could help in case of issues
+        CommonTestUtils.waitUntil("timed out waiting until for new system server uptime",
+                SYSTEM_RESTART_TIMEOUT_SEC, () -> {
+                    long uptimeAfter = getSystemServerUptime();
+                    CLog.d("Uptime after restart: %d", uptimeAfter);
+                    return uptimeAfter != -1 && uptimeAfter != uptimeBefore;
+                });
+
+        waitForCarServiceReady();
+    }
+
+    private void restartOrReboot() throws DeviceNotAvailableException {
+        ITestDevice device = getDevice();
+
+        if (device.isAdbRoot()) {
+            CLog.d("Restarting system server");
             device.executeShellCommand("stop");
             device.executeShellCommand("start");
-            device.waitForDeviceAvailable();
-            waitForCarServiceReady();
-        } finally {
-            if (!isRoot) {
-                getDevice().disableAdbRoot();
-            }
+            return;
         }
+
+        CLog.d("Only root user can restart system server; rebooting instead");
+        getDevice().reboot();
+    }
+
+    /**
+     * Gets the system server uptime (or {@code -1} if not available).
+     */
+    protected long getSystemServerUptime() throws DeviceNotAvailableException {
+        return getDevice().getIntProperty("sys.system_server.start_uptime", -1);
     }
 
     /**
      * Reboots the device.
      */
     protected void reboot() throws Exception {
+        CLog.d("Rebooting device");
         getDevice().reboot();
     }
 

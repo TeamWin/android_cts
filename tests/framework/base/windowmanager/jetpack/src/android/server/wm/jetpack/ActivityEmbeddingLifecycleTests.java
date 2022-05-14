@@ -28,9 +28,9 @@ import static android.server.wm.lifecycle.LifecycleConstants.ON_PAUSE;
 import static android.server.wm.lifecycle.LifecycleConstants.ON_RESUME;
 import static android.server.wm.lifecycle.LifecycleConstants.ON_START;
 import static android.server.wm.lifecycle.LifecycleConstants.ON_STOP;
-import static android.server.wm.lifecycle.LifecycleVerifier.assertOrder;
-import static android.server.wm.lifecycle.LifecycleVerifier.checkOrder;
-import static android.server.wm.lifecycle.LifecycleVerifier.transition;
+import static android.server.wm.lifecycle.TransitionVerifier.assertOrder;
+import static android.server.wm.lifecycle.TransitionVerifier.checkOrder;
+import static android.server.wm.lifecycle.TransitionVerifier.transition;
 
 import static androidx.window.extensions.embedding.SplitRule.FINISH_ALWAYS;
 import static androidx.window.extensions.embedding.SplitRule.FINISH_NEVER;
@@ -44,9 +44,9 @@ import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestActivityWithId2;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
 import android.server.wm.jetpack.utils.TestValueCountConsumer;
-import android.server.wm.lifecycle.LifecycleLog;
-import android.server.wm.lifecycle.LifecycleLog.LifecycleLogClient;
-import android.server.wm.lifecycle.LifecycleTracker;
+import android.server.wm.lifecycle.EventLog;
+import android.server.wm.lifecycle.EventLog.EventLogClient;
+import android.server.wm.lifecycle.EventTracker;
 import android.util.Pair;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -71,9 +71,9 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
     private static final String TEST_OWNER = "TEST_OWNER";
     private static final String ON_SPLIT_STATES_UPDATED = "ON_SPLIT_STATES_UPDATED";
 
-    private LifecycleLogClient mLifecycleLogClient;
-    private LifecycleLog mLifecycleLog;
-    private LifecycleTracker mLifecycleTracker;
+    private EventLogClient mEventLogClient;
+    private EventLog mEventLog;
+    private EventTracker mLifecycleTracker;
     private LifecycleCallbacks mLifecycleCallbacks;
 
     @Override
@@ -82,15 +82,15 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         mSplitInfoConsumer = new SplitInfoLifecycleConsumer<>();
         mActivityEmbeddingComponent.setSplitInfoCallback(mSplitInfoConsumer);
 
-        mLifecycleLogClient = LifecycleLogClient.create(TEST_OWNER,
+        mEventLogClient = EventLogClient.create(TEST_OWNER,
                 mInstrumentation.getTargetContext());
 
         // Log transitions for all activities that belong to this app.
-        mLifecycleLog = new LifecycleLog();
-        mLifecycleLog.clear();
+        mEventLog = new EventLog();
+        mEventLog.clear();
 
         // Track transitions and allow waiting for pending activity states.
-        mLifecycleTracker = new LifecycleTracker(mLifecycleLog);
+        mLifecycleTracker = new EventTracker(mEventLog);
         mLifecycleCallbacks = new LifecycleCallbacks();
         mApplication.registerActivityLifecycleCallbacks(mLifecycleCallbacks);
     }
@@ -99,8 +99,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
     public void tearDown() {
         super.tearDown();
         mApplication.unregisterActivityLifecycleCallbacks(mLifecycleCallbacks);
-        if (mLifecycleLogClient != null) {
-            mLifecycleLogClient.close();
+        if (mEventLogClient != null) {
+            mEventLogClient.close();
         }
     }
 
@@ -110,7 +110,6 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
      */
     @Test
     public void testSecondaryActivityLaunch_replacing() {
-        mLifecycleLog.clear();
         Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
 
         SplitPairRule splitPairRule = createWildcardSplitPairRuleWithPrimaryActivityClass(
@@ -124,9 +123,9 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 transition(TestConfigChangeHandlingActivity.class, ON_CREATE),
                 transition(TestActivityWithId.class, ON_CREATE),
                 transition(TEST_OWNER, ON_SPLIT_STATES_UPDATED));
-        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mLifecycleLog, expected));
-        assertOrder(mLifecycleLog, expected, "Init split states");
-        mLifecycleLog.clear();
+        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mEventLog, expected));
+        assertOrder(mEventLog, expected, "Init split states");
+        mEventLog.clear();
 
         // Launch a replacing secondary activity
         Activity secondaryActivity2 = startActivityAndVerifySplit(primaryActivity,
@@ -136,8 +135,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 transition(TestActivityWithId.class, ON_DESTROY),
                 transition(TestActivityWithId2.class, ON_CREATE),
                 transition(TEST_OWNER, ON_SPLIT_STATES_UPDATED));
-        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mLifecycleLog, expected2));
-        assertOrder(mLifecycleLog, expected2, "Replace secondary container activity");
+        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mEventLog, expected2));
+        assertOrder(mEventLog, expected2, "Replace secondary container activity");
         waitAndAssertResumed(primaryActivity);
         waitAndAssertResumed(secondaryActivity2);
     }
@@ -148,7 +147,6 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
      */
     @Test
     public void testSecondaryActivityLaunch_nonReplacing() {
-        mLifecycleLog.clear();
         Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
 
         SplitPairRule splitPairRule = createWildcardSplitPairRuleWithPrimaryActivityClass(
@@ -163,9 +161,9 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 transition(TestConfigChangeHandlingActivity.class, ON_CREATE),
                 transition(TestActivityWithId.class, ON_CREATE),
                 transition(TEST_OWNER, ON_SPLIT_STATES_UPDATED));
-        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mLifecycleLog, expected));
-        assertOrder(mLifecycleLog, expected, "Init split states");
-        mLifecycleLog.clear();
+        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mEventLog, expected));
+        assertOrder(mEventLog, expected, "Init split states");
+        mEventLog.clear();
 
         // Launch a secondary activity on top
         Activity secondaryActivity2 = startActivityAndVerifySplit(primaryActivity,
@@ -175,8 +173,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 transition(TestActivityWithId.class, ON_PAUSE),
                 transition(TestActivityWithId2.class, ON_CREATE),
                 transition(TEST_OWNER, ON_SPLIT_STATES_UPDATED));
-        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mLifecycleLog, expected2));
-        assertOrder(mLifecycleLog, expected2, "Launch second secondary activity");
+        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mEventLog, expected2));
+        assertOrder(mEventLog, expected2, "Launch second secondary activity");
         waitAndAssertResumed(primaryActivity);
         waitAndAssertResumed(secondaryActivity2);
         waitAndAssertNotVisible(secondaryActivity1);
@@ -187,7 +185,6 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
      */
     @Test
     public void testSecondaryActivityLaunch_multiSplit() {
-        mLifecycleLog.clear();
         Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
 
         SplitPairRule splitPairRule = createWildcardSplitPairRuleWithPrimaryActivityClass(
@@ -202,9 +199,9 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 transition(TestConfigChangeHandlingActivity.class, ON_CREATE),
                 transition(TestActivityWithId.class, ON_CREATE),
                 transition(TEST_OWNER, ON_SPLIT_STATES_UPDATED));
-        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mLifecycleLog, expected));
-        assertOrder(mLifecycleLog, expected, "Init split states");
-        mLifecycleLog.clear();
+        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mEventLog, expected));
+        assertOrder(mEventLog, expected, "Init split states");
+        mEventLog.clear();
 
         // Launch another secondary activity to side
         splitPairRule = createWildcardSplitPairRuleWithPrimaryActivityClass(
@@ -217,8 +214,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 transition(TestConfigChangeHandlingActivity.class, ON_PAUSE),
                 transition(TestActivityWithId2.class, ON_CREATE),
                 transition(TEST_OWNER, ON_SPLIT_STATES_UPDATED));
-        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mLifecycleLog, expected2));
-        assertOrder(mLifecycleLog, expected2, "Launch second secondary activity to side");
+        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mEventLog, expected2));
+        assertOrder(mEventLog, expected2, "Launch second secondary activity to side");
         waitAndAssertNotVisible(primaryActivity);
         waitAndAssertResumed(secondaryActivity);
         waitAndAssertResumed(secondaryActivity2);
@@ -239,7 +236,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         Activity secondaryActivity = startActivityAndVerifySplit(primaryActivity,
                 TestActivityWithId.class, splitPairRule,
                 "secondaryActivity1", mSplitInfoConsumer);
-        mLifecycleLog.clear();
+        mEventLog.clear();
 
         // Finish secondary activity
         secondaryActivity.finish();
@@ -247,8 +244,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 transition(TestActivityWithId.class, ON_PAUSE),
                 transition(TEST_OWNER, ON_SPLIT_STATES_UPDATED),
                 transition(TestActivityWithId.class, ON_DESTROY));
-        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mLifecycleLog, expected));
-        assertOrder(mLifecycleLog, expected, "Finish secondary activity");
+        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mEventLog, expected));
+        assertOrder(mEventLog, expected, "Finish secondary activity");
         waitAndAssertResumed(primaryActivity);
     }
 
@@ -271,7 +268,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         Activity secondaryActivity = startActivityAndVerifySplit(primaryActivity,
                 TestActivityWithId.class, splitPairRule,
                 "secondaryActivity1", mSplitInfoConsumer);
-        mLifecycleLog.clear();
+        mEventLog.clear();
 
         // Finish secondary activity, should trigger finishing of the primary as well
         secondaryActivity.finish();
@@ -279,8 +276,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 transition(TEST_OWNER, ON_SPLIT_STATES_UPDATED),
                 transition(TestActivityWithId.class, ON_DESTROY),
                 transition(TestConfigChangeHandlingActivity.class, ON_DESTROY));
-        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mLifecycleLog, expected));
-        assertOrder(mLifecycleLog, expected, "Finish secondary activity with dependents");
+        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mEventLog, expected));
+        assertOrder(mEventLog, expected, "Finish secondary activity with dependents");
     }
 
     /**
@@ -302,15 +299,15 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         Activity secondaryActivity = startActivityAndVerifySplit(primaryActivity,
                 TestActivityWithId.class, splitPairRule,
                 "secondaryActivity1", mSplitInfoConsumer);
-        mLifecycleLog.clear();
+        mEventLog.clear();
 
         // Finish primary activity
         primaryActivity.finish();
         List<Pair<String, String>> expected = List.of(
                 transition(TEST_OWNER, ON_SPLIT_STATES_UPDATED),
                 transition(TestConfigChangeHandlingActivity.class, ON_DESTROY));
-        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mLifecycleLog, expected));
-        assertOrder(mLifecycleLog, expected, "Finish primary activity only");
+        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mEventLog, expected));
+        assertOrder(mEventLog, expected, "Finish primary activity only");
         waitAndAssertResumed(secondaryActivity);
     }
 
@@ -332,7 +329,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         // Launch a secondary activity to side
         startActivityAndVerifySplit(primaryActivity, TestActivityWithId.class, splitPairRule,
                 "secondaryActivity1", mSplitInfoConsumer);
-        mLifecycleLog.clear();
+        mEventLog.clear();
 
         // Finish primary activity should trigger finishing of the secondary as well.
         primaryActivity.finish();
@@ -340,8 +337,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 transition(TEST_OWNER, ON_SPLIT_STATES_UPDATED),
                 transition(TestActivityWithId.class, ON_DESTROY),
                 transition(TestConfigChangeHandlingActivity.class, ON_DESTROY));
-        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mLifecycleLog, expected));
-        assertOrder(mLifecycleLog, expected, "Finish primary activity with dependents");
+        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mEventLog, expected));
+        assertOrder(mEventLog, expected, "Finish primary activity with dependents");
     }
 
     /**
@@ -370,7 +367,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 "secondaryActivity2", mSplitInfoConsumer);
         waitAndAssertResumed(secondaryActivity);
         waitAndAssertResumed(secondaryActivity2);
-        mLifecycleLog.clear();
+        mEventLog.clear();
 
         // Finish the last activity
         secondaryActivity2.finish();
@@ -378,8 +375,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 transition(TEST_OWNER, ON_SPLIT_STATES_UPDATED),
                 transition(TestActivityWithId2.class, ON_DESTROY),
                 transition(TestConfigChangeHandlingActivity.class, ON_RESUME));
-        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mLifecycleLog, expected));
-        assertOrder(mLifecycleLog, expected, "Finish last activity in multi-split");
+        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mEventLog, expected));
+        assertOrder(mEventLog, expected, "Finish last activity in multi-split");
     }
 
     /**
@@ -409,7 +406,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 "secondaryActivity2", mSplitInfoConsumer);
         waitAndAssertResumed(secondaryActivity);
         waitAndAssertResumed(secondaryActivity2);
-        mLifecycleLog.clear();
+        mEventLog.clear();
 
         // Finish the middle activity
         secondaryActivity.finish();
@@ -419,8 +416,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 transition(TEST_OWNER, ON_SPLIT_STATES_UPDATED),
                 transition(TestActivityWithId.class, ON_DESTROY),
                 transition(TestConfigChangeHandlingActivity.class, ON_STOP));
-        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mLifecycleLog, expected));
-        assertOrder(mLifecycleLog, expected, "Finish middle activity in multi-split");
+        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mEventLog, expected));
+        assertOrder(mEventLog, expected, "Finish middle activity in multi-split");
     }
 
     /**
@@ -447,7 +444,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 "secondaryActivity2", mSplitInfoConsumer);
         waitAndAssertResumed(secondaryActivity);
         waitAndAssertResumed(secondaryActivity2);
-        mLifecycleLog.clear();
+        mEventLog.clear();
 
         // Finish the middle activity
         secondaryActivity.finish();
@@ -458,8 +455,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 transition(TestActivityWithId.class, ON_DESTROY),
                 transition(TestConfigChangeHandlingActivity.class, ON_STOP));
 
-        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mLifecycleLog, expected));
-        assertOrder(mLifecycleLog, expected, "Finish middle activity in multi-split");
+        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mEventLog, expected));
+        assertOrder(mEventLog, expected, "Finish middle activity in multi-split");
     }
 
     /**
@@ -489,7 +486,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 "secondaryActivity2", mSplitInfoConsumer);
         waitAndAssertResumed(secondaryActivity);
         waitAndAssertResumed(secondaryActivity2);
-        mLifecycleLog.clear();
+        mEventLog.clear();
 
         // Finish the middle activity
         secondaryActivity.finish();
@@ -497,45 +494,45 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         List<Pair<String, String>> expected = List.of(
                 transition(TestActivityWithId2.class, ON_DESTROY),
                 transition(TestActivityWithId.class, ON_DESTROY));
-        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mLifecycleLog, expected));
-        assertOrder(mLifecycleLog, expected,
+        mLifecycleTracker.waitForConditionWithTimeout(() -> checkOrder(mEventLog, expected));
+        assertOrder(mEventLog, expected,
                 "Finish middle activity in multi-split with dependents");
         mLifecycleTracker.waitForConditionWithTimeout(() ->
-                mLifecycleLog.getLog().contains(transition(TEST_OWNER, ON_SPLIT_STATES_UPDATED)));
+                mEventLog.getLog().contains(transition(TEST_OWNER, ON_SPLIT_STATES_UPDATED)));
         assertTrue("Split state change must be observed",
-                mLifecycleLog.getLog().contains(transition(TEST_OWNER, ON_SPLIT_STATES_UPDATED)));
+                mEventLog.getLog().contains(transition(TEST_OWNER, ON_SPLIT_STATES_UPDATED)));
     }
 
     private final class LifecycleCallbacks implements
             Application.ActivityLifecycleCallbacks {
         @Override
         public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-            mLifecycleLogClient.onActivityCallback(ON_CREATE, activity);
+            mEventLogClient.onCallback(ON_CREATE, activity);
         }
 
         @Override
         public void onActivityStarted(Activity activity) {
-            mLifecycleLogClient.onActivityCallback(ON_START, activity);
+            mEventLogClient.onCallback(ON_START, activity);
         }
 
         @Override
         public void onActivityResumed(Activity activity) {
-            mLifecycleLogClient.onActivityCallback(ON_RESUME, activity);
+            mEventLogClient.onCallback(ON_RESUME, activity);
         }
 
         @Override
         public void onActivityPaused(Activity activity) {
-            mLifecycleLogClient.onActivityCallback(ON_PAUSE, activity);
+            mEventLogClient.onCallback(ON_PAUSE, activity);
         }
 
         @Override
         public void onActivityStopped(Activity activity) {
-            mLifecycleLogClient.onActivityCallback(ON_STOP, activity);
+            mEventLogClient.onCallback(ON_STOP, activity);
         }
 
         @Override
         public void onActivityDestroyed(Activity activity) {
-            mLifecycleLogClient.onActivityCallback(ON_DESTROY, activity);
+            mEventLogClient.onCallback(ON_DESTROY, activity);
         }
 
         @Override
@@ -547,7 +544,7 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         @Override
         public void accept(T value) {
             super.accept(value);
-            mLifecycleLogClient.onActivityCallback(ON_SPLIT_STATES_UPDATED, TEST_OWNER);
+            mEventLogClient.onCallback(ON_SPLIT_STATES_UPDATED, TEST_OWNER);
         }
     }
 }

@@ -513,8 +513,6 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     public void testMultiSelect_previewVideoControlsVisibility() throws Exception {
         launchPreviewMultipleWithVideos(/* videoCount */ 3);
 
-        mDevice.waitForIdle();
-
         final UiObject playPauseButton = findPlayPauseButton();
         final UiObject muteButton = findMuteButton();
         // Check that buttons auto hide.
@@ -644,6 +642,10 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         // buffering -> ready state takes around 10s.
         final long playbackStartTimeout = 10000;
         (findPreviewVideoImageView()).waitUntilGone(playbackStartTimeout);
+
+        // Wait for Binder calls to complete and device to be idle
+        MediaStore.waitForIdle(mContext.getContentResolver());
+        mDevice.waitForIdle();
     }
 
     private void setUpAndAssertStickyPlayerControls(UiObject playerView, UiObject playPauseButton,

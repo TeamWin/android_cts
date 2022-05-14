@@ -99,9 +99,13 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     public void setUp() throws IOException, InterruptedException {
         MediaFormat format = setUpSource(mTestFile);
         mExtractor.release();
-        ArrayList<MediaFormat> formatList = new ArrayList<>();
-        formatList.add(format);
-        checkFormatSupport(mCodecName, mMime, false, formatList, null, mSupportRequirements);
+        if (IS_Q) {
+            Log.i(LOG_TAG, "Android 10: skip checkFormatSupport() for format " + format);
+        } else {
+            ArrayList<MediaFormat> formatList = new ArrayList<>();
+            formatList.add(format);
+            checkFormatSupport(mCodecName, mMime, false, formatList, null, mSupportRequirements);
+        }
         mActivityRule.getScenario().onActivity(activity -> mActivity = activity);
         setUpSurface(mActivity);
     }

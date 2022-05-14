@@ -37,13 +37,16 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.ProviderException;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.interfaces.EdECPublicKey;
 import java.security.spec.ECGenParameterSpec;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.NamedParameterSpec;
+import java.util.Arrays;
 import java.util.Base64;
+
+import javax.crypto.KeyAgreement;
 
 @RunWith(AndroidJUnit4.class)
 public class Curve25519Test {
@@ -58,23 +61,44 @@ public class Curve25519Test {
 
     @Test
     public void x25519KeyAgreementTest() throws NoSuchAlgorithmException, NoSuchProviderException,
-            InvalidAlgorithmParameterException {
+            InvalidAlgorithmParameterException, InvalidKeySpecException, InvalidKeyException {
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC", "AndroidKeyStore");
-        final String alias = "x25519-alias";
-        deleteEntry(alias);
+        // Aliases for both keys.
+        final String firstKeyAlias = "x25519-alias";
+        deleteEntry(firstKeyAlias);
+        final String secondKeyAlias = "x25519-alias-second";
+        deleteEntry(secondKeyAlias);
 
-        KeyGenParameterSpec keySpec = new KeyGenParameterSpec.Builder(alias,
-                        KeyProperties.PURPOSE_AGREE_KEY)
+        // Generate first x25519 key pair.
+        KeyGenParameterSpec firstKeySpec = new KeyGenParameterSpec.Builder(firstKeyAlias,
+                KeyProperties.PURPOSE_AGREE_KEY)
                 .setAlgorithmParameterSpec(new ECGenParameterSpec("x25519")).build();
-        kpg.initialize(keySpec);
+        kpg.initialize(firstKeySpec);
+        KeyPair firstKeyPair = kpg.generateKeyPair();
 
-        //TODO(b/214203951): Remove this try/catch once Conscrypt class are available.
-        try {
-            kpg.generateKeyPair();
-            fail("Should not be supported yet");
-        } catch (ProviderException e) {
-            assertThat(e.getMessage()).isEqualTo("Curve XDH not supported yet");
-        }
+        // Generate second x25519 key pair.
+        KeyGenParameterSpec secondKeySpec = new KeyGenParameterSpec.Builder(secondKeyAlias,
+                KeyProperties.PURPOSE_AGREE_KEY)
+                .setAlgorithmParameterSpec(new ECGenParameterSpec("x25519")).build();
+        kpg.initialize(secondKeySpec);
+        KeyPair secondKeyPair = kpg.generateKeyPair();
+
+        // Attempt a key agreement with the private key from the first key pair and the public
+        // key from the second key pair.
+        KeyAgreement secondKa = KeyAgreement.getInstance("XDH");
+        secondKa.init(firstKeyPair.getPrivate());
+        secondKa.doPhase(secondKeyPair.getPublic(), true);
+        byte[] secondSecret = secondKa.generateSecret();
+
+        // Attempt a key agreement "the other way around": using the private key from the second
+        // key pair and the public key from the first key pair.
+        KeyAgreement firstKa = KeyAgreement.getInstance("XDH");
+        firstKa.init(secondKeyPair.getPrivate());
+        firstKa.doPhase(firstKeyPair.getPublic(), true);
+        byte[] firstSecret = firstKa.generateSecret();
+
+        // Both secrets being equal means the key agreement was successful.
+        assertThat(Arrays.compare(firstSecret, secondSecret)).isEqualTo(0);
     }
 
     @Test

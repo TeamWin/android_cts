@@ -45,7 +45,7 @@
         />
 
         <!-- The provider properties must match the shared one defined in the util module. -->
-        <provider android:name="android.server.wm.lifecycle.LifecycleLog"
+        <provider android:name="android.server.wm.lifecycle.EventLog"
                   android:authorities="android.server.wm.lifecycle.logprovider"
                   android:exported="true"/>
     </application>

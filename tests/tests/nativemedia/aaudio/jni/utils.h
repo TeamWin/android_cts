@@ -17,8 +17,13 @@
 #define CTS_MEDIA_TEST_AAUDIO_UTILS_H
 
 #include <dlfcn.h>
+#include <atomic>
 #include <map>
+#include <gtest/gtest.h>
 #include <sys/system_properties.h>
+
+#include <android/binder_auto_utils.h>
+#include <android/binder_ibinder.h>
 
 #include <aaudio/AAudio.h>
 
@@ -205,6 +210,38 @@ private:
 
     const bool   mMMapSupported;
     const bool   mMMapExclusiveSupported;
+};
+
+class AudioServerCrashMonitor {
+public:
+    static AudioServerCrashMonitor& getInstance() {
+        static AudioServerCrashMonitor instance;
+        return instance;
+    }
+    ~AudioServerCrashMonitor();
+
+    void linkToDeath();
+
+    bool isDeathRecipientLinked() const { return mDeathRecipientLinked; }
+    void onAudioServerCrash();
+
+private:
+    AudioServerCrashMonitor();
+
+    ::ndk::SpAIBinder getAudioFlinger();
+
+    ::ndk::SpAIBinder mAudioFlinger;
+    ::ndk::ScopedAIBinder_DeathRecipient mDeathRecipient;
+    bool mDeathRecipientLinked = false;
+};
+
+class AAudioCtsBase : public ::testing::Test {
+protected:
+    void SetUp() override;
+    void TearDown() override;
+
+private:
+    void checkIfAudioServerCrash();
 };
 
 #endif  // CTS_MEDIA_TEST_AAUDIO_UTILS_H

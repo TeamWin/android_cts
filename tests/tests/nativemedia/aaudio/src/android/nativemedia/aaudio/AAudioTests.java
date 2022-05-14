@@ -16,10 +16,18 @@
 
 package android.nativemedia.aaudio;
 
-import org.junit.runner.RunWith;
+import android.os.IBinder;
+import android.os.ServiceManager;
+
 import com.android.gtestrunner.GtestRunner;
 import com.android.gtestrunner.TargetLibrary;
 
+import org.junit.runner.RunWith;
+
 @RunWith(GtestRunner.class)
 @TargetLibrary("nativeaaudiotest")
-public class AAudioTests {}
+public class AAudioTests {
+    static IBinder getAudioFlinger() {
+        return ServiceManager.getService("media.audio_flinger");
+    }
+}

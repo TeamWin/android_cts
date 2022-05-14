@@ -28,6 +28,7 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.TruthJUnit.assume;
 
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
@@ -43,6 +44,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
@@ -98,6 +100,9 @@ public class StreamedAppBehaviorTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         mContext = getApplicationContext();
+        assumeTrue(
+                mContext.getPackageManager()
+                        .hasSystemFeature(PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         mVirtualDeviceManager = mContext.getSystemService(VirtualDeviceManager.class);
         mVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(

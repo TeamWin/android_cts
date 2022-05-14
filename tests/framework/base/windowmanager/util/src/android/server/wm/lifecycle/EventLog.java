@@ -33,17 +33,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Used as a shared log storage of activity lifecycle transitions. Methods must be synchronized to
- * prevent concurrent modification of the log store.
+ * Used as a shared log storage of events such as activity lifecycle. Methods must be
+ * synchronized to prevent concurrent modification of the log store.
  */
-public class LifecycleLog extends ContentProvider {
+public class EventLog extends ContentProvider {
 
-    interface LifecycleTrackerCallback {
-        void onActivityLifecycleChanged();
+    interface EventTrackerCallback {
+        void onEventObserved();
     }
 
     /** Identifies the activity to which the event corresponds. */
-    private static final String EXTRA_KEY_ACTIVITY = "key_activity";
+    private static final String EXTRA_KEY_TAG = "key_activity";
     /** Puts a lifecycle or callback into the container. */
     private static final String METHOD_ADD_CALLBACK = "add_callback";
     /** Content provider URI for cross-process lifecycle transitions collecting. */
@@ -56,9 +56,9 @@ public class LifecycleLog extends ContentProvider {
     private static final List<Pair<String, String>> sLog = new ArrayList<>();
 
     /**
-     * Lifecycle tracker interface that waits for correct states or sequences.
+     * Event tracker interface that waits for correct states or sequences.
      */
-    private static LifecycleTrackerCallback sLifecycleTracker;
+    private static EventTrackerCallback sEventTracker;
 
     /** Clear the entire transition log. */
     public void clear() {
@@ -67,8 +67,10 @@ public class LifecycleLog extends ContentProvider {
         }
     }
 
-    public void setLifecycleTracker(LifecycleTrackerCallback lifecycleTracker) {
-        sLifecycleTracker = lifecycleTracker;
+    public void setEventTracker(EventTrackerCallback eventTracker) {
+        synchronized (sLog) {
+            sEventTracker = eventTracker;
+        }
     }
 
     /** Add activity callback to the log. */
@@ -78,8 +80,8 @@ public class LifecycleLog extends ContentProvider {
         }
         log("Activity " + activityCanonicalName + " receiver callback " + callback);
         // Trigger check for valid state in the tracker
-        if (sLifecycleTracker != null) {
-            sLifecycleTracker.onActivityLifecycleChanged();
+        if (sEventTracker != null) {
+            sEventTracker.onEventObserved();
         }
     }
 
@@ -109,28 +111,28 @@ public class LifecycleLog extends ContentProvider {
 
     // ContentProvider implementation for cross-process tracking
 
-    public static class LifecycleLogClient implements AutoCloseable {
+    public static class EventLogClient implements AutoCloseable {
         private static final String EMPTY_ARG = "";
         private final ContentProviderClient mClient;
-        private final String mOwner;
+        private final String mTag;
 
-        public LifecycleLogClient(ContentProviderClient client, String owner) {
+        public EventLogClient(ContentProviderClient client, String tag) {
             mClient = client;
-            mOwner = owner;
+            mTag = tag;
         }
 
-        public void onActivityCallback(String callback) {
-            onActivityCallback(callback, mOwner);
+        public void onCallback(String callback) {
+            onCallback(callback, mTag);
         }
 
-        public void onActivityCallback(String callback, Activity owner) {
-            onActivityCallback(callback, owner.getClass().getCanonicalName());
+        public void onCallback(String callback, Activity activity) {
+            onCallback(callback, activity.getClass().getCanonicalName());
         }
 
-        public void onActivityCallback(String callback, String owner) {
+        public void onCallback(String callback, String tag) {
             final Bundle extras = new Bundle();
             extras.putString(METHOD_ADD_CALLBACK, callback);
-            extras.putString(EXTRA_KEY_ACTIVITY, owner);
+            extras.putString(EXTRA_KEY_TAG, tag);
             try {
                 mClient.call(METHOD_ADD_CALLBACK, EMPTY_ARG, extras);
             } catch (RemoteException e) {
@@ -143,13 +145,13 @@ public class LifecycleLog extends ContentProvider {
             mClient.close();
         }
 
-        public static LifecycleLogClient create(String owner, Context context) {
+        public static EventLogClient create(String owner, Context context) {
             final ContentProviderClient client = context.getContentResolver()
                     .acquireContentProviderClient(URI);
             if (client == null) {
                 throw new RuntimeException("Unable to acquire " + URI);
             }
-            return new LifecycleLogClient(client, owner);
+            return new EventLogClient(client, owner);
         }
     }
 
@@ -158,7 +160,7 @@ public class LifecycleLog extends ContentProvider {
         if (!METHOD_ADD_CALLBACK.equals(method)) {
             throw new UnsupportedOperationException();
         }
-        onActivityCallback(extras.getString(EXTRA_KEY_ACTIVITY), extras.getString(method));
+        onActivityCallback(extras.getString(EXTRA_KEY_TAG), extras.getString(method));
         return null;
     }
 

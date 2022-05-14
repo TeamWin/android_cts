@@ -71,10 +71,10 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     final ActivityTestRule mSlowActivityTestRule = new ActivityTestRule<>(
             SlowActivity.class, true /* initialTouchMode */, false /* launchActivity */);
 
-    private static LifecycleLog mLifecycleLog;
+    private static EventLog sEventLog;
 
     protected Context mTargetContext;
-    private LifecycleTracker mLifecycleTracker;
+    private EventTracker mTransitionTracker;
 
     @Before
     @Override
@@ -83,11 +83,11 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
 
         mTargetContext = getInstrumentation().getTargetContext();
         // Log transitions for all activities that belong to this app.
-        mLifecycleLog = new LifecycleLog();
-        mLifecycleLog.clear();
+        sEventLog = new EventLog();
+        sEventLog.clear();
 
         // Track transitions and allow waiting for pending activity states.
-        mLifecycleTracker = new LifecycleTracker(mLifecycleLog);
+        mTransitionTracker = new EventTracker(sEventLog);
 
         // Some lifecycle tracking activities that have not been destroyed may affect the
         // verification of next test because of the lifecycle log. We need to wait them to be
@@ -252,7 +252,7 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     final void waitAndAssertActivityStates(
             Pair<Class<? extends Activity>, String>... activityCallbacks) {
         log("Start waitAndAssertActivityCallbacks");
-        mLifecycleTracker.waitAndAssertActivityStates(activityCallbacks);
+        mTransitionTracker.waitAndAssertActivityStates(activityCallbacks);
     }
 
     /**
@@ -262,35 +262,35 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     final void waitAndAssertActivityCurrentState(
             Class<? extends Activity> activityClass, String expectedState) {
         log("Start waitAndAssertActivityCurrentState");
-        mLifecycleTracker.waitAndAssertActivityCurrentState(activityClass, expectedState);
+        mTransitionTracker.waitAndAssertActivityCurrentState(activityClass, expectedState);
     }
 
     /**
      * Blocking call that will wait for activities to perform the expected sequence of transitions.
-     * @see LifecycleTracker#waitForActivityTransitions(Class, List)
+     * @see EventTracker#waitForActivityTransitions(Class, List)
      */
     final void waitForActivityTransitions(Class<? extends Activity> activityClass,
             List<String> expectedTransitions) {
         log("Start waitForActivityTransitions");
-        mLifecycleTracker.waitForActivityTransitions(activityClass, expectedTransitions);
+        mTransitionTracker.waitForActivityTransitions(activityClass, expectedTransitions);
     }
 
     /**
      * Blocking call that will wait for activities to perform the expected sequence of transitions.
      * After waiting it asserts that the sequence matches the expected.
-     * @see LifecycleTracker#waitForActivityTransitions(Class, List)
+     * @see EventTracker#waitForActivityTransitions(Class, List)
      */
     final void waitAndAssertActivityTransitions(Class<? extends Activity> activityClass,
             List<String> expectedTransitions, String message) {
         log("Start waitAndAssertActivityTransition");
-        mLifecycleTracker.waitForActivityTransitions(activityClass, expectedTransitions);
+        mTransitionTracker.waitForActivityTransitions(activityClass, expectedTransitions);
 
-        LifecycleVerifier.assertSequence(activityClass, getLifecycleLog(), expectedTransitions,
+        TransitionVerifier.assertSequence(activityClass, getTransitionLog(), expectedTransitions,
                 message);
     }
 
-    LifecycleLog getLifecycleLog() {
-        return mLifecycleLog;
+    EventLog getTransitionLog() {
+        return sEventLog;
     }
 
     static Pair<Class<? extends Activity>, String> state(Activity activity,
@@ -620,7 +620,7 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
 
     void moveTaskToPrimarySplitScreenAndVerify(Activity primaryActivity,
             Activity secondaryActivity) throws Exception {
-        getLifecycleLog().clear();
+        getTransitionLog().clear();
 
         mWmState.computeState(secondaryActivity.getComponentName());
         moveActivitiesToSplitScreen(primaryActivity.getComponentName(),
@@ -629,9 +629,9 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         final Class<? extends Activity> activityClass = primaryActivity.getClass();
 
         final List<String> expectedTransitions =
-                new ArrayList<>(LifecycleVerifier.getSplitScreenTransitionSequence(activityClass));
+                new ArrayList<>(TransitionVerifier.getSplitScreenTransitionSequence(activityClass));
         final List<String> expectedTransitionForMinimizedDock =
-                LifecycleVerifier.appendMinimizedDockTransitionTrail(expectedTransitions);
+                TransitionVerifier.appendMinimizedDockTransitionTrail(expectedTransitions);
 
         final int displayWindowingMode =
                 getDisplayWindowingModeByActivity(getComponentName(activityClass));
@@ -642,10 +642,10 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
                     Collections.singleton(ON_MULTI_WINDOW_MODE_CHANGED));
         }
 
-        mLifecycleTracker.waitForActivityTransitions(activityClass, expectedTransitions);
-        LifecycleVerifier.assertSequenceMatchesOneOf(
+        mTransitionTracker.waitForActivityTransitions(activityClass, expectedTransitions);
+        TransitionVerifier.assertSequenceMatchesOneOf(
                 activityClass,
-                getLifecycleLog(),
+                getTransitionLog(),
                 Arrays.asList(expectedTransitions, expectedTransitionForMinimizedDock),
                 "enterSplitScreen");
     }

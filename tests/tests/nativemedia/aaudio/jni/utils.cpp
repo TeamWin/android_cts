@@ -22,11 +22,17 @@
 
 #include <string>
 
+#include <android/binder_ibinder_jni.h>
+#include <android/binder_status.h>
 #include <android/log.h>
 #include <gtest/gtest.h>
+#include <nativetesthelper_jni/utils.h>
 
 #include "test_aaudio.h"
 #include "utils.h"
+
+using ::ndk::SpAIBinder;
+using ::ndk::ScopedAIBinder_DeathRecipient;
 
 int64_t getNanoseconds(clockid_t clockId) {
     struct timespec time;
@@ -258,7 +264,86 @@ bool AAudioExtensions::loadLibrary() {
         //LOGI("%s() could not find " FUNCTION_GET_MMAP_POLICY, __func__);
         return false;
     }
+
     mFunctionsLoaded = true;
     return mFunctionsLoaded;
+}
+
+static std::atomic_int sAudioServerCrashCount = 0;
+static int sLastAudioServerCrashCount = 0;
+
+void onBinderDied(void* /*cookie*/) {
+    sAudioServerCrashCount += 1;
+    AudioServerCrashMonitor::getInstance().onAudioServerCrash();
+}
+
+AudioServerCrashMonitor::AudioServerCrashMonitor()
+        : mDeathRecipient{ScopedAIBinder_DeathRecipient(
+                AIBinder_DeathRecipient_new(onBinderDied))} {
+    linkToDeath();
+}
+
+AudioServerCrashMonitor::~AudioServerCrashMonitor() {
+    if (mDeathRecipientLinked) {
+        AIBinder_unlinkToDeath(mAudioFlinger.get(), mDeathRecipient.get(), nullptr /* cookie */);
+    }
+}
+
+void AudioServerCrashMonitor::linkToDeath() {
+    if (getAudioFlinger().get() == nullptr) {
+        __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Failed to get audio flinger");
+    } else {
+        auto ret = AIBinder_linkToDeath(mAudioFlinger.get(), mDeathRecipient.get(),
+                                        nullptr /* cookie */);
+        if (ret != STATUS_OK) {
+            __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Failed to link to death, err=%d", ret);
+        } else {
+            mDeathRecipientLinked = true;
+        }
+    }
+}
+
+void AudioServerCrashMonitor::onAudioServerCrash() {
+    mDeathRecipientLinked = false;
+    mAudioFlinger.set(nullptr);
+}
+
+SpAIBinder AudioServerCrashMonitor::getAudioFlinger() {
+    if (mAudioFlinger.get() != nullptr) {
+        return mAudioFlinger;
+    }
+
+    JavaVM* vm = GetJavaVM();
+    EXPECT_NE(nullptr, vm);
+    JNIEnv* env = nullptr;
+    jint attach = vm->AttachCurrentThread(&env, nullptr);
+    EXPECT_EQ(JNI_OK, attach);
+    EXPECT_NE(nullptr, env);
+    jclass cl = env->FindClass("android/nativemedia/aaudio/AAudioTests");
+    EXPECT_NE(nullptr, cl);
+    jmethodID mid = env->GetStaticMethodID(cl, "getAudioFlinger", "()Landroid/os/IBinder;");
+    EXPECT_NE(nullptr, mid);
+    jobject object = env->CallStaticObjectMethod(cl, mid);
+    EXPECT_NE(nullptr, object);
+
+    mAudioFlinger = SpAIBinder(AIBinder_fromJavaBinder(env, object));
+    return mAudioFlinger;
+}
+
+void AAudioCtsBase::SetUp() {
+    checkIfAudioServerCrash();
+}
+
+void AAudioCtsBase::TearDown() {
+    checkIfAudioServerCrash();
+}
+
+void AAudioCtsBase::checkIfAudioServerCrash() {
+    EXPECT_EQ(sLastAudioServerCrashCount, sAudioServerCrashCount);
+    sLastAudioServerCrashCount = sAudioServerCrashCount;
+    EXPECT_TRUE(AudioServerCrashMonitor::getInstance().isDeathRecipientLinked());
+    if (!AudioServerCrashMonitor::getInstance().isDeathRecipientLinked()) {
+        AudioServerCrashMonitor::getInstance().linkToDeath();
+    }
 }
 

@@ -98,7 +98,7 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
         // Navigate home
         launchHomeActivity();
         waitAndAssertActivityStates(state(FirstActivity.class, ON_STOP));
-        getLifecycleLog().clear();
+        getTransitionLog().clear();
 
         // Start activity again with flags in question. Verify activity is resumed.
         // A new instance of activity will be created, and the old one destroyed.

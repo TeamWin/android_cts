@@ -25,12 +25,14 @@ import static android.Manifest.permission.WAKE_LOCK;
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeTrue;
 
 import android.annotation.Nullable;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.platform.test.annotations.AppModeFull;
@@ -74,6 +76,9 @@ public class VirtualInputTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         Context context = getApplicationContext();
+        assumeTrue(
+                context.getPackageManager()
+                        .hasSystemFeature(PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
     }
 

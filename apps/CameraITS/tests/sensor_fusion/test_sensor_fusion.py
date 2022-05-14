@@ -90,7 +90,8 @@ def _collect_data(cam, fps, w, h, test_length, rot_rig, chart_dist, log_path):
   props = cam.get_camera_properties()
   props = cam.override_with_hidden_physical_camera_props(props)
   camera_properties_utils.skip_unless(
-      camera_properties_utils.sensor_fusion_capable(props))
+      camera_properties_utils.sensor_fusion_capable(props) and
+      cam.get_sensors().get('gyro'))
 
   # Start camera rotation.
   p = multiprocessing.Process(

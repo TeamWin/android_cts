@@ -170,8 +170,13 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         // We do this before anything else, because having an active device owner can prevent us
         // from being able to force stop apps. (b/142061276)
         runWithShellPermissionIdentity(() -> {
-            runShellCommand("dpm remove-active-admin --user current "
+            runShellCommand("dpm remove-active-admin --user 0 "
                     + APP_A_SIMPLE_ADMIN_RECEIVER.flattenToString());
+            if (UserManager.isHeadlessSystemUserMode()) {
+                // Must also remove the PO from current user
+                runShellCommand("dpm remove-active-admin --user cur "
+                        + APP_A_SIMPLE_ADMIN_RECEIVER.flattenToString());
+            }
         });
 
         stopTestPackage(TEST_PACKAGE_APP_A);

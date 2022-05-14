@@ -25,6 +25,7 @@ import static android.virtualdevice.cts.util.VirtualDeviceTestUtils.createActivi
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.after;
@@ -45,6 +46,7 @@ import android.companion.virtual.VirtualDeviceParams;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.hardware.display.VirtualDisplay;
 import android.os.Bundle;
 import android.os.ResultReceiver;
@@ -112,6 +114,9 @@ public class ActivityManagementTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         Context context = getApplicationContext();
+        assumeTrue(
+                context.getPackageManager()
+                        .hasSystemFeature(PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
         mResultReceiver = VirtualDeviceTestUtils.createResultReceiver(mOnReceiveResultListener);
     }

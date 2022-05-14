@@ -16,9 +16,16 @@
 
 package android.permission.cts;
 
+import android.app.UiAutomation;
+import android.os.Process;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.SystemUtil;
+
+import org.junit.Assert;
 
 /** Common test utilities */
 public class TestUtils {
@@ -122,5 +129,43 @@ public class TestUtils {
                 }
             }
         }
+    }
+
+    /**
+     * Run the job and then wait for completion
+     */
+    public static void runJobAndWaitUntilCompleted(
+            String packageName,
+            int jobId, long timeout) {
+        runJobAndWaitUntilCompleted(packageName, jobId, timeout,
+                InstrumentationRegistry.getInstrumentation().getUiAutomation());
+    }
+
+    /**
+     * Run the job and then wait for completion
+     */
+    public static void runJobAndWaitUntilCompleted(
+            String packageName,
+            int jobId,
+            long timeout,
+            UiAutomation automation) {
+        String runJobCmd = "cmd jobscheduler run -u " + Process.myUserHandle().getIdentifier()
+                + " -f " + packageName + " " + jobId;
+        String statusCmd = "cmd jobscheduler get-job-state -u "
+                + Process.myUserHandle().getIdentifier() + " " + packageName + " " + jobId;
+
+        SystemUtil.runWithShellPermissionIdentity(automation, () -> {
+            SystemUtil.runShellCommand(automation, runJobCmd);
+            Thread.sleep(500);
+            try {
+                eventually(() -> Assert.assertEquals(
+                        "The job is probably still running",
+                        "waiting",
+                        SystemUtil.runShellCommand(automation, statusCmd).trim()),
+                        timeout);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 }

@@ -101,4 +101,16 @@ public class DeviceOwnerTest {
             assertThat(TestApis.devicePolicy().getDeviceOwner()).isNull();
         }
     }
+
+    @Test
+    @EnsureHasNoDpc
+    public void setAndRemoveDeviceOwnerRepeatedly_doesNotThrowError() {
+        try (TestAppInstance dpc = sNonTestOnlyDpc.install()) {
+            for (int i = 0; i < 100; i++) {
+                DeviceOwner deviceOwner = TestApis.devicePolicy()
+                        .setDeviceOwner(NON_TEST_ONLY_DPC_COMPONENT_NAME);
+                deviceOwner.remove();
+            }
+        }
+    }
 }

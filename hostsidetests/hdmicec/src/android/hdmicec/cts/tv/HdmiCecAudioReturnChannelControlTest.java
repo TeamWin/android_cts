@@ -219,6 +219,10 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHdmiCecCtsTe
             for (int i = 0; i < 4; i++) {
                 codecs.add(CecMessage.getParams(requestSad1, 2 * i, 2 * i + 2));
             }
+            // The first SAD query needs to be replied to, in order for the second query to be sent
+            // as well.
+            hdmiCecClient.sendCecMessage(LogicalAddress.AUDIO_SYSTEM, CecOperand.FEATURE_ABORT,
+                    CecMessage.formatParams("A403"));
             String requestSad2 = hdmiCecClient.checkExpectedOutput(LogicalAddress.AUDIO_SYSTEM,
                     CecOperand.REQUEST_SHORT_AUDIO_DESCRIPTOR);
             for (int i = 0; i < 2; i++) {

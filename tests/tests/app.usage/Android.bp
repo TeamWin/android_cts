@@ -56,7 +56,6 @@ android_test {
 java_defaults {
     name: "test_app_defaults",
     defaults: ["cts_defaults"],
-    platform_apis: true,
     static_libs: [
         "androidx.test.rules",
         "compatibility-device-util-axt",

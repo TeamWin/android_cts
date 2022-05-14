@@ -109,8 +109,10 @@ public class FillEventHistoryTest extends FillEventHistoryCommonTestCase {
         sReplier.getNextSaveRequest();
 
         // Assert it
-        final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
-        assertFillEventForSaveShown(events.get(0), NULL_DATASET_ID);
+        final List<Event> events = InstrumentedAutoFillService.getFillEvents(2);
+        FillEventHistory.Event event = events.get(0);
+        assertThat(event.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
+        assertFillEventForSaveShown(events.get(1), NULL_DATASET_ID);
     }
 
 
@@ -159,10 +161,12 @@ public class FillEventHistoryTest extends FillEventHistoryCommonTestCase {
 
         // ...and check again
         {
-            final List<Event> events = InstrumentedAutoFillService.getFillEvents(3);
+            final List<Event> events = InstrumentedAutoFillService.getFillEvents(4);
             assertFillEventForDatasetShown(events.get(0), UI_TYPE_MENU);
             assertFillEventForDatasetSelected(events.get(1), NULL_DATASET_ID, UI_TYPE_MENU);
             assertFillEventForDatasetShown(events.get(2), UI_TYPE_MENU);
+            FillEventHistory.Event event = events.get(3);
+            assertThat(event.getType()).isEqualTo(TYPE_CONTEXT_COMMITTED);
         }
     }
 

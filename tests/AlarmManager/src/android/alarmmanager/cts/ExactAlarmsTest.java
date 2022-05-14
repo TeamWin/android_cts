@@ -26,6 +26,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
+import android.alarmmanager.alarmtestapp.cts.TestAlarmReceiver;
+import android.alarmmanager.alarmtestapp.cts.TestAlarmScheduler;
+import android.alarmmanager.alarmtestapp.cts.common.FgsTester;
 import android.alarmmanager.alarmtestapp.cts.common.PermissionStateChangedReceiver;
 import android.alarmmanager.alarmtestapp.cts.common.RequestReceiver;
 import android.alarmmanager.util.AlarmManagerDeviceConfigHelper;
@@ -194,6 +197,7 @@ public class ExactAlarmsTest {
     @After
     public void resetAppOps() throws IOException {
         AppOpsUtils.reset(TEST_APP_PACKAGE);
+        AppOpsUtils.reset(TEST_APP_30);
     }
 
     @After
@@ -365,6 +369,61 @@ public class ExactAlarmsTest {
                 () -> mWhitelistManager.addToWhitelist(sContext.getOpPackageName()));
     }
 
+    private void setAlarmClockForFgs(long triggerRTC, String testAppName) throws Exception {
+        final CountDownLatch resultLatch = new CountDownLatch(1);
+        final AtomicInteger result = new AtomicInteger(-1);
+
+        AlarmManager.AlarmClockInfo alarmInfo = new AlarmManager.AlarmClockInfo(triggerRTC, null);
+
+        final Intent requestToTestApp = new Intent(TestAlarmScheduler.ACTION_SET_ALARM_CLOCK)
+                .setClassName(testAppName, TestAlarmScheduler.class.getName())
+                .putExtra(TestAlarmScheduler.EXTRA_ALARM_CLOCK_INFO, alarmInfo)
+                .putExtra(TestAlarmScheduler.EXTRA_TEST_FGS, true)
+                .addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+
+        sContext.sendOrderedBroadcast(requestToTestApp, null, new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                result.set(getResultCode());
+                resultLatch.countDown();
+            }
+        }, null, Activity.RESULT_CANCELED, null, null);
+
+        assertTrue("Timed out waiting for response from helper app " + testAppName,
+                resultLatch.await(10, TimeUnit.SECONDS));
+        assertEquals(Activity.RESULT_OK, result.get());
+    }
+
+    @Test
+    public void alarmClockAllowsFGS() throws Exception {
+        setAppOp(TEST_APP_PACKAGE, AppOpsManager.MODE_ALLOWED);
+
+        final long triggerRtc = System.currentTimeMillis() + 5_000;
+        setAlarmClockForFgs(triggerRtc, TEST_APP_PACKAGE);
+
+        final AtomicReference<String> resultHolder = new AtomicReference<>();
+        final CountDownLatch alarmLatch = new CountDownLatch(1);
+
+        final IntentFilter filter = new IntentFilter(TestAlarmReceiver.ACTION_REPORT_ALARM_EXPIRED);
+        final BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.d(TAG, "Received response intent: " + intent);
+                resultHolder.set(intent.getStringExtra(FgsTester.EXTRA_FGS_START_RESULT));
+                alarmLatch.countDown();
+            }
+        };
+        sContext.registerReceiver(receiver, filter);
+        try {
+            Thread.sleep(5_000);
+            assertTrue("AlarmClock expiration not reported",
+                    alarmLatch.await(30, TimeUnit.SECONDS));
+            assertEquals("FGS result should be empty", "", resultHolder.get());
+        } finally {
+            sContext.unregisterReceiver(receiver);
+        }
+    }
+
     @Test
     public void setAlarmClockWithPermission() throws Exception {
         final long now = System.currentTimeMillis();
@@ -385,7 +444,6 @@ public class ExactAlarmsTest {
         assertSecurityExceptionFromTestApp(RequestReceiver.ACTION_SET_ALARM_CLOCK,
                 TEST_APP_PACKAGE);
     }
-
 
     @Test
     public void setExactAwiWithoutPermissionOrWhitelist() throws Exception {
@@ -580,7 +638,7 @@ public class ExactAlarmsTest {
             public void onReceive(Context context, Intent intent) {
                 Log.d(TAG, "Received response intent: " + intent);
                 resultHolder.set(intent.getStringExtra(
-                        PermissionStateChangedReceiver.EXTRA_FGS_START_RESULT));
+                        FgsTester.EXTRA_FGS_START_RESULT));
                 latch.countDown();
             }
         };
@@ -621,7 +679,7 @@ public class ExactAlarmsTest {
             public void onReceive(Context context, Intent intent) {
                 Log.d(TAG, "Received response intent: " + intent);
                 resultHolder.set(intent.getStringExtra(
-                        PermissionStateChangedReceiver.EXTRA_FGS_START_RESULT));
+                        FgsTester.EXTRA_FGS_START_RESULT));
                 latch.countDown();
             }
         };

@@ -586,6 +586,7 @@ class OutputManager {
 }
 
 abstract class CodecTestBase {
+    public static final boolean IS_Q = ApiLevelUtil.getApiLevel() == Build.VERSION_CODES.Q;
     public static final boolean IS_AT_LEAST_R = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
     // Checking for CODENAME helps in cases when build version on the development branch isn't
     // updated yet but CODENAME is updated.
@@ -809,16 +810,18 @@ abstract class CodecTestBase {
         if (!areFormatsSupported(codecName, mime, formats)) {
             switch (supportRequirements) {
                 case CODEC_ALL:
-                    fail("format(s) not supported by codec: " + codecName + " for mime : " + mime);
+                    fail("format(s) not supported by codec: " + codecName
+                                    + " for mime : " + mime + " formats: " + formats);
                     break;
                 case CODEC_ANY:
                     if (selectCodecs(mime, formats, features, isEncoder).isEmpty())
-                        fail("format(s) not supported by any component for mime : " + mime);
+                        fail("format(s) not supported by any component for mime : " + mime
+                                        + " formats: " + formats);
                     break;
                 case CODEC_DEFAULT:
                     if (isDefaultCodec(codecName, mime, isEncoder))
                         fail("format(s) not supported by default codec : " + codecName +
-                                "for mime : " + mime);
+                                "for mime : " + mime + " formats: " + formats);
                     break;
                 case CODEC_OPTIONAL:
                 default:

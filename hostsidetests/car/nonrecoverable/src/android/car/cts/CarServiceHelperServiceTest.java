@@ -52,7 +52,10 @@ public final class CarServiceHelperServiceTest extends CarHostJUnit4TestCase {
         restartSystemServer();
 
         // Makes sure new user was created and switched to
-        waitUntilAtLeastNPersistentUsersAreAvailable(2);
+        waitUntilAtLeastNPersistentUsersAreAvailable(SYSTEM_RESTART_TIMEOUT_SEC, 2);
+
+        waitUntilCurrentUserIsNotSystem(SYSTEM_RESTART_TIMEOUT_SEC);
+
         assertWithMessage("Current user id").that(getCurrentUserId()).isNotEqualTo(SYSTEM_USER_ID);
     }
 

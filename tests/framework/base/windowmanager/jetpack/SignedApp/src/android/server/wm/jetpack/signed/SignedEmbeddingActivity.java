@@ -22,11 +22,13 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildca
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityCrossUidInSplit;
 import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
 import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
+import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.EXTRA_EMBED_ACTIVITY;
 
 import static org.junit.Assume.assumeNotNull;
 
 import android.app.Activity;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.os.Bundle;
 import android.server.wm.jetpack.utils.TestActivityKnownEmbeddingCerts;
 import android.server.wm.jetpack.utils.TestValueCountConsumer;
@@ -52,6 +54,21 @@ public class SignedEmbeddingActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if (getIntent().getBooleanExtra(EXTRA_EMBED_ACTIVITY, false)) {
+            startActivityInSplit();
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+
+        if (intent.getBooleanExtra(EXTRA_EMBED_ACTIVITY, false)) {
+            startActivityInSplit();
+        }
+    }
+
+    void startActivityInSplit() {
         ActivityEmbeddingComponent embeddingComponent;
         try {
             assumeExtensionSupportedDevice();

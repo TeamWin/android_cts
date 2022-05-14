@@ -47,6 +47,7 @@ android_test {
         // which provides assertThrows
         "testng",
         "bluetooth-test-util-lib",
+        "CtsAccessibilityCommon",
     ],
     jni_libs: [
         "libctspermission_jni",
@@ -62,5 +63,6 @@ android_test {
     libs: [
         "android.test.runner",
         "android.test.base",
+        "safety-center-internal-data",
     ],
 }

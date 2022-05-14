@@ -22,18 +22,12 @@ import static org.junit.Assume.assumeTrue;
 
 import android.os.Build;
 
-import androidx.test.filters.SmallTest;
-
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 
 import org.junit.rules.TestName;
-import org.junit.Test;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Logs a set of measurements and results for defined performance class requirements.
@@ -285,6 +279,95 @@ public class PerformanceClassEvaluator {
         }
     }
 
+    // used for requirements [2.2.7.1/5.3/H-1-1], [2.2.7.1/5.3/H-1-2]
+    public static class FrameDropRequirement extends Requirement {
+        private static final String TAG = FrameDropRequirement.class.getSimpleName();
+
+        private FrameDropRequirement(String id, RequiredMeasurement<?>... reqs) {
+            super(id, reqs);
+        }
+
+        public void setFramesDropped(int framesDropped) {
+            this.setMeasuredValue(RequirementConstants.FRAMES_DROPPED, framesDropped);
+        }
+
+        /**
+         * [2.2.7.1/5.3/H-1-1] MUST NOT drop more than 1 frames in 10 seconds (i.e less than 0.333
+         * percent frame drop) for a 1080p 30 fps video session under load. Load is defined as a
+         * concurrent 1080p to 720p video-only transcoding session using hardware video codecs,
+         * as well as a 128 kbps AAC audio playback.
+         */
+        public static FrameDropRequirement createR5_3__H_1_1_R() {
+            RequiredMeasurement<Integer> frameDropped = RequiredMeasurement
+                .<Integer>builder()
+                .setId(RequirementConstants.FRAMES_DROPPED)
+                .setPredicate(RequirementConstants.INTEGER_LTE)
+                // MUST NOT drop more than 1 frame in 10 seconds so 3 frames for 30 seconds
+                .addRequiredValue(Build.VERSION_CODES.R, 3)
+                .build();
+
+            return new FrameDropRequirement(RequirementConstants.R5_3__H_1_1, frameDropped);
+        }
+
+        /**
+         * [2.2.7.1/5.3/H-1-2] MUST NOT drop more than 1 frame in 10 seconds during a video
+         * resolution change in a 30 fps video session under load. Load is defined as a
+         * concurrent 1080p to 720p video-only transcoding session using hardware video codecs,
+         * as well as a 128Kbps AAC audio playback.
+         */
+        public static FrameDropRequirement createR5_3__H_1_2_R() {
+            RequiredMeasurement<Integer> frameDropped = RequiredMeasurement
+                .<Integer>builder()
+                .setId(RequirementConstants.FRAMES_DROPPED)
+                .setPredicate(RequirementConstants.INTEGER_LTE)
+                // MUST NOT drop more than 1 frame in 10 seconds so 3 frames for 30 seconds
+                .addRequiredValue(Build.VERSION_CODES.R, 3)
+                .build();
+
+            return new FrameDropRequirement(RequirementConstants.R5_3__H_1_2, frameDropped);
+        }
+
+        /**
+         * [2.2.7.1/5.3/H-1-1] MUST NOT drop more than 2(S) / 1(T) frames in 10 seconds for a
+         * 1080p 60 fps video session under load. Load is defined as a concurrent 1080p to 720p
+         * video-only transcoding session using hardware video codecs, as well as a 128 kbps AAC
+         * audio playback.
+         */
+        public static FrameDropRequirement createR5_3__H_1_1_ST() {
+            RequiredMeasurement<Integer> frameDropped = RequiredMeasurement
+                .<Integer>builder()
+                .setId(RequirementConstants.FRAMES_DROPPED)
+                .setPredicate(RequirementConstants.INTEGER_LTE)
+                // MUST NOT drop more than 2 frame in 10 seconds so 6 frames for 30 seconds
+                .addRequiredValue(Build.VERSION_CODES.S, 6)
+                // MUST NOT drop more than 1 frame in 10 seconds so 3 frames for 30 seconds
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 3)
+                .build();
+
+            return new FrameDropRequirement(RequirementConstants.R5_3__H_1_1, frameDropped);
+        }
+
+        /**
+         * [2.2.7.1/5.3/H-1-2] MUST NOT drop more than 2(S) / 1(T) frames in 10 seconds during a
+         * video resolution change in a 60 fps video session under load. Load is defined as a
+         * concurrent 1080p to 720p video-only transcoding session using hardware video codecs,
+         * as well as a 128Kbps AAC audio playback.
+         */
+        public static FrameDropRequirement createR5_3__H_1_2_ST() {
+            RequiredMeasurement<Integer> frameDropped = RequiredMeasurement
+                .<Integer>builder()
+                .setId(RequirementConstants.FRAMES_DROPPED)
+                .setPredicate(RequirementConstants.INTEGER_LTE)
+                // MUST NOT drop more than 2 frame in 10 seconds so 6 frames for 30 seconds
+                .addRequiredValue(Build.VERSION_CODES.S, 6)
+                // MUST NOT drop more than 1 frame in 10 seconds so 3 frames for 30 seconds
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 3)
+                .build();
+
+            return new FrameDropRequirement(RequirementConstants.R5_3__H_1_2, frameDropped);
+        }
+    }
+
     private <R extends Requirement> R addRequirement(R req) {
         if (!this.mRequirements.add(req)) {
             throw new IllegalStateException("Requirement " + req.id() + " already added");
@@ -316,6 +399,22 @@ public class PerformanceClassEvaluator {
 
     public MemoryRequirement addR7_6_1__H_2_1() {
         return this.<MemoryRequirement>addRequirement(MemoryRequirement.createR7_6_1__H_2_1());
+    }
+
+    public FrameDropRequirement addR5_3__H_1_1_R() {
+        return this.addRequirement(FrameDropRequirement.createR5_3__H_1_1_R());
+    }
+
+    public FrameDropRequirement addR5_3__H_1_2_R() {
+        return this.addRequirement(FrameDropRequirement.createR5_3__H_1_2_R());
+    }
+
+    public FrameDropRequirement addR5_3__H_1_1_ST() {
+        return this.addRequirement(FrameDropRequirement.createR5_3__H_1_1_ST());
+    }
+
+    public FrameDropRequirement addR5_3__H_1_2_ST() {
+        return this.addRequirement(FrameDropRequirement.createR5_3__H_1_2_ST());
     }
 
     public CodecInitLatencyRequirement addR5_1__H_1_7() {

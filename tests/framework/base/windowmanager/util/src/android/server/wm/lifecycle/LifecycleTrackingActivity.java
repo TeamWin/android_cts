@@ -40,14 +40,14 @@ import android.os.Looper;
 
 /** Base activity that only tracks fundamental activity lifecycle states. */
 public class LifecycleTrackingActivity extends Activity {
-    LifecycleLog.LifecycleLogClient mLifecycleLogClient;
+    EventLog.EventLogClient mEventLogClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mLifecycleLogClient = LifecycleLog.LifecycleLogClient.create(
+        mEventLogClient = EventLog.EventLogClient.create(
                 this.getClass().getCanonicalName(), this);
-        mLifecycleLogClient.onActivityCallback(ON_CREATE);
+        mEventLogClient.onCallback(ON_CREATE);
 
         final Intent intent = getIntent();
         final Intent startOnCreate =
@@ -72,7 +72,7 @@ public class LifecycleTrackingActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
-        mLifecycleLogClient.onActivityCallback(ON_START);
+        mEventLogClient.onCallback(ON_START);
 
         if (getIntent().getBooleanExtra(EXTRA_FINISH_IN_ON_START, false)) {
             finish();
@@ -82,7 +82,7 @@ public class LifecycleTrackingActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        mLifecycleLogClient.onActivityCallback(ON_RESUME);
+        mEventLogClient.onCallback(ON_RESUME);
 
         final Intent intent = getIntent();
         if (intent.getBooleanExtra(EXTRA_FINISH_IN_ON_RESUME, false)) {
@@ -93,7 +93,7 @@ public class LifecycleTrackingActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
-        mLifecycleLogClient.onActivityCallback(ON_PAUSE);
+        mEventLogClient.onCallback(ON_PAUSE);
 
         if (getIntent().getBooleanExtra(EXTRA_FINISH_IN_ON_PAUSE, false)) {
             finish();
@@ -103,7 +103,7 @@ public class LifecycleTrackingActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
-        mLifecycleLogClient.onActivityCallback(ON_STOP);
+        mEventLogClient.onCallback(ON_STOP);
 
         if (getIntent().getBooleanExtra(EXTRA_FINISH_IN_ON_STOP, false)) {
             finish();
@@ -113,14 +113,14 @@ public class LifecycleTrackingActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mLifecycleLogClient.onActivityCallback(ON_DESTROY);
-        mLifecycleLogClient.close();
+        mEventLogClient.onCallback(ON_DESTROY);
+        mEventLogClient.close();
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
-        mLifecycleLogClient.onActivityCallback(ON_RESTART);
+        mEventLogClient.onCallback(ON_RESTART);
     }
 
     @Override
@@ -128,7 +128,7 @@ public class LifecycleTrackingActivity extends Activity {
         super.onUserLeaveHint();
 
         if (getIntent().getBooleanExtra(EXTRA_ACTIVITY_ON_USER_LEAVE_HINT, false)) {
-            mLifecycleLogClient.onActivityCallback(ON_USER_LEAVE_HINT);
+            mEventLogClient.onCallback(ON_USER_LEAVE_HINT);
         }
     }
 }

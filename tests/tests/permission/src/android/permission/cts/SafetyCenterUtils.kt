@@ -16,19 +16,30 @@
 
 package android.permission.cts
 
+import android.app.Instrumentation
+import android.app.UiAutomation
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
 import android.os.Build
+import android.os.UserHandle
 import android.provider.DeviceConfig
+import android.safetycenter.SafetyCenterIssue
+import android.safetycenter.SafetyCenterManager
 import android.support.test.uiautomator.By
 import androidx.annotation.RequiresApi
+import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject
+import com.android.safetycenter.internaldata.SafetyCenterIds
+import com.android.safetycenter.internaldata.SafetyCenterIssueId
+import org.junit.Assert
 
 object SafetyCenterUtils {
     /** Name of the flag that determines whether SafetyCenter is enabled.  */
     const val PROPERTY_SAFETY_CENTER_ENABLED = "safety_center_is_enabled"
+
+    private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
 
     /** Returns whether the device supports Safety Center. */
     @JvmStatic
@@ -63,8 +74,13 @@ object SafetyCenterUtils {
         waitFindObject(By.desc("Security & Privacy"))
     }
 
-    private fun setDeviceConfigPrivacyProperty(propertyName: String, value: String) {
-        runWithShellPermissionIdentity {
+    @JvmStatic
+    fun setDeviceConfigPrivacyProperty(
+        propertyName: String,
+        value: String,
+        uiAutomation: UiAutomation = instrumentation.uiAutomation
+    ) {
+        runWithShellPermissionIdentity(uiAutomation) {
             val valueWasSet = DeviceConfig.setProperty(
                 DeviceConfig.NAMESPACE_PRIVACY, /* name = */
                 propertyName, /* value = */
@@ -74,4 +90,52 @@ object SafetyCenterUtils {
             check(valueWasSet) { "Could not set $propertyName to $value" }
         }
     }
+
+    @JvmStatic
+    private fun getSafetyCenterIssues(
+        automation: UiAutomation = instrumentation.uiAutomation
+    ): List<SafetyCenterIssue> {
+        val safetyCenterManager = instrumentation.targetContext.getSystemService(
+            SafetyCenterManager::class.java)
+        val issues = ArrayList<SafetyCenterIssue>()
+        runWithShellPermissionIdentity(automation) {
+            val safetyCenterData = safetyCenterManager!!.safetyCenterData
+            issues.addAll(safetyCenterData.issues)
+        }
+        return issues
+    }
+
+    @JvmStatic
+    fun assertSafetyCenterIssueExist(
+        sourceId: String,
+        issueId: String,
+        automation: UiAutomation = instrumentation.uiAutomation
+    ) {
+        val safetyCenterIssueId = safetyCenterIssueId(sourceId, issueId)
+        Assert.assertTrue(
+            "Expect issues in safety center",
+            getSafetyCenterIssues(automation).any { safetyCenterIssueId == it.id }
+        )
+    }
+
+    @JvmStatic
+    fun assertSafetyCenterIssueDoesNotExist(
+        sourceId: String,
+        issueId: String,
+        automation: UiAutomation = instrumentation.uiAutomation
+    ) {
+        val safetyCenterIssueId = safetyCenterIssueId(sourceId, issueId)
+        Assert.assertTrue(
+            "Expect no issue in safety center",
+            getSafetyCenterIssues(automation).none { safetyCenterIssueId == it.id }
+        )
+    }
+
+    private fun safetyCenterIssueId(sourceId: String, sourceIssueId: String) =
+        SafetyCenterIds.encodeToString(
+            SafetyCenterIssueId.newBuilder()
+                .setSafetySourceId(sourceId)
+                .setSafetySourceIssueId(sourceIssueId)
+                .setUserId(UserHandle.myUserId())
+                .build())
 }

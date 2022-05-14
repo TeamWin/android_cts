@@ -39,6 +39,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
@@ -65,6 +66,7 @@ import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.RemoteException;
+import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.util.PackageUtils;
 
@@ -1231,7 +1233,8 @@ public class PackageManagerShellCommandTest {
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
 
         getUiAutomation().adoptShellPermissionIdentity(
-                android.Manifest.permission.PACKAGE_VERIFICATION_AGENT);
+                android.Manifest.permission.PACKAGE_VERIFICATION_AGENT,
+                android.Manifest.permission.INTERACT_ACROSS_USERS_FULL);
 
         final CompletableFuture<Boolean> broadcastReceived = new CompletableFuture<>();
 
@@ -1248,7 +1251,10 @@ public class PackageManagerShellCommandTest {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(Intent.ACTION_PACKAGE_NEEDS_VERIFICATION);
         intentFilter.addDataType(PACKAGE_MIME_TYPE);
-        getContext().registerReceiver(broadcastReceiver, intentFilter, RECEIVER_EXPORTED);
+        // The broadcast is sent for user 0, so we need to request it for all users.
+        // TODO(b/232317379) Fix this in proper way
+        getContext().registerReceiverForAllUsers(broadcastReceiver, intentFilter, null, null,
+                RECEIVER_EXPORTED);
 
         // Enable verification.
         executeShellCommand("settings put global verifier_verify_adb_installs 1");
@@ -1282,6 +1288,10 @@ public class PackageManagerShellCommandTest {
 
     @Test
     public void testPackageVerifierReject() throws Exception {
+        // PackageManager.verifyPendingInstall() call only works with user 0 as verifier is expected
+        // to be user 0. So skip the test if it is not user 0.
+        // TODO(b/232317379) Fix this in proper way
+        assumeTrue(getContext().getUserId() == UserHandle.USER_SYSTEM);
         AtomicInteger dataLoaderType = new AtomicInteger(-1);
 
         runPackageVerifierTest("Failure [INSTALL_FAILED_VERIFICATION_FAILURE: Install not allowed]",

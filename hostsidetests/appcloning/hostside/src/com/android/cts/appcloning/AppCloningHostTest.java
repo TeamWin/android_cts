@@ -119,6 +119,8 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
      */
     @Test
     public void testRemoveClonedProfileMediaProviderCleanup() throws Exception {
+        assumeTrue(isAtLeastT());
+
         String cloneProfileImage = NONCE + "cloneProfileImage.png";
 
         // Inserting blank image in clone profile
@@ -178,6 +180,8 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
 
     @Test
     public void testCrossUserMediaAccess() throws Exception {
+        assumeTrue(isAtLeastT());
+
         // Install the app in both the user spaces
         installPackage(APP_A, "--user all");
 

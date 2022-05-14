@@ -113,6 +113,8 @@ final class DevicePolicyManagerWrapper
             doAnswer(answer).when(spy).setEndUserSessionMessage(any(), any());
             doAnswer(answer).when(spy).setLogoutEnabled(any(), anyBoolean());
             doAnswer(answer).when(spy).removeUser(any(), any());
+            doAnswer(answer).when(spy).setMinimumRequiredWifiSecurityLevel(anyInt());
+            doAnswer(answer).when(spy).setWifiSsidPolicy(any());
 
             // Used by DevicePolicySafetyCheckerIntegrationTest
             doAnswer(answer).when(spy).createAndManageUser(any(), any(), any(), any(), anyInt());
