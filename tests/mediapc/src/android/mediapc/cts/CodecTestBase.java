@@ -343,12 +343,23 @@ abstract class CodecTestBase {
 
     static ArrayList<String> selectHardwareCodecs(String mime, ArrayList<MediaFormat> formats,
             String[] features, boolean isEncoder) {
-        return selectCodecs(mime, formats, features, isEncoder, SELECT_HARDWARE);
+        return selectHardwareCodecs(mime, formats, features, isEncoder, false);
+    }
+
+    static ArrayList<String> selectHardwareCodecs(String mime, ArrayList<MediaFormat> formats,
+            String[] features, boolean isEncoder, boolean allCodecs) {
+        return selectCodecs(mime, formats, features, isEncoder, SELECT_HARDWARE, allCodecs);
     }
 
     static ArrayList<String> selectCodecs(String mime, ArrayList<MediaFormat> formats,
             String[] features, boolean isEncoder, int selectCodecOption) {
-        MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        return selectCodecs(mime, formats, features, isEncoder, selectCodecOption, false);
+    }
+
+    static ArrayList<String> selectCodecs(String mime, ArrayList<MediaFormat> formats,
+            String[] features, boolean isEncoder, int selectCodecOption, boolean allCodecs) {
+        int kind = allCodecs ? MediaCodecList.ALL_CODECS : MediaCodecList.REGULAR_CODECS;
+        MediaCodecList codecList = new MediaCodecList(kind);
         MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
         ArrayList<String> listOfCodecs = new ArrayList<>();
         for (MediaCodecInfo codecInfo : codecInfos) {

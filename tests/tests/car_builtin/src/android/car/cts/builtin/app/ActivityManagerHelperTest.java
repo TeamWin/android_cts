@@ -48,6 +48,7 @@ import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -268,6 +269,7 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
                 .isEqualTo(expectedLaunchAllowed);
     }
 
+    @Ignore("b/232432706")
     @Test
     public void testStopAllTasksForUser() throws Exception {
         int initialCurrentUserId = getCurrentUserId();

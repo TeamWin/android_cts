@@ -1672,6 +1672,7 @@ public class WindowManagerState {
         public boolean translucent;
         private WindowContainer mParent;
         private boolean mEnableRecentsScreenshot;
+        private int mLastDropInputMode;
 
         Activity(ActivityRecordProto proto, WindowContainer parent) {
             super(proto.windowToken.windowContainer);
@@ -1687,6 +1688,7 @@ public class WindowManagerState {
             }
             translucent = proto.translucent;
             mEnableRecentsScreenshot = proto.enableRecentsScreenshot;
+            mLastDropInputMode = proto.lastDropInputMode;
             mParent = parent;
         }
 
@@ -1728,6 +1730,10 @@ public class WindowManagerState {
 
         public boolean enableRecentsScreenshot() {
             return mEnableRecentsScreenshot;
+        }
+
+        public int getLastDropInputMode() {
+            return mLastDropInputMode;
         }
 
         @Override

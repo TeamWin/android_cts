@@ -41,17 +41,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/** Util class that verifies correct activity state transition sequences. */
-public class LifecycleVerifier {
+/** Util class that verifies correct event and state transition sequences. */
+public class TransitionVerifier {
 
     private static final Class CALLBACK_TRACKING_CLASS = CallbackTrackingActivity.class;
     private static final Class CONFIG_CHANGE_HANDLING_CLASS =
             LifecycleConfigChangeHandlingActivity.class;
 
     static void assertLaunchSequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog, String... expectedSubsequentEvents) {
+            EventLog eventLog, String... expectedSubsequentEvents) {
         final List<String> observedTransitions =
-                lifecycleLog.getActivityLog(activityClass);
+                eventLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, "launch");
 
@@ -81,7 +81,7 @@ public class LifecycleVerifier {
     }
 
     static void assertLaunchSequence(Class<? extends Activity> launchingActivity,
-            Class<? extends Activity> existingActivity, LifecycleLog lifecycleLog,
+            Class<? extends Activity> existingActivity, EventLog eventLog,
             boolean launchingIsTranslucent) {
         final boolean includingCallbacks;
         if (CALLBACK_TRACKING_CLASS.isAssignableFrom(launchingActivity)
@@ -97,7 +97,7 @@ public class LifecycleVerifier {
         }
 
 
-        final List<Pair<String, String>> observedTransitions = lifecycleLog.getLog();
+        final List<Pair<String, String>> observedTransitions = eventLog.getLog();
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(launchingActivity, "launch");
 
@@ -125,15 +125,15 @@ public class LifecycleVerifier {
     }
 
     static void assertLaunchAndStopSequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog) {
-        assertLaunchAndStopSequence(activityClass, lifecycleLog,
+            EventLog eventLog) {
+        assertLaunchAndStopSequence(activityClass, eventLog,
                 false /* onTop */);
     }
 
     static void assertLaunchAndStopSequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog, boolean onTop) {
+            EventLog eventLog, boolean onTop) {
         final List<String> observedTransitions =
-                lifecycleLog.getActivityLog(activityClass);
+                eventLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, "launch and stop");
 
@@ -153,9 +153,9 @@ public class LifecycleVerifier {
     }
 
     static void assertLaunchAndPauseSequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog) {
+            EventLog eventLog) {
         final List<String> observedTransitions =
-                lifecycleLog.getActivityLog(activityClass);
+                eventLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, "launch and pause");
 
@@ -165,9 +165,9 @@ public class LifecycleVerifier {
     }
 
     static void assertRestartSequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog) {
+            EventLog eventLog) {
         final List<String> observedTransitions =
-                lifecycleLog.getActivityLog(activityClass);
+                eventLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, "restart");
 
@@ -177,9 +177,9 @@ public class LifecycleVerifier {
     }
 
     static void assertRestartAndResumeSequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog) {
+            EventLog eventLog) {
         final List<String> observedTransitions =
-                lifecycleLog.getActivityLog(activityClass);
+                eventLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, "restart and pause");
 
@@ -194,22 +194,22 @@ public class LifecycleVerifier {
      * state is resolved.
      */
     static void assertRestartAndResumeSubSequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog) {
+            EventLog eventLog) {
         final List<String> observedTransitions =
-                lifecycleLog.getActivityLog(activityClass);
+                eventLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
 
         final List<Pair<String, String>> expectedTransitions =
                 Arrays.asList(transition(activityClass, ON_RESTART),
                         transition(activityClass, ON_START), transition(activityClass, ON_RESUME));
 
-        assertOrder(lifecycleLog, expectedTransitions, "restart and resume");
+        assertOrder(eventLog, expectedTransitions, "restart and resume");
     }
 
     static void assertRecreateAndResumeSequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog) {
+            EventLog eventLog) {
         final List<String> observedTransitions =
-                lifecycleLog.getActivityLog(activityClass);
+                eventLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, "recreateA  and pause");
 
@@ -219,9 +219,9 @@ public class LifecycleVerifier {
     }
 
     static void assertLaunchAndDestroySequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog) {
+            EventLog eventLog) {
         final List<String> observedTransitions =
-                lifecycleLog.getActivityLog(activityClass);
+                eventLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, "launch and destroy");
 
@@ -231,9 +231,9 @@ public class LifecycleVerifier {
     }
 
     static void assertResumeToDestroySequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog) {
+            EventLog eventLog) {
         final List<String> observedTransitions =
-                lifecycleLog.getActivityLog(activityClass);
+                eventLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, "launch and destroy");
 
@@ -250,9 +250,9 @@ public class LifecycleVerifier {
     }
 
     static void assertResumeToStopSequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog) {
+            EventLog eventLog) {
         final List<String> observedTransitions =
-                lifecycleLog.getActivityLog(activityClass);
+                eventLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, "resumed to stopped");
         final boolean includeCallbacks = CALLBACK_TRACKING_CLASS.isAssignableFrom(activityClass);
@@ -268,9 +268,9 @@ public class LifecycleVerifier {
     }
 
     static void assertStopToResumeSequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog) {
+            EventLog eventLog) {
         final List<String> observedTransitions =
-                lifecycleLog.getActivityLog(activityClass);
+                eventLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, "stopped to resumed");
         final boolean includeCallbacks = CALLBACK_TRACKING_CLASS.isAssignableFrom(activityClass);
@@ -290,9 +290,9 @@ public class LifecycleVerifier {
      * state is resolved.
      */
     static void assertStopToResumeSubSequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog) {
+            EventLog eventLog) {
         final List<String> observedTransitions =
-                lifecycleLog.getActivityLog(activityClass);
+                eventLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final boolean includeCallbacks = CALLBACK_TRACKING_CLASS.isAssignableFrom(activityClass);
 
@@ -303,13 +303,13 @@ public class LifecycleVerifier {
             expectedTransitions.add(transition(activityClass, ON_TOP_POSITION_GAINED));
         }
 
-        assertOrder(lifecycleLog, expectedTransitions, "stop and resume");
+        assertOrder(eventLog, expectedTransitions, "stop and resume");
     }
 
     static void assertRelaunchSequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog, String startState) {
+            EventLog eventLog, String startState) {
         final List<String> expectedTransitions = getRelaunchSequence(startState);
-        assertSequence(activityClass, lifecycleLog, expectedTransitions, "relaunch");
+        assertSequence(activityClass, eventLog, expectedTransitions, "relaunch");
     }
 
     static List<String> getRelaunchSequence(String startState) {
@@ -361,10 +361,10 @@ public class LifecycleVerifier {
         return newTransitions;
     }
 
-    static void assertSequence(Class<? extends Activity> activityClass, LifecycleLog lifecycleLog,
+    static void assertSequence(Class<? extends Activity> activityClass, EventLog eventLog,
             List<String> expectedTransitions, String transition) {
         final List<String> observedTransitions =
-                lifecycleLog.getActivityLog(activityClass);
+                eventLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, transition);
 
@@ -378,13 +378,13 @@ public class LifecycleVerifier {
      * Use this method when there is no need to verify the entire sequence, only that some
      * transitions happened after another.
      */
-    static void assertOrder(LifecycleLog lifecycleLog, Class<? extends Activity> activityClass,
+    static void assertOrder(EventLog eventLog, Class<? extends Activity> activityClass,
             List<String> expectedTransitionsOrder, String transition) {
         List<Pair<String, String>> expectedTransitions = new ArrayList<>();
         for (String callback : expectedTransitionsOrder) {
             expectedTransitions.add(transition(activityClass, callback));
         }
-        assertOrder(lifecycleLog, expectedTransitions, transition);
+        assertOrder(eventLog, expectedTransitions, transition);
     }
 
     /**
@@ -394,10 +394,10 @@ public class LifecycleVerifier {
      * Use this method when there is no need to verify the entire sequence, only that some
      * transitions happened after another.
      */
-    public static void assertOrder(LifecycleLog lifecycleLog,
+    public static void assertOrder(EventLog eventLog,
             List<Pair<String, String>> expectedTransitionsOrder,
             String transition) {
-        String result = checkOrderAndReturnError(lifecycleLog, expectedTransitionsOrder,
+        String result = checkOrderAndReturnError(eventLog, expectedTransitionsOrder,
                 transition);
         if (result != null) {
             fail(result);
@@ -405,12 +405,12 @@ public class LifecycleVerifier {
     }
 
     /**
-     * Same as {@link #assertOrder(LifecycleLog, List, String)}, but returns the String with error
+     * Same as {@link #assertOrder(EventLog, List, String)}, but returns the String with error
      * if it occurs. Otherwise returns {@code null}
      */
-    public static String checkOrderAndReturnError(LifecycleLog lifecycleLog,
+    public static String checkOrderAndReturnError(EventLog eventLog,
             List<Pair<String, String>> expectedTransitionsOrder, String transition) {
-        final List<Pair<String, String>> observedTransitions = lifecycleLog.getLog();
+        final List<Pair<String, String>> observedTransitions = eventLog.getLog();
         int nextObservedPosition = 0;
         for (Pair<String, String> expectedTransition
                 : expectedTransitionsOrder) {
@@ -429,42 +429,42 @@ public class LifecycleVerifier {
     /**
      * Assert that a transition was observer, no particular order.
      */
-    public static void assertTransitionObserved(LifecycleLog lifecycleLog,
+    public static void assertTransitionObserved(EventLog eventLog,
             Pair<String, String> expectedTransition, String transition) {
         assertTrue("Transition " + expectedTransition + " must be observed during " + transition,
-                lifecycleLog.getLog().contains(expectedTransition));
+                eventLog.getLog().contains(expectedTransition));
     }
 
     /**
-     * Same as {@link #checkOrderAndReturnError(LifecycleLog, List, String)}, but returns
+     * Same as {@link #checkOrderAndReturnError(EventLog, List, String)}, but returns
      * {@code false} if the order does not match. Otherwise returns {@code true}
      */
-    public static boolean checkOrder(LifecycleLog lifecycleLog,
+    public static boolean checkOrder(EventLog eventLog,
             List<Pair<String, String>> expectedTransitionsOrder) {
-        String result = checkOrderAndReturnError(lifecycleLog, expectedTransitionsOrder, null);
+        String result = checkOrderAndReturnError(eventLog, expectedTransitionsOrder, null);
         return result == null;
     }
 
     /**
      * Assert that a transition was not observer, no particular order.
      */
-    static void assertTransitionNotObserved(LifecycleLog lifecycleLog,
+    static void assertTransitionNotObserved(EventLog eventLog,
             Pair<String, String> expectedTransition, String transition) {
         assertFalse("Transition " + expectedTransition + " must not be observed during "
-                        + transition, lifecycleLog.getLog().contains(expectedTransition));
+                        + transition, eventLog.getLog().contains(expectedTransition));
     }
 
     static void assertEmptySequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog, String transition) {
-        assertSequence(activityClass, lifecycleLog, new ArrayList<>(), transition);
+            EventLog eventLog, String transition) {
+        assertSequence(activityClass, eventLog, new ArrayList<>(), transition);
     }
 
     /** Assert that a lifecycle sequence matches one of the possible variants. */
     static void assertSequenceMatchesOneOf(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog, List<List<String>> expectedTransitions,
+            EventLog eventLog, List<List<String>> expectedTransitions,
             String transition) {
         final List<String> observedTransitions =
-                lifecycleLog.getActivityLog(activityClass);
+                eventLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, transition);
 
@@ -483,8 +483,8 @@ public class LifecycleVerifier {
     /** Assert the entire sequence for all involved activities. */
     static void assertEntireSequence(
             List<Pair<String, String>> expectedTransitions,
-            LifecycleLog lifecycleLog, String message) {
-        final List<Pair<String, String>> observedTransitions = lifecycleLog.getLog();
+            EventLog eventLog, String message) {
+        final List<Pair<String, String>> observedTransitions = eventLog.getLog();
         assertEquals(message, expectedTransitions, observedTransitions);
     }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2022 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,29 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-// TODO: Move this target to cts/tests/tests/net/cronet
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsCronetTestCases",
-    defaults: ["cts_defaults"],
-
-    // Include both the 32 and 64 bit versions
-    compile_multilib: "both",
-
-    static_libs: [
-        "CronetApiCommonTests",
-        "ctstestrunner-axt",
-    ],
-
-    // Tag this module as a cts test artifact
+android_test_helper_app {
+    name: "CtsDuplicatePermission_SamePermissionGroup",
+    defaults: ["cts_support_defaults"],
+    srcs: ["src/**/*.java"],
+    sdk_version: "current",
+    static_libs: ["androidx.test.rules"],
+    // Use the same cert as the app that also defined the permission
+    certificate: ":cts-testkey1",
+    // tag this module as a cts test artifact
     test_suites: [
         "cts",
+        "sts",
         "general-tests",
-        "mts-cronet",
     ],
-
+    min_sdk_version: "29",
+    target_sdk_version: "29",
 }

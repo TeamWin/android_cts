@@ -267,15 +267,17 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                     new ButtonInfo[] {
                             new ButtonInfo(
                                     R.string.device_owner_user_restriction_set,
-                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
-                                            UserManager.DISALLOW_ADD_WIFI_CONFIG, true)),
+                                    CommandReceiverActivity
+                                            .createSetDeviceOwnerUserRestrictionIntent(
+                                                    UserManager.DISALLOW_ADD_WIFI_CONFIG, true)),
                             new ButtonInfo(
                                     R.string.device_owner_settings_go,
                                     new Intent(Settings.ACTION_WIFI_SETTINGS)),
                             new ButtonInfo(
                                     R.string.device_owner_user_restriction_unset,
-                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
-                                            UserManager.DISALLOW_ADD_WIFI_CONFIG, false))
+                                    CommandReceiverActivity
+                                            .createSetDeviceOwnerUserRestrictionIntent(
+                                                    UserManager.DISALLOW_ADD_WIFI_CONFIG, false))
                     }));
 
             // WIFI_SECURITY_LEVEL_RESTRICTION
