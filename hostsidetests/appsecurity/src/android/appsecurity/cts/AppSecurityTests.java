@@ -85,6 +85,25 @@ public class AppSecurityTests extends BaseAppSecurityTest {
     private static final String DUPLICATE_DECLARE_PERMISSION_PKG =
             "com.android.cts.duplicatepermissiondeclareapp";
 
+    private static final String DUPLICATE_PERMISSION_DIFFERENT_PROTECTION_LEVEL_APK =
+            "CtsMalformedDuplicatePermission_DifferentProtectionLevel.apk";
+    private static final String DUPLICATE_PERMISSION_DIFFERENT_PROTECTION_LEVEL_PKG =
+            "com.android.cts.duplicatepermission.differentprotectionlevel";
+    private static final String DUPLICATE_PERMISSION_SAME_PROTECTION_LEVEL_APK =
+            "CtsDuplicatePermission_SameProtectionLevel.apk";
+    private static final String DUPLICATE_PERMISSION_SAME_PROTECTION_LEVEL_PKG =
+            "com.android.cts.duplicatepermission.sameprotectionlevel";
+
+    // TODO sign the apk
+    private static final String DUPLICATE_PERMISSION_DIFFERENT_PERMISSION_GROUP_APK =
+            "CtsMalformedDuplicatePermission_DifferentPermissionGroup.apk";
+    private static final String DUPLICATE_PERMISSION_DIFFERENT_PERMISSION_GROUP_PKG =
+            "com.android.cts.duplicatepermission.differentpermissiongroup";
+    private static final String DUPLICATE_PERMISSION_SAME_PERMISSION_GROUP_APK =
+            "CtsDuplicatePermission_SamePermissionGroup.apk";
+    private static final String DUPLICATE_PERMISSION_SAME_PERMISSION_GROUP_PKG =
+            "com.android.cts.duplicatepermission.samepermissiongroup";
+
     private static final String LOG_TAG = "AppSecurityTests";
 
     @Before
@@ -336,11 +355,74 @@ public class AppSecurityTests extends BaseAppSecurityTest {
     public void testAdbInstallFile_full() throws Exception {
         testAdbInstallFile(false);
     }
+
     @Test
     @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testAdbInstallFile_instant() throws Exception {
         testAdbInstallFile(true);
     }
+
+
+    /**
+     * Tests that a single APK declaring duplicate permissions with different protection levels
+     * cannot be installed.
+     */
+    @Test
+    public void testInstallDuplicatePermission_differentProtectionLevel_fail() throws Exception {
+        try {
+            new InstallMultiple(false /* instant */)
+                    .addFile(DUPLICATE_PERMISSION_DIFFERENT_PROTECTION_LEVEL_APK)
+                    .runExpectingFailure("INSTALL_PARSE_FAILED_MANIFEST_MALFORMED");
+        } finally {
+            getDevice().uninstallPackage(DUPLICATE_PERMISSION_DIFFERENT_PROTECTION_LEVEL_PKG);
+        }
+    }
+
+    /**
+     * Tests that a single APK declaring duplicate permissions with the same protection level
+     * can be installed.
+     */
+    @Test
+    public void testInstallDuplicatePermission_sameProtectionLevel_success() throws Exception {
+        try {
+            new InstallMultiple(false /* instant */)
+                    .addFile(DUPLICATE_PERMISSION_SAME_PROTECTION_LEVEL_APK)
+                    .run(true /* expectingSuccess */);
+        } finally {
+            getDevice().uninstallPackage(DUPLICATE_PERMISSION_SAME_PROTECTION_LEVEL_PKG);
+        }
+    }
+
+    /**
+     * Tests that a single APK declaring duplicate permissions with different permission group
+     * cannot be installed.
+     */
+    @Test
+    public void testInstallDuplicatePermission_differentPermissionGroup_fail() throws Exception {
+        try {
+            new InstallMultiple(false /* instant */)
+                    .addFile(DUPLICATE_PERMISSION_DIFFERENT_PERMISSION_GROUP_APK)
+                    .runExpectingFailure("INSTALL_PARSE_FAILED_MANIFEST_MALFORMED");
+        } finally {
+            getDevice().uninstallPackage(DUPLICATE_PERMISSION_DIFFERENT_PERMISSION_GROUP_PKG);
+        }
+    }
+
+    /**
+     * Tests that a single APK declaring duplicate permissions with the same permission group
+     * can be installed.
+     */
+    @Test
+    public void testInstallDuplicatePermission_samePermissionGroup_success() throws Exception {
+        try {
+            new InstallMultiple(false /* instant */)
+                    .addFile(DUPLICATE_PERMISSION_SAME_PERMISSION_GROUP_APK)
+                    .run(true /* expectingSuccess */);
+        } finally {
+            getDevice().uninstallPackage(DUPLICATE_PERMISSION_SAME_PERMISSION_GROUP_PKG);
+        }
+    }
+
     private void testAdbInstallFile(boolean instant) throws Exception {
         String output = getDevice().executeShellCommand(
                 "cmd package install"
