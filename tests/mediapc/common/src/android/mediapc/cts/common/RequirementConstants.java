@@ -62,6 +62,7 @@ public class RequirementConstants {
     public static final String R8_2__H_2_2 = "r8_2__h_2_2"; // 8.2/H-2-2
     public static final String R8_2__H_2_3 = "r8_2__h_2_3"; // 8.2/H-2-3
     public static final String R8_2__H_2_4 = "r8_2__h_2_4"; // 8.2/H-2-4
+    public static final String RTBD = "tbd"; // placeholder for requirements without a set id
 
     public static final String MAX_CONCURRENT_SESSIONS = "max_concurrent_sessions";
     public static final String SUPPORTED_PERFORMANCE_POINTS = "supported_performance_points";
