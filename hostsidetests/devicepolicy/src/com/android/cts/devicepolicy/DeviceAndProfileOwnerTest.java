@@ -498,6 +498,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".ApplicationHiddenTest", "testCannotHidePolicyExemptApps");
     }
 
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197859595",
+            reason = "Will be migrated to new test infra")
     @Test
     public void testDelegatedCertInstaller() throws Exception {
         installAppAsUser(CERT_INSTALLER_APK, mUserId);
@@ -1053,6 +1055,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".KeyManagementTest");
     }
 
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "218408549",
+            reason = "Will be migrated to new test infra")
     @Test
     public void testInstallKeyPairLogged() throws Exception {
         assertMetricsLogged(getDevice(), () -> {
