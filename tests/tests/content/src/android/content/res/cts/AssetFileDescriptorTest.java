@@ -114,6 +114,12 @@ public class AssetFileDescriptorTest extends AndroidTestCase {
         } catch (IOException e) {
             // expect
         }
+        try {
+            mInputStream = mAssetFileDes.createInputStream();
+            fail("Should throw IOException");
+        } catch (IOException e) {
+            // expect
+        }
         mAssetFileDes.close();
         mAssetFileDes = null;
 
@@ -133,6 +139,12 @@ public class AssetFileDescriptorTest extends AndroidTestCase {
         assertEquals(FILE_END, mInputStream.read());
         mInputStream.close();
         mInputStream = null;
+        try {
+            mInputStream = mAssetFileDes.createInputStream();
+            fail("Should throw IOException");
+        } catch (IOException e) {
+            // expect
+        }
         try {
             mOutputStream = mAssetFileDes.createOutputStream();
             fail("Should throw IOException");

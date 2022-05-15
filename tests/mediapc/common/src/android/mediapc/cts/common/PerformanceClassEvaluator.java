@@ -242,7 +242,8 @@ public class PerformanceClassEvaluator {
                 codec_init_latency);
         }
 
-        // TODO(b/218771970): Update CDD section
+        // TODO(b/218771970): Update CDD section, change RequirementConstants.RTBD to appropirate
+        // requirement id once finalized, ex: RequirementConstants.R5_1__H_1_<something>
         /**
          * [2.2.7.1/5.1/H-1-?] Codec initialization latency of 40ms or less for a 1080p or
          * smaller video decoding session for all hardware video encoders when under load. Load
@@ -256,11 +257,11 @@ public class PerformanceClassEvaluator {
                     .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 40L)
                     .build();
 
-            return new CodecInitLatencyRequirement(RequirementConstants.R5_1__H_1_TBD,
-                codec_init_latency);
+            return new CodecInitLatencyRequirement(RequirementConstants.RTBD, codec_init_latency);
         }
 
-        // TODO(b/218771970): Update CDD section
+        // TODO(b/218771970): Update CDD section, change RequirementConstants.RTBD to appropirate
+        // requirement id once finalized, ex: RequirementConstants.R5_1__H_1_<something>
         /**
          * [2.2.7.1/5.1/H-1-?] Codec initialization latency of 30ms or less for a 128kbps or
          * lower bitrate audio decoding session for all audio encoders when under load. Load here
@@ -274,8 +275,7 @@ public class PerformanceClassEvaluator {
                     .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 30L)
                     .build();
 
-            return new CodecInitLatencyRequirement(RequirementConstants.R5_1__H_1_TBD,
-                codec_init_latency);
+            return new CodecInitLatencyRequirement(RequirementConstants.RTBD, codec_init_latency);
         }
     }
 

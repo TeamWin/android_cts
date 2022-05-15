@@ -40,6 +40,7 @@ public class Utils {
     private static final int sPc;
 
     private static final String TAG = "PerformanceClassTestUtils";
+    private static final String MEDIA_PERF_CLASS_KEY = "media-performance-class";
 
     public static final int DISPLAY_DPI;
     public static final int MIN_DISPLAY_CANDIDATE_DPI = DENSITY_400;
@@ -56,8 +57,18 @@ public class Utils {
     public static final long MIN_MEMORY_PERF_CLASS_T_MB = 7 * 1024;
 
     static {
-        sPc = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S) ? Build.VERSION.MEDIA_PERFORMANCE_CLASS
-                : SystemProperties.getInt("ro.odm.build.media_performance_class", 0);
+        // with a default-media-performance-class that can be configured through a command line
+        // argument.
+        android.os.Bundle args = InstrumentationRegistry.getArguments();
+        String mediaPerfClassArg = args.getString(MEDIA_PERF_CLASS_KEY);
+        if (mediaPerfClassArg != null) {
+            Log.d(TAG, "Running the tests with performance class set to " + mediaPerfClassArg);
+            sPc = Integer.parseInt(mediaPerfClassArg);
+        } else {
+            sPc = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)
+                    ? Build.VERSION.MEDIA_PERFORMANCE_CLASS
+                    : SystemProperties.getInt("ro.odm.build.media_performance_class", 0);
+        }
         Log.d(TAG, "performance class is " + sPc);
 
         Context context = InstrumentationRegistry.getInstrumentation().getContext();

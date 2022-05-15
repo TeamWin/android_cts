@@ -35,7 +35,6 @@ public class RequirementConstants {
     public static final String R5_1__H_1_6 = "r5_1__h_1_6"; // 5.1/H-1-6
     public static final String R5_1__H_1_7 = "r5_1__h_1_7"; // 5.1/H-1-7
     public static final String R5_1__H_1_8 = "r5_1__h_1_8"; // 5.1/H-1-8
-    public static final String R5_1__H_1_TBD = "r5_1__h_1_?"; // 5.1/H-1-?
     public static final String R5_3__H_1_1 = "r5_3__h_1_1"; // 5.3/H-1-1
     public static final String R5_3__H_1_2 = "r5_3__h_1_2"; // 5.3/H-1-2
     public static final String R5_6__H_1_1 = "r5_6__h_1_1"; // 5.6/H-1-1
@@ -62,6 +61,7 @@ public class RequirementConstants {
     public static final String R8_2__H_2_2 = "r8_2__h_2_2"; // 8.2/H-2-2
     public static final String R8_2__H_2_3 = "r8_2__h_2_3"; // 8.2/H-2-3
     public static final String R8_2__H_2_4 = "r8_2__h_2_4"; // 8.2/H-2-4
+    public static final String RTBD = "tbd"; // placeholder for requirements without a set id
 
     public static final String MAX_CONCURRENT_SESSIONS = "max_concurrent_sessions";
     public static final String SUPPORTED_PERFORMANCE_POINTS = "supported_performance_points";
