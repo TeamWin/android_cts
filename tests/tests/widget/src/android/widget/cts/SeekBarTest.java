@@ -38,6 +38,7 @@ import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CtsDownstreamingTest;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
@@ -113,6 +114,7 @@ public class SeekBarTest {
         new SeekBar(mActivity, null, 0, android.R.style.Widget_Material_Light_SeekBar);
     }
 
+    @CtsDownstreamingTest
     @Test
     public void testSetOnSeekBarChangeListener() {
         SeekBar.OnSeekBarChangeListener mockChangeListener =
