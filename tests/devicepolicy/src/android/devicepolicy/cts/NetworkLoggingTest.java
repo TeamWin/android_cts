@@ -36,6 +36,7 @@ import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.utils.Flake;
 
 import org.junit.AssumptionViolatedException;
 import org.junit.ClassRule;
@@ -110,7 +111,8 @@ public final class NetworkLoggingTest {
                 connectToWebsite(url);
             }
 
-            TestApis.devicePolicy().forceNetworkLogs();
+            // TODO(b/232738120): Figure out why it's not reliably received
+            Flake.repeat(() -> TestApis.devicePolicy().forceNetworkLogs());
 
             long batchToken = waitForBatchToken();
 
@@ -210,7 +212,10 @@ public final class NetworkLoggingTest {
             for (String url : URL_LIST) {
                 connectToWebsite(url);
             }
-            TestApis.devicePolicy().forceNetworkLogs();
+
+            // TODO(b/232738120): Figure out why it's not reliably received
+            Flake.repeat(() -> TestApis.devicePolicy().forceNetworkLogs());
+
             long batchToken = waitForBatchToken();
 
             sDeviceState.dpc().devicePolicyManager().retrieveNetworkLogs(
