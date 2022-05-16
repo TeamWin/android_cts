@@ -19,7 +19,6 @@ package android.scopedstorage.cts.device;
 import static android.app.AppOpsManager.permissionToOp;
 import static android.os.ParcelFileDescriptor.MODE_CREATE;
 import static android.os.ParcelFileDescriptor.MODE_READ_WRITE;
-import static android.os.SystemProperties.getBoolean;
 import static android.scopedstorage.cts.lib.RedactionTestHelper.assertExifMetadataMatch;
 import static android.scopedstorage.cts.lib.RedactionTestHelper.assertExifMetadataMismatch;
 import static android.scopedstorage.cts.lib.RedactionTestHelper.getExifMetadata;
@@ -108,6 +107,7 @@ import static android.system.OsConstants.S_IRWXU;
 import static android.system.OsConstants.W_OK;
 
 import static androidx.test.InstrumentationRegistry.getContext;
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -921,7 +921,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             try (ParcelFileDescriptor writePfd = openWithMediaProvider(file, "rw");
                  ParcelFileDescriptor readPfd = ParcelFileDescriptor.open(file, MODE_READ_WRITE)) {
                 assertRWR(readPfd, writePfd);
-                assertLowerFsFdWithPassthrough(writePfd);
+                assertLowerFsFdWithPassthrough(file.getPath(), writePfd);
             }
         } finally {
             file.delete();
@@ -957,7 +957,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             try (ParcelFileDescriptor readPfd = openWithMediaProvider(file, "rw");
                  ParcelFileDescriptor writePfd = ParcelFileDescriptor.open(file, MODE_READ_WRITE)) {
                 assertRWR(readPfd, writePfd);
-                assertLowerFsFdWithPassthrough(readPfd);
+                assertLowerFsFdWithPassthrough(file.getPath(), readPfd);
             }
         } finally {
             file.delete();
@@ -977,8 +977,8 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
                  ParcelFileDescriptor readPfd = openWithMediaProvider(file, "rw")) {
                 assertRWR(readPfd, writePfd);
                 assertRWR(writePfd, readPfd); // Can read on 'w' only pfd
-                assertLowerFsFdWithPassthrough(writePfd);
-                assertLowerFsFdWithPassthrough(readPfd);
+                assertLowerFsFdWithPassthrough(file.getPath(), writePfd);
+                assertLowerFsFdWithPassthrough(file.getPath(), readPfd);
             }
         } finally {
             file.delete();
@@ -1002,7 +1002,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
                 writePfd.close();
 
                 assertRWR(readPfd, writePfdDup);
-                assertLowerFsFdWithPassthrough(writePfdDup);
+                assertLowerFsFdWithPassthrough(file.getPath(), writePfdDup);
             }
         } finally {
             file.delete();
@@ -3347,8 +3347,13 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         assertStartsWith(path, prefix);
     }
 
-    private void assertLowerFsFdWithPassthrough(ParcelFileDescriptor pfd) throws Exception {
-        if (getBoolean("persist.sys.fuse.passthrough.enable", false)) {
+    private void assertLowerFsFdWithPassthrough(final String path, ParcelFileDescriptor pfd)
+            throws Exception {
+        final ContentResolver resolver = getTargetContext().getContentResolver();
+        final Bundle res = resolver.call(MediaStore.AUTHORITY, "uses_fuse_passthrough", path, null);
+        boolean passthroughEnabled = res.getBoolean("uses_fuse_passthrough_result");
+
+        if (passthroughEnabled) {
             assertUpperFsFd(pfd);
         } else {
             assertLowerFsFd(pfd);

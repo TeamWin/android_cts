@@ -237,6 +237,11 @@ public class AudioFocusTest extends CtsAndroidTestCase {
      * @throws Exception when failing
      */
     public void testAudioFocusDelayedByCall() throws Exception {
+        if (hasAutomotiveFeature(getContext())) {
+            Log.i(TAG, "Test testAudioFocusDelayedByCall "
+                    + "skipped: not required for Auto platform");
+            return;
+        }
         Log.i(TAG, "testAudioFocusDelayedByCall");
         final AudioManager am = new AudioManager(getContext());
         final HandlerThread handlerThread = new HandlerThread(TAG);
@@ -308,6 +313,11 @@ public class AudioFocusTest extends CtsAndroidTestCase {
      * @throws Exception when failing
      */
     public void testAudioFocusTransientDelayedByCall() throws Exception {
+        if (hasAutomotiveFeature(getContext())) {
+            Log.i(TAG, "Test testAudioFocusTransientDelayedByCall "
+                    + "skipped: not required for Auto platform");
+            return;
+        }
         Log.i(TAG, "testAudioFocusDelayedByCall");
         final AudioManager am = new AudioManager(getContext());
         final HandlerThread handlerThread = new HandlerThread(TAG);
