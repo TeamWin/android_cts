@@ -1589,6 +1589,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                     .setContentTitle("ConversationOrderingTest")
                     .setContentText(mTag1)
                     .setSmallIcon(R.drawable.ic_stat_alice)
+                    .setGroup("conversations")
                     .setShortcutId(SHARE_SHORTCUT_ID)
                     .setStyle(new Notification.MessagingStyle(person)
                             .setConversationTitle("Bubble Chat")
@@ -1606,6 +1607,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                     .setContentTitle("Non-Person Notification")
                     .setContentText(mTag1)
                     .setSmallIcon(R.drawable.ic_stat_alice)
+                    .setGroup("non-conversation")
                     .build();
             mNm.notify(mTag2, mId2, n2);
         }
