@@ -81,6 +81,9 @@
     <!-- b/183636777 Remove CtsShortcutManagerPackage4 from cts-on-gsi -->
     <option name="compatibility:exclude-filter" value="CtsShortcutManagerPackage4" />
 
+    <!-- b/230829938 Remove CtsShortcutHostTestCases from cts-on-gsi -->
+    <option name="compatibility:exclude-filter" value="CtsShortcutHostTestCases" />
+
     <!-- b/185451791. Can't have single overlay package for both AOSP version and Google-signed mainline modules -->
     <option name="compatibility:exclude-filter" value="CtsWifiTestCases android.net.wifi.cts.ConcurrencyTest#testPersistentGroupOperation" />
     <option name="compatibility:exclude-filter" value="CtsWifiTestCases android.net.wifi.cts.ConcurrencyTest#testRequestNetworkInfo" />
