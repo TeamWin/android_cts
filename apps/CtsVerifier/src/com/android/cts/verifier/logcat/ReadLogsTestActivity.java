@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -61,6 +62,8 @@ public class ReadLogsTestActivity extends PassFailButtons.Activity {
 
     private static final int NUM_OF_LINES_FG = 10;
     private static final int NUM_OF_LINES_BG = 0;
+    private static final int LOG_ACCESS_INTERVAL = 1000 * 60 * 2;
+    private volatile long mLastLogAccess = 0;
 
     private static Context sContext;
     private static ActivityManager sActivityManager;
@@ -109,7 +112,15 @@ public class ReadLogsTestActivity extends PassFailButtons.Activity {
      * Responsible for running the logcat in foreground and testing the allow button
      */
     public void runLogcatInForegroundAllowOnlyOnce() {
-        Log.d(TAG, "Inside runLogcatInForeground()");
+        Log.d(TAG, "Inside runLogcatInForegroundAllowOnlyOnce()");
+
+        if (mLastLogAccess > (SystemClock.elapsedRealtime() - LOG_ACCESS_INTERVAL)) {
+            String reason = "Please wait for "
+                    + ((mLastLogAccess + LOG_ACCESS_INTERVAL - SystemClock.elapsedRealtime())
+                    / 1000) + " seconds before running the test.";
+            Toast.makeText(this, reason, Toast.LENGTH_LONG).show();
+            return;
+        }
 
         sExecutorService.execute(new Runnable() {
 
@@ -153,6 +164,8 @@ public class ReadLogsTestActivity extends PassFailButtons.Activity {
                         Log.d(TAG, "Logcat system allow log contains: " + allowLog + " lineCount: "
                                 + lineCount + " larger than: " + allowLineCount);
 
+                        mLastLogAccess = SystemClock.elapsedRealtime();
+
                     } catch (AssertionError e) {
                         fail("User Consent Allow Testing failed");
                     }
@@ -184,7 +197,15 @@ public class ReadLogsTestActivity extends PassFailButtons.Activity {
      * Responsible for running the logcat in foreground and testing the deny button
      */
     public void runLogcatInForegroundDontAllow() {
-        Log.d(TAG, "Inside runLogcatInForeground()");
+        Log.d(TAG, "Inside runLogcatInForegroundDontAllow()");
+
+        if (mLastLogAccess > (SystemClock.elapsedRealtime() - LOG_ACCESS_INTERVAL)) {
+            String reason = "Please wait for "
+                    + ((mLastLogAccess + LOG_ACCESS_INTERVAL - SystemClock.elapsedRealtime())
+                    / 1000) + " seconds before running the test.";
+            Toast.makeText(this, reason, Toast.LENGTH_LONG).show();
+            return;
+        }
 
         sExecutorService.execute(new Runnable() {
 
@@ -209,6 +230,8 @@ public class ReadLogsTestActivity extends PassFailButtons.Activity {
                     }
 
                     Log.d(TAG, "Logcat system deny line count:" + lineCount);
+
+                    mLastLogAccess = SystemClock.elapsedRealtime();
 
                     try {
                         assertTrue("Deny System log access", lineCount == NUM_OF_LINES_BG);
