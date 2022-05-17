@@ -16,42 +16,54 @@
 
 package android.security.cts;
 
+import static org.junit.Assume.assumeNoException;
+import static org.junit.Assume.assumeTrue;
+
 import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.sts.common.tradefed.testtype.StsExtraBusinessLogicHostTestBase;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-import org.junit.After;
-import org.junit.runner.RunWith;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CVE_2021_39706 extends StsExtraBusinessLogicHostTestBase {
-    public static final int USER_ID = 0;
-    static final String TEST_APP = "CVE-2021-39706.apk";
-    static final String TEST_PKG = "android.security.cts.CVE_2021_39706";
-    static final String TEST_CLASS = TEST_PKG + "." + "DeviceTest";
-    public static final String TEST_DEVICE_ADMIN_RECEIVER = TEST_PKG + ".PocDeviceAdminReceiver";
-
-    @After
-    public void tearDown() throws Exception {
-        // Remove Device Admin Component
-        AdbUtils.runCommandLine("dpm remove-active-admin --user " + USER_ID + " '" + TEST_PKG + "/"
-                + TEST_DEVICE_ADMIN_RECEIVER + "'", getDevice());
-    }
 
     @AsbSecurityTest(cveBugId = 200164168)
     @Test
-    public void testPocCVE_2021_39706() throws Exception {
-        ITestDevice device = getDevice();
-        AdbUtils.runCommandLine("input keyevent KEYCODE_WAKEUP", device);
-        AdbUtils.runCommandLine("input keyevent KEYCODE_MENU", device);
-        AdbUtils.runCommandLine("input keyevent KEYCODE_HOME", device);
-        installPackage(TEST_APP, "-t");
-        // Set Device Admin Component
-        AdbUtils.runCommandLine("dpm set-device-owner --user " + USER_ID + " '" + TEST_PKG + "/"
-                + TEST_DEVICE_ADMIN_RECEIVER + "'", device);
-        runDeviceTests(TEST_PKG, TEST_CLASS, "testCredentialReset");
+    public void testPocCVE_2021_39706() {
+        final int userId = 0;
+        final String testApp = "CVE-2021-39706.apk";
+        final String testPkg = "android.security.cts.CVE_2021_39706";
+        final String testClass = testPkg + "." + "DeviceTest";
+        final String testDeviceAdminReceiver = testPkg + ".PocDeviceAdminReceiver";
+        boolean cmdResult = false;
+        try {
+            ITestDevice device = getDevice();
+            AdbUtils.runCommandLine("input keyevent KEYCODE_WAKEUP", device);
+            AdbUtils.runCommandLine("input keyevent KEYCODE_MENU", device);
+            AdbUtils.runCommandLine("input keyevent KEYCODE_HOME", device);
+            installPackage(testApp, "-t");
+            // Set Device Admin Component
+            String result = AdbUtils.runCommandLine("dpm set-device-owner --user " + userId + " '"
+                    + testPkg + "/" + testDeviceAdminReceiver + "'", device);
+            cmdResult = result.startsWith("Success");
+            assumeTrue("Device admin not set", cmdResult);
+            runDeviceTests(testPkg, testClass, "testCredentialReset");
+        } catch (Exception e) {
+            assumeNoException(e);
+        } finally {
+            try {
+                if (cmdResult) {
+                    // Remove Device Admin Component
+                    AdbUtils.runCommandLine("dpm remove-active-admin --user " + userId + " '"
+                            + testPkg + "/" + testDeviceAdminReceiver + "'", getDevice());
+                }
+            } catch (Exception e) {
+                assumeNoException(e);
+            }
+        }
     }
 }

@@ -20,6 +20,8 @@ import static android.Manifest.permission.CHANGE_COMPONENT_ENABLED_STATE;
 import static android.Manifest.permission.SUSPEND_APPS;
 import static android.appenumeration.cts.Constants.TARGET_STUB;
 import static android.appenumeration.cts.Constants.TARGET_STUB_APK;
+import static android.appenumeration.cts.Constants.TARGET_STUB_SHARED_USER;
+import static android.appenumeration.cts.Constants.TARGET_STUB_SHARED_USER_APK;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.SYSTEM_APP_STATE_HIDDEN_UNTIL_INSTALLED_HIDDEN;
 import static android.content.pm.PackageManager.SYSTEM_APP_STATE_HIDDEN_UNTIL_INSTALLED_VISIBLE;
@@ -32,7 +34,9 @@ import static org.junit.Assert.assertThrows;
 
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.PackageInfoFlags;
 import android.os.UserHandle;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -50,6 +54,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Verify that app without holding the {@link android.Manifest.permission.INTERACT_ACROSS_USERS}
@@ -86,11 +92,13 @@ public class CrossUserPackageVisibilityTests {
         }
 
         uninstallPackage(TARGET_STUB);
+        uninstallPackage(TARGET_STUB_SHARED_USER);
     }
 
     @After
     public void tearDown() {
         uninstallPackage(TARGET_STUB);
+        uninstallPackage(TARGET_STUB_SHARED_USER);
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
     }
@@ -241,6 +249,84 @@ public class CrossUserPackageVisibilityTests {
         assertThat(e1.getMessage()).isEqualTo(e2.getMessage());
     }
 
+    @Test
+    public void testCheckUidSignatures_cannotDetectStubPkgs() throws Exception {
+        installPackage(TARGET_STUB_APK);
+        installPackage(TARGET_STUB_SHARED_USER_APK);
+        final int uidStub = mPackageManager.getPackageUid(
+                TARGET_STUB, PackageInfoFlags.of(0));
+        final int uidStubSharedUser = mPackageManager.getPackageUid(
+                TARGET_STUB_SHARED_USER, PackageInfoFlags.of(0));
+
+        uninstallPackageForUser(TARGET_STUB, mCurrentUser);
+        uninstallPackageForUser(TARGET_STUB_SHARED_USER, mCurrentUser);
+
+        assertThat(mPackageManager.checkSignatures(uidStub, uidStubSharedUser))
+                .isEqualTo(PackageManager.SIGNATURE_UNKNOWN_PACKAGE);
+    }
+
+    @Test
+    public void testHasUidSigningCertificate_cannotDetectStubPkgs() throws Exception {
+        installPackage(TARGET_STUB_APK);
+        installPackage(TARGET_STUB_SHARED_USER_APK);
+        final PackageInfo stubInfo =
+                mPackageManager.getPackageInfo(TARGET_STUB,
+                        PackageInfoFlags.of(PackageManager.GET_SIGNING_CERTIFICATES));
+        final PackageInfo stubSharedUserInfo =
+                mPackageManager.getPackageInfo(TARGET_STUB_SHARED_USER,
+                        PackageInfoFlags.of(PackageManager.GET_SIGNING_CERTIFICATES));
+
+        uninstallPackageForUser(TARGET_STUB, mCurrentUser);
+        uninstallPackageForUser(TARGET_STUB_SHARED_USER, mCurrentUser);
+
+        assertThat(mPackageManager.hasSigningCertificate(
+                stubInfo.applicationInfo.uid,
+                stubInfo.signingInfo.getApkContentsSigners()[0].toByteArray(),
+                PackageManager.CERT_INPUT_RAW_X509)).isFalse();
+        assertThat(mPackageManager.hasSigningCertificate(
+                stubSharedUserInfo.applicationInfo.uid,
+                stubSharedUserInfo.signingInfo.getApkContentsSigners()[0].toByteArray(),
+                PackageManager.CERT_INPUT_RAW_X509)).isFalse();
+    }
+
+    @Test
+    public void testGetNameForUid_cannotDetectStubPkgs() throws Exception {
+        installPackage(TARGET_STUB_APK);
+        installPackage(TARGET_STUB_SHARED_USER_APK);
+        final int uidStub = mPackageManager.getPackageUid(
+                TARGET_STUB, PackageInfoFlags.of(0));
+        final int uidStubSharedUser = mPackageManager.getPackageUid(
+                TARGET_STUB_SHARED_USER, PackageInfoFlags.of(0));
+
+        uninstallPackageForUser(TARGET_STUB, mCurrentUser);
+        uninstallPackageForUser(TARGET_STUB_SHARED_USER, mCurrentUser);
+
+        assertThat(mPackageManager.getNameForUid(uidStub)).isNull();
+        assertThat(mPackageManager.getNameForUid(uidStubSharedUser)).isNull();
+    }
+
+    @Test
+    public void testGetNamesForUids_cannotDetectStubPkgs() throws Exception {
+        installPackage(TARGET_STUB_APK);
+        installPackage(TARGET_STUB_SHARED_USER_APK);
+        final int uidStub = mPackageManager.getPackageUid(
+                TARGET_STUB, PackageInfoFlags.of(0));
+        final int uidStubSharedUser = mPackageManager.getPackageUid(
+                TARGET_STUB_SHARED_USER, PackageInfoFlags.of(0));
+
+        uninstallPackageForUser(TARGET_STUB, mCurrentUser);
+        uninstallPackageForUser(TARGET_STUB_SHARED_USER, mCurrentUser);
+
+        final List<String> names = Arrays.asList(
+                mPackageManager.getNamesForUids(new int[] {uidStub, uidStubSharedUser}));
+        assertThat(names).hasSize(2);
+        names.forEach(name -> assertThat(name).isNull());
+    }
+
+    private static void installPackage(String apkPath) {
+        installPackageForUser(apkPath, null);
+    }
+
     private static void installPackageForUser(String apkPath, UserReference user) {
         installPackageForUser(apkPath, user,
                 InstrumentationRegistry.getInstrumentation().getContext().getPackageName());
@@ -249,8 +335,10 @@ public class CrossUserPackageVisibilityTests {
     private static void installPackageForUser(String apkPath, UserReference user,
             String installerPackageName) {
         assertThat(new File(apkPath).exists()).isTrue();
-        final StringBuilder cmd = new StringBuilder("pm install --user ");
-        cmd.append(user.id()).append(" ");
+        final StringBuilder cmd = new StringBuilder("pm install ");
+        if (user != null) {
+            cmd.append("--user ").append(user.id()).append(" ");
+        }
         cmd.append("-i ").append(installerPackageName).append(" ");
         cmd.append(apkPath);
         final String result = runShellCommand(cmd.toString());

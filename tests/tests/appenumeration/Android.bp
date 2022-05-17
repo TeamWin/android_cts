@@ -74,6 +74,7 @@ android_test {
         ":CtsAppEnumerationWildcardShareActivitySource",
         ":CtsAppEnumerationShareActivityTarget",
         ":CtsAppEnumerationStub",
+        ":CtsAppEnumerationStubSharedUser",
         ":CtsAppEnumerationQueriesServiceViaAction",
         ":CtsAppEnumerationSharedUidSource",
         ":CtsAppEnumerationQueriesNothingReceivesPermissionProtectedUri",

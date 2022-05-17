@@ -98,6 +98,7 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="push" value="CtsAppEnumerationNoApi.apk->/data/local/tmp/cts/appenumeration/CtsAppEnumerationNoApi.apk" />
         <option name="push" value="CtsAppEnumerationStub.apk->/data/local/tmp/cts/appenumeration/CtsAppEnumerationStub.apk" />
+        <option name="push" value="CtsAppEnumerationStubSharedUser.apk->/data/local/tmp/cts/appenumeration/CtsAppEnumerationStubSharedUser.apk" />
         <option name="push" value="CtsAppEnumerationFilters.apk->/data/local/tmp/cts/appenumeration/CtsAppEnumerationFilters.apk" />
         <option name="push" value="CtsAppEnumerationQueriesNothingSeesInstaller.apk->/data/local/tmp/cts/appenumeration/CtsAppEnumerationQueriesNothingSeesInstaller.apk" />
         <option name="push" value="CtsAppEnumerationQueriesNothingReceivesPersistableUri.apk->/data/local/tmp/cts/appenumeration/CtsAppEnumerationQueriesNothingReceivesPersistableUri.apk" />

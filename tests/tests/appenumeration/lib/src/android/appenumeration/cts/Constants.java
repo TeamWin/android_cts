@@ -102,6 +102,7 @@ public class Constants {
     public static final String TARGET_NO_API = PKG_BASE + "noapi";
     /** A package with no published API and just for installing/uninstalling during test */
     public static final String TARGET_STUB = PKG_BASE + "stub";
+    public static final String TARGET_STUB_SHARED_USER = PKG_BASE + "stub.shareduid";
     /** A package that offers an activity used for opening / editing file types */
     public static final String TARGET_EDITOR = PKG_BASE + "editor.activity";
     /** A package that offers an activity used viewing a contact / profile */
@@ -135,6 +136,8 @@ public class Constants {
     private static final String BASE_PATH = "/data/local/tmp/cts/appenumeration/";
     public static final String TARGET_NO_API_APK = BASE_PATH + "CtsAppEnumerationNoApi.apk";
     public static final String TARGET_STUB_APK = BASE_PATH + "CtsAppEnumerationStub.apk";
+    public static final String TARGET_STUB_SHARED_USER_APK =
+            BASE_PATH + "CtsAppEnumerationStubSharedUser.apk";
     public static final String TARGET_FILTERS_APK = BASE_PATH + "CtsAppEnumerationFilters.apk";
     public static final String QUERIES_NOTHING_SEES_INSTALLER_APK =
             BASE_PATH + "CtsAppEnumerationQueriesNothingSeesInstaller.apk";
