@@ -1506,6 +1506,11 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchActivity(PIP_ACTIVITY, extraString(EXTRA_ALLOW_AUTO_PIP, "true"));
         assertPinnedStackDoesNotExist();
 
+        int windowingMode = mWmState.getTaskByActivity(PIP_ACTIVITY).getWindowingMode();
+        // Skip the test if freeform, since desktops may manually request PIP immediately after
+        // the test activity launch.
+        assumeFalse(windowingMode == WINDOWING_MODE_FREEFORM);
+
         // Launch a regular activity with FLAG_ACTIVITY_NO_USER_ACTION and
         // ensure that there is no pinned stack.
         launchActivityWithNoUserAction(TEST_ACTIVITY);
