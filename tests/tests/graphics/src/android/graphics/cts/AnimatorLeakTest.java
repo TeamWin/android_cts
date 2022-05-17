@@ -30,6 +30,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import junit.framework.Assert;
 
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,6 +53,11 @@ public class AnimatorLeakTest {
     boolean mFinitePaused = false;
     boolean mFinitePausedSet = false;
     boolean mResumed = false;
+
+    @After
+    public void cleanup() {
+        Animator.setAnimatorPausingEnabled(true);
+    }
 
     /**
      * The approach of this test is to start animators in the main activity for the test.
@@ -168,6 +174,82 @@ public class AnimatorLeakTest {
         Assert.assertFalse("Non-infinite AnimatorSet was paused", mFinitePausedSet);
         Assert.assertTrue("Animator was not resumed", mResumed);
         Assert.assertTrue("AnimatorSet was not resumed", mResumed);
+    }
+
+    /**
+     * The approach of this test is to start animators in the main activity for the test.
+     * That activity is forced into the background and the test checks whether the animators
+     * are paused appropriately. The activity is then forced back into the foreground again
+     * and the test checks whether the animators previously paused are resumed. There are also
+     * checks to make sure that animators which should not have been paused are handled
+     * correctly.
+     */
+    @Test
+    public void testPauseDisablement() {
+        // Latches used to wait for each of the appropriate lifecycle events
+        final CountDownLatch animatorStartedLatch = new CountDownLatch(1);
+        // There are 2 animators which should be paused and resumed, thus a countdown of 2
+        final CountDownLatch animatorPausedLatch = new CountDownLatch(1);
+        final CountDownLatch animatorResumedLatch = new CountDownLatch(1);
+
+        // The first of these (infinite) should get paused, the second (finite) should not
+        ValueAnimator infiniteAnimator = ValueAnimator.ofFloat(0f, 1f).setDuration(1000);
+        infiniteAnimator.setRepeatCount(ValueAnimator.INFINITE);
+
+        // This listener tracks which animators get paused and resumed
+        AnimatorListenerAdapter listener = new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                // Wait until animators start to trigger the lifecycle changes
+                animatorStartedLatch.countDown();
+            }
+
+            @Override
+            public void onAnimationPause(Animator animation) {
+                mPaused = true;
+                animatorPausedLatch.countDown();
+            }
+
+            @Override
+            public void onAnimationResume(Animator animation) {
+                mResumed = true;
+                animatorResumedLatch.countDown();
+            }
+        };
+        infiniteAnimator.addListener(listener);
+        infiniteAnimator.addPauseListener(listener);
+
+        getInstrumentation().runOnMainSync(new Runnable() {
+            public void run() {
+                Animator.setBackgroundPauseDelay(500);
+                Animator.setAnimatorPausingEnabled(false);
+                try {
+                    infiniteAnimator.start();
+                } catch (Throwable throwable) {
+                }
+            }
+        });
+        try {
+            // Wait until the animators are running to start changing the activity lifecycle
+            animatorStartedLatch.await(5, TimeUnit.SECONDS);
+
+            // Send the activity to the background. This should cause the animators to be paused
+            // after Animator.getBackgroundPauseDelay()
+            UiDevice uiDevice = UiDevice.getInstance(getInstrumentation());
+            uiDevice.pressHome();
+
+            animatorPausedLatch.await(2, TimeUnit.SECONDS);
+
+            // It is not possible (or obvious) how to bring the activity back into the foreground.
+            // However, AnimationHandler pauses/resumes all animators for the process based on
+            // *any* visible activities in that process. So it is sufficient to launch a second
+            // activity, which should resume the animators paused when the first activity went
+            // into the background.
+            mActivityRule2.launchActivity(null);
+            animatorResumedLatch.await(2, TimeUnit.SECONDS);
+        } catch (Exception e) { }
+        Assert.assertFalse("Animator paused when pausing disabled", mPaused);
+        Assert.assertFalse("Animator resumed when pausing disabled", mResumed);
     }
 
 }
