@@ -175,11 +175,17 @@ public class SpatializerTest extends CtsAndroidTestCase {
                 || supportedModes.contains(Spatializer.HEAD_TRACKING_MODE_RELATIVE_WORLD)
                 || supportedModes.contains(Spatializer.HEAD_TRACKING_MODE_OTHER))) {
             // no head tracking is supported, verify it is correctly reported by the API
+            Log.i(TAG, "no headtracking modes supported");
             assertEquals("When no head tracking mode supported, list of modes must be empty",
                     0, supportedModes.size());
             assertEquals("Invalid mode when no head tracking mode supported",
                     Spatializer.HEAD_TRACKING_MODE_UNSUPPORTED, spat.getHeadTrackingMode());
-            Log.i(TAG, "no headtracking modes supported, stop test");
+            // verify you can't enable head tracking on a device
+            final AudioDeviceAttributes device = new AudioDeviceAttributes(
+                    AudioDeviceAttributes.ROLE_OUTPUT, AudioDeviceInfo.TYPE_BLUETOOTH_A2DP, "bli");
+            spat.addCompatibleAudioDevice(device);
+            spat.setHeadTrackerEnabled(true, device);
+            assertFalse(spat.isHeadTrackerEnabled(device));
             return;
         }
         int trackingModeToUse;
