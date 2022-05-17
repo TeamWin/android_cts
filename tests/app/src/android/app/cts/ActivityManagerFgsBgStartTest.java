@@ -40,6 +40,10 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.DeviceConfig;
 import android.test.InstrumentationTestCase;
+import android.provider.Settings;
+import android.server.wm.settings.SettingsSession;
+import android.support.test.uiautomator.UiDevice;
+import android.util.Log;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -580,6 +584,58 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
         } finally {
             uid1Watcher.finish();
             setFgsStartForegroundTimeout(DEFAULT_FGS_START_FOREGROUND_TIMEOUT_MS);
+        }
+    }
+
+    /**
+     * IActivityManager.startService() is called directly (does not go through
+     * {@link Context#startForegroundService(Intent)}, a spoofed packageName "com.google.android.as"
+     * is used as callingPackage. Although "com.google.android.as" is allowlisted to start
+     * foreground service from the background, but framework will detect this is a spoofed
+     * packageName and disallow foreground service start from the background.
+     * @throws Exception
+     */
+    @Test
+    public void testSpoofPackageName() throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+        // CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_SPOOF_PACKAGE_NAME needs access
+        // to hidden API PackageManager.getAttentionServicePackageName() and
+        // PackageManager.getSystemCaptionsServicePackageName(), so we need to call
+        // hddenApiSettings.set("*") to exempt the hidden APIs.
+        SettingsSession<String> hiddenApiSettings = new SettingsSession<>(
+                Settings.Global.getUriFor(
+                        Settings.Global.HIDDEN_API_BLACKLIST_EXEMPTIONS),
+                Settings.Global::getString, Settings.Global::putString);
+        hiddenApiSettings.set("*");
+        try {
+            Bundle bundle = new Bundle();
+            bundle.putInt(LocalForegroundServiceLocation.EXTRA_FOREGROUND_SERVICE_TYPE,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+            // Package1 is in BG state, start FGSL in package1, it won't get location capability.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_SPOOF_PACKAGE_NAME,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, bundle);
+
+            // Package1 is in FGS state, but won't get location capability.
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_FG_SERVICE,
+                    new Integer(PROCESS_CAPABILITY_NONE));
+
+            // stop FGSL
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE_LOCATION,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_CACHED_EMPTY,
+                    new Integer(PROCESS_CAPABILITY_NONE));
+        } finally {
+            uid1Watcher.finish();
+            if (hiddenApiSettings != null) {
+                hiddenApiSettings.close();
+            }
         }
     }
 
