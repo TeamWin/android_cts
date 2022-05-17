@@ -249,6 +249,9 @@ public class VulkanFeaturesTest {
     @CddTest(requirement = "7.1.4.2")
     @Test
     public void testVulkanVariantSupport() throws JSONException {
+        if (mVulkanHardwareVersion == null) {
+            return;
+        }
         int expectedVariant = 0x0;
         int actualVariant = (mVulkanHardwareVersion.version >> 29) & 0x7;
         assertEquals(expectedVariant, actualVariant);
