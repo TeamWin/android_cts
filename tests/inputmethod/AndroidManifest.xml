@@ -24,6 +24,7 @@
     <application android:label="CtsInputMethodTestCases"
          android:multiArch="true"
          android:supportsRtl="true"
+         android:debuggable="true"
          android:testOnly="true">
 
         <uses-library android:name="android.test.runner"/>
