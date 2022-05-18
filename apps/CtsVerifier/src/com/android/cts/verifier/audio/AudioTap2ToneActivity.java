@@ -130,8 +130,10 @@ public class AudioTap2ToneActivity
     private double[] mLatencyMax = new double[NUM_TEST_APIS];   // ms
     private double[] mLatencyAve = new double[NUM_TEST_APIS];   // ms
 
+    // Test State
     private static final int NUM_TEST_PHASES = 5;
     private int mTestPhase;
+    private boolean mArmed = true;  // OK to fire another beep
 
     private double[] mLatencyMillis = new double[NUM_TEST_PHASES];
 
@@ -351,20 +353,25 @@ public class AudioTap2ToneActivity
 
     private void trigger() {
         if (mIsRecording) {
-            mBlipSource.trigger();
+            if (mArmed) {
+                mArmed = false;
 
-            // schedule an analysis to start in the near future
-            mAnalysisTask = new Runnable() {
-                public void run() {
-                    new Thread() {
-                        public void run() {
-                            analyzeCapturedAudio();
-                        }
-                    }.start();
-                }
-            };
-            mTaskCountdown =
-                    (int) (mDuplexAudioManager.getRecorder().getSampleRate() * ANALYSIS_TIME_DELAY);
+                mBlipSource.trigger();
+
+                // schedule an analysis to start in the near future
+                mAnalysisTask = new Runnable() {
+                    public void run() {
+                        new Thread() {
+                            public void run() {
+                                analyzeCapturedAudio();
+                            }
+                        }.start();
+                    }
+                };
+                mTaskCountdown = (int) (mDuplexAudioManager.getRecorder().getSampleRate()
+                                            * ANALYSIS_TIME_DELAY);
+
+            }
         }
     }
 
@@ -453,6 +460,8 @@ public class AudioTap2ToneActivity
 
                 mWaveformView.setSampleData(result.filtered);
                 mWaveformView.postInvalidate();
+
+                mArmed = true;
 
                 calculateTestPass();
             }
