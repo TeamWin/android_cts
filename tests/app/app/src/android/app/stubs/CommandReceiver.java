@@ -17,6 +17,7 @@
 package android.app.stubs;
 
 import android.app.ActivityManager;
+import android.app.IActivityManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -24,8 +25,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Binder;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Parcel;
+import android.os.RemoteException;
+import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.Log;
 
@@ -51,6 +56,7 @@ public class CommandReceiver extends BroadcastReceiver {
     public static final int COMMAND_BIND_FOREGROUND_SERVICE = 14;
     public static final int COMMAND_START_FGSL_SERVICE = 15;
     public static final int COMMAND_STOP_FGSL_SERVICE = 16;
+    public static final int COMMAND_START_FOREGROUND_SERVICE_SPOOF_PACKAGE_NAME = 23;
 
     public static final String EXTRA_COMMAND = "android.app.stubs.extra.COMMAND";
     public static final String EXTRA_TARGET_PACKAGE = "android.app.stubs.extra.TARGET_PACKAGE";
@@ -131,6 +137,9 @@ public class CommandReceiver extends BroadcastReceiver {
                 break;
             case COMMAND_STOP_FGSL_SERVICE:
                 doStopService(context, intent, FG_LOCATION_SERVICE_NAME);
+                break;
+            case COMMAND_START_FOREGROUND_SERVICE_SPOOF_PACKAGE_NAME:
+                doStartForegroundServiceSpoofPackageName(context, intent);
                 break;
         }
     }
@@ -245,6 +254,53 @@ public class CommandReceiver extends BroadcastReceiver {
             ((PendingIntent) sPendingIntent.remove(targetPackage)).send();
         } catch (PendingIntent.CanceledException e) {
             Log.e(TAG, "Caugtht exception:", e);
+        }
+    }
+
+    /**
+     * Directly call IActivityManager.startService() using a spoofed packageName which is known to
+     * be allowlisted by Android framework to be able to start foreground service
+     * from the background. Framework will disallow the foreground service to start from the
+     * background.
+     * @param context
+     * @param commandIntent
+     */
+    private void doStartForegroundServiceSpoofPackageName(Context context, Intent commandIntent) {
+        String targetPackage = getTargetPackage(commandIntent);
+        Intent fgsIntent = new Intent();
+        fgsIntent.putExtras(commandIntent); // include the fg service type if any.
+        fgsIntent.setComponent(new ComponentName(targetPackage, FG_LOCATION_SERVICE_NAME));
+        int command = LocalForegroundService.COMMAND_START_FOREGROUND_WITH_TYPE;
+        fgsIntent.putExtras(LocalForegroundService.newCommand(new Binder(), command));
+        try {
+            final PackageManager pm = context.getPackageManager();
+            String spoofPackageName = pm.getAttentionServicePackageName();
+            if (TextUtils.isEmpty(spoofPackageName)) {
+                Log.d(TAG, "getAttentionServicePackageName() returns empty");
+                spoofPackageName = pm.getSystemCaptionsServicePackageName();
+            }
+            if (TextUtils.isEmpty(spoofPackageName)) {
+                Log.d(TAG, "getSystemCaptionsServicePackageName() returns empty");
+                spoofPackageName = "android";
+            }
+            Log.d(TAG, "spoofPackageName: " + spoofPackageName);
+            final IBinder activityProxy = android.os.ServiceManager.getService("activity");
+            // Call IActivityManager.startService() directly using a spoofed packageName.
+            IActivityManager.Stub.asInterface(activityProxy).startService(
+                    context.getIApplicationThread(),
+                    fgsIntent,
+                    null,
+                    true,
+                    spoofPackageName,
+                    null,
+                    android.os.Process.myUserHandle().getIdentifier()
+            );
+        } catch (LinkageError e) {
+            // IActivityManager.startService() is a hidden API, access hidden API could get
+            // LinkageError, consider the test as pass if we get LinkageError.
+            Log.d(TAG, "startForegroundService gets an LinkageError", e);
+        } catch (RemoteException e) {
+            Log.d(TAG, "startForegroundService gets an RemoteException", e);
         }
     }
 
