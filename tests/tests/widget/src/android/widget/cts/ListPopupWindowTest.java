@@ -111,6 +111,7 @@ public class ListPopupWindowTest {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
         mItemClickListener = new PopupItemClickListener();
+        mActivity.getApplicationInfo().setEnableOnBackInvokedCallback(false);
     }
 
     @After
