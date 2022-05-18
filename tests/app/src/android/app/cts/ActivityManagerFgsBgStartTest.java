@@ -60,6 +60,9 @@ import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
+import android.server.wm.settings.SettingsSession;
+import android.support.test.uiautomator.UiDevice;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -1802,6 +1805,52 @@ public class ActivityManagerFgsBgStartTest {
             CtsAppTestUtils.executeShellCmd(mInstrumentation,
                     "settings put --user current secure default_input_method "
                             + defaultInputMethod);
+        }
+    }
+
+    /**
+     * IActivityManager.startService() is called directly (does not go through
+     * {@link Context#startForegroundService(Intent)}, a spoofed packageName "com.google.android.as"
+     * is used as callingPackage. Although "com.google.android.as" is allowlisted to start
+     * foreground service from the background, but framework will detect this is a spoofed
+     * packageName and disallow foreground service start from the background.
+     * @throws Exception
+     */
+    @Test
+    public void testSpoofPackageName() throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+        // CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_SPOOF_PACKAGE_NAME needs access
+        // to hidden API PackageManager.getAttentionServicePackageName() and
+        // PackageManager.getSystemCaptionsServicePackageName(), so we need to call
+        // hddenApiSettings.set("*") to exempt the hidden APIs.
+        SettingsSession<String> hiddenApiSettings = new SettingsSession<>(
+                Settings.Global.getUriFor(
+                        Settings.Global.HIDDEN_API_BLACKLIST_EXEMPTIONS),
+                Settings.Global::getString, Settings.Global::putString);
+        hiddenApiSettings.set("*");
+        try {
+            // Enable the FGS background startForeground() restriction.
+            enableFgsRestriction(true, true, null);
+            // Start FGS in BG state.
+            WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_SPOOF_PACKAGE_NAME,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            // APP1 does not enter FGS state
+            try {
+                waiter.doWait(WAITFOR_MSEC);
+                fail("Service should not enter foreground service state");
+            } catch (Exception e) {
+            }
+        } finally {
+            uid1Watcher.finish();
+            if (hiddenApiSettings != null) {
+                hiddenApiSettings.close();
+            }
         }
     }
 
