@@ -85,6 +85,7 @@ import android.telephony.PhoneStateListener;
 import android.telephony.PinResult;
 import android.telephony.PreciseCallState;
 import android.telephony.RadioAccessFamily;
+import android.telephony.RadioAccessSpecifier;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.SignalStrengthUpdateRequest;
@@ -1258,6 +1259,20 @@ public class TelephonyManagerTest {
     public void testSetSystemSelectionChannels() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
 
+        List<RadioAccessSpecifier> channels = Collections.emptyList();
+        if (mRadioVersion >= RADIO_HAL_VERSION_1_6) {
+            channels = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, TelephonyManager::getSystemSelectionChannels);
+            if (channels.isEmpty()) {
+                // TODO (b/189255895): Throw an error once getSystemSelectionChannels is functional.
+                Log.e(TAG, "getSystemChannels not implemented on IRadio 1.6+.");
+            }
+        }
+        if (channels.isEmpty()) {
+            Log.d(TAG, "Skipping test since system selection channels are not available.");
+            return;
+        }
+
         LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue<>(1);
         final UiAutomation uiAutomation =
                 InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -1270,10 +1285,7 @@ public class TelephonyManagerTest {
             Boolean result = queue.poll(1000, TimeUnit.MILLISECONDS);
             // Ensure we get a result
             assertNotNull(result);
-            // Only verify the result for supported devices on IRadio 1.3+
-            if (mRadioVersion >= RADIO_HAL_VERSION_1_3) {
-                assertTrue(result);
-            }
+            assertTrue(result);
         } catch (InterruptedException e) {
             fail("interrupted");
         } finally {
@@ -1285,16 +1297,15 @@ public class TelephonyManagerTest {
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                 tp -> tp.setSystemSelectionChannels(Collections.emptyList()));
 
-        // TODO (b/189255895): Uncomment once getSystemSelection channels is functional in S QPR
-        /**
-        // getSystemSelectionChannels was added in IRadio 1.6, so ensure it returns
-        // the value that was set by setSystemSelectionChannels.
-        if (mRadioVersion >= RADIO_HAL_VERSION_1_6) {
-            assertEquals(Collections.emptyList(),
-                    ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                    TelephonyManager::getSystemSelectionChannels));
-        }
-         **/
+        // Assert that we get back the value we set.
+        assertEquals(Collections.emptyList(),
+                ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                TelephonyManager::getSystemSelectionChannels));
+
+        // Reset the values back to the original.
+        List<RadioAccessSpecifier> finalChannels = channels;
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                tp -> tp.setSystemSelectionChannels(finalChannels));
     }
 
     @Test
