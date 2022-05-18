@@ -193,8 +193,8 @@ public class EuiccManagerTest {
     @Test
     public void testSwitchToSubscritionDisableWithNoPortAndChangesCompatDisabled()
             throws Exception {
-        // test disabled state only for now
-        if (mEuiccManager.isEnabled()) {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
             return;
         }
         // disable compact change
@@ -232,8 +232,8 @@ public class EuiccManagerTest {
 
     @Test
     public void testSwitchToSubscriptionDisableWithNoPort() throws Exception {
-        // test disabled state only for now
-        if (mEuiccManager.isEnabled()) {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
             return;
         }
 
