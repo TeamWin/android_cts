@@ -145,7 +145,7 @@ public class BluetoothA2dpTest extends AndroidTestCase {
 
         BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
 
-        assertThrows(SecurityException.class, () -> mBluetoothA2dp.getCodecStatus(testDevice));
+        assertNull(mBluetoothA2dp.getCodecStatus(testDevice));
         assertThrows(IllegalArgumentException.class, () -> {
             mBluetoothA2dp.getCodecStatus(null);
         });
