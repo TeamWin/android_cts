@@ -368,6 +368,63 @@ public class PerformanceClassEvaluator {
         }
     }
 
+    // TODO(b/218771970): Add cdd annotation, change RequirementConstants.RTBD to appropirate
+    // requirement id once finalized
+    // used for requirements [?]
+    public static class VideoCodecRequirement extends Requirement {
+        private static final String TAG = VideoCodecRequirement.class.getSimpleName();
+
+        private VideoCodecRequirement(String id, RequiredMeasurement<?> ... reqs) {
+            super(id, reqs);
+        }
+
+        public void setRequirementSatisfied(boolean requirementSatisfied) {
+            this.setMeasuredValue(RequirementConstants.REQ_SATISFIED, requirementSatisfied);
+        }
+
+        /**
+         * [?] Must have at least 1 HW video decoder supporting 4K60
+         */
+        public static VideoCodecRequirement createR4k60HwDecoder() {
+            RequiredMeasurement<Boolean> requirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.REQ_SATISFIED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+
+            return new VideoCodecRequirement(RequirementConstants.RTBD, requirement);
+        }
+
+        /**
+         * [?] Must have at least 1 HW video encoder supporting 4K60
+         */
+        public static VideoCodecRequirement createR4k60HwEncoder() {
+            RequiredMeasurement<Boolean> requirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.REQ_SATISFIED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+
+            return new VideoCodecRequirement(RequirementConstants.RTBD, requirement);
+        }
+
+        /**
+         * [?] AV1 Hardware decoder: Main 10, Level 4.1, Film Grain
+         */
+        public static VideoCodecRequirement createRAV1DecoderReq() {
+            RequiredMeasurement<Boolean> requirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.REQ_SATISFIED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+
+            return new VideoCodecRequirement(RequirementConstants.RTBD, requirement);
+        }
+    }
+
     private <R extends Requirement> R addRequirement(R req) {
         if (!this.mRequirements.add(req)) {
             throw new IllegalStateException("Requirement " + req.id() + " already added");
@@ -431,6 +488,18 @@ public class PerformanceClassEvaluator {
 
     public CodecInitLatencyRequirement addR5_1__H_1_TBD2() {
         return this.addRequirement(CodecInitLatencyRequirement.createR5_1__H_1_TBD2());
+    }
+
+    public VideoCodecRequirement addR4k60HwEncoder() {
+        return this.addRequirement(VideoCodecRequirement.createR4k60HwEncoder());
+    }
+
+    public VideoCodecRequirement addR4k60HwDecoder() {
+        return this.addRequirement(VideoCodecRequirement.createR4k60HwDecoder());
+    }
+
+    public VideoCodecRequirement addRAV1DecoderReq() {
+        return this.addRequirement(VideoCodecRequirement.createRAV1DecoderReq());
     }
 
     public void submitAndCheck() {

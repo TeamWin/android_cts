@@ -19,6 +19,7 @@ package android.permission.cts;
 import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.PACKAGE_USAGE_STATS;
+import static android.Manifest.permission.WRITE_DEVICE_CONFIG;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_FOREGROUND;
 import static android.app.AppOpsManager.MODE_IGNORED;
@@ -45,8 +46,10 @@ import android.content.pm.PermissionInfo;
 import android.os.Build;
 import android.os.Process;
 import android.os.UserHandle;
+import android.provider.DeviceConfig;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import java.util.ArrayList;
@@ -323,5 +326,26 @@ public class PermissionUtils {
 
         return runtimePermissions;
     }
+
+    /**
+     * Set device config property, if namespace is not supplied default to the privacy namespace
+     */
+    public static void setDeviceConfigProperty(@Nullable String namespace,
+            @NonNull String propertyName,
+            @NonNull String value) {
+        String deviceConfigNamespace =
+                namespace == null ? DeviceConfig.NAMESPACE_PRIVACY : namespace;
+        runWithShellPermissionIdentity(() -> {
+            boolean valueWasSet = DeviceConfig.setProperty(
+                    deviceConfigNamespace,
+                    /* name = */ propertyName,
+                    /* value = */ value,
+                    /* makeDefault = */ false);
+            if (!valueWasSet) {
+                throw new IllegalStateException("Could not set " + propertyName + " to " + value);
+            }
+        }, WRITE_DEVICE_CONFIG);
+    }
+
 
 }

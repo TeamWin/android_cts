@@ -38,6 +38,8 @@ import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.KeyManagement;
 import com.android.bedstead.harrier.policies.KeySelection;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.packages.ProcessReference;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.compatibility.common.util.BlockingCallback;
 import com.android.compatibility.common.util.FakeKeys;
 
@@ -417,9 +419,14 @@ public final class KeyManagementTest {
             sDeviceState.dpcOnly().devicePolicyManager().installKeyPair(
                     sDeviceState.dpcOnly().componentName(), PRIVATE_KEY, CERTIFICATES,
                     RSA_ALIAS, /* requestAccess= */ true);
+            ProcessReference dpcProcess =
+                    Poll.forValue("DPC Uid", () -> sDeviceState.dpcOnly().process())
+                            .toNotBeNull()
+                            .errorOnFail()
+                            .await();
 
             assertThat(sDeviceState.dpc().devicePolicyManager().getKeyPairGrants(RSA_ALIAS))
-                    .isEqualTo(Map.of(sDeviceState.dpcOnly().process().uid(),
+                    .isEqualTo(Map.of(dpcProcess.uid(),
                             singleton(sDeviceState.dpcOnly().packageName())));
         } finally {
             // Remove keypair

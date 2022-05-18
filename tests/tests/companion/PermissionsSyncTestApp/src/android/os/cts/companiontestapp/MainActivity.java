@@ -22,12 +22,11 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
+import android.companion.cts.permissionssynctestapp.R;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
-
-import android.companion.cts.permissionssynctestapp.R;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -199,9 +198,8 @@ public class MainActivity extends Activity implements ContextProvider {
                 case BluetoothCommunicationService.MESSAGE_READ:
                     byte[] readBuf = (byte[]) msg.obj;
                     // construct a string from the valid bytes in the buffer
-                    String readMessage = new String(readBuf, 0, msg.arg1);
-                    Toast.makeText(activity, "Message Received:  "
-                            + readMessage, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, "Message Received: ["
+                            + msg.arg1 + "]", Toast.LENGTH_SHORT).show();
 
                     Intent intent = new Intent(activity, PermissionsTransferCompanionService.class);
                     intent.putExtra(PermissionsTransferCompanionService.EXTRA_MESSAGE_BYTES,

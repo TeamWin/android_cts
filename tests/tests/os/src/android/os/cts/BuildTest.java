@@ -60,6 +60,12 @@ public class BuildTest extends TestCase {
      * Verify that the CPU ABI fields on device match the permitted ABIs defined by CDD.
      */
     public void testCpuAbi_valuesMatchPermitted() throws Exception {
+        for (String abi : Build.SUPPORTED_ABIS) {
+            if (abi.endsWith("-hwasan")) {
+                // HWASan builds are not official builds and support *-hwasan ABIs.
+                return;
+            }
+        }
         // The permitted ABIs are listed in https://developer.android.com/ndk/guides/abis.
         Set<String> just32 = new HashSet<>(Arrays.asList("armeabi", "armeabi-v7a", "x86"));
         Set<String> just64 = new HashSet<>(Arrays.asList("x86_64", "arm64-v8a"));

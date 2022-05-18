@@ -228,177 +228,184 @@ public class BleClientTestBaseActivity extends PassFailButtons.Activity {
             String newAction = null;
             String actionName = null;
             long previousPassed = mPassed;
-            final Intent startIntent = new Intent(BleClientTestBaseActivity.this, BleClientService.class);
+            final Intent startIntent = new Intent(BleClientTestBaseActivity.this,
+                    BleClientService.class);
             if (action != null) {
                 Log.d(TAG, "Processing " + action);
             }
             switch (action) {
-            case BleClientService.BLE_BLUETOOTH_DISABLED:
-                showErrorDialog(R.string.ble_bluetooth_disable_title, R.string.ble_bluetooth_disable_message, true);
-                break;
-            case BleClientService.BLE_BLUETOOTH_CONNECTED:
-                actionName = getString(R.string.ble_client_connect_name);
-                mTestAdapter.setTestPass(BLE_CLIENT_CONNECT);
-                mPassed |= PASS_FLAG_CONNECT;
-                // execute service discovery test
-                newAction = BleClientService.BLE_CLIENT_ACTION_BLE_DISCOVER_SERVICE;
-                break;
-            case BleClientService.BLE_SERVICES_DISCOVERED:
-                actionName = getString(R.string.ble_discover_service_name);
-                mTestAdapter.setTestPass(BLE_BLE_DISCOVER_SERVICE);
-                mPassed |= PASS_FLAG_DISCOVER;
-                // execute MTU requesting test (23bytes)
-                newAction = BleClientService.BLE_CLIENT_ACTION_READ_CHARACTERISTIC;
-                break;
-            case BleClientService.BLE_MTU_CHANGED_23BYTES:
-                actionName = getString(R.string.ble_mtu_23_name);
-                mTestAdapter.setTestPass(BLE_REQUEST_MTU_23BYTES);
-                mPassed |= PASS_FLAG_MTU_CHANGE_23BYTES;
-                // execute MTU requesting test (512bytes)
-                newAction = BleClientService.BLE_CLIENT_ACTION_REQUEST_MTU_512;
-                showProgressDialog = true;
-                break;
-            case BleClientService.BLE_MTU_CHANGED_512BYTES:
-                actionName = getString(R.string.ble_mtu_512_name);
-                mTestAdapter.setTestPass(BLE_REQUEST_MTU_512BYTES);
-                mPassed |= PASS_FLAG_MTU_CHANGE_512BYTES;
-                // execute characteristic reading test
-                newAction = BleClientService.BLE_CLIENT_ACTION_READ_CHARACTERISTIC_NO_PERMISSION;
-                break;
-            case BleClientService.BLE_CHARACTERISTIC_READ:
-                actionName = getString(R.string.ble_read_characteristic_name);
-                mTestAdapter.setTestPass(BLE_READ_CHARACTERISTIC);
-                mPassed |= PASS_FLAG_READ_CHARACTERISTIC;
-                // execute characteristic writing test
-                newAction = BleClientService.BLE_CLIENT_ACTION_WRITE_CHARACTERISTIC;
-                break;
-            case BleClientService.BLE_CHARACTERISTIC_WRITE:
-                actionName = getString(R.string.ble_write_characteristic_name);
-                mTestAdapter.setTestPass(BLE_WRITE_CHARACTERISTIC);
-                mPassed |= PASS_FLAG_WRITE_CHARACTERISTIC;
-                newAction = BleClientService.BLE_CLIENT_ACTION_REQUEST_MTU_23;
-                showProgressDialog = true;
-                break;
-            case BleClientService.BLE_CHARACTERISTIC_READ_NOPERMISSION:
-                actionName = getString(R.string.ble_read_characteristic_nopermission_name);
-                mTestAdapter.setTestPass(BLE_READ_CHARACTERISTIC_NO_PERMISSION);
-                mPassed |= PASS_FLAG_READ_CHARACTERISTIC_NO_PERMISSION;
-                // execute unpermitted characteristic writing test
-                newAction = BleClientService.BLE_CLIENT_ACTION_WRITE_CHARACTERISTIC_NO_PERMISSION;
-                break;
-            case BleClientService.BLE_CHARACTERISTIC_WRITE_NOPERMISSION:
-                actionName = getString(R.string.ble_write_characteristic_nopermission_name);
-                mTestAdapter.setTestPass(BLE_WRITE_CHARACTERISTIC_NO_PERMISSION);
-                mPassed |= PASS_FLAG_WRITE_CHARACTERISTIC_NO_PERMISSION;
-                // execute reliable write test
-                newAction = BleClientService.BLE_CLIENT_ACTION_RELIABLE_WRITE;
-                showProgressDialog = true;
-                break;
-            case BleClientService.BLE_RELIABLE_WRITE_COMPLETED:
-                actionName = getString(R.string.ble_reliable_write_name);
-                mTestAdapter.setTestPass(BLE_RELIABLE_WRITE);
-                mPassed |= PASS_FLAG_RELIABLE_WRITE;
+                case BleClientService.BLE_BLUETOOTH_DISABLED:
+                    showErrorDialog(R.string.ble_bluetooth_disable_title,
+                            R.string.ble_bluetooth_disable_message, true);
+                    break;
+                case BleClientService.BLE_BLUETOOTH_CONNECTED:
+                    actionName = getString(R.string.ble_client_connect_name);
+                    mTestAdapter.setTestPass(BLE_CLIENT_CONNECT);
+                    mPassed |= PASS_FLAG_CONNECT;
+                    // execute service discovery test
+                    newAction = BleClientService.BLE_CLIENT_ACTION_BLE_DISCOVER_SERVICE;
+                    break;
+                case BleClientService.BLE_SERVICES_DISCOVERED:
+                    actionName = getString(R.string.ble_discover_service_name);
+                    mTestAdapter.setTestPass(BLE_BLE_DISCOVER_SERVICE);
+                    mPassed |= PASS_FLAG_DISCOVER;
+                    // execute MTU requesting test (23bytes)
+                    newAction = BleClientService.BLE_CLIENT_ACTION_READ_CHARACTERISTIC;
+                    break;
+                case BleClientService.BLE_MTU_CHANGED_23BYTES:
+                    actionName = getString(R.string.ble_mtu_23_name);
+                    mTestAdapter.setTestPass(BLE_REQUEST_MTU_23BYTES);
+                    mPassed |= PASS_FLAG_MTU_CHANGE_23BYTES;
+                    // execute MTU requesting test (512bytes)
+                    newAction = BleClientService.BLE_CLIENT_ACTION_REQUEST_MTU_512;
+                    showProgressDialog = true;
+                    break;
+                case BleClientService.BLE_MTU_CHANGED_512BYTES:
+                    actionName = getString(R.string.ble_mtu_512_name);
+                    mTestAdapter.setTestPass(BLE_REQUEST_MTU_512BYTES);
+                    mPassed |= PASS_FLAG_MTU_CHANGE_512BYTES;
+                    // execute characteristic reading test
+                    newAction =
+                            BleClientService.BLE_CLIENT_ACTION_READ_CHARACTERISTIC_NO_PERMISSION;
+                    break;
+                case BleClientService.BLE_CHARACTERISTIC_READ:
+                    actionName = getString(R.string.ble_read_characteristic_name);
+                    mTestAdapter.setTestPass(BLE_READ_CHARACTERISTIC);
+                    mPassed |= PASS_FLAG_READ_CHARACTERISTIC;
+                    // execute characteristic writing test
+                    newAction = BleClientService.BLE_CLIENT_ACTION_WRITE_CHARACTERISTIC;
+                    break;
+                case BleClientService.BLE_CHARACTERISTIC_WRITE:
+                    actionName = getString(R.string.ble_write_characteristic_name);
+                    mTestAdapter.setTestPass(BLE_WRITE_CHARACTERISTIC);
+                    mPassed |= PASS_FLAG_WRITE_CHARACTERISTIC;
+                    newAction = BleClientService.BLE_CLIENT_ACTION_REQUEST_MTU_23;
+                    showProgressDialog = true;
+                    break;
+                case BleClientService.BLE_CHARACTERISTIC_READ_NOPERMISSION:
+                    actionName = getString(R.string.ble_read_characteristic_nopermission_name);
+                    mTestAdapter.setTestPass(BLE_READ_CHARACTERISTIC_NO_PERMISSION);
+                    mPassed |= PASS_FLAG_READ_CHARACTERISTIC_NO_PERMISSION;
+                    // execute unpermitted characteristic writing test
+                    newAction =
+                            BleClientService.BLE_CLIENT_ACTION_WRITE_CHARACTERISTIC_NO_PERMISSION;
+                    break;
+                case BleClientService.BLE_CHARACTERISTIC_WRITE_NOPERMISSION:
+                    actionName = getString(R.string.ble_write_characteristic_nopermission_name);
+                    mTestAdapter.setTestPass(BLE_WRITE_CHARACTERISTIC_NO_PERMISSION);
+                    mPassed |= PASS_FLAG_WRITE_CHARACTERISTIC_NO_PERMISSION;
+                    // execute reliable write test
+                    newAction = BleClientService.BLE_CLIENT_ACTION_RELIABLE_WRITE;
+                    showProgressDialog = true;
+                    break;
+                case BleClientService.BLE_RELIABLE_WRITE_COMPLETED:
+                    actionName = getString(R.string.ble_reliable_write_name);
+                    mTestAdapter.setTestPass(BLE_RELIABLE_WRITE);
+                    mPassed |= PASS_FLAG_RELIABLE_WRITE;
 //                newAction = BleClientService.BLE_CLIENT_ACTION_RELIABLE_WRITE_BAD_RESP;
 
-                // skip Reliable write (bad response) test
-                mPassed |= PASS_FLAG_RELIABLE_WRITE_BAD_RESP;
-                Log.d(TAG, "Skip PASS_FLAG_RELIABLE_WRITE_BAD_RESP.");
-                newAction = BleClientService.BLE_CLIENT_ACTION_NOTIFY_CHARACTERISTIC;
-                showProgressDialog = true;
-                break;
-            case BleClientService.BLE_RELIABLE_WRITE_BAD_RESP_COMPLETED: {
-                actionName = getString(R.string.ble_reliable_write_bad_resp_name);
-                if(!intent.hasExtra(BleClientService.EXTRA_ERROR_MESSAGE)) {
+                    // skip Reliable write (bad response) test
                     mPassed |= PASS_FLAG_RELIABLE_WRITE_BAD_RESP;
-                    mTestAdapter.setTestPass(BLE_RELIABLE_WRITE_BAD_RESP);
+                    Log.d(TAG, "Skip PASS_FLAG_RELIABLE_WRITE_BAD_RESP.");
+                    newAction = BleClientService.BLE_CLIENT_ACTION_NOTIFY_CHARACTERISTIC;
+                    showProgressDialog = true;
+                    break;
+                case BleClientService.BLE_RELIABLE_WRITE_BAD_RESP_COMPLETED: {
+                    actionName = getString(R.string.ble_reliable_write_bad_resp_name);
+                    if (!intent.hasExtra(BleClientService.EXTRA_ERROR_MESSAGE)) {
+                        mPassed |= PASS_FLAG_RELIABLE_WRITE_BAD_RESP;
+                        mTestAdapter.setTestPass(BLE_RELIABLE_WRITE_BAD_RESP);
+                    }
+                    // execute notification test
+                    newAction = BleClientService.BLE_CLIENT_ACTION_NOTIFY_CHARACTERISTIC;
+                    showProgressDialog = true;
                 }
-                // execute notification test
-                newAction = BleClientService.BLE_CLIENT_ACTION_NOTIFY_CHARACTERISTIC;
-                showProgressDialog = true;
-            }
                 break;
-            case BleClientService.BLE_CHARACTERISTIC_CHANGED:
-                actionName = getString(R.string.ble_notify_characteristic_name);
-                mTestAdapter.setTestPass(BLE_NOTIFY_CHARACTERISTIC);
-                mPassed |= PASS_FLAG_NOTIFY_CHARACTERISTIC;
-                // execute indication test
-                newAction = BleClientService.BLE_CLIENT_ACTION_INDICATE_CHARACTERISTIC;
-                showProgressDialog = true;
-                break;
-            case BleClientService.BLE_CHARACTERISTIC_INDICATED:
-                actionName = getString(R.string.ble_indicate_characteristic_name);
-                mTestAdapter.setTestPass(BLE_INDICATE_CHARACTERISTIC);
-                mPassed |= PASS_FLAG_INDICATE_CHARACTERISTIC;
-                // execute descriptor reading test
-                newAction = BleClientService.BLE_CLIENT_ACTION_READ_DESCRIPTOR;
-                break;
-            case BleClientService.BLE_DESCRIPTOR_READ:
-                actionName = getString(R.string.ble_read_descriptor_name);
-                mTestAdapter.setTestPass(BLE_READ_DESCRIPTOR);
-                mPassed |= PASS_FLAG_READ_DESCRIPTOR;
-                // execute descriptor writing test
-                newAction = BleClientService.BLE_CLIENT_ACTION_WRITE_DESCRIPTOR;
-                break;
-            case BleClientService.BLE_DESCRIPTOR_WRITE:
-                actionName = getString(R.string.ble_write_descriptor_name);
-                mTestAdapter.setTestPass(BLE_WRITE_DESCRIPTOR);
-                mPassed |= PASS_FLAG_WRITE_DESCRIPTOR;
-                // execute unpermitted descriptor reading test
-                newAction = BleClientService.BLE_CLIENT_ACTION_READ_DESCRIPTOR_NO_PERMISSION;
-                break;
-            case BleClientService.BLE_DESCRIPTOR_READ_NOPERMISSION:
-                actionName = getString(R.string.ble_read_descriptor_nopermission_name);
-                mTestAdapter.setTestPass(BLE_READ_DESCRIPTOR_NO_PERMISSION);
-                mPassed |= PASS_FLAG_READ_DESCRIPTOR_NO_PERMISSION;
-                // execute unpermitted descriptor writing test
-                newAction = BleClientService.BLE_CLIENT_ACTION_WRITE_DESCRIPTOR_NO_PERMISSION;
-                break;
-            case BleClientService.BLE_DESCRIPTOR_WRITE_NOPERMISSION:
-                actionName = getString(R.string.ble_write_descriptor_nopermission_name);
-                mTestAdapter.setTestPass(BLE_WRITE_DESCRIPTOR_NO_PERMISSION);
-                mPassed |= PASS_FLAG_WRITE_DESCRIPTOR_NO_PERMISSION;
+                case BleClientService.BLE_CHARACTERISTIC_CHANGED:
+                    actionName = getString(R.string.ble_notify_characteristic_name);
+                    mTestAdapter.setTestPass(BLE_NOTIFY_CHARACTERISTIC);
+                    mPassed |= PASS_FLAG_NOTIFY_CHARACTERISTIC;
+                    // execute indication test
+                    newAction = BleClientService.BLE_CLIENT_ACTION_INDICATE_CHARACTERISTIC;
+                    showProgressDialog = true;
+                    break;
+                case BleClientService.BLE_CHARACTERISTIC_INDICATED:
+                    actionName = getString(R.string.ble_indicate_characteristic_name);
+                    mTestAdapter.setTestPass(BLE_INDICATE_CHARACTERISTIC);
+                    mPassed |= PASS_FLAG_INDICATE_CHARACTERISTIC;
+                    // execute descriptor reading test
+                    newAction = BleClientService.BLE_CLIENT_ACTION_READ_DESCRIPTOR;
+                    break;
+                case BleClientService.BLE_DESCRIPTOR_READ:
+                    actionName = getString(R.string.ble_read_descriptor_name);
+                    mTestAdapter.setTestPass(BLE_READ_DESCRIPTOR);
+                    mPassed |= PASS_FLAG_READ_DESCRIPTOR;
+                    // execute descriptor writing test
+                    newAction = BleClientService.BLE_CLIENT_ACTION_WRITE_DESCRIPTOR;
+                    break;
+                case BleClientService.BLE_DESCRIPTOR_WRITE:
+                    actionName = getString(R.string.ble_write_descriptor_name);
+                    mTestAdapter.setTestPass(BLE_WRITE_DESCRIPTOR);
+                    mPassed |= PASS_FLAG_WRITE_DESCRIPTOR;
+                    // execute unpermitted descriptor reading test
+                    newAction = BleClientService.BLE_CLIENT_ACTION_READ_DESCRIPTOR_NO_PERMISSION;
+                    break;
+                case BleClientService.BLE_DESCRIPTOR_READ_NOPERMISSION:
+                    actionName = getString(R.string.ble_read_descriptor_nopermission_name);
+                    mTestAdapter.setTestPass(BLE_READ_DESCRIPTOR_NO_PERMISSION);
+                    mPassed |= PASS_FLAG_READ_DESCRIPTOR_NO_PERMISSION;
+                    // execute unpermitted descriptor writing test
+                    newAction = BleClientService.BLE_CLIENT_ACTION_WRITE_DESCRIPTOR_NO_PERMISSION;
+                    break;
+                case BleClientService.BLE_DESCRIPTOR_WRITE_NOPERMISSION:
+                    actionName = getString(R.string.ble_write_descriptor_nopermission_name);
+                    mTestAdapter.setTestPass(BLE_WRITE_DESCRIPTOR_NO_PERMISSION);
+                    mPassed |= PASS_FLAG_WRITE_DESCRIPTOR_NO_PERMISSION;
 // TODO: too flaky b/34951749
-                // execute RSSI requesting test
-                // newAction = BleClientService.BLE_CLIENT_ACTION_READ_RSSI;
-                mPassed |= PASS_FLAG_READ_RSSI;
-                Log.d(TAG, "Skip PASS_FLAG_READ_RSSI.");
-                newAction = BleClientService.BLE_CLIENT_ACTION_READ_PHY;
-                break;
-            case BleClientService.BLE_READ_REMOTE_RSSI:
-                actionName = getString(R.string.ble_read_rssi_name);
-                mTestAdapter.setTestPass(BLE_READ_RSSI);
-                mPassed |= PASS_FLAG_READ_RSSI;
-                newAction = BleClientService.BLE_CLIENT_ACTION_READ_PHY;
-                break;
-            case BleClientService.BLE_PHY_READ:
-                actionName = getString(R.string.ble_read_phy_name);
-                mTestAdapter.setTestPass(BLE_READ_PHY);
-                mPassed |= PASS_FLAG_READ_PHY;
-                newAction = BleClientService.BLE_CLIENT_ACTION_TRIGGER_SERVICE_CHANGED;
-                break;
-            case BleClientService.BLE_ON_SERVICE_CHANGED:
-                actionName = getString(R.string.ble_on_service_changed);
-                mTestAdapter.setTestPass(BLE_ON_SERVICE_CHANGED);
-                mPassed |= PASS_FLAG_ON_SERVICE_CHANGED;
-                newAction = BleClientService.BLE_CLIENT_ACTION_CLIENT_DISCONNECT;
-                break;
-            case BleClientService.BLE_BLUETOOTH_DISCONNECTED:
-                mTestAdapter.setTestPass(BLE_CLIENT_DISCONNECT);
-                mPassed |= PASS_FLAG_DISCONNECT;
-                // all test done
-                newAction = null;
-                break;
-            case BleClientService.BLE_BLUETOOTH_MISMATCH_SECURE:
-                showErrorDialog(R.string.ble_bluetooth_mismatch_title, R.string.ble_bluetooth_mismatch_secure_message, true);
-                break;
-            case BleClientService.BLE_BLUETOOTH_MISMATCH_INSECURE:
-                showErrorDialog(R.string.ble_bluetooth_mismatch_title, R.string.ble_bluetooth_mismatch_insecure_message, true);
-                break;
+                    // execute RSSI requesting test
+                    // newAction = BleClientService.BLE_CLIENT_ACTION_READ_RSSI;
+                    mPassed |= PASS_FLAG_READ_RSSI;
+                    Log.d(TAG, "Skip PASS_FLAG_READ_RSSI.");
+                    newAction = BleClientService.BLE_CLIENT_ACTION_READ_PHY;
+                    break;
+                case BleClientService.BLE_READ_REMOTE_RSSI:
+                    actionName = getString(R.string.ble_read_rssi_name);
+                    mTestAdapter.setTestPass(BLE_READ_RSSI);
+                    mPassed |= PASS_FLAG_READ_RSSI;
+                    newAction = BleClientService.BLE_CLIENT_ACTION_READ_PHY;
+                    break;
+                case BleClientService.BLE_PHY_READ:
+                    actionName = getString(R.string.ble_read_phy_name);
+                    mTestAdapter.setTestPass(BLE_READ_PHY);
+                    mPassed |= PASS_FLAG_READ_PHY;
+                    newAction = BleClientService.BLE_CLIENT_ACTION_TRIGGER_SERVICE_CHANGED;
+                    break;
+                case BleClientService.BLE_ON_SERVICE_CHANGED:
+                    actionName = getString(R.string.ble_on_service_changed);
+                    mTestAdapter.setTestPass(BLE_ON_SERVICE_CHANGED);
+                    mPassed |= PASS_FLAG_ON_SERVICE_CHANGED;
+                    newAction = BleClientService.BLE_CLIENT_ACTION_CLIENT_DISCONNECT;
+                    break;
+                case BleClientService.BLE_BLUETOOTH_DISCONNECTED:
+                    mTestAdapter.setTestPass(BLE_CLIENT_DISCONNECT);
+                    mPassed |= PASS_FLAG_DISCONNECT;
+                    // all test done
+                    newAction = null;
+                    break;
+                case BleClientService.BLE_BLUETOOTH_MISMATCH_SECURE:
+                    showErrorDialog(R.string.ble_bluetooth_mismatch_title,
+                            R.string.ble_bluetooth_mismatch_secure_message, true);
+                    break;
+                case BleClientService.BLE_BLUETOOTH_MISMATCH_INSECURE:
+                    showErrorDialog(R.string.ble_bluetooth_mismatch_title,
+                            R.string.ble_bluetooth_mismatch_insecure_message, true);
+                    break;
             }
 
             if (previousPassed != mPassed) {
-                String logMessage = String.format("Passed Flags has changed from 0x%08X to 0x%08X. Delta=0x%08X",
-                                                  previousPassed, mPassed, mPassed ^ previousPassed);
+                String logMessage = String.format(
+                        "Passed Flags has changed from 0x%08X to 0x%08X. Delta=0x%08X",
+                        previousPassed, mPassed, mPassed ^ previousPassed);
                 Log.d(TAG, logMessage);
             }
 
@@ -438,17 +445,14 @@ public class BleClientTestBaseActivity extends PassFailButtons.Activity {
 
             if (mPassed == PASS_FLAG_ALL) {
                 Log.d(TAG, "All Tests Passed.");
-                if (shouldRebootBluetoothAfterTest()) {
-                    mBtPowerSwitcher.executeSwitching();
-                } else {
-                    getPassButton().setEnabled(true);
-                }
+                getPassButton().setEnabled(true);
             }
         }
     };
 
     private static final long BT_ON_DELAY = 10000;
     private final BluetoothPowerSwitcher mBtPowerSwitcher = new BluetoothPowerSwitcher();
+
     private class BluetoothPowerSwitcher extends BroadcastReceiver {
 
         private boolean mIsSwitching = false;
@@ -456,7 +460,8 @@ public class BleClientTestBaseActivity extends PassFailButtons.Activity {
 
         public void executeSwitching() {
             if (mAdapter == null) {
-                BluetoothManager btMgr = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+                BluetoothManager btMgr = (BluetoothManager) getSystemService(
+                        Context.BLUETOOTH_SERVICE);
                 mAdapter = btMgr.getAdapter();
             }
 

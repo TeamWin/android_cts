@@ -72,6 +72,7 @@ public class RequirementConstants {
     public static final String DISPLAY_DENSITY = "display_density_dpi";
     public static final String PHYSICAL_MEMORY = "physical_memory_mb";
     public static final String CODEC_INIT_LATENCY = "codec_initialization_latency_ms";
+    public static final String REQ_SATISFIED = "requirement_satisfied_boolean";
 
     public enum Result {
         NA, MET, UNMET
@@ -81,6 +82,7 @@ public class RequirementConstants {
     public static final BiPredicate<Long, Long> LONG_LTE = RequirementConstants.lte();
     public static final BiPredicate<Integer, Integer> INTEGER_GTE = RequirementConstants.gte();
     public static final BiPredicate<Integer, Integer> INTEGER_LTE = RequirementConstants.lte();
+    public static final BiPredicate<Boolean, Boolean> BOOLEAN_EQ = RequirementConstants.eq();
 
     /**
      * Creates a >= predicate.
@@ -114,6 +116,23 @@ public class RequirementConstants {
             @Override
             public String toString() {
                 return "Less than or equal to";
+            }
+        };
+    }
+
+    /**
+     * Creates an == predicate.
+     */
+    private static <T, S extends Comparable<T>> BiPredicate<S, T> eq() {
+        return new BiPredicate<S, T>() {
+            @Override
+            public boolean test(S actual, T expected) {
+                return actual.compareTo(expected) == 0;
+            }
+
+            @Override
+            public String toString() {
+                return "Equal to";
             }
         };
     }

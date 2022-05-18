@@ -99,7 +99,7 @@ public class ApkPackageNameCheck {
                                                     "File %s[32/64] wasn't found in module "
                                                             + "dependencies while "
                                                             + "it's expected to be pushed as part"
-                                                            + " of %s.",
+                                                            + " of %s. Make sure that it's added in the Android.bp file of the module under 'data' field.",
                                                     path, config.getName()));
                                 }
                             }
@@ -115,7 +115,7 @@ public class ApkPackageNameCheck {
                                             String.format(
                                                     "File %s wasn't found in module dependencies "
                                                             + "while it's expected to be pushed "
-                                                            + "as part of %s.",
+                                                            + "as part of %s. Make sure that it's added in the Android.bp file of the module under 'data' field.",
                                                     path, config.getName()));
                                 }
                             }
@@ -129,7 +129,7 @@ public class ApkPackageNameCheck {
                     File apkFile = FileUtil.findFile(config.getParentFile(), apkName);
                     if (apkFile == null || !apkFile.exists()) {
                         fail(String.format("Module %s is trying to install %s which does not "
-                                + "exists in testcases/", config.getName(), apkName));
+                                + "exists in testcases/. Make sure that it's added in the Android.bp file of the module under 'data' field.", config.getName(), apkName));
                     }
                     AaptParser res = AaptParser.parse(apkFile);
                     assertNotNull(res);

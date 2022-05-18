@@ -16,6 +16,8 @@
 
 package android.renderscript.cts;
 
+import android.os.Build;
+
 import android.renderscript.Allocation;
 
 import android.renderscript.Byte2;
@@ -60,6 +62,8 @@ import android.renderscript.ScriptIntrinsicConvolve3x3;
 import android.renderscript.ScriptIntrinsicConvolve5x5;
 import android.renderscript.ScriptIntrinsicLUT;
 import android.util.Log;
+
+import com.android.compatibility.common.util.PropertyUtil;
 
 public class ImageProcessingTest extends RSBaseCompute {
     private Allocation a1, a2;
@@ -177,10 +181,18 @@ public class ImageProcessingTest extends RSBaseCompute {
         }
 
         // Do the same but passing LaunchOptions
-        int xStart = 10;
-        int xEnd = 20;
-        int yStart = 3;
-        int yEnd = 6;
+        int xStart = 0;
+        int xEnd = w;
+        int yStart = 0;
+        int yEnd = h;
+        // LaunchOptions tests with restricted range are new tests added in T, so only test them
+        // when the vendor partition has version >= T.
+        if (PropertyUtil.isVendorApiLevelAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+            xStart = 10;
+            xEnd = 20;
+            yStart = 3;
+            yEnd = 6;
+        }
         Script.LaunchOptions opt = new Script.LaunchOptions();
         opt.setX(xStart, xEnd).setY(yStart, yEnd);
         for (int i = 0; i < 14; i++) {

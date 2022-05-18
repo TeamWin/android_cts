@@ -67,7 +67,8 @@ public final class TestAppAppComponentFactory extends AppComponentFactory {
     @Override
     public Activity instantiateActivity(ClassLoader classLoader, String className, Intent intent)
             throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-
+        Log.e(LOG_TAG, "Initiating activity for class "
+                + className + " and intent " + intent);
         try {
             return super.instantiateActivity(classLoader, className, intent);
         } catch (ClassNotFoundException e) {
@@ -85,6 +86,8 @@ public final class TestAppAppComponentFactory extends AppComponentFactory {
     public BroadcastReceiver instantiateReceiver(ClassLoader classLoader, String className,
             Intent intent)
             throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+        Log.e(LOG_TAG, "Initiating receiver for class "
+                + className + " and intent " + intent);
         try {
             return super.instantiateReceiver(classLoader, className, intent);
         } catch (ClassNotFoundException e) {
@@ -121,6 +124,8 @@ public final class TestAppAppComponentFactory extends AppComponentFactory {
     @Override
     public Service instantiateService(ClassLoader classLoader, String className, Intent intent)
             throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+        Log.e(LOG_TAG, "Initiating service for class "
+                + className + " and intent " + intent);
         try {
             return super.instantiateService(classLoader, className, intent);
         } catch (ClassNotFoundException e) {

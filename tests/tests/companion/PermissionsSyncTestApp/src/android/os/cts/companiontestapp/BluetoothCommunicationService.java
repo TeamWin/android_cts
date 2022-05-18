@@ -24,9 +24,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.UUID;
 
 /**
@@ -62,6 +65,8 @@ public class BluetoothCommunicationService {
     // Unique UUID for this application
     private static final UUID MY_UUID_SECURE =
             UUID.fromString("7606c653-6dc3-4a61-9870-07652896cc1c");
+
+    private static final int HEADER_SIZE = 4;
 
     // Member fields
     private final BluetoothAdapter adapter;
@@ -407,18 +412,46 @@ public class BluetoothCommunicationService {
         public void run() {
             Log.i(TAG, "Begin connectedThread");
             byte[] buffer = new byte[1024];
+            byte[] stitchedMessage = new byte[1024];
             int bytes;
             // Keep listening to the InputStream while connected
+            int partialMessageSize = 0;
+            int messageSize = 0;
             while (true) {
                 try {
                     // Read from the InputStream
                     bytes = inStream.read(buffer);
-                    // Send the obtained bytes to the UI Activity
-                    handler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
+
+                    if (partialMessageSize == 0) {
+                        byte[] messageSizeBytes = Arrays.copyOf(buffer, HEADER_SIZE);
+                        messageSize = ByteBuffer.wrap(messageSizeBytes).getInt();
+                        if (stitchedMessage.length < messageSize) {
+                            stitchedMessage = new byte[messageSize];
+                        }
+                        partialMessageSize = bytes - HEADER_SIZE;
+                        System.arraycopy(buffer, HEADER_SIZE, stitchedMessage, 0,
+                                bytes - HEADER_SIZE);
+                    } else {
+                        System.arraycopy(buffer, 0, stitchedMessage, partialMessageSize, bytes);
+                        partialMessageSize += bytes;
+                    }
+
+                    if (partialMessageSize > messageSize) {
+                        Log.e(TAG, "Invalid message header received.");
+                        partialMessageSize = 0;
+                        messageSize = 0;
+                    }
+
+                    if (partialMessageSize == messageSize) {
+                        // Send the obtained bytes to the UI Activity
+                        handler.obtainMessage(MESSAGE_READ, messageSize, -1,
+                                stitchedMessage).sendToTarget();
+                        partialMessageSize = 0;
+                        messageSize = 0;
+                    }
                 } catch (IOException e) {
                     Log.e(TAG, "disconnected", e);
                     connectionLost();
-
                     // Start the service over to restart listening mode
                     BluetoothCommunicationService.this.start();
                     break;
@@ -433,9 +466,16 @@ public class BluetoothCommunicationService {
          */
         public void write(byte[] buffer) {
             try {
-                outStream.write(buffer);
+                // Add 4 bytes message size at the beginning of the stream
+                byte[] messageSizeToBytes = ByteBuffer.allocate(HEADER_SIZE).putInt(
+                        buffer.length).array();
+                byte[] bufferWithHeader = new byte[HEADER_SIZE + buffer.length];
+                System.arraycopy(messageSizeToBytes, 0, bufferWithHeader, 0, HEADER_SIZE);
+                System.arraycopy(buffer, 0, bufferWithHeader, HEADER_SIZE, buffer.length);
+
+                outStream.write(bufferWithHeader);
                 // Share the sent message back to the UI Activity
-                handler.obtainMessage(MESSAGE_WRITE, -1, -1, buffer).sendToTarget();
+                handler.obtainMessage(MESSAGE_WRITE, -1, -1, bufferWithHeader).sendToTarget();
             } catch (IOException e) {
                 Log.e(TAG, "Exception during write", e);
             }

@@ -16,6 +16,9 @@
 
 package android.app.cts;
 
+import static android.Manifest.permission.POST_NOTIFICATIONS;
+import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL;
+import static android.Manifest.permission.REVOKE_RUNTIME_PERMISSIONS;
 import static android.app.Notification.FLAG_BUBBLE;
 import static android.app.NotificationManager.BUBBLE_PREFERENCE_ALL;
 import static android.app.NotificationManager.BUBBLE_PREFERENCE_NONE;
@@ -49,6 +52,8 @@ import android.content.IntentFilter;
 import android.content.LocusId;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
+import android.permission.PermissionManager;
+import android.permission.cts.PermissionUtils;
 import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
@@ -69,6 +74,8 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
 
     private static final String TAG = NotificationManagerBubbleTest.class.getSimpleName();
 
+    private static final String STUB_PACKAGE_NAME = "android.app.stubs";
+
     // use a value of 10000 for consistency with other CTS tests (see
     // android.server.wm.intentLaunchRunner#ACTIVITY_LAUNCH_TIMEOUT)
     private static final int ACTIVITY_LAUNCH_TIMEOUT = 10000;
@@ -79,6 +86,8 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        PermissionUtils.grantPermission(STUB_PACKAGE_NAME, POST_NOTIFICATIONS);
+        PermissionUtils.grantPermission(mContext.getPackageName(), POST_NOTIFICATIONS);
 
         // This setting is forced on / off for certain tests, save it & restore what's on the
         // device after tests are run
@@ -99,6 +108,17 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
 
         // Restore bubbles setting
         setBubblesGlobal(mBubblesEnabledSettingToRestore);
+
+        // Use test API to prevent PermissionManager from killing the test process when revoking
+        // permission.
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mContext.getSystemService(PermissionManager.class)
+                        .revokePostNotificationPermissionWithoutKillForTest(
+                                mContext.getPackageName(),
+                                android.os.Process.myUserHandle().getIdentifier()),
+                REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL,
+                REVOKE_RUNTIME_PERMISSIONS);
+        PermissionUtils.revokePermission(STUB_PACKAGE_NAME, POST_NOTIFICATIONS);
     }
 
     private boolean isBubblesFeatureSupported() {

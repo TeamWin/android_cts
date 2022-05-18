@@ -28,6 +28,7 @@ import static android.util.DisplayMetrics.DENSITY_MEDIUM;
 import static android.util.DisplayMetrics.DENSITY_TV;
 import static android.util.DisplayMetrics.DENSITY_XHIGH;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -169,6 +170,15 @@ public class LowRamDeviceTest {
         } else {
             assertDataPartitionMinimumSize(
                     "Application data", mContext.getFilesDir(), MIN_APP_DATA_PARTITION_SIZE_GB);
+        }
+    }
+
+    @Test
+    @CddTest(requirement = "7.6.1/H-1-1")
+    public void test32BitOnlyIfLessThan2GiB() {
+        if (getTotalMemory() < 2048 * ONE_MEGABYTE) {
+            assertEquals("Devices with less than 2GiB MUST support only 32-bit ABIs",
+                         0, Build.SUPPORTED_64_BIT_ABIS.length);
         }
     }
 

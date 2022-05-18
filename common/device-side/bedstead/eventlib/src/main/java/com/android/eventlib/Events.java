@@ -149,10 +149,17 @@ final class Events {
             }
 
             Log.e(TAG, "writing event to file: " + event);
-            byte[] eventBytes = event.toBytes();
-            mOutputStream.write(
-                    ByteBuffer.allocate(BYTES_PER_INT).putInt(eventBytes.length).array());
-            mOutputStream.write(eventBytes);
+            try {
+                byte[] eventBytes = event.toBytes();
+                mOutputStream.write(
+                        ByteBuffer.allocate(BYTES_PER_INT).putInt(eventBytes.length).array());
+                mOutputStream.write(eventBytes);
+            } catch (Throwable e) {
+                // This will happen if the event contains a Binder - can't be written to disk
+                Log.e(TAG, "We can't write this event to disk because it contains a Binder "
+                        + "(this may cause errors in tests after this point - particularly related"
+                        + " to EventLib)", e);
+            }
         } catch (IOException e) {
             throw new IllegalStateException("Error writing event to log", e);
         }
