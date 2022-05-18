@@ -5251,7 +5251,15 @@ public class TelephonyManagerTest {
             }
             // This could be OUT_OF_SERVICE or POWER_OFF, it doesn't really matter for this test as
             // long as it's not IN_SERVICE
-            int originalServiceState = mTelephonyManager.getServiceState().getState();
+            ServiceState serviceState = mTelephonyManager.getServiceState();
+            int retry = 0;
+            while (serviceState == null && retry < 3) {
+                serviceState = mTelephonyManager.getServiceState();
+                retry++;
+                waitForMs(200);
+            }
+            int originalServiceState = serviceState != null ? serviceState.getState()
+                    : callback.mServiceState.getState();
             Log.i(TAG, "testSetVoiceServiceStateOverride: originalSS = " + originalServiceState);
             assertNotEquals(ServiceState.STATE_IN_SERVICE, originalServiceState);
 
@@ -5259,7 +5267,7 @@ public class TelephonyManagerTest {
             // Retry setting the override to prevent flaky test failures.
             int listenerState = callback.mServiceState.getState();
             int telephonyManagerState = originalServiceState;
-            int retry = 0;
+            retry = 0;
             while ((listenerState != ServiceState.STATE_IN_SERVICE
                     || telephonyManagerState != ServiceState.STATE_IN_SERVICE) && retry < 3) {
                 // We should see the override in both ServiceStateListener and getServiceState
@@ -5268,7 +5276,7 @@ public class TelephonyManagerTest {
                         permission.BIND_TELECOM_CONNECTION_SERVICE);
                 setServiceStateOverride = true;
 
-                ServiceState serviceState = mTelephonyManager.getServiceState();
+                serviceState = mTelephonyManager.getServiceState();
                 if (serviceState != null) {
                     telephonyManagerState = serviceState.getState();
                 }
