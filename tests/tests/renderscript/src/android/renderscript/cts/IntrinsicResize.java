@@ -16,8 +16,10 @@
 
 package android.renderscript.cts;
 
+import android.os.Build;
 import android.renderscript.*;
 import android.util.Log;
+import com.android.compatibility.common.util.PropertyUtil;
 
 public class IntrinsicResize extends IntrinsicBase {
 
@@ -25,6 +27,12 @@ public class IntrinsicResize extends IntrinsicBase {
     static final int inY = 157;
 
   private void testResize(int w, int h, Element.DataType dt, int vecSize, float scaleX, float scaleY, boolean useOpt) {
+
+        // The LaunchOptions tests are new tests added in T, so skip the tests if the vendor
+        // partition has an earlier version.
+        if (useOpt && !PropertyUtil.isVendorApiLevelAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+            return;
+        }
 
         Element e = makeElement(dt, vecSize);
 

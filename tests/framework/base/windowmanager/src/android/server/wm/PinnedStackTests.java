@@ -1429,15 +1429,15 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     public void testDisplayMetricsPinUnpin() {
         separateTestJournal();
         launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
-        final int defaultWindowingMode = mWmState
-                .getTaskByActivity(TEST_ACTIVITY).getWindowingMode();
-        final SizeInfo initialSizes = getLastReportedSizesForActivity(TEST_ACTIVITY);
-        final Rect initialAppBounds = getAppBounds(TEST_ACTIVITY);
+        launchActivity(PIP_ACTIVITY);
+        int defaultWindowingMode = mWmState.getTaskByActivity(PIP_ACTIVITY).getWindowingMode();
+        final SizeInfo initialSizes = getLastReportedSizesForActivity(PIP_ACTIVITY);
+        final Rect initialAppBounds = getAppBounds(PIP_ACTIVITY);
         assertNotNull("Must report display dimensions", initialSizes);
         assertNotNull("Must report app bounds", initialAppBounds);
 
         separateTestJournal();
-        launchActivity(PIP_ACTIVITY, extraString(EXTRA_ENTER_PIP, "true"));
+        enterPipAndAssertPinnedTaskExists(PIP_ACTIVITY);
         // Wait for animation complete since we are comparing bounds
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         final SizeInfo pinnedSizes = getLastReportedSizesForActivity(PIP_ACTIVITY);

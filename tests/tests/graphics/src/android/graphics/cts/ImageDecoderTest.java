@@ -52,6 +52,7 @@ import android.util.TypedValue;
 import androidx.core.content.FileProvider;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
+import androidx.test.filters.RequiresDevice;
 
 import com.android.compatibility.common.util.BitmapUtils;
 import com.android.compatibility.common.util.MediaUtils;
@@ -234,6 +235,47 @@ public class ImageDecoderTest {
             resId -> getAsFileUri(resId),
             resId -> getAsContentUri(resId),
     };
+
+    @Test
+    @RequiresDevice
+    public void testDecode10BitHeif() {
+        if (!MediaUtils.hasDecoder(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
+            return;
+        }
+        try {
+            ImageDecoder.Source src = ImageDecoder
+                .createSource(getResources(), R.raw.heifimage_10bit);
+            assertNotNull(src);
+            Bitmap bm = ImageDecoder.decodeBitmap(src);
+            assertNotNull(bm);
+            assertEquals(4096, bm.getWidth());
+            assertEquals(3072, bm.getHeight());
+            assertEquals(Bitmap.Config.RGBA_1010102, bm.getConfig());
+        } catch (IOException e) {
+            fail("Failed with exception " + e);
+        }
+    }
+
+    @Test
+    @RequiresDevice
+    public void testDecode10BitHeifWithLowRam() {
+        if (!MediaUtils.hasDecoder(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
+            return;
+        }
+        ImageDecoder.Source src = ImageDecoder.createSource(getResources(), R.raw.heifimage_10bit);
+        assertNotNull(src);
+        try {
+            Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, source) -> {
+                decoder.setMemorySizePolicy(ImageDecoder.MEMORY_POLICY_LOW_RAM);
+            });
+            assertNotNull(bm);
+            assertEquals(4096, bm.getWidth());
+            assertEquals(3072, bm.getHeight());
+            assertEquals(Bitmap.Config.RGB_565, bm.getConfig());
+        } catch (IOException e) {
+            fail("Failed with exception " + e);
+        }
+    }
 
     @Test
     @Parameters(method = "getRecords")
