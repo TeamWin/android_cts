@@ -71,10 +71,10 @@ public class MidiIODevice {
             // manufacturer=AndroidCTSVerifier and product=VerifierMidiEcho or else
             // it might be some other MIDI app providing virtual MIDI services
             if (mDeviceType == MidiDeviceInfo.TYPE_VIRTUAL) {
-                if (!devBundle.getString(MidiDeviceInfo.PROPERTY_MANUFACTURER)
-                            .equals("AndroidCTSVerifier")
-                        || !devBundle.getString(MidiDeviceInfo.PROPERTY_PRODUCT)
-                            .equals("VerifierMidiEcho")) {
+                if (!"AndroidCTSVerifier".equals(
+                        devBundle.getString(MidiDeviceInfo.PROPERTY_MANUFACTURER))
+                        || !"VerifierMidiEcho".equals(
+                                devBundle.getString(MidiDeviceInfo.PROPERTY_PRODUCT))) {
                     // Virtual [but not ours]
                     Log.d(TAG, "Virtual Midi Device:" + devInfo);
                     continue;
