@@ -28,6 +28,7 @@ android_test {
     ],
     test_suites: [
         "cts",
+        "gts",
         "general-tests",
     ],
 }
