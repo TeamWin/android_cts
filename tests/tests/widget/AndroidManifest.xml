@@ -19,7 +19,7 @@
      package="android.widget.cts"
      android:targetSandboxVersion="2">
 
-    <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="23" />
+    <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="32" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
     <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
 
