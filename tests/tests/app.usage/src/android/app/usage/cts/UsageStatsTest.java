@@ -20,6 +20,7 @@ import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL;
 import static android.Manifest.permission.REVOKE_RUNTIME_PERMISSIONS;
 import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_FREQUENT;
+import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_NEVER;
 import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_RARE;
 import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_WORKING_SET;
 import static android.provider.DeviceConfig.NAMESPACE_APP_STANDBY;
@@ -1018,6 +1019,60 @@ public class UsageStatsTest {
             // minutes.
             waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(TEST_APP_API_32_PKG),
                     STANDBY_BUCKET_WORKING_SET);
+            mUiDevice.pressHome();
+        }
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @MediumTest
+    @Test
+    public void testNotificationSeen_noImpact() throws Exception {
+        // Skip the test for wearable devices, televisions and automotives; none of them have
+        // a notification shade, as notifications are shown via a different path than phones
+        assumeFalse("Test cannot run on a watch- notification shade is not shown",
+                mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH));
+        assumeFalse("Test cannot run on a television- notifications are not shown",
+                mContext.getPackageManager().hasSystemFeature(
+                        PackageManager.FEATURE_LEANBACK_ONLY));
+        assumeFalse("Test cannot run on an automotive - notification shade is not shown",
+                mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+
+        final long promotedBucketHoldDurationMs = TimeUnit.MINUTES.toMillis(1);
+        try (DeviceConfigStateHelper deviceConfigStateHelper =
+                     new DeviceConfigStateHelper(NAMESPACE_APP_STANDBY)) {
+            deviceConfigStateHelper.set(KEY_NOTIFICATION_SEEN_PROMOTED_BUCKET,
+                    String.valueOf(STANDBY_BUCKET_NEVER));
+            deviceConfigStateHelper.set(KEY_NOTIFICATION_SEEN_HOLD_DURATION,
+                    String.valueOf(promotedBucketHoldDurationMs));
+
+            mUiDevice.wakeUp();
+            dismissKeyguard();
+            final TestServiceConnection connection = bindToTestServiceAndGetConnection();
+            try {
+                ITestReceiver testReceiver = connection.getITestReceiver();
+                testReceiver.cancelAll();
+                testReceiver.createNotificationChannel(TEST_NOTIFICATION_CHANNEL_ID,
+                        TEST_NOTIFICATION_CHANNEL_NAME,
+                        TEST_NOTIFICATION_CHANNEL_DESC);
+                testReceiver.postNotification(TEST_NOTIFICATION_ID_1,
+                        buildNotification(TEST_NOTIFICATION_CHANNEL_ID, TEST_NOTIFICATION_ID_1,
+                                TEST_NOTIFICATION_TEXT_1));
+            } finally {
+                connection.unbind();
+            }
+            setStandByBucket(TEST_APP_PKG, "rare");
+            executeShellCmd("cmd usagestats clear-last-used-timestamps " + TEST_APP_PKG);
+            waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(TEST_APP_PKG),
+                    STANDBY_BUCKET_RARE);
+            mUiDevice.openNotification();
+            // Verify there is no change in the standby bucket
+            waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(TEST_APP_PKG),
+                    STANDBY_BUCKET_RARE);
+            SystemClock.sleep(promotedBucketHoldDurationMs);
+            // Verify there is no change in the standby bucket even after the hold duration
+            // is elapsed.
+            waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(TEST_APP_PKG),
+                    STANDBY_BUCKET_RARE);
             mUiDevice.pressHome();
         }
     }
