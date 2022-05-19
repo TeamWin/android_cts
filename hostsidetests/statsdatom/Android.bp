@@ -77,6 +77,8 @@ java_test_host {
         ":CtsAppExitTestCases",
         ":CtsExternalServiceService",
         ":CtsSimpleApp",
+        ":CtsStatsdAlarmHelper",
+        ":CtsStatsdAlarmHelper2",
     ],
     per_testcase_directory: true,
 }
