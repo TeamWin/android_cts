@@ -240,9 +240,13 @@ public class WindowManagerStateHelper extends WindowManagerState {
         waitForWithAmState(state -> !state.isDisplayFrozen(), "Display unfrozen");
     }
 
-    public void waitForActivityState(ComponentName activityName, String activityState) {
-        waitForWithAmState(state -> state.hasActivityState(activityName, activityState),
+    public boolean waitForActivityState(ComponentName activityName, String activityState) {
+        return waitForWithAmState(state -> state.hasActivityState(activityName, activityState),
                 "state of " + getActivityName(activityName) + " to be " + activityState);
+    }
+
+    public void waitAndAssertActivityState(ComponentName activityName, String activityState) {
+        assertTrue(waitForActivityState(activityName, activityState));
     }
 
     public void waitForActivityRemoved(ComponentName activityName) {

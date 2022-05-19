@@ -991,7 +991,7 @@ public class PackageManagerTest {
         assertEquals(3, result.length);
         assertEquals("shared:android.uid.system", result[0]);
         assertEquals(null, result[1]);
-        assertEquals("com.android.cts.ctsshim", result[2]);
+        assertEquals("shared:com.android.cts.ctsshim", result[2]);
     }
 
     @Test

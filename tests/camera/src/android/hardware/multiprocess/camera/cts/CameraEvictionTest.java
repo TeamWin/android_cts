@@ -193,7 +193,7 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
             mUiAutomation.adoptShellPermissionIdentity();
         }
         CameraManager manager = mContext.getSystemService(CameraManager.class);
-        assertNotNull(manager);
+        assertNotNull("Unable to get CameraManager service!", manager);
         String[] cameraIds = manager.getCameraIdListNoLazy();
 
         if (cameraIds.length == 0) {
@@ -201,7 +201,7 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
             return;
         }
 
-        assertTrue(mContext.getMainLooper() != null);
+        assertTrue("Context has no main looper!", mContext.getMainLooper() != null);
 
         // Setup camera manager
         String chosenCamera = cameraIds[0];
@@ -309,7 +309,7 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
      */
     public void testCamera2OomScoreOffsetPermissions() throws Throwable {
         CameraManager manager = mContext.getSystemService(CameraManager.class);
-        assertNotNull(manager);
+        assertNotNull("Unable to get CameraManager service!", manager);
         String[] cameraIds = manager.getCameraIdListNoLazy();
 
         if (cameraIds.length == 0) {
@@ -317,7 +317,7 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
             return;
         }
 
-        assertTrue(mContext.getMainLooper() != null);
+        assertTrue("Context has no main looper!", mContext.getMainLooper() != null);
         for (String cameraId : cameraIds) {
             // Setup camera manager
             Handler cameraHandler = new Handler(mContext.getMainLooper());
@@ -371,7 +371,7 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
 
         final int permissionCallbackTimeoutMs = 3000;
         CameraManager manager = mContext.getSystemService(CameraManager.class);
-        assertNotNull(manager);
+        assertNotNull("Unable to get CameraManager service!", manager);
         String[] cameraIds = manager.getCameraIdListNoLazy();
 
         if (cameraIds.length == 0) {
@@ -379,7 +379,7 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
             return;
         }
 
-        assertTrue(mContext.getMainLooper() != null);
+        assertTrue("Context has no main looper!", mContext.getMainLooper() != null);
 
         // Setup camera manager
         Handler cameraHandler = new Handler(mContext.getMainLooper());
@@ -402,7 +402,10 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
         Rect splitBounds = metrics.getBounds();
 
         // The original of the initial and split activity bounds should remain the same
-        assertTrue((initialBounds.left == splitBounds.left)
+        assertTrue("Initial bounds and split bounds do not match! "
+                + "(" + initialBounds.left + ", " + initialBounds.top + ") vs. "
+                + "(" + splitBounds.left + ", " + splitBounds.top + ")",
+                (initialBounds.left == splitBounds.left)
                 && (initialBounds.top == splitBounds.top));
 
         Rect secondBounds;
@@ -430,7 +433,7 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
     public void testCamera2AccessCallback() throws Throwable {
         int PERMISSION_CALLBACK_TIMEOUT_MS = 2000;
         CameraManager manager = mContext.getSystemService(CameraManager.class);
-        assertNotNull(manager);
+        assertNotNull("Unable to get CameraManager service!", manager);
         String[] cameraIds = manager.getCameraIdListNoLazy();
 
         if (cameraIds.length == 0) {
@@ -438,7 +441,7 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
             return;
         }
 
-        assertTrue(mContext.getMainLooper() != null);
+        assertTrue("Context has no main looper!", mContext.getMainLooper() != null);
 
         // Setup camera manager
         Handler cameraHandler = new Handler(mContext.getMainLooper());
@@ -466,7 +469,7 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
     public void testCamera2NativeAccessCallback() throws Throwable {
         int PERMISSION_CALLBACK_TIMEOUT_MS = 2000;
         CameraManager manager = mContext.getSystemService(CameraManager.class);
-        assertNotNull(manager);
+        assertNotNull("Unable to get CameraManager service!", manager);
         String[] cameraIds = manager.getCameraIdListNoLazy();
 
         if (cameraIds.length == 0) {
@@ -685,7 +688,8 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
         String cameraActivityName = a.getPackageName() + ":" + processName;
         List<ActivityManager.RunningAppProcessInfo> list =
                 mActivityManager.getRunningAppProcesses();
-        assertEquals(-1, getPid(cameraActivityName, list));
+        assertEquals("Activity " + cameraActivityName + " already running.",
+                -1, getPid(cameraActivityName, list));
 
         // Start activity in a new top foreground process
         Intent activityIntent = new Intent(a, klass);
@@ -698,7 +702,8 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
         // Fail if activity isn't running
         list = mActivityManager.getRunningAppProcesses();
         mProcessPid = getPid(cameraActivityName, list);
-        assertTrue(-1 != mProcessPid);
+        assertTrue("Activity " + cameraActivityName + " not found in list of running app "
+                + "processes.", -1 != mProcessPid);
     }
 
     /**
@@ -740,7 +745,7 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
      * @param array array to check.
      */
     public static <T> void assertNotEmpty(T[] array) {
-        assertNotNull(array);
+        assertNotNull("Array is null.", array);
         assertFalse("Array is empty: " + Arrays.toString(array), array.length == 0);
     }
 
@@ -757,9 +762,9 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
      * @param <T>
      */
     public static <T> void assertOrderedEvents(T[] actual, T[] expected, T[] ignored) {
-        assertNotNull(actual);
-        assertNotNull(expected);
-        assertNotNull(ignored);
+        assertNotNull("List of actual events is null.", actual);
+        assertNotNull("List of expected events is null.", expected);
+        assertNotNull("List of ignored events is null.", ignored);
 
         int expIndex = 0;
         int index = 0;

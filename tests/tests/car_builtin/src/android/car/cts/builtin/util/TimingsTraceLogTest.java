@@ -21,6 +21,7 @@ import static android.car.cts.builtin.util.LogcatHelper.Level.VERBOSE;
 import static android.car.cts.builtin.util.LogcatHelper.assertLogcatMessage;
 import static android.car.cts.builtin.util.LogcatHelper.clearLog;
 
+import android.car.builtin.os.BuildHelper;
 import android.car.builtin.os.TraceHelper;
 import android.car.builtin.util.TimingsTraceLog;
 
@@ -43,7 +44,10 @@ public final class TimingsTraceLogTest {
         timingsTraceLog.traceBegin("testTimingsTraceLog");
         timingsTraceLog.traceEnd();
 
-        assertLogMessage("testTimingsTraceLog took to complete");
+        // TODO(b/232814433): assert Trace is called including the user build.
+        if (!BuildHelper.isUserBuild()) {
+            assertLogMessage("testTimingsTraceLog took to complete");
+        }
     }
 
     @Test

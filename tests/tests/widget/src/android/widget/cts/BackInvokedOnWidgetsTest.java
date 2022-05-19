@@ -36,6 +36,7 @@ import com.android.compatibility.common.util.GestureNavRule;
 
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,6 +62,7 @@ public class BackInvokedOnWidgetsTest {
         mUiDevice = UiDevice.getInstance(mInstrumentation);
     }
 
+    @Ignore("b/229946481")
     @Test
     public void popupWindowDismissedOnBackGesture() {
         PopupWindow[] popupWindow = new PopupWindow[1];

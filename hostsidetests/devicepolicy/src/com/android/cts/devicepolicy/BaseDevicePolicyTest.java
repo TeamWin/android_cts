@@ -386,6 +386,11 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         executeShellCommand("am force-stop --user " + userId + " " + packageName);
     }
 
+    protected void fgsStopPackageForUser(String packageName, int userId) throws Exception {
+        // TODO Move this logic to ITestDevice
+        executeShellCommand("am stop-app --user " + userId + " " + packageName);
+    }
+
     protected String executeShellCommand(String commandTemplate, Object...args) throws Exception {
         return executeShellCommand(String.format(commandTemplate, args));
     }

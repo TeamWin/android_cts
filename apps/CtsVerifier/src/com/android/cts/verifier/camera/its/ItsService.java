@@ -248,6 +248,8 @@ public class ItsService extends Service implements SensorEventListener {
     private volatile boolean mLockedAWB = false;
     private volatile boolean mNeedsLockedAE = false;
     private volatile boolean mNeedsLockedAWB = false;
+    private volatile boolean mDoAE = true;
+    private volatile boolean mDoAF = true;
 
     class MySensorEvent {
         public Sensor sensor;
@@ -1447,26 +1449,23 @@ public class ItsService extends Service implements SensorEventListener {
 
             // By default, AE and AF both get triggered, but the user can optionally override this.
             // Also, AF won't get triggered if the lens is fixed-focus.
-            boolean doAE = true;
-            boolean doAF = true;
             if (params.has(TRIGGER_KEY)) {
                 JSONObject triggers = params.getJSONObject(TRIGGER_KEY);
                 if (triggers.has(TRIGGER_AE_KEY)) {
-                    doAE = triggers.getBoolean(TRIGGER_AE_KEY);
+                    mDoAE = triggers.getBoolean(TRIGGER_AE_KEY);
                 }
                 if (triggers.has(TRIGGER_AF_KEY)) {
-                    doAF = triggers.getBoolean(TRIGGER_AF_KEY);
+                    mDoAF = triggers.getBoolean(TRIGGER_AF_KEY);
                 }
             }
-            Float minFocusDistance = c.get(
-                    CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE);
-            boolean isFixedFocusLens = minFocusDistance != null && minFocusDistance == 0.0;
-            if (doAF && isFixedFocusLens) {
+
+            boolean isFixedFocusLens = isFixedFocusLens(c);
+            if (mDoAF && isFixedFocusLens) {
                 // Send a fake result back for the code that is waiting for this message to see
                 // that AF has converged.
                 Logt.i(TAG, "Ignoring request for AF on fixed-focus camera");
                 mSocketRunnableObj.sendResponse("afResult", "0.0");
-                doAF = false;
+                mDoAF = false;
             }
 
             mInterlock3A.open();
@@ -1486,7 +1485,7 @@ public class ItsService extends Service implements SensorEventListener {
             boolean triggeredAF = false;
 
             Logt.i(TAG, String.format("Initiating 3A: AE:%d, AF:%d, AWB:1, AELOCK:%d, AWBLOCK:%d",
-                    doAE?1:0, doAF?1:0, mNeedsLockedAE?1:0, mNeedsLockedAWB?1:0));
+                    mDoAE?1:0, mDoAF?1:0, mNeedsLockedAE?1:0, mNeedsLockedAWB?1:0));
 
             // Keep issuing capture requests until 3A has converged.
             while (true) {
@@ -1505,10 +1504,10 @@ public class ItsService extends Service implements SensorEventListener {
 
                 synchronized(m3AStateLock) {
                     // If not converged yet, issue another capture request.
-                    if (       (doAE && (!triggeredAE || !mConvergedAE))
+                    if (       (mDoAE && (!triggeredAE || !mConvergedAE))
                             || !mConvergedAWB
-                            || (doAF && (!triggeredAF || !mConvergedAF))
-                            || (doAE && mNeedsLockedAE && !mLockedAE)
+                            || (mDoAF && (!triggeredAF || !mConvergedAF))
+                            || (mDoAE && mNeedsLockedAE && !mLockedAE)
                             || (mNeedsLockedAWB && !mLockedAWB)) {
 
                         // Baseline capture request for 3A.
@@ -1553,7 +1552,7 @@ public class ItsService extends Service implements SensorEventListener {
 
                         boolean triggering = false;
                         // Trigger AE first.
-                        if (doAE && !triggeredAE) {
+                        if (mDoAE && !triggeredAE) {
                             Logt.i(TAG, "Triggering AE");
                             req.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
                                     CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
@@ -1562,7 +1561,7 @@ public class ItsService extends Service implements SensorEventListener {
                         }
 
                         // After AE has converged, trigger AF.
-                        if (doAF && !triggeredAF && (!doAE || (triggeredAE && mConvergedAE))) {
+                        if (mDoAF && !triggeredAF && (!mDoAE || (triggeredAE && mConvergedAE))) {
                             Logt.i(TAG, "Triggering AF");
                             req.set(CaptureRequest.CONTROL_AF_TRIGGER,
                                     CaptureRequest.CONTROL_AF_TRIGGER_START);
@@ -2863,6 +2862,8 @@ public class ItsService extends Service implements SensorEventListener {
         private boolean aeResultSent = false;
         private boolean awbResultSent = false;
         private boolean afResultSent = false;
+        private CameraCharacteristics c = mCameraCharacteristics;
+        private boolean isFixedFocusLens = isFixedFocusLens(c);
 
         @Override
         public void onCaptureStarted(CameraCaptureSession session, CaptureRequest request,
@@ -2907,66 +2908,74 @@ public class ItsService extends Service implements SensorEventListener {
                                                 CaptureResult.CONTROL_AWB_STATE_LOCKED;
                     }
 
-                    if (mConvergedAE && (!mNeedsLockedAE || mLockedAE) && !aeResultSent) {
-                        aeResultSent = true;
-                        if (result.get(CaptureResult.SENSOR_SENSITIVITY) != null
-                                && result.get(CaptureResult.SENSOR_EXPOSURE_TIME) != null) {
-                            mSocketRunnableObj.sendResponse("aeResult", String.format("%d %d",
-                                    result.get(CaptureResult.SENSOR_SENSITIVITY).intValue(),
-                                    result.get(CaptureResult.SENSOR_EXPOSURE_TIME).intValue()
-                                    ));
-                        } else {
-                            Logt.i(TAG, String.format(
-                                    "AE converged but NULL exposure values, sensitivity:%b, expTime:%b",
-                                    result.get(CaptureResult.SENSOR_SENSITIVITY) == null,
-                                    result.get(CaptureResult.SENSOR_EXPOSURE_TIME) == null));
+                    if((mConvergedAE || !mDoAE) && mConvergedAWB &&
+                            (!mDoAF || isFixedFocusLens || mConvergedAF)){
+                        if ((!mNeedsLockedAE || mLockedAE) && !aeResultSent) {
+                            aeResultSent = true;
+                            if (result.get(CaptureResult.SENSOR_SENSITIVITY) != null
+                                    && result.get(CaptureResult.SENSOR_EXPOSURE_TIME) != null) {
+                                mSocketRunnableObj.sendResponse("aeResult", String.format("%d %d",
+                                        result.get(CaptureResult.SENSOR_SENSITIVITY).intValue(),
+                                        result.get(CaptureResult.SENSOR_EXPOSURE_TIME).intValue()
+                                        ));
+                            } else {
+                                Logt.i(TAG, String.format(
+                                        "AE converged but NULL exposure values, sensitivity:%b,"
+                                        + " expTime:%b",
+                                        result.get(CaptureResult.SENSOR_SENSITIVITY) == null,
+                                        result.get(CaptureResult.SENSOR_EXPOSURE_TIME) == null));
+                            }
                         }
-                    }
-
-                    if (mConvergedAF && !afResultSent) {
-                        afResultSent = true;
-                        if (result.get(CaptureResult.LENS_FOCUS_DISTANCE) != null) {
-                            mSocketRunnableObj.sendResponse("afResult", String.format("%f",
-                                    result.get(CaptureResult.LENS_FOCUS_DISTANCE)
-                                    ));
-                        } else {
-                            Logt.i(TAG, "AF converged but NULL focus distance values");
+                        if (!afResultSent) {
+                            afResultSent = true;
+                            if (result.get(CaptureResult.LENS_FOCUS_DISTANCE) != null) {
+                                mSocketRunnableObj.sendResponse("afResult", String.format("%f",
+                                        result.get(CaptureResult.LENS_FOCUS_DISTANCE)
+                                        ));
+                            } else {
+                                Logt.i(TAG, "AF converged but NULL focus distance values");
+                            }
                         }
-                    }
-
-                    if (mConvergedAWB && (!mNeedsLockedAWB || mLockedAWB) && !awbResultSent) {
-                        awbResultSent = true;
-                        if (result.get(CaptureResult.COLOR_CORRECTION_GAINS) != null
-                                && result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM) != null) {
-                            mSocketRunnableObj.sendResponse("awbResult", String.format(
-                                    "%f %f %f %f %f %f %f %f %f %f %f %f %f",
-                                    result.get(CaptureResult.COLOR_CORRECTION_GAINS).getRed(),
-                                    result.get(CaptureResult.COLOR_CORRECTION_GAINS).getGreenEven(),
-                                    result.get(CaptureResult.COLOR_CORRECTION_GAINS).getGreenOdd(),
-                                    result.get(CaptureResult.COLOR_CORRECTION_GAINS).getBlue(),
-                                    r2f(result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM).
-                                            getElement(0,0)),
-                                    r2f(result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM).
-                                            getElement(1,0)),
-                                    r2f(result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM).
-                                            getElement(2,0)),
-                                    r2f(result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM).
-                                            getElement(0,1)),
-                                    r2f(result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM).
-                                            getElement(1,1)),
-                                    r2f(result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM).
-                                            getElement(2,1)),
-                                    r2f(result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM).
-                                            getElement(0,2)),
-                                    r2f(result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM).
-                                            getElement(1,2)),
-                                    r2f(result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM).
-                                            getElement(2,2))));
-                        } else {
-                            Logt.i(TAG, String.format(
-                                    "AWB converged but NULL color correction values, gains:%b, ccm:%b",
-                                    result.get(CaptureResult.COLOR_CORRECTION_GAINS) == null,
-                                    result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM) == null));
+                        if ((!mNeedsLockedAWB || mLockedAWB) && !awbResultSent) {
+                            awbResultSent = true;
+                            if (result.get(CaptureResult.COLOR_CORRECTION_GAINS) != null
+                                    && result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM) != null) {
+                                mSocketRunnableObj.sendResponse("awbResult", String.format(
+                                        "%f %f %f %f %f %f %f %f %f %f %f %f %f",
+                                        result.get(CaptureResult.COLOR_CORRECTION_GAINS).
+                                                getRed(),
+                                        result.get(CaptureResult.COLOR_CORRECTION_GAINS).
+                                                getGreenEven(),
+                                        result.get(CaptureResult.COLOR_CORRECTION_GAINS).
+                                                getGreenOdd(),
+                                        result.get(CaptureResult.COLOR_CORRECTION_GAINS).
+                                                getBlue(),
+                                        r2f(result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM).
+                                                getElement(0,0)),
+                                        r2f(result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM).
+                                                getElement(1,0)),
+                                        r2f(result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM).
+                                                getElement(2,0)),
+                                        r2f(result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM).
+                                                getElement(0,1)),
+                                        r2f(result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM).
+                                                getElement(1,1)),
+                                        r2f(result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM).
+                                                getElement(2,1)),
+                                        r2f(result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM).
+                                                getElement(0,2)),
+                                        r2f(result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM).
+                                                getElement(1,2)),
+                                        r2f(result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM).
+                                                getElement(2,2))));
+                            } else {
+                                Logt.i(TAG, String.format(
+                                        "AWB converged but NULL color correction values, gains:%b,"
+                                        + " ccm:%b",
+                                        result.get(CaptureResult.COLOR_CORRECTION_GAINS) == null,
+                                        result.get(CaptureResult.COLOR_CORRECTION_TRANSFORM) ==
+                                                null));
+                            }
                         }
                     }
                 }
@@ -3115,5 +3124,11 @@ public class ItsService extends Service implements SensorEventListener {
         }
 
         throw new ItsException("Uknown reprocess format: " + reprocessFormat);
+    }
+
+    private boolean isFixedFocusLens(CameraCharacteristics c) {
+        Float minFocusDistance = c.get(
+                CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE);
+        return (minFocusDistance != null) && (minFocusDistance == 0.0);
     }
 }

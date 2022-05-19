@@ -318,9 +318,13 @@ public class CommandReceiverActivity extends Activity {
                 } break;
                 case COMMAND_REQUEST_BUGREPORT: {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        Log.i(TAG, "Not requesting bugreport as " + getPackageName() + " is not a "
+                                + "DO when asked to " + mDpm);
                         return;
                     }
+                    Log.i(TAG, "Requesting a bugreport using " + mDpm);
                     final boolean bugreportStarted = mDpm.requestBugreport(mAdmin);
+                    Log.i(TAG, "Bug report started: " + bugreportStarted);
                     if (!bugreportStarted) {
                         Utils.showBugreportNotification(this, getString(
                                 R.string.bugreport_already_in_progress),

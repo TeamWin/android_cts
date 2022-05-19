@@ -57,6 +57,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
+import com.android.compatibility.common.util.DisableAnimationRule;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.RetryRule;
 import com.android.compatibility.common.util.SafeCleanerRule;
@@ -276,6 +277,10 @@ public final class AutoFillServiceTestCase {
                 // mTestWatcher should always be one the first rules, as it defines the name of the
                 // test being ran and finishes dangling activities at the end
                 .around(mTestWatcher)
+                //
+                // Disable animation for UiAutomator because animation will cause the UiAutomator
+                // got a wrong position and then tests failed due to click on the wrong position.
+                .around(new DisableAnimationRule())
                 //
                 // sMockImeSessionRule make sure MockImeSession.create() is used to launch mock IME
                 .around(sMockImeSessionRule)
