@@ -21,6 +21,7 @@
 
     <application android:label="Cts Alarm Manager Test"
                  android:debuggable="true">
+        <!-- Needs to be debuggable to allow overriding compat change ids -->
         <uses-library android:name="android.test.runner"/>
 
         <receiver android:name=".AlarmReceiver" />
