@@ -72,7 +72,13 @@ public class RequirementConstants {
     public static final String DISPLAY_DENSITY = "display_density_dpi";
     public static final String PHYSICAL_MEMORY = "physical_memory_mb";
     public static final String CODEC_INIT_LATENCY = "codec_initialization_latency_ms";
-    public static final String REQ_SATISFIED = "requirement_satisfied_boolean";
+    public static final String VIDEO_REQ_SATISFIED = "video_requirement_satisfied_boolean";
+    public static final String SECURE_REQ_SATISFIED = "secure_requirement_satisfied_boolean";
+    public static final String WIDEWINE_SUPPORT = "widevine_support_boolean";
+    public static final String WIDEWINE_L1 = "widevine_l1_support_boolean";
+    public static final String WIDEWINE_L1_TIER3 = "widevine_l1_tier3_support_boolean";
+    public static final String OEM_CRYPTO_17_PLUS = "oem_crypto_version_17plus_boolean";
+    public static final String WIDEWINE_CDM_17_PLUS = "widevine_cdm_version_17plus_boolean";
 
     public enum Result {
         NA, MET, UNMET

@@ -112,22 +112,15 @@ public class PerformanceClassTest {
             if (isHwDecoderFoundForMime && !isSecureHwDecoderFoundForMime)
                 noSecureHwDecoderForMimes.add(mime);
         }
-        if (Utils.isTPerfClass()) {
-            assertTrue(
-                    "For MPC >= Android T, if HW decoder is present for a mime, secure HW decoder" +
-                            " must be present for the mime. HW decoder present but secure HW " +
-                            "decoder not available for mimes: " + noSecureHwDecoderForMimes,
-                    noSecureHwDecoderForMimes.isEmpty());
-        } else {
-            DeviceReportLog log =
-                    new DeviceReportLog("MediaPerformanceClassLogs", "SecureHwDecodeSupport");
-            log.addValue("SecureHwDecodeSupportForMimesWithHwDecoders",
-                    noSecureHwDecoderForMimes.isEmpty(), ResultType.NEUTRAL, ResultUnit.NONE);
-            // TODO(b/218771970) Log CDD sections
-            log.setSummary("MPC 13: Widevine/Secure codec requirements", 0, ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-            log.submit(InstrumentationRegistry.getInstrumentation());
-        }
+
+        boolean secureDecodeSupportIfHwDecoderPresent = noSecureHwDecoderForMimes.isEmpty();
+
+        PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
+        PerformanceClassEvaluator.SecureCodecRequirement rSecureDecodeSupport =
+            pce.addRSecureDecodeSupport();
+        rSecureDecodeSupport.setSecureReqSatisfied(secureDecodeSupportIfHwDecoderPresent);
+
+        pce.submitAndCheck();
     }
 
     @SmallTest
@@ -154,32 +147,17 @@ public class PerformanceClassTest {
             isWidevineCdm17Plus = cdmMajorVersion >= 17;
         }
 
-        if (Utils.isTPerfClass()) {
-            assertTrue("Widevine support required for MPC >= Android T", isWidevineSupported);
-            assertTrue("Widevine L1 support required for MPC >= Android T", isL1Supported);
-            assertTrue("Widevine L1 Resource Rating Tier 3 support required for MPC >= Android T",
-                    isL1Tier3Supported);
-            assertTrue("OEMCrypto min version 17.x required for MPC >= Android T",
-                    isOemCrypto17Plus);
-            assertTrue("Widevine CDM min version 17.x required for MPC >= Android T",
-                    isWidevineCdm17Plus);
-        } else {
-            DeviceReportLog log =
-                    new DeviceReportLog("MediaPerformanceClassLogs", "WidevineSupport");
-            log.addValue("Widevine Support", isWidevineSupported, ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-            log.addValue("Widevine L1 Support", isL1Supported, ResultType.NEUTRAL, ResultUnit.NONE);
-            log.addValue("Widevine L1 Resource Rating Tier 3 Support", isL1Tier3Supported,
-                    ResultType.NEUTRAL, ResultUnit.NONE);
-            log.addValue("OEMCrypto min version 17.x Support", isOemCrypto17Plus,
-                    ResultType.NEUTRAL, ResultUnit.NONE);
-            log.addValue("Widevine CDM min version 17.x Support", isWidevineCdm17Plus,
-                    ResultType.NEUTRAL, ResultUnit.NONE);
-            // TODO(b/218771970) Log CDD sections
-            log.setSummary("MPC 13: Widevine/Secure codec requirements", 0, ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-            log.submit(InstrumentationRegistry.getInstrumentation());
-        }
+        PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
+        PerformanceClassEvaluator.SecureCodecRequirement rWidevineReqSupport =
+            pce.addRWidevineSupport();
+
+        rWidevineReqSupport.setWidevineSupported(isWidevineSupported);
+        rWidevineReqSupport.setWidevineL1Supported(isL1Supported);
+        rWidevineReqSupport.setWidevineL1Tier3Supported(isL1Tier3Supported);
+        rWidevineReqSupport.setOemCrypto17Plus(isOemCrypto17Plus);
+        rWidevineReqSupport.setWidevineCdm17Plus(isWidevineCdm17Plus);
+
+        pce.submitAndCheck();
     }
 
     @SmallTest
