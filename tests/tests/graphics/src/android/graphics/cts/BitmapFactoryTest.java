@@ -38,6 +38,7 @@ import android.media.MediaFormat;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.LargeTest;
+import android.platform.test.annotations.RequiresDevice;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.util.DisplayMetrics;
@@ -999,6 +1000,63 @@ public class BitmapFactoryTest {
             }
         }
         return argb;
+    }
+
+    @Test
+    @RequiresDevice
+    public void testDecode10BitHEIFTo10BitBitmap() {
+        if (!MediaUtils.hasDecoder(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
+            return;
+        }
+        BitmapFactory.Options opt = new BitmapFactory.Options();
+        opt.inPreferredConfig = Config.RGBA_1010102;
+        Bitmap bm = BitmapFactory.decodeStream(obtainInputStream(R.raw.heifimage_10bit), null, opt);
+        assertNotNull(bm);
+        assertEquals(4096, bm.getWidth());
+        assertEquals(3072, bm.getHeight());
+        assertEquals(Config.RGBA_1010102, bm.getConfig());
+    }
+
+    @Test
+    @RequiresDevice
+    public void testDecode10BitHEIFTo8BitBitmap() {
+        if (!MediaUtils.hasDecoder(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
+            return;
+        }
+        BitmapFactory.Options opt = new BitmapFactory.Options();
+        opt.inPreferredConfig = Config.ARGB_8888;
+        Bitmap bm1 =
+            BitmapFactory.decodeStream(obtainInputStream(R.raw.heifimage_10bit), null, opt);
+        Bitmap bm2 = BitmapFactory.decodeStream(obtainInputStream(R.raw.heifimage_10bit));
+        assertNotNull(bm1);
+        assertEquals(4096, bm1.getWidth());
+        assertEquals(3072, bm1.getHeight());
+        assertEquals(Config.RGBA_1010102, bm1.getConfig());
+        assertNotNull(bm2);
+        assertEquals(4096, bm2.getWidth());
+        assertEquals(3072, bm2.getHeight());
+        assertEquals(Config.RGBA_1010102, bm2.getConfig());
+    }
+
+    @Test
+    @RequiresDevice
+    public void testDecode8BitHEIFTo10BitBitmap() {
+        if (!MediaUtils.hasDecoder(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
+            return;
+        }
+        BitmapFactory.Options opt = new BitmapFactory.Options();
+        opt.inPreferredConfig = Config.RGBA_1010102;
+        Bitmap bm1 =
+            BitmapFactory.decodeStream(obtainInputStream(R.raw.heifwriter_input), null, opt);
+        Bitmap bm2 = BitmapFactory.decodeStream(obtainInputStream(R.raw.heifwriter_input));
+        assertNotNull(bm1);
+        assertEquals(1920, bm1.getWidth());
+        assertEquals(1080, bm1.getHeight());
+        assertEquals(Config.ARGB_8888, bm1.getConfig());
+        assertNotNull(bm2);
+        assertEquals(1920, bm2.getWidth());
+        assertEquals(1080, bm2.getHeight());
+        assertEquals(Config.ARGB_8888, bm2.getConfig());
     }
 
     private byte[] obtainArray() {
