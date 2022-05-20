@@ -599,7 +599,7 @@ def plot_camera_rotations(cam_rots, start_frame, video_quality,
   pylab.plot(frames, cam_rots*_RADS_TO_DEGS, '-ro', label='x')
   pylab.xlabel('frame #')
   pylab.ylabel('camera rotation (degrees)')
-  matplotlib.pyplot.savefig(f'{plot_name_stem}_{video_quality}_cam_rots.png')
+  matplotlib.pyplot.savefig(f'{plot_name_stem}_cam_rots.png')
 
 
 def plot_gyro_events(gyro_events, plot_name, log_path):
