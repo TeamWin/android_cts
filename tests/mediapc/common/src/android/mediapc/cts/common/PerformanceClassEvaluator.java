@@ -342,6 +342,10 @@ public class PerformanceClassEvaluator {
             this.setMeasuredValue(RequirementConstants.FRAMES_DROPPED, framesDropped);
         }
 
+        public void setFrameRate(double frameRate) {
+            this.setMeasuredValue(RequirementConstants.FRAME_RATE, frameRate);
+        }
+
         /**
          * [2.2.7.1/5.3/H-1-1] MUST NOT drop more than 1 frames in 10 seconds (i.e less than 0.333
          * percent frame drop) for a 1080p 30 fps video session under load. Load is defined as a
@@ -357,7 +361,15 @@ public class PerformanceClassEvaluator {
                 .addRequiredValue(Build.VERSION_CODES.R, 3)
                 .build();
 
-            return new FrameDropRequirement(RequirementConstants.R5_3__H_1_1, frameDropped);
+            RequiredMeasurement<Double> frameRate = RequiredMeasurement
+                .<Double>builder()
+                .setId(RequirementConstants.FRAME_RATE)
+                .setPredicate(RequirementConstants.DOUBLE_EQ)
+                .addRequiredValue(Build.VERSION_CODES.R, 30.0)
+                .build();
+
+            return new FrameDropRequirement(RequirementConstants.R5_3__H_1_1, frameDropped,
+                frameRate);
         }
 
         /**
@@ -375,7 +387,15 @@ public class PerformanceClassEvaluator {
                 .addRequiredValue(Build.VERSION_CODES.R, 3)
                 .build();
 
-            return new FrameDropRequirement(RequirementConstants.R5_3__H_1_2, frameDropped);
+            RequiredMeasurement<Double> frameRate = RequiredMeasurement
+                .<Double>builder()
+                .setId(RequirementConstants.FRAME_RATE)
+                .setPredicate(RequirementConstants.DOUBLE_EQ)
+                .addRequiredValue(Build.VERSION_CODES.R, 30.0)
+                .build();
+
+            return new FrameDropRequirement(RequirementConstants.R5_3__H_1_2, frameDropped,
+                frameRate);
         }
 
         /**
@@ -395,7 +415,15 @@ public class PerformanceClassEvaluator {
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 3)
                 .build();
 
-            return new FrameDropRequirement(RequirementConstants.R5_3__H_1_1, frameDropped);
+            RequiredMeasurement<Double> frameRate = RequiredMeasurement
+                .<Double>builder()
+                .setId(RequirementConstants.FRAME_RATE)
+                .setPredicate(RequirementConstants.DOUBLE_EQ)
+                .addRequiredValue(Build.VERSION_CODES.S, 60.0)
+                .build();
+
+            return new FrameDropRequirement(RequirementConstants.R5_3__H_1_1, frameDropped,
+                frameRate);
         }
 
         /**
@@ -415,7 +443,15 @@ public class PerformanceClassEvaluator {
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 3)
                 .build();
 
-            return new FrameDropRequirement(RequirementConstants.R5_3__H_1_2, frameDropped);
+            RequiredMeasurement<Double> frameRate = RequiredMeasurement
+                .<Double>builder()
+                .setId(RequirementConstants.FRAME_RATE)
+                .setPredicate(RequirementConstants.DOUBLE_EQ)
+                .addRequiredValue(Build.VERSION_CODES.S, 60.0)
+                .build();
+
+            return new FrameDropRequirement(RequirementConstants.R5_3__H_1_2, frameDropped,
+                frameRate);
         }
     }
 

@@ -193,4 +193,13 @@ public class RequirementTest {
             IllegalStateException.class,
             () -> testReq.checkPerformanceClass(31));
     }
+
+    @Test
+    public void writeLogAndCheck_UnsetMeasurement() {
+        TestReq testReq = TestReq.create();
+
+        assertThrows(
+            IllegalStateException.class,
+            () -> testReq.writeLogAndCheck("writeLogAndCheck_UnsetMeasurement"));
+    }
 }
