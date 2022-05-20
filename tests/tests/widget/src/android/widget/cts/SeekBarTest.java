@@ -16,6 +16,7 @@
 
 package android.widget.cts;
 
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.eq;
@@ -27,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.graphics.Rect;
+import android.os.Build;
 import android.os.SystemClock;
 import android.view.MotionEvent;
 import android.view.View;
@@ -65,6 +67,8 @@ public class SeekBarTest {
 
     @Before
     public void setup() throws Throwable {
+        assumeTrue("Skipping test intended for SV2 devices",
+                Build.VERSION.SDK_INT == Build.VERSION_CODES.S_V2);
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
         mSeekBar = mActivity.findViewById(R.id.seekBar);
