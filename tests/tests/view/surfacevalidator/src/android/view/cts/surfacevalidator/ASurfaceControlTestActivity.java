@@ -394,4 +394,8 @@ public class ASurfaceControlTestActivity extends Activity {
             }
         }
     }
+
+    public boolean isOnWatch() {
+        return mOnWatch;
+    }
 }

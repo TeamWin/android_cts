@@ -755,6 +755,8 @@ public class SipDelegateManagerTest {
         }
     }
 
+    @Ignore("the compatibility framework does not currently support changing compatibility flags"
+            + "on user builds for device side CTS tests. Ignore this test until support is added")
     @Test
     public void testDelegateRegistrationChangesCompatDisabled() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {

@@ -5203,6 +5203,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <!-- A list of fully-qualified test classes that should not be run. -->
     <string-array name="disabled_tests">
         <item>com.android.cts.verifier.telecom.CtsVerifierInCallUi</item>
+        <item>com.android.cts.verifier.car.CarDockActivity</item>
+        <item>com.android.cts.verifier.car.CarDockTestActivity</item>
     </string-array>
 
     <!-- Strings for screen pinning test -->

@@ -21,7 +21,6 @@ import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeFalse;
 
 import android.app.Instrumentation;
 import android.app.compat.CompatChanges;
@@ -153,8 +152,6 @@ public final class HotwordDetectionServiceBasicTest
     @RequiresDevice
     public void testHotwordDetectionService_createDetectorTwiceQuickly_triggerSuccess()
             throws Throwable {
-        assumeFalse("TODO(b/214488187): Fix failure for Automotive", sIsAutomotive);
-
         Thread.sleep(CLEAR_CHIP_MS);
         final BlockingBroadcastReceiver softwareReceiver = new BlockingBroadcastReceiver(mContext,
                 Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT);
@@ -208,8 +205,6 @@ public final class HotwordDetectionServiceBasicTest
     @RequiresDevice
     public void testHotwordDetectionService_onDetectFromDsp_success()
             throws Throwable {
-        assumeFalse("TODO(b/214488187): Fix failure for Automotive", sIsAutomotive);
-
         Thread.sleep(CLEAR_CHIP_MS);
         // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
         testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
@@ -230,8 +225,6 @@ public final class HotwordDetectionServiceBasicTest
     @RequiresDevice
     public void testHotwordDetectionService_onDetectFromDsp_rejection()
             throws Throwable {
-        assumeFalse("TODO(b/214488187): Fix failure for Automotive", sIsAutomotive);
-
         Thread.sleep(CLEAR_CHIP_MS);
         // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
         testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
@@ -271,8 +264,6 @@ public final class HotwordDetectionServiceBasicTest
     @RequiresDevice
     public void testHotwordDetectionService_onDetectFromMic_success()
             throws Throwable {
-        assumeFalse("TODO(b/214488187): Fix failure for Automotive", sIsAutomotive);
-
         Thread.sleep(CLEAR_CHIP_MS);
         // Create SoftwareHotwordDetector and wait the HotwordDetectionService ready
         testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST,
@@ -317,8 +308,6 @@ public final class HotwordDetectionServiceBasicTest
     @Test
     @RequiresDevice
     public void testHotwordDetectionService_concurrentCapture() throws Throwable {
-        assumeFalse("TODO(b/214488187): Fix failure for Automotive", sIsAutomotive);
-
         // Create SoftwareHotwordDetector and wait the HotwordDetectionService ready
         testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST,
                 Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT,

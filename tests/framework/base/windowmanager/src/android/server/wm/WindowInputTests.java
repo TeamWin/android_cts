@@ -41,6 +41,7 @@ import android.app.Instrumentation;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.input.InputManager;
@@ -142,14 +143,16 @@ public class WindowInputTests {
 
         final WindowMetrics windowMetrics = wm.getCurrentWindowMetrics();
         final WindowInsets windowInsets = windowMetrics.getWindowInsets();
-        final Rect windowBounds = new Rect(windowMetrics.getBounds());
-        windowBounds.inset(windowInsets.getInsetsIgnoringVisibility(p.getFitInsetsTypes()));
+        final Rect selectBounds = new Rect(windowMetrics.getBounds());
+        final Insets insets = windowInsets.getInsetsIgnoringVisibility(p.getFitInsetsTypes());
+        selectBounds.inset(0, 0, insets.left + insets.right + p.width,
+                insets.top + insets.bottom + p.height);
 
         // Move the window to a random location in the window and attempt to tap on view multiple
         // times.
         final Point locationInWindow = new Point();
         for (int i = 0; i < TOTAL_NUMBER_OF_CLICKS; i++) {
-            selectRandomLocationInWindow(windowBounds, locationInWindow);
+            selectRandomLocationInWindow(selectBounds, locationInWindow);
             mActivityRule.runOnUiThread(() -> {
                 p.x = locationInWindow.x;
                 p.y = locationInWindow.y;
@@ -170,7 +173,8 @@ public class WindowInputTests {
                         new Point(viewOnScreenXY[0] + vW / 2, viewOnScreenXY[1] + vH / 2);
                 final Rect realBounds = new Rect(viewOnScreenXY[0], viewOnScreenXY[1],
                         viewOnScreenXY[0] + vW, viewOnScreenXY[1] + vH);
-                final Rect requestedBounds = new Rect(p.x, p.y, p.x + p.width, p.y + p.height);
+                final Rect requestedBounds = new Rect(p.x + insets.left, p.y + insets.top,
+                        p.x + insets.left + p.width, p.y + insets.top + p.height);
                 dumpWindows("Dumping windows due to failure");
                 fail("Tap #" + i + " on " + tapPosition + " failed; realBounds=" + realBounds
                         + " requestedBounds=" + requestedBounds);

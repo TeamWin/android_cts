@@ -101,6 +101,27 @@ public class PerformanceClassEvaluator {
             return new ResolutionRequirement(RequirementConstants.R7_1_1_1__H_2_1, long_resolution,
                 short_resolution);
         }
+
+        /**
+         * [7.1.1.1/?] MUST have screen resolution of at least 1080p.
+         */
+        public static ResolutionRequirement createR7_1_1_1__TBD1() {
+            RequiredMeasurement<Integer> long_resolution = RequiredMeasurement
+                .<Integer>builder()
+                .setId(RequirementConstants.LONG_RESOLUTION)
+                .setPredicate(RequirementConstants.INTEGER_GTE)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 1920)
+                .build();
+            RequiredMeasurement<Integer> short_resolution = RequiredMeasurement
+                .<Integer>builder()
+                .setId(RequirementConstants.SHORT_RESOLUTION)
+                .setPredicate(RequirementConstants.INTEGER_GTE)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 1080)
+                .build();
+
+            return new ResolutionRequirement(RequirementConstants.RTBD, long_resolution,
+                short_resolution);
+        }
     }
 
     // used for requirements [7.1.1.3/H-1-1], [7.1.1.3/H-2-1]
@@ -141,6 +162,20 @@ public class PerformanceClassEvaluator {
                 .build();
 
             return new DensityRequirement(RequirementConstants.R7_1_1_3__H_2_1, display_density);
+        }
+
+        /**
+         * [7.1.1.3/?] MUST have screen density of at least 400 dpi.
+         */
+        public static DensityRequirement createR7_1_1_3__TBD2() {
+            RequiredMeasurement<Integer> display_density = RequiredMeasurement
+                .<Integer>builder()
+                .setId(RequirementConstants.DISPLAY_DENSITY)
+                .setPredicate(RequirementConstants.INTEGER_GTE)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 400)
+                .build();
+
+            return new DensityRequirement(RequirementConstants.RTBD, display_density);
         }
     }
 
@@ -186,6 +221,22 @@ public class PerformanceClassEvaluator {
                 .build();
 
             return new MemoryRequirement(RequirementConstants.R7_6_1__H_2_1, physical_memory);
+        }
+
+        /**
+         * [7.6.1/H-3-1] MUST have at least 8 GB of physical memory.
+         */
+        public static MemoryRequirement createR7_6_1__H_3_1() {
+            RequiredMeasurement<Long> physical_memory = RequiredMeasurement
+                .<Long>builder()
+                .setId(RequirementConstants.PHYSICAL_MEMORY)
+                .setPredicate(RequirementConstants.LONG_GTE)
+                // Media performance requires 8 GB minimum RAM, but keeping the following to 7 GB
+                // as activityManager.getMemoryInfo() returns around 7.4 GB on a 8 GB device.
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 7L * 1024L)
+                .build();
+
+            return new MemoryRequirement(RequirementConstants.R7_6_1__H_3_1, physical_memory);
         }
     }
 
@@ -378,8 +429,8 @@ public class PerformanceClassEvaluator {
             super(id, reqs);
         }
 
-        public void setRequirementSatisfied(boolean requirementSatisfied) {
-            this.setMeasuredValue(RequirementConstants.REQ_SATISFIED, requirementSatisfied);
+        public void setVideoReqSatisfied(boolean videoReqSatisfied) {
+            this.setMeasuredValue(RequirementConstants.VIDEO_REQ_SATISFIED, videoReqSatisfied);
         }
 
         /**
@@ -388,7 +439,7 @@ public class PerformanceClassEvaluator {
         public static VideoCodecRequirement createR4k60HwDecoder() {
             RequiredMeasurement<Boolean> requirement = RequiredMeasurement
                 .<Boolean>builder()
-                .setId(RequirementConstants.REQ_SATISFIED)
+                .setId(RequirementConstants.VIDEO_REQ_SATISFIED)
                 .setPredicate(RequirementConstants.BOOLEAN_EQ)
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
                 .build();
@@ -402,7 +453,7 @@ public class PerformanceClassEvaluator {
         public static VideoCodecRequirement createR4k60HwEncoder() {
             RequiredMeasurement<Boolean> requirement = RequiredMeasurement
                 .<Boolean>builder()
-                .setId(RequirementConstants.REQ_SATISFIED)
+                .setId(RequirementConstants.VIDEO_REQ_SATISFIED)
                 .setPredicate(RequirementConstants.BOOLEAN_EQ)
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
                 .build();
@@ -416,12 +467,100 @@ public class PerformanceClassEvaluator {
         public static VideoCodecRequirement createRAV1DecoderReq() {
             RequiredMeasurement<Boolean> requirement = RequiredMeasurement
                 .<Boolean>builder()
-                .setId(RequirementConstants.REQ_SATISFIED)
+                .setId(RequirementConstants.VIDEO_REQ_SATISFIED)
                 .setPredicate(RequirementConstants.BOOLEAN_EQ)
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
                 .build();
 
             return new VideoCodecRequirement(RequirementConstants.RTBD, requirement);
+        }
+    }
+
+    // TODO(b/218771970): Add cdd annotation
+    // used for requirements [?]
+    public static class SecureCodecRequirement extends Requirement {
+        private static final String TAG = SecureCodecRequirement.class.getSimpleName();
+
+        private SecureCodecRequirement(String id, RequiredMeasurement<?> ... reqs) {
+            super(id, reqs);
+        }
+
+        public void setSecureReqSatisfied(boolean secureReqSatisfied) {
+            this.setMeasuredValue(RequirementConstants.SECURE_REQ_SATISFIED, secureReqSatisfied);
+        }
+
+        public void setWidevineSupported(boolean isWidevineSupported) {
+            this.setMeasuredValue(RequirementConstants.WIDEWINE_SUPPORT, isWidevineSupported);
+        }
+
+        public void setWidevineL1Supported(boolean isL1Supported) {
+            this.setMeasuredValue(RequirementConstants.WIDEWINE_L1, isL1Supported);
+        }
+
+        public void setWidevineL1Tier3Supported(boolean isL1Tier3Supported) {
+            this.setMeasuredValue(RequirementConstants.WIDEWINE_L1_TIER3, isL1Tier3Supported);
+        }
+
+        public void setOemCrypto17Plus(boolean isOemCrypto17Plus) {
+            this.setMeasuredValue(RequirementConstants.OEM_CRYPTO_17_PLUS, isOemCrypto17Plus);
+        }
+
+        public void setWidevineCdm17Plus(boolean isWidevineCdm17Plus) {
+            this.setMeasuredValue(RequirementConstants.WIDEWINE_CDM_17_PLUS, isWidevineCdm17Plus);
+        }
+
+        /**
+         * [?] Support for Widevine L1 Tier 3, WidevineCdmVersion >= 17, OemCryptoVersion >= 17
+         */
+        public static SecureCodecRequirement createRWidevineSupport() {
+            RequiredMeasurement<Boolean> widevineSupport = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.WIDEWINE_SUPPORT)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+
+            RequiredMeasurement<Boolean> widevineL1 =
+                RequiredMeasurement.<Boolean>builder().setId(RequirementConstants.WIDEWINE_L1)
+                    .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                    .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                    .build();
+
+            RequiredMeasurement<Boolean> widevineL1Tier3 =
+                RequiredMeasurement.<Boolean>builder().setId(RequirementConstants.WIDEWINE_L1_TIER3)
+                    .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                    .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                    .build();
+
+            RequiredMeasurement<Boolean> oemCryptoReq = RequiredMeasurement.<Boolean>builder()
+                .setId(RequirementConstants.OEM_CRYPTO_17_PLUS)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+
+            RequiredMeasurement<Boolean> widevineCdmReq = RequiredMeasurement.<Boolean>builder()
+                .setId(RequirementConstants.WIDEWINE_CDM_17_PLUS)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+
+            return new SecureCodecRequirement(RequirementConstants.RTBD, widevineSupport,
+                widevineL1, widevineL1Tier3, oemCryptoReq, widevineCdmReq);
+        }
+
+        /**
+         * [?] Must support secure decoder when a corresponding AVC/VP9/HEVC or AV1 hardware
+         * decoder is available
+         */
+        public static SecureCodecRequirement createRSecureDecodeSupport() {
+            RequiredMeasurement<Boolean> requirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.SECURE_REQ_SATISFIED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+
+            return new SecureCodecRequirement(RequirementConstants.RTBD, requirement);
         }
     }
 
@@ -450,12 +589,24 @@ public class PerformanceClassEvaluator {
             ResolutionRequirement.createR7_1_1_1__H_2_1());
     }
 
+    public ResolutionRequirement addR7_1_1_1__TBD1() {
+        return this.<ResolutionRequirement>addRequirement(
+            ResolutionRequirement.createR7_1_1_1__TBD1());
+    }
+
     public DensityRequirement addR7_1_1_3__H_2_1() {
         return this.<DensityRequirement>addRequirement(DensityRequirement.createR7_1_1_3__H_2_1());
     }
 
+    public DensityRequirement addR7_1_1_3__TBD2() {
+        return this.<DensityRequirement>addRequirement(DensityRequirement.createR7_1_1_3__TBD2());
+    }
+
     public MemoryRequirement addR7_6_1__H_2_1() {
         return this.<MemoryRequirement>addRequirement(MemoryRequirement.createR7_6_1__H_2_1());
+    }
+    public MemoryRequirement addR7_6_1__H_3_1() {
+        return this.<MemoryRequirement>addRequirement(MemoryRequirement.createR7_6_1__H_3_1());
     }
 
     public FrameDropRequirement addR5_3__H_1_1_R() {
@@ -500,6 +651,14 @@ public class PerformanceClassEvaluator {
 
     public VideoCodecRequirement addRAV1DecoderReq() {
         return this.addRequirement(VideoCodecRequirement.createRAV1DecoderReq());
+    }
+
+    public SecureCodecRequirement addRSecureDecodeSupport() {
+        return this.addRequirement(SecureCodecRequirement.createRSecureDecodeSupport());
+    }
+
+    public SecureCodecRequirement addRWidevineSupport() {
+        return this.addRequirement(SecureCodecRequirement.createRWidevineSupport());
     }
 
     public void submitAndCheck() {

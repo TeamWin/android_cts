@@ -17,6 +17,7 @@
 package android.view.inputmethod.cts.util;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
@@ -140,15 +141,19 @@ public class TestActivity extends Activity {
     }
 
     public void showOverlayWindow() {
+        showOverlayWindow(false /* imeFocusable */);
+    }
+    public void showOverlayWindow(boolean imeFocusable) {
         if (mOverlayView != null) {
             throw new IllegalStateException("can only show one overlay at a time.");
         }
         Context overlayContext = getApplicationContext().createWindowContext(getDisplay(),
                 TYPE_APPLICATION_OVERLAY, null);
         mOverlayView = new TextView(overlayContext);
-        WindowManager.LayoutParams params =
-                new WindowManager.LayoutParams(MATCH_PARENT, MATCH_PARENT,
-                        TYPE_APPLICATION_OVERLAY, FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT);
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams(MATCH_PARENT,
+                MATCH_PARENT, TYPE_APPLICATION_OVERLAY,
+                (imeFocusable ? FLAG_NOT_FOCUSABLE | FLAG_ALT_FOCUSABLE_IM : FLAG_NOT_FOCUSABLE),
+                PixelFormat.TRANSLUCENT);
         params.setTitle(OVERLAY_WINDOW_NAME);
         mOverlayView.setLayoutParams(params);
         mOverlayView.setText("IME CTS TestActivity OverlayView");

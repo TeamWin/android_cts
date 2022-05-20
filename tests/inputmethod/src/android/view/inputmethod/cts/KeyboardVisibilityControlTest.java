@@ -94,6 +94,7 @@ import androidx.test.uiautomator.BySelector;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.Until;
 
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeLayoutInfo;
@@ -851,6 +852,56 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                 // Verify IME became visible when the non-ime-focusable PopupWindow has dismissed.
                 expectImeVisible(TIMEOUT);
             }
+        }
+    }
+
+    /**
+     * Test case for Bug 228766370.
+     *
+     * <p>This test ensures that IME will visible on an ime-focusable overlay window when another
+     * activity behind the overlay that requests to show IME. <p/>
+     */
+    @Test
+    public void testImeVisibleOnImeFocusableOverlay() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder()
+                        .setInputViewHeight(NEW_KEYBOARD_HEIGHT)
+                        .setDrawsBehindNavBar(true))) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            TestActivity testActivity = TestActivity.startSync(activity -> {
+                final View view = new View(activity);
+                view.setLayoutParams(new LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+                return view;
+            });
+
+            // Show an overlay with "IME Focusable" (NOT_FOCUSABLE | ALT_FOCUSABLE_IM) flags.
+            runOnMainSync(() -> SystemUtil.runWithShellPermissionIdentity(() ->
+                    testActivity.showOverlayWindow(true /* imeFocusable */)));
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+
+            // Start a next activity to expect IME should visible on top of the overlay.
+            final String marker = getTestMarker();
+            final AtomicReference<EditText> editorRef = new AtomicReference<>();
+            TestActivity.startNewTaskSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+                layout.setGravity(Gravity.BOTTOM);
+                final EditText editText = new EditText(activity);
+                editorRef.set(editText);
+                editText.setHint("focused editText");
+                editText.setPrivateImeOptions(marker);
+                editText.requestFocus();
+                layout.addView(editText);
+                return layout;
+            });
+            // Show IME.
+            runOnMainSync(() -> editorRef.get().getContext().getSystemService(
+                    InputMethodManager.class).showSoftInput(editorRef.get(), 0));
+
+            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectImeVisible(TIMEOUT);
         }
     }
 

@@ -401,4 +401,8 @@ public class CapturedActivity extends Activity {
         }
     }
 
+    public boolean isOnWatch() {
+        return mOnWatch;
+    }
+
 }

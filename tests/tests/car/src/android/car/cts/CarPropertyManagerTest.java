@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.testng.Assert.assertThrows;
 
+import android.app.UiAutomation;
 import android.car.Car;
 import android.car.EvConnectorType;
 import android.car.FuelType;
@@ -47,6 +48,7 @@ import android.util.ArraySet;
 import android.util.SparseArray;
 
 import androidx.annotation.GuardedBy;
+import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
@@ -937,6 +939,30 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                                     /*EvRegenerativeBrakingState.PARTIALLY_ENABLED=*/2,
                                     /*EvRegenerativeBrakingState.FULLY_ENABLED=*/3));
                 }).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testPerfSteeringAngleIfSupported() {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.adoptShellPermissionIdentity(Car.PERMISSION_READ_STEERING_STATE);
+
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.PERF_STEERING_ANGLE,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                Float.class).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testPerfRearSteeringAngleIfSupported() {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.adoptShellPermissionIdentity(Car.PERMISSION_READ_STEERING_STATE);
+
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.PERF_REAR_STEERING_ANGLE,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                Float.class).build().verify(mCarPropertyManager);
     }
 
 

@@ -30,12 +30,9 @@ import android.net.Credentials;
 import android.net.LocalServerSocket;
 import android.net.LocalSocket;
 import android.net.LocalSocketAddress;
-import android.os.ParcelFileDescriptor;
-import android.os.SystemClock;
 import android.system.Os;
 import android.system.OsConstants;
 import android.system.StructTimeval;
-import android.system.UnixSocketAddress;
 
 import androidx.test.runner.AndroidJUnit4;
 
@@ -196,7 +193,7 @@ public class LocalSocketTest {
     }
 
     // http://b/31205169
-    @Test
+    @Test @IgnoreUpTo(SC_V2)  // Crashes on pre-T due to a JNI bug. See http://r.android.com/2096720
     public void testSetSoTimeout_readTimeout() throws Exception {
         String address = ADDRESS_PREFIX + "_testSetSoTimeout_readTimeout";
 

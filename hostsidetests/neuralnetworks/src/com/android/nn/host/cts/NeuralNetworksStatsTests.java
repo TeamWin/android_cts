@@ -115,6 +115,7 @@ public class NeuralNetworksStatsTests extends DeviceTestCase implements IBuildRe
         assertThat(atom.getCompilationTimeSumSquaredMillis()).isAtLeast(0);
         assertThat(atom.getCompilationTimeCount()).isGreaterThan(0);
         assertThat(atom.getCount()).isGreaterThan(0);
+        // atom.getModelArchHash64() can have any value
 
         for (EventMetricData event : data) {
             NeuralNetworksCompilationCompleted current = event.getAtom()
@@ -158,6 +159,7 @@ public class NeuralNetworksStatsTests extends DeviceTestCase implements IBuildRe
         assertFalse(atom.getHasControlFlow());
         assertFalse(atom.getHasDynamicTemporaries());
         assertThat(atom.getCount()).isGreaterThan(0);
+        // atom.getModelArchHash64() can have any value
 
         for (EventMetricData event : data) {
             NeuralNetworksCompilationFailed current = event.getAtom()
@@ -216,6 +218,7 @@ public class NeuralNetworksStatsTests extends DeviceTestCase implements IBuildRe
         assertThat(atom.getDurationRuntimeSumSquaredMicros()).isAtLeast(0);
         assertThat(atom.getDurationRuntimeCount()).isGreaterThan(0);
         assertThat(atom.getCount()).isGreaterThan(0);
+        // atom.getModelArchHash64() can have any value
 
         for (EventMetricData event : data) {
             NeuralNetworksExecutionCompleted current = event.getAtom()
@@ -260,6 +263,7 @@ public class NeuralNetworksStatsTests extends DeviceTestCase implements IBuildRe
         assertFalse(atom.getHasControlFlow());
         assertFalse(atom.getHasDynamicTemporaries());
         assertThat(atom.getCount()).isGreaterThan(0);
+        // atom.getModelArchHash64() can have any value
 
         for (EventMetricData event : data) {
             NeuralNetworksExecutionFailed current = event.getAtom()

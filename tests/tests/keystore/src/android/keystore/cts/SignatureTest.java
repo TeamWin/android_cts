@@ -24,13 +24,22 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.keystore.cts.R;
+import android.content.Context;
 import android.keystore.cts.util.EmptyArray;
 import android.keystore.cts.util.ImportedKey;
 import android.keystore.cts.util.TestUtils;
+import android.security.keystore.KeyInfo;
+import android.security.keystore.KeyPermanentlyInvalidatedException;
+import android.security.keystore.KeyProperties;
+import android.security.keystore.KeyProtection;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyStore;
@@ -49,17 +58,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-
-import android.content.Context;
-import android.security.keystore.KeyInfo;
-import android.security.keystore.KeyPermanentlyInvalidatedException;
-import android.security.keystore.KeyProperties;
-import android.security.keystore.KeyProtection;
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * Tests for algorithm-agnostic functionality of {@code Signature} implementations backed by Android
@@ -366,6 +364,9 @@ public class SignatureTest {
         Set<String> actualSigAlgsLowerCase = new HashSet<String>();
         Set<String> expectedSigAlgsLowerCase = new HashSet<String>(
                 Arrays.asList(TestUtils.toLowerCase(EXPECTED_SIGNATURE_ALGORITHMS)));
+        //TODO(b/233037333): Move this value to the EXPECTED_SIGNATURE_ALGORITHMS array, once
+        //we have confirmed key import is working for Ed25519 and have a key to import.
+        expectedSigAlgsLowerCase.add("ed25519");
         for (Service service : services) {
             if ("Signature".equalsIgnoreCase(service.getType())) {
                 String algLowerCase = service.getAlgorithm().toLowerCase(Locale.US);

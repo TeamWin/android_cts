@@ -454,6 +454,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     /** Verify that app without READ_EXTERNAL can play default URIs in external storage. */
     @Test
     public void testExternalStorageReadDefaultUris() throws Exception {
+        Throwable existingException = null;
         try {
             wipePrimaryExternalStorage();
 
@@ -472,14 +473,31 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
                 runDeviceTests(
                         NONE_PKG, NONE_PKG + ".ReadDefaultUris", "testPlayDefaultUris", user);
             }
-        } finally {
-            // Make sure the provider and uris are reset on failure.
-            for (int user : mUsers) {
-                runDeviceTests(
-                        WRITE_PKG, WRITE_PKG + ".ChangeDefaultUris", "testResetDefaultUris", user);
+        } catch (Throwable t) {
+            Log.e(TAG, "Test exception: " + t);
+            // Don't rethrow if there is already an exception.
+            if (existingException == null) {
+                existingException = t;
+                throw t;
             }
-            getDevice().uninstallPackage(NONE_PKG);
-            getDevice().uninstallPackage(WRITE_PKG);
+        } finally {
+            try {
+                // Make sure the provider and uris are reset on failure.
+                for (int user : mUsers) {
+                    runDeviceTests(
+                            WRITE_PKG, WRITE_PKG + ".ChangeDefaultUris", "testResetDefaultUris",
+                            user);
+                }
+                getDevice().uninstallPackage(NONE_PKG);
+                getDevice().uninstallPackage(WRITE_PKG);
+            } catch (Throwable t) {
+                Log.e(TAG, "Cleanup exception: " + t);
+                // Don't rethrow if there is already an exception.
+                if (existingException == null) {
+                    existingException = t;
+                    throw t;
+                }
+            }
         }
     }
 

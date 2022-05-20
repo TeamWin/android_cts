@@ -19,6 +19,7 @@ package android.server.biometrics;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricPrompt;
 import android.hardware.biometrics.SensorProperties;
@@ -272,5 +273,18 @@ public class Utils {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Retrieves HIDL biometric sensor configuration defined in config_biometric_sensors.
+     *
+     * @param context The system context.
+     * @return List of biometric sensors on the device, in decreasing strength, otherwise null.
+     */
+    @Nullable
+    public static String[] getSensorConfiguration(Context context) {
+        final int sensorConfigId = context.getResources().getSystem().getIdentifier(
+                "config_biometric_sensors", "array", "android");
+        return context.getResources().getSystem().getStringArray(sensorConfigId);
     }
 }

@@ -172,6 +172,7 @@ public class ExactAlarmsTest {
     @After
     public void removeFromWhitelists() {
         removeFromWhitelists(sContext.getOpPackageName());
+        removeFromWhitelists(TEST_APP_PACKAGE);
     }
 
     private void removeFromWhitelists(String packageName) {

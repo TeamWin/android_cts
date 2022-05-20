@@ -34,6 +34,16 @@
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/>
             </intent-filter>
         </receiver>
+
+        <!-- This activity is used to show "Work Policy Info" in Settings for Managed Devices -->
+        <activity android:name=".WorkPolicyInfoActivity"
+                  android:exported="true"
+                  android:launchMode="singleTask">
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="android.settings.SHOW_WORK_POLICY_INFO"/>
+            </intent-filter>
+        </activity>
     </application>
     <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="28"/>
 </manifest>
