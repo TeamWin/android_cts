@@ -1494,6 +1494,7 @@ public class BroadcastResponseStatsTest {
     }
 
     @AppModeFull(reason = "No broadcast message response stats in instant apps")
+    @MediumTest
     @Test
     public void testBroadcastResponseStats_broadcastSession() throws Exception {
         final long broadcastSessionDurationMs = TimeUnit.MINUTES.toMillis(1);
@@ -1563,6 +1564,7 @@ public class BroadcastResponseStatsTest {
     }
 
     @AppModeFull(reason = "No broadcast message response stats in instant apps")
+    @MediumTest
     @Test
     public void testBroadcastResponseStats_broadcastSession_withLateNotification()
             throws Exception {
@@ -1638,6 +1640,7 @@ public class BroadcastResponseStatsTest {
     }
 
     @AppModeFull(reason = "No broadcast message response stats in instant apps")
+    @MediumTest
     @Test
     public void testBroadcastResponseStats_broadcastSessionWithResponse() throws Exception {
         final long broadcastSessionWithResponseDurationMs = TimeUnit.MINUTES.toMillis(1);
@@ -1715,6 +1718,7 @@ public class BroadcastResponseStatsTest {
     }
 
     @AppModeFull(reason = "No broadcast message response stats in instant apps")
+    @MediumTest
     @Test
     public void testBroadcastResponseStats_broadcastSessionWithResponse_recordOnlyOne()
             throws Exception {
