@@ -21,6 +21,7 @@ import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL
 import static android.Manifest.permission.REVOKE_RUNTIME_PERMISSIONS;
 import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_FREQUENT;
 import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_RARE;
+import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_WORKING_SET;
 import static android.provider.DeviceConfig.NAMESPACE_APP_STANDBY;
 
 import static org.junit.Assert.assertEquals;
@@ -158,14 +159,15 @@ public class UsageStatsTest {
     private static final ComponentName TEST_APP2_PIP_COMPONENT = new ComponentName(TEST_APP2_PKG,
             TEST_APP2_CLASS_PIP);
 
-    private static final String TEST_APP3_PKG = "android.app.usage.cts.test3";
-    private static final String TEST_APP4_PKG = "android.app.usage.cts.test4";
+    private static final String TEST_APP_API_32_PKG = "android.app.usage.cts.testapi32";
 
     // TODO(206518483): Define these constants in UsageStatsManager to avoid hardcoding here.
     private static final String KEY_NOTIFICATION_SEEN_HOLD_DURATION =
             "notification_seen_duration";
     private static final String KEY_NOTIFICATION_SEEN_PROMOTED_BUCKET =
             "notification_seen_promoted_bucket";
+    private static final String KEY_RETAIN_NOTIFICATION_SEEN_IMPACT_FOR_PRE_T_APPS =
+            "retain_notification_seen_impact_for_pre_t_apps";
 
     private static final int DEFAULT_TIMEOUT_MS = 10_000;
 
@@ -894,24 +896,37 @@ public class UsageStatsTest {
             mUiDevice.wakeUp();
             dismissKeyguard();
             final TestServiceConnection connection = bindToTestServiceAndGetConnection();
+            final TestServiceConnection connection2 = bindToTestServiceAndGetConnection(
+                    TEST_APP_API_32_PKG);
             try {
                 ITestReceiver testReceiver = connection.getITestReceiver();
-                testReceiver.cancelAll();
-                testReceiver.createNotificationChannel(TEST_NOTIFICATION_CHANNEL_ID,
-                        TEST_NOTIFICATION_CHANNEL_NAME,
-                        TEST_NOTIFICATION_CHANNEL_DESC);
-                testReceiver.postNotification(TEST_NOTIFICATION_ID_1,
-                        buildNotification(TEST_NOTIFICATION_CHANNEL_ID, TEST_NOTIFICATION_ID_1,
-                                TEST_NOTIFICATION_TEXT_1));
+                ITestReceiver testReceiver2 = connection2.getITestReceiver();
+                for (ITestReceiver receiver : new ITestReceiver[] {
+                        testReceiver,
+                        testReceiver2
+                }) {
+                    receiver.cancelAll();
+                    receiver.createNotificationChannel(TEST_NOTIFICATION_CHANNEL_ID,
+                            TEST_NOTIFICATION_CHANNEL_NAME,
+                            TEST_NOTIFICATION_CHANNEL_DESC);
+                    receiver.postNotification(TEST_NOTIFICATION_ID_1,
+                            buildNotification(TEST_NOTIFICATION_CHANNEL_ID, TEST_NOTIFICATION_ID_1,
+                                    TEST_NOTIFICATION_TEXT_1));
+                }
             } finally {
                 connection.unbind();
+                connection2.unbind();
             }
-            setStandByBucket(TEST_APP_PKG, "rare");
-            executeShellCmd("cmd usagestats clear-last-used-timestamps " + TEST_APP_PKG);
-            waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(TEST_APP_PKG),
-                    STANDBY_BUCKET_RARE);
+            for (String pkg : new String[] {TEST_APP_PKG, TEST_APP_API_32_PKG}) {
+                setStandByBucket(pkg, "rare");
+                executeShellCmd("cmd usagestats clear-last-used-timestamps " + pkg);
+                waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(pkg),
+                        STANDBY_BUCKET_RARE);
+            }
             mUiDevice.openNotification();
             waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(TEST_APP_PKG),
+                    STANDBY_BUCKET_FREQUENT);
+            waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(TEST_APP_API_32_PKG),
                     STANDBY_BUCKET_FREQUENT);
             SystemClock.sleep(promotedBucketHoldDurationMs);
             // Verify that after the promoted duration expires, the app drops into a
@@ -923,6 +938,86 @@ public class UsageStatsTest {
             waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(TEST_APP_PKG),
                     result -> result > STANDBY_BUCKET_FREQUENT,
                     "bucket should be > FREQUENT");
+            waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(TEST_APP_API_32_PKG),
+                    result -> result > STANDBY_BUCKET_FREQUENT,
+                    "bucket should be > FREQUENT");
+            mUiDevice.pressHome();
+        }
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @MediumTest
+    @Test
+    public void testNotificationSeen_verifyBucket_retainPreTImpact() throws Exception {
+        // Skip the test for wearable devices, televisions and automotives; none of them have
+        // a notification shade, as notifications are shown via a different path than phones
+        assumeFalse("Test cannot run on a watch- notification shade is not shown",
+                mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH));
+        assumeFalse("Test cannot run on a television- notifications are not shown",
+                mContext.getPackageManager().hasSystemFeature(
+                        PackageManager.FEATURE_LEANBACK_ONLY));
+        assumeFalse("Test cannot run on an automotive - notification shade is not shown",
+                mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+
+        final long promotedBucketHoldDurationMs = TimeUnit.MINUTES.toMillis(2);
+        try (DeviceConfigStateHelper deviceConfigStateHelper =
+                     new DeviceConfigStateHelper(NAMESPACE_APP_STANDBY)) {
+            deviceConfigStateHelper.set(KEY_NOTIFICATION_SEEN_PROMOTED_BUCKET,
+                    String.valueOf(STANDBY_BUCKET_FREQUENT));
+            deviceConfigStateHelper.set(KEY_NOTIFICATION_SEEN_HOLD_DURATION,
+                    String.valueOf(promotedBucketHoldDurationMs));
+            deviceConfigStateHelper.set(KEY_RETAIN_NOTIFICATION_SEEN_IMPACT_FOR_PRE_T_APPS,
+                    String.valueOf(true));
+
+            mUiDevice.wakeUp();
+            dismissKeyguard();
+            final TestServiceConnection connection = bindToTestServiceAndGetConnection();
+            final TestServiceConnection connection2 = bindToTestServiceAndGetConnection(
+                    TEST_APP_API_32_PKG);
+            try {
+                ITestReceiver testReceiver = connection.getITestReceiver();
+                ITestReceiver testReceiver2 = connection2.getITestReceiver();
+                for (ITestReceiver receiver : new ITestReceiver[] {
+                        testReceiver,
+                        testReceiver2
+                }) {
+                    receiver.cancelAll();
+                    receiver.createNotificationChannel(TEST_NOTIFICATION_CHANNEL_ID,
+                            TEST_NOTIFICATION_CHANNEL_NAME,
+                            TEST_NOTIFICATION_CHANNEL_DESC);
+                    receiver.postNotification(TEST_NOTIFICATION_ID_1,
+                            buildNotification(TEST_NOTIFICATION_CHANNEL_ID, TEST_NOTIFICATION_ID_1,
+                                    TEST_NOTIFICATION_TEXT_1));
+                }
+            } finally {
+                connection.unbind();
+                connection2.unbind();
+            }
+            for (String pkg : new String[] {TEST_APP_PKG, TEST_APP_API_32_PKG}) {
+                setStandByBucket(pkg, "rare");
+                executeShellCmd("cmd usagestats clear-last-used-timestamps " + pkg);
+                waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(pkg),
+                        STANDBY_BUCKET_RARE);
+            }
+            mUiDevice.openNotification();
+            waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(TEST_APP_PKG),
+                    STANDBY_BUCKET_FREQUENT);
+            waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(TEST_APP_API_32_PKG),
+                    STANDBY_BUCKET_WORKING_SET);
+            SystemClock.sleep(promotedBucketHoldDurationMs);
+            // Verify that after the promoted duration expires, the app drops into a
+            // lower standby bucket.
+            // Note: "set-standby-bucket" command only updates the bucket of the app and not
+            // it's last used timestamps. So, it is possible when the standby bucket is calculated
+            // the app is not going to be back in RARE bucket we set earlier. So, just verify
+            // the app gets demoted to some lower bucket.
+            waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(TEST_APP_PKG),
+                    result -> result > STANDBY_BUCKET_FREQUENT,
+                    "bucket should be > FREQUENT");
+            // App targeting api level 32 should still be in the working set bucket after a few
+            // minutes.
+            waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(TEST_APP_API_32_PKG),
+                    STANDBY_BUCKET_WORKING_SET);
             mUiDevice.pressHome();
         }
     }
