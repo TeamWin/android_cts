@@ -252,8 +252,9 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
             eventList[eventIdx++] = e.getEvent();
         }
         String[] actualEvents = TestConstants.convertToStringArray(eventList);
-        String[] expectedEvents = new String[] {TestConstants.EVENT_CAMERA_UNAVAILABLE_STR,
-                TestConstants.EVENT_CAMERA_CONNECT_STR};
+        String[] expectedEvents = new String[] { TestConstants.EVENT_ACTIVITY_RESUMED_STR,
+                TestConstants.EVENT_CAMERA_UNAVAILABLE_STR,
+                TestConstants.EVENT_CAMERA_CONNECT_STR };
         String[] ignoredEvents = new String[] { TestConstants.EVENT_CAMERA_AVAILABLE_STR,
                 TestConstants.EVENT_CAMERA_UNAVAILABLE_STR };
         assertOrderedEvents(actualEvents, expectedEvents, ignoredEvents);
@@ -384,9 +385,6 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
         // Setup camera manager
         Handler cameraHandler = new Handler(mContext.getMainLooper());
 
-        WindowMetrics metrics = getActivity().getWindowManager().getCurrentWindowMetrics();
-        Rect initialBounds = metrics.getBounds();
-
         startRemoteProcess(Camera2Activity.class, "camera2ActivityProcess",
                 true /*splitScreen*/);
 
@@ -395,33 +393,42 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
                 TestConstants.EVENT_CAMERA_CONNECT);
         assertNotNull("Camera device not setup in remote process!", allEvents);
 
+        WindowMetrics metrics = getActivity().getWindowManager().getCurrentWindowMetrics();
+        Rect firstBounds = metrics.getBounds();
+
+        Rect secondBounds = new Rect();
+        boolean activityResumed = false;
+        boolean cameraConnected = false;
+        for (ErrorLoggingService.LogEvent e : allEvents) {
+            int eventTag = e.getEvent();
+            if (eventTag == TestConstants.EVENT_ACTIVITY_RESUMED) {
+                String[] components = e.getLogText().split(":");
+                secondBounds.left = Integer.parseInt(components[0]);
+                secondBounds.top = Integer.parseInt(components[1]);
+                secondBounds.right = Integer.parseInt(components[2]);
+                secondBounds.bottom = Integer.parseInt(components[3]);
+                activityResumed = true;
+            } else if (eventTag == TestConstants.EVENT_CAMERA_CONNECT) {
+                cameraConnected = true;
+            }
+        }
+        assertTrue("Remote activity never resumed!", activityResumed);
+        assertTrue("Camera device not setup in remote process!", cameraConnected);
+
+        Log.v(TAG, "Split bounds: (" + firstBounds.left + ", " + firstBounds.top + ", "
+                + firstBounds.right + ", " + firstBounds.bottom + "), ("
+                + secondBounds.left + ", " + secondBounds.top + ", "
+                + secondBounds.right + ", " + secondBounds.bottom + ")");
+
         CameraManager.AvailabilityCallback mockAvailCb = mock(
                 CameraManager.AvailabilityCallback.class);
         manager.registerAvailabilityCallback(mockAvailCb, cameraHandler);
-        metrics = getActivity().getWindowManager().getCurrentWindowMetrics();
-        Rect splitBounds = metrics.getBounds();
-
-        // The original of the initial and split activity bounds should remain the same
-        assertTrue("Initial bounds and split bounds do not match! "
-                + "(" + initialBounds.left + ", " + initialBounds.top + ") vs. "
-                + "(" + splitBounds.left + ", " + splitBounds.top + ")",
-                (initialBounds.left == splitBounds.left)
-                && (initialBounds.top == splitBounds.top));
-
-        Rect secondBounds;
-        if (initialBounds.right > splitBounds.right) {
-            secondBounds = new Rect(splitBounds.right + 1, initialBounds.top, initialBounds.right,
-                    initialBounds.bottom);
-        } else {
-            secondBounds = new Rect(initialBounds.left, splitBounds.bottom + 1, initialBounds.right,
-                    initialBounds.bottom);
-        }
 
         // Priorities are also expected to change when a second activity only gains or loses focus
         // while running in split screen mode
-        injectTapEvent(splitBounds.centerX(), splitBounds.centerY());
+        injectTapEvent(firstBounds.centerX(), firstBounds.centerY());
         injectTapEvent(secondBounds.centerX(), secondBounds.centerY());
-        injectTapEvent(splitBounds.centerX(), splitBounds.centerY());
+        injectTapEvent(firstBounds.centerX(), firstBounds.centerY());
 
         verify(mockAvailCb, timeout(
                 permissionCallbackTimeoutMs).atLeastOnce()).onCameraAccessPrioritiesChanged();
