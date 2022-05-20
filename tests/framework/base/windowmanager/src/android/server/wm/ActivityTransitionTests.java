@@ -31,6 +31,7 @@ import static android.view.RoundedCorner.POSITION_BOTTOM_LEFT;
 import static android.view.RoundedCorner.POSITION_BOTTOM_RIGHT;
 import static android.view.RoundedCorner.POSITION_TOP_LEFT;
 import static android.view.RoundedCorner.POSITION_TOP_RIGHT;
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
@@ -56,9 +57,9 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.cts.R;
 import android.util.Range;
 import android.view.RoundedCorner;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowInsets;
-import android.view.WindowManager;
-import android.view.WindowMetrics;
 
 import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -390,13 +391,12 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
     }
 
     private TestBounds getTestBounds() {
-        startLauncherActivity();
+        final LauncherActivity activity = startLauncherActivity();
         final TestBounds bounds = new TestBounds();
-        bounds.rect = getActivityFullyVisibleRegion();
-        bounds.excluded = getRoundedCornersRegions();
+        bounds.rect = activity.getActivityFullyVisibleRegion();
+        bounds.excluded = activity.getRoundedCornersRegions();
         launchHomeActivityNoWait();
         removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
-
         return bounds;
     }
 
@@ -501,7 +501,6 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         for (int x = testBounds.rect.left; x < testBounds.rect.right; x++) {
             for (int y = testBounds.rect.top;
                     y < testBounds.rect.bottom; y++) {
-
                 if (rectsContain(testBounds.excluded, x, y)) {
                     continue;
                 }
@@ -540,67 +539,6 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
             }
         }
         return false;
-    }
-
-    private Rect getActivityFullyVisibleRegion() {
-        final Rect activityBounds = getTopAppBounds();
-
-        final WindowMetrics windowMetrics = mContext.getSystemService(
-                WindowManager.class).getCurrentWindowMetrics();
-
-        final Insets insets = windowMetrics.getWindowInsets()
-                .getInsets(WindowInsets.Type.systemBars()
-                | WindowInsets.Type.displayCutout());
-        activityBounds.inset(insets);
-
-        return activityBounds;
-    }
-
-    private ArrayList<Rect> getRoundedCornersRegions() {
-        final WindowMetrics windowMetrics = mContext.getSystemService(
-                WindowManager.class).getCurrentWindowMetrics();
-
-        RoundedCorner topRightCorner =
-                windowMetrics.getWindowInsets().getRoundedCorner(POSITION_TOP_RIGHT);
-        RoundedCorner topLeftCorner =
-                windowMetrics.getWindowInsets().getRoundedCorner(POSITION_TOP_LEFT);
-        RoundedCorner bottomRightCorner =
-                windowMetrics.getWindowInsets().getRoundedCorner(POSITION_BOTTOM_RIGHT);
-        RoundedCorner bottomLeftCorner =
-                windowMetrics.getWindowInsets().getRoundedCorner(POSITION_BOTTOM_LEFT);
-
-        final ArrayList<Rect> roundedCornersRects = new ArrayList<>();
-
-        if (topRightCorner != null) {
-            final Point center = topRightCorner.getCenter();
-            final int radius = topRightCorner.getRadius();
-            roundedCornersRects.add(
-                    new Rect(center.x, center.y - radius,
-                            center.x + radius, center.y));
-        }
-        if (topLeftCorner != null) {
-            final Point center = topLeftCorner.getCenter();
-            final int radius = topLeftCorner.getRadius();
-            roundedCornersRects.add(
-                    new Rect(center.x - radius, center.y - radius,
-                            center.x, center.y));
-        }
-        if (bottomRightCorner != null) {
-            final Point center = bottomRightCorner.getCenter();
-            final int radius = bottomRightCorner.getRadius();
-            roundedCornersRects.add(
-                    new Rect(center.x, center.y,
-                            center.x + radius, center.y + radius));
-        }
-        if (bottomLeftCorner != null) {
-            final Point center = bottomLeftCorner.getCenter();
-            final int radius = bottomLeftCorner.getRadius();
-            roundedCornersRects.add(
-                    new Rect(center.x - radius, center.y,
-                            center.x, center.y + radius));
-        }
-
-        return roundedCornersRects;
     }
 
     private Rect getTopAppBounds() {
@@ -773,6 +711,8 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
 
     public static class LauncherActivity extends Activity {
 
+        private WindowInsets mInsets;
+
         @Override
         protected void onCreate(@Nullable Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -780,6 +720,60 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
             // Ensure the activity is edge-to-edge
             // In tests we rely on the activity's content filling the entire window
             getWindow().setDecorFitsSystemWindows(false);
+
+            View view = new View(this);
+            view.setLayoutParams(new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+            view.setOnApplyWindowInsetsListener((v, insets) -> mInsets = insets);
+            setContentView(view);
+        }
+
+        private Rect getActivityFullyVisibleRegion() {
+            final Rect activityBounds = getWindowManager().getCurrentWindowMetrics().getBounds();
+            final Insets insets = mInsets.getInsets(WindowInsets.Type.systemBars()
+                    | WindowInsets.Type.displayCutout());
+            activityBounds.inset(insets);
+
+            return new Rect(activityBounds);
+        }
+
+        private ArrayList<Rect> getRoundedCornersRegions() {
+            RoundedCorner topRightCorner = mInsets.getRoundedCorner(POSITION_TOP_RIGHT);
+            RoundedCorner topLeftCorner = mInsets.getRoundedCorner(POSITION_TOP_LEFT);
+            RoundedCorner bottomRightCorner = mInsets.getRoundedCorner(POSITION_BOTTOM_RIGHT);
+            RoundedCorner bottomLeftCorner = mInsets.getRoundedCorner(POSITION_BOTTOM_LEFT);
+
+            final ArrayList<Rect> roundedCornersRects = new ArrayList<>();
+
+            if (topRightCorner != null) {
+                final Point center = topRightCorner.getCenter();
+                final int radius = topRightCorner.getRadius();
+                roundedCornersRects.add(
+                        new Rect(center.x, center.y - radius,
+                                center.x + radius, center.y));
+            }
+            if (topLeftCorner != null) {
+                final Point center = topLeftCorner.getCenter();
+                final int radius = topLeftCorner.getRadius();
+                roundedCornersRects.add(
+                        new Rect(center.x - radius, center.y - radius,
+                                center.x, center.y));
+            }
+            if (bottomRightCorner != null) {
+                final Point center = bottomRightCorner.getCenter();
+                final int radius = bottomRightCorner.getRadius();
+                roundedCornersRects.add(
+                        new Rect(center.x, center.y,
+                                center.x + radius, center.y + radius));
+            }
+            if (bottomLeftCorner != null) {
+                final Point center = bottomLeftCorner.getCenter();
+                final int radius = bottomLeftCorner.getRadius();
+                roundedCornersRects.add(
+                        new Rect(center.x - radius, center.y,
+                                center.x, center.y + radius));
+            }
+
+            return roundedCornersRects;
         }
 
         public void startActivity(ActivityOptions activityOptions, Class<?> klass) {
