@@ -35,6 +35,7 @@ import static android.server.wm.lifecycle.LifecycleConstants.ON_USER_LEAVE_HINT;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Looper;
 
@@ -45,8 +46,8 @@ public class LifecycleTrackingActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mEventLogClient = EventLog.EventLogClient.create(
-                this.getClass().getCanonicalName(), this);
+        mEventLogClient = EventLog.EventLogClient.create(this.getClass().getCanonicalName(), this,
+                Uri.parse("content://android.server.wm.lifecycle.logprovider"));
         mEventLogClient.onCallback(ON_CREATE);
 
         final Intent intent = getIntent();

@@ -477,6 +477,12 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         final UiObject muteButton = findMuteButton();
         // unmute the audio of video preview
         clickAndWait(muteButton);
+
+        // Remote video preview involves binder calls
+        // Wait for Binder calls to complete and device to be idle
+        MediaStore.waitForIdle(mContext.getContentResolver());
+        mDevice.waitForIdle();
+
         assertMuteButtonState(muteButton, /* isMuted */ false);
 
         // Verify that test lost the audio focus because PhotoPicker has requested audio focus now.

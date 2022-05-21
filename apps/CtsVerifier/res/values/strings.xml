@@ -5423,6 +5423,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_status">Status</string>
     <string name="audio_general_pass">PASS</string>
     <string name="audio_general_fail">FAIL</string>
+    <string name="audio_general_not_tested">Not Tested</string>
 
     <string name="audio_general_Input">Input</string>
     <string name="audio_general_Output">Output</string>
@@ -5453,7 +5454,7 @@ You should be prompted to select credentials; choose the ones you just installed
           \nThe system will measure the input-output audio latency by injecting an audio signal into
           the output and compute the time between generating the signal and recording it back.
           You can vary the Audio Level slider to ensure the pulse will feed back at adequate levels.
-          Repeat until a confidence level >= 0.6 is achieved. When each route test is completed the
+          Repeat until a sufficient confidence is achieved. When each route test is completed, the
           measured and required latencies will be displayed.
           \nWhen all test routes have passed, the test as a whole can be passed.
     </string>
@@ -5463,11 +5464,12 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_loopback_plug_ready_btn">Loopback Plug Ready</string>
     <string name="audio_loopback_instructions2">
           Set the audio level to a suitable value, then press Test button.
-          It might require multiple tries until a confidence >= 0.6 is achieved.
+          It might require multiple tries until a sufficient confidence is achieved.
     </string>
     <string name="audio_loopback_level_text">Audio Level</string>
     <string name="audio_loopback_test_btn">Test</string>
     <string name="audio_loopback_results_text">Results...</string>
+    <string name="audio_loopback_test_all_paths">Please test all supported paths.</string>
 
     <string name="audio_loopback_speakermicpath_instructions">Place the DUT flat on a table
     in a quiet room. Press the Start button and allow the test to proceed.</string>

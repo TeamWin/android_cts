@@ -411,16 +411,29 @@ public class BluetoothCommunicationService {
         @Override
         public void run() {
             Log.i(TAG, "Begin connectedThread");
-            byte[] buffer = new byte[1024];
-            byte[] stitchedMessage = new byte[1024];
-            int bytes;
+
             // Keep listening to the InputStream while connected
+            byte[] stitchedMessage = new byte[0];
+            byte[] leftOver = new byte[0];
             int partialMessageSize = 0;
             int messageSize = 0;
             while (true) {
                 try {
+                    byte[] buffer = new byte[0];
+
                     // Read from the InputStream
-                    bytes = inStream.read(buffer);
+                    byte[] newBuffer = new byte[1024];
+                    int bytes = inStream.read(newBuffer);
+
+                    if (leftOver.length > 0) {
+                        buffer = new byte[leftOver.length + bytes];
+                        System.arraycopy(leftOver, 0, buffer, 0, leftOver.length);
+                        System.arraycopy(newBuffer, 0, buffer, leftOver.length, bytes);
+
+                        leftOver = new byte[0];
+                    } else {
+                        buffer = Arrays.copyOf(newBuffer, bytes);
+                    }
 
                     if (partialMessageSize == 0) {
                         byte[] messageSizeBytes = Arrays.copyOf(buffer, HEADER_SIZE);
@@ -428,12 +441,30 @@ public class BluetoothCommunicationService {
                         if (stitchedMessage.length < messageSize) {
                             stitchedMessage = new byte[messageSize];
                         }
-                        partialMessageSize = bytes - HEADER_SIZE;
+                        partialMessageSize = buffer.length - HEADER_SIZE;
                         System.arraycopy(buffer, HEADER_SIZE, stitchedMessage, 0,
-                                bytes - HEADER_SIZE);
+                                buffer.length - HEADER_SIZE);
                     } else {
-                        System.arraycopy(buffer, 0, stitchedMessage, partialMessageSize, bytes);
-                        partialMessageSize += bytes;
+                        System.arraycopy(buffer, 0, stitchedMessage, partialMessageSize,
+                                Math.min(stitchedMessage.length - partialMessageSize,
+                                        buffer.length));
+
+                        if (stitchedMessage.length - partialMessageSize < buffer.length) {
+                            // There are more messages in the stream
+                            leftOver = Arrays.copyOfRange(buffer,
+                                    stitchedMessage.length - partialMessageSize,
+                                    buffer.length);
+
+                            // Send the obtained bytes to the UI Activity
+                            handler.obtainMessage(MESSAGE_READ, messageSize, -1,
+                                    stitchedMessage).sendToTarget();
+                            stitchedMessage = new byte[0];
+                            partialMessageSize = 0;
+                            messageSize = 0;
+                            continue;
+                        } else {
+                            partialMessageSize += buffer.length;
+                        }
                     }
 
                     if (partialMessageSize > messageSize) {
@@ -446,6 +477,7 @@ public class BluetoothCommunicationService {
                         // Send the obtained bytes to the UI Activity
                         handler.obtainMessage(MESSAGE_READ, messageSize, -1,
                                 stitchedMessage).sendToTarget();
+                        stitchedMessage = new byte[0];
                         partialMessageSize = 0;
                         messageSize = 0;
                     }
@@ -475,7 +507,7 @@ public class BluetoothCommunicationService {
 
                 outStream.write(bufferWithHeader);
                 // Share the sent message back to the UI Activity
-                handler.obtainMessage(MESSAGE_WRITE, -1, -1, bufferWithHeader).sendToTarget();
+//                handler.obtainMessage(MESSAGE_WRITE, -1, -1, bufferWithHeader).sendToTarget();
             } catch (IOException e) {
                 Log.e(TAG, "Exception during write", e);
             }

@@ -46,8 +46,6 @@ public class EventLog extends ContentProvider {
     private static final String EXTRA_KEY_TAG = "key_activity";
     /** Puts a lifecycle or callback into the container. */
     private static final String METHOD_ADD_CALLBACK = "add_callback";
-    /** Content provider URI for cross-process lifecycle transitions collecting. */
-    private static final Uri URI = Uri.parse("content://android.server.wm.lifecycle.logprovider");
 
     /**
      * Log for encountered activity callbacks. Note that methods accessing or modifying this
@@ -145,13 +143,16 @@ public class EventLog extends ContentProvider {
             mClient.close();
         }
 
-        public static EventLogClient create(String owner, Context context) {
+        /**
+         * @param uri Content provider URI for cross-process event log collecting.
+         */
+        public static EventLogClient create(String tag, Context context, Uri uri) {
             final ContentProviderClient client = context.getContentResolver()
-                    .acquireContentProviderClient(URI);
+                    .acquireContentProviderClient(uri);
             if (client == null) {
-                throw new RuntimeException("Unable to acquire " + URI);
+                throw new RuntimeException("Unable to acquire " + uri);
             }
-            return new EventLogClient(client, owner);
+            return new EventLogClient(client, tag);
         }
     }
 

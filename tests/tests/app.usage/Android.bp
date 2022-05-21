@@ -49,6 +49,7 @@ android_test {
         ":CtsUsageStatsTestApp2",
         ":CtsUsageStatsTestApp3",
         ":CtsUsageStatsTestApp1",
+        ":CtsUsageStatsTestAppApi32",
     ],
     per_testcase_directory: true,
 }
@@ -110,5 +111,18 @@ android_test_helper_app {
     ],
     aaptflags: [
         "--rename-manifest-package android.app.usage.cts.test4",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsUsageStatsTestAppApi32",
+    defaults: ["test_app_defaults"],
+    resource_dirs: [
+        "TestApp1/res",
+        "TestAppApi32/res",
+    ],
+    target_sdk_version: "32",
+    aaptflags: [
+        "--rename-manifest-package android.app.usage.cts.testapi32",
     ],
 }

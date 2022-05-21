@@ -485,6 +485,7 @@ public class CheckoutActivityTest
     // Tests to verify CheckBox by setting with AutofillValue.
     // ============================================================================================
     @Test
+    @Ignore("b/232198065 Fix touch mode problem in ActivityTestRule")
     public void autofillToggleValueWithTrue() throws Exception {
         autofillCompoundButton(AutofillValue.forToggle(true), true, true);
     }
