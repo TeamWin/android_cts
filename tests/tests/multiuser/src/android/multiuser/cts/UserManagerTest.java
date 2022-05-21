@@ -285,6 +285,8 @@ public final class UserManagerTest {
 
     @Test
     public void testSomeUserHasAccount() {
+        // TODO: (b/233197356): Replace with bedstead annotation.
+        assumeTrue(mUserManager.supportsMultipleUsers());
         UserHandle user = null;
 
         try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
@@ -298,6 +300,8 @@ public final class UserManagerTest {
 
     @Test
     public void testSomeUserHasAccount_shouldIgnoreToBeRemovedUsers() {
+        // TODO: (b/233197356): Replace with bedstead annotation.
+        assumeTrue(mUserManager.supportsMultipleUsers());
         try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
             final NewUserResponse response = mUserManager.createUser(newUserRequest());
             assertThat(response.getOperationResult()).isEqualTo(USER_OPERATION_SUCCESS);
@@ -309,6 +313,8 @@ public final class UserManagerTest {
     @Test
     public void testCreateUser_withNewUserRequest_shouldCreateUserWithCorrectProperties()
             throws PackageManager.NameNotFoundException {
+        // TODO: (b/233197356): Replace with bedstead annotation.
+        assumeTrue(mUserManager.supportsMultipleUsers());
         UserHandle user = null;
 
         try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
@@ -342,6 +348,8 @@ public final class UserManagerTest {
 
     @Test
     public void testCreateUser_withNewUserRequest_shouldNotAllowDuplicateUserAccounts() {
+        // TODO: (b/233197356): Replace with bedstead annotation.
+        assumeTrue(mUserManager.supportsMultipleUsers());
         UserHandle user1 = null;
         UserHandle user2 = null;
 

@@ -17,6 +17,7 @@
 package android.hardware.multiprocess.camera.cts;
 
 import android.app.Activity;
+import android.graphics.Rect;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
@@ -24,6 +25,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
+import android.view.WindowMetrics;
 
 /**
  * Activity implementing basic access of the Camera2 API.
@@ -62,6 +64,12 @@ public class Camera2Activity extends Activity {
     protected void onResume() {
         Log.i(TAG, "onResume called.");
         super.onResume();
+
+        WindowMetrics metrics = getWindowManager().getCurrentWindowMetrics();
+        Rect windowRect = metrics.getBounds();
+        mErrorServiceConnection.logAsync(TestConstants.EVENT_ACTIVITY_RESUMED,
+                windowRect.left + ":" + windowRect.top + ":"
+                + windowRect.right + ":" + windowRect.bottom);
 
         try {
             mCameraManager = getSystemService(CameraManager.class);

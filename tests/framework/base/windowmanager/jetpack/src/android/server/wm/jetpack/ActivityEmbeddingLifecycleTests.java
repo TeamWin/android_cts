@@ -39,6 +39,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.app.Application;
+import android.net.Uri;
 import android.os.Bundle;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestActivityWithId2;
@@ -82,8 +83,8 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         mSplitInfoConsumer = new SplitInfoLifecycleConsumer<>();
         mActivityEmbeddingComponent.setSplitInfoCallback(mSplitInfoConsumer);
 
-        mEventLogClient = EventLogClient.create(TEST_OWNER,
-                mInstrumentation.getTargetContext());
+        mEventLogClient = EventLogClient.create(TEST_OWNER, mInstrumentation.getTargetContext(),
+                Uri.parse("content://android.server.wm.jetpack.logprovider"));
 
         // Log transitions for all activities that belong to this app.
         mEventLog = new EventLog();

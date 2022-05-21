@@ -16,6 +16,14 @@
 
 package android.dpi.cts;
 
+import static android.content.res.Configuration.SCREENLAYOUT_LONG_MASK;
+import static android.content.res.Configuration.SCREENLAYOUT_LONG_NO;
+import static android.content.res.Configuration.SCREENLAYOUT_LONG_YES;
+import static android.content.res.Configuration.SCREENLAYOUT_SIZE_LARGE;
+import static android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK;
+import static android.content.res.Configuration.SCREENLAYOUT_SIZE_NORMAL;
+import static android.content.res.Configuration.SCREENLAYOUT_SIZE_XLARGE;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -24,9 +32,6 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.server.wm.IgnoreOrientationRequestSession;
 import android.test.ActivityInstrumentationTestCase2;
-import android.util.DisplayMetrics;
-import android.view.Display;
-import android.view.WindowManager;
 
 public class ConfigurationScreenLayoutTest
         extends ActivityInstrumentationTestCase2<OrientationActivity> {
@@ -37,6 +42,9 @@ public class ConfigurationScreenLayoutTest
             ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT,
             ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE,
     };
+
+    private static final int BIGGEST_LAYOUT = SCREENLAYOUT_SIZE_XLARGE
+            | SCREENLAYOUT_LONG_YES;
 
     public ConfigurationScreenLayoutTest() {
         super(OrientationActivity.class);
@@ -60,53 +68,34 @@ public class ConfigurationScreenLayoutTest
         // follow physical rotations.
         try (IgnoreOrientationRequestSession session =
                      new IgnoreOrientationRequestSession(false /* enable */)) {
-            int expectedScreenLayout = computeScreenLayout();
-            int expectedSize = expectedScreenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
-            int expectedLong = expectedScreenLayout & Configuration.SCREENLAYOUT_LONG_MASK;
 
             // Check that all four orientations report the same configuration value.
-            for (int i = 0; i < ORIENTATIONS.length; i++) {
-                Activity activity = startOrientationActivity(ORIENTATIONS[i]);
+            for (int orientation : ORIENTATIONS) {
+                Activity activity = startOrientationActivity(orientation);
                 if (activity.isInMultiWindowMode()) {
-                    // activity.setRequestedOrientation has no effect in multiwindow mode.
+                    // activity.setRequestedOrientation has no effect in multi-window mode.
                     tearDown();
                     return;
                 }
-                Configuration mConfig = activity.getResources().getConfiguration();
-                int actualSize = mConfig.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
-                int actualLong = mConfig.screenLayout & Configuration.SCREENLAYOUT_LONG_MASK;
+                final int expectedLayout = reduceScreenLayout(activity);
+                final int expectedSize = expectedLayout & SCREENLAYOUT_SIZE_MASK;
+                final int expectedLong = expectedLayout & SCREENLAYOUT_LONG_MASK;
+
+                final Configuration config = activity.getResources().getConfiguration();
+                final int actualSize = config.screenLayout & SCREENLAYOUT_SIZE_MASK;
+                final int actualLong = config.screenLayout & SCREENLAYOUT_LONG_MASK;
 
                 assertEquals("Expected screen size value of " + expectedSize + " but got "
                         + actualSize + " for orientation "
-                        + ORIENTATIONS[i], expectedSize, actualSize);
+                        + orientation, expectedSize, actualSize);
                 assertEquals("Expected screen long value of " + expectedLong + " but got "
                         + actualLong + " for orientation "
-                        + ORIENTATIONS[i], expectedLong, actualLong);
+                        + orientation, expectedLong, actualLong);
                 tearDown();
             }
         } finally {
             tearDown();
         }
-    }
-
-    /**
-     * @return expected value of {@link Configuration#screenLayout} with the
-     *         {@link Configuration#SCREENLAYOUT_LONG_MASK} and
-     *         {@link Configuration#SCREENLAYOUT_SIZE_MASK} defined
-     */
-    private int computeScreenLayout() throws Exception {
-        // 1. Start with the biggest configuration possible.
-        // 2. For each orientation start an activity and compute what it's screenLayout value is
-        // 3. Reduce the screenLayout values if they are smaller
-        // 4. Return the reduced value which is what should be reported
-        int screenLayout = Configuration.SCREENLAYOUT_SIZE_XLARGE
-                | Configuration.SCREENLAYOUT_LONG_YES;
-        for (int i = 0; i < ORIENTATIONS.length; i++) {
-            Activity activity = startOrientationActivity(ORIENTATIONS[i]);
-            screenLayout = reduceScreenLayout(activity, screenLayout);
-            tearDown();
-        }
-        return screenLayout;
     }
 
     private boolean hasDeviceFeature(final String requiredFeature) {
@@ -122,49 +111,41 @@ public class ConfigurationScreenLayoutTest
         return getActivity();
     }
 
-    // Logic copied from WindowManagerService but using DisplayMetrics instead of internal APIs
-    private int reduceScreenLayout(Context context, int screenLayout) {
+    // Logic copied from Configuration#reduceScreenLayout(int, int, int)
+    /**
+     * Returns expected value of {@link Configuration#screenLayout} with the
+     *         {@link Configuration#SCREENLAYOUT_LONG_MASK} and
+     *         {@link Configuration#SCREENLAYOUT_SIZE_MASK} defined
+     */
+    private int reduceScreenLayout(Context context) {
+        int screenLayout = BIGGEST_LAYOUT;
         int screenLayoutSize;
         boolean screenLayoutLong;
 
-        WindowManager windowManager =
-                (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-        Display display = windowManager.getDefaultDisplay();
-        DisplayMetrics metrics = new DisplayMetrics();
-        display.getMetrics(metrics);
-
-        int max = Math.max(metrics.widthPixels, metrics.heightPixels);
-        int min = Math.min(metrics.widthPixels, metrics.heightPixels);
-        int longSize = (int) (max / metrics.density);
-        int shortSize = (int) (min / metrics.density);
+        final Configuration configuration = context.getResources().getConfiguration();
+        final int longSize = Math.max(configuration.screenWidthDp, configuration.screenHeightDp);
+        final int shortSize = Math.min(configuration.screenWidthDp, configuration.screenHeightDp);
 
         if (longSize < 470) {
             screenLayoutSize = Configuration.SCREENLAYOUT_SIZE_SMALL;
             screenLayoutLong = false;
         } else {
             if (longSize >= 960 && shortSize >= 720) {
-                screenLayoutSize = Configuration.SCREENLAYOUT_SIZE_XLARGE;
+                screenLayoutSize = SCREENLAYOUT_SIZE_XLARGE;
             } else if (longSize >= 640 && shortSize >= 480) {
-                screenLayoutSize = Configuration.SCREENLAYOUT_SIZE_LARGE;
+                screenLayoutSize = SCREENLAYOUT_SIZE_LARGE;
             } else {
-                screenLayoutSize = Configuration.SCREENLAYOUT_SIZE_NORMAL;
+                screenLayoutSize = SCREENLAYOUT_SIZE_NORMAL;
             }
-
-            if (((longSize * 3) / 5) >= (shortSize - 1)) {
-                screenLayoutLong = true;
-            } else {
-                screenLayoutLong = false;
-            }
+            screenLayoutLong = ((longSize * 3) / 5) >= (shortSize - 1);
         }
 
         if (!screenLayoutLong) {
-            screenLayout = (screenLayout & ~Configuration.SCREENLAYOUT_LONG_MASK)
-                    | Configuration.SCREENLAYOUT_LONG_NO;
+            screenLayout = (screenLayout & ~SCREENLAYOUT_LONG_MASK) | SCREENLAYOUT_LONG_NO;
         }
-        int curSize = screenLayout&Configuration.SCREENLAYOUT_SIZE_MASK;
+        int curSize = screenLayout & SCREENLAYOUT_SIZE_MASK;
         if (screenLayoutSize < curSize) {
-            screenLayout = (screenLayout&~Configuration.SCREENLAYOUT_SIZE_MASK)
-                    | screenLayoutSize;
+            screenLayout = (screenLayout & ~SCREENLAYOUT_SIZE_MASK) | screenLayoutSize;
         }
         return screenLayout;
     }
@@ -180,7 +161,7 @@ public class ConfigurationScreenLayoutTest
                 || (!supportsLandscape && !supportsPortrait);
     }
 
-    // Check if it is a PC device
+    /** Checks if it is a PC device */
     private boolean isPC() {
         return hasDeviceFeature(PackageManager.FEATURE_PC);
     }
