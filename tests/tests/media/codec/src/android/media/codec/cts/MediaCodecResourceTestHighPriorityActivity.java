@@ -16,20 +16,49 @@
 package android.media.codec.cts;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Process;
 
 public class MediaCodecResourceTestHighPriorityActivity extends Activity {
     public static final String ACTION_HIGH_PRIORITY_ACTIVITY_READY =
             "android.media.codec.cts.HIGH_PRIORITY_TEST_ACTIVITY_READY";
 
+    public static final String ACTION_HIGH_PRIORITY_ACTIVITY_FINISH =
+            "android.media.codec.cts.HIGH_PRIORITY_TEST_ACTIVITY_FINISH";
+
+    private FinishBroadcastReceiver mFinishBroadcastReceiver = null;
+
     @Override
     protected void onStart() {
         super.onStart();
+
+        mFinishBroadcastReceiver = new FinishBroadcastReceiver();
+        registerReceiver(mFinishBroadcastReceiver,
+                new IntentFilter(ACTION_HIGH_PRIORITY_ACTIVITY_FINISH));
+
         Intent intent = new Intent();
         intent.setAction(ACTION_HIGH_PRIORITY_ACTIVITY_READY);
         intent.putExtra("pid", Process.myPid());
         intent.putExtra("uid", Process.myUid());
         sendBroadcast(intent);
+    }
+
+    @Override
+    protected void onStop() {
+        if (mFinishBroadcastReceiver != null) {
+            unregisterReceiver(mFinishBroadcastReceiver);
+            mFinishBroadcastReceiver = null;
+        }
+        super.onStop();
+    }
+
+    private class FinishBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            finish();
+        }
     }
 }

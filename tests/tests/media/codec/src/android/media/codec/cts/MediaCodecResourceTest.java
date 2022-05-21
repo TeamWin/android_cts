@@ -84,16 +84,19 @@ public class MediaCodecResourceTest {
     public void testCreateCodecForAnotherProcessWithoutPermissionsThrows() throws Exception {
         CodecInfo codecInfo = getFirstVideoHardwareDecoder();
         assumeTrue("No video hardware codec found.", codecInfo != null);
-        ProcessInfo processInfo = createLowPriorityProcess();
-        assertTrue("Unable to retrieve low priority process info.", processInfo != null);
-
-        boolean wasSecurityExceptionThrown = false;
         try {
+            ProcessInfo processInfo = createLowPriorityProcess();
+            assertTrue("Unable to retrieve low priority process info.", processInfo != null);
+
             MediaCodec mediaCodec = MediaCodec.createByCodecNameForClient(codecInfo.name,
                     processInfo.pid, processInfo.uid);
             fail("No SecurityException thrown when creating a codec for another process");
         } catch (SecurityException ex) {
             // expected
+        } finally {
+            destroyLowPriorityProcess();
+            // Allow time for resources to be released
+            Thread.sleep(500);
         }
     }
 
@@ -105,13 +108,15 @@ public class MediaCodecResourceTest {
         assumeTrue("No video hardware codec found.", codecInfo != null);
         assertTrue("Expected at least one max supported codec instance.",
                 codecInfo.maxSupportedInstances > 0);
-        ProcessInfo lowPriorityProcess = createLowPriorityProcess();
-        assertTrue("Unable to retrieve low priority process info.", lowPriorityProcess != null);
-        ProcessInfo highPriorityProcess = createHighPriorityProcess();
-        assertTrue("Unable to retrieve high priority process info.", highPriorityProcess != null);
 
         List<MediaCodec> mediaCodecList = new ArrayList<>();
         try {
+            ProcessInfo lowPriorityProcess = createLowPriorityProcess();
+            assertTrue("Unable to retrieve low priority process info.", lowPriorityProcess != null);
+            ProcessInfo highPriorityProcess = createHighPriorityProcess();
+            assertTrue("Unable to retrieve high priority process info.",
+                    highPriorityProcess != null);
+
             // This permission is required to create MediaCodecs on behalf of other processes.
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .adoptShellPermissionIdentity(Manifest.permission.MEDIA_RESOURCE_OVERRIDE_PID);
@@ -174,6 +179,10 @@ public class MediaCodecResourceTest {
             }
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
+            destroyHighPriorityProcess();
+            destroyLowPriorityProcess();
+            // Allow time for the codecs and other resources to be released
+            Thread.sleep(500);
         }
     }
 
@@ -185,13 +194,15 @@ public class MediaCodecResourceTest {
         assumeTrue("No video hardware codec found.", codecInfo != null);
         assertTrue("Expected at least one max supported codec instance.",
                 codecInfo.maxSupportedInstances > 0);
-        ProcessInfo lowPriorityProcess = createLowPriorityProcess();
-        assertTrue("Unable to retrieve low priority process info.", lowPriorityProcess != null);
-        ProcessInfo highPriorityProcess = createHighPriorityProcess();
-        assertTrue("Unable to retrieve high priority process info.", highPriorityProcess != null);
 
         List<MediaCodec> mediaCodecList = new ArrayList<>();
         try {
+            ProcessInfo lowPriorityProcess = createLowPriorityProcess();
+            assertTrue("Unable to retrieve low priority process info.", lowPriorityProcess != null);
+            ProcessInfo highPriorityProcess = createHighPriorityProcess();
+            assertTrue("Unable to retrieve high priority process info.",
+                    highPriorityProcess != null);
+
             // This permission is required to create MediaCodecs on behalf of other processes.
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .adoptShellPermissionIdentity(Manifest.permission.MEDIA_RESOURCE_OVERRIDE_PID);
@@ -254,6 +265,10 @@ public class MediaCodecResourceTest {
             }
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
+            destroyHighPriorityProcess();
+            destroyLowPriorityProcess();
+            // Allow time for the codecs and other resources to be released
+            Thread.sleep(500);
         }
     }
 
@@ -294,7 +309,9 @@ public class MediaCodecResourceTest {
         Intent intent = new Intent(context, MediaCodecResourceTestLowPriorityService.class);
         context.startForegroundService(intent);
         // Starting the service and receiving the broadcast should take less than 1 second
-        return processInfoBroadcastReceiver.waitForProcessInfoMs(1000);
+        ProcessInfo processInfo = processInfoBroadcastReceiver.waitForProcessInfoMs(1000);
+        context.unregisterReceiver(processInfoBroadcastReceiver);
+        return processInfo;
     }
 
     private ProcessInfo createHighPriorityProcess() {
@@ -304,10 +321,25 @@ public class MediaCodecResourceTest {
         context.registerReceiver(processInfoBroadcastReceiver,
                 new IntentFilter(ACTION_HIGH_PRIORITY_ACTIVITY_READY));
         Intent intent = new Intent(context, MediaCodecResourceTestHighPriorityActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         context.startActivity(intent);
         // Starting the activity and receiving the broadcast should take less than 1 second
-        return processInfoBroadcastReceiver.waitForProcessInfoMs(1000);
+        ProcessInfo processInfo = processInfoBroadcastReceiver.waitForProcessInfoMs(1000);
+        context.unregisterReceiver(processInfoBroadcastReceiver);
+        return processInfo;
+    }
+
+    private void destroyLowPriorityProcess() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, MediaCodecResourceTestLowPriorityService.class);
+        context.stopService(intent);
+    }
+
+    private void destroyHighPriorityProcess() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent().setAction(
+                MediaCodecResourceTestHighPriorityActivity.ACTION_HIGH_PRIORITY_ACTIVITY_FINISH);
+        context.sendBroadcast(intent);
     }
 
     private static class ProcessInfoBroadcastReceiver extends BroadcastReceiver {

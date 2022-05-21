@@ -146,6 +146,12 @@ public class CallLogTest extends InstrumentationTestCase {
      * and asserts the entries are returned.
      */
     public void testPopulateAndQueryCallAndVoicemailLogs() {
+        Context context = getInstrumentation().getContext();
+        if (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELECOM)) {
+            // This is tied to default-dialer, so don't test if the device doesn't have telecom.
+            return;
+        }
+
         try {
             // needed in order to populate call log database
             ShellUtils.runShellCommand("telecom set-default-dialer %s",
@@ -183,6 +189,12 @@ public class CallLogTest extends InstrumentationTestCase {
      * Therefore, a Security Exception is thrown.
      */
     public void testInvalidQueryToCallLog() {
+        Context context = getInstrumentation().getContext();
+        if (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELECOM)) {
+            // This is tied to default-dialer, so don't test if the device doesn't have telecom.
+            return;
+        }
+
         try {
             // needed in order to populate call log database
             ShellUtils.runShellCommand("telecom set-default-dialer %s",
