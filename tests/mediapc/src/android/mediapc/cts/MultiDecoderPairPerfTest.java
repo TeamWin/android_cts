@@ -132,16 +132,16 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
     }
 
     /**
-     * Validates if hardware decoder pairs where one or both supports secure decode and required
-     * perf are present
+     * Validates if hardware decoder pairs where one supports secure decode and required
+     * perf are present and tests with concurrent unsecure decoders
      */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     // TODO(b/218771970) Add @CddTest annotation
-    public void testReqSecureDecodeSupport() throws Exception {
+    public void testReqSecureWithUnsecureDecodeSupport() throws Exception {
         Assume.assumeTrue(Utils.isTPerfClass() || !Utils.isPerfClass());
-        Assume.assumeTrue("Skipping secure decode support tests if both are non-secure codecs",
-                isSecureSupportedCodec(mFirstPair.second, mFirstPair.first) ||
+        Assume.assumeTrue("Testing if only one of the pair is secure",
+                isSecureSupportedCodec(mFirstPair.second, mFirstPair.first) ^
                         isSecureSupportedCodec(mSecondPair.second, mSecondPair.first));
 
         MediaCodecInfo.VideoCapabilities.PerformancePoint reqSecurePP =
@@ -159,6 +159,47 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
                 isSecureSupportedCodec(mSecondPair.second, mSecondPair.first) ? reqSecurePP :
                         reqNonSecurePP);
 
+        testCodec(m1080pTestFiles, 1080, 1920,
+                REQUIRED_CONCURRENT_NON_SECURE_INSTANCES_WITH_SECURE + 1, true);
+
+        if (Utils.isTPerfClass()) {
+            assertTrue(
+                    "Required Secure Decode Support required for MPC >= Android T, unsupported " +
+                            "codec pair: " + mFirstPair.second + "," + mSecondPair.second,
+                    codecSupportsReqPP);
+        } else {
+            DeviceReportLog log =
+                    new DeviceReportLog("MediaPerformanceClassLogs", "SecureDecodeSupport");
+            log.addValue("Req Secure Decode Support pair: " + mFirstPair.second + "," +
+                    mSecondPair.second, codecSupportsReqPP, ResultType.NEUTRAL, ResultUnit.NONE);
+            // TODO(b/218771970) Log CDD sections
+            log.setSummary("MPC 13: Secure Decode requirements", 0, ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+            log.submit(InstrumentationRegistry.getInstrumentation());
+        }
+    }
+
+    /**
+     * Validates if hardware decoder pairs where both supports secure decode and required
+     * perf is present
+     */
+    @LargeTest
+    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    // TODO(b/218771970) Add @CddTest annotation
+    public void testReqMultiSecureDecodeSupport() throws Exception {
+        Assume.assumeTrue(Utils.isTPerfClass() || !Utils.isPerfClass());
+        Assume.assumeTrue("Run test if both are secure codecs",
+                isSecureSupportedCodec(mFirstPair.second, mFirstPair.first) &&
+                        isSecureSupportedCodec(mSecondPair.second, mSecondPair.first));
+
+        MediaCodecInfo.VideoCapabilities.PerformancePoint reqSecurePP =
+                new MediaCodecInfo.VideoCapabilities.PerformancePoint(1920, 1080, 30);
+
+        boolean codecSupportsReqPP =
+                codecSupportsPP(mFirstPair.second, mFirstPair.first, reqSecurePP);
+        codecSupportsReqPP &= codecSupportsPP(mSecondPair.second, mSecondPair.first, reqSecurePP);
+
+        testCodec(null, 1080, 1920, REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES);
 
         if (Utils.isTPerfClass()) {
             assertTrue(
@@ -179,6 +220,11 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
 
     private void testCodec(Map<String, String> testFiles, int height, int width,
             int requiredMinInstances) throws Exception {
+        testCodec(testFiles, height, width, requiredMinInstances, false);
+    }
+
+    private void testCodec(Map<String, String> testFiles, int height, int width,
+            int requiredMinInstances, boolean secureWithUnsecure) throws Exception {
         mTestFiles = testFiles;
         ArrayList<Pair<String, String>> mimeDecoderPairs = new ArrayList<>();
         mimeDecoderPairs.add(mFirstPair);
@@ -186,19 +232,36 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
         int maxInstances = checkAndGetMaxSupportedInstancesForCodecCombinations(height, width,
                 mimeDecoderPairs);
         double achievedFrameRate = 0.0;
-        if (maxInstances >= requiredMinInstances) {
+        // secure test should not reach this point if secure codec doesn't support PP
+        if (maxInstances >= requiredMinInstances || secureWithUnsecure) {
             int secondPairInstances = maxInstances / 2;
             int firstPairInstances = maxInstances - secondPairInstances;
-            ExecutorService pool = Executors.newFixedThreadPool(maxInstances);
+            if (secureWithUnsecure) {
+                firstPairInstances =
+                        isSecureSupportedCodec(mFirstPair.second, mFirstPair.first) ? 1 : 3;
+                secondPairInstances = requiredMinInstances - firstPairInstances;
+                maxInstances = requiredMinInstances;
+            }
             List<Decode> testList = new ArrayList<>();
             for (int i = 0; i < firstPairInstances; i++) {
-                testList.add(new Decode(mFirstPair.first, mTestFiles.get(mFirstPair.first),
-                        mFirstPair.second, mIsAsync));
+                boolean isSecure = isSecureSupportedCodec(mFirstPair.second, mFirstPair.first);
+                String testFile = isSecure ? m1080pWidevineTestFiles.get(mFirstPair.first) :
+                        mTestFiles.get(mFirstPair.first);
+                Assume.assumeTrue("Add " + (isSecure ? "secure" : "") + " test vector for mime: " +
+                        mFirstPair.first, testFile != null);
+                testList.add(new Decode(mFirstPair.first, testFile, mFirstPair.second, mIsAsync,
+                        isSecure));
             }
             for (int i = 0; i < secondPairInstances; i++) {
-                testList.add(new Decode(mSecondPair.first, mTestFiles.get(mSecondPair.first),
-                        mSecondPair.second, mIsAsync));
+                boolean isSecure = isSecureSupportedCodec(mSecondPair.second, mSecondPair.first);
+                String testFile = isSecure ? m1080pWidevineTestFiles.get(mSecondPair.first) :
+                        mTestFiles.get(mSecondPair.first);
+                Assume.assumeTrue("Add " + (isSecure ? "secure" : "") + " test vector for mime: " +
+                        mFirstPair.first, testFile != null);
+                testList.add(new Decode(mSecondPair.first, testFile, mSecondPair.second, mIsAsync,
+                        isSecure));
             }
+            ExecutorService pool = Executors.newFixedThreadPool(maxInstances);
             List<Future<Double>> resultList = pool.invokeAll(testList);
             for (Future<Double> result : resultList) {
                 achievedFrameRate += result.get();

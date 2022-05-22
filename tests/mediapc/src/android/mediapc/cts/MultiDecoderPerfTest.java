@@ -54,7 +54,6 @@ import java.util.concurrent.Future;
 @RunWith(Parameterized.class)
 public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
     private static final String LOG_TAG = MultiDecoderPerfTest.class.getSimpleName();
-    private static final int REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES = 2;
 
     private final String mDecoderName;
 
@@ -128,6 +127,8 @@ public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
 
         boolean codecSupportsReqPP = codecSupportsPP(mDecoderName, mMime, reqPP);
 
+        testCodec(m1080pWidevineTestFiles, 1080, 1920, REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES);
+
         if (Utils.isTPerfClass()) {
             assertTrue(
                     "Required Secure Decode Support required for MPC >= Android T, unsupported " +
@@ -147,6 +148,7 @@ public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
     private void testCodec(Map<String, String> testFiles, int height, int width,
             int requiredMinInstances) throws Exception {
         mTestFile = testFiles.get(mMime);
+        Assume.assumeTrue("Add test vector for mime: " + mMime, mTestFile != null);
         ArrayList<Pair<String, String>> mimeDecoderPairs = new ArrayList<>();
         mimeDecoderPairs.add(Pair.create(mMime, mDecoderName));
         int maxInstances =
@@ -157,7 +159,8 @@ public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
             ExecutorService pool = Executors.newFixedThreadPool(maxInstances);
             List<Decode> testList = new ArrayList<>();
             for (int i = 0; i < maxInstances; i++) {
-                testList.add(new Decode(mMime, mTestFile, mDecoderName, mIsAsync));
+                boolean isSecure = isSecureSupportedCodec(mDecoderName, mMime);
+                testList.add(new Decode(mMime, mTestFile, mDecoderName, mIsAsync, isSecure));
             }
             List<Future<Double>> resultList = pool.invokeAll(testList);
             for (Future<Double> result : resultList) {

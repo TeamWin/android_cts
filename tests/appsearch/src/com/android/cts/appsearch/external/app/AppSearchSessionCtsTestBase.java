@@ -52,6 +52,7 @@ import android.app.appsearch.StorageInfo;
 import android.app.appsearch.exceptions.AppSearchException;
 import android.app.appsearch.testutil.AppSearchEmail;
 import android.content.Context;
+import android.util.ArrayMap;
 
 import androidx.test.core.app.ApplicationProvider;
 
@@ -69,6 +70,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -674,7 +676,6 @@ public abstract class AppSearchSessionCtsTestBase {
                                         .build())
                         .build();
         mDb1.setSchemaAsync(new SetSchemaRequest.Builder().addSchemas(schema).build()).get();
-
         // Creates a large batch of Documents, since we have max document size in Framework which is
         // 512KiB, we will create 1KiB * 4000 docs = 4MiB total size > 1MiB binder transaction limit
         char[] chars = new char[1024]; // 1KiB
@@ -708,9 +709,22 @@ public abstract class AppSearchSessionCtsTestBase {
                         "end",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                .setResultCountPerPage(4000)
                                 .build());
         List<GenericDocument> outDocuments = convertSearchResultsToDocuments(searchResults);
-        assertThat(inDocuments).containsExactlyElementsIn(outDocuments);
+
+        // Create a map to assert the output is same to the input in O(n).
+        // containsExactlyElementsIn will create two iterators and the complexity is O(n^2).
+        Map<String, GenericDocument> outMap = new ArrayMap<>(outDocuments.size());
+        for (int i = 0; i < outDocuments.size(); i++) {
+            outMap.put(outDocuments.get(i).getId(), outDocuments.get(i));
+        }
+        for (int i = 0; i < inDocuments.size(); i++) {
+            GenericDocument inDocument = inDocuments.get(i);
+            assertThat(inDocument).isEqualTo(outMap.get(inDocument.getId()));
+            outMap.remove(inDocument.getId());
+        }
+        assertThat(outMap).isEmpty();
 
         // Get by document ID and verify they are same with the input. This also verify
         // AppSearchBatchResult could handle large batch.

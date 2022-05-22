@@ -39,6 +39,7 @@ import android.car.hardware.CarPropertyValue;
 import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.CarPropertyManager.CarPropertyEventCallback;
 import android.car.hardware.property.EvChargeState;
+import android.car.hardware.property.EvRegenerativeBrakingState;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardStatus;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardType;
 import android.platform.test.annotations.AppModeFull;
@@ -934,10 +935,10 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                     Integer evRegenerativeBrakingState = (Integer) carPropertyValue.getValue();
                     assertWithMessage("EV_REGENERATIVE_BRAKING_STATE must be a defined state: "
                             + evRegenerativeBrakingState).that(evRegenerativeBrakingState).isIn(
-                            ImmutableSet.of(/*EvRegenerativeBrakingState.UNKNOWN=*/0,
-                                    /*EvRegenerativeBrakingState.DISABLED=*/1,
-                                    /*EvRegenerativeBrakingState.PARTIALLY_ENABLED=*/2,
-                                    /*EvRegenerativeBrakingState.FULLY_ENABLED=*/3));
+                            ImmutableSet.of(EvRegenerativeBrakingState.STATE_UNKNOWN,
+                                    EvRegenerativeBrakingState.STATE_DISABLED,
+                                    EvRegenerativeBrakingState.STATE_PARTIALLY_ENABLED,
+                                    EvRegenerativeBrakingState.STATE_FULLY_ENABLED));
                 }).build().verify(mCarPropertyManager);
     }
 

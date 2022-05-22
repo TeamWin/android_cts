@@ -1039,6 +1039,7 @@ public class ItsService extends Service implements SensorEventListener {
 
     private void doStartSensorEvents() throws ItsException {
         synchronized(mEventLock) {
+            mEvents.clear();
             mEventsEnabled = true;
         }
         mSocketRunnableObj.sendResponse("sensorEventsStarted", "");

@@ -72,12 +72,14 @@ public class FrameDropTest extends FrameDropTestBase {
         Assume.assumeTrue("Test is limited to R performance class devices or devices that do not " +
                         "advertise performance class",
                 Utils.isRPerfClass() || !Utils.isPerfClass());
+        int frameRate = 30;
 
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.FrameDropRequirement r5_3__H_1_1_R = pce.addR5_3__H_1_1_R();
 
-        int framesDropped = testDecodeToSurface(30);
+        int framesDropped = testDecodeToSurface(frameRate);
         r5_3__H_1_1_R.setFramesDropped(framesDropped);
+        r5_3__H_1_1_R.setFrameRate(frameRate);
         pce.submitAndCheck();
     }
 
@@ -93,12 +95,14 @@ public class FrameDropTest extends FrameDropTestBase {
         Assume.assumeTrue("Test is limited to S/T performance class devices or devices that do " +
                         "not advertise performance class",
                 Utils.isSPerfClass() || Utils.isTPerfClass() || !Utils.isPerfClass());
+        int frameRate = 60;
 
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.FrameDropRequirement r5_3__H_1_1_ST = pce.addR5_3__H_1_1_ST();
 
-        int framesDropped = testDecodeToSurface(60);
+        int framesDropped = testDecodeToSurface(frameRate);
         r5_3__H_1_1_ST.setFramesDropped(framesDropped);
+        r5_3__H_1_1_ST.setFrameRate(frameRate);
         pce.submitAndCheck();
     }
 }

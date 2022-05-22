@@ -2359,6 +2359,7 @@ public class ActivityManagerProcessStateTest {
             // Launch home activity, so the activity in app1 will be stopped, app1 now only has FGS,
             // we're not "finishing" the activity because removing a task could result in service
             // restart.
+            waitForAppFocus(PACKAGE_NAME_APP1,WAITFOR_MSEC);
             final Intent homeIntent = new Intent();
             homeIntent.setAction(Intent.ACTION_MAIN);
             homeIntent.addCategory(Intent.CATEGORY_HOME);

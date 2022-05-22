@@ -82,13 +82,15 @@ public class AdaptivePlaybackFrameDropTest extends FrameDropTestBase {
         Assume.assumeTrue("Test is limited to R performance class devices or devices that do not " +
                 "advertise performance class",
             Utils.isRPerfClass() || !Utils.isPerfClass());
+        int frameRate = 30;
 
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.FrameDropRequirement r5_3__H_1_2_R = pce.addR5_3__H_1_2_R();
 
-        int framesDropped = testAdaptivePlaybackFrameDrop(30);
+        int framesDropped = testAdaptivePlaybackFrameDrop(frameRate);
 
         r5_3__H_1_2_R.setFramesDropped(framesDropped);
+        r5_3__H_1_2_R.setFrameRate(frameRate);
         pce.submitAndCheck();
     }
 
@@ -105,13 +107,15 @@ public class AdaptivePlaybackFrameDropTest extends FrameDropTestBase {
         Assume.assumeTrue("Test is limited to S/T performance class devices or devices that do " +
                 "not advertise performance class",
             Utils.isSPerfClass() || Utils.isTPerfClass() || !Utils.isPerfClass());
+        int frameRate = 60;
 
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.FrameDropRequirement r5_3__H_1_2_ST = pce.addR5_3__H_1_2_ST();
 
-        int framesDropped = testAdaptivePlaybackFrameDrop(60);
+        int framesDropped = testAdaptivePlaybackFrameDrop(frameRate);
 
         r5_3__H_1_2_ST.setFramesDropped(framesDropped);
+        r5_3__H_1_2_ST.setFrameRate(frameRate);
         pce.submitAndCheck();
     }
 }
