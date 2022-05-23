@@ -74,6 +74,10 @@ def extract_key_frames_from_video(log_path, video_file_name):
   for file in arr:
     if '.png' in file and not os.path.isdir(file) and ffmpeg_image_name in file:
       key_frame_files.append(file)
+
+  if not len(key_frame_files):
+    raise AssertionError('No key frames extracted. Check source video.')
+
   return key_frame_files
 
 
@@ -124,4 +128,7 @@ def extract_all_frames_from_video(log_path, video_file_name, img_format):
   file_list = sorted(
       [_ for _ in os.listdir(log_path) if (_.endswith(img_format)
                                            and ffmpeg_image_name in _)])
+  if not len(file_list):
+    raise AssertionError('No frames extracted. Check source video.')
+
   return file_list
