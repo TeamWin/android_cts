@@ -16,6 +16,9 @@
 
 package com.android.bedstead.nene.device;
 
+import static com.android.bedstead.nene.permissions.CommonPermissions.DISABLE_KEYGUARD;
+
+import android.app.KeyguardManager;
 import android.os.RemoteException;
 import android.support.test.uiautomator.UiDevice;
 
@@ -24,6 +27,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.ShellCommand;
 
@@ -32,6 +36,9 @@ public final class Device {
     public static final Device sInstance = new Device();
     private static final UiDevice sDevice =
             UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+    private static final KeyguardManager.KeyguardLock sKeyguardLock =
+            TestApis.context().instrumentedContext().getSystemService(KeyguardManager.class)
+                    .newKeyguardLock("Nene");
 
     private Device() {
 
@@ -78,6 +85,17 @@ public final class Device {
                 .validate(String::isEmpty)
                 .executeOrThrowNeneException("Error setting stayOn");
         unlock();
+    }
+
+    @Experimental
+    public void setKeyguardEnabled(boolean keyguardEnabled) {
+        try (PermissionContext p = TestApis.permissions().withPermission(DISABLE_KEYGUARD)) {
+            if (keyguardEnabled) {
+                sKeyguardLock.reenableKeyguard();
+            } else {
+                sKeyguardLock.disableKeyguard();
+            }
+        }
     }
 
     /**
