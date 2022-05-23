@@ -22,7 +22,7 @@ android_test_helper_app {
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
     target_sdk_version: "33",
-    min_sdk_version: "30",
+    min_sdk_version: "29",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
     test_suites: [
@@ -38,7 +38,7 @@ android_test_helper_app {
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
     target_sdk_version: "31",
-    min_sdk_version: "30",
+    min_sdk_version: "29",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
     test_suites: [
@@ -54,7 +54,7 @@ android_test_helper_app {
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
     target_sdk_version: "33",
-    min_sdk_version: "30",
+    min_sdk_version: "29",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
     test_suites: [
@@ -70,7 +70,7 @@ android_test_helper_app {
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
     target_sdk_version: "33",
-    min_sdk_version: "30",
+    min_sdk_version: "29",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
     test_suites: [
@@ -86,7 +86,7 @@ android_test_helper_app {
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
     target_sdk_version: "30",
-    min_sdk_version: "30",
+    min_sdk_version: "29",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
     test_suites: [
@@ -134,7 +134,7 @@ android_test_helper_app {
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
     target_sdk_version: "33",
-    min_sdk_version: "30",
+    min_sdk_version: "29",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
     test_suites: [
@@ -150,7 +150,7 @@ android_test_helper_app {
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
     target_sdk_version: "33",
-    min_sdk_version: "30",
+    min_sdk_version: "29",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
     test_suites: [
@@ -166,7 +166,7 @@ android_test_helper_app {
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
     target_sdk_version: "33",
-    min_sdk_version: "30",
+    min_sdk_version: "29",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
     test_suites: [
@@ -182,7 +182,7 @@ android_test_helper_app {
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
     target_sdk_version: "30",
-    min_sdk_version: "30",
+    min_sdk_version: "29",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
     test_suites: [
@@ -227,7 +227,7 @@ android_test {
     ],
     sdk_version: "test_current",
     target_sdk_version: "33",
-    min_sdk_version: "30",
+    min_sdk_version: "29",
     java_resources: [
         ":CtsScopedStorageTestAppA",
         ":CtsScopedStorageTestAppA31",
@@ -253,7 +253,7 @@ android_test {
     ],
     sdk_version: "test_current",
     target_sdk_version: "29",
-    min_sdk_version: "30",
+    min_sdk_version: "29",
     java_resources: [
         ":CtsScopedStorageTestAppA",
     ],
@@ -381,7 +381,7 @@ android_test {
     ],
     sdk_version: "test_current",
     target_sdk_version: "33",
-    min_sdk_version: "30",
+    min_sdk_version: "29",
     libs: [
         "android.test.base",
         "android.test.mock",
