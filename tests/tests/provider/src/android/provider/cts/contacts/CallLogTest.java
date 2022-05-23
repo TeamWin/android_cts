@@ -44,11 +44,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.HashMap;
-import java.util.Map;
 
 public class CallLogTest extends InstrumentationTestCase {
     // Test Call Log Entry
@@ -78,7 +78,7 @@ public class CallLogTest extends InstrumentationTestCase {
     // Test call composer URI that throws Security Exception
     private static final Uri INVALID_CALL_LOG_URI = Uri.parse(
             "content://call_log/call_composer/%2fdata%2fdata%2fcom.android.providers"
-                    + ".contacts%2fshared_prefs%2fContactsUpgradeReceiver.xml");
+                    + ".contacts%2fdatabases%2fcontacts2.db");
     // Test Failure Error
     private static final String TEST_FAIL_DID_NOT_TRHOW_SE =
             "fail test because Security Exception was not throw";
@@ -213,47 +213,58 @@ public class CallLogTest extends InstrumentationTestCase {
 
     /**
      * Tests scenario where an app gives {@link ContentResolver} a file to open that is not in the
-     * Call Log directory.
+     * Call Log directory. Will throw a Security Exception if the file passed is found && a valid
+     * ParcelFileDescriptor is returned.
      */
     public void testOpenFileOutsideOfScopeThrowsException() throws FileNotFoundException {
         try {
             Context context = getInstrumentation().getContext();
             ContentResolver resolver = context.getContentResolver();
-            resolver.openFile(INVALID_CALL_LOG_URI, "w", null);
-            // previous line should throw exception
-            fail(TEST_FAIL_DID_NOT_TRHOW_SE);
-        } catch (SecurityException e) {
-            assertNotNull(e.toString());
+            ParcelFileDescriptor fileDescriptor =
+                    resolver.openFile(INVALID_CALL_LOG_URI, "w", null);
+            // only fail the test if the file is found
+            if (fileDescriptor != null) {
+                // invalid file found instead of hitting SE.  manually fail the test.
+                fail(TEST_FAIL_DID_NOT_TRHOW_SE);
+            }
+        } catch (SecurityException se) {
+            assertNotNull(se.toString());
         }
     }
 
     /**
-     * Tests scenario where an app gives {@link ContentResolver} a file to delete that is not in the
-     * Call Log directory.
+     * Tests scenario where an app gives {@link ContentResolver} {@link ContentValues} to delete
+     * in a table that is not owned by the Call Log directory.
      */
     public void testDeleteFileOutsideOfScopeThrowsException() {
         try {
             Context context = getInstrumentation().getContext();
             ContentResolver resolver = context.getContentResolver();
-            resolver.delete(INVALID_CALL_LOG_URI, "w", null);
-            // previous line should throw exception
-            fail(TEST_FAIL_DID_NOT_TRHOW_SE);
+            int numFilesDeleted =
+                    resolver.delete(INVALID_CALL_LOG_URI, "w", null);
+            if (numFilesDeleted > 0) {
+                // resolver.delete should throw an SE instead of deleting file
+                fail(TEST_FAIL_DID_NOT_TRHOW_SE);
+            }
         } catch (SecurityException e) {
             assertNotNull(e.toString());
         }
     }
 
     /**
-     * Tests scenario where an app gives {@link ContentResolver} a file to insert outside the
-     * Call Log directory.
+     * Tests scenario where an app gives {@link ContentResolver} {@link ContentValues} to insert
+     * in a table that is not owned by the Call Log directory.
      */
     public void testInsertFileOutsideOfScopeThrowsException() {
         try {
             Context context = getInstrumentation().getContext();
             ContentResolver resolver = context.getContentResolver();
-            resolver.insert(INVALID_CALL_LOG_URI, new ContentValues());
-            // previous line should throw exception
-            fail(TEST_FAIL_DID_NOT_TRHOW_SE);
+            Uri uri =
+                    resolver.insert(INVALID_CALL_LOG_URI, new ContentValues());
+            if (uri != null) {
+                // resolver.insert(...) should throw an SE instead of inserting ContentValues
+                fail(TEST_FAIL_DID_NOT_TRHOW_SE);
+            }
         } catch (SecurityException e) {
             assertNotNull(e.toString());
         }
