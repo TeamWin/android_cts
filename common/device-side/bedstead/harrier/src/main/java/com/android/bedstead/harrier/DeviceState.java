@@ -271,13 +271,7 @@ public final class DeviceState extends HarrierRule {
                 try {
                     Throwable t = future.get(MAX_TEST_DURATION.getSeconds(), TimeUnit.SECONDS);
                     if (t != null) {
-                        if (t instanceof AssertionError
-                                || t instanceof AssumptionViolatedException) {
-                            throw t;
-                        } else {
-                            // We wrap the failure in an AssertionError so it doesn't crash
-                            throw new AssertionError("Exception while executing test", t);
-                        }
+                        throw t;
                     }
                 } catch (TimeoutException e) {
                     StackTraceElement[] stack = mTestThread.getStackTrace();
