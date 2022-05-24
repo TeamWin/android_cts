@@ -23,6 +23,7 @@ import static org.junit.Assert.fail;
 
 import android.app.Instrumentation;
 import android.content.res.AssetFileDescriptor;
+import android.media.AudioFormat;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -53,9 +54,8 @@ public class DecoderTestAacFormat {
     static final String mInpPrefix = WorkDir.getMediaDirString();
     private static final boolean sIsAndroidRAndAbove =
             ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
-    // TODO: replace > Sv2 with >= T once T is assigned.
     private static final boolean sIsAtLeastT =
-            ApiLevelUtil.isAfter(Build.VERSION_CODES.S_V2);
+            ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU);
 
     @Before
     public void setUp() throws Exception {
@@ -74,11 +74,14 @@ public class DecoderTestAacFormat {
             return;
 
         // array of multichannel resources with their expected number of channels without downmixing
+        // and the channel mask of the content
         Object [][] samples = {
                 //  {resource, numChannels},
-                {"noise_5ch_48khz_aot5_dr_sbr_sig1_mp4.m4a", 5},
-                {"noise_6ch_44khz_aot5_dr_sbr_sig2_mp4.m4a", 6},
+                {"noise_5ch_48khz_aot5_dr_sbr_sig1_mp4.m4a", 5,
+                        AudioFormat.CHANNEL_OUT_QUAD | AudioFormat.CHANNEL_OUT_FRONT_CENTER},
+                {"noise_6ch_44khz_aot5_dr_sbr_sig2_mp4.m4a", 6, AudioFormat.CHANNEL_OUT_5POINT1},
         };
+
         for (Object [] sample: samples) {
             for (String codecName : DecoderTest.codecsFor((String)sample[0] /* resource */)) {
                 // verify correct number of channels is observed without downmixing
@@ -98,9 +101,13 @@ public class DecoderTestAacFormat {
                 assertEquals("Number of channels differs for codec:" + codecName
                                 + " when downmixing with KEY_AAC_MAX_OUTPUT_CHANNEL_COUNT",
                         2, aacDownmixParams.getNumChannels());
-
                 if (sIsAtLeastT) {
-                    // KEY_MAX)OUTPUT_CHANNEL_COUNT introduced in T
+                    // KEY_CHANNEL_MASK expected to work starting with T
+                    assertEquals("Wrong channel mask with KEY_AAC_MAX_OUTPUT_CHANNEL_COUNT",
+                            AudioFormat.CHANNEL_OUT_STEREO,
+                            aacDownmixParams.getChannelMask());
+
+                    // KEY_MAX_OUTPUT_CHANNEL_COUNT introduced in T
                     // - with codec-agnostic key
                     AudioParameter downmixParams = new AudioParameter();
                     decodeUpdateFormat(codecName, (String) sample[0] /* resource */, downmixParams,
@@ -109,6 +116,9 @@ public class DecoderTestAacFormat {
                     assertEquals("Number of channels differs for codec:" + codecName
                                     + " when downmixing with KEY_MAX_OUTPUT_CHANNEL_COUNT",
                             2, downmixParams.getNumChannels());
+                    assertEquals("Wrong channel mask with KEY_MAX_OUTPUT_CHANNEL_COUNT",
+                            AudioFormat.CHANNEL_OUT_STEREO,
+                            aacDownmixParams.getChannelMask());
 
                     // verify setting value larger than actual channel count behaves like
                     // no downmixing
@@ -120,6 +130,9 @@ public class DecoderTestAacFormat {
                                     + " when setting " + tooManyChannels
                                     + " on KEY_MAX_OUTPUT_CHANNEL_COUNT",
                             sample[1], bigChanParams.getNumChannels());
+                    assertEquals("Wrong channel mask with big KEY_MAX_OUTPUT_CHANNEL_COUNT",
+                            ((Integer) sample[2]).intValue(),
+                            bigChanParams.getChannelMask());
                 }
             }
         }
@@ -253,6 +266,10 @@ public class DecoderTestAacFormat {
                 MediaFormat outputFormat = decoder.getOutputFormat();
                 audioParams.setNumChannels(outputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
                 audioParams.setSamplingRate(outputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE));
+                if (sIsAtLeastT) {
+                    audioParams.setChannelMask(
+                            outputFormat.getInteger(MediaFormat.KEY_CHANNEL_MASK));
+                }
                 Log.i(TAG, "output format has changed to " + outputFormat);
             } else {
                 Log.d(TAG, "dequeueOutputBuffer returned " + res);
