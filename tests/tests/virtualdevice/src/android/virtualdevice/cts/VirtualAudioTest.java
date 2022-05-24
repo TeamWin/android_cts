@@ -60,6 +60,7 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.timeout;
@@ -154,6 +155,7 @@ public class VirtualAudioTest {
         assumeTrue(
                 context.getPackageManager()
                         .hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
+        assumeFalse("Skipping test: not supported on automotive", isAutomotive());
 
         VirtualDeviceManager vdm = context.getSystemService(VirtualDeviceManager.class);
         mVirtualDevice = vdm.createVirtualDevice(
@@ -335,6 +337,11 @@ public class VirtualAudioTest {
     public void audioInjection_writeFloatArray_appShouldRecordInjectedData() {
         runAudioInjectionTest(FLOAT_ARRAY, /* writeMode= */
                 WRITE_BLOCKING, /* timestamp= */ 0);
+    }
+
+    private boolean isAutomotive() {
+        return getApplicationContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
     private void runAudioCaptureTest(@AudioHelper.DataType int dataType, int readMode) {

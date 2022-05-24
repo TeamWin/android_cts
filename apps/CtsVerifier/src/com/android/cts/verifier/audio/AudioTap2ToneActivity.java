@@ -413,7 +413,7 @@ public class AudioTap2ToneActivity
 
         mLatencyAve[mActiveTestAPI] = StatUtils.calculateMean(mLatencyMillis);
         double meanAbsoluteDeviation = StatUtils.calculateMeanAbsoluteDeviation(
-                mLatencyAve[mActiveTestAPI], mLatencyMillis);
+                mLatencyAve[mActiveTestAPI], mLatencyMillis, mTestPhase + 1);
 
         mTestPhase++;
 

@@ -248,7 +248,7 @@ public class ViewClippingTests extends ActivityTestBase {
                 boolean result = super.verify(bitmap, offset, stride, width, height);
                 // Verify that we have seen pixel color values in between the outer and inner
                 // colors indicating that anti-aliasing has been applied.
-                return result && mNumAntiAliasedPixels > (height * 0.4f);
+                return result && mNumAntiAliasedPixels > (height * 0.1f);
             }
         };
         // NOTE: Only HW is supported
