@@ -5226,30 +5226,75 @@ You should be prompted to select credentials; choose the ones you just installed
           Note if the appropriate notification messages appear below.
           The \"Pass\" button will be enabled if device connect and disconnect messages are received.
     </string>
-    <string name="audio_out_devices_notifications_test">Audio Output Devices Notifications Test</string>
-    <string name="audio_in_devices_notifications_test">Audio Input Devices Notifications Test</string>
     <string name="audio_dev_notification_clearmsgs">Clear Messages</string>
     <string name="audio_dev_notification_connectMsg">CONNECT DETECTED</string>
     <string name="audio_dev_notification_disconnectMsg">DISCONNECT DETECTED</string>
 
+    <string name="audio_out_devices_notifications_test">Audio Output Devices Notifications Test</string>
+    <string name="audio_out_devices_infotext">Tests whether wired output peripheral
+        connect/disconnect notifications are correctly sent when output peripherals are
+        connected or disconnected. A \"wired output peripheral\" can be a headset or headphones
+        connected to an analog 3.5mm jack or the USB port or a USB audio interface connected to
+        the USB port.
+        \n\nTest Setup:
+        \nDisconnect any wired audio peripherals.
+        \n\nTest Process:
+        \n1. Verify that the DUT supports USB or Analog audio peripherals.
+        \n2. Press the \"Clear Messages\" button to clear any previously sent \"sticky\" notifications.
+        \n3. Connect a wired output peripheral. A connect message should appear. Disconnect the
+        audio peripheral. A disconnect message should appear.
+        \n\nTest Criteria:
+        \nThe test passes if either the device DOES NOT support wired output peripherals, or both
+        the connect and disconnect notifications are received.
+    </string>
+
+    <string name="audio_in_devices_notifications_test">Audio Input Devices Notifications Test</string>
+    <string name="audio_in_devices_infotext">Tests whether wired input peripheral
+        connect/disconnect notifications are correctly sent when input peripherals are
+        connected or disconnected. A \"wired input peripheral\" can be a headset connected to an
+        analog 3.5mm jack or the USB port or a USB audio interface connected to the USB port.
+        \n\nTest Setup:
+        \nDisconnect any wired audio peripherals.
+        \n\nTest Process:
+        \n1. Verify that the DUT supports USB or Analog audio peripherals.
+        \n2. Press the \"Clear Messages\" button to clear any previously sent \"sticky\" notifications.
+        \n3. Connect a wired output peripheral. A connect message should appear. Disconnect the
+        audio peripheral. A disconnect message should appear.
+        \n\nTest Criteria:
+        \nThe test passes if either the device DOES NOT support wired output peripherals, or both
+        the connect and disconnect notifications are received.
+    </string>
+
     <string name="audio_input_routingnotifications_test">Audio Input Routing Notifications Test</string>
     <string name="audio_input_routingnotification_instructions">
-          Click on the "Record" button in the AudioRecord Routing Notifications section below to
-          start recording. Insert a wired headset or microphone. Observe a message acknowledging the
-          rerouting event below. Remove the wired headset and observe the new routing message.
-          Click on the "Stop" button to stop recording.\n
+        Test whether appropriate routing notifications are sent when audio input peripherals are
+        connected to the device.
+        \n\nTest Setup:
+        \nDisconnect any wired audio peripherals.
+        \n\nTest Process:
+        \n1. Verify that the DUT supports USB or Analog audio peripherals.
+        \n2. Press the \"Record\" button.
+        \n3. Connect a wired input peripheral. A connect routing message should appear.
+        \n4. Press the \"Stop\" button.
+        \n\nTest Criteria:
+        \nThe test passes if either the device DOES NOT support wired input peripherals, or
+        the routing notifications are received.
     </string>
     <string name="audio_output_routingnotifications_test">Audio Output Routing Notifications Test</string>
     <string name="audio_output_routingnotification_instructions">
-          Click on the "Play" button in the AudioTrack Routing Notifications section below to
-          start (silent) playback. Insert a wired headset. Observe a message acknowledging the
-          rerouting event below. Remove the wired headset and observe the new routing message.
-          Click on the "Stop" button to stop playback.\n
+        Test whether appropriate output routing notifications are sent when audio output peripherals are
+        connected to the device.
+        \n\nTest Setup:
+        \nDisconnect any wired audio peripherals.
+        \n\nTest Process:
+        \n1. Verify that the DUT supports USB or Analog audio peripherals.
+        \n2. Press the \"Play\" button.
+        \n3. Connect a wired output peripheral. A connect routing message should appear.
+        \n4. Press the \"Stop\" button.
+        \n\nTest Criteria:
+        \nThe test passes if either the device DOES NOT support wired output peripherals, or
+        the routing notifications are received.
     </string>
-    <string name="audio_routingnotification_playBtn">Play</string>
-    <string name="audio_routingnotification_playStopBtn">Stop</string>
-    <string name="audio_routingnotification_recBtn">Record</string>
-    <string name="audio_routingnotification_recStopBtn">Stop</string>
     <string name="audio_routingnotification_playHeader">AudioTrack Routing Notifications</string>
     <string name="audio_routingnotification_recHeader">AudioRecord Routing Notifications</string>
     <string name="audio_routingnotification_trackRoutingMsg">AudioTrack rerouting</string>
@@ -5428,6 +5473,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_Input">Input</string>
     <string name="audio_general_Output">Output</string>
 
+    <string name="audio_general_record">Record</string>
+    <string name="audio_general_play">Play</string>
+
     <string name="audio_general_JavaApi">Java API</string>
     <string name="audio_general_NativeApi">Native API</string>
 
@@ -5435,6 +5483,7 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="audio_general_test_not_run">Test Not Run</string>
     <string name="audio_general_testnotcompleted">Test not completed.</string>
+
 
     <!-- Audio Loopback Latency Test -->
     <string name="audio_loopback_latency_test">Audio Loopback Latency Test</string>

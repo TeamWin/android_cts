@@ -87,11 +87,19 @@ public class AudioInputDeviceNotificationsActivity extends AudioWiredDeviceBaseA
         // "Honor System" buttons
         super.setup();
 
+        setInfoResources(R.string.audio_in_devices_notifications_test,
+                R.string.audio_in_devices_infotext, -1);
         setPassFailButtonClickListeners();
     }
 
     @Override
     protected void enableTestButtons(boolean enabled) {
         mInfoView.setVisibility(enabled ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    @Override
+    protected void calculatePass() {
+        getPassButton().setEnabled(!mSupportsWiredPeripheral
+                || (mConnectReceived && mDisconnectReceived));
     }
 }
