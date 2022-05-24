@@ -196,6 +196,15 @@ public class MainInteractionSession extends VoiceInteractionSession {
             return;
         }
 
+        if (structure != null && structure.isHomeActivity() && !state.isFocused()) {
+            // If the system has multiple display areas, the launcher may be visible and resumed
+            // when the tests are in progress, so the tests might fail if they receives unexpected
+            // state from the launcher. Ignore the states from unfocused launcher to avoid this
+            // failure.
+            Log.i(TAG, "Ignoring the state from unfocused launcher");
+            return;
+        }
+
         // send to test to verify that this is accurate.
         mAssistData.putBoolean(Utils.ASSIST_IS_ACTIVITY_ID_NULL, state.getActivityId() == null);
         mAssistData.putParcelable(Utils.ASSIST_STRUCTURE_KEY, structure);

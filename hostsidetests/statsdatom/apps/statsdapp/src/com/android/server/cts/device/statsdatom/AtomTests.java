@@ -82,7 +82,6 @@ import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -98,6 +97,11 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+
+import javax.net.ssl.SSLSocket;
+
+import libcore.javax.net.ssl.TestSSLContext;
+import libcore.javax.net.ssl.TestSSLSocketPair;
 
 public class AtomTests {
     private static final String TAG = AtomTests.class.getSimpleName();
@@ -227,6 +231,20 @@ public class AtomTests {
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_ESTABLISH_VPN_MANAGER, 118);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_ACCESS_RESTRICTED_SETTINGS, 119);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_RECEIVE_AMBIENT_TRIGGER_AUDIO, 120);
+    }
+
+    @Test
+    public void testTlsHandshake() throws Exception {
+        TestSSLContext context = TestSSLContext.create();
+        SSLSocket[] sockets = TestSSLSocketPair.connect(context, null, null);
+
+        if (sockets.length < 2) {
+            return;
+        }
+        sockets[0].getOutputStream().write(42);
+        Assert.assertEquals(42, sockets[1].getInputStream().read());
+        sockets[0].close();
+        sockets[1].close();
     }
 
     @Test
