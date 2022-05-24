@@ -5750,6 +5750,7 @@ Follow the instructions on the screen to measure the frequency response for the 
         test is best conducted in a quiet room with the device laying on a table.
         \n\nTo execute test:
         \n1. Select the Audio API to test (\"Native\" has the lowest latency) and press the \"Start\" button.
+        The test needs to pass for ONLY ONE API.
         \n2. Use your fingernail to tap ONCE on the field below to trigger the test tone. DO NOT leave
         the finger resting on the test field. A strong "tick" sound from the fingernail striking
         the display is necessary to register the start of the test process.
