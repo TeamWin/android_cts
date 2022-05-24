@@ -23,6 +23,7 @@ import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -370,6 +371,7 @@ public class ItsTestActivity extends DialogTestListActivity {
                 String reqNum, float threshold) {
             Matcher matcher = pattern.matcher(mpcResult);
             boolean match = matcher.matches();
+            final int LATEST_MPC_LEVEL = Build.VERSION_CODES.TIRAMISU;
 
             if (match) {
                 // Store test result
@@ -377,7 +379,7 @@ public class ItsTestActivity extends DialogTestListActivity {
                         mpcResult, ResultType.NEUTRAL, ResultUnit.NONE);
 
                 float latency = Float.parseFloat(matcher.group(1));
-                int mpcLevel = latency < threshold ? 31 : 0;
+                int mpcLevel = latency < threshold ? LATEST_MPC_LEVEL : 0;
                 mExecutedMpcTests.add(new ResultKey(cameraId, reqNum));
 
                 if (mMpcLevelMap.containsKey(reqNum)) {
