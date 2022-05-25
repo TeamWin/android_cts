@@ -43,6 +43,8 @@ import static org.testng.Assert.assertThrows;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.AfterClass;
+import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
+import com.android.bedstead.harrier.annotations.EnsureUnlocked;
 import com.android.bedstead.harrier.annotations.IntTestParameter;
 import com.android.bedstead.harrier.annotations.NotificationsTest;
 import com.android.bedstead.harrier.annotations.StringTestParameter;
@@ -645,6 +647,8 @@ public final class PermissionGrantTest {
     }
 
     @PolicyAppliesTest(policy = SetPermissionGrantState.class)
+    @EnsureScreenIsOn
+    @EnsureUnlocked
     public void setPermissionPolicy_grant_automaticallyGrantsPermissions() {
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
@@ -666,6 +670,8 @@ public final class PermissionGrantTest {
     }
 
     @PolicyAppliesTest(policy = SetPermissionGrantState.class)
+    @EnsureScreenIsOn
+    @EnsureUnlocked
     public void setPermissionPolicy_deny_automaticallyDeniesPermissions() {
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
