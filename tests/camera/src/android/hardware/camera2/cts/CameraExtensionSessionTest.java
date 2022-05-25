@@ -602,10 +602,14 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                             }
                         }
 
+                        mReportLog.addValue("width", maxSize.getWidth(), ResultType.NEUTRAL,
+                                ResultUnit.NONE);
+                        mReportLog.addValue("height", maxSize.getHeight(),
+                                ResultType.NEUTRAL, ResultUnit.NONE);
+                        mReportLog.addValue("format", captureFormat, ResultType.NEUTRAL,
+                                ResultUnit.NONE);
                         long avgCaptureLatency = (long) Stat.getAverage(captureTimes);
-                        String resultFormat = "avg_latency size: " + maxSize.toString() +
-                                " image format: " + captureFormat;
-                        mReportLog.addValue(resultFormat, avgCaptureLatency,
+                        mReportLog.addValue("avg_latency", avgCaptureLatency,
                                 ResultType.LOWER_BETTER, ResultUnit.MS);
 
                         verify(captureMockCallback, times(0))

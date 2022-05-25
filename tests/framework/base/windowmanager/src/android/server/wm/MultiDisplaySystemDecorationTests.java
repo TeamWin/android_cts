@@ -58,6 +58,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -366,9 +367,18 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     @Test
     public void testLaunchSecondaryHomeActivityOnDisplayWithDecorations() {
         createManagedHomeActivitySession(SECONDARY_HOME_ACTIVITY);
+        boolean useSystemProvidedLauncher = mContext.getResources().getBoolean(
+                Resources.getSystem().getIdentifier("config_useSystemProvidedLauncherForSecondary",
+                        "bool", "android"));
 
-        // Provided secondary home activity should be automatically launched on the new display.
-        assertSecondaryHomeResumedOnNewDisplay(SECONDARY_HOME_ACTIVITY);
+        if (useSystemProvidedLauncher) {
+            // Default secondary home activity should be automatically launched on the new display
+            // if forced by the config.
+            assertSecondaryHomeResumedOnNewDisplay(getDefaultSecondaryHomeComponent());
+        } else {
+            // Provided secondary home activity should be automatically launched on the new display.
+            assertSecondaryHomeResumedOnNewDisplay(SECONDARY_HOME_ACTIVITY);
+        }
     }
 
     private void assertSecondaryHomeResumedOnNewDisplay(ComponentName homeComponentName) {

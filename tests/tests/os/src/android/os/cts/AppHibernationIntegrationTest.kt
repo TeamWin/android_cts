@@ -284,6 +284,25 @@ class AppHibernationIntegrationTest {
     }
 
     @Test
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE,
+        codeName = "UpsideDownCake")
+    fun testIsOatArtifactDeletionEnabled_verifyConfigWithRuntimeValue() {
+        val appHibernationManager = context.getSystemService(AppHibernationManager::class.java)!!
+        withApp(APK_PATH_S_APP, APK_PACKAGE_NAME_S_APP) {
+            runWithShellPermissionIdentity {
+                val enabled =
+                    appHibernationManager.isOatArtifactDeletionEnabled()
+                val res = InstrumentationRegistry.getInstrumentation().getContext().getResources()
+                val runtimeConfig = res.getBoolean(res.getIdentifier(
+                    "config_hibernationDeletesOatArtifactsEnabled", "bool", "android"))
+
+                assertEquals("Expected API return value is different from device config value",
+                    enabled, runtimeConfig)
+            }
+        }
+    }
+
+    @Test
     fun testAppInfo_RemovePermissionsAndFreeUpSpaceToggleExists() {
         assumeFalse(
             "Remove permissions and free up space toggle may be unavailable on TV",

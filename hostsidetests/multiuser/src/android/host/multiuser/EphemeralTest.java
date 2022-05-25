@@ -17,8 +17,6 @@ package android.host.multiuser;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assert.assertTrue;
-
 import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.Presubmit;
 
@@ -41,8 +39,11 @@ public class EphemeralTest extends BaseMultiUserTest {
     private static final String TEST_APP_PKG_NAME = "com.android.cts.multiuser";
     private static final String TEST_APP_PKG_APK = "CtsMultiuserApp.apk";
 
-    private static final int REMOVE_RESULT_REMOVED = 0; //UserManager.REMOVE_RESULT_REMOVED;
-    private static final int REMOVE_RESULT_DEFERRED = 1; //UserManager.REMOVE_RESULT_DEFERRED;
+    // Values below were copied from UserManager
+    private static final int REMOVE_RESULT_REMOVED = 0;
+    private static final int REMOVE_RESULT_DEFERRED = 1;
+    private static final int REMOVE_RESULT_ERROR_USER_RESTRICTION = -2;
+    private static final String DISALLOW_REMOVE_USER = "no_remove_user";
 
     @Rule
     public final SupportsMultiUserRule mSupportsMultiUserRule = new SupportsMultiUserRule(this);
@@ -81,8 +82,10 @@ public class EphemeralTest extends BaseMultiUserTest {
 
         installPackageAsUser(
                 TEST_APP_PKG_APK, /* grantPermissions= */true, ephemeralUserId, /* options= */"-t");
-        assertTrue(getDevice().isPackageInstalled(TEST_APP_PKG_NAME,
-                String.valueOf(ephemeralUserId)));
+        assertWithMessage("isPackageInstalled(app=%s, user=%s)", TEST_APP_PKG_APK, ephemeralUserId)
+                .that(getDevice().isPackageInstalled(TEST_APP_PKG_NAME,
+                        String.valueOf(ephemeralUserId)))
+                .isTrue();
 
         final boolean appResult = runDeviceTests(getDevice(),
                 TEST_APP_PKG_NAME,
@@ -90,7 +93,7 @@ public class EphemeralTest extends BaseMultiUserTest {
                 "addMockAccountForCurrentUser",
                 ephemeralUserId,
                 5 * 60 * 1000L /* ms */);
-        assertTrue("Failed to successfully run app", appResult);
+        assertWithMessage("Device-side test passing").that(appResult).isTrue();
 
         getDevice().reboot();
         assertUserNotPresent(ephemeralUserId);
@@ -156,19 +159,61 @@ public class EphemeralTest extends BaseMultiUserTest {
         assertUserNotPresent(userId);
     }
 
+    /**
+     * Test to verify that
+     * {@link android.os.UserManager#removeUserWhenPossible(UserHandle, boolean)} works correctly
+     * when a DPC set the {@code no_remove_user} restriction in the current user.
+     */
+    @Presubmit
+    @Test
+    public void testRemoveUserWhenPossible_devicePolicyIsSet() throws Exception {
+        installPackage(DpcCommander.PKG_APK, /* options= */ "-t");
+        assertWithMessage("isPackageInstalled(%s)", DpcCommander.PKG_APK)
+                .that(getDevice().isPackageInstalled(DpcCommander.PKG_NAME))
+                .isTrue();
+
+        final DpcCommander dpc = DpcCommander.forCurrentUser(getDevice());
+        final int userId = createUser();
+
+        dpc.setProfileOwner();
+        try {
+            dpc.addUserRestriction(DISALLOW_REMOVE_USER);
+            try {
+                executeRemoveUserWhenPossible(userId, /* overrideDevicePolicy= */ false,
+                        /* expectedResult= */ REMOVE_RESULT_ERROR_USER_RESTRICTION);
+                assertUserPresent(userId);
+
+                executeRemoveUserWhenPossible(userId, /* overrideDevicePolicy= */ true,
+                        /* expectedResult= */ REMOVE_RESULT_REMOVED);
+                assertUserNotPresent(userId);
+            } finally {
+                dpc.clearUserRestriction(DISALLOW_REMOVE_USER);
+            }
+        } finally {
+            dpc.removeActiveAdmin();
+        }
+    }
+
     private void executeRemoveUserWhenPossible(int userId, int expectedResult) throws Exception {
+        executeRemoveUserWhenPossible(userId, /* overrideDevicePolicy= */ false, expectedResult);
+    }
+
+    private void executeRemoveUserWhenPossible(int userId, boolean overrideDevicePolicy,
+            int expectedResult) throws Exception {
         installPackage(TEST_APP_PKG_APK, /* options= */"-t");
-        assertTrue(getDevice().isPackageInstalled(TEST_APP_PKG_NAME));
+        assertWithMessage("isPackageInstalled(%s)", TEST_APP_PKG_APK)
+                .that(getDevice().isPackageInstalled(TEST_APP_PKG_NAME))
+                .isTrue();
 
         DeviceTestRunOptions options = new DeviceTestRunOptions(TEST_APP_PKG_NAME)
                 .setDevice(getDevice())
                 .setTestClassName(TEST_APP_PKG_NAME + ".UserOperationsTest")
                 .setTestMethodName("removeUserWhenPossibleDeviceSide")
                 .addInstrumentationArg("userId", String.valueOf(userId))
-                .addInstrumentationArg("overrideDevicePolicy", String.valueOf(false))
+                .addInstrumentationArg("overrideDevicePolicy", String.valueOf(overrideDevicePolicy))
                 .addInstrumentationArg("expectedResult", String.valueOf(expectedResult));
         final boolean appResult = runDeviceTests(options);
-        assertTrue("Failed to successfully run app", appResult);
+        assertWithMessage("Device-side test passing").that(appResult).isTrue();
     }
 
     private void assertUserEphemeral(int userId) throws Exception {

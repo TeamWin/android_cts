@@ -178,7 +178,8 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         void handleTestCompletion() {
             mMeanLatencyMS = StatUtils.calculateMean(mLatencyMS);
             mMeanAbsoluteDeviation =
-                    StatUtils.calculateMeanAbsoluteDeviation(mMeanLatencyMS, mLatencyMS);
+                    StatUtils.calculateMeanAbsoluteDeviation(
+                            mMeanLatencyMS, mLatencyMS, mLatencyMS.length);
             mMeanConfidence = StatUtils.calculateMean(mConfidence);
         }
 

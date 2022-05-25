@@ -1517,4 +1517,64 @@ public class SurfaceControlTest {
             }
         }
     }
+
+    @Test
+    public void testReleaseBufferCallbackNullBuffer() throws InterruptedException {
+        CountDownLatch releaseCounter = new CountDownLatch(1);
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl surfaceControl = createFromWindow(holder);
+                        HardwareBuffer buffer = getSolidBuffer(DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.YELLOW);
+                        SurfaceControl.Transaction t = new SurfaceControl.Transaction()
+                                .setBuffer(surfaceControl, buffer, null,
+                                        (SyncFence fence) -> releaseCounter.countDown());
+                        t.setBuffer(surfaceControl, (HardwareBuffer) null).apply();
+                        buffer.close();
+                    }
+                },
+                new PixelChecker(PixelColor.YELLOW) {
+                    @Override
+                    public boolean checkPixels(int matchingPixelCount, int width, int height) {
+                        return matchingPixelCount > 9000 && matchingPixelCount < 11000;
+                    }
+                }
+        );
+
+        assertTrue(releaseCounter.await(5, TimeUnit.SECONDS));
+    }
+
+    @Test
+    public void testReleaseBufferCallbackNullBufferThenNonNull() throws InterruptedException {
+        CountDownLatch releaseCounter = new CountDownLatch(2);
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl surfaceControl = createFromWindow(holder);
+                        HardwareBuffer buffer = getSolidBuffer(DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.YELLOW);
+                        SurfaceControl.Transaction t = new SurfaceControl.Transaction()
+                                .setBuffer(surfaceControl, buffer, null,
+                                        (SyncFence fence) -> releaseCounter.countDown());
+                        t.setBuffer(surfaceControl, (HardwareBuffer) null);
+                        t.setBuffer(surfaceControl, buffer, null,
+                                (SyncFence fence) -> releaseCounter.countDown()).apply();
+                        setSolidBuffer(surfaceControl,
+                                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT, PixelColor.YELLOW);
+                        buffer.close();
+                    }
+                },
+                new PixelChecker(PixelColor.YELLOW) {
+                    @Override
+                    public boolean checkPixels(int matchingPixelCount, int width, int height) {
+                        return matchingPixelCount > 9000 && matchingPixelCount < 11000;
+                    }
+                }
+        );
+
+        assertTrue(releaseCounter.await(5, TimeUnit.SECONDS));
+    }
 }

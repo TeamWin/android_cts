@@ -269,11 +269,23 @@ public class ImsServiceTest {
 
     private static class SingleRegistrationCapabilityReceiver extends BaseReceiver {
         private int mCapability;
+        private int mSubId;
+
+        SingleRegistrationCapabilityReceiver(int subId) {
+            mSubId = subId;
+        }
 
         @Override
         public void onReceive(Context context, Intent intent) {
             if (ProvisioningManager.ACTION_RCS_SINGLE_REGISTRATION_CAPABILITY_UPDATE
                     .equals(intent.getAction())) {
+                // if sub id in intent is not expected, then intent should be ignored.
+                int subId = intent.getIntExtra(ProvisioningManager.EXTRA_SUBSCRIPTION_ID,
+                        SubscriptionManager.INVALID_SUBSCRIPTION_ID);
+                if (mSubId != subId) {
+                    return;
+                }
+
                 mCapability = intent.getIntExtra(ProvisioningManager.EXTRA_STATUS,
                         ProvisioningManager.STATUS_DEVICE_NOT_CAPABLE
                         | ProvisioningManager.STATUS_CARRIER_NOT_CAPABLE);
@@ -321,7 +333,7 @@ public class ImsServiceTest {
         InstrumentationRegistry.getInstrumentation().getContext()
                 .registerReceiver(sReceiver, filter);
 
-        sSrcReceiver = new SingleRegistrationCapabilityReceiver();
+        sSrcReceiver = new SingleRegistrationCapabilityReceiver(sTestSub);
         InstrumentationRegistry.getInstrumentation().getContext()
                 .registerReceiver(sSrcReceiver, new IntentFilter(
                         ProvisioningManager.ACTION_RCS_SINGLE_REGISTRATION_CAPABILITY_UPDATE));

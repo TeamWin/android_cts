@@ -2197,32 +2197,42 @@ public class DecoderTest extends MediaTestBase {
     protected static class AudioParameter {
 
         public AudioParameter() {
-            this.reset();
+            reset();
         }
 
         public void reset() {
-            this.numChannels = 0;
-            this.samplingRate = 0;
+            mNumChannels = 0;
+            mSamplingRate = 0;
+            mChannelMask = 0;
         }
 
         public int getNumChannels() {
-            return this.numChannels;
+            return mNumChannels;
         }
 
         public int getSamplingRate() {
-            return this.samplingRate;
+            return mSamplingRate;
+        }
+
+        public int getChannelMask() {
+            return mChannelMask;
         }
 
         public void setNumChannels(int numChannels) {
-            this.numChannels = numChannels;
+            mNumChannels = numChannels;
         }
 
         public void setSamplingRate(int samplingRate) {
-            this.samplingRate = samplingRate;
+            mSamplingRate = samplingRate;
         }
 
-        private int numChannels;
-        private int samplingRate;
+        public void setChannelMask(int mask) {
+            mChannelMask = mask;
+        }
+
+        private int mNumChannels;
+        private int mSamplingRate;
+        private int mChannelMask;
     }
 
     private short[] decodeToMemory(String codecName, final String testinput, int resetMode,
