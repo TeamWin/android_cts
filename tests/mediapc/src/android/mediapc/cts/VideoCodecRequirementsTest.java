@@ -97,7 +97,7 @@ public class VideoCodecRequirementsTest {
 
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.VideoCodecRequirement rAV1DecoderReq = pce.addRAV1DecoderReq();
-        rAV1DecoderReq.setRequirementSatisfied(oneCodecDecoding);
+        rAV1DecoderReq.setVideoReqSatisfied(oneCodecDecoding);
 
         pce.submitAndCheck();
     }
@@ -114,7 +114,7 @@ public class VideoCodecRequirementsTest {
 
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.VideoCodecRequirement r4k60HwDecoder = pce.addR4k60HwDecoder();
-        r4k60HwDecoder.setRequirementSatisfied(oneCodecSupportsRequiredPerformance);
+        r4k60HwDecoder.setVideoReqSatisfied(oneCodecSupportsRequiredPerformance);
 
         pce.submitAndCheck();
     }
@@ -131,7 +131,7 @@ public class VideoCodecRequirementsTest {
 
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.VideoCodecRequirement r4k60HwEncoder = pce.addR4k60HwEncoder();
-        r4k60HwEncoder.setRequirementSatisfied(oneCodecSupportsRequiredPerformance);
+        r4k60HwEncoder.setVideoReqSatisfied(oneCodecSupportsRequiredPerformance);
 
         pce.submitAndCheck();
     }
