@@ -16,24 +16,17 @@
 
 package android.mediapc.cts;
 
-import static org.junit.Assert.assertTrue;
-
+import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.mediapc.cts.common.Utils;
-import android.os.Build;
-
 import androidx.test.filters.LargeTest;
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.compatibility.common.util.CddTest;
-import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
-
+import java.util.Collection;
+import org.junit.Assume;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import java.util.Collection;
 
 /**
  * The following test class validates the frame drops of a playback for the hardware decoders
@@ -47,6 +40,9 @@ public class FrameDropTest extends FrameDropTestBase {
         super(mimeType, decoderName, isAsync);
     }
 
+    @Rule
+    public final TestName mTestName = new TestName();
+
     // Returns the list of parameters with mimeTypes and their hardware decoders
     // combining with sync and async modes.
     // Parameters {0}_{1}_{2} -- Mime_DecoderName_isAsync
@@ -55,34 +51,54 @@ public class FrameDropTest extends FrameDropTestBase {
         return prepareArgumentsList(null);
     }
 
+    private int testDecodeToSurface(int frameRate) throws Exception {
+        String[] testFiles = frameRate == 30 ?
+                new String[]{m1080p30FpsTestFiles.get(mMime)} :
+                new String[]{m1080p60FpsTestFiles.get(mMime)};
+        PlaybackFrameDrop playbackFrameDrop = new PlaybackFrameDrop(mMime, mDecoderName, testFiles,
+                mSurface, frameRate, mIsAsync);
+        return playbackFrameDrop.getFrameDropCount();
+    }
+
     /**
      * This test validates that the playback of 1920x1080 resolution asset of 3 seconds duration
-     * at 60 fps for S perf class / 30 fps for R perf class, for at least 30 seconds worth of
-     * frames or for 31 seconds of elapsed time. must not drop more than 6 frames for S perf
-     * class / 3 frames for R perf class.
+     * at 30 fps for R perf class, for at least 30 seconds worth of  frames or for 31 seconds of
+     * elapsed time. must not drop more than 3 frames for R perf class.
      */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     @CddTest(requirement="2.2.7.1/5.3/H-1-1")
-    public void testDecodeToSurface() throws Exception {
-        PlaybackFrameDrop playbackFrameDrop = new PlaybackFrameDrop(mMime, mDecoderName,
-                new String[]{m1080pTestFiles.get(mMime)}, mSurface, FRAME_RATE, mIsAsync);
-        int frameDropCount = playbackFrameDrop.getFrameDropCount();
-        if (Utils.isPerfClass()) {
-            assertTrue("FrameDrop count for mime: " + mMime + ", decoder: " + mDecoderName
-                            + ", FrameRate: " + FRAME_RATE + ", is not as expected. act/exp: "
-                            + frameDropCount + "/" + MAX_FRAME_DROP_FOR_30S,
-                    frameDropCount <= MAX_FRAME_DROP_FOR_30S);
-        } else {
-            int pc = frameDropCount <= MAX_FRAME_DROP_FOR_30S ? Build.VERSION_CODES.R : 0;
-            DeviceReportLog log = new DeviceReportLog("MediaPerformanceClassLogs",
-                    "FrameDrop_" + mDecoderName);
-            log.addValue("decoder", mDecoderName, ResultType.NEUTRAL, ResultUnit.NONE);
-            log.addValue("frame_drops_for_30sec", frameDropCount, ResultType.LOWER_BETTER,
-                    ResultUnit.NONE);
-            log.setSummary("CDD 2.2.7.1/5.3/H-1-1 performance_class", pc, ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-            log.submit(InstrumentationRegistry.getInstrumentation());
-        }
+    public void test30Fps() throws Exception {
+        Assume.assumeTrue("Test is limited to R performance class devices or devices that do not " +
+                        "advertise performance class",
+                Utils.isRPerfClass() || !Utils.isPerfClass());
+
+        PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
+        PerformanceClassEvaluator.FrameDropRequirement r5_3__H_1_1_R = pce.addR5_3__H_1_1_R();
+
+        int framesDropped = testDecodeToSurface(30);
+        r5_3__H_1_1_R.setFramesDropped(framesDropped);
+        pce.submitAndCheck();
+    }
+
+    /**
+     * This test validates that the playback of 1920x1080 resolution asset of 3 seconds duration
+     * at 60 fps for S/T perf class,  for at least 30 seconds worth of  frames or for 31 seconds of
+     * elapsed time. must not drop more than 6 frames for S perf class / 3 frames for T perf class.
+     */
+    @LargeTest
+    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    @CddTest(requirement="2.2.7.1/5.3/H-1-1")
+    public void test60Fps() throws Exception {
+        Assume.assumeTrue("Test is limited to S/T performance class devices or devices that do " +
+                        "not advertise performance class",
+                Utils.isSPerfClass() || Utils.isTPerfClass() || !Utils.isPerfClass());
+
+        PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
+        PerformanceClassEvaluator.FrameDropRequirement r5_3__H_1_1_ST = pce.addR5_3__H_1_1_ST();
+
+        int framesDropped = testDecodeToSurface(60);
+        r5_3__H_1_1_ST.setFramesDropped(framesDropped);
+        pce.submitAndCheck();
     }
 }

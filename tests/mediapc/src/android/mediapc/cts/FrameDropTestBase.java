@@ -26,6 +26,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.media.MediaFormat;
 import android.mediapc.cts.common.Utils;
+import android.os.Build;
 import android.util.Log;
 import android.view.Surface;
 
@@ -52,9 +53,13 @@ public class FrameDropTestBase {
     static final String AAC_LOAD_FILE_NAME = "bbb_1c_128kbps_aac_audio.mp4";
     static final String AVC_LOAD_FILE_NAME = "bbb_1280x720_3mbps_30fps_avc.mp4";
     static final long DECODE_31S = 31000; // In ms
-    static final int MAX_ADAPTIVE_PLAYBACK_FRAME_DROP = 0;
-    static final int FRAME_RATE = Utils.isSPerfClass() ? 60 : 30;
     static final int MAX_FRAME_DROP_FOR_30S;
+    // For perf class R, one frame drop per 10 seconds at 30 fps i.e. 3 drops per 30 seconds
+    static final int MAX_FRAME_DROP_FOR_30S_30FPS_PC_R = 3;
+    // For perf class S, two frame drops per 10 seconds at 60 fps i.e. 6 drops per 30 seconds
+    static final int MAX_FRAME_DROP_FOR_30S_60FPS_PC_S = 6;
+    // For perf class T, one frame drop per 10 seconds at 60 fps i.e. 3 drops per 30 seconds
+    static final int MAX_FRAME_DROP_FOR_30S_60FPS_PC_T = 3;
 
     final String mMime;
     final String mDecoderName;
@@ -70,37 +75,46 @@ public class FrameDropTestBase {
     static String AVC_DECODER_NAME;
     static String AVC_ENCODER_NAME;
     static String AAC_DECODER_NAME;
-    static Map<String, String> m540pTestFiles = new HashMap<>();
-    static Map<String, String> m1080pTestFiles = new HashMap<>();
+    static Map<String, String> m540p30FpsTestFiles = new HashMap<>();
+    static Map<String, String> m1080p30FpsTestFiles = new HashMap<>();
+    static Map<String, String> m540p60FpsTestFiles = new HashMap<>();
+    static Map<String, String> m1080p60FpsTestFiles = new HashMap<>();
     static {
-        if (Utils.isSPerfClass()) {
-            // Two frame drops per 10 seconds at 60 fps is 6 drops per 30 seconds
-            MAX_FRAME_DROP_FOR_30S = 6;
-            m540pTestFiles.put(AVC, "bbb_960x540_3mbps_60fps_avc.mp4");
-            m540pTestFiles.put(HEVC, "bbb_960x540_3mbps_60fps_hevc.mp4");
-            m540pTestFiles.put(VP8, "bbb_960x540_3mbps_60fps_vp8.webm");
-            m540pTestFiles.put(VP9, "bbb_960x540_3mbps_60fps_vp9.webm");
-            m540pTestFiles.put(AV1, "bbb_960x540_3mbps_60fps_av1.mp4");
+        m540p60FpsTestFiles.put(AVC, "bbb_960x540_3mbps_60fps_avc.mp4");
+        m540p60FpsTestFiles.put(HEVC, "bbb_960x540_3mbps_60fps_hevc.mp4");
+        m540p60FpsTestFiles.put(VP8, "bbb_960x540_3mbps_60fps_vp8.webm");
+        m540p60FpsTestFiles.put(VP9, "bbb_960x540_3mbps_60fps_vp9.webm");
+        m540p60FpsTestFiles.put(AV1, "bbb_960x540_3mbps_60fps_av1.mp4");
 
-            m1080pTestFiles.put(AVC, "bbb_1920x1080_8mbps_60fps_avc.mp4");
-            m1080pTestFiles.put(HEVC, "bbb_1920x1080_6mbps_60fps_hevc.mp4");
-            m1080pTestFiles.put(VP8, "bbb_1920x1080_8mbps_60fps_vp8.webm");
-            m1080pTestFiles.put(VP9, "bbb_1920x1080_6mbps_60fps_vp9.webm");
-            m1080pTestFiles.put(AV1, "bbb_1920x1080_6mbps_60fps_av1.mp4");
-        } else {
-            // One frame drops per 10 seconds at 30 fps is 3 drops per 30 seconds
-            MAX_FRAME_DROP_FOR_30S = 3;
-            m540pTestFiles.put(AVC, "bbb_960x540_2mbps_30fps_avc.mp4");
-            m540pTestFiles.put(HEVC, "bbb_960x540_2mbps_30fps_hevc.mp4");
-            m540pTestFiles.put(VP8, "bbb_960x540_2mbps_30fps_vp8.webm");
-            m540pTestFiles.put(VP9, "bbb_960x540_2mbps_30fps_vp9.webm");
-            m540pTestFiles.put(AV1, "bbb_960x540_2mbps_30fps_av1.mp4");
+        m1080p60FpsTestFiles.put(AVC, "bbb_1920x1080_8mbps_60fps_avc.mp4");
+        m1080p60FpsTestFiles.put(HEVC, "bbb_1920x1080_6mbps_60fps_hevc.mp4");
+        m1080p60FpsTestFiles.put(VP8, "bbb_1920x1080_8mbps_60fps_vp8.webm");
+        m1080p60FpsTestFiles.put(VP9, "bbb_1920x1080_6mbps_60fps_vp9.webm");
+        m1080p60FpsTestFiles.put(AV1, "bbb_1920x1080_6mbps_60fps_av1.mp4");
 
-            m1080pTestFiles.put(AVC, "bbb_1920x1080_6mbps_30fps_avc.mp4");
-            m1080pTestFiles.put(HEVC, "bbb_1920x1080_4mbps_30fps_hevc.mp4");
-            m1080pTestFiles.put(VP8, "bbb_1920x1080_6mbps_30fps_vp8.webm");
-            m1080pTestFiles.put(VP9, "bbb_1920x1080_4mbps_30fps_vp9.webm");
-            m1080pTestFiles.put(AV1, "bbb_1920x1080_4mbps_30fps_av1.mp4");
+        m540p30FpsTestFiles.put(AVC, "bbb_960x540_2mbps_30fps_avc.mp4");
+        m540p30FpsTestFiles.put(HEVC, "bbb_960x540_2mbps_30fps_hevc.mp4");
+        m540p30FpsTestFiles.put(VP8, "bbb_960x540_2mbps_30fps_vp8.webm");
+        m540p30FpsTestFiles.put(VP9, "bbb_960x540_2mbps_30fps_vp9.webm");
+        m540p30FpsTestFiles.put(AV1, "bbb_960x540_2mbps_30fps_av1.mp4");
+
+        m1080p30FpsTestFiles.put(AVC, "bbb_1920x1080_6mbps_30fps_avc.mp4");
+        m1080p30FpsTestFiles.put(HEVC, "bbb_1920x1080_4mbps_30fps_hevc.mp4");
+        m1080p30FpsTestFiles.put(VP8, "bbb_1920x1080_6mbps_30fps_vp8.webm");
+        m1080p30FpsTestFiles.put(VP9, "bbb_1920x1080_4mbps_30fps_vp9.webm");
+        m1080p30FpsTestFiles.put(AV1, "bbb_1920x1080_4mbps_30fps_av1.mp4");
+
+        switch (Utils.getPerfClass()) {
+            case Build.VERSION_CODES.TIRAMISU:
+                MAX_FRAME_DROP_FOR_30S = MAX_FRAME_DROP_FOR_30S_60FPS_PC_T;
+                break;
+            case Build.VERSION_CODES.S:
+                MAX_FRAME_DROP_FOR_30S = MAX_FRAME_DROP_FOR_30S_60FPS_PC_S;
+                break;
+            case Build.VERSION_CODES.R:
+            default:
+                MAX_FRAME_DROP_FOR_30S = MAX_FRAME_DROP_FOR_30S_30FPS_PC_R;
+                break;
         }
     }
 
@@ -147,7 +161,7 @@ public class FrameDropTestBase {
         final String[] mimesList = new String[] {AVC, HEVC, VP8, VP9, AV1};
         for (String mime : mimesList) {
             MediaFormat format = MediaFormat.createVideoFormat(mime, 1920, 1080);
-            format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
+            format.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
             ArrayList<MediaFormat> formats = new ArrayList<>();
             formats.add(format);
             ArrayList<String> listOfDecoders =
@@ -159,6 +173,18 @@ public class FrameDropTestBase {
             }
         }
         return argsList;
+    }
+
+    protected int getAchievedPerfClass(int frameRate, int frameDropCount) {
+        int pc = 0;
+        if (frameRate == 30) {
+            pc = frameDropCount <= MAX_FRAME_DROP_FOR_30S_30FPS_PC_R ? Build.VERSION_CODES.R : 0;
+        } else {
+            pc = frameDropCount <= MAX_FRAME_DROP_FOR_30S_60FPS_PC_T ? Build.VERSION_CODES.TIRAMISU
+                    : frameDropCount <= MAX_FRAME_DROP_FOR_30S_60FPS_PC_S ? Build.VERSION_CODES.S
+                    : 0;
+        }
+        return pc;
     }
 
     private void createSurface() throws InterruptedException {
@@ -218,7 +244,6 @@ public class FrameDropTestBase {
     private void stopLoad() throws Exception {
         if (mLoadStatus != null) {
             mLoadStatus.setLoadFinished();
-            mLoadStatus = null;
         }
         if (mTranscodeLoadThread != null) {
             mTranscodeLoadThread.join();
@@ -230,5 +255,6 @@ public class FrameDropTestBase {
         }
         if (mTranscodeLoadException != null) throw mTranscodeLoadException;
         if (mAudioPlaybackLoadException != null) throw mAudioPlaybackLoadException;
+        mLoadStatus = null;
     }
 }

@@ -61,6 +61,7 @@ public class RequirementConstants {
     public static final String R8_2__H_2_2 = "r8_2__h_2_2"; // 8.2/H-2-2
     public static final String R8_2__H_2_3 = "r8_2__h_2_3"; // 8.2/H-2-3
     public static final String R8_2__H_2_4 = "r8_2__h_2_4"; // 8.2/H-2-4
+    public static final String RTBD = "tbd"; // placeholder for requirements without a set id
 
     public static final String MAX_CONCURRENT_SESSIONS = "max_concurrent_sessions";
     public static final String SUPPORTED_PERFORMANCE_POINTS = "supported_performance_points";
@@ -70,14 +71,24 @@ public class RequirementConstants {
     public static final String SHORT_RESOLUTION = "short_resolution_pixels";
     public static final String DISPLAY_DENSITY = "display_density_dpi";
     public static final String PHYSICAL_MEMORY = "physical_memory_mb";
+    public static final String CODEC_INIT_LATENCY = "codec_initialization_latency_ms";
+    public static final String VIDEO_REQ_SATISFIED = "video_requirement_satisfied_boolean";
+    public static final String SECURE_REQ_SATISFIED = "secure_requirement_satisfied_boolean";
+    public static final String WIDEWINE_SUPPORT = "widevine_support_boolean";
+    public static final String WIDEWINE_L1 = "widevine_l1_support_boolean";
+    public static final String WIDEWINE_L1_TIER3 = "widevine_l1_tier3_support_boolean";
+    public static final String OEM_CRYPTO_17_PLUS = "oem_crypto_version_17plus_boolean";
+    public static final String WIDEWINE_CDM_17_PLUS = "widevine_cdm_version_17plus_boolean";
 
     public enum Result {
         NA, MET, UNMET
     }
 
     public static final BiPredicate<Long, Long> LONG_GTE = RequirementConstants.gte();
+    public static final BiPredicate<Long, Long> LONG_LTE = RequirementConstants.lte();
     public static final BiPredicate<Integer, Integer> INTEGER_GTE = RequirementConstants.gte();
     public static final BiPredicate<Integer, Integer> INTEGER_LTE = RequirementConstants.lte();
+    public static final BiPredicate<Boolean, Boolean> BOOLEAN_EQ = RequirementConstants.eq();
 
     /**
      * Creates a >= predicate.
@@ -111,6 +122,23 @@ public class RequirementConstants {
             @Override
             public String toString() {
                 return "Less than or equal to";
+            }
+        };
+    }
+
+    /**
+     * Creates an == predicate.
+     */
+    private static <T, S extends Comparable<T>> BiPredicate<S, T> eq() {
+        return new BiPredicate<S, T>() {
+            @Override
+            public boolean test(S actual, T expected) {
+                return actual.compareTo(expected) == 0;
+            }
+
+            @Override
+            public String toString() {
+                return "Equal to";
             }
         };
     }
