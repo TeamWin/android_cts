@@ -1261,16 +1261,14 @@ public class TelephonyManagerTest {
 
         List<RadioAccessSpecifier> channels = Collections.emptyList();
         if (mRadioVersion >= RADIO_HAL_VERSION_1_6) {
-            channels = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                    mTelephonyManager, TelephonyManager::getSystemSelectionChannels);
-            if (channels.isEmpty()) {
-                // TODO (b/189255895): Throw an error once getSystemSelectionChannels is functional.
-                Log.e(TAG, "getSystemChannels not implemented on IRadio 1.6+.");
+            try {
+                channels = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                        mTelephonyManager, TelephonyManager::getSystemSelectionChannels);
+            } catch (IllegalStateException e) {
+                // TODO (b/189255895): Allow ISE once API is enforced in IRadio 2.1.
+                Log.d(TAG, "Skipping test since system selection channels are not available.");
+                return;
             }
-        }
-        if (channels.isEmpty()) {
-            Log.d(TAG, "Skipping test since system selection channels are not available.");
-            return;
         }
 
         LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue<>(1);
