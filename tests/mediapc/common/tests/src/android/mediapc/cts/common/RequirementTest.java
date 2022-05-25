@@ -18,6 +18,8 @@ package android.mediapc.cts.common;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
+
 import android.os.Build;
 
 import org.junit.Test;
@@ -181,5 +183,14 @@ public class RequirementTest {
         // performance class 33 not handled by testReq, so expected result is true
         perfClassMet = testReq.checkPerformanceClass(33);
         assertThat(perfClassMet).isEqualTo(true);
+    }
+
+    @Test
+    public void checkPerformanceClass_UnsetMeasurement() {
+        TestReq testReq = TestReq.create();
+
+        assertThrows(
+            IllegalStateException.class,
+            () -> testReq.checkPerformanceClass(31));
     }
 }

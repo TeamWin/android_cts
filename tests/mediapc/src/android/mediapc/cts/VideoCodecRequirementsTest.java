@@ -21,35 +21,30 @@ import static android.mediapc.cts.CodecTestBase.SELECT_HARDWARE;
 import static android.mediapc.cts.CodecTestBase.SELECT_VIDEO;
 import static android.mediapc.cts.CodecTestBase.getMimesOfAvailableCodecs;
 import static android.mediapc.cts.CodecTestBase.selectHardwareCodecs;
-import static org.junit.Assert.assertTrue;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.VideoCapabilities.PerformancePoint;
 import android.media.MediaFormat;
-import android.mediapc.cts.common.Utils;
-import android.os.Build;
+import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.util.Log;
-
 import androidx.test.filters.LargeTest;
-import androidx.test.platform.app.InstrumentationRegistry;
-
-import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
-
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
 
 public class VideoCodecRequirementsTest {
     private static final String LOG_TAG = VideoCodecRequirementsTest.class.getSimpleName();
     private static final String FILE_AV1_REQ_SUPPORT =
             "dpov_1920x1080_60fps_av1_10bit_film_grain.mp4";
+
+    @Rule
+    public final TestName mTestName = new TestName();
 
     private Set<String> get4k60HwCodecSet(boolean isEncoder) throws IOException {
         Set<String> codecSet = new HashSet<>();
@@ -99,21 +94,12 @@ public class VideoCodecRequirementsTest {
                 oneCodecDecoding = true;
             }
         }
-        if (Utils.isTPerfClass()) {
-            assertTrue("One AV1 HW decoder with supported features required for MPC >= Android T",
-                    oneCodecDecoding);
-        } else {
-            int pc = oneCodecDecoding ? Build.VERSION_CODES.TIRAMISU : 0;
-            DeviceReportLog log =
-                    new DeviceReportLog("MediaPerformanceClassLogs", "VideoCodecRequirements");
-            log.addValue("AV1DecoderFeatureSupport", oneCodecDecoding, ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-            // TODO(b/218771970) Log CDD sections
-            log.setSummary(
-                    "Video Codec Requirements: AV1 HW decoder: Main 10, Level 4.1, Film Grain", pc,
-                    ResultType.HIGHER_BETTER, ResultUnit.NONE);
-            log.submit(InstrumentationRegistry.getInstrumentation());
-        }
+
+        PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
+        PerformanceClassEvaluator.VideoCodecRequirement rAV1DecoderReq = pce.addRAV1DecoderReq();
+        rAV1DecoderReq.setRequirementSatisfied(oneCodecDecoding);
+
+        pce.submitAndCheck();
     }
 
     /**
@@ -126,20 +112,11 @@ public class VideoCodecRequirementsTest {
         Set<String> decoderSet = get4k60HwCodecSet(false);
         boolean oneCodecSupportsRequiredPerformance = !decoderSet.isEmpty();
 
-        if (Utils.isTPerfClass()) {
-            assertTrue("At least one 4k60 HW decoder required for MPC >= Android T",
-                    oneCodecSupportsRequiredPerformance);
-        } else {
-            int pc = oneCodecSupportsRequiredPerformance ? Build.VERSION_CODES.TIRAMISU : 0;
-            DeviceReportLog log =
-                    new DeviceReportLog("MediaPerformanceClassLogs", "VideoCodecRequirements");
-            log.addValue("4k60DecodeHW", oneCodecSupportsRequiredPerformance, ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-            // TODO(b/218771970) Log CDD sections
-            log.setSummary("Video Codec Requirements: 1 HW video decoder supporting 4K60", pc,
-                    ResultType.HIGHER_BETTER, ResultUnit.NONE);
-            log.submit(InstrumentationRegistry.getInstrumentation());
-        }
+        PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
+        PerformanceClassEvaluator.VideoCodecRequirement r4k60HwDecoder = pce.addR4k60HwDecoder();
+        r4k60HwDecoder.setRequirementSatisfied(oneCodecSupportsRequiredPerformance);
+
+        pce.submitAndCheck();
     }
 
     /**
@@ -152,19 +129,10 @@ public class VideoCodecRequirementsTest {
         Set<String> encoderSet = get4k60HwCodecSet(true);
         boolean oneCodecSupportsRequiredPerformance = !encoderSet.isEmpty();
 
-        if (Utils.isTPerfClass()) {
-            assertTrue("At least one 4k60 HW encoder required for MPC >= Android T",
-                    oneCodecSupportsRequiredPerformance);
-        } else {
-            int pc = oneCodecSupportsRequiredPerformance ? Build.VERSION_CODES.TIRAMISU : 0;
-            DeviceReportLog log =
-                    new DeviceReportLog("MediaPerformanceClassLogs", "VideoCodecRequirements");
-            log.addValue("4k60EncodeHW", oneCodecSupportsRequiredPerformance, ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-            // TODO(b/218771970) Log CDD sections
-            log.setSummary("Video Codec Requirements: 1 HW video encoder supporting 4K60", pc,
-                    ResultType.HIGHER_BETTER, ResultUnit.NONE);
-            log.submit(InstrumentationRegistry.getInstrumentation());
-        }
+        PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
+        PerformanceClassEvaluator.VideoCodecRequirement r4k60HwEncoder = pce.addR4k60HwEncoder();
+        r4k60HwEncoder.setRequirementSatisfied(oneCodecSupportsRequiredPerformance);
+
+        pce.submitAndCheck();
     }
 }
