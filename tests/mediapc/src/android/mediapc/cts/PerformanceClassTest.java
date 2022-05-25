@@ -17,11 +17,6 @@
 package android.mediapc.cts;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_SecurePlayback;
-import static android.mediapc.cts.common.Utils.MIN_MEMORY_PERF_CLASS_CANDIDATE_MB;
-import static android.mediapc.cts.common.Utils.MIN_MEMORY_PERF_CLASS_T_MB;
-import static android.util.DisplayMetrics.DENSITY_400;
-
-import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertTrue;
 
@@ -35,7 +30,6 @@ import android.media.MediaFormat;
 import android.media.UnsupportedSchemeException;
 import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.mediapc.cts.common.Utils;
-import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.WindowManager;
@@ -196,14 +190,19 @@ public class PerformanceClassTest {
         PerformanceClassEvaluator.DensityRequirement r7_1_1_3__h_1_1 = pce.addR7_1_1_3__H_1_1();
         PerformanceClassEvaluator.ResolutionRequirement r7_1_1_1__h_2_1 = pce.addR7_1_1_1__H_2_1();
         PerformanceClassEvaluator.DensityRequirement r7_1_1_3__h_2_1 = pce.addR7_1_1_3__H_2_1();
+        PerformanceClassEvaluator.ResolutionRequirement r7_1_1_1__tbd1 = pce.addR7_1_1_1__TBD1();
+        PerformanceClassEvaluator.DensityRequirement r7_1_1_3__tbd2 = pce.addR7_1_1_3__TBD2();
 
         r7_1_1_1__h_1_1.setLongResolution(longPix);
         r7_1_1_1__h_2_1.setLongResolution(longPix);
+        r7_1_1_1__tbd1.setLongResolution(longPix);
         r7_1_1_1__h_1_1.setShortResolution(shortPix);
         r7_1_1_1__h_2_1.setShortResolution(shortPix);
+        r7_1_1_1__tbd1.setShortResolution(shortPix);
 
         r7_1_1_3__h_1_1.setDisplayDensity(density);
         r7_1_1_3__h_2_1.setDisplayDensity(density);
+        r7_1_1_3__tbd2.setDisplayDensity(density);
 
         pce.submitAndCheck();
     }
@@ -225,9 +224,11 @@ public class PerformanceClassTest {
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.MemoryRequirement r7_6_1_h_1_1 = pce.addR7_6_1__H_1_1();
         PerformanceClassEvaluator.MemoryRequirement r7_6_1_h_2_1 = pce.addR7_6_1__H_2_1();
+        PerformanceClassEvaluator.MemoryRequirement r7_6_1_h_3_1 = pce.addR7_6_1__H_3_1();
 
         r7_6_1_h_1_1.setPhysicalMemory(totalMemoryMb);
         r7_6_1_h_2_1.setPhysicalMemory(totalMemoryMb);
+        r7_6_1_h_3_1.setPhysicalMemory(totalMemoryMb);
 
         pce.submitAndCheck();
     }
