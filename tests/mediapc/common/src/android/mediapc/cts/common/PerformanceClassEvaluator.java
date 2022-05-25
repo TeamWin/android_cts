@@ -195,6 +195,96 @@ public class PerformanceClassEvaluator {
         }
     }
 
+    // used for requirements [2.2.7.1/5.1/H-1-7], [2.2.7.1/5.1/H-1-8], [2.2.7.1/5.1/H-1-?]
+    public static class CodecInitLatencyRequirement extends Requirement {
+
+        private static final String TAG = CodecInitLatencyRequirement.class.getSimpleName();
+
+        private CodecInitLatencyRequirement(String id, RequiredMeasurement<?>... reqs) {
+            super(id, reqs);
+        }
+
+        public void setCodecInitLatencyMs(long codecInitLatencyMs) {
+            this.setMeasuredValue(RequirementConstants.CODEC_INIT_LATENCY, codecInitLatencyMs);
+        }
+
+        /**
+         * [2.2.7.1/5.1/H-1-7] MUST have a codec initialization latency of 65(R) / 50(S) / 40(T)
+         * ms or less for a 1080p or smaller video encoding session for all hardware video
+         * encoders when under load. Load here is defined as a concurrent 1080p to 720p
+         * video-only transcoding session using hardware video codecs together with the 1080p
+         * audio-video recording initialization.
+         */
+        public static CodecInitLatencyRequirement createR5_1__H_1_7() {
+            RequiredMeasurement<Long> codec_init_latency =
+                RequiredMeasurement.<Long>builder().setId(RequirementConstants.CODEC_INIT_LATENCY)
+                    .setPredicate(RequirementConstants.LONG_LTE)
+                    .addRequiredValue(Build.VERSION_CODES.R, 65L)
+                    .addRequiredValue(Build.VERSION_CODES.S, 50L)
+                    .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 40L)
+                    .build();
+
+            return new CodecInitLatencyRequirement(RequirementConstants.R5_1__H_1_7,
+                codec_init_latency);
+        }
+
+        /**
+         * [2.2.7.1/5.1/H-1-8] MUST have a codec initialization latency of 50(R) / 40(S) / 30(T)
+         * ms or less for a 128 kbps or lower bitrate audio encoding session for all audio
+         * encoders when under load. Load here is defined as a concurrent 1080p to 720p
+         * video-only transcoding session using hardware video codecs together with the 1080p
+         * audio-video recording initialization.
+         */
+        public static CodecInitLatencyRequirement createR5_1__H_1_8() {
+            RequiredMeasurement<Long> codec_init_latency =
+                RequiredMeasurement.<Long>builder().setId(RequirementConstants.CODEC_INIT_LATENCY)
+                    .setPredicate(RequirementConstants.LONG_LTE)
+                    .addRequiredValue(Build.VERSION_CODES.R, 50L)
+                    .addRequiredValue(Build.VERSION_CODES.S, 40L)
+                    .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 30L)
+                    .build();
+
+            return new CodecInitLatencyRequirement(RequirementConstants.R5_1__H_1_8,
+                codec_init_latency);
+        }
+
+        // TODO(b/218771970): Update CDD section
+        /**
+         * [2.2.7.1/5.1/H-1-?] Codec initialization latency of 40ms or less for a 1080p or
+         * smaller video decoding session for all hardware video encoders when under load. Load
+         * here is defined as a concurrent 1080p to 720p video-only transcoding session using
+         * hardware video codecs together with the 1080p audio-video recording initialization.
+         */
+        public static CodecInitLatencyRequirement createR5_1__H_1_TBD1() {
+            RequiredMeasurement<Long> codec_init_latency =
+                RequiredMeasurement.<Long>builder().setId(RequirementConstants.CODEC_INIT_LATENCY)
+                    .setPredicate(RequirementConstants.LONG_LTE)
+                    .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 40L)
+                    .build();
+
+            return new CodecInitLatencyRequirement(RequirementConstants.R5_1__H_1_TBD,
+                codec_init_latency);
+        }
+
+        // TODO(b/218771970): Update CDD section
+        /**
+         * [2.2.7.1/5.1/H-1-?] Codec initialization latency of 30ms or less for a 128kbps or
+         * lower bitrate audio decoding session for all audio encoders when under load. Load here
+         * is defined as a concurrent 1080p to 720p video-only transcoding session using hardware
+         * video codecs together with the 1080p audio-video recording initialization.
+         */
+        public static CodecInitLatencyRequirement createR5_1__H_1_TBD2() {
+            RequiredMeasurement<Long> codec_init_latency =
+                RequiredMeasurement.<Long>builder().setId(RequirementConstants.CODEC_INIT_LATENCY)
+                    .setPredicate(RequirementConstants.LONG_LTE)
+                    .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 30L)
+                    .build();
+
+            return new CodecInitLatencyRequirement(RequirementConstants.R5_1__H_1_TBD,
+                codec_init_latency);
+        }
+    }
+
     private <R extends Requirement> R addRequirement(R req) {
         if (!this.mRequirements.add(req)) {
             throw new IllegalStateException("Requirement " + req.id() + " already added");
@@ -226,6 +316,22 @@ public class PerformanceClassEvaluator {
 
     public MemoryRequirement addR7_6_1__H_2_1() {
         return this.<MemoryRequirement>addRequirement(MemoryRequirement.createR7_6_1__H_2_1());
+    }
+
+    public CodecInitLatencyRequirement addR5_1__H_1_7() {
+        return this.addRequirement(CodecInitLatencyRequirement.createR5_1__H_1_7());
+    }
+
+    public CodecInitLatencyRequirement addR5_1__H_1_8() {
+        return this.addRequirement(CodecInitLatencyRequirement.createR5_1__H_1_8());
+    }
+
+    public CodecInitLatencyRequirement addR5_1__H_1_TBD1() {
+        return this.addRequirement(CodecInitLatencyRequirement.createR5_1__H_1_TBD1());
+    }
+
+    public CodecInitLatencyRequirement addR5_1__H_1_TBD2() {
+        return this.addRequirement(CodecInitLatencyRequirement.createR5_1__H_1_TBD2());
     }
 
     public void submitAndCheck() {

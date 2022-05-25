@@ -35,8 +35,8 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.MediaRecorder;
+import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.mediapc.cts.common.Utils;
-import android.os.Build;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Surface;
@@ -46,14 +46,11 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.CddTest;
-import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -76,19 +73,7 @@ import java.util.Set;
 public class CodecInitializationLatencyTest {
     private static final String LOG_TAG = CodecInitializationLatencyTest.class.getSimpleName();
     private static final boolean[] boolStates = {false, true};
-    private static final int MAX_AUDIOENC_INITIALIZATION_LATENCY_PC_R_MS = 50;
-    private static final int MAX_VIDEOENC_INITIALIZATION_LATENCY_PC_R_MS = 65;
-    private static final int MAX_AUDIOENC_INITIALIZATION_LATENCY_PC_S_MS = 40;
-    private static final int MAX_VIDEOENC_INITIALIZATION_LATENCY_PC_S_MS = 50;
-    private static final int MAX_AUDIOENC_INITIALIZATION_LATENCY_PC_T_MS = 30;
-    private static final int MAX_VIDEOENC_INITIALIZATION_LATENCY_PC_T_MS = 40;
-    private static final int MAX_AUDIODEC_INITIALIZATION_LATENCY_PC_T_MS = 30;
-    private static final int MAX_VIDEODEC_INITIALIZATION_LATENCY_PC_T_MS = 40;
 
-    private static final int MAX_AUDIOENC_INITIALIZATION_LATENCY_MS;
-    private static final int MAX_VIDEOENC_INITIALIZATION_LATENCY_MS;
-    private static final int MAX_AUDIODEC_INITIALIZATION_LATENCY_MS;
-    private static final int MAX_VIDEODEC_INITIALIZATION_LATENCY_MS;
     private static final String AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
     private static final String HEVC = MediaFormat.MIMETYPE_VIDEO_HEVC;
     private static final String AVC_TRANSCODE_FILE = "bbb_1280x720_3mbps_30fps_avc.mp4";
@@ -96,26 +81,10 @@ public class CodecInitializationLatencyTest {
     private static String AVC_ENCODER_NAME;
     private static final Map<String, String> mTestFiles = new HashMap<>();
 
+    @Rule
+    public final TestName mTestName = new TestName();
+
     static {
-        if (Utils.isRPerfClass()) {
-            MAX_AUDIOENC_INITIALIZATION_LATENCY_MS = MAX_AUDIOENC_INITIALIZATION_LATENCY_PC_R_MS;
-            MAX_VIDEOENC_INITIALIZATION_LATENCY_MS = MAX_VIDEOENC_INITIALIZATION_LATENCY_PC_R_MS;
-        } else if (Utils.isSPerfClass()) {
-            MAX_AUDIOENC_INITIALIZATION_LATENCY_MS = MAX_AUDIOENC_INITIALIZATION_LATENCY_PC_S_MS;
-            MAX_VIDEOENC_INITIALIZATION_LATENCY_MS = MAX_VIDEOENC_INITIALIZATION_LATENCY_PC_S_MS;
-        } else {
-            // Performance class Build.VERSION_CODES.TIRAMISU and beyond
-            MAX_AUDIOENC_INITIALIZATION_LATENCY_MS = MAX_AUDIOENC_INITIALIZATION_LATENCY_PC_T_MS;
-            MAX_VIDEOENC_INITIALIZATION_LATENCY_MS = MAX_VIDEOENC_INITIALIZATION_LATENCY_PC_T_MS;
-        }
-        if (Utils.isTPerfClass()) {
-            MAX_AUDIODEC_INITIALIZATION_LATENCY_MS = MAX_AUDIODEC_INITIALIZATION_LATENCY_PC_T_MS;
-            MAX_VIDEODEC_INITIALIZATION_LATENCY_MS = MAX_VIDEODEC_INITIALIZATION_LATENCY_PC_T_MS;
-        } else {
-            // no requirement below performance class Build.VERSION_CODES.TIRAMISU
-            MAX_AUDIODEC_INITIALIZATION_LATENCY_MS = Integer.MAX_VALUE;
-            MAX_VIDEODEC_INITIALIZATION_LATENCY_MS = Integer.MAX_VALUE;
-        }
         // TODO(b/222006626): Add tests vectors for remaining media types
         // Audio media types
         mTestFiles.put(MediaFormat.MIMETYPE_AUDIO_AAC, "bbb_stereo_48kHz_128kbps_aac.mp4");
@@ -300,6 +269,7 @@ public class CodecInitializationLatencyTest {
         }
     }
 
+    // TODO(b/218771970): Add cdd annotation
     /**
      * This test validates the initialization latency (time for codec create + configure) for
      * audio and hw video codecs.
@@ -324,11 +294,6 @@ public class CodecInitializationLatencyTest {
         // need to meet the pass criteria. For eg. if NUM_MEASUREMENTS = 5, audio, sync and Async
         // modes which is a total of 10 iterations, this translates to index 7.
         final int percentile = 70;
-        long expectedMaxCodecInitializationLatencyMs = isAudio ?
-                isEncoder ? MAX_AUDIOENC_INITIALIZATION_LATENCY_MS :
-                        MAX_AUDIODEC_INITIALIZATION_LATENCY_MS :
-                isEncoder ? MAX_VIDEOENC_INITIALIZATION_LATENCY_MS :
-                        MAX_VIDEODEC_INITIALIZATION_LATENCY_MS;
         long sumOfCodecInitializationLatencyMs = 0;
         int count = 0;
         int numOfActualMeasurements =
@@ -378,38 +343,15 @@ public class CodecInitializationLatencyTest {
         Log.i(LOG_TAG, "Max " + statsLog + codecInitializationLatencyMs[count - 1]);
         Log.i(LOG_TAG, "Avg " + statsLog + (sumOfCodecInitializationLatencyMs / count));
         long initializationLatency = codecInitializationLatencyMs[percentile * count / 100];
-        if (Utils.isPerfClass()) {
-            String errorLog = String.format(
-                    "CodecInitialization latency for mime: %s, Codec: %s is not as expected."
-                            + "act/exp in Ms :: %d/%d", mMime, mCodecName, initializationLatency,
-                    expectedMaxCodecInitializationLatencyMs);
-            assertTrue(errorLog, initializationLatency <= expectedMaxCodecInitializationLatencyMs);
-        } else {
-            int pc;
-            if (mMime.startsWith("audio/")) {
-                pc = initializationLatency < MAX_AUDIOENC_INITIALIZATION_LATENCY_PC_T_MS ?
-                        Build.VERSION_CODES.TIRAMISU :
-                        initializationLatency < MAX_AUDIOENC_INITIALIZATION_LATENCY_PC_S_MS ?
-                                Build.VERSION_CODES.S : initializationLatency <
-                                MAX_AUDIOENC_INITIALIZATION_LATENCY_PC_R_MS ?
-                                Build.VERSION_CODES.R : 0;
-            } else {
-                pc = initializationLatency < MAX_VIDEOENC_INITIALIZATION_LATENCY_PC_T_MS ?
-                        Build.VERSION_CODES.TIRAMISU :
-                        initializationLatency < MAX_VIDEOENC_INITIALIZATION_LATENCY_PC_S_MS ?
-                                Build.VERSION_CODES.S : initializationLatency <
-                                MAX_VIDEOENC_INITIALIZATION_LATENCY_PC_R_MS ?
-                                Build.VERSION_CODES.R : 0;
-            }
-            DeviceReportLog log = new DeviceReportLog("MediaPerformanceClassLogs",
-                    "InitializationLatency_" + mCodecName);
-            log.addValue("codec", mCodecName, ResultType.NEUTRAL, ResultUnit.NONE);
-            log.addValue("initialization_latency", initializationLatency, ResultType.LOWER_BETTER,
-                    ResultUnit.NONE);
-            log.setSummary("CDD 2.2.7.1/5.1/H-1-7,H-1-8 performance_class", pc, ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-            log.submit(InstrumentationRegistry.getInstrumentation());
-        }
+
+        PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
+        PerformanceClassEvaluator.CodecInitLatencyRequirement r5_1__H_1_Latency =
+            isEncoder ? isAudio ? pce.addR5_1__H_1_8() : pce.addR5_1__H_1_7()
+                : isAudio ? pce.addR5_1__H_1_TBD2() : pce.addR5_1__H_1_TBD1();
+
+        r5_1__H_1_Latency.setCodecInitLatencyMs(initializationLatency);
+
+        pce.submitAndCheck();
     }
 
     /**
