@@ -132,14 +132,6 @@ fun runAppHibernationJob(context: Context, tag: String) {
     }
 }
 
-fun runPermissionEventCleanupJob(context: Context) {
-    eventually {
-        runShellCommandOrThrow("cmd jobscheduler run -u " +
-            "${Process.myUserHandle().identifier} -f " +
-            "${context.packageManager.permissionControllerPackageName} 3")
-    }
-}
-
 inline fun withApp(
     apk: String,
     packageName: String,
