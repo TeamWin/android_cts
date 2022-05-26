@@ -465,19 +465,27 @@ public class PerformanceClassEvaluator {
             super(id, reqs);
         }
 
-        public void setVideoReqSatisfied(boolean videoReqSatisfied) {
-            this.setMeasuredValue(RequirementConstants.VIDEO_REQ_SATISFIED, videoReqSatisfied);
+        public void setAv1DecoderReq(boolean av1DecoderReqSatisfied) {
+            this.setMeasuredValue(RequirementConstants.AV1_DEC_REQ, av1DecoderReqSatisfied);
+        }
+
+        public void set4kHwDecoders(int num4kHwDecoders) {
+            this.setMeasuredValue(RequirementConstants.NUM_4k_HW_DEC, num4kHwDecoders);
+        }
+
+        public void set4kHwEncoders(int num4kHwEncoders) {
+            this.setMeasuredValue(RequirementConstants.NUM_4k_HW_ENC, num4kHwEncoders);
         }
 
         /**
          * [?] Must have at least 1 HW video decoder supporting 4K60
          */
         public static VideoCodecRequirement createR4k60HwDecoder() {
-            RequiredMeasurement<Boolean> requirement = RequiredMeasurement
-                .<Boolean>builder()
-                .setId(RequirementConstants.VIDEO_REQ_SATISFIED)
-                .setPredicate(RequirementConstants.BOOLEAN_EQ)
-                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+            RequiredMeasurement<Integer> requirement = RequiredMeasurement
+                .<Integer>builder()
+                .setId(RequirementConstants.NUM_4k_HW_DEC)
+                .setPredicate(RequirementConstants.INTEGER_GTE)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 1)
                 .build();
 
             return new VideoCodecRequirement(RequirementConstants.RTBD, requirement);
@@ -487,11 +495,11 @@ public class PerformanceClassEvaluator {
          * [?] Must have at least 1 HW video encoder supporting 4K60
          */
         public static VideoCodecRequirement createR4k60HwEncoder() {
-            RequiredMeasurement<Boolean> requirement = RequiredMeasurement
-                .<Boolean>builder()
-                .setId(RequirementConstants.VIDEO_REQ_SATISFIED)
-                .setPredicate(RequirementConstants.BOOLEAN_EQ)
-                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+            RequiredMeasurement<Integer> requirement = RequiredMeasurement
+                .<Integer>builder()
+                .setId(RequirementConstants.NUM_4k_HW_ENC)
+                .setPredicate(RequirementConstants.INTEGER_GTE)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 1)
                 .build();
 
             return new VideoCodecRequirement(RequirementConstants.RTBD, requirement);
@@ -503,7 +511,7 @@ public class PerformanceClassEvaluator {
         public static VideoCodecRequirement createRAV1DecoderReq() {
             RequiredMeasurement<Boolean> requirement = RequiredMeasurement
                 .<Boolean>builder()
-                .setId(RequirementConstants.VIDEO_REQ_SATISFIED)
+                .setId(RequirementConstants.AV1_DEC_REQ)
                 .setPredicate(RequirementConstants.BOOLEAN_EQ)
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
                 .build();

@@ -129,8 +129,7 @@ public class TestTaskOrganizer extends TaskOrganizer {
 
             // Set the roots as adjacent to each other.
             final WindowContainerTransaction wct = new WindowContainerTransaction();
-            wct.setAdjacentRoots(mRootPrimary.getToken(), mRootSecondary.getToken(),
-                    true /* moveTogether */);
+            wct.setAdjacentRoots(mRootPrimary.getToken(), mRootSecondary.getToken());
             wct.setLaunchAdjacentFlagRoot(mRootSecondary.getToken());
             applyTransaction(wct);
         }

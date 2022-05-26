@@ -37,6 +37,7 @@ import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.Backup;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.utils.Poll;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -75,8 +76,12 @@ public final class BackupTest {
             sDeviceState.dpc().devicePolicyManager().setBackupServiceEnabled(
                     sDeviceState.dpc().componentName(), true);
 
-            assertThat(sDeviceState.dpc().devicePolicyManager().isBackupServiceEnabled(
-                    sDeviceState.dpc().componentName())).isTrue();
+            Poll.forValue("DPC isBackupServiceEnabled",
+                    () -> sDeviceState.dpc().devicePolicyManager().isBackupServiceEnabled(
+                            sDeviceState.dpc().componentName()))
+                    .toBeEqualTo(true)
+                    .errorOnFail()
+                    .await();
             assertThat(sLocalBackupManager
                     .isBackupServiceActive(TestApis.users().instrumented().userHandle())).isTrue();
         } finally {
@@ -93,8 +98,13 @@ public final class BackupTest {
             sDeviceState.dpc().devicePolicyManager().setBackupServiceEnabled(
                     sDeviceState.dpc().componentName(), false);
 
-            assertThat(sDeviceState.dpc().devicePolicyManager().isBackupServiceEnabled(
-                    sDeviceState.dpc().componentName())).isFalse();
+
+            Poll.forValue("DPC isBackupServiceEnabled",
+                            () -> sDeviceState.dpc().devicePolicyManager().isBackupServiceEnabled(
+                                    sDeviceState.dpc().componentName()))
+                    .toBeEqualTo(false)
+                    .errorOnFail()
+                    .await();
             assertThat(sLocalBackupManager
                     .isBackupServiceActive(TestApis.users().instrumented().userHandle())).isFalse();
         } finally {

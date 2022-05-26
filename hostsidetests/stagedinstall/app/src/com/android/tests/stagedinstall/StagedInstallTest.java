@@ -174,6 +174,8 @@ public class StagedInstallTest {
     private static final TestApp Apex3Rebootless = new TestApp(
             "StagedInstallTestApexV3_Rebootless", SHIM_APEX_PACKAGE_NAME, 3,
             /*isApex*/true, "com.android.apex.cts.shim.v3_rebootless.apex");
+    private static final TestApp Apex2AsApk = new TestApp("Apex2", SHIM_APEX_PACKAGE_NAME, 2,
+            /*isApex*/false, "com.android.apex.cts.shim.v2.apex");
 
     @Before
     public void adoptShellPermissions() {
@@ -549,7 +551,7 @@ public class StagedInstallTest {
     @Test
     public void testStageApkWithSameNameAsApexShouldFail_Commit() throws Exception {
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
-        int sessionId = stageSingleApk(TESTAPP_SAME_NAME_AS_APEX).assertSuccessful().getSessionId();
+        int sessionId = stageSingleApk(Apex2AsApk).assertSuccessful().getSessionId();
         assertSessionReady(sessionId);
         storeSessionId(sessionId);
     }
@@ -559,6 +561,9 @@ public class StagedInstallTest {
         int sessionId = retrieveLastSessionId();
         assertSessionFailed(sessionId);
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+        PackageInstaller.SessionInfo sessionInfo = getSessionInfo(sessionId);
+        assertThat(sessionInfo.getStagedSessionErrorMessage()).contains(
+                "is an APEX package and can't be installed as an APK");
     }
 
     @Test
@@ -566,7 +571,7 @@ public class StagedInstallTest {
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
         InstallUtils.commitExpectingFailure(AssertionError.class,
                 "is an APEX package and can't be installed as an APK",
-                Install.single(TESTAPP_SAME_NAME_AS_APEX));
+                Install.single(Apex2AsApk));
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
     }
 

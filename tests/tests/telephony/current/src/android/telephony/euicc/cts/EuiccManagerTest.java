@@ -44,6 +44,7 @@ import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -190,6 +191,8 @@ public class EuiccManagerTest {
                 EuiccManager.EMBEDDED_SUBSCRIPTION_RESULT_ERROR, mCallbackReceiver.getResultCode());
     }
 
+    @Ignore("the compatibility framework does not currently support changing compatibility flags"
+            + " on user builds for device side CTS tests. Ignore this test until support is added")
     @Test
     public void testSwitchToSubscritionDisableWithNoPortAndChangesCompatDisabled()
             throws Exception {

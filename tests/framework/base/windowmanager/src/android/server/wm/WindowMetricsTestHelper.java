@@ -50,7 +50,11 @@ public class WindowMetricsTestHelper {
     public static void assertMetricsMatchesLayout(WindowMetrics currentMetrics,
             WindowMetrics maxMetrics, Rect layoutBounds, WindowInsets layoutInsets,
             boolean isFreeform, boolean isFloating) {
-        assertEquals(layoutBounds, currentMetrics.getBounds());
+        // Only validate the size portion of the bounds, regardless of the position on the screen to
+        // take into consideration multiple screen devices (e.g. the dialog is on another screen)
+        final Rect currentMetricsBounds = currentMetrics.getBounds();
+        assertEquals(layoutBounds.height(), currentMetricsBounds.height());
+        assertEquals(layoutBounds.width(), currentMetricsBounds.width());
         // Freeform activities doesn't guarantee max window metrics bounds is larger than current
         // window metrics bounds. The bounds of a freeform activity is unlimited except that
         // it must be contained in display bounds.

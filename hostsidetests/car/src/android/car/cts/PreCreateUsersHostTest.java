@@ -164,7 +164,7 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
                 : createFullUser("PreCreatedUsersTest_Reference_User");
         // Some permissions (e.g. Role permission) are given only after initialization.
         switchUser(referenceUserId);
-        waitUntilUserPermissionsIsReady(/* waitTime= */ 30, referenceUserId);
+        waitUntilUserPermissionsIsReady(referenceUserId);
         Map<String, List<String>> refPkgMap = getPackagesAndPermissionsForUser(referenceUserId);
 
         // There can be just one guest by default, so remove it now otherwise
@@ -182,7 +182,7 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
         convertPreCreatedUser(isGuest, preCreatedUserId);
         // Some permissions (e.g. Role permission) are given only after initialization.
         switchUser(preCreatedUserId);
-        waitUntilUserPermissionsIsReady(/* waitTime= */ 20, preCreatedUserId);
+        waitUntilUserPermissionsIsReady(preCreatedUserId);
         Map<String, List<String>> actualPkgMap = getPackagesAndPermissionsForUser(preCreatedUserId);
 
         List<String> errors = new ArrayList<>();
@@ -195,7 +195,7 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
 
         if (!errors.isEmpty()) {
             // if there are errors, wait for some more time and check again.
-            waitUntilUserPermissionsIsReady(/* waitTime= */ 20, preCreatedUserId);
+            waitUntilUserPermissionsIsReady(preCreatedUserId);
             Map<String, List<String>> actualPkgMap2 = getPackagesAndPermissionsForUser(
                     preCreatedUserId);
 
@@ -259,11 +259,11 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
         sleep(napTimeSec * 1_000);
     }
 
-    // TODO(b/170263003): update this method after core framewokr's refactoring for proto
-    private void waitUntilUserPermissionsIsReady(int waitTime, int userId)
-            throws InterruptedException {
-        CLog.i("Sleeping %ds to make permissions for user %d is ready", waitTime, userId);
-        sleep(waitTime * 1_000);
+    // TODO(b/170263003): update this method after core framework's refactoring for proto
+    private void waitUntilUserPermissionsIsReady(int userId) throws InterruptedException {
+        int waitTimeSec = 60;
+        CLog.i("Sleeping %ds to make permissions for user %d is ready", waitTimeSec, userId);
+        sleep(waitTimeSec * 1_000);
     }
 
     private void deletePreCreatedUsers() throws Exception {

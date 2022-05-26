@@ -366,6 +366,11 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
                 .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
                 .setIntentFlags(FLAG_ACTIVITY_NEW_TASK).execute();
         waitAndAssertResumedActivity(BROADCAST_RECEIVER_ACTIVITY,"Activity must be resumed");
+        // Home activity can still be visible if the BROADCAST_RECEIVER_ACTIVITY is not in the
+        // same TaskDisplayArea.
+        assumeTrue("Should launch on same TaskDisplayArea" ,
+                mWmState.getTaskDisplayArea(BROADCAST_RECEIVER_ACTIVITY) ==
+                        mWmState.getTaskDisplayArea(mWmState.getHomeActivityName()));
         final int taskId = mWmState.getTaskByActivity(BROADCAST_RECEIVER_ACTIVITY).mTaskId;
 
         try {
@@ -410,6 +415,14 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         // Launch a different activity on top.
         launchActivity(BROADCAST_RECEIVER_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         mWmState.waitForActivityState(BROADCAST_RECEIVER_ACTIVITY, STATE_RESUMED);
+        // Assert activity state and visibility only if both tasks were launched
+        // in the same task display area.
+        WindowManagerState.DisplayArea firstTaskTda = mWmState
+                .getTaskDisplayArea(MOVE_TASK_TO_BACK_ACTIVITY);
+        WindowManagerState.DisplayArea secondTaskTda = mWmState
+                .getTaskDisplayArea(BROADCAST_RECEIVER_ACTIVITY);
+        assumeTrue("Tasks were not launched in the same display area ",
+                firstTaskTda == secondTaskTda);
         mWmState.waitForActivityState(MOVE_TASK_TO_BACK_ACTIVITY,STATE_STOPPED);
         final boolean shouldBeVisible =
                 !mWmState.isBehindOpaqueActivities(MOVE_TASK_TO_BACK_ACTIVITY);

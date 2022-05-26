@@ -330,8 +330,8 @@ public class ApplicationInfoTest {
         final String systemPath = Environment.getRootDirectory().getAbsolutePath();
         final String vendorPath = Environment.getVendorDirectory().getAbsolutePath();
         final String packageName = getPartitionFirstPackageName(systemPath, vendorPath);
-        assertNotNull("Can not find any vendor packages on " + vendorPath + " or "
-                + systemPath + vendorPath, packageName);
+        // vendor package may not exist in every builds
+        assumeNotNull(packageName);
 
         final PackageInfo info = getContext().getPackageManager().getPackageInfo(
                 packageName.trim(), PackageManager.PackageInfoFlags.of(0));

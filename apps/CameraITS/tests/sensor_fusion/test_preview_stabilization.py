@@ -176,7 +176,7 @@ class PreviewStabilityTest(its_base_test.ItsBaseTest):
 
         # Extract camera rotations
         img_h = frames[0].shape[0]
-        file_name_stem = os.path.join(log_path, _NAME)
+        file_name_stem = f'{os.path.join(log_path, _NAME)}_{video_size}'
         cam_rots = sensor_fusion_utils.get_cam_rotations(
             frames[_START_FRAME : len(frames)],
             facing,

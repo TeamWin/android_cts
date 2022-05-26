@@ -97,7 +97,7 @@ public class VideoCodecRequirementsTest {
 
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.VideoCodecRequirement rAV1DecoderReq = pce.addRAV1DecoderReq();
-        rAV1DecoderReq.setVideoReqSatisfied(oneCodecDecoding);
+        rAV1DecoderReq.setAv1DecoderReq(oneCodecDecoding);
 
         pce.submitAndCheck();
     }
@@ -110,11 +110,10 @@ public class VideoCodecRequirementsTest {
     // TODO(b/218771970) Add @CddTest annotation
     public void test4k60Decoder() throws IOException {
         Set<String> decoderSet = get4k60HwCodecSet(false);
-        boolean oneCodecSupportsRequiredPerformance = !decoderSet.isEmpty();
 
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.VideoCodecRequirement r4k60HwDecoder = pce.addR4k60HwDecoder();
-        r4k60HwDecoder.setVideoReqSatisfied(oneCodecSupportsRequiredPerformance);
+        r4k60HwDecoder.set4kHwDecoders(decoderSet.size());
 
         pce.submitAndCheck();
     }
@@ -127,11 +126,10 @@ public class VideoCodecRequirementsTest {
     // TODO(b/218771970) Add @CddTest annotation
     public void test4k60Encoder() throws IOException {
         Set<String> encoderSet = get4k60HwCodecSet(true);
-        boolean oneCodecSupportsRequiredPerformance = !encoderSet.isEmpty();
 
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.VideoCodecRequirement r4k60HwEncoder = pce.addR4k60HwEncoder();
-        r4k60HwEncoder.setVideoReqSatisfied(oneCodecSupportsRequiredPerformance);
+        r4k60HwEncoder.set4kHwEncoders(encoderSet.size());
 
         pce.submitAndCheck();
     }

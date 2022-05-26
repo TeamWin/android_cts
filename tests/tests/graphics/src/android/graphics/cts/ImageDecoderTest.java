@@ -246,7 +246,9 @@ public class ImageDecoderTest {
             ImageDecoder.Source src = ImageDecoder
                 .createSource(getResources(), R.raw.heifimage_10bit);
             assertNotNull(src);
-            Bitmap bm = ImageDecoder.decodeBitmap(src);
+            Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, source) -> {
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+            });
             assertNotNull(bm);
             assertEquals(4096, bm.getWidth());
             assertEquals(3072, bm.getHeight());
@@ -267,6 +269,7 @@ public class ImageDecoderTest {
         try {
             Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, source) -> {
                 decoder.setMemorySizePolicy(ImageDecoder.MEMORY_POLICY_LOW_RAM);
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
             });
             assertNotNull(bm);
             assertEquals(4096, bm.getWidth());

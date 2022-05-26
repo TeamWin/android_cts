@@ -92,6 +92,8 @@ def get_key_frame_to_process(key_frame_files):
   Returns:
     key_frame_file to be used for further processing.
   """
+  if not key_frame_files:
+    raise AssertionError('key_frame_files list is empty.')
   key_frame_files.sort()
   return key_frame_files[-1]
 
