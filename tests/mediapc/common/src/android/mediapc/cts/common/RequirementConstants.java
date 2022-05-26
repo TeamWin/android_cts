@@ -72,7 +72,9 @@ public class RequirementConstants {
     public static final String DISPLAY_DENSITY = "display_density_dpi";
     public static final String PHYSICAL_MEMORY = "physical_memory_mb";
     public static final String CODEC_INIT_LATENCY = "codec_initialization_latency_ms";
-    public static final String VIDEO_REQ_SATISFIED = "video_requirement_satisfied_boolean";
+    public static final String AV1_DEC_REQ = "av1_decoder_requirement_boolean";
+    public static final String NUM_4k_HW_DEC = "number_4k_hw_decoders";
+    public static final String NUM_4k_HW_ENC = "number_4k_hw_encoders";
     public static final String SECURE_REQ_SATISFIED = "secure_requirement_satisfied_boolean";
     public static final String WIDEWINE_SUPPORT = "widevine_support_boolean";
     public static final String WIDEWINE_L1 = "widevine_l1_support_boolean";
@@ -88,6 +90,7 @@ public class RequirementConstants {
     public static final BiPredicate<Long, Long> LONG_LTE = RequirementConstants.lte();
     public static final BiPredicate<Integer, Integer> INTEGER_GTE = RequirementConstants.gte();
     public static final BiPredicate<Integer, Integer> INTEGER_LTE = RequirementConstants.lte();
+    public static final BiPredicate<Double, Double> DOUBLE_EQ = RequirementConstants.eq();
     public static final BiPredicate<Boolean, Boolean> BOOLEAN_EQ = RequirementConstants.eq();
 
     /**

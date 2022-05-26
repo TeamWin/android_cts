@@ -46,6 +46,11 @@ license {
 }
 
 filegroup {
+    name: "CtsVerifierNotice",
+    srcs: ["NOTICE.txt"],
+}
+
+filegroup {
     name: "CtsVerifierMockVrListenerServiceFiles",
     srcs: ["src/com/android/cts/verifier/vr/MockVrListenerService.java"],
 }
@@ -104,7 +109,7 @@ android_library {
 android_test {
     name: "CtsVerifier",
     static_libs: [
-        "CtsVerifierLibT"
+        "CtsVerifierLibT",
     ],
 
     compile_multilib: "both",
@@ -203,13 +208,14 @@ genrule {
         ":cts_apps_to_include",
         ":CtsVerifier",
         ":camera-its",
+        ":CtsVerifierNotice",
     ],
     tools: [
         "soong_zip",
         "merge_zips",
     ],
     out: ["android-cts-verifier.zip"],
-    cmd: "echo $(locations :cts_apps_to_include) $(location :CtsVerifier) > $(genDir)/list &&" +
+    cmd: "echo $(locations :cts_apps_to_include) $(location :CtsVerifier) $(location :CtsVerifierNotice) > $(genDir)/list &&" +
         " $(location soong_zip) -o $(genDir)/cts-verifier.zip -j -P android-cts-verifier -l $(genDir)/list &&" +
         " $(location merge_zips) $(out) $(genDir)/cts-verifier.zip $(location :camera-its)",
     dists: [

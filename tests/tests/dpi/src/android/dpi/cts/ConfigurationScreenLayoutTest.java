@@ -23,15 +23,21 @@ import static android.content.res.Configuration.SCREENLAYOUT_SIZE_LARGE;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_MASK;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_NORMAL;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_XLARGE;
+import static android.view.WindowInsets.Type.displayCutout;
+import static android.view.WindowInsets.Type.navigationBars;
+import static android.view.WindowInsets.Type.systemBars;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Insets;
+import android.graphics.Rect;
 import android.server.wm.IgnoreOrientationRequestSession;
 import android.test.ActivityInstrumentationTestCase2;
+import android.view.WindowInsets;
+import android.view.WindowMetrics;
 
 public class ConfigurationScreenLayoutTest
         extends ActivityInstrumentationTestCase2<OrientationActivity> {
@@ -77,7 +83,7 @@ public class ConfigurationScreenLayoutTest
                     tearDown();
                     return;
                 }
-                final int expectedLayout = reduceScreenLayout(activity);
+                final int expectedLayout = computeScreenLayout(activity);
                 final int expectedSize = expectedLayout & SCREENLAYOUT_SIZE_MASK;
                 final int expectedLong = expectedLayout & SCREENLAYOUT_LONG_MASK;
 
@@ -117,14 +123,32 @@ public class ConfigurationScreenLayoutTest
      *         {@link Configuration#SCREENLAYOUT_LONG_MASK} and
      *         {@link Configuration#SCREENLAYOUT_SIZE_MASK} defined
      */
-    private int reduceScreenLayout(Context context) {
-        int screenLayout = BIGGEST_LAYOUT;
+    private int computeScreenLayout(Activity activity) {
+        final WindowInsets windowInsets = activity.getWindowManager().getCurrentWindowMetrics()
+                .getWindowInsets();
+        // 1. Calculate the screenLayout from display, which use the display size excluding nav bar
+        //    and cutout area.
+        Insets insets = windowInsets.getInsets(navigationBars() | displayCutout());
+        int screenLayout = reduceScreenLayout(activity, insets, BIGGEST_LAYOUT);
+        // 2. Calculate the screenLayout from Task, which use the bounds excluding all system bars
+        //    and cutout area.
+        insets = windowInsets.getInsets(systemBars() | displayCutout());
+        return reduceScreenLayout(activity, insets, screenLayout);
+    }
+
+    private int reduceScreenLayout(Activity activity, Insets excludeInsets, int screenLayout) {
         int screenLayoutSize;
         boolean screenLayoutLong;
 
-        final Configuration configuration = context.getResources().getConfiguration();
-        final int longSize = Math.max(configuration.screenWidthDp, configuration.screenHeightDp);
-        final int shortSize = Math.min(configuration.screenWidthDp, configuration.screenHeightDp);
+        final WindowMetrics windowMetrics = activity.getWindowManager().getCurrentWindowMetrics();
+        final Rect bounds = new Rect(windowMetrics.getBounds());
+        bounds.inset(excludeInsets);
+
+        final float density = activity.getResources().getDisplayMetrics().density;
+        final int widthDp = (int) (bounds.width() / density);
+        final int heightDp = (int) (bounds.height() / density);
+        final int longSize = Math.max(widthDp, heightDp);
+        final int shortSize = Math.min(widthDp, heightDp);
 
         if (longSize < 470) {
             screenLayoutSize = Configuration.SCREENLAYOUT_SIZE_SMALL;

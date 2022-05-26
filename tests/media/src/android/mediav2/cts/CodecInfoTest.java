@@ -34,6 +34,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -134,12 +135,28 @@ public class CodecInfoTest {
      * doesn't validate its support.
      */
     @Test
-    public void testColorFormatSupport() {
+    public void testColorFormatSupport() throws IOException {
         Assume.assumeTrue("Test is applicable for video codecs", mMediaType.startsWith("video/"));
         MediaCodecInfo.CodecCapabilities caps = mCodecInfo.getCapabilitiesForType(mMediaType);
         assertFalse(mCodecInfo.getName() + " does not support COLOR_FormatYUV420Flexible",
                 IntStream.of(caps.colorFormats)
                         .noneMatch(x -> x == COLOR_FormatYUV420Flexible));
+
+        // Encoders that support FEATURE_HdrEditing, must support P010 and ABGR2101010
+        // color format and at least one HDR profile
+        boolean hdrEditingSupported = caps.isFeatureSupported(FEATURE_HdrEditing);
+        if (mCodecInfo.isEncoder() && hdrEditingSupported) {
+            boolean abgr2101010Supported =
+                    IntStream.of(caps.colorFormats)
+                            .anyMatch(x -> x == COLOR_Format32bitABGR2101010);
+            boolean p010Supported =
+                    IntStream.of(caps.colorFormats).anyMatch(x -> x == COLOR_FormatYUVP010);
+            assertTrue(mCodecName + " supports FEATURE_HdrEditing, but does not support " +
+                    "COLOR_FormatABGR2101010 and COLOR_FormatYUVP010 color formats.",
+                    abgr2101010Supported && p010Supported);
+            assertTrue(mCodecName + " supports FEATURE_HdrEditing, but does not support any HDR " +
+                    "profiles.", CodecTestBase.doesCodecSupportHDRProfile(mCodecName, mMediaType));
+        }
 
         // COLOR_FormatSurface support is an existing requirement, but we did not
         // test for it before T.  We can not retroactively apply the higher standard to

@@ -21,6 +21,7 @@ import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.os.Build;
+import android.os.Bundle;
 
 import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
@@ -44,14 +45,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Test to validate hdr static metadata in encoders
+ * Test to validate hdr static and dynamic metadata in encoders
  */
 @RunWith(Parameterized.class)
 // P010 support was added in Android T, hence limit the following tests to Android T and above
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 public class EncoderHDRInfoTest extends CodecEncoderTestBase {
     private static final String LOG_TAG = EncoderHDRInfoTest.class.getSimpleName();
-
     private MediaMuxer mMuxer;
     private int mTrackID = -1;
 
@@ -63,11 +63,24 @@ public class EncoderHDRInfoTest extends CodecEncoderTestBase {
         mCheckESList.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
     }
 
-    public EncoderHDRInfoTest(String encoderName, String mime, int bitrate, int width,
-                              int height) {
-        super(encoderName, mime, new int[]{bitrate}, new int[]{width}, new int[]{height});
+    public EncoderHDRInfoTest(String encoderName, String mediaType, int bitrate, int width,
+            int height, boolean testDynamicMetadata) {
+        super(encoderName, mediaType, new int[]{bitrate}, new int[]{width}, new int[]{height});
+        mTestDynamicMetadata = testDynamicMetadata;
     }
 
+    void enqueueInput(int bufferIndex) {
+        if(mTestDynamicMetadata){
+            final Bundle params = new Bundle();
+            byte[] info = loadByteArrayFromString(HDR_DYNAMIC_INFO[mInputCount]);
+            params.putByteArray(MediaFormat.KEY_HDR10_PLUS_INFO, info);
+            mCodec.setParameters(params);
+            if (mInputCount >= HDR_DYNAMIC_INFO.length) {
+                mSawInputEOS = true;
+            }
+        }
+        super.enqueueInput(bufferIndex);
+    }
     void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
         if (info.size > 0) {
             ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
@@ -80,6 +93,11 @@ public class EncoderHDRInfoTest extends CodecEncoderTestBase {
             }
         }
         super.dequeueOutput(bufferIndex, info);
+        // verify if the out fmt contains HDR Dynamic metadata as expected
+        if (mTestDynamicMetadata && mOutputCount > 0) {
+            validateHDRDynamicMetaData(mCodec.getOutputFormat(),
+                    ByteBuffer.wrap(loadByteArrayFromString(HDR_DYNAMIC_INFO[mOutputCount - 1])));
+        }
     }
 
     @Parameterized.Parameters(name = "{index}({0}_{1})")
@@ -89,9 +107,13 @@ public class EncoderHDRInfoTest extends CodecEncoderTestBase {
         final boolean needVideo = true;
 
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
-                {MediaFormat.MIMETYPE_VIDEO_AV1, 512000, 352, 288},
-                {MediaFormat.MIMETYPE_VIDEO_VP9, 512000, 352, 288},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 512000, 352, 288},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 512000, 352, 288, false},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 512000, 352, 288, false},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 512000, 352, 288, false},
+
+                {MediaFormat.MIMETYPE_VIDEO_AV1, 512000, 352, 288, true},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, 512000, 352, 288, true},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 512000, 352, 288, true},
         });
 
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
@@ -100,10 +122,15 @@ public class EncoderHDRInfoTest extends CodecEncoderTestBase {
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testHDRMetadata() throws IOException, InterruptedException {
+        int profile;
         setUpParams(1);
         MediaFormat format = mFormats.get(0);
         final ByteBuffer hdrStaticInfo = ByteBuffer.wrap(loadByteArrayFromString(HDR_STATIC_INFO));
-        int profile = mProfileHdr10Map.getOrDefault(mMime, new int[]{-1})[0];
+        if (mTestDynamicMetadata) {
+            profile = mProfileHdr10PlusMap.getOrDefault(mMime, new int[]{-1})[0];
+        } else {
+            profile = mProfileHdr10Map.getOrDefault(mMime, new int[]{-1})[0];
+        }
         format.setInteger(MediaFormat.KEY_PROFILE, profile);
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUVP010);
         format.setInteger(MediaFormat.KEY_COLOR_RANGE, MediaFormat.COLOR_RANGE_LIMITED);
@@ -112,7 +139,7 @@ public class EncoderHDRInfoTest extends CodecEncoderTestBase {
         format.setByteBuffer(MediaFormat.KEY_HDR_STATIC_INFO, hdrStaticInfo);
         mFormats.clear();
         mFormats.add(format);
-        Assume.assumeTrue(mCodecName + " does not support HDR10 profile",
+        Assume.assumeTrue(mCodecName + " does not support this HDR profile",
                 areFormatsSupported(mCodecName, mMime, mFormats));
         Assume.assumeTrue(mCodecName + " does not support color format COLOR_FormatYUVP010",
                 hasSupportForColorFormat(mCodecName, mMime, COLOR_FormatYUVP010));
@@ -156,7 +183,7 @@ public class EncoderHDRInfoTest extends CodecEncoderTestBase {
         // verify if the out fmt contains HDR Static metadata as expected
         validateHDRStaticMetaData(fmt, hdrStaticInfo);
 
-        // verify if the muxed file contains HDR Static metadata as expected
+        // verify if the muxed file contains HDR metadata as expected
         MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         String decoder = codecList.findDecoderForFormat(format);
         assertNotNull("Device advertises support for encoding " + format.toString() +
@@ -167,11 +194,20 @@ public class EncoderHDRInfoTest extends CodecEncoderTestBase {
         if (parent != null) parent += File.separator;
         else parent = "";
         cdtb.validateHDRStaticMetaData(parent, tmpFile.getName(), hdrStaticInfo, false);
+        if (mTestDynamicMetadata) {
+            cdtb.validateHDRDynamicMetaData(parent, tmpFile.getName(), false);
+        }
 
         // if HDR static metadata can also be signalled via elementary stream then verify if
         // the elementary stream contains HDR static data as expected
         if (mCheckESList.contains(mMime)) {
             cdtb.validateHDRStaticMetaData(parent, tmpFile.getName(), hdrStaticInfo, true);
+
+            // since HDR static metadata is signalled via elementary stream then verify if
+            // the elementary stream contains HDR static data as expected
+            if (mTestDynamicMetadata) {
+                cdtb.validateHDRDynamicMetaData(parent, tmpFile.getName(), true);
+            }
         }
 
         tmpFile.delete();

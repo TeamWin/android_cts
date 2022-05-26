@@ -186,20 +186,20 @@ static void s_MyErrorCallbackProc(
 }
 
 bool NativeAudioAnalyzer::isRecordingComplete() {
-    return mPulseLatencyAnalyzer.isRecordingComplete();
+    return mWhiteNoiseLatencyAnalyzer.isRecordingComplete();
 }
 
 int NativeAudioAnalyzer::analyze() {
-    mPulseLatencyAnalyzer.analyze();
+    mWhiteNoiseLatencyAnalyzer.analyze();
     return getError(); // TODO review
 }
 
 double NativeAudioAnalyzer::getLatencyMillis() {
-    return mPulseLatencyAnalyzer.getMeasuredLatency() * 1000.0 / 48000;
+    return mWhiteNoiseLatencyAnalyzer.getMeasuredLatency() * 1000.0 / 48000;
 }
 
 double NativeAudioAnalyzer::getConfidence() {
-    return mPulseLatencyAnalyzer.getMeasuredConfidence();
+    return mWhiteNoiseLatencyAnalyzer.getMeasuredConfidence();
 }
 
 bool NativeAudioAnalyzer::isLowLatencyStream() {
@@ -216,7 +216,8 @@ aaudio_result_t NativeAudioAnalyzer::openAudio(int inputDeviceId, int outputDevi
 
     AAudioStreamBuilder *builder = nullptr;
 
-    mLoopbackProcessor = &mPulseLatencyAnalyzer; // for latency test
+    mWhiteNoiseLatencyAnalyzer.setup();
+    mLoopbackProcessor = &mWhiteNoiseLatencyAnalyzer; // for latency test
 
     // Use an AAudioStreamBuilder to contain requested parameters.
     aaudio_result_t result = AAudio_createStreamBuilder(&builder);
