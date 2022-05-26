@@ -17,7 +17,6 @@ import logging
 import math
 import multiprocessing
 import os
-import subprocess
 import time
 
 from mobly import test_runner
@@ -28,6 +27,7 @@ import image_processing_utils
 import its_base_test
 import its_session_utils
 import sensor_fusion_utils
+import video_processing_utils
 
 _ARDUINO_ANGLES = (10, 25)  # degrees
 _ARDUINO_MOVE_TIME = 0.30  # seconds
@@ -188,21 +188,9 @@ class VideoStabilityTest(its_base_test.ItsBaseTest):
         logging.debug('Number of gyro samples %d', len(gyro_events))
 
         # Extract all frames from video
-        logging.debug('Extracting all frames')
-        ffmpeg_image_name = f"{file_name.split('.')[0]}_frame"
-        logging.debug('ffmpeg_image_name: %s', ffmpeg_image_name)
-        ffmpeg_image_file_names = (
-            f'{os.path.join(log_path, ffmpeg_image_name)}_%03d.{_IMG_FORMAT}')
-        cmd = ['ffmpeg', '-i', os.path.join(log_path, file_name),
-               ffmpeg_image_file_names,
-              ]
-        _ = subprocess.call(cmd)
-
-        # Create frame array
+        file_list = video_processing_utils.extract_all_frames_from_video(
+            log_path, file_name, _IMG_FORMAT)
         frames = []
-        file_list = sorted(
-            [_ for _ in os.listdir(log_path) if
-             (_.endswith(_IMG_FORMAT) and f'_{video_quality}_' in _)])
         logging.debug('Number of frames %d', len(file_list))
         for file in file_list:
           img = image_processing_utils.convert_image_to_numpy_array(
