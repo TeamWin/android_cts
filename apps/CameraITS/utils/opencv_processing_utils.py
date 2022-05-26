@@ -99,7 +99,8 @@ def calc_chart_scaling(chart_distance, camera_fov):
         numpy.isclose(chart_distance, CHART_DISTANCE_WFOV, rtol=0.1)):
     chart_scaling = SCALE_TELE_IN_WFOV_BOX
   elif (camera_fov <= FOV_THRESH_TELE25 and
-        numpy.isclose(chart_distance, CHART_DISTANCE_RFOV, rtol=0.1)):
+        (numpy.isclose(chart_distance, CHART_DISTANCE_RFOV, rtol=0.1) or
+         chart_distance > CHART_DISTANCE_RFOV)):
     chart_scaling = SCALE_TELE25_IN_RFOV_BOX
   elif (camera_fov <= FOV_THRESH_TELE40 and
         numpy.isclose(chart_distance, CHART_DISTANCE_RFOV, rtol=0.1)):
