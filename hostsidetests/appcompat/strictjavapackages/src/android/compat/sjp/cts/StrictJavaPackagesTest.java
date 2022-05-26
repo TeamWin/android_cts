@@ -726,6 +726,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 PERMISSION_CONTROLLER_APK_IN_APEX_BURNDOWN_LIST)
             .put("/apex/com.android.permission/priv-app/GooglePermissionController/GooglePermissionController.apk",
                 PERMISSION_CONTROLLER_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.tethering/priv-app/InProcessTethering/InProcessTethering.apk",
+                TETHERING_APK_IN_APEX_BURNDOWN_LIST)
             .put("/apex/com.android.tethering/priv-app/TetheringNextGoogle/TetheringNextGoogle.apk",
                 TETHERING_APK_IN_APEX_BURNDOWN_LIST)
             .put("/apex/com.android.tethering/priv-app/TetheringGoogle/TetheringGoogle.apk",
