@@ -1524,7 +1524,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
                 mUiBot.pressHome();
                 break;
             case TOUCH_OUTSIDE:
-                mUiBot.assertShownByText(expectedMessage).click();
+                mUiBot.touchOutsideSaveDialog();
                 break;
             default:
                 throw new IllegalArgumentException("invalid dismiss type: " + dismissType);

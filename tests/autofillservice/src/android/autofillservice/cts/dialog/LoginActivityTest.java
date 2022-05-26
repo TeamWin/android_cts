@@ -109,6 +109,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
 
         mUiBot.assertFillDialogDatasets("Dialog Presentation");
 
+        // Dismiss fill dialog
+        mUiBot.touchOutsideDialog();
+        mUiBot.waitForIdle();
+
         // Click on password field again
         mUiBot.selectByRelativeIdFromUiDevice(ID_PASSWORD);
         mUiBot.waitForIdleSync();
@@ -316,6 +320,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
         mUiBot.assertFillDialogDatasets("Dialog presentation");
         // Verify IME is not shown
         assertThat(isImeShowing(activity.getRootWindowInsets())).isFalse();
+
+        mUiBot.touchOutsideDialog();
+        mUiBot.waitForIdle();
 
         // Click on username field, and verify dropdown UI is shown
         mUiBot.selectByRelativeIdFromUiDevice(ID_USERNAME);
@@ -623,7 +630,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
 
         // Touch outside to cancel the fill dialog, should back to dropdown UI
         mUiBot.touchOutsideDialog();
-        mUiBot.waitForIdleSync();
+        mUiBot.waitForIdle();
 
         mUiBot.assertDatasets("Dropdown Presentation");
         assertMockImeStatus(activity, true);
