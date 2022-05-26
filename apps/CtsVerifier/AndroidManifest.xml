@@ -4160,7 +4160,7 @@
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
             <meta-data android:name="CddTest"
-                       android:value="7.4.2.5/H-1-1,7.4.2.5/H-1-2" />
+                       android:value="7.4.2.5/H-1-1|7.4.2.5/H-1-2" />
         </activity>
 
         <activity-alias
