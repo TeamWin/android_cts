@@ -33,7 +33,6 @@
 
 #include <aaudio/AAudio.h>
 
-#include "analyzer/GlitchAnalyzer.h"
 #include "analyzer/LatencyAnalyzer.h"
 
 class NativeAudioAnalyzer {
@@ -119,8 +118,7 @@ private:
 
     int32_t readFormattedData(int32_t numFrames);
 
-    GlitchAnalyzer       mSineAnalyzer;
-    PulseLatencyAnalyzer mPulseLatencyAnalyzer;
+    WhiteNoiseLatencyAnalyzer mWhiteNoiseLatencyAnalyzer;
     LoopbackProcessor   *mLoopbackProcessor;
 
     int32_t            mInputFramesMaximum = 0;
