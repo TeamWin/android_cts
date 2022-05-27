@@ -29,6 +29,7 @@ import android.media.MediaFormat;
 import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.util.Log;
 import androidx.test.filters.LargeTest;
+import com.android.compatibility.common.util.CddTest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -78,7 +79,7 @@ public class VideoCodecRequirementsTest {
      */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    // TODO(b/218771970) Add @CddTest annotation
+    @CddTest(requirement = "2.2.7.1/5.1/H-1-14")
     public void testAV1HwDecoderRequirements() throws Exception {
         MediaFormat format = MediaFormat.createVideoFormat(MIMETYPE_VIDEO_AV1, 1920, 1080);
         format.setInteger(MediaFormat.KEY_FRAME_RATE, 60);
@@ -107,7 +108,7 @@ public class VideoCodecRequirementsTest {
      */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    // TODO(b/218771970) Add @CddTest annotation
+    @CddTest(requirement = "2.2.7.1/5.1/H-1-15")
     public void test4k60Decoder() throws IOException {
         Set<String> decoderSet = get4k60HwCodecSet(false);
 
@@ -123,7 +124,7 @@ public class VideoCodecRequirementsTest {
      */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    // TODO(b/218771970) Add @CddTest annotation
+    @CddTest(requirement = "2.2.7.1/5.1/H-1-16")
     public void test4k60Encoder() throws IOException {
         Set<String> encoderSet = get4k60HwCodecSet(true);
 

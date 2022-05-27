@@ -90,36 +90,17 @@ public class PerformanceClassEvaluator {
                 .setId(RequirementConstants.LONG_RESOLUTION)
                 .setPredicate(RequirementConstants.INTEGER_GTE)
                 .addRequiredValue(Build.VERSION_CODES.S, 1920)
-                .build();
-            RequiredMeasurement<Integer> short_resolution = RequiredMeasurement
-                .<Integer>builder()
-                .setId(RequirementConstants.SHORT_RESOLUTION)
-                .setPredicate(RequirementConstants.INTEGER_GTE)
-                .addRequiredValue(Build.VERSION_CODES.S, 1080)
-                .build();
-
-            return new ResolutionRequirement(RequirementConstants.R7_1_1_1__H_2_1, long_resolution,
-                short_resolution);
-        }
-
-        /**
-         * [7.1.1.1/?] MUST have screen resolution of at least 1080p.
-         */
-        public static ResolutionRequirement createR7_1_1_1__TBD1() {
-            RequiredMeasurement<Integer> long_resolution = RequiredMeasurement
-                .<Integer>builder()
-                .setId(RequirementConstants.LONG_RESOLUTION)
-                .setPredicate(RequirementConstants.INTEGER_GTE)
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 1920)
                 .build();
             RequiredMeasurement<Integer> short_resolution = RequiredMeasurement
                 .<Integer>builder()
                 .setId(RequirementConstants.SHORT_RESOLUTION)
                 .setPredicate(RequirementConstants.INTEGER_GTE)
+                .addRequiredValue(Build.VERSION_CODES.S, 1080)
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 1080)
                 .build();
 
-            return new ResolutionRequirement(RequirementConstants.RTBD, long_resolution,
+            return new ResolutionRequirement(RequirementConstants.R7_1_1_1__H_2_1, long_resolution,
                 short_resolution);
         }
     }
@@ -159,27 +140,14 @@ public class PerformanceClassEvaluator {
                 .setId(RequirementConstants.DISPLAY_DENSITY)
                 .setPredicate(RequirementConstants.INTEGER_GTE)
                 .addRequiredValue(Build.VERSION_CODES.S, 400)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 400)
                 .build();
 
             return new DensityRequirement(RequirementConstants.R7_1_1_3__H_2_1, display_density);
         }
-
-        /**
-         * [7.1.1.3/?] MUST have screen density of at least 400 dpi.
-         */
-        public static DensityRequirement createR7_1_1_3__TBD2() {
-            RequiredMeasurement<Integer> display_density = RequiredMeasurement
-                .<Integer>builder()
-                .setId(RequirementConstants.DISPLAY_DENSITY)
-                .setPredicate(RequirementConstants.INTEGER_GTE)
-                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 400)
-                .build();
-
-            return new DensityRequirement(RequirementConstants.RTBD, display_density);
-        }
     }
 
-    // used for requirements [7.6.1/H-1-1], [7.6.1/H-2-1], [7.6.1/H-3-1]
+    // used for requirements [7.6.1/H-1-1], [7.6.1/H-2-1]
     public static class MemoryRequirement extends Requirement {
         private static final String TAG = MemoryRequirement.class.getSimpleName();
 
@@ -208,39 +176,23 @@ public class PerformanceClassEvaluator {
         }
 
         /**
-         * [7.6.1/H-2-1] MUST have at least 6 GB of physical memory.
+         * [7.6.1/H-2-1] MUST have at least 6/8 GB of physical memory.
          */
         public static MemoryRequirement createR7_6_1__H_2_1() {
             RequiredMeasurement<Long> physical_memory = RequiredMeasurement
                 .<Long>builder()
                 .setId(RequirementConstants.PHYSICAL_MEMORY)
                 .setPredicate(RequirementConstants.LONG_GTE)
-                // Media performance requires 6 GB minimum RAM, but keeping the following to 5 GB
-                // as activityManager.getMemoryInfo() returns around 5.4 GB on a 6 GB device.
+                // Media performance requires 6/8 GB minimum RAM, but keeping the following to
+                // 5/7 GB as activityManager.getMemoryInfo() returns around 5.4 GB on a 6 GB device.
                 .addRequiredValue(Build.VERSION_CODES.S, 5L * 1024L)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 7L * 1024L)
                 .build();
 
             return new MemoryRequirement(RequirementConstants.R7_6_1__H_2_1, physical_memory);
         }
-
-        /**
-         * [7.6.1/H-3-1] MUST have at least 8 GB of physical memory.
-         */
-        public static MemoryRequirement createR7_6_1__H_3_1() {
-            RequiredMeasurement<Long> physical_memory = RequiredMeasurement
-                .<Long>builder()
-                .setId(RequirementConstants.PHYSICAL_MEMORY)
-                .setPredicate(RequirementConstants.LONG_GTE)
-                // Media performance requires 8 GB minimum RAM, but keeping the following to 7 GB
-                // as activityManager.getMemoryInfo() returns around 7.4 GB on a 8 GB device.
-                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 7L * 1024L)
-                .build();
-
-            return new MemoryRequirement(RequirementConstants.R7_6_1__H_3_1, physical_memory);
-        }
     }
 
-    // used for requirements [2.2.7.1/5.1/H-1-7], [2.2.7.1/5.1/H-1-8], [2.2.7.1/5.1/H-1-?]
     public static class CodecInitLatencyRequirement extends Requirement {
 
         private static final String TAG = CodecInitLatencyRequirement.class.getSimpleName();
@@ -293,40 +245,38 @@ public class PerformanceClassEvaluator {
                 codec_init_latency);
         }
 
-        // TODO(b/218771970): Update CDD section, change RequirementConstants.RTBD to appropirate
-        // requirement id once finalized, ex: RequirementConstants.R5_1__H_1_<something>
         /**
-         * [2.2.7.1/5.1/H-1-?] Codec initialization latency of 40ms or less for a 1080p or
+         * [2.2.7.1/5.1/H-1-12] Codec initialization latency of 40ms or less for a 1080p or
          * smaller video decoding session for all hardware video encoders when under load. Load
          * here is defined as a concurrent 1080p to 720p video-only transcoding session using
          * hardware video codecs together with the 1080p audio-video recording initialization.
          */
-        public static CodecInitLatencyRequirement createR5_1__H_1_TBD1() {
+        public static CodecInitLatencyRequirement createR5_1__H_1_12() {
             RequiredMeasurement<Long> codec_init_latency =
                 RequiredMeasurement.<Long>builder().setId(RequirementConstants.CODEC_INIT_LATENCY)
                     .setPredicate(RequirementConstants.LONG_LTE)
                     .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 40L)
                     .build();
 
-            return new CodecInitLatencyRequirement(RequirementConstants.RTBD, codec_init_latency);
+            return new CodecInitLatencyRequirement(RequirementConstants.R5_1__H_1_12,
+                    codec_init_latency);
         }
 
-        // TODO(b/218771970): Update CDD section, change RequirementConstants.RTBD to appropirate
-        // requirement id once finalized, ex: RequirementConstants.R5_1__H_1_<something>
         /**
-         * [2.2.7.1/5.1/H-1-?] Codec initialization latency of 30ms or less for a 128kbps or
+         * [2.2.7.1/5.1/H-1-13] Codec initialization latency of 30ms or less for a 128kbps or
          * lower bitrate audio decoding session for all audio encoders when under load. Load here
          * is defined as a concurrent 1080p to 720p video-only transcoding session using hardware
          * video codecs together with the 1080p audio-video recording initialization.
          */
-        public static CodecInitLatencyRequirement createR5_1__H_1_TBD2() {
+        public static CodecInitLatencyRequirement createR5_1__H_1_13() {
             RequiredMeasurement<Long> codec_init_latency =
                 RequiredMeasurement.<Long>builder().setId(RequirementConstants.CODEC_INIT_LATENCY)
                     .setPredicate(RequirementConstants.LONG_LTE)
                     .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 30L)
                     .build();
 
-            return new CodecInitLatencyRequirement(RequirementConstants.RTBD, codec_init_latency);
+            return new CodecInitLatencyRequirement(RequirementConstants.R5_1__H_1_13,
+                    codec_init_latency);
         }
     }
 
@@ -455,9 +405,6 @@ public class PerformanceClassEvaluator {
         }
     }
 
-    // TODO(b/218771970): Add cdd annotation, change RequirementConstants.RTBD to appropirate
-    // requirement id once finalized
-    // used for requirements [?]
     public static class VideoCodecRequirement extends Requirement {
         private static final String TAG = VideoCodecRequirement.class.getSimpleName();
 
@@ -478,7 +425,7 @@ public class PerformanceClassEvaluator {
         }
 
         /**
-         * [?] Must have at least 1 HW video decoder supporting 4K60
+         * [2.2.7.1/5.1/H-1-15] Must have at least 1 HW video decoder supporting 4K60
          */
         public static VideoCodecRequirement createR4k60HwDecoder() {
             RequiredMeasurement<Integer> requirement = RequiredMeasurement
@@ -488,11 +435,11 @@ public class PerformanceClassEvaluator {
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 1)
                 .build();
 
-            return new VideoCodecRequirement(RequirementConstants.RTBD, requirement);
+            return new VideoCodecRequirement(RequirementConstants.R5_1__H_1_15, requirement);
         }
 
         /**
-         * [?] Must have at least 1 HW video encoder supporting 4K60
+         * [2.2.7.1/5.1/H-1-16] Must have at least 1 HW video encoder supporting 4K60
          */
         public static VideoCodecRequirement createR4k60HwEncoder() {
             RequiredMeasurement<Integer> requirement = RequiredMeasurement
@@ -502,11 +449,11 @@ public class PerformanceClassEvaluator {
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 1)
                 .build();
 
-            return new VideoCodecRequirement(RequirementConstants.RTBD, requirement);
+            return new VideoCodecRequirement(RequirementConstants.R5_1__H_1_16, requirement);
         }
 
         /**
-         * [?] AV1 Hardware decoder: Main 10, Level 4.1, Film Grain
+         * [2.2.7.1/5.1/H-1-14] AV1 Hardware decoder: Main 10, Level 4.1, Film Grain
          */
         public static VideoCodecRequirement createRAV1DecoderReq() {
             RequiredMeasurement<Boolean> requirement = RequiredMeasurement
@@ -516,7 +463,7 @@ public class PerformanceClassEvaluator {
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
                 .build();
 
-            return new VideoCodecRequirement(RequirementConstants.RTBD, requirement);
+            return new VideoCodecRequirement(RequirementConstants.R5_1__H_1_14, requirement);
         }
     }
 
@@ -593,8 +540,8 @@ public class PerformanceClassEvaluator {
         }
 
         /**
-         * [?] Must support secure decoder when a corresponding AVC/VP9/HEVC or AV1 hardware
-         * decoder is available
+         * [2.2.7.1/5.7/H-1-1] Must support secure decoder when a corresponding AVC/VP9/HEVC or AV1
+         * hardware decoder is available
          */
         public static SecureCodecRequirement createRSecureDecodeSupport() {
             RequiredMeasurement<Boolean> requirement = RequiredMeasurement
@@ -604,7 +551,7 @@ public class PerformanceClassEvaluator {
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
                 .build();
 
-            return new SecureCodecRequirement(RequirementConstants.RTBD, requirement);
+            return new SecureCodecRequirement(RequirementConstants.R5_7__H_1_1, requirement);
         }
     }
 
@@ -633,24 +580,12 @@ public class PerformanceClassEvaluator {
             ResolutionRequirement.createR7_1_1_1__H_2_1());
     }
 
-    public ResolutionRequirement addR7_1_1_1__TBD1() {
-        return this.<ResolutionRequirement>addRequirement(
-            ResolutionRequirement.createR7_1_1_1__TBD1());
-    }
-
     public DensityRequirement addR7_1_1_3__H_2_1() {
         return this.<DensityRequirement>addRequirement(DensityRequirement.createR7_1_1_3__H_2_1());
     }
 
-    public DensityRequirement addR7_1_1_3__TBD2() {
-        return this.<DensityRequirement>addRequirement(DensityRequirement.createR7_1_1_3__TBD2());
-    }
-
     public MemoryRequirement addR7_6_1__H_2_1() {
         return this.<MemoryRequirement>addRequirement(MemoryRequirement.createR7_6_1__H_2_1());
-    }
-    public MemoryRequirement addR7_6_1__H_3_1() {
-        return this.<MemoryRequirement>addRequirement(MemoryRequirement.createR7_6_1__H_3_1());
     }
 
     public FrameDropRequirement addR5_3__H_1_1_R() {
@@ -677,12 +612,12 @@ public class PerformanceClassEvaluator {
         return this.addRequirement(CodecInitLatencyRequirement.createR5_1__H_1_8());
     }
 
-    public CodecInitLatencyRequirement addR5_1__H_1_TBD1() {
-        return this.addRequirement(CodecInitLatencyRequirement.createR5_1__H_1_TBD1());
+    public CodecInitLatencyRequirement addR5_1__H_1_12() {
+        return this.addRequirement(CodecInitLatencyRequirement.createR5_1__H_1_12());
     }
 
-    public CodecInitLatencyRequirement addR5_1__H_1_TBD2() {
-        return this.addRequirement(CodecInitLatencyRequirement.createR5_1__H_1_TBD2());
+    public CodecInitLatencyRequirement addR5_1__H_1_13() {
+        return this.addRequirement(CodecInitLatencyRequirement.createR5_1__H_1_13());
     }
 
     public VideoCodecRequirement addR4k60HwEncoder() {

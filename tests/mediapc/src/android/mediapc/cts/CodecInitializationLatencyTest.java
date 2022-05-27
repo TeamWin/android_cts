@@ -269,7 +269,6 @@ public class CodecInitializationLatencyTest {
         }
     }
 
-    // TODO(b/218771970): Add cdd annotation
     /**
      * This test validates the initialization latency (time for codec create + configure) for
      * audio and hw video codecs.
@@ -282,7 +281,9 @@ public class CodecInitializationLatencyTest {
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     @CddTest(requirements = {
         "2.2.7.1/5.1/H-1-7",
-        "2.2.7.1/5.1/H-1-8",})
+        "2.2.7.1/5.1/H-1-8",
+        "2.2.7.1/5.1/H-1-12",
+        "2.2.7.1/5.1/H-1-13",})
     public void testInitializationLatency() throws Exception {
         MediaCodec codec = MediaCodec.createByCodecName(mCodecName);
         boolean isEncoder = codec.getCodecInfo().isEncoder();
@@ -347,7 +348,7 @@ public class CodecInitializationLatencyTest {
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.CodecInitLatencyRequirement r5_1__H_1_Latency =
             isEncoder ? isAudio ? pce.addR5_1__H_1_8() : pce.addR5_1__H_1_7()
-                : isAudio ? pce.addR5_1__H_1_TBD2() : pce.addR5_1__H_1_TBD1();
+                : isAudio ? pce.addR5_1__H_1_13() : pce.addR5_1__H_1_12();
 
         r5_1__H_1_Latency.setCodecInitLatencyMs(initializationLatency);
 
