@@ -155,8 +155,8 @@ public class SilentUpdateTests {
                 .putLong("lastUpdateTime", lastUpdateTime)
                 .commit();
         commit(fileSupplier(
-                "/data/local/tmp/silentupdatetest/CtsSilentUpdateTestCases.apk"),
-                false /* requireUserAction */, true /* dontKillApp */);
+                "/data/local/tmp/silentupdatetest/CtsSilentUpdateTestCases_mdpi-v4.apk"),
+                false /* requireUserAction */, INSTALLER_PACKAGE_NAME);
     }
 
     @Test
@@ -266,7 +266,7 @@ public class SilentUpdateTests {
     private int install(Supplier<InputStream> apkStreamSupplier, Boolean requireUserAction)
             throws Exception {
         InstallStatusListener isl = commit(apkStreamSupplier, requireUserAction,
-                false /* dontKillApp */);
+                null /* dontKillPackageName */);
         final Intent statusUpdate = isl.getResult();
         final int result =
                 statusUpdate.getIntExtra(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE);
@@ -279,16 +279,21 @@ public class SilentUpdateTests {
     }
 
     private InstallStatusListener commit(Supplier<InputStream> apkStreamSupplier,
-            Boolean requireUserAction, boolean dontKillApp) throws IOException {
+            Boolean requireUserAction, String dontKillPackageName) throws IOException {
         final Context context = getContext();
         final PackageInstaller installer = context.getPackageManager().getPackageInstaller();
-        SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+        SessionParams params = new SessionParams(
+                dontKillPackageName == null ? SessionParams.MODE_FULL_INSTALL
+                        : SessionParams.MODE_INHERIT_EXISTING);
         if (requireUserAction != null) {
             params.setRequireUserAction(requireUserAction
                     ? USER_ACTION_REQUIRED
                     : USER_ACTION_NOT_REQUIRED);
         }
-        params.setDontKillApp(dontKillApp);
+        if (dontKillPackageName != null) {
+            params.setAppPackageName(dontKillPackageName);
+            params.setDontKillApp(true);
+        }
         int sessionId = installer.createSession(params);
         Assert.assertEquals("SessionInfo.getRequireUserAction and "
                         + "SessionParams.setRequireUserAction are not equal",
