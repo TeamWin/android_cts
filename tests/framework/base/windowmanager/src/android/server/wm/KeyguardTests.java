@@ -441,6 +441,12 @@ public class KeyguardTests extends KeyguardTestBase {
                 .setWaitForLaunched(false)
                 .setTargetActivity(BROADCAST_RECEIVER_ACTIVITY).execute();
         mWmState.waitForKeyguardShowingAndNotOccluded();
+        // The activity should be launched in same TDA to ensure that
+        // keyguard is showing and not occluded.
+        assumeTrue("Should launch in same TDA",
+                mWmState.getTaskDisplayArea(occludingActivity)
+                        == mWmState.getTaskDisplayArea(BROADCAST_RECEIVER_ACTIVITY)
+        );
         mWmState.assertKeyguardShowingAndNotOccluded();
 
         mBroadcastActionTrigger.finishBroadcastReceiverActivity();

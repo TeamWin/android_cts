@@ -14,6 +14,17 @@
 # Bug component: 36137 = per-file SharedUserIdTest.java
 # Bug component: 36137 = per-file SplitTests.java
 
+# Storage bug component
+# Bug component: 46626 = per-file *Adoptable*
+# Bug component: 46626 = per-file *DirectBoot*
+# Bug component: 46626 = per-file *Storage*
+# Bug component: 46626 = per-file *Documents*
+# Bug component: 46626 = per-file ScopedDirectoryAccessTest.java
+
+# DocsUI bug component
+# Bug component: 46626 = per-file *Documents*
+# Bug component: 46626 = per-file ScopedDirectoryAccessTest.java
+
 patb@google.com
 per-file AccessSerialNumberTest.java = ewol@google.com
 per-file ApexSignatureVerificationTest.java = dariofreni@google.com

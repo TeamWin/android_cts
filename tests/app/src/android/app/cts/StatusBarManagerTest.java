@@ -69,13 +69,22 @@ public class StatusBarManagerTest {
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
 
         if (mStatusBarManager != null) {
             // Adopt again since tests could've dropped it
             mUiAutomation.adoptShellPermissionIdentity(PERMISSION_STATUS_BAR);
+
+            // Give the UI thread a chance to finish any animations that happened during the test,
+            // otherwise it seems to just drop these calls
+            // (b/233937748)
+            Thread.sleep(100);
+
+            mStatusBarManager.collapsePanels();
             mStatusBarManager.setDisabledForSetup(false);
+            mStatusBarManager.setExpansionDisabledForSimNetworkLock(false);
         }
+
         mUiAutomation.dropShellPermissionIdentity();
     }
 

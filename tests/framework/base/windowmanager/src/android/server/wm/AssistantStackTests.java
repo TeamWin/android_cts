@@ -352,6 +352,11 @@ public class AssistantStackTests extends ActivityManagerTestBase {
             // Launch a new fullscreen activity
             // Using Animation Test Activity because it is opaque on all devices.
             launchActivityOnDisplay(ANIMATION_TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN, mAssistantDisplayId);
+            // If the activity is not launched in same TDA, ASSISTANT_ACTIVITY will be visible.
+            assumeTrue("Should launch in same TDA",
+                    mWmState.getTaskDisplayArea(ASSISTANT_ACTIVITY)
+                            == mWmState.getTaskDisplayArea(ANIMATION_TEST_ACTIVITY)
+            );
             // Wait for animation finished.
             mWmState.waitForActivityState(ANIMATION_TEST_ACTIVITY, STATE_RESUMED);
 

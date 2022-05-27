@@ -205,7 +205,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                 tmpFile = File.createTempFile("tmp" + (mUseHighBitDepth ? "10bit" : ""), ".mp4");
             }
             mMuxer = new MediaMuxer(tmpFile.getAbsolutePath(), muxerFormat);
-            configureCodec(mConfigFormat, true, true, true);
+            configureCodec(mConfigFormat, false, true, true);
             mCodec.start();
             doWork(4);
             queueEOS();

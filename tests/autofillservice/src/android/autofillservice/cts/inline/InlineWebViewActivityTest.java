@@ -42,6 +42,7 @@ import android.view.ViewStructure.HtmlInfo;
 
 import androidx.test.filters.FlakyTest;
 
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 
@@ -108,9 +109,11 @@ public class InlineWebViewActivityTest extends AbstractWebViewTestCase<WebViewAc
 
     @Test
     public void testAutofillOneDataset() throws Exception {
+        // TODO(b/226240255) WebView does not inform the autofill service about editText (re-)entry
+        Assume.assumeFalse(isPreventImeStartup());
+
         // TODO(b/187664861): Find better solution for small display device.
         mUiBot.assumeMinimumResolution(500);
-
         // Set service.
         enableService();
 

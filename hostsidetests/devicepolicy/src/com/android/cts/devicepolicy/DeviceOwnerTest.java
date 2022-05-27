@@ -32,6 +32,7 @@ import android.stats.devicepolicy.EventId;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.TemporarilyIgnoreOnHeadlessSystemUserMode;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.log.LogUtil.CLog;
 
@@ -342,6 +343,8 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
         executeCreateAndManageUserTest("testCreateAndManageUser_RemoveRestrictionSet");
     }
 
+    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "220386262",
+            reason = "Often fails on automotive due to race condition")
     @Test
     public void testCreateAndManageUser_newUserDisclaimer() throws Exception {
         assumeCanStartNewUser();

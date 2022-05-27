@@ -33,6 +33,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -65,18 +66,7 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
     // RGB = Transpose(FLOOR_CLIP_PIXEL(CONV_CSC * (Transpose(YUV) - LVL_OFFSET)))
     // The matrices LVL_OFFSET and CONV_CSC for different color aspects are below.
     //
-    // YUV values in the 8bit color bar test videos
-    //     {{126, 191, 230},
-    //      {98, 104, 204},
-    //      {180, 20, 168},
-    //      {121, 109, 60},
-    //      {114, 179, 172},
-    //      {133, 138, 118},
-    //      {183, 93, 153},
-    //      {203, 20, 33},
-    //      {147, 131, 183},
-    //      {40, 177, 202},
-    //      {170, 82, 96},
+    // YUV values in the 8bit color bar test videos are in COLOR_BARS_YUV below
     //
     // The color conversion matrices (CONV_CSC) for the RGB equation above:
     // MULTIPLY_ROW_WISE_LR = Transpose({255/219, 255/224, 255/224})
@@ -94,6 +84,20 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
     // The level shift matrices (LVL_OFFSET) for the RGB equation above:
     // LVL_OFFSET_LR = Transpose({16, 128, 128})
     // LVL_OFFSET_FR = Transpose({0, 128, 128})
+
+    private static final int[][] COLOR_BARS_YUV = new int[][]{
+            {126, 191, 230},
+            {98, 104, 204},
+            {180, 20, 168},
+            {121, 109, 60},
+            {114, 179, 172},
+            {133, 138, 118},
+            {183, 93, 153},
+            {203, 20, 33},
+            {147, 131, 183},
+            {40, 177, 202},
+            {170, 82, 96},
+    };
 
     // Reference RGB values for 601 Limited Range
     private static final int[][] COLOR_BARS_601LR = new int[][]{
@@ -152,35 +156,41 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
     private final int mRange;
     private final int mStandard;
     private final int mTransferCurve;
+    private final boolean mUseYuvSampling;
 
     private OutputSurface mEGLWindowOutSurface;
     private int mBadFrames = 0;
 
     public DecodeGlAccuracyTest(String decoder, String mediaType, String fileName, int range,
-            int standard, int transfer) {
+            int standard, int transfer, boolean useYuvSampling) {
         super(null, mediaType, null);
         mCompName = decoder;
         mFileName = fileName;
         mRange = range;
         mStandard = standard;
         mTransferCurve = transfer;
+        mUseYuvSampling = useYuvSampling;
 
-        mColorBars = COLOR_BARS_601LR;
-        if ((mStandard == MediaFormat.COLOR_STANDARD_BT601_NTSC) &&
-                (mRange == MediaFormat.COLOR_RANGE_LIMITED)) {
+        if (!mUseYuvSampling) {
             mColorBars = COLOR_BARS_601LR;
-        } else if ((mStandard == MediaFormat.COLOR_STANDARD_BT601_NTSC) &&
-                (mRange == MediaFormat.COLOR_RANGE_FULL)) {
-            mColorBars = COLOR_BARS_601FR;
-        } else if ((mStandard == MediaFormat.COLOR_STANDARD_BT709) &&
-                (mRange == MediaFormat.COLOR_RANGE_LIMITED)) {
-            mColorBars = COLOR_BARS_709LR;
+            if ((mStandard == MediaFormat.COLOR_STANDARD_BT601_NTSC) &&
+                    (mRange == MediaFormat.COLOR_RANGE_LIMITED)) {
+                mColorBars = COLOR_BARS_601LR;
+            } else if ((mStandard == MediaFormat.COLOR_STANDARD_BT601_NTSC) &&
+                    (mRange == MediaFormat.COLOR_RANGE_FULL)) {
+                mColorBars = COLOR_BARS_601FR;
+            } else if ((mStandard == MediaFormat.COLOR_STANDARD_BT709) &&
+                    (mRange == MediaFormat.COLOR_RANGE_LIMITED)) {
+                mColorBars = COLOR_BARS_709LR;
+            } else {
+                Log.e(LOG_TAG, "Unsupported Color Aspects.");
+            }
         } else {
-            Log.e(LOG_TAG, "Unsupported Color Aspects.");
+            mColorBars = COLOR_BARS_YUV;
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{3}_{4}_{5})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{3}_{4}_{5}_{6})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = false;
         final boolean needAudio = false;
@@ -256,7 +266,18 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
 
                 // Note: OpenGL is not required to support 709 FR. So we are not testing it.
         });
-        return CodecTestBase.prepareParamList(argsList, isEncoder, needAudio, needVideo,
+        final List<Object[]> exhaustiveArgsList = new ArrayList<>();
+        for (Object[] arg : argsList) {
+            int argLength = argsList.get(0).length;
+            boolean[] boolStates = {true, false};
+            for (boolean useYuvSampling : boolStates) {
+                Object[] testArgs = new Object[argLength + 1];
+                System.arraycopy(arg, 0, testArgs, 0, argLength);
+                testArgs[argLength] = useYuvSampling;
+                exhaustiveArgsList.add(testArgs);
+            }
+        }
+        return CodecTestBase.prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo,
                 false);
     }
 
@@ -338,7 +359,7 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
 
         mWidth = format.getInteger(MediaFormat.KEY_WIDTH);
         mHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
-        mEGLWindowOutSurface = new OutputSurface(mWidth, mHeight, false);
+        mEGLWindowOutSurface = new OutputSurface(mWidth, mHeight, false, mUseYuvSampling);
         mSurface = mEGLWindowOutSurface.getSurface();
 
         mCodec = MediaCodec.createByCodecName(mCompName);
