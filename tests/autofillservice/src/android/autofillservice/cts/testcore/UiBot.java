@@ -1374,7 +1374,16 @@ public class UiBot {
     public void touchOutsideDialog() throws Exception {
         Log.v(TAG, "touchOutsideDialog()");
         final UiObject2 picker = findFillDialogPicker();
-        mDevice.click(1, picker.getVisibleBounds().top - 1);
+        mDevice.click(1, picker.getVisibleBounds().top / 2);
+    }
+
+    /**
+     * Touch outside the fill dialog.
+     */
+    public void touchOutsideSaveDialog() throws Exception {
+        Log.v(TAG, "touchOutsideSaveDialog()");
+        final UiObject2 picker = waitForObject(SAVE_UI_SELECTOR, SAVE_TIMEOUT);
+        mDevice.click(1, picker.getVisibleBounds().top / 2);
     }
 
     /**
