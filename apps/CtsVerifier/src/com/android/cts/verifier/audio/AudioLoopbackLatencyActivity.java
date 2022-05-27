@@ -111,9 +111,7 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
     protected static final int NUM_TEST_PHASES = 5;
     protected int mTestPhase = 0;
 
-    // There is more distortion/variance with the Speaker/Mic path, so lower confidence is needed
-    private static final double CONFIDENCE_THRESHOLD_AMBIENT = 0.2;
-    // A cleaner signal for wired or USB loopback, so higher confidence is possible
+    private static final double CONFIDENCE_THRESHOLD_AMBIENT = 0.6;
     private static final double CONFIDENCE_THRESHOLD_WIRED = 0.6;
 
     public static final double LATENCY_NOT_MEASURED = 0.0;
