@@ -895,7 +895,10 @@ public final class DeviceState extends HarrierRule {
 
                 try {
                     TestApis.device().keepScreenOn(true);
-                    TestApis.device().setKeyguardEnabled(false);
+
+                    if (!Tags.hasTag(Tags.INSTANT_APP)) {
+                        TestApis.device().setKeyguardEnabled(false);
+                    }
                     TestApis.users().setStopBgUsersOnSwitch(STOP_USER_ON_SWITCH_FALSE);
 
                     try {
@@ -933,7 +936,9 @@ public final class DeviceState extends HarrierRule {
                         teardownShareableState();
                     }
 
-                    TestApis.device().setKeyguardEnabled(true);
+                    if (!Tags.hasTag(Tags.INSTANT_APP)) {
+                        TestApis.device().setKeyguardEnabled(true);
+                    }
                     TestApis.device().keepScreenOn(false);
                     TestApis.users().setStopBgUsersOnSwitch(STOP_USER_ON_SWITCH_DEFAULT);
                 }
