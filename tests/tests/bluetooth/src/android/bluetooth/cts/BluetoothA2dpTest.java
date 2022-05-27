@@ -143,6 +143,7 @@ public class BluetoothA2dpTest extends AndroidTestCase {
     public void test_getCodecStatus() {
         if (!(mHasBluetooth && mIsA2dpSupported)) return;
 
+        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothA2dp);
 
