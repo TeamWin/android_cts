@@ -486,7 +486,7 @@ public class ImsCallingTest {
         assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
 
         Call call = getCall(mCurrentCallId);
-        if (call.getDetails().getState() == call.STATE_RINGING) {
+        if (call.getDetails().getState() == Call.STATE_RINGING) {
             callingTestLatchCountdown(LATCH_WAIT, 5000);
             call.answer(0);
         }
@@ -669,7 +669,7 @@ public class ImsCallingTest {
         callSession.addTestType(TestImsCallSessionImpl.TEST_TYPE_RESUME_FAILED);
         callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_STATE_RESUME);
         call.unhold();
-        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_STATE);
+        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_STATE_HOLD);
         assertTrue("Call is not in Hold State", (call.getDetails().getState()
                 == call.STATE_HOLDING));
 
@@ -889,7 +889,7 @@ public class ImsCallingTest {
         assertParticiapantAddedToConference(2);
 
         //Disconnect the conference call.
-        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_STATE);
+        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_DISCONNECT);
         conferenceCall.disconnect();
 
         //Verify conference participant connections are disconnected.
@@ -913,7 +913,7 @@ public class ImsCallingTest {
         mCallSession2.addTestType(TestImsCallSessionImpl.TEST_TYPE_CONFERENCE_FAILED);
         addConferenceCall(mCall1, mCall2);
 
-        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_STATE);
+        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_CONNECT);
         //Verify foreground call is in Active state after merge failed.
         assertTrue("Call is not in Active State", (mCall2.getDetails().getState()
                 == Call.STATE_ACTIVE));

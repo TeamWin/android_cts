@@ -600,6 +600,7 @@ def plot_camera_rotations(cam_rots, start_frame, video_quality,
   pylab.xlabel('frame #')
   pylab.ylabel('camera rotation (degrees)')
   matplotlib.pyplot.savefig(f'{plot_name_stem}_cam_rots.png')
+  pylab.close(video_quality)
 
 
 def plot_gyro_events(gyro_events, plot_name, log_path):
@@ -647,6 +648,7 @@ def plot_gyro_events(gyro_events, plot_name, log_path):
   pylab.legend()
   file_name = os.path.join(log_path, plot_name)
   matplotlib.pyplot.savefig(f'{file_name}_gyro_events.png')
+  pylab.close(plot_name)
 
 
 def conv_acceleration_to_movement(gyro_events, video_delay_time):

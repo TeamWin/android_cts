@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.os.Parcel;
@@ -319,7 +320,7 @@ public class DataProfileTest {
         assertEquals(ApnSetting.PROTOCOL_IP, profile.getRoamingProtocolType());
         assertEquals(ApnSetting.TYPE_NONE, profile.getSupportedApnTypesBitmask());
         assertEquals(DataProfile.TYPE_COMMON, profile.getType());
-        assertFalse(profile.isEnabled());
+        assertTrue(profile.isEnabled());
         assertFalse(profile.isPersistent());
         assertFalse(profile.isPreferred());
         assertEquals(td, profile.getTrafficDescriptor());
