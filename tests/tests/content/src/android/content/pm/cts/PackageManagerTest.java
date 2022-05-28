@@ -203,6 +203,8 @@ public class PackageManagerTest {
     private static final String NON_EXISTENT_PACKAGE_NAME = "android.content.cts.nonexistent.pkg";
     private static final String STUB_PACKAGE_APK = SAMPLE_APK_BASE
             + "CtsSyncAccountAccessStubs.apk";
+    private static final String STUB_PACKAGE_SPLIT =
+            SAMPLE_APK_BASE + "CtsSyncAccountAccessStubs_mdpi-v4.apk";
 
     private static final int MAX_SAFE_LABEL_LENGTH = 1000;
 
@@ -1796,12 +1798,14 @@ public class PackageManagerTest {
     }
 
     private boolean installPackage(String apkPath) {
-        return installPackage(apkPath, false /* dontKill */);
+        return SystemUtil.runShellCommand(
+                "pm install -t " + apkPath).equals("Success\n");
     }
 
-    private boolean installPackage(String apkPath, boolean dontKill) {
+    private boolean addSplitDontKill(String packageName, String splitPath) {
         return SystemUtil.runShellCommand(
-                "pm install -t " + (dontKill ? "--dont-kill " : "") + apkPath).equals("Success\n");
+                "pm install-streaming -p " + packageName + " --dont-kill -t " + splitPath).equals(
+                "Success\n");
     }
 
     private void uninstallPackage(String packageName) {
@@ -2188,6 +2192,8 @@ public class PackageManagerTest {
 
     @Test
     public void testInstallUpdate_dontKill_applicationIsNotKilled() throws Exception {
+        installPackage(STUB_PACKAGE_APK);
+
         final Intent intent = new Intent();
         intent.setComponent(STUB_SERVICE_COMPONENT);
         final AtomicBoolean killed = new AtomicBoolean();
@@ -2202,7 +2208,7 @@ public class PackageManagerTest {
             }
         }, Context.BIND_AUTO_CREATE);
 
-        installPackage(STUB_PACKAGE_APK, true /* dontKill */);
+        addSplitDontKill(STUB_PACKAGE_NAME, STUB_PACKAGE_SPLIT);
         // The application shouldn't be killed after updating with --dont-kill.
         assertThrows(AssertionFailedError.class,
                 () -> TestUtils.waitUntil(

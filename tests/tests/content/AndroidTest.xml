@@ -44,6 +44,7 @@
         <option name="push" value="CtsContentMockLauncherTestApp.apk->/data/local/tmp/cts/content/CtsContentMockLauncherTestApp.apk" />
         <option name="push" value="CtsContentLongLabelNameTestApp.apk->/data/local/tmp/cts/content/CtsContentLongLabelNameTestApp.apk" />
         <option name="push" value="CtsSyncAccountAccessStubs.apk->/data/local/tmp/cts/content/CtsSyncAccountAccessStubs.apk" />
+        <option name="push" value="CtsSyncAccountAccessStubs_mdpi-v4.apk->/data/local/tmp/cts/content/CtsSyncAccountAccessStubs_mdpi-v4.apk" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
