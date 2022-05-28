@@ -37,6 +37,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.UiAutomatorUtils
+import com.android.modules.utils.build.SdkLevel
 import com.android.sts.common.util.StsExtraBusinessLogicTestCase
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -63,7 +64,6 @@ abstract class BasePermissionUiTest : StsExtraBusinessLogicTestCase() {
 
         const val APP_PACKAGE_NAME = "android.security.cts.usepermission"
         const val NOTIF_TEXT = "permgrouprequest_notifications"
-        const val NOTIF_CONTINUE_TEXT = "permgrouprequestcontinue_notifications"
         const val ALLOW_BUTTON_TEXT = "grant_dialog_button_allow"
         const val ALLOW_BUTTON =
             "com.android.permissioncontroller:id/permission_allow_button"
@@ -216,7 +216,7 @@ abstract class BasePermissionUiTest : StsExtraBusinessLogicTestCase() {
         )
         waitForIdle()
         // Notification permission prompt is shown first, so get it out of the way
-        clickNotificationPermissionRequestAllowButton()
+        clickNotificationPermissionRequestAllowButtonIfAvailable()
         // Perform the post-request action
         block()
         return future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
@@ -225,10 +225,14 @@ abstract class BasePermissionUiTest : StsExtraBusinessLogicTestCase() {
     /**
      * Only for use in tests that are not testing the notification permission popup
      */
-    private fun clickNotificationPermissionRequestAllowButton() {
+    private fun clickNotificationPermissionRequestAllowButtonIfAvailable() {
+        if (!SdkLevel.isAtLeastT()) {
+            return
+        }
+
         if (waitFindObjectOrNull(
                 By.text(getPermissionControllerString(
-                    NOTIF_CONTINUE_TEXT,
+                    NOTIF_TEXT,
                     APP_PACKAGE_NAME
                 )), 1000) != null ||
             waitFindObjectOrNull(
