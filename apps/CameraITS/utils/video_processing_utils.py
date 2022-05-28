@@ -81,6 +81,8 @@ def extract_key_frames_from_video(log_path, video_file_name):
     if '.png' in file and not os.path.isdir(file) and ffmpeg_image_name in file:
       key_frame_files.append(file)
 
+  logging.debug('Extracted key frames: %s', key_frame_files)
+  logging.debug('Length of key_frame_files: %d', len(key_frame_files))
   if not len(key_frame_files):
     raise AssertionError('No key frames extracted. Check source video.')
 

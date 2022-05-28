@@ -1,7 +1,13 @@
-# Bug component: 655625
-
-include platform/frameworks/base:/core/java/android/os/storage/OWNERS
-
 tgunn@google.com
 nicksauer@google.com
 nona@google.com
+
+# Storage team ownership
+
+# Bug component: 655625 = per-file *MediaStore*
+
+per-file *MediaStore* = file:platform/frameworks/base:/core/java/android/os/storage/OWNERS
+per-file Android.bp = file:platform/frameworks/base:/core/java/android/os/storage/OWNERS
+per-file AndroidManifest.xml = file:platform/frameworks/base:/core/java/android/os/storage/OWNERS
+per-file AndroidTest.xml = file:platform/frameworks/base:/core/java/android/os/storage/OWNERS
+per-file OWNERS = file:platform/frameworks/base:/core/java/android/os/storage/OWNERS

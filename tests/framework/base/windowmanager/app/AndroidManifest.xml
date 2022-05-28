@@ -632,16 +632,6 @@
              android:exported="true"
              android:colorMode="wideColorGamut"
              android:theme="@style/BadBlurryDialog"/>
-        <activity android:name=".CustomTransitionExitActivity"
-            android:theme="@style/Theme.CustomTransitionTheme"
-            android:exported="true"
-            android:colorMode="wideColorGamut"
-            android:fitsSystemWindows="true" />
-        <activity android:name=".CustomTransitionEnterActivity"
-            android:theme="@style/Theme.CustomTransitionTheme"
-            android:exported="true"
-            android:colorMode="wideColorGamut"
-            android:fitsSystemWindows="true" />
         <activity android:name=".KeepClearRectsActivity"
             android:exported="true"
             android:theme="@style/NoInsetsTheme"/>

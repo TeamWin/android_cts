@@ -112,4 +112,12 @@
     <option name="compatibility:exclude-filter" value="CtsHdmiCecHostTestCases android.hdmicec.cts.tv.HdmiCecRoutingControlTest" />
     <option name="compatibility:exclude-filter" value="CtsHdmiCecHostTestCases android.hdmicec.cts.tv.HdmiCecTvOneTouchPlayTest" />
 
+    <!-- b/192113622, b/203031609, b/204402327, b/204615046, b/204860049  Remove tests for S "optional" algorithms for GRF devices -->
+    <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.IpSecAlgorithmImplTest#testChaCha20Poly1305" />
+    <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.IpSecManagerTest#testChaCha20Poly1305Tcp4" />
+    <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.IpSecManagerTest#testChaCha20Poly1305Tcp6" />
+    <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.IpSecManagerTest#testChaCha20Poly1305Udp4" />
+    <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.IpSecManagerTest#testChaCha20Poly1305Udp6" />
+    <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.IpSecManagerTest#testChaCha20Poly1305Udp4UdpEncap" />
+    <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.IpSecManagerTest#testChaCha20Poly1305Tcp4UdpEncap" />
 </configuration>

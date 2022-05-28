@@ -1186,6 +1186,73 @@ public class UiTranslationManagerTest {
         }
     }
 
+    @Test
+    public void testUiTranslation_selectableText() throws Throwable {
+        final Pair<List<AutofillId>, ContentCaptureContext> result =
+                enableServicesAndStartActivityForTranslation();
+
+        final CharSequence originalText = mTextView.getText();
+        final List<AutofillId> views = result.first;
+        final ContentCaptureContext contentCaptureContext = result.second;
+
+        final String translatedText = "success";
+        // Set responses
+        final TranslationResponse response =
+                createViewsTranslationResponse(views, translatedText);
+        sTranslationReplier.addResponse(response);
+
+        mActivityScenario.onActivity(activity -> {
+            mTextView.setTextIsSelectable(true);
+
+            // We want to check that these other flags can be restored after translation is
+            // finished.
+            mTextView.setClickable(false);
+            mTextView.setLongClickable(false);
+            mTextView.setFocusable(false);
+            mTextView.setFocusableInTouchMode(false);
+        });
+
+        startUiTranslation(/* shouldPadContent */ false, views, contentCaptureContext);
+
+        // TextView is not selectable while translated.
+        assertScreenText(mTextView, translatedText);
+        assertThat(mTextView.isTextSelectable()).isFalse();
+
+        finishUiTranslation(contentCaptureContext);
+
+        // Selectable and other flags are restored after translation is finished.
+        assertScreenText(mTextView, originalText.toString());
+        assertThat(mTextView.isTextSelectable()).isTrue();
+        assertThat(mTextView.isClickable()).isFalse();
+        assertThat(mTextView.isFocusable()).isFalse();
+        assertThat(mTextView.isFocusableInTouchMode()).isFalse();
+        assertThat(mTextView.isLongClickable()).isFalse();
+
+        mActivityScenario.onActivity(activity -> {
+            // We also want to check we can restore flags with true values.
+            mTextView.setClickable(true);
+            mTextView.setLongClickable(true);
+            mTextView.setFocusable(true);
+            mTextView.setFocusableInTouchMode(true);
+        });
+
+        sTranslationReplier.addResponse(response);
+        startUiTranslation(/* shouldPadContent */ false, views, contentCaptureContext);
+
+        // TextView is not selectable while translated.
+        assertScreenText(mTextView, translatedText);
+        assertThat(mTextView.isTextSelectable()).isFalse();
+
+        finishUiTranslation(contentCaptureContext);
+
+        // Selectable and other flags are restored after translation is finished.
+        assertScreenText(mTextView, originalText.toString());
+        assertThat(mTextView.isTextSelectable()).isTrue();
+        assertThat(mTextView.isClickable()).isTrue();
+        assertThat(mTextView.isFocusable()).isTrue();
+        assertThat(mTextView.isFocusableInTouchMode()).isTrue();
+        assertThat(mTextView.isLongClickable()).isTrue();
+    }
 
     private void assertScreenText(TextView textView, String expected) {
         String screenText = textView.getLayout().getText().toString();

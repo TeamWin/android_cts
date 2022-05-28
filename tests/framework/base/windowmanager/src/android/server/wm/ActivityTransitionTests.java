@@ -457,9 +457,7 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         boolean isTransitioning;
         do {
             getWmState().computeState();
-            isTransitioning =
-                    getWmState().getDefaultDisplayLastTransition().equals("TRANSIT_ACTIVITY_OPEN")
-                    && getWmState().getDefaultDisplayAppTransitionState()
+            isTransitioning = getWmState().getDefaultDisplayAppTransitionState()
                             .equals("APP_STATE_RUNNING");
             SystemClock.sleep(10);
         } while (!isTransitioning);

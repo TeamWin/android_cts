@@ -286,33 +286,11 @@ public class Components extends ComponentsBase {
     public static final ComponentName BAD_BLUR_ACTIVITY =
             component("BadBlurActivity");
 
-    public static final ComponentName CUSTOM_TRANSITION_EXIT_ACTIVITY =
-            component("CustomTransitionExitActivity");
-
-    public static final ComponentName CUSTOM_TRANSITION_ENTER_ACTIVITY =
-            component("CustomTransitionEnterActivity");
-
     public static final ComponentName KEEP_CLEAR_RECTS_ACTIVITY =
             component("KeepClearRectsActivity");
 
     public static final ComponentName KEEP_CLEAR_RECTS_ACTIVITY2 =
             component("KeepClearRectsActivity2");
-
-    /**
-     * The keys used by {@link CustomTransitionExitActivity} to select the animation to run.
-     */
-    public static class CustomTransitionAnimations {
-        /** see @anim/show_backdrop_hide_window_animation.xml */
-        public static final String BACKGROUND_COLOR = "backgroundColor";
-        /** see @anim/edge_extension_right_window_animation.xml */
-        public static final String LEFT_EDGE_EXTENSION = "leftEdgeExtension";
-        /** see @anim/edge_extension_top_window_animation.xml */
-        public static final String TOP_EDGE_EXTENSION = "topEdgeExtension";
-        /** see @anim/edge_extension_left_window_animation.xml */
-        public static final String RIGHT_EDGE_EXTENSION = "rightEdgeExtension";
-        /** see @anim/edge_extension_bottom_window_animation.xml */
-        public static final String BOTTOM_EDGE_EXTENSION = "bottomExtension";
-    }
 
     /**
      * The keys are used for {@link TestJournalProvider} when testing starting window.

@@ -91,12 +91,6 @@ public class IntentTest {
 
             for (String activeIntent : activeIntents) {
               String intent = activeIntent.trim();
-
-                // STOPSHIP Remove this. b/230099874
-                if ("android.intent.action.EXPERIMENTAL_IS_ALIAS".equals(intent)) {
-                    continue;
-                }
-
               if (!platformIntents.contains(intent) &&
                     intent.startsWith(ANDROID_INTENT_PREFIX)) {
                   invalidIntents.add(activeIntent);

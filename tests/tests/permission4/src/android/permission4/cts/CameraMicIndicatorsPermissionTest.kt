@@ -26,13 +26,18 @@ import android.content.pm.PackageManager
 import android.hardware.camera2.CameraManager
 import android.os.Build
 import android.os.Process
+import android.os.SystemClock
 import android.permission.PermissionManager
 import android.provider.DeviceConfig
 import android.provider.Settings
 import android.safetycenter.SafetyCenterManager
 import android.server.wm.WindowManagerStateHelper
 import android.support.test.uiautomator.By
+import android.support.test.uiautomator.BySelector
+import android.support.test.uiautomator.StaleObjectException
 import android.support.test.uiautomator.UiDevice
+import android.support.test.uiautomator.UiObject2
+import android.support.test.uiautomator.UiScrollable
 import android.support.test.uiautomator.UiSelector
 import androidx.annotation.RequiresApi
 import androidx.test.filters.SdkSuppress
@@ -42,6 +47,7 @@ import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionI
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.android.compatibility.common.util.UiAutomatorUtils
 import org.junit.After
 import org.junit.Assert
 import org.junit.Assert.assertEquals
@@ -103,7 +109,7 @@ class CameraMicIndicatorsPermissionTest {
 
     private val safetyCenterEnabled = callWithShellPermissionIdentity {
         DeviceConfig.getString(DeviceConfig.NAMESPACE_PRIVACY,
-                SAFETY_CENTER_ENABLED, false.toString())
+            SAFETY_CENTER_ENABLED, false.toString())
     }
 
     @Before
@@ -116,7 +122,7 @@ class CameraMicIndicatorsPermissionTest {
                 context.contentResolver, Settings.System.SCREEN_OFF_TIMEOUT, 1800000L
             )
             DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY,
-                    SAFETY_CENTER_ENABLED, false.toString(), false)
+                SAFETY_CENTER_ENABLED, false.toString(), false)
         }
 
         if (!isScreenOn) {
@@ -400,12 +406,20 @@ class CameraMicIndicatorsPermissionTest {
                 return@eventually
             }
             if (useMic) {
-                val iconView = uiDevice.findObject(UiSelector().descriptionContains(micLabel))
-                assertTrue("View with description $micLabel not found", iconView.exists())
+                var iconView = if (safetyCenterEnabled) {
+                    waitFindObjectOrNull(By.text(micLabel))
+                } else {
+                    uiDevice.findObject(UiSelector().descriptionContains(micLabel))
+                }
+                assertNotNull("View with description $micLabel not found", iconView)
             }
             if (useCamera) {
-                val iconView = uiDevice.findObject(UiSelector().descriptionContains(cameraLabel))
-                assertTrue("View with text $APP_LABEL not found", iconView.exists())
+                var iconView = if (safetyCenterEnabled) {
+                    waitFindObjectOrNull(By.text(cameraLabel))
+                } else {
+                    uiDevice.findObject(UiSelector().descriptionContains(cameraLabel))
+                }
+                assertNotNull("View with text $APP_LABEL not found", iconView)
             }
             val appView = uiDevice.findObject(UiSelector().textContains(APP_LABEL))
             assertTrue("View with text $APP_LABEL not found", appView.exists())
@@ -440,6 +454,10 @@ class CameraMicIndicatorsPermissionTest {
             "Did not find shell package"
         }
 
+        if (safetyCenterEnabled) {
+            val appView = UiScrollable(UiSelector().scrollable(true))
+            appView.scrollIntoView(UiSelector().resourceId(SAFETY_CENTER_ITEM_ID))
+        }
         val usageViews = if (safetyCenterEnabled) {
             uiDevice.findObjects(By.res(SAFETY_CENTER_ITEM_ID))
         } else {
@@ -468,7 +486,7 @@ class CameraMicIndicatorsPermissionTest {
     private fun changeSafetyCenterFlag(safetyCenterEnabled: String) {
         runWithShellPermissionIdentity {
             DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY,
-                    SAFETY_CENTER_ENABLED, safetyCenterEnabled, false)
+                SAFETY_CENTER_ENABLED, safetyCenterEnabled, false)
         }
     }
 
@@ -478,7 +496,28 @@ class CameraMicIndicatorsPermissionTest {
         val isSafetyCenterEnabled: Boolean = runWithShellPermissionIdentity<Boolean> {
             safetyCenterManager.isSafetyCenterEnabled
         }
-
         assumeTrue(isSafetyCenterEnabled)
+    }
+
+    protected fun waitFindObjectOrNull(selector: BySelector): UiObject2? {
+        waitForIdle()
+        return findObjectWithRetry({ t -> UiAutomatorUtils.waitFindObjectOrNull(selector, t) })
+    }
+
+    private fun findObjectWithRetry(
+        automatorMethod: (timeoutMillis: Long) -> UiObject2?,
+        timeoutMillis: Long = TIMEOUT_MILLIS
+    ): UiObject2? {
+        waitForIdle()
+        val startTime = SystemClock.elapsedRealtime()
+        return try {
+            automatorMethod(timeoutMillis)
+        } catch (e: StaleObjectException) {
+            val remainingTime = timeoutMillis - (SystemClock.elapsedRealtime() - startTime)
+            if (remainingTime <= 0) {
+                throw e
+            }
+            automatorMethod(remainingTime)
+        }
     }
 }

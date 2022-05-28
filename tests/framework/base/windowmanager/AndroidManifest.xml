@@ -119,6 +119,16 @@
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$TrampolineActivity"/>
 
+        <activity android:name="android.server.wm.AspectRatioTests$NonResizeablePortraitActivity"
+                  android:resizeableActivity="false"
+                  android:screenOrientation="portrait"
+                  android:exported="true"/>
+
+        <activity android:name="android.server.wm.AspectRatioTests$NonResizeableLandscapeActivity"
+                  android:resizeableActivity="false"
+                  android:screenOrientation="landscape"
+                  android:exported="true"/>
+
         <activity android:name="android.server.wm.MultiDisplayActivityLaunchTests$ImmediateLaunchTestActivity"
              android:allowEmbedded="true"/>
 

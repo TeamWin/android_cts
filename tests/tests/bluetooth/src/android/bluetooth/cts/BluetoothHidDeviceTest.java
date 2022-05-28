@@ -35,7 +35,6 @@ import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothHidDevice;
-import android.bluetooth.BluetoothHidDeviceAppSdpSettings;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.pm.PackageManager;
@@ -45,8 +44,7 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 
 import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -63,8 +61,6 @@ public class BluetoothHidDeviceTest extends AndroidTestCase {
     private UiAutomation mUiAutomation;
     private Condition mConditionProfileIsConnected;
     private ReentrantLock mProfileConnectedlock;
-    private BluetoothHidDeviceAppSdpSettings mSettings;
-    private ExecutorService mExecutor;
     private BluetoothHidDevice mBluetoothHidDevice;
 
 
@@ -89,7 +85,6 @@ public class BluetoothHidDeviceTest extends AndroidTestCase {
         mConditionProfileIsConnected = mProfileConnectedlock.newCondition();
         mIsProfileReady = false;
         mBluetoothHidDevice = null;
-        mExecutor = Executors.newSingleThreadExecutor();
 
         mAdapter.getProfileProxy(getContext(), new BluetoothHidServiceListener(),
                 BluetoothProfile.HID_DEVICE);
@@ -120,10 +115,16 @@ public class BluetoothHidDeviceTest extends AndroidTestCase {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothHidDevice);
 
-        assertEquals(mBluetoothHidDevice.getDevicesMatchingConnectionStates(
-                        new int[]{BluetoothProfile.STATE_CONNECTED}),
-                new ArrayList<BluetoothDevice>()
-        );
+        assertEquals(new ArrayList<BluetoothDevice>(),
+                mBluetoothHidDevice.getDevicesMatchingConnectionStates(
+                        new int[]{BluetoothProfile.STATE_CONNECTED}));
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        // Verify returns empty list if bluetooth is not enabled
+        List<BluetoothDevice> connectedDevices =
+                mBluetoothHidDevice.getDevicesMatchingConnectionStates(null);
+        assertTrue(connectedDevices.isEmpty());
     }
 
     public void test_getConnectionState() {
@@ -134,8 +135,15 @@ public class BluetoothHidDeviceTest extends AndroidTestCase {
 
         BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
 
-        assertEquals(mBluetoothHidDevice.getConnectionState(testDevice),
-                BluetoothProfile.STATE_DISCONNECTED);
+        // Verify returns STATE_DISCONNECTED when invalid input is given
+        assertEquals(BluetoothProfile.STATE_DISCONNECTED,
+                mBluetoothHidDevice.getConnectionState(null));
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        // Verify returns STATE_DISCONNECTED if bluetooth is not enabled
+        assertEquals(BluetoothProfile.STATE_DISCONNECTED,
+                mBluetoothHidDevice.getConnectionState(testDevice));
     }
 
     public void test_connect() {
@@ -162,6 +170,40 @@ public class BluetoothHidDeviceTest extends AndroidTestCase {
         assertFalse(mBluetoothHidDevice.disconnect(testDevice));
         mUiAutomation.dropShellPermissionIdentity();
         assertThrows(SecurityException.class, () -> mBluetoothHidDevice.connect(testDevice));
+    }
+
+    public void test_getConnectedDevices() {
+        if (!(mHasBluetooth && mIsHidSupported)) return;
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothHidDevice);
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        // Verify returns empty list if bluetooth is not enabled
+        List<BluetoothDevice> connectedDevices = mBluetoothHidDevice.getConnectedDevices();
+        assertTrue(connectedDevices.isEmpty());
+    }
+
+    public void test_setConnectionPolicy() {
+        if (!(mHasBluetooth && mIsHidSupported)) return;
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothHidDevice);
+
+        BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+
+        // Verify returns false when invalid input is given
+        assertFalse(mBluetoothHidDevice.setConnectionPolicy(
+                testDevice, BluetoothProfile.CONNECTION_POLICY_UNKNOWN));
+        assertFalse(mBluetoothHidDevice.setConnectionPolicy(
+                null, BluetoothProfile.CONNECTION_POLICY_ALLOWED));
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        // Verify returns false if bluetooth is not enabled
+        assertFalse(mBluetoothHidDevice.setConnectionPolicy(
+                testDevice, BluetoothProfile.CONNECTION_POLICY_FORBIDDEN));
     }
 
 

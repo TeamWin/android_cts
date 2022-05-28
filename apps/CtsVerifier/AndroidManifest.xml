@@ -1962,6 +1962,8 @@
                        android:value="single_display_mode" />
             <meta-data android:name="ApiTest" android:value=
                 "android.content.pm.PackageManager#FEATURE_SECURITY_MODEL_COMPATIBLE" />
+            <meta-data android:name="CddTest" android:value="2.2.5/9.1/H-0-1" />
+
         </activity>
 
         <activity android:name=".streamquality.StreamingVideoActivity"

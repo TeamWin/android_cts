@@ -74,6 +74,9 @@ public class CrossUserPackageVisibilityTests {
 
     private static final ComponentName TEST_ACTIVITY_COMPONENT_NAME = ComponentName.createRelative(
             TARGET_STUB, "android.appenumeration.cts.TestActivity");
+    private static final ComponentName TEST_INSTRUMENTATION_COMPONENT_NAME =
+            ComponentName.createRelative(
+                    TARGET_STUB, "android.appenumeration.testapp.DummyInstrumentation");
 
     @ClassRule
     @Rule
@@ -491,6 +494,28 @@ public class CrossUserPackageVisibilityTests {
                 new String[] {TARGET_STUB}, true /* suspended */, null /* appExtras */,
                 null /* launcherExtras */, dialogInfo);
         assertThat(suspendedPkg).asList().contains(TARGET_STUB);
+    }
+
+    @Test
+    public void testGetInstrumentationInfo_cannotDetectStubPkg() {
+        assertThrows(PackageManager.NameNotFoundException.class,
+                () -> mPackageManager.getInstrumentationInfo(
+                        TEST_INSTRUMENTATION_COMPONENT_NAME, 0 /* flags */));
+
+        installPackageForUser(TARGET_STUB_APK, mOtherUser);
+
+        assertThrows(PackageManager.NameNotFoundException.class,
+                () -> mPackageManager.getInstrumentationInfo(
+                        TEST_INSTRUMENTATION_COMPONENT_NAME, 0 /* flags */));
+    }
+
+    @Test
+    public void testQueryInstrumentation_cannotDetectStubPkg() {
+        assertThat(mPackageManager.queryInstrumentation(TARGET_STUB, 0 /* flags */)).isEmpty();
+
+        installPackageForUser(TARGET_STUB_APK, mOtherUser);
+
+        assertThat(mPackageManager.queryInstrumentation(TARGET_STUB, 0 /* flags */)).isEmpty();
     }
 
     private static void installPackage(String apkPath) {

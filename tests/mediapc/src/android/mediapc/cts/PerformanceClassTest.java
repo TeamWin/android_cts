@@ -190,19 +190,15 @@ public class PerformanceClassTest {
         PerformanceClassEvaluator.DensityRequirement r7_1_1_3__h_1_1 = pce.addR7_1_1_3__H_1_1();
         PerformanceClassEvaluator.ResolutionRequirement r7_1_1_1__h_2_1 = pce.addR7_1_1_1__H_2_1();
         PerformanceClassEvaluator.DensityRequirement r7_1_1_3__h_2_1 = pce.addR7_1_1_3__H_2_1();
-        PerformanceClassEvaluator.ResolutionRequirement r7_1_1_1__tbd1 = pce.addR7_1_1_1__TBD1();
-        PerformanceClassEvaluator.DensityRequirement r7_1_1_3__tbd2 = pce.addR7_1_1_3__TBD2();
 
         r7_1_1_1__h_1_1.setLongResolution(longPix);
         r7_1_1_1__h_2_1.setLongResolution(longPix);
-        r7_1_1_1__tbd1.setLongResolution(longPix);
+
         r7_1_1_1__h_1_1.setShortResolution(shortPix);
         r7_1_1_1__h_2_1.setShortResolution(shortPix);
-        r7_1_1_1__tbd1.setShortResolution(shortPix);
 
         r7_1_1_3__h_1_1.setDisplayDensity(density);
         r7_1_1_3__h_2_1.setDisplayDensity(density);
-        r7_1_1_3__tbd2.setDisplayDensity(density);
 
         pce.submitAndCheck();
     }
@@ -210,8 +206,7 @@ public class PerformanceClassTest {
     @Test
     @CddTest(requirements={
         "2.2.7.3/7.6.1/H-1-1",
-        "2.2.7.3/7.6.1/H-2-1",
-        "2.2.7.3/7.6.1/H-3-1"})
+        "2.2.7.3/7.6.1/H-2-1",})
     public void testMinimumMemory() {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
 
@@ -224,11 +219,9 @@ public class PerformanceClassTest {
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.MemoryRequirement r7_6_1_h_1_1 = pce.addR7_6_1__H_1_1();
         PerformanceClassEvaluator.MemoryRequirement r7_6_1_h_2_1 = pce.addR7_6_1__H_2_1();
-        PerformanceClassEvaluator.MemoryRequirement r7_6_1_h_3_1 = pce.addR7_6_1__H_3_1();
 
         r7_6_1_h_1_1.setPhysicalMemory(totalMemoryMb);
         r7_6_1_h_2_1.setPhysicalMemory(totalMemoryMb);
-        r7_6_1_h_3_1.setPhysicalMemory(totalMemoryMb);
 
         pce.submitAndCheck();
     }

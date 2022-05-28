@@ -337,36 +337,47 @@ public class TelephonyManagerTest {
     }
 
     private int mTestSub;
-    private TelephonyManagerTest.CarrierConfigReceiver mReceiver;
     private int mRadioVersion;
     private boolean mIsAllowedNetworkTypeChanged;
     private Map<Integer, Long> mAllowedNetworkTypesList = new HashMap<>();
 
-    private static class CarrierConfigReceiver extends BroadcastReceiver {
+    private class CarrierPrivilegeChangeMonitor implements AutoCloseable {
+        // CarrierPrivilegesCallback will be triggered upon registration. Filter the first callback
+        // here since we really care of the *change* of carrier privileges instead of the content
+        private boolean mHasSentPrivilegeChangeCallback = false;
         private CountDownLatch mLatch = new CountDownLatch(1);
-        private final int mSubId;
+        private final TelephonyManager.CarrierPrivilegesCallback mCarrierPrivilegesCallback;
 
-        CarrierConfigReceiver(int subId) {
-            mSubId = subId;
+        CarrierPrivilegeChangeMonitor() {
+            mCarrierPrivilegesCallback = (privilegedPackageNames, privilegedUids) -> {
+                // Ignore the first callback which is triggered upon registration
+                if (!mHasSentPrivilegeChangeCallback) {
+                    mHasSentPrivilegeChangeCallback = true;
+                    return;
+                }
+                mLatch.countDown();
+            };
+
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.registerCarrierPrivilegesCallback(
+                            SubscriptionManager.getSlotIndex(mTestSub),
+                            getContext().getMainExecutor(),
+                            mCarrierPrivilegesCallback));
         }
 
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED.equals(intent.getAction())) {
-                int subId = intent.getIntExtra(CarrierConfigManager.EXTRA_SUBSCRIPTION_INDEX,
-                        SubscriptionManager.INVALID_SUBSCRIPTION_ID);
-                if (mSubId == subId) {
-                    mLatch.countDown();
-                }
+        public void waitForCarrierPrivilegeChanged() throws Exception {
+            if (!mLatch.await(5, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("Failed to update carrier privileges");
             }
         }
 
-        void clearQueue() {
-            mLatch = new CountDownLatch(1);
-        }
-
-        void waitForCarrierConfigChanged() throws Exception {
-            mLatch.await(5000, TimeUnit.MILLISECONDS);
+        @Override
+        public void close() throws Exception {
+            if(mTelephonyManager != null) {
+                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                        (tm) -> tm.unregisterCarrierPrivilegesCallback(
+                                mCarrierPrivilegesCallback));
+            }
         }
     }
 
@@ -383,12 +394,9 @@ public class TelephonyManagerTest {
         mTestSub = SubscriptionManager.getDefaultSubscriptionId();
         mTelephonyManager = getContext().getSystemService(TelephonyManager.class)
                 .createForSubscriptionId(mTestSub);
-        mReceiver = new CarrierConfigReceiver(mTestSub);
         Pair<Integer, Integer> radioVersion = mTelephonyManager.getRadioHalVersion();
         mRadioVersion = makeRadioVersion(radioVersion.first, radioVersion.second);
         IntentFilter filter = new IntentFilter(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED);
-        // ACTION_CARRIER_CONFIG_CHANGED is sticky, so we will get a callback right away.
-        getContext().registerReceiver(mReceiver, filter);
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity("android.permission.READ_PHONE_STATE");
         saveAllowedNetworkTypesForAllReasons();
@@ -399,10 +407,6 @@ public class TelephonyManagerTest {
         if (mListener != null) {
             // unregister the listener
             mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
-        }
-        if (mReceiver != null) {
-            getContext().unregisterReceiver(mReceiver);
-            mReceiver = null;
         }
         if (mIsAllowedNetworkTypeChanged) {
             recoverAllowedNetworkType();
@@ -494,7 +498,7 @@ public class TelephonyManagerTest {
             // purge the certs in carrierConfigs first
             carrierConfig.putStringArray(
                     CarrierConfigManager.KEY_CARRIER_CERTIFICATE_STRING_ARRAY, new String[]{});
-            overrideCarrierConfig(carrierConfig);
+            changeCarrierPrivileges(false, carrierConfig);
             // verify we don't have privilege through carrierConfigs or Uicc
             assertFalse(mTelephonyManager.hasCarrierPrivileges());
 
@@ -503,25 +507,34 @@ public class TelephonyManagerTest {
                     new String[]{mSelfCertHash});
 
             // verify we now have privilege after adding certificate to carrierConfigs
-            overrideCarrierConfig(carrierConfig);
+            changeCarrierPrivileges(true, carrierConfig);
             assertTrue(mTelephonyManager.hasCarrierPrivileges());
         } finally {
             // purge the newly added certificate
             carrierConfig.putStringArray(
                     CarrierConfigManager.KEY_CARRIER_CERTIFICATE_STRING_ARRAY, new String[]{});
-            // carrierConfig.remove(CarrierConfigManager.KEY_CARRIER_CERTIFICATE_STRING_ARRAY);
-            overrideCarrierConfig(carrierConfig);
-
+            changeCarrierPrivileges(false, carrierConfig);
             // verify we no longer have privilege after removing certificate
             assertFalse(mTelephonyManager.hasCarrierPrivileges());
         }
     }
 
+    private void changeCarrierPrivileges(boolean gain, PersistableBundle carrierConfig)
+            throws Exception {
+        if (mTelephonyManager.hasCarrierPrivileges() == gain) {
+            Log.w(TAG, "Carrier privileges already " + (gain ? "granted" : "revoked"));
+            return;
+        }
+
+        try(CarrierPrivilegeChangeMonitor monitor = new CarrierPrivilegeChangeMonitor()) {
+            overrideCarrierConfig(carrierConfig);
+            monitor.waitForCarrierPrivilegeChanged();
+        }
+    }
+
     private void overrideCarrierConfig(PersistableBundle bundle) throws Exception {
-        mReceiver.clearQueue();
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mCarrierConfigManager,
                 (cm) -> cm.overrideConfig(mTestSub, bundle));
-        mReceiver.waitForCarrierConfigChanged();
     }
 
     public static void grantLocationPermissions() {
@@ -1284,16 +1297,14 @@ public class TelephonyManagerTest {
     public void testSetSystemSelectionChannels() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
 
-        List<RadioAccessSpecifier> channels = Collections.emptyList();
-        if (mRadioVersion >= RADIO_HAL_VERSION_1_6) {
-            try {
-                channels = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                        mTelephonyManager, TelephonyManager::getSystemSelectionChannels);
-            } catch (IllegalStateException e) {
-                // TODO (b/189255895): Allow ISE once API is enforced in IRadio 2.1.
-                Log.d(TAG, "Skipping test since system selection channels are not available.");
-                return;
-            }
+        List<RadioAccessSpecifier> channels;
+        try {
+            channels = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, TelephonyManager::getSystemSelectionChannels);
+        } catch (IllegalStateException e) {
+            // TODO (b/189255895): Allow ISE once API is enforced in IRadio 2.1.
+            Log.d(TAG, "Skipping test since system selection channels are not available.");
+            return;
         }
 
         LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue<>(1);

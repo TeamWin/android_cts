@@ -41,7 +41,6 @@ import androidx.test.filters.FlakyTest;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -94,7 +93,6 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
                 .contains("Safe to run device policy operations: true");
     }
 
-    @Ignore("TODO(b/230030584):  emulate-driving-state is not triggering changes")
     @Test
     public void testCarServiceHelperServiceDump_unsafeMode() throws Exception {
         assumeSystemServerDumpSupported();
@@ -122,7 +120,6 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
                 .contains("Operation REBOOT is SAFE. Reason: NONE");
     }
 
-    @Ignore("TODO(b/230030584):  emulate-driving-state is not triggering changes")
     @Test
     public void testCarServiceHelperServiceDump_unsafeOperation() throws Exception {
         assumeSystemServerDumpSupported();
