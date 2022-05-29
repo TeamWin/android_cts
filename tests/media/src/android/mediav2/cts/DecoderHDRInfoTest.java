@@ -95,11 +95,23 @@ public class DecoderHDRInfoTest extends CodecDecoderTestBase {
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testHDRMetadata() throws IOException, InterruptedException {
+        int[] Hdr10Profiles = mProfileHdr10Map.get(mMime);
+        Assume.assumeNotNull("Test is only applicable to codecs that have HDR10 profiles",
+                Hdr10Profiles);
         MediaFormat format = setUpSource(mTestFile);
         mExtractor.release();
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
+
+        // When HDR metadata isn't present in the container, but included in the bitstream,
+        // extractors may not be able to populate HDR10/HDR10+ profiles correctly.
+        // In such cases, override the profile
+        if (mHDRStaticInfoContainer == null && mHDRStaticInfoStream != null) {
+            int profile = Hdr10Profiles[0];
+            format.setInteger(MediaFormat.KEY_PROFILE, profile);
+        }
         Assume.assumeTrue(areFormatsSupported(mCodecName, mMime, formats));
+
         if (mHDRStaticInfoContainer != null) {
             validateHDRStaticMetaData(format, mHDRStaticInfoContainer);
         }
