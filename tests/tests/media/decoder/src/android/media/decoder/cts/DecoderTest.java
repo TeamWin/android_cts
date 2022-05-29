@@ -4004,12 +4004,12 @@ public class DecoderTest extends MediaTestBase {
     }
 
     /**
-     * Test tunneled video peek is on by default if supported
+     * Test tunneled video peek renders the first frame when on
      *
      * TODO(b/182915887): Test all the codecs advertised by the DUT for the provided test content
      */
-    private void testTunneledVideoPeekDefault(String mimeType, String videoName) throws Exception {
-        if (!MediaUtils.check(mIsAtLeastS, "testTunneledVideoPeekDefault requires Android 12")) {
+    private void testTunneledVideoPeekOn(String mimeType, String videoName) throws Exception {
+        if (!MediaUtils.check(mIsAtLeastS, "testTunneledVideoPeekOn requires Android 12")) {
             return;
         }
 
@@ -4030,6 +4030,7 @@ public class DecoderTest extends MediaTestBase {
         assertTrue("MediaCodecPlayer.start() failed!", mMediaCodecPlayer.start());
         assertTrue("MediaCodecPlayer.prepare() failed!", mMediaCodecPlayer.prepare());
         mMediaCodecPlayer.start();
+        mMediaCodecPlayer.setVideoPeek(true); // Enable video peek
 
         // Assert that onFirstTunnelFrameReady is called
         mMediaCodecPlayer.queueOneVideoFrame();
@@ -4047,38 +4048,38 @@ public class DecoderTest extends MediaTestBase {
     }
 
     /**
-     * Test default tunneled video peek with HEVC if supported
+     * Test tunneled video peek with HEVC renders the first frame when on
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
-    public void testTunneledVideoPeekDefaultHevc() throws Exception {
-        testTunneledVideoPeekDefault(MediaFormat.MIMETYPE_VIDEO_HEVC,
+    public void testTunneledVideoPeekOnHevc() throws Exception {
+        testTunneledVideoPeekOn(MediaFormat.MIMETYPE_VIDEO_HEVC,
                 "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv");
     }
 
     /**
-     * Test default tunneled video peek with AVC if supported
+     * Test tunneled video peek with AVC renders the first frame when on
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
-    public void testTunneledVideoPeekDefaultAvc() throws Exception {
-        testTunneledVideoPeekDefault(MediaFormat.MIMETYPE_VIDEO_AVC,
+    public void testTunneledVideoPeekOnAvc() throws Exception {
+        testTunneledVideoPeekOn(MediaFormat.MIMETYPE_VIDEO_AVC,
                 "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
     }
 
     /**
-     * Test default tunneled video peek with VP9 if supported
+     * Test tunneled video peek with VP9 renders the first frame when on
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
-    public void testTunneledVideoPeekDefaultVp9() throws Exception {
-        testTunneledVideoPeekDefault(MediaFormat.MIMETYPE_VIDEO_VP9,
+    public void testTunneledVideoPeekOnVp9() throws Exception {
+        testTunneledVideoPeekOn(MediaFormat.MIMETYPE_VIDEO_VP9,
                 "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
     }
 
 
     /**
-     * Test tunneled video peek can be turned off then on.
+     * Test tunneled video peek doesn't render the first frame when off and then turned on
      *
      * TODO(b/182915887): Test all the codecs advertised by the DUT for the provided test content
      */
@@ -4129,7 +4130,7 @@ public class DecoderTest extends MediaTestBase {
     }
 
     /**
-     * Test tunneled video peek can be turned off then on with HEVC if supported
+     * Test tunneled video peek with HEVC doesn't render the first frame when off and then turned on
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
@@ -4139,7 +4140,7 @@ public class DecoderTest extends MediaTestBase {
     }
 
     /**
-     * Test tunneled video peek can be turned off then on with AVC if supported
+     * Test tunneled video peek with AVC doesn't render the first frame when off and then turned on
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
@@ -4149,7 +4150,7 @@ public class DecoderTest extends MediaTestBase {
     }
 
     /**
-     * Test tunneled video peek can be turned off then on with VP9 if supported
+     * Test tunneled video peek with VP9 doesn't render the first frame when off and then turned on
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
@@ -4576,7 +4577,13 @@ public class DecoderTest extends MediaTestBase {
         // TODO(b/200280965): Find a more appropriate delay based on partner feedback
         final int audioUnderrunTimeoutMs = 1000; // Arbitrary upper time limit on loop time duration
         long startTimeMs = System.currentTimeMillis();
-        AudioTimestamp previousTimestamp = mMediaCodecPlayer.getTimestamp();
+        AudioTimestamp previousTimestamp;
+        while ((previousTimestamp = mMediaCodecPlayer.getTimestamp()) == null) {
+            assertTrue(String.format("No audio timestamp after %d milliseconds",
+                            System.currentTimeMillis() - startTimeMs),
+                    System.currentTimeMillis() - startTimeMs < audioUnderrunTimeoutMs);
+            Thread.sleep(50);
+        }
         AudioTimestamp underrunAudioTimestamp;
         while ((underrunAudioTimestamp = mMediaCodecPlayer.getTimestamp()) != previousTimestamp) {
             assertTrue(String.format("No audio underrun after %d milliseconds",

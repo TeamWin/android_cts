@@ -19,8 +19,8 @@
     <option name="compatibility:run-suite-tag" value="cts" />
     <!-- Enable module parameterization to run instant_app modules in main CTS -->
     <option name="compatibility:enable-parameterized-modules" value="true" />
-    <!-- Main CTS remains single device until decided otherwise -->
-    <option name="multi-devices-modules" value="EXCLUDE_ALL" />
+    <!-- Main CTS executes both single and multi-devices in the same plan during sharding -->
+    <option name="multi-devices-modules" value="RUN" />
 
     <include name="cts-preconditions" />
     <include name="cts-system-checkers" />
