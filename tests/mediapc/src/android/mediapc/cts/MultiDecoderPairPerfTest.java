@@ -127,46 +127,26 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
      */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    @CddTest(requirement = "2.2.7.1/5.1/H-1-1,H-1-2")
+    @CddTest(requirements = {
+            "2.2.7.1/5.1/H-1-1",
+            "2.2.7.1/5.1/H-1-2",
+            "2.2.7.1/5.1/H-1-9",
+            "2.2.7.1/5.1/H-1-10",})
     public void test1080p() throws Exception {
         Assume.assumeTrue(Utils.isTPerfClass() || !Utils.isPerfClass());
-        Assume.assumeFalse("Skipping regular performance tests for secure codecs",
-                isSecureSupportedCodec(mFirstPair.second, mFirstPair.first) ||
-                        isSecureSupportedCodec(mSecondPair.second, mSecondPair.first));
-        testCodec(m1080pTestFiles, 1080, 1920, REQUIRED_MIN_CONCURRENT_INSTANCES);
-    }
+        boolean isFirstSecure = isSecureSupportedCodec(mFirstPair.second, mFirstPair.first);
+        boolean isSecondSecure = isSecureSupportedCodec(mSecondPair.second, mSecondPair.first);
+        boolean onlyOneSecure = isFirstSecure ^ isSecondSecure;
+        boolean bothSecure = isFirstSecure & isSecondSecure;
 
-    /**
-     * Validates if hardware decoder pairs where one supports secure decode and required
-     * perf are present and tests with concurrent unsecure decoders
-     */
-    @LargeTest
-    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    @CddTest(requirement = "2.2.7.1/5.1/H-1-10")
-    public void testReqSecureWithUnsecureDecodeSupport() throws Exception {
-        Assume.assumeTrue(Utils.isTPerfClass() || !Utils.isPerfClass());
-        Assume.assumeTrue("Testing if only one of the pair is secure",
-                isSecureSupportedCodec(mFirstPair.second, mFirstPair.first) ^
-                        isSecureSupportedCodec(mSecondPair.second, mSecondPair.first));
-
-        testCodec(m1080pTestFiles, 1080, 1920,
-                REQUIRED_CONCURRENT_NON_SECURE_INSTANCES_WITH_SECURE + 1, true);
-    }
-
-    /**
-     * Validates if hardware decoder pairs where both supports secure decode and required
-     * perf is present
-     */
-    @LargeTest
-    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    @CddTest(requirement = "2.2.7.1/5.1/H-1-9")
-    public void testReqMultiSecureDecodeSupport() throws Exception {
-        Assume.assumeTrue(Utils.isTPerfClass() || !Utils.isPerfClass());
-        Assume.assumeTrue("Run test if both are secure codecs",
-                isSecureSupportedCodec(mFirstPair.second, mFirstPair.first) &&
-                        isSecureSupportedCodec(mSecondPair.second, mSecondPair.first));
-
-        testCodec(null, 1080, 1920, REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES);
+        if (bothSecure) {
+            testCodec(null, 1080, 1920, REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES);
+        } else if (onlyOneSecure) {
+            testCodec(m1080pTestFiles, 1080, 1920,
+                    REQUIRED_CONCURRENT_NON_SECURE_INSTANCES_WITH_SECURE + 1, true);
+        } else {
+            testCodec(m1080pTestFiles, 1080, 1920, REQUIRED_MIN_CONCURRENT_INSTANCES);
+        }
     }
 
     private void testCodec(Map<String, String> testFiles, int height, int width,

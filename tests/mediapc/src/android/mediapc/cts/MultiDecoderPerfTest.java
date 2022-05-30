@@ -101,31 +101,24 @@ public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
     }
 
     /**
-     * This test validates that the decoder can support at least 6 concurrent 1080p 30fps
-     * decoder instances. Also ensures that all the concurrent sessions succeed in decoding
-     * with meeting the expected frame rate.
+     * This test validates that the decoder can support at least 6 non-secure/2 secure concurrent
+     * 1080p 30fps decoder instances. Also ensures that all the concurrent sessions succeed in
+     * decoding with meeting the expected frame rate.
      */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    @CddTest(requirement = "2.2.7.1/5.1/H-1-1,H-1-2")
+    @CddTest(requirements = {
+            "2.2.7.1/5.1/H-1-1",
+            "2.2.7.1/5.1/H-1-2",
+            "2.2.7.1/5.1/H-1-9",})
     public void test1080p() throws Exception {
         Assume.assumeTrue(Utils.isTPerfClass() || !Utils.isPerfClass());
-        Assume.assumeFalse("Skipping regular performance tests for secure codecs",
-                isSecureSupportedCodec(mDecoderName, mMime));
-        testCodec(m1080pTestFiles, 1080, 1920, REQUIRED_MIN_CONCURRENT_INSTANCES);
-    }
-
-    /**
-     * Validates if hardware decoder that supports required secure decode perf is present
-     */
-    @LargeTest
-    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    @CddTest(requirement = "2.2.7.1/5.1/H-1-9")
-    public void testReqSecureDecodeSupport() throws Exception {
-        Assume.assumeTrue(Utils.isTPerfClass() || !Utils.isPerfClass());
-        Assume.assumeTrue("Skipping secure decode support tests for non-secure codecs",
-                isSecureSupportedCodec(mDecoderName, mMime));
-        testCodec(m1080pWidevineTestFiles, 1080, 1920, REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES);
+        if (isSecureSupportedCodec(mDecoderName, mMime)) {
+            testCodec(m1080pWidevineTestFiles, 1080, 1920,
+                    REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES);
+        } else {
+            testCodec(m1080pTestFiles, 1080, 1920, REQUIRED_MIN_CONCURRENT_INSTANCES);
+        }
     }
 
     private void testCodec(Map<String, String> testFiles, int height, int width,
