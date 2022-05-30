@@ -36,12 +36,33 @@ public final class Device {
     public static final Device sInstance = new Device();
     private static final UiDevice sDevice =
             UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-    private static final KeyguardManager.KeyguardLock sKeyguardLock =
-            TestApis.context().instrumentedContext().getSystemService(KeyguardManager.class)
-                    .newKeyguardLock("Nene");
+    private static final KeyguardManager sKeyguardManager =
+            TestApis.context().instrumentedContext()
+            .getSystemService(KeyguardManager.class);
+    private static KeyguardManager.KeyguardLock sKeyguardLock;
 
     private Device() {
 
+    }
+
+    private KeyguardManager.KeyguardLock keyGuardLock() {
+        if (sKeyguardManager == null) {
+            if (TestApis.packages().instrumented().isInstantApp()) {
+                throw new NeneException("Cannot manage keyguard with instant app");
+            }
+
+            throw new NeneException("KeyguardManager cannot be found.");
+        }
+
+        if (sKeyguardLock == null) {
+            synchronized (Device.class) {
+                if (sKeyguardLock == null) {
+                    sKeyguardLock = sKeyguardManager.newKeyguardLock("Nene");
+                }
+            }
+        }
+
+        return sKeyguardLock;
     }
 
     /**
@@ -91,9 +112,9 @@ public final class Device {
     public void setKeyguardEnabled(boolean keyguardEnabled) {
         try (PermissionContext p = TestApis.permissions().withPermission(DISABLE_KEYGUARD)) {
             if (keyguardEnabled) {
-                sKeyguardLock.reenableKeyguard();
+                keyGuardLock().reenableKeyguard();
             } else {
-                sKeyguardLock.disableKeyguard();
+                keyGuardLock().disableKeyguard();
             }
         }
     }
