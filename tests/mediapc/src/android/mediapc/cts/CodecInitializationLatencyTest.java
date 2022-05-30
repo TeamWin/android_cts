@@ -37,6 +37,7 @@ import android.media.MediaFormat;
 import android.media.MediaRecorder;
 import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.mediapc.cts.common.Utils;
+import android.os.SystemClock;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Surface;
@@ -436,14 +437,14 @@ public class CodecInitializationLatencyTest {
             MediaCodec.BufferInfo outInfo = new MediaCodec.BufferInfo();
             long enqueueTimeStamp = 0;
             long dequeueTimeStamp = 0;
-            long baseTimeStamp = System.nanoTime();
+            long baseTimeStamp = SystemClock.elapsedRealtimeNanos();
             mCodec = MediaCodec.createByCodecName(mEncoderName);
             resetContext(mIsAsync, false);
             mAsyncHandle.setCallBack(mCodec, mIsAsync);
             mCodec.configure(format, null, MediaCodec.CONFIGURE_FLAG_ENCODE, null);
-            long configureTimeStamp = System.nanoTime();
+            long configureTimeStamp = SystemClock.elapsedRealtimeNanos();
             mCodec.start();
-            long startTimeStamp = System.nanoTime();
+            long startTimeStamp = SystemClock.elapsedRealtimeNanos();
             if (mIsAsync) {
                 // We will keep on feeding the input to encoder until we see the first dequeued
                 // frame.
@@ -453,12 +454,12 @@ public class CodecInitializationLatencyTest {
                         int bufferID = element.first;
                         MediaCodec.BufferInfo info = element.second;
                         if (info != null) {
-                            dequeueTimeStamp = System.nanoTime();
+                            dequeueTimeStamp = SystemClock.elapsedRealtimeNanos();
                             dequeueOutput(bufferID, info);
                             break;
                         } else {
                             if (enqueueTimeStamp == 0) {
-                                enqueueTimeStamp = System.nanoTime();
+                                enqueueTimeStamp = SystemClock.elapsedRealtimeNanos();
                             }
                             enqueueInput(bufferID);
                         }
@@ -470,14 +471,14 @@ public class CodecInitializationLatencyTest {
                         int inputBufferId = mCodec.dequeueInputBuffer(Q_DEQ_TIMEOUT_US);
                         if (inputBufferId > 0) {
                             if (enqueueTimeStamp == 0) {
-                                enqueueTimeStamp = System.nanoTime();
+                                enqueueTimeStamp = SystemClock.elapsedRealtimeNanos();
                             }
                             enqueueInput(inputBufferId);
                         }
                     }
                     int outputBufferId = mCodec.dequeueOutputBuffer(outInfo, Q_DEQ_TIMEOUT_US);
                     if (outputBufferId >= 0) {
-                        dequeueTimeStamp = System.nanoTime();
+                        dequeueTimeStamp = SystemClock.elapsedRealtimeNanos();
                         dequeueOutput(outputBufferId, outInfo);
                         break;
                     }
@@ -532,14 +533,14 @@ public class CodecInitializationLatencyTest {
             MediaFormat format = setUpSource(mTestFile);
             long enqueueTimeStamp = 0;
             long dequeueTimeStamp = 0;
-            long baseTimeStamp = System.nanoTime();
+            long baseTimeStamp = SystemClock.elapsedRealtimeNanos();
             mCodec = MediaCodec.createByCodecName(mDecoderName);
             resetContext(mIsAsync, false);
             mAsyncHandle.setCallBack(mCodec, mIsAsync);
             mCodec.configure(format, mSurface, 0, null);
-            long configureTimeStamp = System.nanoTime();
+            long configureTimeStamp = SystemClock.elapsedRealtimeNanos();
             mCodec.start();
-            long startTimeStamp = System.nanoTime();
+            long startTimeStamp = SystemClock.elapsedRealtimeNanos();
             if (mIsAsync) {
                 // We will keep on feeding the input to decoder until we see the first dequeued
                 // frame.
@@ -549,12 +550,12 @@ public class CodecInitializationLatencyTest {
                         int bufferID = element.first;
                         MediaCodec.BufferInfo info = element.second;
                         if (info != null) {
-                            dequeueTimeStamp = System.nanoTime();
+                            dequeueTimeStamp = SystemClock.elapsedRealtimeNanos();
                             dequeueOutput(bufferID, info);
                             break;
                         } else {
                             if (enqueueTimeStamp == 0) {
-                                enqueueTimeStamp = System.nanoTime();
+                                enqueueTimeStamp = SystemClock.elapsedRealtimeNanos();
                             }
                             enqueueInput(bufferID);
                         }
@@ -566,14 +567,14 @@ public class CodecInitializationLatencyTest {
                         int inputBufferId = mCodec.dequeueInputBuffer(Q_DEQ_TIMEOUT_US);
                         if (inputBufferId >= 0) {
                             if (enqueueTimeStamp == 0) {
-                                enqueueTimeStamp = System.nanoTime();
+                                enqueueTimeStamp = SystemClock.elapsedRealtimeNanos();
                             }
                             enqueueInput(inputBufferId);
                         }
                     }
                     int outputBufferId = mCodec.dequeueOutputBuffer(outInfo, Q_DEQ_TIMEOUT_US);
                     if (outputBufferId >= 0) {
-                        dequeueTimeStamp = System.nanoTime();
+                        dequeueTimeStamp = SystemClock.elapsedRealtimeNanos();
                         dequeueOutput(outputBufferId, outInfo);
                         break;
                     }
