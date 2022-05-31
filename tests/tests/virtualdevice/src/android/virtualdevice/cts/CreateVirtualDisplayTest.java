@@ -199,9 +199,6 @@ public class CreateVirtualDisplayTest {
                     /* flags= */ 0,
                     Runnable::run,
                     mVirtualDisplayCallback));
-            // TODO(b/230544802) - for now, use sleep to avoid deadlock when creating multiple
-            //  displays in quick succession
-            Thread.sleep(50);
         }
 
         // Releasing several displays in quick succession should not cause deadlock

@@ -428,7 +428,8 @@
         <activity android:name="android.server.wm.WindowInputTests$TestActivity" />
 
         <activity android:name="android.server.wm.ActivityRecordInputSinkTestsActivity"
-                  android:exported="true"/>
+            android:theme="@android:style/Theme.Material.NoActionBar"
+            android:exported="true"/>
 
         <service android:name="android.view.cts.surfacevalidator.LocalMediaProjectionService"
              android:foregroundServiceType="mediaProjection"
