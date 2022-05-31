@@ -129,6 +129,7 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
             AudioDeviceInfo routedDevice = audioRecord.getRoutedDevice();
             CharSequence deviceName = routedDevice != null ? routedDevice.getProductName() : "none";
             mConnectedPeripheralName = deviceName.toString();
+
             int deviceType = routedDevice != null ? routedDevice.getType() : -1;
             textView.setText(msg + " - " +
                              deviceName + " [0x" + Integer.toHexString(deviceType) + "]" +
@@ -156,8 +157,6 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
                     R.id.audio_routingnotification_testresult)).setText(
                             "Test PASSES - No peripheral support");
         }
-
-        stopRecording();
     }
 
     protected void storeTestResults() {

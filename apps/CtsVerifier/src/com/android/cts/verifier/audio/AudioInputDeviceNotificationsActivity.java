@@ -81,6 +81,17 @@ public class AudioInputDeviceNotificationsActivity extends AudioWiredDeviceBaseA
         mInfoView.setText(mContext.getResources().getString(
                 R.string.audio_devices_notification_instructions));
 
+        findViewById(R.id.audio_dev_notification_connect_clearmsgs_btn)
+                .setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) {
+                        mConnectView.setText("");
+                        mConnectReceived = false;
+                        mDisconnectView.setText("");
+                        mDisconnectReceived = false;
+                        calculatePass();
+                    }
+                });
+
         AudioManager audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
         audioManager.registerAudioDeviceCallback(new TestAudioDeviceCallback(), null);
 
@@ -90,6 +101,8 @@ public class AudioInputDeviceNotificationsActivity extends AudioWiredDeviceBaseA
         setInfoResources(R.string.audio_in_devices_notifications_test,
                 R.string.audio_in_devices_infotext, -1);
         setPassFailButtonClickListeners();
+
+        calculatePass();
     }
 
     @Override
