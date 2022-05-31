@@ -105,8 +105,8 @@ public class BroadcastResponseStatsTest {
             "broadcast_sessions_duration_ms";
     private static final String KEY_BROADCAST_SESSIONS_WITH_RESPONSE_DURATION_MS =
             "broadcast_sessions_with_response_duration_ms";
-    private static final String KEY_RECORD_ALL_BROADCAST_SESSIONS_WITHIN_RESPONSE_WINDOW =
-            "record_all_broadcast_sessions_within_response_window";
+    private static final String KEY_NOTE_RESPONSE_EVENT_FOR_ALL_BROADCAST_SESSIONS =
+            "note_response_event_for_all_broadcast_sessions";
 
     private static Context sContext;
     private static String sTargetPackage;
@@ -1737,7 +1737,7 @@ public class BroadcastResponseStatsTest {
                     KEY_BROADCAST_RESPONSE_WINDOW_DURATION_MS,
                     String.valueOf(broadcastResponseWindowDurationMs));
             updateFlagWithDelay(deviceConfigStateHelper,
-                    KEY_RECORD_ALL_BROADCAST_SESSIONS_WITHIN_RESPONSE_WINDOW,
+                    KEY_NOTE_RESPONSE_EVENT_FOR_ALL_BROADCAST_SESSIONS,
                     String.valueOf(false));
 
             assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
