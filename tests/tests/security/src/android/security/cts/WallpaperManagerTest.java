@@ -28,13 +28,17 @@ import android.platform.test.annotations.AsbSecurityTest;
 import android.view.Display;
 
 import androidx.test.platform.app.InstrumentationRegistry;
-
-import com.android.compatibility.common.util.CtsAndroidTestCase;
+import androidx.test.runner.AndroidJUnit4;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class WallpaperManagerTest extends CtsAndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class WallpaperManagerTest extends StsExtraBusinessLogicTestCase {
 
     @Before
     public void setUp() {
@@ -51,6 +55,7 @@ public class WallpaperManagerTest extends CtsAndroidTestCase {
     }
 
     // b/204316511
+    @Test
     @AsbSecurityTest(cveBugId = 204316511)
     public void testSetDisplayPadding() {
         WallpaperManager wallpaperManager = WallpaperManager.getInstance(getContext());
@@ -62,7 +67,7 @@ public class WallpaperManagerTest extends CtsAndroidTestCase {
         Rect negativeRect = new Rect(-1, 0 , 0, 0);
         try {
             wallpaperManager.setDisplayPadding(negativeRect);
-            fail("setDisplayPadding should fail for a Rect with negative values");
+            Assert.fail("setDisplayPadding should fail for a Rect with negative values");
         } catch (IllegalArgumentException e) {
             // Expected exception
         }
@@ -76,7 +81,7 @@ public class WallpaperManagerTest extends CtsAndroidTestCase {
         Rect tooWideRect = new Rect(0, 0, display.getMaximumSizeDimension() + 1, 0);
         try {
             wallpaperManager.setDisplayPadding(tooWideRect);
-            fail("setDisplayPadding should fail for a Rect width larger than "
+            Assert.fail("setDisplayPadding should fail for a Rect width larger than "
                     + display.getMaximumSizeDimension());
         } catch (IllegalArgumentException e) {
             // Expected exception
@@ -85,7 +90,7 @@ public class WallpaperManagerTest extends CtsAndroidTestCase {
         Rect tooHighRect = new Rect(0, 0, 0, display.getMaximumSizeDimension() + 1);
         try {
             wallpaperManager.setDisplayPadding(tooHighRect);
-            fail("setDisplayPadding should fail for a Rect height larger than "
+            Assert.fail("setDisplayPadding should fail for a Rect height larger than "
                     + display.getMaximumSizeDimension());
         } catch (IllegalArgumentException e) {
             // Expected exception
