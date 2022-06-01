@@ -110,4 +110,33 @@ class MediaPermissionTest : BaseUsePermissionTest() {
         }
         assertStorageAndMediaPermissionState(false)
     }
+
+    @Test
+    fun testWhenA33AppRequestsAuralThenDialogAndGrant() {
+        installPackage(APP_APK_PATH_LATEST)
+        requestAppPermissions(android.Manifest.permission.READ_MEDIA_AUDIO) {
+            clickPermissionRequestAllowButton()
+        }
+        assertAppHasPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE, false)
+        assertAppHasPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, false)
+        assertAppHasPermission(android.Manifest.permission.READ_MEDIA_AUDIO, true)
+        assertAppHasPermission(android.Manifest.permission.READ_MEDIA_VIDEO, false)
+        assertAppHasPermission(android.Manifest.permission.READ_MEDIA_IMAGES, false)
+    }
+
+    @Test
+    fun testWhenA33AppRequestsVisualThenDialogAndGrant() {
+        installPackage(APP_APK_PATH_LATEST)
+        requestAppPermissions(
+            android.Manifest.permission.READ_MEDIA_VIDEO,
+            android.Manifest.permission.READ_MEDIA_IMAGES
+        ) {
+            clickPermissionRequestAllowButton()
+        }
+        assertAppHasPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE, false)
+        assertAppHasPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, false)
+        assertAppHasPermission(android.Manifest.permission.READ_MEDIA_AUDIO, false)
+        assertAppHasPermission(android.Manifest.permission.READ_MEDIA_VIDEO, true)
+        assertAppHasPermission(android.Manifest.permission.READ_MEDIA_IMAGES, true)
+    }
 }
