@@ -30,6 +30,8 @@
         <option name="test-file-name" value="CtsUsageStatsTestApp3.apk" />
         <option name="test-file-name" value="CtsUsageStatsTestApp4.apk" />
         <option name="test-file-name" value="CtsUsageStatsTestAppApi32.apk" />
+        <option name="test-file-name" value="CtsUsageStatsTestAssistApp.apk" />
+        <option name="test-file-name" value="CtsUsageStatsTestExactAlarmApp.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.app.usage.cts" />
