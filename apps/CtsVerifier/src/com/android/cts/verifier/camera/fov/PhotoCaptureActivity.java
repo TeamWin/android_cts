@@ -23,6 +23,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
@@ -436,6 +437,36 @@ public class PhotoCaptureActivity extends Activity
         initializeCamera(true);
     }
 
+    private void setPreviewTransform(Size previewSize) {
+        int sensorRotation = mPreviewOrientation;
+        float selectedPreviewAspectRatio;
+        if (sensorRotation == 0 || sensorRotation == 180) {
+            selectedPreviewAspectRatio = (float) previewSize.width
+                / (float) previewSize.height;
+        } else {
+            selectedPreviewAspectRatio = (float) previewSize.height
+                / (float) previewSize.width;
+        }
+
+        Matrix transform = new Matrix();
+        float viewAspectRatio = (float) mPreviewView.getMeasuredWidth()
+                / (float) mPreviewView.getMeasuredHeight();
+        float scaleX = 1.0f, scaleY = 1.0f;
+        float translateX = 0, translateY = 0;
+        if (selectedPreviewAspectRatio > viewAspectRatio) {
+            scaleY = viewAspectRatio / selectedPreviewAspectRatio;
+            translateY = (float) mPreviewView.getMeasuredHeight() / 2
+                    - (float) mPreviewView.getMeasuredHeight() * scaleY / 2;
+        } else {
+            scaleX = selectedPreviewAspectRatio / viewAspectRatio;
+            translateX = (float) mPreviewView.getMeasuredWidth() / 2
+                    - (float) mPreviewView.getMeasuredWidth() * scaleX / 2;
+        }
+        transform.postScale(scaleX, scaleY);
+        transform.postTranslate(translateX, translateY);
+        mPreviewView.setTransform(transform);
+    }
+
     private void initializeCamera(boolean startPreviewAfterInit) {
         if (mCamera == null || mPreviewTexture == null) {
             return;
@@ -470,6 +501,7 @@ public class PhotoCaptureActivity extends Activity
         if (selectedPreviewSize != null) {
             params.setPreviewSize(selectedPreviewSize.width, selectedPreviewSize.height);
             mCamera.setParameters(params);
+            setPreviewTransform(selectedPreviewSize);
             mCameraInitialized = true;
         }
 
