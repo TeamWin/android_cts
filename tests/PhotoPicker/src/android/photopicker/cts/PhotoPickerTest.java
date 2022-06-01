@@ -431,6 +431,8 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         assertMuteButtonState(muteButton, /* isMuted */ false);
         // check that next video resumed previous video's mute state
         swipeLeftAndWait();
+        // Wait for 1s before checking Play/Pause button's visibility
+        playPauseButton.waitForExists(1000);
         // check that player controls are visible
         assertPlayerControlsVisible(playPauseButton, muteButton);
         assertMuteButtonState(muteButton, /* isMuted */ false);
@@ -581,6 +583,8 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
 
     private void setUpAndAssertStickyPlayerControls(UiObject playerView, UiObject playPauseButton,
             UiObject muteButton) throws Exception {
+        // Wait for 1s for player view to exist
+        playerView.waitForExists(1000);
         // Wait for 1s or Play/Pause button to hide
         playPauseButton.waitUntilGone(1000);
         // Click on StyledPlayerView to make the video controls visible
