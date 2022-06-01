@@ -115,7 +115,7 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
 
         boolean hasVP9 = mFirstPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9) ||
                 mSecondPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9);
-        int requiredMinInstances = getRequiredMinConcurrentInstances(hasVP9);
+        int requiredMinInstances = getRequiredMinConcurrentInstances720p(hasVP9);
         testCodec(m720pTestFiles, 720, 1280, requiredMinInstances);
     }
 
@@ -162,7 +162,7 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
         mimeDecoderPairs.add(mSecondPair);
         boolean bothSecure = true;
         int maxInstances = checkAndGetMaxSupportedInstancesForCodecCombinations(height, width,
-                mimeDecoderPairs);
+                mimeDecoderPairs, requiredMinInstances);
         double achievedFrameRate = 0.0;
         // secure test should not reach this point if secure codec doesn't support PP
         if (maxInstances >= requiredMinInstances || secureWithUnsecure) {

@@ -115,9 +115,11 @@ public class MultiCodecPerfTestBase {
     }
 
     // Returns the max number of 30 fps instances that the given list of mimeCodecPairs
-    // supports. It also checks that the each codec supports 180 fps PerformancePoint.
+    // supports. It also checks that the each codec supports a PerformancePoint that covers
+    // required number of 30 fps instances.
     public int checkAndGetMaxSupportedInstancesForCodecCombinations(int height, int width,
-            ArrayList<Pair<String, String>> mimeCodecPairs) throws IOException {
+            ArrayList<Pair<String, String>> mimeCodecPairs, int requiredMinInstances)
+            throws IOException {
         int[] maxInstances = new int[mimeCodecPairs.size()];
         int[] maxFrameRates = new int[mimeCodecPairs.size()];
         int[] maxMacroBlockRates = new int[mimeCodecPairs.size()];
@@ -130,8 +132,7 @@ public class MultiCodecPerfTestBase {
             assertTrue(pps.size() > 0);
 
             boolean hasVP9 = mimeCodecPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9);
-            int requiredFrameRate = getRequiredMinConcurrentInstances(hasVP9, mimeCodecPair.second,
-                    mimeCodecPair.first) * 30;
+            int requiredFrameRate = requiredMinInstances * 30;
 
             maxInstances[loopCount] = cap.getMaxSupportedInstances();
             PerformancePoint PPRes = new PerformancePoint(width, height, requiredFrameRate);
@@ -169,17 +170,7 @@ public class MultiCodecPerfTestBase {
                 (int) (minOfMaxMacroBlockRates / ((width / 16) * (height / 16)) / 30.0)));
     }
 
-    public int getRequiredMinConcurrentInstances(boolean hasVP9) throws IOException {
-        return getRequiredMinConcurrentInstances(hasVP9, null, null);
-    }
-
-    public int getRequiredMinConcurrentInstances(boolean hasVP9, String codecName, String mime)
-            throws IOException {
-        if (codecName != null && mime != null) {
-            if (isSecureSupportedCodec(codecName, mime)) {
-                return REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES;
-            }
-        }
+    public int getRequiredMinConcurrentInstances720p(boolean hasVP9) throws IOException {
         // Below T, VP9 requires 60 fps at 720p and minimum of 2 instances
         if (!Utils.isTPerfClass() && hasVP9) {
             return REQUIRED_MIN_CONCURRENT_INSTANCES_FOR_VP9;

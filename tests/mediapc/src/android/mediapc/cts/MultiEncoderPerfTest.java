@@ -88,7 +88,7 @@ public class MultiEncoderPerfTest extends MultiCodecPerfTestBase {
         Assume.assumeTrue(Utils.isSPerfClass() || Utils.isRPerfClass() || !Utils.isPerfClass());
 
         boolean hasVP9 = mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP9);
-        int requiredMinInstances = getRequiredMinConcurrentInstances(hasVP9);
+        int requiredMinInstances = getRequiredMinConcurrentInstances720p(hasVP9);
         testCodec(720, 1280, 4000000, requiredMinInstances);
     }
 
@@ -109,7 +109,7 @@ public class MultiEncoderPerfTest extends MultiCodecPerfTestBase {
         ArrayList<Pair<String, String>> mimeEncoderPairs = new ArrayList<>();
         mimeEncoderPairs.add(Pair.create(mMime, mEncoderName));
         int maxInstances = checkAndGetMaxSupportedInstancesForCodecCombinations(height, width,
-                mimeEncoderPairs);
+                mimeEncoderPairs, requiredMinInstances);
         double achievedFrameRate = 0.0;
         if (maxInstances >= requiredMinInstances) {
             ExecutorService pool = Executors.newFixedThreadPool(maxInstances);
