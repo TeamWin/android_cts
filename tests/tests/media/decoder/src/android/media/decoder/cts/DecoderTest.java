@@ -4241,45 +4241,54 @@ public class DecoderTest extends MediaTestBase {
         assertNotEquals("Audio timestamp has a zero frame position",
                 mMediaCodecPlayer.getTimestamp().framePosition, 0);
 
-        // After 30 ms, Changing the presentation offset for audio track
-        Thread.sleep(30);
-
         // Requirement: If the audio presentation timestamp header sent by the app is greater than
         // the current audio clock by less than 100ms, the framePosition returned by
         // AudioTrack#getTimestamp (per get_presentation_position) must not advance for any silent
         // frames rendered to fill the gap.
         // TODO: add link to documentation when available
-        mMediaCodecPlayer.setAudioTrackOffsetMs(100);
-        // Wait for 20 ms so that whatever was buffered before offset is played
-        Thread.sleep(20);
-        long initialFramePosition = mMediaCodecPlayer.getTimestamp().framePosition;
 
-        // Verify that the framePosition did not advance after 30 ms. This ensures framePosition
-        // returned by AudioTrack#getTimestamp did not advance for any silent frames rendered to
-        // fill PTS gaps.
+        // Simulate a PTS gap of 100ms after 30ms
         Thread.sleep(30);
-        assertEquals(
-                "Initial frame position != Final frame position after introducing PTS gaps",
-                initialFramePosition, mMediaCodecPlayer.getTimestamp().framePosition);
+        mMediaCodecPlayer.setAudioTrackOffsetMs(100);
 
+        // Verify that at some point in time in the future, the framePosition stopped advancing.
+        // This verifies that when silence was rendered to fill the PTS gap, that the silent frames
+        // do not cause framePosition to advance.
+        final long ptsGapTimeoutMs = 1000;
+        long startTimeMs = System.currentTimeMillis();
+        AudioTimestamp currentTimestamp = mMediaCodecPlayer.getTimestamp();
+        AudioTimestamp ptsGapTimestamp;
+        do {
+            assertTrue(String.format("No audio PTS gap after %d milliseconds", ptsGapTimeoutMs),
+                    System.currentTimeMillis() - startTimeMs < ptsGapTimeoutMs);
+            ptsGapTimestamp = currentTimestamp;
+            Thread.sleep(50);
+            currentTimestamp = mMediaCodecPlayer.getTimestamp();
+        } while (currentTimestamp.framePosition != ptsGapTimestamp.framePosition);
+
+        // Allow the playback to advance past the PTS gap and back to normal operation
         Thread.sleep(500);
+        // Simulate the end of playback
         mMediaCodecPlayer.stopWritingToAudioTrack(true);
 
         // Sleep till framePosition stabilizes, i.e. playback is complete or till max 3 seconds.
-        long framePosCurrent = 0;
-        int totalSleepMs = 0;
-        while (totalSleepMs < 3000
-                && framePosCurrent != mMediaCodecPlayer.getTimestamp().framePosition) {
-            framePosCurrent = mMediaCodecPlayer.getTimestamp().framePosition;
-            Thread.sleep(500);
-            totalSleepMs += 500;
-        }
+        final long endOfPlayackTimeoutMs = 3000;
+        startTimeMs = System.currentTimeMillis();
+        AudioTimestamp endOfPlaybackTimestamp;
+        do {
+            assertTrue(String.format("No end of playback after %d milliseconds",
+                            endOfPlayackTimeoutMs),
+                    System.currentTimeMillis() - startTimeMs < endOfPlayackTimeoutMs);
+            endOfPlaybackTimestamp = currentTimestamp;
+            Thread.sleep(50);
+            currentTimestamp = mMediaCodecPlayer.getTimestamp();
+        } while (currentTimestamp.framePosition != endOfPlaybackTimestamp.framePosition);
 
-        // Verify if number of frames written and played are same even if PTS Gaps were present
+        // Verify if number of frames written and played are same even if PTS gaps were present
         // in the playback.
         assertEquals("Number of frames written != Number of frames played",
                 mMediaCodecPlayer.getAudioFramesWritten(),
-                mMediaCodecPlayer.getTimestamp().framePosition);
+                endOfPlaybackTimestamp.framePosition);
     }
 
     /**
