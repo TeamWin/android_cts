@@ -45,11 +45,13 @@ android_test {
         "general-tests",
     ],
     data: [
-        ":CtsUsageStatsTestApp4",
+        ":CtsUsageStatsTestApp1",
         ":CtsUsageStatsTestApp2",
         ":CtsUsageStatsTestApp3",
-        ":CtsUsageStatsTestApp1",
+        ":CtsUsageStatsTestApp4",
         ":CtsUsageStatsTestAppApi32",
+        ":CtsUsageStatsTestAssistApp",
+        ":CtsUsageStatsTestExactAlarmApp",
     ],
     per_testcase_directory: true,
 }
@@ -125,5 +127,31 @@ android_test_helper_app {
     target_sdk_version: "32",
     aaptflags: [
         "--rename-manifest-package android.app.usage.cts.testapi32",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsUsageStatsTestAssistApp",
+    defaults: ["test_app_defaults"],
+    resource_dirs: [
+        "TestApp1/res",
+        "TestAssistApp/res",
+    ],
+    manifest: "TestAssistApp/AndroidManifest.xml",
+    aaptflags: [
+        "--rename-manifest-package android.app.usage.cts.test.assist",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsUsageStatsTestExactAlarmApp",
+    defaults: ["test_app_defaults"],
+    resource_dirs: [
+        "TestApp1/res",
+        "TestExactAlarmApp/res",
+    ],
+    manifest: "TestExactAlarmApp/AndroidManifest.xml",
+    aaptflags: [
+        "--rename-manifest-package android.app.usage.cts.test.exactalarm",
     ],
 }
