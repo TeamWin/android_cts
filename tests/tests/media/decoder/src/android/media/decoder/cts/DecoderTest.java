@@ -41,7 +41,6 @@ import android.hardware.display.DisplayManager;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTimestamp;
-import android.media.AudioTrack;
 import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
@@ -4676,10 +4675,6 @@ public class DecoderTest extends MediaTestBase {
             Thread.sleep(50);
         }
 
-        long resumeAudioSystemTime = interpolateSystemTimeAt(
-                underrunAudioTimestamp.framePosition + 1, postResumeTimestamp,
-                mMediaCodecPlayer.getAudioTrack());
-
         // Now that audio playback has resumed, loop to wait until video playback resumes
         // We care about the timestamp of the first output frame, rather than the exact time the
         // video resumed, which is why we only start polling after we are sure audio playback has
@@ -4693,15 +4688,27 @@ public class DecoderTest extends MediaTestBase {
             Thread.sleep(50);
         }
 
-        final ImmutableList<Long> renderedSystemTimeList =
-                mMediaCodecPlayer.getRenderedVideoFrameSystemTimeList();
-        final long resumeVideoFrameSystemTime = mMediaCodecPlayer
-                .getRenderedVideoFrameSystemTimeList().get(underrunVideoRenderedTimestampIndex + 1);
-        final long vsync = (long) (1000 / frameRate);
-        final long avSyncOffset = resumeAudioSystemTime + 100 - resumeVideoFrameSystemTime;
-        assertTrue(String.format("Audio and video tracks are more than %d milliseconds out of sync",
-                        vsync),
-                Math.abs(avSyncOffset) <= vsync);
+        // The system time when rendering the first audio frame after the resume
+        long playbackRateFps = mMediaCodecPlayer.getAudioTrack().getPlaybackRate();
+        long playedFrames = postResumeTimestamp.framePosition
+                - underrunAudioTimestamp.framePosition + 1;
+        double elapsedTimeNs = playedFrames * (1000.0 * 1000.0 * 1000.0 / playbackRateFps);
+        long resumeAudioSystemTimeNs = postResumeTimestamp.nanoTime - (long) elapsedTimeNs;
+        long resumeAudioSystemTimeMs = resumeAudioSystemTimeNs / 1000 / 1000;
+
+        // The system time when rendering the first video frame after the resume
+        long resumeVideoSystemTimeMs = mMediaCodecPlayer.getRenderedVideoFrameSystemTimeList()
+                .get(underrunVideoRenderedTimestampIndex + 1) / 1000 / 1000;
+
+        // Verify that audio and video are in-sync after resume time
+        // Note: Because a -100ms PTS gap is introduced, the video should resume 100ms later
+        resumeAudioSystemTimeMs += 100;
+        long vsyncMs = 1000 / frameRate;
+        long avSyncOffsetMs = resumeAudioSystemTimeMs - resumeVideoSystemTimeMs;
+        assertTrue(String.format(
+                        "Audio and video is %d milliseconds out of sync (audio:%d video:%d)",
+                        avSyncOffsetMs, resumeAudioSystemTimeMs, resumeVideoSystemTimeMs),
+                Math.abs(avSyncOffsetMs) <= vsyncMs);
     }
 
     /**
@@ -4742,18 +4749,6 @@ public class DecoderTest extends MediaTestBase {
         do {
             Thread.sleep(50);
         } while (!supplier.get() && System.currentTimeMillis() < deadLineMs);
-    }
-
-    /**
-     * Returns the system time of the frame {@code framePosition} from {@code timestamp}, for a
-     * specific {@code AudioTrack}.
-     */
-    private static long interpolateSystemTimeAt(long framePosition, AudioTimestamp timestamp,
-            AudioTrack audioTrack) {
-        final long playbackRateFps = audioTrack.getPlaybackRate();  // Frames per second
-        final long playedFrames = timestamp.framePosition - framePosition;
-        final double elapsedTimeNs = playedFrames * (1000000000.0 / playbackRateFps);
-        return timestamp.nanoTime - (long) elapsedTimeNs;
     }
 
     /**
