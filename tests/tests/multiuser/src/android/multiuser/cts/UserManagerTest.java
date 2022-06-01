@@ -51,10 +51,10 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
-import com.android.bedstead.nene.users.UserType;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -376,16 +376,14 @@ public final class UserManagerTest {
 
     @Test
     @AppModeFull
-    @RequireFeature(FEATURE_MANAGED_USERS)
+    @EnsureHasWorkProfile
     @EnsureHasPermission(INTERACT_ACROSS_USERS)
-    public void getProfileParent_withNewlyCreatedProfile() {
+    public void getProfileParent_returnsParent() {
         final UserReference parent = TestApis.users().instrumented();
-        try (UserReference profile = TestApis.users().createUser()
-                .parent(parent)
-                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
-                .createAndStart()) {
-            assertThat(mUserManager.getProfileParent(profile.userHandle()))
-                    .isEqualTo(parent.userHandle());
+        for (UserHandle profile : mUserManager.getUserProfiles()) {
+            if (!profile.equals(parent.userHandle())) {
+                assertThat(mUserManager.getProfileParent(profile)).isEqualTo(parent.userHandle());
+            }
         }
     }
 

@@ -140,8 +140,12 @@ class VideoStabilityTest(its_base_test.ItsBaseTest):
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
       first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
+      supported_stabilization_modes = props[
+          'android.control.availableVideoStabilizationModes']
+
       camera_properties_utils.skip_unless(
-          first_api_level >= its_session_utils.ANDROID13_API_LEVEL)
+          first_api_level >= its_session_utils.ANDROID13_API_LEVEL and
+          _VIDEO_STABILIZATION_MODE in supported_stabilization_modes)
 
       # Raise error if not FRONT or REAR facing camera
       facing = props['android.lens.facing']

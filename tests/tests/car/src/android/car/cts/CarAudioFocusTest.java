@@ -40,6 +40,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -288,6 +289,7 @@ public final class CarAudioFocusTest extends CarApiTestBase {
     }
 
     @Test
+    @Ignore("b/234467798")
     public void exclusiveInteractionsForFocusGain_requestGrantedAndFocusLossSent() {
         // For each interaction the focus request is granted and on the second request
         // focus lost is dispatched to the first focus listener
@@ -300,6 +302,7 @@ public final class CarAudioFocusTest extends CarApiTestBase {
     }
 
     @Test
+    @Ignore("b/234467798")
     public void exclusiveInteractionsTransient_requestGrantedAndFocusLossSent() {
         // For each interaction the focus request is granted and on the second request
         // focus lost transient is dispatched to the first focus listener
@@ -313,6 +316,7 @@ public final class CarAudioFocusTest extends CarApiTestBase {
     }
 
     @Test
+    @Ignore("b/234467798")
     public void exclusiveInteractionsTransientMayDuck_requestGrantedAndFocusLossSent() {
         // For each interaction the focus request is granted and on the second request
         // focus lost transient is dispatched to the first focus listener
@@ -326,6 +330,7 @@ public final class CarAudioFocusTest extends CarApiTestBase {
     }
 
     @Test
+    @Ignore("b/234467798")
     public void rejectedInteractions_focusRequestRejected() {
         // Test different paired interaction between different usages
         // for each interaction pair the first focus request will be granted but the second
@@ -347,6 +352,7 @@ public final class CarAudioFocusTest extends CarApiTestBase {
     }
 
     @Test
+    @Ignore("b/234467798")
     public void concurrentInteractionsFocusGain_requestGrantedAndFocusLossSent() {
         // Test concurrent interactions i.e. interactions that can
         // potentially gain focus at the same time.
@@ -357,6 +363,7 @@ public final class CarAudioFocusTest extends CarApiTestBase {
     }
 
     @Test
+    @Ignore("b/234467798")
     public void concurrentInteractionsTransientGain_requestGrantedAndFocusLossTransientSent() {
         // Test concurrent interactions i.e. interactions that can
         // potentially gain focus at the same time.
@@ -370,6 +377,7 @@ public final class CarAudioFocusTest extends CarApiTestBase {
     }
 
     @Test
+    @Ignore("b/234467798")
     public void concurrentInteractionsTransientGainMayDuck_requestGrantedAndNoFocusLossSent() {
         // Test concurrent interactions i.e. interactions that can
         // potentially gain focus at the same time.
@@ -582,7 +590,8 @@ public final class CarAudioFocusTest extends CarApiTestBase {
                 // Since ducking and concurrent can exist together
                 // this needs to be skipped as the focus lost is not sent
                 if (!(interaction == INTERACTION_CONCURRENT
-                        && gainType == AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)) {
+                        && gainType == AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
+                        && !pauseForDucking)) {
                     message = "Focus change was not dispatched for 1st "
                             + usageToString(attributes1.getSystemUsage());
 

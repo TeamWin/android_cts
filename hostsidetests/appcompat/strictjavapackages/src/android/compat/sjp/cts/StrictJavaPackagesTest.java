@@ -30,12 +30,14 @@ import android.compat.testing.SharedLibraryInfo;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.modules.utils.build.testing.DeviceSdkLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.device.INativeDevice;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
+import com.android.tradefed.util.FileUtil;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableCollection;
@@ -52,10 +54,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -79,6 +84,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
     private static ImmutableList<String> sSharedLibJars;
     private static ImmutableList<SharedLibraryInfo> sSharedLibs;
     private static ImmutableMultimap<String, String> sJarsToClasses;
+    private static ImmutableMultimap<String, String> sJarsToFiles;
 
     private DeviceSdkLevel mDeviceSdkLevel;
 
@@ -766,6 +772,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 .filter(file -> !file.contains("com.google.android.gms"))
                 .collect(ImmutableList.toImmutableList());
 
+        final ImmutableSetMultimap.Builder<String, String> jarsToFiles =
+                ImmutableSetMultimap.builder();
         final ImmutableSetMultimap.Builder<String, String> jarsToClasses =
                 ImmutableSetMultimap.builder();
         Stream.of(sBootclasspathJars.stream(),
@@ -773,21 +781,32 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                         sSharedLibJars.stream())
                 .reduce(Stream::concat).orElseGet(Stream::empty)
                 .parallel()
-                .forEach(jar -> {
+                .forEach(jarPath -> {
+                    File jar = null;
                     try {
+                        jar = pullJarFromDevice(testInfo.getDevice(), jarPath);
+
+                        ImmutableSet<String> files = getJarFileContents(jar);
+                        synchronized (jarsToFiles) {
+                            jarsToFiles.putAll(jarPath, files);
+                        }
+
                         ImmutableSet<String> classes =
-                                Classpaths.getClassDefsFromJar(testInfo.getDevice(), jar).stream()
+                                Classpaths.getClassDefsFromJar(jar).stream()
                                         .map(ClassDef::getType)
                                         // Inner classes always go with their parent.
                                         .filter(className -> !className.contains("$"))
                                         .collect(ImmutableSet.toImmutableSet());
                         synchronized (jarsToClasses) {
-                            jarsToClasses.putAll(jar, classes);
+                            jarsToClasses.putAll(jarPath, classes);
                         }
                     } catch (DeviceNotAvailableException | IOException e) {
                         throw new RuntimeException(e);
+                    } finally {
+                        FileUtil.deleteFile(jar);
                     }
                 });
+        sJarsToFiles = jarsToFiles.build();
         sJarsToClasses = jarsToClasses.build();
     }
 
@@ -951,9 +970,11 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
         Arrays.stream(collectApkInApexPaths())
                 .parallel()
                 .forEach(apk -> {
+                    File apkFile = null;
                     try {
+                        apkFile = pullJarFromDevice(getDevice(), apk);
                         final ImmutableSet<String> apkClasses =
-                                Classpaths.getClassDefsFromJar(getDevice(), apk).stream()
+                                Classpaths.getClassDefsFromJar(apkFile).stream()
                                         .map(ClassDef::getType)
                                         .collect(ImmutableSet.toImmutableSet());
                         // b/226559955: The directory paths containing APKs contain the build ID,
@@ -977,6 +998,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                         }
                     } catch (Exception e) {
                         throw new RuntimeException(e);
+                    } finally {
+                        FileUtil.deleteFile(apkFile);
                     }
                 });
         assertThat(perApkClasspathDuplicates).isEmpty();
@@ -1011,6 +1034,46 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                             LegacyExemptAndroidxSharedLibsJarToClasses, e.getKey(), e.getValue()))
                         .collect(Collectors.toList())
                 ).isEmpty();
+    }
+
+    /**
+     * Ensure that there are no kotlin files in BOOTCLASSPATH, SYSTEMSERVERCLASSPATH
+     * and shared library jars.
+     */
+    @Test
+    public void testNoKotlinFilesInClasspaths() {
+        ImmutableList<String> kotlinFiles =
+                Stream.of(sBootclasspathJars.stream(),
+                        sSystemserverclasspathJars.stream(),
+                        sSharedLibJars.stream())
+                .reduce(Stream::concat).orElseGet(Stream::empty)
+                .parallel()
+                .filter(jarPath -> {
+                    return sJarsToFiles
+                            .get(jarPath)
+                            .stream()
+                            .anyMatch(file -> file.contains(".kotlin_builtins")
+                                    || file.contains(".kotlin_module"));
+                })
+                .collect(ImmutableList.toImmutableList());
+        assertThat(kotlinFiles).isEmpty();
+    }
+
+    private static File pullJarFromDevice(INativeDevice device,
+            String remoteJarPath) throws DeviceNotAvailableException {
+        File jar = device.pullFile(remoteJarPath);
+        if (jar == null) {
+            throw new IllegalStateException("could not pull remote file " + remoteJarPath);
+        }
+        return jar;
+    }
+
+    private static ImmutableSet<String> getJarFileContents(File jar) throws IOException {
+        try (JarFile jarFile = new JarFile(jar)) {
+            return jarFile.stream()
+                    .map(JarEntry::getName)
+                    .collect(ImmutableSet.toImmutableSet());
+        }
     }
 
     private boolean isLegacyAndroidxDependency(

@@ -382,7 +382,7 @@ public class SystemFeaturesTest {
         assertFeatureForSensor(featuresLeft, PackageManager.FEATURE_SENSOR_HINGE_ANGLE,
                 Sensor.TYPE_HINGE_ANGLE);
         assertFeatureForSensor(featuresLeft, PackageManager.FEATURE_SENSOR_DYNAMIC_HEAD_TRACKER,
-                Sensor.TYPE_HEAD_TRACKER);
+                Sensor.TYPE_DYNAMIC_SENSOR_META);
         assertFeatureForSensor(featuresLeft,
                 PackageManager.FEATURE_SENSOR_ACCELEROMETER_LIMITED_AXES,
                 Sensor.TYPE_ACCELEROMETER_LIMITED_AXES);

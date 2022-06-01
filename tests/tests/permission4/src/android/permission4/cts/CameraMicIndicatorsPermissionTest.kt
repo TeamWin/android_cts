@@ -421,8 +421,8 @@ class CameraMicIndicatorsPermissionTest {
                 }
                 assertNotNull("View with text $APP_LABEL not found", iconView)
             }
-            val appView = uiDevice.findObject(UiSelector().textContains(APP_LABEL))
-            assertTrue("View with text $APP_LABEL not found", appView.exists())
+            var appView = waitFindObjectOrNull(By.textContains(APP_LABEL))
+            assertNotNull("View with text $APP_LABEL not found", appView)
             if (safetyCenterEnabled) {
                 assertTrue("Did not find safety center views",
                     uiDevice.findObjects(By.res(SAFETY_CENTER_ITEM_ID)).size > 0)
@@ -457,17 +457,20 @@ class CameraMicIndicatorsPermissionTest {
         if (safetyCenterEnabled) {
             val appView = UiScrollable(UiSelector().scrollable(true))
             appView.scrollIntoView(UiSelector().resourceId(SAFETY_CENTER_ITEM_ID))
-        }
-        val usageViews = if (safetyCenterEnabled) {
-            uiDevice.findObjects(By.res(SAFETY_CENTER_ITEM_ID))
+            var micView = waitFindObjectOrNull(By.text(micLabel))
+            assertNotNull("View with text $micLabel not found", micView)
+            var camView = waitFindObjectOrNull(By.text(cameraLabel))
+            assertNotNull("View with text $cameraLabel not found", camView)
+            var shellView = waitFindObjectOrNull(By.textContains(shellLabel))
+            assertNotNull("View with text $shellLabel not found", shellView)
         } else {
-            uiDevice.findObjects(By.res(PRIVACY_ITEM_ID))
+            val usageViews = uiDevice.findObjects(By.res(PRIVACY_ITEM_ID))
+            assertEquals("Expected two usage views", 2, usageViews.size)
+            val appViews = uiDevice.findObjects(By.textContains(APP_LABEL))
+            assertEquals("Expected two $APP_LABEL view", 2, appViews.size)
+            val shellView = uiDevice.findObjects(By.textContains(shellLabel))
+            assertEquals("Expected only one shell view", 1, shellView.size)
         }
-        assertEquals("Expected two usage views", 2, usageViews.size)
-        val appViews = uiDevice.findObjects(By.textContains(APP_LABEL))
-        assertEquals("Expected two $APP_LABEL view", 2, appViews.size)
-        val shellView = uiDevice.findObjects(By.textContains(shellLabel))
-        assertEquals("Expected only one shell view", 1, shellView.size)
     }
 
     private fun pressBack() {

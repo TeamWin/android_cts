@@ -252,15 +252,6 @@ public class UsageStatsTest {
                                 Process.myUserHandle().getIdentifier()),
                 REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL,
                 REVOKE_RUNTIME_PERMISSIONS);
-
-        // Clear broadcast response stats
-        setAppOpsMode("allow");
-        try {
-            mUsageStatsManager.clearBroadcastEvents();
-            mUsageStatsManager.clearBroadcastResponseStats(null /* packageName */, 0 /* id */);
-        } finally {
-            resetAppOpsMode();
-        }
     }
 
 

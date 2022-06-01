@@ -195,7 +195,6 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
 
     @Test
     public void testTurnScreenOnActivity() {
-        assumeTrue(supportsLockScreen());
 
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         if (!supportsInsecureLock()) {
@@ -216,7 +215,14 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         final ActivitySession activity = activityClient.startActivity(
                 getLaunchActivityBuilder().setUseInstrumentation()
                         .setWaitForLaunched(false).setTargetActivity(TOP_ACTIVITY));
-        waitAndAssertActivityState(TOP_ACTIVITY, STATE_STOPPED, "Activity must be stopped.");
+        if (supportsLockScreen()) {
+            // top activity is hidden behind lock screen
+            waitAndAssertActivityState(TOP_ACTIVITY, STATE_STOPPED,
+                    "Top activity must be stopped.");
+        } else {
+            waitAndAssertActivityState(TOP_ACTIVITY, STATE_RESUMED,
+                    "Top activity must be resumed.");
+        }
         lockScreenSession.sleepDevice();
 
         // Finish the top activity and make sure the device still in sleep
@@ -224,12 +230,11 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         waitAndAssertActivityState(TURN_SCREEN_ON_ACTIVITY, STATE_STOPPED,
                 "Activity must be stopped");
         mWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, false);
-        assertFalse("Display must be remained OFF", isDisplayOn(DEFAULT_DISPLAY));
+        assertFalse("Display must remain OFF", isDisplayOn(DEFAULT_DISPLAY));
     }
 
     @Test
     public void testTurnScreenOnActivity_slowLaunch() {
-        assumeTrue(supportsLockScreen());
 
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         final ActivitySessionClient activityClient = createManagedActivityClientSession();
