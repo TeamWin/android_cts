@@ -706,6 +706,16 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 "Lcom/android/internal/util/StateMachine;",
                 "Lcom/android/internal/util/State;"
             );
+
+    // TODO: b/234557765
+    private static final ImmutableSet<String> ADSERVICES_SANDBOX_APK_IN_APEX_BURNDOWN_LIST =
+            ImmutableSet.of(
+                // /apex/com.android.adservices/javalib/service-sdksandbox.jar
+                "Lcom/android/sdksandbox/ISdkSandboxManagerToSdkSandboxCallback;",
+                "Lcom/android/sdksandbox/ISdkSandboxService;",
+                "Lcom/android/sdksandbox/ISdkSandboxToSdkSandboxManagerCallback;"
+            );
+
     private static final ImmutableMap<String, ImmutableSet<String>> FULL_APK_IN_APEX_BURNDOWN =
         new ImmutableMap.Builder<String, ImmutableSet<String>>()
             .put("/apex/com.android.bluetooth/app/Bluetooth/Bluetooth.apk",
@@ -736,6 +746,10 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 CELLBROADCAST_APK_IN_APEX_BURNDOWN_LIST)
             .put("/apex/com.android.cellbroadcast/priv-app/CellBroadcastServiceModule/CellBroadcastServiceModule.apk",
                 CELLBROADCAST_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.adservices/app/SdkSandbox/SdkSandbox.apk",
+                ADSERVICES_SANDBOX_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.adservices/app/SdkSandboxGoogle/SdkSandboxGoogle.apk",
+                ADSERVICES_SANDBOX_APK_IN_APEX_BURNDOWN_LIST)
             .build();
 
     /**
