@@ -410,7 +410,9 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // DISALLOW_USB_FILE_TRANSFER
-        if (FeatureUtil.isUsbFileTransferSupported(this)) {
+        if (FeatureUtil.isUsbFileTransferSupported(this)
+                && !packageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
+                && !packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
             adapter.add(createInteractiveTestItem(this, DISALLOW_USB_FILE_TRANSFER_ID,
                     R.string.device_owner_disallow_usb_file_transfer_test,
                     R.string.device_owner_disallow_usb_file_transfer_test_info,
@@ -467,7 +469,9 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
 
         // setLockTaskFeatures
         // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
-        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
+                && !packageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
+                && !packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
             final Intent lockTaskUiTestIntent = new Intent(this, LockTaskUiTestActivity.class);
             lockTaskUiTestIntent.putExtra(LockTaskUiTestActivity.EXTRA_TEST_ID,
                     LOCK_TASK_UI_TEST_ID);
