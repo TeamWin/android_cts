@@ -17,6 +17,7 @@
 package android.bluetooth.cts;
 
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
+import static android.Manifest.permission.BLUETOOTH_PRIVILEGED;
 
 import static org.junit.Assert.assertThrows;
 
@@ -43,6 +44,7 @@ import androidx.test.InstrumentationRegistry;
 import com.android.compatibility.common.util.ApiLevelUtil;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -363,12 +365,21 @@ public class BluetoothAdapterTest extends AndroidTestCase {
             // Skip the test if bluetooth is not present.
             return;
         }
+
+        Duration minute = Duration.ofMinutes(1);
+
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
         assertEquals(null, mAdapter.getDiscoverableTimeout());
-        assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
+        assertEquals(BluetoothStatusCodes.ERROR_BLUETOOTH_NOT_ENABLED,
+                mAdapter.setDiscoverableTimeout(minute));
 
-        mUiAutomation.dropShellPermissionIdentity();
-        assertEquals(120, mAdapter.getDiscoverableTimeout().toSeconds());
+        assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
+        assertThrows(IllegalArgumentException.class, () -> mAdapter.setDiscoverableTimeout(
+                Duration.ofDays(25000)));
+        assertEquals(BluetoothStatusCodes.SUCCESS,
+                mAdapter.setDiscoverableTimeout(minute));
+        assertEquals(minute, mAdapter.getDiscoverableTimeout());
     }
 
     public void test_getConnectionState() {
