@@ -17,7 +17,7 @@
 package android.mediapc.cts;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_SecurePlayback;
-
+import static android.media.MediaDrm.SECURITY_LEVEL_HW_SECURE_ALL;
 import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
@@ -33,30 +33,26 @@ import android.mediapc.cts.common.Utils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.WindowManager;
-
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.compatibility.common.util.CddTest;
-import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
-
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.UUID;
 
 /**
  * Tests the basic aspects of the media performance class.
  */
 public class PerformanceClassTest {
     private static final String TAG = "PerformanceClassTest";
-    private static final UUID WIDEVINE_UUID = new UUID(0xEDEF8BA979D64ACEL, 0xA3C827DCD51D21EDL);
+    public static final String[] VIDEO_CONTAINER_MEDIA_TYPES =
+        {"video/mp4", "video/webm", "video/3gpp", "video/3gpp2", "video/avi", "video/x-ms-wmv",
+            "video/x-ms-asf"};
     static ArrayList<String> mMimeSecureSupport = new ArrayList<>();
 
     @Rule
@@ -83,8 +79,8 @@ public class PerformanceClassTest {
 
     @SmallTest
     @Test
-    // TODO(b/218771970) Add @CddTest annotation
-    public void testSecureHwDecodeSupport() throws IOException {
+    @CddTest(requirements = {"2.2.7.1/5.1/H-1-11"})
+    public void testSecureHwDecodeSupport() {
         ArrayList<String> noSecureHwDecoderForMimes = new ArrayList<>();
         for (String mime : mMimeSecureSupport) {
             boolean isSecureHwDecoderFoundForMime = false;
@@ -110,46 +106,35 @@ public class PerformanceClassTest {
         boolean secureDecodeSupportIfHwDecoderPresent = noSecureHwDecoderForMimes.isEmpty();
 
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
-        PerformanceClassEvaluator.SecureCodecRequirement rSecureDecodeSupport =
-            pce.addRSecureDecodeSupport();
-        rSecureDecodeSupport.setSecureReqSatisfied(secureDecodeSupportIfHwDecoderPresent);
+        PerformanceClassEvaluator.SecureCodecRequirement r5_1__H_1_11 = pce.addR5_1__H_1_11();
+        r5_1__H_1_11.setSecureReqSatisfied(secureDecodeSupportIfHwDecoderPresent);
 
         pce.submitAndCheck();
     }
 
     @SmallTest
     @Test
-    // TODO(b/218771970) Add @CddTest annotation
-    public void testWidevineSupport() throws UnsupportedSchemeException {
-        boolean isWidevineSupported = MediaDrm.isCryptoSchemeSupported(WIDEVINE_UUID);
-        boolean isL1Supported = false;
-        boolean isL1Tier3Supported = false;
-        boolean isOemCrypto17Plus = false;
-        boolean isWidevineCdm17Plus = false;
-        if (isWidevineSupported) {
-            MediaDrm mediaDrm = new MediaDrm(WIDEVINE_UUID);
-            isL1Supported = mediaDrm.getPropertyString("securityLevel").equals("L1");
-            int tier = Integer.parseInt(mediaDrm.getPropertyString("resourceRatingTier"));
-            isL1Tier3Supported = tier >= 3;
+    @CddTest(requirements = {"2.2.7.1/5.7/H-1-2"})
+    public void testMediaDrmSecurityLevelHwSecureAll() throws UnsupportedSchemeException {
+        List<UUID> drmList = MediaDrm.getSupportedCryptoSchemes();
+        List<UUID> supportedHwSecureAllSchemes = new ArrayList<>();
 
-            String oemCryptoVersionProperty = mediaDrm.getPropertyString("oemCryptoApiVersion");
-            int oemCryptoVersion = Integer.parseInt(oemCryptoVersionProperty);
-            isOemCrypto17Plus = oemCryptoVersion >= 17;
-
-            String cdmVersionProperty = mediaDrm.getPropertyString(MediaDrm.PROPERTY_VERSION);
-            int cdmMajorVersion = Integer.parseInt(cdmVersionProperty.split("\\.", 2)[0]);
-            isWidevineCdm17Plus = cdmMajorVersion >= 17;
+        for (UUID cryptoSchemeUUID : drmList) {
+            boolean cryptoSchemeSupportedForAtleastOneMediaType = false;
+            for (String mediaType : VIDEO_CONTAINER_MEDIA_TYPES) {
+                cryptoSchemeSupportedForAtleastOneMediaType |= MediaDrm
+                    .isCryptoSchemeSupported(cryptoSchemeUUID, mediaType,
+                        SECURITY_LEVEL_HW_SECURE_ALL);
+            }
+            if (cryptoSchemeSupportedForAtleastOneMediaType) {
+                supportedHwSecureAllSchemes.add(cryptoSchemeUUID);
+            }
         }
 
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
-        PerformanceClassEvaluator.SecureCodecRequirement rWidevineReqSupport =
-            pce.addRWidevineSupport();
+        PerformanceClassEvaluator.SecureCodecRequirement r5_7__H_1_2 = pce.addR5_7__H_1_2();
 
-        rWidevineReqSupport.setWidevineSupported(isWidevineSupported);
-        rWidevineReqSupport.setWidevineL1Supported(isL1Supported);
-        rWidevineReqSupport.setWidevineL1Tier3Supported(isL1Tier3Supported);
-        rWidevineReqSupport.setOemCrypto17Plus(isOemCrypto17Plus);
-        rWidevineReqSupport.setWidevineCdm17Plus(isWidevineCdm17Plus);
+        r5_7__H_1_2.setNumCryptoHwSecureAllDec(supportedHwSecureAllSchemes.size());
 
         pce.submitAndCheck();
     }
