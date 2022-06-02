@@ -368,8 +368,8 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
         mCodec.start();
         doWork(Integer.MAX_VALUE);
         queueEOS();
-        validateColorAspects(mCodec.getOutputFormat(), mRange, mStandard, mTransferCurve);
         waitForAllOutputs();
+        validateColorAspects(mCodec.getOutputFormat(), mRange, mStandard, mTransferCurve);
         mCodec.stop();
         mCodec.release();
         mEGLWindowOutSurface.release();
