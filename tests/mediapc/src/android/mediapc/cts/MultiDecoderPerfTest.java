@@ -18,10 +18,9 @@ package android.mediapc.cts;
 
 import static org.junit.Assert.assertTrue;
 
-import android.media.MediaCodecInfo.VideoCapabilities.PerformancePoint;
 import android.media.MediaFormat;
+import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.mediapc.cts.common.Utils;
-import android.os.Build;
 import android.util.Pair;
 
 import androidx.test.filters.LargeTest;
@@ -33,7 +32,9 @@ import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
 import org.junit.Assume;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -61,6 +62,9 @@ public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
         super(mimeType, null, isAsync);
         mDecoderName = decoderName;
     }
+
+    @Rule
+    public final TestName mTestName = new TestName();
 
     // Returns the params list with the mime and corresponding hardware decoders in
     // both sync and async modes.
@@ -97,51 +101,23 @@ public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
     }
 
     /**
-     * This test validates that the decoder can support at least 6 concurrent 1080p 30fps
-     * decoder instances. Also ensures that all the concurrent sessions succeed in decoding
-     * with meeting the expected frame rate.
+     * This test validates that the decoder can support at least 6 non-secure/2 secure concurrent
+     * 1080p 30fps decoder instances. Also ensures that all the concurrent sessions succeed in
+     * decoding with meeting the expected frame rate.
      */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    @CddTest(requirement = "2.2.7.1/5.1/H-1-1,H-1-2")
+    @CddTest(requirements = {
+            "2.2.7.1/5.1/H-1-1",
+            "2.2.7.1/5.1/H-1-2",
+            "2.2.7.1/5.1/H-1-9",})
     public void test1080p() throws Exception {
         Assume.assumeTrue(Utils.isTPerfClass() || !Utils.isPerfClass());
-        Assume.assumeFalse("Skipping regular performance tests for secure codecs",
-                isSecureSupportedCodec(mDecoderName, mMime));
-        testCodec(m1080pTestFiles, 1080, 1920, REQUIRED_MIN_CONCURRENT_INSTANCES);
-    }
-
-    /**
-     * Validates if hardware decoder that supports required secure decode perf is present
-     */
-    @LargeTest
-    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    // TODO(b/218771970) Add @CddTest annotation
-    public void testReqSecureDecodeSupport() throws Exception {
-        Assume.assumeTrue(Utils.isTPerfClass() || !Utils.isPerfClass());
-        Assume.assumeTrue("Skipping secure decode support tests for non-secure codecs",
-                isSecureSupportedCodec(mDecoderName, mMime));
-
-        PerformancePoint reqPP =
-                new PerformancePoint(1920, 1080, 30 * REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES);
-
-        boolean codecSupportsReqPP = codecSupportsPP(mDecoderName, mMime, reqPP);
-
-        testCodec(m1080pWidevineTestFiles, 1080, 1920, REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES);
-
-        if (Utils.isTPerfClass()) {
-            assertTrue(
-                    "Required Secure Decode Support required for MPC >= Android T, unsupported " +
-                            "codec: " + mDecoderName, codecSupportsReqPP);
+        if (isSecureSupportedCodec(mDecoderName, mMime)) {
+            testCodec(m1080pWidevineTestFiles, 1080, 1920,
+                    REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES);
         } else {
-            DeviceReportLog log =
-                    new DeviceReportLog("MediaPerformanceClassLogs", "SecureDecodeSupport");
-            log.addValue("Req Secure Decode Support: " + mDecoderName, codecSupportsReqPP,
-                    ResultType.NEUTRAL, ResultUnit.NONE);
-            // TODO(b/218771970) Log CDD sections
-            log.setSummary("MPC 13: Secure Decode requirements", 0, ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-            log.submit(InstrumentationRegistry.getInstrumentation());
+            testCodec(m1080pTestFiles, 1080, 1920, REQUIRED_MIN_CONCURRENT_INSTANCES);
         }
     }
 
@@ -151,6 +127,7 @@ public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
         Assume.assumeTrue("Add test vector for mime: " + mMime, mTestFile != null);
         ArrayList<Pair<String, String>> mimeDecoderPairs = new ArrayList<>();
         mimeDecoderPairs.add(Pair.create(mMime, mDecoderName));
+        boolean isSecure = isSecureSupportedCodec(mDecoderName, mMime);
         int maxInstances =
                 checkAndGetMaxSupportedInstancesForCodecCombinations(height, width,
                         mimeDecoderPairs);
@@ -159,7 +136,6 @@ public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
             ExecutorService pool = Executors.newFixedThreadPool(maxInstances);
             List<Decode> testList = new ArrayList<>();
             for (int i = 0; i < maxInstances; i++) {
-                boolean isSecure = isSecureSupportedCodec(mDecoderName, mMime);
                 testList.add(new Decode(mMime, mTestFile, mDecoderName, mIsAsync, isSecure));
             }
             List<Future<Double>> resultList = pool.invokeAll(testList);
@@ -167,26 +143,26 @@ public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
                 achievedFrameRate += result.get();
             }
         }
-        if (Utils.isPerfClass()) {
-            assertTrue("Decoder " + mDecoderName + " unable to support minimum concurrent " +
-                            "instances. act/exp: " + maxInstances + "/" + requiredMinInstances,
-                    maxInstances >= requiredMinInstances);
-            assertTrue("Unable to achieve the maxFrameRate supported. act/exp: " + achievedFrameRate
-                            + "/" + mMaxFrameRate + " for " + maxInstances + " instances.",
-                    achievedFrameRate >= mMaxFrameRate);
+
+        PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
+        if (isSecure) {
+            PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_9 = pce.addR5_1__H_1_9();
+            r5_1__H_1_9.setConcurrentFps(achievedFrameRate);
         } else {
-            int pc = maxInstances >= requiredMinInstances && achievedFrameRate >= mMaxFrameRate
-                    ? Build.VERSION_CODES.R : 0;
-            DeviceReportLog log = new DeviceReportLog("MediaPerformanceClassLogs",
-                    "MultiDecoderPerf_" + mDecoderName);
-            log.addValue("decoders", mMime + "_" + mDecoderName, ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-            log.addValue("achieved_framerate", achievedFrameRate, ResultType.HIGHER_BETTER,
-                    ResultUnit.NONE);
-            log.addValue("expected_framerate", mMaxFrameRate, ResultType.NEUTRAL, ResultUnit.NONE);
-            log.setSummary("CDD 2.2.7.1/5.1/H-1-1,H-1-2 performance_class", pc, ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-            log.submit(InstrumentationRegistry.getInstrumentation());
+            PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_1;
+            PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_2;
+            if (height >= 1080) {
+                r5_1__H_1_1 = pce.addR5_1__H_1_1_1080p();
+                r5_1__H_1_2 = pce.addR5_1__H_1_2_1080p();
+                r5_1__H_1_1.setConcurrentInstances(maxInstances);
+                r5_1__H_1_2.setConcurrentFps(achievedFrameRate);
+            } else {
+                r5_1__H_1_1 = pce.addR5_1__H_1_1_720p(mMime, mMime, height);
+                r5_1__H_1_2 = pce.addR5_1__H_1_2_720p(mMime, mMime, height);
+                r5_1__H_1_1.setConcurrentInstances(maxInstances);
+                r5_1__H_1_2.setConcurrentFps(achievedFrameRate);
+            }
         }
+        pce.submitAndCheck();
     }
 }

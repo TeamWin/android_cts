@@ -381,8 +381,6 @@ public class SystemFeaturesTest {
                 Sensor.TYPE_RELATIVE_HUMIDITY);
         assertFeatureForSensor(featuresLeft, PackageManager.FEATURE_SENSOR_HINGE_ANGLE,
                 Sensor.TYPE_HINGE_ANGLE);
-        assertFeatureForSensor(featuresLeft, PackageManager.FEATURE_SENSOR_DYNAMIC_HEAD_TRACKER,
-                Sensor.TYPE_DYNAMIC_SENSOR_META);
         assertFeatureForSensor(featuresLeft,
                 PackageManager.FEATURE_SENSOR_ACCELEROMETER_LIMITED_AXES,
                 Sensor.TYPE_ACCELEROMETER_LIMITED_AXES);
@@ -397,6 +395,15 @@ public class SystemFeaturesTest {
                 Sensor.TYPE_GYROSCOPE_LIMITED_AXES_UNCALIBRATED);
         assertFeatureForSensor(featuresLeft, PackageManager.FEATURE_SENSOR_HEADING,
                 Sensor.TYPE_HEADING);
+
+        // Note that FEATURE_SENSOR_DYNAMIC_HEAD_TRACKER requires dynamic sensor discovery, but
+        // dynamic sensor discovery does not require FEATURE_SENSOR_DYNAMIC_HEAD_TRACKER
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_DYNAMIC_HEAD_TRACKER)) {
+            assertTrue("Device declared " + PackageManager.FEATURE_SENSOR_DYNAMIC_HEAD_TRACKER
+                    + " but does not support dynamic sensor discovery",
+                    mSensorManager.isDynamicSensorDiscoverySupported());
+        }
+        featuresLeft.remove(PackageManager.FEATURE_SENSOR_DYNAMIC_HEAD_TRACKER);
 
         /*
          * We have three cases to test for :

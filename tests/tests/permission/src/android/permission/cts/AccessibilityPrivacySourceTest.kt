@@ -60,41 +60,31 @@ class AccessibilityPrivacySourceTest {
 
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context: Context = instrumentation.targetContext
-    private val mAccessibilityServiceRule = InstrumentedAccessibilityServiceTestRule(
-        AccessibilityTestService::class.java, false
-    )
-    private val permissionControllerPackage = context.packageManager
-        .permissionControllerPackageName
-    private val accessibilityTestService = ComponentName(
-        context,
-        AccessibilityTestService::class.java
-    ).flattenToString()
+    private val mAccessibilityServiceRule =
+        InstrumentedAccessibilityServiceTestRule(AccessibilityTestService::class.java, false)
+    private val permissionControllerPackage = context.packageManager.permissionControllerPackageName
+    private val accessibilityTestService =
+        ComponentName(context, AccessibilityTestService::class.java).flattenToString()
     private val safetyCenterIssueId = "accessibility_$accessibilityTestService"
     private val safetyCenterManager = context.getSystemService(SafetyCenterManager::class.java)
 
     @get:Rule
-    val deviceConfigSafetyCenterEnabled = DeviceConfigStateChangerRule(
-        context,
-        DeviceConfig.NAMESPACE_PRIVACY,
-        SAFETY_CENTER_ENABLED,
-        true.toString()
-    )
+    val deviceConfigSafetyCenterEnabled =
+        DeviceConfigStateChangerRule(
+            context, DeviceConfig.NAMESPACE_PRIVACY, SAFETY_CENTER_ENABLED, true.toString())
 
     @get:Rule
-    val deviceConfigA11ySourceEnabled = DeviceConfigStateChangerRule(
-        context,
-        DeviceConfig.NAMESPACE_PRIVACY,
-        ACCESSIBILITY_SOURCE_ENABLED,
-        true.toString()
-    )
+    val deviceConfigA11ySourceEnabled =
+        DeviceConfigStateChangerRule(
+            context, DeviceConfig.NAMESPACE_PRIVACY, ACCESSIBILITY_SOURCE_ENABLED, true.toString())
 
     @get:Rule
-    val deviceConfigA11yListenerDisabled = DeviceConfigStateChangerRule(
-        context,
-        DeviceConfig.NAMESPACE_PRIVACY,
-        ACCESSIBILITY_LISTENER_ENABLED,
-        false.toString()
-    )
+    val deviceConfigA11yListenerDisabled =
+        DeviceConfigStateChangerRule(
+            context,
+            DeviceConfig.NAMESPACE_PRIVACY,
+            ACCESSIBILITY_LISTENER_ENABLED,
+            false.toString())
 
     @Before
     fun setup() {
@@ -108,9 +98,7 @@ class AccessibilityPrivacySourceTest {
     @After
     fun cleanup() {
         cancelNotifications(permissionControllerPackage)
-        runWithShellPermissionIdentity {
-            safetyCenterManager?.clearAllSafetySourceDataForTests()
-        }
+        runWithShellPermissionIdentity { safetyCenterManager?.clearAllSafetySourceDataForTests() }
     }
 
     @Test
@@ -124,7 +112,8 @@ class AccessibilityPrivacySourceTest {
     fun testJobSendsIssuesToSafetyCenter() {
         mAccessibilityServiceRule.enableService()
         runJobAndWaitUntilCompleted()
-        assertSafetyCenterIssueExist(SC_ACCESSIBILITY_SOURCE_ID, safetyCenterIssueId)
+        assertSafetyCenterIssueExist(
+            SC_ACCESSIBILITY_SOURCE_ID, safetyCenterIssueId, SC_ACCESSIBILITY_ISSUE_TYPE_ID)
     }
 
     @Test
@@ -144,10 +133,15 @@ class AccessibilityPrivacySourceTest {
         setDeviceConfigPrivacyProperty(ACCESSIBILITY_LISTENER_ENABLED, true.toString())
         val automation = getAutomation()
         mAccessibilityServiceRule.enableService()
-        TestUtils.eventually({
-            assertSafetyCenterIssueExist(SC_ACCESSIBILITY_SOURCE_ID,
-                safetyCenterIssueId, automation)
-        }, TIMEOUT_MILLIS)
+        TestUtils.eventually(
+            {
+                assertSafetyCenterIssueExist(
+                    SC_ACCESSIBILITY_SOURCE_ID,
+                    safetyCenterIssueId,
+                    SC_ACCESSIBILITY_ISSUE_TYPE_ID,
+                    automation)
+            },
+            TIMEOUT_MILLIS)
         automation.destroy()
     }
 
@@ -160,7 +154,8 @@ class AccessibilityPrivacySourceTest {
     @Test
     fun testJobWithDisabledServiceDoesNotSendIssueToSafetyCenter() {
         runJobAndWaitUntilCompleted()
-        assertSafetyCenterIssueDoesNotExist(SC_ACCESSIBILITY_SOURCE_ID, safetyCenterIssueId)
+        assertSafetyCenterIssueDoesNotExist(
+            SC_ACCESSIBILITY_SOURCE_ID, safetyCenterIssueId, SC_ACCESSIBILITY_ISSUE_TYPE_ID)
     }
 
     @Test
@@ -176,7 +171,8 @@ class AccessibilityPrivacySourceTest {
         setDeviceConfigPrivacyProperty(ACCESSIBILITY_SOURCE_ENABLED, false.toString())
         mAccessibilityServiceRule.enableService()
         runJobAndWaitUntilCompleted()
-        assertSafetyCenterIssueDoesNotExist(SC_ACCESSIBILITY_SOURCE_ID, safetyCenterIssueId)
+        assertSafetyCenterIssueDoesNotExist(
+            SC_ACCESSIBILITY_SOURCE_ID, safetyCenterIssueId, SC_ACCESSIBILITY_ISSUE_TYPE_ID)
     }
 
     @Test
@@ -192,15 +188,16 @@ class AccessibilityPrivacySourceTest {
         setDeviceConfigPrivacyProperty(SAFETY_CENTER_ENABLED, false.toString())
         mAccessibilityServiceRule.enableService()
         runJobAndWaitUntilCompleted()
-        assertSafetyCenterIssueDoesNotExist(SC_ACCESSIBILITY_SOURCE_ID, safetyCenterIssueId)
+        assertSafetyCenterIssueDoesNotExist(
+            SC_ACCESSIBILITY_SOURCE_ID, safetyCenterIssueId, SC_ACCESSIBILITY_ISSUE_TYPE_ID)
     }
 
     @Test
     fun testNotificationClickOpenSafetyCenter() {
         mAccessibilityServiceRule.enableService()
         runJobAndWaitUntilCompleted()
-        val statusBarNotification = getNotification(permissionControllerPackage,
-            ACCESSIBILITY_NOTIFICATION_ID)
+        val statusBarNotification =
+            getNotification(permissionControllerPackage, ACCESSIBILITY_NOTIFICATION_ID)
         Assert.assertNotNull(statusBarNotification)
         val contentIntent = statusBarNotification!!.notification.contentIntent
         contentIntent.send()
@@ -209,61 +206,59 @@ class AccessibilityPrivacySourceTest {
 
     private fun getAutomation(): UiAutomation {
         return instrumentation.getUiAutomation(
-            UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES
-        )
+            UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES)
     }
 
     private fun runJobAndWaitUntilCompleted() {
-        TestUtils.runJobAndWaitUntilCompleted(permissionControllerPackage, ACCESSIBILITY_JOB_ID,
-            TIMEOUT_MILLIS, getAutomation())
+        TestUtils.runJobAndWaitUntilCompleted(
+            permissionControllerPackage, ACCESSIBILITY_JOB_ID, TIMEOUT_MILLIS, getAutomation())
     }
 
-    /**
-     * Reset the permission controllers state.
-     */
+    /** Reset the permission controllers state. */
     @Throws(Throwable::class)
     private fun resetPermissionController() {
         PermissionUtils.clearAppState(permissionControllerPackage)
         val currentUserId = Process.myUserHandle().identifier
 
         // Wait until jobs are cleared
-        TestUtils.eventually({
-            val dump = getJobSchedulerDump()
-            for (job in dump!!.registeredJobs) {
-                if (job.dump.sourceUserId == currentUserId &&
-                    job.dump.sourcePackageName == permissionControllerPackage
-                ) {
-                    Assert.assertFalse(
-                        job.dump.jobInfo.service.className.contains("AccessibilityJobService")
-                    )
+        TestUtils.eventually(
+            {
+                val dump = getJobSchedulerDump()
+                for (job in dump!!.registeredJobs) {
+                    if (job.dump.sourceUserId == currentUserId &&
+                        job.dump.sourcePackageName == permissionControllerPackage) {
+                        Assert.assertFalse(
+                            job.dump.jobInfo.service.className.contains("AccessibilityJobService"))
+                    }
                 }
-            }
-        }, TIMEOUT_MILLIS)
+            },
+            TIMEOUT_MILLIS)
 
         runShellCommand(
             "cmd jobscheduler reset-execution-quota -u " +
-                    "${Process.myUserHandle().identifier} $permissionControllerPackage"
-        )
+                "${Process.myUserHandle().identifier} $permissionControllerPackage")
 
-        context.sendBroadcast(Intent().apply {
-            setClassName(permissionControllerPackage, AccessibilityOnBootReceiver)
-            setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
-            setPackage(permissionControllerPackage)
-        })
+        context.sendBroadcast(
+            Intent().apply {
+                setClassName(permissionControllerPackage, AccessibilityOnBootReceiver)
+                setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+                setPackage(permissionControllerPackage)
+            })
 
         // Wait until jobs are set up
-        TestUtils.eventually({
-            val dump = getJobSchedulerDump()
-            for (job in dump!!.registeredJobs) {
-                if (job.dump.sourceUserId == currentUserId &&
-                    job.dump.sourcePackageName == permissionControllerPackage &&
-                    job.dump.jobInfo.service.className.contains("AccessibilityJobService")
-                ) {
-                    return@eventually
+        TestUtils.eventually(
+            {
+                val dump = getJobSchedulerDump()
+                for (job in dump!!.registeredJobs) {
+                    if (job.dump.sourceUserId == currentUserId &&
+                        job.dump.sourcePackageName == permissionControllerPackage &&
+                        job.dump.jobInfo.service.className.contains("AccessibilityJobService")) {
+                        return@eventually
+                    }
                 }
-            }
-            Assert.fail("accessibility job not found")
-        }, TIMEOUT_MILLIS)
+                Assert.fail("accessibility job not found")
+            },
+            TIMEOUT_MILLIS)
     }
 
     @Throws(Exception::class)
@@ -271,8 +266,7 @@ class AccessibilityPrivacySourceTest {
         return ProtoUtils.getProto(
             getAutomation(),
             JobSchedulerServiceDumpProto::class.java,
-            ProtoUtils.DUMPSYS_JOB_SCHEDULER
-        )
+            ProtoUtils.DUMPSYS_JOB_SCHEDULER)
     }
 
     companion object {
@@ -285,12 +279,15 @@ class AccessibilityPrivacySourceTest {
         private const val ACCESSIBILITY_NOTIFICATION_ID = 4
         private const val TIMEOUT_MILLIS: Long = 10000
 
+        private const val SC_ACCESSIBILITY_ISSUE_TYPE_ID = "accessibility_privacy_issue"
+
         private const val AccessibilityOnBootReceiver =
             "com.android.permissioncontroller.privacysources.AccessibilityOnBootReceiver"
 
         @get:ClassRule
         @JvmStatic
-        val ctsNotificationListenerHelper = CtsNotificationListenerHelperRule(
-            InstrumentationRegistry.getInstrumentation().targetContext)
+        val ctsNotificationListenerHelper =
+            CtsNotificationListenerHelperRule(
+                InstrumentationRegistry.getInstrumentation().targetContext)
     }
 }

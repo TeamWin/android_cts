@@ -4143,10 +4143,10 @@
                  test parent : PresenceTestActivity
         -->
         <activity
-            android:name=".presence.NanPrecisionAndBiasTestActivity"
+            android:name=".presence.NanPrecisionTestActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true"
-            android:label="@string/nan_precision_and_bias" >
+            android:label="@string/nan_precision" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

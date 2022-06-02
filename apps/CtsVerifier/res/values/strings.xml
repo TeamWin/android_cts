@@ -6602,23 +6602,28 @@ Follow the instructions on the screen to measure the frequency response for the 
         \n3. Report the median (500th value); must be within [-57, -63] dBm to pass
         \n4. Report the reference device used
     </string>
-
-    <string name="nan_precision_and_bias_instruction">
-        1. Take 1000 ranging measurements at each of the ground truth points of 1m, 3m, and 5m. The Wifinanscan in Play Store is recommended for data collection.
-        \n2. For each point:
-        \n\t\ta. Compute and report the range (Range = 975th measurement - 25th measurement).
-        \n\t\tb. Range must be less than 2m for test to pass.
-        \n3. Using the same measurements collected in step 1, compute a least squares regression line.
-        \n4. Report the bias and slope.
-        \n5. Bias must be 0+/- 0.25m and slope must be 1+/- 0.05m for tests to pass.
-        \n6. Report reference device used. All fields must be filled before test can be passed.
+    <string name="nan_precision_instruction">
+        1. Take 1000 ranging measurements at each of the ground truth points of 10cm, 1m, 3m, and 5m. The WifiNanScan app in Play Store is recommended for data collection.
+        \n2. Report the bandwidth at which the data was collected. Must be either 160, 80, 40, 20 MHz.
+        \n2. For each ground truth point:
+        \n\t\ta. Must report the range at the 68th percentile (as calculated with the Cumulative Distribution Function), accurately to within:
+        \n\t\t\ti. +/-1 meters at 160 MHz bandwidth
+        \n\t\t\tii. +/-2 meters at 80 MHz bandwidth
+        \n\t\t\tiii. +/-4 meters at 40 MHz bandwidth
+        \n\t\t\tiv. +/-8 meters at 20 MHz bandwidth
+        \n4. Following the same instructions above, it is strongly recommended (but not required), to report the range at the 90th percentile as calculated with the Cumulative Distribution Function. If the range at 90th percentile is inputted, it must be within the expected range, and inputted for all distance ranges.
+        \n5. Report reference device used. All required fields must be filled before test can be passed.
     </string>
-    <string name="report_distance_range_1m_gt">Report Measurement Range at 1m</string>
-    <string name="report_distance_range_3m_gt">Report Measurement Range at 3m</string>
-    <string name="report_distance_range_5m_gt">Report Measurement Range at 5m</string>
-    <string name="report_bias_meters">Report Bias (meters)</string>
-    <string name="report_slope">Report Slope</string>
-    <string name="nan_precision_and_bias">Nan Precision and Bias Test</string>
+    <string name="report_nan_bandwidth_mhz">Bandwidth (MHz)</string>
+    <string name="report_distance_range_10cm_gt_68p">Measurement Range at 10cm (68th percentile)</string>
+    <string name="report_distance_range_1m_gt_68p">Measurement Range at 1m (68th percentile)</string>
+    <string name="report_distance_range_3m_gt_68p">Measurement Range at 3m (68th percentile)</string>
+    <string name="report_distance_range_5m_gt_68p">Measurement Range at 5m (68th percentile)</string>
+    <string name="report_distance_range_10cm_gt_90p">Measurement Range at 10cm (90th percentile)</string>
+    <string name="report_distance_range_1m_gt_90p">Measurement Range at 1m (90th percentile)</string>
+    <string name="report_distance_range_3m_gt_90p">Measurement Range at 3m (90th percentile)</string>
+    <string name="report_distance_range_5m_gt_90p">Measurement Range at 5m (90th percentile)</string>
+    <string name="nan_precision">Nan Precision Test</string>
     <string name="wifi_nan">WiFi NAN</string>
 
     <!-- Strings for AudioMicrophoneMuteToggleActivity -->

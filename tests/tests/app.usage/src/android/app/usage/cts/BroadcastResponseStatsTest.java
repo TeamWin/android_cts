@@ -17,6 +17,9 @@
 package android.app.usage.cts;
 
 import static android.Manifest.permission.ACCESS_BROADCAST_RESPONSE_STATS;
+import static android.Manifest.permission.INTERNET;
+import static android.Manifest.permission.PACKAGE_USAGE_STATS;
+import static android.Manifest.permission.USE_EXACT_ALARM;
 import static android.app.usage.cts.UsageStatsTest.TEST_APP_CLASS;
 import static android.app.usage.cts.UsageStatsTest.TEST_APP_CLASS_BROADCAST_RECEIVER;
 import static android.app.usage.cts.UsageStatsTest.TEST_APP_CLASS_SERVICE;
@@ -35,6 +38,7 @@ import android.app.BroadcastOptions;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.UiAutomation;
+import android.app.role.RoleManager;
 import android.app.usage.BroadcastResponseStats;
 import android.app.usage.UsageStatsManager;
 import android.app.usage.cts.UsageStatsTest.TestServiceConnection;
@@ -44,6 +48,7 @@ import android.content.Intent;
 import android.graphics.drawable.Icon;
 import android.media.session.MediaSession;
 import android.os.Bundle;
+import android.os.Process;
 import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
@@ -76,6 +81,8 @@ public class BroadcastResponseStatsTest {
 
     private static final String TEST_APP3_PKG = "android.app.usage.cts.test3";
     private static final String TEST_APP4_PKG = "android.app.usage.cts.test4";
+    private static final String TEST_ASSIST_APP_PKG = "android.app.usage.cts.test.assist";
+    private static final String TEST_EXACT_ALARM_APP_PKG = "android.app.usage.cts.test.exactalarm";
 
     private static final long TEST_RESPONSE_STATS_ID_1 = 11;
     private static final long TEST_RESPONSE_STATS_ID_2 = 22;
@@ -107,6 +114,10 @@ public class BroadcastResponseStatsTest {
             "broadcast_sessions_with_response_duration_ms";
     private static final String KEY_NOTE_RESPONSE_EVENT_FOR_ALL_BROADCAST_SESSIONS =
             "note_response_event_for_all_broadcast_sessions";
+    private static final String KEY_BROADCAST_RESPONSE_EXEMPTED_ROLES =
+            "brodacast_response_exempted_roles";
+    private static final String KEY_BROADCAST_RESPONSE_EXEMPTED_PERMISSIONS =
+            "brodacast_response_exempted_permissions";
 
     private static Context sContext;
     private static String sTargetPackage;
@@ -1822,6 +1833,205 @@ public class BroadcastResponseStatsTest {
         }
     }
 
+    @AppModeFull(reason = "No broadcast message response stats in instant apps")
+    @Test
+    public void testBroadcastResponseStats_exemptedRole() throws Exception {
+        try (DeviceConfigStateHelper deviceConfigStateHelper =
+                new DeviceConfigStateHelper(NAMESPACE_APP_STANDBY)) {
+            updateFlagWithDelay(deviceConfigStateHelper,
+                    KEY_BROADCAST_RESPONSE_EXEMPTED_ROLES,
+                    RoleManager.ROLE_ASSISTANT);
+
+            assertResponseStats(TEST_ASSIST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                    0 /* broadcastCount */,
+                    0 /* notificationPostedCount */,
+                    0 /* notificationUpdatedCount */,
+                    0 /* notificationCancelledCount */);
+            assertResponseStats(TEST_ASSIST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                    0 /* broadcastCount */,
+                    0 /* notificationPostedCount */,
+                    0 /* notificationUpdatedCount */,
+                    0 /* notificationCancelledCount */);
+
+            final TestServiceConnection connection = bindToTestServiceAndGetConnection(
+                    TEST_ASSIST_APP_PKG);
+            try {
+                ITestReceiver testReceiver = connection.getITestReceiver();
+                testReceiver.cancelAll();
+
+                // Send a broadcast with a request to record response and verify broadcast-sent
+                // count gets incremented.
+                final Intent intent = new Intent().setComponent(new ComponentName(
+                        TEST_ASSIST_APP_PKG, TEST_APP_CLASS_BROADCAST_RECEIVER));
+                final BroadcastOptions options = BroadcastOptions.makeBasic();
+                options.recordResponseEventWhileInBackground(TEST_RESPONSE_STATS_ID_1);
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+
+                testReceiver.createNotificationChannel(TEST_NOTIFICATION_CHANNEL_ID,
+                        TEST_NOTIFICATION_CHANNEL_NAME,
+                        TEST_NOTIFICATION_CHANNEL_DESC);
+                testReceiver.postNotification(TEST_NOTIFICATION_ID_1,
+                        buildMediaNotification(TEST_NOTIFICATION_CHANNEL_ID, TEST_NOTIFICATION_ID_1,
+                                TEST_NOTIFICATION_TEXT_1));
+
+                assertResponseStats(TEST_ASSIST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        1 /* broadcastCount */,
+                        1 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+
+                addAssistRoleHolder(TEST_ASSIST_APP_PKG, Process.myUserHandle().getIdentifier());
+
+                // Since the assistant role is exempted and the test app holds assist role,
+                // broadcast response stats for it would not be recorded.
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+                testReceiver.postNotification(TEST_NOTIFICATION_ID_1,
+                        buildMediaNotification(TEST_NOTIFICATION_CHANNEL_ID, TEST_NOTIFICATION_ID_1,
+                                TEST_NOTIFICATION_TEXT_2));
+
+                assertResponseStats(TEST_ASSIST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        1 /* broadcastCount */,
+                        1 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+
+                // Remove the assistant role from exempted roles and verify broadcast
+                // response stats for the test app are recorded.
+                updateFlagWithDelay(deviceConfigStateHelper,
+                        KEY_BROADCAST_RESPONSE_EXEMPTED_ROLES,
+                        String.join("|", RoleManager.ROLE_BROWSER, RoleManager.ROLE_EMERGENCY));
+
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+                testReceiver.cancelNotification(TEST_NOTIFICATION_ID_1);
+
+                assertResponseStats(TEST_ASSIST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        2 /* broadcastCount */,
+                        1 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        1 /* notificationCancelledCount */);
+
+                // Add the assistant role to the list of exempted roles and verify broadcast
+                // response stats for the test app are not recorded.
+                updateFlagWithDelay(deviceConfigStateHelper,
+                        KEY_BROADCAST_RESPONSE_EXEMPTED_ROLES,
+                        String.join("|", RoleManager.ROLE_BROWSER, RoleManager.ROLE_EMERGENCY,
+                                RoleManager.ROLE_ASSISTANT));
+
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+                testReceiver.postNotification(TEST_NOTIFICATION_ID_1,
+                        buildMediaNotification(TEST_NOTIFICATION_CHANNEL_ID, TEST_NOTIFICATION_ID_1,
+                                TEST_NOTIFICATION_TEXT_1));
+
+                assertResponseStats(TEST_ASSIST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        2 /* broadcastCount */,
+                        1 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        1 /* notificationCancelledCount */);
+            } finally {
+                removeAssistRoleHolder(TEST_ASSIST_APP_PKG, Process.myUserHandle().getIdentifier());
+                connection.unbind();
+            }
+        }
+    }
+
+    @AppModeFull(reason = "No broadcast message response stats in instant apps")
+    @Test
+    public void testBroadcastResponseStats_exemptedPermission() throws Exception {
+        try (DeviceConfigStateHelper deviceConfigStateHelper =
+                     new DeviceConfigStateHelper(NAMESPACE_APP_STANDBY)) {
+
+            assertResponseStats(TEST_EXACT_ALARM_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                    0 /* broadcastCount */,
+                    0 /* notificationPostedCount */,
+                    0 /* notificationUpdatedCount */,
+                    0 /* notificationCancelledCount */);
+            assertResponseStats(TEST_EXACT_ALARM_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                    0 /* broadcastCount */,
+                    0 /* notificationPostedCount */,
+                    0 /* notificationUpdatedCount */,
+                    0 /* notificationCancelledCount */);
+
+            final TestServiceConnection connection = bindToTestServiceAndGetConnection(
+                    TEST_EXACT_ALARM_APP_PKG);
+            try {
+                ITestReceiver testReceiver = connection.getITestReceiver();
+                testReceiver.cancelAll();
+
+                // Send a broadcast with a request to record response and verify broadcast-sent
+                // count gets incremented.
+                final Intent intent = new Intent().setComponent(new ComponentName(
+                        TEST_EXACT_ALARM_APP_PKG, TEST_APP_CLASS_BROADCAST_RECEIVER));
+                final BroadcastOptions options = BroadcastOptions.makeBasic();
+                options.recordResponseEventWhileInBackground(TEST_RESPONSE_STATS_ID_1);
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+
+                testReceiver.createNotificationChannel(TEST_NOTIFICATION_CHANNEL_ID,
+                        TEST_NOTIFICATION_CHANNEL_NAME,
+                        TEST_NOTIFICATION_CHANNEL_DESC);
+                testReceiver.postNotification(TEST_NOTIFICATION_ID_1,
+                        buildMediaNotification(TEST_NOTIFICATION_CHANNEL_ID, TEST_NOTIFICATION_ID_1,
+                                TEST_NOTIFICATION_TEXT_1));
+
+                assertResponseStats(TEST_EXACT_ALARM_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        1 /* broadcastCount */,
+                        1 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+
+                // Add USE_EXACT_ALARM to the list of exempted permissions and verify
+                // broadcast response stats for the test app are not recorded.
+                updateFlagWithDelay(deviceConfigStateHelper,
+                        KEY_BROADCAST_RESPONSE_EXEMPTED_PERMISSIONS,
+                        USE_EXACT_ALARM);
+
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+                testReceiver.postNotification(TEST_NOTIFICATION_ID_1,
+                        buildMediaNotification(TEST_NOTIFICATION_CHANNEL_ID, TEST_NOTIFICATION_ID_1,
+                                TEST_NOTIFICATION_TEXT_2));
+
+                assertResponseStats(TEST_EXACT_ALARM_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        1 /* broadcastCount */,
+                        1 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+
+                // Remove USE_EXACT_ALARM from the list of exempted permissions and verify
+                // broadcast response stats for the test app are recorded.
+                updateFlagWithDelay(deviceConfigStateHelper,
+                        KEY_BROADCAST_RESPONSE_EXEMPTED_PERMISSIONS,
+                        String.join("|", PACKAGE_USAGE_STATS, INTERNET));
+
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+                testReceiver.cancelNotification(TEST_NOTIFICATION_ID_1);
+
+                assertResponseStats(TEST_EXACT_ALARM_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        2 /* broadcastCount */,
+                        1 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        1 /* notificationCancelledCount */);
+
+                // Add USE_EXACT_ALARM to the list of exempted permissions again and verify
+                // broadcast response stats for the test app are not recorded.
+                updateFlagWithDelay(deviceConfigStateHelper,
+                        KEY_BROADCAST_RESPONSE_EXEMPTED_PERMISSIONS,
+                        String.join("|", PACKAGE_USAGE_STATS, INTERNET, USE_EXACT_ALARM));
+
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+                testReceiver.postNotification(TEST_NOTIFICATION_ID_1,
+                        buildMediaNotification(TEST_NOTIFICATION_CHANNEL_ID, TEST_NOTIFICATION_ID_1,
+                                TEST_NOTIFICATION_TEXT_1));
+
+                assertResponseStats(TEST_EXACT_ALARM_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        2 /* broadcastCount */,
+                        1 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        1 /* notificationCancelledCount */);
+            } finally {
+                connection.unbind();
+            }
+        }
+    }
+
     private void updateFlagWithDelay(DeviceConfigStateHelper deviceConfigStateHelper,
             String key, String value) {
         deviceConfigStateHelper.set(key, value);
@@ -1975,6 +2185,18 @@ public class BroadcastResponseStatsTest {
         if (!latch.await(DEFAULT_TIMEOUT_MS, TimeUnit.SECONDS)) {
             fail("Timed out waiting for the test app activity to be resumed");
         }
+    }
+
+    protected void addAssistRoleHolder(String pkgName, int userId) throws Exception {
+        final String cmd = String.format("cmd role add-role-holder "
+                + "--user %d android.app.role.ASSISTANT %s", userId, pkgName);
+        SystemUtil.runShellCommand(cmd);
+    }
+
+    protected void removeAssistRoleHolder(String pkgName, int userId) throws Exception {
+        final String cmd = String.format("cmd role remove-role-holder "
+                + "--user %d android.app.role.ASSISTANT %s", userId, pkgName);
+        SystemUtil.runShellCommand(cmd);
     }
 
     private void wakeUpAndDismissKeyguard() throws Exception {

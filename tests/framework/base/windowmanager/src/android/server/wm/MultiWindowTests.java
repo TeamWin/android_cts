@@ -37,6 +37,7 @@ import static android.server.wm.app27.Components.SDK_27_SEPARATE_PROCESS_ACTIVIT
 import static android.server.wm.app27.Components.SDK_27_TEST_ACTIVITY;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -479,7 +480,7 @@ public class MultiWindowTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testDisallowHierarchyOperationWhenInLockedTask() {
+    public void testDisallowReparentOperationWhenInLockedTask() {
         launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         launchActivity(LAUNCHING_ACTIVITY, WINDOWING_MODE_MULTI_WINDOW);
         final WindowManagerState.Task task = mWmState
@@ -562,5 +563,53 @@ public class MultiWindowTests extends ActivityManagerTestBase {
         mWmState.computeState(new WaitForValidActivityState(TRANSLUCENT_TEST_ACTIVITY));
         mWmState.assertVisibility(TRANSLUCENT_TEST_ACTIVITY, true);
         mWmState.assertVisibility(TEST_ACTIVITY_WITH_SAME_AFFINITY, true);
+    }
+
+    /**
+     * Ensure that the hierarchy operation : reorder is not allowed if the target task is violated
+     * the lock-task policy.
+     */
+    @Test
+    public void testDisallowReOrderOperationWhenInLockedTask() {
+        // Start LaunchingActivity and testActivity in two separate tasks.
+        launchActivity(LAUNCHING_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        waitAndAssertResumedActivity(TEST_ACTIVITY, "Activity must be resumed");
+
+        final int taskId = mWmState.getTaskByActivity(TEST_ACTIVITY).mTaskId;
+        final int taskId2 = mWmState.getTaskByActivity(LAUNCHING_ACTIVITY).mTaskId;
+        // Make sure the launching activity and the test activity are not in the same task.
+        assertNotEquals("Activity must be in different task.", taskId, taskId2);
+
+        try {
+            runWithShellPermission(() -> {
+                mAtm.startSystemLockTaskMode(taskId);
+            });
+            waitForOrFail("Fail to enter locked task mode", () ->
+                    mAm.getLockTaskModeState() != LOCK_TASK_MODE_NONE);
+
+            boolean gotAssertionError = false;
+            try {
+                runWithShellPermission(() -> {
+                    final WindowContainerToken token =
+                            mTaskOrganizer.getTaskInfo(taskId2).getToken();
+
+                    // Verify performing reorder operation is no operation.
+                    final WindowContainerTransaction wct = new WindowContainerTransaction()
+                            .reorder(token, true /* onTop */);
+                    mTaskOrganizer.applyTransaction(wct);
+                    waitForOrFail("Fail to reorder", () ->
+                            mTaskOrganizer.getTaskInfo(taskId2).isVisible());
+                });
+            } catch (AssertionError e) {
+                gotAssertionError = true;
+            }
+            assertTrue("Not allowed to perform reorder operation while in locked task mode.",
+                    gotAssertionError);
+        } finally {
+            runWithShellPermission(() -> {
+                mAtm.stopSystemLockTaskMode();
+            });
+        }
     }
 }

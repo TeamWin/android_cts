@@ -33,10 +33,11 @@ import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionId
 import com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject
 import com.android.safetycenter.internaldata.SafetyCenterIds
 import com.android.safetycenter.internaldata.SafetyCenterIssueId
+import com.android.safetycenter.internaldata.SafetyCenterIssueKey
 import org.junit.Assert
 
 object SafetyCenterUtils {
-    /** Name of the flag that determines whether SafetyCenter is enabled.  */
+    /** Name of the flag that determines whether SafetyCenter is enabled. */
     const val PROPERTY_SAFETY_CENTER_ENABLED = "safety_center_is_enabled"
 
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -48,14 +49,10 @@ object SafetyCenterUtils {
             Resources.getSystem().getIdentifier("config_enableSafetyCenter", "bool", "android"))
     }
 
-    /**
-     * Enabled or disable Safety Center
-     */
+    /** Enabled or disable Safety Center */
     @JvmStatic
     fun setSafetyCenterEnabled(enabled: Boolean) {
-        setDeviceConfigPrivacyProperty(
-            PROPERTY_SAFETY_CENTER_ENABLED, enabled.toString()
-        )
+        setDeviceConfigPrivacyProperty(PROPERTY_SAFETY_CENTER_ENABLED, enabled.toString())
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -64,8 +61,7 @@ object SafetyCenterUtils {
         context.startActivity(
             Intent(Intent.ACTION_SAFETY_CENTER)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        )
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK))
     }
 
     @JvmStatic
@@ -81,12 +77,12 @@ object SafetyCenterUtils {
         uiAutomation: UiAutomation = instrumentation.uiAutomation
     ) {
         runWithShellPermissionIdentity(uiAutomation) {
-            val valueWasSet = DeviceConfig.setProperty(
-                DeviceConfig.NAMESPACE_PRIVACY, /* name = */
-                propertyName, /* value = */
-                value, /* makeDefault = */
-                false
-            )
+            val valueWasSet =
+                DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_PRIVACY,
+                    /* name = */ propertyName,
+                    /* value = */ value,
+                    /* makeDefault = */ false)
             check(valueWasSet) { "Could not set $propertyName to $value" }
         }
     }
@@ -95,8 +91,8 @@ object SafetyCenterUtils {
     private fun getSafetyCenterIssues(
         automation: UiAutomation = instrumentation.uiAutomation
     ): List<SafetyCenterIssue> {
-        val safetyCenterManager = instrumentation.targetContext.getSystemService(
-            SafetyCenterManager::class.java)
+        val safetyCenterManager =
+            instrumentation.targetContext.getSystemService(SafetyCenterManager::class.java)
         val issues = ArrayList<SafetyCenterIssue>()
         runWithShellPermissionIdentity(automation) {
             val safetyCenterData = safetyCenterManager!!.safetyCenterData
@@ -109,33 +105,37 @@ object SafetyCenterUtils {
     fun assertSafetyCenterIssueExist(
         sourceId: String,
         issueId: String,
+        issueTypeId: String,
         automation: UiAutomation = instrumentation.uiAutomation
     ) {
-        val safetyCenterIssueId = safetyCenterIssueId(sourceId, issueId)
+        val safetyCenterIssueId = safetyCenterIssueId(sourceId, issueId, issueTypeId)
         Assert.assertTrue(
             "Expect issues in safety center",
-            getSafetyCenterIssues(automation).any { safetyCenterIssueId == it.id }
-        )
+            getSafetyCenterIssues(automation).any { safetyCenterIssueId == it.id })
     }
 
     @JvmStatic
     fun assertSafetyCenterIssueDoesNotExist(
         sourceId: String,
         issueId: String,
+        issueTypeId: String,
         automation: UiAutomation = instrumentation.uiAutomation
     ) {
-        val safetyCenterIssueId = safetyCenterIssueId(sourceId, issueId)
+        val safetyCenterIssueId = safetyCenterIssueId(sourceId, issueId, issueTypeId)
         Assert.assertTrue(
             "Expect no issue in safety center",
-            getSafetyCenterIssues(automation).none { safetyCenterIssueId == it.id }
-        )
+            getSafetyCenterIssues(automation).none { safetyCenterIssueId == it.id })
     }
 
-    private fun safetyCenterIssueId(sourceId: String, sourceIssueId: String) =
+    private fun safetyCenterIssueId(sourceId: String, sourceIssueId: String, issueTypeId: String) =
         SafetyCenterIds.encodeToString(
             SafetyCenterIssueId.newBuilder()
-                .setSafetySourceId(sourceId)
-                .setSafetySourceIssueId(sourceIssueId)
-                .setUserId(UserHandle.myUserId())
+                .setSafetyCenterIssueKey(
+                    SafetyCenterIssueKey.newBuilder()
+                        .setSafetySourceId(sourceId)
+                        .setSafetySourceIssueId(sourceIssueId)
+                        .setUserId(UserHandle.myUserId())
+                        .build())
+                .setIssueTypeId(issueTypeId)
                 .build())
 }

@@ -44,10 +44,7 @@ public class MultiCodecPerfTestBase {
     static final int REQUIRED_MIN_CONCURRENT_INSTANCES = 6;
     static final int REQUIRED_MIN_CONCURRENT_INSTANCES_FOR_VP9 = 2;
     static final int REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES = 2;
-    // allowed tolerance in measured fps vs expected fps in percentage, i.e. codecs achieving fps
-    // that is greater than (FPS_TOLERANCE_FACTOR * expectedFps) will be considered as
-    // passing the test
-    static final double FPS_TOLERANCE_FACTOR = 0.95;
+
     static ArrayList<String> mMimeList = new ArrayList<>();
     static Map<String, String> mTestFiles = new HashMap<>();
     static Map<String, String> m720pTestFiles = new HashMap<>();
@@ -88,8 +85,6 @@ public class MultiCodecPerfTestBase {
     String mMime;
     String mTestFile;
     final boolean mIsAsync;
-
-    double mMaxFrameRate;
 
     @Before
     public void isPerformanceClassCandidate() {
@@ -168,9 +163,6 @@ public class MultiCodecPerfTestBase {
         int minOfMaxFrameRates = maxFrameRates[0];
         int minOfMaxMacroBlockRates = maxMacroBlockRates[0];
 
-        // Allow a tolerance in expected frame rate
-        mMaxFrameRate = minOfMaxFrameRates * FPS_TOLERANCE_FACTOR;
-
         // Calculate how many 30fps max instances it can support from it's mMaxFrameRate
         // amd maxMacroBlockRate. (assuming 16x16 macroblocks)
         return Math.min(minOfMaxInstances, Math.min((int) (minOfMaxFrameRates / 30.0),
@@ -202,22 +194,5 @@ public class MultiCodecPerfTestBase {
                 FEATURE_SecurePlayback);
         codec.release();
         return isSecureSupported;
-    }
-
-    boolean codecSupportsPP(String codecName, String mime, PerformancePoint reqPP)
-            throws IOException {
-        MediaCodec codec = MediaCodec.createByCodecName(codecName);
-        List<PerformancePoint> suppPPs =
-                codec.getCodecInfo().getCapabilitiesForType(mime).getVideoCapabilities()
-                        .getSupportedPerformancePoints();
-        assertTrue("Performance point not published by codec: " + codecName, suppPPs != null);
-        boolean codecSupportsReqPP = false;
-        for (PerformancePoint pp : suppPPs) {
-            if (pp.covers(reqPP)) {
-                codecSupportsReqPP = true;
-            }
-        }
-        codec.release();
-        return codecSupportsReqPP;
     }
 }
