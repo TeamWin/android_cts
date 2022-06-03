@@ -183,8 +183,9 @@ public class PhotoCaptureActivity extends Activity
                     SelectableResolution resolution = mSupportedResolutions.get(position);
                     switchToCamera(resolution, false);
 
-                    // It should be guaranteed that the FOV is correctly updated after setParameters().
-                    mReportedFovPrePictureTaken = mCamera.getParameters().getHorizontalViewAngle();
+                    // It should be guaranteed that the FOV is correctly updated after
+                    // setParameters().
+                    mReportedFovPrePictureTaken = getCameraFov(resolution.cameraId);
 
                     mResolutionSpinnerIndex = position;
                     startPreview();
@@ -271,8 +272,8 @@ public class PhotoCaptureActivity extends Activity
     @Override
     public void onPictureTaken(byte[] data, Camera camera) {
         File pictureFile = getPictureFile(this);
-        Camera.Parameters params = mCamera.getParameters();
-        mReportedFovDegrees = params.getHorizontalViewAngle();
+
+        mReportedFovDegrees = getCameraFov(mSelectedResolution.cameraId);
 
         // Show error if FOV does not match the value reported before takePicture().
         if (mReportedFovPrePictureTaken != mReportedFovDegrees) {
@@ -561,21 +562,25 @@ public class PhotoCaptureActivity extends Activity
         return result;
     }
 
+    private int getDisplayRotation() {
+        int displayRotation = getDisplay().getRotation();
+        int displayRotationDegrees = 0;
+        switch (displayRotation) {
+            case Surface.ROTATION_0: displayRotationDegrees = 0; break;
+            case Surface.ROTATION_90: displayRotationDegrees = 90; break;
+            case Surface.ROTATION_180: displayRotationDegrees = 180; break;
+            case Surface.ROTATION_270: displayRotationDegrees = 270; break;
+        }
+        return displayRotationDegrees;
+    }
+
     private void calculateOrientations(Activity activity,
             int cameraId, android.hardware.Camera camera) {
         android.hardware.Camera.CameraInfo info =
                 new android.hardware.Camera.CameraInfo();
         android.hardware.Camera.getCameraInfo(cameraId, info);
-        int rotation = activity.getWindowManager().getDefaultDisplay()
-                .getRotation();
-        int degrees = 0;
-        switch (rotation) {
-            case Surface.ROTATION_0: degrees = 0; break;
-            case Surface.ROTATION_90: degrees = 90; break;
-            case Surface.ROTATION_180: degrees = 180; break;
-            case Surface.ROTATION_270: degrees = 270; break;
-        }
 
+        int degrees = getDisplayRotation();
         if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
             mJpegOrientation = (info.orientation + degrees) % 360;
             mPreviewOrientation = (360 - mJpegOrientation) % 360;  // compensate the mirror
@@ -602,5 +607,13 @@ public class PhotoCaptureActivity extends Activity
                     ": " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
         return false;
+    }
+
+    private float getCameraFov(int cameraId) {
+        if (mPreviewOrientation == 0 || mPreviewOrientation == 180) {
+            return mCamera.getParameters().getHorizontalViewAngle();
+        } else {
+            return mCamera.getParameters().getVerticalViewAngle();
+        }
     }
 }
