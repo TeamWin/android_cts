@@ -16,9 +16,7 @@
 package com.android.compatibility.common.deviceinfo
 
 import android.content.Context
-
 import androidx.test.core.app.ApplicationProvider
-
 import com.android.compatibility.common.util.DeviceConfigStateManager
 import com.android.compatibility.common.util.DeviceInfoStore
 
@@ -35,10 +33,11 @@ public final class InputDeviceInfo : DeviceInfo() {
         collectInputInfo(store, "input")
     }
 
-    private fun readDeviceConfig(namespace: String, name: String): String {
+    private fun readDeviceConfig(namespace: String, name: String, default: String): String {
         val context: Context = ApplicationProvider.getApplicationContext()
         val stateManager = DeviceConfigStateManager(context, namespace, name)
-        return stateManager.get()!!
+        val value = stateManager.get()
+        return if (value != null) value else default
     }
 
     /**
@@ -47,9 +46,14 @@ public final class InputDeviceInfo : DeviceInfo() {
     private fun collectInputInfo(store: DeviceInfoStore, groupName: String) {
         store.startGroup(groupName)
 
-        val palmRejectionValue = readDeviceConfig("input_native_boot", "palm_rejection_enabled")
+        val palmRejectionValue = readDeviceConfig("input_native_boot", "palm_rejection_enabled", "")
         val palmRejectionEnabled = palmRejectionValue == "1" || palmRejectionValue == "true"
         store.addResult("palm_rejection_enabled", palmRejectionEnabled)
+
+        val velocityTrackerStrategyValue = readDeviceConfig(
+            "input_native_boot", "velocitytracker_strategy", "default"
+        )
+        store.addResult("velocitytracker_strategy", velocityTrackerStrategyValue)
 
         store.endGroup()
     }
