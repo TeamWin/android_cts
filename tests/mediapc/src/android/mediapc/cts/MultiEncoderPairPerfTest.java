@@ -103,7 +103,7 @@ public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
 
         boolean hasVP9 = mFirstPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9) ||
                 mSecondPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9);
-        int requiredMinInstances = getRequiredMinConcurrentInstances(hasVP9);
+        int requiredMinInstances = getRequiredMinConcurrentInstances720p(hasVP9);
         testCodec(720, 1280, 4000000, requiredMinInstances);
     }
 
@@ -127,7 +127,7 @@ public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
         mimeEncoderPairs.add(mFirstPair);
         mimeEncoderPairs.add(mSecondPair);
         int maxInstances = checkAndGetMaxSupportedInstancesForCodecCombinations(height, width,
-                mimeEncoderPairs);
+                mimeEncoderPairs, requiredMinInstances);
         double achievedFrameRate = 0.0;
         if (maxInstances >= requiredMinInstances) {
             int secondPairInstances = maxInstances / 2;

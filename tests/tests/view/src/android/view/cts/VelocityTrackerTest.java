@@ -18,6 +18,7 @@ package android.view.cts;
 
 import static org.junit.Assert.fail;
 
+import android.os.StrictMode;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.InputDevice;
@@ -65,6 +66,15 @@ public class VelocityTrackerTest {
         mVy = 0;
         mAx = 0;
         mAy = 0;
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                .detectAll()
+                .penaltyLog()
+                .build());
+        StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+                .detectAll()
+                .penaltyLog()
+                .penaltyDeath()
+                .build());
     }
 
     @After

@@ -96,7 +96,7 @@ public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
         Assume.assumeFalse("Skipping regular performance tests for secure codecs",
                 isSecureSupportedCodec(mDecoderName, mMime));
         boolean hasVP9 = mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP9);
-        int requiredMinInstances = getRequiredMinConcurrentInstances(hasVP9);
+        int requiredMinInstances = getRequiredMinConcurrentInstances720p(hasVP9);
         testCodec(m720pTestFiles, 720, 1280, requiredMinInstances);
     }
 
@@ -130,7 +130,7 @@ public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
         boolean isSecure = isSecureSupportedCodec(mDecoderName, mMime);
         int maxInstances =
                 checkAndGetMaxSupportedInstancesForCodecCombinations(height, width,
-                        mimeDecoderPairs);
+                        mimeDecoderPairs, requiredMinInstances);
         double achievedFrameRate = 0.0;
         if (maxInstances >= requiredMinInstances) {
             ExecutorService pool = Executors.newFixedThreadPool(maxInstances);

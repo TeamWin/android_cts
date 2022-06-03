@@ -786,6 +786,7 @@ public class TestHelper {
                     // be the primary connection.
                     if (mWifiManager.isStaConcurrencyForLocalOnlyConnectionsSupported()) {
                         assertThat(wifiInfo.isPrimary()).isFalse();
+                        assertConnectionEquals(network, mWifiManager.getConnectionInfo());
                     } else {
                         assertThat(wifiInfo.isPrimary()).isTrue();
                     }

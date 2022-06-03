@@ -449,8 +449,10 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
         mInstrumentation.waitForIdleSync();
         assertTrue(mTvView.isFocused());
 
-        verifyKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_GUIDE), unhandledEvent);
-        verifyKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_GUIDE), unhandledEvent);
+        verifyKeyEvent(
+                new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_16), unhandledEvent);
+        verifyKeyEvent(
+                new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_16), unhandledEvent);
     }
 
     public void testConnectionFailed() throws Throwable {

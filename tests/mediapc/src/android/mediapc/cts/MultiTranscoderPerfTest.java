@@ -115,7 +115,7 @@ public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
 
         boolean hasVP9 = mDecoderPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9)
                 || mEncoderPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9);
-        int requiredMinInstances = getRequiredMinConcurrentInstances(hasVP9) / 2;
+        int requiredMinInstances = getRequiredMinConcurrentInstances720p(hasVP9);
         testCodec(m720pTestFiles, 720, 1280, requiredMinInstances);
     }
 
@@ -131,7 +131,7 @@ public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
     @CddTest(requirement = "2.2.7.1/5.1/H-1-5,H-1-6")
     public void test1080p() throws Exception {
         Assume.assumeTrue(Utils.isTPerfClass() || !Utils.isPerfClass());
-        testCodec(m1080pTestFiles, 1080, 1920, REQUIRED_MIN_CONCURRENT_INSTANCES / 2);
+        testCodec(m1080pTestFiles, 1080, 1920, REQUIRED_MIN_CONCURRENT_INSTANCES);
     }
 
     private void testCodec(Map<String, String> testFiles, int height, int width,
@@ -141,7 +141,8 @@ public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
         mimeCodecPairs.add(mDecoderPair);
         mimeCodecPairs.add(mEncoderPair);
         int maxInstances =
-                checkAndGetMaxSupportedInstancesForCodecCombinations(height, width, mimeCodecPairs);
+                checkAndGetMaxSupportedInstancesForCodecCombinations(height, width, mimeCodecPairs,
+                        requiredMinInstances);
         double achievedFrameRate = 0.0;
         if (maxInstances >= requiredMinInstances) {
             ExecutorService pool =
