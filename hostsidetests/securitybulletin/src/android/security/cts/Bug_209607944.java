@@ -17,9 +17,11 @@
 package android.security.cts;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNoException;
 
 import android.platform.test.annotations.AsbSecurityTest;
 
+import com.android.tradefed.targetprep.TargetSetupError;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -38,7 +40,14 @@ public class Bug_209607944 extends SecurityTestCase {
     @Test
     @AsbSecurityTest(cveBugId = 209607944)
     public void testBug_209607944() throws Exception {
-        installPackage(TEST_APP);
+        try {
+            installPackage(TEST_APP);
+        } catch (TargetSetupError e) {
+            if (e.getMessage().contains("INSTALL_PARSE_FAILED_MANIFEST_MALFORMED")) {
+                assumeNoException("Installation blocked by b/213323615", e);
+            }
+            throw e;
+        }
         /* Ensure the permission is revoked before test */
         AdbUtils.runCommandLine("pm revoke " + TEST_PKG + " " + TARGET_PERMISSION, getDevice());
         /* Launch the test app, and it would try to request the permission */
