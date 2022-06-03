@@ -20,9 +20,9 @@ import time
 
 from mobly import test_runner
 
+import its_base_test
 import camera_properties_utils
 import image_processing_utils
-import its_base_test
 import its_session_utils
 import sensor_fusion_utils
 import video_processing_utils
@@ -86,7 +86,7 @@ def _collect_data(cam, video_size, rot_rig):
   return recording_obj
 
 
-class PreviewStabilityTest(its_base_test.ItsBaseTest):
+class PreviewStabilizationTest(its_base_test.ItsBaseTest):
   """Tests if preview is stabilized.
 
   Camera is moved in sensor fusion rig on an arc of 15 degrees.
@@ -115,7 +115,7 @@ class PreviewStabilityTest(its_base_test.ItsBaseTest):
       camera_properties_utils.skip_unless(
           first_api_level >= its_session_utils.ANDROID13_API_LEVEL,
           'First API level should be {} or higher. Found {}.'.format(
-            its_session_utils.ANDROID13_API_LEVEL, first_api_level))
+              its_session_utils.ANDROID13_API_LEVEL, first_api_level))
 
       supported_stabilization_modes = props[
           'android.control.availableVideoStabilizationModes'
@@ -124,7 +124,7 @@ class PreviewStabilityTest(its_base_test.ItsBaseTest):
       camera_properties_utils.skip_unless(
           supported_stabilization_modes is not None
           and _PREVIEW_STABILIZATION_MODE_PREVIEW
-              in supported_stabilization_modes,
+          in supported_stabilization_modes,
           'Preview Stabilization not supported',
       )
 
@@ -140,6 +140,7 @@ class PreviewStabilityTest(its_base_test.ItsBaseTest):
 
       # List of video resolutions to test
       supported_preview_sizes = cam.get_supported_preview_sizes(self.camera_id)
+      supported_preview_sizes.remove(video_processing_utils.QCIF_SIZE)
       logging.debug('Supported preview resolutions: %s',
                     supported_preview_sizes)
 
@@ -201,10 +202,9 @@ class PreviewStabilityTest(its_base_test.ItsBaseTest):
             sensor_fusion_utils.calc_max_rotation_angle(gyro_rots, 'Gyro')
         )
         logging.debug(
-            'Max deflection (degrees): gyro: %.2f, camera: %.2f',
-            max_gyro_angles[-1],
-            max_camera_angles[-1],
-        )
+            'Max deflection (degrees) %s: video: %.3f, gyro: %.3f ratio: %.4f',
+            video_size, max_camera_angles[-1], max_gyro_angles[-1],
+            max_camera_angles[-1] / max_gyro_angles[-1])
 
         # Assert phone is moved enough during test
         if max_gyro_angles[-1] < _MIN_PHONE_MOVEMENT_ANGLE:
@@ -218,9 +218,10 @@ class PreviewStabilityTest(its_base_test.ItsBaseTest):
         if max_camera_angle >= max_gyro_angles[i] * _VIDEO_STABILIZATION_FACTOR:
           test_failures.append(
               f'{supported_preview_sizes[i]} video not stabilized enough! '
-              f'Max gyro angle: {max_gyro_angles[i]:.2f}, Max camera angle: '
-              f'{max_camera_angle:.2f}, stabilization factor THRESH: '
-              f'{_VIDEO_STABILIZATION_FACTOR}.')
+              f'Max video angle:  {max_camera_angle:.3f}, '
+              f'Max gyro angle: {max_gyro_angles[i]:.3f}, '
+              f'ratio: {max_camera_angle/max_gyro_angles[i]:.4f} '
+              f'THRESH: {_VIDEO_STABILIZATION_FACTOR}.')
 
       if test_failures:
         raise AssertionError(test_failures)
