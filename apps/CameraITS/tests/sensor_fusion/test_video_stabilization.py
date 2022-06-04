@@ -22,9 +22,9 @@ import time
 from mobly import test_runner
 import numpy as np
 
+import its_base_test
 import camera_properties_utils
 import image_processing_utils
-import its_base_test
 import its_session_utils
 import sensor_fusion_utils
 import video_processing_utils
@@ -115,7 +115,7 @@ def _collect_data(cam, video_profile, video_quality, rot_rig):
   return recording_obj
 
 
-class VideoStabilityTest(its_base_test.ItsBaseTest):
+class VideoStabilizationTest(its_base_test.ItsBaseTest):
   """Tests if video is stabilized.
 
   Camera is moved in sensor fusion rig on an arc of 15 degrees.
@@ -220,8 +220,10 @@ class VideoStabilityTest(its_base_test.ItsBaseTest):
         gyro_rots = _conv_acceleration_to_movement(gyro_events)
         max_gyro_angles.append(sensor_fusion_utils.calc_max_rotation_angle(
             gyro_rots, 'Gyro'))
-        logging.debug('Max deflection (degrees): gyro: %.2f, camera: %.2f',
-                      max_gyro_angles[-1], max_camera_angles[-1])
+        logging.debug(
+            'Max deflection (degrees) %s: video: %.3f, gyro: %.3f, ratio: %.4f',
+            video_quality, max_camera_angles[-1], max_gyro_angles[-1],
+            max_camera_angles[-1] / max_gyro_angles[-1])
 
         # Assert phone is moved enough during test
         if max_gyro_angles[-1] < _MIN_PHONE_MOVEMENT_ANGLE:
@@ -235,9 +237,10 @@ class VideoStabilityTest(its_base_test.ItsBaseTest):
         if max_camera_angle >= max_gyro_angles[i] * _VIDEO_STABILIZATION_FACTOR:
           test_failures.append(
               f'{tested_video_qualities[i]} video not stabilized enough! '
-              f'Max gyro angle: {max_gyro_angles[i]:.2f}, Max camera angle: '
-              f'{max_camera_angle:.2f}, stabilization factor THRESH: '
-              f'{_VIDEO_STABILIZATION_FACTOR}.')
+              f'Max video angle: {max_camera_angle:.3f}, '
+              f'Max gyro angle: {max_gyro_angles[i]:.3f}, '
+              f'ratio: {max_camera_angle}/{max_gyro_angles[-1]:.3f}, '
+              f'THRESH: {_VIDEO_STABILIZATION_FACTOR}.')
       if test_failures:
         raise AssertionError(test_failures)
 

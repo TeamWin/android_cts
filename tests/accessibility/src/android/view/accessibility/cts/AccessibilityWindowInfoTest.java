@@ -99,6 +99,7 @@ public class AccessibilityWindowInfoTest {
         Region region = new Region();
         w.getRegionInScreen(region);
         assertTrue(region.isEmpty());
+        assertEquals(0, w.getTransitionTimeMillis());
 
         try {
             w.getChild(0);
@@ -140,6 +141,7 @@ public class AccessibilityWindowInfoTest {
         w1.getRegionInScreen(regions1);
         w2.getRegionInScreen(regions2);
         equality &= regions1.equals(regions2);
+        equality &= w1.getTransitionTimeMillis() == w2.getTransitionTimeMillis();
         return equality;
     }
 }

@@ -17,6 +17,7 @@
 package android.bluetooth.cts;
 
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
+import static android.Manifest.permission.BLUETOOTH_PRIVILEGED;
 import static android.bluetooth.BluetoothDevice.ACCESS_ALLOWED;
 import static android.bluetooth.BluetoothDevice.ACCESS_REJECTED;
 import static android.bluetooth.BluetoothDevice.ACCESS_UNKNOWN;
@@ -170,38 +171,6 @@ public class BluetoothDeviceTest extends AndroidTestCase {
         assertEquals(BluetoothDevice.BATTERY_LEVEL_BLUETOOTH_OFF, mFakeDevice.getBatteryLevel());
     }
 
-    public void test_getMessageAccessPermission() {
-        if (!mHasBluetooth || !mHasCompanionDevice) {
-            // Skip the test if bluetooth or companion device are not present.
-            return;
-        }
-
-        assertEquals(BluetoothDevice.ACCESS_UNKNOWN, mFakeDevice.getMessageAccessPermission());
-
-        mUiAutomation.dropShellPermissionIdentity();
-        assertThrows(SecurityException.class, () -> mFakeDevice.getMessageAccessPermission());
-        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
-
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-        assertEquals(BluetoothDevice.ACCESS_UNKNOWN, mFakeDevice.getMessageAccessPermission());
-    }
-
-    public void test_getPhonebookAccessPermission() {
-        if (!mHasBluetooth || !mHasCompanionDevice) {
-            // Skip the test if bluetooth or companion device are not present.
-            return;
-        }
-
-        assertEquals(BluetoothDevice.ACCESS_UNKNOWN, mFakeDevice.getPhonebookAccessPermission());
-
-        mUiAutomation.dropShellPermissionIdentity();
-        assertThrows(SecurityException.class, () -> mFakeDevice.getPhonebookAccessPermission());
-        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
-
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-        assertEquals(BluetoothDevice.ACCESS_UNKNOWN, mFakeDevice.getPhonebookAccessPermission());
-    }
-
     public void test_isBondingInitiatedLocally() {
         if (!mHasBluetooth || !mHasCompanionDevice) {
             // Skip the test if bluetooth or companion device are not present.
@@ -301,23 +270,6 @@ public class BluetoothDeviceTest extends AndroidTestCase {
         assertThrows(SecurityException.class, () -> mFakeDevice
                 .createBondOutOfBand(TRANSPORT_AUTO, data, null));
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
-    }
-
-    public void test_getSimAccessPermission() {
-        if (!mHasBluetooth || !mHasCompanionDevice) {
-            // Skip the test if bluetooth or companion device are not present.
-            return;
-        }
-
-        //Access is unknown as device is not bonded
-        assertEquals(ACCESS_UNKNOWN, mFakeDevice.getSimAccessPermission());
-
-        mUiAutomation.dropShellPermissionIdentity();
-        assertThrows(SecurityException.class, () -> mFakeDevice.getSimAccessPermission());
-        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
-
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-        assertEquals(ACCESS_UNKNOWN, mFakeDevice.getSimAccessPermission());
     }
 
     public void test_getUuids() {
@@ -423,7 +375,7 @@ public class BluetoothDeviceTest extends AndroidTestCase {
         assertFalse(mFakeDevice.fetchUuidsWithSdp(TRANSPORT_AUTO));
     }
 
-    public void test_setMessageAccessPermission() {
+    public void test_messageAccessPermission() {
         if (!mHasBluetooth || !mHasCompanionDevice) {
             // Skip the test if bluetooth or companion device are not present.
             return;
@@ -436,9 +388,19 @@ public class BluetoothDeviceTest extends AndroidTestCase {
                 .setMessageAccessPermission(ACCESS_UNKNOWN));
         assertThrows(SecurityException.class, () -> mFakeDevice
                 .setMessageAccessPermission(ACCESS_REJECTED));
+
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
+
+        // Should be able to set permissions after adopting the BLUETOOTH_PRIVILEGED permission
+        assertTrue(mFakeDevice.setMessageAccessPermission(ACCESS_UNKNOWN));
+        assertEquals(ACCESS_UNKNOWN, mFakeDevice.getMessageAccessPermission());
+        assertTrue(mFakeDevice.setMessageAccessPermission(ACCESS_ALLOWED));
+        assertEquals(ACCESS_ALLOWED, mFakeDevice.getMessageAccessPermission());
+        assertTrue(mFakeDevice.setMessageAccessPermission(ACCESS_REJECTED));
+        assertEquals(ACCESS_REJECTED, mFakeDevice.getMessageAccessPermission());
     }
 
-    public void test_setPhonebookAccessPermission() {
+    public void test_phonebookAccessPermission() {
         if (!mHasBluetooth || !mHasCompanionDevice) {
             // Skip the test if bluetooth or companion device are not present.
             return;
@@ -451,9 +413,19 @@ public class BluetoothDeviceTest extends AndroidTestCase {
                 .setPhonebookAccessPermission(ACCESS_UNKNOWN));
         assertThrows(SecurityException.class, () -> mFakeDevice
                 .setPhonebookAccessPermission(ACCESS_REJECTED));
+
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
+
+        // Should be able to set permissions after adopting the BLUETOOTH_PRIVILEGED permission
+        assertTrue(mFakeDevice.setPhonebookAccessPermission(ACCESS_UNKNOWN));
+        assertEquals(ACCESS_UNKNOWN, mFakeDevice.getPhonebookAccessPermission());
+        assertTrue(mFakeDevice.setPhonebookAccessPermission(ACCESS_ALLOWED));
+        assertEquals(ACCESS_ALLOWED, mFakeDevice.getPhonebookAccessPermission());
+        assertTrue(mFakeDevice.setPhonebookAccessPermission(ACCESS_REJECTED));
+        assertEquals(ACCESS_REJECTED, mFakeDevice.getPhonebookAccessPermission());
     }
 
-    public void test_setSimAccessPermission() {
+    public void test_simAccessPermission() {
         if (!mHasBluetooth || !mHasCompanionDevice) {
             // Skip the test if bluetooth or companion device are not present.
             return;
@@ -466,6 +438,16 @@ public class BluetoothDeviceTest extends AndroidTestCase {
                 .setSimAccessPermission(ACCESS_UNKNOWN));
         assertThrows(SecurityException.class, () -> mFakeDevice
                 .setSimAccessPermission(ACCESS_REJECTED));
+
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
+
+        // Should be able to set permissions after adopting the BLUETOOTH_PRIVILEGED permission
+        assertTrue(mFakeDevice.setSimAccessPermission(ACCESS_UNKNOWN));
+        assertEquals(ACCESS_UNKNOWN, mFakeDevice.getSimAccessPermission());
+        assertTrue(mFakeDevice.setSimAccessPermission(ACCESS_ALLOWED));
+        assertEquals(ACCESS_ALLOWED, mFakeDevice.getSimAccessPermission());
+        assertTrue(mFakeDevice.setSimAccessPermission(ACCESS_REJECTED));
+        assertEquals(ACCESS_REJECTED, mFakeDevice.getSimAccessPermission());
     }
 
     private byte[] convertPinToBytes(String pin) {

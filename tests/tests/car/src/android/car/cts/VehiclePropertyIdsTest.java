@@ -173,6 +173,8 @@ public class VehiclePropertyIdsTest {
                 .isEqualTo("HVAC_MAX_AC_ON");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HVAC_MAX_DEFROST_ON))
                 .isEqualTo("HVAC_MAX_DEFROST_ON");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HVAC_ELECTRIC_DEFROSTER_ON))
+                .isEqualTo("HVAC_ELECTRIC_DEFROSTER_ON");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HVAC_POWER_ON))
                 .isEqualTo("HVAC_POWER_ON");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HVAC_RECIRC_ON))

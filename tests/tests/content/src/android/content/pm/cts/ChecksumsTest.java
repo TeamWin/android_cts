@@ -52,10 +52,12 @@ import android.content.pm.PackageInstaller.SessionParams;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
 import android.util.ExceptionUtils;
 
@@ -71,6 +73,7 @@ import com.android.server.pm.PackageManagerShellCommandDataLoader.Metadata;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -152,6 +155,11 @@ public class ChecksumsTest {
             new Checksum(TYPE_WHOLE_SHA256, hexStringToBytes(TEST_FIXED_APK_SHA256)),
             new Checksum(TYPE_WHOLE_MD5, hexStringToBytes(TEST_FIXED_APK_MD5))};
 
+    /** Default is to not use fs-verity since it depends on kernel support. */
+    private static final int FSVERITY_DISABLED = 0;
+
+    /** Standard fs-verity. */
+    private static final int FSVERITY_ENABLED = 2;
 
     private static final byte[] NO_SIGNATURE = null;
 
@@ -315,6 +323,7 @@ public class ChecksumsTest {
     @LargeTest
     @Test
     public void testFixedFSVerityDefaultChecksums() throws Exception {
+        Assume.assumeTrue(isApkVerityEnabled());
         installApkWithFSVerity(TEST_FIXED_APK_FSVERITY, TEST_FIXED_APK_FSVERITY_FSVSIG);
         assertTrue(isAppInstalled(FIXED_FSVERITY_PACKAGE_NAME));
 
@@ -1511,6 +1520,13 @@ public class ChecksumsTest {
 
     private boolean checkIncrementalDeliveryFeature() {
         return getPackageManager().hasSystemFeature(PackageManager.FEATURE_INCREMENTAL_DELIVERY);
+    }
+
+    // From PackageManagerServiceUtils.
+    private static boolean isApkVerityEnabled() {
+        return Build.VERSION.DEVICE_INITIAL_SDK_INT >= Build.VERSION_CODES.R
+                || SystemProperties.getInt("ro.apk_verity.mode", FSVERITY_DISABLED)
+                == FSVERITY_ENABLED;
     }
 
     private byte[] readSignature() throws IOException {

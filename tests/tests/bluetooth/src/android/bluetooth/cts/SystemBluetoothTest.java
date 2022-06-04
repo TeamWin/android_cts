@@ -18,9 +18,6 @@ package android.bluetooth.cts;
 
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
 import static android.Manifest.permission.BLUETOOTH_PRIVILEGED;
-import static android.bluetooth.BluetoothDevice.ACCESS_ALLOWED;
-import static android.bluetooth.BluetoothDevice.ACCESS_REJECTED;
-import static android.bluetooth.BluetoothDevice.ACCESS_UNKNOWN;
 
 import static org.junit.Assert.assertArrayEquals;
 
@@ -46,8 +43,6 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
 
-import java.lang.reflect.InvocationTargetException;
-import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -90,45 +85,6 @@ public class SystemBluetoothTest extends AndroidTestCase {
         if (mHasBluetooth) {
             assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
         }
-    }
-
-    public void testPhonebookAccessPermission() {
-        if (!mHasBluetooth) {
-            return;
-        }
-
-        assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
-
-        BluetoothDevice device = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
-        setAndCheckPermission("PhonebookAccessPermission", ACCESS_UNKNOWN, device);
-        setAndCheckPermission("PhonebookAccessPermission", ACCESS_ALLOWED, device);
-        setAndCheckPermission("PhonebookAccessPermission", ACCESS_REJECTED, device);
-    }
-
-    public void testMessageAccessPermission() {
-        if (!mHasBluetooth) {
-            return;
-        }
-
-        assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
-
-        BluetoothDevice device = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
-        setAndCheckPermission("MessageAccessPermission", ACCESS_UNKNOWN, device);
-        setAndCheckPermission("MessageAccessPermission", ACCESS_ALLOWED, device);
-        setAndCheckPermission("MessageAccessPermission", ACCESS_REJECTED, device);
-    }
-
-    public void testSimAccessPermission() {
-        if (!mHasBluetooth) {
-            return;
-        }
-
-        assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
-
-        BluetoothDevice device = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
-        setAndCheckPermission("SimAccessPermission", ACCESS_UNKNOWN, device);
-        setAndCheckPermission("SimAccessPermission", ACCESS_ALLOWED, device);
-        setAndCheckPermission("SimAccessPermission", ACCESS_REJECTED, device);
     }
 
     /**
@@ -377,19 +333,6 @@ public class SystemBluetoothTest extends AndroidTestCase {
         assertTrue(isBluetoothPersistedOff());
     }
 
-    void setAndCheckPermission(String functionBase, int permission, BluetoothDevice device) {
-        try {
-            BluetoothDevice.class.getMethod("set" + functionBase, int.class).invoke(device,
-                    permission);
-            assertEquals(permission,
-                    BluetoothDevice.class.getMethod("get" + functionBase).invoke(device));
-
-        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
-                | NoSuchMethodException | SecurityException e) {
-            Log.e(TAG, "get or set " + functionBase + " doesn't exist.");
-        }
-    }
-
     public void testSetLowLatencyAudioAllowed() {
         if (!mHasBluetooth) {
             return;
@@ -441,27 +384,6 @@ public class SystemBluetoothTest extends AndroidTestCase {
         }
 
         mAdapter.generateLocalOobData(BluetoothDevice.TRANSPORT_BREDR, executor, callback);
-    }
-
-    public void testSetGetDiscoverableTimeout() {
-        if (!mHasBluetooth) {
-            return;
-        }
-        Duration minute = Duration.ofMinutes(1);
-
-        assertEquals(BluetoothStatusCodes.ERROR_BLUETOOTH_NOT_ENABLED,
-                mAdapter.setDiscoverableTimeout(minute));
-
-        assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
-        try {
-            mAdapter.setDiscoverableTimeout(Duration.ofDays(25000));
-            fail("Discoverable timeout in seconds is greater than Integer.MAX_VALUE");
-        } catch (IllegalArgumentException ignored) {
-        }
-
-        assertEquals(BluetoothStatusCodes.SUCCESS,
-                mAdapter.setDiscoverableTimeout(minute));
-        assertEquals(minute, mAdapter.getDiscoverableTimeout());
     }
 
     public void testSetScanMode() {

@@ -19,6 +19,7 @@ package android.mediav2.cts;
 import android.media.MediaFormat;
 
 import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.MediaUtils;
@@ -33,6 +34,13 @@ import static org.junit.Assert.assertTrue;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class CodecListTest {
+    static final String MEDIA_TYPE_PREFIX_KEY = "media-type-prefix";
+    static String mediaTypePrefix;
+
+    static {
+        android.os.Bundle args = InstrumentationRegistry.getArguments();
+        mediaTypePrefix = args.getString(MEDIA_TYPE_PREFIX_KEY);
+    }
 
     /**
      * Tests if the device under test has support for required components as guided by CDD.
@@ -41,8 +49,8 @@ public class CodecListTest {
      */
     @Test
     public void testCddRequiredCodecsAvailability() {
-        final boolean needAudio = true;
-        final boolean needVideo = true;
+        final boolean needAudio = mediaTypePrefix == null || mediaTypePrefix.startsWith("audio");
+        final boolean needVideo = mediaTypePrefix == null || mediaTypePrefix.startsWith("video");
         boolean[] modes = {true, false};
         for (boolean isEncoder : modes) {
             ArrayList<String> cddRequiredMimeList =

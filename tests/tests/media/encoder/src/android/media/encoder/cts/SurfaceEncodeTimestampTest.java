@@ -27,6 +27,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaFormat;
 import android.media.cts.InputSurface;
+import android.media.cts.TestArgs;
 import android.opengl.GLES20;
 import android.os.Build;
 import android.os.Bundle;
@@ -41,6 +42,10 @@ import android.util.Log;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.filters.SdkSuppress;
+
+import com.android.compatibility.common.util.MediaUtils;
+
+import org.junit.Before;
 
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
@@ -70,11 +75,20 @@ public class SurfaceEncodeTimestampTest extends AndroidTestCase {
     private static final int BORDER_WIDTH = 16;
     private static final int OUTPUT_FRAME_RATE = 30;
 
+    private static final String MEDIA_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC;
+
     private Handler mHandler;
     private HandlerThread mHandlerThread;
     private MediaCodec mEncoder;
     private InputSurface mInputEglSurface;
     private int mInputCount;
+
+    @Before
+    public void shouldSkip() {
+        if (TestArgs.shouldSkipMediaType(MEDIA_TYPE)) {
+            MediaUtils.skipTest(TAG, "Test should run only for video components");
+        }
+    }
 
     @Override
     public void setUp() throws Exception {
@@ -323,9 +337,9 @@ public class SurfaceEncodeTimestampTest extends AndroidTestCase {
             if (DEBUG) Log.d(TAG, "started");
 
             // setup surface encoder format
-            mEncoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC);
+            mEncoder = MediaCodec.createEncoderByType(MEDIA_TYPE);
             MediaFormat codecFormat = MediaFormat.createVideoFormat(
-                    MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720);
+                    MEDIA_TYPE, 1280, 720);
             codecFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 0);
             codecFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT,
                     CodecCapabilities.COLOR_FormatSurface);

@@ -237,7 +237,11 @@ public class ValidateTestsAbi {
                 }
                 try {
                     // Ignore python binaries
-                    if (FileUtil.readStringFromFile(f).startsWith("#!/usr/bin/env python")) {
+                    String content = FileUtil.readStringFromFile(f);
+                    if (content.startsWith("#!/usr/bin/env python")) {
+                        return true;
+                    }
+                    if (content.contains("mobly/__init__.py")) {
                         return true;
                     }
                 } catch (IOException e) {
