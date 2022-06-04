@@ -79,8 +79,7 @@ abstract class TestBase {
         })
 
         // Make sure CompanionDeviceServices are not bound.
-        assertFalse(PrimaryCompanionService.isBound)
-        assertFalse(SecondaryCompanionService.isBound)
+        assertValidCompanionDeviceServicesUnbind()
 
         setUp()
     }
