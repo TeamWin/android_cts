@@ -802,8 +802,7 @@ public class PerformanceClassEvaluator {
         }
     }
 
-    // TODO(b/218771970): Add cdd annotation
-    // used for requirements [?]
+    // used for requirements [2.2.7.1/5.1/H-1-11], [2.2.7.1/5.7/H-1-2]
     public static class SecureCodecRequirement extends Requirement {
         private static final String TAG = SecureCodecRequirement.class.getSimpleName();
 
@@ -815,70 +814,30 @@ public class PerformanceClassEvaluator {
             this.setMeasuredValue(RequirementConstants.SECURE_REQ_SATISFIED, secureReqSatisfied);
         }
 
-        public void setWidevineSupported(boolean isWidevineSupported) {
-            this.setMeasuredValue(RequirementConstants.WIDEWINE_SUPPORT, isWidevineSupported);
-        }
-
-        public void setWidevineL1Supported(boolean isL1Supported) {
-            this.setMeasuredValue(RequirementConstants.WIDEWINE_L1, isL1Supported);
-        }
-
-        public void setWidevineL1Tier3Supported(boolean isL1Tier3Supported) {
-            this.setMeasuredValue(RequirementConstants.WIDEWINE_L1_TIER3, isL1Tier3Supported);
-        }
-
-        public void setOemCrypto17Plus(boolean isOemCrypto17Plus) {
-            this.setMeasuredValue(RequirementConstants.OEM_CRYPTO_17_PLUS, isOemCrypto17Plus);
-        }
-
-        public void setWidevineCdm17Plus(boolean isWidevineCdm17Plus) {
-            this.setMeasuredValue(RequirementConstants.WIDEWINE_CDM_17_PLUS, isWidevineCdm17Plus);
+        public void setNumCryptoHwSecureAllDec(int numCryptoHwSecureAllDec) {
+            this.setMeasuredValue(RequirementConstants.NUM_CRYPTO_HW_SECURE_ALL_SUPPORT,
+                numCryptoHwSecureAllDec);
         }
 
         /**
-         * [?] Support for Widevine L1 Tier 3, WidevineCdmVersion >= 17, OemCryptoVersion >= 17
+         * [2.2.7.1/5.7/H-1-2] MUST support MediaDrm.SECURITY_LEVEL_HW_SECURE_ALL with the below
+         * content decryption capabilities.
          */
-        public static SecureCodecRequirement createRWidevineSupport() {
-            RequiredMeasurement<Boolean> widevineSupport = RequiredMeasurement
-                .<Boolean>builder()
-                .setId(RequirementConstants.WIDEWINE_SUPPORT)
-                .setPredicate(RequirementConstants.BOOLEAN_EQ)
-                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+        public static SecureCodecRequirement createR5_7__H_1_2() {
+            RequiredMeasurement<Integer> hw_secure_all = RequiredMeasurement.<Integer>builder()
+                .setId(RequirementConstants.NUM_CRYPTO_HW_SECURE_ALL_SUPPORT)
+                .setPredicate(RequirementConstants.INTEGER_GTE)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 1)
                 .build();
 
-            RequiredMeasurement<Boolean> widevineL1 =
-                RequiredMeasurement.<Boolean>builder().setId(RequirementConstants.WIDEWINE_L1)
-                    .setPredicate(RequirementConstants.BOOLEAN_EQ)
-                    .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
-                    .build();
-
-            RequiredMeasurement<Boolean> widevineL1Tier3 =
-                RequiredMeasurement.<Boolean>builder().setId(RequirementConstants.WIDEWINE_L1_TIER3)
-                    .setPredicate(RequirementConstants.BOOLEAN_EQ)
-                    .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
-                    .build();
-
-            RequiredMeasurement<Boolean> oemCryptoReq = RequiredMeasurement.<Boolean>builder()
-                .setId(RequirementConstants.OEM_CRYPTO_17_PLUS)
-                .setPredicate(RequirementConstants.BOOLEAN_EQ)
-                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
-                .build();
-
-            RequiredMeasurement<Boolean> widevineCdmReq = RequiredMeasurement.<Boolean>builder()
-                .setId(RequirementConstants.WIDEWINE_CDM_17_PLUS)
-                .setPredicate(RequirementConstants.BOOLEAN_EQ)
-                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
-                .build();
-
-            return new SecureCodecRequirement(RequirementConstants.RTBD, widevineSupport,
-                widevineL1, widevineL1Tier3, oemCryptoReq, widevineCdmReq);
+            return new SecureCodecRequirement(RequirementConstants.R5_7__H_1_2, hw_secure_all);
         }
 
         /**
-         * [2.2.7.1/5.7/H-1-1] Must support secure decoder when a corresponding AVC/VP9/HEVC or AV1
+         * [2.2.7.1/5.1/H-1-11] Must support secure decoder when a corresponding AVC/VP9/HEVC or AV1
          * hardware decoder is available
          */
-        public static SecureCodecRequirement createRSecureDecodeSupport() {
+        public static SecureCodecRequirement createR5_1__H_1_11() {
             RequiredMeasurement<Boolean> requirement = RequiredMeasurement
                 .<Boolean>builder()
                 .setId(RequirementConstants.SECURE_REQ_SATISFIED)
@@ -886,7 +845,7 @@ public class PerformanceClassEvaluator {
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
                 .build();
 
-            return new SecureCodecRequirement(RequirementConstants.R5_7__H_1_1, requirement);
+            return new SecureCodecRequirement(RequirementConstants.R5_1__H_1_11, requirement);
         }
     }
 
@@ -967,12 +926,12 @@ public class PerformanceClassEvaluator {
         return this.addRequirement(VideoCodecRequirement.createRAV1DecoderReq());
     }
 
-    public SecureCodecRequirement addRSecureDecodeSupport() {
-        return this.addRequirement(SecureCodecRequirement.createRSecureDecodeSupport());
+    public SecureCodecRequirement addR5_1__H_1_11() {
+        return this.addRequirement(SecureCodecRequirement.createR5_1__H_1_11());
     }
 
-    public SecureCodecRequirement addRWidevineSupport() {
-        return this.addRequirement(SecureCodecRequirement.createRWidevineSupport());
+    public SecureCodecRequirement addR5_7__H_1_2() {
+        return this.addRequirement(SecureCodecRequirement.createR5_7__H_1_2());
     }
 
     public ConcurrentCodecRequirement addR5_1__H_1_1_720p(String mimeType1, String mimeType2,
