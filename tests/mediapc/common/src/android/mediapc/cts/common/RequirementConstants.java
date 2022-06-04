@@ -47,6 +47,7 @@ public class RequirementConstants {
     public static final String R5_3__H_1_2 = "r5_3__h_1_2"; // 5.3/H-1-2
     public static final String R5_6__H_1_1 = "r5_6__h_1_1"; // 5.6/H-1-1
     public static final String R5_7__H_1_1 = "r5_7__h_1_1"; // 5.7/H-1-1
+    public static final String R5_7__H_1_2 = "r5_7__h_1_2"; // 5.7/H-1-2
     public static final String R7_5__H_1_1 = "r7_5__h_1_1"; // 7.5/H-1-1
     public static final String R7_5__H_1_2 = "r7_5__h_1_2"; // 7.5/H-1-2
     public static final String R7_5__H_1_3 = "r7_5__h_1_3"; // 7.5/H-1-3
@@ -86,11 +87,8 @@ public class RequirementConstants {
     public static final String NUM_4k_HW_DEC = "number_4k_hw_decoders";
     public static final String NUM_4k_HW_ENC = "number_4k_hw_encoders";
     public static final String SECURE_REQ_SATISFIED = "secure_requirement_satisfied_boolean";
-    public static final String WIDEWINE_SUPPORT = "widevine_support_boolean";
-    public static final String WIDEWINE_L1 = "widevine_l1_support_boolean";
-    public static final String WIDEWINE_L1_TIER3 = "widevine_l1_tier3_support_boolean";
-    public static final String OEM_CRYPTO_17_PLUS = "oem_crypto_version_17plus_boolean";
-    public static final String WIDEWINE_CDM_17_PLUS = "widevine_cdm_version_17plus_boolean";
+    public static final String NUM_CRYPTO_HW_SECURE_ALL_SUPPORT =
+        "number_crypto_hw_secure_all_support";
 
     public enum Result {
         NA, MET, UNMET
