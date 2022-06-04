@@ -53,6 +53,6 @@ public class CVE_2021_0954 extends BaseHostJUnit4Test {
         installPackage(TEST_APP);
         AdbUtils.runCommandLine("pm grant " + TEST_PKG + " android.permission.SYSTEM_ALERT_WINDOW",
                 device);
-        Assert.assertTrue(runDeviceTests(TEST_PKG, TEST_CLASS, "testVulnerableActivityPresence"));
+        runDeviceTests(TEST_PKG, TEST_CLASS, "testVulnerableActivityPresence");
     }
 }
