@@ -16,24 +16,19 @@
 
 package android.mediapc.cts;
 
-import static org.junit.Assert.assertTrue;
-
 import android.media.MediaFormat;
+import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.mediapc.cts.common.Utils;
-import android.os.Build;
-import android.util.Log;
 import android.util.Pair;
 
 import androidx.test.filters.LargeTest;
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.CddTest;
-import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
 
 import org.junit.Assume;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -65,6 +60,9 @@ public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
         mFirstPair = firstPair;
         mSecondPair = secondPair;
     }
+
+    @Rule
+    public final TestName mTestName = new TestName();
 
     // Returns the list of params with two hardware (mime - encoder) pairs in both
     // sync and async modes.
@@ -105,7 +103,7 @@ public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
 
         boolean hasVP9 = mFirstPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9) ||
                 mSecondPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9);
-        int requiredMinInstances = getRequiredMinConcurrentInstances(hasVP9);
+        int requiredMinInstances = getRequiredMinConcurrentInstances720p(hasVP9);
         testCodec(720, 1280, 4000000, requiredMinInstances);
     }
 
@@ -129,7 +127,7 @@ public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
         mimeEncoderPairs.add(mFirstPair);
         mimeEncoderPairs.add(mSecondPair);
         int maxInstances = checkAndGetMaxSupportedInstancesForCodecCombinations(height, width,
-                mimeEncoderPairs);
+                mimeEncoderPairs, requiredMinInstances);
         double achievedFrameRate = 0.0;
         if (maxInstances >= requiredMinInstances) {
             int secondPairInstances = maxInstances / 2;
@@ -151,22 +149,22 @@ public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
                 achievedFrameRate += result.get();
             }
         }
-        if (Utils.isPerfClass()) {
-            assertTrue("Encoder pair " + mFirstPair.second + " and " + mSecondPair.second
-                    + " unable to support minimum concurrent instances. act/exp: " + maxInstances
-                    + "/" + requiredMinInstances, maxInstances >= requiredMinInstances);
-            Log.v(LOG_TAG, "Achieved fps: " + achievedFrameRate +
-                    "\nAchieved frame rate is not compared as this test runs in byte buffer mode");
+        PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
+        PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_3;
+        PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_4;
+        // Achieved frame rate is not compared as this test runs in byte buffer mode.
+        if (height >= 1080) {
+            r5_1__H_1_3 = pce.addR5_1__H_1_3_1080p();
+            r5_1__H_1_4 = pce.addR5_1__H_1_4_1080p();
+            r5_1__H_1_3.setConcurrentInstances(maxInstances);
+            r5_1__H_1_4.setConcurrentFps(achievedFrameRate);
         } else {
-            int pc = maxInstances >= requiredMinInstances ? Build.VERSION_CODES.R : 0;
-            DeviceReportLog log = new DeviceReportLog("MediaPerformanceClassLogs",
-                    "MultiEncoderPairPerf_" + mFirstPair.second);
-            log.addValue("encoders",
-                    mFirstPair.first + "_" + mFirstPair.second + "_" + mSecondPair.first + "_"
-                            + mSecondPair.second, ResultType.NEUTRAL, ResultUnit.NONE);
-            log.setSummary("CDD 2.2.7.1/5.1/H-1-3,H-1-4 performance_class", pc, ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-            log.submit(InstrumentationRegistry.getInstrumentation());
+            r5_1__H_1_3 = pce.addR5_1__H_1_3_720p(mMime, mMime, height);
+            r5_1__H_1_4 = pce.addR5_1__H_1_4_720p();
+            r5_1__H_1_3.setConcurrentInstances(maxInstances);
+            r5_1__H_1_4.setConcurrentFps(achievedFrameRate);
         }
+
+        pce.submitAndCheck();
     }
 }

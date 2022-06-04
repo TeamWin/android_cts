@@ -33,6 +33,7 @@ ITS_SUPPORTED_QUALITIES = (
     'LOW',
     'VGA'
 )
+QCIF_SIZE = '176x144'
 
 
 def extract_key_frames_from_video(log_path, video_file_name):
@@ -83,7 +84,7 @@ def extract_key_frames_from_video(log_path, video_file_name):
 
   logging.debug('Extracted key frames: %s', key_frame_files)
   logging.debug('Length of key_frame_files: %d', len(key_frame_files))
-  if not len(key_frame_files):
+  if not key_frame_files:
     raise AssertionError('No key frames extracted. Check source video.')
 
   return key_frame_files
@@ -142,7 +143,7 @@ def extract_all_frames_from_video(log_path, video_file_name, img_format):
   file_list = sorted(
       [_ for _ in os.listdir(log_path) if (_.endswith(img_format)
                                            and ffmpeg_image_name in _)])
-  if not len(file_list):
+  if not file_list:
     raise AssertionError('No frames extracted. Check source video.')
 
   return file_list

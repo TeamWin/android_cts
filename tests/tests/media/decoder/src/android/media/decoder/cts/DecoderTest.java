@@ -16,6 +16,7 @@
 
 package android.media.decoder.cts;
 
+import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_TunneledPlayback;
 import static android.media.MediaCodecInfo.CodecProfileLevel.AVCLevel31;
 import static android.media.MediaCodecInfo.CodecProfileLevel.AVCLevel32;
 import static android.media.MediaCodecInfo.CodecProfileLevel.AVCLevel4;
@@ -3872,11 +3873,8 @@ public class DecoderTest extends MediaTestBase {
      * TODO(b/182915887): Test all the codecs advertised by the DUT for the provided test content
      */
     private void tunneledVideoPlayback(String mimeType, String videoName) throws Exception {
-        if (!isVideoFeatureSupported(mimeType,
-                CodecCapabilities.FEATURE_TunneledPlayback)) {
-            MediaUtils.skipTest(
-                    TAG,
-                    "No tunneled video playback codec found for MIME " + mimeType);
+        if (!MediaUtils.check(isVideoFeatureSupported(mimeType, FEATURE_TunneledPlayback),
+                    "No tunneled video playback codec found for MIME " + mimeType)) {
             return;
         }
 
@@ -3892,6 +3890,16 @@ public class DecoderTest extends MediaTestBase {
 
         // starts video playback
         mMediaCodecPlayer.startThread();
+        sleepUntil(() ->
+                mMediaCodecPlayer.getCurrentPosition() > CodecState.UNINITIALIZED_TIMESTAMP
+                && mMediaCodecPlayer.getTimestamp() != null
+                && mMediaCodecPlayer.getTimestamp().framePosition > 0,
+                Duration.ofSeconds(1));
+        assertNotEquals("onFrameRendered was not called",
+                mMediaCodecPlayer.getVideoTimeUs(), CodecState.UNINITIALIZED_TIMESTAMP);
+        assertNotEquals("Audio timestamp is null", mMediaCodecPlayer.getTimestamp(), null);
+        assertNotEquals("Audio timestamp has a zero frame position",
+                mMediaCodecPlayer.getTimestamp().framePosition, 0);
 
         final long durationMs = mMediaCodecPlayer.getDuration();
         final long timeOutMs = System.currentTimeMillis() + durationMs + 5 * 1000; // add 5 sec
@@ -3947,11 +3955,8 @@ public class DecoderTest extends MediaTestBase {
      * TODO(b/182915887): Test all the codecs advertised by the DUT for the provided test content
      */
     private void testTunneledVideoFlush(String mimeType, String videoName) throws Exception {
-        if (!isVideoFeatureSupported(mimeType,
-                        CodecCapabilities.FEATURE_TunneledPlayback)) {
-            MediaUtils.skipTest(
-                    TAG,
-                    "No tunneled video playback codec found for MIME " + mimeType);
+        if (!MediaUtils.check(isVideoFeatureSupported(mimeType, FEATURE_TunneledPlayback),
+                    "No tunneled video playback codec found for MIME " + mimeType)) {
             return;
         }
 
@@ -3967,7 +3972,17 @@ public class DecoderTest extends MediaTestBase {
 
         // starts video playback
         mMediaCodecPlayer.startThread();
-        Thread.sleep(SLEEP_TIME_MS);
+        sleepUntil(() ->
+                mMediaCodecPlayer.getCurrentPosition() > CodecState.UNINITIALIZED_TIMESTAMP
+                && mMediaCodecPlayer.getTimestamp() != null
+                && mMediaCodecPlayer.getTimestamp().framePosition > 0,
+                Duration.ofSeconds(1));
+        assertNotEquals("onFrameRendered was not called",
+                mMediaCodecPlayer.getVideoTimeUs(), CodecState.UNINITIALIZED_TIMESTAMP);
+        assertNotEquals("Audio timestamp is null", mMediaCodecPlayer.getTimestamp(), null);
+        assertNotEquals("Audio timestamp has a zero frame position",
+                mMediaCodecPlayer.getTimestamp().framePosition, 0);
+
         mMediaCodecPlayer.pause();
         mMediaCodecPlayer.flush();
         // mMediaCodecPlayer.reset() handled in TearDown();
@@ -4013,9 +4028,8 @@ public class DecoderTest extends MediaTestBase {
             return;
         }
 
-        if (!MediaUtils.check(isVideoFeatureSupported(mimeType,
-                                CodecCapabilities.FEATURE_TunneledPlayback),
-                        "No tunneled video playback codec found for MIME " + mimeType)){
+        if (!MediaUtils.check(isVideoFeatureSupported(mimeType, FEATURE_TunneledPlayback),
+                    "No tunneled video playback codec found for MIME " + mimeType)) {
             return;
         }
 
@@ -4088,9 +4102,8 @@ public class DecoderTest extends MediaTestBase {
             return;
         }
 
-        if (!MediaUtils.check(isVideoFeatureSupported(mimeType,
-                                CodecCapabilities.FEATURE_TunneledPlayback),
-                        "No tunneled video playback codec found for MIME " + mimeType)){
+        if (!MediaUtils.check(isVideoFeatureSupported(mimeType, FEATURE_TunneledPlayback),
+                    "No tunneled video playback codec found for MIME " + mimeType)) {
             return;
         }
 
@@ -4199,9 +4212,8 @@ public class DecoderTest extends MediaTestBase {
     }
 
     private void testTunneledAudioPtsGaps(String mimeType, String fileName) throws Exception {
-        if (!MediaUtils.check(isVideoFeatureSupported(mimeType,
-                CodecCapabilities.FEATURE_TunneledPlayback),
-                "No tunneled video playback codec found for MIME " + mimeType)) {
+        if (!MediaUtils.check(isVideoFeatureSupported(mimeType, FEATURE_TunneledPlayback),
+                    "No tunneled video playback codec found for MIME " + mimeType)) {
             return;
         }
 
@@ -4212,52 +4224,71 @@ public class DecoderTest extends MediaTestBase {
 
         final Uri mediaUri = Uri.fromFile(new File(mInpPrefix, fileName));
         mMediaCodecPlayer.setAudioDataSource(mediaUri, null);
-
+        mMediaCodecPlayer.setVideoDataSource(mediaUri, null);
         assertTrue("MediaCodecPlayer.start() failed!", mMediaCodecPlayer.start());
         assertTrue("MediaCodecPlayer.prepare() failed!", mMediaCodecPlayer.prepare());
 
+        // starts video playback
         mMediaCodecPlayer.startThread();
-        sleepUntil(() -> mMediaCodecPlayer.getTimestamp() != null
-                && mMediaCodecPlayer.getTimestamp().framePosition > 0,  Duration.ofSeconds(1));
-        // After 30 ms, Changing the presentation offset for audio track
-        Thread.sleep(30);
+        sleepUntil(() ->
+                mMediaCodecPlayer.getCurrentPosition() > CodecState.UNINITIALIZED_TIMESTAMP
+                && mMediaCodecPlayer.getTimestamp() != null
+                && mMediaCodecPlayer.getTimestamp().framePosition > 0,
+                Duration.ofSeconds(1));
+        assertNotEquals("onFrameRendered was not called",
+                mMediaCodecPlayer.getVideoTimeUs(), CodecState.UNINITIALIZED_TIMESTAMP);
+        assertNotEquals("Audio timestamp is null", mMediaCodecPlayer.getTimestamp(), null);
+        assertNotEquals("Audio timestamp has a zero frame position",
+                mMediaCodecPlayer.getTimestamp().framePosition, 0);
 
         // Requirement: If the audio presentation timestamp header sent by the app is greater than
         // the current audio clock by less than 100ms, the framePosition returned by
         // AudioTrack#getTimestamp (per get_presentation_position) must not advance for any silent
         // frames rendered to fill the gap.
         // TODO: add link to documentation when available
-        mMediaCodecPlayer.setAudioTrackOffsetMs(100);
-        // Wait for 20 ms so that whatever was buffered before offset is played
-        Thread.sleep(20);
-        long initialFramePosition = mMediaCodecPlayer.getTimestamp().framePosition;
 
-        // Verify that the framePosition did not advance after 30 ms. This ensures framePosition
-        // returned by AudioTrack#getTimestamp did not advance for any silent frames rendered to
-        // fill PTS gaps.
+        // Simulate a PTS gap of 100ms after 30ms
         Thread.sleep(30);
-        assertEquals(
-                "Initial frame position != Final frame position after introducing PTS gaps",
-                initialFramePosition, mMediaCodecPlayer.getTimestamp().framePosition);
+        mMediaCodecPlayer.setAudioTrackOffsetMs(100);
 
+        // Verify that at some point in time in the future, the framePosition stopped advancing.
+        // This verifies that when silence was rendered to fill the PTS gap, that the silent frames
+        // do not cause framePosition to advance.
+        final long ptsGapTimeoutMs = 1000;
+        long startTimeMs = System.currentTimeMillis();
+        AudioTimestamp currentTimestamp = mMediaCodecPlayer.getTimestamp();
+        AudioTimestamp ptsGapTimestamp;
+        do {
+            assertTrue(String.format("No audio PTS gap after %d milliseconds", ptsGapTimeoutMs),
+                    System.currentTimeMillis() - startTimeMs < ptsGapTimeoutMs);
+            ptsGapTimestamp = currentTimestamp;
+            Thread.sleep(50);
+            currentTimestamp = mMediaCodecPlayer.getTimestamp();
+        } while (currentTimestamp.framePosition != ptsGapTimestamp.framePosition);
+
+        // Allow the playback to advance past the PTS gap and back to normal operation
         Thread.sleep(500);
+        // Simulate the end of playback
         mMediaCodecPlayer.stopWritingToAudioTrack(true);
 
         // Sleep till framePosition stabilizes, i.e. playback is complete or till max 3 seconds.
-        long framePosCurrent = 0;
-        int totalSleepMs = 0;
-        while (totalSleepMs < 3000
-                && framePosCurrent != mMediaCodecPlayer.getTimestamp().framePosition) {
-            framePosCurrent = mMediaCodecPlayer.getTimestamp().framePosition;
-            Thread.sleep(500);
-            totalSleepMs += 500;
-        }
+        final long endOfPlayackTimeoutMs = 3000;
+        startTimeMs = System.currentTimeMillis();
+        AudioTimestamp endOfPlaybackTimestamp;
+        do {
+            assertTrue(String.format("No end of playback after %d milliseconds",
+                            endOfPlayackTimeoutMs),
+                    System.currentTimeMillis() - startTimeMs < endOfPlayackTimeoutMs);
+            endOfPlaybackTimestamp = currentTimestamp;
+            Thread.sleep(50);
+            currentTimestamp = mMediaCodecPlayer.getTimestamp();
+        } while (currentTimestamp.framePosition != endOfPlaybackTimestamp.framePosition);
 
-        // Verify if number of frames written and played are same even if PTS Gaps were present
+        // Verify if number of frames written and played are same even if PTS gaps were present
         // in the playback.
         assertEquals("Number of frames written != Number of frames played",
                 mMediaCodecPlayer.getAudioFramesWritten(),
-                mMediaCodecPlayer.getTimestamp().framePosition);
+                endOfPlaybackTimestamp.framePosition);
     }
 
     /**
@@ -4292,8 +4323,7 @@ public class DecoderTest extends MediaTestBase {
 
     private void testTunneledAudioTimestampProgressWithUnderrun(
             String mimeType, String fileName) throws Exception {
-        if (!MediaUtils.check(isVideoFeatureSupported(mimeType,
-                CodecCapabilities.FEATURE_TunneledPlayback),
+        if (!MediaUtils.check(isVideoFeatureSupported(mimeType, FEATURE_TunneledPlayback),
                 "No tunneled video playback codec found for MIME " + mimeType)) {
             return;
         }
@@ -4305,11 +4335,22 @@ public class DecoderTest extends MediaTestBase {
 
         final Uri mediaUri = Uri.fromFile(new File(mInpPrefix, fileName));
         mMediaCodecPlayer.setAudioDataSource(mediaUri, null);
-
+        mMediaCodecPlayer.setVideoDataSource(mediaUri, null);
         assertTrue("MediaCodecPlayer.start() failed!", mMediaCodecPlayer.start());
         assertTrue("MediaCodecPlayer.prepare() failed!", mMediaCodecPlayer.prepare());
 
+        // starts video playback
         mMediaCodecPlayer.startThread();
+        sleepUntil(() ->
+                mMediaCodecPlayer.getCurrentPosition() > CodecState.UNINITIALIZED_TIMESTAMP
+                && mMediaCodecPlayer.getTimestamp() != null
+                && mMediaCodecPlayer.getTimestamp().framePosition > 0,
+                Duration.ofSeconds(1));
+        assertNotEquals("onFrameRendered was not called",
+                mMediaCodecPlayer.getVideoTimeUs(), CodecState.UNINITIALIZED_TIMESTAMP);
+        assertNotEquals("Audio timestamp is null", mMediaCodecPlayer.getTimestamp(), null);
+        assertNotEquals("Audio timestamp has a zero frame position",
+                mMediaCodecPlayer.getTimestamp().framePosition, 0);
 
         // Stop writing to the AudioTrack after 200 ms.
         Thread.sleep(200);
@@ -4354,9 +4395,8 @@ public class DecoderTest extends MediaTestBase {
             return;
         }
 
-        if (!MediaUtils.check(isVideoFeatureSupported(mimeType,
-                                CodecCapabilities.FEATURE_TunneledPlayback),
-                        "No tunneled video playback codec found for MIME " + mimeType)){
+        if (!MediaUtils.check(isVideoFeatureSupported(mimeType, FEATURE_TunneledPlayback),
+                    "No tunneled video playback codec found for MIME " + mimeType)) {
             return;
         }
 
@@ -4382,12 +4422,19 @@ public class DecoderTest extends MediaTestBase {
         // does.
         mMediaCodecPlayer.setVideoPeek(false);
 
-        // Start playback
+        // starts video playback
         mMediaCodecPlayer.startThread();
-        Thread.sleep(maxAllowedTimeToFirstFrameMs);
-        assertNotEquals(String.format("No frame displayed after %d ms",
-                        maxAllowedTimeToFirstFrameMs), CodecState.UNINITIALIZED_TIMESTAMP,
-                mMediaCodecPlayer.getCurrentPosition());
+        sleepUntil(() ->
+                mMediaCodecPlayer.getCurrentPosition() > CodecState.UNINITIALIZED_TIMESTAMP
+                && mMediaCodecPlayer.getTimestamp() != null
+                && mMediaCodecPlayer.getTimestamp().framePosition > 0,
+                Duration.ofSeconds(1));
+        assertNotEquals("onFrameRendered was not called",
+                mMediaCodecPlayer.getVideoTimeUs(), CodecState.UNINITIALIZED_TIMESTAMP);
+        assertNotEquals("Audio timestamp is null", mMediaCodecPlayer.getTimestamp(), null);
+        assertNotEquals("Audio timestamp has a zero frame position",
+                mMediaCodecPlayer.getTimestamp().framePosition, 0);
+
         // Pause playback
         mMediaCodecPlayer.pause();
         // Ensure audio and video are in sync. We give some time to the codec to finish displaying
@@ -4492,9 +4539,8 @@ public class DecoderTest extends MediaTestBase {
     private void
     testTunneledAudioTimestampProgress(String mimeType, String videoName) throws Exception
     {
-        if (!isVideoFeatureSupported(mimeType,
-                CodecCapabilities.FEATURE_TunneledPlayback)) {
-            MediaUtils.skipTest(TAG,"No tunneled video playback codec found for MIME " + mimeType);
+        if (!MediaUtils.check(isVideoFeatureSupported(mimeType, FEATURE_TunneledPlayback),
+                    "No tunneled video playback codec found for MIME " + mimeType)) {
             return;
         }
 
@@ -4510,15 +4556,18 @@ public class DecoderTest extends MediaTestBase {
 
         // starts video playback
         mMediaCodecPlayer.startThread();
-
         sleepUntil(() ->
-                mMediaCodecPlayer.getCurrentPosition() > CodecState.UNINITIALIZED_TIMESTAMP,
+                mMediaCodecPlayer.getCurrentPosition() > CodecState.UNINITIALIZED_TIMESTAMP
+                && mMediaCodecPlayer.getTimestamp() != null
+                && mMediaCodecPlayer.getTimestamp().framePosition > 0,
                 Duration.ofSeconds(1));
-        final int firstPosition = mMediaCodecPlayer.getCurrentPosition();
-        assertNotEquals("On frame rendered not called after playback start!",
-                CodecState.UNINITIALIZED_TIMESTAMP, firstPosition);
-        AudioTimestamp firstTimestamp = mMediaCodecPlayer.getTimestamp();
-        assertTrue("Timestamp is null!", firstTimestamp != null);
+        long firstVideoPosition = mMediaCodecPlayer.getVideoTimeUs();
+        assertNotEquals("onFrameRendered was not called",
+                firstVideoPosition, CodecState.UNINITIALIZED_TIMESTAMP);
+        AudioTimestamp firstAudioTimestamp = mMediaCodecPlayer.getTimestamp();
+        assertNotEquals("Audio timestamp is null", firstAudioTimestamp, null);
+        assertNotEquals("Audio timestamp has a zero frame position",
+                firstAudioTimestamp.framePosition, 0);
 
         // Expected stabilization wait is 60ms. We triple to 180ms to prevent flakiness
         // and still test basic functionality.
@@ -4527,15 +4576,15 @@ public class DecoderTest extends MediaTestBase {
         mMediaCodecPlayer.pause();
         // pause might take some time to ramp volume down.
         Thread.sleep(sleepTimeMs);
-        AudioTimestamp timeStampAfterPause = mMediaCodecPlayer.getTimestamp();
+        AudioTimestamp audioTimestampAfterPause = mMediaCodecPlayer.getTimestamp();
         // Verify the video has advanced beyond the first position.
-        assertTrue(mMediaCodecPlayer.getCurrentPosition() > firstPosition);
+        assertTrue(mMediaCodecPlayer.getVideoTimeUs() > firstVideoPosition);
         // Verify that the timestamp has advanced beyond the first timestamp.
-        assertTrue(timeStampAfterPause.nanoTime > firstTimestamp.nanoTime);
+        assertTrue(audioTimestampAfterPause.nanoTime > firstAudioTimestamp.nanoTime);
 
         Thread.sleep(sleepTimeMs);
         // Verify that the timestamp does not advance after pause.
-        assertEquals(timeStampAfterPause.nanoTime, mMediaCodecPlayer.getTimestamp().nanoTime);
+        assertEquals(audioTimestampAfterPause.nanoTime, mMediaCodecPlayer.getTimestamp().nanoTime);
     }
 
     /**
@@ -4547,11 +4596,8 @@ public class DecoderTest extends MediaTestBase {
      */
     private void tunneledAudioUnderrun(String mimeType, String videoName, int frameRate)
             throws Exception {
-        if (!isVideoFeatureSupported(mimeType,
-                        CodecCapabilities.FEATURE_TunneledPlayback)) {
-            MediaUtils.skipTest(
-                    TAG,
-                    "No tunneled video playback codec found for MIME " + mimeType);
+        if (!MediaUtils.check(isVideoFeatureSupported(mimeType, FEATURE_TunneledPlayback),
+                "No tunneled video playback codec found for MIME " + mimeType)) {
             return;
         }
 
@@ -4565,12 +4611,19 @@ public class DecoderTest extends MediaTestBase {
         assertTrue("MediaCodecPlayer.start() failed!", mMediaCodecPlayer.start());
         assertTrue("MediaCodecPlayer.prepare() failed!", mMediaCodecPlayer.prepare());
 
-        // Start media playback
+        // starts video playback
         mMediaCodecPlayer.startThread();
-        final int waitStartMs = 50;
-        Thread.sleep(waitStartMs);
-        assertTrue(String.format("Playback has not started after %d milliseconds", waitStartMs),
-                mMediaCodecPlayer.getVideoTimeUs() != 0);
+        sleepUntil(() ->
+                mMediaCodecPlayer.getCurrentPosition() > CodecState.UNINITIALIZED_TIMESTAMP
+                && mMediaCodecPlayer.getTimestamp() != null
+                && mMediaCodecPlayer.getTimestamp().framePosition > 0,
+                Duration.ofSeconds(1));
+        assertNotEquals("onFrameRendered was not called",
+                mMediaCodecPlayer.getVideoTimeUs(), CodecState.UNINITIALIZED_TIMESTAMP);
+        assertNotEquals("Audio timestamp is null", mMediaCodecPlayer.getTimestamp(), null);
+        assertNotEquals("Audio timestamp has a zero frame position",
+                mMediaCodecPlayer.getTimestamp().framePosition, 0);
+
         // Keep buffering video content but stop buffering audio content -> audio underrun
         mMediaCodecPlayer.simulateAudioUnderrun(true);
         // Loop to wait for audio underrun

@@ -615,6 +615,9 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
      * Note: This assumes there is exactly one video codec running in the player.
      */
     public long getVideoTimeUs() {
+        if (mVideoCodecStates == null || mVideoCodecStates.get(0) == null) {
+            return CodecState.UNINITIALIZED_TIMESTAMP;
+        }
         return mVideoCodecStates.get(0).getVideoTimeUs();
     }
 

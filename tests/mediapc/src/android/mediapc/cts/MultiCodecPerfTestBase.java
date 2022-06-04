@@ -44,10 +44,7 @@ public class MultiCodecPerfTestBase {
     static final int REQUIRED_MIN_CONCURRENT_INSTANCES = 6;
     static final int REQUIRED_MIN_CONCURRENT_INSTANCES_FOR_VP9 = 2;
     static final int REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES = 2;
-    // allowed tolerance in measured fps vs expected fps in percentage, i.e. codecs achieving fps
-    // that is greater than (FPS_TOLERANCE_FACTOR * expectedFps) will be considered as
-    // passing the test
-    static final double FPS_TOLERANCE_FACTOR = 0.95;
+
     static ArrayList<String> mMimeList = new ArrayList<>();
     static Map<String, String> mTestFiles = new HashMap<>();
     static Map<String, String> m720pTestFiles = new HashMap<>();
@@ -89,8 +86,6 @@ public class MultiCodecPerfTestBase {
     String mTestFile;
     final boolean mIsAsync;
 
-    double mMaxFrameRate;
-
     @Before
     public void isPerformanceClassCandidate() {
         Utils.assumeDeviceMeetsPerformanceClassPreconditions();
@@ -120,9 +115,11 @@ public class MultiCodecPerfTestBase {
     }
 
     // Returns the max number of 30 fps instances that the given list of mimeCodecPairs
-    // supports. It also checks that the each codec supports 180 fps PerformancePoint.
+    // supports. It also checks that the each codec supports a PerformancePoint that covers
+    // required number of 30 fps instances.
     public int checkAndGetMaxSupportedInstancesForCodecCombinations(int height, int width,
-            ArrayList<Pair<String, String>> mimeCodecPairs) throws IOException {
+            ArrayList<Pair<String, String>> mimeCodecPairs, int requiredMinInstances)
+            throws IOException {
         int[] maxInstances = new int[mimeCodecPairs.size()];
         int[] maxFrameRates = new int[mimeCodecPairs.size()];
         int[] maxMacroBlockRates = new int[mimeCodecPairs.size()];
@@ -135,8 +132,7 @@ public class MultiCodecPerfTestBase {
             assertTrue(pps.size() > 0);
 
             boolean hasVP9 = mimeCodecPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9);
-            int requiredFrameRate = getRequiredMinConcurrentInstances(hasVP9, mimeCodecPair.second,
-                    mimeCodecPair.first) * 30;
+            int requiredFrameRate = requiredMinInstances * 30;
 
             maxInstances[loopCount] = cap.getMaxSupportedInstances();
             PerformancePoint PPRes = new PerformancePoint(width, height, requiredFrameRate);
@@ -168,26 +164,13 @@ public class MultiCodecPerfTestBase {
         int minOfMaxFrameRates = maxFrameRates[0];
         int minOfMaxMacroBlockRates = maxMacroBlockRates[0];
 
-        // Allow a tolerance in expected frame rate
-        mMaxFrameRate = minOfMaxFrameRates * FPS_TOLERANCE_FACTOR;
-
         // Calculate how many 30fps max instances it can support from it's mMaxFrameRate
         // amd maxMacroBlockRate. (assuming 16x16 macroblocks)
         return Math.min(minOfMaxInstances, Math.min((int) (minOfMaxFrameRates / 30.0),
                 (int) (minOfMaxMacroBlockRates / ((width / 16) * (height / 16)) / 30.0)));
     }
 
-    public int getRequiredMinConcurrentInstances(boolean hasVP9) throws IOException {
-        return getRequiredMinConcurrentInstances(hasVP9, null, null);
-    }
-
-    public int getRequiredMinConcurrentInstances(boolean hasVP9, String codecName, String mime)
-            throws IOException {
-        if (codecName != null && mime != null) {
-            if (isSecureSupportedCodec(codecName, mime)) {
-                return REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES;
-            }
-        }
+    public int getRequiredMinConcurrentInstances720p(boolean hasVP9) throws IOException {
         // Below T, VP9 requires 60 fps at 720p and minimum of 2 instances
         if (!Utils.isTPerfClass() && hasVP9) {
             return REQUIRED_MIN_CONCURRENT_INSTANCES_FOR_VP9;
@@ -202,22 +185,5 @@ public class MultiCodecPerfTestBase {
                 FEATURE_SecurePlayback);
         codec.release();
         return isSecureSupported;
-    }
-
-    boolean codecSupportsPP(String codecName, String mime, PerformancePoint reqPP)
-            throws IOException {
-        MediaCodec codec = MediaCodec.createByCodecName(codecName);
-        List<PerformancePoint> suppPPs =
-                codec.getCodecInfo().getCapabilitiesForType(mime).getVideoCapabilities()
-                        .getSupportedPerformancePoints();
-        assertTrue("Performance point not published by codec: " + codecName, suppPPs != null);
-        boolean codecSupportsReqPP = false;
-        for (PerformancePoint pp : suppPPs) {
-            if (pp.covers(reqPP)) {
-                codecSupportsReqPP = true;
-            }
-        }
-        codec.release();
-        return codecSupportsReqPP;
     }
 }
