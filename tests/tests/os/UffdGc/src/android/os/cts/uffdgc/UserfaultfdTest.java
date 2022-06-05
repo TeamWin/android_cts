@@ -71,6 +71,8 @@ public final class UserfaultfdTest {
   // Test if userfaultfd works for minor-faults on shmem.
   @Test
   public void minorUserfaultfd() {
+    // minor fault feature is not enabled on 32-bit kernel archs.
+    Assume.assumeTrue(confirmKernelArch64bit());
     assertEquals(0, performMinorUffd());
   }
 
@@ -82,6 +84,7 @@ public final class UserfaultfdTest {
     assertEquals(13, checkGetattr());
   }
 
+  private native boolean confirmKernelArch64bit();
   private native boolean confirmKernelVersion();
   private native int performKernelSpaceUffd();
   private native int uffdWithoutUserModeOnly();

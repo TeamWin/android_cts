@@ -449,6 +449,8 @@ public class CamcorderProfileTest {
                         CamcorderProfile.getAll(String.valueOf(cameraId), quality);
                     checkAllProfiles(allProfiles, profile, videoSizesToCheck);
                 }
+            } else {
+                assertNull(CamcorderProfile.getAll(String.valueOf(cameraId), quality));
             }
         }
 
