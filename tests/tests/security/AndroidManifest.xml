@@ -194,6 +194,13 @@
             android:grantUriPermissions="true"
             android:process=":badprovider" />
 
+        <activity android:name="android.security.cts.CVE_2022_20143.PocActivity"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.action.AUTOMATIC_ZEN_RULE"/>
+            </intent-filter>
+        </activity>
+
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
