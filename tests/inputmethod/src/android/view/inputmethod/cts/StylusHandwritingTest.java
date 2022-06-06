@@ -582,8 +582,8 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     NOT_EXPECT_TIMEOUT);
 
             final int touchSlop = getTouchSlop();
-            final int startX = 50;
-            final int startY = 50;
+            final int startX = editText.getWidth() / 2;
+            final int startY = editText.getHeight() / 2;
             final int endX = startX + 2 * touchSlop;
             final int endY = startY + 2 * touchSlop;
             final int number = 5;
