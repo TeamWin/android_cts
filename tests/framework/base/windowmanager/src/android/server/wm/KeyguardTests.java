@@ -44,9 +44,7 @@ import static android.view.Surface.ROTATION_90;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.never;
@@ -61,7 +59,6 @@ import android.content.res.Configuration;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
-import android.server.wm.WindowManagerState.WindowState;
 import android.server.wm.app.Components;
 
 import androidx.test.filters.FlakyTest;
@@ -195,16 +192,13 @@ public class KeyguardTests extends KeyguardTestBase {
      */
     @Test
     public void testTranslucentShowWhenLockedActivity() {
-        // TODO(b/209906849) remove assumeFalse after issue fix.
-        assumeFalse(ENABLE_SHELL_TRANSITIONS);
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         launchActivity(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY);
         mWmState.computeState(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY);
         mWmState.assertVisibility(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY, true);
         lockScreenSession.gotoKeyguard(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY);
-        mWmState.computeState();
         mWmState.assertVisibility(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY, true);
-        assertWallpaperShowing();
+        mWmState.waitAndAssertWindowShown(TYPE_WALLPAPER, true);
         mWmState.assertKeyguardShowingAndOccluded();
     }
 
@@ -229,16 +223,13 @@ public class KeyguardTests extends KeyguardTestBase {
 
     @Test
     public void testDialogShowWhenLockedActivity() {
-        // TODO(b/209906849) remove assumeFalse after issue fix.
-        assumeFalse(ENABLE_SHELL_TRANSITIONS);
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         launchActivity(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY);
         mWmState.computeState(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY);
         mWmState.assertVisibility(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY, true);
-        lockScreenSession.gotoKeyguard();
-        mWmState.computeState();
+        lockScreenSession.gotoKeyguard(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY);
         mWmState.assertVisibility(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY, true);
-        assertWallpaperShowing();
+        mWmState.waitAndAssertWindowShown(TYPE_WALLPAPER, true);
         mWmState.assertKeyguardShowingAndOccluded();
     }
 
@@ -604,13 +595,6 @@ public class KeyguardTests extends KeyguardTestBase {
         mWmState.assertKeyguardShowingAndNotOccluded();
         // The {@link SHOW_WHEN_LOCKED_ACTIVITY} has gone because of the 'finish' broadcast.
         mWmState.waitAndAssertActivityRemoved(SHOW_WHEN_LOCKED_ACTIVITY);
-    }
-
-    private void assertWallpaperShowing() {
-        WindowState wallpaper =
-                mWmState.findFirstWindowWithType(TYPE_WALLPAPER);
-        assertNotNull(wallpaper);
-        assertTrue(wallpaper.isSurfaceShown());
     }
 
     @Test
