@@ -18,6 +18,8 @@ package android.companion.cts.core
 
 import android.companion.cts.common.DEVICE_DISPLAY_NAME_A
 import android.companion.cts.common.DEVICE_DISPLAY_NAME_B
+import android.companion.cts.common.assertOnlyPrimaryCompanionDeviceServiceNotified
+import android.companion.cts.common.assertValidCompanionDeviceServicesUnbind
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.compatibility.common.util.SystemUtil
@@ -54,15 +56,18 @@ class DumpSysTest : CoreTestBase() {
         assertFalse(out[1].contains("id=$associationId")) // But not present yet
         assertFalse(out[2].contains("u$userId\\$targetPackageName")) // App is not bound yet
 
-        // Publish device's presence.
+        // Publish device's presence and wait for callback.
         cdm.notifyDeviceAppeared(associationId)
+        assertOnlyPrimaryCompanionDeviceServiceNotified(associationId, appeared = true)
 
         out = dumpCurrentState()
         assertTrue(out[0].contains("mId=$associationId")) // Device is still associated
         assertTrue(out[1].contains("id=$associationId")) // And also present
         assertTrue(out[2].contains("u$userId\\$targetPackageName")) // App is now bound
 
+        // Clean up
         cdm.notifyDeviceDisappeared(associationId)
+        assertValidCompanionDeviceServicesUnbind()
     }
 
     @Test
@@ -78,15 +83,18 @@ class DumpSysTest : CoreTestBase() {
         assertFalse(out[1].contains("id=$idB")) // Device B not present
         assertFalse(out[2].contains("u$userId\\$targetPackageName")) // App is not bound yet
 
-        // Only publish device A's presence.
+        // Only publish device A's presence and wait for callback.
         cdm.notifyDeviceAppeared(idA)
+        assertOnlyPrimaryCompanionDeviceServiceNotified(idA, appeared = true)
 
         out = dumpCurrentState()
         assertTrue(out[1].contains("id=$idA")) // Device A is now present
         assertFalse(out[1].contains("id=$idB")) // Device B still not present
         assertTrue(out[2].contains("u$userId\\$targetPackageName")) // App is now bound
 
+        // Clean up
         cdm.notifyDeviceDisappeared(idA)
+        assertValidCompanionDeviceServicesUnbind()
     }
 
     /**
