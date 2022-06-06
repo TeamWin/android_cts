@@ -213,7 +213,7 @@ def test_manual(cam, props, log_path):
             metadata['android.tonemap.curve']['green'],
             metadata['android.tonemap.curve']['blue']]
   logging.debug('Tonemap: %s', str(curves[0][1::16]))
-  for j, c in enumerate(curves):
+  for _, c in enumerate(curves):
     if not c:
       raise AssertionError('c in curves is empty.')
     if not all([np.isclose(c[i], c[i+1], atol=ISCLOSE_ATOL)

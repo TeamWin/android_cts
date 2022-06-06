@@ -337,7 +337,7 @@ class SensorFusionTest(its_base_test.ItsBaseTest):
           " smaller values of 'w', 'h', 'fps', or 'test_length'.")
 
     if replay:
-      events, frames, _, h = load_data()
+      events, frames, _, _ = load_data()
     else:
       with its_session_utils.ItsSession(
           device_id=self.dut.serial,
