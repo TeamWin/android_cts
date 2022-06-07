@@ -41,7 +41,6 @@ import android.hardware.display.DisplayManager;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTimestamp;
-import android.media.AudioTrack;
 import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
@@ -4611,7 +4610,7 @@ public class DecoderTest extends MediaTestBase {
         assertTrue("MediaCodecPlayer.start() failed!", mMediaCodecPlayer.start());
         assertTrue("MediaCodecPlayer.prepare() failed!", mMediaCodecPlayer.prepare());
 
-        // starts video playback
+        // Starts video playback
         mMediaCodecPlayer.startThread();
         sleepUntil(() ->
                 mMediaCodecPlayer.getCurrentPosition() > CodecState.UNINITIALIZED_TIMESTAMP
@@ -4626,82 +4625,97 @@ public class DecoderTest extends MediaTestBase {
 
         // Keep buffering video content but stop buffering audio content -> audio underrun
         mMediaCodecPlayer.simulateAudioUnderrun(true);
-        // Loop to wait for audio underrun
-        // TODO(b/200280965): Find a more appropriate delay based on partner feedback
+
+        // Wait for audio underrun
         final int audioUnderrunTimeoutMs = 1000; // Arbitrary upper time limit on loop time duration
         long startTimeMs = System.currentTimeMillis();
-        AudioTimestamp previousTimestamp;
-        while ((previousTimestamp = mMediaCodecPlayer.getTimestamp()) == null) {
-            assertTrue(String.format("No audio timestamp after %d milliseconds",
+        AudioTimestamp currentAudioTimestamp = mMediaCodecPlayer.getTimestamp();
+        AudioTimestamp underrunAudioTimestamp;
+        do {
+            assertTrue(String.format("No audio underrun after %d milliseconds",
                             System.currentTimeMillis() - startTimeMs),
                     System.currentTimeMillis() - startTimeMs < audioUnderrunTimeoutMs);
+            underrunAudioTimestamp = currentAudioTimestamp;
             Thread.sleep(50);
-        }
-        AudioTimestamp underrunAudioTimestamp;
-        while ((underrunAudioTimestamp = mMediaCodecPlayer.getTimestamp()) != previousTimestamp) {
-            assertTrue(String.format("No audio underrun after %d milliseconds",
-                            audioUnderrunTimeoutMs),
-                    System.currentTimeMillis() - startTimeMs < audioUnderrunTimeoutMs);
-            previousTimestamp = underrunAudioTimestamp;
-            Thread.sleep(50);
-        }
-        // Loop to wait until video playback stalls
-        long previousVideoTimeUs = mMediaCodecPlayer.getVideoTimeUs();
-        long underrunVideoTimeUs;
-        startTimeMs = System.currentTimeMillis();
-        // TODO(b/200280965): Find a more appropriate delay based on partner feedback
+            currentAudioTimestamp = mMediaCodecPlayer.getTimestamp();
+        } while (currentAudioTimestamp.framePosition != underrunAudioTimestamp.framePosition);
+
+
+        // Wait until video playback stalls
         final int videoUnderrunTimeoutMs = 1000;
-        while ((underrunVideoTimeUs = mMediaCodecPlayer.getVideoTimeUs()) != previousVideoTimeUs) {
+        startTimeMs = System.currentTimeMillis();
+        long currentVideoTimeUs = mMediaCodecPlayer.getVideoTimeUs();
+        long underrunVideoTimeUs = -1;
+        do {
             assertTrue(String.format("No video underrun after %d milliseconds",
                             videoUnderrunTimeoutMs),
                     System.currentTimeMillis() - startTimeMs < videoUnderrunTimeoutMs);
-            previousVideoTimeUs = underrunVideoTimeUs;
+            underrunVideoTimeUs = currentVideoTimeUs;
             Thread.sleep(50);
-        }
+            currentVideoTimeUs = mMediaCodecPlayer.getVideoTimeUs();
+        } while (currentVideoTimeUs != underrunVideoTimeUs);
 
-        final int underrunVideoRenderedTimestampIndex =
+        // Retrieve index for the video rendered frame at the time of underrun
+        int underrunVideoRenderedTimestampIndex =
                 mMediaCodecPlayer.getRenderedVideoFrameTimestampList().size() - 1;
+
         // Resume audio buffering with a negative offset, in order to simulate a desynchronisation.
         // TODO(b/202710709): Use timestamp relative to last played video frame before pause
         mMediaCodecPlayer.setAudioTrackOffsetMs(-100);
         mMediaCodecPlayer.simulateAudioUnderrun(false);
 
-        // Loop to wait until audio playback resumes
+        // Wait until audio playback resumes
+        final int audioResumeTimeoutMs = 1000;
         startTimeMs = System.currentTimeMillis();
-        AudioTimestamp postResumeTimestamp;
-        while ((postResumeTimestamp = mMediaCodecPlayer.getTimestamp()) == underrunAudioTimestamp) {
+        currentAudioTimestamp = mMediaCodecPlayer.getTimestamp();
+        AudioTimestamp postResumeAudioTimestamp;
+        do {
             assertTrue(String.format("Audio has not resumed after %d milliseconds",
-                            audioUnderrunTimeoutMs),
-                    System.currentTimeMillis() - startTimeMs < audioUnderrunTimeoutMs);
+                            audioResumeTimeoutMs),
+                    System.currentTimeMillis() - startTimeMs < audioResumeTimeoutMs);
+            postResumeAudioTimestamp = currentAudioTimestamp;
             Thread.sleep(50);
-        }
+            currentAudioTimestamp = mMediaCodecPlayer.getTimestamp();
+        } while(currentAudioTimestamp.framePosition == postResumeAudioTimestamp.framePosition);
 
-        long resumeAudioSystemTime = interpolateSystemTimeAt(
-                underrunAudioTimestamp.framePosition + 1, postResumeTimestamp,
-                mMediaCodecPlayer.getAudioTrack());
-
-        // Now that audio playback has resumed, loop to wait until video playback resumes
+        // Now that audio playback has resumed, wait until video playback resumes
         // We care about the timestamp of the first output frame, rather than the exact time the
         // video resumed, which is why we only start polling after we are sure audio playback has
         // resumed.
-        long resumeVideoTimeUs = 0;
+        final int videoResumeTimeoutMs = 1000;
         startTimeMs = System.currentTimeMillis();
-        while ((resumeVideoTimeUs = mMediaCodecPlayer.getVideoTimeUs()) == underrunVideoTimeUs) {
+        currentVideoTimeUs = mMediaCodecPlayer.getVideoTimeUs();
+        long resumeVideoTimeUs = -1;
+        do {
             assertTrue(String.format("Video has not resumed after %d milliseconds",
-                            videoUnderrunTimeoutMs),
-                    System.currentTimeMillis() - startTimeMs < videoUnderrunTimeoutMs);
+                            videoResumeTimeoutMs),
+                    System.currentTimeMillis() - startTimeMs < videoResumeTimeoutMs);
+            resumeVideoTimeUs = currentVideoTimeUs;
             Thread.sleep(50);
-        }
+            currentVideoTimeUs = mMediaCodecPlayer.getVideoTimeUs();
+        } while (currentVideoTimeUs == resumeVideoTimeUs);
 
-        final ImmutableList<Long> renderedSystemTimeList =
-                mMediaCodecPlayer.getRenderedVideoFrameSystemTimeList();
-        final long resumeVideoFrameSystemTime = mMediaCodecPlayer
-                .getRenderedVideoFrameSystemTimeList().get(underrunVideoRenderedTimestampIndex + 1);
-        final long vsync = (long) (1000 / frameRate);
-        final long avSyncOffset = resumeAudioSystemTime + 100 - resumeVideoFrameSystemTime;
-        assertTrue(String.format("Audio and video tracks are more than %d milliseconds out of sync",
-                        vsync),
-                Math.abs(avSyncOffset) <= vsync);
+        // The system time when rendering the first audio frame after the resume
+        long playbackRateFps = mMediaCodecPlayer.getAudioTrack().getPlaybackRate();
+        long playedFrames = postResumeAudioTimestamp.framePosition
+                - underrunAudioTimestamp.framePosition + 1;
+        double elapsedTimeNs = playedFrames * (1000.0 * 1000.0 * 1000.0 / playbackRateFps);
+        long resumeAudioSystemTimeNs = postResumeAudioTimestamp.nanoTime - (long) elapsedTimeNs;
+        long resumeAudioSystemTimeMs = resumeAudioSystemTimeNs / 1000 / 1000;
+
+        // The system time when rendering the first video frame after the resume
+        long resumeVideoSystemTimeMs = mMediaCodecPlayer.getRenderedVideoFrameSystemTimeList()
+                .get(underrunVideoRenderedTimestampIndex + 1) / 1000 / 1000;
+
+        // Verify that audio and video are in-sync after resume time
+        // Note: Because a -100ms PTS gap is introduced, the video should resume 100ms later
+        resumeAudioSystemTimeMs += 100;
+        long vsyncMs = 1000 / frameRate;
+        long avSyncOffsetMs = resumeAudioSystemTimeMs - resumeVideoSystemTimeMs;
+        assertTrue(String.format(
+                        "Audio is %d milliseconds out of sync of video (audio:%d video:%d)",
+                        avSyncOffsetMs, resumeAudioSystemTimeMs, resumeVideoSystemTimeMs),
+                Math.abs(avSyncOffsetMs) <= vsyncMs);
     }
 
     /**
@@ -4742,18 +4756,6 @@ public class DecoderTest extends MediaTestBase {
         do {
             Thread.sleep(50);
         } while (!supplier.get() && System.currentTimeMillis() < deadLineMs);
-    }
-
-    /**
-     * Returns the system time of the frame {@code framePosition} from {@code timestamp}, for a
-     * specific {@code AudioTrack}.
-     */
-    private static long interpolateSystemTimeAt(long framePosition, AudioTimestamp timestamp,
-            AudioTrack audioTrack) {
-        final long playbackRateFps = audioTrack.getPlaybackRate();  // Frames per second
-        final long playedFrames = timestamp.framePosition - framePosition;
-        final double elapsedTimeNs = playedFrames * (1000000000.0 / playbackRateFps);
-        return timestamp.nanoTime - (long) elapsedTimeNs;
     }
 
     /**

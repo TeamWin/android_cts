@@ -146,8 +146,9 @@ def canakit_cmd_send(canakit_serial_port, cmd_str):
     time.sleep(CANAKIT_CMD_TIME)  # This is critical for relay.
     canakit_serial_port.write(cmd_str.encode())
 
-  except IOError:
-    raise IOError(f'Port {CANAKIT_VID}:{CANAKIT_PID} is not open!')
+  except IOError as io_error:
+    raise IOError(
+        f'Port {CANAKIT_VID}:{CANAKIT_PID} is not open!') from io_error
 
 
 def canakit_set_relay_channel_state(canakit_port, ch, state):

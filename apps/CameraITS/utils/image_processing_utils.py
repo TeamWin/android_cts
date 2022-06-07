@@ -137,7 +137,7 @@ def unpack_raw10_image(img):
   # Cut out the 4x2b LSBs and put each in bits [1:0] of their own 8b words.
   lsbs = img[::, 4::5].reshape(h, w // 4)
   lsbs = numpy.right_shift(
-      numpy.packbits(numpy.unpackbits(lsbs).reshape(h, w // 4, 4, 2), 3), 6)
+      numpy.packbits(numpy.unpackbits(lsbs).reshape((h, w // 4, 4, 2)), 3), 6)
   # Pair the LSB bits group to 0th pixel instead of 3rd pixel
   lsbs = lsbs.reshape(h, w // 4, 4)[:, :, ::-1]
   lsbs = lsbs.reshape(h, w)
@@ -190,7 +190,7 @@ def unpack_raw12_image(img):
   # Cut out the 2x4b LSBs and put each in bits [3:0] of their own 8b words.
   lsbs = img[::, 2::3].reshape(h, w // 2)
   lsbs = numpy.right_shift(
-      numpy.packbits(numpy.unpackbits(lsbs).reshape(h, w // 2, 2, 4), 3), 4)
+      numpy.packbits(numpy.unpackbits(lsbs).reshape((h, w // 2, 2, 4)), 3), 4)
   # Pair the LSB bits group to pixel 0 instead of pixel 1
   lsbs = lsbs.reshape(h, w // 2, 2)[:, :, ::-1]
   lsbs = lsbs.reshape(h, w)
@@ -243,7 +243,7 @@ def decompress_jpeg_to_rgb_image(jpeg_buffer):
   img = Image.open(io.BytesIO(jpeg_buffer))
   w = img.size[0]
   h = img.size[1]
-  return numpy.array(img).reshape(h, w, 3) / 255.0
+  return numpy.array(img).reshape((h, w, 3)) / 255.0
 
 
 def convert_image_to_numpy_array(image_path):
@@ -453,7 +453,7 @@ def convert_raw_to_rgb_image(r_plane, gr_plane, gb_plane, b_plane, props,
   img = (((img.reshape(h, w, 3) - black_levels) * scale) * gains).clip(0.0, 1.0)
   if apply_ccm_raw_to_rgb:
     img = numpy.dot(
-        img.reshape(w * h, 3), ccm.T).reshape(h, w, 3).clip(0.0, 1.0)
+        img.reshape(w * h, 3), ccm.T).reshape((h, w, 3)).clip(0.0, 1.0)
   return img
 
 
@@ -938,7 +938,7 @@ class ImageProcessingUtilsTest(unittest.TestCase):
     ref_image = [0.1, 0.2, 0.3]
     lut_max = 65536
     lut = numpy.array([i*2 for i in range(lut_max)])
-    x = numpy.array(ref_image).reshape(1, 1, 3)
+    x = numpy.array(ref_image).reshape((1, 1, 3))
     y = apply_lut_to_image(x, lut).reshape(3).tolist()
     y_ref = [i*2 for i in ref_image]
     self.assertTrue(numpy.allclose(y, y_ref, atol=1/lut_max))

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-package android.media.muxer.cts;
+package android.security.cts.CVE_2022_20143;
 
-import android.media.cts.WorkDirBase;
+import android.app.Activity;
 
-class WorkDir extends WorkDirBase {
-    public static final String getMediaDirString() {
-        return getMediaDirString("CtsMediaMuxerTestCases-1.2");
-    }
+public class PocActivity extends Activity {
 }

@@ -756,8 +756,16 @@ public class WindowInputTests {
 
         final ExecutorService executor = Executors.newSingleThreadExecutor();
         boolean[] securityExceptionCaught = new boolean[1];
+        Exception[] illegalArgumentException = new Exception[1];
         executor.execute(() -> {
-            mInstrumentation.sendPointerSync(eventDown);
+            try {
+                mInstrumentation.sendPointerSync(eventDown);
+            } catch (IllegalArgumentException e) {
+                // InputManagerService throws IllegalArgumentException when input target mismatch.
+                // Store the exception, and raise test failure later to avoid cts thread crash.
+                illegalArgumentException[0] = e;
+                return;
+            }
             for (int i = 0; i < 20; i++) {
                 final long eventTime = SystemClock.uptimeMillis();
                 final MotionEvent eventMove = MotionEvent.obtain(
@@ -766,8 +774,13 @@ public class WindowInputTests {
                     mInstrumentation.sendPointerSync(eventMove);
                 } catch (SecurityException e) {
                     securityExceptionCaught[0] = true;
+                    return;
+                } catch (IllegalArgumentException e) {
+                    illegalArgumentException[0] = e;
+                    return;
                 }
             }
+
         });
 
         // Launch another activity, should not crash the process.
@@ -782,6 +795,11 @@ public class WindowInputTests {
             // Fail the test here instead of in the executor lambda,
             // so the failure is thrown in the test thread.
             fail("Should be allowed to inject event.");
+        }
+
+        if (illegalArgumentException[0] != null) {
+            fail("Failed to inject event due to input target mismatch: "
+                    + illegalArgumentException[0].getMessage());
         }
     }
 
