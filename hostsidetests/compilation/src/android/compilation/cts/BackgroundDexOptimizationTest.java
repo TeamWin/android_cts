@@ -82,6 +82,8 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
     // Uses internal consts defined in BackgroundDexOptService only for testing purpose.
     private static final int STATUS_OK = 0;
     private static final int STATUS_CANCELLED = 1;
+    // We allow package level failure in dexopt, which will lead into this error state.
+    private static final int STATUS_DEX_OPT_FAILED = 5;
 
     private ITestDevice mDevice;
 
@@ -124,7 +126,7 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
                 () -> getLastExecutionTime().duration >= 0);
 
         int status = getLastDexOptStatus();
-        assertThat(status).isAnyOf(STATUS_OK, STATUS_CANCELLED);
+        assertThat(status).isAnyOf(STATUS_OK, STATUS_DEX_OPT_FAILED, STATUS_CANCELLED);
         if (status == STATUS_CANCELLED) {
             assertThat(checkFinishedPostBootUpdate()).isFalse();
             // If cancelled, we can complete it by running it again.
@@ -177,7 +179,7 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
                 () -> getLastExecutionTime().duration >= 0);
 
         int status = getLastDexOptStatus();
-        assertThat(status).isAnyOf(STATUS_OK, STATUS_CANCELLED);
+        assertThat(status).isAnyOf(STATUS_OK, STATUS_DEX_OPT_FAILED, STATUS_CANCELLED);
         if (status == STATUS_CANCELLED) {
             // If cancelled, we can complete it by running it again.
             completeIdleOptimization();
@@ -204,7 +206,7 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
         assertThat(timeAfter.startTime).isAtLeast(timeBefore.deviceCurrentTime);
         assertThat(timeAfter.duration).isAtLeast(0);
         int status = getLastDexOptStatus();
-        assertThat(status).isEqualTo(STATUS_OK);
+        assertThat(status).isAnyOf(STATUS_OK, STATUS_DEX_OPT_FAILED);
     }
 
     private void completeIdleOptimization() throws Exception {
@@ -220,7 +222,7 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
                 });
 
         int status = getLastDexOptStatus();
-        assertThat(status).isEqualTo(STATUS_OK);
+        assertThat(status).isAnyOf(STATUS_OK, STATUS_DEX_OPT_FAILED);
     }
 
     @After
