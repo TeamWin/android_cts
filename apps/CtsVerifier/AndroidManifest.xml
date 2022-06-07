@@ -105,7 +105,9 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
     <!-- Needed for Wi-Fi Direct tests from T -->
-    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
+    <uses-permission
+        android:name="android.permission.NEARBY_WIFI_DEVICES"
+        android:usesPermissionFlags="neverForLocation" />
 
     <!-- READ_LOGS User Consent Test from T -->
     <uses-permission android:name="android.permission.READ_LOGS" />
