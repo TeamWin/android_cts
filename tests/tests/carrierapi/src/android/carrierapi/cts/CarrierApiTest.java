@@ -1105,7 +1105,7 @@ public class CarrierApiTest extends BaseCarrierApiTest {
         }
 
         // Set subscription group with current sub Id.
-        int subId = SubscriptionManager.getDefaultDataSubscriptionId();
+        int subId = SubscriptionManager.getDefaultSubscriptionId();
         if (subId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) return;
         ParcelUuid uuid = ShellIdentityUtils.invokeMethodWithShellPermissions(mSubscriptionManager,
                 (sm) -> sm.createSubscriptionGroup(Arrays.asList(subId)));
@@ -1142,7 +1142,7 @@ public class CarrierApiTest extends BaseCarrierApiTest {
     @Test
     public void testAddSubscriptionToExistingGroupForEsim() {
         // Set subscription group with current sub Id.
-        int subId = SubscriptionManager.getDefaultDataSubscriptionId();
+        int subId = SubscriptionManager.getDefaultSubscriptionId();
         if (subId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) return;
         ParcelUuid uuid = mSubscriptionManager.createSubscriptionGroup(Arrays.asList(subId));
 
@@ -1172,7 +1172,7 @@ public class CarrierApiTest extends BaseCarrierApiTest {
      */
     @Test
     public void testOpportunistic() {
-        int subId = SubscriptionManager.getDefaultDataSubscriptionId();
+        int subId = SubscriptionManager.getDefaultSubscriptionId();
         if (subId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) return;
         SubscriptionInfo info = mSubscriptionManager.getActiveSubscriptionInfo(subId);
         boolean oldOpportunistic = info.isOpportunistic();
