@@ -17,6 +17,7 @@
 package android.media.audio.cts;
 
 import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -191,7 +192,7 @@ public class VolumeShaperTest {
                 .isLowRamDevice();
     }
 
-    private static AudioTrack createSineAudioTrack() {
+    private static AudioTrack createSineAudioTrack(boolean allowOffload) {
         final int TEST_FORMAT = AudioFormat.ENCODING_PCM_FLOAT;
         final int TEST_MODE = AudioTrack.MODE_STATIC;
         final int TEST_SR = 48000;
@@ -203,8 +204,13 @@ public class VolumeShaperTest {
 
         final int frameCount = AudioHelper.frameCountFromMsec(100 /*ms*/, format);
         final int frameSize = AudioHelper.frameSizeFromFormat(format);
+        final int usage = allowOffload
+                ? AudioAttributes.USAGE_MEDIA : AudioAttributes.USAGE_ALARM;
 
         final AudioTrack audioTrack = new AudioTrack.Builder()
+            .setAudioAttributes(new AudioAttributes.Builder()
+                    .setUsage(usage)
+                    .build())
             .setAudioFormat(format)
             .setBufferSizeInBytes(frameCount * frameSize)
             .setTransferMode(TEST_MODE)
@@ -268,8 +274,8 @@ public class VolumeShaperTest {
     }
 
     private static class AudioTrackPlayer implements Player {
-        public AudioTrackPlayer() {
-            mTrack = createSineAudioTrack();
+        AudioTrackPlayer(boolean allowOffload) {
+            mTrack = createSineAudioTrack(allowOffload);
             mName = new String("AudioTrack");
         }
 
@@ -341,11 +347,14 @@ public class VolumeShaperTest {
     private static final int PLAYER_TYPE_AUDIO_TRACK = 0;
     private static final int PLAYER_TYPE_MEDIA_PLAYER_NON_OFFLOADED = 1;
     private static final int PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED = 2;
+    private static final int PLAYER_TYPE_AUDIO_TRACK_NON_OFFLOADED = 3;
 
     private Player createPlayer(int type) {
         switch (type) {
             case PLAYER_TYPE_AUDIO_TRACK:
-                return new AudioTrackPlayer();
+                return new AudioTrackPlayer(true /* allowOffload */);
+            case PLAYER_TYPE_AUDIO_TRACK_NON_OFFLOADED:
+                return new AudioTrackPlayer(false /* allowOffload */);
             case PLAYER_TYPE_MEDIA_PLAYER_NON_OFFLOADED:
                 return new MediaPlayerPlayer(false /* offloaded */);
             case PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED:
@@ -1276,6 +1285,12 @@ public class VolumeShaperTest {
                 }
                 if (useMediaTime &&  p == PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED) {
                     continue;  // Offloaded media time not supported.
+                }
+                // For this test, force non offload track for media time,
+                // as media time based offload/direct volumeshaper is not supported yet.
+                // TODO(b/236187574) - remove this requirement.
+                if (useMediaTime &&  p == PLAYER_TYPE_AUDIO_TRACK) {
+                    p = PLAYER_TYPE_AUDIO_TRACK_NON_OFFLOADED;
                 }
 
                 try (   Player player = createPlayer(p);
