@@ -148,7 +148,7 @@ class PreviewStabilizationFoVTest(its_base_test.ItsBaseTest):
       camera_properties_utils.skip_unless(
           first_api_level >= its_session_utils.ANDROID13_API_LEVEL,
           'First API level should be {} or higher. Found {}.'.format(
-            its_session_utils.ANDROID13_API_LEVEL, first_api_level))
+              its_session_utils.ANDROID13_API_LEVEL, first_api_level))
 
       supported_stabilization_modes = props[
           'android.control.availableVideoStabilizationModes'

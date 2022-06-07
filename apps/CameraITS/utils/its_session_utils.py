@@ -134,10 +134,10 @@ class ItsSession(object):
       try:
         socket_lock.bind((ItsSession.IPADDR, ItsSession.LOCK_PORT))
         break
-      except (socket.error, socket.timeout):
+      except (socket.error, socket.timeout) as socket_issue:
         if i == num_retries - 1:
-          raise error_util.CameraItsError(self._device_id,
-                                          'socket lock returns error')
+          raise error_util.CameraItsError(
+              self._device_id, 'socket lock returns error') from socket_issue
         else:
           time.sleep(retry_wait_time_sec)
 
@@ -545,8 +545,9 @@ class ItsSession(object):
       VideoRecordingObject: {
         'tag': 'recordingResponse',
         'objValue': {
-          'recordedOutputPath': '/storage/emulated/0/Android/data/com.android.cts.verifier'
-                                '/files/VideoITS/VID_20220324_080414_0_CIF_352x288.mp4',
+          'recordedOutputPath': '/storage/emulated/0/Android/data/'
+                                'com.android.cts.verifier/files/VideoITS/'
+                                'VID_20220324_080414_0_CIF_352x288.mp4',
           'quality': 'preview',
           'videoSize': '352x288'
         }
@@ -1478,8 +1479,8 @@ def get_build_sdk_version(device_id):
   try:
     build_sdk_version = int(subprocess.check_output(cmd.split()).rstrip())
     logging.debug('Build SDK version: %d', build_sdk_version)
-  except (subprocess.CalledProcessError, ValueError):
-    raise AssertionError('No build_sdk_version.')
+  except (subprocess.CalledProcessError, ValueError) as exp_errors:
+    raise AssertionError('No build_sdk_version.') from exp_errors
   return build_sdk_version
 
 

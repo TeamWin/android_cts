@@ -273,13 +273,13 @@ class ZoomTest(its_base_test.ItsBaseTest):
           if circle_cropped(circle, size):
             logging.debug('zoom %.2f is too large! Skip further captures', z)
             break
-        except AssertionError:
+        except AssertionError as e:
           if z/z_list[0] >= ZOOM_MAX_THRESH:
             break
           else:
             raise AssertionError(
                 f'No circle was detected for zoom ratio <= {ZOOM_MAX_THRESH}. '
-                'Please take pictures according to instructions carefully!')
+                'Take pictures according to instructions carefully!') from e
         test_data[i] = {'z': z, 'circle': circle, 'r_tol': radius_tol,
                         'o_tol': offset_tol, 'fl': cap_fl}
 
