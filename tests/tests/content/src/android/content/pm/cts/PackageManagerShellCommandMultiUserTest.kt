@@ -237,18 +237,18 @@ class PackageManagerShellCommandMultiUserTest {
         val intentFilter = IntentFilter()
         intentFilter.addAction(Intent.ACTION_PACKAGE_FULLY_REMOVED)
         intentFilter.addDataScheme("package")
-        context.registerReceiver(
-            broadcastReceiverForPrimaryUser,
-            intentFilter,
-            null,
-            backgroundHandler,
-            RECEIVER_EXPORTED
-        )
         uiAutomation.adoptShellPermissionIdentity(
             Manifest.permission.INTERACT_ACROSS_USERS,
             Manifest.permission.INTERACT_ACROSS_USERS_FULL
         )
         try {
+            context.createContextAsUser(primaryUser.userHandle(), 0).registerReceiver(
+                broadcastReceiverForPrimaryUser,
+                intentFilter,
+                null,
+                backgroundHandler,
+                RECEIVER_EXPORTED
+            )
             context.createContextAsUser(secondaryUser.userHandle(), 0).registerReceiver(
                 broadcastReceiverForSecondaryUser,
                 intentFilter,
