@@ -791,6 +791,12 @@ public abstract class ActivityManagerTestBase {
         return mInstrumentation.getUiAutomation().takeScreenshot();
     }
 
+    protected Bitmap takeScreenshotForBounds(Rect rect) {
+        Bitmap fullBitmap = takeScreenshot();
+        return Bitmap.createBitmap(fullBitmap, rect.left, rect.top,
+                rect.width(), rect.height());
+    }
+
     protected void launchActivity(final ComponentName activityName,
             final CliIntentExtra... extras) {
         launchActivityNoWait(activityName, extras);
