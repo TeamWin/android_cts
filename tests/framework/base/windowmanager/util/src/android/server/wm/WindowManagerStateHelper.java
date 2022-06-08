@@ -705,6 +705,8 @@ public class WindowManagerStateHelper extends WindowManagerState {
     public void assertKeyguardShowingAndOccluded() {
         assertTrue("Keyguard is showing",
                 getKeyguardControllerState().keyguardShowing);
+        assertFalse("keygaurd is not going away",
+                getKeyguardControllerState().mKeyguardGoingAway);
         assertTrue("Keyguard is occluded",
                 getKeyguardControllerState().isKeyguardOccluded(DEFAULT_DISPLAY));
     }
@@ -712,6 +714,8 @@ public class WindowManagerStateHelper extends WindowManagerState {
     public void assertKeyguardShowingAndNotOccluded() {
         assertTrue("Keyguard is showing",
                 getKeyguardControllerState().keyguardShowing);
+        assertFalse("keygaurd is not going away",
+                getKeyguardControllerState().mKeyguardGoingAway);
         assertFalse("Keyguard is not occluded",
                 getKeyguardControllerState().isKeyguardOccluded(DEFAULT_DISPLAY));
     }

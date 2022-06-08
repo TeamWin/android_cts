@@ -33,6 +33,7 @@ import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_ATTR_ACTIVITY;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_DIALOG_ACTIVITY;
+import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_NO_PREVIEW_ACTIVITY;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
@@ -477,6 +478,7 @@ public class KeyguardTests extends KeyguardTestBase {
         assertTrue(mWmState.getKeyguardControllerState().keyguardShowing);
         assertFalse(isDisplayOn(DEFAULT_DISPLAY));
     }
+
     /**
      * Tests whether a FLAG_DISMISS_KEYGUARD activity occludes Keyguard.
      */
@@ -549,6 +551,20 @@ public class KeyguardTests extends KeyguardTestBase {
         mBroadcastActionTrigger.dismissKeyguardByFlag();
         mWmState.assertKeyguardShowingAndOccluded();
         mWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+    }
+
+    @Test
+    public void testDismissKeyguard_fromActivityOption_onlyOnce() {
+        // TODO(b/228431314): Move this test from CTS to flicker test.
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+
+        lockScreenSession.gotoKeyguard();
+        launchActivityWithDismissKeyguard(SHOW_WHEN_LOCKED_NO_PREVIEW_ACTIVITY);
+        mWmState.computeState(SHOW_WHEN_LOCKED_NO_PREVIEW_ACTIVITY);
+        mWmState.assertVisibility(SHOW_WHEN_LOCKED_NO_PREVIEW_ACTIVITY, true);
+
+        lockScreenSession.gotoKeyguard();
+        assertFalse(mWmState.getKeyguardControllerState().mKeyguardGoingAway);
     }
 
     @Test

@@ -1784,12 +1784,14 @@ public class WindowManagerState {
 
         boolean aodShowing = false;
         boolean keyguardShowing = false;
+        boolean mKeyguardGoingAway = false;
         SparseArray<Boolean> mKeyguardOccludedStates = new SparseArray<>();
 
         KeyguardControllerState(KeyguardControllerProto proto) {
             if (proto != null) {
                 aodShowing = proto.aodShowing;
                 keyguardShowing = proto.keyguardShowing;
+                mKeyguardGoingAway = proto.keyguardGoingAway;
                 for (int i = 0;  i < proto.keyguardPerDisplay.length; i++) {
                     mKeyguardOccludedStates.append(proto.keyguardPerDisplay[i].displayId,
                             proto.keyguardPerDisplay[i].keyguardOccluded);

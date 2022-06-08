@@ -339,7 +339,7 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
                 EdgeExtensionActivity.class, extras);
         final Rect appBounds = getTopAppBounds();
         assertColorChangeXIndex(screenshots,
-                (appBounds.left + appBounds.right) / 4 * 3, testBounds);
+                appBounds.left + (appBounds.right - appBounds.left) * 3 / 4, testBounds);
     }
 
     /**
@@ -390,7 +390,7 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
                 EdgeExtensionActivity.class, extras);
         final Rect appBounds = getTopAppBounds();
         assertColorChangeXIndex(screenshots,
-                (appBounds.left + appBounds.right) / 4, testBounds);
+            appBounds.left + (appBounds.right - appBounds.left) / 4, testBounds);
     }
 
     /**

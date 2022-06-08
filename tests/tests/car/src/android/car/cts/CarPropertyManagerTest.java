@@ -49,7 +49,7 @@ import android.util.ArraySet;
 import android.util.SparseArray;
 
 import androidx.annotation.GuardedBy;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
@@ -629,6 +629,38 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                             VehicleIgnitionState.ACC, VehicleIgnitionState.ON,
                             VehicleIgnitionState.START));
                 }).build().verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testAbsActiveIfSupported() {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.adoptShellPermissionIdentity(/* Car.PERMISSION_CAR_DYNAMICS_STATE = */
+                "android.car.permission.CAR_DYNAMICS_STATE");
+        try {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.ABS_ACTIVE,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Boolean.class).build().verify(mCarPropertyManager);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testTractionControlActiveIfSupported() {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.adoptShellPermissionIdentity(/* Car.PERMISSION_CAR_DYNAMICS_STATE = */
+                "android.car.permission.CAR_DYNAMICS_STATE");
+        try {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.TRACTION_CONTROL_ACTIVE,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Boolean.class).build().verify(mCarPropertyManager);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
     }
 
     @Test

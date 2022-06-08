@@ -32,4 +32,8 @@ java_test_host {
         "vts",
         "general-tests",
     ],
+    data: [
+        ":CtsHostsideVoiceInteractionTestsApp",
+    ],
+    per_testcase_directory: true,
 }

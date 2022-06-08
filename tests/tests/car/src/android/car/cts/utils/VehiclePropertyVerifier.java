@@ -22,6 +22,7 @@ import static org.junit.Assume.assumeNotNull;
 
 import android.car.VehicleAreaType;
 import android.car.VehiclePropertyIds;
+import android.car.VehiclePropertyType;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
 import android.car.hardware.property.CarPropertyManager;
@@ -248,6 +249,31 @@ public class VehiclePropertyVerifier<T> {
             assertWithMessage(mPropertyName + " configArray is undefined, so it must be empty")
                     .that(carPropertyConfig.getConfigArray().size()).isEqualTo(0);
         }
+
+        for (int areaId : carPropertyConfig.getAreaIds()) {
+            T areaIdMinValue = (T) carPropertyConfig.getMinValue(areaId);
+            T areaIdMaxValue = (T) carPropertyConfig.getMaxValue(areaId);
+            if (areaIdMinValue == null || areaIdMaxValue == null) {
+                continue;
+            }
+            assertWithMessage(
+                    mPropertyName + " - areaId: " + areaId + "'s max value must be >= min value")
+                    .that(verifyMaxAndMin(areaIdMinValue, areaIdMaxValue)).isTrue();
+        }
+    }
+
+    private boolean verifyMaxAndMin(T min, T max) {
+        int propertyType = mPropertyId & VehiclePropertyType.MASK;
+        switch (propertyType) {
+            case VehiclePropertyType.INT32:
+                return (Integer) max >= (Integer) min;
+            case VehiclePropertyType.INT64:
+                return (Long) max >= (Long) min;
+            case VehiclePropertyType.FLOAT:
+                return (Float) max >= (Float) min;
+            default:
+                return false;
+        }
     }
 
     private void verifyContinuousCarPropertyConfig(CarPropertyConfig<?> carPropertyConfig) {
@@ -329,6 +355,29 @@ public class VehiclePropertyVerifier<T> {
         mCarPropertyValueVerifier.ifPresent(
                 propertyValueVerifier -> propertyValueVerifier.verify(carPropertyConfig,
                         carPropertyValue));
+
+        T areaIdMinValue = (T) carPropertyConfig.getMinValue(areaId);
+        T areaIdMaxValue = (T) carPropertyConfig.getMaxValue(areaId);
+        if (areaIdMinValue != null && areaIdMaxValue != null) {
+            assertWithMessage(
+                "carPropertyValue must be between the max and min values")
+                .that(verifyValueInRange(areaIdMinValue, areaIdMaxValue,
+                    (T) carPropertyValue.getValue())).isTrue();
+        }
+    }
+
+    private boolean verifyValueInRange(T min, T max, T value) {
+        int propertyType = mPropertyId & VehiclePropertyType.MASK;
+        switch (propertyType) {
+            case VehiclePropertyType.INT32:
+                return ((Integer) value >= (Integer) min && (Integer) value <= (Integer) max);
+            case VehiclePropertyType.INT64:
+                return ((Long) value >= (Long) min && (Long) value <= (Long) max);
+            case VehiclePropertyType.FLOAT:
+                return ((Float) value >= (Float) min && (Float) value <= (Float) max);
+            default:
+                return false;
+        }
     }
 
     public interface ConfigArrayVerifier {
