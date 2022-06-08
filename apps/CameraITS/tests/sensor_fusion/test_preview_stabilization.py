@@ -37,7 +37,7 @@ _NUM_ROTATIONS = 25
 _START_FRAME = 30  # give 3A some frames to warm up
 _VIDEO_DELAY_TIME = 5.5  # seconds
 _VIDEO_DURATION = 5.5  # seconds
-_VIDEO_STABILIZATION_FACTOR = 0.6  # 60% of gyro movement allowed
+_VIDEO_STABILIZATION_FACTOR = 0.7  # 70% of gyro movement allowed
 _PREVIEW_STABILIZATION_MODE_PREVIEW = 2
 
 
