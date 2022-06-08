@@ -525,10 +525,9 @@ public class CarrierApiTest extends BaseCarrierApiTest {
             mTelephonyManager.getServiceState();
             mTelephonyManager.getManualNetworkSelectionPlmn();
             mTelephonyManager.setForbiddenPlmns(new ArrayList<String>());
-            int activeModemCount = mTelephonyManager.getActiveModemCount();
-            for (int i = 0; i < activeModemCount; i++) {
-                mTelephonyManager.isModemEnabledForSlot(i);
-            }
+            // TODO(b/235490259): test all slots once TM#isModemEnabledForSlot allows
+            mTelephonyManager.isModemEnabledForSlot(
+                    SubscriptionManager.getSlotIndex(mTelephonyManager.getSubscriptionId()));
         } catch (SecurityException e) {
             fail(NO_CARRIER_PRIVILEGES_FAILURE_MESSAGE);
         }
