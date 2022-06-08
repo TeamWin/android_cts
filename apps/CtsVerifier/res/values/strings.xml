@@ -6590,6 +6590,11 @@ Follow the instructions on the screen to measure the frequency response for the 
         The Presence tests check whether or not a device is properly calibrated for BLE, NAN and UWB based on Presence requirements.
         \nAll tests are required to pass on every device, if the radio technology is supported
     </string>
+    <string name="presence_test_tv_info">
+        The Presence tests check whether or not a device is properly calibrated for BLE, NAN and UWB based on Presence requirements.
+        \nAll tests are required to pass on all Android T+ launched TV devices, if the radio technology is supported.
+        \nIf the TV device is launched on older Android letters, all tests will be disabled. Press Pass to pass this case.
+    </string>
     <string name="uwb_precision">Uwb Precision Test</string>
     <string name="uwb_short_range">Uwb Short Range Test</string>
     <string name="uwb_precision_instruction">

@@ -183,8 +183,9 @@ public class AppCompatStateStatsTests extends DeviceTestCase implements IBuildRe
     private void testAppCompatFlow(String activity, @Nullable String secondActivity,
             boolean switchToOpened, List<AppCompatStateChanged.State>... expectedStatesOptions)
             throws Exception {
-        if (!isOpenedDeviceStateAvailable()) {
-            CLog.i("Device doesn't support OPENED device state.");
+        if (!isDeviceStateAvailable(DEVICE_STATE_OPENED)
+                || !isDeviceStateAvailable(DEVICE_STATE_CLOSED)) {
+            CLog.i("Device doesn't support OPENED or CLOSED device states.");
             return;
         }
 
@@ -238,10 +239,10 @@ public class AppCompatStateStatsTests extends DeviceTestCase implements IBuildRe
         return result;
     }
 
-    private boolean isOpenedDeviceStateAvailable() throws Exception {
+    private boolean isDeviceStateAvailable(int state) throws Exception {
         return Arrays.stream(
                 getDevice().executeShellCommand(CMD_GET_AVAILABLE_DEVICE_STATES).split(","))
                 .map(Integer::valueOf)
-                .anyMatch(state -> state == DEVICE_STATE_OPENED);
+                .anyMatch(availableState -> availableState == state);
     }
 }

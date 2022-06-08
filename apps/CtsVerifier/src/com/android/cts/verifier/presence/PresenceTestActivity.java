@@ -16,11 +16,17 @@
 
 package com.android.cts.verifier.presence;
 
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemProperties;
 
 import com.android.cts.verifier.ManifestTestListAdapter;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class PresenceTestActivity extends PassFailButtons.TestListActivity {
 
@@ -29,8 +35,26 @@ public class PresenceTestActivity extends PassFailButtons.TestListActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.pass_fail_list);
         setPassFailButtonClickListeners();
-        setInfoResources(R.string.presence_test, R.string.presence_test_info, -1);
-        setTestListAdapter(
-                new ManifestTestListAdapter(this, PresenceTestActivity.class.getName()));
+
+        List<String> disabledTest = new ArrayList<String>();
+        boolean isTv = getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+        if (isTv) {
+            setInfoResources(R.string.presence_test, R.string.presence_test_tv_info, -1);
+            int firstSdk = SystemProperties.getInt("ro.product.first_api_level", 0);
+            if (firstSdk < Build.VERSION_CODES.TIRAMISU) {
+                disabledTest.add("com.android.cts.verifier.presence.UwbPrecisionActivity");
+                disabledTest.add("com.android.cts.verifier.presence.UwbShortRangeActivity");
+                disabledTest.add("com.android.cts.verifier.presence.BleRssiPrecisionActivity");
+                disabledTest.add("com.android.cts.verifier.presence.BleRxTxCalibrationActivity");
+                disabledTest.add("com.android.cts.verifier.presence.BleRxOffsetActivity");
+                disabledTest.add("com.android.cts.verifier.presence.BleTxOffsetActivity");
+                disabledTest.add("com.android.cts.verifier.presence.NanPrecisionTestActivity");
+            }
+        } else {
+            setInfoResources(R.string.presence_test, R.string.presence_test_info, -1);
+        }
+
+        setTestListAdapter(new ManifestTestListAdapter(this, PresenceTestActivity.class.getName(),
+                disabledTest.toArray(new String[disabledTest.size()])));
     }
 }

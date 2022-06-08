@@ -160,8 +160,6 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
                     R.id.audio_routingnotification_testresult)).setText(
                     "Test PASSES - No peripheral support");
         }
-
-        stopPlayback();
     }
 
     protected void storeTestResults() {
