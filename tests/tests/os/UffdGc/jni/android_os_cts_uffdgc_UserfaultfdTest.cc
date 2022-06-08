@@ -16,6 +16,7 @@
 #include "jni.h"
 
 #include <cstring>
+#include <cassert>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -118,13 +119,29 @@ JNIEXPORT bool JNICALL Java_android_os_cts_uffdgc_UserfaultfdTest_confirmKernelV
 
   int major, minor;
   struct utsname uts;
-  if (uname(&uts) != 0 ||
-      strcmp(uts.sysname, "Linux") != 0 ||
-      sscanf(uts.release, "%d.%d", &major, &minor) != 2 ||
+  uname(&uts);
+  assert(strcmp(uts.sysname, "Linux") == 0);
+  if (sscanf(uts.release, "%d.%d", &major, &minor) != 2 ||
       (major < kRequiredMajor || (major == kRequiredMajor && minor < kRequiredMinor))) {
     return false;
   }
   return true;
+#else
+  return false;
+#endif
+}
+
+extern "C"
+JNIEXPORT bool JNICALL Java_android_os_cts_uffdgc_UserfaultfdTest_confirmKernelArch64bit(JNIEnv*) {
+#if defined(__linux__)
+  struct utsname uts;
+  uname(&uts);
+  assert(strcmp(uts.sysname, "Linux") == 0);
+  if (strstr(uts.machine, "64") != nullptr ||
+      strstr(uts.machine, "armv8") == uts.machine) {
+    return true;
+  }
+  return false;
 #else
   return false;
 #endif
