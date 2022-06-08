@@ -142,6 +142,10 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
         if (!mIsAudio) {
             int colorFormat = mFormats.get(0).getInteger(MediaFormat.KEY_COLOR_FORMAT);
             Assume.assumeTrue(hasSupportForColorFormat(mCodecName, mMime, colorFormat));
+            if (mUseHBD) {
+                Assume.assumeTrue("Codec doesn't support high bit depth profile encoding",
+                        doesCodecSupportHDRProfile(mCodecName, mMime));
+            }
         }
         checkFormatSupport(mCodecName, mMime, true, mFormats, null, CODEC_OPTIONAL);
         setUpSource(inputFile);

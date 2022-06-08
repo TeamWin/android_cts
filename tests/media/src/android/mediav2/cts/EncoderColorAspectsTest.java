@@ -20,8 +20,11 @@ import android.media.MediaCodec;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
+import android.opengl.GLES20;
 import android.os.Build;
 import android.util.Log;
+import android.util.Pair;
+import android.view.Surface;
 
 import androidx.test.filters.SmallTest;
 
@@ -39,7 +42,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_Format32bitABGR2101010;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -54,22 +59,31 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
     private int mStandard;
     private int mTransferCurve;
     private boolean mUseHighBitDepth;
+    private boolean mSurfaceMode;
+
+    private Surface mInpSurface;
+    private EGLWindowSurface mEGLWindowInpSurface;
     private MediaFormat mConfigFormat;
 
     private MediaMuxer mMuxer;
     private int mTrackID = -1;
+
+    private int mLatency;
+    private boolean mReviseLatency;
 
     private ArrayList<String> mCheckESList = new ArrayList<>();
 
     private static boolean sIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
 
     public EncoderColorAspectsTest(String encoderName, String mime, int width, int height,
-            int range, int standard, int transferCurve, boolean useHighBitDepth) {
+            int range, int standard, int transferCurve, boolean useHighBitDepth,
+            boolean surfaceMode) {
         super(encoderName, mime, new int[]{64000}, new int[]{width}, new int[]{height});
         mRange = range;
         mStandard = standard;
         mTransferCurve = transferCurve;
         mUseHighBitDepth = useHighBitDepth;
+        mSurfaceMode = surfaceMode;
         mWidth = width;
         mHeight = height;
         setUpParams(1);
@@ -113,7 +127,10 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                         if (!stringArgsList.contains(currentObject)) {
                             exhaustiveArgsList
                                     .add(new Object[]{mediaType, 176, 144, range, standard,
-                                            transfer, useHighBitDepth});
+                                            transfer, useHighBitDepth, false});
+                            exhaustiveArgsList
+                                    .add(new Object[]{mediaType, 176, 144, range, standard,
+                                            transfer, useHighBitDepth, true});
                             stringArgsList.add(currentObject);
                         }
                     }
@@ -122,7 +139,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{4}_{5}_{6})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{4}_{5}_{6}_{7}_{8})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = false;
@@ -170,19 +187,109 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
         return CodecTestBase
                 .prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
     }
+    private long computePresentationTime(int frameIndex) {
+        return frameIndex * 1000000 / mFrameRate;
+    }
+
+    private void generateSurfaceFrame() {
+        GLES20.glViewport(0, 0, mWidth, mHeight);
+        GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
+        GLES20.glClearColor(128.0f, 128.0f, 128.0f, 1.0f);
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+    }
+
+    private void tryEncoderOutput(long timeOutUs) throws InterruptedException {
+        if (!mAsyncHandle.hasSeenError() && !mSawOutputEOS) {
+            int retry = 0;
+            while (mReviseLatency) {
+                if (mAsyncHandle.hasOutputFormatChanged()) {
+                    mReviseLatency = false;
+                    int actualLatency = mAsyncHandle.getOutputFormat()
+                            .getInteger(MediaFormat.KEY_LATENCY, mLatency);
+                    if (mLatency < actualLatency) {
+                        mLatency = actualLatency;
+                        return;
+                    }
+                } else {
+                    if (retry > RETRY_LIMIT) {
+                        throw new InterruptedException(
+                                "did not receive output format changed for encoder after " +
+                                        Q_DEQ_TIMEOUT_US * RETRY_LIMIT + " us");
+                    }
+                    Thread.sleep(Q_DEQ_TIMEOUT_US / 1000);
+                    retry++;
+                }
+            }
+            Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandle.getOutput();
+            if (element != null) {
+                dequeueOutput(element.first, element.second);
+            }
+        }
+    }
+
+    void queueEOS() throws InterruptedException {
+        if (!mSurfaceMode) {
+            super.queueEOS();
+        } else {
+            if (!mAsyncHandle.hasSeenError() && !mSawInputEOS) {
+                mCodec.signalEndOfInputStream();
+                mSawInputEOS = true;
+                if (ENABLE_LOGS) Log.d(LOG_TAG, "signalled end of stream");
+            }
+        }
+    }
+
+    void doWork(int frameLimit) throws IOException, InterruptedException {
+        if (!mSurfaceMode) {
+            super.doWork(frameLimit);
+        } else {
+            while (!mAsyncHandle.hasSeenError() && !mSawInputEOS &&
+                    mInputCount < frameLimit) {
+                if (mInputCount - mOutputCount > mLatency) {
+                    tryEncoderOutput(CodecTestBase.Q_DEQ_TIMEOUT_US);
+                }
+                mEGLWindowInpSurface.makeCurrent();
+                generateSurfaceFrame();
+                mEGLWindowInpSurface
+                        .setPresentationTime(computePresentationTime(mInputCount) * 1000);
+                if (ENABLE_LOGS) Log.d(LOG_TAG, "inputSurface swapBuffers");
+                mEGLWindowInpSurface.swapBuffers();
+                mInputCount++;
+            }
+        }
+    }
 
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testColorAspects() throws IOException, InterruptedException {
         Assume.assumeTrue("Test introduced with Android 11", sIsAtLeastR);
-        String inputTestFile = mInputFile;
         if (mUseHighBitDepth) {
-            Assume.assumeTrue(hasSupportForColorFormat(mCodecName, mMime, COLOR_FormatYUVP010));
-            mConfigFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUVP010);
-            mBytesPerSample = 2;
-            inputTestFile = INPUT_VIDEO_FILE_HBD;
+            // Check if encoder is capable of supporting HDR profiles.
+            // Previous check doesn't verify this as profile isn't set in the format
+            Assume.assumeTrue(mCodecName + " doesn't support HDR encoding",
+                    CodecTestBase.doesCodecSupportHDRProfile(mCodecName, mMime));
+
+            // Encoder surface mode tests are to be enabled only if an encoder supports
+            // COLOR_Format32bitABGR2101010
+            if (mSurfaceMode) {
+                Assume.assumeTrue(mCodecName + " doesn't support RGBA1010102",
+                        hasSupportForColorFormat(mCodecName, mMime, COLOR_Format32bitABGR2101010));
+            }
         }
-        setUpSource(inputTestFile);
+
+        if (mSurfaceMode) {
+            mConfigFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatSurface);
+        } else {
+            String inputTestFile = mInputFile;
+            if (mUseHighBitDepth) {
+                Assume.assumeTrue(hasSupportForColorFormat(mCodecName, mMime, COLOR_FormatYUVP010));
+                mConfigFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUVP010);
+                mBytesPerSample = 2;
+                inputTestFile = INPUT_VIDEO_FILE_HBD;
+            }
+            setUpSource(inputTestFile);
+        }
+
         mOutputBuff = new OutputManager();
         {
             mCodec = MediaCodec.createByCodecName(mCodecName);
@@ -205,7 +312,19 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                 tmpFile = File.createTempFile("tmp" + (mUseHighBitDepth ? "10bit" : ""), ".mp4");
             }
             mMuxer = new MediaMuxer(tmpFile.getAbsolutePath(), muxerFormat);
-            configureCodec(mConfigFormat, false, true, true);
+            // When in surface mode, encoder needs to be configured in async mode
+            boolean isAsync = mSurfaceMode;
+            configureCodec(mConfigFormat, isAsync, true, true);
+
+            if (mSurfaceMode) {
+                mInpSurface = mCodec.createInputSurface();
+                assertTrue("Surface is not valid", mInpSurface.isValid());
+                mEGLWindowInpSurface = new EGLWindowSurface(mInpSurface, mUseHighBitDepth);
+                if (mCodec.getInputFormat().containsKey(MediaFormat.KEY_LATENCY)) {
+                    mReviseLatency = true;
+                    mLatency = mCodec.getInputFormat().getInteger(MediaFormat.KEY_LATENCY);
+                }
+            }
             mCodec.start();
             doWork(4);
             queueEOS();
@@ -218,6 +337,16 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                 mMuxer.release();
                 mMuxer = null;
             }
+
+            if (mEGLWindowInpSurface != null) {
+                mEGLWindowInpSurface.release();
+                mEGLWindowInpSurface = null;
+            }
+            if (mInpSurface != null) {
+                mInpSurface.release();
+                mInpSurface = null;
+            }
+
             assertTrue(log + "unexpected error", !mAsyncHandle.hasSeenError());
             assertTrue(log + "no input sent", 0 != mInputCount);
             assertTrue(log + "output received", 0 != mOutputCount);
