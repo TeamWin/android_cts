@@ -16,17 +16,14 @@
 
 package android.view.inputmethod.cts;
 
-import static android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_HOME;
 import static android.content.Intent.ACTION_CLOSE_SYSTEM_DIALOGS;
 import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
-import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeVisible;
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -58,11 +55,7 @@ import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.Until;
 
-import com.android.cts.mockime.ImeSettings;
-import com.android.cts.mockime.MockImeSession;
-
 import org.junit.After;
-import org.junit.AssumptionViolatedException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -176,30 +169,6 @@ public class InputMethodManagerTest {
         final List<String> enabledImeIds =
                 enabledImes.stream().map(InputMethodInfo::getId).collect(Collectors.toList());
         assertThat(enabledImeIds).contains(HIDDEN_FROM_PICKER_IME_ID);
-    }
-
-    @Test
-    public void getInputMethodWindowVisibleHeight_returnsZeroIfNotFocused() throws Exception {
-        InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
-        try (MockImeSession session = MockImeSession.create(mContext,
-                mInstrumentation.getUiAutomation(), new ImeSettings.Builder())) {
-            mInstrumentation.getUiAutomation().performGlobalAction(GLOBAL_ACTION_HOME);
-            session.callRequestShowSelf(0);
-            expectImeVisible(TIMEOUT);
-            assertEquals("Only IME target UID may observe the visible height of the IME", 0,
-                    reflectivelyGetInputMethodWindowVisibleHeight(imm));
-        }
-    }
-
-    private int reflectivelyGetInputMethodWindowVisibleHeight(InputMethodManager imm)
-            throws Exception {
-        try {
-            return (int) InputMethodManager.class
-                    .getMethod("getInputMethodWindowVisibleHeight")
-                    .invoke(imm);
-        } catch (NoSuchMethodError e) {
-            throw new AssumptionViolatedException("getInputMethodWindowVisibleHeight not found");
-        }
     }
 
     private static String dumpInputMethodInfoList(@NonNull List<InputMethodInfo> imiList) {
