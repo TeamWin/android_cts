@@ -20,6 +20,8 @@ import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_HOME;
 import static android.app.admin.DevicePolicyManager.MAKE_USER_EPHEMERAL;
 import static android.app.admin.DevicePolicyManager.SKIP_SETUP_WIZARD;
 
+import static com.android.cts.verifier.Utils.flattenToShortString;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -262,9 +264,9 @@ public class CommandReceiverActivity extends Activity {
                 } break;
                 case COMMAND_SET_STATUSBAR_DISABLED: {
                     boolean enforced = intent.getBooleanExtra(EXTRA_ENFORCED, false);
-                    Log.d(TAG, "calling setStatusBarDisabled("
-                            + ComponentName.flattenToShortString(mAdmin) + ", " + enforced
-                            + ") using " + mDpm + " on user " + UserHandle.myUserId());
+                    Log.d(TAG, "calling setStatusBarDisabled(" + flattenToShortString(mAdmin)
+                            + ", " + enforced + ") using " + mDpm + " on user "
+                            + UserHandle.myUserId());
                     mDpm.setStatusBarDisabled(mAdmin, enforced);
                 } break;
                 case COMMAND_SET_LOCK_TASK_FEATURES: {
