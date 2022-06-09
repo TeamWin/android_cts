@@ -30,4 +30,10 @@ java_test_host {
         "tradefed",
         "compatibility-host-util",
     ],
+    data: [
+        ":CtsSustainedPerformanceDeviceTestApp",
+        ":CtsSustainedPerformanceTestCases",
+    ],
+    data_device_bins_both: ["dhry"],
+    per_testcase_directory: true,
 }
