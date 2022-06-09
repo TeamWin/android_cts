@@ -16,8 +16,10 @@
 package android.service.dreams.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeFalse;
 
 import android.content.ComponentName;
+import android.content.pm.PackageManager;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.DreamCoordinator;
 import android.service.dreams.DreamService;
@@ -65,6 +67,9 @@ public class DreamServiceTest extends ActivityManagerTestBase {
 
     @Test
     public void testDreamInSeparateProcess() {
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUTOMOTIVE));
+
         final ComponentName dreamService =
                 ComponentName.unflattenFromString(DREAM_SERVICE_COMPONENT);
         final ComponentName dreamActivity = mDreamCoordinator.setActiveDream(dreamService);
