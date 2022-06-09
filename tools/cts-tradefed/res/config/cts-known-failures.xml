@@ -267,4 +267,7 @@
     <!-- b/216553645 -->
     <option name="compatibility:exclude-filter" value="CtsKeystoreTestCases android.keystore.cts.ECDSASignatureTest#testNONEwithECDSATruncatesInputToFieldSize" />
   
+    <!-- b/216546060 -->
+    <option name="compatibility:exclude-filter" value="CtsVoiceRecognitionTestCases android.voicerecognition.cts.RecognitionServiceMicIndicatorTest#testTrustedRecognitionServiceCanBlameCallingApp" />
+  
 </configuration>
