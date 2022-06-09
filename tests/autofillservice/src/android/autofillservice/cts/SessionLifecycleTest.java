@@ -525,6 +525,14 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase.ManualActivity
 
         // Trigger save
         mUiBot.setTextByRelativeId(ID_USERNAME, "dude");
+
+        // It works fine for portrait but for the platforms that the default orientation
+        // is landscape, e.g. automotive. Depending on the height of the IME, the ID_LOGIN
+        // button may not be visible.
+        // In order to avoid that,
+        // generate back key event to hide IME before pressing ID_LOGIN button.
+        mUiBot.pressBack();
+
         mUiBot.selectByRelativeId(ID_LOGIN);
         mUiBot.assertSaveShowing(SAVE_DATA_TYPE_USERNAME);
 

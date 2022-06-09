@@ -1131,6 +1131,11 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     }
 
     @Test
+    // There is a minor bug which, alghough fixed in sc-dev (aosp/1834457),
+    // cannot be propagated to the already released sc-release branche
+    // (b/234145920), where mainline-modules are tested.
+    // Skip this test in S to avoid failures in outdated targets.
+    @SdkSuppress(minSdkVersion = 33, codeName = "T")
     public void testAppendUpdatesMtime() throws Exception {
         writeAndCheckMtime(true);
     }

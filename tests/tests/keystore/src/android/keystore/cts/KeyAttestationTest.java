@@ -815,6 +815,10 @@ public class KeyAttestationTest {
         if (Build.VERSION.DEVICE_INITIAL_SDK_INT <= Build.VERSION_CODES.S) {
             return;
         }
+        // ID attestation is not implemented on the goldfish emulator.
+        if (Build.BOARD.startsWith("goldfish")) {
+            return;
+        }
         // ID attestation is tested by other tests (outside of this class), including negative
         // tests that ID attestation is failing if the platform does not declare support.
         // Hence, it's safe to only test here that the feature is supported.

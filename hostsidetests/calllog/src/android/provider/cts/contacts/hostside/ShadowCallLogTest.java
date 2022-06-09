@@ -44,11 +44,6 @@ public class ShadowCallLogTest extends BaseHostJUnit4Test {
     private static final String CLASS = PKG + ".CallLogDirectBootTest";
     private static final String APK = "CtsCallLogDirectBootApp.apk";
 
-    private static final String MODE_EMULATED = "emulated";
-    private static final String MODE_NONE = "none";
-
-    private static final long SHUTDOWN_TIME_MS = 30 * 1000;
-
     @Before
     public void setUp() throws Exception {
         assertNotNull(getAbi());
@@ -64,9 +59,8 @@ public class ShadowCallLogTest extends BaseHostJUnit4Test {
 
     @Test
     public void testDirectBootCallLog() throws Exception {
-        String fbeMode = getDevice().executeShellCommand("sm get-fbe-mode").trim();
-        if (MODE_NONE.equals(fbeMode)) {
-            Log.i(TAG, "Device doesn't support FBE, skipping.");
+        if (!"file".equals(getDevice().getProperty("ro.crypto.type"))) {
+            Log.i(TAG, "Device doesn't use FBE, skipping.");
             return;
         }
         try {
@@ -85,16 +79,7 @@ public class ShadowCallLogTest extends BaseHostJUnit4Test {
 
             Log.i(TAG, "Rebooting device");
             // Reboot system into known state with keys ejected
-            if (MODE_EMULATED.equals(fbeMode)) {
-                final String res = getDevice().executeShellCommand("sm set-emulate-fbe true");
-                if (res != null && res.contains("Emulation not supported")) {
-                    return;
-                }
-                getDevice().waitForDeviceNotAvailable(SHUTDOWN_TIME_MS);
-                getDevice().waitForDeviceOnline(120000);
-            } else {
-                getDevice().rebootUntilOnline();
-            }
+            getDevice().rebootUntilOnline();
             waitForBootCompleted(getDevice());
 
             assertTrue(runDeviceTests(PKG, CLASS, "testShadowCallComposerPicture"));
@@ -110,13 +95,7 @@ public class ShadowCallLogTest extends BaseHostJUnit4Test {
                 getDevice().uninstallPackage(PKG);
 
                 // Get ourselves back into a known-good state
-                if (MODE_EMULATED.equals(fbeMode)) {
-                    getDevice().executeShellCommand("sm set-emulate-fbe false");
-                    getDevice().waitForDeviceNotAvailable(SHUTDOWN_TIME_MS);
-                    getDevice().waitForDeviceOnline();
-                } else {
-                    getDevice().rebootUntilOnline();
-                }
+                getDevice().rebootUntilOnline();
                 getDevice().waitForDeviceAvailable();
             }
         }

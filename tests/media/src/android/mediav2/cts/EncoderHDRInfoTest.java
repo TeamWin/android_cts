@@ -82,11 +82,12 @@ public class EncoderHDRInfoTest extends CodecEncoderTestBase {
         super.enqueueInput(bufferIndex);
     }
     void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
+        MediaFormat bufferFormat = mCodec.getOutputFormat(bufferIndex);
         if (info.size > 0) {
             ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
             if (mMuxer != null) {
                 if (mTrackID == -1) {
-                    mTrackID = mMuxer.addTrack(mCodec.getOutputFormat());
+                    mTrackID = mMuxer.addTrack(bufferFormat);
                     mMuxer.start();
                 }
                 mMuxer.writeSampleData(mTrackID, buf, info);
@@ -95,7 +96,7 @@ public class EncoderHDRInfoTest extends CodecEncoderTestBase {
         super.dequeueOutput(bufferIndex, info);
         // verify if the out fmt contains HDR Dynamic metadata as expected
         if (mTestDynamicMetadata && mOutputCount > 0) {
-            validateHDRDynamicMetaData(mCodec.getOutputFormat(),
+            validateHDRDynamicMetaData(bufferFormat,
                     ByteBuffer.wrap(loadByteArrayFromString(HDR_DYNAMIC_INFO[mOutputCount - 1])));
         }
     }

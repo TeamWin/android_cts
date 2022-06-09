@@ -15,16 +15,15 @@
  */
 package android.packageinstaller.tapjacking.cts;
 
-import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
@@ -34,20 +33,19 @@ import android.support.test.uiautomator.Until;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.core.app.ActivityScenario;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.junit.AssumptionViolatedException;
+import org.junit.Before;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
+import org.junit.runner.RunWith;
 import org.junit.runners.model.Statement;
-
-import java.io.IOException;
 
 @RunWith(AndroidJUnit4.class)
 @MediumTest
@@ -67,6 +65,7 @@ public class TapjackingTest {
     private String mPackageName;
     private UiDevice mUiDevice;
     boolean isWatch = mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
+    ActivityScenario<TestActivity> mScenario;
 
     @Rule
     public final RequiredRule mRequiredRule = new RequiredRule(isWatch);
@@ -82,10 +81,13 @@ public class TapjackingTest {
     }
 
     private void launchPackageInstaller() {
-        Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
-        intent.setData(Uri.parse("package:" + TEST_APP_PACKAGE_NAME));
-        intent.addFlags(FLAG_ACTIVITY_CLEAR_TASK | FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
+        Intent appInstallIntent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+        appInstallIntent.setData(Uri.parse("package:" + TEST_APP_PACKAGE_NAME));
+
+        Intent intent = new Intent(mContext, TestActivity.class);
+        intent.putExtra(Intent.EXTRA_INTENT, appInstallIntent);
+        intent.putExtra("requestCode", 1);
+        mScenario = ActivityScenario.launch(intent);
     }
 
     private void launchOverlayingActivity() {
@@ -141,6 +143,17 @@ public class TapjackingTest {
                     base.evaluate();
                 }
             };
+        }
+    }
+
+    public static final class TestActivity extends Activity {
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            Intent appInstallIntent = getIntent().getParcelableExtra(Intent.EXTRA_INTENT);
+            int requestCode = getIntent().getIntExtra("requestCode", Integer.MIN_VALUE);
+            startActivityForResult(appInstallIntent, requestCode);
         }
     }
 }
