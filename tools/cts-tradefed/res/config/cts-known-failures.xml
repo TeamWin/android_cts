@@ -240,7 +240,7 @@
 
     <!-- b/194146521 -->
     <option name="compatibility:exclude-filter" value="CtsPermission3TestCases android.permission3.cts.PermissionTest23#testNoResidualPermissionsOnUninstall" />
- 
+
     <!-- b/198992105 -->
     <option name="compatibility:exclude-filter" value="CtsStatsdAtomHostTestCases android.cts.statsdatom.permissionstate.DangerousPermissionStateTests#testDangerousPermissionState" />
     <option name="compatibility:exclude-filter" value="CtsStatsdAtomHostTestCases[instant] android.cts.statsdatom.permissionstate.DangerousPermissionStateTests#testDangerousPermissionState" />
@@ -266,8 +266,13 @@
 
     <!-- b/216553645 -->
     <option name="compatibility:exclude-filter" value="CtsKeystoreTestCases android.keystore.cts.ECDSASignatureTest#testNONEwithECDSATruncatesInputToFieldSize" />
-  
+
     <!-- b/216546060 -->
     <option name="compatibility:exclude-filter" value="CtsVoiceRecognitionTestCases android.voicerecognition.cts.RecognitionServiceMicIndicatorTest#testTrustedRecognitionServiceCanBlameCallingApp" />
-  
+
+    <!-- b/216546060 -->
+    <option name="compatibility:exclude-filter" value="CtsMonkeyTestCases com.android.cts.monkey.CategoryTest#testDefaultCategories" />
+    <option name="compatibility:exclude-filter" value="CtsMonkeyTestCases com.android.cts.monkey.CategoryTest#testSingleCategory" />
+    <option name="compatibility:exclude-filter" value="CtsMonkeyTestCases com.android.cts.monkey.CategoryTest#testMultipleCategories" />
+
 </configuration>
