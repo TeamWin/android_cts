@@ -17,26 +17,34 @@
 package android.mediapc.cts;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_SecurePlayback;
+import static android.mediapc.cts.CodecDecoderTestBase.WIDEVINE_UUID;
 import static android.mediapc.cts.CodecTestBase.selectHardwareCodecs;
 import static org.junit.Assert.assertTrue;
 
+import android.content.Context;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.VideoCapabilities.PerformancePoint;
+import android.media.MediaDrm;
 import android.media.MediaFormat;
+import android.media.UnsupportedSchemeException;
 import android.mediapc.cts.common.Utils;
+import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
+import android.net.Network;
 import android.os.Build;
 import android.util.Log;
 import android.util.Pair;
-
-import org.junit.Before;
-
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.Assume;
+import org.junit.Before;
 
 public class MultiCodecPerfTestBase {
     private static final String LOG_TAG = MultiCodecPerfTestBase.class.getSimpleName();
@@ -185,5 +193,44 @@ public class MultiCodecPerfTestBase {
                 FEATURE_SecurePlayback);
         codec.release();
         return isSecureSupported;
+    }
+
+    boolean isWidevineSupported() {
+        return MediaDrm.isCryptoSchemeSupported(WIDEVINE_UUID);
+    }
+
+    boolean isWidevineL1Supported() throws UnsupportedSchemeException {
+        boolean isL1Supported = false;
+        if (isWidevineSupported()) {
+            MediaDrm mediaDrm = new MediaDrm(WIDEVINE_UUID);
+            isL1Supported = mediaDrm.getPropertyString("securityLevel").equals("L1");
+            mediaDrm.close();
+        }
+        return isL1Supported;
+    }
+
+    boolean isInternetAvailable() {
+        Context context = androidx.test.core.app.ApplicationProvider.getApplicationContext();
+        ConnectivityManager cm = context.getSystemService(ConnectivityManager.class);
+        NetworkCapabilities cap = cm.getNetworkCapabilities(cm.getActiveNetwork());
+        if (cap == null) return false;
+        return cap.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+    }
+
+    boolean meetsSecureDecodePreconditions() throws UnsupportedSchemeException {
+        Assume.assumeTrue("Skipping secure decoder performance tests as Widevine is not supported",
+                isWidevineSupported());
+
+        if (Utils.isTPerfClass()) {
+            assertTrue("If Widevine is supported, L1 support is required for media performance " +
+                            "class T devices",
+                    isWidevineL1Supported());
+            assertTrue("Test requires internet connection for validating secure decoder " +
+                            "requirements for media performance class T devices",
+                    isInternetAvailable());
+            return true;
+        }
+
+        return isWidevineL1Supported() && isInternetAvailable();
     }
 }
