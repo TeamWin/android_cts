@@ -5043,25 +5043,47 @@ public class TelephonyManagerTest {
     @Test
     public void testSimSlotMapping() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
-
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+        Collection<UiccSlotMapping> simSlotMapping = mTelephonyManager.getSimSlotMapping();
+        // passing slotMapping combination
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
-        // passing slotMapping combination
-        UiccSlotMapping slotMapping1 = new UiccSlotMapping(0, 1, 1);
-        UiccSlotMapping slotMapping2 = new UiccSlotMapping(1, 0, 0);
+        try {
+            mTelephonyManager.setSimSlotMapping(simSlotMapping);
+        } catch (IllegalArgumentException e) {
+            fail("Not Expected Fail, Error in setSimSlotMapping :" + e);
+        }
+
         List<UiccSlotMapping> slotMappingList = new ArrayList<>();
+        // invalid logicalSlotIndex - Fail
+        UiccSlotMapping slotMapping1 = new UiccSlotMapping(
+                TelephonyManager.DEFAULT_PORT_INDEX, /*portIndex*/
+                1, /*physicalSlotIndex*/
+                SubscriptionManager.INVALID_PHONE_INDEX /*logicalSlotIndex*/);
+        UiccSlotMapping slotMapping2 = new UiccSlotMapping(
+                TelephonyManager.DEFAULT_PORT_INDEX, /*portIndex*/
+                0, /*physicalSlotIndex*/
+                0 /*logicalSlotIndex*/);
         slotMappingList.add(slotMapping1);
         slotMappingList.add(slotMapping2);
         try {
             mTelephonyManager.setSimSlotMapping(slotMappingList);
-        } catch (Exception e) {
-            fail("Not Expected Fail, Error in setSimSlotMapping :" + e);
+            fail("Expected IllegalStateException, invalid UiccSlotMapping data found");
+        } catch (IllegalStateException e) {
+            //expected
         }
         slotMappingList.clear();
 
         // Duplicate logicalSlotIndex - Fail
-        UiccSlotMapping slotMapping3 = new UiccSlotMapping(0, 1, 0);
-        UiccSlotMapping slotMapping4 = new UiccSlotMapping(1, 0, 0);
+        UiccSlotMapping slotMapping3 = new UiccSlotMapping(
+                TelephonyManager.DEFAULT_PORT_INDEX, /*portIndex*/
+                1, /*physicalSlotIndex*/
+                0 /*logicalSlotIndex*/);
+        UiccSlotMapping slotMapping4 = new UiccSlotMapping(
+                TelephonyManager.DEFAULT_PORT_INDEX, /*portIndex*/
+                0, /*physicalSlotIndex*/
+                0 /*logicalSlotIndex*/);
         slotMappingList.add(slotMapping3);
         slotMappingList.add(slotMapping4);
         try {
@@ -5073,8 +5095,14 @@ public class TelephonyManagerTest {
         slotMappingList.clear();
 
         // Duplicate {portIndex+physicalSlotIndex} - Fail
-        UiccSlotMapping slotMapping5 = new UiccSlotMapping(0, 1, 0);
-        UiccSlotMapping slotMapping6 = new UiccSlotMapping(0, 1, 1);
+        UiccSlotMapping slotMapping5 = new UiccSlotMapping(
+                TelephonyManager.DEFAULT_PORT_INDEX, /*portIndex*/
+                1, /*physicalSlotIndex*/
+                0 /*logicalSlotIndex*/);
+        UiccSlotMapping slotMapping6 = new UiccSlotMapping(
+                TelephonyManager.DEFAULT_PORT_INDEX, /*portIndex*/
+                1, /*physicalSlotIndex*/
+                1 /*logicalSlotIndex*/);
         slotMappingList.add(slotMapping5);
         slotMappingList.add(slotMapping6);
         try {
@@ -5086,8 +5114,14 @@ public class TelephonyManagerTest {
         slotMappingList.clear();
 
         // Duplicate {portIndex+physicalSlotIndex+logicalSlotIndex} - Fail
-        UiccSlotMapping slotMapping7 = new UiccSlotMapping(0, 1, 0);
-        UiccSlotMapping slotMapping8 = new UiccSlotMapping(0, 1, 0);
+        UiccSlotMapping slotMapping7 = new UiccSlotMapping(
+                TelephonyManager.DEFAULT_PORT_INDEX, /*portIndex*/
+                1, /*physicalSlotIndex*/
+                0 /*logicalSlotIndex*/);
+        UiccSlotMapping slotMapping8 = new UiccSlotMapping(
+                TelephonyManager.DEFAULT_PORT_INDEX, /*portIndex*/
+                1, /*physicalSlotIndex*/
+                0 /*logicalSlotIndex*/);
         slotMappingList.add(slotMapping7);
         slotMappingList.add(slotMapping8);
         try {
