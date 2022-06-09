@@ -112,4 +112,6 @@
     <option name="compatibility:exclude-filter" value="CtsHdmiCecHostTestCases android.hdmicec.cts.tv.HdmiCecRoutingControlTest" />
     <option name="compatibility:exclude-filter" value="CtsHdmiCecHostTestCases android.hdmicec.cts.tv.HdmiCecTvOneTouchPlayTest" />
 
+    <!-- b/234409652 Stable API does not exist to enforce this requirement on variable geometry devices -->
+    <option name="compatibility:exclude-filter" value="CtsCameraTestCases android.hardware.camera2.cts.ExtendedCameraCharacteristicsTest#testCameraOrientationAlignedWithDevice"/>
 </configuration>
