@@ -22,6 +22,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.Editable;
 import android.util.Log;
+import android.view.View;
 import android.widget.EditText;
 
 import com.android.compatibility.common.util.ResultType;
@@ -39,10 +40,6 @@ public class BleRxOffsetActivity extends PassFailButtons.Activity {
     private static final String KEY_MEDIAN_RSSI = "rssi_range";
     private static final String KEY_REFERENCE_DEVICE = "reference_device";
 
-    // Thresholds
-    private static final int MEDIAN_RSSI_UPPER_BOUND = -57;
-    private static final int MEDIAN_RSSI_LOWER_BOUND = -63;
-
     private EditText reportMedianRssiEditText;
     private EditText reportReferenceDeviceEditText;
 
@@ -51,7 +48,9 @@ public class BleRxOffsetActivity extends PassFailButtons.Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.ble_rx_offset);
         setPassFailButtonClickListeners();
-        getPassButton().setEnabled(false);
+        View failButton = findViewById(R.id.fail_button);
+        //Remove fail button for strongly recommended tests
+        failButton.setVisibility(View.GONE);
 
         reportMedianRssiEditText = findViewById(R.id.report_ble_rssi_median);
         reportReferenceDeviceEditText = findViewById(R.id.report_reference_device);
@@ -68,37 +67,6 @@ public class BleRxOffsetActivity extends PassFailButtons.Activity {
                     .setOnCancelListener(dialog -> finish())
                     .create().show();
         }
-
-        reportMedianRssiEditText.addTextChangedListener(
-                InputTextHandler.getOnTextChangedHandler((Editable s) -> checkTestInputs()));
-        reportReferenceDeviceEditText.addTextChangedListener(
-                InputTextHandler.getOnTextChangedHandler((Editable s) -> checkTestInputs()));
-    }
-
-    private void checkTestInputs() {
-        getPassButton().setEnabled(checkMedianRssiInput() && checkReferenceDeviceInput());
-    }
-
-    private boolean checkMedianRssiInput() {
-        String medianRssiInput = reportMedianRssiEditText.getText().toString();
-
-        if (!medianRssiInput.isEmpty()) {
-            int medianRssiRange;
-            try {
-                medianRssiRange = Integer.parseInt(medianRssiInput);
-            } catch (NumberFormatException e) {
-                return false;
-            }
-            // Median RSSI must be inputted and within acceptable range before test can be passed
-            return medianRssiRange <= MEDIAN_RSSI_UPPER_BOUND
-                    && medianRssiRange >= MEDIAN_RSSI_LOWER_BOUND;
-        }
-        return false;
-    }
-
-    private boolean checkReferenceDeviceInput() {
-        // Reference device must be inputted before test can be passed
-        return !reportReferenceDeviceEditText.getText().toString().isEmpty();
     }
 
     @Override

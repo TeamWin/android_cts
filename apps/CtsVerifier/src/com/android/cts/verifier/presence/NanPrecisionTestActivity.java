@@ -129,7 +129,7 @@ public class NanPrecisionTestActivity extends PassFailButtons.Activity {
         String measurementRangeInput10cmGt90p = mMeasurementRange10cmGt90p.getText().toString();
         String measurementRangeInput1mGt90p = mMeasurementRange1mGt90p.getText().toString();
         String measurementRangeInput3mGt90p = mMeasurementRange3mGt90p.getText().toString();
-        String measurementRangeInput5mGt90p = mMeasurementRange1mGt90p.getText().toString();
+        String measurementRangeInput5mGt90p = mMeasurementRange5mGt90p.getText().toString();
         List<String> optionalMeasurementRangeList = Arrays.asList(measurementRangeInput10cmGt90p,
                 measurementRangeInput1mGt90p,
                 measurementRangeInput3mGt90p, measurementRangeInput5mGt90p);
@@ -168,7 +168,7 @@ public class NanPrecisionTestActivity extends PassFailButtons.Activity {
                 // bandwidth must be one of the expected thresholds
                 return false;
             }
-            int distanceRange = Integer.parseInt(input);
+            double distanceRange = Double.parseDouble(input);
             int bandwidth = Integer.parseInt(bandwidthInputMhz);
             if (distanceRange < -BANDWIDTH_TO_THRESHOLD_MAP.get(bandwidth)
                     || distanceRange > BANDWIDTH_TO_THRESHOLD_MAP.get(bandwidth)) {
@@ -207,56 +207,56 @@ public class NanPrecisionTestActivity extends PassFailButtons.Activity {
         if (!measurementRange10cmGt68p.isEmpty()) {
             Log.i(TAG, "NAN Measurement Range at 10cm: " + measurementRange10cmGt68p);
             getReportLog().addValue(KEY_MEASUREMENT_RANGE_10CM_AT_68P,
-                    Integer.parseInt(measurementRange10cmGt68p),
+                    Double.parseDouble(measurementRange10cmGt68p),
                     ResultType.NEUTRAL, ResultUnit.NONE);
         }
 
         if (!measurementRange1mGt68p.isEmpty()) {
             Log.i(TAG, "NAN Measurement Range at 1m: " + measurementRange1mGt68p);
             getReportLog().addValue(KEY_MEASUREMENT_RANGE_1M_AT_68P,
-                    Integer.parseInt(measurementRange1mGt68p),
+                    Double.parseDouble(measurementRange1mGt68p),
                     ResultType.NEUTRAL, ResultUnit.NONE);
         }
 
         if (!measurementRange3mGt68p.isEmpty()) {
             Log.i(TAG, "NAN Measurement Range at 3m: " + measurementRange3mGt68p);
             getReportLog().addValue(KEY_MEASUREMENT_RANGE_3M_AT_68p,
-                    Integer.parseInt(measurementRange3mGt68p),
+                    Double.parseDouble(measurementRange3mGt68p),
                     ResultType.NEUTRAL, ResultUnit.NONE);
         }
 
         if (!measurementRange5mGt68p.isEmpty()) {
             Log.i(TAG, "NAN Measurement Range at 5m: " + measurementRange5mGt68p);
             getReportLog().addValue(KEY_MEASUREMENT_RANGE_5M_AT_68p,
-                    Integer.parseInt(measurementRange5mGt68p),
+                    Double.parseDouble(measurementRange5mGt68p),
                     ResultType.NEUTRAL, ResultUnit.NONE);
         }
 
         if (!measurementRange10cmGt90p.isEmpty()) {
             Log.i(TAG, "NAN Measurement Range at 10cm: " + measurementRange10cmGt68p);
             getReportLog().addValue(KEY_MEASUREMENT_RANGE_10CM_AT_90P,
-                    Integer.parseInt(measurementRange10cmGt90p),
+                    Double.parseDouble(measurementRange10cmGt90p),
                     ResultType.NEUTRAL, ResultUnit.NONE);
         }
 
         if (!measurementRange1mGt90p.isEmpty()) {
             Log.i(TAG, "NAN Measurement Range at 1m: " + measurementRange1mGt90p);
             getReportLog().addValue(KEY_MEASUREMENT_RANGE_1M_AT_90P,
-                    Integer.parseInt(measurementRange1mGt90p),
+                    Double.parseDouble(measurementRange1mGt90p),
                     ResultType.NEUTRAL, ResultUnit.NONE);
         }
 
         if (!measurementRange3mGt90p.isEmpty()) {
             Log.i(TAG, "NAN Measurement Range at 3m: " + measurementRange3mGt90p);
             getReportLog().addValue(KEY_MEASUREMENT_RANGE_3M_AT_90p,
-                    Integer.parseInt(measurementRange3mGt90p),
+                    Double.parseDouble(measurementRange3mGt90p),
                     ResultType.NEUTRAL, ResultUnit.NONE);
         }
 
         if (!measurementRange5mGt90p.isEmpty()) {
             Log.i(TAG, "NAN Measurement Range at 5m: " + measurementRange5mGt90p);
             getReportLog().addValue(KEY_MEASUREMENT_RANGE_5M_AT_90p,
-                    Integer.parseInt(measurementRange5mGt90p),
+                    Double.parseDouble(measurementRange5mGt90p),
                     ResultType.NEUTRAL, ResultUnit.NONE);
         }
 
