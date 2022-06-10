@@ -777,12 +777,12 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
                 "verifySignatures_noRotation_succeeds");
 
-        assertInstallSucceeds("CtsSignatureQueryService_v2-tgt-33.apk");
+        assertInstallFromBuildSucceeds("CtsSignatureQueryService_v2-tgt-33.apk");
         Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
                 "verifySignatures_withRotation_succeeds");
 
-        assertInstallSucceeds("CtsSignatureQueryService_v3-tgt-33.apk");
-        assertInstallSucceeds("CtsSignatureQueryServiceTest_v2-tgt-33.apk");
+        assertInstallFromBuildSucceeds("CtsSignatureQueryService_v3-tgt-33.apk");
+        assertInstallFromBuildSucceeds("CtsSignatureQueryServiceTest_v2-tgt-33.apk");
         Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
                 "verifySignatures_withRotation_succeeds");
     }
@@ -800,12 +800,12 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
                 "verifySignatures_noRotation_succeeds");
 
-        assertInstallV4Succeeds("CtsSignatureQueryService_v2-tgt-33.apk");
+        assertInstallV4FromBuildSucceeds("CtsSignatureQueryService_v2-tgt-33.apk");
         Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
                 "verifySignatures_withRotation_succeeds");
 
-        assertInstallV4Succeeds("CtsSignatureQueryService_v3-tgt-33.apk");
-        assertInstallV4Succeeds("CtsSignatureQueryServiceTest_v2-tgt-33.apk");
+        assertInstallV4FromBuildSucceeds("CtsSignatureQueryService_v3-tgt-33.apk");
+        assertInstallV4FromBuildSucceeds("CtsSignatureQueryServiceTest_v2-tgt-33.apk");
         Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
                 "verifySignatures_withRotation_succeeds");
     }
