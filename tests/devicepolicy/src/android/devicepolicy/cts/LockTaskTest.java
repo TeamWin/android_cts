@@ -29,6 +29,7 @@ import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_SYSTEM_INF
 import static android.content.Intent.ACTION_DIAL;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
 
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
@@ -56,6 +57,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.IntTestParameter;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
@@ -569,6 +571,7 @@ public final class LockTaskTest {
 
     @PolicyAppliesTest(policy = LockTask.class)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
+    @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE) // TODO(b/235576683): Re-enable
     public void setLockTaskPackages_removingCurrentlyLockedTask_otherLockedTasksRemainLocked() {
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()

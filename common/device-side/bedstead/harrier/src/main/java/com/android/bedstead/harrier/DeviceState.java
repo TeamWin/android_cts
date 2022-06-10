@@ -1142,7 +1142,7 @@ public final class DeviceState extends HarrierRule {
 
     private PermissionContextImpl mPermissionContext = null;
     private final List<UserReference> mCreatedUsers = new ArrayList<>();
-    private final List<UserBuilder> mRemovedUsers = new ArrayList<>();
+    private final List<RemovedUser> mRemovedUsers = new ArrayList<>();
     private final List<UserReference> mUsersSetPasswords = new ArrayList<>();
     private final List<BlockingBroadcastReceiver> mRegisteredBroadcastReceivers = new ArrayList<>();
     private boolean mHasChangedDeviceOwner = false;
@@ -1152,6 +1152,21 @@ public final class DeviceState extends HarrierRule {
     private Boolean mOriginalBluetoothEnabled;
     private TestAppProvider mTestAppProvider = new TestAppProvider();
     private Map<String, TestAppInstance> mTestApps = new HashMap<>();
+
+
+    private static final class RemovedUser {
+        // Store the user builder so we can recreate the user later
+        public final UserBuilder userBuilder;
+        public final boolean isRunning;
+        public final boolean isOriginalSwitchedToUser;
+
+        RemovedUser(UserBuilder userBuilder,
+                boolean isRunning, boolean isOriginalSwitchedToUser) {
+            this.userBuilder = userBuilder;
+            this.isRunning = isRunning;
+            this.isOriginalSwitchedToUser = isOriginalSwitchedToUser;
+        }
+    }
 
     /**
      * Get the {@link UserReference} of the work profile for the primary user.
@@ -1509,10 +1524,14 @@ public final class DeviceState extends HarrierRule {
         switchFromUser(userReference);
 
         if (!mCreatedUsers.remove(userReference)) {
-            mRemovedUsers.add(TestApis.users().createUser()
+            mRemovedUsers.add(
+                    new RemovedUser(
+                    TestApis.users().createUser()
                     .name(userReference.name())
                     .type(userReference.type())
-                    .parent(userReference.parent()));
+                    .parent(userReference.parent()),
+                            userReference.isRunning(),
+                            Objects.equal(mOriginalSwitchedUser, userReference)));
         }
 
         userReference.remove();
@@ -1651,18 +1670,6 @@ public final class DeviceState extends HarrierRule {
     private Set<TestAppInstance> mUninstalledTestApps = new HashSet<>();
 
     private void teardownShareableState() {
-        if (mOriginalSwitchedUser != null) {
-            if (!mOriginalSwitchedUser.exists()) {
-                Log.d(LOG_TAG, "Could not switch back to original user "
-                        + mOriginalSwitchedUser
-                        + " as it does not exist. Switching to initial instead.");
-                TestApis.users().initial().switchTo();
-            } else {
-                mOriginalSwitchedUser.switchTo();
-            }
-            mOriginalSwitchedUser = null;
-        }
-
         if (mHasChangedDeviceOwner) {
             if (mOriginalDeviceOwner == null) {
                 if (mDeviceOwner != null) {
@@ -1684,7 +1691,6 @@ public final class DeviceState extends HarrierRule {
 
             ProfileOwner currentProfileOwner =
                     TestApis.devicePolicy().getProfileOwner(originalProfileOwner.getKey());
-
             if (Objects.equal(currentProfileOwner, originalProfileOwner.getValue())) {
                 continue; // No need to restore
             }
@@ -1714,11 +1720,30 @@ public final class DeviceState extends HarrierRule {
         }
 
         mCreatedUsers.clear();
-        for (UserBuilder userBuilder : mRemovedUsers) {
-            userBuilder.create();
+
+        for (RemovedUser removedUser : mRemovedUsers) {
+            UserReference user = removedUser.userBuilder.create();
+            if (removedUser.isRunning) {
+                user.start();
+            }
+
+            if (removedUser.isOriginalSwitchedToUser) {
+                mOriginalSwitchedUser = user;
+            }
         }
 
         mRemovedUsers.clear();
+        if (mOriginalSwitchedUser != null) {
+            if (!mOriginalSwitchedUser.exists()) {
+                Log.d(LOG_TAG, "Could not switch back to original user "
+                        + mOriginalSwitchedUser
+                        + " as it does not exist. Switching to initial instead.");
+                TestApis.users().initial().switchTo();
+            } else {
+                mOriginalSwitchedUser.switchTo();
+            }
+            mOriginalSwitchedUser = null;
+        }
 
         for (TestAppInstance installedTestApp : mInstalledTestApps) {
             installedTestApp.uninstall();
@@ -2352,6 +2377,10 @@ public final class DeviceState extends HarrierRule {
             }
 
             if (otherUser.parent() != null) {
+                continue;
+            }
+
+            if (!otherUser.isRunning()) {
                 continue;
             }
 
