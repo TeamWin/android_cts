@@ -528,11 +528,15 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
     }
 
     private boolean arrayEquals(float[] array1, float[] array2) {
+        return arrayEquals(array1, array2, COLOR_VALUE_VARIANCE_TOLERANCE);
+    }
+
+    private boolean arrayEquals(float[] array1, float[] array2, float varianceTolerance) {
         if (array1.length != array2.length) {
             return true;
         }
         for (int i = 0; i < array1.length; i++) {
-            if (Math.abs(array1[i] - array2[i]) > COLOR_VALUE_VARIANCE_TOLERANCE) {
+            if (Math.abs(array1[i] - array2[i]) > varianceTolerance) {
                 return true;
             }
         }
@@ -591,13 +595,6 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
 
     private AssertionResult assertColorChangeXIndex(Bitmap screen, int xIndex,
             TestBounds testBounds) {
-        final int colorChangeXIndex = getColorChangeXIndex(screen);
-
-        if (xIndex != colorChangeXIndex) {
-            return new AssertionResult(true, "Expected color to change at x index " + xIndex
-                    + " instead of " + colorChangeXIndex);
-        }
-
         // The activity we are extending is a half red, half blue.
         // We are scaling the activity in the animation so if the extension doesn't work we should
         // have a blue, then red, then black section, and if it does work we should see on a blue,
@@ -629,34 +626,19 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
                     sRgbColor = rawColor;
                 }
 
+                // Increase tolerance on edge pixels since blending might occur there
+                final float varianceTolerance = Math.abs(x - xIndex) <= 1
+                        ? 0.5f : COLOR_VALUE_VARIANCE_TOLERANCE;
                 if (arrayEquals(new float[]{
                                 expectedColor.red(), expectedColor.green(), expectedColor.blue()},
-                        new float[]{sRgbColor.red(), sRgbColor.green(), sRgbColor.blue()})) {
+                        new float[]{sRgbColor.red(), sRgbColor.green(), sRgbColor.blue()},
+                        varianceTolerance)) {
                     return new ColorCheckResult(new Point(x, y), expectedColor, sRgbColor);
                 }
             }
         }
 
         return AssertionResult.SUCCESS;
-    }
-
-    private int getColorChangeXIndex(Bitmap screen) {
-        // Look for color changing index at middle of app
-        final int y =
-                (getTopAppBounds().top + getTopAppBounds().bottom) / 2;
-
-        Color prevColor = screen.getColor(0, y)
-                .convert(ColorSpace.get(ColorSpace.Named.SRGB));
-        for (int x = 0; x < screen.getWidth(); x++) {
-            final Color c = screen.getColor(x, y)
-                    .convert(ColorSpace.get(ColorSpace.Named.SRGB));
-
-            if (!colorsEqual(prevColor, c)) {
-                return x;
-            }
-        }
-
-        return -1;
     }
 
     private boolean colorsEqual(Color c1, Color c2) {
