@@ -253,7 +253,7 @@ public class TestMedia extends SecurityTestCase {
     @Test
     @AsbSecurityTest(cveBugId = 36104177)
     public void testPocCVE_2017_0670() throws Exception {
-        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0670", null, getDevice());
+        AdbUtils.runPocAssertExitStatusNotVulnerable("CVE-2017-0670", getDevice(), 60);
     }
 
     /**
