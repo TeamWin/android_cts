@@ -61,12 +61,13 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
         }
     }
 
-    public static final int TEST_TYPE_NONE = 0x00000000;
-    public static final int TEST_TYPE_MO_ANSWER = 0x00000001;
-    public static final int TEST_TYPE_MO_FAILED = 0x00000002;
-    public static final int TEST_TYPE_HOLD_FAILED = 0x00000004;
-    public static final int TEST_TYPE_RESUME_FAILED = 0x00000008;
-    public static final int TEST_TYPE_CONFERENCE_FAILED = 0x00000010;
+    public static final int TEST_TYPE_NONE = 0;
+    public static final int TEST_TYPE_MO_ANSWER = 1 << 0;
+    public static final int TEST_TYPE_MO_FAILED = 1 << 1;
+    public static final int TEST_TYPE_HOLD_FAILED = 1 << 2;
+    public static final int TEST_TYPE_RESUME_FAILED = 1 << 3;
+    public static final int TEST_TYPE_CONFERENCE_FAILED = 1 << 4;
+    public static final int TEST_TYPE_HOLD_NO_RESPONSE = 1 << 5;
 
     private int mTestType = TEST_TYPE_NONE;
     private boolean mIsOnHold = false;
@@ -317,29 +318,26 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
         setState(ImsCallSessionImplBase.State.TERMINATED);
     }
 
-    // End the Incoming Call from local side after accept.
+    // End the Incoming Call
     public void terminateIncomingCall() {
-        int state = getState();
-        if (state == ImsCallSessionImplBase.State.ESTABLISHED) {
-            postAndRunTask(() -> {
-                try {
-                    if (mListener == null) {
-                        return;
-                    }
-                    Log.d(LOG_TAG, "invokeTerminated mCallId = " + mCallId);
-                    mListener.callSessionTerminated(getReasonInfo(
-                            ImsReasonInfo.CODE_USER_TERMINATED_BY_REMOTE,
-                            ImsReasonInfo.CODE_UNSPECIFIED));
-                } catch (Throwable t) {
-                    Throwable cause = t.getCause();
-                    if (t instanceof DeadObjectException
-                            || (cause != null && cause instanceof DeadObjectException)) {
-                        fail("starting cause Throwable to be thrown: " + t);
-                    }
+        postAndRunTask(() -> {
+            try {
+                if (mListener == null) {
+                    return;
                 }
-            });
-            setState(ImsCallSessionImplBase.State.TERMINATED);
-        }
+                Log.d(LOG_TAG, "invokeTerminated mCallId = " + mCallId);
+                mListener.callSessionTerminated(getReasonInfo(
+                        ImsReasonInfo.CODE_USER_TERMINATED_BY_REMOTE,
+                        ImsReasonInfo.CODE_UNSPECIFIED));
+            } catch (Throwable t) {
+                Throwable cause = t.getCause();
+                if (t instanceof DeadObjectException
+                        || (cause != null && cause instanceof DeadObjectException)) {
+                    fail("starting cause Throwable to be thrown: " + t);
+                }
+            }
+        });
+        setState(ImsCallSessionImplBase.State.TERMINATED);
     }
 
     @Override
@@ -361,24 +359,7 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
             }
             setState(ImsCallSessionImplBase.State.RENEGOTIATING);
 
-            postAndRunTask(() -> {
-                imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_ESTABLISHING);
-                try {
-                    if (mListener == null) {
-                        return;
-                    }
-                    Log.d(LOG_TAG, "invokeHeld mCallId = " + mCallId);
-                    mListener.callSessionHeld(mCallProfile);
-                    mIsOnHold = true;
-                } catch (Throwable t) {
-                    Throwable cause = t.getCause();
-                    if (t instanceof DeadObjectException
-                            || (cause != null && cause instanceof DeadObjectException)) {
-                        fail("starting cause Throwable to be thrown: " + t);
-                    }
-                }
-            });
-            setState(ImsCallSessionImplBase.State.ESTABLISHED);
+            if (!isTestType(TEST_TYPE_HOLD_NO_RESPONSE)) sendHoldResponse();
         }
     }
 
@@ -581,6 +562,30 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
         imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_STATE_CHANGE);
         Log.d(LOG_TAG, "invokeCallSessionConferenceStateUpdated");
         mListener.callSessionConferenceStateUpdated(confState);
+    }
+
+    /**
+     * Send a hold response for this listener.
+     */
+    public void sendHoldResponse() {
+        postAndRunTask(() -> {
+            imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_ESTABLISHING);
+            try {
+                if (mListener == null) {
+                    return;
+                }
+                Log.d(LOG_TAG, "invokeHeld mCallId = " + mCallId);
+                mListener.callSessionHeld(mCallProfile);
+                mIsOnHold = true;
+            } catch (Throwable t) {
+                Throwable cause = t.getCause();
+                if (t instanceof DeadObjectException
+                        || (cause != null && cause instanceof DeadObjectException)) {
+                    fail("starting cause Throwable to be thrown: " + t);
+                }
+            }
+        });
+        setState(ImsCallSessionImplBase.State.ESTABLISHED);
     }
 
     public Bundle createConferenceParticipant(String user, String endpoint,
