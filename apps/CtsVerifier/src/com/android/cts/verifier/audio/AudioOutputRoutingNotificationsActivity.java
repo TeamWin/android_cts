@@ -137,7 +137,6 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
             textView.setText(msg + " - " +
                              deviceName + " [0x" + Integer.toHexString(deviceType) + "]" +
                              " - " + mNumRoutingNotifications);
-
             mRoutingNotificationReceived = true;
             calculatePass();
         }
@@ -152,16 +151,14 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
     @Override
     protected void calculatePass() {
         getPassButton().setEnabled(mRoutingNotificationReceived || !mSupportsWiredPeripheral);
+        TextView tv = ((TextView) findViewById(R.id.audio_routingnotification_testresult));
         if (mRoutingNotificationReceived) {
-            ((TextView) findViewById(R.id.audio_routingnotification_testresult)).setText(
-                    "Test PASSES - Routing notification received");
+            tv.setText("Test PASSES - Routing notification received");
         } else if (!mSupportsWiredPeripheral) {
-            ((TextView) findViewById(
-                    R.id.audio_routingnotification_testresult)).setText(
-                    "Test PASSES - No peripheral support");
+            tv.setText("Test PASSES - No peripheral support");
+        } else {
+            tv.setText("");
         }
-
-        stopPlayback();
     }
 
     protected void storeTestResults() {
@@ -187,9 +184,9 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
         stopBtn = (Button) findViewById(R.id.audio_routingnotification_playStopBtn);
         stopBtn.setOnClickListener(mBtnClickListener);
 
-        enableTestButtons(false);
-
         mInfoView = (TextView) findViewById(R.id.info_text);
+
+        enableTestButtons(false);
 
         // Setup Player
         //

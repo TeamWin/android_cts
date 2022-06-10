@@ -241,15 +241,17 @@ class PackageManagerShellCommandMultiUserTest {
             Manifest.permission.INTERACT_ACROSS_USERS,
             Manifest.permission.INTERACT_ACROSS_USERS_FULL
         )
+        val contextPrimaryUser = context.createContextAsUser(primaryUser.userHandle(), 0)
+        val contextSecondaryUser = context.createContextAsUser(secondaryUser.userHandle(), 0)
         try {
-            context.createContextAsUser(primaryUser.userHandle(), 0).registerReceiver(
+            contextPrimaryUser.registerReceiver(
                 broadcastReceiverForPrimaryUser,
                 intentFilter,
                 null,
                 backgroundHandler,
                 RECEIVER_EXPORTED
             )
-            context.createContextAsUser(secondaryUser.userHandle(), 0).registerReceiver(
+            contextSecondaryUser.registerReceiver(
                 broadcastReceiverForSecondaryUser,
                 intentFilter,
                 null,

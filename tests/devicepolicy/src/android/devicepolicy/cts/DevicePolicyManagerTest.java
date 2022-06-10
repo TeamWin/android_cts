@@ -1177,6 +1177,7 @@ public final class DevicePolicyManagerTest {
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @RequireDoesNotHaveFeature(FEATURE_MANAGED_USERS)
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
     public void checkProvisioningPreCondition_actionPO_withoutManagedUserFeature_returnsManagedUsersNotSupported() {
         assertThat(
                 sDevicePolicyManager.checkProvisioningPrecondition(

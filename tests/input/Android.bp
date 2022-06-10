@@ -40,4 +40,8 @@ android_test {
         "kotlin-test",
     ],
     sdk_version: "test_current",
+    data: [
+        ":InputInjectionApp",
+    ],
+    per_testcase_directory: true,
 }

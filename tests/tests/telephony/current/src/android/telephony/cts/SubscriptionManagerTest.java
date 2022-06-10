@@ -33,7 +33,6 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.annotation.Nullable;
-import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -50,7 +49,6 @@ import android.net.Uri;
 import android.os.Looper;
 import android.os.ParcelUuid;
 import android.os.PersistableBundle;
-import android.os.Process;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
@@ -680,20 +678,10 @@ public class SubscriptionManagerTest {
                 (sm) -> sm.createSubscriptionGroup(subGroup));
 
         // Getting subscriptions in group.
-        List<SubscriptionInfo> infoList;
-        try {
-            mSm.getSubscriptionsInGroup(uuid);
-            fail("SecurityException should be thrown without USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER");
-        } catch (SecurityException ex) {
-            // Expected
-        }
-
-        // has the READ_PRIVILEGED_PHONE_STATE permission
-        infoList = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
-                (sm) -> sm.getSubscriptionsInGroup(uuid), READ_PRIVILEGED_PHONE_STATE);
+        List<SubscriptionInfo> infoList = mSm.getSubscriptionsInGroup(uuid);
         assertNotNull(infoList);
         assertEquals(1, infoList.size());
-        assertEquals(uuid, infoList.get(0).getGroupUuid());
+        assertNull(infoList.get(0).getGroupUuid());
 
         infoList = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
                 (sm) -> sm.getSubscriptionsInGroup(uuid));
@@ -710,36 +698,30 @@ public class SubscriptionManagerTest {
         }
         availableInfoList = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
                 (sm) -> sm.getAvailableSubscriptionInfoList());
-        // has the USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER permission
-        try {
-            setIdentifierAccess(true);
-            if (availableInfoList.size() > 1) {
-                List<Integer> availableSubGroup = availableInfoList.stream()
-                        .map(info -> info.getSubscriptionId())
-                        .filter(subId -> subId != mSubId)
-                        .collect(Collectors.toList());
+        if (availableInfoList.size() > 1) {
+            List<Integer> availableSubGroup = availableInfoList.stream()
+                    .map(info -> info.getSubscriptionId())
+                    .filter(subId -> subId != mSubId)
+                    .collect(Collectors.toList());
 
-                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
-                        (sm) -> sm.addSubscriptionsIntoGroup(availableSubGroup, uuid));
-
-                infoList = mSm.getSubscriptionsInGroup(uuid);
-                assertNotNull(infoList);
-                assertEquals(availableInfoList.size(), infoList.size());
-
-                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
-                        (sm) -> sm.removeSubscriptionsFromGroup(availableSubGroup, uuid));
-            }
-
-            // Remove from subscription group with current sub Id.
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
-                    (sm) -> sm.removeSubscriptionsFromGroup(subGroup, uuid));
+                    (sm) -> sm.addSubscriptionsIntoGroup(availableSubGroup, uuid));
 
             infoList = mSm.getSubscriptionsInGroup(uuid);
             assertNotNull(infoList);
-            assertTrue(infoList.isEmpty());
-        } finally {
-            setIdentifierAccess(false);
+            assertEquals(availableInfoList.size(), infoList.size());
+
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                    (sm) -> sm.removeSubscriptionsFromGroup(availableSubGroup, uuid));
         }
+
+        // Remove from subscription group with current sub Id.
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                (sm) -> sm.removeSubscriptionsFromGroup(subGroup, uuid));
+
+        infoList = mSm.getSubscriptionsInGroup(uuid);
+        assertNotNull(infoList);
+        assertTrue(infoList.isEmpty());
     }
 
     @Test
@@ -751,31 +733,23 @@ public class SubscriptionManagerTest {
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
                 (sm) -> sm.addSubscriptionsIntoGroup(subGroup, uuid));
 
-        List<SubscriptionInfo> infoList;
-        try {
-            mSm.getSubscriptionsInGroup(uuid);
-            fail("SecurityException should be thrown without USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER");
-        } catch (SecurityException ex) {
-            // Expected
-        }
-
         // Getting subscriptions in group.
-        try {
-            setIdentifierAccess(true);
-            infoList = mSm.getSubscriptionsInGroup(uuid);
-            assertNotNull(infoList);
-            assertEquals(1, infoList.size());
-            assertEquals(uuid, infoList.get(0).getGroupUuid());
-        } finally {
-            setIdentifierAccess(false);
-        }
+        List<SubscriptionInfo> infoList = mSm.getSubscriptionsInGroup(uuid);
+        assertNotNull(infoList);
+        assertEquals(1, infoList.size());
+        assertNull(infoList.get(0).getGroupUuid());
+
+        infoList = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getSubscriptionsInGroup(uuid));
+        assertNotNull(infoList);
+        assertEquals(1, infoList.size());
+        assertEquals(uuid, infoList.get(0).getGroupUuid());
 
         // Remove from subscription group with current sub Id.
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
                 (sm) -> sm.removeSubscriptionsFromGroup(subGroup, uuid));
 
-        infoList = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
-                (sm) -> sm.getSubscriptionsInGroup(uuid));
+        infoList = mSm.getSubscriptionsInGroup(uuid);
         assertNotNull(infoList);
         assertTrue(infoList.isEmpty());
     }
@@ -1484,14 +1458,5 @@ public class SubscriptionManagerTest {
         boolean validNetworkType = dataNetworkType == TelephonyManager.NETWORK_TYPE_NR;
 
         return validCarrier && validNetworkType && validCapabilities;
-    }
-
-    private void setIdentifierAccess(boolean allowed) {
-        String op = AppOpsManager.OPSTR_USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER;
-        AppOpsManager appOpsManager = InstrumentationRegistry.getContext().getSystemService(
-                AppOpsManager.class);
-        int mode = allowed ? AppOpsManager.MODE_ALLOWED : AppOpsManager.opToDefaultMode(op);
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
-                appOpsManager, (appOps) -> appOps.setUidMode(op, Process.myUid(), mode));
     }
 }

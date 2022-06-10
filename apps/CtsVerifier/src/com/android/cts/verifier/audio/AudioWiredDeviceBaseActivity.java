@@ -35,7 +35,7 @@ abstract class AudioWiredDeviceBaseActivity extends PassFailButtons.Activity {
     private Button mSupportsBtn;
     private Button mDoesntSupportBtn;
 
-    protected boolean mSupportsWiredPeripheral;
+    protected boolean mSupportsWiredPeripheral = true;
     protected String mConnectedPeripheralName;
 
     protected abstract void enableTestButtons(boolean enabled);

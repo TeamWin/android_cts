@@ -133,7 +133,6 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
             textView.setText(msg + " - " +
                              deviceName + " [0x" + Integer.toHexString(deviceType) + "]" +
                              " - " + mNumRoutingNotifications);
-
             mRoutingNotificationReceived = true;
             calculatePass();
         }
@@ -148,16 +147,14 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
     @Override
     protected void calculatePass() {
         getPassButton().setEnabled(mRoutingNotificationReceived || !mSupportsWiredPeripheral);
+        TextView tv = ((TextView) findViewById(R.id.audio_routingnotification_testresult));
         if (mRoutingNotificationReceived) {
-            ((TextView) findViewById(R.id.audio_routingnotification_testresult)).setText(
-                    "Test PASSES - Routing notification received");
+            tv.setText("Test PASSES - Routing notification received");
         } else if (!mSupportsWiredPeripheral) {
-            ((TextView) findViewById(
-                    R.id.audio_routingnotification_testresult)).setText(
-                            "Test PASSES - No peripheral support");
+            tv.setText("Test PASSES - No peripheral support");
+        } else {
+            tv.setText("");
         }
-
-        stopRecording();
     }
 
     protected void storeTestResults() {
@@ -182,9 +179,9 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
         stopBtn = (Button) findViewById(R.id.audio_routingnotification_recordStopBtn);
         stopBtn.setOnClickListener(mBtnClickListener);
 
-        enableTestButtons(false);
-
         mInfoView = (TextView) findViewById(R.id.info_text);
+
+        enableTestButtons(false);
 
         mContext = this;
 
@@ -217,11 +214,5 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
     @Override
     public final String getReportSectionName() {
         return setTestNameSuffix(sCurrentDisplayMode, SECTION_INPUT_ROUTING);
-    }
-
-    @Override
-    public void onBackPressed () {
-        stopRecording();
-        super.onBackPressed();
     }
 }

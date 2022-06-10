@@ -2089,6 +2089,38 @@ public class PackageManagerTest {
     }
 
     @Test
+    public void setComponentEnabledSetting_disableMultiplePackagesNoKill() throws Exception {
+        final int activityState = mPackageManager.getComponentEnabledSetting(ACTIVITY_COMPONENT);
+        final int serviceState = mPackageManager.getComponentEnabledSetting(SERVICE_COMPONENT);
+        assertThat(installPackage(MOCK_LAUNCHER_APK)).isTrue();
+        final List<ComponentEnabledSetting> settings = List.of(
+                new ComponentEnabledSetting(RESET_ENABLED_SETTING_ACTIVITY_COMPONENT,
+                        COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP),
+                new ComponentEnabledSetting(RESET_ENABLED_SETTING_RECEIVER_COMPONENT,
+                        COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP),
+                new ComponentEnabledSetting(RESET_ENABLED_SETTING_SERVICE_COMPONENT,
+                        COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP),
+                new ComponentEnabledSetting(RESET_ENABLED_SETTING_PROVIDER_COMPONENT,
+                        COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP),
+                new ComponentEnabledSetting(
+                        ACTIVITY_COMPONENT, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP),
+                new ComponentEnabledSetting(
+                        SERVICE_COMPONENT, COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP));
+
+        try {
+            mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
+                    android.Manifest.permission.CHANGE_COMPONENT_ENABLED_STATE);
+            setComponentEnabledSettingsAndWaitForBroadcasts(settings);
+        } finally {
+            final List<ComponentEnabledSetting> enabledSettings = List.of(
+                    new ComponentEnabledSetting(ACTIVITY_COMPONENT, activityState, DONT_KILL_APP),
+                    new ComponentEnabledSetting(SERVICE_COMPONENT, serviceState, DONT_KILL_APP));
+            setComponentEnabledSettingsAndWaitForBroadcasts(enabledSettings);
+            mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
     public void clearApplicationUserData_resetComponentEnabledSettings() throws Exception {
         assertThat(installPackage(MOCK_LAUNCHER_APK)).isTrue();
         final List<ComponentEnabledSetting> settings = List.of(

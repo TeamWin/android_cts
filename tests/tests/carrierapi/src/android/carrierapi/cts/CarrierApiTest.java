@@ -525,10 +525,9 @@ public class CarrierApiTest extends BaseCarrierApiTest {
             mTelephonyManager.getServiceState();
             mTelephonyManager.getManualNetworkSelectionPlmn();
             mTelephonyManager.setForbiddenPlmns(new ArrayList<String>());
-            int activeModemCount = mTelephonyManager.getActiveModemCount();
-            for (int i = 0; i < activeModemCount; i++) {
-                mTelephonyManager.isModemEnabledForSlot(i);
-            }
+            // TODO(b/235490259): test all slots once TM#isModemEnabledForSlot allows
+            mTelephonyManager.isModemEnabledForSlot(
+                    SubscriptionManager.getSlotIndex(mTelephonyManager.getSubscriptionId()));
         } catch (SecurityException e) {
             fail(NO_CARRIER_PRIVILEGES_FAILURE_MESSAGE);
         }
@@ -1105,7 +1104,7 @@ public class CarrierApiTest extends BaseCarrierApiTest {
         }
 
         // Set subscription group with current sub Id.
-        int subId = SubscriptionManager.getDefaultDataSubscriptionId();
+        int subId = SubscriptionManager.getDefaultSubscriptionId();
         if (subId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) return;
         ParcelUuid uuid = ShellIdentityUtils.invokeMethodWithShellPermissions(mSubscriptionManager,
                 (sm) -> sm.createSubscriptionGroup(Arrays.asList(subId)));
@@ -1142,7 +1141,7 @@ public class CarrierApiTest extends BaseCarrierApiTest {
     @Test
     public void testAddSubscriptionToExistingGroupForEsim() {
         // Set subscription group with current sub Id.
-        int subId = SubscriptionManager.getDefaultDataSubscriptionId();
+        int subId = SubscriptionManager.getDefaultSubscriptionId();
         if (subId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) return;
         ParcelUuid uuid = mSubscriptionManager.createSubscriptionGroup(Arrays.asList(subId));
 
@@ -1172,7 +1171,7 @@ public class CarrierApiTest extends BaseCarrierApiTest {
      */
     @Test
     public void testOpportunistic() {
-        int subId = SubscriptionManager.getDefaultDataSubscriptionId();
+        int subId = SubscriptionManager.getDefaultSubscriptionId();
         if (subId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) return;
         SubscriptionInfo info = mSubscriptionManager.getActiveSubscriptionInfo(subId);
         boolean oldOpportunistic = info.isOpportunistic();
