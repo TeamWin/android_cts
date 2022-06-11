@@ -141,6 +141,12 @@ abstract class TestBase {
 
     private fun CompanionDeviceManager.disassociateAll() =
             allAssociations.forEach { disassociate(it.id) }
+
+    protected fun setSystemPropertyDuration(duration: Duration, systemPropertyTag: String) =
+        instrumentation.setSystemProp(
+            systemPropertyTag,
+            duration.inWholeMilliseconds.toString()
+        )
 }
 
 const val TAG = "CtsCompanionDeviceManagerTestCases"
@@ -155,6 +161,12 @@ fun assertAssociations(
     actual: List<AssociationInfo>,
     expected: Set<Pair<String, MacAddress?>>
 ) = assertEquals(actual = actual.map { it.packageName to it.deviceMacAddress }.toSet(),
+        expected = expected)
+
+fun assertSelfManagedAssociations(
+    actual: List<AssociationInfo>,
+    expected: Set<Pair<String, Int>>
+) = assertEquals(actual = actual.map { it.packageName to it.id }.toSet(),
         expected = expected)
 
 /**

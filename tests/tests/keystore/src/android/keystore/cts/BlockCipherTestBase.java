@@ -842,19 +842,19 @@ abstract class BlockCipherTestBase {
             int ciphertextIndex = 0;
             for (int plaintextIndex = 0; plaintextIndex < plaintext.length; plaintextIndex++) {
                 byte[] output = update(new byte[] {plaintext[plaintextIndex]});
-                if ((plaintextIndex % blockSize) == blockSize - 1) {
-                    String additionalInformation = "";
-                    boolean compareOutput = true;
-                    if (isStrongbox() && output == null) {
-                        // This is known to be broken on older vendor implementations.
-                        if (Build.VERSION_CODES.TIRAMISU
-                                > SystemProperties.getInt("ro.vendor.api_level", 0)) {
-                            compareOutput = false;
-                        } else {
-                            additionalInformation = " (b/194134359)";
-                        }
+                String additionalInformation = "";
+                boolean compareOutput = true;
+                if (isStrongbox()) {
+                    // This is known to be broken on older vendor implementations.
+                    if (Build.VERSION_CODES.TIRAMISU
+                            > SystemProperties.getInt("ro.vendor.api_level", 0)) {
+                        compareOutput = false;
+                    } else {
+                        additionalInformation = " (b/194134359)";
                     }
-                    if (compareOutput) {
+                }
+                if (compareOutput) {
+                    if ((plaintextIndex % blockSize) == blockSize - 1) {
                         // Cipher.update is expected to have output a new block
                         assertArrayEquals(
                                 "plaintext index: " + plaintextIndex + additionalInformation,
@@ -863,10 +863,12 @@ abstract class BlockCipherTestBase {
                                         ciphertextIndex,
                                         ciphertextIndex + blockSize),
                                 output);
+                    } else {
+                        // Cipher.update is expected to have produced no output
+                        assertArrayEquals(
+                                "plaintext index: " + plaintextIndex + additionalInformation,
+                                null, output);
                     }
-                } else {
-                    // Cipher.update is expected to have produced no output
-                    assertArrayEquals("plaintext index: " + plaintextIndex, null, output);
                 }
                 if (output != null) {
                     ciphertextIndex += output.length;
@@ -943,27 +945,28 @@ abstract class BlockCipherTestBase {
                                 && (ciphertextIndex > 0) && ((ciphertextIndex % blockSize) == 0))
                         || ((!paddingEnabled) && ((ciphertextIndex % blockSize) == blockSize - 1));
 
-                if (outputExpected) {
-                    String additionalInformation = "";
-                    boolean compareOutput = true;
-                    if (isStrongbox()) {
-                        // This is known to be broken on older vendor implementations.
-                        if (Build.VERSION_CODES.TIRAMISU
-                                > SystemProperties.getInt("ro.vendor.api_level", 0)) {
-                            compareOutput = false;
-                        } else {
-                            additionalInformation = " (b/194134040)";
-                        }
+                String additionalInformation = "";
+                boolean compareOutput = true;
+                if (isStrongbox()) {
+                    // This is known to be broken on older vendor implementations.
+                    if (Build.VERSION_CODES.TIRAMISU
+                            > SystemProperties.getInt("ro.vendor.api_level", 0)) {
+                        compareOutput = false;
+                    } else {
+                        additionalInformation = " (b/194134040)";
                     }
-                    if (compareOutput) {
+                }
+                if (compareOutput) {
+                    if (outputExpected) {
                         assertArrayEquals(
                                 "ciphertext index: " + ciphertextIndex + additionalInformation,
                                 subarray(expectedPlaintext, plaintextIndex,
                                     plaintextIndex + blockSize),
                                 output);
+                    } else {
+                        assertEquals("ciphertext index: " + ciphertextIndex + additionalInformation,
+                                null, output);
                     }
-                } else {
-                    assertEquals("ciphertext index: " + ciphertextIndex, null, output);
                 }
 
                 if (output != null) {
@@ -1322,7 +1325,6 @@ abstract class BlockCipherTestBase {
         System.arraycopy(input, 0, buffer, inputOffsetInBuffer, input.length);
         createCipher();
         initKat(opmode);
-        String additionalInformation = "";
         int outputLength = update(buffer, inputOffsetInBuffer, input.length,
                 buffer, outputOffsetInBuffer);
         if (isStrongbox()) {

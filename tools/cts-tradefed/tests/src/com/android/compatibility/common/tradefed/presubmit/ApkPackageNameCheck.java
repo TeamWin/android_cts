@@ -32,6 +32,8 @@ import com.android.tradefed.testtype.InstrumentationTest;
 import com.android.tradefed.util.AaptParser;
 import com.android.tradefed.util.FileUtil;
 
+import com.google.common.base.Joiner;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -74,6 +76,8 @@ public class ApkPackageNameCheck {
         // We check all apk installed by all modules
         Map<String, String> packageNames = new HashMap<>();
 
+        List<String> errors = new ArrayList<>();
+
         for (File config : listConfigs) {
             IConfiguration c = ConfigurationFactory.getInstance()
                     .createConfigurationFromArgs(new String[] {config.getAbsolutePath()});
@@ -94,13 +98,16 @@ public class ApkPackageNameCheck {
                             if (file32 == null || file64 == null) {
                                 // TODO: Enforce should abort on failure is True in CTS
                                 if (((FilePusher) prep).shouldAbortOnFailure()) {
-                                    fail(
+                                    errors.add(
                                             String.format(
                                                     "File %s[32/64] wasn't found in module "
-                                                            + "dependencies while "
-                                                            + "it's expected to be pushed as part"
-                                                            + " of %s. Make sure that it's added in the Android.bp file of the module under 'data' field.",
+                                                            + "dependencies while it's expected to "
+                                                            + "be pushed as part of %s. Make sure "
+                                                            + "that it's added in the Android.bp "
+                                                            + "file of the module under "
+                                                            + "'data_device_bins_both' field.",
                                                     path, config.getName()));
+                                    continue;
                                 }
                             }
                         }
@@ -111,12 +118,13 @@ public class ApkPackageNameCheck {
                             if (toBePushed == null) {
                                 // TODO: Enforce should abort on failure is True in CTS
                                 if (((PushFilePreparer) prep).shouldAbortOnFailure()) {
-                                    fail(
+                                    errors.add(
                                             String.format(
                                                     "File %s wasn't found in module dependencies "
                                                             + "while it's expected to be pushed "
                                                             + "as part of %s. Make sure that it's added in the Android.bp file of the module under 'data' field.",
                                                     path, config.getName()));
+                                    continue;
                                 }
                             }
                         }
@@ -128,8 +136,12 @@ public class ApkPackageNameCheck {
                     String apkName = apk.getName();
                     File apkFile = FileUtil.findFile(config.getParentFile(), apkName);
                     if (apkFile == null || !apkFile.exists()) {
-                        fail(String.format("Module %s is trying to install %s which does not "
-                                + "exists in testcases/. Make sure that it's added in the Android.bp file of the module under 'data' field.", config.getName(), apkName));
+                        errors.add(
+                                String.format("Module %s is trying to install %s which does not "
+                                                + "exists in testcases/. Make sure that it's added "
+                                                + "in the Android.bp file of the module under "
+                                                + "'data' field.", config.getName(), apkName));
+                        continue;
                     }
                     AaptParser res = AaptParser.parse(apkFile);
                     assertNotNull(res);
@@ -138,9 +150,11 @@ public class ApkPackageNameCheck {
                     packageListNames.add(packageName);
                     // The package already exists and it's a different apk
                     if (put != null && !apkName.equals(put) && !EXCEPTION_LIST.contains(packageName)) {
-                        fail(String.format("Module %s: Package name '%s' from apk '%s' was already "
-                                + "added by previous apk '%s'.",
-                                config.getName(), packageName, apkName, put));
+                        errors.add(
+                                String.format("Module %s: Package name '%s' from apk '%s' was "
+                                                + "already added by previous apk '%s'.",
+                                        config.getName(), packageName, apkName, put));
+                        continue;
                     }
                 }
             }
@@ -151,14 +165,18 @@ public class ApkPackageNameCheck {
                     InstrumentationTest instrumentationTest = (InstrumentationTest) test;
                     if (instrumentationTest.getPackageName() != null) {
                         if (!packageListNames.contains(instrumentationTest.getPackageName())) {
-                            throw new ConfigurationException(
+                            errors.add(
                                     String.format("Module %s requests to run '%s' but it's not "
                                         + "part of any apks.",
                                         config.getName(), instrumentationTest.getPackageName()));
+                            continue;
                         }
                     }
                 }
             }
+        }
+        if (!errors.isEmpty()) {
+            throw new ConfigurationException(Joiner.on("\n").join(errors));
         }
     }
 }

@@ -27,7 +27,6 @@ import android.companion.cts.common.RecordingCallback.OnFailure
 import android.companion.cts.common.SIMPLE_EXECUTOR
 import android.companion.cts.common.TestBase
 import android.companion.cts.common.assertEmpty
-import android.companion.cts.common.setSystemProp
 import android.content.Intent
 import android.net.MacAddress
 import android.os.Parcelable
@@ -41,7 +40,6 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.seconds
 
@@ -122,7 +120,7 @@ open class UiAutomationTestBase(
         // Give the discovery service extra time to find the first match device before
         // pressing the negative button for singleDevice && userRejected.
         if (singleDevice) {
-            setDiscoveryTimeout(2.seconds)
+            setSystemPropertyDuration(2.seconds, SYS_PROP_DEBUG_DISCOVERY_TIMEOUT)
         }
 
         sendRequestAndLaunchConfirmation(singleDevice, selfManaged, displayName)
@@ -159,7 +157,7 @@ open class UiAutomationTestBase(
     }
 
     protected fun test_timeout(singleDevice: Boolean = false) {
-        setDiscoveryTimeout(1.seconds)
+        setSystemPropertyDuration(1.seconds, SYS_PROP_DEBUG_DISCOVERY_TIMEOUT)
 
         // The discovery timeout is 1 sec, but let's give it 2.
         callback.assertInvokedByActions(2.seconds) {
@@ -312,13 +310,8 @@ open class UiAutomationTestBase(
                 if (profilePermission != null) it += profilePermission
             }
 
-    private fun setDiscoveryTimeout(timeout: Duration) =
-        instrumentation.setSystemProp(
-            SYS_PROP_DEBUG_TIMEOUT,
-            timeout.inWholeMilliseconds.toString()
-        )
-
-    private fun restoreDiscoveryTimeout() = setDiscoveryTimeout(ZERO)
+    private fun restoreDiscoveryTimeout() = setSystemPropertyDuration(
+        ZERO, SYS_PROP_DEBUG_DISCOVERY_TIMEOUT)
 
     companion object {
         /**
@@ -344,6 +337,6 @@ open class UiAutomationTestBase(
                 .setNamePattern(Pattern.compile("This Device Does Not Exist"))
                 .build()
 
-        private const val SYS_PROP_DEBUG_TIMEOUT = "debug.cdm.discovery_timeout"
+        private const val SYS_PROP_DEBUG_DISCOVERY_TIMEOUT = "debug.cdm.discovery_timeout"
     }
 }

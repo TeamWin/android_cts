@@ -55,6 +55,7 @@ import android.telephony.emergency.EmergencyNumber;
 import android.telephony.ims.ImsReasonInfo;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -113,7 +114,7 @@ public class TelephonyCallbackTest {
     private SignalStrength mSignalStrength;
     private TelephonyManager mTelephonyManager;
     private final Object mLock = new Object();
-    private static final String TAG = "android.telephony.cts.TelephonyCallbackTest";
+    private static final String TAG = "TelephonyCallbackTest";
     private static ConnectivityManager mCm;
     private HandlerThread mHandlerThread;
     private Handler mHandler;
@@ -138,12 +139,7 @@ public class TelephonyCallbackTest {
             PreciseCallState.PRECISE_CALL_STATE_WAITING
     );
 
-    private Executor mSimpleExecutor = new Executor() {
-        @Override
-        public void execute(Runnable r) {
-            r.run();
-        }
-    };
+    private final Executor mSimpleExecutor = Runnable::run;
 
     @Before
     public void setUp() throws Exception {
@@ -617,7 +613,7 @@ public class TelephonyCallbackTest {
     }
 
     @Test
-    public void testOSrvccStateChangedByRegisterTelephonyCallback() throws Throwable {
+    public void testOnSrvccStateChangedByRegisterTelephonyCallback() throws Throwable {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
             return;
@@ -634,7 +630,7 @@ public class TelephonyCallbackTest {
                 mLock.wait(WAIT_TIME);
             }
         }
-        Log.d(TAG, "testOSrvccStateChangedByRegisterTelephonyCallback");
+        Log.d(TAG, "testOnSrvccStateChangedByRegisterTelephonyCallback");
 
         assertThat(mSrvccStateChangedCalled).isTrue();
 
@@ -1363,8 +1359,7 @@ public class TelephonyCallbackTest {
     private class PhysicalChannelConfigListener extends TelephonyCallback
             implements TelephonyCallback.PhysicalChannelConfigListener {
         @Override
-        public void onPhysicalChannelConfigChanged(
-                @NonNull List<PhysicalChannelConfig> configs) {
+        public void onPhysicalChannelConfigChanged(@NonNull List<PhysicalChannelConfig> configs) {
             synchronized (mLock) {
                 mOnPhysicalChannelConfigCalled = true;
                 mLock.notify();
@@ -1379,10 +1374,25 @@ public class TelephonyCallbackTest {
             return;
         }
 
+        Pair<Integer, Integer> radioVersion = mTelephonyManager.getRadioHalVersion();
+        // 1.2+ or 1.6 with CAPABILITY_PHYSICAL_CHANNEL_CONFIG_1_6_SUPPORTED or 2.0+
+        boolean physicalChannelConfigSupported;
+        if (radioVersion.first == 1 && radioVersion.second == 6) {
+            physicalChannelConfigSupported = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.isRadioInterfaceCapabilitySupported(
+                            TelephonyManager.CAPABILITY_PHYSICAL_CHANNEL_CONFIG_1_6_SUPPORTED));
+        } else {
+            physicalChannelConfigSupported =
+                    radioVersion.first > 1 || radioVersion.second >= 2;
+        }
+        if (!physicalChannelConfigSupported) {
+            Log.d(TAG, "Skipping test because physical channel configs are not available.");
+            return;
+        }
+
         assertFalse(mOnPhysicalChannelConfigCalled);
         mHandler.post(() -> {
-            mPhysicalChannelConfigCallback =
-                    new PhysicalChannelConfigListener();
+            mPhysicalChannelConfigCallback = new PhysicalChannelConfigListener();
             registerTelephonyCallbackWithPermission(mPhysicalChannelConfigCallback);
         });
 

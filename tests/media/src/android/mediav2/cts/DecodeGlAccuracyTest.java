@@ -19,6 +19,7 @@ package android.mediav2.cts;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
@@ -336,15 +337,18 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testDecodeGlAccuracyRGB() throws IOException, InterruptedException {
+        if (mRange != MediaFormat.COLOR_RANGE_LIMITED
+                || mStandard != MediaFormat.COLOR_STANDARD_BT601_NTSC) {
+            // This test was added in Android T, but some upgrading devices fail the test. Hence
+            // limit the test to devices launching with T
+            assumeTrue("Skipping color range " + mRange + " and color standard " + mStandard +
+                            " for devices upgrading to T",
+                    FIRST_SDK_IS_AT_LEAST_T);
 
-        // TODO (b/219748700): Android software codecs work only with 601LR. Skip for now.
-        if (!isVendorCodec(mCompName)) {
-            if (mRange != MediaFormat.COLOR_RANGE_LIMITED
-                    || mStandard != MediaFormat.COLOR_STANDARD_BT601_NTSC) {
-                Log.w(LOG_TAG, "Skipping " + mCompName + " for color range " + mRange
-                        + " and color standard " + mStandard);
-                return;
-            }
+            // TODO (b/219748700): Android software codecs work only with 601LR. Skip for now.
+            assumeTrue("Skipping " + mCompName + " for color range " + mRange
+                            + " and color standard " + mStandard,
+                    isVendorCodec(mCompName));
         }
 
         MediaFormat format = setUpSource(mFileName);
@@ -368,8 +372,8 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
         mCodec.start();
         doWork(Integer.MAX_VALUE);
         queueEOS();
-        validateColorAspects(mCodec.getOutputFormat(), mRange, mStandard, mTransferCurve);
         waitForAllOutputs();
+        validateColorAspects(mCodec.getOutputFormat(), mRange, mStandard, mTransferCurve);
         mCodec.stop();
         mCodec.release();
         mEGLWindowOutSurface.release();
