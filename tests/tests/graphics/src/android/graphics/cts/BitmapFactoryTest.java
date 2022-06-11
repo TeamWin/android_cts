@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
 import android.content.res.Resources;
@@ -35,6 +36,7 @@ import android.graphics.BitmapFactory.Options;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.media.MediaFormat;
+import android.os.Build;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.LargeTest;
@@ -47,6 +49,7 @@ import android.util.TypedValue;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.BitmapUtils;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
@@ -1005,6 +1008,8 @@ public class BitmapFactoryTest {
     @Test
     @RequiresDevice
     public void testDecode10BitHEIFTo10BitBitmap() {
+        assumeTrue(
+            "Test needs Android T.", ApiLevelUtil.isFirstApiAtLeast(Build.VERSION_CODES.TIRAMISU));
         if (!MediaUtils.hasDecoder(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
             return;
         }
@@ -1020,6 +1025,8 @@ public class BitmapFactoryTest {
     @Test
     @RequiresDevice
     public void testDecode10BitHEIFTo8BitBitmap() {
+        assumeTrue(
+            "Test needs Android T.", ApiLevelUtil.isFirstApiAtLeast(Build.VERSION_CODES.TIRAMISU));
         if (!MediaUtils.hasDecoder(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
             return;
         }

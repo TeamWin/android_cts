@@ -278,8 +278,7 @@ public class BluetoothDeviceTest extends AndroidTestCase {
             return;
         }
 
-        assertNotNull(mFakeDevice.getUuids());
-        assertEquals(0, mFakeDevice.getUuids().length);
+        assertNull(mFakeDevice.getUuids());
         mUiAutomation.dropShellPermissionIdentity();
         assertThrows(SecurityException.class, () -> mFakeDevice.getUuids());
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);

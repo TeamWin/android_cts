@@ -32,6 +32,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.os.Build;
 import android.os.PersistableBundle;
+import android.os.SystemProperties;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Display;
@@ -597,6 +598,8 @@ abstract class CodecTestBase {
     // TIRAMISU is set correctly
     public static final boolean FIRST_SDK_IS_AT_LEAST_T =
             ApiLevelUtil.isFirstApiAfter(Build.VERSION_CODES.S_V2);
+    public static final boolean VNDK_IS_AT_LEAST_T =
+            SystemProperties.getInt("ro.vndk.version", 0) > Build.VERSION_CODES.S_V2;
     private static final String LOG_TAG = CodecTestBase.class.getSimpleName();
     enum SupportClass {
         CODEC_ALL, // All codecs must support

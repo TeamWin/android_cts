@@ -261,4 +261,10 @@
     <!-- b/198021503 -->
     <option name="compatibility:exclude-filter" value="CtsAppSecurityHostTestCases android.appsecurity.cts.StorageHostTest#testFullDisk" />
 
+    <!-- b/216546060 -->
+    <option name="compatibility:exclude-filter" value="CtsFragmentTestCases android.fragment.cts.FragmentAnimatorTest#saveWhileAnimatingAway" />
+
+    <!-- b/216553645 -->
+    <option name="compatibility:exclude-filter" value="CtsKeystoreTestCases android.keystore.cts.ECDSASignatureTest#testNONEwithECDSATruncatesInputToFieldSize" />
+  
 </configuration>
