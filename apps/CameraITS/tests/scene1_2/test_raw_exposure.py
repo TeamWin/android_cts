@@ -112,6 +112,8 @@ def assert_increasing_means(means, exps, sens, black_levels, white_level):
   Returns:
     None
   """
+  lower_thresh = np.array(black_levels) * (1 + BLK_LVL_RTOL)
+  logging.debug('Lower threshold for check: %s', lower_thresh)
   allow_under_saturated = True
   for i in range(1, len(means)):
     prev_mean = means[i-1]
@@ -122,8 +124,7 @@ def assert_increasing_means(means, exps, sens, black_levels, white_level):
                     white_level, max(mean))
       break
 
-    if allow_under_saturated and np.allclose(
-        mean, black_levels, rtol=BLK_LVL_RTOL):
+    if allow_under_saturated and min(mean-lower_thresh) > 0:
       # All channel means are close to black level
       continue
 

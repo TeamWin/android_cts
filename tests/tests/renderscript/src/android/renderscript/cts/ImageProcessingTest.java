@@ -17,6 +17,7 @@
 package android.renderscript.cts;
 
 import android.os.Build;
+import android.platform.test.annotations.AppModeFull;
 
 import android.renderscript.Allocation;
 
@@ -113,6 +114,7 @@ public class ImageProcessingTest extends RSBaseCompute {
         mBlur.destroy();
     }
 
+    @AppModeFull(reason = "Instant apps cannot query vendor API level")
     public void testBlend() {
         ScriptIntrinsicBlend mBlend;
         mBlend = ScriptIntrinsicBlend.create(mRS, Element.U8_4(mRS));

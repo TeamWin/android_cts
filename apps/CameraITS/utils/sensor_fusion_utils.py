@@ -87,6 +87,7 @@ _CV2_LK_PARAMS = dict(winSize=(15, 15),
                       criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT,
                                 10, 0.03))  # cv2.calcOpticalFlowPyrLK params.
 _ROTATION_PER_FRAME_MIN = 0.001  # rads/s
+_GYRO_ROTATION_PER_SEC_MAX = 2.0  # rads/s
 
 # unittest constants
 _COARSE_FIT_RANGE = 20  # Range area around coarse fit to do optimization.
@@ -364,6 +365,7 @@ def get_gyro_rotations(gyro_events, cam_times):
     raise AssertionError('Gyro times do not bound camera times! '
                          f'gyro: {gyro_times[0]:.0f} -> {gyro_times[-1]:.0f} '
                          f'cam: {cam_times[0]} -> {cam_times[-1]} (ns).')
+
   # Integrate the gyro data between each pair of camera frame times.
   for i_cam in range(len(cam_times)-1):
     # Get the window of gyro samples within the current pair of frames.
@@ -396,7 +398,6 @@ def get_gyro_rotations(gyro_events, cam_times):
         f = (t_cam1 - t_gyro0) / (t_gyro1 - t_gyro0)
         frac_correction = gyro_val * t_gyro_delta * f
         gyro_sum += frac_correction
-
     gyro_rots.append(gyro_sum)
   gyro_rots = np.array(gyro_rots)
   return gyro_rots
@@ -650,6 +651,13 @@ def plot_gyro_events(gyro_events, plot_name, log_path):
   file_name = os.path.join(log_path, plot_name)
   matplotlib.pyplot.savefig(f'{file_name}_gyro_events.png')
   pylab.close(plot_name)
+
+  z_max = max(abs(z))
+  logging.info('%.3f', z_max)
+  if z_max > _GYRO_ROTATION_PER_SEC_MAX:
+    raise AssertionError(
+        f'Phone moved too rapidly! Please confirm controller firmware. '
+        f'Max: {z_max:.3f}, TOL: {_GYRO_ROTATION_PER_SEC_MAX} rads/s')
 
 
 def conv_acceleration_to_movement(gyro_events, video_delay_time):
