@@ -22,7 +22,6 @@ android_test {
     name: "CtsPermission4TestCases",
     sdk_version: "test_current",
     defaults: ["cts_defaults"],
-    platform_apis: true,
     srcs: [
         "src/**/*.kt",
     ],
