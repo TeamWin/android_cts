@@ -402,10 +402,10 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
 
     /** Seek all tracks to their very beginning.
      *
-     * @param  shouldContinuePts      a boolean that controls whether timestamps keep increasing
+     * @param  presentationTimeOffsetUs The offset for the presentation time to start at.
      * @throws IllegalStateException  if the player is not paused
      */
-    public void seekToBeginning(boolean shouldContinuePts) {
+    public void seekToBeginning(long presentationTimeOffsetUs) {
         Log.d(TAG, "seekToBeginning");
         synchronized (mState) {
             if (mState != STATE_PAUSED) {
@@ -413,11 +413,11 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
             }
 
             for (CodecState state : mVideoCodecStates.values()) {
-                state.seekToBeginning(shouldContinuePts);
+                state.seekToBeginning(presentationTimeOffsetUs);
             }
 
             for (CodecState state : mAudioCodecStates.values()) {
-                state.seekToBeginning(shouldContinuePts);
+                state.seekToBeginning(presentationTimeOffsetUs);
             }
         }
     }

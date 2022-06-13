@@ -4436,24 +4436,22 @@ public class DecoderTest extends MediaTestBase {
 
         // Pause playback
         mMediaCodecPlayer.pause();
-        // We allow some time to allow playback to pause.
+        // Allow some time for playback to pause
         Thread.sleep(maxDrainTimeMs);
 
-        // Verify that playback has paused, but allow for some pause time to take effect.
-        long pauseAudioFramePosition = mMediaCodecPlayer.getTimestamp().framePosition;
-        long pauseVideoPosition = mMediaCodecPlayer.getVideoTimeUs();
+        // Verify that playback has paused
+        long pauseAudioFramePositionUs = mMediaCodecPlayer.getTimestamp().framePosition;
+        long pauseVideoPositionUs = mMediaCodecPlayer.getVideoTimeUs();
         Thread.sleep(maxDrainTimeMs);
-        assertEquals(mMediaCodecPlayer.getTimestamp().framePosition, pauseAudioFramePosition);
-        assertEquals(mMediaCodecPlayer.getVideoTimeUs(), pauseVideoPosition);
+        assertEquals(mMediaCodecPlayer.getTimestamp().framePosition, pauseAudioFramePositionUs);
+        assertEquals(mMediaCodecPlayer.getVideoTimeUs(), pauseVideoPositionUs);
 
-        // Verify audio and video are in sync.
-        final long audioPositionUs = mMediaCodecPlayer.getAudioTrackPositionUs();
-        final long videoPositionUs = mMediaCodecPlayer.getVideoTimeUs();
+        // Verify audio and video are in sync
         assertTrue(String.format("Video pts (%d) is ahead of audio pts (%d)",
-                        videoPositionUs, audioPositionUs),
-                videoPositionUs <= audioPositionUs);
+                        pauseVideoPositionUs, pauseAudioFramePositionUs),
+                pauseVideoPositionUs <= pauseAudioFramePositionUs);
 
-        // Flush both audio and video pipelines.
+        // Flush both audio and video pipelines
         mMediaCodecPlayer.flush();
 
         // The flush should not cause any frame to be displayed.
@@ -4462,12 +4460,18 @@ public class DecoderTest extends MediaTestBase {
         assertEquals("Video frame rendered after flush", mMediaCodecPlayer.getVideoTimeUs(),
                 CodecState.UNINITIALIZED_TIMESTAMP);
 
-        // We queue one frame, but expect it not to be rendered
-        mMediaCodecPlayer.seekToBeginning(true /* shouldContinuePts */);
+        // Ensure video peek is disabled before queuing the next frame, otherwise it will
+        // automatically be rendered when queued.
+        mMediaCodecPlayer.setVideoPeek(false);
+
+        // We rewind to the beginning of the stream (to a key frame) and queue one frame, but
+        // pretend like we're seeking 1 second forward in the stream.
+        long presentationTimeOffsetUs = pauseVideoPositionUs + 1000 * 1000;
+        mMediaCodecPlayer.seekToBeginning(presentationTimeOffsetUs);
         Long queuedVideoTimestamp = mMediaCodecPlayer.queueOneVideoFrame();
         assertNotNull("Failed to queue a video frame", queuedVideoTimestamp);
 
-        // The enqueued frame should not propagate through the tunnel while we're paused.
+        // The enqueued frame should not be rendered while we're paused.
         // Wait for the max startup latency to see if it (incorrectly) arrives.
         Thread.sleep(maxAllowedTimeToFirstFrameMs);
         assertEquals("Video frame rendered during pause", mMediaCodecPlayer.getVideoTimeUs(),
@@ -4476,6 +4480,7 @@ public class DecoderTest extends MediaTestBase {
         // Resume playback
         mMediaCodecPlayer.resume();
         Thread.sleep(maxAllowedTimeToFirstFrameMs);
+        // Verify that the first rendered frame was the first queued frame
         ImmutableList<Long> renderedVideoTimestamps =
                 mMediaCodecPlayer.getRenderedVideoFrameTimestampList();
         assertFalse(String.format("No frame rendered after resume within %d ms",
