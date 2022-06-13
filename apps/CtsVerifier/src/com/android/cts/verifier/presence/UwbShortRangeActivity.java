@@ -35,8 +35,8 @@ public class UwbShortRangeActivity extends PassFailButtons.Activity {
     private static final String KEY_DISTANCE_MEDIAN_CM = "distance_median_cm";
     private static final String KEY_REFERENCE_DEVICE = "reference_device";
     // Median Thresholds
-    private static final int MIN_MEDIAN = 8;
-    private static final int MAX_MEDIAN = 12;
+    private static final double MIN_MEDIAN = 0.75;
+    private static final double MAX_MEDIAN = 1.25;
     private EditText mMedianInput;
     private EditText mReferenceDeviceInput;
 
@@ -47,7 +47,7 @@ public class UwbShortRangeActivity extends PassFailButtons.Activity {
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
 
-        mMedianInput = (EditText) findViewById(R.id.distance_median_cm);
+        mMedianInput = (EditText) findViewById(R.id.distance_median_meters);
         mReferenceDeviceInput = (EditText) findViewById(R.id.reference_device);
 
         DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
@@ -66,7 +66,7 @@ public class UwbShortRangeActivity extends PassFailButtons.Activity {
     private boolean checkMedianInput() {
         String medianInput = mMedianInput.getText().toString();
         if (!medianInput.isEmpty()) {
-            int median = Integer.parseInt(medianInput);
+            double median = Double.parseDouble(medianInput);
             return median >= MIN_MEDIAN && median <= MAX_MEDIAN;
         }
         return false;
@@ -82,7 +82,7 @@ public class UwbShortRangeActivity extends PassFailButtons.Activity {
         String referenceDeviceInput = mReferenceDeviceInput.getText().toString();
         if (!medianInput.isEmpty()) {
             Log.i(TAG, "UWB Distance Median: " + medianInput);
-            getReportLog().addValue(KEY_DISTANCE_MEDIAN_CM, Integer.parseInt(medianInput),
+            getReportLog().addValue(KEY_DISTANCE_MEDIAN_CM, Double.parseDouble(medianInput),
                     ResultType.NEUTRAL, ResultUnit.NONE);
         }
         if (!referenceDeviceInput.isEmpty()) {
