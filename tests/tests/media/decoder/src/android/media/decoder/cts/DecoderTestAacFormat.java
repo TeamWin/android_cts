@@ -264,11 +264,25 @@ public class DecoderTestAacFormat {
                 Log.d(TAG, "output buffers have changed.");
             } else if (res == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 MediaFormat outputFormat = decoder.getOutputFormat();
-                audioParams.setNumChannels(outputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
-                audioParams.setSamplingRate(outputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE));
+                try {
+                    audioParams.setNumChannels(
+                            outputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
+                } catch (NullPointerException e) {
+                    fail("KEY_CHANNEL_COUNT not found on output format");
+                }
+                try {
+                    audioParams.setSamplingRate(
+                            outputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE));
+                } catch (NullPointerException e) {
+                    fail("KEY_SAMPLE_RATE not found on output format");
+                }
                 if (sIsAtLeastT) {
-                    audioParams.setChannelMask(
-                            outputFormat.getInteger(MediaFormat.KEY_CHANNEL_MASK));
+                    try {
+                        audioParams.setChannelMask(
+                                outputFormat.getInteger(MediaFormat.KEY_CHANNEL_MASK));
+                    } catch (NullPointerException e) {
+                        fail("KEY_CHANNEL_MASK not found on output format");
+                    }
                 }
                 Log.i(TAG, "output format has changed to " + outputFormat);
             } else {
