@@ -32,8 +32,6 @@ android_test {
         "libcore-expectations-virtualdeviceknownfailures-jar",
 
         "mockito-target-minus-junit4",
-        "time_zone_distro-tests",
-        "time_zone_distro_installer-tests",
     ],
     dex_preopt: {
         enabled: false,

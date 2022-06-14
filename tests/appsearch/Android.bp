@@ -24,7 +24,6 @@ android_test {
         "androidx.test.ext.junit",
         "androidx.test.rules",
         "compatibility-device-util-axt",
-        "service-appsearch",
         "testng",
     ],
     srcs: [

@@ -39,6 +39,7 @@ import android.os.SystemClock;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.CorrectionInfo;
@@ -73,6 +74,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>Public methods are not thread-safe.</p>
  */
 public class MockImeSession implements AutoCloseable {
+
+    private static final String TAG = "MockImeSession";
+
     private final String mImeEventActionName =
             "com.android.cts.mockime.action.IME_EVENT." + SystemClock.elapsedRealtimeNanos();
 
@@ -185,10 +189,11 @@ public class MockImeSession implements AutoCloseable {
     }
 
     @Nullable
-    private static void writeMockImeSettings(@NonNull Context context,
+    private void writeMockImeSettings(@NonNull Context context,
             @NonNull String imeEventActionName,
             @Nullable ImeSettings.Builder imeSettings) throws Exception {
         final Bundle bundle = ImeSettings.serializeToBundle(imeEventActionName, imeSettings);
+        Log.i(TAG, "Writing MockIme settings: session=" + this);
         context.getContentResolver().call(SettingsProvider.AUTHORITY, "write", null, bundle);
     }
 
@@ -336,6 +341,7 @@ public class MockImeSession implements AutoCloseable {
                         .noneMatch(info -> getMockImeComponentName().equals(info.getComponent())));
         mContext.unregisterReceiver(mEventReceiver);
         mHandlerThread.quitSafely();
+        Log.i(TAG, "Deleting MockIme settings: session=" + this);
         mContext.getContentResolver().call(SettingsProvider.AUTHORITY, "delete", null, null);
     }
 

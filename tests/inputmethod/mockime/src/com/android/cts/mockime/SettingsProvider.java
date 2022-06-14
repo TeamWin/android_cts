@@ -21,6 +21,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -30,6 +31,7 @@ import androidx.annotation.Nullable;
  */
 public class SettingsProvider extends ContentProvider {
 
+    private static final String TAG = "SettingsProvider";
     static final String AUTHORITY = "com.android.cts.mockime.provider";
 
     @Nullable
@@ -68,6 +70,7 @@ public class SettingsProvider extends ContentProvider {
 
     @Override
     public Bundle call(String authority, String method, String arg, Bundle extras) {
+        Log.i(TAG, String.format("SettingsProvider.call(): instance=%s, method=%s", this, method));
         if ("write".equals(method)) {
             sSettings = null;
             final String callingPackageName = getCallingPackage();

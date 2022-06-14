@@ -156,6 +156,16 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         }
     }
 
+    private static void adoptSystemLevelPermission(String permission, Runnable verifierRunnable) {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.adoptShellPermissionIdentity(permission);
+        try {
+            verifierRunnable.run();
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
     @Before
     public void setUp() throws Exception {
         super.setUp();
@@ -633,34 +643,26 @@ public class CarPropertyManagerTest extends CarApiTestBase {
 
     @Test
     public void testAbsActiveIfSupported() {
-        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        uiAutomation.adoptShellPermissionIdentity(/* Car.PERMISSION_CAR_DYNAMICS_STATE = */
-                "android.car.permission.CAR_DYNAMICS_STATE");
-        try {
-            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.ABS_ACTIVE,
-                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
-                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
-                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                    Boolean.class).build().verify(mCarPropertyManager);
-        } finally {
-            uiAutomation.dropShellPermissionIdentity();
-        }
+        adoptSystemLevelPermission(/* Car.PERMISSION_CAR_DYNAMICS_STATE = */
+                "android.car.permission.CAR_DYNAMICS_STATE", () -> {
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.ABS_ACTIVE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Boolean.class).build().verify(mCarPropertyManager);
+                });
     }
 
     @Test
     public void testTractionControlActiveIfSupported() {
-        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        uiAutomation.adoptShellPermissionIdentity(/* Car.PERMISSION_CAR_DYNAMICS_STATE = */
-                "android.car.permission.CAR_DYNAMICS_STATE");
-        try {
-            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.TRACTION_CONTROL_ACTIVE,
-                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
-                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
-                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                    Boolean.class).build().verify(mCarPropertyManager);
-        } finally {
-            uiAutomation.dropShellPermissionIdentity();
-        }
+        adoptSystemLevelPermission(/* Car.PERMISSION_CAR_DYNAMICS_STATE = */
+                "android.car.permission.CAR_DYNAMICS_STATE", () -> {
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.TRACTION_CONTROL_ACTIVE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Boolean.class).build().verify(mCarPropertyManager);
+                });
     }
 
     @Test
@@ -976,26 +978,83 @@ public class CarPropertyManagerTest extends CarApiTestBase {
 
     @Test
     public void testPerfSteeringAngleIfSupported() {
-        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        uiAutomation.adoptShellPermissionIdentity(Car.PERMISSION_READ_STEERING_STATE);
-
-        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.PERF_STEERING_ANGLE,
-                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
-                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
-                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                Float.class).build().verify(mCarPropertyManager);
+        adoptSystemLevelPermission(Car.PERMISSION_READ_STEERING_STATE, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.PERF_STEERING_ANGLE,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                    Float.class).build().verify(mCarPropertyManager);
+        });
     }
 
     @Test
     public void testPerfRearSteeringAngleIfSupported() {
-        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        uiAutomation.adoptShellPermissionIdentity(Car.PERMISSION_READ_STEERING_STATE);
+        adoptSystemLevelPermission(Car.PERMISSION_READ_STEERING_STATE, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.PERF_REAR_STEERING_ANGLE,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                    Float.class).build().verify(mCarPropertyManager);
+        });
+    }
 
-        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.PERF_REAR_STEERING_ANGLE,
-                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
-                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
-                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                Float.class).build().verify(mCarPropertyManager);
+    @Test
+    public void testEngineCoolantTempIfSupported() {
+        adoptSystemLevelPermission(/*Car.PERMISSION_CAR_ENGINE_DETAILED=*/
+                "android.car.permission.CAR_ENGINE_DETAILED", () -> {
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.ENGINE_COOLANT_TEMP,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                            Float.class).build().verify(mCarPropertyManager);
+                });
+    }
+
+    @Test
+    public void testEngineOilLevelIfSupported() {
+        adoptSystemLevelPermission(/*Car.PERMISSION_CAR_ENGINE_DETAILED=*/
+                "android.car.permission.CAR_ENGINE_DETAILED", () -> {
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.ENGINE_OIL_LEVEL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setCarPropertyValueVerifier(
+                                    (carPropertyConfig, carPropertyValue) -> assertWithMessage(
+                                    "ENGINE_OIL_LEVEL Integer value must be greater than or equal"
+                                            + " 0").that(
+                                    (Integer) carPropertyValue.getValue()).isAtLeast(
+                                    0)).build().verify(
+                            mCarPropertyManager);
+                });
+    }
+
+    @Test
+    public void testEngineOilTempIfSupported() {
+        adoptSystemLevelPermission(/*Car.PERMISSION_CAR_ENGINE_DETAILED=*/
+                "android.car.permission.CAR_ENGINE_DETAILED", () -> {
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.ENGINE_OIL_TEMP,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                            Float.class).build().verify(mCarPropertyManager);
+                });
+    }
+
+    @Test
+    public void testEngineRpmIfSupported() {
+        adoptSystemLevelPermission(/*Car.PERMISSION_CAR_ENGINE_DETAILED=*/
+                "android.car.permission.CAR_ENGINE_DETAILED", () -> {
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.ENGINE_RPM,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                            Float.class).setCarPropertyValueVerifier(
+                                    (carPropertyConfig, carPropertyValue) -> assertWithMessage(
+                                    "ENGINE_RPM Float value must be greater than or equal 0").that(
+                                    (Float) carPropertyValue.getValue()).isAtLeast(
+                                    0)).build().verify(
+                            mCarPropertyManager);
+                });
     }
 
 
