@@ -6620,7 +6620,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="ble_rssi_precision_name">BLE RSSI Precision Test</string>
     <string name="ble_rssi_precision_test_instructions">
         1. Take 1000 scan measurements with the DUT at 1m distance from the reference device transmitting at ADVERTISE_TX_POWER_HIGH in line of sight environment
-        \n2. Must report RSSI measurements to be within +/-6dBm for 95% of the measurements.
+        \n2. Must report RSSI measurements to be within +/-9dBm for 95% of the measurements.
         \n3. Report the reference device used
     </string>
     <string name="report_ble_rssi_range">Report RSSI Range (dBm)</string>
