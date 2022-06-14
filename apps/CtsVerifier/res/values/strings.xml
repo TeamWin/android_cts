@@ -4350,7 +4350,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_config_date_time">Disallow config date time</string>
     <string name="disallow_config_date_time_action">Configuring auto time, time, auto date or date</string>
     <string name="disallow_config_location">Disallow config location</string>
-    <string name="disallow_config_location_action">Enabling or disabling location in settings or quick settings</string>
+    <string name="disallow_config_location_action">Enabling or disabling location, \'Bluetooth Scanning\' or \'WiFi Scanning\' in settings or quick settings</string>
     <string name="disallow_airplane_mode">Disallow airplane mode</string>
     <string name="disallow_airplane_mode_action">Toggling airplane mode switch bar or changing airplane mode state in quick settings</string>
     <string name="disallow_config_screen_timeout">Disallow config screen timeout</string>
@@ -6598,21 +6598,20 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="uwb_precision">Uwb Precision Test</string>
     <string name="uwb_short_range">Uwb Short Range Test</string>
     <string name="uwb_precision_instruction">
-        1. Take 1000 measurements with DUT at any distance from the reference device. We recommend 1m.
+        1. Take 1000 measurements with DUT at 1m distance from the reference device in a non-reflective chamber.
         \n2. Sort the 1000 measurements.
-        \n3. Compute the range as range = 975th measurement - 25th measurement
-        \n4. Report the range below - Must be less than 10cm for distance measurements and 5 degrees for angle of arrival measurements (if supported) for tests to pass.
+        \n3. Report the range below - Must be within +/-15cm (distance) and +/-5 degrees (angle of arrival, if supported) for 95% of the measurements for tests to pass.
         \n5. Distance range is a compulsory input for this test to pass. Angle of arrival (Aoa) is optional.
     </string>
     <string name="report_distance_range_cm">Report Range (cm)</string>
     <string name="report_aoa_range_degrees">Report Range (degrees)</string>
     <string name="uwb_short_range_instruction">
-        1. Take 1000 measurements with DUT being 10cm apart from the reference device
+        1. Take 1000 measurements with DUT being 1m apart from the reference device, where ground truth distance is measured from the top edge of the DUT, held face up and tilted 45 degrees
         \n2. Sort the values.
-        \n3. Report the median (500th value) (must be within 8cm - 12cm to pass).
+        \n3. Report the median (500th value) (must be within 0.75m and 1.25m to pass).
         \n4. Report the reference device used.
     </string>
-    <string name="report_distance_median_cm">Report Median (cm)</string>
+    <string name="report_distance_median_meters">Report Median (meters)</string>
     <string name="report_reference_device">Report Reference Device</string>
     <string name="uwb_not_supported">Uwb is not supported on device. Finishing activity. </string>
     <string name="ble">BLE</string>
@@ -6620,11 +6619,9 @@ Follow the instructions on the screen to measure the frequency response for the 
     <!-- Strings for BLE RSSI Precision Test -->
     <string name="ble_rssi_precision_name">BLE RSSI Precision Test</string>
     <string name="ble_rssi_precision_test_instructions">
-        1. Take 1000 scan measurements with the DUT
-        \n2. Sort the values
-        \n3. Compute the range as range = 975th measurement - 25th measurement
-        \n4. Report the range; must be less than or equal to 12dBm to pass
-        \n5. Report the reference device used
+        1. Take 1000 scan measurements with the DUT at 1m distance from the reference device transmitting at ADVERTISE_TX_POWER_HIGH in line of sight environment
+        \n2. Must report RSSI measurements to be within +/-6dBm for 95% of the measurements.
+        \n3. Report the reference device used
     </string>
     <string name="report_ble_rssi_range">Report RSSI Range (dBm)</string>
 
@@ -6633,7 +6630,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="ble_rx_tx_calibration_test_instructions">
         To verify this requirement, work with your chip vendor. The chip vendor can measure the
         channel flatness and identify the differences between cores and channels.
-        \nThe RSSI range must be less than or equal to 6 dBm to pass.
+        \n Must include Rx/Tx corrections to reduce per-channel deviations so that the measurements on each of the 3 channels, on each of the antennas (if multiple are used), are within +/-3dBm of one another for 95% of the measurements. Report this range
     </string>
     <string name="report_channels_ble_rssi_range">Report RSSI Range Across Channels (dBm)</string>
     <string name="report_cores_ble_rssi_range">[Optional] Report RSSI Range Across Cores (dBm)</string>
@@ -6641,9 +6638,10 @@ Follow the instructions on the screen to measure the frequency response for the 
     <!-- Strings for BLE Rx Offset Test -->
     <string name="ble_rx_offset_name">BLE Rx Offset Test</string>
     <string name="ble_rx_offset_test_instructions">
-        1. Take 1000 scan measurements with the DUT
+        This test is strongly recommended but not required.
+        \n1. Take 1000 scan measurements with the DUT at 1m distance from a reference device transmitting at ADVERTISE_TX_POWER_HIGH, where devices are oriented such that they are on `parallel planes` with screens facing the same direction
         \n2. Sort the values
-        \n3. Report the median (500th value); must be within [-57, -63] dBm to pass
+        \n3. Report the median (500th value); should be within [-50, -70] dBm
         \n4. Report the reference device used
     </string>
     <string name="report_ble_rssi_median">Report RSSI Median (dBm)</string>
@@ -6651,9 +6649,10 @@ Follow the instructions on the screen to measure the frequency response for the 
     <!-- Strings for BLE Tx Offset Test -->
     <string name="ble_tx_offset_name">BLE Tx Offset Test</string>
     <string name="ble_tx_offset_test_instructions">
-        1. Start BLE advertisement on DUT and take 1000 scan measurements with the reference device
+        This test is strongly recommended but not required
+        1. Start BLE advertisement on DUT transmitting at ADVERTISE_TX_POWER_HIGH and take 1000 scan measurements with the reference device at 1m distance, where devices are oriented such that they are on `parallel planes` with screens facing the same direction
         \n2. Sort the values
-        \n3. Report the median (500th value); must be within [-57, -63] dBm to pass
+        \n3. Report the median (500th value); should be within [-50, -70] dBm
         \n4. Report the reference device used
     </string>
     <string name="nan_precision_instruction">
