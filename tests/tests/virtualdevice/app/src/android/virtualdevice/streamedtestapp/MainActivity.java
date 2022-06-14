@@ -386,7 +386,7 @@ public class MainActivity extends Activity {
             }
             byte value = 0;
             for (int i = 0; i < audioData.length; i++) {
-                if (audioData[i] != 0) {
+                if (audioData[i] == BYTE_VALUE) {
                     value = audioData[i];
                     break;
                 }
@@ -413,7 +413,7 @@ public class MainActivity extends Activity {
             }
             short value = 0;
             for (int i = 0; i < audioData.length; i++) {
-                if (audioData[i] != 0) {
+                if (audioData[i] == SHORT_VALUE) {
                     value = audioData[i];
                     break;
                 }
@@ -440,7 +440,8 @@ public class MainActivity extends Activity {
             }
             float value = 0f;
             for (int i = 0; i < audioData.length; i++) {
-                if (Float.compare(audioData[i], 0.0f) != 0) {
+                float roundOffDiff = Math.abs(audioData[i] - FLOAT_VALUE);
+                if (roundOffDiff < 0.001f) {
                     value = audioData[i];
                     break;
                 }
