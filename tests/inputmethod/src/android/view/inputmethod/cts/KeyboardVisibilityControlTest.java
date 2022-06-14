@@ -51,6 +51,7 @@ import static org.junit.Assume.assumeTrue;
 import android.app.AlertDialog;
 import android.app.Instrumentation;
 import android.app.compat.CompatChanges;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.SystemClock;
@@ -245,26 +246,37 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
     }
 
     private void verifyHideImeBackPressed(
-            boolean appRequestsLegacy, boolean imeRequestsLegacy) throws Exception {
+            boolean appRequestsBackCallback, boolean imeRequestsBackCallback) throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        final InputMethodManager imm = InstrumentationRegistry.getInstrumentation()
-                .getTargetContext().getSystemService(InputMethodManager.class);
+        final Context context = instrumentation.getTargetContext();
+        final InputMethodManager imm = context.getSystemService(InputMethodManager.class);
+
+        // Whether 'OnBackInvokedCallback' or 'onBackPressed' (legacy back) is used is defined by
+        // the 'enableOnBackInvokedCallback' flag in the Application manifest.
+        // Registering a callback is only authorized if the flag is set to true. Since the
+        // WindowOnBackDispatcher is created at the same time as the ViewRootImpl, for test purpose,
+        // we need to manually set the flag on ApplicationInfo before the window is created which
+        // happens during the MockIme creation and TestActivity creation.
 
         try (MockImeSession imeSession = MockImeSession.create(
                 instrumentation.getContext(),
                 instrumentation.getUiAutomation(),
-                new ImeSettings.Builder())) {
+                new ImeSettings.Builder()
+                        .setOnBackCallbackEnabled(imeRequestsBackCallback)
+        )) {
             final ImeEventStream stream = imeSession.openEventStream();
 
             final String marker = getTestMarker();
+
+            if (appRequestsBackCallback) {
+                context.getApplicationInfo().setEnableOnBackInvokedCallback(true);
+            }
+
             final EditText editText = launchTestActivity(marker);
             final TestActivity testActivity = (TestActivity) editText.getContext();
-            if (appRequestsLegacy) {
-                testActivity.getApplicationInfo().setEnableOnBackInvokedCallback(true);
+
+            if (!appRequestsBackCallback) {
                 testActivity.setIgnoreBackKey(true);
-            }
-            if (imeRequestsLegacy) {
-                imeSession.callSetEnableOnBackInvokedCallback(true);
             }
 
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
@@ -296,22 +308,26 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
 
     @Test
     public void testHideImeAfterBackPressed_legacyAppLegacyIme() throws Exception {
-        verifyHideImeBackPressed(true /* appRequestsLegacy */, true /* imeRequestsLegacy */);
+        verifyHideImeBackPressed(false/* appRequestsBackCallback */,
+                false/* imeRequestsBackCallback */);
     }
 
     @Test
     public void testHideImeAfterBackPressed_migratedAppLegacyIme() throws Exception {
-        verifyHideImeBackPressed(false /* appRequestsLegacy */, true /* imeRequestsLegacy */);
+        verifyHideImeBackPressed(true/* appRequestsBackCallback */,
+                false/* imeRequestsBackCallback */);
     }
 
     @Test
     public void testHideImeAfterBackPressed_migratedAppMigratedIme() throws Exception {
-        verifyHideImeBackPressed(false /* appRequestsLegacy */, false /* imeRequestsLegacy */);
+        verifyHideImeBackPressed(true/* appRequestsBackCallback */,
+                true/* imeRequestsBackCallback */);
     }
 
     @Test
     public void testHideImeAfterBackPressed_legacyAppMigratedIme() throws Exception {
-        verifyHideImeBackPressed(true /* appRequestsLegacy */, false /* imeRequestsLegacy */);
+        verifyHideImeBackPressed(false/* appRequestsBackCallback */,
+                true/* imeRequestsBackCallback */);
     }
 
     @Test
