@@ -49,7 +49,7 @@ abstract class DomainVerificationIntentTestBase(
 
         @Parameterized.Parameters(name = "{0}")
         @JvmStatic
-        fun parameters() = IntentVariant.values().take(1)
+        fun parameters() = IntentVariant.values()
     }
 
     @Parameterized.Parameter(0)
