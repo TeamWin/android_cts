@@ -32,10 +32,11 @@
             <LinearLayout android:orientation="vertical"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
-                <EditText android:id="@+id/distance_median_cm"
+                <EditText android:id="@+id/distance_median_meters"
                         android:layout_width="wrap_content"
+                          android:inputType="numberDecimal"
                         android:layout_height="wrap_content"
-                        android:hint="@string/report_distance_median_cm"/>
+                        android:hint="@string/report_distance_median_meters"/>
                 <EditText android:id="@+id/reference_device"
                           android:layout_width="wrap_content"
                           android:layout_height="wrap_content"

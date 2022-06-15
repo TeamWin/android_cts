@@ -66,6 +66,7 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.SubsystemRestartTrackingCallback;
 import android.net.wifi.WifiManager.WifiLock;
 import android.net.wifi.WifiNetworkConnectionStatistics;
+import android.net.wifi.WifiNetworkSelectionConfig;
 import android.net.wifi.WifiNetworkSuggestion;
 import android.net.wifi.WifiScanner;
 import android.net.wifi.WifiSsid;
@@ -1181,6 +1182,23 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             fail("Expected security exception for non DO app");
         } catch (SecurityException e) {
         }
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    public void testSetNetworkSelectionConfig() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        WifiNetworkSelectionConfig nsConfig = new WifiNetworkSelectionConfig.Builder()
+                .setSufficiencyCheckEnabledWhenScreenOff(true).build();
+        assertThrows(SecurityException.class,
+                () -> mWifiManager.setNetworkSelectionConfig(nsConfig));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setNetworkSelectionConfig(nsConfig));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setNetworkSelectionConfig(
+                        new WifiNetworkSelectionConfig.Builder().build()));
     }
 
     /**

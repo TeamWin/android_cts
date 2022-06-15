@@ -76,6 +76,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class StylusHandwritingTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
+    private static final long TIMEOUT_1_S = TimeUnit.SECONDS.toMillis(1);
     private static final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
     private static final int SETTING_VALUE_ON = 1;
     private static final int SETTING_VALUE_OFF = 0;
@@ -740,6 +741,73 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     .getReturnBooleanValue());
 
             TestUtils.injectStylusUpEvent(focusedCustomEditor, endX, endY);
+        }
+    }
+
+    /**
+     * Verify that system times-out Handwriting session after given timeout.
+     */
+    @Test
+    public void testHandwritingSessionIdleTimeout() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+            // update handwriting session timeout
+            assertTrue(expectCommand(
+                    stream,
+                    imeSession.callSetStylusHandwritingTimeout(100 /* timeoutMs */),
+                    TIMEOUT).getReturnBooleanValue());
+
+            final int touchSlop = getTouchSlop();
+            final int startX = editText.getWidth() / 2;
+            final int startY = editText.getHeight() / 2;
+            final int endX = startX + 2 * touchSlop;
+            final int endY = startY;
+            final int number = 5;
+            TestUtils.injectStylusDownEvent(editText, startX, startY);
+            TestUtils.injectStylusMoveEvents(editText, startX, startY,
+                    endX, endY, number);
+            // Handwriting should already be initiated before ACTION_UP.
+            // keyboard shouldn't show up.
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+            // Handwriting should start
+            expectEvent(
+                    stream,
+                    editorMatcher("onStartStylusHandwriting", marker),
+                    TIMEOUT);
+
+            // Handwriting should finish soon.
+            expectEvent(
+                    stream,
+                    editorMatcher("onFinishStylusHandwriting", marker),
+                    TIMEOUT_1_S);
+
+            // test setting extremely large timeout and verify we limit it to
+            // STYLUS_HANDWRITING_IDLE_TIMEOUT_MS
+            assertTrue(expectCommand(
+                    stream, imeSession.callSetStylusHandwritingTimeout(
+                            InputMethodService.getStylusHandwritingIdleTimeoutMax().toMillis()
+                                    * 10),
+                    TIMEOUT).getReturnBooleanValue());
+            assertEquals("Stylus handwriting timeout must be equal to max value.",
+                    InputMethodService.getStylusHandwritingIdleTimeoutMax().toMillis(),
+                    expectCommand(
+                            stream, imeSession.callGetStylusHandwritingTimeout(), TIMEOUT)
+                                    .getReturnLongValue());
         }
     }
 

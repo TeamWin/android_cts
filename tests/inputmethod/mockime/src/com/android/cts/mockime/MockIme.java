@@ -83,6 +83,7 @@ import androidx.autofill.inline.UiVersions;
 import androidx.autofill.inline.UiVersions.StylesBuilder;
 import androidx.autofill.inline.v1.InlineSuggestionUi;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -525,6 +526,14 @@ public final class MockIme extends InputMethodService {
                         inkView.setOnTouchListener((view, event) ->
                                 mEvents.add(MotionEvent.obtain(event)));
                         return true;
+                    }
+                    case "setStylusHandwritingTimeout": {
+                        setStylusHandwritingSessionTimeout(
+                                Duration.ofMillis(command.getExtras().getLong("timeoutMs")));
+                        return true;
+                    }
+                    case "getStylusHandwritingTimeout": {
+                        return getStylusHandwritingSessionTimeout().toMillis();
                     }
                     case "getStylusHandwritingEvents": {
                         return mEvents;

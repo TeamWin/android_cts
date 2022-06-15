@@ -1507,6 +1507,18 @@ public class MockImeSession implements AutoCloseable {
     }
 
     @NonNull
+    public ImeCommand callSetStylusHandwritingTimeout(long timeoutMs) {
+        Bundle params = new Bundle();
+        params.putLong("timeoutMs", timeoutMs);
+        return callCommandInternal("setStylusHandwritingTimeout", params);
+    }
+
+    @NonNull
+    public ImeCommand callGetStylusHandwritingTimeout() {
+        return callCommandInternal("getStylusHandwritingTimeout", new Bundle());
+    }
+
+    @NonNull
     public ImeCommand callGetStylusHandwritingEvents() {
         return callCommandInternal("getStylusHandwritingEvents", new Bundle());
     }

@@ -35,12 +35,12 @@
                 <EditText android:id="@+id/distance_range_cm"
                           android:layout_width="wrap_content"
                           android:layout_height="wrap_content"
-                          android:inputType="number"
+                          android:inputType="numberDecimal"
                           android:hint="@string/report_distance_range_cm"/>
                 <EditText android:id="@+id/aoa_range_degrees"
                           android:layout_width="wrap_content"
                           android:layout_height="wrap_content"
-                          android:inputType="number"
+                          android:inputType="numberDecimal"
                           android:hint="@string/report_aoa_range_degrees"/>
                 <EditText android:id="@+id/reference_device"
                           android:layout_width="wrap_content"

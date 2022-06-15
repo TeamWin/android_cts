@@ -83,7 +83,6 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
-import com.android.compatibility.common.util.CddTest;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -805,26 +804,6 @@ public class KeyAttestationTest {
         testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_SERIAL, null);
         testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_IMEI, "Unable to retrieve IMEI");
         testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_MEID, "Unable to retrieve MEID");
-    }
-
-    @CddTest(requirement="9.11.4")
-    @Test
-    public void testMandatoryDeviceidAttestation() {
-        // ID attestation is only mandatory on devices that have shipped with T and
-        // above.
-        if (Build.VERSION.DEVICE_INITIAL_SDK_INT <= Build.VERSION_CODES.S) {
-            return;
-        }
-        // ID attestation is not implemented on the goldfish emulator.
-        if (Build.BOARD.startsWith("goldfish")) {
-            return;
-        }
-        // ID attestation is tested by other tests (outside of this class), including negative
-        // tests that ID attestation is failing if the platform does not declare support.
-        // Hence, it's safe to only test here that the feature is supported.
-        PackageManager pm = getContext().getPackageManager();
-        assertThat("As of Android T, devices must support ID attestation",
-                pm.hasSystemFeature(PackageManager.FEATURE_DEVICE_ID_ATTESTATION),is(true));
     }
 
     @SuppressWarnings("deprecation")

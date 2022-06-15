@@ -23,7 +23,9 @@ import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.os.Build;
 
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.cts.verifier.R;
 
 import java.lang.reflect.Method;
@@ -216,7 +218,9 @@ public abstract class ConnectReqTestCase extends ReqTestCase {
             if (!group.isGroupOwner()) {
                 long endTime = System.currentTimeMillis();
                 long connectionLatency = endTime - startTime;
-                if (connectionLatency > MAXIMUM_EXPECTED_CONNECTION_LATENCY_WITH_CONFIG_MS) {
+                if (PropertyUtil.isVndkApiLevelAtLeast(Build.VERSION_CODES.TIRAMISU)
+                        && connectionLatency
+                        > MAXIMUM_EXPECTED_CONNECTION_LATENCY_WITH_CONFIG_MS) {
                     mReason = mContext.getString(R.string.p2p_connection_latency_error,
                             MAXIMUM_EXPECTED_CONNECTION_LATENCY_WITH_CONFIG_MS, connectionLatency);
                     return false;

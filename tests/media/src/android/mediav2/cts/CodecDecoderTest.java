@@ -44,9 +44,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.IntStream;
 
+import static android.media.MediaCodecInfo.CodecCapabilities.*;
 import static android.mediav2.cts.CodecTestBase.SupportClass.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -930,5 +934,50 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
             mCodec.release();
         }
         mExtractor.release();
+    }
+
+    /**
+     * Test if decoder outputs 8-bit output for 8-bit as well as 10-bit content by default.
+     * The test runs for 1 frame and only in async mode. We remove the key "KEY_COLOR_FORMAT"
+     * from the input format to the decoder and validate that we get the default 8-bit output
+     * color format.
+     */
+    @SmallTest
+    @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
+    public void testDefaultOutputColorFormat() throws IOException, InterruptedException {
+        Assume.assumeTrue("Test needs Android 13", IS_AT_LEAST_T);
+        Assume.assumeTrue("Test is applicable for video decoders", mMime.startsWith("video/"));
+
+        MediaFormat format = setUpSource(mTestFile);
+        format.removeKey(MediaFormat.KEY_COLOR_FORMAT);
+
+        mOutputBuff = new OutputManager();
+        mCodec = MediaCodec.createByCodecName(mCodecName);
+        mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+        configureCodec(format, true, true, false);
+        mCodec.start();
+        doWork(1);
+        queueEOS();
+        waitForAllOutputs();
+        MediaFormat outputFormat = mCodec.getOutputFormat();
+        mCodec.stop();
+        mCodec.reset();
+        mCodec.release();
+
+        String log = String.format("decoder: %s, input file: %s, mode:: async", mCodecName,
+                mTestFile);
+        assertFalse(log + " unexpected error", mAsyncHandle.hasSeenError());
+        assertNotEquals(log + "no input sent", 0, mInputCount);
+        assertNotEquals(log + "output received", 0, mOutputCount);
+
+        assertTrue(log + "output format from decoder does not contain KEY_COLOR_FORMAT",
+                outputFormat.containsKey(MediaFormat.KEY_COLOR_FORMAT));
+        // 8-bit color formats
+        int[] defaultOutputColorFormatList =
+                new int[]{COLOR_FormatYUV420Flexible, COLOR_FormatYUV420Planar,
+                        COLOR_FormatYUV420PackedPlanar, COLOR_FormatYUV420SemiPlanar};
+        int outputColorFormat = outputFormat.getInteger(MediaFormat.KEY_COLOR_FORMAT);
+        assertTrue(log + "unexpected output color format: " + outputColorFormat,
+                IntStream.of(defaultOutputColorFormatList).anyMatch(x -> x == outputColorFormat));
     }
 }

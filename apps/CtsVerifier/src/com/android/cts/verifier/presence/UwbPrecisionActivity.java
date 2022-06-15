@@ -37,7 +37,7 @@ public class UwbPrecisionActivity extends PassFailButtons.Activity {
     private static final String KEY_AOA_RANGE_DEGREES = "aoa_range_degrees";
     private static final String KEY_REFERENCE_DEVICE = "reference_device";
     // Thresholds
-    private static final int MAX_DISTANCE_RANGE_CM = 10;
+    private static final int MAX_DISTANCE_RANGE_CM = 15;
     private static final int MAX_ANGLE_OF_ARRIVAL_RANGE_DEGREES = 5;
 
     private EditText mDistanceRangeInput;
@@ -74,10 +74,11 @@ public class UwbPrecisionActivity extends PassFailButtons.Activity {
     private boolean checkDistanceRangeInput() {
         String distanceRangeInput = mDistanceRangeInput.getText().toString();
         if (!distanceRangeInput.isEmpty()) {
-            int distanceRange = Integer.parseInt(distanceRangeInput);
+            double distanceRange = Double.parseDouble(distanceRangeInput);
             // Distance range must be inputted and within acceptable range before test can be
             // passed.
-            return distanceRange <= MAX_DISTANCE_RANGE_CM;
+            return distanceRange >= -MAX_DISTANCE_RANGE_CM
+                    && distanceRange <= MAX_DISTANCE_RANGE_CM;
         }
         return false;
     }
@@ -87,7 +88,8 @@ public class UwbPrecisionActivity extends PassFailButtons.Activity {
         if (!aoaRangeInput.isEmpty()) {
             int aoaRange = Integer.parseInt(aoaRangeInput);
             // Aoa range must be within acceptable range before test can be passed.
-            return aoaRange <= MAX_ANGLE_OF_ARRIVAL_RANGE_DEGREES;
+            return aoaRange >= -MAX_ANGLE_OF_ARRIVAL_RANGE_DEGREES
+                    && aoaRange <= MAX_ANGLE_OF_ARRIVAL_RANGE_DEGREES;
         }
         return true;
     }
@@ -104,12 +106,12 @@ public class UwbPrecisionActivity extends PassFailButtons.Activity {
         String referenceDevice = mReferenceDeviceInput.getText().toString();
         if (!distanceRange.isEmpty()) {
             Log.i(TAG, "UWB Distance Range: " + distanceRange);
-            getReportLog().addValue(KEY_DISTANCE_RANGE_CM, Integer.parseInt(distanceRange),
+            getReportLog().addValue(KEY_DISTANCE_RANGE_CM, Double.parseDouble(distanceRange),
                     ResultType.NEUTRAL, ResultUnit.NONE);
         }
         if (!aoaRange.isEmpty()) {
             Log.i(TAG, "UWB Angle of Arrival Range: " + aoaRange);
-            getReportLog().addValue(KEY_AOA_RANGE_DEGREES, Integer.parseInt(aoaRange),
+            getReportLog().addValue(KEY_AOA_RANGE_DEGREES, Double.parseDouble(aoaRange),
                     ResultType.NEUTRAL, ResultUnit.NONE);
         }
         if (!referenceDevice.isEmpty()) {

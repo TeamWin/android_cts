@@ -1486,9 +1486,6 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                             .onCaptureResultAvailable(eq(extensionSession), eq(triggerRequest),
                                     any(TotalCaptureResult.class));
 
-                    verify(mockAFListener,
-                            timeout(WAIT_FOR_FOCUS_DONE_TIMEOUT_MS).atLeastOnce()).onInactive();
-
                     afState.lockAutoFocus(captureBuilder, triggerBuilder);
                     triggerRequest = triggerBuilder.build();
                     reset(mockAFListener);
@@ -1499,9 +1496,6 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                             timeout(REPEATING_REQUEST_TIMEOUT_MS).atLeastOnce())
                             .onCaptureResultAvailable(eq(extensionSession), eq(triggerRequest),
                                     any(TotalCaptureResult.class));
-
-                    verify(mockAFListener,
-                            timeout(WAIT_FOR_FOCUS_DONE_TIMEOUT_MS).atLeastOnce()).onScan();
 
                     verify(mockAFListener, timeout(WAIT_FOR_FOCUS_DONE_TIMEOUT_MS)
                             .atLeast(1)).onDone(anyBoolean());
