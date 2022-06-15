@@ -67,6 +67,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.RemoteException;
 import android.os.UserHandle;
+import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
 import android.util.PackageUtils;
 
@@ -1535,6 +1536,7 @@ public class PackageManagerShellCommandTest {
     @LargeTest
     @Test
     public void testCreateUserCurAsType() throws Exception {
+        assumeTrue(UserManager.supportsMultipleUsers());
         Pattern pattern = Pattern.compile("Success: created user id (\\d+)\\R*");
         String commandResult = executeShellCommand("pm create-user --profileOf cur "
                 + "--user-type android.os.usertype.profile.CLONE test");
