@@ -217,7 +217,13 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Landroid/os/CreateAppDataArgs;",
                     "Landroid/os/CreateAppDataResult;",
                     "Landroid/os/ReconcileSdkDataArgs;",
-                    "Lcom/android/internal/util/FrameworkStatsLog;"
+                    "Lcom/android/internal/util/FrameworkStatsLog;",
+                    // Extra Pixel specific S oversights
+                    "Landroid/os/BlockUntrustedTouchesMode;",
+                    "Landroid/os/IInputConstants;",
+                    "Landroid/os/InputEventInjectionResult;",
+                    "Landroid/os/InputEventInjectionSync;"
+
             );
 
     private static final String FEATURE_WEARABLE = "android.hardware.type.watch";
