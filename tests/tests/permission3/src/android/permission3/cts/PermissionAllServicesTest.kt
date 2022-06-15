@@ -42,6 +42,10 @@ import org.junit.Test
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 class PermissionAllServicesTest : BasePermissionTest() {
 
+    // "All services" screen is not supported on TV in T
+    @Before
+    fun assumeNotTv() = assumeFalse(isTv)
+
     // "All services" screen is not supported on Auto in T
     @Before
     fun assumeNotAuto() = assumeFalse(isAutomotive)

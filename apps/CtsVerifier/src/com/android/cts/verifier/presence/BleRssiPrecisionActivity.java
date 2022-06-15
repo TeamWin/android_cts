@@ -38,7 +38,7 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
     private static final String KEY_REFERENCE_DEVICE = "reference_device";
 
     // Thresholds
-    private static final int MAX_RSSI_RANGE_DBM = 6;
+    private static final int MAX_RSSI_RANGE_DBM = 9;
 
     private EditText reportRssiRangeEditText;
     private EditText reportReferenceDeviceEditText;

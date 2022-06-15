@@ -40,6 +40,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveAppOp;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.compatibility.common.util.BlockingCallback;
@@ -273,6 +274,7 @@ public final class CredentialManagementAppTest {
 
     @Test
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
+    @EnsureHasNoDpc // Existing DPC means the Credential Management App is ignored
     public void choosePrivateKeyAlias_isCredentialManagementApp_aliasSelected() throws Exception {
         setCredentialManagementApp();
 
