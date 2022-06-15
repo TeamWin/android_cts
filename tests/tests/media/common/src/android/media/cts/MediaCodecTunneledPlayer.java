@@ -400,38 +400,24 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
         }
     }
 
-    /**
-     * Flushes all the video codecs when the player is in stand-by.
+    /** Seek all tracks to their very beginning.
      *
+     * @param  presentationTimeOffsetUs The offset for the presentation time to start at.
      * @throws IllegalStateException  if the player is not paused
      */
-    public void videoFlush() {
-        Log.d(TAG, "videoFlush");
+    public void seekToBeginning(long presentationTimeOffsetUs) {
+        Log.d(TAG, "seekToBeginning");
         synchronized (mState) {
             if (mState != STATE_PAUSED) {
                 throw new IllegalStateException("Expected STATE_PAUSED, got " + mState);
             }
 
             for (CodecState state : mVideoCodecStates.values()) {
-                state.flush();
-            }
-        }
-    }
-
-    /** Seek all video tracks to their very beginning.
-     *
-     * @param  shouldContinuePts      a boolean that controls whether timestamps keep increasing
-     * @throws IllegalStateException  if the player is not paused
-     */
-    public void videoSeekToBeginning(boolean shouldContinuePts) {
-        Log.d(TAG, "videoSeekToBeginning");
-        synchronized (mState) {
-            if (mState != STATE_PAUSED) {
-                throw new IllegalStateException("Expected STATE_PAUSED, got " + mState);
+                state.seekToBeginning(presentationTimeOffsetUs);
             }
 
-            for (CodecState state : mVideoCodecStates.values()) {
-                state.seekToBeginning(shouldContinuePts);
+            for (CodecState state : mAudioCodecStates.values()) {
+                state.seekToBeginning(presentationTimeOffsetUs);
             }
         }
     }
