@@ -91,6 +91,8 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
     public void setUp() throws Exception {
         mDevice = getDevice();
         assertThat(mDevice.waitForBootComplete(REBOOT_TIMEOUT_MS)).isTrue();
+        // Turn off the display to simulate the idle state in terms of power consumption.
+        toggleScreenOn(false);
     }
 
     @Test
@@ -227,10 +229,24 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
 
     @After
     public void tearDown() throws Exception {
+        // Restore the display state. CTS runs display on state by default. So we need to turn it
+        // on again.
+        toggleScreenOn(true);
         // Cancel all active dexopt jobs.
         executeShellCommand(CMD_CANCEL_IDLE);
         executeShellCommand(CMD_CANCEL_POST_BOOT);
         mDevice.uninstallPackage(APPLICATION_PACKAGE);
+    }
+
+    /**
+     * Turns on or off the screen.
+     */
+    private void toggleScreenOn(boolean on) throws Exception {
+        if (on) {
+            executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        } else {
+            executeShellCommand("input keyevent KEYCODE_SLEEP");
+        }
     }
 
     private void postJobSchedulerJob(String cmd) throws Exception {
