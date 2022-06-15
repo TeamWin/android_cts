@@ -1023,6 +1023,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 .put("/system_ext/framework/androidx.window.sidecar.jar",
                     ImmutableSet.of("Landroidx/window/common/", "Landroidx/window/sidecar",
                         "Landroidx/window/util"))
+                .put("/vendor/framework/com.google.android.camera.experimental2020_midyear.jar",
+                    ImmutableSet.of("Landroidx/annotation"))
                 .build();
         assertWithMessage("There must not be any androidx classes on the "
             + "bootclasspath. Please use alternatives provided by the platform instead. "
