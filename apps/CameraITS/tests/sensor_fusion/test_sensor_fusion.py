@@ -39,6 +39,7 @@ _CAM_FRAME_RANGE_MAX = 9.0  # Seconds: max allowed camera frame range.
 _GYRO_SAMP_RATE_MIN = 100.0  # Samples/second: min gyro sample rate.
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _ARDUINO_ANGLES = (0, 90)
+_ARDUINO_INIT_WAIT_TIME = 3.0  # Seconds to wait for Arduino comm
 _ARDUINO_MOVE_TIME = 2
 _ARDUINO_SERVO_SPEED = 20
 _NUM_ROTATIONS = 10
@@ -104,6 +105,8 @@ def _collect_data(cam, fps, w, h, test_length, rot_rig, chart_dist, log_path):
 
   # Sleep a while for gyro events to stabilize.
   time.sleep(_GYRO_INIT_WAIT_TIME)
+  if rot_rig['cntl'].lower() == 'arduino':
+    time.sleep(_ARDUINO_INIT_WAIT_TIME)
 
   # Capture frames.
   facing = props['android.lens.facing']
