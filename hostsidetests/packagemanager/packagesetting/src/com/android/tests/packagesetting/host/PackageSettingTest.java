@@ -25,6 +25,7 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -83,6 +84,8 @@ public class PackageSettingTest extends BaseHostJUnit4Test {
     @Test
     @AppModeFull
     public void testFirstInstallTimeWithReboot() throws Exception {
+        Assume.assumeTrue("device does not support multi-user",
+                getDevice().getMaxNumberOfUsersSupported() > 1);
         installPackage(TEST_APK);
         final int currentUser = getDevice().getCurrentUser();
         final String firstInstallTimeForCurrentUser = getFirstInstallTimeForUserFromDumpsys(

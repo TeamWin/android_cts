@@ -107,6 +107,7 @@ public class CtsConfigLoadingTest {
                             "telecom",
                             "tv",
                             "uitoolkit",
+                            "uwb",
                             "vr",
                             "webview",
                             "wifi"));
