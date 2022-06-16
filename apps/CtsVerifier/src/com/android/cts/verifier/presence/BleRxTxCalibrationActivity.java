@@ -42,7 +42,7 @@ public class BleRxTxCalibrationActivity extends PassFailButtons.Activity {
     private static final String KEY_REFERENCE_DEVICE = "reference_device";
 
     // Thresholds
-    private static final int MAX_RSSI_RANGE = 3;
+    private static final int MAX_RSSI_RANGE = 6;
 
     private EditText reportChannelsRssiRangeEditText;
     private EditText reportCoresRssiRangeEditText;
@@ -90,7 +90,7 @@ public class BleRxTxCalibrationActivity extends PassFailButtons.Activity {
         if (!channelsRssiRangeInput.isEmpty()) {
             int channelsRssiRange = Integer.parseInt(channelsRssiRangeInput);
             // RSSI range must be inputted and within acceptable range before test can be passed
-            return channelsRssiRange >= -MAX_RSSI_RANGE && channelsRssiRange <= MAX_RSSI_RANGE;
+            return channelsRssiRange <= MAX_RSSI_RANGE;
         }
         return false;
     }
@@ -100,7 +100,7 @@ public class BleRxTxCalibrationActivity extends PassFailButtons.Activity {
         if (!coresRssiRangeInput.isEmpty()) {
             int coresRssiRange = Integer.parseInt(coresRssiRangeInput);
             // RSSI range must be inputted and within acceptable range before test can be passed
-            return coresRssiRange >= -MAX_RSSI_RANGE && coresRssiRange <= MAX_RSSI_RANGE;
+            return coresRssiRange <= MAX_RSSI_RANGE;
         }
         // This field is optional, so return true even if the user has not inputted anything
         return true;

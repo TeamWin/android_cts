@@ -34,14 +34,11 @@ public class UwbPrecisionActivity extends PassFailButtons.Activity {
     private static final String TAG = UwbPrecisionActivity.class.getName();
     // Report log schema
     private static final String KEY_DISTANCE_RANGE_CM = "distance_range_cm";
-    private static final String KEY_AOA_RANGE_DEGREES = "aoa_range_degrees";
     private static final String KEY_REFERENCE_DEVICE = "reference_device";
     // Thresholds
-    private static final int MAX_DISTANCE_RANGE_CM = 15;
-    private static final int MAX_ANGLE_OF_ARRIVAL_RANGE_DEGREES = 5;
+    private static final int MAX_DISTANCE_RANGE_CM = 30;
 
     private EditText mDistanceRangeInput;
-    private EditText mAoaRangeInput;
     private EditText mReferenceDeviceInput;
 
     @Override
@@ -52,7 +49,6 @@ public class UwbPrecisionActivity extends PassFailButtons.Activity {
         getPassButton().setEnabled(false);
 
         mDistanceRangeInput = (EditText) findViewById(R.id.distance_range_cm);
-        mAoaRangeInput = (EditText) findViewById(R.id.aoa_range_degrees);
         mReferenceDeviceInput = (EditText) findViewById(R.id.reference_device);
 
         DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
@@ -60,15 +56,13 @@ public class UwbPrecisionActivity extends PassFailButtons.Activity {
 
         mDistanceRangeInput.addTextChangedListener(
                 InputTextHandler.getOnTextChangedHandler((Editable s) -> checkTestInputs()));
-        mAoaRangeInput.addTextChangedListener(
-                InputTextHandler.getOnTextChangedHandler((Editable s) -> checkTestInputs()));
         mReferenceDeviceInput.addTextChangedListener(
                 InputTextHandler.getOnTextChangedHandler((Editable s) -> checkTestInputs()));
     }
 
     private void checkTestInputs() {
         getPassButton().setEnabled(
-                checkDistanceRangeInput() && checkAoaRangeInput() && checkReferenceDeviceInput());
+                checkDistanceRangeInput() && checkReferenceDeviceInput());
     }
 
     private boolean checkDistanceRangeInput() {
@@ -77,21 +71,9 @@ public class UwbPrecisionActivity extends PassFailButtons.Activity {
             double distanceRange = Double.parseDouble(distanceRangeInput);
             // Distance range must be inputted and within acceptable range before test can be
             // passed.
-            return distanceRange >= -MAX_DISTANCE_RANGE_CM
-                    && distanceRange <= MAX_DISTANCE_RANGE_CM;
+            return distanceRange <= MAX_DISTANCE_RANGE_CM;
         }
         return false;
-    }
-
-    private boolean checkAoaRangeInput() {
-        String aoaRangeInput = mAoaRangeInput.getText().toString();
-        if (!aoaRangeInput.isEmpty()) {
-            int aoaRange = Integer.parseInt(aoaRangeInput);
-            // Aoa range must be within acceptable range before test can be passed.
-            return aoaRange >= -MAX_ANGLE_OF_ARRIVAL_RANGE_DEGREES
-                    && aoaRange <= MAX_ANGLE_OF_ARRIVAL_RANGE_DEGREES;
-        }
-        return true;
     }
 
     private boolean checkReferenceDeviceInput() {
@@ -102,16 +84,10 @@ public class UwbPrecisionActivity extends PassFailButtons.Activity {
     @Override
     public void recordTestResults() {
         String distanceRange = mDistanceRangeInput.getText().toString();
-        String aoaRange = mAoaRangeInput.getText().toString();
         String referenceDevice = mReferenceDeviceInput.getText().toString();
         if (!distanceRange.isEmpty()) {
             Log.i(TAG, "UWB Distance Range: " + distanceRange);
             getReportLog().addValue(KEY_DISTANCE_RANGE_CM, Double.parseDouble(distanceRange),
-                    ResultType.NEUTRAL, ResultUnit.NONE);
-        }
-        if (!aoaRange.isEmpty()) {
-            Log.i(TAG, "UWB Angle of Arrival Range: " + aoaRange);
-            getReportLog().addValue(KEY_AOA_RANGE_DEGREES, Double.parseDouble(aoaRange),
                     ResultType.NEUTRAL, ResultUnit.NONE);
         }
         if (!referenceDevice.isEmpty()) {
