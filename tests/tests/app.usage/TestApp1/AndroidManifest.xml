@@ -25,6 +25,9 @@
         <activity android:name=".SomeActivityWithLocus"
                   android:exported="true"
         />
+        <activity android:name=".FinishOnResumeActivity"
+            android:exported="true"
+        />
         <service android:name=".TestService"
                   android:exported="true"
         />
