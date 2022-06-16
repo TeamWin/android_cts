@@ -498,6 +498,7 @@ class AutoRevokeTest {
             waitFindObject(By.res("com.android.permissioncontroller:id/permission_allow_button"))
                     .click()
         }
+        waitForIdle()
     }
 
     private fun clickUninstallIcon() {

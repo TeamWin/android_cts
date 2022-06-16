@@ -150,6 +150,8 @@ public class UsageStatsTest {
             = "android.app.usage.cts.test1.TestService";
     static final String TEST_APP_CLASS_BROADCAST_RECEIVER
             = "android.app.usage.cts.test1.TestBroadcastReceiver";
+    private static final String TEST_APP_CLASS_FINISH_SELF_ON_RESUME =
+            "android.app.usage.cts.test1.FinishOnResumeActivity";
     private static final String TEST_AUTHORITY = "android.app.usage.cts.test1.provider";
     private static final String TEST_APP_CONTENT_URI_STRING = "content://" + TEST_AUTHORITY;
     private static final String TEST_APP2_PKG = "android.app.usage.cts.test2";
@@ -549,6 +551,14 @@ public class UsageStatsTest {
                 startTime, endTime);
         UsageStats stats = events.get(mTargetPackage);
         int startingCount = stats.getAppLaunchCount();
+        // Launch count is updated by UsageStatsService depending on last background package.
+        // When running this test on single screen device (where tasks are launched in the same
+        // TaskDisplayArea), the last background package is updated when the HOME activity is
+        // paused. In a hierarchy with multiple TaskDisplayArea there is no guarantee the Home
+        // Activity will be paused as the activities we launch might be placed on a different
+        // TaskDisplayArea. Starting an activity and finishing it immediately will update the last
+        // background package of the UsageStatsService regardless of the HOME Activity state.
+        launchTestActivity(TEST_APP_PKG, TEST_APP_CLASS_FINISH_SELF_ON_RESUME);
         launchSubActivity(Activities.ActivityOne.class);
         launchSubActivity(Activities.ActivityTwo.class);
         endTime = System.currentTimeMillis();
@@ -556,10 +566,9 @@ public class UsageStatsTest {
                 startTime, endTime);
         stats = events.get(mTargetPackage);
         assertEquals(startingCount + 1, stats.getAppLaunchCount());
+        mUiDevice.pressHome();
 
-        // Launch a new activity so the other sub activities go into a paused state.
-        launchTestActivity(TEST_APP_PKG, TEST_APP_CLASS);
-
+        launchTestActivity(TEST_APP_PKG, TEST_APP_CLASS_FINISH_SELF_ON_RESUME);
         launchSubActivity(Activities.ActivityOne.class);
         launchSubActivity(Activities.ActivityTwo.class);
         launchSubActivity(Activities.ActivityThree.class);

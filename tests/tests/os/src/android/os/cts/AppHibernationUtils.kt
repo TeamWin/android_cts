@@ -219,6 +219,7 @@ fun startApp(packageName: String) {
 
 fun goHome() {
     runShellCommandOrThrow("input keyevent KEYCODE_HOME")
+    waitForIdle()
 }
 
 /**

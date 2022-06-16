@@ -94,6 +94,8 @@ public class NanPrecisionTestActivity extends PassFailButtons.Activity {
         DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
                 PackageManager.FEATURE_WIFI_AWARE);
 
+        mBandwidthMhz.addTextChangedListener(
+                InputTextHandler.getOnTextChangedHandler((Editable s) -> checkTestInputs()));
         mMeasurementRange10cmGt68p.addTextChangedListener(
                 InputTextHandler.getOnTextChangedHandler((Editable s) -> checkTestInputs()));
         mMeasurementRange1mGt68p.addTextChangedListener(

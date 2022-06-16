@@ -77,7 +77,6 @@ import android.widget.TextView;
 import androidx.lifecycle.Lifecycle;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
-import androidx.test.filters.FlakyTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
@@ -363,7 +362,6 @@ public class UiTranslationManagerTest {
     }
 
     @Test
-    @FlakyTest(bugId = 192418800)
     public void testPauseUiTranslationThenStartUiTranslation() throws Throwable {
         final Pair<List<AutofillId>, ContentCaptureContext> result =
                 enableServicesAndStartActivityForTranslation();
@@ -443,7 +441,6 @@ public class UiTranslationManagerTest {
     }
 
     @Test
-    @FlakyTest(bugId = 192418800)
     public void testUiTranslation_ViewTranslationCallback_paddingText() throws Throwable {
         try {
             final Pair<List<AutofillId>, ContentCaptureContext> result =
@@ -1148,7 +1145,6 @@ public class UiTranslationManagerTest {
     }
 
     @Test
-    @FlakyTest(bugId = 192418800)
     public void testUiTranslation_customTextView() throws Throwable {
         try {
             // Enable CTS ContentCaptureService

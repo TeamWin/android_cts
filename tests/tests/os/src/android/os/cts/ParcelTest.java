@@ -53,6 +53,8 @@ import com.google.common.util.concurrent.AbstractFuture;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertThrows;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 public class ParcelTest extends AndroidTestCase {
 
@@ -2554,6 +2556,23 @@ public class ParcelTest extends AndroidTestCase {
         for (int i = 0; i < s2.size(); i++) {
             assertEquals(s2.get(i), s3.get(i));
         }
+        p.recycle();
+    }
+
+    public void testWriteTypedList() {
+        Parcel p = Parcel.obtain();
+        ArrayList<SimpleParcelable> list = new ArrayList<>();
+        SimpleParcelable spy = spy(new SimpleParcelable(42));
+        list.add(spy);
+        int flags = Parcelable.PARCELABLE_WRITE_RETURN_VALUE;
+        p.writeTypedList(list, flags);
+
+        verify(spy).writeToParcel(p, flags);
+
+        p.setDataPosition(0);
+        ArrayList<SimpleParcelable> read = p.createTypedArrayList(SimpleParcelable.CREATOR);
+        assertEquals(list.size(), read.size());
+        assertEquals(list.get(0).getValue(), read.get(0).getValue());
         p.recycle();
     }
 

@@ -25,6 +25,7 @@ android_test {
         "ctstestrunner-axt",
         "junit",
         "compatibility-device-util-axt",
+        "cts-wm-util",
     ],
     libs: [
         "android.test.runner",

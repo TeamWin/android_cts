@@ -16,9 +16,15 @@
 
 package android.hardware.camera2.cts;
 
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.params.BlackLevelPattern;
+import android.hardware.camera2.params.Capability;
+import android.hardware.camera2.params.DeviceStateSensorOrientationMap;
+import android.hardware.camera2.params.Face;
 
 import androidx.test.runner.AndroidJUnit4;
 
@@ -34,7 +40,7 @@ import org.junit.runner.RunWith;
 public class SimpleObjectsTest {
 
     @Test
-    public void CameraKeysTest() throws Exception {
+    public void cameraKeysTest() throws Exception {
         String keyName = "android.testing.Key";
         String keyName2 = "android.testing.Key2";
 
@@ -105,6 +111,149 @@ public class SimpleObjectsTest {
                 "Two characteristics keys with different types and names should not be equal",
                 !testCharacteristicsKey.equals(testCharacteristicsKey5));
 
+    }
+
+    @Test
+    public void blackLevelPatternConstructionTest() {
+        int[] offsets = { 5, 5, 5, 5 };
+        BlackLevelPattern blackLevelPattern = new BlackLevelPattern(offsets);
+
+        try {
+            blackLevelPattern = new BlackLevelPattern(/*offsets*/ null);
+            Assert.fail("BlackLevelPattern did not throw a NullPointerException for null offsets");
+        } catch (NullPointerException e) {
+            // Do nothing
+        }
+
+        try {
+            int[] badOffsets = { 5 };
+            blackLevelPattern = new BlackLevelPattern(badOffsets);
+            Assert.fail("BlackLevelPattern did not throw an IllegalArgumentException for incorrect"
+                    + " offsets length");
+        } catch (IllegalArgumentException e) {
+            // Do nothing
+        }
+    }
+
+    @Test
+    public void capabilityConstructionTest() {
+        Capability capability = new Capability(/*mode*/ 0, /*maxStreamingWidth*/ 128,
+                /*maxStreamingHeight*/ 128, /*minZoomRatio*/ 0.2f, /*maxZoomRatio*/ 2.0f);
+
+        try {
+            capability = new Capability(/*mode*/ 0, /*maxStreamingWidth*/ -1,
+                    /*maxStreamingHeight*/ 128, /*minZoomRatio*/ 0.2f, /*maxZoomRatio*/ 2.0f);
+            Assert.fail("Capability did not throw an IllegalArgumentException for negative "
+                    + "maxStreamingWidth");
+        } catch (IllegalArgumentException e) {
+            // Do nothing
+        }
+
+        try {
+            capability = new Capability(/*mode*/ 0, /*maxStreamingWidth*/ 128,
+                    /*maxStreamingHeight*/ -1, /*minZoomRatio*/ 0.2f, /*maxZoomRatio*/ 2.0f);
+            Assert.fail("Capability did not throw an IllegalArgumentException for negative "
+                    + "maxStreamingHeight");
+        } catch (IllegalArgumentException e) {
+            // Do nothing
+        }
+
+        try {
+            capability = new Capability(/*mode*/ 0, /*maxStreamingWidth*/ 128,
+                    /*maxStreamingHeight*/ 128, /*minZoomRatio*/ -3.0f, /*maxZoomRatio*/ -2.0f);
+            Assert.fail("Capability did not throw an IllegalArgumentException for negative "
+                    + "zoom ratios");
+        } catch (IllegalArgumentException e) {
+            // Do nothing
+        }
+
+        try {
+            capability = new Capability(/*mode*/ 0, /*maxStreamingWidth*/ 128,
+                    /*maxStreamingHeight*/ 128, /*minZoomRatio*/ 3.0f, /*maxZoomRatio*/ 2.0f);
+            Assert.fail("Capability did not throw an IllegalArgumentException for minZoomRatio "
+                    + "> maxZoomRatio");
+        } catch (IllegalArgumentException e) {
+            // Do nothing
+        }
+    }
+
+    @Test
+    public void deviceStateSensorOrientationMapConstructionTest() {
+        long[] elements = { 0, 90, 1, 180, 2, 270 };
+        DeviceStateSensorOrientationMap deviceStateSensorOrientationMap =
+                new DeviceStateSensorOrientationMap(elements);
+
+        try {
+            deviceStateSensorOrientationMap = new DeviceStateSensorOrientationMap(
+                    /*elements*/ null);
+            Assert.fail("DeviceStateSensorOrientationMap did not throw a NullPointerException for"
+                    + " null elements");
+        } catch (NullPointerException e) {
+            // Do nothing
+        }
+
+        try {
+            long[] oddElements = { 0 };
+            deviceStateSensorOrientationMap = new DeviceStateSensorOrientationMap(oddElements);
+            Assert.fail("DeviceStateSensorOrientationMap did not throw an IllegalArgumentException "
+                    + "for null elements");
+        } catch (IllegalArgumentException e) {
+            // Do nothing
+        }
+
+        try {
+            long[] badElements = { 0, 55 };
+            deviceStateSensorOrientationMap = new DeviceStateSensorOrientationMap(badElements);
+            Assert.fail("DeviceStateSensorOrientationMap did not throw an IllegalArgumentException "
+                    + "for incorrect elements values");
+        } catch (IllegalArgumentException e) {
+            // Do nothing
+        }
+    }
+
+    @Test
+    public void faceConstructionTest() {
+        Rect bounds = new Rect();
+        int score = 50;
+        int id = 1;
+        Point leftEyePosition = new Point();
+        Point rightEyePosition = new Point();
+        Point mouthPosition = new Point();
+        Face face = new Face(bounds, score, id, leftEyePosition, rightEyePosition, mouthPosition);
+        face = new Face(bounds, score);
+
+        try {
+            face = new Face(/*bounds*/ null, score, id, leftEyePosition, rightEyePosition,
+                    mouthPosition);
+            Assert.fail("Face did not throw an IllegalArgumentException for null bounds");
+        } catch (IllegalArgumentException e) {
+            // Do nothing
+        }
+
+        try {
+            face = new Face(bounds, /*score*/ Face.SCORE_MIN - 1, id, leftEyePosition,
+                    rightEyePosition, mouthPosition);
+            Assert.fail("Face did not throw an IllegalArgumentException for score below range");
+        } catch (IllegalArgumentException e) {
+            // Do nothing
+        }
+
+        try {
+            face = new Face(bounds, /*score*/ Face.SCORE_MAX + 1, id, leftEyePosition,
+                    rightEyePosition, mouthPosition);
+            Assert.fail("Face did not throw an IllegalArgumentException for score above range");
+        } catch (IllegalArgumentException e) {
+            // Do nothing
+        }
+
+        try {
+            face = new Face(bounds, score, /*id*/ Face.ID_UNSUPPORTED, leftEyePosition,
+                    rightEyePosition, mouthPosition);
+            Assert.fail("Face did not throw an IllegalArgumentException for non-null positions when"
+                    + " id is ID_UNSUPPORTED.");
+        } catch (IllegalArgumentException e) {
+            // Do nothing
+        }
     }
 
 }

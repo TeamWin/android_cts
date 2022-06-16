@@ -14,7 +14,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="vertical"
               android:layout_width="match_parent"
               android:layout_height="wrap_content">
@@ -26,12 +26,16 @@
     <Button android:id="@+id/ble_advertising_set_start_test"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_below="@id/ble_advertising_set_test_instruction"
             android:text="@string/ble_advertising_set_start_test"/>
     <ListView android:id="@+id/ble_advertising_set_tests"
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
+              android:layout_below="@id/ble_advertising_set_start_test"
+              android:layout_above="@id/pass_fail_buttons"
               android:padding="10dip"/>
     <include android:layout_width="match_parent"
              android:layout_height="wrap_content"
+             android:layout_alignParentBottom="true"
              layout="@layout/pass_fail_buttons"/>
-</LinearLayout>
+</RelativeLayout>

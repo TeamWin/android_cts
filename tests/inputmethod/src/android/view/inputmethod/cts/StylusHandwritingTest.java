@@ -178,9 +178,9 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             final EditText editText = launchTestActivity(marker);
 
             // Touch down with a stylus
-            final int x = 10;
-            final int y = 10;
-            TestUtils.injectStylusDownEvent(editText, x, y);
+            final int startX = editText.getWidth() / 2;
+            final int startY = editText.getHeight() / 2;
+            TestUtils.injectStylusDownEvent(editText, startX, startY);
 
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
             notExpectEvent(
@@ -210,7 +210,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                             .getReturnBooleanValue());
 
             // Release the stylus pointer
-            TestUtils.injectStylusUpEvent(editText, x, y);
+            TestUtils.injectStylusUpEvent(editText, startX, startY);
 
             // Verify calling finishStylusHandwriting() calls onFinishStylusHandwriting().
             imeSession.callFinishStylusHandwriting();
@@ -256,8 +256,8 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
 
             final List<MotionEvent> injectedEvents = new ArrayList<>();
             // Touch down with a stylus
-            final int startX = 10;
-            final int startY = 10;
+            final int startX = editText.getWidth() / 2;
+            final int startY = editText.getHeight() / 2;
             injectedEvents.add(TestUtils.injectStylusDownEvent(editText, startX, startY));
 
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
@@ -279,17 +279,21 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     .getReturnBooleanValue());
 
             if (verifyOnInkView) {
-                // Verify IME stylus Ink view receives the motion Event.
+                // Set IME stylus Ink view
                 assertTrue(expectCommand(
                         stream,
                         imeSession.callSetStylusHandwritingInkView(),
                         TIMEOUT).getReturnBooleanValue());
             }
 
-            final int endX = startX + 500;
-            final int endY = startY + 500;
+            final int touchSlop = getTouchSlop();
+
+            final int endX = startX + 2 * touchSlop;
+            final int endY = startY;
+            final int number = 5;
+
             injectedEvents.addAll(
-                    TestUtils.injectStylusMoveEvents(editText, startX, startY, endX, endY, 10));
+                    TestUtils.injectStylusMoveEvents(editText, startX, startY, endX, endY, number));
             injectedEvents.add(TestUtils.injectStylusUpEvent(editText, endX, endY));
 
             expectEvent(
