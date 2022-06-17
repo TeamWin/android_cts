@@ -74,6 +74,7 @@ public class Utils {
     public static final int HOTWORD_DETECTION_SERVICE_INVALIDATION = 2;
     public static final int HOTWORD_DETECTION_SERVICE_WITHOUT_ISOLATED_PROCESS = 3;
     public static final int HOTWORD_DETECTION_SERVICE_WITHIN_ISOLATED_PROCESS = 4;
+    public static final int HOTWORD_DETECTION_SERVICE_PERMISSION = 5;
 
     /**
      * Indicate which test event for testing.

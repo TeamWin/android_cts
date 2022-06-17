@@ -18,19 +18,14 @@ package android.mediapc.cts;
 
 import static org.junit.Assert.assertTrue;
 
-import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.mediapc.cts.common.Utils;
 import android.util.Pair;
 
 import androidx.test.filters.LargeTest;
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.CddTest;
-import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
 
 import org.junit.Assume;
 import org.junit.Rule;
@@ -143,7 +138,7 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
             testCodec(null, 1080, 1920, REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES);
         } else if (onlyOneSecure) {
             testCodec(m1080pTestFiles, 1080, 1920,
-                    REQUIRED_CONCURRENT_NON_SECURE_INSTANCES_WITH_SECURE + 1, true);
+                    REQUIRED_CONCURRENT_NON_SECURE_INSTANCES_WITH_SECURE + 1);
         } else {
             testCodec(m1080pTestFiles, 1080, 1920, REQUIRED_MIN_CONCURRENT_INSTANCES);
         }
@@ -151,21 +146,21 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
 
     private void testCodec(Map<String, String> testFiles, int height, int width,
             int requiredMinInstances) throws Exception {
-        testCodec(testFiles, height, width, requiredMinInstances, false);
-    }
-
-    private void testCodec(Map<String, String> testFiles, int height, int width,
-            int requiredMinInstances, boolean secureWithUnsecure) throws Exception {
         mTestFiles = testFiles;
         ArrayList<Pair<String, String>> mimeDecoderPairs = new ArrayList<>();
         mimeDecoderPairs.add(mFirstPair);
         mimeDecoderPairs.add(mSecondPair);
-        boolean bothSecure = true;
+        boolean isFirstSecure = isSecureSupportedCodec(mFirstPair.second, mFirstPair.first);
+        boolean isSecondSecure = isSecureSupportedCodec(mSecondPair.second, mSecondPair.first);
+        boolean secureWithUnsecure = isFirstSecure ^ isSecondSecure;
+        boolean bothSecure = isFirstSecure & isSecondSecure;
         int maxInstances = checkAndGetMaxSupportedInstancesForCodecCombinations(height, width,
                 mimeDecoderPairs, requiredMinInstances);
         double achievedFrameRate = 0.0;
+        boolean meetsPreconditions = (isFirstSecure || isSecondSecure) ?
+                meetsSecureDecodePreconditions() : true;
         // secure test should not reach this point if secure codec doesn't support PP
-        if (maxInstances >= requiredMinInstances || secureWithUnsecure) {
+        if (meetsPreconditions && (maxInstances >= requiredMinInstances || secureWithUnsecure)) {
             int secondPairInstances = maxInstances / 2;
             int firstPairInstances = maxInstances - secondPairInstances;
             if (secureWithUnsecure) {
@@ -176,8 +171,7 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
             }
             List<Decode> testList = new ArrayList<>();
             for (int i = 0; i < firstPairInstances; i++) {
-                boolean isSecure = isSecureSupportedCodec(mFirstPair.second, mFirstPair.first);
-                bothSecure &= isSecure;
+                boolean isSecure = isFirstSecure;
                 String testFile = isSecure ? m1080pWidevineTestFiles.get(mFirstPair.first) :
                         mTestFiles.get(mFirstPair.first);
                 Assume.assumeTrue("Add " + (isSecure ? "secure" : "") + " test vector for mime: " +
@@ -186,14 +180,13 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
                         isSecure));
             }
             for (int i = 0; i < secondPairInstances; i++) {
-                boolean isSecure = isSecureSupportedCodec(mSecondPair.second, mSecondPair.first);
-                bothSecure &= isSecure;
+                boolean isSecure = isSecondSecure;
                 String testFile = isSecure ? m1080pWidevineTestFiles.get(mSecondPair.first) :
                         mTestFiles.get(mSecondPair.first);
                 Assume.assumeTrue("Add " + (isSecure ? "secure" : "") + " test vector for mime: " +
-                        mFirstPair.first, testFile != null);
-                testList.add(new Decode(mSecondPair.first, testFile, mSecondPair.second, mIsAsync,
-                        isSecure));
+                        mSecondPair.first, testFile != null);
+                testList.add(new Decode(mSecondPair.first, testFile, mSecondPair.second,
+                        mIsAsync, isSecure));
             }
             ExecutorService pool = Executors.newFixedThreadPool(maxInstances);
             List<Future<Double>> resultList = pool.invokeAll(testList);

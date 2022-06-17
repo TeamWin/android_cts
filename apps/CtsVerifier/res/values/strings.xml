@@ -3182,7 +3182,6 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         Tap Go button to remove existing screen lock.
     </string>
-    <string name="provisioning_byod_profile_visible">Profile-aware accounts settings</string>
     <string name="provisioning_byod_admin_visible">Profile-aware device administrator settings</string>
     <string name="provisioning_byod_workapps_visible">Badged work apps visible in Launcher</string>
     <string name="provisioning_byod_cross_profile_from_personal">Open app cross profiles from the personal side</string>
@@ -3370,16 +3369,6 @@ You should be prompted to select credentials; choose the ones you just installed
         Verify that a toast was displayed saying you are in the work profile.
         \n\n
         Please press finish to return to the tests and then mark this test accordingly.
-    </string>
-    <string name="provisioning_byod_profile_visible_instruction">
-        Please press the Go button to open the Settings page.
-        (If this device has a separate app for work settings, ignore the Go button and open that app manually from the launcher).\n
-        Navigate to Accounts and confirm that:\n
-        \n
-        - Both Personal and Work categories(or Personal and Work tabs) exist.\n
-        - \"Remove work profile\" or \"Uninstall\" exists under the Work category(or Work tab).\n
-        \n
-        Use the Back button (or navigate back to this app using Recents) to return to this page.
     </string>
     <string name="provisioning_byod_user_settings">Profile-aware user settings</string>
     <string name="provisioning_byod_user_settings_instruction">

@@ -34,6 +34,7 @@
         <option name="package" value="android.devicepolicy.cts" />
         <option name="exclude-annotation" value="com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile" />
         <option name="exclude-annotation" value="com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser" />
+        <option name="exclude-annotation" value="com.android.interactive.annotations.Interactive" />
         <option name="hidden-api-checks" value="false" />
         <!-- test-timeout unit is ms, value = 10 min -->
         <option name="test-timeout" value="600000" />

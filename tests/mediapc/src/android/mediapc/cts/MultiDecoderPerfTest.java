@@ -16,28 +16,12 @@
 
 package android.mediapc.cts;
 
-import static org.junit.Assert.assertTrue;
-
 import android.media.MediaFormat;
 import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.mediapc.cts.common.Utils;
 import android.util.Pair;
-
 import androidx.test.filters.LargeTest;
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.compatibility.common.util.CddTest;
-import com.android.compatibility.common.util.DeviceReportLog;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
-
-import org.junit.Assume;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -45,6 +29,12 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.junit.Assume;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 /**
  * The following test class validates the maximum number of concurrent decode sessions that it can
@@ -132,7 +122,9 @@ public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
                 checkAndGetMaxSupportedInstancesForCodecCombinations(height, width,
                         mimeDecoderPairs, requiredMinInstances);
         double achievedFrameRate = 0.0;
-        if (maxInstances >= requiredMinInstances) {
+        boolean meetsPreconditions = isSecure ? meetsSecureDecodePreconditions() : true;
+
+        if (meetsPreconditions && maxInstances >= requiredMinInstances) {
             ExecutorService pool = Executors.newFixedThreadPool(maxInstances);
             List<Decode> testList = new ArrayList<>();
             for (int i = 0; i < maxInstances; i++) {

@@ -554,11 +554,16 @@ public class DisplayTest {
         Display display = getSecondaryDisplay(manager.getDisplays());
 
         Point outSize = new Point();
-        display.getSize(outSize);
+        display.getRealSize(outSize);
 
         DisplayMetrics outMetrics = new DisplayMetrics();
         outMetrics.setToDefaults();
         display.getMetrics(outMetrics);
+
+        assertEquals("Secondary display real size width is unexpected; height: " + outSize.y
+                + " name " + display.getName() + " id " + display.getDisplayId()
+                + " type " + display.getType(), SECONDARY_DISPLAY_WIDTH, outSize.x);
+        assertEquals(SECONDARY_DISPLAY_HEIGHT, outSize.y);
 
         assertEquals("Secondary display width is unexpected; height: " + outMetrics.heightPixels
                 + " name " + display.getName() + " id " + display.getDisplayId()

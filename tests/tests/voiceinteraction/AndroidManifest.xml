@@ -106,6 +106,24 @@
             <meta-data android:name="android.speech"
                      android:resource="@xml/recognition_service" />
         </service>
+        <service
+            android:name="android.voiceinteraction.service.TestPermissionVoiceInteractionService"
+            android:label="CTS test permission voice interaction service"
+            android:permission="android.permission.BIND_VOICE_INTERACTION"
+            android:exported="true"
+            android:visibleToInstantApps="true">
+            <meta-data android:name="android.voice_interaction"
+                       android:resource="@xml/interaction_service_with_hotword_permission"/>
+            <intent-filter>
+                <action android:name="android.service.voice.VoiceInteractionService"/>
+            </intent-filter>
+        </service>
+        <service
+            android:name="android.voiceinteraction.service.TestPermissionHotwordDetectionService"
+            android:permission="android.permission.BIND_HOTWORD_DETECTION_SERVICE"
+            android:isolatedProcess="true"
+            android:exported="true">
+        </service>
       <receiver android:name="VoiceInteractionTestReceiver"
            android:exported="true"/>
     </application>

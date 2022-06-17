@@ -85,7 +85,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
 
     private DialogTestListItem mProfileOwnerInstalled;
     private DialogTestListItem mDiskEncryptionTest;
-    private DialogTestListItem mProfileAccountVisibleTest;
     private DialogTestListItem mDeviceAdminVisibleTest;
     private DialogTestListItem mWorkAppVisibleTest;
     private DialogTestListItem mCrossProfileIntentFiltersTestFromPersonal;
@@ -342,12 +341,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 NonMarketAppsActivity.class.getName(),
                 new Intent(this, NonMarketAppsActivity.class), null);
 
-        mProfileAccountVisibleTest = new DialogTestListItem(this,
-                R.string.provisioning_byod_profile_visible,
-                "BYOD_ProfileAccountVisibleTest",
-                R.string.provisioning_byod_profile_visible_instruction,
-                new Intent(Settings.ACTION_SETTINGS));
-
         mUserSettingsVisibleTest = new DialogTestListItem(this,
             R.string.provisioning_byod_user_settings,
             "BYOD_UserSettingsVisibleTest",
@@ -537,7 +530,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         */
 
         // Settings related tests.
-        adapter.add(mProfileAccountVisibleTest);
         adapter.add(mDeviceAdminVisibleTest);
         adapter.add(mCredSettingsVisibleTest);
         adapter.add(mUserSettingsVisibleTest);

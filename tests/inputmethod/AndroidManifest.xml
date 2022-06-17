@@ -31,6 +31,16 @@
 
         <!-- TestActivity etc are merged from util/AndroidManifest.xml -->
 
+        <service android:name="android.view.inputmethod.cts.inprocime.InProcIme"
+                 android:label="In-Process Test IME"
+                 android:permission="android.permission.BIND_INPUT_METHOD"
+                 android:exported="true">
+            <intent-filter>
+                <action android:name="android.view.InputMethod"/>
+            </intent-filter>
+            <meta-data android:name="android.view.im" android:resource="@xml/inprocime"/>
+        </service>
+
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

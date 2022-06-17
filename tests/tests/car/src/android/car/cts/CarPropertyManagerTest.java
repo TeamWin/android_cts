@@ -1057,6 +1057,21 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 });
     }
 
+    @Test
+    public void testPerfOdometerIfSupported() {
+        adoptSystemLevelPermission(/*Car.PERMISSION_MILEAGE=*/"android.car.permission.CAR_MILEAGE",
+                () -> {
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.PERF_ODOMETER,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                            Float.class).setCarPropertyValueVerifier(
+                            (carPropertyConfig, carPropertyValue) -> assertWithMessage(
+                                    "PERF_ODOMETER Float value must be greater than or equal 0")
+                                    .that((Float) carPropertyValue.getValue()).isAtLeast(0))
+                            .build().verify(mCarPropertyManager);
+                });
+    }
 
     @SuppressWarnings("unchecked")
     @Test
