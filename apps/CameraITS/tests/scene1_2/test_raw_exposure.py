@@ -124,12 +124,12 @@ def assert_increasing_means(means, exps, sens, black_levels, white_level):
                     white_level, max(mean))
       break
 
-    if allow_under_saturated and min(mean-lower_thresh) > 0:
+    if allow_under_saturated and min(mean-lower_thresh) < 0:
       # All channel means are close to black level
       continue
-
     allow_under_saturated = False
     # Check pixel means are increasing (with small tolerance)
+    logging.debug('iso: %d, exp: %.3f, means: %s', sens, exps[i-1], mean)
     for ch, color in enumerate(COLORS):
       if mean[ch] <= prev_mean[ch] * IMG_DELTA_THRESH:
         e_msg = f'{color} not increasing with increased exp time! ISO: {sens}, '
