@@ -263,6 +263,11 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testColorAspects() throws IOException, InterruptedException {
         Assume.assumeTrue("Test introduced with Android 11", sIsAtLeastR);
+        if (mSurfaceMode) {
+            Assume.assumeTrue("Surface mode tests are limited to devices launching with Android T",
+                    FIRST_SDK_IS_AT_LEAST_T);
+        }
+
         if (mUseHighBitDepth) {
             // Check if encoder is capable of supporting HDR profiles.
             // Previous check doesn't verify this as profile isn't set in the format
