@@ -76,7 +76,6 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.os.Vibrator;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Rational;
 import android.util.Size;
@@ -1840,7 +1839,9 @@ public class ItsService extends Service implements SensorEventListener {
             return;
         }
 
-        Size maxPreviewSize = getMaxPreviewSize();
+        // s1440p which is the max supported stream size in a combination, when preview
+        // stabilization is on.
+        Size maxPreviewSize = new Size(1920, 1440);
         Size[] outputSizes = configMap.getOutputSizes(ImageFormat.YUV_420_888);
         if (outputSizes == null) {
             mSocketRunnableObj.sendResponse("supportedPreviewSizes", "");
@@ -1856,18 +1857,6 @@ public class ItsService extends Service implements SensorEventListener {
                 .collect(Collectors.joining(";"));
 
         mSocketRunnableObj.sendResponse("supportedPreviewSizes", response);
-    }
-
-    private Size getMaxPreviewSize() {
-        // Android guarantees preview resolutions up to 1080p or the screen resolution, whichever
-        // is lower.
-        Size maxGuaranteedPreviewSize = new Size(1920, 1080);
-        DisplayMetrics displayMetrics = getApplicationContext().getResources().getDisplayMetrics();
-        if (maxGuaranteedPreviewSize.getHeight() * maxGuaranteedPreviewSize.getWidth()
-                < displayMetrics.heightPixels * displayMetrics.widthPixels) {
-            return maxGuaranteedPreviewSize;
-        }
-        return new Size(displayMetrics.widthPixels, displayMetrics.heightPixels);
     }
 
     private class MediaCodecListener extends MediaCodec.Callback {
