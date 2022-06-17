@@ -39,7 +39,6 @@ import android.annotation.NonNull;
 import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -1260,11 +1259,14 @@ public class TelephonyManagerTest {
                 Pattern.matches(ISO_COUNTRY_CODE_PATTERN, countryCode));
 
         for (int i = 0; i < mTelephonyManager.getPhoneCount(); i++) {
-            countryCode = mTelephonyManager.getNetworkCountryIso(i);
-
-            assertTrue("Country code '" + countryCode + "' did not match "
-                    + ISO_COUNTRY_CODE_PATTERN + " for slot " + i,
-                    Pattern.matches(ISO_COUNTRY_CODE_PATTERN, countryCode));
+            SubscriptionInfo subscriptionInfo =
+                    mSubscriptionManager.getActiveSubscriptionInfoForSimSlotIndex(i);
+            if (subscriptionInfo != null) {
+                countryCode = mTelephonyManager.getNetworkCountryIso(i);
+                assertTrue("Country code '" + countryCode + "' did not match "
+                                + ISO_COUNTRY_CODE_PATTERN + " for slot " + i,
+                        Pattern.matches(ISO_COUNTRY_CODE_PATTERN, countryCode));
+            }
         }
     }
 
