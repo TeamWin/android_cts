@@ -22,14 +22,20 @@
  */
 package android.security.cts;
 
-import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
-import android.app.Instrumentation;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeThat;
+
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.SurfaceTexture;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -37,65 +43,50 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
-import android.opengl.GLES20;
-import android.opengl.GLES11Ext;
+import android.media.TimedText;
 import android.os.Looper;
+import android.os.Parcel;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.os.Parcel;
 import android.platform.test.annotations.AsbSecurityTest;
+import android.security.NetworkSecurityPolicy;
 import android.util.Log;
 import android.view.Surface;
 import android.webkit.cts.CtsTestServer;
 
+import androidx.test.runner.AndroidJUnit4;
+
 import com.android.compatibility.common.util.CrashUtils;
 import com.android.compatibility.common.util.mainline.MainlineModule;
 import com.android.compatibility.common.util.mainline.ModuleDetector;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
+import org.junit.runner.RunWith;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.BindException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.OutputStream;
-import java.io.InputStream;
-import java.net.BindException;
-import java.net.Socket;
-import java.net.ServerSocket;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import android.security.cts.R;
-
-import android.security.NetworkSecurityPolicy;
-import android.media.TimedText;
-
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
-
-import org.junit.Rule;
-import org.junit.rules.TestName;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import static org.junit.Assume.*;
-import static org.junit.Assert.*;
-
-import static org.hamcrest.Matchers.is;
 
 /**
  * Verify that the device is not vulnerable to any known Stagefright
@@ -2412,7 +2403,8 @@ public class StagefrightTest extends StsExtraBusinessLogicTestCase {
                 MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
                 try {
                     ByteBuffer [] inputBuffers = codec.getInputBuffers();
-                    while (true) {
+                    long startTime = System.nanoTime();
+                    while (System.nanoTime() - startTime < TIMEOUT_NS) {
                         int flags = ex.getSampleFlags();
                         long time = ex.getSampleTime();
                         ex.getCachedDuration();
