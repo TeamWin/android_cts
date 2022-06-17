@@ -6599,12 +6599,10 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="uwb_short_range">Uwb Short Range Test</string>
     <string name="uwb_precision_instruction">
         1. Take 1000 measurements with DUT at 1m distance from the reference device in a non-reflective chamber.
-        \n2. Sort the 1000 measurements.
-        \n3. Report the range below - Must be within +/-15cm (distance) and +/-5 degrees (angle of arrival, if supported) for 95% of the measurements for tests to pass.
-        \n5. Distance range is a compulsory input for this test to pass. Angle of arrival (Aoa) is optional.
+        \n2. Sort the 1000 measurements and compute the range as 975th measurement - 25th measurement
+        \n3. Report the range below - Must be within 30cm (distance) for tests to pass.
     </string>
     <string name="report_distance_range_cm">Report Range (cm)</string>
-    <string name="report_aoa_range_degrees">Report Range (degrees)</string>
     <string name="uwb_short_range_instruction">
         1. Take 1000 measurements with DUT being 1m apart from the reference device, where ground truth distance is measured from the top edge of the DUT, held face up and tilted 45 degrees
         \n2. Sort the values.
@@ -6620,8 +6618,9 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="ble_rssi_precision_name">BLE RSSI Precision Test</string>
     <string name="ble_rssi_precision_test_instructions">
         1. Take 1000 scan measurements with the DUT at 1m distance from the reference device transmitting at ADVERTISE_TX_POWER_HIGH in line of sight environment
-        \n2. Must report RSSI measurements to be within +/-9dBm for 95% of the measurements.
-        \n3. Report the reference device used
+        \n2. Sort the measurements and compute the range as 975th measurement - 25th measurement
+        \n3. Report the range below. Must be within 18dBm for tests to pass
+        \n4. Report the reference device used
     </string>
     <string name="report_ble_rssi_range">Report RSSI Range (dBm)</string>
 
@@ -6630,41 +6629,22 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="ble_rx_tx_calibration_test_instructions">
         To verify this requirement, work with your chip vendor. The chip vendor can measure the
         channel flatness and identify the differences between cores and channels.
-        \n Must include Rx/Tx corrections to reduce per-channel deviations so that the measurements on each of the 3 channels, on each of the antennas (if multiple are used), are within +/-3dBm of one another for 95% of the measurements. Report this range
+        \n1. Must include Rx/Tx corrections to reduce per-channel deviations so that the measurements on each of the 3 channels, on each of the antennas (if multiple are used), are within +/-3dBm of one another for 95% of the measurements.
+        \n2. For 1000 sorted measurements, report the range as 975th measurement - 25th measurement. Must be within 6dBm to pass.
     </string>
     <string name="report_channels_ble_rssi_range">Report RSSI Range Across Channels (dBm)</string>
     <string name="report_cores_ble_rssi_range">[Optional] Report RSSI Range Across Cores (dBm)</string>
 
-    <!-- Strings for BLE Rx Offset Test -->
-    <string name="ble_rx_offset_name">BLE Rx Offset Test</string>
-    <string name="ble_rx_offset_test_instructions">
-        This test is strongly recommended but not required.
-        \n1. Take 1000 scan measurements with the DUT at 1m distance from a reference device transmitting at ADVERTISE_TX_POWER_HIGH, where devices are oriented such that they are on `parallel planes` with screens facing the same direction
-        \n2. Sort the values
-        \n3. Report the median (500th value); should be within [-50, -70] dBm
-        \n4. Report the reference device used
-    </string>
-    <string name="report_ble_rssi_median">Report RSSI Median (dBm)</string>
-
-    <!-- Strings for BLE Tx Offset Test -->
-    <string name="ble_tx_offset_name">BLE Tx Offset Test</string>
-    <string name="ble_tx_offset_test_instructions">
-        This test is strongly recommended but not required
-        1. Start BLE advertisement on DUT transmitting at ADVERTISE_TX_POWER_HIGH and take 1000 scan measurements with the reference device at 1m distance, where devices are oriented such that they are on `parallel planes` with screens facing the same direction
-        \n2. Sort the values
-        \n3. Report the median (500th value); should be within [-50, -70] dBm
-        \n4. Report the reference device used
-    </string>
     <string name="nan_precision_instruction">
         1. Take 1000 ranging measurements at each of the ground truth points of 10cm, 1m, 3m, and 5m. The WifiNanScan app in Play Store is recommended for data collection.
         \n2. Report the bandwidth at which the data was collected. Must be either 160, 80, 40, 20 MHz.
-        \n2. For each ground truth point:
-        \n\t\ta. Must report the range at the 68th percentile (as calculated with the Cumulative Distribution Function), accurately to within:
-        \n\t\t\ti. +/-1 meters at 160 MHz bandwidth
-        \n\t\t\tii. +/-2 meters at 80 MHz bandwidth
-        \n\t\t\tiii. +/-4 meters at 40 MHz bandwidth
-        \n\t\t\tiv. +/-8 meters at 20 MHz bandwidth
-        \n4. Following the same instructions above, it is strongly recommended (but not required), to report the range at the 90th percentile as calculated with the Cumulative Distribution Function. If the range at 90th percentile is inputted, it must be within the expected range, and inputted for all distance ranges.
+        \n3. For each ground truth point:
+        \n\t\ta. Sort the measurements, and report the range at the 68th percentile (840th measurement - 160th measurement), accurately to within:
+        \n\t\t\ti. 2 meters at 160 MHz bandwidth
+        \n\t\t\tii. 4 meters at 80 MHz bandwidth
+        \n\t\t\tiii. 8 meters at 40 MHz bandwidth
+        \n\t\t\tiv. 16 meters at 20 MHz bandwidth
+        \n4. Following the same instructions above, it is strongly recommended (but not required), to report the range at the 90th percentile (950th measurement - 50th measurement) as calculated with the Cumulative Distribution Function. If the range at 90th percentile is inputted, it must be within the expected range, and inputted for all distance ranges.
         \n5. Report reference device used. All required fields must be filled before test can be passed.
     </string>
     <string name="report_nan_bandwidth_mhz">Bandwidth (MHz)</string>

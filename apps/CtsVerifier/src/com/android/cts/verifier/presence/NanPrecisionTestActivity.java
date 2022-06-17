@@ -51,10 +51,10 @@ public class NanPrecisionTestActivity extends PassFailButtons.Activity {
     private static final String KEY_REFERENCE_DEVICE = "reference_device";
 
     // Thresholds
-    private static final int MAX_DISTANCE_RANGE_METERS_160MHZ = 1;
-    private static final int MAX_DISTANCE_RANGE_METERS_80MHZ = 2;
-    private static final int MAX_DISTANCE_RANGE_METERS_40MHZ = 4;
-    private static final int MAX_DISTANCE_RANGE_METERS_20MHZ = 8;
+    private static final int MAX_DISTANCE_RANGE_METERS_160MHZ = 2;
+    private static final int MAX_DISTANCE_RANGE_METERS_80MHZ = 4;
+    private static final int MAX_DISTANCE_RANGE_METERS_40MHZ = 8;
+    private static final int MAX_DISTANCE_RANGE_METERS_20MHZ = 16;
 
     // Maps NAN bandwidths to acceptable range thresholds
     private static final ImmutableMap<Integer, Integer> BANDWIDTH_TO_THRESHOLD_MAP =
@@ -172,8 +172,7 @@ public class NanPrecisionTestActivity extends PassFailButtons.Activity {
             }
             double distanceRange = Double.parseDouble(input);
             int bandwidth = Integer.parseInt(bandwidthInputMhz);
-            if (distanceRange < -BANDWIDTH_TO_THRESHOLD_MAP.get(bandwidth)
-                    || distanceRange > BANDWIDTH_TO_THRESHOLD_MAP.get(bandwidth)) {
+            if (distanceRange > BANDWIDTH_TO_THRESHOLD_MAP.get(bandwidth)) {
                 // All inputs must be in acceptable range so fail early otherwise
                 return false;
             }
