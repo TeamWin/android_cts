@@ -38,7 +38,7 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
     private static final String KEY_REFERENCE_DEVICE = "reference_device";
 
     // Thresholds
-    private static final int MAX_RSSI_RANGE_DBM = 9;
+    private static final int MAX_RSSI_RANGE_DBM = 18;
 
     private EditText reportRssiRangeEditText;
     private EditText reportReferenceDeviceEditText;
@@ -82,7 +82,7 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
         if (!rssiRangeInput.isEmpty()) {
             int rssiRange = Integer.parseInt(rssiRangeInput);
             // RSSI range must be inputted and within acceptable range before test can be passed
-            return rssiRange >= -MAX_RSSI_RANGE_DBM && rssiRange <= MAX_RSSI_RANGE_DBM;
+            return rssiRange <= MAX_RSSI_RANGE_DBM;
         }
         return false;
     }
