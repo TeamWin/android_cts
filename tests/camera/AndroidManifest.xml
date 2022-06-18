@@ -32,19 +32,28 @@
         <activity android:name="android.hardware.cts.CameraCtsActivity"
             android:label="CameraCtsActivity"
             android:screenOrientation="locked"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden">
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:keepScreenOn="true">
         </activity>
 
         <activity android:name="android.hardware.camera2.cts.Camera2SurfaceViewCtsActivity"
             android:label="Camera2CtsActivity"
             android:screenOrientation="locked"
-            android:configChanges="keyboardHidden|orientation|screenSize">
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:keepScreenOn="true">
         </activity>
 
         <activity android:name="android.hardware.camera2.cts.Camera2MultiViewCtsActivity"
             android:label="Camera2MultiViewCtsActivity"
             android:screenOrientation="locked"
-            android:configChanges="keyboardHidden|orientation|screenSize">
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:keepScreenOn="true">
         </activity>
 
         <activity android:name="android.hardware.cts.GLSurfaceViewCtsActivity"
@@ -60,34 +69,49 @@
             android:label="RemoteCamera1Activity"
             android:screenOrientation="locked"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:process=":camera1ActivityProcess">
+            android:process=":camera1ActivityProcess"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:keepScreenOn="true">
         </activity>
 
         <activity android:name="android.hardware.multiprocess.camera.cts.Camera2Activity"
             android:label="RemoteCamera2Activity"
             android:screenOrientation="locked"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
-            android:process=":camera2ActivityProcess">
+            android:process=":camera2ActivityProcess"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:keepScreenOn="true">
         </activity>
 
         <activity android:name="android.hardware.camera2.cts.Camera2OfflineTestActivity"
             android:label="RemoteCamera2OfflineTestActivity"
             android:screenOrientation="locked"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:process=":camera2ActivityProcess">
+            android:process=":camera2ActivityProcess"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:keepScreenOn="true">
         </activity>
 
         <activity android:name="android.hardware.multiprocess.camera.cts.MediaRecorderCameraActivity"
             android:label="RemoteMediaRecorderCameraActivity"
             android:screenOrientation="locked"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:process=":mediaRecorderCameraActivityProcess">
+            android:process=":mediaRecorderCameraActivityProcess"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:keepScreenOn="true">
         </activity>
 
         <activity android:name="android.hardware.camera2.cts.CameraExtensionTestActivity"
             android:label="CameraExtensionTestActivity"
             android:screenOrientation="locked"
-            android:configChanges="keyboardHidden|orientation|screenSize">
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:keepScreenOn="true">
         </activity>
         <activity android:name="android.hardware.camera2.cts.EmptyActivity"
             android:label="EmptyActivity">

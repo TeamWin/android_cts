@@ -1,2 +1,3 @@
-# Owners of the IntegrityCheckResultReported atom
-songpan@google.com
+# Bug component: 953234
+include platform/frameworks/base:/services/core/java/com/android/server/integrity/OWNERS
+

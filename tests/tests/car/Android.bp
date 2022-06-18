@@ -56,6 +56,7 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
+        "automotive-tests",
     ],
     sdk_version: "test_current",
     data: [

@@ -474,4 +474,8 @@
         android:protectionLevel="signature|privileged"
         android:label="@string/car_permission_label_control_car_app_launch"
         android:description="@string/car_permission_desc_control_car_app_launch"/>
+    <permission android:name="android.car.permission.THREAD_PRIORITY"
+        android:protectionLevel="signature|privileged"
+        android:label="@string/car_permission_label_thread_priority"
+        android:description="@string/car_permission_desc_thread_priority"/>
 </manifest>

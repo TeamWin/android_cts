@@ -70,7 +70,7 @@ public class SeccompDeviceTest {
 
     // The service start can take a long time, because seccomp denials will
     // cause process crashes and dumps, which we waitpid() for sequentially.
-    private static final int SERVICE_START_TIMEOUT_MS = 120000;
+    private static final int SERVICE_START_TIMEOUT_MS = 180000;
 
     private JSONObject mAllowedSyscallMap;
     private JSONObject mBlockedSyscallMap;

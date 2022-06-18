@@ -46,6 +46,9 @@ public class TestMmTelFeature extends MmTelFeature {
     private Set<RtpHeaderExtensionType> mOfferedRtpHeaderExtensionTypes;
     private CountDownLatch mOfferedRtpHeaderExtensionLatch = new CountDownLatch(1);
     private TestImsCallSessionImpl mCallSession;
+    private CountDownLatch mTerminalBasedCallWaitingLatch = new CountDownLatch(1);
+    private boolean mIsTerminalBasedCallWaitingNotified = false;
+    private boolean mIsTerminalBasedCallWaitingEnabled = false;
 
     TestMmTelFeature(TestImsService.ReadyListener readyListener,
             TestImsService.RemovedListener removedListener,
@@ -147,6 +150,13 @@ public class TestMmTelFeature extends MmTelFeature {
         return s != null ? s : null;
     }
 
+    @Override
+    public void setTerminalBasedCallWaitingStatus(boolean enabled) {
+        mIsTerminalBasedCallWaitingNotified = true;
+        mIsTerminalBasedCallWaitingEnabled = enabled;
+        mTerminalBasedCallWaitingLatch.countDown();
+    }
+
     public void setCapabilities(MmTelCapabilities capabilities) {
         mCapabilities = capabilities;
     }
@@ -202,5 +212,23 @@ public class TestMmTelFeature extends MmTelFeature {
 
     public ConferenceHelper getConferenceHelper() {
         return sConferenceHelper;
+    }
+
+    public CountDownLatch getTerminalBasedCallWaitingLatch() {
+        return mTerminalBasedCallWaitingLatch;
+    }
+
+    public CountDownLatch resetTerminalBasedCallWaitingLatch() {
+        mIsTerminalBasedCallWaitingNotified = false;
+        mTerminalBasedCallWaitingLatch = new CountDownLatch(1);
+        return mTerminalBasedCallWaitingLatch;
+    }
+
+    public boolean isTerminalBasedCallWaitingNotified() {
+        return mIsTerminalBasedCallWaitingNotified;
+    }
+
+    public boolean isTerminalBasedCallWaitingEnabled() {
+        return mIsTerminalBasedCallWaitingEnabled;
     }
 }

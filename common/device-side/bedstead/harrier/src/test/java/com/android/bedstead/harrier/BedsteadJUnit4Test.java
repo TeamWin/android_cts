@@ -25,6 +25,7 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_A
 import static com.google.common.truth.Truth.assertThat;
 
 import com.android.bedstead.harrier.annotations.AfterClass;
+import com.android.bedstead.harrier.annotations.BeforeClass;
 import com.android.bedstead.harrier.annotations.CrossUserTest;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnumTestParameter;
@@ -35,8 +36,10 @@ import com.android.bedstead.harrier.annotations.UserPair;
 import com.android.bedstead.harrier.annotations.UserTest;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerPrimaryUser;
+import com.android.bedstead.harrier.exceptions.RestartTestException;
 import com.android.bedstead.nene.TestApis;
 
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -78,6 +81,16 @@ public class BedsteadJUnit4Test {
         assertThat(sIndirectParameterizedCalls).isEqualTo(2);
         assertThat(sIntParameterizedCalls).isEqualTo(2);
         assertThat(sEnumParameterizedCalls).isEqualTo(3);
+    }
+
+    @BeforeClass
+    public static void beforeClass() {
+        sBeforeClassCalls += 1;
+    }
+
+    @Before
+    public void before() {
+        sBeforeCalls += 1;
     }
 
     @Test
@@ -153,6 +166,40 @@ public class BedsteadJUnit4Test {
         } else {
             assertThat(TestApis.users().instrumented()).isEqualTo(sDeviceState.workProfile());
             assertThat(sDeviceState.otherUser()).isEqualTo(sDeviceState.primaryUser());
+        }
+    }
+
+    private static int sTestRuns = 0;
+
+    @Test
+    public void throwsRestartTestException_restartsTest() {
+        if (sTestRuns < 2) {
+            sTestRuns++;
+            throw new RestartTestException("Testing that this restarts");
+        }
+        try {
+            assertThat(sTestRuns).isEqualTo(2);
+        } finally {
+            sTestRuns = 0;
+        }
+    }
+
+    private static int sBeforeClassCalls = 0;
+    private static int sBeforeCalls = 0;
+
+    @Test
+    public void throwsRestartTestException_setupRunsWithEachRestart() {
+        if (sTestRuns < 1) {
+            sBeforeClassCalls = 0;
+            sBeforeCalls = 0;
+            sTestRuns++;
+            throw new RestartTestException("Testing that this restarts and re-calls before");
+        }
+        try {
+            assertThat(sBeforeClassCalls).isEqualTo(0);
+            assertThat(sBeforeCalls).isEqualTo(1);
+        } finally {
+            sTestRuns = 0;
         }
     }
 }

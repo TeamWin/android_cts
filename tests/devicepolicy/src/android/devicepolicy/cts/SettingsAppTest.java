@@ -19,6 +19,7 @@ package android.devicepolicy.cts;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.EnsureOnLauncher;
 import com.android.compatibility.common.util.CddTest;
 import com.android.interactive.Step;
 import com.android.interactive.annotations.Interactive;
@@ -44,7 +45,10 @@ public final class SettingsAppTest {
     @EnsureHasWorkProfile
     @Interactive
     @CddTest(requirements = {"3.9.2/C-1-7"})
+    @EnsureOnLauncher // We need to ensure the settings screen (which can be cached) is not open
     public void accountSettings_hasPersonalCategory() {
+        // TODO: Add an account and verify that account is listed in the personal category - and
+        //   that one added on the work profile is not listed in the personal category
         // Launch personal settings app (or combined app) + navigate to accounts page
         Step.execute(NavigateToPersonalAccountSettingsStep.class);
 
@@ -56,7 +60,10 @@ public final class SettingsAppTest {
     @EnsureHasWorkProfile
     @Interactive
     @CddTest(requirements = {"3.9.2/C-1-7"})
+    @EnsureOnLauncher // We need to ensure the settings screen (which can be cached) is not open
     public void accountSettings_hasWorkCategory() {
+        // TODO: Add an account to work profile and verify that account is listed in the work
+        //  category - and that one added on the personal profile is not listed in the work category
         // Launch work settings app (or combined app) + navigate to the accounts page
         Step.execute(NavigateToWorkAccountSettingsStep.class);
 
@@ -68,6 +75,7 @@ public final class SettingsAppTest {
     @EnsureHasWorkProfile
     @Interactive
     // TODO(b/221134166): Annotate correct Cdd requirement
+    @EnsureOnLauncher // We need to ensure the settings screen (which can be cached) is not open
     public void accountSettings_removeWorkProfile() {
         // Launch work settings app (or combined app) + navigate to the accounts page
         Step.execute(NavigateToWorkAccountSettingsStep.class);

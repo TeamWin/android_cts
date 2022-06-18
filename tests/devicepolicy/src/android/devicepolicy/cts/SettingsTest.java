@@ -28,6 +28,7 @@ import static org.testng.Assert.assertThrows;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureNotDemoMode;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
@@ -85,6 +86,7 @@ public final class SettingsTest {
 
     @CanSetPolicyTest(policy = SetGlobalSetting.class)
     @Postsubmit(reason = "new test")
+    @EnsureNotDemoMode // retail demo mode bypasses global setting allowlist
     public void setGlobalSetting_unsupported_throwsSecurityException() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().setGlobalSetting(

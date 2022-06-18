@@ -43,6 +43,7 @@ import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTes
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 import com.android.bedstead.harrier.annotations.meta.RepeatingAnnotation;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeNone;
+import com.android.bedstead.harrier.exceptions.RestartTestException;
 import com.android.bedstead.nene.annotations.Nullable;
 import com.android.bedstead.nene.exceptions.NeneException;
 
@@ -50,9 +51,12 @@ import com.google.auto.value.AutoAnnotation;
 
 import org.junit.Test;
 import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
+import org.junit.runners.model.Statement;
 import org.junit.runners.model.TestClass;
 
 import java.lang.annotation.Annotation;
@@ -74,6 +78,8 @@ import java.util.stream.Stream;
  * A JUnit test runner for use with Bedstead.
  */
 public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
+
+    private static final String LOG_TAG = "BedsteadJUnit4";
 
     private static final String BEDSTEAD_PACKAGE_NAME = "com.android.bedstead";
 
@@ -757,5 +763,28 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
     @Override
     protected void validateTestMethods(List<Throwable> errors) {
         // We do allow arguments - they will fail validation later on if not properly annotated
+    }
+
+    @Override
+    protected void runChild(final FrameworkMethod method, RunNotifier notifier) {
+        Description description = describeChild(method);
+        if (isIgnored(method)) {
+            notifier.fireTestIgnored(description);
+        } else {
+            Statement statement = new Statement() {
+                @Override
+                public void evaluate() throws Throwable {
+                    while (true) {
+                        try {
+                            methodBlock(method).evaluate();
+                            return;
+                        } catch (RestartTestException e) {
+                            System.out.println(LOG_TAG + ": Restarting test(" + e.toString() + ")");
+                        }
+                    }
+                }
+            };
+            runLeaf(statement, description, notifier);
+        }
     }
 }

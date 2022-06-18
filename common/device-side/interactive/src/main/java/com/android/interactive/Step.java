@@ -20,6 +20,7 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.SYSTEM_ALE
 import static com.android.bedstead.nene.permissions.CommonPermissions.SYSTEM_APPLICATION_OVERLAY;
 
 import android.graphics.PixelFormat;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,6 +33,8 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.utils.Poll;
 
+import org.junit.Assert;
+
 import java.time.Duration;
 
 /**
@@ -39,11 +42,16 @@ import java.time.Duration;
  */
 public abstract class Step {
 
+    private static final String LOG_TAG = "Interactive.Step";
+
     // We timeout 10 seconds before the infra would timeout
     private static final Duration MAX_STEP_DURATION =
             Duration.ofMillis(
                     Long.parseLong(TestApis.instrumentation().arguments().getString(
                             "timeout_msec", "600000")) - 10000);
+
+    private static final Automator sAutomator =
+            new Automator("/sdcard/InteractiveAutomation.apk");
 
     private View mInstructionView;
 
@@ -67,39 +75,63 @@ public abstract class Step {
             throw new AssertionError("Error preparing step", e);
         }
 
-        // TODO: Try to run the automatic resolution
-//        try {
-//            Log.i(LOG_TAG, "Attempting automatic resolution of " + stepClass);
-////            step.automate();
-//
-//            // If it reaches this point then it has passed
-//            Log.i(LOG_TAG, "Succeeded with automatic resolution of " + stepClass);
-//            return;
-//        } catch (Throwable t) {
-//            Log.e(LOG_TAG, "Error attempting automation of " + stepClass
-//                    + ". Now attempting manual execution", t);
-//        }
+        if (TestApis.instrumentation().arguments().getBoolean("ENABLE_AUTOMATION", true)) {
+            if (sAutomator.canAutomate(step)) {
+                try {
+                    sAutomator.automate(step);
 
-        // If it fails, then we record it and try manual
-        step.interact();
+                    // If it reaches this point then it has passed
+                    Log.i(LOG_TAG, "Succeeded with automatic resolution of " + stepClass);
+                    return;
+                } catch (Throwable t) {
+                    Log.e(LOG_TAG, "Error attempting automation of " + stepClass, t);
+                    // TODO: If an automation fails we might be in a bad state so should re-run the
+                    // entire test fully manually - we need to store the fact that the current test
+                    // is manual only - and reset that at the end of the test - and throw a
+                    // RestartTestException
+                }
+            } else {
+                Log.i(LOG_TAG, "No automation for " + stepClass);
+            }
+        }
 
-        // Wait until we've reached a valid ending point
-        Step finalStep = step;
-        Poll.forValue("passed", step::hasPassed)
-                .toBeEqualTo(true)
-                .terminalValue((b) -> finalStep.hasFailed())
-                .errorOnFail()
-                .timeout(MAX_STEP_DURATION)
-                .await();
+        if (TestApis.instrumentation().arguments().getBoolean(
+                "ENABLE_MANUAL", false)) {
+            step.interact();
+
+            // Wait until we've reached a valid ending point
+            Step finalStep = step;
+            try {
+                Poll.forValue("passed", step::hasPassed)
+                        .toBeEqualTo(true)
+                        .terminalValue((b) -> finalStep.hasFailed())
+                        .errorOnFail()
+                        .timeout(MAX_STEP_DURATION)
+                        .await();
+
+                // After the test has been marked passed, we validate ourselves
+                Poll.forValue("validated", step::validate)
+                        .toBeEqualTo(true)
+                        .errorOnFail()
+                        .timeout(MAX_STEP_DURATION)
+                        .await();
+            } finally {
+                step.close();
+            }
+        } else {
+            Assert.fail("Could not automatically or manually pass test");
+        }
     }
 
 
     protected final void pass() {
         mPassed = true;
+        close();
     }
 
     protected final void fail(String reason) {
         mFailed = true; // TODO: Use reason
+        close();
     }
 
     /**
@@ -168,8 +200,32 @@ public abstract class Step {
         });
     }
 
+    private void close() {
+        if (mInstructionView != null) {
+            TestApis.context().instrumentationContext().getMainExecutor().execute(() -> {
+                try {
+                    sWindowManager.removeViewImmediate(mInstructionView);
+                    mInstructionView = null;
+                } catch (IllegalArgumentException e) {
+                    // This can happen if the view is no longer attached
+                    Log.i(LOG_TAG, "Error removing instruction view", e);
+                }
+            });
+        }
+    }
+
     /**
      * Executes the manual step.
      */
     public abstract void interact();
+
+    /**
+     * Validate that the step has been complete.
+     *
+     * <p>This implementation must apply to all Android devices.
+     */
+    public boolean validate() {
+        // By default there is no validation
+        return true;
+    }
 }

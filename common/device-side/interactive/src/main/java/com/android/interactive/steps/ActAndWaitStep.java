@@ -36,12 +36,17 @@ public class ActAndWaitStep extends Step {
 
     @Override
     public boolean hasPassed() {
-        return mChecker.get();
+        return validate();
     }
 
     @Override
     public void interact() {
         show(mInstruction);
         addFailButton();
+    }
+
+    @Override
+    public boolean validate() {
+        return mChecker.get();
     }
 }

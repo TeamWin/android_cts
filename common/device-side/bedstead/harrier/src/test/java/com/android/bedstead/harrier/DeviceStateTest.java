@@ -50,11 +50,14 @@ import android.content.PermissionChecker;
 import android.os.Build;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
+import android.provider.Settings;
 
 import com.android.bedstead.harrier.annotations.EnsureBluetoothDisabled;
 import com.android.bedstead.harrier.annotations.EnsureBluetoothEnabled;
+import com.android.bedstead.harrier.annotations.EnsureDemoMode;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveAppOp;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
+import com.android.bedstead.harrier.annotations.EnsureGlobalSettingSet;
 import com.android.bedstead.harrier.annotations.EnsureHasAppOp;
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoTvProfile;
@@ -63,6 +66,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.EnsureNotDemoMode;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
@@ -1026,5 +1030,26 @@ public class DeviceStateTest {
         assertThat(((ProfileOwner) sDeviceState.profileOwner(
                 sDeviceState.workProfile()).devicePolicyController()).isOrganizationOwned())
                 .isTrue();
+    }
+
+    @EnsureGlobalSettingSet(key = "testGlobalSetting", value = "testValue")
+    @Test
+    public void ensureGlobalSettingSetAnnotation_globalSettingIsSet() {
+        assertThat(TestApis.settings().global().getString("testGlobalSetting"))
+                .isEqualTo("testValue");
+    }
+
+    @EnsureDemoMode
+    @Test
+    public void ensureDemoModeAnnotation_deviceIsInDemoMode() {
+        assertThat(TestApis.settings().global().getInt(Settings.Global.DEVICE_DEMO_MODE))
+                .isEqualTo(1);
+    }
+
+    @EnsureNotDemoMode
+    @Test
+    public void ensureNotDemoModeAnnotation_deviceIsNotInDemoMode() {
+        assertThat(TestApis.settings().global().getInt(Settings.Global.DEVICE_DEMO_MODE))
+                .isEqualTo(0);
     }
 }

@@ -41,6 +41,7 @@ import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.VGA;
 import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.YUV;
 
 import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.assertFalse;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
@@ -373,6 +374,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     public void testMandatoryPreviewStabilizationOutputCombinations() throws Exception {
         for (String id : mCameraIdsUnderTest) {
             StaticMetadata info = mAllStaticInfo.get(id);
+            boolean previewStabilizationSupported = isPreviewStabilizationSupported(info);
             CameraCharacteristics chars = info.getCharacteristics();
             CameraCharacteristics.Key<MandatoryStreamCombination []> ck =
                     CameraCharacteristics
@@ -380,12 +382,15 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             MandatoryStreamCombination[] combinations = chars.get(ck);
 
             if (combinations == null) {
-                assertNull(combinations);
+                assertFalse("Preview stabilization supported by camera id: " + id
+                        + " but null mandatory streams", previewStabilizationSupported);
                 Log.i(TAG, "Camera id " + id + " doesn't support preview stabilization, skip test");
                 continue;
+            } else {
+                assertTrue("Preview stabilization not supported by camera id: " + id
+                        + " but non-null mandatory streams", previewStabilizationSupported);
             }
 
-            assertNotNull(combinations);
             openDevice(id);
 
             try {
@@ -403,6 +408,19 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 closeDevice(id);
             }
         }
+    }
+
+    private boolean isPreviewStabilizationSupported(StaticMetadata info) {
+        int[] availableVideoStabilizationModes = info.getAvailableVideoStabilizationModesChecked();
+        if (availableVideoStabilizationModes == null) {
+            return false;
+        }
+        for (int mode : availableVideoStabilizationModes) {
+            if (mode == CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void testMandatoryOutputCombinationWithPresetKeys(String cameraId,

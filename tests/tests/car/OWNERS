@@ -1,7 +1,2 @@
 # Bug component: 526266
-ankitarora@google.com
-felipeal@google.com
-gurunagarajan@google.com
-keunyoung@google.com
-nicksauer@google.com
-sgurun@google.com
+include platform/packages/services/Car:/OWNERS

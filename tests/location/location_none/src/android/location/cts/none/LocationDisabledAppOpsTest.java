@@ -19,6 +19,7 @@ package android.location.cts.none;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.OPSTR_FINE_LOCATION;
 
+import static com.android.compatibility.common.util.SystemUtil.eventually;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import android.app.ActivityManager;
@@ -26,7 +27,6 @@ import android.app.AppOpsManager;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.PackageTagsList;
 import android.os.Process;
@@ -70,46 +70,50 @@ public class LocationDisabledAppOpsTest {
             runWithShellPermissionIdentity(() -> {
                 mLm.setLocationEnabledForUser(false, user);
             });
+            List<PackageInfo> pkgs =
+                    mContext.getPackageManager().getInstalledPackagesAsUser(
+                            0, user.getIdentifier());
 
-            List<String> bypassedNoteOps = new ArrayList<>();
-            List<String> bypassedCheckOps = new ArrayList<>();
-            for (PackageInfo pi : mContext.getPackageManager().getInstalledPackagesAsUser(
-                            0, user.getIdentifier())) {
-                ApplicationInfo ai = pi.applicationInfo;
-                if (ai.uid != Process.SYSTEM_UID) {
-                    final int[] mode = {MODE_ALLOWED};
-                    runWithShellPermissionIdentity(() -> {
-                        mode[0] = mAom.noteOpNoThrow(
-                                OPSTR_FINE_LOCATION, ai.uid, ai.packageName);
-                    });
-                    if (mode[0] == MODE_ALLOWED && !ignoreList.containsAll(pi.packageName)) {
-                        bypassedNoteOps.add(pi.packageName);
+            eventually(() -> {
+                List<String> bypassedNoteOps = new ArrayList<>();
+                List<String> bypassedCheckOps = new ArrayList<>();
+                for (PackageInfo pi : pkgs) {
+                    ApplicationInfo ai = pi.applicationInfo;
+                    if (ai.uid != Process.SYSTEM_UID) {
+                        final int[] mode = {MODE_ALLOWED};
+                        runWithShellPermissionIdentity(() -> {
+                            mode[0] = mAom.noteOpNoThrow(
+                                    OPSTR_FINE_LOCATION, ai.uid, ai.packageName);
+                        });
+                        if (mode[0] == MODE_ALLOWED && !ignoreList.containsAll(pi.packageName)) {
+                            bypassedNoteOps.add(pi.packageName);
+                        }
+
+
+                        mode[0] = MODE_ALLOWED;
+                        runWithShellPermissionIdentity(() -> {
+                            mode[0] = mAom
+                                    .checkOpNoThrow(OPSTR_FINE_LOCATION, ai.uid, ai.packageName);
+                        });
+                        if (mode[0] == MODE_ALLOWED && !ignoreList.includes(pi.packageName)) {
+                            bypassedCheckOps.add(pi.packageName);
+                        }
+
                     }
-
-
-                    mode[0] = MODE_ALLOWED;
-                    runWithShellPermissionIdentity(() -> {
-                        mode[0] = mAom.checkOpNoThrow(OPSTR_FINE_LOCATION, ai.uid, ai.packageName);
-                    });
-                    if (mode[0] == MODE_ALLOWED && !ignoreList.includes(pi.packageName)) {
-                        bypassedCheckOps.add(pi.packageName);
-                    }
-
                 }
-            }
 
-            String msg = "";
-            if (!bypassedNoteOps.isEmpty()) {
-                msg += "Apps which still have access from noteOp " + bypassedNoteOps;
-            }
-            if (!bypassedCheckOps.isEmpty()) {
-                msg += (msg.isEmpty() ? "" : "\n\n")
-                        +  "Apps which still have access from checkOp " + bypassedCheckOps;
-            }
-            if(!msg.isEmpty()) {
-                Assert.fail(msg);
-            }
-
+                String msg = "";
+                if (!bypassedNoteOps.isEmpty()) {
+                    msg += "Apps which still have access from noteOp " + bypassedNoteOps;
+                }
+                if (!bypassedCheckOps.isEmpty()) {
+                    msg += (msg.isEmpty() ? "" : "\n\n")
+                            +  "Apps which still have access from checkOp " + bypassedCheckOps;
+                }
+                if (!msg.isEmpty()) {
+                    Assert.fail(msg);
+                }
+            });
         } finally {
             runWithShellPermissionIdentity(() -> {
                 mLm.setLocationEnabledForUser(wasEnabled, user);

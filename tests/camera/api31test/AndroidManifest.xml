@@ -24,7 +24,10 @@
     <application android:largeHeap="true">
         <uses-library android:name="android.test.runner" />
         <activity android:name="android.camera.cts.api31test.SPerfClassTestActivity"
-            android:label="SPerfClassTestActivity">
+            android:label="SPerfClassTestActivity"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:keepScreenOn="true">
         </activity>
     </application>
 
