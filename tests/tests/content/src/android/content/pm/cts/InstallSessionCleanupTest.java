@@ -103,7 +103,8 @@ public class InstallSessionCleanupTest {
         final List<PackageInstaller.SessionInfo> allSessions = mPackageInstaller.getAllSessions();
         List<Integer> result = new ArrayList<>();
         for (PackageInstaller.SessionInfo sessionInfo : allSessions) {
-            if (sessionInfo.installerPackageName.equals(installerPackageName)) {
+            if (sessionInfo.installerPackageName != null
+                        && sessionInfo.installerPackageName.equals(installerPackageName)) {
                 result.add(sessionInfo.sessionId);
             }
         }
