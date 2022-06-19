@@ -427,10 +427,6 @@ public final class MockIme extends InputMethodService {
                             return e;
                         }
                     }
-                    case "setEnableOnBackInvokedCallback":
-                        boolean isEnabled = command.getExtras().getBoolean("isEnabled");
-                        getApplicationInfo().setEnableOnBackInvokedCallback(isEnabled);
-                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     case "getDisplayId":
                         return getDisplay().getDisplayId();
                     case "verifyLayoutInflaterContext":
@@ -686,6 +682,10 @@ public final class MockIme extends InputMethodService {
                             .penaltyListener(Runnable::run,
                                     v -> getTracer().onStrictModeViolated(() -> { }))
                             .build());
+        }
+
+        if (mSettings.isOnBackCallbackEnabled()) {
+            getApplicationInfo().setEnableOnBackInvokedCallback(true);
         }
 
         getTracer().onCreate(() -> {
