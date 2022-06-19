@@ -187,7 +187,8 @@ public class KernelConfigTest extends BaseHostJUnit4Test {
 
         if (mitigationInfoMeltdown != null && mitigationInfoSpectreV2 != null &&
             !mitigationInfoMeltdown.contains("Vulnerable") &&
-            !mitigationInfoSpectreV2.contains("Vulnerable"))
+            (!mitigationInfoSpectreV2.contains("Vulnerable") ||
+              mitigationInfoSpectreV2.equals("Vulnerable: Unprivileged eBPF enabled\n")))
                 return "VULN_SAFE";
 
         for (String nodeInfo : pathList) {
