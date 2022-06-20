@@ -61,6 +61,11 @@ public class ImeSettings {
     private static final String STRICT_MODE_ENABLED = "StrictModeEnabled";
     private static final String VERIFY_CONTEXT_APIS_IN_ON_CREATE = "VerifyContextApisInOnCreate";
 
+    /**
+     * Simulate the manifest flag enableOnBackInvokedCallback being true for the IME.
+     */
+    private static final String ON_BACK_CALLBACK_ENABLED = "onBackCallbackEnabled";
+
     @NonNull
     private final PersistableBundle mBundle;
 
@@ -180,6 +185,10 @@ public class ImeSettings {
 
     public boolean isVerifyContextApisInOnCreate() {
         return mBundle.getBoolean(VERIFY_CONTEXT_APIS_IN_ON_CREATE, false);
+    }
+
+    public boolean isOnBackCallbackEnabled() {
+        return mBundle.getBoolean(ON_BACK_CALLBACK_ENABLED, false);
     }
 
     static Bundle serializeToBundle(@NonNull String eventCallbackActionName,
@@ -361,6 +370,16 @@ public class ImeSettings {
          */
         public Builder setVerifyUiContextApisInOnCreate(boolean enabled) {
             mBundle.putBoolean(VERIFY_CONTEXT_APIS_IN_ON_CREATE, enabled);
+            return this;
+        }
+
+        /**
+         * Sets whether the IME's
+         * {@link android.content.pm.ApplicationInfo#isOnBackInvokedCallbackEnabled()}
+         * should be set to {@code true}.
+         */
+        public Builder setOnBackCallbackEnabled(boolean enabled) {
+            mBundle.putBoolean(ON_BACK_CALLBACK_ENABLED, enabled);
             return this;
         }
     }
