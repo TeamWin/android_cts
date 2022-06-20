@@ -1489,6 +1489,7 @@ public class KeyAttestationTest {
     public static void verifyCertificateChain(Certificate[] certChain, boolean expectStrongBox)
             throws GeneralSecurityException {
         assertNotNull(certChain);
+        boolean strongBoxSubjectFound = false;
         for (int i = 1; i < certChain.length; ++i) {
             try {
                 PublicKey pubKey = certChain[i].getPublicKey();
@@ -1515,19 +1516,19 @@ public class KeyAttestationTest {
                 if (i == 1) {
                     // First cert should have subject "CN=Android Keystore Key".
                     assertEquals(signedCertSubject, new X500Name("CN=Android Keystore Key"));
-                } else {
-                    // Only strongbox implementations should have strongbox in the subject line
-                    assertEquals(expectStrongBox, signedCertSubject.toString()
-                                                                   .toLowerCase()
-                                                                   .contains("strongbox"));
+                } else if (signedCertSubject.toString().toLowerCase().contains("strongbox")) {
+                    strongBoxSubjectFound = true;
                 }
             } catch (InvalidKeyException | CertificateException | NoSuchAlgorithmException
                     | NoSuchProviderException | SignatureException e) {
                 throw new GeneralSecurityException("Using StrongBox: " + expectStrongBox + "\n"
-                        + "Failed to verify certificate "
-                        + certChain[i - 1] + " with public key " + certChain[i].getPublicKey(), e);
+                                + "Failed to verify certificate " + certChain[i - 1]
+                                + " with public key " + certChain[i].getPublicKey(),
+                        e);
             }
         }
+        // At least one intermediate in a StrongBox chain must have "strongbox" in the subject.
+        assertEquals(expectStrongBox, strongBoxSubjectFound);
     }
 
     private void testDeviceIdAttestationFailure(int idType,
