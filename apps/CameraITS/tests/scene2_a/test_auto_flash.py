@@ -29,8 +29,8 @@ AE_MODES = {0: 'OFF', 1: 'ON', 2: 'ON_AUTO_FLASH', 3: 'ON_ALWAYS_FLASH',
             4: 'ON_AUTO_FLASH_REDEYE', 5: 'ON_EXTERNAL_FLASH'}
 AE_STATES = {0: 'INACTIVE', 1: 'SEARCHING', 2: 'CONVERGED', 3: 'LOCKED',
              4: 'FLASH_REQUIRED', 5: 'PRECAPTURE'}
-_GRAD_DELTA_ATOL = 100  # gradiant for tablets as screen aborbs energy
-_MEAN_DELTA_ATOL = 100  # mean used for reflective charts
+_GRAD_DELTA_ATOL = 50  # gradiant for tablets as screen aborbs energy
+_MEAN_DELTA_ATOL = 50  # mean used for reflective charts
 _NUM_FRAMES = 8
 _PATCH_H = 0.25  # center 25%
 _PATCH_W = 0.25
