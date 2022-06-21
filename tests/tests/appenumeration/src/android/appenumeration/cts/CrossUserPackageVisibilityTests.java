@@ -518,6 +518,33 @@ public class CrossUserPackageVisibilityTests {
         assertThat(mPackageManager.queryInstrumentation(TARGET_STUB, 0 /* flags */)).isEmpty();
     }
 
+    @Test
+    public void testHasSigningCertificate_cannotDetectStubPkg() throws Exception {
+        installPackage(TARGET_STUB_APK);
+        final PackageInfo stubInfo =
+                mPackageManager.getPackageInfo(TARGET_STUB,
+                        PackageInfoFlags.of(PackageManager.GET_SIGNING_CERTIFICATES));
+
+        uninstallPackageForUser(TARGET_STUB, mCurrentUser);
+
+        assertThat(mPackageManager.hasSigningCertificate(
+                TARGET_STUB,
+                stubInfo.signingInfo.getApkContentsSigners()[0].toByteArray(),
+                PackageManager.CERT_INPUT_RAW_X509)).isFalse();
+    }
+
+    @Test
+    public void testCanPackageQuery_cannotDetectStubPkg() throws Exception {
+        assertThrows(PackageManager.NameNotFoundException.class,
+                () -> mPackageManager.canPackageQuery(TARGET_STUB, TARGET_STUB_SHARED_USER));
+
+        installPackageForUser(TARGET_STUB_APK, mOtherUser);
+        installPackageForUser(TARGET_STUB_SHARED_USER_APK, mOtherUser);
+
+        assertThrows(PackageManager.NameNotFoundException.class,
+                () -> mPackageManager.canPackageQuery(TARGET_STUB, TARGET_STUB_SHARED_USER));
+    }
+
     private static void installPackage(String apkPath) {
         installPackageForUser(apkPath, null);
     }
