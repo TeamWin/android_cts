@@ -174,20 +174,6 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     }
 
     @Test
-    public void testDismissKeyguardIfInsecure_notAllowed() {
-        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        lockScreenSession.setLockCredential().gotoKeyguard();
-
-        mWmState.assertKeyguardShowingAndNotOccluded();
-        launchActivityWithDismissKeyguardIfInsecure(SHOW_WHEN_LOCKED_ACTIVITY);
-        mWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
-        mWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
-
-        // Make sure we stay on Keyguard.
-        mWmState.assertKeyguardShowingAndOccluded();
-    }
-
-    @Test
     public void testDismissKeyguardActivity_method() {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         lockScreenSession.setLockCredential();
