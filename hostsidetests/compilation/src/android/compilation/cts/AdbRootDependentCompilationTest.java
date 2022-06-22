@@ -266,6 +266,11 @@ public class AdbRootDependentCompilationTest extends BaseHostJUnit4Test {
                 "android.compilation.cts.appusedbyotherapp.MyActivity.method1()",
                 "android.compilation.cts.appusedbyotherapp.MyActivity.method2()");
 
+        executeCompile(APP_USED_BY_OTHER_APP_PACKAGE, "-m", "verify");
+        // The app should not be re-compiled with a worse compiler filter even if the odex file can
+        // be public after then.
+        assertThat(getCompilerFilter(odexFilePath)).isEqualTo("speed-profile");
+
         DeviceTestRunOptions options = new DeviceTestRunOptions(APP_USING_OTHER_APP_PACKAGE);
         options.setTestClassName(APP_USING_OTHER_APP_PACKAGE + ".UsingOtherAppTest");
         options.setTestMethodName("useOtherApp");
