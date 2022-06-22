@@ -26,7 +26,7 @@ android_library {
         "RemoteFrameworkClasses"
     ],
     manifest: "src/testapps/main/AndroidManifest.xml",
-    min_sdk_version: "28",
+    min_sdk_version: "29",
     plugins: ["ConnectedAppsSDK_Processor", "TestApp_Processor"],
 }
 
@@ -48,7 +48,7 @@ android_library {
         "TestApp_JavaProtos"
     ],
     manifest: "src/library/main/AndroidManifest.xml",
-    min_sdk_version: "28",
+    min_sdk_version: "29",
     resource_zips: [":TestApp_Apps"],
     plugins: ["ConnectedAppsSDK_Processor", "TestApp_Processor"],
 }
@@ -72,7 +72,7 @@ android_test {
         "testng" // for assertThrows
     ],
     manifest: "src/test/AndroidManifest.xml",
-    min_sdk_version: "28"
+    min_sdk_version: "29"
 }
 
 python_binary_host {
@@ -122,7 +122,7 @@ android_test_helper_app {
         "TestApp_TestApps"
     ],
     manifest: "manifests/EmptyTestAppManifest.xml",
-    min_sdk_version: "28"
+    min_sdk_version: "29"
 }
 
 android_test_helper_app {
@@ -132,7 +132,7 @@ android_test_helper_app {
     ],
     manifest: "manifests/NotEmptyTestAppManifest.xml",
     additional_manifests: ["CommonManifest.xml"],
-    min_sdk_version: "28"
+    min_sdk_version: "29"
 }
 
 android_test_helper_app {
@@ -143,7 +143,7 @@ android_test_helper_app {
     ],
     manifest: "manifests/DeviceAdminManifest.xml",
     additional_manifests: ["CommonManifest.xml"],
-    min_sdk_version: "28"
+    min_sdk_version: "29"
 }
 
 android_test_helper_app {
@@ -153,7 +153,7 @@ android_test_helper_app {
     ],
     manifest: "manifests/LockTaskAppManifest.xml",
     additional_manifests: ["CommonManifest.xml"],
-    min_sdk_version: "28"
+    min_sdk_version: "29"
 }
 
 android_test_helper_app {
@@ -163,7 +163,7 @@ android_test_helper_app {
     ],
     manifest: "manifests/DelegateManifest.xml",
     additional_manifests: ["CommonManifest.xml"],
-    min_sdk_version: "28"
+    min_sdk_version: "29"
 }
 
 android_test_helper_app {
@@ -174,7 +174,7 @@ android_test_helper_app {
     ],
     manifest: "manifests/RemoteDPCManifest.xml",
     additional_manifests: ["CommonManifest.xml"],
-    min_sdk_version: "28"
+    min_sdk_version: "29"
 }
 
 android_test_helper_app {
@@ -184,7 +184,7 @@ android_test_helper_app {
     ],
     manifest: "manifests/SmsAppManifest.xml",
     additional_manifests: ["CommonManifest.xml"],
-    min_sdk_version: "28"
+    min_sdk_version: "29"
 }
 
 android_test_helper_app {
@@ -195,7 +195,7 @@ android_test_helper_app {
     resource_dirs: ["src/testapps/main/res/accountmanagement"],
     manifest: "manifests/AccountManagementManifest.xml",
     additional_manifests: ["CommonManifest.xml"],
-    min_sdk_version: "28"
+    min_sdk_version: "29"
 }
 
 android_test_helper_app {
@@ -205,7 +205,7 @@ android_test_helper_app {
     ],
     manifest: "manifests/RoleHolderAppManifest.xml",
     additional_manifests: ["CommonManifest.xml"],
-    min_sdk_version: "28"
+    min_sdk_version: "29"
 }
 
 java_library {

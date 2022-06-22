@@ -810,8 +810,6 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "verifySignatures_withRotation_succeeds");
     }
 
-    // TODO(b/235407278): fix the prebuilts used for this test and enable it again
-    /*
     @CddTest(requirement="4/C-0-9")
     public void testInstallV41WrongBlockId() throws Exception {
         // V4 is only enabled on devices with Incremental feature
@@ -862,7 +860,6 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallV4FailsWithError("CtsSignatureQueryService_v2-tgt-33-wrongDigest.apk",
                 "APK digest in V4 signature does not match V2/V3");
     }
-    */
 
     public void testInstallV3KeyRotationSigPerm() throws Exception {
         // tests that a v3 signed APK can still get a signature permission from an app with its

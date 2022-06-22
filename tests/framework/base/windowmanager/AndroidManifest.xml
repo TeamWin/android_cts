@@ -73,6 +73,14 @@
              android:process=":SecondProcess"
              android:exported="true"/>
 
+        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$LaunchFromHomeActivity"
+                android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
         <provider android:name="android.server.wm.lifecycle.EventLog"
              android:authorities="android.server.wm.lifecycle.logprovider"
              android:exported="true"/>
@@ -118,16 +126,6 @@
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$LaunchForwardResultActivity"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$TrampolineActivity"/>
-
-        <activity android:name="android.server.wm.AspectRatioTests$NonResizeablePortraitActivity"
-                  android:resizeableActivity="false"
-                  android:screenOrientation="portrait"
-                  android:exported="true"/>
-
-        <activity android:name="android.server.wm.AspectRatioTests$NonResizeableLandscapeActivity"
-                  android:resizeableActivity="false"
-                  android:screenOrientation="landscape"
-                  android:exported="true"/>
 
         <activity android:name="android.server.wm.MultiDisplayActivityLaunchTests$ImmediateLaunchTestActivity"
              android:allowEmbedded="true"/>

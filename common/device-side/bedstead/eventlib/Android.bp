@@ -14,7 +14,7 @@ android_library {
         "Queryable"
     ],
     manifest: "src/main/AndroidManifest.xml",
-    min_sdk_version: "27"
+    min_sdk_version: "29"
 }
 
 android_test {
@@ -38,5 +38,5 @@ android_test {
     resource_dirs: ["src/test/res"],
     data: [":EventLibTestApp"],
     manifest: "src/test/AndroidManifest.xml",
-    min_sdk_version: "27"
+    min_sdk_version: "29"
 }

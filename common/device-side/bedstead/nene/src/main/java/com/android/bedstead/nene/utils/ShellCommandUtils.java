@@ -209,6 +209,7 @@ public final class ShellCommandUtils {
         return !output.toUpperCase().startsWith("ERROR");
     }
 
+    @SuppressWarnings("NewApi")
     private static String executeCommandPreS(
             String command, boolean allowEmptyOutput, byte[] stdIn) throws AdbException {
         ParcelFileDescriptor[] fds = uiAutomation().executeShellCommandRw(command);

@@ -32,7 +32,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 import android.app.Activity;
@@ -40,7 +39,6 @@ import android.compat.testing.PlatformCompatChangeRule;
 import android.content.ComponentName;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 import android.provider.DeviceConfig;
@@ -357,9 +355,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO})
     public void testOverrideMinAspectRatioMissingSpecificOverride() {
-        runMinAspectRatioTest(
-                NON_RESIZEABLE_PORTRAIT_ACTIVITY,
-                /* expected= */ getDefaultMinAspectRatioForUnresizableApps());
+        runMinAspectRatioTest(NON_RESIZEABLE_PORTRAIT_ACTIVITY, /* expected= */ 0);
     }
 
     /**
@@ -369,9 +365,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
     public void testOverrideMinAspectRatioMissingGeneralOverride() {
-        runMinAspectRatioTest(
-                NON_RESIZEABLE_PORTRAIT_ACTIVITY,
-                /* expected= */ getDefaultMinAspectRatioForUnresizableApps());
+        runMinAspectRatioTest(NON_RESIZEABLE_PORTRAIT_ACTIVITY, /* expected= */ 0);
     }
 
     /**
@@ -382,10 +376,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO,
             ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
     public void testOverrideMinAspectRatioForLandscapeActivity() {
-        float expectedAspectRatio = Math.min(
-                    OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE,
-                    getDefaultMinAspectRatioForUnresizableApps());
-        runMinAspectRatioTest(NON_RESIZEABLE_LANDSCAPE_ACTIVITY, expectedAspectRatio);
+        runMinAspectRatioTest(NON_RESIZEABLE_LANDSCAPE_ACTIVITY, /* expected= */ 0);
     }
 
     /**
@@ -809,18 +800,6 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         } catch (PackageManager.NameNotFoundException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private float getDefaultMinAspectRatioForUnresizableApps() {
-        final Resources resources = mContext.getResources();
-        float aspectRatio = 0.0f;
-        try {
-            aspectRatio = resources.getFloat(resources.getIdentifier(
-                    "config_letterboxDefaultMinAspectRatioForUnresizableApps", "dimen", "android"));
-        } catch (Resources.NotFoundException e) {
-            fail("Device must define config_letterboxDefaultMinAspectRatioForUnresizableApps");
-        }
-        return aspectRatio;
     }
 
     private static ComponentName component(Class<? extends Activity> activity) {

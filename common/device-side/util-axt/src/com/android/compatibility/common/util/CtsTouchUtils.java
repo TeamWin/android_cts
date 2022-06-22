@@ -445,10 +445,11 @@ public final class CtsTouchUtils {
         final int dragAmountY = dragEndY - dragStartY;
         final int sleepTime = dragDurationMs / moveEventCount;
 
-        // sleep for a bit to emulate the overall drag gesture.
         long prevEventTime = downTime;
-        SystemClock.sleep(sleepTime);
+
         for (int i = 0; i < moveEventCount; i++) {
+            // sleep for a bit to emulate the overall drag gesture.
+            SystemClock.sleep(sleepTime);
             // Note that the first MOVE event is generated "away" from the coordinates
             // of the start / DOWN event, and the last MOVE event is generated
             // at the same coordinates as the subsequent UP event.
@@ -506,9 +507,6 @@ public final class CtsTouchUtils {
             }
             eventMove.recycle();
             prevEventTime = eventTime;
-
-            // sleep for a bit to emulate the overall drag gesture.
-            SystemClock.sleep(sleepTime);
         }
     }
 
