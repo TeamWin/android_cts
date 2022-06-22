@@ -27,11 +27,13 @@ import static android.server.wm.app30.Components.SDK_30_TEST_ACTIVITY;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Binder;
@@ -39,6 +41,7 @@ import android.os.IBinder;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.TaskFragmentOrganizerTestBase.BasicTaskFragmentOrganizer;
 import android.server.wm.WindowContextTests.TestActivity;
+import android.server.wm.WindowManagerState.Task;
 import android.window.TaskAppearedInfo;
 import android.window.TaskFragmentCreationParams;
 import android.window.TaskFragmentInfo;
@@ -208,6 +211,9 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
 
         assertThat(mTaskFragmentOrganizer.getThrowable()).isInstanceOf(SecurityException.class);
         assertThat(mTaskFragmentOrganizer.getErrorCallbackToken()).isEqualTo(errorCallbackToken);
+
+        // Activity must be launched on a new task instead.
+        waitAndAssertActivityLaunchOnTask(LAUNCHING_ACTIVITY);
     }
 
     /**
@@ -233,9 +239,20 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
         mTaskFragmentOrganizer.waitForTaskFragmentError();
         assertThat(mTaskFragmentOrganizer.getThrowable()).isInstanceOf(SecurityException.class);
 
-        // Making sure no activity launched
+        // Making sure activity is not launched on the TaskFragment
         TaskFragmentInfo info = mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken);
         assertEmptyTaskFragment(info, taskFragToken);
+
+        // Activity must be launched on a new task instead.
+        waitAndAssertActivityLaunchOnTask(SDK_30_TEST_ACTIVITY);
+    }
+
+    private void waitAndAssertActivityLaunchOnTask(ComponentName activityName) {
+        waitAndAssertResumedActivity(activityName, "Activity must be resumed.");
+
+        Task task = mWmState.getTaskByActivity(activityName);
+        assertWithMessage("Launching activity must be started on Task")
+                .that(task.getActivities()).contains(mWmState.getActivity(activityName));
     }
 
     /**
