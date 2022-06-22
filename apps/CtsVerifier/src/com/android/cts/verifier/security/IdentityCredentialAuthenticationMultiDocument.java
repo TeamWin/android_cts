@@ -18,6 +18,8 @@ package com.android.cts.verifier.security;
 
 import android.Manifest;
 import android.app.KeyguardManager;
+import android.content.Context;
+import android.content.pm.FeatureInfo;
 import android.content.pm.PackageManager;
 import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricManager.Authenticators;
@@ -48,6 +50,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -59,6 +62,8 @@ public class IdentityCredentialAuthenticationMultiDocument extends PassFailButto
 
     private static final int BIOMETRIC_REQUEST_PERMISSION_CODE = 0;
 
+    private static final int PRESENTATION_SESSION_FEATURE_VERSION_NEEDED = 202201;
+
     private BiometricManager mBiometricManager;
     private KeyguardManager mKeyguardManager;
 
@@ -68,6 +73,31 @@ public class IdentityCredentialAuthenticationMultiDocument extends PassFailButto
 
     private int getDescriptionRes() {
         return R.string.sec_identity_credential_authentication_multi_document_test_info;
+    }
+
+    // Returns 0 if Identity Credential is not implemented. Otherwise returns the feature version.
+    //
+    private static int getFeatureVersion(Context appContext) {
+        PackageManager pm = appContext.getPackageManager();
+
+        if (pm.hasSystemFeature(PackageManager.FEATURE_IDENTITY_CREDENTIAL_HARDWARE)) {
+            FeatureInfo[] infos = pm.getSystemAvailableFeatures();
+            for (int n = 0; n < infos.length; n++) {
+                FeatureInfo info = infos[n];
+                if (info.name.equals(PackageManager.FEATURE_IDENTITY_CREDENTIAL_HARDWARE)) {
+                    return info.version;
+                }
+            }
+        }
+
+        // Use of the system feature is not required since Android 12. So for Android 11
+        // return 202009 which is the feature version shipped with Android 11.
+        IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
+        if (store != null) {
+            return 202009;
+        }
+
+        return 0;
     }
 
     @Override
@@ -151,6 +181,18 @@ public class IdentityCredentialAuthenticationMultiDocument extends PassFailButto
         IdentityCredentialStore store = IdentityCredentialStore.getInstance(this);
         if (store == null) {
             showToast("No Identity Credential support, test passed.");
+            getPassButton().setEnabled(true);
+            return;
+        }
+        int featureVersion = getFeatureVersion(this);
+        Log.i(TAG, "Identity Credential featureVersion: " + featureVersion);
+        if (featureVersion < PRESENTATION_SESSION_FEATURE_VERSION_NEEDED) {
+            showToast(String.format(
+                          Locale.US,
+                          "Identity Credential version %d or later is required but "
+                          + "version %d was found. Test passed.",
+                          PRESENTATION_SESSION_FEATURE_VERSION_NEEDED,
+                          featureVersion));
             getPassButton().setEnabled(true);
             return;
         }

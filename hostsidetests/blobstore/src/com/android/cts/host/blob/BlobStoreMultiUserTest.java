@@ -15,9 +15,9 @@
  */
 package com.android.cts.host.blob;
 
-import static org.junit.Assume.assumeTrue;
-
 import static com.google.common.truth.Truth.assertThat;
+
+import static org.junit.Assume.assumeTrue;
 
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -34,6 +34,9 @@ import java.util.Map;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class BlobStoreMultiUserTest extends BaseBlobStoreHostTest {
     private static final String TEST_CLASS = TARGET_PKG + ".DataCleanupTest";
+
+    private static final String PERM_ACCESS_BLOBS_ACROSS_USERS =
+            "android.permission.ACCESS_BLOBS_ACROSS_USERS";
 
     private static int mPrimaryUserId;
     private static int mSecondaryUserId;
@@ -58,6 +61,10 @@ public class BlobStoreMultiUserTest extends BaseBlobStoreHostTest {
         // want the ACCESS_BLOBS_ACROSS_USERS permission to be granted by default.
         installPackageAsUser(TARGET_APK_ASSIST, false /* grantPermissions */, mPrimaryUserId);
         installPackageAsUser(TARGET_APK_ASSIST, false /* grantPermissions */, mSecondaryUserId);
+        // Explicitly revoke the permission, in order to deal with
+        // http://b/233710271 which was causing the permission to be pre-granted.
+        revokePermission(TARGET_PKG_ASSIST, PERM_ACCESS_BLOBS_ACROSS_USERS, mPrimaryUserId);
+        revokePermission(TARGET_PKG_ASSIST, PERM_ACCESS_BLOBS_ACROSS_USERS, mSecondaryUserId);
     }
 
     @AfterClassWithInfo

@@ -159,9 +159,11 @@ open class UiAutomationTestBase(
     }
 
     protected fun test_timeout(singleDevice: Boolean = false) {
-        setDiscoveryTimeout(1.seconds)
+        // Set discovery timeout to 2 seconds to avoid flaky that
+        // there's a chance CDM UI is disappeared before waitUntilVisible
+        // is called.
+        setDiscoveryTimeout(2.seconds)
 
-        // The discovery timeout is 1 sec, but let's give it 2.
         callback.assertInvokedByActions(2.seconds) {
             // Make sure no device will match the request
             sendRequestAndLaunchConfirmation(
