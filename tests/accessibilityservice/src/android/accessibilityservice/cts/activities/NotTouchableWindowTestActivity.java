@@ -118,7 +118,7 @@ public class NotTouchableWindowTestActivity extends AccessibilityTestActivity  {
                 | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
                 | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
         params.type = WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
-
+        params.setFitInsetsTypes(0);
         params.gravity = Gravity.TOP;
         params.setTitle(NON_TOUCHABLE_WINDOW_TITLE);
 
