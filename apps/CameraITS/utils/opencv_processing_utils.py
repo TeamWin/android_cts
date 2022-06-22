@@ -18,11 +18,9 @@ import logging
 import math
 import os
 import unittest
-
+import cv2
 import numpy
 
-
-import cv2
 import capture_request_utils
 import image_processing_utils
 
@@ -232,6 +230,8 @@ class Chart(object):
     scale_stop = self._scale_stop * s_factor
     scale_step = self._scale_step * s_factor
     self.scale = s_factor
+    logging.debug('scale start: %.3f, stop: %.3f, step: %.3f',
+                  scale_start, scale_stop, scale_step)
     max_match = []
     # check for normalized image
     if numpy.amax(scene) <= 1.0:
@@ -250,7 +250,7 @@ class Chart(object):
 
     # determine if optimization results are valid
     opt_values = [x[0] for x in max_match]
-    if 2.0 * min(opt_values) > max(opt_values):
+    if not opt_values or (2.0 * min(opt_values) > max(opt_values)):
       estring = ('Warning: unable to find chart in scene!\n'
                  'Check camera distance and self-reported '
                  'pixel pitch, focal length and hyperfocal distance.')
@@ -538,6 +538,7 @@ class Cv2ImageProcessingUtilsTests(unittest.TestCase):
   """Unit tests for this module."""
 
   def test_get_angle_identify_rotated_chessboard_angle(self):
+    """Unit test to check extracted angles from images."""
     # Array of the image files and angles containing rotated chessboards.
     test_cases = [
         ('', 0),
