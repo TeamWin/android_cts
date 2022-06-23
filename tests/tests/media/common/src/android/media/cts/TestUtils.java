@@ -25,8 +25,10 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.Assert;
@@ -149,6 +151,46 @@ public final class TestUtils {
             // Ignore the exception on devices that do not have this module
         }
         return true;
+    }
+
+    /*
+     * Report whether we are in MTS mode (vs in CTS) mode.
+     * Some tests (or parts of tests) are restricted to a particular mode.
+     */
+    public static boolean isMtsMode() {
+        Bundle bundle = InstrumentationRegistry.getArguments();
+        // null if not set
+        boolean isMTS = TextUtils.equals("true", bundle.getString("mts-media"));
+
+        return isMTS;
+    }
+
+    /*
+     * Report whether we want to test a particular code in the current test mode.
+     * CTS is pretty much "test them all".
+     * MTS should only be testing codecs that are part of the swcodec module; all of these
+     * begin with "c2.android."
+     *
+     * Used in spots throughout the test suite where we want to limit our testing to relevant
+     * codecs. This avoids false alarms that are sometimes triggered by non-compliant,
+     * non-mainline codecs.
+     *
+     * @param name    the name of a codec
+     * @return {@code} true is the codec should be tested in the current operating mode.
+     */
+    public static boolean isTestableCodecInCurrentMode(String name) {
+        if (name == null) {
+            return false;
+        }
+        if (!isMtsMode()) {
+            // CTS mode -- test everything
+            return true;
+        }
+        // MTS mode, just the codecs that live in the modules
+        if (name.startsWith("c2.android.")) {
+            return true;
+        }
+        return false;
     }
 
     private TestUtils() {
