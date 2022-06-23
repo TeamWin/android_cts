@@ -286,6 +286,8 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         }
         final SizeInfo dockedSizes = getLastReportedSizesForActivity(activityName);
         assertSizesAreSane(initialFullscreenSizes, dockedSizes);
+        final boolean orientationChanged =
+                initialFullscreenSizes.orientation != dockedSizes.orientation;
 
         separateTestJournal();
         // Restore to fullscreen.
@@ -298,10 +300,17 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         // (dock task was minimized), start the activity again to ensure the activity is at
         // foreground.
         launchActivity(activityName, WINDOWING_MODE_FULLSCREEN);
-        assertActivityLifecycle(activityName, relaunch);
-        final SizeInfo finalFullscreenSizes = getLastReportedSizesForActivity(activityName);
+        if (relaunch && !orientationChanged) {
+            // If there is no orientation changes while moving the non-resizeable activity out of
+            // the split, the Activity won't be relaunched because size changes won't cross the
+            // size config buckets. So, there won't be any lifecycle changes.
+            waitForOnMultiWindowModeChanged(activityName);
+        } else {
+            assertActivityLifecycle(activityName, relaunch);
+        }
 
-        // After activity configuration was changed twice it must report same size as original one.
+        // It must report same size as original one after split-screen dismissed.
+        final SizeInfo finalFullscreenSizes = getLastReportedSizesForActivity(activityName);
         assertSizesAreSame(initialFullscreenSizes, finalFullscreenSizes);
     }
 

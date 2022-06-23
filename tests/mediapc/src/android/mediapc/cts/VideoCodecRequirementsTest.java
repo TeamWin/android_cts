@@ -21,12 +21,14 @@ import static android.mediapc.cts.CodecTestBase.SELECT_HARDWARE;
 import static android.mediapc.cts.CodecTestBase.SELECT_VIDEO;
 import static android.mediapc.cts.CodecTestBase.getMimesOfAvailableCodecs;
 import static android.mediapc.cts.CodecTestBase.selectHardwareCodecs;
+import static org.junit.Assert.assertTrue;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.VideoCapabilities.PerformancePoint;
 import android.media.MediaFormat;
 import android.mediapc.cts.common.PerformanceClassEvaluator;
+import android.mediapc.cts.common.Utils;
 import android.util.Log;
 import androidx.test.filters.LargeTest;
 import com.android.compatibility.common.util.CddTest;
@@ -35,6 +37,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -46,6 +49,11 @@ public class VideoCodecRequirementsTest {
 
     @Rule
     public final TestName mTestName = new TestName();
+
+    @Before
+    public void isPerformanceClassCandidate() {
+        Utils.assumeDeviceMeetsPerformanceClassPreconditions();
+    }
 
     private Set<String> get4k60HwCodecSet(boolean isEncoder) throws IOException {
         Set<String> codecSet = new HashSet<>();
@@ -60,6 +68,7 @@ public class VideoCodecRequirementsTest {
                         codec.getCodecInfo().getCapabilitiesForType(codecMediaType);
                 List<PerformancePoint> pps =
                         capabilities.getVideoCapabilities().getSupportedPerformancePoints();
+                assertTrue(hwVideoCodec + " doesn't advertise performance points", pps.size() > 0);
                 for (PerformancePoint pp : pps) {
                     if (pp.covers(PP4k60)) {
                         codecSet.add(hwVideoCodec);

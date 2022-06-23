@@ -3746,6 +3746,11 @@ You should be prompted to select credentials; choose the ones you just installed
             Device Owner. Then press the button below, and check that CTSVerifier is NOT Device
             Owner anymore.
     </string>
+    <string name="device_owner_remove_device_owner_test_info_on_tv">
+            Please check in Settings &gt; Privacy &gt; Security &amp; Restrictions &gt; Device Administrators if CTSVerifier is
+            Device Owner. Then press the button below, and check that CTSVerifier is NOT Device
+            Owner anymore.
+    </string>
     <string name="remove_device_owner_button">Remove device owner</string>
     <string name="device_owner_check_device_owner_test">Check device owner</string>
     <string name="device_owner_check_profile_owner_test">Check profile owner</string>
@@ -6377,6 +6382,12 @@ Follow the instructions on the screen to measure the frequency response for the 
         bubble does NOT appear on screen. Verify that there is a notification in the notification
         shade.</string>
     <string name="bubbles_test_lowram_button">Add bubble</string>
+    <!-- Disable bubbles by config_supportsBubble -->
+    <string name="bubbles_test_disable_config_title">No bubbles on bubbles disabled device</string>
+    <string name="bubbles_test_disable_config_verify">Click the button below and verify that a
+        bubble does NOT appear on screen. Verify that there is a notification in the notification
+        shade.</string>
+    <string name="bubbles_test_disable_config_button">Add bubble</string>
     <!-- Bubbles end of test summary -->
     <string name="bubbles_test_summary_title">Test Complete</string>
     <string name="bubbles_test_summary">%1$d out of %2$d tests passed</string>

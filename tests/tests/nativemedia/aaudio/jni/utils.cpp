@@ -308,22 +308,51 @@ void AudioServerCrashMonitor::onAudioServerCrash() {
     mAudioFlinger.set(nullptr);
 }
 
-SpAIBinder AudioServerCrashMonitor::getAudioFlinger() {
-    if (mAudioFlinger.get() != nullptr) {
-        return mAudioFlinger;
-    }
+namespace {
 
+JNIEnv* getJNIEnv() {
     JavaVM* vm = GetJavaVM();
     EXPECT_NE(nullptr, vm);
     JNIEnv* env = nullptr;
     jint attach = vm->AttachCurrentThread(&env, nullptr);
     EXPECT_EQ(JNI_OK, attach);
     EXPECT_NE(nullptr, env);
-    jclass cl = env->FindClass("android/nativemedia/aaudio/AAudioTests");
-    EXPECT_NE(nullptr, cl);
-    jmethodID mid = env->GetStaticMethodID(cl, "getAudioFlinger", "()Landroid/os/IBinder;");
-    EXPECT_NE(nullptr, mid);
-    jobject object = env->CallStaticObjectMethod(cl, mid);
+    return env;
+}
+
+#define CALL_JAVA_STATIC_METHOD(_jtype, _jname)                                        \
+    _jtype callJavaStatic##_jname##Function(                                           \
+            JNIEnv* env, const char* className,                                        \
+            const char* funcName, const char* signature, ...) {                        \
+        _jtype result;                                                                 \
+        if (env == nullptr) {                                                          \
+            env = getJNIEnv();                                                         \
+        }                                                                              \
+        jclass cl = env->FindClass(className);                                         \
+        EXPECT_NE(nullptr, cl);                                                        \
+        jmethodID mid = env->GetStaticMethodID(cl, funcName, signature);               \
+        EXPECT_NE(nullptr, mid);                                                       \
+        va_list args;                                                                  \
+        va_start(args, signature);                                                     \
+        result = env->CallStatic##_jname##Method(cl, mid, args);                       \
+        va_end(args);                                                                  \
+        return result;                                                                 \
+    }                                                                                  \
+
+CALL_JAVA_STATIC_METHOD(jobject, Object)
+CALL_JAVA_STATIC_METHOD(jboolean, Boolean)
+
+} // namespace
+
+SpAIBinder AudioServerCrashMonitor::getAudioFlinger() {
+    if (mAudioFlinger.get() != nullptr) {
+        return mAudioFlinger;
+    }
+
+    JNIEnv *env = getJNIEnv();
+    jobject object = callJavaStaticObjectFunction(
+            env, "android/nativemedia/aaudio/AAudioTests",
+            "getAudioFlinger", "()Landroid/os/IBinder;");
     EXPECT_NE(nullptr, object);
 
     mAudioFlinger = SpAIBinder(AIBinder_fromJavaBinder(env, object));
@@ -345,5 +374,10 @@ void AAudioCtsBase::checkIfAudioServerCrash() {
     if (!AudioServerCrashMonitor::getInstance().isDeathRecipientLinked()) {
         AudioServerCrashMonitor::getInstance().linkToDeath();
     }
+}
+
+bool isIEC61937Supported() {
+    return (bool) callJavaStaticBooleanFunction(
+            nullptr, "android/nativemedia/aaudio/AAudioTests", "isIEC61937Supported", "()Z");
 }
 

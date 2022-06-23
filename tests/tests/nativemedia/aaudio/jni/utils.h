@@ -244,4 +244,6 @@ private:
     void checkIfAudioServerCrash();
 };
 
+bool isIEC61937Supported();
+
 #endif  // CTS_MEDIA_TEST_AAUDIO_UTILS_H

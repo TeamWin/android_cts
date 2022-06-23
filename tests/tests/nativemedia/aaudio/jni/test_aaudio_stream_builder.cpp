@@ -207,6 +207,7 @@ class AAudioStreamBuilderFormatTest : public AAudioCtsBase,
             case AAUDIO_FORMAT_UNSPECIFIED:
             case AAUDIO_FORMAT_PCM_I16:
             case AAUDIO_FORMAT_PCM_FLOAT:
+            case AAUDIO_FORMAT_IEC61937:
                 return true;
         }
         return false;
@@ -218,14 +219,22 @@ TEST_P(AAudioStreamBuilderFormatTest, openStream) {
     AAudioStreamBuilder *aaudioBuilder = nullptr;
     create_stream_builder(&aaudioBuilder);
     AAudioStreamBuilder_setFormat(aaudioBuilder, GetParam());
-    try_opening_audio_stream(
-            aaudioBuilder, isValidFormat(GetParam()) ? Expect::SUCCEED : Expect::FAIL);
+    const aaudio_format_t format = GetParam();
+    Expect expectedResult = isValidFormat(format) ? Expect::SUCCEED : Expect::FAIL;
+    if (format == AAUDIO_FORMAT_IEC61937) {
+        expectedResult = isIEC61937Supported() ? Expect::SUCCEED : Expect::FAIL;
+        // For IEC61937, sample rate and channel mask should be specified.
+        AAudioStreamBuilder_setSampleRate(aaudioBuilder, 48000);
+        AAudioStreamBuilder_setChannelMask(aaudioBuilder, AAUDIO_CHANNEL_STEREO);
+    }
+    try_opening_audio_stream(aaudioBuilder, expectedResult);
 }
 
 INSTANTIATE_TEST_CASE_P(F, AAudioStreamBuilderFormatTest,
         ::testing::Values(
                 // Reasonable values
                 AAUDIO_FORMAT_UNSPECIFIED, AAUDIO_FORMAT_PCM_I16, AAUDIO_FORMAT_PCM_FLOAT,
+                AAUDIO_FORMAT_IEC61937,
                 // Odd values
                 AAUDIO_FORMAT_INVALID, AAUDIO_FORMAT_INVALID - 1, 100, 1000000, 10000000),
         &AAudioStreamBuilderFormatTest::getTestName);

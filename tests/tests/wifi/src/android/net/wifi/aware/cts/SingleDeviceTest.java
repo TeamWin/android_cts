@@ -630,7 +630,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
      * then the attach/destroy will not correspond to enable/disable and will not result in a new
      * MAC address being generated.
      */
-    public void testAttachDiscoveryAddressChanges() {
+    public void testAttachDiscoveryAddressChanges() throws InterruptedException {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
         }
@@ -639,6 +639,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         Set<TestUtils.MacWrapper> macs = new HashSet<>();
 
         for (int i = 0; i < numIterations; ++i) {
+            Thread.sleep(1000);
             AttachCallbackTest attachCb = new AttachCallbackTest();
             IdentityChangedListenerTest identityL = new IdentityChangedListenerTest();
             mWifiAwareManager.attach(attachCb, identityL, mHandler);

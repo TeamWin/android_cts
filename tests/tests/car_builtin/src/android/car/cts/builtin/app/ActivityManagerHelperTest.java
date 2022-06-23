@@ -185,8 +185,7 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
         ComponentName activityName = task1TopActivity.getComponentName();
         waitAndAssertTopResumedActivity(activityName, DEFAULT_DISPLAY,
                 "Activity must be resumed");
-        assertWithMessage("task1 top activity has focus")
-                .that(task1TopActivity.hasFocus()).isTrue();
+        waitAndAssertFocusStatusChanged(task1TopActivity, true);
         assertWithMessage("task1 top activity is visible")
                 .that(task1TopActivity.isVisible()).isTrue();
 
@@ -446,6 +445,11 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
     }
 
     public static final class ActivityC extends ActivityManagerTestActivityBase {
+    }
+
+    private static void waitAndAssertFocusStatusChanged(ActivityManagerTestActivityBase activity,
+            boolean expectedStatus) throws Exception {
+        PollingCheck.waitFor(TIMEOUT_MS, () -> activity.hasFocus() == expectedStatus);
     }
 
     private static int createUser(String userName) throws Exception {

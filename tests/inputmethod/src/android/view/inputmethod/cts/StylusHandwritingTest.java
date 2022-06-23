@@ -23,6 +23,8 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -708,9 +710,9 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
 
             final String focusedMarker = getTestMarker();
             final String unfocusedMarker = getTestMarker();
-            final Pair<View, View> customEditorPair =
+            final Pair<CustomEditorView, CustomEditorView> customEditorPair =
                     launchTestActivityWithCustomEditors(focusedMarker, unfocusedMarker);
-            final View focusedCustomEditor = customEditorPair.first;
+            final CustomEditorView focusedCustomEditor = customEditorPair.first;
 
             expectEvent(stream, editorMatcher("onStartInput", focusedMarker), TIMEOUT);
             notExpectEvent(
@@ -743,6 +745,10 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             assertTrue(expectCommand(
                     stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
                     .getReturnBooleanValue());
+
+            // Verify that stylus move events are swallowed by the handwriting initiator once
+            // handwriting has been initiated and not dispatched to the view tree.
+            assertThat(focusedCustomEditor.mStylusMoveEventCount).isLessThan(number);
 
             TestUtils.injectStylusUpEvent(focusedCustomEditor, endX, endY);
         }
@@ -829,9 +835,9 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
 
             final String focusedMarker = getTestMarker();
             final String unfocusedMarker = getTestMarker();
-            final Pair<View, View> customEditorPair =
+            final Pair<CustomEditorView, CustomEditorView> customEditorPair =
                     launchTestActivityWithCustomEditors(focusedMarker, unfocusedMarker);
-            final View unfocusedCustomEditor = customEditorPair.second;
+            final CustomEditorView unfocusedCustomEditor = customEditorPair.second;
 
             expectEvent(stream, editorMatcher("onStartInput", focusedMarker), TIMEOUT);
             notExpectEvent(
@@ -867,7 +873,59 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
                     .getReturnBooleanValue());
 
+            // Verify that stylus move events are swallowed by the handwriting initiator once
+            // handwriting has been initiated and not dispatched to the view tree.
+            assertThat(unfocusedCustomEditor.mStylusMoveEventCount).isLessThan(number);
+
             TestUtils.injectStylusUpEvent(unfocusedCustomEditor, endX, endY);
+        }
+    }
+
+    /**
+     * Inject stylus events on top of a focused custom editor that disables auto handwriting.
+     *
+     * @link InputMethodManager#startStylusHandwriting(View)} should not be called.
+     */
+    @Test
+    public void testAutoHandwritingDisabled_customEditor() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String focusedMarker = getTestMarker();
+            final String unfocusedMarker = getTestMarker();
+            final Pair<CustomEditorView, CustomEditorView> customEditorPair =
+                    launchTestActivityWithCustomEditors(focusedMarker, unfocusedMarker);
+            final CustomEditorView focusedCustomEditor = customEditorPair.first;
+            focusedCustomEditor.setAutoHandwritingEnabled(false);
+
+            expectEvent(stream, editorMatcher("onStartInput", focusedMarker), TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", focusedMarker),
+                    NOT_EXPECT_TIMEOUT);
+
+            final int touchSlop = getTouchSlop();
+            final int startX = focusedCustomEditor.getWidth() / 2;
+            final int startY = focusedCustomEditor.getHeight() / 2;
+            final int endX = startX + 2 * touchSlop;
+            final int endY = startY + 2 * touchSlop;
+            final int number = 5;
+            TestUtils.injectStylusDownEvent(focusedCustomEditor, startX, startY);
+            TestUtils.injectStylusMoveEvents(focusedCustomEditor, startX, startY,
+                    endX, endY, number);
+            // Handwriting should not start
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartStylusHandwriting", focusedMarker),
+                    NOT_EXPECT_TIMEOUT);
+
+            // Verify that all stylus move events are dispatched to the view tree.
+            assertThat(focusedCustomEditor.mStylusMoveEventCount).isEqualTo(number);
+
+            TestUtils.injectStylusUpEvent(focusedCustomEditor, endX, endY);
         }
     }
 
@@ -923,24 +981,24 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
         return new Pair<>(focusedEditTextRef.get(), nonFocusedEditTextRef.get());
     }
 
-    private Pair<View, View> launchTestActivityWithCustomEditors(@NonNull String focusedMarker,
-            @NonNull String unfocusedMarker) {
-        final AtomicReference<View> focusedCustomEditorRef = new AtomicReference<>();
-        final AtomicReference<View> unfocusedCustomEditorRef = new AtomicReference<>();
+    private Pair<CustomEditorView, CustomEditorView> launchTestActivityWithCustomEditors(
+            @NonNull String focusedMarker, @NonNull String unfocusedMarker) {
+        final AtomicReference<CustomEditorView> focusedCustomEditorRef = new AtomicReference<>();
+        final AtomicReference<CustomEditorView> unfocusedCustomEditorRef = new AtomicReference<>();
         TestActivity.startSync(activity -> {
             final LinearLayout layout = new LinearLayout(activity);
             layout.setOrientation(LinearLayout.VERTICAL);
             // Add some top padding for tests that inject stylus event out of the view boundary.
             layout.setPadding(0, 100, 0, 0);
 
-            final View focusedCustomEditor =
+            final CustomEditorView focusedCustomEditor =
                     new CustomEditorView(activity, focusedMarker, Color.RED);
             focusedCustomEditor.setAutoHandwritingEnabled(true);
             focusedCustomEditor.requestFocus();
             focusedCustomEditorRef.set(focusedCustomEditor);
             layout.addView(focusedCustomEditor);
 
-            final View unfocusedCustomEditor =
+            final CustomEditorView unfocusedCustomEditor =
                     new CustomEditorView(activity, unfocusedMarker, Color.BLUE);
             unfocusedCustomEditor.setAutoHandwritingEnabled(true);
             unfocusedCustomEditorRef.set(unfocusedCustomEditor);
@@ -953,6 +1011,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
 
     private static final class CustomEditorView extends View {
         private final String mMarker;
+        private int mStylusMoveEventCount = 0;
 
         private CustomEditorView(Context context, @NonNull String marker,
                 @ColorInt int backgroundColor) {
@@ -979,6 +1038,19 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
         public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
             // This View needs a valid size to be focusable.
             setMeasuredDimension(300, 100);
+        }
+
+        @Override
+        public boolean onTouchEvent(MotionEvent event) {
+            if (event.getToolType(event.getActionIndex()) == MotionEvent.TOOL_TYPE_STYLUS) {
+                if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                    // Return true to receive ACTION_MOVE events.
+                    return true;
+                } else if (event.getActionMasked() == MotionEvent.ACTION_MOVE) {
+                    mStylusMoveEventCount++;
+                }
+            }
+            return super.onTouchEvent(event);
         }
     }
 }

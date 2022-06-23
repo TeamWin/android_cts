@@ -266,7 +266,7 @@ public final class CtsTouchUtils {
                 eventInjectionListener);
 
         // Inject a sequence of MOVE events that emulate the "move" part of the gesture
-        injectMoveEventsForDrag(uiAutomation, downTime, true, dragStartX, dragStartY,
+        injectMoveEventsForDrag(uiAutomation, downTime, dragStartX, dragStartY,
                 dragStartX + dragAmountX, dragStartY + dragAmountY, moveEventCount, dragDurationMs,
                 waitForAnimations, eventInjectionListener);
 
@@ -360,7 +360,6 @@ public final class CtsTouchUtils {
             // Inject a sequence of MOVE events that emulate the "move" part of the gesture.
             injectMoveEventsForDrag(uiAutomation,
                     downTime,
-                    true,
                     coordinates.get(i).x,
                     coordinates.get(i).y,
                     coordinates.get(i + 1).x,
@@ -438,7 +437,7 @@ public final class CtsTouchUtils {
     }
 
     private static void injectMoveEventsForDrag(UiAutomation uiAutomation, long downTime,
-            boolean useCurrentEventTime, int dragStartX, int dragStartY, int dragEndX, int dragEndY,
+            int dragStartX, int dragStartY, int dragEndX, int dragEndY,
             int moveEventCount, int dragDurationMs, boolean waitForAnimations,
             EventInjectionListener eventInjectionListener) {
         final int dragAmountX = dragEndX - dragStartX;
@@ -448,14 +447,17 @@ public final class CtsTouchUtils {
         long prevEventTime = downTime;
 
         for (int i = 0; i < moveEventCount; i++) {
-            // sleep for a bit to emulate the overall drag gesture.
-            SystemClock.sleep(sleepTime);
             // Note that the first MOVE event is generated "away" from the coordinates
             // of the start / DOWN event, and the last MOVE event is generated
             // at the same coordinates as the subsequent UP event.
             final int moveX = dragStartX + dragAmountX * (i  + 1) / moveEventCount;
             final int moveY = dragStartY + dragAmountY * (i  + 1) / moveEventCount;
-            long eventTime = useCurrentEventTime ? SystemClock.uptimeMillis() : downTime;
+            // Sleep for a bit to emulate the overall drag gesture. Take into account the amount
+            // of time we already spent injecting the event (since the injection could be
+            // synchronous).
+            final long remainingSleep = sleepTime - (SystemClock.uptimeMillis() - prevEventTime);
+            SystemClock.sleep(Math.max(0, remainingSleep));
+            final long eventTime = SystemClock.uptimeMillis();
 
             // If necessary, generate history for our next MOVE event. The history is generated
             // to be spaced at 10 millisecond intervals, interpolating the coordinates from the
@@ -482,9 +484,8 @@ public final class CtsTouchUtils {
                 for (int historyIndex = 0; historyIndex < historyEventCount; historyIndex++) {
                     int stepMoveX = prevMoveX + deltaMoveX * (historyIndex + 1) / historyEventCount;
                     int stepMoveY = prevMoveY + deltaMoveY * (historyIndex + 1) / historyEventCount;
-                    long stepEventTime = useCurrentEventTime
-                            ? prevEventTime + deltaTime * (historyIndex + 1) / historyEventCount
-                            : downTime;
+                    long stepEventTime =
+                            prevEventTime + deltaTime * (historyIndex + 1) / historyEventCount;
                     if (historyIndex == 0) {
                         // Generate the first event in our sequence
                         eventMove = MotionEvent.obtain(downTime, stepEventTime,

@@ -37,7 +37,6 @@ import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.StaleObjectException
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiObject2
-import android.support.test.uiautomator.UiScrollable
 import android.support.test.uiautomator.UiSelector
 import androidx.annotation.RequiresApi
 import androidx.test.filters.SdkSuppress
@@ -455,8 +454,6 @@ class CameraMicIndicatorsPermissionTest {
         }
 
         if (safetyCenterEnabled) {
-            val appView = UiScrollable(UiSelector().scrollable(true))
-            appView.scrollIntoView(UiSelector().resourceId(SAFETY_CENTER_ITEM_ID))
             var micView = waitFindObjectOrNull(By.text(micLabel))
             assertNotNull("View with text $micLabel not found", micView)
             var camView = waitFindObjectOrNull(By.text(cameraLabel))

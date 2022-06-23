@@ -22,12 +22,10 @@ import android.content.ComponentName
 import android.content.Intent
 import android.location.LocationManager
 import android.os.Build
-import android.provider.DeviceConfig
 import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.AppOpsUtils.setOpMode
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
-import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.modules.utils.build.SdkLevel
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -45,7 +43,6 @@ class PermissionAttributionTest : BasePermissionHubTest() {
     private val micLabel = packageManager.getPermissionGroupInfo(
         android.Manifest.permission_group.MICROPHONE, 0).loadLabel(packageManager).toString()
     val locationManager = context.getSystemService(LocationManager::class.java)!!
-    private var wasEnabled = false
 
     // Permission history is not available on Auto devices running S or below.
     @Before
@@ -67,15 +64,11 @@ class PermissionAttributionTest : BasePermissionHubTest() {
         setOpMode(
             context.packageName, AppOpsManager.OPSTR_MOCK_LOCATION, AppOpsManager.MODE_ALLOWED
         )
-        wasEnabled = setSubattributionEnabledStateIfNeeded(true)
     }
 
     @After
     fun teardown() {
         locationManager.removeTestProvider(APP_PACKAGE_NAME)
-        if (!wasEnabled) {
-            setSubattributionEnabledStateIfNeeded(false)
-        }
     }
 
     @Test
@@ -119,24 +112,10 @@ class PermissionAttributionTest : BasePermissionHubTest() {
         assertEquals(Activity.RESULT_OK, result.resultCode)
     }
 
-    private fun setSubattributionEnabledStateIfNeeded(shouldBeEnabled: Boolean): Boolean {
-        var currentlyEnabled = false
-        runWithShellPermissionIdentity {
-            currentlyEnabled = DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_PRIVACY,
-                FLAG_SUBATTRIBUTION, false)
-            if (currentlyEnabled != shouldBeEnabled) {
-                DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY, FLAG_SUBATTRIBUTION,
-                    shouldBeEnabled.toString(), false)
-            }
-        }
-        return currentlyEnabled
-    }
-
     companion object {
         const val APP_APK_PATH = "$APK_DIRECTORY/CtsAccessMicrophoneAppLocationProvider.apk"
         const val APP_PACKAGE_NAME = "android.permission3.cts.accessmicrophoneapplocationprovider"
         const val APP_LABEL = "LocationProviderWithMicApp"
         const val ATTRIBUTION_LABEL = "Attribution Label"
-        const val FLAG_SUBATTRIBUTION = "permissions_hub_subattribution_enabled"
     }
 }
