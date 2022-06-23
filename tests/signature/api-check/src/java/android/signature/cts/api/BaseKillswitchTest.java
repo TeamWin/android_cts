@@ -59,7 +59,7 @@ public abstract class BaseKillswitchTest extends AbstractApiTest {
         doTestKillswitchMechanism(FIELD_FILTER, /* reflection= */ true, /* jni= */ false);
     }
 
-    @Test
+    @Test(timeout = 900000)
     public void testKillswitchMechanismFieldsThroughJni() {
         doTestKillswitchMechanism(FIELD_FILTER, /* reflection= */ false, /* jni= */ true);
     }
