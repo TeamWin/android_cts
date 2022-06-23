@@ -33,6 +33,7 @@ import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionId
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -91,6 +92,7 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
     }
 
     @Test
+    @Ignore("b/236749332")
     fun closeToSender_displaysChip() {
         statusBarManager.updateMediaTapToTransferReceiverDisplay(
             StatusBarManager.MEDIA_TRANSFER_RECEIVER_STATE_CLOSE_TO_SENDER,
@@ -106,6 +108,7 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
     }
 
     @Test
+    @Ignore("236749332")
     fun farFromSender_hidesChip() {
         // First, make sure we display the chip
         statusBarManager.updateMediaTapToTransferReceiverDisplay(
