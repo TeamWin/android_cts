@@ -96,6 +96,8 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     private static final String DISALLOW_ADD_WIFI_CONFIG_ID = "DISALLOW_ADD_WIFI_CONFIG";
     private static final String WIFI_SECURITY_LEVEL_RESTRICTION_ID =
             "WIFI_SECURITY_LEVEL_RESTRICTION";
+    private static final String ACTION_CONNECT_INPUT =
+            "com.google.android.intent.action.CONNECT_INPUT";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -401,7 +403,8 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                             UserManager.DISALLOW_CONFIG_BLUETOOTH, true)),
                             new ButtonInfo(
                                     R.string.device_owner_settings_go,
-                                    new Intent(Settings.ACTION_BLUETOOTH_SETTINGS)),
+                                    new Intent(Utils.isTV(this) ? ACTION_CONNECT_INPUT
+                                            : Settings.ACTION_BLUETOOTH_SETTINGS)),
                             new ButtonInfo(
                                     R.string.device_owner_user_restriction_unset,
                                     CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
@@ -410,7 +413,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // DISALLOW_USB_FILE_TRANSFER
-        if (FeatureUtil.isUsbFileTransferSupported(this)) {
+        if (FeatureUtil.isUsbFileTransferSupported(this) && !Utils.isTV(this)) {
             adapter.add(createInteractiveTestItem(this, DISALLOW_USB_FILE_TRANSFER_ID,
                     R.string.device_owner_disallow_usb_file_transfer_test,
                     R.string.device_owner_disallow_usb_file_transfer_test_info,
@@ -467,7 +470,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
 
         // setLockTaskFeatures
         // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
-        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH) && !Utils.isTV(this)) {
             final Intent lockTaskUiTestIntent = new Intent(this, LockTaskUiTestActivity.class);
             lockTaskUiTestIntent.putExtra(LockTaskUiTestActivity.EXTRA_TEST_ID,
                     LOCK_TASK_UI_TEST_ID);
@@ -676,7 +679,8 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         // removeDeviceOwner
         adapter.add(createInteractiveTestItem(this, REMOVE_DEVICE_OWNER_TEST_ID,
                 R.string.device_owner_remove_device_owner_test,
-                R.string.device_owner_remove_device_owner_test_info,
+                Utils.isTV(this) ? R.string.device_owner_remove_device_owner_test_info_on_tv
+                        : R.string.device_owner_remove_device_owner_test_info,
                 new ButtonInfo(
                         R.string.remove_device_owner_button,
                         createTearDownIntent())));

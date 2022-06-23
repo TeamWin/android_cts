@@ -3755,6 +3755,11 @@ You should be prompted to select credentials; choose the ones you just installed
             Device Owner. Then press the button below, and check that CTSVerifier is NOT Device
             Owner anymore.
     </string>
+    <string name="device_owner_remove_device_owner_test_info_on_tv">
+            Please check in Settings &gt; Privacy &gt; Security &amp; Restrictions &gt; Device Administrators if CTSVerifier is
+            Device Owner. Then press the button below, and check that CTSVerifier is NOT Device
+            Owner anymore.
+    </string>
     <string name="remove_device_owner_button">Remove device owner</string>
     <string name="device_owner_check_device_owner_test">Check device owner</string>
     <string name="device_owner_check_profile_owner_test">Check profile owner</string>
@@ -4059,11 +4064,12 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_disallow_config_bt">Disallow configuring Bluetooth</string>
     <string name="device_owner_disallow_config_bt_info">
         Please press the Set restriction button to set the user restriction.
-        Then press Go to open the Bluetooth page in Settings.
-        Confirm that:\n
-        \n
+        Then press Go, you should either see (a) the Bluetooth settings page or (b) trigger a support message directly.\n
+        In the case of (a), confirm that:\n
         - You cannot view Bluetooth devices in range.\n
         - Trying to edit, add or remove any already paired devices triggers a support message.\n
+        \n
+        In the case of (b) this step is successful.\n
         \n
         Use the Back button to return to this page.
     </string>

@@ -43,6 +43,7 @@ import android.util.Log;
 
 import com.android.server.biometrics.nano.SensorStateProto;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -301,7 +302,10 @@ public class BiometricSimpleTests extends BiometricTestBase {
      *
      * Upon successful authentication, checks that the result is
      * {@link BiometricPrompt#AUTHENTICATION_RESULT_TYPE_BIOMETRIC}
+     *
+     * TODO(b/236763921): fix this test and unignore.
      */
+    @Ignore
     @Test
     public void testSimpleBiometricAuth_nonConvenience() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());

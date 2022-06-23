@@ -35,14 +35,13 @@ import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.MediaCodecInfo.EncoderCapabilities;
 import android.media.MediaCodecInfo.VideoCapabilities;
 import android.media.MediaCodecList;
-import android.media.MediaCrypto;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.media.cts.AudioHelper;
 import android.media.cts.InputSurface;
 import android.media.cts.OutputSurface;
 import android.media.cts.Preconditions;
 import android.media.cts.StreamUtils;
+import android.media.cts.TestUtils;
 import android.opengl.GLES20;
 import android.os.Build;
 import android.os.ConditionVariable;
@@ -64,13 +63,9 @@ import androidx.test.filters.SmallTest;
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
-import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -2429,6 +2424,11 @@ public class MediaCodecTest extends AndroidTestCase {
                 continue;
             }
             MediaCodec codec = null;
+            if (!TestUtils.isTestableCodecInCurrentMode(info.getName())) {
+                Log.d(TAG, "skip testing codec " + info.getName() + " in current mode:"
+                                + (TestUtils.isMtsMode() ? " MTS" : " CTS"));
+                continue;
+            }
             try {
                 codec = MediaCodec.createByCodecName(info.getName());
                 List<String> vendorParams = codec.getSupportedVendorParameters();
