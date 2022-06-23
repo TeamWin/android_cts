@@ -26,19 +26,23 @@ import android.app.Instrumentation;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.server.wm.backlegacyapp.Components;
 import android.support.test.uiautomator.UiDevice;
-import android.view.KeyEvent;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.GestureNavRule;
+
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
  * Integration test for back navigation legacy mode
  */
-public class BackNavigationLegacyTest extends ActivityManagerTestBase {
+public class BackNavigationLegacyGestureTest extends ActivityManagerTestBase {
     private Instrumentation mInstrumentation;
 
+    @ClassRule
+    public static GestureNavRule GESTURE_NAV_RULE = new GestureNavRule();
     private UiDevice mUiDevice;
 
     @Before
@@ -54,7 +58,7 @@ public class BackNavigationLegacyTest extends ActivityManagerTestBase {
         mWmState.assertActivityDisplayed(BACK_LEGACY);
         waitAndAssertActivityState(BACK_LEGACY, STATE_RESUMED, "Activity should be resumed");
         mUiDevice = UiDevice.getInstance(mInstrumentation);
-        mUiDevice.pressKeyCode(KeyEvent.KEYCODE_BACK);
+        doBackGesture();
         waitAndAssertActivityState(BACK_LEGACY, STATE_STOPPED, "Activity should be stopped");
         assertTrue("OnBackPressed should have been called",
                 TestJournalContainer.get(BACK_LEGACY).extras.getBoolean(
@@ -62,5 +66,15 @@ public class BackNavigationLegacyTest extends ActivityManagerTestBase {
         assertFalse("OnBackInvoked should not have been called",
                 TestJournalContainer.get(BACK_LEGACY).extras.getBoolean(
                         Components.KEY_ON_BACK_INVOKED_CALLED));
+    }
+
+    /**
+     * Do a back gesture. (Swipe)
+     */
+    private void doBackGesture() {
+        int midHeight = mUiDevice.getDisplayHeight() / 2;
+        int midWidth = mUiDevice.getDisplayWidth() / 2;
+        mUiDevice.swipe(0, midHeight, midWidth, midHeight, 100);
+        mUiDevice.waitForIdle();
     }
 }
