@@ -40,7 +40,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -130,7 +129,6 @@ public final class CarAudioFocusTest extends CarApiTestBase {
         }
     }
 
-    @Ignore("b/234467798:STOPSHIP if not re-enabled")
     @Test
     public void requestAudioFocus_forRequestWithDelayedFocus_requestGranted() {
         AudioFocusRequest mediaAudioFocusRequest = delayedFocusRequestBuilder().build();
@@ -141,7 +139,6 @@ public final class CarAudioFocusTest extends CarApiTestBase {
                 .isEqualTo(AUDIOFOCUS_REQUEST_GRANTED);
     }
 
-    @Ignore("b/234467798:STOPSHIP if not re-enabled")
     @Test
     public void requestAudioFocus_forRequestWithDelayedFocus_whileOnCall_requestDelayed() {
         AudioFocusRequest phoneAudioFocusRequest = phoneFocusRequestBuilder().build();
@@ -252,7 +249,6 @@ public final class CarAudioFocusTest extends CarApiTestBase {
                 .isFalse();
     }
 
-    @Ignore("b/234467798:STOPSHIP if not re-enabled")
     @Test
     public void requestAudioFocus_multipleTimesForSameFocusListener_requestFailed() {
         AudioFocusRequest phoneAudioFocusRequest = phoneFocusRequestBuilder().build();
@@ -278,7 +274,6 @@ public final class CarAudioFocusTest extends CarApiTestBase {
         mAudioFocusRequestsSet.remove(systemSoundRequest);
     }
 
-    @Ignore("b/234467798:STOPSHIP if not re-enabled")
     @Test
     public void individualAttributeFocusRequest_focusRequestGranted() {
         // Make sure each usage is able to request and release audio focus individually
@@ -293,7 +288,6 @@ public final class CarAudioFocusTest extends CarApiTestBase {
     }
 
     @Test
-    @Ignore("b/234467798")
     public void exclusiveInteractionsForFocusGain_requestGrantedAndFocusLossSent() {
         // For each interaction the focus request is granted and on the second request
         // focus lost is dispatched to the first focus listener
@@ -306,7 +300,6 @@ public final class CarAudioFocusTest extends CarApiTestBase {
     }
 
     @Test
-    @Ignore("b/234467798")
     public void exclusiveInteractionsTransient_requestGrantedAndFocusLossSent() {
         // For each interaction the focus request is granted and on the second request
         // focus lost transient is dispatched to the first focus listener
@@ -320,7 +313,6 @@ public final class CarAudioFocusTest extends CarApiTestBase {
     }
 
     @Test
-    @Ignore("b/234467798")
     public void exclusiveInteractionsTransientMayDuck_requestGrantedAndFocusLossSent() {
         // For each interaction the focus request is granted and on the second request
         // focus lost transient is dispatched to the first focus listener
@@ -334,7 +326,6 @@ public final class CarAudioFocusTest extends CarApiTestBase {
     }
 
     @Test
-    @Ignore("b/234467798")
     public void rejectedInteractions_focusRequestRejected() {
         // Test different paired interaction between different usages
         // for each interaction pair the first focus request will be granted but the second
@@ -356,7 +347,6 @@ public final class CarAudioFocusTest extends CarApiTestBase {
     }
 
     @Test
-    @Ignore("b/234467798")
     public void concurrentInteractionsFocusGain_requestGrantedAndFocusLossSent() {
         // Test concurrent interactions i.e. interactions that can
         // potentially gain focus at the same time.
@@ -367,7 +357,6 @@ public final class CarAudioFocusTest extends CarApiTestBase {
     }
 
     @Test
-    @Ignore("b/234467798")
     public void concurrentInteractionsTransientGain_requestGrantedAndFocusLossTransientSent() {
         // Test concurrent interactions i.e. interactions that can
         // potentially gain focus at the same time.
@@ -381,7 +370,6 @@ public final class CarAudioFocusTest extends CarApiTestBase {
     }
 
     @Test
-    @Ignore("b/234467798")
     public void concurrentInteractionsTransientGainMayDuck_requestGrantedAndNoFocusLossSent() {
         // Test concurrent interactions i.e. interactions that can
         // potentially gain focus at the same time.

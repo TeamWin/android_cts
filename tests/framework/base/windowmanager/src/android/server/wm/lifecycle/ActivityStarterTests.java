@@ -16,8 +16,11 @@
 
 package android.server.wm.lifecycle;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
+import static android.content.Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP;
@@ -738,6 +741,47 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
         // same app
         assertNotEquals("Affinity should not be same with the package name.",
                 RELINQUISHTASKIDENTITY_ACTIVITY.getPackageName(), affinity);
+    }
+
+    /**
+     * This test case tests behavior of activity with launch_adjacent and new_task. Ensure the flags
+     * make activity in multi-window mode.
+     */
+    @Test
+    public void testLaunchActivityWithLaunchAdjacentAndNewTask() {
+        assumeTrue("Skipping test: no split multi-window support",
+                supportsSplitScreenMultiWindow());
+
+        // Launch activity with FLAG_ACTIVITY_NEW_TASK and FLAG_ACTIVITY_LAUNCH_ADJACENT.
+        assertTrue(launchAndGetActivityWindowingMode(
+                FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_LAUNCH_ADJACENT)
+                == WINDOWING_MODE_MULTI_WINDOW);
+    }
+
+    /**
+     * This test case tests behavior of activity with launch_adjacent. Ensure the flag is ignored
+     * if without new_task together.
+     */
+    @Test
+    public void testLaunchActivityWithLaunchAdjacent() {
+        assumeTrue("Skipping test: no split multi-window support",
+                supportsSplitScreenMultiWindow());
+
+        // Launch activity with FLAG_ACTIVITY_LAUNCH_ADJACENT only.
+        assertTrue(launchAndGetActivityWindowingMode(FLAG_ACTIVITY_LAUNCH_ADJACENT)
+                == WINDOWING_MODE_FULLSCREEN);
+    }
+
+    private int launchAndGetActivityWindowingMode(int flags) {
+        getLaunchActivityBuilder()
+                .setTargetActivity(STANDARD_ACTIVITY)
+                .setIntentFlags(flags)
+                .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
+                .execute();
+
+        waitAndAssertActivityState(STANDARD_ACTIVITY, STATE_RESUMED,
+                "Activity should be resumed");
+        return mWmState.getActivity(STANDARD_ACTIVITY).getWindowingMode();
     }
 
     // Test activity

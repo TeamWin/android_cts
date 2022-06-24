@@ -983,6 +983,17 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * Tests that all types in /sys/fs/bpf have the bpffs_type attribute.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBpffsTypeViolators() throws Exception {
+        assertSepolicyTests("TestBpffsTypeViolations", "/sepolicy_tests",
+                PropertyUtil.isVendorApiLevelNewerThan(mDevice, 33) /* includeVendorSepolicy */);
+    }
+
+    /**
      * Tests that all types in /proc have the proc_type attribute.
      *
      * @throws Exception

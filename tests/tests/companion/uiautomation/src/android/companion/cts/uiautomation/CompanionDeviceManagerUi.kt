@@ -59,6 +59,9 @@ class CompanionDeviceManagerUi(private val ui: UiDevice) {
     fun clickNegativeButtonMultipleDevices() = click(
             NEGATIVE_BUTTON_MULTIPLE_DEVICES, "Negative button for multiple devices")
 
+    fun waitUntilAppAppeared() = ui.wait(Until.hasObject(ASSOCIATION_REVOKE_APP_UI),
+        "The test app has not appeared.")
+
     private fun click(selector: BySelector, description: String) = ui.waitShortAndFind(
             Until.findObject(selector), "$description  is not found")
             .click()
@@ -68,6 +71,7 @@ class CompanionDeviceManagerUi(private val ui: UiDevice) {
 
         private val CONFIRMATION_UI = By.pkg(PACKAGE_NAME)
                 .res(PACKAGE_NAME, "activity_confirmation")
+        private val ASSOCIATION_REVOKE_APP_UI = By.pkg(ASSOCIATION_REVOKE_APP_NAME).depth(0)
 
         private val CLICKABLE_BUTTON =
                 By.pkg(PACKAGE_NAME).clazz(".Button").clickable(true)

@@ -28,9 +28,11 @@ import com.android.os.AtomsProto.SizeCompatRestartButtonEventReported;
 import com.android.os.AtomsProto.SizeCompatRestartButtonEventReported.Event;
 import com.android.os.StatsLog;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.Pair;
 
 import java.util.Arrays;
 import java.util.List;
@@ -104,6 +106,11 @@ public class SizeCompatRestartButtonStatsTests extends DeviceTestCase implements
             return;
         }
 
+        Pair<Integer, Integer> displaySizeClosed = getDisplayRealSize(getDevice());
+        if (displaySizeClosed == null) {
+            CLog.i("Could not determine display size while CLOSED.");
+            return;
+        }
         try (AutoCloseable a = DeviceUtils.withActivity(getDevice(),
                 DeviceUtils.STATSD_ATOM_TEST_PKG, NON_RESIZEABLE_PORTRAIT_ACTIVITY, "action",
                 "action.sleep_top")) {
@@ -112,6 +119,15 @@ public class SizeCompatRestartButtonStatsTests extends DeviceTestCase implements
             Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         }
 
+        Pair<Integer, Integer> displaySizeOpened = getDisplayRealSize(getDevice());
+        if (displaySizeOpened == null) {
+            CLog.i("Could not determine display size while OPENED.");
+            return;
+        }
+        if (displaySizeClosed.equals(displaySizeOpened)) {
+            CLog.i("Display size has not changed.");
+            return;
+        }
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data.size()).isEqualTo(1);
 
@@ -126,5 +142,26 @@ public class SizeCompatRestartButtonStatsTests extends DeviceTestCase implements
                 getDevice().executeShellCommand(CMD_GET_AVAILABLE_DEVICE_STATES).split(","))
                 .map(Integer::valueOf)
                 .anyMatch(availableState -> availableState == state);
+    }
+
+    /**
+     * Returns the physical size of the current display used.
+     */
+    private Pair<Integer, Integer> getDisplayRealSize(ITestDevice device) throws Exception {
+        final String physicalSize = "Physical size: ";
+        String str = device.executeShellCommand("wm size");
+        if (!str.isEmpty()) {
+            String[] lines = str.split(System.getProperty("line.separator"));
+            for (String s : lines) {
+                if (s.contains(physicalSize)) {
+                    String substring = s.substring(physicalSize.length());
+                    if (!substring.isEmpty()) {
+                        return Pair.create(Integer.parseInt(substring.split("x")[0]),
+                                Integer.parseInt(substring.split("x")[1]));
+                    }
+                }
+            }
+        }
+        return null;
     }
 }

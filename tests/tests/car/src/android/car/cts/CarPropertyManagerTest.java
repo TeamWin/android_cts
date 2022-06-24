@@ -688,6 +688,66 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     }
 
     @Test
+    public void testTirePressureIfSupported() {
+        adoptSystemLevelPermission(/*Car.PERMISSION_TIRES=*/
+                "android.car.permission.CAR_TIRES", () -> {
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.TIRE_PRESSURE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_WHEEL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
+                            Float.class).setCarPropertyValueVerifier(
+                                    (carPropertyConfig, carPropertyValue) -> assertWithMessage(
+                                            "TIRE_PRESSURE Float value"
+                                                    + " at Area ID equals to "
+                                                    + carPropertyValue.getAreaId()
+                                                    + " must be greater than or equal 0").that(
+                                    (Float) carPropertyValue.getValue()).isAtLeast(
+                                    0)).build().verify(
+                            mCarPropertyManager);
+                });
+    }
+
+    @Test
+    public void testCriticallyLowTirePressureIfSupported() {
+        adoptSystemLevelPermission(/*Car.PERMISSION_TIRES=*/
+                "android.car.permission.CAR_TIRES", () -> {
+                    VehiclePropertyVerifier.newBuilder(
+                            VehiclePropertyIds.CRITICALLY_LOW_TIRE_PRESSURE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_WHEEL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                            Float.class).setCarPropertyValueVerifier(
+                                    (carPropertyConfig, carPropertyValue) -> {
+                                        int areaId = carPropertyValue.getAreaId();
+
+                                        assertWithMessage(
+                                                "CRITICALLY_LOW_TIRE_PRESSURE Float value"
+                                                        + "at Area ID equals to" + areaId
+                                                        + " must be greater than or equal 0")
+                                            .that((Float) carPropertyValue.getValue()).isAtLeast(0);
+
+                                        CarPropertyConfig<?> tirePressureConfig =
+                                                mCarPropertyManager.getCarPropertyConfig(
+                                                        VehiclePropertyIds.TIRE_PRESSURE);
+
+                                        if (tirePressureConfig == null
+                                                || tirePressureConfig.getMinValue(areaId) == null) {
+                                            return;
+                                        }
+
+                                        assertWithMessage(
+                                                "CRITICALLY_LOW_TIRE_PRESSURE Float value"
+                                                        + "at Area ID equals to" + areaId
+                                                        + " must not exceed"
+                                                        + " minFloatValue in TIRE_PRESSURE")
+                                                .that((Float) carPropertyValue.getValue()).isAtMost(
+                                                        (Float) tirePressureConfig
+                                                                .getMinValue(areaId));
+                                    }).build().verify(mCarPropertyManager);
+                });
+    }
+
+    @Test
     public void testTirePressureDisplayUnitsIfSupported() {
         VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.TIRE_PRESSURE_DISPLAY_UNITS,
                 CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,

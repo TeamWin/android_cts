@@ -335,7 +335,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 // Already duplicate in BCP.
                 "Landroid/hidl/base/V1_0/DebugInfo;",
                 "Landroid/hidl/base/V1_0/IBase;",
-                // /apex/com.android.bluetooth/javalib/framework-bluetooth.jar
+                // /apex/com.android.btservices/javalib/framework-bluetooth.jar
                 "Lcom/android/bluetooth/x/android/sysprop/AdbProperties;",
                 "Lcom/android/bluetooth/x/android/sysprop/ApkVerityProperties;",
                 "Lcom/android/bluetooth/x/android/sysprop/BluetoothProperties;",
@@ -724,9 +724,9 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
 
     private static final ImmutableMap<String, ImmutableSet<String>> FULL_APK_IN_APEX_BURNDOWN =
         new ImmutableMap.Builder<String, ImmutableSet<String>>()
-            .put("/apex/com.android.bluetooth/app/Bluetooth/Bluetooth.apk",
+            .put("/apex/com.android.btservices/app/Bluetooth/Bluetooth.apk",
                 BLUETOOTH_APK_IN_APEX_BURNDOWN_LIST)
-            .put("/apex/com.android.bluetooth/app/BluetoothGoogle/BluetoothGoogle.apk",
+            .put("/apex/com.android.btservices/app/BluetoothGoogle/BluetoothGoogle.apk",
                 BLUETOOTH_APK_IN_APEX_BURNDOWN_LIST)
             .put("/apex/com.android.permission/priv-app/PermissionController/PermissionController.apk",
                 PERMISSION_CONTROLLER_APK_IN_APEX_BURNDOWN_LIST)
@@ -995,8 +995,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                                         .collect(ImmutableSet.toImmutableSet());
                         // b/226559955: The directory paths containing APKs contain the build ID,
                         // so strip out the @BUILD_ID portion.
-                        // e.g. /apex/com.android.bluetooth/app/Bluetooth@SC-DEV/Bluetooth.apk ->
-                        //      /apex/com.android.bluetooth/app/Bluetooth/Bluetooth.apk
+                        // e.g. /apex/com.android.btservices/app/Bluetooth@SC-DEV/Bluetooth.apk ->
+                        //      /apex/com.android.btservices/app/Bluetooth/Bluetooth.apk
                         apk = apk.replaceFirst("@[^/]*", "");
                         final ImmutableSet<String> burndownClasses =
                                 FULL_APK_IN_APEX_BURNDOWN.getOrDefault(apk, ImmutableSet.of());

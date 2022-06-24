@@ -561,9 +561,10 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     }
 
     public void testTvInputHardwareOverrideAudioSink() {
-        if (mManager == null) {
+        if (!Utils.hasTvInputFramework(getActivity()) || mManager == null) {
             return;
         }
+
         // Update hardware device list
         int deviceId = 0;
         boolean hardwareDeviceAdded = false;

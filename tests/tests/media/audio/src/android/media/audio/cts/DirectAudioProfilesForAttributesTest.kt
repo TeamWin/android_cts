@@ -57,11 +57,7 @@ class DirectAudioProfilesForAttributesTest {
             val audioAttributes = AudioAttributes.Builder()
                 .setUsage(usage)
                 .build()
-            val allProfilesForAttributes =
-                audioManager.getAudioDevicesForAttributes(audioAttributes).map { it.audioProfiles }
-                    .flatten()
             val directProfiles = audioManager.getDirectProfilesForAttributes(audioAttributes)
-            val nonDirectProfiles = allProfilesForAttributes.subtractAll(directProfiles)
 
             // All compressed format (non pcm) profiles can create direct AudioTracks.
             // getDirectProfilesForAttributes does not include profiles supporting
@@ -70,13 +66,6 @@ class DirectAudioProfilesForAttributesTest {
             val compressedProfiles = directProfiles.filterOutPcmFormats()
             for (directProfile in compressedProfiles) {
                 checkCreateAudioTracks(audioAttributes, directProfile, true)
-            }
-
-            // Any other available but not returned compressed format profile
-            // can't create any direct AudioTrack
-            val otherCompressedProfiles = nonDirectProfiles.filterOutPcmFormats()
-            for (nonDirectProfile in otherCompressedProfiles) {
-                checkCreateAudioTracks(audioAttributes, nonDirectProfile, false)
             }
         }
     }
@@ -101,7 +90,7 @@ class DirectAudioProfilesForAttributesTest {
                     .build()
                     .release()
                 // allow a short time to free the AudioTrack resources
-                Thread.sleep(150)
+                Thread.sleep(100)
                 if (!expectedCreationSuccess) {
                     fail(
                         "Created AudioTrack for attributes ($audioAttributes) and " +
@@ -120,13 +109,6 @@ class DirectAudioProfilesForAttributesTest {
     }
 
     // Utils
-    private fun AudioProfile.isSame(profile: AudioProfile) =
-        format == profile.format &&
-                encapsulationType == profile.encapsulationType &&
-                sampleRates.contentEquals(profile.sampleRates) &&
-                channelMasks.contentEquals(profile.channelMasks) &&
-                channelIndexMasks.contentEquals(profile.channelIndexMasks)
-
     private fun AudioProfile.getAllAudioFormats() =
         sampleRates.map { sampleRate ->
             channelMasks.map { channelMask ->
@@ -145,12 +127,6 @@ class DirectAudioProfilesForAttributesTest {
                 }
             )
         }.flatten()
-
-    private fun List<AudioProfile>.subtractAll(elements: List<AudioProfile>) =
-        filter { profile -> elements.none { it.isSame(profile) } }
-
-    private fun List<AudioProfile>.includesAll(elements: List<AudioProfile>) =
-        elements.all { profile -> this@includesAll.any { it.isSame(profile) } }
 
     private fun List<AudioProfile>.filterOutPcmFormats() = filter { it.format !in pcmFormats }
 
