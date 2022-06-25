@@ -172,6 +172,7 @@ public class Utils {
             "destroyedInteractor";
     public static final String DIRECT_ACTIONS_ACTIVITY_CMD_INVALIDATE_ACTIONS = "invalidateActions";
     public static final String DIRECT_ACTIONS_ACTIVITY_CMD_GET_PACKAGE_NAME = "getpackagename";
+    public static final String DIRECT_ACTIONS_ACTIVITY_CMD_GET_PACKAGE_INFO = "getpackageinfo";
 
     public static final String DIRECT_ACTIONS_RESULT_PERFORMED = "performed";
     public static final String DIRECT_ACTIONS_RESULT_CANCELLED = "cancelled";

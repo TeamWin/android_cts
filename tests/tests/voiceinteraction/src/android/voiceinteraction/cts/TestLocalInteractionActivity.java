@@ -17,6 +17,8 @@
 package android.voiceinteraction.cts;
 
 import android.app.Activity;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
@@ -41,6 +43,18 @@ public class TestLocalInteractionActivity extends Activity {
         Log.i(TAG, "startLocalInteraction(): " + Utils.toBundleString(privateOptions));
         mStarted = counter;
         startLocalVoiceInteraction(privateOptions);
+    }
+
+    PackageInfo getVoiceInteractionPackageInfo() {
+        final String packageName = getVoiceInteractor().getPackageName();
+        PackageManager packageManager = getPackageManager();
+        try {
+            return packageManager.getPackageInfo(
+                    packageName, PackageManager.GET_META_DATA | PackageManager.GET_SERVICES);
+        } catch (Exception e) {
+            Log.w(TAG, "getPackageInfo failed: " + e.toString());
+            return null;
+        }
     }
 
     @Override

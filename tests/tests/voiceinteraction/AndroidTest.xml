@@ -24,6 +24,12 @@
 
     <!-- Force service to be installed as non-instant mode, always -->
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
+        <!--
+            force-queryable defaults to true for CTS and makes all apks installed as part of
+            that suite visible to all other apps on device. This is set to false so that tests
+            can cover granting visibility to the client app correctly.
+        -->
+        <option name="force-queryable" value="false" />
         <option name="instant-mode" value="false"/>
         <option name="force-install-mode" value="FULL"/>
         <option name="cleanup-apks" value="true"/>

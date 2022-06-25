@@ -35,6 +35,8 @@ import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -272,6 +274,7 @@ public class FontManagerTest {
         }
     }
 
+    @CddTest(requirement = "3.8.13/C-1-3")
     @Test
     public void fontManager_NotoColorEmojiAvailable() throws IOException {
         FontConfig fontConfig = getFontConfig();

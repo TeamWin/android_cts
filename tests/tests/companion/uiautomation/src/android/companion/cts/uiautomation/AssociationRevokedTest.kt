@@ -20,11 +20,11 @@ import android.Manifest.permission.MANAGE_COMPANION_DEVICES
 import android.companion.AssociationRequest.DEVICE_PROFILE_WATCH
 import android.companion.cts.common.sleepFor
 import android.platform.test.annotations.AppModeFull
-import org.junit.Test
 import kotlin.test.assertContains
 import kotlin.test.assertFalse
 import kotlin.test.fail
 import kotlin.time.Duration.Companion.seconds
+import org.junit.Test
 
 /**
  * Test Association role revoked.
@@ -41,11 +41,13 @@ class AssociationRevokedTest : AssociationRevokedTestBase() {
         launchAppAndConfirmationUi()
         // Press the `Allow` button.
         confirmationUi.waitUntilPositiveButtonIsEnabledAndClick()
+        // Give it 1 second for creating the association internally.
+        sleepFor(1.seconds)
 
         val association = withShellPermissionIdentity(MANAGE_COMPANION_DEVICES) {
             cdm.allAssociations.find {
                 it.belongsToPackage(userId, packageName)
-            } ?: fail("No association for u$associationApp.userId/$associationApp.packageName")
+            } ?: fail("No association for u${associationApp.userId}/${associationApp.packageName}")
         }
         // Give it 2 seconds for the app to grant the role.
         sleepFor(2.seconds)
@@ -72,11 +74,13 @@ class AssociationRevokedTest : AssociationRevokedTestBase() {
         launchAppAndConfirmationUi()
         // Press the `Allow` button.
         confirmationUi.waitUntilPositiveButtonIsEnabledAndClick()
+        // Give it 1 second for creating the association internally.
+        sleepFor(1.seconds)
 
         val association = withShellPermissionIdentity(MANAGE_COMPANION_DEVICES) {
             cdm.allAssociations.find {
                 it.belongsToPackage(userId, packageName)
-            } ?: fail("No association for u$userId/$packageName")
+            } ?: fail("No association for u${associationApp.userId}/${associationApp.packageName}")
         }
         // Give it 2 seconds for the app to grant the role.
         sleepFor(2.seconds)

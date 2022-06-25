@@ -78,4 +78,27 @@ public class LocalVoiceInteractionTest extends AbstractVoiceInteractionTestCase 
         }
         mTestActivity.finish();
     }
+
+    @Test
+    public void testGrantVisibilityOnStartLocalInteraction() throws Exception {
+        assertWithMessage("Doesn't support LocalVoiceInteraction")
+                .that(mTestActivity.isLocalVoiceInteractionSupported())
+                .isTrue();
+        mTestActivity.startLocalInteraction(mLatchStart);
+        if (!mLatchStart.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+            fail("Failed to start voice interaction in " + TIMEOUT_MS + "msec");
+            return;
+        }
+
+        assertWithMessage("Visibility is not granted to the client app")
+                .that(mTestActivity.getVoiceInteractionPackageInfo() != null)
+                .isTrue();
+
+        mTestActivity.stopLocalInteraction(mLatchStop);
+        if (!mLatchStop.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+            fail("Failed to stop voice interaction in " + TIMEOUT_MS + "msec");
+            return;
+        }
+        mTestActivity.finish();
+    }
 }

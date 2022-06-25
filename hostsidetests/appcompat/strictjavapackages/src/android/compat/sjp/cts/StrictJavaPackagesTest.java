@@ -717,9 +717,11 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
     private static final ImmutableSet<String> ADSERVICES_SANDBOX_APK_IN_APEX_BURNDOWN_LIST =
             ImmutableSet.of(
                 // /apex/com.android.adservices/javalib/service-sdksandbox.jar
+                "Lcom/android/sdksandbox/IDataReceivedCallback;",
+                "Lcom/android/sdksandbox/ILoadSdkInSandboxCallback;",
+                "Lcom/android/sdksandbox/IRequestSurfacePackageFromSdkCallback;",
                 "Lcom/android/sdksandbox/ISdkSandboxManagerToSdkSandboxCallback;",
-                "Lcom/android/sdksandbox/ISdkSandboxService;",
-                "Lcom/android/sdksandbox/ISdkSandboxToSdkSandboxManagerCallback;"
+                "Lcom/android/sdksandbox/ISdkSandboxService;"
             );
 
     private static final ImmutableMap<String, ImmutableSet<String>> FULL_APK_IN_APEX_BURNDOWN =
@@ -727,6 +729,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
             .put("/apex/com.android.btservices/app/Bluetooth/Bluetooth.apk",
                 BLUETOOTH_APK_IN_APEX_BURNDOWN_LIST)
             .put("/apex/com.android.btservices/app/BluetoothGoogle/BluetoothGoogle.apk",
+                BLUETOOTH_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.bluetooth/app/BluetoothGoogle/BluetoothGoogle.apk",
                 BLUETOOTH_APK_IN_APEX_BURNDOWN_LIST)
             .put("/apex/com.android.permission/priv-app/PermissionController/PermissionController.apk",
                 PERMISSION_CONTROLLER_APK_IN_APEX_BURNDOWN_LIST)
