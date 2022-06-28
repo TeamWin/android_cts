@@ -81,6 +81,7 @@ public final class HotwordDetectionServiceBasicTest
     private static final String PRIVACY_CHIP_ID = "privacy_chip";
     private static final Long PERMISSION_INDICATORS_NOT_PRESENT = 162547999L;
     private static final Long CLEAR_CHIP_MS = 10000L;
+    private static final int TEST_RESULT_AWAIT_TIMEOUT_MS = 10 * 1000;
 
     private static Instrumentation sInstrumentation = InstrumentationRegistry.getInstrumentation();
     private static UiDevice sUiDevice = UiDevice.getInstance(sInstrumentation);
@@ -241,6 +242,25 @@ public final class HotwordDetectionServiceBasicTest
     }
 
     @Test
+    @RequiresDevice
+    public void testHotwordDetectionService_onDetectFromDsp_timeout()
+            throws Throwable {
+        Thread.sleep(CLEAR_CHIP_MS);
+        // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
+
+        // Update HotwordDetectionService options to delay detection, to cause a timeout
+        perform(Utils.HOTWORD_DETECTION_SERVICE_ADD_DETECTION_DELAY);
+
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_GET_ERROR);
+        verifyMicrophoneChip(false);
+    }
+
+    @Test
     public void testHotwordDetectionService_onDetectFromExternalSource_success()
             throws Throwable {
         Thread.sleep(CLEAR_CHIP_MS);
@@ -365,7 +385,7 @@ public final class HotwordDetectionServiceBasicTest
         // ActivityManager restarts the HotwordDetectionService again. Add the sleep time to wait
         // ActivityManager to restart the HotwordDetectionService, so that the service can be
         // destroyed after finishing this test case.
-        Thread.sleep(TIMEOUT_MS);
+        Thread.sleep(5000);
 
         testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
@@ -411,7 +431,7 @@ public final class HotwordDetectionServiceBasicTest
                 expectedIntent);
         receiver.register();
         perform(testType);
-        final Intent intent = receiver.awaitForBroadcast(TIMEOUT_MS);
+        final Intent intent = receiver.awaitForBroadcast(TEST_RESULT_AWAIT_TIMEOUT_MS);
         receiver.unregisterQuietly();
 
         assertThat(intent).isNotNull();
@@ -424,7 +444,7 @@ public final class HotwordDetectionServiceBasicTest
                 Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT);
         receiver.register();
         perform(testType);
-        final Intent intent = receiver.awaitForBroadcast(TIMEOUT_MS);
+        final Intent intent = receiver.awaitForBroadcast(TEST_RESULT_AWAIT_TIMEOUT_MS);
         receiver.unregisterQuietly();
 
         assertThat(intent).isNotNull();

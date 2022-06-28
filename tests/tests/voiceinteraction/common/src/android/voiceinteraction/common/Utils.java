@@ -97,6 +97,7 @@ public class Utils {
     public static final int HOTWORD_DETECTION_SERVICE_SOFTWARE_DESTROY_DETECTOR = 109;
     public static final int DSP_DETECTOR_START_RECOGNITION_WITH_DATA_TEST = 110;
     public static final int DSP_DETECTOR_ENROLL_FAKE_DSP_MODEL = 111;
+    public static final int HOTWORD_DETECTION_SERVICE_ADD_DETECTION_DELAY = 112;
 
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS = 1;
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION = 2;
@@ -203,6 +204,7 @@ public class Utils {
     public static final String KEY_TEST_EVENT = "testEvent";
     public static final String KEY_TEST_RESULT = "testResult";
     public static final String KEY_TEST_SCENARIO = "testScenario";
+    public static final String KEY_DETECTION_DELAY_MS = "detectionDelayMs";
 
     public static final String VOICE_INTERACTION_KEY_CALLBACK = "callback";
     public static final String VOICE_INTERACTION_KEY_CONTROL = "control";

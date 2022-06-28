@@ -196,6 +196,131 @@ public class PerformanceClassEvaluator {
         }
     }
 
+    // used for requirements [8.2/H-1-1], [8.2/H-1-2], [8.2/H-1-3], [8.2/H-1-4]
+    public static class FileSystemRequirement extends Requirement {
+
+        private static final String TAG = FileSystemRequirement.class.getSimpleName();
+
+        private FileSystemRequirement(String id, RequiredMeasurement<?>... reqs) {
+            super(id, reqs);
+        }
+        /**
+         * Set the Filesystem I/O Rate in MB/s.
+         */
+        public void setFilesystemIoRate(double filesystemIoRate) {
+            this.setMeasuredValue(RequirementConstants.FILESYSTEM_IO_RATE, filesystemIoRate);
+        }
+
+        /**
+         * [8.2/H-1-1] MUST ensure a sequential write performance of at least 100(R) / 125(S &
+         * above) MB/s.
+         */
+        public static FileSystemRequirement createR8_2__H_1_1() {
+            RequiredMeasurement<Double> filesystem_io_rate = RequiredMeasurement
+                .<Double>builder().setId(RequirementConstants.FILESYSTEM_IO_RATE)
+                .setPredicate(RequirementConstants.DOUBLE_GTE)
+                .addRequiredValue(Build.VERSION_CODES.R, 100.0)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 125.0)
+                .build();
+
+            return new FileSystemRequirement(RequirementConstants.R8_2__H_1_1, filesystem_io_rate);
+        }
+
+        /**
+         * [8.2/H-2-1] MUST ensure a sequential write performance of at least 125 MB/s.
+         */
+        public static FileSystemRequirement createR8_2__H_2_1() {
+            RequiredMeasurement<Double> filesystem_io_rate = RequiredMeasurement
+                .<Double>builder().setId(RequirementConstants.FILESYSTEM_IO_RATE)
+                .setPredicate(RequirementConstants.DOUBLE_GTE)
+                .addRequiredValue(Build.VERSION_CODES.S, 125.0)
+                .build();
+
+            return new FileSystemRequirement(RequirementConstants.R8_2__H_2_1, filesystem_io_rate);
+        }
+
+        /**
+         * [8.2/H-1-2] MUST ensure a random write performance of at least 10 MB/s
+         */
+        public static FileSystemRequirement createR8_2__H_1_2() {
+            RequiredMeasurement<Double> filesystem_io_rate = RequiredMeasurement
+                .<Double>builder().setId(RequirementConstants.FILESYSTEM_IO_RATE)
+                .setPredicate(RequirementConstants.DOUBLE_GTE)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 10.0)
+                .build();
+
+            return new FileSystemRequirement(RequirementConstants.R8_2__H_1_2, filesystem_io_rate);
+        }
+
+        /**
+         * [8.2/H-2-2] MUST ensure a random write performance of at least 10 MB/s.
+         */
+        public static FileSystemRequirement createR8_2__H_2_2() {
+            RequiredMeasurement<Double> filesystem_io_rate = RequiredMeasurement
+                .<Double>builder().setId(RequirementConstants.FILESYSTEM_IO_RATE)
+                .setPredicate(RequirementConstants.DOUBLE_GTE)
+                .addRequiredValue(Build.VERSION_CODES.S, 10.0)
+                .build();
+
+            return new FileSystemRequirement(RequirementConstants.R8_2__H_2_2, filesystem_io_rate);
+        }
+
+        /**
+         * [8.2/H-1-3] MUST ensure a sequential read performance of at least 200(R) / 250(S &
+         * above) MB/s.
+         */
+        public static FileSystemRequirement createR8_2__H_1_3() {
+            RequiredMeasurement<Double> filesystem_io_rate = RequiredMeasurement
+                .<Double>builder().setId(RequirementConstants.FILESYSTEM_IO_RATE)
+                .setPredicate(RequirementConstants.DOUBLE_GTE)
+                .addRequiredValue(Build.VERSION_CODES.R, 200.0)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 250.0)
+                .build();
+
+            return new FileSystemRequirement(RequirementConstants.R8_2__H_1_3, filesystem_io_rate);
+        }
+
+        /**
+         * [8.2/H-2-3] MUST ensure a sequential read performance of at least 250 MB/s.
+         */
+        public static FileSystemRequirement createR8_2__H_2_3() {
+            RequiredMeasurement<Double> filesystem_io_rate = RequiredMeasurement
+                .<Double>builder().setId(RequirementConstants.FILESYSTEM_IO_RATE)
+                .setPredicate(RequirementConstants.DOUBLE_GTE)
+                .addRequiredValue(Build.VERSION_CODES.S, 250.0)
+                .build();
+
+            return new FileSystemRequirement(RequirementConstants.R8_2__H_2_3, filesystem_io_rate);
+        }
+
+        /**
+         * [8.2/H-1-4] MUST ensure a random read performance of at least 25(R) / 40(S & above) MB/s.
+         */
+        public static FileSystemRequirement createR8_2__H_1_4() {
+            RequiredMeasurement<Double> filesystem_io_rate = RequiredMeasurement
+                .<Double>builder().setId(RequirementConstants.FILESYSTEM_IO_RATE)
+                .setPredicate(RequirementConstants.DOUBLE_GTE)
+                .addRequiredValue(Build.VERSION_CODES.R, 25.0)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 40.0)
+                .build();
+
+            return new FileSystemRequirement(RequirementConstants.R8_2__H_1_4, filesystem_io_rate);
+        }
+
+        /**
+         * [8.2/H-2-4] MUST ensure a random read performance of at least 40 MB/s.
+         */
+        public static FileSystemRequirement createR8_2__H_2_4() {
+            RequiredMeasurement<Double> filesystem_io_rate = RequiredMeasurement
+                .<Double>builder().setId(RequirementConstants.FILESYSTEM_IO_RATE)
+                .setPredicate(RequirementConstants.DOUBLE_GTE)
+                .addRequiredValue(Build.VERSION_CODES.S, 40.0)
+                .build();
+
+            return new FileSystemRequirement(RequirementConstants.R8_2__H_2_4, filesystem_io_rate);
+        }
+    }
+
     public static class CodecInitLatencyRequirement extends Requirement {
 
         private static final String TAG = CodecInitLatencyRequirement.class.getSimpleName();
@@ -544,6 +669,42 @@ public class PerformanceClassEvaluator {
         }
 
         /**
+         * Helper method used to create ConcurrentCodecRequirements, builds and fills out the
+         * a requirement for tests ran with a resolution of 720p
+         */
+        private static ConcurrentCodecRequirement create720p(String requirementId,
+                RequiredMeasurement<?> measure) {
+            RequiredMeasurement<Integer> testResolution = RequiredMeasurement.<Integer>builder()
+                .setId(RequirementConstants.TEST_RESOLUTION)
+                .setPredicate(RequirementConstants.INTEGER_EQ)
+                .addRequiredValue(Build.VERSION_CODES.R, 720)
+                .build();
+
+            ConcurrentCodecRequirement req = new ConcurrentCodecRequirement(requirementId, measure,
+                    testResolution);
+            req.setMeasuredValue(RequirementConstants.TEST_RESOLUTION, 720);
+            return req;
+        }
+
+        /**
+         * Helper method used to create ConcurrentCodecRequirements, builds and fills out the
+         * a requirement for tests ran with a resolution of 1080p
+         */
+        private static ConcurrentCodecRequirement create1080p(String requirementId,
+                RequiredMeasurement<?> measure) {
+            RequiredMeasurement<Integer> testResolution = RequiredMeasurement.<Integer>builder()
+                .setId(RequirementConstants.TEST_RESOLUTION)
+                .setPredicate(RequirementConstants.INTEGER_EQ)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 1080)
+                .build();
+
+            ConcurrentCodecRequirement req = new ConcurrentCodecRequirement(requirementId, measure,
+                    testResolution);
+            req.setMeasuredValue(RequirementConstants.TEST_RESOLUTION, 1080);
+            return req;
+        }
+
+        /**
          * [2.2.7.1/5.1/H-1-1] MUST advertise the maximum number of hardware video decoder
          * sessions that can be run concurrently in any codec combination via the
          * CodecCapabilities.getMaxSupportedInstances() and VideoCapabilities
@@ -562,7 +723,7 @@ public class PerformanceClassEvaluator {
                         resolution))
                 .build();
 
-            return new ConcurrentCodecRequirement(RequirementConstants.R5_1__H_1_1, maxInstances);
+            return create720p(RequirementConstants.R5_1__H_1_1, maxInstances);
         }
 
         /**
@@ -578,7 +739,7 @@ public class PerformanceClassEvaluator {
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 6)
                 .build();
 
-            return new ConcurrentCodecRequirement(RequirementConstants.R5_1__H_1_1, maxInstances);
+            return create1080p(RequirementConstants.R5_1__H_1_1, maxInstances);
         }
 
         /**
@@ -597,8 +758,7 @@ public class PerformanceClassEvaluator {
                     getReqMinConcurrentFps(Build.VERSION_CODES.S, mimeType1, mimeType2, resolution))
                 .build();
 
-            return new ConcurrentCodecRequirement(RequirementConstants.R5_1__H_1_2,
-                reqConcurrentFps);
+            return create720p(RequirementConstants.R5_1__H_1_2, reqConcurrentFps);
         }
 
         /**
@@ -613,8 +773,7 @@ public class PerformanceClassEvaluator {
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 6 * FPS_30_TOLERANCE)
                 .build();
 
-            return new ConcurrentCodecRequirement(RequirementConstants.R5_1__H_1_2,
-                reqConcurrentFps);
+            return create1080p(RequirementConstants.R5_1__H_1_2, reqConcurrentFps);
         }
 
         /**
@@ -636,7 +795,7 @@ public class PerformanceClassEvaluator {
                         resolution))
                 .build();
 
-            return new ConcurrentCodecRequirement(RequirementConstants.R5_1__H_1_3, maxInstances);
+            return create720p(RequirementConstants.R5_1__H_1_3, maxInstances);
         }
 
         /**
@@ -652,7 +811,7 @@ public class PerformanceClassEvaluator {
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 6)
                 .build();
 
-            return new ConcurrentCodecRequirement(RequirementConstants.R5_1__H_1_3, maxInstances);
+            return create1080p(RequirementConstants.R5_1__H_1_3, maxInstances);
         }
 
         /**
@@ -669,8 +828,7 @@ public class PerformanceClassEvaluator {
                 .addRequiredValue(Build.VERSION_CODES.S, 0.0)
                 .build();
 
-            return new ConcurrentCodecRequirement(RequirementConstants.R5_1__H_1_4,
-                reqConcurrentFps);
+            return create720p(RequirementConstants.R5_1__H_1_4, reqConcurrentFps);
         }
 
         /**
@@ -686,8 +844,7 @@ public class PerformanceClassEvaluator {
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 0.0)
                 .build();
 
-            return new ConcurrentCodecRequirement(RequirementConstants.R5_1__H_1_4,
-                reqConcurrentFps);
+            return create1080p(RequirementConstants.R5_1__H_1_4, reqConcurrentFps);
         }
 
         /**
@@ -709,7 +866,7 @@ public class PerformanceClassEvaluator {
                         resolution))
                 .build();
 
-            return new ConcurrentCodecRequirement(RequirementConstants.R5_1__H_1_5, maxInstances);
+            return create720p(RequirementConstants.R5_1__H_1_5, maxInstances);
         }
 
         /**
@@ -725,7 +882,7 @@ public class PerformanceClassEvaluator {
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 6)
                 .build();
 
-            return new ConcurrentCodecRequirement(RequirementConstants.R5_1__H_1_5, maxInstances);
+            return create1080p(RequirementConstants.R5_1__H_1_5, maxInstances);
         }
 
         /**
@@ -747,8 +904,7 @@ public class PerformanceClassEvaluator {
                         / 2)
                 .build();
 
-            return new ConcurrentCodecRequirement(RequirementConstants.R5_1__H_1_6,
-                reqConcurrentFps);
+            return create720p(RequirementConstants.R5_1__H_1_6, reqConcurrentFps);
         }
 
         /**
@@ -764,8 +920,7 @@ public class PerformanceClassEvaluator {
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 6 * FPS_30_TOLERANCE / 2)
                 .build();
 
-            return new ConcurrentCodecRequirement(RequirementConstants.R5_1__H_1_6,
-                reqConcurrentFps);
+            return create1080p(RequirementConstants.R5_1__H_1_6, reqConcurrentFps);
         }
 
         /**
@@ -780,8 +935,7 @@ public class PerformanceClassEvaluator {
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 2 * FPS_30_TOLERANCE)
                 .build();
 
-            return new ConcurrentCodecRequirement(RequirementConstants.R5_1__H_1_9,
-                reqConcurrentFps);
+            return create1080p(RequirementConstants.R5_1__H_1_9, reqConcurrentFps);
         }
 
         /**
@@ -797,8 +951,7 @@ public class PerformanceClassEvaluator {
                 .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 4 * FPS_30_TOLERANCE)
                 .build();
 
-            return new ConcurrentCodecRequirement(RequirementConstants.R5_1__H_1_10,
-                reqConcurrentFps);
+            return create1080p(RequirementConstants.R5_1__H_1_10, reqConcurrentFps);
         }
     }
 
@@ -880,6 +1033,38 @@ public class PerformanceClassEvaluator {
 
     public MemoryRequirement addR7_6_1__H_2_1() {
         return this.<MemoryRequirement>addRequirement(MemoryRequirement.createR7_6_1__H_2_1());
+    }
+
+    public FileSystemRequirement addR8_2__H_1_1() {
+        return this.addRequirement(FileSystemRequirement.createR8_2__H_1_1());
+    }
+
+    public FileSystemRequirement addR8_2__H_2_1() {
+        return this.addRequirement(FileSystemRequirement.createR8_2__H_2_1());
+    }
+
+    public FileSystemRequirement addR8_2__H_1_2() {
+        return this.addRequirement(FileSystemRequirement.createR8_2__H_1_2());
+    }
+
+    public FileSystemRequirement addR8_2__H_2_2() {
+        return this.addRequirement(FileSystemRequirement.createR8_2__H_2_2());
+    }
+
+    public FileSystemRequirement addR8_2__H_1_3() {
+        return this.addRequirement(FileSystemRequirement.createR8_2__H_1_3());
+    }
+
+    public FileSystemRequirement addR8_2__H_2_3() {
+        return this.addRequirement(FileSystemRequirement.createR8_2__H_2_3());
+    }
+
+    public FileSystemRequirement addR8_2__H_1_4() {
+        return this.addRequirement(FileSystemRequirement.createR8_2__H_1_4());
+    }
+
+    public FileSystemRequirement addR8_2__H_2_4() {
+        return this.addRequirement(FileSystemRequirement.createR8_2__H_2_4());
     }
 
     public FrameDropRequirement addR5_3__H_1_1_R() {

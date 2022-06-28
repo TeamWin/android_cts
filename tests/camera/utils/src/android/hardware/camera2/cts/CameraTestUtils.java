@@ -2913,7 +2913,7 @@ public class CameraTestUtils extends Assert {
      * <p>
      * Two images are strongly equal if and only if the data, formats, sizes,
      * and timestamps are same. For {@link ImageFormat#PRIVATE PRIVATE} format
-     * images, the image data is not not accessible thus the data comparison is
+     * images, the image data is not accessible thus the data comparison is
      * effectively skipped as the number of planes is zero.
      * </p>
      * <p>

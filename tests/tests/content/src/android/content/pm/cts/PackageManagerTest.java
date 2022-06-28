@@ -117,8 +117,10 @@ import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -2298,5 +2300,23 @@ public class PackageManagerTest {
     public void testComponentInfoFlags() {
         final long rawFlags = PackageManager.GET_META_DATA;
         assertEquals(rawFlags, PackageManager.ComponentInfoFlags.of(rawFlags).getValue());
+    }
+
+    @Test
+    public void testDeleteDexopt_withoutShellIdentity() throws Exception {
+        assertThat(runCommand("pm delete-dexopt " + PACKAGE_NAME))
+                .contains(SecurityException.class.getName());
+    }
+
+    private static String runCommand(String cmd) throws Exception {
+        final Process process = Runtime.getRuntime().exec(cmd);
+        final StringBuilder output = new StringBuilder();
+        BufferedReader reader =
+                new BufferedReader(new InputStreamReader(process.getInputStream()));
+        reader.lines().forEach(line -> output.append(line));
+        reader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+        reader.lines().forEach(line -> output.append(line));
+        process.waitFor();
+        return output.toString();
     }
 }

@@ -23,14 +23,14 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import android.content.Context;
 import android.provider.Settings;
 
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
 import com.android.compatibility.common.util.SettingsStateChangerRule;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
-
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 /**
  * Base class for using the VoiceInteractionService that included a basic HotwordDetectionService.
@@ -39,7 +39,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 abstract class AbstractVoiceInteractionBasicTestCase {
     // TODO: (b/181943521) Combine the duplicated test class
 
-    protected static final int TIMEOUT_MS = 5 * 1000;
+    protected static final int TEST_RESULT_AWAIT_TIMEOUT_MS = 10 * 1000;
 
     protected final Context mContext = getInstrumentation().getTargetContext();
 

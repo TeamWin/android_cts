@@ -74,6 +74,7 @@ public class RequirementConstants {
     public static final String RTBD = "tbd"; // placeholder for requirements without a set id
 
     public static final String CONCURRENT_SESSIONS = "concurrent_sessions";
+    public static final String TEST_RESOLUTION = "resolution";
     public static final String CONCURRENT_FPS = "concurrent_fps";
     public static final String SUPPORTED_PERFORMANCE_POINTS = "supported_performance_points";
     public static final String FRAMES_DROPPED = "frame_drops_per_30sec";
@@ -89,6 +90,7 @@ public class RequirementConstants {
     public static final String SECURE_REQ_SATISFIED = "secure_requirement_satisfied_boolean";
     public static final String NUM_CRYPTO_HW_SECURE_ALL_SUPPORT =
         "number_crypto_hw_secure_all_support";
+    public static final String FILESYSTEM_IO_RATE = "filesystem_io_rate_mbps";
 
     public enum Result {
         NA, MET, UNMET
@@ -98,9 +100,10 @@ public class RequirementConstants {
     public static final BiPredicate<Long, Long> LONG_LTE = RequirementConstants.lte();
     public static final BiPredicate<Integer, Integer> INTEGER_GTE = RequirementConstants.gte();
     public static final BiPredicate<Integer, Integer> INTEGER_LTE = RequirementConstants.lte();
+    public static final BiPredicate<Integer, Integer> INTEGER_EQ = RequirementConstants.eq();
+    public static final BiPredicate<Double, Double> DOUBLE_GTE = RequirementConstants.gte();
     public static final BiPredicate<Double, Double> DOUBLE_EQ = RequirementConstants.eq();
     public static final BiPredicate<Boolean, Boolean> BOOLEAN_EQ = RequirementConstants.eq();
-    public static final BiPredicate<Double, Double> DOUBLE_GTE = RequirementConstants.gte();
 
     /**
      * Creates a >= predicate.

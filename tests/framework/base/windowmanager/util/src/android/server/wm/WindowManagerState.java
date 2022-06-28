@@ -39,6 +39,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.ActivityTaskManager;
+import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.res.Configuration;
 import android.graphics.Point;
@@ -127,6 +128,9 @@ public class WindowManagerState {
     private static final int TYPE_NAVIGATION_BAR_PANEL = 2024;
     /** @see WindowManager.LayoutParams */
     private static final int TYPE_NOTIFICATION_SHADE = 2040;
+
+    /** Whether accessibility services should be suppressed when taking the WindowManager dump. */
+    private boolean mSuppressAccessibilityServices = true;
 
     private RootWindowContainer mRoot = null;
     // Displays in z-order with the top most at the front of the list, starting with primary.
@@ -356,9 +360,15 @@ public class WindowManagerState {
         }
     }
 
+    public void setSuppressAccessibilityServices(boolean suppressAccessibilityServices) {
+        mSuppressAccessibilityServices = suppressAccessibilityServices;
+    }
+
     private byte[] executeShellCommand(String cmd) {
         try {
-            ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation()
+            ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation(
+                    mSuppressAccessibilityServices ? 0
+                            : UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES)
                     .executeShellCommand(cmd);
             byte[] buf = new byte[512];
             int bytesRead;

@@ -87,6 +87,11 @@ public class ListeningPortsTest extends AndroidTestCase {
         // TODO: this is not standard notation for IPv6. Use [$addr]:$port instead as per RFC 3986.
         EXCEPTION_PATTERNS.add(":::5555");          // emulator port for adb
         EXCEPTION_PATTERNS.add(":::7275");          // used by supl
+
+        // DHCP: This port is open when a network is connected before DHCP is resolved
+        // And can also be opened on boot for ethernet networks.
+        // Thus a device connected via wifi with an ethernet port can encounter this.
+        EXCEPTION_PATTERNS.add("0.0.0.0:68");
     }
 
     /**

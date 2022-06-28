@@ -16,6 +16,9 @@
 
 package com.android.cts.verifier.audio;
 
+import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
+import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
+
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -136,6 +139,16 @@ public class AudioTap2ToneActivity
     private boolean mArmed = true;  // OK to fire another beep
 
     private double[] mLatencyMillis = new double[NUM_TEST_PHASES];
+
+    @Override
+    public String getReportFileName() {
+        return PassFailButtons.AUDIO_TESTS_REPORT_LOG_NAME;
+    }
+
+    @Override
+    public final String getReportSectionName() {
+        return setTestNameSuffix(sCurrentDisplayMode, "audio_tap2tone_latency_activity");
+    }
 
     // ReportLog Schema
     // Note that each key will be suffixed with the ID of the API tested
@@ -323,34 +336,6 @@ public class AudioTap2ToneActivity
         getPassButton().setEnabled(pass);
     }
 
-    private void recordTestStatus() {
-        CtsVerifierReportLog reportLog = getReportLog();
-        for (int api = TEST_API_NATIVE; api <= TEST_API_JAVA; api++) {
-            reportLog.addValue(
-                    KEY_LATENCY_MIN + api,
-                    mLatencyMin[api],
-                    ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-            reportLog.addValue(
-                    KEY_LATENCY_MAX + api,
-                    mLatencyMax[api],
-                    ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-            reportLog.addValue(
-                    KEY_LATENCY_AVE + api,
-                    mLatencyAve[api],
-                    ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-            reportLog.addValue(
-                    KEY_LATENCY_NUM_MEASUREMENTS + api,
-                    mNumMeasurements[api],
-                    ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-        }
-
-        reportLog.submit();
-    }
-
     private void trigger() {
         if (mIsRecording) {
             if (mArmed) {
@@ -493,11 +478,38 @@ public class AudioTap2ToneActivity
         }
     }
 
+    private void reportTestResultForApi(int api) {
+        CtsVerifierReportLog reportLog = getReportLog();
+        reportLog.addValue(
+                KEY_LATENCY_MIN + api,
+                mLatencyMin[api],
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
+        reportLog.addValue(
+                KEY_LATENCY_MAX + api,
+                mLatencyMax[api],
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
+        reportLog.addValue(
+                KEY_LATENCY_AVE + api,
+                mLatencyAve[api],
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
+        reportLog.addValue(
+                KEY_LATENCY_NUM_MEASUREMENTS + api,
+                mNumMeasurements[api],
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
+    }
+
     @Override
-    public void setTestResultAndFinish(boolean passed) {
-        stopAudio();
-        recordTestStatus();
-        super.setTestResultAndFinish(passed);
+    public void recordTestResults() {
+        Log.i(TAG, "recordTestResults()");
+
+        reportTestResultForApi(TEST_API_NATIVE);
+        reportTestResultForApi(TEST_API_JAVA);
+
+        getReportLog().submit();
     }
 
     //

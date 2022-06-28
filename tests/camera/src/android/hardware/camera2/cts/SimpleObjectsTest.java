@@ -25,6 +25,8 @@ import android.hardware.camera2.params.BlackLevelPattern;
 import android.hardware.camera2.params.Capability;
 import android.hardware.camera2.params.DeviceStateSensorOrientationMap;
 import android.hardware.camera2.params.Face;
+import android.util.Range;
+import android.util.Size;
 
 import androidx.test.runner.AndroidJUnit4;
 
@@ -137,12 +139,12 @@ public class SimpleObjectsTest {
 
     @Test
     public void capabilityConstructionTest() {
-        Capability capability = new Capability(/*mode*/ 0, /*maxStreamingWidth*/ 128,
-                /*maxStreamingHeight*/ 128, /*minZoomRatio*/ 0.2f, /*maxZoomRatio*/ 2.0f);
+        Capability capability = new Capability(/*mode*/ 0, /*maxStreamingSize*/ new Size(128, 128),
+                /*zoomRatioRange*/ new Range<Float>(0.2f, 2.0f));
 
         try {
-            capability = new Capability(/*mode*/ 0, /*maxStreamingWidth*/ -1,
-                    /*maxStreamingHeight*/ 128, /*minZoomRatio*/ 0.2f, /*maxZoomRatio*/ 2.0f);
+            capability = new Capability(/*mode*/ 0, /*maxStreamingSize*/ new Size(-1, 128),
+                    /*zoomRatioRange*/ new Range<Float>(0.2f, 2.0f));
             Assert.fail("Capability did not throw an IllegalArgumentException for negative "
                     + "maxStreamingWidth");
         } catch (IllegalArgumentException e) {
@@ -150,8 +152,8 @@ public class SimpleObjectsTest {
         }
 
         try {
-            capability = new Capability(/*mode*/ 0, /*maxStreamingWidth*/ 128,
-                    /*maxStreamingHeight*/ -1, /*minZoomRatio*/ 0.2f, /*maxZoomRatio*/ 2.0f);
+            capability = new Capability(/*mode*/ 0, /*maxStreamingSize*/ new Size(128, -1),
+                     /*zoomRatioRange*/ new Range<Float>(0.2f, 2.0f));
             Assert.fail("Capability did not throw an IllegalArgumentException for negative "
                     + "maxStreamingHeight");
         } catch (IllegalArgumentException e) {
@@ -159,8 +161,8 @@ public class SimpleObjectsTest {
         }
 
         try {
-            capability = new Capability(/*mode*/ 0, /*maxStreamingWidth*/ 128,
-                    /*maxStreamingHeight*/ 128, /*minZoomRatio*/ -3.0f, /*maxZoomRatio*/ -2.0f);
+            capability = new Capability(/*mode*/ 0, /*maxStreamingSize*/ new Size(128, 128),
+                    /*zoomRatioRange*/ new Range<Float>(-3.0f, -2.0f));
             Assert.fail("Capability did not throw an IllegalArgumentException for negative "
                     + "zoom ratios");
         } catch (IllegalArgumentException e) {
@@ -168,8 +170,8 @@ public class SimpleObjectsTest {
         }
 
         try {
-            capability = new Capability(/*mode*/ 0, /*maxStreamingWidth*/ 128,
-                    /*maxStreamingHeight*/ 128, /*minZoomRatio*/ 3.0f, /*maxZoomRatio*/ 2.0f);
+            capability = new Capability(/*mode*/ 0, /*maxStreamingSize*/ new Size(128, 128),
+                    /*zoomRatioRange*/ new Range<Float>(3.0f, 2.0f));
             Assert.fail("Capability did not throw an IllegalArgumentException for minZoomRatio "
                     + "> maxZoomRatio");
         } catch (IllegalArgumentException e) {

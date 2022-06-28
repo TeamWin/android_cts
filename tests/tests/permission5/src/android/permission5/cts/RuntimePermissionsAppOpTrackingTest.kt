@@ -25,6 +25,7 @@ import android.content.Context
 import android.content.ContextParams
 import android.content.Intent
 import android.content.pm.PackageManager.FEATURE_LEANBACK
+import android.content.pm.PackageManager.FEATURE_TELEPHONY
 import android.net.Uri
 import android.os.Bundle
 import android.os.Process
@@ -42,8 +43,14 @@ import android.speech.SpeechRecognizer
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
 import com.google.common.truth.Truth.assertThat
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.ReentrantLock
+import java.util.function.Consumer
 import org.junit.After
 import org.junit.Assume.assumeFalse
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatcher
@@ -52,11 +59,6 @@ import org.mockito.Mockito.inOrder
 import org.mockito.Mockito.intThat
 import org.mockito.Mockito.isNull
 import org.mockito.Mockito.mock
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.locks.ReentrantLock
-import java.util.function.Consumer
 
 @AppModeFull(reason = "Instant apps cannot hold READ_CONTACTS/READ_CALENDAR/READ_SMS/READ_CALL_LOG")
 class RuntimePermissionsAppOpTrackingTest {
@@ -105,6 +107,7 @@ class RuntimePermissionsAppOpTrackingTest {
     @Throws(Exception::class)
     fun testSelfSmsAccess() {
         assumeNotTv()
+        assumeHasTelephony()
         testSelfAccess(Telephony.Sms.CONTENT_URI,
                 Manifest.permission.READ_SMS)
     }
@@ -178,6 +181,7 @@ class RuntimePermissionsAppOpTrackingTest {
     @Throws(Exception::class)
     fun testUntrustedSmsAccessAttributeToAnother() {
         assumeNotTv()
+        assumeHasTelephony()
         testUntrustedAccessAttributeToAnother(Telephony.Sms.CONTENT_URI,
                 Manifest.permission.READ_SMS)
     }
@@ -225,6 +229,7 @@ class RuntimePermissionsAppOpTrackingTest {
     @Throws(Exception::class)
     fun testUntrustedSmsAccessAttributeToAnotherThroughIntermediary() {
         assumeNotTv()
+        assumeHasTelephony()
         testUntrustedAccessAttributeToAnotherThroughIntermediary(
                 Telephony.Sms.CONTENT_URI,
                 Manifest.permission.READ_SMS)
@@ -323,6 +328,7 @@ class RuntimePermissionsAppOpTrackingTest {
     @Throws(Exception::class)
     fun testTrustedAccessSmsAttributeToAnother() {
         assumeNotTv()
+        assumeHasTelephony()
         testTrustedAccessAttributeToAnother(Telephony.Sms.CONTENT_URI,
                 Manifest.permission.READ_SMS)
     }
@@ -357,6 +363,15 @@ class RuntimePermissionsAppOpTrackingTest {
                 /*accessorTrusted*/ true, /*accessorAccessCount*/ 1,
                 /*receiverAccessCount*/ 1, /*checkAccessor*/ false,
                 /*fromDatasource*/ false)
+    }
+
+    @Test
+    fun testGetAllPackagesForAllAppOps() {
+        val appOpsManager = Companion.context.getSystemService(AppOpsManager::class.java)!!
+        val result = SystemUtil.runWithShellPermissionIdentity<List<AppOpsManager.PackageOps>> {
+            appOpsManager.getPackagesForOps(null as Array<String>?)
+        }
+        assertThat(result.size).isAtLeast(1)
     }
 
     @Test
@@ -666,6 +681,7 @@ class RuntimePermissionsAppOpTrackingTest {
             get() = InstrumentationRegistry.getInstrumentation()
 
         private val isTv = context.packageManager.hasSystemFeature(FEATURE_LEANBACK)
+        private val isTel = context.packageManager.hasSystemFeature(FEATURE_TELEPHONY)
 
         fun ensureAuxiliaryAppsNotRunningAndNoResidualProcessState() {
             SystemUtil.runShellCommand("am force-stop $RECEIVER_PACKAGE_NAME")
@@ -1178,5 +1194,6 @@ class RuntimePermissionsAppOpTrackingTest {
         }
 
         private fun assumeNotTv() = assumeFalse(isTv)
+        private fun assumeHasTelephony() = assumeTrue(isTel)
     }
 }

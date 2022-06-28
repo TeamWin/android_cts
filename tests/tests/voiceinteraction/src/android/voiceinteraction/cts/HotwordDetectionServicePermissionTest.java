@@ -110,7 +110,7 @@ public final class HotwordDetectionServicePermissionTest
                 expectedIntent);
         receiver.register();
         perform(testType);
-        final Intent intent = receiver.awaitForBroadcast(TIMEOUT_MS);
+        final Intent intent = receiver.awaitForBroadcast(TEST_RESULT_AWAIT_TIMEOUT_MS);
         receiver.unregisterQuietly();
 
         assertThat(intent).isNotNull();
@@ -123,7 +123,7 @@ public final class HotwordDetectionServicePermissionTest
                 Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT);
         receiver.register();
         perform(testType);
-        final Intent intent = receiver.awaitForBroadcast(TIMEOUT_MS);
+        final Intent intent = receiver.awaitForBroadcast(TEST_RESULT_AWAIT_TIMEOUT_MS);
         receiver.unregisterQuietly();
 
         assertThat(intent).isNotNull();

@@ -55,9 +55,10 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
     // qp of the encoded clips shall drop down to < 10. Further the color bands are aligned to 2,
     // so from downsampling rgb24 to yuv420p, even if bilinear filters are used as opposed to
     // skipping samples, we may not see large color loss. Hence allowable tolerance is kept to 5.
-    // until QP stabilizes, the tolerance is set at 7.
-    private final int TRANSIENT_STATE_COLOR_DELTA = 7;
-    private final int STEADY_STATE_COLOR_DELTA = 5;
+    // until QP stabilizes, the tolerance is set at 7. For devices upgrading to T, thresholds are
+    // relaxed to 8 and 10.
+    private final int TRANSIENT_STATE_COLOR_DELTA = FIRST_SDK_IS_AT_LEAST_T ? 7: 10;
+    private final int STEADY_STATE_COLOR_DELTA = FIRST_SDK_IS_AT_LEAST_T ? 5: 8;
     private final int[][] mColorBars = new int[][]{
             {66, 133, 244},
             {219, 68, 55},

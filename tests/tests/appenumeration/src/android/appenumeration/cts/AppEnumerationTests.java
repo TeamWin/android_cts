@@ -26,6 +26,7 @@ import static android.appenumeration.cts.Constants.ACTION_CHECK_SIGNATURES;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_URI_PERMISSION;
 import static android.appenumeration.cts.Constants.ACTION_GET_ALL_PACKAGE_INSTALLER_SESSIONS;
 import static android.appenumeration.cts.Constants.ACTION_GET_ALL_SESSIONS;
+import static android.appenumeration.cts.Constants.ACTION_GET_CONTENT_PROVIDER_MIME_TYPE;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_ACCESSIBILITYSERVICES_PACKAGES;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_APPWIDGET_PROVIDERS;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_PACKAGES;
@@ -1969,6 +1970,18 @@ public class AppEnumerationTests {
     }
 
     @Test
+    public void queriesPackage_getType_canGetMimeType() throws Exception {
+        assertThat(getContentProviderMimeType(QUERIES_PACKAGE, TARGET_SYNCADAPTER),
+                is("got/theMIME"));
+    }
+
+    @Test
+    public void queriesNothing_getType_cannotGetMimeType() throws Exception {
+        assertThat(getContentProviderMimeType(QUERIES_NOTHING, TARGET_SYNCADAPTER),
+                IsNull.nullValue());
+    }
+
+    @Test
     public void setAutoRevokeWhitelisted_targetIsNotExisting_setFailed() throws Exception {
         final boolean result = SystemUtil.callWithShellPermissionIdentity(
                 () -> sPm.setAutoRevokeWhitelisted(TEST_NONEXISTENT_PACKAGE_NAME_1,
@@ -2550,6 +2563,15 @@ public class AppEnumerationTests {
         extraData.putString(EXTRA_AUTHORITY, providerPackageName);
         sendCommandBlocking(providerPackageName, null /* targetPackageName */, extraData,
                 ACTION_REVOKE_URI_PERMISSION);
+    }
+
+    private String getContentProviderMimeType(String sourcePackageName, String targetPackageName)
+            throws Exception {
+        final Bundle extraData = new Bundle();
+        extraData.putString(EXTRA_AUTHORITY, targetPackageName + ".authority");
+        final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
+                extraData, ACTION_GET_CONTENT_PROVIDER_MIME_TYPE);
+        return response.getString(Intent.EXTRA_RETURN_RESULT);
     }
 
     private boolean canPackageQuery(String callerPackageName, String sourcePackageName,

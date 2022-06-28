@@ -33,6 +33,11 @@
         <option name="dynamic-config-name" value="CtsMediaExtractorTestCases" />
         <option name="version" value="1.0"/>
     </target_preparer>
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
+        <option name="target" value="device" />
+        <option name="config-filename" value="CtsMediaExtractorTestCases" />
+        <option name="version" value="1.0"/>
+    </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.MediaPreparer">
         <option name="push-all" value="true" />
         <option name="media-folder-name" value="CtsMediaExtractorTestCases-1.0" />
@@ -41,11 +46,6 @@
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsMediaExtractorTestCases.apk" />
-    </target_preparer>
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
-        <option name="target" value="device" />
-        <option name="config-filename" value="CtsMediaExtractorTestCases" />
-        <option name="version" value="1.0"/>
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.media.extractor.cts" />

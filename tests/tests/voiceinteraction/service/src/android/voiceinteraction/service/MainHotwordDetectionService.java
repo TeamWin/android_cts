@@ -80,6 +80,8 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     private Handler mHandler;
     @GuardedBy("mLock")
     private boolean mStopDetectionCalled;
+    @GuardedBy("mLock")
+    private int mDetectionDelayMs = 0;
 
     @GuardedBy("mLock")
     @Nullable
@@ -123,10 +125,14 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             } while (Utils.getParcelableSize(persistableBundle)
                     <= HotwordDetectedResult.getMaxBundleSize());
 
-            try {
-                callback.onDetected(hotwordDetectedResult);
-            } catch (IllegalArgumentException e) {
-                callback.onDetected(DETECTED_RESULT);
+            synchronized (mLock) {
+                mHandler.postDelayed(() -> {
+                    try {
+                        callback.onDetected(hotwordDetectedResult);
+                    } catch (IllegalArgumentException e) {
+                        callback.onDetected(DETECTED_RESULT);
+                    }
+                }, mDetectionDelayMs);
             }
         } else {
             callback.onRejected(REJECTED_RESULT);
@@ -239,6 +245,9 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                     mDetectionJob = null;
                 }
                 mStopDetectionCalled = false;
+            }
+            if (options != null) {
+                mDetectionDelayMs = options.getInt(Utils.KEY_DETECTION_DELAY_MS, 0);
             }
         }
 

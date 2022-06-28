@@ -63,7 +63,7 @@ public class AlwaysOnHotwordDetectorTest extends AbstractVoiceInteractionBasicTe
                 expectedIntent);
         receiver.register();
         perform(testType);
-        final Intent intent = receiver.awaitForBroadcast(TIMEOUT_MS);
+        final Intent intent = receiver.awaitForBroadcast(TEST_RESULT_AWAIT_TIMEOUT_MS);
         receiver.unregisterQuietly();
 
         assertThat(intent).isNotNull();

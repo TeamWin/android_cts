@@ -149,6 +149,7 @@ public final class MockTestActivityUtil {
                 TEST_ACTIVITY.getPackageName());
         commandBuilder.append(" -f 0x").append(
                 Integer.toHexString(FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS));
+        commandBuilder.append(" --receiver-registered-only");
         commandBuilder.append(" --ez " + extra + " true");
         runWithShellPermissionIdentity(() -> {
             runShellCommand(commandBuilder.toString());

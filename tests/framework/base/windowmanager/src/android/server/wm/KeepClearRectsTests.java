@@ -27,6 +27,7 @@ import static org.junit.Assume.assumeTrue;
 
 import static java.util.Collections.EMPTY_LIST;
 
+import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -40,6 +41,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
 
@@ -47,7 +49,9 @@ import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.PollingCheck;
 
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -75,10 +79,20 @@ public class KeepClearRectsTests extends WindowManagerTestBase {
 
     private TestActivitySession<TestActivity> mTestSession;
 
+    @Rule
+    public InstrumentedAccessibilityServiceTestRule<AccessibilityTestService>
+            mAccessibilityServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
+            AccessibilityTestService.class, false);
+
     @Before
     public void setUp() throws Exception {
         super.setUp();
         mTestSession = createManagedTestActivitySession();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        mWmState.setSuppressAccessibilityServices(true);
     }
 
     @Test
@@ -534,8 +548,53 @@ public class KeepClearRectsTests extends WindowManagerTestBase {
                 () -> getUnrestrictedKeepClearRectsForActivity(activity));
     }
 
+    @Test
+    public void testAccessibilityFocusCreatesKeepClearRect() throws Exception {
+        mTestSession.launchTestActivityOnDisplaySync(TestActivity.class, DEFAULT_DISPLAY);
+        final TestActivity activity = mTestSession.getActivity();
+
+        mWmState.setSuppressAccessibilityServices(false);
+        mAccessibilityServiceRule.enableService();
+
+        final View v = createTestViewInActivity(activity, TEST_VIEW_BOUNDS);
+        v.setFocusable(false);
+
+        mTestSession.runOnMainSyncAndWait(() -> {
+            v.performAccessibilityAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null);
+        });
+
+        assertSameElementsEventually(Collections.singletonList(TEST_VIEW_BOUNDS),
+                () -> getKeepClearRectsForActivity(activity));
+    }
+
+    @Test
+    public void testAccessibilityAndInputFocusCreateKeepClearRects() throws Exception {
+        mTestSession.launchTestActivityOnDisplaySync(TestActivity.class, DEFAULT_DISPLAY);
+        final TestActivity activity = mTestSession.getActivity();
+
+        mWmState.setSuppressAccessibilityServices(false);
+        mAccessibilityServiceRule.enableService();
+
+        final Rect a11yFocusViewBounds = new Rect(30, 0, 50, 25);
+        final Rect inputFocusViewBounds = new Rect(0, 0, 25, 25);
+
+        final View a11yFocusView = createTestViewInActivity(activity, a11yFocusViewBounds);
+        final View inputFocusView = createTestViewInActivity(activity, inputFocusViewBounds);
+
+        mTestSession.runOnMainSyncAndWait(() -> {
+            a11yFocusView.performAccessibilityAction(
+                    AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null);
+
+            inputFocusView.setFocusable(true);
+            inputFocusView.requestFocus();
+        });
+
+        assertSameElementsEventually(Arrays.asList(a11yFocusViewBounds, inputFocusViewBounds),
+                () -> getKeepClearRectsForActivity(activity));
+    }
+
     private View createTestViewInActivity(TestActivity activity) {
-        return createTestViewInActivity(activity, new Rect(0, 0, 100, 100));
+        return createTestViewInActivity(activity, TEST_VIEW_BOUNDS);
     }
 
     private View createTestViewInActivity(TestActivity activity, Rect viewBounds) {

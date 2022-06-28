@@ -158,10 +158,10 @@ public class CodecInfoTest {
                             .noneMatch(x -> x == COLOR_FormatSurface));
         }
 
-        // For devices launching with Android T, if a codec supports an HDR profile, it must
-        // advertise P010 support
+        // For devices launching with Android T, if a codec supports an HDR profile and device
+        // supports HDR display, it must advertise P010 support
         int[] HdrProfileArray = mProfileHdrMap.get(mMediaType);
-        if (FIRST_SDK_IS_AT_LEAST_T && HdrProfileArray != null) {
+        if (FIRST_SDK_IS_AT_LEAST_T && HdrProfileArray != null && DISPLAY_HDR_TYPES.length > 0) {
             for (CodecProfileLevel pl : caps.profileLevels) {
                 if (IntStream.of(HdrProfileArray).anyMatch(x -> x == pl.profile)) {
                     assertFalse(mCodecInfo.getName() + " supports HDR profile " + pl.profile + "," +

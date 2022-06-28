@@ -1671,6 +1671,72 @@
         </activity>
 
         <activity
+            android:name=".biometrics.UserAuthenticationCredentialAeadCipherTest"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
+            android:label="@string/biometric_test_set_user_authentication_credential_aead_cipher_label" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data android:name="test_category" android:value="@string/biometric_test_category_combination" />
+            <meta-data android:name="test_parent"
+                       android:value="com.android.cts.verifier.biometrics.BiometricTestList" />
+            <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest" android:value="javax.crypto.Cipher#updateAAD"/>
+        </activity>
+
+        <activity
+            android:name=".biometrics.UserAuthenticationBiometricAeadCipherTest"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
+            android:label="@string/biometric_test_set_user_authentication_biometric_aead_cipher_label" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data android:name="test_category" android:value="@string/biometric_test_category_combination" />
+            <meta-data android:name="test_parent"
+                       android:value="com.android.cts.verifier.biometrics.BiometricTestList" />
+            <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest" android:value="javax.crypto.Cipher#updateAAD"/>
+        </activity>
+
+        <activity
+            android:name=".biometrics.UserAuthenticationBiometricOrCredentialAeadCipherTest"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
+            android:label="@string/biometric_test_set_user_authentication_biometric_credential_aead_cipher_label" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data android:name="test_category" android:value="@string/biometric_test_category_combination" />
+            <meta-data android:name="test_parent"
+                       android:value="com.android.cts.verifier.biometrics.BiometricTestList" />
+            <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest" android:value="javax.crypto.Cipher#updateAAD"/>
+        </activity>
+
+        <activity
             android:name=".biometrics.UserAuthenticationCredentialSignatureTest"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true"

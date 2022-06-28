@@ -176,6 +176,16 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                                 createFakeSharedMemoryData());
                     }
                 }, MANAGE_HOTWORD_DETECTION);
+            } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_ADD_DETECTION_DELAY) {
+                runWithShellPermissionIdentity(() -> {
+                    if (mAlwaysOnHotwordDetector != null) {
+                        PersistableBundle options = createFakePersistableBundleData();
+                        options.putInt(Utils.KEY_DETECTION_DELAY_MS, 5000);
+                        mAlwaysOnHotwordDetector.updateState(
+                                options,
+                                createFakeSharedMemoryData());
+                    }
+                }, MANAGE_HOTWORD_DETECTION);
             } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR) {
                 if (mAlwaysOnHotwordDetector != null) {
                     Log.i(TAG, "destroying AlwaysOnHotwordDetector");

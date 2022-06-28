@@ -561,6 +561,15 @@
         <activity android:name="android.server.wm.KeepClearRectsTests$TranslucentTestActivity"
                   android:exported="true"
                   android:theme="@style/NoInsetsTheme.Translucent" />
+        <service android:name="android.server.wm.AccessibilityTestService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService"/>
+            </intent-filter>
+            <meta-data android:name="android.accessibilityservice"
+                android:resource="@xml/test_accessibilityservice"/>
+        </service>
 
         <activity android:name="android.server.wm.SnapshotTaskTests$TestActivity"
             android:theme="@style/WhiteBackgroundTheme"
