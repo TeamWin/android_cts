@@ -95,6 +95,9 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
         final PackageManager packageManager = context.getPackageManager();
         // TVs do not support companion
         assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
+        // Virtual input devices only operate on virtual displays
+        assumeTrue(packageManager.hasSystemFeature(
+                PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
 
         final String packageName = context.getPackageName();
         associateCompanionDevice(packageName);
