@@ -29,6 +29,7 @@ import static android.server.wm.CliIntentExtra.extraBool;
 import static android.server.wm.CliIntentExtra.extraString;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getWindowName;
+import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.UiDeviceUtils.pressWindowButton;
 import static android.server.wm.WindowManagerState.STATE_PAUSED;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
@@ -60,6 +61,7 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_CLOSE_ACTION;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR;
+import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_BACK_PRESSED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_PAUSE;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_PIP_REQUESTED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_USER_LEAVE_HINT;
@@ -325,6 +327,34 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     @Test
     public void testEnterPipAspectRatioMax() {
         testEnterPipAspectRatio(MAX_ASPECT_RATIO_NUMERATOR, MAX_ASPECT_RATIO_DENOMINATOR);
+    }
+
+    @Test
+    public void testEnterPipOnBackPressed() {
+        // Launch a PiP activity that calls enterPictureInPictureMode when it receives
+        // onBackPressed callback.
+        launchActivity(PIP_ACTIVITY, extraString(EXTRA_ENTER_PIP_ON_BACK_PRESSED, "true"));
+
+        assertEnterPipOnBackPressed(PIP_ACTIVITY);
+    }
+
+    @Test
+    public void testEnterPipOnBackPressedWithAutoPipEnabled() {
+        // Launch the PIP activity that calls enterPictureInPictureMode when it receives
+        // onBackPressed callback and set its pip params to allow auto-pip.
+        launchActivity(PIP_ACTIVITY,
+                extraString(EXTRA_ALLOW_AUTO_PIP, "true"),
+                extraString(EXTRA_ENTER_PIP_ON_BACK_PRESSED, "true"));
+
+        assertEnterPipOnBackPressed(PIP_ACTIVITY);
+    }
+
+    private void assertEnterPipOnBackPressed(ComponentName componentName) {
+        // Press the back button.
+        pressBackButton();
+        // Assert that we have entered PiP.
+        waitForEnterPipAnimationComplete(componentName);
+        assertPinnedStackExists();
     }
 
     @Test

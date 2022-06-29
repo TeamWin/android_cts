@@ -127,6 +127,7 @@ public class BleClientTestBaseActivity extends PassFailButtons.Activity {
         filter.addAction(BleClientService.BLE_RELIABLE_WRITE_BAD_RESP_COMPLETED);
         filter.addAction(BleClientService.BLE_READ_REMOTE_RSSI);
         filter.addAction(BleClientService.BLE_PHY_READ);
+        filter.addAction(BleClientService.BLE_PHY_READ_SKIPPED);
         filter.addAction(BleClientService.BLE_ON_SERVICE_CHANGED);
         filter.addAction(BleClientService.BLE_CHARACTERISTIC_READ_NOPERMISSION);
         filter.addAction(BleClientService.BLE_CHARACTERISTIC_WRITE_NOPERMISSION);
@@ -375,6 +376,7 @@ public class BleClientTestBaseActivity extends PassFailButtons.Activity {
                     newAction = BleClientService.BLE_CLIENT_ACTION_READ_PHY;
                     break;
                 case BleClientService.BLE_PHY_READ:
+                case BleClientService.BLE_PHY_READ_SKIPPED:
                     actionName = getString(R.string.ble_read_phy_name);
                     mTestAdapter.setTestPass(BLE_READ_PHY);
                     mPassed |= PASS_FLAG_READ_PHY;

@@ -40,6 +40,7 @@ import android.net.wifi.p2p.WifiP2pGroupList;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.ExternalApproverRequestListener;
+import android.net.wifi.p2p.WifiP2pWfdInfo;
 import android.net.wifi.p2p.nsd.WifiP2pServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pUpnpServiceInfo;
 import android.os.Build;
@@ -1073,5 +1074,24 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
             uiAutomation.dropShellPermissionIdentity();
         }
 
+    }
+
+    /** Test setWfdInfo() API. */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testP2pSetWfdInfo() {
+        if (!setupWifiP2p()) {
+            return;
+        }
+
+        WifiP2pWfdInfo info = new WifiP2pWfdInfo();
+        info.setEnabled(true);
+        info.setDeviceType(WifiP2pWfdInfo.DEVICE_TYPE_WFD_SOURCE);
+        info.setSessionAvailable(true);
+        resetResponse(mMyResponse);
+        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+            mWifiP2pManager.setWfdInfo(mWifiP2pChannel, info, mActionListener);
+            assertTrue(waitForServiceResponse(mMyResponse));
+            assertTrue(mMyResponse.success);
+        });
     }
 }

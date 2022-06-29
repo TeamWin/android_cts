@@ -1486,6 +1486,99 @@ public class ListViewTest {
         });
     }
 
+    @Test
+    public void flingUpWhileStretchedAtTop() throws Throwable {
+        showOnlyStretch();
+
+        CaptureOnReleaseEdgeEffect edgeEffect = new CaptureOnReleaseEdgeEffect(mActivity);
+        mListViewStretch.mEdgeGlowTop = edgeEffect;
+
+        int[] scrollStateValue = new int[1];
+
+        mListViewStretch.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+                scrollStateValue[0] = scrollState;
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
+                    int totalItemCount) {
+            }
+        });
+        executeWhileDragging(1000, () -> {}, () -> {
+            assertFalse(edgeEffect.isFinished());
+        });
+        mActivityRule.runOnUiThread(() -> {
+            edgeEffect.onReleaseCalled = false;
+            mListViewStretch.fling(10000);
+            assertFalse(edgeEffect.onReleaseCalled);
+            assertFalse(edgeEffect.isFinished());
+        });
+        mActivityRule.runOnUiThread(() -> {
+            assertEquals(AbsListView.OnScrollListener.SCROLL_STATE_FLING, scrollStateValue[0]);
+        });
+        long end = SystemClock.uptimeMillis() + 4000;
+        while (scrollStateValue[0] == AbsListView.OnScrollListener.SCROLL_STATE_FLING
+                && SystemClock.uptimeMillis() < end) {
+            // wait one frame
+            mActivityRule.runOnUiThread(() -> {});
+        }
+        assertNotEquals(AbsListView.OnScrollListener.SCROLL_STATE_FLING, scrollStateValue[0]);
+        mActivityRule.runOnUiThread(() -> {
+            assertEquals(0f, edgeEffect.getDistance(), 0f);
+            assertNotEquals(0, mListViewStretch.getFirstVisiblePosition());
+        });
+    }
+
+    @Test
+    public void flingDownWhileStretchedAtBottom() throws Throwable {
+        showOnlyStretch();
+        scrollToBottomOfStretch();
+
+        int bottomItem = mListViewStretch.getLastVisiblePosition();
+
+        CaptureOnReleaseEdgeEffect edgeEffect = new CaptureOnReleaseEdgeEffect(mActivity);
+        mListViewStretch.mEdgeGlowBottom = edgeEffect;
+
+        int[] scrollStateValue = new int[1];
+
+        mListViewStretch.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+                scrollStateValue[0] = scrollState;
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
+                    int totalItemCount) {
+            }
+        });
+        executeWhileDragging(-1000, () -> {}, () -> {
+            assertFalse(edgeEffect.isFinished());
+        });
+        mActivityRule.runOnUiThread(() -> {
+            edgeEffect.onReleaseCalled = false;
+            mListViewStretch.fling(-10000);
+            assertFalse(edgeEffect.onReleaseCalled);
+            assertFalse(edgeEffect.isFinished());
+        });
+        mActivityRule.runOnUiThread(() -> {
+            assertEquals(AbsListView.OnScrollListener.SCROLL_STATE_FLING, scrollStateValue[0]);
+        });
+        long end = SystemClock.uptimeMillis() + 4000;
+        while (scrollStateValue[0] == AbsListView.OnScrollListener.SCROLL_STATE_FLING
+                && SystemClock.uptimeMillis() < end) {
+            // wait one frame
+            mActivityRule.runOnUiThread(() -> {});
+        }
+        assertNotEquals(AbsListView.OnScrollListener.SCROLL_STATE_FLING, scrollStateValue[0]);
+        mActivityRule.runOnUiThread(() -> {
+            assertEquals(0f, edgeEffect.getDistance(), 0f);
+            assertNotEquals(bottomItem, mListViewStretch.getLastVisiblePosition());
+        });
+    }
+
     private MotionEvent createScrollEvent(float scrollAmount, int source) {
         MotionEvent.PointerProperties pointerProperties = new MotionEvent.PointerProperties();
         pointerProperties.toolType = MotionEvent.TOOL_TYPE_MOUSE;

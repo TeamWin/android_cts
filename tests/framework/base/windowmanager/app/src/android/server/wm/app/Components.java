@@ -548,6 +548,9 @@ public class Components extends ComponentsBase {
         // Calls requestAutoEnterPictureInPicture() with the value provided
         public static final String EXTRA_ENTER_PIP_ON_PIP_REQUESTED =
                 "enter_pip_on_pip_requested";
+        // Calls enterPictureInPictureMode when activity receives onBackPressed
+        public static final String EXTRA_ENTER_PIP_ON_BACK_PRESSED =
+                "enter_pip_on_back_pressed";
         public static final String EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR =
                 "expanded_pip_numerator";
         public static final String EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR =

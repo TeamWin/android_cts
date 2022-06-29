@@ -4826,7 +4826,8 @@
          @hide
          @SystemApi -->
     <permission android:name="android.permission.CONFIGURE_WIFI_DISPLAY"
-        android:protectionLevel="signature" />
+                android:protectionLevel="signature|knownSigner"
+                android:knownCerts="@array/wifi_known_signers" />
 
     <!-- Allows an application to control low-level features of Wifi displays
          such as opening an RTSP socket.  This permission should only be used
@@ -6471,6 +6472,16 @@
          @hide @TestApi  -->
     <permission android:name="android.permission.MAKE_UID_VISIBLE"
                 android:protectionLevel="signature" />
+
+    <!-- Allows an app to turn on the screen on, e.g. with
+         {@link android.os.PowerManager#ACQUIRE_CAUSES_WAKEUP}.
+         <p>Intended to only be used by home automation apps.
+    -->
+    <permission android:name="android.permission.TURN_SCREEN_ON"
+                android:label="@string/permlab_turnScreenOn"
+                android:description="@string/permdesc_turnScreenOn"
+                android:protectionLevel="normal|appop" />
+
 
     <!-- Attribution for Geofencing service. -->
     <attribution android:tag="GeofencingService" android:label="@string/geofencing_service"/>
