@@ -38,6 +38,7 @@ import static android.appenumeration.cts.Constants.ACTION_GET_PREFERRED_ACTIVITI
 import static android.appenumeration.cts.Constants.ACTION_GET_SESSION_INFO;
 import static android.appenumeration.cts.Constants.ACTION_GET_SHAREDLIBRARY_DEPENDENT_PACKAGES;
 import static android.appenumeration.cts.Constants.ACTION_GET_STAGED_SESSIONS;
+import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_CONTROL_PANEL;
 import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY;
 import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_TYPES;
 import static android.appenumeration.cts.Constants.ACTION_GRANT_URI_PERMISSION;
@@ -133,6 +134,7 @@ import static android.appenumeration.cts.Constants.TARGET_STUB_APK;
 import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER;
 import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER_SHARED_USER;
 import static android.appenumeration.cts.Constants.TARGET_WEB;
+import static android.content.Intent.EXTRA_COMPONENT_NAME;
 import static android.content.Intent.EXTRA_PACKAGES;
 import static android.content.Intent.EXTRA_UID;
 import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
@@ -155,6 +157,7 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItemInArray;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
@@ -1753,6 +1756,22 @@ public class AppEnumerationTests {
     }
 
     @Test
+    public void queriesPackage_getRunningServiceControlPanel_canSeeSyncadapterTarget()
+            throws Exception {
+        assertThat(getSyncAdapterControlPanel(
+                        QUERIES_PACKAGE, ACCOUNT_SYNCADAPTER, TARGET_SYNCADAPTER),
+                notNullValue());
+    }
+
+    @Test
+    public void queriesNothing_getRunningServiceControlPanel_cannotSeeSyncadapterTarget()
+            throws Exception {
+        assertThat(getSyncAdapterControlPanel(
+                        QUERIES_NOTHING, ACCOUNT_SYNCADAPTER, TARGET_SYNCADAPTER),
+                nullValue());
+    }
+
+    @Test
     public void queriesNothingSharedUser_getSyncAdapterPackages_canSeeSyncadapterSharedUserTarget()
             throws Exception {
         assertVisible(QUERIES_NOTHING_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER,
@@ -2459,6 +2478,19 @@ public class AppEnumerationTests {
         final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
                 extraData, ACTION_REQUEST_SYNC_AND_AWAIT_STATUS);
         return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private PendingIntent getSyncAdapterControlPanel(String sourcePackageName, Account account,
+            String targetPackageName) throws Exception {
+        final ComponentName componentName = new ComponentName(
+                targetPackageName, "android.appenumeration.testapp.MockSyncAdapterService");
+        final Bundle extraData = new Bundle();
+        extraData.putParcelable(EXTRA_ACCOUNT, account);
+        extraData.putString(EXTRA_AUTHORITY, targetPackageName + ".authority");
+        extraData.putParcelable(EXTRA_COMPONENT_NAME, componentName);
+        final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
+                extraData, ACTION_GET_SYNCADAPTER_CONTROL_PANEL);
+        return response.getParcelable(Intent.EXTRA_RETURN_RESULT);
     }
 
     private void forceStopPackage(String packageName) {

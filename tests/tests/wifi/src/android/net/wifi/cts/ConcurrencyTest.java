@@ -403,6 +403,25 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         return true;
     }
 
+    private void assertFirstConnectedEvent() {
+        // The first network state might be IDLE due to
+        // lazy initialization or DISCONNECTED due to previous
+        // group removal, but not CONNECTED.
+        for (int i = 0; i < 2; i++) {
+            assertTrue(waitForBroadcasts(MySync.NETWORK_INFO));
+            assertNotNull(mMySync.expectedNetworkInfo);
+            NetworkInfo.DetailedState state = mMySync.expectedNetworkInfo.getDetailedState();
+            if (NetworkInfo.DetailedState.CONNECTED == state) {
+                break;
+            }
+
+            assertTrue(NetworkInfo.DetailedState.IDLE == state
+                    || NetworkInfo.DetailedState.DISCONNECTED == state);
+        }
+        assertEquals(NetworkInfo.DetailedState.CONNECTED,
+                mMySync.expectedNetworkInfo.getDetailedState());
+    }
+
     public void testConcurrency() {
         if (!setupWifiP2p()) {
             return;
@@ -510,20 +529,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         assertTrue(waitForServiceResponse(mMyResponse));
         assertTrue(mMyResponse.success);
 
-        // The first network state might be IDLE due to
-        // lazy initialization, but not CONNECTED.
-        for (int i = 0; i < 2; i++) {
-            assertTrue(waitForBroadcasts(MySync.NETWORK_INFO));
-            assertNotNull(mMySync.expectedNetworkInfo);
-            if (NetworkInfo.DetailedState.CONNECTED ==
-                    mMySync.expectedNetworkInfo.getDetailedState()) {
-                break;
-            }
-            assertEquals(NetworkInfo.DetailedState.IDLE,
-                    mMySync.expectedNetworkInfo.getDetailedState());
-        }
-        assertEquals(NetworkInfo.DetailedState.CONNECTED,
-                mMySync.expectedNetworkInfo.getDetailedState());
+        assertFirstConnectedEvent();
 
         resetResponse(mMyResponse);
         mWifiP2pManager.requestNetworkInfo(mWifiP2pChannel,
@@ -662,20 +668,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         assertTrue(waitForServiceResponse(mMyResponse));
         assertTrue(mMyResponse.success);
 
-        // The first network state might be IDLE due to
-        // lazy initialization, but not CONNECTED.
-        for (int i = 0; i < 2; i++) {
-            assertTrue(waitForBroadcasts(MySync.NETWORK_INFO));
-            assertNotNull(mMySync.expectedNetworkInfo);
-            if (NetworkInfo.DetailedState.CONNECTED ==
-                    mMySync.expectedNetworkInfo.getDetailedState()) {
-                break;
-            }
-            assertEquals(NetworkInfo.DetailedState.IDLE,
-                    mMySync.expectedNetworkInfo.getDetailedState());
-        }
-        assertEquals(NetworkInfo.DetailedState.CONNECTED,
-                mMySync.expectedNetworkInfo.getDetailedState());
+        assertFirstConnectedEvent();
 
         resetResponse(mMyResponse);
         mWifiP2pManager.removeGroup(mWifiP2pChannel, mActionListener);
@@ -814,20 +807,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         assertTrue(waitForServiceResponse(mMyResponse));
         assertTrue(mMyResponse.success);
 
-        // The first network state might be IDLE due to
-        // lazy initialization, but not CONNECTED.
-        for (int i = 0; i < 2; i++) {
-            assertTrue(waitForBroadcasts(MySync.NETWORK_INFO));
-            assertNotNull(mMySync.expectedNetworkInfo);
-            if (NetworkInfo.DetailedState.CONNECTED
-                    == mMySync.expectedNetworkInfo.getDetailedState()) {
-                break;
-            }
-            assertEquals(NetworkInfo.DetailedState.IDLE,
-                    mMySync.expectedNetworkInfo.getDetailedState());
-        }
-        assertEquals(NetworkInfo.DetailedState.CONNECTED,
-                mMySync.expectedNetworkInfo.getDetailedState());
+        assertFirstConnectedEvent();
 
         resetResponse(mMyResponse);
         MacAddress peerMacAddress = MacAddress.fromString(mTestWifiP2pPeerConfig.deviceAddress);

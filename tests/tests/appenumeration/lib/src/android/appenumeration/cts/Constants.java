@@ -212,6 +212,8 @@ public class Constants {
             PKG_BASE + "cts.action.GET_SYNCADAPTER_TYPES";
     public static final String ACTION_GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY =
             PKG_BASE + "cts.action.GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY";
+    public static final String ACTION_GET_SYNCADAPTER_CONTROL_PANEL =
+            PKG_BASE + "cts.action.GET_SYNCADAPTER_CONTROL_PANEL";
     public static final String ACTION_GET_INSTALLED_APPWIDGET_PROVIDERS =
             PKG_BASE + "cts.action.GET_INSTALLED_APPWIDGET_PROVIDERS";
     public static final String ACTION_REQUEST_SYNC_AND_AWAIT_STATUS =

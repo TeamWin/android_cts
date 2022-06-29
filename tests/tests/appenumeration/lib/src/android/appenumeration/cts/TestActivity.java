@@ -59,6 +59,7 @@ import static android.os.Process.ROOT_UID;
 
 import android.accounts.Account;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.AppOpsManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
@@ -266,6 +267,14 @@ public class TestActivity extends Activity {
                         .getParcelable(EXTRA_ACCOUNT);
                 awaitRequestSyncStatus(remoteCallback, action, account, authority,
                         EXTENDED_TIMEOUT_MS);
+            } else if (Constants.ACTION_GET_SYNCADAPTER_CONTROL_PANEL.equals(action)) {
+                final String authority = intent.getBundleExtra(EXTRA_DATA)
+                        .getString(EXTRA_AUTHORITY);
+                final Account account = intent.getBundleExtra(EXTRA_DATA)
+                        .getParcelable(EXTRA_ACCOUNT);
+                final ComponentName componentName = intent.getBundleExtra(EXTRA_DATA)
+                        .getParcelable(EXTRA_COMPONENT_NAME);
+                sendGetSyncAdapterControlPanel(remoteCallback, account, authority, componentName);
             } else if (Constants.ACTION_AWAIT_LAUNCHER_APPS_CALLBACK.equals(action)) {
                 final int expectedEventCode = intent.getBundleExtra(EXTRA_DATA)
                         .getInt(EXTRA_FLAGS, CALLBACK_EVENT_INVALID);
@@ -752,6 +761,19 @@ public class TestActivity extends Activity {
         mainHandler.postDelayed(
                 () -> sendError(remoteCallback, new MissingCallbackException(action, timeoutMs)),
                 token, timeoutMs);
+    }
+
+    private void sendGetSyncAdapterControlPanel(RemoteCallback remoteCallback, Account account,
+            String authority, ComponentName componentName) {
+        ContentResolver.cancelSync(account, authority);
+        ContentResolver.requestSync(account, authority, new Bundle());
+        final ActivityManager activityManager = getSystemService(ActivityManager.class);
+        final PendingIntent pendingIntent =
+                activityManager.getRunningServiceControlPanel(componentName);
+        final Bundle result = new Bundle();
+        result.putParcelable(EXTRA_RETURN_RESULT, pendingIntent);
+        remoteCallback.sendResult(result);
+        finish();
     }
 
     private void sendGetSharedLibraryDependentPackages(RemoteCallback remoteCallback,

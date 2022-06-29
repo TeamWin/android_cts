@@ -181,31 +181,26 @@ public class SimpleObjectsTest {
 
     @Test
     public void deviceStateSensorOrientationMapConstructionTest() {
-        long[] elements = { 0, 90, 1, 180, 2, 270 };
-        DeviceStateSensorOrientationMap deviceStateSensorOrientationMap =
-                new DeviceStateSensorOrientationMap(elements);
+        DeviceStateSensorOrientationMap.Builder builder =
+                new DeviceStateSensorOrientationMap.Builder();
+        builder.addOrientationForState(/*deviceState*/ 0, /*angle*/ 90);
+        builder.addOrientationForState(/*deviceState*/ 1, /*angle*/ 180);
+        builder.addOrientationForState(/*deviceState*/ 2, /*angle*/ 270);
+        DeviceStateSensorOrientationMap deviceStateSensorOrientationMap = builder.build();
 
         try {
-            deviceStateSensorOrientationMap = new DeviceStateSensorOrientationMap(
-                    /*elements*/ null);
-            Assert.fail("DeviceStateSensorOrientationMap did not throw a NullPointerException for"
-                    + " null elements");
-        } catch (NullPointerException e) {
+            builder = new DeviceStateSensorOrientationMap.Builder();
+            deviceStateSensorOrientationMap = builder.build();
+            Assert.fail("DeviceStateSensorOrientationMap did not throw an IllegalStateException for"
+                    + " zero elements");
+        } catch (IllegalStateException e) {
             // Do nothing
         }
 
         try {
-            long[] oddElements = { 0 };
-            deviceStateSensorOrientationMap = new DeviceStateSensorOrientationMap(oddElements);
-            Assert.fail("DeviceStateSensorOrientationMap did not throw an IllegalArgumentException "
-                    + "for null elements");
-        } catch (IllegalArgumentException e) {
-            // Do nothing
-        }
-
-        try {
-            long[] badElements = { 0, 55 };
-            deviceStateSensorOrientationMap = new DeviceStateSensorOrientationMap(badElements);
+            builder = new DeviceStateSensorOrientationMap.Builder();
+            builder.addOrientationForState(/*deviceState*/ 0, 55);
+            deviceStateSensorOrientationMap = builder.build();
             Assert.fail("DeviceStateSensorOrientationMap did not throw an IllegalArgumentException "
                     + "for incorrect elements values");
         } catch (IllegalArgumentException e) {

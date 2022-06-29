@@ -41,6 +41,8 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.UiAutomatorUtils;
 
+import android.app.DreamManager;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -71,7 +73,6 @@ public class OneTimePermissionTest {
             UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
     private final ActivityManager mActivityManager =
             mContext.getSystemService(ActivityManager.class);
-
     private String mOldOneTimePermissionTimeoutValue;
     private String mOldOneTimePermissionKilledDelayValue;
 
@@ -247,8 +248,14 @@ public class OneTimePermissionTest {
         try {
             new Thread(() -> {
                 while (!hasExited[0]) {
+                    DreamManager mDreamManager = mContext.getSystemService(DreamManager.class);
                     mUiDevice.pressHome();
                     mUiDevice.pressBack();
+                    runWithShellPermissionIdentity(() -> {
+                        if (mDreamManager.isDreaming()) {
+                            mDreamManager.stopDream();
+                        }
+                    });
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
