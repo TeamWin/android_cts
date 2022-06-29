@@ -57,6 +57,7 @@ public class BackInvokedOnWidgetsTest {
 
     @Before
     public void setUp() {
+        rule.assumeGestureNavigationMode();
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mUiDevice = UiDevice.getInstance(mInstrumentation);
     }
