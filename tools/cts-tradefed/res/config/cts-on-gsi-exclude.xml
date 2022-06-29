@@ -114,4 +114,7 @@
 
     <!-- b/234409652 Stable API does not exist to enforce this requirement on variable geometry devices -->
     <option name="compatibility:exclude-filter" value="CtsCameraTestCases android.hardware.camera2.cts.ExtendedCameraCharacteristicsTest#testCameraOrientationAlignedWithDevice"/>
+
+    <!-- b/235453601 -->
+    <option name="compatibility:exclude-filter" value="CtsMediaPerformanceClassTestCases android.mediapc.cts.MultiDecoderPerfTest" />
 </configuration>
