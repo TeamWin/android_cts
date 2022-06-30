@@ -199,14 +199,6 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
                         null /* activityOptions */);
 
         mTaskFragmentOrganizer.applyTransaction(wct);
-
-        mTaskFragmentOrganizer.waitForTaskFragmentCreated();
-
-        TaskFragmentInfo info = mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken);
-
-        // TaskFragment must remain empty because embedding activities in a new task is not allowed.
-        assertEmptyTaskFragment(info, taskFragToken);
-
         mTaskFragmentOrganizer.waitForTaskFragmentError();
 
         assertThat(mTaskFragmentOrganizer.getThrowable()).isInstanceOf(SecurityException.class);
