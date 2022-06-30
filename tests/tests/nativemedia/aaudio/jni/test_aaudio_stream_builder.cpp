@@ -208,6 +208,8 @@ class AAudioStreamBuilderFormatTest : public AAudioCtsBase,
             case AAUDIO_FORMAT_PCM_I16:
             case AAUDIO_FORMAT_PCM_FLOAT:
             case AAUDIO_FORMAT_IEC61937:
+            case AAUDIO_FORMAT_PCM_I24_PACKED:
+            case AAUDIO_FORMAT_PCM_I32:
                 return true;
         }
         return false;
@@ -234,7 +236,7 @@ INSTANTIATE_TEST_CASE_P(F, AAudioStreamBuilderFormatTest,
         ::testing::Values(
                 // Reasonable values
                 AAUDIO_FORMAT_UNSPECIFIED, AAUDIO_FORMAT_PCM_I16, AAUDIO_FORMAT_PCM_FLOAT,
-                AAUDIO_FORMAT_IEC61937,
+                AAUDIO_FORMAT_PCM_I24_PACKED, AAUDIO_FORMAT_PCM_I32, AAUDIO_FORMAT_IEC61937,
                 // Odd values
                 AAUDIO_FORMAT_INVALID, AAUDIO_FORMAT_INVALID - 1, 100, 1000000, 10000000),
         &AAudioStreamBuilderFormatTest::getTestName);

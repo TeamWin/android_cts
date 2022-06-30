@@ -3185,7 +3185,6 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         Tap Go button to remove existing screen lock.
     </string>
-    <string name="provisioning_byod_admin_visible">Profile-aware device administrator settings</string>
     <string name="provisioning_byod_workapps_visible">Badged work apps visible in Launcher</string>
     <string name="provisioning_byod_cross_profile_from_personal">Open app cross profiles from the personal side</string>
     <string name="provisioning_byod_cross_profile_from_work">Open app cross profiles from the work side</string>
@@ -3380,17 +3379,6 @@ You should be prompted to select credentials; choose the ones you just installed
         Navigate to Accounts and confirm that:\n
         - There are two auto-sync options present, one for personal and one for work data (on the screen or in the overflow menu or in differernt tab).\n
         - De-selecting either option prompts a warning dialog.\n
-        \n
-        Use the Back button (or navigate back to this app using Recents) to return to this page.
-    </string>
-    <string name="provisioning_byod_admin_visible_instruction">
-        Please press the Go button to open the Security page in Settings.
-        (If this device has a separate app for work settings, ignore the Go button and open that app manually from the launcher).\n
-        Navigate to Device admin apps and confirm that:\n
-        \n
-        - Device administrators outside of the work profile (if any) appear in the list, and the managed profile administrators are badged correctly.\n
-        - A badged \"CTS Verifier\" exists, and is activated.\n
-        - There is no option to deactivate the badged \"CTS Verifier\" version, only an option to \"Remove work profile\".\n
         \n
         Use the Back button (or navigate back to this app using Recents) to return to this page.
     </string>

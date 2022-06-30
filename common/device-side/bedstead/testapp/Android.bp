@@ -138,9 +138,9 @@ android_test_helper_app {
 android_test_helper_app {
     name: "DeviceAdminTestApp",
     static_libs: [
-        "TestApp_TestApps",
-        "DeviceAdminApp"
+        "TestApp_TestApps"
     ],
+    resource_dirs: ["src/testapps/main/res/device_admin"],
     manifest: "manifests/DeviceAdminManifest.xml",
     additional_manifests: ["CommonManifest.xml"],
     min_sdk_version: "29"
@@ -169,9 +169,9 @@ android_test_helper_app {
 android_test_helper_app {
     name: "RemoteDPCTestApp",
     static_libs: [
-        "TestApp_TestApps",
-        "DeviceAdminApp"
+        "TestApp_TestApps"
     ],
+    resource_dirs: ["src/testapps/main/res/device_admin"],
     manifest: "manifests/RemoteDPCManifest.xml",
     additional_manifests: ["CommonManifest.xml"],
     min_sdk_version: "29"

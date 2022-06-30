@@ -16,14 +16,25 @@
 
 package com.android.interactive.steps.enterprise.settings;
 
+import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+
+import android.content.Intent;
+import android.provider.Settings;
+
+import com.android.bedstead.nene.TestApis;
 import com.android.interactive.Automation;
 import com.android.interactive.annotations.AutomationFor;
 
-@AutomationFor("com.android.interactive.steps.enterprise.settings.NavigateToWorkAccountSettingsStep")
-public final class NavigateToWorkAccountSettingsStepAutomation implements Automation {
+@AutomationFor("com.android.interactive.steps.enterprise.settings.NavigateToWorkSecuritySettingsStep")
+public final class NavigateToWorkSecuritySettingsStepAutomation implements Automation {
     @Override
     public void automate() {
-        // There is only one Settings app
-        new NavigateToPersonalAccountSettingsStepAutomation().automate();
+        Intent intent = new Intent(Settings.ACTION_SECURITY_SETTINGS);
+        // This screen can cache which means it won't show the latest UI unless we use
+        // FLAG_ACTIVITY_MULTIPLE_TASK
+        intent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+
+        TestApis.context().instrumentedContext().startActivity(intent);
     }
 }

@@ -28,6 +28,7 @@ import static com.android.bedstead.harrier.Defaults.DEFAULT_PASSWORD;
 import static com.android.bedstead.harrier.annotations.EnsureTestAppInstalled.DEFAULT_TEST_APP_KEY;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
+import static com.android.bedstead.nene.utils.Versions.U;
 import static com.android.bedstead.nene.utils.Versions.meetsSdkVersionRequirements;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -2599,17 +2600,14 @@ public final class DeviceState extends HarrierRule {
     }
 
     private void ensureGlobalSettingSet(String key, String value){
-            if (!mOriginalGlobalSettings.containsKey(key)) {
-                mOriginalGlobalSettings.put(key, TestApis.settings().global().getString(value));
-            }
-            TestApis.settings().global().putString(key, value);
+        if (!mOriginalGlobalSettings.containsKey(key)) {
+            mOriginalGlobalSettings.put(key, TestApis.settings().global().getString(value));
+        }
+
+        TestApis.settings().global().putString(key, value);
     }
 
     private void ensureOnLauncher() {
-        Intent intent = new Intent();
-        intent.setAction(ACTION_MAIN);
-        intent.addCategory(CATEGORY_HOME);
-        intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
-        TestApis.context().instrumentedContext().startActivity(intent);
+        TestApis.activities().clearAllActivities();
     }
 }

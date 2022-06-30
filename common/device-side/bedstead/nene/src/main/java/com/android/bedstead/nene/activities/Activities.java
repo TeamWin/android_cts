@@ -17,9 +17,17 @@
 package com.android.bedstead.nene.activities;
 
 import static android.Manifest.permission.REAL_GET_TASKS;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_DREAM;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.os.Build.VERSION_CODES.Q;
 
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_ACTIVITY_TASKS;
+
 import android.app.ActivityManager;
+import android.app.ActivityTaskManager;
 import android.content.ComponentName;
 
 import com.android.bedstead.nene.TestApis;
@@ -105,5 +113,21 @@ public final class Activities {
                         ActivityManager.class);
 
         return activityManager.getLockTaskModeState();
+    }
+
+    private final int[] ALL_ACTIVITY_TYPE_BUT_HOME = {
+            ACTIVITY_TYPE_STANDARD, ACTIVITY_TYPE_ASSISTANT, ACTIVITY_TYPE_RECENTS,
+            ACTIVITY_TYPE_DREAM, ACTIVITY_TYPE_UNDEFINED
+    };
+
+    /**
+     * Clear activities.
+     */
+    @Experimental
+    public void clearAllActivities() {
+        try (PermissionContext p = TestApis.permissions().withPermission(MANAGE_ACTIVITY_TASKS)) {
+            TestApis.context().instrumentedContext().getSystemService(ActivityTaskManager.class)
+                    .removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
+        }
     }
 }

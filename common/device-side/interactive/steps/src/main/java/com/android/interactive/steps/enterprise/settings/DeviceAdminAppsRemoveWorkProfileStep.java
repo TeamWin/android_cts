@@ -16,18 +16,18 @@
 
 package com.android.interactive.steps.enterprise.settings;
 
-import com.android.interactive.steps.CompositionStep;
-import com.android.interactive.steps.settings.NavigateToAccountSettingsStep;
+import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 
-import java.util.Arrays;
+import com.android.bedstead.nene.TestApis;
+import com.android.interactive.steps.ActAndWaitStep;
 
-/**
- * Starting from anywhere, navigate to the account settings section of the work settings app.
- *
- * <p>This will be the only settings app if there is no separate work settings app.
- */
-public final class NavigateToWorkAccountSettingsStep extends CompositionStep {
-    public NavigateToWorkAccountSettingsStep() {
-        super(Arrays.asList(LaunchWorkSettingsStep.class, NavigateToAccountSettingsStep.class));
+public class DeviceAdminAppsRemoveWorkProfileStep extends ActAndWaitStep {
+    public DeviceAdminAppsRemoveWorkProfileStep() {
+        super("Use the 'Remove Work Profile' button to remove the work profile",
+                () ->
+                        TestApis.users().findProfileOfType(
+                                TestApis.users().supportedType(
+                                        MANAGED_PROFILE_TYPE_NAME),
+                                TestApis.users().instrumented()) == null);
     }
 }

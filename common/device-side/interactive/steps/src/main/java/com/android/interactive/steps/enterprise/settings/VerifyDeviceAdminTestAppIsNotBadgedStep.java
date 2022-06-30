@@ -16,18 +16,10 @@
 
 package com.android.interactive.steps.enterprise.settings;
 
-import com.android.interactive.steps.CompositionStep;
-import com.android.interactive.steps.settings.NavigateToAccountSettingsStep;
+import com.android.interactive.steps.TrueFalseStep;
 
-import java.util.Arrays;
-
-/**
- * Starting from anywhere, navigate to the account settings section of the work settings app.
- *
- * <p>This will be the only settings app if there is no separate work settings app.
- */
-public final class NavigateToWorkAccountSettingsStep extends CompositionStep {
-    public NavigateToWorkAccountSettingsStep() {
-        super(Arrays.asList(LaunchWorkSettingsStep.class, NavigateToAccountSettingsStep.class));
+public final class VerifyDeviceAdminTestAppIsNotBadgedStep extends TrueFalseStep {
+    public VerifyDeviceAdminTestAppIsNotBadgedStep() {
+        super("Find the entry for 'DeviceAdminTestApp'. Does the icon have a badge?", false);
     }
 }

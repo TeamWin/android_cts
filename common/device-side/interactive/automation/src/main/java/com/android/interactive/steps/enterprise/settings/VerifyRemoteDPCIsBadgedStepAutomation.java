@@ -16,18 +16,13 @@
 
 package com.android.interactive.steps.enterprise.settings;
 
-import com.android.interactive.steps.CompositionStep;
-import com.android.interactive.steps.settings.NavigateToAccountSettingsStep;
+import com.android.interactive.Automation;
+import com.android.interactive.annotations.AutomationFor;
 
-import java.util.Arrays;
-
-/**
- * Starting from anywhere, navigate to the account settings section of the work settings app.
- *
- * <p>This will be the only settings app if there is no separate work settings app.
- */
-public final class NavigateToWorkAccountSettingsStep extends CompositionStep {
-    public NavigateToWorkAccountSettingsStep() {
-        super(Arrays.asList(LaunchWorkSettingsStep.class, NavigateToAccountSettingsStep.class));
+@AutomationFor("com.android.interactive.steps.enterprise.settings.VerifyRemoteDPCIsBadgedStep")
+public final class VerifyRemoteDPCIsBadgedStepAutomation implements Automation {
+    @Override
+    public void automate() throws Throwable {
+        // TODO: We need a way of comparing the icon to check for the badge
     }
 }

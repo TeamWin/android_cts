@@ -16,39 +16,40 @@
 
 package com.android.interactive.steps.enterprise.settings;
 
-import static com.google.common.truth.Truth.assertWithMessage;
-
+import android.widget.Button;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiScrollable;
 import androidx.test.uiautomator.UiSelector;
 
 import com.android.interactive.Automation;
 import com.android.interactive.annotations.AutomationFor;
 
-@AutomationFor("com.android.interactive.steps.enterprise.settings.ConfirmPersonalAccountsAreSeparateToWorkStep")
-public final class ConfirmPersonalAccountsAreSeparateToWorkStepAutomation implements Automation {
-
-    private static final long WAIT_TIMEOUT = 10000;
+@AutomationFor("com.android.interactive.steps.enterprise.settings.DeviceAdminAppsRemoveWorkProfileStep")
+public final class DeviceAdminAppsRemoveWorkProfileStepAutomation implements Automation {
 
     @Override
-    public void automate() {
+    public void automate() throws Throwable {
         // TODO: Standardise UI interaction patterns
         UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
 
-        // TODO: Can we verify more than just the text of the tabs?
-        boolean hasPersonalTab =
-                device.findObject(
-                        new UiSelector().text("Personal").className(
-                                TextView.class)).waitForExists(WAIT_TIMEOUT);
-        boolean hasWorkTab =
-                device.findObject(new UiSelector().text("Work").className(
-                        TextView.class)).waitForExists(WAIT_TIMEOUT);
+        UiScrollable settingsItem = new UiScrollable(new UiSelector()
+                .className("androidx.recyclerview.widget.RecyclerView"));
+        settingsItem.getChildByText(new UiSelector()
+                .className(TextView.class), "RemoteDPC").click();
 
-        assertWithMessage("Expects personal tab to be present")
-                .that(hasPersonalTab).isTrue();
-        assertWithMessage("Expects work tab to be present")
-                .that(hasWorkTab).isTrue();
+        // Now on the confirmation page
+        UiScrollable confirmPageList = new UiScrollable(new UiSelector()
+                .className(ScrollView.class));
+
+        confirmPageList.getChildByText(new UiSelector()
+                .className(Button.class), "Remove work profile").click();
+
+        // Confirm
+        device.findObject(new UiSelector().text("Delete").className(
+                Button.class)).click();
     }
 }

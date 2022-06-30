@@ -183,10 +183,11 @@ public class SimpleObjectsTest {
     public void deviceStateSensorOrientationMapConstructionTest() {
         DeviceStateSensorOrientationMap.Builder builder =
                 new DeviceStateSensorOrientationMap.Builder();
-        builder.addOrientationForState(/*deviceState*/ 0, /*angle*/ 90);
-        builder.addOrientationForState(/*deviceState*/ 1, /*angle*/ 180);
-        builder.addOrientationForState(/*deviceState*/ 2, /*angle*/ 270);
-        DeviceStateSensorOrientationMap deviceStateSensorOrientationMap = builder.build();
+        DeviceStateSensorOrientationMap deviceStateSensorOrientationMap =
+                builder.addOrientationForState(/*deviceState*/ 0, /*angle*/ 90)
+                       .addOrientationForState(/*deviceState*/ 1, /*angle*/ 180)
+                       .addOrientationForState(/*deviceState*/ 2, /*angle*/ 270)
+                       .build();
 
         try {
             builder = new DeviceStateSensorOrientationMap.Builder();
@@ -199,8 +200,8 @@ public class SimpleObjectsTest {
 
         try {
             builder = new DeviceStateSensorOrientationMap.Builder();
-            builder.addOrientationForState(/*deviceState*/ 0, 55);
-            deviceStateSensorOrientationMap = builder.build();
+            deviceStateSensorOrientationMap = builder.addOrientationForState(/*deviceState*/ 0, 55)
+                                                     .build();
             Assert.fail("DeviceStateSensorOrientationMap did not throw an IllegalArgumentException "
                     + "for incorrect elements values");
         } catch (IllegalArgumentException e) {
@@ -216,38 +217,107 @@ public class SimpleObjectsTest {
         Point leftEyePosition = new Point();
         Point rightEyePosition = new Point();
         Point mouthPosition = new Point();
-        Face face = new Face(bounds, score, id, leftEyePosition, rightEyePosition, mouthPosition);
-        face = new Face(bounds, score);
+
+        Face.Builder builder = new Face.Builder();
+        Face face = builder.setBounds(bounds)
+                           .setScore(score)
+                           .setId(id)
+                           .setLeftEyePosition(leftEyePosition)
+                           .setRightEyePosition(rightEyePosition)
+                           .setMouthPosition(mouthPosition)
+                           .build();
+
+        builder = new Face.Builder();
+        face = builder.setBounds(bounds)
+                      .setScore(score)
+                      .build();
 
         try {
-            face = new Face(/*bounds*/ null, score, id, leftEyePosition, rightEyePosition,
-                    mouthPosition);
+            builder = new Face.Builder();
+            face = builder.build();
+            Assert.fail("Face.Builder did not throw an IllegalStateException for unset bounds "
+                    + "and score.");
+        } catch (IllegalStateException e) {
+            // Do nothing
+        }
+
+        try {
+            builder = new Face.Builder();
+            face = builder.setBounds(bounds)
+                          .build();
+            Assert.fail("Face.Builder did not throw an IllegalStateException for unset score.");
+        } catch (IllegalStateException e) {
+            // Do nothing
+        }
+
+        try {
+            builder = new Face.Builder();
+            face = builder.setBounds(null)
+                    .setScore(score)
+                    .setId(id)
+                    .setLeftEyePosition(leftEyePosition)
+                    .setRightEyePosition(rightEyePosition)
+                    .setMouthPosition(mouthPosition)
+                    .build();
             Assert.fail("Face did not throw an IllegalArgumentException for null bounds");
         } catch (IllegalArgumentException e) {
             // Do nothing
         }
 
         try {
-            face = new Face(bounds, /*score*/ Face.SCORE_MIN - 1, id, leftEyePosition,
-                    rightEyePosition, mouthPosition);
+            builder = new Face.Builder();
+            face = builder.setBounds(bounds)
+                          .setScore(Face.SCORE_MIN - 1)
+                          .setId(id)
+                          .setLeftEyePosition(leftEyePosition)
+                          .setRightEyePosition(rightEyePosition)
+                          .setMouthPosition(mouthPosition)
+                          .build();
             Assert.fail("Face did not throw an IllegalArgumentException for score below range");
         } catch (IllegalArgumentException e) {
             // Do nothing
         }
 
         try {
-            face = new Face(bounds, /*score*/ Face.SCORE_MAX + 1, id, leftEyePosition,
-                    rightEyePosition, mouthPosition);
+            builder = new Face.Builder();
+            face = builder.setBounds(bounds)
+                          .setScore(Face.SCORE_MAX + 1)
+                          .setId(id)
+                          .setLeftEyePosition(leftEyePosition)
+                          .setRightEyePosition(rightEyePosition)
+                          .setMouthPosition(mouthPosition)
+                          .build();
             Assert.fail("Face did not throw an IllegalArgumentException for score above range");
         } catch (IllegalArgumentException e) {
             // Do nothing
         }
 
         try {
-            face = new Face(bounds, score, /*id*/ Face.ID_UNSUPPORTED, leftEyePosition,
-                    rightEyePosition, mouthPosition);
+            builder = new Face.Builder();
+            face = builder.setBounds(bounds)
+                          .setScore(score)
+                          .setId(Face.ID_UNSUPPORTED)
+                          .setLeftEyePosition(leftEyePosition)
+                          .setRightEyePosition(rightEyePosition)
+                          .setMouthPosition(mouthPosition)
+                          .build();
             Assert.fail("Face did not throw an IllegalArgumentException for non-null positions when"
                     + " id is ID_UNSUPPORTED.");
+        } catch (IllegalArgumentException e) {
+            // Do nothing
+        }
+
+        try {
+            builder = new Face.Builder();
+            face = builder.setBounds(bounds)
+                          .setScore(score)
+                          .setId(Face.ID_UNSUPPORTED)
+                          .setLeftEyePosition(leftEyePosition)
+                          .setRightEyePosition(rightEyePosition)
+                          .setMouthPosition(null)
+                          .build();
+            Assert.fail("Face did not throw an IllegalArgumentException for partially defined "
+                    + "face features");
         } catch (IllegalArgumentException e) {
             // Do nothing
         }

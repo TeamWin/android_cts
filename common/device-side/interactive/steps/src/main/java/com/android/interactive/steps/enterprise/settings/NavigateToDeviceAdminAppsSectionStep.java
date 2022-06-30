@@ -16,18 +16,13 @@
 
 package com.android.interactive.steps.enterprise.settings;
 
-import com.android.interactive.steps.CompositionStep;
-import com.android.interactive.steps.settings.NavigateToAccountSettingsStep;
-
-import java.util.Arrays;
+import com.android.interactive.steps.ActAndConfirmStep;
 
 /**
- * Starting from anywhere, navigate to the account settings section of the work settings app.
- *
- * <p>This will be the only settings app if there is no separate work settings app.
+ * Starting from security settings, navigate to device admin apps section.
  */
-public final class NavigateToWorkAccountSettingsStep extends CompositionStep {
-    public NavigateToWorkAccountSettingsStep() {
-        super(Arrays.asList(LaunchWorkSettingsStep.class, NavigateToAccountSettingsStep.class));
+public final class NavigateToDeviceAdminAppsSectionStep extends ActAndConfirmStep {
+    public NavigateToDeviceAdminAppsSectionStep() {
+        super("Navigate to Device admin Apps section");
     }
 }

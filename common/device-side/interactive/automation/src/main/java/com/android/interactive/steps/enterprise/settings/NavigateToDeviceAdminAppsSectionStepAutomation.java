@@ -16,39 +16,31 @@
 
 package com.android.interactive.steps.enterprise.settings;
 
-import static com.google.common.truth.Truth.assertWithMessage;
-
 import android.widget.TextView;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiScrollable;
 import androidx.test.uiautomator.UiSelector;
 
 import com.android.interactive.Automation;
 import com.android.interactive.annotations.AutomationFor;
 
-@AutomationFor("com.android.interactive.steps.enterprise.settings.ConfirmPersonalAccountsAreSeparateToWorkStep")
-public final class ConfirmPersonalAccountsAreSeparateToWorkStepAutomation implements Automation {
-
-    private static final long WAIT_TIMEOUT = 10000;
-
+@AutomationFor("com.android.interactive.steps.enterprise.settings.NavigateToDeviceAdminAppsSectionStep")
+public class NavigateToDeviceAdminAppsSectionStepAutomation implements Automation {
     @Override
-    public void automate() {
+    public void automate() throws Throwable {
         // TODO: Standardise UI interaction patterns
         UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
 
-        // TODO: Can we verify more than just the text of the tabs?
-        boolean hasPersonalTab =
-                device.findObject(
-                        new UiSelector().text("Personal").className(
-                                TextView.class)).waitForExists(WAIT_TIMEOUT);
-        boolean hasWorkTab =
-                device.findObject(new UiSelector().text("Work").className(
-                        TextView.class)).waitForExists(WAIT_TIMEOUT);
+        // Move to "Advanced Settings"
+        UiScrollable settingsItem = new UiScrollable(new UiSelector()
+                .className("androidx.recyclerview.widget.RecyclerView"));
+        settingsItem.getChildByText(new UiSelector()
+                .className(TextView.class), "More security settings").click();
 
-        assertWithMessage("Expects personal tab to be present")
-                .that(hasPersonalTab).isTrue();
-        assertWithMessage("Expects work tab to be present")
-                .that(hasWorkTab).isTrue();
+        // Move to Device Admin Apps screen
+        device.findObject(new UiSelector().text("Device admin apps").className(
+                TextView.class)).click();
     }
 }

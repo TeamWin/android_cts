@@ -27,7 +27,7 @@ import com.android.interactive.Automation;
 import com.android.interactive.annotations.AutomationFor;
 
 @AutomationFor("com.android.interactive.steps.enterprise.settings.NavigateToPersonalAccountSettingsStep")
-public class NavigateToPersonalAccountSettingsStepAutomation implements Automation {
+public final class NavigateToPersonalAccountSettingsStepAutomation implements Automation {
     @Override
     public void automate() {
         Intent intent = new Intent(Settings.ACTION_SYNC_SETTINGS);

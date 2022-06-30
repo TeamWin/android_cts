@@ -27,10 +27,8 @@ import androidx.test.uiautomator.UiSelector;
 import com.android.interactive.Automation;
 import com.android.interactive.annotations.AutomationFor;
 
-import com.google.common.truth.Truth;
-
 @AutomationFor("com.android.interactive.steps.enterprise.settings.ConfirmWorkAccountsAreSeparateToPersonalStep")
-public class ConfirmWorkAccountsAreSeparateToPersonalStepAutomation implements Automation {
+public final class ConfirmWorkAccountsAreSeparateToPersonalStepAutomation implements Automation {
 
     private static final long WAIT_TIMEOUT = 10000;
 

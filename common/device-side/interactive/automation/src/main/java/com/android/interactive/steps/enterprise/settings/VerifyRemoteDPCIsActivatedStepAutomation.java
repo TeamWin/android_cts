@@ -16,33 +16,43 @@
 
 package com.android.interactive.steps.enterprise.settings;
 
-import android.widget.Button;
+import static com.google.common.truth.Truth.assertThat;
+
 import android.widget.TextView;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiObject;
+import androidx.test.uiautomator.UiObject2;
+import androidx.test.uiautomator.UiScrollable;
 import androidx.test.uiautomator.UiSelector;
 
 import com.android.interactive.Automation;
 import com.android.interactive.annotations.AutomationFor;
 
-@AutomationFor("com.android.interactive.steps.enterprise.settings.AccountsRemoveWorkProfileStep")
-public final class AccountsRemoveWorkProfileStepAutomation implements Automation {
+import com.google.common.truth.Truth;
+
+@AutomationFor("com.android.interactive.steps.enterprise.settings.VerifyRemoteDPCIsActivatedStep")
+public final class VerifyRemoteDPCIsActivatedStepAutomation implements Automation {
     @Override
     public void automate() throws Throwable {
         // TODO: Standardise UI interaction patterns
         UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
 
-        // Move to "Work" tab
-        device.findObject(new UiSelector().text("Work").className(
-                TextView.class)).click();
+        UiScrollable settingsItem = new UiScrollable(new UiSelector()
+                .className("androidx.recyclerview.widget.RecyclerView"));
+        UiObject remoteDpcText = settingsItem.getChildByText(new UiSelector()
+                .className(TextView.class), "RemoteDPC");
 
-        // Press "Remove work profile"
-        device.findObject(new UiSelector().text("Remove work profile").className(
-                TextView.class)).click();
+        assertThat(remoteDpcText.exists()).isTrue();
 
-        // Confirm
-        device.findObject(new UiSelector().text("Delete").className(
-                Button.class)).click();
+        // TODO: This is very dependent on the view hierarchy and quite brittle
+        UiObject2 remoteDpcSwitch =
+                device.findObject(By.text("RemoteDPC")).getParent().getParent()
+                        .findObject(By.checkable(true));
+
+        Truth.assertWithMessage("Expected RemoteDPC to be activated")
+                .that(remoteDpcSwitch.isChecked()).isTrue();
     }
 }

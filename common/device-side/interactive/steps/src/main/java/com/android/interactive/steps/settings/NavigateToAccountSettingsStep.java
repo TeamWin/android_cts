@@ -21,6 +21,6 @@ import com.android.interactive.steps.ActAndConfirmStep;
 /** Beginning at the Settings app main menu, navigate to the Account settings area. */
 public class NavigateToAccountSettingsStep extends ActAndConfirmStep {
     public NavigateToAccountSettingsStep() {
-        super("Navigate to 'Accounts'");
+        super("Navigate to accounts");
     }
 }

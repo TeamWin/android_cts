@@ -223,7 +223,13 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Landroid/os/CreateAppDataArgs;",
                     "Landroid/os/CreateAppDataResult;",
                     "Landroid/os/ReconcileSdkDataArgs;",
-                    "Lcom/android/internal/util/FrameworkStatsLog;"
+                    "Lcom/android/internal/util/FrameworkStatsLog;",
+                    // Extra Pixel specific S oversights
+                    "Landroid/os/BlockUntrustedTouchesMode;",
+                    "Landroid/os/IInputConstants;",
+                    "Landroid/os/InputEventInjectionResult;",
+                    "Landroid/os/InputEventInjectionSync;"
+
             );
 
     private static final String FEATURE_WEARABLE = "android.hardware.type.watch";
@@ -1044,6 +1050,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 .put("/system_ext/framework/androidx.window.sidecar.jar",
                     ImmutableSet.of("Landroidx/window/common/", "Landroidx/window/sidecar",
                         "Landroidx/window/util"))
+                .put("/vendor/framework/com.google.android.camera.experimental2020_midyear.jar",
+                    ImmutableSet.of("Landroidx/annotation"))
                 .build();
         assertWithMessage("There must not be any androidx classes on the "
             + "bootclasspath. Please use alternatives provided by the platform instead. "

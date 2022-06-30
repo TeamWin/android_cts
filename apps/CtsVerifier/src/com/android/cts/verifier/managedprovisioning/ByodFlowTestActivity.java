@@ -353,12 +353,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 R.string.provisioning_byod_app_settings_instruction,
                 new Intent(Settings.ACTION_APPLICATION_SETTINGS));
 
-        mDeviceAdminVisibleTest = new DialogTestListItem(this,
-                R.string.provisioning_byod_admin_visible,
-                "BYOD_DeviceAdminVisibleTest",
-                R.string.provisioning_byod_admin_visible_instruction,
-                new Intent(Settings.ACTION_SECURITY_SETTINGS));
-
         mCredSettingsVisibleTest = new DialogTestListItem(this,
                 R.string.provisioning_byod_cred_settings,
                 "BYOD_CredSettingsVisibleTest",

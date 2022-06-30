@@ -28,6 +28,9 @@ import java.lang.annotation.Target;
  *
  * <p>You can guarantee that these methods do not run on devices not on the launcher
  * using {@code DeviceState}.
+ *
+ * <p>On U+ this will close all recent tasks - prior to that it will just launch Launcher in the
+ * foreground.
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

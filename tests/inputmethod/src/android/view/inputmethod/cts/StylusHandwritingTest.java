@@ -120,6 +120,27 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     }
 
     @Test
+    public void testIsStylusHandwritingAvailable_prefDisabled() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            imeSession.openEventStream();
+
+            // Disable pref
+            Settings.Global.putInt(mContext.getContentResolver(),
+                    STYLUS_HANDWRITING_ENABLED, SETTING_VALUE_OFF);
+            mShouldRestoreInitialHwState = true;
+
+            launchTestActivity(getTestMarker());
+            assertFalse(
+                    "should return false for isStylusHandwritingAvailable() when pref is disabled",
+                    mContext.getSystemService(
+                            InputMethodManager.class).isStylusHandwritingAvailable());
+        }
+    }
+
+    @Test
     public void testIsStylusHandwritingAvailable() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
