@@ -117,7 +117,7 @@ public final class ProfileOwner extends DevicePolicyController {
             devicePolicyManager.forceRemoveActiveAdmin(mComponentName, mUser.id());
         } catch (SecurityException e) {
             if (e.getMessage().contains("Attempt to remove non-test admin")
-                    && mPackage.appComponentFactory().equals(TEST_APP_APP_COMPONENT_FACTORY)
+                    && TEST_APP_APP_COMPONENT_FACTORY.equals(mPackage.appComponentFactory())
                     && user().parent() == null) {
                 removeTestApp();
             } else {
@@ -138,7 +138,7 @@ public final class ProfileOwner extends DevicePolicyController {
                     .validate(ShellCommandUtils::startsWithSuccess)
                     .execute();
         } catch (AdbException e) {
-            if (mPackage.appComponentFactory().equals(TEST_APP_APP_COMPONENT_FACTORY)
+            if (TEST_APP_APP_COMPONENT_FACTORY.equals(mPackage.appComponentFactory())
                     && user().parent() == null) {
                 // We can't see why it failed so we'll try the test app version
                 removeTestApp();

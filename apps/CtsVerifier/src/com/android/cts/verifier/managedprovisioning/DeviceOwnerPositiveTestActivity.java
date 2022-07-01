@@ -448,9 +448,11 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                     }));
         }
 
+        // Without PIN/Password watches don't have any lockscreen, so this policy isn't applicable
         // setKeyguardDisabled
-        if (FeatureUtil.isKeyguardShownWhenUserDoesntHaveCredentials(this)
-                && Utils.isLockscreenSupported(this)) {
+        if (FeatureUtil.isKeyguardShownWhenUserDoesntHaveCredentials(this) &&
+                Utils.isLockscreenSupported(this) &&
+                !packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             adapter.add(createInteractiveTestItem(this, DISABLE_KEYGUARD_TEST_ID,
                     R.string.device_owner_disable_keyguard_test,
                     R.string.device_owner_disable_keyguard_test_info,

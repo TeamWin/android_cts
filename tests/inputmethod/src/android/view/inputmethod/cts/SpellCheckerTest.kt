@@ -469,6 +469,39 @@ class SpellCheckerTest : EndToEndImeTestBase() {
     }
 
     @Test
+    fun suppressesSpellChecker_unbind() {
+        val configuration = MockSpellCheckerConfiguration.newBuilder()
+                .addSuggestionRules(
+                        MockSpellCheckerProto.SuggestionRule.newBuilder()
+                                .setMatch("match")
+                                .addSuggestions("suggestion")
+                                .setAttributes(RESULT_ATTR_LOOKS_LIKE_TYPO)
+                ).build()
+        // SpellCheckingIme should have android:suppressesSpellChecker="true"
+        ImeSession(SPELL_CHECKING_IME_ID).use {
+            assertThat(getCurrentInputMethodInfo().suppressesSpellChecker()).isTrue()
+
+            MockSpellCheckerClient.create(context, configuration).use {
+                val (activity, editText) = startTestActivity()
+                CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText)
+                val imm = activity.getSystemService(InputMethodManager::class.java)
+                waitOnMainUntil({ editText.hasFocus() &&
+                        imm.hasActiveInputConnection(editText) }, TIMEOUT)
+                assertThat(imm?.isInputMethodSuppressingSpellChecker).isTrue()
+
+                // Unbind the SpellCheckingIme. Use MockIme in case the default IME sets
+                // android:suppressesSpellChecker="true"
+                MockImeSession.create(context).use {
+                    PollingCheck.check("Make sure the SpellCheckingIme is not selected", TIMEOUT) {
+                        getCurrentInputMethodInfo().id != SPELL_CHECKING_IME_ID
+                    }
+                    assertThat(imm?.isInputMethodSuppressingSpellChecker).isFalse()
+                }
+            }
+        }
+    }
+
+    @Test
     fun trailingPunctuation() {
         // Set up a rule that matches the sentence "match?" and marks it as grammar error.
         val configuration = MockSpellCheckerConfiguration.newBuilder()

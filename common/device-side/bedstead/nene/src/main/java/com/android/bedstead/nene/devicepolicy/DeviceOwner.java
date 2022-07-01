@@ -107,7 +107,7 @@ public final class DeviceOwner extends DevicePolicyController {
                     .validate(ShellCommandUtils::startsWithSuccess)
                     .execute();
         } catch (AdbException e) {
-            if (mPackage.appComponentFactory().equals(TEST_APP_APP_COMPONENT_FACTORY)
+            if (TEST_APP_APP_COMPONENT_FACTORY.equals(mPackage.appComponentFactory())
                     && user().parent() == null) {
                 // We can't see why it failed so we'll try the test app version
                 removeTestApp();

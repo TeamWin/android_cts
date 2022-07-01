@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assume.assumeNotNull;
 
 import android.car.VehicleAreaType;
+import android.car.VehicleAreaWheel;
 import android.car.VehiclePropertyIds;
 import android.car.VehiclePropertyType;
 import android.car.hardware.CarPropertyConfig;
@@ -41,6 +42,9 @@ import java.util.stream.Collectors;
 public class VehiclePropertyVerifier<T> {
     private final static String CAR_PROPERTY_VALUE_SOURCE_GETTER = "Getter";
     private final static String CAR_PROPERTY_VALUE_SOURCE_CALLBACK = "Callback";
+    private static final ImmutableSet<Integer> WHEEL_AREA_IDS = ImmutableSet.of(
+            VehicleAreaWheel.WHEEL_LEFT_FRONT, VehicleAreaWheel.WHEEL_LEFT_REAR,
+            VehicleAreaWheel.WHEEL_RIGHT_FRONT, VehicleAreaWheel.WHEEL_RIGHT_REAR);
 
     private final int mPropertyId;
     private final String mPropertyName;
@@ -220,6 +224,17 @@ public class VehiclePropertyVerifier<T> {
                     mPropertyName + "'s AreaIds must contain a single 0 since it is "
                             + areaTypeToString(mAreaType))
                     .that(carPropertyConfig.getAreaIds()).isEqualTo(new int[]{0});
+        } else if (mAreaType == VehicleAreaType.VEHICLE_AREA_TYPE_WHEEL) {
+            assertWithMessage(mPropertyName + "'s Area IDs must all be unique").that(
+                    ImmutableSet.copyOf(Arrays.stream(
+                            carPropertyConfig.getAreaIds()).boxed().collect(
+                            Collectors.toList())).size()
+                            == carPropertyConfig.getAreaIds().length).isTrue();
+            for (int areaId : carPropertyConfig.getAreaIds()) {
+                assertWithMessage(mPropertyName + "'s area ID: " + areaId
+                        + " must be a valid VehicleAreaWheel area ID").that(
+                        WHEEL_AREA_IDS.contains(areaId)).isTrue();
+            }
         }
 
         if (mChangeMode == CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS) {

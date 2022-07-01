@@ -16,208 +16,208 @@
 
 package android.os.cts.companiontestapp;
 
-
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothServerSocket;
+import android.bluetooth.BluetoothSocket;
+import android.companion.AssociationInfo;
+import android.companion.AssociationRequest;
+import android.companion.CompanionDeviceManager;
 import android.companion.cts.permissionssynctestapp.R;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-public class MainActivity extends Activity implements ContextProvider {
-    private static final String TAG = "MainActivity";
+import java.io.IOException;
+import java.util.UUID;
 
-    private static final int REQUEST_CODE_CDM = 2;
-    private static final int REQUEST_CODE_PERMISSIONS_SYNC = 3;
-    private static final int REQUEST_CODE_BLUETOOTH_DISCOVERY = 4;
-    private static final int REQUEST_CODE_BLUETOOTH_PERMISSIONS = 5;
-    private static final int BLUETOOTH_DISCOVERY_DURATION_SECONDS = 100;
+public class MainActivity extends Activity {
+    static final String TAG = "MainActivity";
 
-    private CommunicationManager mCommunicationManager;
-    private CDMController mCDMController;
+    // Name for the SDP record when creating server socket
+    private static final String SERVICE_NAME = "CDMPermissionsSyncBluetoothSecure";
+
+    // Unique UUID for this application
+    private static final UUID SERVICE_UUID =
+            UUID.fromString("7606c653-6dc3-4a61-9870-07652896cc1c");
+
+    private BluetoothAdapter mAdapter;
+    private BluetoothServerThread mServerThread;
+    private BluetoothDevice mClientDevice;
+
+    private CompanionDeviceManager mCompanionDeviceManager;
+    private int mAssociationId;
+
+    private static final int REQUEST_CODE_DISCOVERABLE = 100;
+    private static final int REQUEST_CODE_ASSOCIATE = 101;
+    private static final int REQUEST_CODE_SYNC = 102;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
 
-        mCommunicationManager = CommunicationManager.createInstance(this, mHandler);
-        mCDMController = new CDMController(this);
+        mAdapter = getSystemService(BluetoothManager.class).getAdapter();
 
-        Button associateButton = findViewById(R.id.associateButton);
-        Button disassociateButton = findViewById(R.id.disassociateButton);
-        Button beginPermissionsSyncButton = findViewById(R.id.beginPermissionsSyncButton);
-        Button startAdvertisingButton = findViewById(R.id.startAdvertisingButton);
+        mCompanionDeviceManager = getSystemService(CompanionDeviceManager.class);
 
-        associateButton.setOnClickListener(v -> mCDMController.associate());
-        disassociateButton.setOnClickListener(v -> mCDMController.disassociate());
-        beginPermissionsSyncButton.setOnClickListener(v -> mCDMController.requestUserConsentForTransfer());
-        startAdvertisingButton.setOnClickListener(v -> startAdvertisingDevice());
+        requireViewById(R.id.associateButton).setOnClickListener(v -> {
+            mCompanionDeviceManager.associate(
+                    new AssociationRequest.Builder()
+                            .setDisplayName("Test Device")
+                            .build(),
+                    getMainExecutor(), mCallback);
+        });
+        requireViewById(R.id.disassociateButton).setOnClickListener(v -> {
+            mCompanionDeviceManager.disassociate(mAssociationId);
+        });
+
+        requireViewById(R.id.beginPermissionsSyncButton).setOnClickListener(v -> {
+            try {
+                final IntentSender intentSender = mCompanionDeviceManager
+                        .buildPermissionTransferUserConsentIntent(mAssociationId);
+                startIntentSenderForResult(intentSender, REQUEST_CODE_SYNC, null, 0, 0, 0);
+            } catch (IntentSender.SendIntentException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        requireViewById(R.id.startAdvertisingButton).setOnClickListener(v -> {
+            startActivityForResult(new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE),
+                    REQUEST_CODE_DISCOVERABLE);
+        });
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        boolean permissionGranted = checkBluetoothPermissions();
-        if (permissionGranted) {
-            mCommunicationManager.onStart();
-        }
+
+        bindService(new Intent(this, PermissionsTransferCompanionService.class),
+                mServiceConnection, Context.BIND_AUTO_CREATE);
+
+        mServerThread = new BluetoothServerThread();
+        mServerThread.start();
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mCommunicationManager.onStop();
-    }
+    protected void onStop() {
+        super.onStop();
 
-    private void transferData() {
-        if (mCommunicationManager.hasCommunicationChannel()) {
-            mCDMController.beginDataTransfer();
-        } else {
-            Toast.makeText(this,
-                    "Cannot begin data transfer. Devices are not connected", Toast.LENGTH_SHORT).show();
-        }
-    }
+        mServerThread.shutdown();
+        mServerThread = null;
 
-    /**
-     * Checks if the {@link Manifest.permission#BLUETOOTH_CONNECT} permission has been granted. If not,
-     * requests the permission from the user
-     *
-     * @return true if the permission has been granted, false otherwise
-     */
-    private boolean checkBluetoothPermissions() {
-        if (checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PERMISSION_GRANTED) {
-            Toast.makeText(this, "permission already granted", Toast.LENGTH_SHORT).show();
-            return true;
-        } else {
-            requestPermissions(new String[] {Manifest.permission.BLUETOOTH_CONNECT}, REQUEST_CODE_BLUETOOTH_PERMISSIONS);
-            return false;
-        }
-    }
-
-    private void startAdvertisingDevice() {
-        Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-        discoverableIntent.putExtra(
-                BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, BLUETOOTH_DISCOVERY_DURATION_SECONDS);
-        startActivityForResult(discoverableIntent, REQUEST_CODE_BLUETOOTH_DISCOVERY);
+        unbindService(mServiceConnection);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        Log.i(TAG, "onActivityResult called with requestCode: " + requestCode + " and resultCode: " + resultCode);
+        Log.v(TAG, "onActivityResult() request=" + requestCode + " result=" + resultCode);
 
         switch (requestCode) {
-            case REQUEST_CODE_PERMISSIONS_SYNC:
-                if(resultCode == Activity.RESULT_OK) {
-                    Toast.makeText(this, "permissions sync accepted; begin transfer", Toast.LENGTH_SHORT).show();
-                    transferData();
-                } else {
-                    Toast.makeText(this, "permissions sync declined", Toast.LENGTH_SHORT).show();
+            case REQUEST_CODE_SYNC:
+                if (resultCode == Activity.RESULT_OK) {
+                    try {
+                        final BluetoothSocket socket = mClientDevice
+                                .createRfcommSocketToServiceRecord(SERVICE_UUID);
+                        socket.connect();
+                        Log.v(TAG, "Attaching client socket " + socket);
+                        PermissionsTransferCompanionService.sInstance.attachSystemDataTransport(
+                                mAssociationId, socket.getInputStream(), socket.getOutputStream());
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    mCompanionDeviceManager.startSystemDataTransfer(mAssociationId);
                 }
                 break;
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_CODE_BLUETOOTH_PERMISSIONS:
-                if (grantResults.length > 0 && grantResults[0] == PERMISSION_GRANTED) {
-                    Toast.makeText(this, "permission granted", Toast.LENGTH_SHORT).show();
-                    mCommunicationManager.onStart();
-                }  else {
-                    Toast.makeText(this, "permission denied", Toast.LENGTH_SHORT).show();
-                }
-        }
-    }
-
-    @Override
-    public Context getContext() {
-        return this;
-    }
-
-    @Override
-    public void processAssociationIntentSender(IntentSender intentSender) {
-        try {
-            startIntentSenderForResult(intentSender, REQUEST_CODE_CDM, null, 0, 0, 0);
-        } catch (IntentSender.SendIntentException e) {
-            Toast.makeText(this, "IntentSender exception", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    @Override
-    public void processPermissionsSyncUserConsentIntentSender(IntentSender intentSender) {
-        try {
-            startIntentSenderForResult(intentSender, REQUEST_CODE_PERMISSIONS_SYNC, null, 0, 0, 0);
-        } catch (IntentSender.SendIntentException e) {
-            Toast.makeText(this, "IntentSender exception", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    /**
-     * The Handler that gets information back from the BluetoothCommunicationService
-     */
-    private final Handler mHandler = new Handler(Looper.getMainLooper()) {
+    private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
-        public void handleMessage(Message msg) {
-            Activity activity = MainActivity.this;
-            switch (msg.what) {
-                case BluetoothCommunicationService.MESSAGE_STATE_CHANGE:
-                    switch (msg.arg1) {
-                        case BluetoothCommunicationService.STATE_CONNECTED:
-                            Toast.makeText(activity, "state: connected", Toast.LENGTH_SHORT).show();
-                            break;
-                        case BluetoothCommunicationService.STATE_CONNECTING:
-                            Toast.makeText(activity, "state: connecting", Toast.LENGTH_SHORT).show();
-                            break;
-                        case BluetoothCommunicationService.STATE_LISTEN:
-                            Toast.makeText(activity, "state: listen", Toast.LENGTH_SHORT).show();
-                            break;
-                        case BluetoothCommunicationService.STATE_NONE:
-                            Toast.makeText(activity, "state: none", Toast.LENGTH_SHORT).show();
-                            break;
-                    }
-                    break;
-                case BluetoothCommunicationService.MESSAGE_WRITE:
-                    byte[] writeBuf = (byte[]) msg.obj;
-                    // nothing to do
-                    break;
-                case BluetoothCommunicationService.MESSAGE_READ:
-                    byte[] readBuf = (byte[]) msg.obj;
-                    // construct a string from the valid bytes in the buffer
-                    Toast.makeText(activity, "Message Received: ["
-                            + msg.arg1 + "]", Toast.LENGTH_SHORT).show();
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            // ignored
+        }
 
-                    Intent intent = new Intent(activity, PermissionsTransferCompanionService.class);
-                    intent.putExtra(PermissionsTransferCompanionService.EXTRA_MESSAGE_BYTES,
-                            readBuf);
-                    intent.putExtra(PermissionsTransferCompanionService.EXTRA_ASSOCIATION_ID,
-                            mCDMController.getAssociationId());
-                    intent.putExtra(PermissionsTransferCompanionService.EXTRA_HAS_RECEIVED_MESSAGE,
-                            true);
-                    activity.startService(intent);
-
-                    break;
-                case BluetoothCommunicationService.MESSAGE_DEVICE_NAME:
-                    // save the connected device's name
-                    String deviceName = msg.getData().getString(BluetoothCommunicationService.DEVICE_NAME);
-                    Toast.makeText(activity, "Connected to "
-                            + deviceName, Toast.LENGTH_SHORT).show();
-                    break;
-            }
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            // ignored
         }
     };
+
+    private CompanionDeviceManager.Callback mCallback = new CompanionDeviceManager.Callback() {
+        @Override
+        public void onAssociationPending(@NonNull IntentSender intentSender) {
+            Log.v(TAG, "onAssociationPending " + intentSender);
+
+            try {
+                startIntentSenderForResult(intentSender, REQUEST_CODE_ASSOCIATE, null, 0, 0, 0);
+            } catch (IntentSender.SendIntentException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void onAssociationCreated(@NonNull AssociationInfo associationInfo) {
+            Log.v(TAG, "onAssociationCreated " + associationInfo);
+
+            mAssociationId = associationInfo.getId();
+            mClientDevice = mAdapter.getRemoteDevice(
+                    associationInfo.getDeviceMacAddress().toString().toUpperCase());
+        }
+
+        @Override
+        public void onFailure(@Nullable CharSequence error) {
+            throw new RuntimeException(error.toString());
+        }
+    };
+
+    private class BluetoothServerThread extends Thread {
+        private BluetoothServerSocket mServerSocket;
+
+        @Override
+        public void run() {
+            try {
+                Log.v(TAG, "Listening for remote connections...");
+                mServerSocket = mAdapter.listenUsingRfcommWithServiceRecord(SERVICE_NAME,
+                        SERVICE_UUID);
+                while (true) {
+                    final BluetoothSocket socket = mServerSocket.accept();
+                    Log.v(TAG, "Attaching server socket " + socket);
+                    PermissionsTransferCompanionService.sInstance.attachSystemDataTransport(
+                            mAssociationId, socket.getInputStream(), socket.getOutputStream());
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public void shutdown() {
+            if (mServerSocket != null) {
+                try {
+                    mServerSocket.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
 }

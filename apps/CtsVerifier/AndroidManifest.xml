@@ -5138,6 +5138,7 @@
                 android:exported="true"
             android:launchMode="singleTask">
             <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
@@ -5146,6 +5147,8 @@
                 android:value="android.software.live_tv" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest"
+                       android:value="3.12/C-1-2" />
         </activity>
 
         <activity android:name=".tv.MicrophoneDeviceTestActivity"

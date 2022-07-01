@@ -76,7 +76,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
             int attempt = 0;
             boolean hasVirtualDisk = false;
             String result = "";
-            while (!hasVirtualDisk && attempt++ < 20) {
+            while (!hasVirtualDisk && attempt++ < 50) {
                 Thread.sleep(1000);
                 result = getDevice().executeShellCommand("sm list-disks adoptable").trim();
                 hasVirtualDisk = result.startsWith("disk:");

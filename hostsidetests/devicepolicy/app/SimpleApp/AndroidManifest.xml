@@ -30,11 +30,11 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".NonExportedActivity">
-                        android:exported=&quot;false&quot;&gt;
+        <activity android:name=".NonExportedActivity"
+             android:exported="false">
         </activity>
-        <activity android:name=".NonLauncherActivity">
-                        android:exported=&quot;true&quot;&gt;
+        <activity android:name=".NonLauncherActivity"
+             android:exported="true">
         </activity>
         <activity android:name=".SimpleActivityStartService"
              android:turnScreenOn="true"

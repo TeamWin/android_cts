@@ -106,6 +106,12 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     private static final ImmutableSet<Integer> SPEED_DISPLAY_UNITS =
             ImmutableSet.<Integer>builder().add(VehicleUnit.METER_PER_SEC,
                     VehicleUnit.MILES_PER_HOUR, VehicleUnit.KILOMETERS_PER_HOUR).build();
+    private static final ImmutableSet<Integer> TURN_SIGNAL_STATES =
+            ImmutableSet.<Integer>builder().add(/*TurnSignalState.NONE=*/0,
+                    /*TurnSignalState.RIGHT=*/1, /*TurnSignalState.LEFT=*/2).build();
+    private static final ImmutableSet<Integer> VEHICLE_LIGHT_STATES =
+            ImmutableSet.<Integer>builder().add(/*VehicleLightState.OFF=*/0,
+                    /*VehicleLightState.ON=*/1, /*VehicleLightState.DAYTIME_RUNNING=*/2).build();
     /** contains property Ids for the properties required by CDD */
     private final ArraySet<Integer> mPropertyIds = new ArraySet<>();
     private CarPropertyManager mCarPropertyManager;
@@ -1130,6 +1136,172 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                                     "PERF_ODOMETER Float value must be greater than or equal 0")
                                     .that((Float) carPropertyValue.getValue()).isAtLeast(0))
                             .build().verify(mCarPropertyManager);
+                });
+    }
+
+    @Test
+    public void testTurnSignalStateIfSupported() {
+        adoptSystemLevelPermission(/*Car.PERMISSION_EXTERIOR_LIGHTS=*/
+                "android.car.permission.CAR_EXTERIOR_LIGHTS", () -> {
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.TURN_SIGNAL_STATE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setCarPropertyValueVerifier(
+                                (carPropertyConfig, carPropertyValue) -> {
+                                    Integer turnSignalState = (Integer) carPropertyValue.getValue();
+                                    assertWithMessage("TURN_SIGNAL_STATE must be a defined state.")
+                                            .that(turnSignalState)
+                                            .isIn(TURN_SIGNAL_STATES);
+                                }).build().verify(mCarPropertyManager);
+                });
+    }
+
+    @Test
+    public void testHeadlightsStateIfSupported() {
+        adoptSystemLevelPermission(/*Car.PERMISSION_EXTERIOR_LIGHTS=*/
+                "android.car.permission.CAR_EXTERIOR_LIGHTS", () -> {
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HEADLIGHTS_STATE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setCarPropertyValueVerifier(
+                                (carPropertyConfig, carPropertyValue) -> {
+                                    Integer headLightsState = (Integer) carPropertyValue.getValue();
+                                    assertWithMessage("HEADLIGHTS_STATE must be a defined state.")
+                                            .that(headLightsState)
+                                            .isIn(VEHICLE_LIGHT_STATES);
+                                }).build().verify(mCarPropertyManager);
+                });
+    }
+
+    @Test
+    public void testHighBeamLightsStateIfSupported() {
+        adoptSystemLevelPermission(/*Car.PERMISSION_EXTERIOR_LIGHTS=*/
+                "android.car.permission.CAR_EXTERIOR_LIGHTS", () -> {
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HIGH_BEAM_LIGHTS_STATE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setCarPropertyValueVerifier(
+                                (carPropertyConfig, carPropertyValue) -> {
+                                    Integer highBeamLightsState =
+                                            (Integer) carPropertyValue.getValue();
+                                    assertWithMessage(
+                                            "HIGH_BEAM_LIGHTS_STATE must be a defined state.")
+                                            .that(highBeamLightsState)
+                                            .isIn(VEHICLE_LIGHT_STATES);
+                                }).build().verify(mCarPropertyManager);
+                });
+    }
+
+    @Test
+    public void testFogLightsStateIfSupported() {
+        adoptSystemLevelPermission(/*Car.PERMISSION_EXTERIOR_LIGHTS=*/
+                "android.car.permission.CAR_EXTERIOR_LIGHTS", () -> {
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.FOG_LIGHTS_STATE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setCarPropertyValueVerifier(
+                                (carPropertyConfig, carPropertyValue) -> {
+                                    Integer fogLightsState = (Integer) carPropertyValue.getValue();
+
+                                    assertWithMessage(
+                                            "FRONT_FOG_LIGHTS_STATE must not be implemented"
+                                                    + "when FOG_LIGHTS_STATE is implemented")
+                                            .that(mCarPropertyManager.getCarPropertyConfig(
+                                                    VehiclePropertyIds.FRONT_FOG_LIGHTS_STATE))
+                                            .isNull();
+
+                                    assertWithMessage(
+                                            "REAR_FOG_LIGHTS_STATE must not be implemented"
+                                                    + "when FOG_LIGHTS_STATE is implemented")
+                                            .that(mCarPropertyManager.getCarPropertyConfig(
+                                                    VehiclePropertyIds.REAR_FOG_LIGHTS_STATE))
+                                            .isNull();
+
+                                    assertWithMessage("FOG_LIGHTS_STATE must be a defined state.")
+                                            .that(fogLightsState)
+                                            .isIn(VEHICLE_LIGHT_STATES);
+                                }).build().verify(mCarPropertyManager);
+                });
+    }
+
+    @Test
+    public void testHazardLightsStateIfSupported() {
+        adoptSystemLevelPermission(/*Car.PERMISSION_EXTERIOR_LIGHTS=*/
+                "android.car.permission.CAR_EXTERIOR_LIGHTS", () -> {
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HAZARD_LIGHTS_STATE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setCarPropertyValueVerifier(
+                                (carPropertyConfig, carPropertyValue) -> {
+                                    Integer hazardLightsState =
+                                            (Integer) carPropertyValue.getValue();
+
+                                    assertWithMessage(
+                                            "HAZARD_LIGHTS_STATE must be a defined state.")
+                                            .that(hazardLightsState)
+                                            .isIn(VEHICLE_LIGHT_STATES);
+                                }).build().verify(mCarPropertyManager);
+                });
+    }
+
+    @Test
+    public void testFrontFogLightsStateIfSupported() {
+        adoptSystemLevelPermission(/*Car.PERMISSION_EXTERIOR_LIGHTS=*/
+                "android.car.permission.CAR_EXTERIOR_LIGHTS", () -> {
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.FRONT_FOG_LIGHTS_STATE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setCarPropertyValueVerifier(
+                                (carPropertyConfig, carPropertyValue) -> {
+                                    Integer frontFogLightsState =
+                                            (Integer) carPropertyValue.getValue();
+
+                                    assertWithMessage(
+                                            "FOG_LIGHTS_STATE must not be implemented"
+                                                    + "when FRONT_FOG_LIGHTS_STATE is implemented")
+                                            .that(mCarPropertyManager.getCarPropertyConfig(
+                                                    VehiclePropertyIds.FOG_LIGHTS_STATE))
+                                            .isNull();
+
+                                    assertWithMessage(
+                                            "FRONT_FOG_LIGHTS_STATE must be a defined state.")
+                                            .that(frontFogLightsState)
+                                            .isIn(VEHICLE_LIGHT_STATES);
+                                }).build().verify(mCarPropertyManager);
+                });
+    }
+
+    @Test
+    public void testRearFogLightsStateIfSupported() {
+        adoptSystemLevelPermission(/*Car.PERMISSION_EXTERIOR_LIGHTS=*/
+                "android.car.permission.CAR_EXTERIOR_LIGHTS", () -> {
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.REAR_FOG_LIGHTS_STATE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setCarPropertyValueVerifier(
+                                (carPropertyConfig, carPropertyValue) -> {
+                                    Integer rearFogLightsState =
+                                            (Integer) carPropertyValue.getValue();
+
+                                    assertWithMessage(
+                                            "FOG_LIGHTS_STATE must not be implemented"
+                                                    + "when REAR_FOG_LIGHTS_STATE is implemented")
+                                            .that(mCarPropertyManager.getCarPropertyConfig(
+                                                    VehiclePropertyIds.FOG_LIGHTS_STATE))
+                                            .isNull();
+
+                                    assertWithMessage(
+                                            "REAR_FOG_LIGHTS_STATE must be a defined state.")
+                                            .that(rearFogLightsState)
+                                            .isIn(VEHICLE_LIGHT_STATES);
+                                }).build().verify(mCarPropertyManager);
                 });
     }
 
