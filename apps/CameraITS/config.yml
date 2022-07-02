@@ -45,7 +45,7 @@ TestBeds:
       test_length: 7
       debug_mode: "False"  # quotes are needed here
       chart_distance: 25
-      rotator_cntl: <controller-type>  # arduino, canakit, or as-is for manual
+      rotator_cntl: "arduino"  # Note: only sensor fusion supports manual
       rotator_ch: <controller-channel>
       camera: <camera-id>
 

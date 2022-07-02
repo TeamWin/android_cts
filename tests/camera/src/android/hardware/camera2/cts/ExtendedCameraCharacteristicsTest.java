@@ -2352,6 +2352,17 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                     // Sanitize the high speed FPS ranges for each size
                     List<Range<Integer>> ranges =
                             Arrays.asList(config.getHighSpeedVideoFpsRangesFor(size));
+                    int previewFps = Integer.MAX_VALUE;
+                    for (Range<Integer> range : ranges) {
+                        int rangeMin = range.getLower();
+                        if (previewFps > rangeMin) {
+                            previewFps = rangeMin;
+                        }
+                    }
+                    Log.v(TAG, "Advertised preview fps is: " + previewFps);
+                    // We only support preview of 30fps or 60fps.
+                    assertTrue("Preview fps " + previewFps + " is not valid.",
+                            (previewFps == 30 || previewFps == 60));
                     for (Range<Integer> range : ranges) {
                         assertTrue("The range " + range + " doesn't satisfy the"
                                 + " min/max boundary requirements.",
@@ -2360,10 +2371,12 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                         assertTrue("The range " + range + " should be multiple of 30fps",
                                 range.getLower() % 30 == 0 && range.getUpper() % 30 == 0);
                         // If the range is fixed high speed range, it should contain the
-                        // [30, fps_max] in the high speed range list; if it's variable FPS range,
-                        // the corresponding fixed FPS Range must be included in the range list.
+                        // [previewFps, fps_max] in the high speed range list; if it's variable FPS
+                        // range, the corresponding fixed FPS Range must be included in the range
+                        // list.
                         if (range.getLower() == range.getUpper()) {
-                            Range<Integer> variableRange = new Range<Integer>(30, range.getUpper());
+                            Range<Integer> variableRange = new Range<Integer>(previewFps,
+                                    range.getUpper());
                             assertTrue("The variable FPS range " + variableRange +
                                     " shoould be included in the high speed ranges for size " +
                                     size, ranges.contains(variableRange));

@@ -28,6 +28,7 @@ import android.bluetooth.BluetoothSocket;
 import android.companion.AssociationInfo;
 import android.companion.AssociationRequest;
 import android.companion.CompanionDeviceManager;
+import android.companion.CompanionException;
 import android.companion.cts.permissionssynctestapp.R;
 import android.content.ComponentName;
 import android.content.Context;
@@ -39,6 +40,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.OutcomeReceiver;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
@@ -145,7 +147,22 @@ public class MainActivity extends Activity {
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                    mCompanionDeviceManager.startSystemDataTransfer(mAssociationId);
+                    mCompanionDeviceManager.startSystemDataTransfer(mAssociationId,
+                            getMainExecutor(), new OutcomeReceiver<Void, CompanionException>() {
+                                @Override
+                                public void onResult(Void result) {
+                                    Log.v(TAG, "Success!");
+                                    PermissionsTransferCompanionService.sInstance
+                                            .detachSystemDataTransport(mAssociationId);
+                                }
+
+                                @Override
+                                public void onError(CompanionException error) {
+                                    Log.v(TAG, "Failure!", error);
+                                    PermissionsTransferCompanionService.sInstance
+                                            .detachSystemDataTransport(mAssociationId);
+                                }
+                            });
                 }
                 break;
         }

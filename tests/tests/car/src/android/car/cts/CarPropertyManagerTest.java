@@ -673,24 +673,33 @@ public class CarPropertyManagerTest extends CarApiTestBase {
 
     @Test
     public void testDistanceDisplayUnitsIfSupported() {
-        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.DISTANCE_DISPLAY_UNITS,
-                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
-                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
-                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                Integer.class).setPossibleConfigArrayValues(
-                DISTANCE_DISPLAY_UNITS).requirePropertyValueTobeInConfigArray().build().verify(
-                mCarPropertyManager);
+        adoptSystemLevelPermission(/*Car.PERMISSION_VENDOR_EXTENSION=*/
+                "android.car.permission.CAR_VENDOR_EXTENSION", () -> {
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.DISTANCE_DISPLAY_UNITS,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setPossibleConfigArrayValues(
+                            DISTANCE_DISPLAY_UNITS).requirePropertyValueTobeInConfigArray()
+                            .verifySetterWithConfigArrayValues().build().verify(
+                            mCarPropertyManager);
+                });
     }
 
     @Test
     public void testFuelVolumeDisplayUnitsIfSupported() {
-        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.FUEL_VOLUME_DISPLAY_UNITS,
-                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
-                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
-                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                Integer.class).setPossibleConfigArrayValues(
-                VOLUME_DISPLAY_UNITS).requirePropertyValueTobeInConfigArray().build().verify(
-                mCarPropertyManager);
+        adoptSystemLevelPermission(/*Car.PERMISSION_VENDOR_EXTENSION=*/
+                "android.car.permission.CAR_VENDOR_EXTENSION", () -> {
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.FUEL_VOLUME_DISPLAY_UNITS,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setPossibleConfigArrayValues(
+                            VOLUME_DISPLAY_UNITS).requirePropertyValueTobeInConfigArray()
+                            .verifySetterWithConfigArrayValues().build().verify(
+                            mCarPropertyManager);
+
+                });
     }
 
     @Test
@@ -755,35 +764,51 @@ public class CarPropertyManagerTest extends CarApiTestBase {
 
     @Test
     public void testTirePressureDisplayUnitsIfSupported() {
-        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.TIRE_PRESSURE_DISPLAY_UNITS,
-                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
-                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
-                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                Integer.class).setPossibleConfigArrayValues(
-                PRESSURE_DISPLAY_UNITS).requirePropertyValueTobeInConfigArray().build().verify(
-                mCarPropertyManager);
+        adoptSystemLevelPermission(/*Car.PERMISSION_VENDOR_EXTENSION=*/
+                "android.car.permission.CAR_VENDOR_EXTENSION", () -> {
+                    VehiclePropertyVerifier.newBuilder(
+                            VehiclePropertyIds.TIRE_PRESSURE_DISPLAY_UNITS,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setPossibleConfigArrayValues(
+                            PRESSURE_DISPLAY_UNITS).requirePropertyValueTobeInConfigArray()
+                            .verifySetterWithConfigArrayValues().build().verify(
+                            mCarPropertyManager);
+
+                });
     }
 
     @Test
     public void testEvBatteryDisplayUnitsIfSupported() {
-        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.EV_BATTERY_DISPLAY_UNITS,
-                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
-                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
-                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                Integer.class).setPossibleConfigArrayValues(
-                BATTERY_DISPLAY_UNITS).requirePropertyValueTobeInConfigArray().build().verify(
-                mCarPropertyManager);
+        adoptSystemLevelPermission(/*Car.PERMISSION_VENDOR_EXTENSION=*/
+                "android.car.permission.CAR_VENDOR_EXTENSION", () -> {
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.EV_BATTERY_DISPLAY_UNITS,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setPossibleConfigArrayValues(
+                            BATTERY_DISPLAY_UNITS).requirePropertyValueTobeInConfigArray()
+                            .verifySetterWithConfigArrayValues().build().verify(
+                            mCarPropertyManager);
+
+                });
     }
 
     @Test
     public void testVehicleSpeedDisplayUnitsIfSupported() {
-        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.VEHICLE_SPEED_DISPLAY_UNITS,
-                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
-                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
-                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                Integer.class).setPossibleConfigArrayValues(
-                SPEED_DISPLAY_UNITS).requirePropertyValueTobeInConfigArray().build().verify(
-                mCarPropertyManager);
+        adoptSystemLevelPermission(/*Car.PERMISSION_VENDOR_EXTENSION=*/
+                "android.car.permission.CAR_VENDOR_EXTENSION", () -> {
+                    VehiclePropertyVerifier.newBuilder(
+                            VehiclePropertyIds.VEHICLE_SPEED_DISPLAY_UNITS,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setPossibleConfigArrayValues(
+                            SPEED_DISPLAY_UNITS).requirePropertyValueTobeInConfigArray()
+                            .verifySetterWithConfigArrayValues().build().verify(
+                            mCarPropertyManager);
+                });
     }
 
     @Test

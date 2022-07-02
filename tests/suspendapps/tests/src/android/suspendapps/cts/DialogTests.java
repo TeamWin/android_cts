@@ -18,7 +18,6 @@ package android.suspendapps.cts;
 
 import static android.content.pm.SuspendDialogInfo.BUTTON_ACTION_UNSUSPEND;
 import static android.suspendapps.cts.Constants.TEST_APP_PACKAGE_NAME;
-import static android.suspendapps.cts.SuspendTestUtils.assertSameExtras;
 import static android.suspendapps.cts.SuspendTestUtils.createExtras;
 import static android.suspendapps.cts.SuspendTestUtils.startTestAppActivity;
 
@@ -32,7 +31,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.SuspendDialogInfo;
 import android.os.Bundle;
-import android.platform.test.annotations.SystemUserOnly;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
@@ -126,9 +124,7 @@ public class DialogTests {
 
         final Intent activityIntent = mTestAppInterface.awaitTestActivityStart();
         assertNotNull("Test activity did not start on neutral button tap", activityIntent);
-        assertSameExtras("Different extras passed to startActivity on unsuspend",
-                extrasForStart, activityIntent.getExtras());
-
+        // TODO(b/237707107): Verify that activityIntent has the expected extras.
         assertFalse("Test package still suspended", mTestAppInterface.isTestAppSuspended());
     }
 

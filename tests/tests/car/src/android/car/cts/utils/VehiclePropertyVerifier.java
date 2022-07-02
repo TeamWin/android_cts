@@ -58,6 +58,7 @@ public class VehiclePropertyVerifier<T> {
     private final Optional<AreaIdsVerifier> mAreaIdsVerifier;
     private final ImmutableSet<Integer> mPossibleConfigArrayValues;
     private final boolean mRequirePropertyValueToBeInConfigArray;
+    private final boolean mVerifySetterWithConfigArrayValues;
 
     private VehiclePropertyVerifier(int propertyId, int access, int areaType, int changeMode,
             Class<T> propertyType, boolean requiredProperty,
@@ -65,7 +66,8 @@ public class VehiclePropertyVerifier<T> {
             Optional<CarPropertyValueVerifier> carPropertyValueVerifier,
             Optional<AreaIdsVerifier> areaIdsVerifier,
             ImmutableSet<Integer> possibleConfigArrayValues,
-            boolean requirePropertyValueToBeInConfigArray) {
+            boolean requirePropertyValueToBeInConfigArray,
+            boolean verifySetterWithConfigArrayValues) {
         mPropertyId = propertyId;
         mPropertyName = VehiclePropertyIds.toString(propertyId);
         mAccess = access;
@@ -78,6 +80,7 @@ public class VehiclePropertyVerifier<T> {
         mAreaIdsVerifier = areaIdsVerifier;
         mPossibleConfigArrayValues = possibleConfigArrayValues;
         mRequirePropertyValueToBeInConfigArray = requirePropertyValueToBeInConfigArray;
+        mVerifySetterWithConfigArrayValues = verifySetterWithConfigArrayValues;
     }
 
     public static <T> Builder<T> newBuilder(int propertyId, int access, int areaType,
@@ -146,6 +149,39 @@ public class VehiclePropertyVerifier<T> {
         verifyCarPropertyConfig(carPropertyConfig);
         verifyCarPropertyValueGetter(carPropertyConfig, carPropertyManager);
         verifyCarPropertyValueCallback(carPropertyConfig, carPropertyManager);
+        verifyCarPropertyValueSetter(carPropertyConfig, carPropertyManager);
+    }
+
+    private void verifyCarPropertyValueSetter(CarPropertyConfig<?> carPropertyConfig,
+            CarPropertyManager carPropertyManager) {
+        if (carPropertyConfig.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ) {
+            return;
+        }
+        if (!mVerifySetterWithConfigArrayValues) {
+            return;
+        }
+        for (Integer valueToSet : carPropertyConfig.getConfigArray()) {
+            for (int areaId : carPropertyConfig.getAreaIds()) {
+                CarPropertyValue<Integer> currentCarPropertyValue = carPropertyManager.getProperty(
+                        mPropertyId, areaId);
+                verifyCarPropertyValue(carPropertyConfig, currentCarPropertyValue, areaId,
+                        CAR_PROPERTY_VALUE_SOURCE_GETTER);
+                if (currentCarPropertyValue.getValue().equals(valueToSet)) {
+                    continue;
+                }
+                SetterCallback setterCallback = new SetterCallback(mPropertyId, mPropertyName,
+                        areaId, valueToSet);
+                assertWithMessage("Failed to register setter callback for " + mPropertyName).that(
+                        carPropertyManager.registerCallback(setterCallback, mPropertyId,
+                                CarPropertyManager.SENSOR_RATE_FASTEST)).isTrue();
+                carPropertyManager.setIntProperty(mPropertyId, areaId, valueToSet);
+                CarPropertyValue<?> updatedCarPropertyValue =
+                        setterCallback.waitForUpdatedCarPropertyValue();
+                verifyCarPropertyValue(carPropertyConfig, updatedCarPropertyValue, areaId,
+                        CAR_PROPERTY_VALUE_SOURCE_CALLBACK);
+                carPropertyManager.unregisterCallback(setterCallback, mPropertyId);
+            }
+        }
     }
 
     private void verifyCarPropertyValueCallback(CarPropertyConfig<?> carPropertyConfig,
@@ -419,6 +455,7 @@ public class VehiclePropertyVerifier<T> {
         private Optional<AreaIdsVerifier> mAreaIdsVerifier = Optional.empty();
         private ImmutableSet<Integer> mPossibleConfigArrayValues = ImmutableSet.of();
         private boolean mRequirePropertyValueToBeInConfigArray = false;
+        private boolean mVerifySetterWithConfigArrayValues = false;
 
 
         private Builder(int propertyId, int access, int areaType, int changeMode,
@@ -462,11 +499,16 @@ public class VehiclePropertyVerifier<T> {
             return this;
         }
 
+        public Builder<T> verifySetterWithConfigArrayValues() {
+            mVerifySetterWithConfigArrayValues = true;
+            return this;
+        }
+
         public VehiclePropertyVerifier<T> build() {
             return new VehiclePropertyVerifier<>(mPropertyId, mAccess, mAreaType, mChangeMode,
                     mPropertyType, mRequiredProperty, mConfigArrayVerifier,
                     mCarPropertyValueVerifier, mAreaIdsVerifier, mPossibleConfigArrayValues,
-                    mRequirePropertyValueToBeInConfigArray);
+                    mRequirePropertyValueToBeInConfigArray, mVerifySetterWithConfigArrayValues);
         }
     }
 
@@ -508,6 +550,55 @@ public class VehiclePropertyVerifier<T> {
 
         @Override
         public void onErrorEvent(int propId, int areaId, int errorCode) {
+        }
+    }
+
+
+    private static class SetterCallback<T> implements CarPropertyManager.CarPropertyEventCallback {
+        private final int mPropertyId;
+        private final String mPropertyName;
+        private final int mAreaId;
+        private final T mExpectedSetValue;
+        private final CountDownLatch mCountDownLatch = new CountDownLatch(1);
+        private final long mCreationTimeNanos = SystemClock.elapsedRealtimeNanos();
+        private CarPropertyValue<?> mUpdatedCarPropertyValue = null;
+
+        SetterCallback(int propertyId, String propertyName, int areaId, T expectedSetValue) {
+            mPropertyId = propertyId;
+            mPropertyName = propertyName;
+            mAreaId = areaId;
+            mExpectedSetValue = expectedSetValue;
+        }
+
+        public CarPropertyValue<?> waitForUpdatedCarPropertyValue() {
+            try {
+                assertWithMessage(
+                        "Never received onChangeEvent(s) for " + mPropertyName + " new value: "
+                                + mExpectedSetValue + " before 5s timeout").that(
+                        mCountDownLatch.await(5, TimeUnit.SECONDS)).isTrue();
+            } catch (InterruptedException e) {
+                assertWithMessage("Waiting for onChangeEvent set callback for " + mPropertyName
+                        + " threw an exception: " + e).fail();
+            }
+            return mUpdatedCarPropertyValue;
+        }
+
+        @Override
+        public void onChangeEvent(CarPropertyValue carPropertyValue) {
+            if (mUpdatedCarPropertyValue != null || carPropertyValue.getPropertyId() != mPropertyId
+                    || carPropertyValue.getAreaId() != mAreaId
+                    || carPropertyValue.getStatus() != CarPropertyValue.STATUS_AVAILABLE
+                    || carPropertyValue.getTimestamp() <= mCreationTimeNanos
+                    || carPropertyValue.getTimestamp() >= SystemClock.elapsedRealtimeNanos()
+                    || !carPropertyValue.getValue().equals(mExpectedSetValue)) {
+                return;
+            }
+            mUpdatedCarPropertyValue = carPropertyValue;
+            mCountDownLatch.countDown();
+        }
+
+        @Override
+        public void onErrorEvent(int propId, int zone) {
         }
     }
 }

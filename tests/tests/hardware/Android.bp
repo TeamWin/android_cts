@@ -34,6 +34,7 @@ android_test {
         "androidx.test.ext.junit",
         "compatibility-device-util-axt",
         "cts-input-lib",
+        "cts-kernelinfo-lib",
         "ctstestrunner-axt",
         "cts-wm-util",
         "mockito-target-minus-junit4",

@@ -239,10 +239,15 @@ public abstract class VirtualInputDevice implements InputManager.InputDeviceList
             return;
         }
         // Check if the device is what we expected
-        if (device.getVendorId() == mVendorId && device.getProductId() == mProductId
-                && (device.getSources() & mSources) == mSources) {
-            mDeviceId = device.getId();
-            mDeviceAddedSignal.countDown();
+        if (device.getVendorId() == mVendorId && device.getProductId() == mProductId) {
+            if ((device.getSources() & mSources) == mSources) {
+                mDeviceId = device.getId();
+                mDeviceAddedSignal.countDown();
+            } else {
+                Log.i(TAG, "Mismatching sources for " + device);
+            }
+        } else {
+            Log.w(TAG, "Unexpected input device: " + device);
         }
     }
 

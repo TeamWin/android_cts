@@ -42,7 +42,7 @@ public final class AlternativeSpansTest {
     public void testInvalidAlternativeSpanStartPosition() {
         // Fails because the range start is negative.
         assertThrows(RuntimeException.class,
-                () -> new AlternativeSpan.Builder(-1, 10).build());
+                () -> new AlternativeSpan(-1, 10, List.of("alt")));
     }
 
     /**
@@ -52,7 +52,7 @@ public final class AlternativeSpansTest {
     public void testInvalidAlternativeSpanEndPosition() {
         // Fails because the range end is not greater than the range start.
         assertThrows(RuntimeException.class,
-                () -> new AlternativeSpan.Builder(1, 1).build());
+                () -> new AlternativeSpan(1, 1, List.of("alt")));
     }
 
     /**
@@ -61,28 +61,24 @@ public final class AlternativeSpansTest {
      */
     @Test
     public void testInvalidAlternativesList() {
-        // Fails because the default list of alternatives is empty.
+        // Fails because the set (immutable) list of alternatives is empty.
         assertThrows(RuntimeException.class,
-                () -> new AlternativeSpan.Builder(1, 10).build());
+                () -> new AlternativeSpan(1, 5, List.of()));
 
-
-        // Fails because the set list of alternatives is empty.
+        // Fails because the set (mutable) list of alternatives is empty.
         assertThrows(RuntimeException.class,
-                () -> new AlternativeSpan.Builder(5, 10).setAlternatives(List.of()).build());
+                () -> new AlternativeSpan(5, 10, new ArrayList<>()));
     }
 
     /**
-     * Test that AlternativeSpan fields set and added before building
-     * are returned by the generated getters.
+     * Test that set AlternativeSpan fields are returned by the generated getters.
      */
     @Test
     public void testAlternativeSpanSetAndGet() {
         int start = 1;
         int end = 10;
 
-        AlternativeSpan altSpan = new AlternativeSpan.Builder(start, end)
-                .setAlternatives(List.of("alt1", "alt2", "alt3"))
-                .build();
+        AlternativeSpan altSpan = new AlternativeSpan(start, end, List.of("alt1", "alt2", "alt3"));
 
         assertThat(altSpan.getStartPosition()).isEqualTo(start);
         assertThat(altSpan.getEndPosition()).isEqualTo(end);
@@ -91,24 +87,15 @@ public final class AlternativeSpansTest {
     }
 
     /**
-     * Test that AlternativeSpans field set and added before building
-     * are returned by the generated getter.
+     * Test that set AlternativeSpans field is returned by the generated getter.
      */
     @Test
     public void testAlternativeSpansSetAndGet() {
-        AlternativeSpan altSpan1 = new AlternativeSpan.Builder(1, 2)
-                .setAlternatives(List.of("alt1", "alt2"))
-                .build();
-        AlternativeSpan altSpan2 = new AlternativeSpan.Builder(3, 4)
-                .setAlternatives(List.of("alt3", "alt4"))
-                .build();
-        AlternativeSpan altSpan3 = new AlternativeSpan.Builder(5, 10)
-                .setAlternatives(List.of("alt5", "alt6"))
-                .build();
+        AlternativeSpan altSpan1 = new AlternativeSpan(1, 2, List.of("alt1", "alt2"));
+        AlternativeSpan altSpan2 = new AlternativeSpan(3, 4, List.of("alt3", "alt4"));
+        AlternativeSpan altSpan3 = new AlternativeSpan(5, 10, List.of("alt5", "alt6"));
 
-        AlternativeSpans altSpans = new AlternativeSpans.Builder()
-                .setSpans(List.of(altSpan1, altSpan2, altSpan3))
-                .build();
+        AlternativeSpans altSpans = new AlternativeSpans(List.of(altSpan1, altSpan2, altSpan3));
 
         assertThat(altSpans.getSpans()).containsExactly(altSpan1, altSpan2, altSpan3).inOrder();
     }
@@ -122,22 +109,12 @@ public final class AlternativeSpansTest {
     public void testBundleWriteAndRead() {
         final String bundleKey = SpeechRecognizer.RESULTS_ALTERNATIVES;
 
-        AlternativeSpan altSpan1 = new AlternativeSpan.Builder(1, 2)
-                .setAlternatives(List.of("alt1", "alt2"))
-                .build();
-        AlternativeSpan altSpan2 = new AlternativeSpan.Builder(3, 4)
-                .setAlternatives(List.of("alt3", "alt4"))
-                .build();
-        AlternativeSpan altSpan3 = new AlternativeSpan.Builder(5, 10)
-                .setAlternatives(List.of("alt5", "alt6"))
-                .build();
+        AlternativeSpan altSpan1 = new AlternativeSpan(1, 2, List.of("alt1", "alt2"));
+        AlternativeSpan altSpan2 = new AlternativeSpan(3, 4, List.of("alt3", "alt4"));
+        AlternativeSpan altSpan3 = new AlternativeSpan(5, 10, List.of("alt5", "alt6"));
 
-        AlternativeSpans altSpans1 = new AlternativeSpans.Builder()
-                .setSpans(List.of(altSpan1))
-                .build();
-        AlternativeSpans altSpans2 = new AlternativeSpans.Builder()
-                .setSpans(List.of(altSpan2, altSpan3))
-                .build();
+        AlternativeSpans altSpans1 = new AlternativeSpans(List.of(altSpan1));
+        AlternativeSpans altSpans2 = new AlternativeSpans(List.of(altSpan2, altSpan3));
 
         Bundle bundle = new Bundle();
         bundle.putParcelableArrayList(bundleKey, new ArrayList<>(List.of(altSpans1, altSpans2)));
