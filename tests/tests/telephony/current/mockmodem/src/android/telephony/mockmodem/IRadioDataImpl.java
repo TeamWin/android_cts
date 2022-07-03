@@ -16,6 +16,7 @@
 
 package android.telephony.mockmodem;
 
+import android.content.Context;
 import android.hardware.radio.RadioError;
 import android.hardware.radio.RadioIndicationType;
 import android.hardware.radio.RadioResponseInfo;
@@ -25,21 +26,47 @@ import android.hardware.radio.data.IRadioDataIndication;
 import android.hardware.radio.data.IRadioDataResponse;
 import android.hardware.radio.data.KeepaliveRequest;
 import android.hardware.radio.data.LinkAddress;
+import android.hardware.radio.data.SetupDataCallResult;
 import android.hardware.radio.data.SliceInfo;
+import android.os.AsyncResult;
+import android.os.Handler;
+import android.os.Message;
 import android.os.RemoteException;
 import android.util.Log;
+
+import java.util.List;
 
 public class IRadioDataImpl extends IRadioData.Stub {
     private static final String TAG = "MRDATA";
 
     private final MockModemService mService;
+    private final MockDataService mMockDataService;
     private IRadioDataResponse mRadioDataResponse;
     private IRadioDataIndication mRadioDataIndication;
+    private MockModemConfigInterface[] mMockModemConfigInterfaces;
+    private static Object sCacheUpdateMutex = new Object();
+    private final Handler mHandler;
+    private int mSubId;
 
-    public IRadioDataImpl(MockModemService service) {
+    private static MockNetworkService sServiceState;
+
+    // Event
+    static final int EVENT_NETWORK_STATUS_CHANGED = 1;
+
+    public IRadioDataImpl(
+            MockModemService service, Context context,
+            MockModemConfigInterface[] interfaces, int instanceId) {
         Log.d(TAG, "Instantiated");
-
+        mMockDataService = new MockDataService(context);
         this.mService = service;
+
+        mMockModemConfigInterfaces = interfaces;
+        mSubId = instanceId;
+        mHandler = new IRadioDataHandler();
+
+        // Register event
+        mMockModemConfigInterfaces[mSubId].registerForServiceStateChanged(
+                mHandler, EVENT_NETWORK_STATUS_CHANGED, null);
     }
 
     // Implementation of IRadioData functions
@@ -51,7 +78,7 @@ public class IRadioDataImpl extends IRadioData.Stub {
         mRadioDataIndication = radioDataIndication;
         mService.countDownLatch(MockModemService.LATCH_RADIO_INTERFACES_READY);
 
-        unsolEmptyDataCallList();
+        unsolDataCallListChanged();
     }
 
     @Override
@@ -80,21 +107,29 @@ public class IRadioDataImpl extends IRadioData.Stub {
     @Override
     public void deactivateDataCall(int serial, int cid, int reason) {
         Log.d(TAG, "deactivateDataCall");
+
+        mMockDataService.deactivateDataCall(cid, reason);
         RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioDataResponse.deactivateDataCallResponse(rsp);
         } catch (RemoteException ex) {
             Log.e(TAG, "Failed to deactivateDataCall from AIDL. Exception" + ex);
         }
+        // send the data call list changed
+        unsolDataCallListChanged();
     }
 
     @Override
     public void getDataCallList(int serial) {
         Log.d(TAG, "getDataCallList");
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        List<SetupDataCallResult> dataCallLists = mMockDataService.getDataCallListChanged();
+        SetupDataCallResult[] dcList = new SetupDataCallResult[dataCallLists.size()];
+        dcList = dataCallLists.toArray(dcList);
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
-            mRadioDataResponse.getDataCallListResponse(rsp, null);
+            mRadioDataResponse.getDataCallListResponse(rsp, dcList);
         } catch (RemoteException ex) {
             Log.e(TAG, "Failed to getDataCallList from AIDL. Exception" + ex);
         }
@@ -141,7 +176,11 @@ public class IRadioDataImpl extends IRadioData.Stub {
     @Override
     public void setDataProfile(int serial, DataProfileInfo[] profiles) {
         Log.d(TAG, "setDataProfile");
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+
+        // set data profiles to mockdataservice
+        mMockDataService.setDataProfileInfo(profiles);
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioDataResponse.setDataProfileResponse(rsp);
         } catch (RemoteException ex) {
@@ -164,7 +203,10 @@ public class IRadioDataImpl extends IRadioData.Stub {
     @Override
     public void setInitialAttachApn(int serial, DataProfileInfo dataProfileInfo) {
         Log.d(TAG, "setInitialAttachApn");
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        // set initial attach apn to mockdataservice
+        mMockDataService.setInitialAttachProfile(dataProfileInfo);
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioDataResponse.setInitialAttachApnResponse(rsp);
         } catch (RemoteException ex) {
@@ -185,12 +227,31 @@ public class IRadioDataImpl extends IRadioData.Stub {
             SliceInfo sliceInfo,
             boolean matchAllRuleAllowed) {
         Log.d(TAG, "setupDataCall");
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+
+        RadioResponseInfo rsp;
+        SetupDataCallResult dc = new SetupDataCallResult();
+        rsp = mService.makeSolRsp(serial);
+        synchronized (sCacheUpdateMutex) {
+            if (sServiceState == null || !sServiceState.isPsInService()) {
+                rsp = mService.makeSolRsp(serial, RadioError.OP_NOT_ALLOWED_BEFORE_REG_TO_NW);
+            } else {
+                if (dataProfileInfo.apn.equals("ims")) {
+                    dc = mMockDataService.setupDataCall(mMockDataService.APN_TYPE_IMS);
+                } else if (dataProfileInfo.apn.equals("internet")) {
+                    dc = mMockDataService.setupDataCall(mMockDataService.APN_TYPE_DEFAULT);
+                } else {
+                    rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+                }
+            }
+        }
+
         try {
-            mRadioDataResponse.setupDataCallResponse(rsp, null);
+            mRadioDataResponse.setupDataCallResponse(rsp, dc);
         } catch (RemoteException ex) {
             Log.e(TAG, "Failed to setupDataCall from AIDL. Exception" + ex);
         }
+        // send the data call list changed
+        unsolDataCallListChanged();
     }
 
     @Override
@@ -236,12 +297,13 @@ public class IRadioDataImpl extends IRadioData.Stub {
         return IRadioData.VERSION;
     }
 
-    public void unsolEmptyDataCallList() {
-        Log.d(TAG, "unsolEmptyDataCallList");
+    public void unsolDataCallListChanged() {
+        Log.d(TAG, "unsolDataCallListChanged");
 
         if (mRadioDataIndication != null) {
-            android.hardware.radio.data.SetupDataCallResult[] dcList =
-                    new android.hardware.radio.data.SetupDataCallResult[0];
+            List<SetupDataCallResult> dataCallLists = mMockDataService.getDataCallListChanged();
+            SetupDataCallResult[] dcList = new SetupDataCallResult[dataCallLists.size()];
+            dcList = dataCallLists.toArray(dcList);
 
             try {
                 mRadioDataIndication.dataCallListChanged(RadioIndicationType.UNSOLICITED, dcList);
@@ -250,6 +312,28 @@ public class IRadioDataImpl extends IRadioData.Stub {
             }
         } else {
             Log.e(TAG, "null mRadioDataIndication");
+        }
+    }
+
+    /** Handler class to handle callbacks */
+    private static final class IRadioDataHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            AsyncResult ar;
+            synchronized (sCacheUpdateMutex) {
+                switch (msg.what) {
+                    case EVENT_NETWORK_STATUS_CHANGED:
+                        Log.d(TAG, "Received EVENT_NETWORK_STATUS_CHANGED");
+                        ar = (AsyncResult) msg.obj;
+                        if (ar != null && ar.exception == null) {
+                            sServiceState = (MockNetworkService) ar.result;
+                            Log.i(TAG, "Service State: " + sServiceState.toString());
+                        } else {
+                            Log.e(TAG, msg.what + " failure. Exception: " + ar.exception);
+                        }
+                        break;
+                }
+            }
         }
     }
 }

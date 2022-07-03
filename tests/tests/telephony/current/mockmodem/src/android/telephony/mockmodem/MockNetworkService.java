@@ -562,6 +562,11 @@ public class MockNetworkService {
                 || (mPsRegState == RegState.REG_ROAMING));
     }
 
+    public boolean isPsInService() {
+        return ((mPsRegState == RegState.REG_HOME)
+                 || (mPsRegState == RegState.REG_ROAMING));
+    }
+
     public void updateSimPlmn(String simPlmn) {
         mSimPlmn = simPlmn;
 

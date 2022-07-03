@@ -130,6 +130,6 @@ public final class FeatureUtil {
      * Checks whether the device shows keyguard when the user doesn't have credentials.
      */
     public static boolean isKeyguardShownWhenUserDoesntHaveCredentials(Context context) {
-        return !isAutomotive(context);
+        return !isAutomotive(context) && !isWatch(context);
     }
 }
