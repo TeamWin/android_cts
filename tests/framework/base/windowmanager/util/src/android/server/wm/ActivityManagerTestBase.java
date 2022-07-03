@@ -62,6 +62,7 @@ import static android.server.wm.ActivityLauncher.KEY_RANDOM_DATA;
 import static android.server.wm.ActivityLauncher.KEY_REORDER_TO_FRONT;
 import static android.server.wm.ActivityLauncher.KEY_SUPPRESS_EXCEPTIONS;
 import static android.server.wm.ActivityLauncher.KEY_TARGET_COMPONENT;
+import static android.server.wm.ActivityLauncher.KEY_TASK_DISPLAY_AREA_FEATURE_ID;
 import static android.server.wm.ActivityLauncher.KEY_USE_APPLICATION_CONTEXT;
 import static android.server.wm.ActivityLauncher.KEY_WINDOWING_MODE;
 import static android.server.wm.ActivityLauncher.launchActivityFromExtras;
@@ -109,6 +110,7 @@ import static android.view.Display.INVALID_DISPLAY;
 import static android.view.Surface.ROTATION_0;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_BASE_APPLICATION;
+import static android.window.DisplayAreaOrganizer.FEATURE_UNDEFINED;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -916,6 +918,16 @@ public abstract class ActivityManagerTestBase {
     protected void launchActivityOnDisplay(ComponentName activityName, int windowingMode,
             int displayId, final CliIntentExtra... extras) {
         executeShellCommand(getAmStartCmd(activityName, displayId, extras)
+                + " --windowingMode " + windowingMode);
+        mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
+                .setWindowingMode(windowingMode)
+                .build());
+    }
+
+    protected void launchActivityOnTaskDisplayArea(ComponentName activityName, int windowingMode,
+            int launchTaskDisplayAreaFeatureId, int displayId, final CliIntentExtra... extras) {
+        executeShellCommand(getAmStartCmd(activityName, displayId, extras)
+                + " --task-display-area-feature-id " + launchTaskDisplayAreaFeatureId
                 + " --windowingMode " + windowingMode);
         mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setWindowingMode(windowingMode)
@@ -2376,6 +2388,7 @@ public abstract class ActivityManagerTestBase {
         private Bundle mExtras;
         private LaunchInjector mLaunchInjector;
         private ActivitySessionClient mActivitySessionClient;
+        private int mLaunchTaskDisplayAreaFeatureId = FEATURE_UNDEFINED;
 
         private enum LauncherType {
             INSTRUMENTATION, LAUNCHING_ACTIVITY, BROADCAST_RECEIVER
@@ -2470,6 +2483,12 @@ public abstract class ActivityManagerTestBase {
 
         public LaunchActivityBuilder setWaitForLaunched(boolean shouldWait) {
             mWaitForLaunched = shouldWait;
+            return this;
+        }
+
+        public LaunchActivityBuilder setLaunchTaskDisplayAreaFeatureId(
+                int launchTaskDisplayAreaFeatureId) {
+            mLaunchTaskDisplayAreaFeatureId = launchTaskDisplayAreaFeatureId;
             return this;
         }
 
@@ -2580,6 +2599,7 @@ public abstract class ActivityManagerTestBase {
             b.putBoolean(KEY_SUPPRESS_EXCEPTIONS, mSuppressExceptions);
             b.putInt(KEY_INTENT_FLAGS, mIntentFlags);
             b.putBundle(KEY_INTENT_EXTRAS, getExtras());
+            b.putInt(KEY_TASK_DISPLAY_AREA_FEATURE_ID, mLaunchTaskDisplayAreaFeatureId);
             final Context context = getInstrumentation().getContext();
             launchActivityFromExtras(context, b, mLaunchInjector);
         }
@@ -2658,6 +2678,13 @@ public abstract class ActivityManagerTestBase {
 
             if (mIntentFlags != 0) {
                 commandBuilder.append(" --ei " + KEY_INTENT_FLAGS + " ").append(mIntentFlags);
+            }
+
+            if (mLaunchTaskDisplayAreaFeatureId != FEATURE_UNDEFINED) {
+                commandBuilder.append(" --task-display-area-feature-id ")
+                        .append(mLaunchTaskDisplayAreaFeatureId);
+                commandBuilder.append(" --ei " + KEY_TASK_DISPLAY_AREA_FEATURE_ID + " ")
+                        .append(mLaunchTaskDisplayAreaFeatureId);
             }
 
             if (mLaunchInjector != null) {
