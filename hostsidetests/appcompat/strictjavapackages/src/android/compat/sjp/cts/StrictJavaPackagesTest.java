@@ -83,6 +83,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
     private static ImmutableList<String> sSystemserverclasspathJars;
     private static ImmutableList<String> sSharedLibJars;
     private static ImmutableList<SharedLibraryInfo> sSharedLibs;
+    private static ImmutableMultimap<String, String> sSharedLibsPathsToName;
     private static ImmutableMultimap<String, String> sJarsToClasses;
     private static ImmutableMultimap<String, String> sJarsToFiles;
 
@@ -797,6 +798,13 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 .filter(file -> !file.contains("GmsCore"))
                 .filter(file -> !file.contains("com.google.android.gms"))
                 .collect(ImmutableList.toImmutableList());
+        final ImmutableSetMultimap.Builder<String, String> sharedLibsPathsToName =
+                ImmutableSetMultimap.builder();
+        sSharedLibs.forEach(sharedLibraryInfo -> {
+                sharedLibraryInfo.paths.forEach(path ->
+                        sharedLibsPathsToName.putAll(path, sharedLibraryInfo.name));
+        });
+        sSharedLibsPathsToName = sharedLibsPathsToName.build();
 
         final ImmutableSetMultimap.Builder<String, String> jarsToFiles =
                 ImmutableSetMultimap.builder();
@@ -1040,17 +1048,17 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
         // WARNING: Do not add more exceptions here, no androidx should be in bootclasspath.
         // See go/androidx-api-guidelines#module-naming for more details.
         final ImmutableMap<String, ImmutableSet<String>>
-                LegacyExemptAndroidxSharedLibsJarToClasses =
+                LegacyExemptAndroidxSharedLibsNamesToClasses =
                 new ImmutableMap.Builder<String, ImmutableSet<String>>()
-                .put("/vendor/framework/androidx.camera.extensions.impl.jar",
+                .put("androidx.camera.extensions.impl",
                     ImmutableSet.of("Landroidx/camera/extensions/impl/"))
-                .put("/system_ext/framework/androidx.window.extensions.jar",
+                .put("androidx.window.extensions",
                     ImmutableSet.of("Landroidx/window/common/", "Landroidx/window/extensions/",
                         "Landroidx/window/util/"))
-                .put("/system_ext/framework/androidx.window.sidecar.jar",
+                .put("androidx.window.sidecar",
                     ImmutableSet.of("Landroidx/window/common/", "Landroidx/window/sidecar",
                         "Landroidx/window/util"))
-                .put("/vendor/framework/com.google.android.camera.experimental2020_midyear.jar",
+                .put("com.google.android.camera.experimental2020_midyear",
                     ImmutableSet.of("Landroidx/annotation"))
                 .build();
         assertWithMessage("There must not be any androidx classes on the "
@@ -1059,7 +1067,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 .that(sJarsToClasses.entries().stream()
                         .filter(e -> e.getValue().startsWith("Landroidx/"))
                         .filter(e -> !isLegacyAndroidxDependency(
-                            LegacyExemptAndroidxSharedLibsJarToClasses, e.getKey(), e.getValue()))
+                            LegacyExemptAndroidxSharedLibsNamesToClasses, e.getKey(), e.getValue()))
                         .collect(Collectors.toList())
                 ).isEmpty();
     }
@@ -1105,11 +1113,12 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
     }
 
     private boolean isLegacyAndroidxDependency(
-            ImmutableMap<String, ImmutableSet<String>> legacyExemptAndroidxSharedLibsJarToClasses,
-            String jar, String className) {
-        return legacyExemptAndroidxSharedLibsJarToClasses.containsKey(jar)
-                && legacyExemptAndroidxSharedLibsJarToClasses.get(jar).stream().anyMatch(
-                        v -> className.startsWith(v));
+            ImmutableMap<String, ImmutableSet<String>> legacyExemptAndroidxSharedLibsNamesToClasses,
+            String path, String className) {
+        return sSharedLibsPathsToName.get(path).stream()
+                .filter(legacyExemptAndroidxSharedLibsNamesToClasses::containsKey)
+                .flatMap(name -> legacyExemptAndroidxSharedLibsNamesToClasses.get(name).stream())
+                .anyMatch(className::startsWith);
     }
 
     private String[] collectApkInApexPaths() {
