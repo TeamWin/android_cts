@@ -21,6 +21,7 @@ import static android.server.wm.jetpack.second.Components.SECOND_UNTRUSTED_EMBED
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.assumeActivityEmbeddingSupportedDevice;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -33,6 +34,7 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Binder;
 import android.os.IBinder;
+import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState.Task;
 import android.window.TaskFragmentCreationParams;
 import android.window.TaskFragmentInfo;
@@ -49,6 +51,7 @@ import org.junit.Test;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:TaskFragmentTrustedModeTest
  */
+@Presubmit
 public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
 
     private final ComponentName mTranslucentActivity = new ComponentName(mContext,
@@ -248,7 +251,7 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
      */
     @Test
     public void testUntrustedModeTaskFragment_startActivityInTaskFragmentOutsideOfParentBounds() {
-        final Task parentTask = mWmState.getRootTask(mOwnerTaskId);
+        Task parentTask = mWmState.getRootTask(mOwnerTaskId);
         final Rect parentBounds = new Rect(parentTask.getBounds());
         final IBinder errorCallbackToken = new Binder();
         final WindowContainerTransaction wct = new WindowContainerTransaction()
@@ -263,8 +266,11 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
         // It is disallowed to start activity to TaskFragment with bounds outside of its parent
         // in untrusted mode.
         assertTaskFragmentError(errorCallbackToken, SecurityException.class);
-        mWmState.waitForAppTransitionIdleOnDisplay(mOwnerActivity.getDisplayId());
-        mWmState.assertNotExist(SECOND_UNTRUSTED_EMBEDDING_ACTIVITY);
+
+        parentTask = mWmState.getRootTask(mOwnerTaskId);
+        assertWithMessage("Activity must be started in parent Task because it's not"
+                + " allowed to be embedded").that(parentTask.mActivities).contains(
+                mWmState.getActivity(SECOND_UNTRUSTED_EMBEDDING_ACTIVITY));
     }
 
     /**
