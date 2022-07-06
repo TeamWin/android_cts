@@ -120,11 +120,7 @@ public class PhotoPickerAssertionsUtils {
                     .that(xmp.contains("13166/7763")).isTrue();
         }
 
-        // assert no write access
-        try (ParcelFileDescriptor pfd = resolver.openFileDescriptor(uri, "w")) {
-            fail("Does not grant write access to uri " + uri.toString());
-        } catch (SecurityException | FileNotFoundException expected) {
-        }
+        assertNoWriteAccess(uri, resolver);
     }
 
     private static void assertImageRedactedReadOnlyAccess(Uri uri, ContentResolver resolver)
@@ -153,12 +149,7 @@ public class PhotoPickerAssertionsUtils {
                 assertImageExifRedacted(is);
             }
 
-            // Assert no write access
-            try (ParcelFileDescriptor pfd =
-                    ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_WRITE)) {
-                fail("Does not grant write access to file " + file);
-            } catch (IOException e) {
-            }
+            assertNoWriteAccess(uri, resolver);
         }
     }
 
@@ -178,5 +169,20 @@ public class PhotoPickerAssertionsUtils {
                 .that(xmp.contains("53,50.070500N")).isFalse();
         assertWithMessage("Redacted non-location XMP")
                 .that(xmp.contains("LensDefaults")).isTrue();
+    }
+
+    public static void assertReadOnlyAccess(Uri uri, ContentResolver resolver) throws Exception {
+        try (ParcelFileDescriptor pfd = resolver.openFileDescriptor(uri, "r")) {
+            assertThat(pfd).isNotNull();
+        }
+
+        assertNoWriteAccess(uri, resolver);
+    }
+
+    private static void assertNoWriteAccess(Uri uri, ContentResolver resolver) throws Exception {
+        try (ParcelFileDescriptor pfd = resolver.openFileDescriptor(uri, "w")) {
+            fail("Does not grant write access to uri " + uri.toString());
+        } catch (SecurityException | FileNotFoundException expected) {
+        }
     }
 }

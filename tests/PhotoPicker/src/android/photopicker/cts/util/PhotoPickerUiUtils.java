@@ -20,8 +20,8 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.text.format.DateUtils;
 
+import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject;
-import androidx.test.uiautomator.UiObjectNotFoundException;
 import androidx.test.uiautomator.UiScrollable;
 import androidx.test.uiautomator.UiSelector;
 
@@ -35,6 +35,7 @@ public class PhotoPickerUiUtils {
     public static final long SHORT_TIMEOUT = 5 * DateUtils.SECOND_IN_MILLIS;
 
     private static final long TIMEOUT = 30 * DateUtils.SECOND_IN_MILLIS;
+
     public static final String REGEX_PACKAGE_NAME =
             "com(.google)?.android.providers.media(.module)?";
 
@@ -91,5 +92,23 @@ public class PhotoPickerUiUtils {
     public static UiObject findProfileButton() {
         return new UiObject(new UiSelector().resourceIdMatches(
                 REGEX_PACKAGE_NAME + ":id/profile_button"));
+    }
+
+    public static void findAndClickBrowse(UiDevice uiDevice) throws Exception {
+        assertWithMessage("Timed out waiting for overflow menu to appear")
+                .that(new UiObject(new UiSelector().description("More options"))
+                        .waitForExists(SHORT_TIMEOUT))
+                .isTrue();
+
+        final UiObject overflowMenu = new UiObject(new UiSelector().description("More options"));
+        clickAndWait(uiDevice, overflowMenu);
+
+        final UiObject browseButton = new UiObject(new UiSelector().textContains("Browse"));
+        clickAndWait(uiDevice, browseButton);
+    }
+
+    public static void clickAndWait(UiDevice uiDevice, UiObject uiObject) throws Exception {
+        uiObject.click();
+        uiDevice.waitForIdle();
     }
 }

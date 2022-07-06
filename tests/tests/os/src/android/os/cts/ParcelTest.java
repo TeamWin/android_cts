@@ -4692,4 +4692,69 @@ public class ParcelTest extends AndroidTestCase {
         p = Parcel.obtain();
         assertEquals(0, p.getFlags());
     }
+
+    public static class SimpleParcelableWithoutNestedCreator implements Parcelable {
+        private final int value;
+
+        public SimpleParcelableWithoutNestedCreator(int value) {
+            this.value = value;
+        }
+
+        private SimpleParcelableWithoutNestedCreator(Parcel in) {
+            this.value = in.readInt();
+        }
+
+        public int getValue() {
+            return value;
+        }
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel out, int flags) {
+            out.writeInt(value);
+        }
+
+        public static Parcelable.Creator<SimpleParcelableWithoutNestedCreator> CREATOR =
+                new SimpleParcelableWithoutNestedCreatorCreator();
+    }
+
+    public static class SimpleParcelableWithoutNestedCreatorCreator implements
+            Parcelable.Creator<SimpleParcelableWithoutNestedCreator> {
+        @Override
+        public SimpleParcelableWithoutNestedCreator createFromParcel(Parcel source) {
+            return new SimpleParcelableWithoutNestedCreator(source);
+        }
+
+        @Override
+        public SimpleParcelableWithoutNestedCreator[] newArray(int size) {
+            return new SimpleParcelableWithoutNestedCreator[size];
+        }
+    }
+
+    // http://b/232589966
+    public void testReadParcelableWithoutNestedCreator() {
+        Parcel p = Parcel.obtain();
+        p.writeParcelable(new SimpleParcelableWithoutNestedCreator(1), 0);
+        p.setDataPosition(0);
+        // First time checks the type of the creator using reflection
+        SimpleParcelableWithoutNestedCreator parcelable =
+                p.readParcelable(getClass().getClassLoader(),
+                        SimpleParcelableWithoutNestedCreator.class);
+        assertEquals(1, parcelable.value);
+        p.recycle();
+
+        p = Parcel.obtain();
+        p.writeParcelable(new SimpleParcelableWithoutNestedCreator(2), 0);
+        p.setDataPosition(0);
+        // Second time tries to read it from a cache
+        parcelable =
+                p.readParcelable(getClass().getClassLoader(),
+                        SimpleParcelableWithoutNestedCreator.class);
+        assertEquals(2, parcelable.value);
+        p.recycle();
+    }
 }

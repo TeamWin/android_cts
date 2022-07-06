@@ -34,6 +34,18 @@ public class AlwaysOnHotwordDetectorSystemApiTest extends CompatChangeGatingTest
     private static final String VOICE_INTERACTION_SERVICES_PACKAGE_NAME =
             "android.voiceinteraction.service";
 
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+
+        // Recover the compat change config to enabled (default from T) to avoid causing unexpected
+        // test cases failed
+        setCompatConfig(
+                /* enabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* disabledChanges */ ImmutableSet.of(),
+                VOICE_INTERACTION_SERVICES_PACKAGE_NAME);
+    }
+
     public void testStartRecognitionThrowCheckedExceptionEnabled()
             throws DeviceNotAvailableException {
         setCompatConfig(

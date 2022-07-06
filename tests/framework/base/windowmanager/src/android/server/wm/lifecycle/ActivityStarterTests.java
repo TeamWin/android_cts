@@ -48,6 +48,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityLauncher;
+import android.server.wm.WaitForValidActivityState;
 import android.server.wm.app.Components;
 
 import org.junit.Test;
@@ -753,9 +754,9 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
                 supportsSplitScreenMultiWindow());
 
         // Launch activity with FLAG_ACTIVITY_NEW_TASK and FLAG_ACTIVITY_LAUNCH_ADJACENT.
-        assertTrue(launchAndGetActivityWindowingMode(
-                FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_LAUNCH_ADJACENT)
-                == WINDOWING_MODE_MULTI_WINDOW);
+        launchAndAssertActivityWindowingMode(
+                FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_LAUNCH_ADJACENT,
+                WINDOWING_MODE_MULTI_WINDOW);
     }
 
     /**
@@ -768,20 +769,24 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
                 supportsSplitScreenMultiWindow());
 
         // Launch activity with FLAG_ACTIVITY_LAUNCH_ADJACENT only.
-        assertTrue(launchAndGetActivityWindowingMode(FLAG_ACTIVITY_LAUNCH_ADJACENT)
-                == WINDOWING_MODE_FULLSCREEN);
+        launchAndAssertActivityWindowingMode(FLAG_ACTIVITY_LAUNCH_ADJACENT,
+                WINDOWING_MODE_FULLSCREEN);
     }
 
-    private int launchAndGetActivityWindowingMode(int flags) {
+    private void launchAndAssertActivityWindowingMode(int flags, int expectWindowingMode) {
         getLaunchActivityBuilder()
                 .setTargetActivity(STANDARD_ACTIVITY)
                 .setIntentFlags(flags)
                 .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
                 .execute();
 
-        waitAndAssertActivityState(STANDARD_ACTIVITY, STATE_RESUMED,
-                "Activity should be resumed");
-        return mWmState.getActivity(STANDARD_ACTIVITY).getWindowingMode();
+        // wait for the expected windowing mode
+        mWmState.waitForValidState(new WaitForValidActivityState.Builder(STANDARD_ACTIVITY)
+                .setWindowingMode(expectWindowingMode)
+                .build());
+
+        assertEquals(expectWindowingMode,
+                mWmState.getActivity(STANDARD_ACTIVITY).getWindowingMode());
     }
 
     // Test activity
