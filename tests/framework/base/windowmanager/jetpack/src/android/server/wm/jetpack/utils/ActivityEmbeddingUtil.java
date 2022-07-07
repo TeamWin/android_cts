@@ -216,19 +216,13 @@ public class ActivityEmbeddingUtil {
 
     /**
      * Attempts to start an activity from a different UID into a split, verifies that activity
-     * start did not succeed and no new split is active.
+     * did not start on splitContainer successfully and no new split is active.
      */
     public static void startActivityCrossUidInSplit_expectFail(@NonNull Activity primaryActivity,
             @NonNull ComponentName secondActivityComponent,
             @NonNull TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer) {
-        boolean startExceptionObserved = false;
-        try {
-            startActivityFromActivity(primaryActivity, secondActivityComponent, "secondActivityId",
+        startActivityFromActivity(primaryActivity, secondActivityComponent, "secondActivityId",
                     Bundle.EMPTY);
-        } catch (SecurityException e) {
-            startExceptionObserved = true;
-        }
-        assertTrue(startExceptionObserved);
 
         // No split should be active, primary activity should be covered by the new one.
         assertNoSplit(primaryActivity, splitInfoConsumer);

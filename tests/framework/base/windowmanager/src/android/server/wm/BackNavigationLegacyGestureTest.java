@@ -47,8 +47,8 @@ public class BackNavigationLegacyGestureTest extends ActivityManagerTestBase {
 
     @Before
     public void setup() {
+        GESTURE_NAV_RULE.assumeGestureNavigationMode();
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
-
     }
 
     @Test

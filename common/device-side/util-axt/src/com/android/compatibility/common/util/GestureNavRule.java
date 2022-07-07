@@ -33,13 +33,14 @@ import android.util.ArrayMap;
 
 import androidx.test.InstrumentationRegistry;
 
+import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 
 import java.io.IOException;
 import java.util.Map;
 
 /**
- * Test rule to enable gesture navigation on the device.
+ * Test rule to enable gesture navigation on the device. Designed to be a {@link ClassRule}.
  */
 public class GestureNavRule extends ExternalResource {
     private static final String SETTINGS_PACKAGE_NAME = "com.android.settings";
@@ -69,7 +70,6 @@ public class GestureNavRule extends ExternalResource {
         if (!isGestureMode()) {
             enableGestureNav();
         }
-        assumeGestureNavigationMode();
     }
 
     @Override
@@ -256,7 +256,12 @@ public class GestureNavRule extends ExternalResource {
         }
     }
 
-    private void assumeGestureNavigationMode() {
+    /**
+     * Assumes the device is in gesture navigation mode. Due to constraints of AndroidJUnitRunner we
+     * can't make assumptions in static contexts like in a {@link ClassRule} so tests need to call
+     * this method explicitly.
+     */
+    public void assumeGestureNavigationMode() {
         boolean isGestureMode = isGestureMode();
         assumeTrue("Gesture navigation required", isGestureMode);
     }
