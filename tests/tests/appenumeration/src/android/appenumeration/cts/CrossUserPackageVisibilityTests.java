@@ -40,7 +40,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.PackageInfoFlags;
 import android.content.pm.SuspendDialogInfo;
 import android.os.Process;
-import android.os.UserHandle;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -94,11 +93,11 @@ public class CrossUserPackageVisibilityTests {
 
         // Get users
         final UserReference primaryUser = sDeviceState.primaryUser();
-        if (primaryUser.id() == UserHandle.myUserId()) {
+        if (primaryUser.id() == mContext.getUserId()) {
             mCurrentUser = primaryUser;
             mOtherUser = sDeviceState.secondaryUser();
         } else {
-            mCurrentUser = sDeviceState.secondaryUser();
+            mCurrentUser = UserReference.of(mContext.getUser());
             mOtherUser = primaryUser;
         }
 

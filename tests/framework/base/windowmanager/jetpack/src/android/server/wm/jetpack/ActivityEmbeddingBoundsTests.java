@@ -68,13 +68,15 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
         final Activity primaryActivity = startActivityNewTask(
                 TestConfigChangeHandlingActivity.class);
 
-        // Set split pair rule such that if the parent width is any smaller than it is now, then
+        // Set split pair rule such that if the parent bounds is any smaller than it is now, then
         // the parent cannot support a split.
         final int originalTaskWidth = getTaskWidth();
+        final int originalTaskHeight = getTaskHeight();
         final SplitPairRule splitPairRule = new SplitPairRule.Builder(
                 activityActivityPair -> true /* activityPairPredicate */,
                 activityIntentPair -> true /* activityIntentPredicate */,
-                parentWindowMetrics -> parentWindowMetrics.getBounds().width() >= originalTaskWidth)
+                parentWindowMetrics -> parentWindowMetrics.getBounds().width() >= originalTaskWidth
+                        && parentWindowMetrics.getBounds().height() >= originalTaskHeight)
                 .setSplitRatio(DEFAULT_SPLIT_RATIO).build();
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 
@@ -92,7 +94,7 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
         for (int i = 0; i < numTimesToResize; i++) {
             // Shrink the display by 10% to make the activities stacked
             mReportedDisplayMetrics.setSize(new Size((int) (originalDisplaySize.getWidth() * 0.9),
-                    originalDisplaySize.getHeight()));
+                    (int) (originalDisplaySize.getHeight() * 0.9)));
             waitForFillsTask(secondaryActivity);
             waitAndAssertNotVisible(primaryActivity);
 

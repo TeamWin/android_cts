@@ -211,11 +211,18 @@ public class VehiclePropertyVerifier<T> {
                             Collectors.toList()));
 
         } else if (mChangeMode == CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS) {
-            CarPropertyValueCallback carPropertyValueCallback =
-                    new CarPropertyValueCallback(mPropertyName, 1);
+            int updatesPerAreaId = 2;
+            int minimumTotalUpdates = updatesPerAreaId * carPropertyConfig.getAreaIds().length;
+            float secondsToMillis = 1_000;
+            long bufferMillis = 1_000; // 1 second
+            long timeoutMillis =
+                    ((long) ((1.0f / carPropertyConfig.getMinSampleRate()) * secondsToMillis
+                            * minimumTotalUpdates)) + bufferMillis;
+            CarPropertyValueCallback carPropertyValueCallback = new CarPropertyValueCallback(
+                    mPropertyName, minimumTotalUpdates, timeoutMillis);
             assertWithMessage("Failed to register callback for " + mPropertyName).that(
                     carPropertyManager.registerCallback(carPropertyValueCallback, mPropertyId,
-                            CarPropertyManager.SENSOR_RATE_FASTEST)).isTrue();
+                            carPropertyConfig.getMaxSampleRate())).isTrue();
             List<CarPropertyValue<?>> carPropertyValues =
                     carPropertyValueCallback.getCarPropertyValues();
             carPropertyManager.unregisterCallback(carPropertyValueCallback, mPropertyId);
@@ -223,6 +230,15 @@ public class VehiclePropertyVerifier<T> {
             for (CarPropertyValue<?> carPropertyValue : carPropertyValues) {
                 verifyCarPropertyValue(carPropertyConfig, carPropertyValue,
                         carPropertyValue.getAreaId(), CAR_PROPERTY_VALUE_SOURCE_CALLBACK);
+            }
+
+            for (int areaId : carPropertyConfig.getAreaIds()) {
+                assertWithMessage(
+                        mPropertyName + " callback values did not receive " + updatesPerAreaId
+                                + " updates for area ID: " + areaId).that(
+                        carPropertyValues.stream().filter(
+                                carPropertyValue -> carPropertyValue.getAreaId()
+                                        == areaId).count()).isAtLeast(updatesPerAreaId);
             }
         }
     }
@@ -375,6 +391,10 @@ public class VehiclePropertyVerifier<T> {
                         + areaId)
                 .that(carPropertyValue.getAreaId())
                 .isEqualTo(areaId);
+        assertWithMessage(mPropertyName + " - areaId: " + areaId + " - source: " + source
+                + " area ID must be in carPropertyConfig#getAreaIds()").that(Arrays.stream(
+                carPropertyConfig.getAreaIds()).boxed().collect(Collectors.toList()).contains(
+                carPropertyValue.getAreaId())).isTrue();
         assertWithMessage(
                 mPropertyName + " - areaId: " + areaId + " - source: " + source
                         + " value's status must be valid")
@@ -518,19 +538,27 @@ public class VehiclePropertyVerifier<T> {
         private final int mTotalOnChangeEvents;
         private final CountDownLatch mCountDownLatch;
         private final List<CarPropertyValue<?>> mCarPropertyValues = new ArrayList<>();
+        private final long mTimeoutMillis;
 
-        public CarPropertyValueCallback(String propertyName, int totalOnChangeEvents) {
+        CarPropertyValueCallback(String propertyName, int totalOnChangeEvents) {
+            this(propertyName, totalOnChangeEvents, 1500);
+        }
+
+        CarPropertyValueCallback(String propertyName, int totalOnChangeEvents,
+                long timeoutMillis) {
             mPropertyName = propertyName;
             mTotalOnChangeEvents = totalOnChangeEvents;
             mCountDownLatch = new CountDownLatch(totalOnChangeEvents);
+            mTimeoutMillis = timeoutMillis;
         }
 
         public List<CarPropertyValue<?>> getCarPropertyValues() {
             try {
                 assertWithMessage(
                         "Never received " + mTotalOnChangeEvents + "  onChangeEvent(s) for "
-                                + mPropertyName + " callback before 1500ms timeout").that(
-                        mCountDownLatch.await(1500, TimeUnit.MILLISECONDS)).isTrue();
+                                + mPropertyName + " callback before " + mTimeoutMillis
+                                + " ms timeout").that(
+                        mCountDownLatch.await(mTimeoutMillis, TimeUnit.MILLISECONDS)).isTrue();
             } catch (InterruptedException e) {
                 assertWithMessage("Waiting for onChangeEvent callback(s) for " + mPropertyName
                         + " threw an exception: " + e).fail();

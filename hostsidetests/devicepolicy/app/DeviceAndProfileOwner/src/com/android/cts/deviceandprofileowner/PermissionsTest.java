@@ -45,6 +45,7 @@ import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.cts.devicepolicy.PermissionBroadcastReceiver;
 import com.android.cts.devicepolicy.PermissionUtils;
 
@@ -404,6 +405,7 @@ public class PermissionsTest extends BaseDeviceAdminTest {
                 PERMISSION_APP_PACKAGE_NAME);
     }
 
+    @CddTest(requirements = {"9.1/C-0-12", "9.1/C-1-1"})
     public void testSensorsRelatedPermissionsNotGrantedViaPolicy() throws Exception {
         int permissionPolicy = mDevicePolicyManager.getPermissionPolicy(ADMIN_RECEIVER_COMPONENT);
         try {

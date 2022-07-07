@@ -186,6 +186,11 @@ public class WindowManagerJetpackTestBase {
                 .width();
     }
 
+    public int getTaskHeight() {
+        return mContext.getSystemService(WindowManager.class).getMaximumWindowMetrics().getBounds()
+                .height();
+    }
+
     public static void setActivityOrientationActivityHandlesOrientationChanges(
             TestActivity activity, int orientation) {
         // Make sure that the provided orientation is a fixed orientation

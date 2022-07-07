@@ -598,30 +598,25 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
         final int atomTag = Atom.SCREEN_BRIGHTNESS_CHANGED_FIELD_NUMBER;
 
-        Set<Integer> screenMin = new HashSet<>(Arrays.asList(47));
-        Set<Integer> screen100 = new HashSet<>(Arrays.asList(100));
-
-        // Add state sets to the list in order.
-        List<Set<Integer>> stateSet = Arrays.asList(screenMin, screen100);
-
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 atomTag);
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testScreenBrightness");
 
-        // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        List<Integer> expectedValues = Arrays.asList(47, 100);
+
+        // Sorted list of brightness values in order in which they occurred, filtered to only
+        // contain expectedValues if they are present.
+        List<Integer> data = ReportUtils.getEventMetricDataList(getDevice())
+                                     .stream()
+                                     .map(e -> e.getAtom().getScreenBrightnessChanged().getLevel())
+                                     .filter(expectedValues::contains)
+                                     .collect(Collectors.toList());
 
         // Restore initial screen brightness
         setScreenBrightness(initialBrightness);
         setScreenBrightnessMode(isInitialManual);
 
-        AtomTestUtils.popUntilFind(data, screenMin,
-                atom -> atom.getScreenBrightnessChanged().getLevel());
-        AtomTestUtils.popUntilFindFromEnd(data, screen100,
-                atom -> atom.getScreenBrightnessChanged().getLevel());
-        // Assert that the events happened in the expected order.
-        AtomTestUtils.assertStatesOccurredInOrder(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
-                atom -> atom.getScreenBrightnessChanged().getLevel());
+        assertThat(data).containsExactlyElementsIn(expectedValues).inOrder();
     }
 
     public void testSyncState() throws Exception {

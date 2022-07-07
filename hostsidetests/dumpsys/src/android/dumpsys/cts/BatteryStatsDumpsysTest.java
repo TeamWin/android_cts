@@ -25,6 +25,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,6 +35,41 @@ import java.util.Set;
 public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
    private static final String TEST_APK = "CtsFramestatsTestApp.apk";
     private static final String TEST_PKG = "com.android.cts.framestatstestapp";
+
+    /**
+     * Parse each line from output of dumpsys to handle special fields such as
+     * 'aaa,"bbb,ccc",ddd', to capture properly.
+     */
+    private static String[] parseCsv(String line) {
+        ArrayList<String> parts = new ArrayList<>();
+        String[] splitStrings = line.split(",", -1);
+        String s = "";
+        boolean escaping = false;
+        for (String splitString : splitStrings) {
+            if (escaping) {
+                s += "," + splitString;
+            } else {
+                if (splitString.startsWith("\"")) {
+                    // Field start with ". Start escaping.
+                    s = splitString;
+                    escaping = true;
+                } else {
+                    parts.add(splitString);
+                }
+            }
+            if (escaping && s.length() > 1 && s.endsWith("\"")) {
+                // Field end with ". Stop escaping.
+                parts.add(s.substring(1, s.length() - 1));
+                escaping = false;
+            }
+        }
+        if (escaping) {
+            // Unclosed escaping string. Add it anyway.
+            parts.add(s.substring(1));
+        }
+
+        return parts.toArray(new String[parts.size()]);
+    }
 
     /**
      * Tests the output of "dumpsys batterystats --checkin".
@@ -58,11 +94,7 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
 
 
                 try {
-                    // With a default limit of 0, empty strings at the end are discarded.
-                    // We still consider the empty string as a valid value in some cases.
-                    // Using any negative number for the limit will preserve a trailing empty string.
-                    // @see String#split(String, int)
-                    String[] parts = line.split(",", -1);
+                    String[] parts = parseCsv(line);
                     assertInteger(parts[0]); // old version
                     assertInteger(parts[1]); // UID
                     switch (parts[2]) { // aggregation type
