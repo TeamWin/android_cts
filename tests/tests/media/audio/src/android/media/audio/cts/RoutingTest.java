@@ -808,7 +808,7 @@ public class RoutingTest extends AndroidTestCase {
     }
 
     private MediaRecorder allocMediaRecorder() throws Exception {
-        final String outputPath = new File(Environment.getExternalStorageDirectory(),
+        final String outputPath = new File(mContext.getExternalFilesDir(null),
             "record.out").getAbsolutePath();
         mOutFile = new File(outputPath);
         MediaRecorder mediaRecorder = new MediaRecorder();

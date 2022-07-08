@@ -616,6 +616,122 @@ class ItsSession(object):
       raise error_util.CameraItsError('No supported preview sizes')
     return data['strValue'].split(';')
 
+  def do_capture_with_flash(self,
+                            preview_request_start,
+                            preview_request_idle,
+                            still_capture_req,
+                            out_surface):
+    """Issue capture request with flash and read back the image and metadata.
+
+    Captures a single image with still_capture_req as capture request
+    with flash. It triggers the precapture sequence with preview request
+    preview_request_start with capture intent preview by setting aePrecapture
+    trigger to Start. This is followed by repeated preview requests
+    preview_request_idle with aePrecaptureTrigger set to IDLE.
+    Once the AE is converged, a single image is captured still_capture_req
+    during which the flash must be fired.
+    Note: The part where we read output data from socket is cloned from
+    do_capture and will be consolidated in U.
+
+    Args:
+      preview_request_start: Preview request with aePrecaptureTrigger set to
+        Start
+      preview_request_idle: Preview request with aePrecaptureTrigger set to Idle
+      still_capture_req: Single still capture request.
+      out_surface: Specifications of the output image formats and
+        sizes to use for capture.
+    Returns:
+      An object which contains following fields:
+      * data: the image data as a numpy array of bytes.
+      * width: the width of the captured image.
+      * height: the height of the captured image.
+      * format: image format
+      * metadata: the capture result object
+    """
+    cmd = {}
+    cmd['cmdName'] = 'doCaptureWithFlash'
+    cmd['previewRequestStart'] = [preview_request_start]
+    cmd['previewRequestIdle'] = [preview_request_idle]
+    cmd['stillCaptureRequest'] = [still_capture_req]
+    cmd['outputSurfaces'] = [out_surface]
+
+    cam_ids = self._camera_id
+    self.sock.settimeout(self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT)
+    logging.debug('Capturing image with ON_AUTO_FLASH.')
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+
+    bufs = {}
+    bufs[self._camera_id] = {'jpeg': []}
+    formats = ['jpeg']
+    rets = []
+    nbufs = 0
+    mds = []
+    physical_mds = []
+    widths = None
+    heights = None
+    ncap = 1
+    capture_results_returned = False
+    yuv_bufs = {}
+    while not capture_results_returned:
+      json_obj, buf = self.__read_response_from_socket()
+      if json_obj['tag'] in ItsSession.IMAGE_FORMAT_LIST_1 and buf is not None:
+        fmt = json_obj['tag'][:-5]
+        bufs[self._camera_id][fmt].append(buf)
+        nbufs += 1
+      elif json_obj['tag'] == 'captureResults':
+        capture_results_returned = True
+        mds.append(json_obj['objValue']['captureResult'])
+        physical_mds.append(json_obj['objValue']['physicalResults'])
+        outputs = json_obj['objValue']['outputs']
+        widths = [out['width'] for out in outputs]
+        heights = [out['height'] for out in outputs]
+      else:
+        tag_string = unicodedata.normalize('NFKD', json_obj['tag']).encode(
+            'ascii', 'ignore')
+        for x in ItsSession.IMAGE_FORMAT_LIST_2:
+          x = bytes(x, encoding='utf-8')
+          if tag_string.startswith(x):
+            if x == b'yuvImage':
+              physical_id = json_obj['tag'][len(x):]
+              if physical_id in cam_ids:
+                buf_size = numpy.product(buf.shape)
+                yuv_bufs[physical_id][buf_size].append(buf)
+                nbufs += 1
+            else:
+              physical_id = json_obj['tag'][len(x):]
+              if physical_id in cam_ids:
+                fmt = x[:-5].decode('UTF-8')
+                bufs[physical_id][fmt].append(buf)
+                nbufs += 1
+    rets = []
+    for j, fmt in enumerate(formats):
+      objs = []
+      if 'physicalCamera' in cmd['outputSurfaces'][j]:
+        cam_id = cmd['outputSurfaces'][j]['physicalCamera']
+      else:
+        cam_id = self._camera_id
+      for i in range(ncap):
+        obj = {}
+        obj['width'] = widths[j]
+        obj['height'] = heights[j]
+        obj['format'] = fmt
+        if cam_id == self._camera_id:
+          obj['metadata'] = mds[i]
+        else:
+          for physical_md in physical_mds[i]:
+            if cam_id in physical_md:
+              obj['metadata'] = physical_md[cam_id]
+              break
+        obj['data'] = bufs[cam_id][fmt][i]
+        objs.append(obj)
+      rets.append(objs if ncap > 1 else objs[0])
+    self.sock.settimeout(self.SOCK_TIMEOUT)
+    if len(rets) > 1 or (isinstance(rets[0], dict) and
+                         isinstance(still_capture_req, list)):
+      return rets
+    else:
+      return rets[0]
+
   def do_capture(self,
                  cap_request,
                  out_surfaces=None,

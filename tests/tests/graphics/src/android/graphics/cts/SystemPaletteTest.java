@@ -34,6 +34,7 @@ import androidx.core.graphics.ColorUtils;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Assert;
@@ -74,6 +75,7 @@ public class SystemPaletteTest {
     }
 
     @Test
+    @CddTest(requirements = {"3.8.6/C-1-4,C-1-5,C-1-6"})
     public void testThemeStyles() {
         final Context context = getInstrumentation().getTargetContext();
         forEachThemeDefinition((color, style, expectedPalette) -> {

@@ -17,10 +17,12 @@
 package android.graphics.cts;
 
 import static android.opengl.EGL14.*;
+import static android.system.OsConstants.EINVAL;
 
 import static org.junit.Assert.assertEquals;
 
 import android.graphics.SurfaceTexture;
+import android.media.ImageReader;
 import android.opengl.EGL14;
 import android.opengl.EGLConfig;
 import android.opengl.EGLContext;
@@ -195,9 +197,6 @@ public class ANativeWindowTest {
 
     @Test
     public void testSetBuffersDataSpace() {
-        final int DATASPACE_SRGB = 142671872;
-        final int DATASPACE_UNKNOWN = 123;
-
         int[] texId = new int[1];
         GLES20.glGenTextures(1, texId, 0);
 
@@ -206,17 +205,36 @@ public class ANativeWindowTest {
         Surface surface = new Surface(consumer);
 
         assertEquals(nGetBuffersDataSpace(surface), 0);
-        assertEquals(nSetBuffersDataSpace(surface, DATASPACE_SRGB), 0);
-        assertEquals(nGetBuffersDataSpace(surface), DATASPACE_SRGB);
+        assertEquals(nSetBuffersDataSpace(surface, DataSpace.ADATASPACE_SRGB), 0);
+        assertEquals(nGetBuffersDataSpace(surface), DataSpace.ADATASPACE_SRGB);
 
-        assertEquals(nSetBuffersDataSpace(null, DATASPACE_SRGB), -22);
-        assertEquals(nGetBuffersDataSpace(null), -22);
-        assertEquals(nGetBuffersDataSpace(surface), DATASPACE_SRGB);
+        assertEquals(nSetBuffersDataSpace(null, DataSpace.ADATASPACE_SRGB), -EINVAL);
+        assertEquals(nGetBuffersDataSpace(null), -EINVAL);
+        assertEquals(nGetBuffersDataSpace(surface), DataSpace.ADATASPACE_SRGB);
 
         // set an unsupported data space should return a error code,
         // the original data space shouldn't change.
-        assertEquals(nSetBuffersDataSpace(surface, DATASPACE_UNKNOWN), -22);
-        assertEquals(nGetBuffersDataSpace(surface), DATASPACE_SRGB);
+        final int invalidDataSpace = 123;
+        assertEquals(nSetBuffersDataSpace(surface, invalidDataSpace), -EINVAL);
+        assertEquals(nGetBuffersDataSpace(surface), DataSpace.ADATASPACE_SRGB);
+    }
+
+    @Test
+    public void testGetBuffersDefaultDataspace() {
+        assertEquals(nGetBuffersDefaultDataSpace(null), -EINVAL);
+
+        ImageReader reader1 = new ImageReader.Builder(32, 32)
+                .setDefaultDataSpace(DataSpace.ADATASPACE_BT709)
+                .build();
+        assertEquals(nGetBuffersDefaultDataSpace(reader1.getSurface()), DataSpace.ADATASPACE_BT709);
+        reader1.close();
+
+        ImageReader reader2 = new ImageReader.Builder(32, 32)
+                .setDefaultDataSpace(DataSpace.ADATASPACE_BT2020)
+                .build();
+        assertEquals(nGetBuffersDefaultDataSpace(reader2.getSurface()),
+                DataSpace.ADATASPACE_BT2020);
+        reader2.close();
     }
 
     // Multiply 4x4 matrices result = a*b. result can be the same as either a or b,
@@ -261,5 +279,6 @@ public class ANativeWindowTest {
     private static native void nPushBufferWithTransform(Surface surface, int transform);
     private static native int nSetBuffersDataSpace(Surface surface, int dataSpace);
     private static native int nGetBuffersDataSpace(Surface surface);
+    private static native int nGetBuffersDefaultDataSpace(Surface surface);
     private static native void nTryAllocateBuffers(Surface surface);
 }

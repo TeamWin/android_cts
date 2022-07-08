@@ -889,7 +889,7 @@ public class StagedInstallTest {
     @Test
     public void testFailStagingMultipleSessionsIfNoCheckPoint() throws Exception {
         stageSingleApk(TestApp.A1).assertSuccessful();
-        int sessionId = stageSingleApk(TestApp.B1).assertSuccessful().getSessionId();
+        int sessionId = stageSingleApk(TestApp.B1).assertFailure().getSessionId();
         PackageInstaller.SessionInfo info = getSessionInfo(sessionId);
         assertThat(info).isStagedSessionFailed();
         assertThat(info.getStagedSessionErrorMessage()).contains(

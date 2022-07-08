@@ -1445,7 +1445,17 @@ public class CarPropertyManagerTest extends CarApiTestBase {
 
         // Test for continuous properties
         int vehicleSpeed = VehiclePropertyIds.PERF_VEHICLE_SPEED;
-        CarPropertyEventCounter speedListenerUI = new CarPropertyEventCounter();
+        CarPropertyConfig<?> carPropertyConfig = mCarPropertyManager.getCarPropertyConfig(
+                VehiclePropertyIds.PERF_VEHICLE_SPEED);
+        float secondsToMillis = 1_000;
+        long bufferMillis = 1_000; // 1 second
+        // timeoutMillis is set to the maximum expected time needed to receive the required
+        // number of PERF_VEHICLE_SPEED events for test. If the test does not receive the
+        // required number of events before the timeout expires, it fails.
+        long timeoutMillis =
+                ((long) ((1.0f / carPropertyConfig.getMinSampleRate()) * secondsToMillis
+                        * UI_RATE_EVENT_COUNTER)) + bufferMillis;
+        CarPropertyEventCounter speedListenerUI = new CarPropertyEventCounter(timeoutMillis);
         CarPropertyEventCounter speedListenerFast = new CarPropertyEventCounter();
 
         assertThat(speedListenerUI.receivedEvent(vehicleSpeed)).isEqualTo(NO_EVENTS);
@@ -1455,21 +1465,21 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         assertThat(speedListenerFast.receivedError(vehicleSpeed)).isEqualTo(NO_EVENTS);
         assertThat(speedListenerFast.receivedErrorWithErrorCode(vehicleSpeed)).isEqualTo(NO_EVENTS);
 
+        speedListenerUI.resetCountDownLatch(UI_RATE_EVENT_COUNTER);
         mCarPropertyManager.registerCallback(speedListenerUI, vehicleSpeed,
                 CarPropertyManager.SENSOR_RATE_UI);
         mCarPropertyManager.registerCallback(speedListenerFast, vehicleSpeed,
                 CarPropertyManager.SENSOR_RATE_FASTEST);
-        speedListenerUI.resetCountDownLatch(UI_RATE_EVENT_COUNTER);
         speedListenerUI.assertOnChangeEventCalled();
+        mCarPropertyManager.unregisterCallback(speedListenerUI);
+        mCarPropertyManager.unregisterCallback(speedListenerFast);
+
         assertThat(speedListenerUI.receivedEvent(vehicleSpeed)).isGreaterThan(NO_EVENTS);
-        assertThat(speedListenerFast.receivedEvent(vehicleSpeed)).isGreaterThan(
+        assertThat(speedListenerFast.receivedEvent(vehicleSpeed)).isAtLeast(
                 speedListenerUI.receivedEvent(vehicleSpeed));
         // The test did not change property values, it should not get error with error codes.
         assertThat(speedListenerUI.receivedErrorWithErrorCode(vehicleSpeed)).isEqualTo(NO_EVENTS);
         assertThat(speedListenerFast.receivedErrorWithErrorCode(vehicleSpeed)).isEqualTo(NO_EVENTS);
-
-        mCarPropertyManager.unregisterCallback(speedListenerFast);
-        mCarPropertyManager.unregisterCallback(speedListenerUI);
 
         // Test for on_change properties
         int nightMode = VehiclePropertyIds.NIGHT_MODE;
@@ -1479,7 +1489,6 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         nightModeListener.assertOnChangeEventCalled();
         assertThat(nightModeListener.receivedEvent(nightMode)).isEqualTo(1);
         mCarPropertyManager.unregisterCallback(nightModeListener);
-
     }
 
     @Test
@@ -1604,6 +1613,15 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         private final SparseArray<Integer> mErrorWithErrorCodeCounter = new SparseArray<>();
         private int mCounter = FAST_OR_FASTEST_EVENT_COUNTER;
         private CountDownLatch mCountDownLatch = new CountDownLatch(mCounter);
+        private final long mTimeoutMillis;
+
+        CarPropertyEventCounter(long timeoutMillis) {
+            mTimeoutMillis = timeoutMillis;
+        }
+
+        CarPropertyEventCounter() {
+            this(WAIT_CALLBACK);
+        }
 
         public int receivedEvent(int propId) {
             int val;
@@ -1660,18 +1678,19 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         }
 
         public void assertOnChangeEventCalled() throws InterruptedException {
-            if (!mCountDownLatch.await(WAIT_CALLBACK, TimeUnit.MILLISECONDS)) {
-                throw new IllegalStateException("Callback is not called:" + mCounter + "times in "
-                        + WAIT_CALLBACK + " ms.");
+            if (!mCountDownLatch.await(mTimeoutMillis, TimeUnit.MILLISECONDS)) {
+                throw new IllegalStateException(
+                        "Callback is not called " + mCounter + "times in " + mTimeoutMillis
+                                + " ms. It was only called " + (mCounter
+                                - mCountDownLatch.getCount()) + " times.");
             }
         }
 
         public void assertOnChangeEventNotCalled() throws InterruptedException {
             // Once get an event, fail the test.
             mCountDownLatch = new CountDownLatch(1);
-            if (mCountDownLatch.await(WAIT_CALLBACK, TimeUnit.MILLISECONDS)) {
-                throw new IllegalStateException("Callback is called in "
-                        + WAIT_CALLBACK + " ms.");
+            if (mCountDownLatch.await(mTimeoutMillis, TimeUnit.MILLISECONDS)) {
+                throw new IllegalStateException("Callback is called in " + mTimeoutMillis + " ms.");
             }
         }
 

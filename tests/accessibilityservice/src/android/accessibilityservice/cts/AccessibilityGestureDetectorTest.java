@@ -46,6 +46,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.PointF;
+import android.graphics.RectF;
 import android.platform.test.annotations.AppModeFull;
 import android.util.DisplayMetrics;
 import android.view.Display;
@@ -104,6 +105,7 @@ public class AccessibilityGestureDetectorTest {
     Point mCenter; // Center of screen. Gestures all start from this point.
     PointF mTapLocation;
     int mScaledTouchSlop;
+    RectF mDisplayBounds;
     int mMaxAdjustedStrokeLenPxX;
     int mMaxAdjustedStrokeLenPxY;
     @Mock AccessibilityService.GestureResultCallback mGestureDispatchCallback;
@@ -144,8 +146,7 @@ public class AccessibilityGestureDetectorTest {
         mStrokeLenPxX = (int) (GESTURE_LENGTH_INCHES * metrics.xdpi);
         // The threshold is determined by xdpi.
         mStrokeLenPxY = mStrokeLenPxX;
-        mMaxAdjustedStrokeLenPxX = metrics.widthPixels / 2;
-        mMaxAdjustedStrokeLenPxY = metrics.heightPixels / 2;
+        mDisplayBounds = new RectF(0.0f, 0.0f, (float) metrics.widthPixels, (float) metrics.heightPixels);
         final boolean screenWideEnough = metrics.widthPixels / 2 > mStrokeLenPxX;
         final boolean screenHighEnough =  metrics.heightPixels / 2 > mStrokeLenPxY;
         mScreenBigEnough = screenWideEnough && screenHighEnough;
@@ -312,38 +313,30 @@ public class AccessibilityGestureDetectorTest {
                 AccessibilityService.GESTURE_4_FINGER_TRIPLE_TAP,
                 displayId);
 
-        testGesture(
-                MultiFingerSwipe(displayId, 3, 0, dy),
-                AccessibilityService.GESTURE_3_FINGER_SWIPE_DOWN,
-                displayId);
-        testGesture(
-                MultiFingerSwipe(displayId, 3, -dx, 0),
-                AccessibilityService.GESTURE_3_FINGER_SWIPE_LEFT,
-                displayId);
-        testGesture(
-                MultiFingerSwipe(displayId, 3, dx, 0),
-                AccessibilityService.GESTURE_3_FINGER_SWIPE_RIGHT,
-                displayId);
-        testGesture(
-                MultiFingerSwipe(displayId, 3, 0, -dy),
-                AccessibilityService.GESTURE_3_FINGER_SWIPE_UP,
-                displayId);
-        testGesture(
-                MultiFingerSwipe(displayId, 4, 0, dy),
-                AccessibilityService.GESTURE_4_FINGER_SWIPE_DOWN,
-                displayId);
-        testGesture(
-                MultiFingerSwipe(displayId, 4, -dx, 0),
-                AccessibilityService.GESTURE_4_FINGER_SWIPE_LEFT,
-                displayId);
-        testGesture(
-                MultiFingerSwipe(displayId, 4, dx, 0),
-                AccessibilityService.GESTURE_4_FINGER_SWIPE_RIGHT,
-                displayId);
-        testGesture(
-                MultiFingerSwipe(displayId, 4, 0, -dy),
-                AccessibilityService.GESTURE_4_FINGER_SWIPE_UP,
-                displayId);
+        testMultiSwipeGesture(
+                displayId, 3, 0, dy,
+                AccessibilityService.GESTURE_3_FINGER_SWIPE_DOWN);
+        testMultiSwipeGesture(
+                displayId, 3, -dx, 0,
+                AccessibilityService.GESTURE_3_FINGER_SWIPE_LEFT);
+        testMultiSwipeGesture(
+                displayId, 3, dx, 0,
+                AccessibilityService.GESTURE_3_FINGER_SWIPE_RIGHT);
+        testMultiSwipeGesture(
+                displayId, 3, 0, -dy,
+                AccessibilityService.GESTURE_3_FINGER_SWIPE_UP);
+        testMultiSwipeGesture(
+                displayId, 4, 0, dy,
+                AccessibilityService.GESTURE_4_FINGER_SWIPE_DOWN);
+        testMultiSwipeGesture(
+                displayId, 4, -dx, 0,
+                AccessibilityService.GESTURE_4_FINGER_SWIPE_LEFT);
+        testMultiSwipeGesture(
+                displayId, 4, dx, 0,
+                AccessibilityService.GESTURE_4_FINGER_SWIPE_RIGHT);
+        testMultiSwipeGesture(
+                displayId, 4, 0, -dy,
+                AccessibilityService.GESTURE_4_FINGER_SWIPE_UP);
     }
 
     /** Convenient short alias to make a Point. */
@@ -396,6 +389,15 @@ public class AccessibilityGestureDetectorTest {
         // Wait for gesture recognizer, and check recognized gesture.
         mService.assertGestureReceived(gestureId, displayId);
     }
+
+    private void testMultiSwipeGesture(
+            int displayId, int fingerCount, int dx, int dy, int gestureId) {
+        GestureDescription gesture = MultiFingerSwipe(displayId, fingerCount, dx, dy);
+        if (gesture != null) {
+            testGesture(gesture, gestureId, displayId);
+        }
+    }
+
     /** Create a path from startPoint, moving by delta1, then delta2. (delta2 may be null.) */
     Path linePath(Point startPoint, Point delta1, Point delta2) {
         Path path = new Path();
@@ -641,14 +643,18 @@ public class AccessibilityGestureDetectorTest {
                 adjustStrokeDurationForSlop(STROKE_MS, dx, slopAdjustedDx),
                 adjustStrokeDurationForSlop(STROKE_MS, dy, slopAdjustedDy));
 
+        final float fingerOffsetSum = (fingerCount - 1) * fingerOffset;
         final PointF tapLocation = new PointF(mTapLocation);
-        final float locationOffsetX = (fingerCount - 1) * fingerOffset;
-        tapLocation.offset(dx > 0 ? -locationOffsetX : locationOffsetX , 0);
+
+        // Center the length of the swipe gesture on screen, instead of starting at the centre.
+        // This includes extra room required for multiple fingers.
+        adjustTapLocation(tapLocation, fingerOffsetSum, slopAdjustedDx, slopAdjustedDy);
+
+        // If the tap location is out of bounds, there is no room for this manoeuvre.
+        if (!mDisplayBounds.contains(tapLocation.x, tapLocation.y)) {
+            return null;
+        }
         for (int currentFinger = 0; currentFinger < fingerCount; ++currentFinger) {
-            // Make sure adjustments don't take us outside of screen boundaries.
-            assertTrue(slopAdjustedDx + (fingerOffset * currentFinger) < (mMaxAdjustedStrokeLenPxX
-                    + locationOffsetX));
-            assertTrue(slopAdjustedDy < mMaxAdjustedStrokeLenPxY);
             builder.addStroke(
                     GestureUtils.swipe(
                             add(tapLocation, fingerOffset * currentFinger, 0),
@@ -661,9 +667,9 @@ public class AccessibilityGestureDetectorTest {
 
     private float adjustStrokeDeltaForSlop(int fingerCount, float strokeDelta) {
         if (strokeDelta > 0.0f) {
-            return Math.max(strokeDelta, fingerCount * mScaledTouchSlop + 10);
+            return strokeDelta + (fingerCount * mScaledTouchSlop);
         } else if (strokeDelta < 0.0f) {
-            return Math.min(strokeDelta, -(fingerCount * mScaledTouchSlop + 10));
+            return strokeDelta - (fingerCount * mScaledTouchSlop);
         }
         return strokeDelta;
     }
@@ -677,5 +683,22 @@ public class AccessibilityGestureDetectorTest {
         float absAdjustedDelta = Math.abs(adjustedDelta);
         // Adjusted delta in this case, has additional delta added due to touch slop.
         return Math.round((float) strokeDuration * absUnadjustedDelta / absAdjustedDelta);
+    }
+
+    private void adjustTapLocation(
+            PointF tapLocation, float fingerOffsetSum, float strokeDeltaX, float strokeDeltaY) {
+        float offsetX = 0.0f;
+        float offsetY = 0.0f;
+        if (strokeDeltaX > 0.0f) {
+            offsetX = (strokeDeltaX + fingerOffsetSum) / -2.0f;
+        } else if (strokeDeltaX < 0.0f) {
+            offsetX = (strokeDeltaX - fingerOffsetSum) / -2.0f;
+        }
+        if (strokeDeltaY > 0.0f) {
+            offsetY = (strokeDeltaY + fingerOffsetSum) / -2.0f;
+        } else if (strokeDeltaY < 0.0f) {
+            offsetY = (strokeDeltaY - fingerOffsetSum) / -2.0f;
+        }
+        tapLocation.offset(offsetX, offsetY);
     }
 }

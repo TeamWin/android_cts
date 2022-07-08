@@ -58,6 +58,14 @@ jint getBuffersDataSpace(JNIEnv* env, jclass, jobject jSurface) {
     return ANativeWindow_getBuffersDataSpace(window);
 }
 
+jint getBuffersDefaultDataspace(JNIEnv* env, jclass, jobject jSurface) {
+    ANativeWindow* window = nullptr;
+    if (jSurface) {
+        window = ANativeWindow_fromSurface(env, jSurface);
+    }
+    return ANativeWindow_getBuffersDefaultDataSpace(window);
+}
+
 void tryAllocateBuffers(JNIEnv* env, jclass, jobject jSurface) {
     ANativeWindow* window = nullptr;
     if (jSurface) {
@@ -71,13 +79,15 @@ void tryAllocateBuffers(JNIEnv* env, jclass, jobject jSurface) {
     }
 }
 
-const std::array<JNINativeMethod, 4> JNI_METHODS = {{
+const std::array<JNINativeMethod, 5> JNI_METHODS = {{
     {"nPushBufferWithTransform", "(Landroid/view/Surface;I)V",
      (void*)pushBufferWithTransform},
     {"nSetBuffersDataSpace", "(Landroid/view/Surface;I)I",
      (void*)setBuffersDataSpace},
     {"nGetBuffersDataSpace", "(Landroid/view/Surface;)I",
      (void*)getBuffersDataSpace},
+    {"nGetBuffersDefaultDataSpace", "(Landroid/view/Surface;)I",
+     (void*)getBuffersDefaultDataspace},
     {"nTryAllocateBuffers", "(Landroid/view/Surface;)V",
      (void*)tryAllocateBuffers},
 }};

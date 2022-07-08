@@ -32,6 +32,7 @@ import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
+import android.graphics.SurfaceTexture;
 import android.hardware.HardwareBuffer;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -241,6 +242,8 @@ public class ItsService extends Service implements SensorEventListener {
 
     final Object m3AStateLock = new Object();
     private volatile boolean mConvergedAE = false;
+    private volatile boolean mPrecaptureTriggered = false;
+    private volatile boolean mConvergeAETriggered = false;
     private volatile boolean mConvergedAF = false;
     private volatile boolean mConvergedAWB = false;
     private volatile boolean mLockedAE = false;
@@ -821,6 +824,8 @@ public class ItsService extends Service implements SensorEventListener {
                     String cameraId = cmdObj.getString("cameraId");
                     int profileId = cmdObj.getInt("profileId");
                     doCheckHLG10Support(cameraId, profileId);
+                } else if ("doCaptureWithFlash".equals(cmdObj.getString("cmdName"))) {
+                    doCaptureWithFlash(cmdObj);
                 } else {
                     throw new ItsException("Unknown command: " + cmd);
                 }
@@ -2337,6 +2342,104 @@ public class ItsService extends Service implements SensorEventListener {
         return mediaFile + fileExtension;
     }
 
+    private void doCaptureWithFlash(JSONObject params) throws ItsException {
+        // Parse the json to get the capture requests
+        List<CaptureRequest.Builder> previewStartRequests = ItsSerializer.deserializeRequestList(
+            mCamera, params, "previewRequestStart");
+        List<CaptureRequest.Builder> previewIdleRequests = ItsSerializer.deserializeRequestList(
+            mCamera, params, "previewRequestIdle");
+        List<CaptureRequest.Builder> stillCaptureRequests = ItsSerializer.deserializeRequestList(
+            mCamera, params, "stillCaptureRequest");
+
+        mCaptureResults = new CaptureResult[2];
+
+        ThreeAResultListener threeAListener = new ThreeAResultListener();
+        List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
+        SurfaceTexture preview = new SurfaceTexture(/*random int*/ 1);
+        Surface previewSurface = new Surface(preview);
+        try {
+            BlockingSessionCallback sessionListener = new BlockingSessionCallback();
+            try {
+                mCountCapRes.set(0);
+                mCountJpg.set(0);
+                JSONArray jsonOutputSpecs = ItsUtils.getOutputSpecs(params);
+                prepareImageReadersWithOutputSpecs(jsonOutputSpecs, /*inputSize*/null,
+                         /*inputFormat*/0,/*maxInputBuffers*/0,false);
+
+                outputConfigs.add(new OutputConfiguration(mOutputImageReaders[0].getSurface()));
+                outputConfigs.add(new OutputConfiguration(previewSurface));
+                mCamera.createCaptureSessionByOutputConfigurations(
+                        outputConfigs, sessionListener, mCameraHandler);
+                mSession = sessionListener.waitAndGetSession(TIMEOUT_IDLE_MS);
+                ImageReader.OnImageAvailableListener readerListener =
+                        createAvailableListener(mCaptureCallback);
+                mOutputImageReaders[0].setOnImageAvailableListener(readerListener,
+                        mSaveHandlers[0]);
+            } catch (Exception e) {
+                throw new ItsException("Error configuring outputs", e);
+            }
+            CaptureRequest.Builder previewIdleReq = previewIdleRequests.get(0);
+            previewIdleReq.addTarget(previewSurface);
+            mSession.setRepeatingRequest(previewIdleReq.build(), threeAListener, mResultHandler);
+            Logt.i(TAG, "Triggering precapture sequence");
+            mPrecaptureTriggered = false;
+            CaptureRequest.Builder previewStartReq = previewStartRequests.get(0);
+            previewStartReq.addTarget(previewSurface);
+            mSession.capture(previewStartReq.build(), threeAListener ,mResultHandler);
+            mInterlock3A.open();
+            synchronized(m3AStateLock) {
+                mPrecaptureTriggered = false;
+                mConvergeAETriggered = false;
+            }
+            long tstart = System.currentTimeMillis();
+            boolean triggeredAE = false;
+            while (!mPrecaptureTriggered) {
+                if (!mInterlock3A.block(TIMEOUT_3A * 1000) ||
+                        System.currentTimeMillis() - tstart > TIMEOUT_3A * 1000) {
+                    throw new ItsException (
+                        "AE state is " + CaptureResult.CONTROL_AE_STATE_PRECAPTURE +
+                        "after " + TIMEOUT_3A + " seconds.");
+                }
+            }
+            mConvergeAETriggered = false;
+
+            tstart = System.currentTimeMillis();
+            while (!mConvergeAETriggered) {
+                if (!mInterlock3A.block(TIMEOUT_3A * 1000) ||
+                        System.currentTimeMillis() - tstart > TIMEOUT_3A * 1000) {
+                    throw new ItsException (
+                        "3A failed to converge after " + TIMEOUT_3A + " seconds.\n" +
+                        "AE converge state: " + mConvergedAE + ".");
+                }
+            }
+            mInterlock3A.close();
+            Logt.i(TAG, "AE state after precapture sequence: " + mConvergeAETriggered);
+            threeAListener.stop();
+
+            // Send a still capture request
+            CaptureRequest.Builder stillCaptureRequest = stillCaptureRequests.get(0);
+            Logt.i(TAG, "Taking still capture with ON_AUTO_FLASH.");
+            stillCaptureRequest.addTarget(mOutputImageReaders[0].getSurface());
+            mSession.capture(stillCaptureRequest.build(), mCaptureResultListener, mResultHandler);
+            mCountCallbacksRemaining.set(1);
+            long timeout = TIMEOUT_CALLBACK * 1000;
+            waitForCallbacks(timeout);
+            mSession.stopRepeating();
+        } catch (android.hardware.camera2.CameraAccessException e) {
+            throw new ItsException("Access error: ", e);
+        } finally {
+            if (mSession != null) {
+                mSession.close();
+            }
+            if (previewSurface != null) {
+                previewSurface.release();
+            }
+            if (preview != null) {
+                preview.release();
+            }
+        }
+    }
+
     private void doCapture(JSONObject params) throws ItsException {
         try {
             // Parse the JSON to get the list of capture requests.
@@ -2882,8 +2985,13 @@ public class ItsService extends Service implements SensorEventListener {
                                                   CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED ||
                                        result.get(CaptureResult.CONTROL_AE_STATE) ==
                                                   CaptureResult.CONTROL_AE_STATE_LOCKED;
-                        mLockedAE = result.get(CaptureResult.CONTROL_AE_STATE) ==
-                                               CaptureResult.CONTROL_AE_STATE_LOCKED;
+                        if (!mPrecaptureTriggered) {
+                            mPrecaptureTriggered = result.get(CaptureResult.CONTROL_AE_STATE) ==
+                                    CaptureResult.CONTROL_AE_STATE_PRECAPTURE;
+                        }
+                        if (!mConvergeAETriggered) {
+                            mConvergeAETriggered = mConvergedAE;
+                        }
                     }
                     if (result.get(CaptureResult.CONTROL_AF_STATE) != null) {
                         mConvergedAF = result.get(CaptureResult.CONTROL_AF_STATE) ==

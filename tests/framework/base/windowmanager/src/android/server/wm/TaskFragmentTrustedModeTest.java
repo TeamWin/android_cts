@@ -32,6 +32,7 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Binder;
 import android.os.IBinder;
+import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState.Task;
 import android.window.TaskFragmentCreationParams;
 import android.window.TaskFragmentInfo;
@@ -47,6 +48,7 @@ import org.junit.Test;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:TaskFragmentTrustedModeTest
  */
+@Presubmit
 public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
 
     private final ComponentName mTranslucentActivity = new ComponentName(mContext,
@@ -254,8 +256,6 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
         // It is disallowed to start activity to TaskFragment with bounds outside of its parent
         // in untrusted mode.
         assertTaskFragmentError(errorCallbackToken, SecurityException.class);
-        mWmState.waitForAppTransitionIdleOnDisplay(mOwnerActivity.getDisplayId());
-        mWmState.assertNotExist(SECOND_UNTRUSTED_EMBEDDING_ACTIVITY);
     }
 
     /**

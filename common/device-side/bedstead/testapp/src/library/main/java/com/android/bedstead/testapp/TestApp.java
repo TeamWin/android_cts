@@ -169,6 +169,11 @@ public final class TestApp {
         }
     }
 
+    /** The package label, or the package name if no label is specified. */
+    public String label() {
+        return mDetails.label() != null ? mDetails.label() : packageName();
+    }
+
     /** The package name of the test app. */
     public String packageName() {
         return mDetails.mApp.getPackageName();

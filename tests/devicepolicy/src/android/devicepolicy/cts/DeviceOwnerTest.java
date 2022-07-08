@@ -131,7 +131,7 @@ public final class DeviceOwnerTest {
     @Postsubmit(reason = "new test")
     public void getDeviceOwnerNameOnAnyUser_returnsDeviceOwnerName() {
         assertThat(sDevicePolicyManager.getDeviceOwnerNameOnAnyUser())
-                .isEqualTo(sDeviceState.dpc().packageName());
+                .isEqualTo(sDeviceState.dpc().testApp().label());
     }
 
     @UserTest({UserType.PRIMARY_USER, UserType.SECONDARY_USER})
