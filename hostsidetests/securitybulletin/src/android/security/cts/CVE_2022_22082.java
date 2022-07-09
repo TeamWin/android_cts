@@ -1,0 +1,46 @@
+/**
+ * Copyright (C) 2022 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package android.security.cts;
+
+import static org.junit.Assume.*;
+
+import android.platform.test.annotations.AsbSecurityTest;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class CVE_2022_22082 extends SecurityTestCase {
+
+    /**
+     * CVE-2022-22082
+     */
+    @AsbSecurityTest(cveBugId = 223211217)
+    @Test
+    public void testPocCVE_2022_22082() throws Exception {
+        /*
+         * Non StageFright test.
+         */
+        safeReboot();
+        AdbUtils.pushResource("/cve_2022_22082.dsf", "/sdcard/cve_2022_22082.dsf", getDevice());
+        AdbUtils.runCommandLine("logcat -c", getDevice());
+        AdbUtils.runCommandLine(
+                "am start -a android.intent.action.VIEW -t audio/dsf -d file:///sdcard/cve_2022_22082.dsf",
+                getDevice());
+        Thread.sleep(10000);
+        AdbUtils.assertNoCrashes(getDevice(), "media.extractor");
+    }
+}

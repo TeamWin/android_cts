@@ -49,6 +49,7 @@ import static android.appenumeration.cts.Constants.EXTRA_ID;
 import static android.appenumeration.cts.Constants.EXTRA_PENDING_INTENT;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_CALLBACK;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_READY_CALLBACK;
+import static android.appenumeration.cts.Constants.SERVICE_CLASS_DUMMY_SERVICE;
 import static android.content.Intent.EXTRA_COMPONENT_NAME;
 import static android.content.Intent.EXTRA_PACKAGES;
 import static android.content.Intent.EXTRA_RETURN_RESULT;
@@ -80,6 +81,9 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller.SessionCallback;
 import android.content.pm.PackageInstaller.SessionInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.ApplicationInfoFlags;
+import android.content.pm.PackageManager.PackageInfoFlags;
+import android.content.pm.PackageManager.ResolveInfoFlags;
 import android.content.pm.SharedLibraryInfo;
 import android.database.Cursor;
 import android.net.Uri;
@@ -142,10 +146,11 @@ public class TestActivity extends Activity {
     }
 
     private void handleIntent(Intent intent) {
-        RemoteCallback remoteCallback = intent.getParcelableExtra(EXTRA_REMOTE_CALLBACK);
+        final RemoteCallback remoteCallback = intent.getParcelableExtra(EXTRA_REMOTE_CALLBACK,
+                RemoteCallback.class);
         try {
             final String action = intent.getAction();
-            final Intent queryIntent = intent.getParcelableExtra(Intent.EXTRA_INTENT);
+            final Intent queryIntent = intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent.class);
             if (ACTION_GET_PACKAGE_INFO.equals(action)) {
                 final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
                 sendPackageInfo(remoteCallback, packageName);
@@ -160,7 +165,7 @@ public class TestActivity extends Activity {
                 sendNamesForUids(remoteCallback, uid);
             } else if (ACTION_CHECK_SIGNATURES.equals(action)) {
                 final int uid1 = getPackageManager().getApplicationInfo(
-                        getPackageName(), /* flags */ 0).uid;
+                        getPackageName(), ApplicationInfoFlags.of(0)).uid;
                 final int uid2 = intent.getIntExtra(EXTRA_UID, INVALID_UID);
                 sendCheckSignatures(remoteCallback, uid1, uid2);
             } else if (ACTION_HAS_SIGNING_CERTIFICATE.equals(action)) {
@@ -181,7 +186,8 @@ public class TestActivity extends Activity {
                     setResult(RESULT_OK,
                             getIntent().putExtra(
                                     Intent.EXTRA_RETURN_RESULT,
-                                    getPackageManager().getPackageInfo(getCallingPackage(), 0)));
+                                    getPackageManager().getPackageInfo(getCallingPackage(),
+                                            PackageInfoFlags.of(0))));
                 } catch (PackageManager.NameNotFoundException e) {
                     setResult(RESULT_FIRST_USER, new Intent().putExtra("error", e));
                 }
@@ -205,7 +211,8 @@ public class TestActivity extends Activity {
             } else if (ACTION_GET_INSTALLED_PACKAGES.equals(action)) {
                 sendGetInstalledPackages(remoteCallback, queryIntent.getIntExtra(EXTRA_FLAGS, 0));
             } else if (ACTION_START_SENDER_FOR_RESULT.equals(action)) {
-                PendingIntent pendingIntent = intent.getParcelableExtra(EXTRA_PENDING_INTENT);
+                final PendingIntent pendingIntent = intent.getParcelableExtra(EXTRA_PENDING_INTENT,
+                        PendingIntent.class);
                 int requestCode = RESULT_FIRST_USER + callbacks.size();
                 callbacks.put(requestCode, remoteCallback);
                 try {
@@ -264,16 +271,16 @@ public class TestActivity extends Activity {
                 final String authority = intent.getBundleExtra(EXTRA_DATA)
                         .getString(EXTRA_AUTHORITY);
                 final Account account = intent.getBundleExtra(EXTRA_DATA)
-                        .getParcelable(EXTRA_ACCOUNT);
+                        .getParcelable(EXTRA_ACCOUNT, Account.class);
                 awaitRequestSyncStatus(remoteCallback, action, account, authority,
                         EXTENDED_TIMEOUT_MS);
             } else if (Constants.ACTION_GET_SYNCADAPTER_CONTROL_PANEL.equals(action)) {
                 final String authority = intent.getBundleExtra(EXTRA_DATA)
                         .getString(EXTRA_AUTHORITY);
                 final Account account = intent.getBundleExtra(EXTRA_DATA)
-                        .getParcelable(EXTRA_ACCOUNT);
+                        .getParcelable(EXTRA_ACCOUNT, Account.class);
                 final ComponentName componentName = intent.getBundleExtra(EXTRA_DATA)
-                        .getParcelable(EXTRA_COMPONENT_NAME);
+                        .getParcelable(EXTRA_COMPONENT_NAME, ComponentName.class);
                 sendGetSyncAdapterControlPanel(remoteCallback, account, authority, componentName);
             } else if (Constants.ACTION_AWAIT_LAUNCHER_APPS_CALLBACK.equals(action)) {
                 final int expectedEventCode = intent.getBundleExtra(EXTRA_DATA)
@@ -345,7 +352,7 @@ public class TestActivity extends Activity {
                 sendPendingIntentGetActivity(remoteCallback);
             } else if (Constants.ACTION_PENDING_INTENT_GET_CREATOR_PACKAGE.equals(action)) {
                 sendPendingIntentGetCreatorPackage(remoteCallback,
-                        intent.getParcelableExtra(EXTRA_PENDING_INTENT));
+                        intent.getParcelableExtra(EXTRA_PENDING_INTENT, PendingIntent.class));
             } else if (Constants.ACTION_CHECK_PACKAGE.equals(action)) {
                 // Using ROOT_UID as default value here to pass the check in #verifyAndGetBypass,
                 // this is intended by design.
@@ -389,7 +396,8 @@ public class TestActivity extends Activity {
     }
 
     private void onCommandReady(Intent intent) {
-        final RemoteCallback callback = intent.getParcelableExtra(EXTRA_REMOTE_READY_CALLBACK);
+        final RemoteCallback callback = intent.getParcelableExtra(EXTRA_REMOTE_READY_CALLBACK,
+                RemoteCallback.class);
         if (callback != null) {
             callback.sendResult(null);
         }
@@ -410,7 +418,7 @@ public class TestActivity extends Activity {
                 mainHandler.removeCallbacksAndMessages(token);
                 finish();
             }
-        }, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
+        }, filter, Context.RECEIVER_EXPORTED);
         mainHandler.postDelayed(
                 () -> sendError(remoteCallback,
                         new MissingBroadcastException(action, timeoutMs)),
@@ -435,7 +443,7 @@ public class TestActivity extends Activity {
                     finish();
                 }
             }
-        }, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
+        }, filter, Context.RECEIVER_EXPORTED);
         mainHandler.postDelayed(() -> remoteCallback.sendResult(result), token, timeoutMs);
     }
 
@@ -463,7 +471,7 @@ public class TestActivity extends Activity {
                     sendResult.run();
                 }
             }
-        }, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
+        }, filter, Context.RECEIVER_EXPORTED);
         mainHandler.postDelayed(() -> sendResult.run(), token, timeoutMs);
     }
 
@@ -542,7 +550,7 @@ public class TestActivity extends Activity {
 
     private void sendGetInstalledPackages(RemoteCallback remoteCallback, int flags) {
         String[] packages =
-                getPackageManager().getInstalledPackages(flags)
+                getPackageManager().getInstalledPackages(PackageInfoFlags.of(flags))
                         .stream().map(p -> p.packageName).distinct().toArray(String[]::new);
         Bundle result = new Bundle();
         result.putStringArray(EXTRA_RETURN_RESULT, packages);
@@ -552,7 +560,7 @@ public class TestActivity extends Activity {
 
     private void sendQueryIntentActivities(RemoteCallback remoteCallback, Intent queryIntent) {
         final String[] resolveInfos = getPackageManager().queryIntentActivities(
-                queryIntent, 0 /* flags */).stream()
+                queryIntent, ResolveInfoFlags.of(0)).stream()
                 .map(ri -> ri.activityInfo.applicationInfo.packageName)
                 .distinct()
                 .toArray(String[]::new);
@@ -564,7 +572,7 @@ public class TestActivity extends Activity {
 
     private void sendQueryIntentServices(RemoteCallback remoteCallback, Intent queryIntent) {
         final String[] resolveInfos = getPackageManager().queryIntentServices(
-                queryIntent, 0 /* flags */).stream()
+                queryIntent, ResolveInfoFlags.of(0)).stream()
                 .map(ri -> ri.serviceInfo.applicationInfo.packageName)
                 .distinct()
                 .toArray(String[]::new);
@@ -576,7 +584,7 @@ public class TestActivity extends Activity {
 
     private void sendQueryIntentProviders(RemoteCallback remoteCallback, Intent queryIntent) {
         final String[] resolveInfos = getPackageManager().queryIntentContentProviders(
-                queryIntent, 0 /* flags */).stream()
+                queryIntent, ResolveInfoFlags.of(0)).stream()
                 .map(ri -> ri.providerInfo.applicationInfo.packageName)
                 .distinct()
                 .toArray(String[]::new);
@@ -623,7 +631,7 @@ public class TestActivity extends Activity {
     private void sendPackageInfo(RemoteCallback remoteCallback, String packageName) {
         final PackageInfo pi;
         try {
-            pi = getPackageManager().getPackageInfo(packageName, 0);
+            pi = getPackageManager().getPackageInfo(packageName, PackageInfoFlags.of(0));
         } catch (PackageManager.NameNotFoundException e) {
             sendError(remoteCallback, e);
             return;
@@ -980,7 +988,7 @@ public class TestActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
         final RemoteCallback remoteCallback = callbacks.get(requestCode);
         if (resultCode != RESULT_OK) {
-            Exception e = (Exception) data.getSerializableExtra(EXTRA_ERROR);
+            final Exception e = data.getSerializableExtra(EXTRA_ERROR, Exception.class);
             sendError(remoteCallback, e == null ? new Exception("Result was " + resultCode) : e);
             return;
         }
@@ -991,9 +999,8 @@ public class TestActivity extends Activity {
     }
 
     private void bindService(RemoteCallback remoteCallback, String packageName) {
-        final String SERVICE_NAME = "android.appenumeration.testapp.DummyService";
         final Intent intent = new Intent();
-        intent.setClassName(packageName, SERVICE_NAME);
+        intent.setClassName(packageName, SERVICE_CLASS_DUMMY_SERVICE);
         final ServiceConnection serviceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName className, IBinder service) {
@@ -1028,7 +1035,7 @@ public class TestActivity extends Activity {
         result.putBoolean(EXTRA_RETURN_RESULT, bound);
         remoteCallback.sendResult(result);
         // Don't invoke finish() right here if service is bound successfully to keep the service
-        // connection alive since the ServiceRecord would be remove from the ServiceMap once no
+        // connection alive since the ServiceRecord would be removed from the ServiceMap once no
         // client is binding the service.
         if (!bound) finish();
     }

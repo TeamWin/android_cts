@@ -28,8 +28,11 @@ import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.content.res.Resources
 import android.net.Uri
 import android.os.Build
+import android.os.UserHandle
 import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig
+import android.safetycenter.SafetyCenterIssue
+import android.safetycenter.SafetyCenterManager
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiObject2
@@ -54,6 +57,13 @@ import com.android.compatibility.common.util.click
 import com.android.compatibility.common.util.depthFirstSearch
 import com.android.compatibility.common.util.uiDump
 import com.android.modules.utils.build.SdkLevel
+import com.android.safetycenter.internaldata.SafetyCenterIds
+import com.android.safetycenter.internaldata.SafetyCenterIssueId
+import com.android.safetycenter.internaldata.SafetyCenterIssueKey
+import java.lang.reflect.Modifier
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
+import java.util.regex.Pattern
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.containsStringIgnoringCase
 import org.hamcrest.CoreMatchers.equalTo
@@ -71,10 +81,6 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.lang.reflect.Modifier
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
-import java.util.regex.Pattern
 
 private const val READ_CALENDAR = "android.permission.READ_CALENDAR"
 private const val BLUETOOTH_CONNECT = "android.permission.BLUETOOTH_CONNECT"
@@ -103,6 +109,8 @@ class AutoRevokeTest {
     companion object {
         const val LOG_TAG = "AutoRevokeTest"
         private const val STORE_EXACT_TIME_KEY = "permission_changes_store_exact_time"
+        private const val UNUSED_APPS_SOURCE_ID = "AndroidPermissionAutoRevoke"
+        private const val UNUSED_APPS_ISSUE_ID = "unused_apps_issue"
 
         @JvmStatic
         @BeforeClass
@@ -429,6 +437,84 @@ class AutoRevokeTest {
             eventually {
                 runWithShellPermissionIdentity {
                     assertFalse(pm.isAutoRevokeWhitelisted(supportedAppPackageName))
+                }
+            }
+        }
+    }
+
+    @AppModeFull(reason = "Uses separate apps for testing")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    @Test
+    fun testAutoRevoke_showsUpInSafetyCenter() {
+        withSafetyCenterEnabled {
+            withUnusedThresholdMs(3L) {
+                withDummyApp {
+                    startAppAndAcceptPermission()
+
+                    killDummyApp()
+
+                    // Run
+                    runAppHibernationJob(context, LOG_TAG)
+
+                    // Verify
+                    val safetyCenterManager =
+                        context.getSystemService(SafetyCenterManager::class.java)!!
+                    val issues = ArrayList<SafetyCenterIssue>()
+                    runWithShellPermissionIdentity {
+                        val safetyCenterData = safetyCenterManager!!.safetyCenterData
+                        issues.addAll(safetyCenterData.issues)
+                    }
+                    val issueId = SafetyCenterIds.encodeToString(
+                        SafetyCenterIssueId.newBuilder()
+                            .setSafetyCenterIssueKey(SafetyCenterIssueKey.newBuilder()
+                                .setSafetySourceId(UNUSED_APPS_SOURCE_ID)
+                                .setSafetySourceIssueId(UNUSED_APPS_ISSUE_ID)
+                                .setUserId(UserHandle.myUserId())
+                                .build())
+                            .setIssueTypeId(UNUSED_APPS_ISSUE_ID)
+                            .build())
+                    assertTrue(issues.any {it.id == issueId})
+                }
+            }
+        }
+    }
+
+    @AppModeFull(reason = "Uses separate apps for testing")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    @Test
+    fun testAutoRevoke_goToUnusedAppsPage_removesSafetyCenterIssue() {
+        withSafetyCenterEnabled {
+            withUnusedThresholdMs(3L) {
+                withDummyApp {
+                    startAppAndAcceptPermission()
+
+                    killDummyApp()
+
+                    // Run
+                    runAppHibernationJob(context, LOG_TAG)
+
+                    // Go to unused apps page
+                    openUnusedAppsNotification()
+                    waitFindObject(By.text(supportedAppPackageName))
+
+                    // Verify
+                    val safetyCenterManager =
+                        context.getSystemService(SafetyCenterManager::class.java)!!
+                    val issues = ArrayList<SafetyCenterIssue>()
+                    runWithShellPermissionIdentity {
+                        val safetyCenterData = safetyCenterManager!!.safetyCenterData
+                        issues.addAll(safetyCenterData.issues)
+                    }
+                    val issueId = SafetyCenterIds.encodeToString(
+                        SafetyCenterIssueId.newBuilder()
+                            .setSafetyCenterIssueKey(SafetyCenterIssueKey.newBuilder()
+                                .setSafetySourceId(UNUSED_APPS_SOURCE_ID)
+                                .setSafetySourceIssueId(UNUSED_APPS_ISSUE_ID)
+                                .setUserId(UserHandle.myUserId())
+                                .build())
+                            .setIssueTypeId(UNUSED_APPS_ISSUE_ID)
+                            .build())
+                    assertFalse(issues.any {it.id == issueId})
                 }
             }
         }

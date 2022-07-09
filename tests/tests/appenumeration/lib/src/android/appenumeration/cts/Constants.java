@@ -20,6 +20,11 @@ public class Constants {
     public static final String PKG_BASE = "android.appenumeration.";
     public static final String TEST_PKG = "android.appenumeration.cts";
 
+    /** The shared library for getting dependent packages */
+    public static final String TEST_SHARED_LIB_NAME = "android.test.runner";
+    public static final String TEST_NONEXISTENT_PACKAGE_NAME_1 = "com.android.cts.nonexistent1";
+    public static final String TEST_NONEXISTENT_PACKAGE_NAME_2 = "com.android.cts.nonexistent2";
+
     /** A package that queries for {@link #TARGET_NO_API} package */
     public static final String QUERIES_PACKAGE = PKG_BASE + "queries.pkg";
     /** A package has a provider that queries for {@link #TARGET_NO_API} package */
@@ -133,6 +138,7 @@ public class Constants {
      *  tests of preferred activity. */
     public static final String TARGET_PREFERRED_ACTIVITY = PKG_BASE + "preferred.activity";
 
+    public static final String AUTHORITY_SUFFIX = ".authority";
     private static final String BASE_PATH = "/data/local/tmp/cts/appenumeration/";
     public static final String TARGET_NO_API_APK = BASE_PATH + "CtsAppEnumerationNoApi.apk";
     public static final String TARGET_STUB_APK = BASE_PATH + "CtsAppEnumerationStub.apk";
@@ -169,6 +175,10 @@ public class Constants {
     public static final String ACTIVITY_CLASS_DUMMY_ACTIVITY = PKG_BASE + "testapp.DummyActivity";
     public static final String ACTIVITY_CLASS_NOT_EXPORTED =
             PKG_BASE + "testapp.DummyActivityNotExported";
+
+    public static final String SERVICE_CLASS_DUMMY_SERVICE = PKG_BASE + "testapp.DummyService";
+    public static final String SERVICE_CLASS_SYNC_ADAPTER =
+            PKG_BASE + "testapp.MockSyncAdapterService";
 
     public static final String ACTION_MANIFEST_ACTIVITY = PKG_BASE + "action.ACTIVITY";
     public static final String ACTION_MANIFEST_SERVICE = PKG_BASE + "action.SERVICE";
@@ -266,6 +276,13 @@ public class Constants {
             PKG_BASE + "cts.action.AWAIT_PACKAGE_RESTARTED";
     public static final String ACTION_GET_CONTENT_PROVIDER_MIME_TYPE =
             PKG_BASE + "cts.action.GET_CONTENT_PROVIDER_MIME_TYPE";
+    public static final String ACTION_APP_ENUMERATION_PREFERRED_ACTIVITY =
+            PKG_BASE + "cts.action.APP_ENUMERATION_PREFERRED_ACTIVITY";
+
+    public static final String ACCOUNT_NAME = "CtsAppEnumerationTests";
+    public static final String ACCOUNT_TYPE = "android.appenumeration.account.type";
+    public static final String ACCOUNT_TYPE_SHARED_USER =
+            "android.appenumeration.shareduid.account.type";
 
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_REMOTE_READY_CALLBACK = "remoteReadyCallback";

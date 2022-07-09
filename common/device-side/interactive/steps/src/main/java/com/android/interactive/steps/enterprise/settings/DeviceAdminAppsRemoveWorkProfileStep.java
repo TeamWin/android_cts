@@ -23,7 +23,7 @@ import com.android.interactive.steps.ActAndWaitStep;
 
 public class DeviceAdminAppsRemoveWorkProfileStep extends ActAndWaitStep {
     public DeviceAdminAppsRemoveWorkProfileStep() {
-        super("Use the 'Remove Work Profile' button to remove the work profile",
+        super("Use the 'Remove Work Profile' or 'Uninstall' button to remove the work profile",
                 () ->
                         TestApis.users().findProfileOfType(
                                 TestApis.users().supportedType(

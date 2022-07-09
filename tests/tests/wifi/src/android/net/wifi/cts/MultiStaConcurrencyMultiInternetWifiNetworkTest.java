@@ -151,6 +151,8 @@ public class MultiStaConcurrencyMultiInternetWifiNetworkTest extends WifiJUnit4T
                 () -> wifiManager.setScanThrottleEnabled(false));
 
         // Enable Wifi
+        sWasWifiEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.isWifiEnabled());
         ShellIdentityUtils.invokeWithShellPermissions(() -> wifiManager.setWifiEnabled(true));
         // Make sure wifi is enabled
         PollingCheck.check("Wifi not enabled", DURATION_MILLIS, () -> wifiManager.isWifiEnabled());

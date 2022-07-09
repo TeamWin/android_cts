@@ -240,7 +240,7 @@ def check_manual_scenes(device_id, camera_id, scene, out_path):
       img_name = os.path.join(out_path, f'test_{scene}.jpg')
       logging.info('Please check scene setup in %s', img_name)
       image_processing_utils.write_image(img, img_name)
-      choice = input('Is the image okay for ITS {scene}? (Y/N)').lower()
+      choice = input(f'Is the image okay for ITS {scene}? (Y/N)').lower()
       if choice == 'y':
         break
 

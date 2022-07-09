@@ -2985,6 +2985,8 @@ public class ItsService extends Service implements SensorEventListener {
                                                   CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED ||
                                        result.get(CaptureResult.CONTROL_AE_STATE) ==
                                                   CaptureResult.CONTROL_AE_STATE_LOCKED;
+                        mLockedAE = result.get(CaptureResult.CONTROL_AE_STATE) ==
+                                CaptureResult.CONTROL_AE_STATE_LOCKED;
                         if (!mPrecaptureTriggered) {
                             mPrecaptureTriggered = result.get(CaptureResult.CONTROL_AE_STATE) ==
                                     CaptureResult.CONTROL_AE_STATE_PRECAPTURE;

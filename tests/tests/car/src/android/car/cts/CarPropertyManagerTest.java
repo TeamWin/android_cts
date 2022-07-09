@@ -59,6 +59,7 @@ import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -702,6 +703,7 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 });
     }
 
+    @Ignore("b/238317257")
     @Test
     public void testTirePressureIfSupported() {
         adoptSystemLevelPermission(/*Car.PERMISSION_TIRES=*/
