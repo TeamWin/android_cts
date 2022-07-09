@@ -117,4 +117,8 @@
 
     <!-- b/235453601 -->
     <option name="compatibility:exclude-filter" value="CtsMediaPerformanceClassTestCases android.mediapc.cts.MultiDecoderPerfTest" />
+
+    <!-- b/238155422 -->
+    <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.ConnectivityManagerTest#testSetAirplaneMode" />
+
 </configuration>
