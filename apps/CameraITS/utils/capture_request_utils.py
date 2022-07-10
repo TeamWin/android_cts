@@ -14,6 +14,7 @@
 """Utility functions to create custom capture requests."""
 
 
+import logging
 import math
 import unittest
 
@@ -63,6 +64,7 @@ def auto_capture_request(linear_tonemap=False, props=None):
       raise AssertionError('props is None with linear_tonemap.')
     # CONTRAST_CURVE mode
     if 0 in props['android.tonemap.availableToneMapModes']:
+      logging.debug('CONTRAST_CURVE tonemap mode')
       req['android.tonemap.mode'] = 0
       req['android.tonemap.curve'] = {
           'red': [0.0, 0.0, 1.0, 1.0],  # coordinate pairs: x0, y0, x1, y1
@@ -71,6 +73,7 @@ def auto_capture_request(linear_tonemap=False, props=None):
       }
     # GAMMA_VALUE mode
     elif 3 in props['android.tonemap.availableToneMapModes']:
+      logging.debug('GAMMA_VALUE tonemap mode')
       req['android.tonemap.mode'] = 3
       req['android.tonemap.gamma'] = 1.0
     else:
@@ -126,6 +129,7 @@ def manual_capture_request(sensitivity,
       raise AssertionError('props is None.')
     # CONTRAST_CURVE mode
     if 0 in props['android.tonemap.availableToneMapModes']:
+      logging.debug('CONTRAST_CURVE tonemap mode')
       req['android.tonemap.mode'] = 0
       req['android.tonemap.curve'] = {
           'red': [0.0, 0.0, 1.0, 1.0],
@@ -134,6 +138,7 @@ def manual_capture_request(sensitivity,
       }
     # GAMMA_VALUE mode
     elif 3 in props['android.tonemap.availableToneMapModes']:
+      logging.debug('GAMMA_VALUE tonemap mode')
       req['android.tonemap.mode'] = 3
       req['android.tonemap.gamma'] = 1.0
     else:

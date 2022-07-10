@@ -673,6 +673,47 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     }
 
     @Test
+    public void testDoorPosIfSupported() {
+        adoptSystemLevelPermission(/* Car.PERMISSION_CONTROL_CAR_DOORS = */
+                "android.car.permission.CONTROL_CAR_DOORS", () -> {
+                VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.DOOR_POS,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_DOOR,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Integer.class).setCarPropertyValueVerifier(
+                        (carPropertyConfig, carPropertyValue) -> {
+                            assertWithMessage(
+                                "DOOR_POS Integer value must be greater than or equal 0").that(
+                                    (Integer) carPropertyValue.getValue()).isAtLeast(0);
+                        }).build().verify(mCarPropertyManager);
+            });
+    }
+
+    @Test
+    public void testDoorMoveIfSupported() {
+        adoptSystemLevelPermission(/* Car.PERMISSION_CONTROL_CAR_DOORS = */
+                "android.car.permission.CONTROL_CAR_DOORS", () -> {
+                VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.DOOR_MOVE,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_DOOR,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Integer.class).build().verify(mCarPropertyManager);
+            });
+    }
+
+    @Test
+    public void testDoorLockIfSupported() {
+        adoptSystemLevelPermission(/* Car.PERMISSION_CONTROL_CAR_DOORS = */
+                "android.car.permission.CONTROL_CAR_DOORS", () -> {
+                VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.DOOR_LOCK,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_DOOR,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Boolean.class).build().verify(mCarPropertyManager);
+            });
+    }
+
+    @Test
     public void testDistanceDisplayUnitsIfSupported() {
         adoptSystemLevelPermission(/*Car.PERMISSION_VENDOR_EXTENSION=*/
                 "android.car.permission.CAR_VENDOR_EXTENSION", () -> {
