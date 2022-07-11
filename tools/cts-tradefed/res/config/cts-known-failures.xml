@@ -284,5 +284,6 @@
 
     <!-- b/237035040 -->
     <option name="compatibility:exclude-filter" value="CtsGraphicsTestCases android.graphics.cts.ImageDecoderTest#testDecode10BitHeifWithLowRam" />
+    <option name="compatibility:exclude-filter" value="CtsGraphicsTestCases[instant] android.graphics.cts.ImageDecoderTest#testDecode10BitHeifWithLowRam" />
 
 </configuration>
