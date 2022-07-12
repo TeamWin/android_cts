@@ -16,6 +16,7 @@
 
 package android.server.wm.jetpack.utils;
 
+import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
 import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getActivityBounds;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getMaximumActivityBounds;
@@ -28,6 +29,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -51,6 +53,7 @@ import com.android.compatibility.common.util.PollingCheck;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 /**
@@ -445,6 +448,13 @@ public class ActivityEmbeddingUtil {
             outPrimaryActivityBounds.set(rightContainerBounds);
             outSecondaryActivityBounds.set(leftContainerBounds);
         }
+    }
+
+    public static void assumeActivityEmbeddingSupportedDevice() {
+        assumeExtensionSupportedDevice();
+        assumeTrue("Device does not support ActivityEmbedding",
+                Objects.requireNonNull(getWindowExtensions())
+                        .getActivityEmbeddingComponent() != null);
     }
 
     private static void assertSplitInfoTopSplitIsCorrect(@NonNull List<SplitInfo> splitInfoList,
