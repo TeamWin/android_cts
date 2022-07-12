@@ -37,6 +37,7 @@ import android.app.ActivityManager;
 import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.os.Bundle;
+import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.Condition;
 import android.server.wm.NestedShellPermission;
@@ -66,6 +67,7 @@ import java.util.function.BooleanSupplier;
  * Build/Install/Run:
  *     atest CtsWindowManagerJetpackTestCases:ActivityEmbeddingPolicyTests
  */
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class ActivityEmbeddingPolicyTests extends ActivityManagerTestBase {
     protected ActivityEmbeddingComponent mActivityEmbeddingComponent;
@@ -74,8 +76,6 @@ public class ActivityEmbeddingPolicyTests extends ActivityManagerTestBase {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        // TODO(b/207070762): remove the assumption after shell transition enabled.
-        assumeFalse(ENABLE_SHELL_TRANSITIONS);
         assumeExtensionSupportedDevice();
         WindowExtensions windowExtensions = getWindowExtensions();
         assumeNotNull(windowExtensions);
@@ -96,6 +96,11 @@ public class ActivityEmbeddingPolicyTests extends ActivityManagerTestBase {
      */
     @Test
     public void testInputDuringAnimationIsNotAllowed_untrustedEmbedding() {
+        // TODO(b/207070762): remove the test when cleanup legacy app transition
+        // We don't need to disable input with Shell transition, because we won't pass the surface
+        // to app.
+        assumeFalse(ENABLE_SHELL_TRANSITIONS);
+
         Activity primaryActivity = startActivityNewTask(mContext, mInstrumentation,
                 TestConfigChangeHandlingActivity.class, null /* activityId */);
 
@@ -139,6 +144,11 @@ public class ActivityEmbeddingPolicyTests extends ActivityManagerTestBase {
      */
     @Test
     public void testInputDuringAnimationIsNotAllowed_trustedEmbedding() {
+        // TODO(b/207070762): remove the test when cleanup legacy app transition
+        // We don't need to disable input with Shell transition, because we won't pass the surface
+        // to app.
+        assumeFalse(ENABLE_SHELL_TRANSITIONS);
+
         // Extend the animation scale, so that the test has enough time to catch the state during
         // transition.
         UiAutomation automation = mInstrumentation.getUiAutomation();

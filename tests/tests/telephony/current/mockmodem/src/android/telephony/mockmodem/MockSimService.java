@@ -63,6 +63,7 @@ public class MockSimService {
     private static final int MOCK_SIM_SLOT_1 = 0;
     private static final int MOCK_SIM_SLOT_2 = 1;
     private static final int MOCK_SIM_SLOT_3 = 2;
+    public static final int MOCK_SIM_SLOT_MIN = 1;
     public static final int MOCK_SIM_SLOT_MAX = 3;
 
     /* Default value definition */

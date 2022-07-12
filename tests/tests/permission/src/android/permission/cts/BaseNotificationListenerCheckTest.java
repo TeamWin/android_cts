@@ -46,16 +46,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.os.Build;
-import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.SdkSuppress;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
 import com.android.compatibility.common.util.ProtoUtils;
@@ -66,7 +62,6 @@ import com.android.server.job.nano.JobSchedulerServiceDumpProto.RegisteredJob;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
-import org.junit.runner.RunWith;
 
 import java.util.List;
 
@@ -74,10 +69,6 @@ import java.util.List;
  * Base test class used for {@code NotificationListenerCheckTest} and
  * {@code NotificationListenerCheckWithSafetyCenterUnsupportedTest}
  */
-@RunWith(AndroidJUnit4.class)
-@AppModeFull(reason = "Cannot set system settings as instant app. Also we never show a notification"
-        + " listener check notification for instant apps.")
-@SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 public class BaseNotificationListenerCheckTest {
     private static final String LOG_TAG = BaseNotificationListenerCheckTest.class.getSimpleName();
     private static final boolean DEBUG = false;

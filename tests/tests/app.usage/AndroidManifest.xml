@@ -33,6 +33,16 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_BROADCAST_RESPONSE_STATS" />
 
+    <queries>
+        <package android:name="android.app.usage.cts.test1" />
+        <package android:name="android.app.usage.cts.test2" />
+        <package android:name="android.app.usage.cts.test3" />
+        <package android:name="android.app.usage.cts.test4" />
+        <package android:name="android.app.usage.cts.testapi32" />
+        <package android:name="android.app.usage.cts.test.assist" />
+        <package android:name="android.app.usage.cts.test.exactalarm" />
+    </queries>
+
     <application android:usesCleartextTraffic="true"
             android:networkSecurityConfig="@xml/network_security_config"
             android:debuggable="true" >

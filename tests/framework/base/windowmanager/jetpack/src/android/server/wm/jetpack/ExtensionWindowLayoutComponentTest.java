@@ -39,6 +39,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeNotNull;
 
 import android.graphics.Rect;
+import android.platform.test.annotations.Presubmit;
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
 import android.server.wm.jetpack.utils.TestValueCountConsumer;
@@ -75,6 +76,7 @@ import java.util.stream.Collectors;
  * Build/Install/Run:
  *     atest CtsWindowManagerJetpackTestCases:ExtensionWindowLayoutComponentTest
  */
+@Presubmit
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTestBase {

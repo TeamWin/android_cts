@@ -31,9 +31,8 @@ import android.media.cts.NonMediaMainlineTest;
 import android.os.SystemClock;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.CtsAndroidTestCase;
-
-import org.junit.AssumptionViolatedException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -126,6 +125,7 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                 getAudioFormatWithEncoding(AudioFormat.ENCODING_OPUS));
     }
 
+    @CddTest(requirement="5.5.4")
     public void testGaplessMP3AudioTrackOffload() throws Exception {
         // sine882hz3s has a gapless delay of 576 and padding of 756.
         // To speed up the test, trim additionally 1000 samples each (20 periods at 882hz, 22ms).
@@ -304,12 +304,15 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                 String playbackDurationsMsString = Arrays.stream(playbackDurationsMs)
                         .mapToObj(Long::toString)
                         .collect(Collectors.joining(", "));
-                assertWithMessage("Unexpected playback durations average"
-                        + ", measured playback durations (ms): [" + playbackDurationsMsString + "]")
-                        .that(averageDuration)
-                        // Allow 10% tolerance for scheduling jitter.
-                        .isWithin(PRESENTATION_END_PRECISION_MS * 0.1)
-                        .of(durationMs);
+
+                if (averageDuration < durationMs - PRESENTATION_END_PRECISION_MS * 0.1
+                        || averageDuration > durationMs + PRESENTATION_END_PRECISION_MS * 0.1) {
+                    Log.w(TAG, "Unexpected playback durations average"
+                            + ", measured playback durations (ms): ["
+                            + playbackDurationsMsString + "]");
+                } else {
+                    Log.i(TAG, "Compliant playback durations average: " + averageDuration);
+                }
             }
         } finally {
             offloadTrack.pause();

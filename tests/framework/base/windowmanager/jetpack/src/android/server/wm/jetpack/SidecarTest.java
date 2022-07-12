@@ -18,45 +18,28 @@ package android.server.wm.jetpack;
 
 import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
-import static android.server.wm.jetpack.utils.SidecarUtil.MINIMUM_SIDECAR_VERSION;
 import static android.server.wm.jetpack.utils.SidecarUtil.assertEqualWindowLayoutInfo;
 import static android.server.wm.jetpack.utils.SidecarUtil.assumeHasDisplayFeatures;
 import static android.server.wm.jetpack.utils.SidecarUtil.assumeSidecarSupportedDevice;
 import static android.server.wm.jetpack.utils.SidecarUtil.getSidecarInterface;
-import static android.server.wm.jetpack.utils.SidecarUtil.isSidecarVersionValid;
-import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.assertNotBothDimensionsZero;
-import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.assertHasNonNegativeDimensions;
-import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.doesDisplayRotateForOrientation;
-import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getActivityBounds;
-import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getActivityWindowToken;
-import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getMaximumActivityBounds;
-import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.setActivityOrientationActivityDoesNotHandleOrientationChanges;
-import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.setActivityOrientationActivityHandlesOrientationChanges;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
-import android.content.pm.ActivityInfo;
 import android.graphics.Rect;
 import android.os.IBinder;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
 import android.server.wm.jetpack.utils.SidecarCallbackCounter;
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
 import android.server.wm.jetpack.utils.TestGetWindowLayoutInfoActivity;
+import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
-
 import androidx.window.sidecar.SidecarDeviceState;
 import androidx.window.sidecar.SidecarDisplayFeature;
 import androidx.window.sidecar.SidecarInterface;
@@ -69,8 +52,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.List;
-
 /**
  * Tests for the {@link androidx.window.sidecar} implementation provided on the device (and only
  * if one is available).
@@ -78,6 +59,7 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsWindowManagerJetpackTestCases:SidecarTest
  */
+@Presubmit
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class SidecarTest extends WindowManagerJetpackTestBase {

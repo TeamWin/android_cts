@@ -20,13 +20,17 @@ import static android.content.Intent.ACTION_CLOSE_SYSTEM_DIALOGS;
 import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.content.pm.PackageManager.FEATURE_INPUT_METHODS;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Intent;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.SecurityTest;
 import android.server.wm.ActivityManagerTestBase;
@@ -92,6 +96,41 @@ public class InputMethodPickerTest extends ActivityManagerTestBase {
 
         // Actual Test: Make sure the IME picker hides app overlays.
         mWmState.waitAndAssertWindowSurfaceShown(TestActivity.OVERLAY_WINDOW_NAME, false);
+    }
+
+    /**
+     * Test if the IME picker dialog remain to be visible when popup the non-focusable overlay
+     * window with {@link android.view.WindowManager.LayoutParams#FLAG_ALT_FOCUSABLE_IM} flag.
+     *
+     * <p>Regression test for Bug 236101545.</p>
+     */
+    @AppModeFull(reason = "Instant apps cannot rely on ACTION_CLOSE_SYSTEM_DIALOGS")
+    @Test
+    public void testShowInputMethodPicker_noDismissWhenOverlayPopup() throws Exception {
+        assumeTrue(mContext.getPackageManager().hasSystemFeature(FEATURE_INPUT_METHODS));
+        assertFalse("InputMethod picker should be closed initially.",
+                getOnMainSync(mImManager::isInputMethodPickerShown));
+
+        TestActivity testActivity = TestActivity.startSync(activity -> {
+            final View view = new View(activity);
+            view.setLayoutParams(new LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+            return view;
+        });
+
+        // Make sure that InputMethodPicker is not shown in the initial state.
+        mContext.sendBroadcast(
+                new Intent(ACTION_CLOSE_SYSTEM_DIALOGS).setFlags(FLAG_RECEIVER_FOREGROUND));
+        waitOnMainUntil(() -> !mImManager.isInputMethodPickerShown(), TIMEOUT,
+                "InputMethod picker should be closed");
+
+        // Test the IME picker dialog won't be dismissed when the overlay popup in parallel.
+        mImManager.showInputMethodPicker();
+        waitOnMainUntil(mImManager::isInputMethodPickerShown, TIMEOUT,
+                "InputMethod picker should be shown");
+        getInstrumentation().runOnMainSync(() ->
+                testActivity.showOverlayWindow(true /* imeFocusable */));
+        SystemClock.sleep(500);
+        assertTrue(getOnMainSync(mImManager::isInputMethodPickerShown));
     }
 
     private void closeSystemDialogsAndWait() throws Exception {

@@ -1079,7 +1079,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
         final InputManager im = mContext.getSystemService(InputManager.class);
         for (int id : im.getInputDeviceIds()) {
             InputDevice inputDevice = im.getInputDevice(id);
-            if (isStylusDevice(inputDevice)) {
+            if (inputDevice != null && isStylusDevice(inputDevice)) {
                 return true;
             }
         }
