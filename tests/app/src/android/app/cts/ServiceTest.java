@@ -66,6 +66,7 @@ import android.util.SparseArray;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
 
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.IBinderParcelable;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.server.am.nano.ActivityManagerServiceDumpProcessesProto;
@@ -78,7 +79,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 public class ServiceTest extends ActivityTestsBase {
     private static final String TAG = "ServiceTest";
@@ -99,6 +102,8 @@ public class ServiceTest extends ActivityTestsBase {
     private static final String EXTERNAL_SERVICE_COMPONENT =
             EXTERNAL_SERVICE_PACKAGE + "/android.app.stubs.LocalService";
     private static final String APP_ZYGOTE_PROCESS_NAME = "android.app.stubs_zygote";
+    private static final String KEY_MAX_SERVICE_CONNECTIONS_PER_PROCESS =
+            "max_service_connections_per_process";
     private int mExpectedServiceState;
     private Context mContext;
     private Intent mLocalService;
@@ -158,6 +163,23 @@ public class ServiceTest extends ActivityTestsBase {
             synchronized (this) {
                 return mNullBinding;
             }
+        }
+    }
+
+    private static class LatchedConnection implements ServiceConnection {
+        private final CountDownLatch mLatch;
+
+        LatchedConnection(CountDownLatch latch) {
+            mLatch = latch;
+        }
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mLatch.countDown();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
         }
     }
 
@@ -2044,6 +2066,55 @@ public class ServiceTest extends ActivityTestsBase {
                 }
             }
             doUnbind(a, connections, -1, BINDING_ANY);
+        }
+    }
+
+    /**
+     * Test per process's max outgoing bindService() service connections.
+     * @throws Exception
+     */
+    public void testMaxServiceConnections() throws Exception {
+        final ArrayList<LatchedConnection> connections = new ArrayList<>();
+        final int max = 1000;
+        final int extra = 10;
+        DeviceConfigStateHelper helper = new DeviceConfigStateHelper("activity_manager");
+        try {
+            helper.set(KEY_MAX_SERVICE_CONNECTIONS_PER_PROCESS, Integer.toString(max));
+            // bindService() adds max number of ServiceConnections.
+            for (int i = 0; i < max; ++i) {
+                final CountDownLatch latch = new CountDownLatch(1);
+                final LatchedConnection connection = new LatchedConnection(latch);
+                connections.add(connection);
+                assertTrue(mContext.bindService(mLocalService, connection,
+                        Context.BIND_AUTO_CREATE));
+                assertTrue(latch.await(5, TimeUnit.SECONDS));
+            }
+            // bindService() adds "extra" number of ServiceConnections, it should fail.
+            for (int i = 0; i < extra; ++i) {
+                final CountDownLatch latch = new CountDownLatch(1);
+                final LatchedConnection connection = new LatchedConnection(latch);
+                assertFalse(mContext.bindService(mLocalService, connection,
+                        Context.BIND_AUTO_CREATE));
+            }
+            // unbindService removes max/4 number of ServiceConnections.
+            for (int i = 0; i < max / 4; ++i) {
+                final LatchedConnection connection = connections.remove(0);
+                mContext.unbindService(connection);
+            }
+            // bindService adds max/4 number of ServiceConnections.
+            for (int i = 0; i < max / 4; ++i) {
+                final CountDownLatch latch = new CountDownLatch(1);
+                final LatchedConnection connection = new LatchedConnection(latch);
+                connections.add(connection);
+                assertTrue(mContext.bindService(mLocalService, connection,
+                        Context.BIND_AUTO_CREATE));
+                assertTrue(latch.await(5, TimeUnit.SECONDS));
+            }
+        } finally {
+            helper.restoreOriginalValues();
+            for (ServiceConnection connection : connections) {
+                mContext.unbindService(connection);
+            }
         }
     }
 }

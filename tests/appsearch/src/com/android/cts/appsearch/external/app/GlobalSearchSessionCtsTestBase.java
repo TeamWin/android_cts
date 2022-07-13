@@ -1641,6 +1641,11 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
     @Test
     public void testAddObserver_schemaChange_added() throws Exception {
+        assumeTrue(
+                mDb1.getFeatures()
+                        .isFeatureSupported(
+                                Features.GLOBAL_SEARCH_SESSION_REGISTER_OBSERVER_CALLBACK));
+
         // Register an observer
         TestObserverCallback observer = new TestObserverCallback();
         mGlobalSearchSession.registerObserverCallback(
@@ -1688,6 +1693,11 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
     @Test
     public void testAddObserver_schemaChange_removed() throws Exception {
+        assumeTrue(
+                mDb1.getFeatures()
+                        .isFeatureSupported(
+                                Features.GLOBAL_SEARCH_SESSION_REGISTER_OBSERVER_CALLBACK));
+
         // Add a schema type
         mDb1.setSchemaAsync(
                         new SetSchemaRequest.Builder()
@@ -1723,6 +1733,11 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
     @Test
     public void testAddObserver_schemaChange_contents() throws Exception {
+        assumeTrue(
+                mDb1.getFeatures()
+                        .isFeatureSupported(
+                                Features.GLOBAL_SEARCH_SESSION_REGISTER_OBSERVER_CALLBACK));
+
         // Add a schema
         mDb1.setSchemaAsync(
                         new SetSchemaRequest.Builder()
@@ -1794,6 +1809,11 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
     @Test
     public void testAddObserver_schemaChange_contents_skipBySpec() throws Exception {
+        assumeTrue(
+                mDb1.getFeatures()
+                        .isFeatureSupported(
+                                Features.GLOBAL_SEARCH_SESSION_REGISTER_OBSERVER_CALLBACK));
+
         // Add a schema
         mDb1.setSchemaAsync(
                         new SetSchemaRequest.Builder()
@@ -1862,6 +1882,11 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
     @Test
     public void testRegisterObserver_schemaMigration() throws Exception {
+        assumeTrue(
+                mDb1.getFeatures()
+                        .isFeatureSupported(
+                                Features.GLOBAL_SEARCH_SESSION_REGISTER_OBSERVER_CALLBACK));
+
         // Add a schema with two types
         mDb1.setSchemaAsync(
                         new SetSchemaRequest.Builder()

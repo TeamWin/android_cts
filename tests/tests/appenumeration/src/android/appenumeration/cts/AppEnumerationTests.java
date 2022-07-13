@@ -21,15 +21,11 @@ import static android.appenumeration.cts.Constants.ACCOUNT_NAME;
 import static android.appenumeration.cts.Constants.ACCOUNT_TYPE;
 import static android.appenumeration.cts.Constants.ACCOUNT_TYPE_SHARED_USER;
 import static android.appenumeration.cts.Constants.ACTION_APP_ENUMERATION_PREFERRED_ACTIVITY;
-import static android.appenumeration.cts.Constants.ACTION_AWAIT_LAUNCHER_APPS_CALLBACK;
-import static android.appenumeration.cts.Constants.ACTION_AWAIT_LAUNCHER_APPS_SESSION_CALLBACK;
 import static android.appenumeration.cts.Constants.ACTION_BIND_SERVICE;
 import static android.appenumeration.cts.Constants.ACTION_CAN_PACKAGE_QUERY;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_PACKAGE;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_SIGNATURES;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_URI_PERMISSION;
-import static android.appenumeration.cts.Constants.ACTION_GET_ALL_PACKAGE_INSTALLER_SESSIONS;
-import static android.appenumeration.cts.Constants.ACTION_GET_ALL_SESSIONS;
 import static android.appenumeration.cts.Constants.ACTION_GET_CONTENT_PROVIDER_MIME_TYPE;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_ACCESSIBILITYSERVICES_PACKAGES;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_APPWIDGET_PROVIDERS;
@@ -39,18 +35,13 @@ import static android.appenumeration.cts.Constants.ACTION_GET_NAME_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGES_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGE_INFO;
 import static android.appenumeration.cts.Constants.ACTION_GET_PREFERRED_ACTIVITIES;
-import static android.appenumeration.cts.Constants.ACTION_GET_SESSION_INFO;
 import static android.appenumeration.cts.Constants.ACTION_GET_SHAREDLIBRARY_DEPENDENT_PACKAGES;
-import static android.appenumeration.cts.Constants.ACTION_GET_STAGED_SESSIONS;
 import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_CONTROL_PANEL;
 import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY;
 import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_TYPES;
 import static android.appenumeration.cts.Constants.ACTION_GRANT_URI_PERMISSION;
 import static android.appenumeration.cts.Constants.ACTION_HAS_SIGNING_CERTIFICATE;
 import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
-import static android.appenumeration.cts.Constants.ACTION_LAUNCHER_APPS_GET_SUSPENDED_PACKAGE_LAUNCHER_EXTRAS;
-import static android.appenumeration.cts.Constants.ACTION_LAUNCHER_APPS_IS_ACTIVITY_ENABLED;
-import static android.appenumeration.cts.Constants.ACTION_LAUNCHER_APPS_SHOULD_HIDE_FROM_SUGGESTIONS;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_PROVIDER;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_SERVICE;
@@ -71,22 +62,12 @@ import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_DUMMY_ACTIVITY
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_NOT_EXPORTED;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_TEST;
 import static android.appenumeration.cts.Constants.AUTHORITY_SUFFIX;
-import static android.appenumeration.cts.Constants.CALLBACK_EVENT_INVALID;
-import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGES_SUSPENDED;
-import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGES_UNSUSPENDED;
-import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGE_ADDED;
-import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGE_CHANGED;
-import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGE_REMOVED;
 import static android.appenumeration.cts.Constants.EXTRA_ACCOUNT;
 import static android.appenumeration.cts.Constants.EXTRA_AUTHORITY;
 import static android.appenumeration.cts.Constants.EXTRA_CERT;
 import static android.appenumeration.cts.Constants.EXTRA_DATA;
-import static android.appenumeration.cts.Constants.EXTRA_ERROR;
 import static android.appenumeration.cts.Constants.EXTRA_FLAGS;
-import static android.appenumeration.cts.Constants.EXTRA_ID;
 import static android.appenumeration.cts.Constants.EXTRA_PENDING_INTENT;
-import static android.appenumeration.cts.Constants.EXTRA_REMOTE_CALLBACK;
-import static android.appenumeration.cts.Constants.EXTRA_REMOTE_READY_CALLBACK;
 import static android.appenumeration.cts.Constants.QUERIES_ACTIVITY_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_PERM;
@@ -152,7 +133,7 @@ import static android.appenumeration.cts.Utils.ensurePackageIsInstalled;
 import static android.appenumeration.cts.Utils.ensurePackageIsNotInstalled;
 import static android.appenumeration.cts.Utils.forceStopPackage;
 import static android.appenumeration.cts.Utils.installPackage;
-import static android.appenumeration.cts.Utils.suspendPackagesForUser;
+import static android.appenumeration.cts.Utils.suspendPackages;
 import static android.appenumeration.cts.Utils.uninstallPackage;
 import static android.content.Intent.EXTRA_COMPONENT_NAME;
 import static android.content.Intent.EXTRA_PACKAGES;
@@ -167,7 +148,6 @@ import static android.os.Process.ROOT_UID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.emptyArray;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -185,51 +165,31 @@ import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SyncAdapterType;
-import android.content.pm.LauncherApps;
 import android.content.pm.PackageInfo;
-import android.content.pm.PackageInstaller;
-import android.content.pm.PackageInstaller.SessionInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.PackageInfoFlags;
 import android.content.pm.Signature;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.ConditionVariable;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Parcelable;
 import android.os.Process;
-import android.os.RemoteCallback;
 
-import androidx.annotation.Nullable;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.SystemUtil;
-import com.android.cts.install.lib.Install;
-import com.android.cts.install.lib.InstallUtils;
-import com.android.cts.install.lib.LocalIntentSender;
-import com.android.cts.install.lib.TestApp;
 
 import org.hamcrest.core.IsNull;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
 import java.io.ByteArrayInputStream;
@@ -242,54 +202,13 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 
 @RunWith(AndroidJUnit4.class)
-public class AppEnumerationTests {
-    private static Handler sResponseHandler;
-    private static HandlerThread sResponseThread;
-
-    private static Context sContext;
-    private static PackageManager sPm;
-    private static AccountManager sAccountManager;
+public class AppEnumerationTests extends AppEnumerationTestsBase {
 
     private static final Account ACCOUNT_SYNCADAPTER = new Account(ACCOUNT_NAME, ACCOUNT_TYPE);
     private static final Account ACCOUNT_SYNCADAPTER_SHARED_USER = new Account(ACCOUNT_NAME,
             ACCOUNT_TYPE_SHARED_USER);
-
-    @Rule
-    public TestName name = new TestName();
-
-    @BeforeClass
-    public static void setup() {
-        sResponseThread = new HandlerThread("response");
-        sResponseThread.start();
-        sResponseHandler = new Handler(sResponseThread.getLooper());
-
-        sContext = InstrumentationRegistry.getInstrumentation().getContext();
-        sPm = sContext.getPackageManager();
-        sAccountManager = AccountManager.get(sContext);
-
-        assertThat(sAccountManager.addAccountExplicitly(ACCOUNT_SYNCADAPTER,
-                null /* password */, null /* userdata */), is(true));
-        assertThat(sAccountManager.addAccountExplicitly(ACCOUNT_SYNCADAPTER_SHARED_USER,
-                null /* password */, null /* userdata */), is(true));
-    }
-
-    @AfterClass
-    public static void tearDown() {
-        sResponseThread.quit();
-
-        assertThat(sAccountManager.removeAccountExplicitly(ACCOUNT_SYNCADAPTER),
-                is(true));
-        assertThat(sAccountManager.removeAccountExplicitly(ACCOUNT_SYNCADAPTER_SHARED_USER),
-                is(true));
-    }
 
     @Test
     public void systemPackagesQueryable_notEnabled() throws Exception {
@@ -786,21 +705,14 @@ public class AppEnumerationTests {
 
     @Test
     public void queriesNothing_cannotSeeA11yService() throws Exception {
-        final String[] result = getInstalledAccessibilityServices(QUERIES_NOTHING);
-        assertThat(result, not(hasItemInArray(TARGET_FILTERS)));
+        assertNotVisible(QUERIES_NOTHING, TARGET_FILTERS,
+                this::getInstalledAccessibilityServices);
     }
 
     @Test
     public void queriesNothingHasPermission_canSeeA11yService() throws Exception {
-        final String[] result = getInstalledAccessibilityServices(QUERIES_NOTHING_PERM);
-        assertThat(QUERIES_NOTHING_PERM + " should be able to see " + TARGET_FILTERS,
-                result, hasItemInArray(TARGET_FILTERS));
-    }
-
-    private void assertVisible(String sourcePackageName, String targetPackageName)
-            throws Exception {
-        Assert.assertNotNull(sourcePackageName + " should be able to see " + targetPackageName,
-                getPackageInfo(sourcePackageName, targetPackageName));
+        assertVisible(QUERIES_NOTHING_PERM, TARGET_FILTERS,
+                this::getInstalledAccessibilityServices);
     }
 
     @Test
@@ -981,663 +893,6 @@ public class AppEnumerationTests {
     }
 
     @Test
-    public void launcherAppsCallback_added_notVisibleNotReceives() throws Exception {
-        ensurePackageIsNotInstalled(TARGET_STUB);
-        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING,
-                CALLBACK_EVENT_PACKAGE_ADDED);
-
-        installPackage(TARGET_STUB_APK);
-        final Bundle response = result.await();
-
-        assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_INVALID));
-        assertThat(response.getStringArray(EXTRA_PACKAGES), emptyArray());
-    }
-
-    @Test
-    public void launcherAppsCallback_added_visibleReceives() throws Exception {
-        ensurePackageIsNotInstalled(TARGET_STUB);
-        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING_PERM,
-                CALLBACK_EVENT_PACKAGE_ADDED);
-
-        installPackage(TARGET_STUB_APK);
-        final Bundle response = result.await();
-
-        assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_PACKAGE_ADDED));
-        assertThat(response.getStringArray(EXTRA_PACKAGES),
-                arrayContainingInAnyOrder(new String[]{TARGET_STUB}));
-    }
-
-    @Test
-    public void launcherAppsCallback_removed_notVisibleNotReceives() throws Exception {
-        ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
-        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING,
-                CALLBACK_EVENT_PACKAGE_REMOVED);
-
-        uninstallPackage(TARGET_STUB);
-        final Bundle response = result.await();
-
-        assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_INVALID));
-        assertThat(response.getStringArray(EXTRA_PACKAGES), emptyArray());
-    }
-
-    @Test
-    public void launcherAppsCallback_removed_visibleReceives() throws Exception {
-        ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
-        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING_PERM,
-                CALLBACK_EVENT_PACKAGE_REMOVED);
-
-        uninstallPackage(TARGET_STUB);
-        final Bundle response = result.await();
-
-        assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_PACKAGE_REMOVED));
-        assertThat(response.getStringArray(EXTRA_PACKAGES),
-                arrayContainingInAnyOrder(new String[]{TARGET_STUB}));
-    }
-
-    @Test
-    public void launcherAppsCallback_changed_notVisibleNotReceives() throws Exception {
-        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING,
-                CALLBACK_EVENT_PACKAGE_CHANGED);
-
-        installPackage(TARGET_FILTERS_APK);
-        final Bundle response = result.await();
-
-        assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_INVALID));
-        assertThat(response.getStringArray(EXTRA_PACKAGES), emptyArray());
-    }
-
-    @Test
-    public void launcherAppsCallback_changed_visibleReceives() throws Exception {
-        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING_PERM,
-                CALLBACK_EVENT_PACKAGE_CHANGED);
-
-        installPackage(TARGET_FILTERS_APK);
-        final Bundle response = result.await();
-
-        assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_PACKAGE_CHANGED));
-        assertThat(response.getStringArray(EXTRA_PACKAGES),
-                arrayContainingInAnyOrder(new String[]{TARGET_FILTERS}));
-    }
-
-    @Test
-    public void launcherAppsCallback_suspended_notVisibleNotReceives() throws Exception {
-        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING,
-                CALLBACK_EVENT_PACKAGES_SUSPENDED);
-
-        try {
-            setPackagesSuspended(/* suspend */ true,
-                    Arrays.asList(TARGET_NO_API, TARGET_FILTERS));
-            final Bundle response = result.await();
-
-            assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_INVALID));
-            assertThat(response.getStringArray(EXTRA_PACKAGES), emptyArray());
-        } finally {
-            setPackagesSuspended(/* suspend */ false,
-                    Arrays.asList(TARGET_NO_API, TARGET_FILTERS));
-        }
-    }
-
-    @Test
-    public void launcherAppsCallback_suspended_visibleReceives() throws Exception {
-        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_ACTIVITY_ACTION,
-                CALLBACK_EVENT_PACKAGES_SUSPENDED);
-
-        try {
-            setPackagesSuspended(/* suspend */ true,
-                    Arrays.asList(TARGET_NO_API, TARGET_FILTERS));
-            final Bundle response = result.await();
-
-            assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_PACKAGES_SUSPENDED));
-            assertThat(response.getStringArray(EXTRA_PACKAGES),
-                    arrayContainingInAnyOrder(new String[]{TARGET_FILTERS}));
-        } finally {
-            setPackagesSuspended(/* suspend */ false,
-                    Arrays.asList(TARGET_NO_API, TARGET_FILTERS));
-        }
-    }
-
-    @Test
-    public void launcherAppsCallback_unsuspended_notVisibleNotReceives() throws Exception {
-        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING,
-                CALLBACK_EVENT_PACKAGES_UNSUSPENDED);
-
-        setPackagesSuspended(/* suspend */ false, Arrays.asList(TARGET_NO_API, TARGET_FILTERS));
-        final Bundle response = result.await();
-
-        assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_INVALID));
-        assertThat(response.getStringArray(EXTRA_PACKAGES), emptyArray());
-    }
-
-    @Test
-    public void launcherAppsCallback_unsuspended_visibleReceives() throws Exception {
-        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_ACTIVITY_ACTION,
-                CALLBACK_EVENT_PACKAGES_UNSUSPENDED);
-
-        setPackagesSuspended(/* suspend */ false, Arrays.asList(TARGET_NO_API, TARGET_FILTERS));
-        final Bundle response = result.await();
-
-        assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_PACKAGES_UNSUSPENDED));
-        assertThat(response.getStringArray(EXTRA_PACKAGES),
-                arrayContainingInAnyOrder(new String[]{TARGET_FILTERS}));
-    }
-
-    @Test
-    public void launcherAppsSessionCallback_queriesNothing_cannotSeeSession() throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final Result result = sendCommandAndWaitForLauncherAppsSessionCallback(
-                    QUERIES_NOTHING, sessionId);
-            commitSession(sessionId);
-            final Bundle response = result.await();
-            assertThat(response.getInt(EXTRA_ID), equalTo(SessionInfo.INVALID_ID));
-        } finally {
-            uninstallPackage(TestApp.A);
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void launcherAppsSessionCallback_queriesNothingHasPermission_canSeeSession()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final Result result = sendCommandAndWaitForLauncherAppsSessionCallback(
-                    QUERIES_NOTHING_PERM, sessionId);
-            commitSession(sessionId);
-            final Bundle response = result.await();
-            assertThat(response.getInt(EXTRA_ID), equalTo(sessionId));
-        } finally {
-            uninstallPackage(TestApp.A);
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void launcherAppsSessionCallback_queriesPackage_canSeeSession()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final Result result = sendCommandAndWaitForLauncherAppsSessionCallback(
-                    QUERIES_PACKAGE, sessionId);
-            commitSession(sessionId);
-            final Bundle response = result.await();
-            assertThat(response.getInt(EXTRA_ID), equalTo(sessionId));
-        } finally {
-            uninstallPackage(TestApp.A);
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void launcherAppsSessionCallback_queriesNothingTargetsQ_canSeeSession()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final Result result = sendCommandAndWaitForLauncherAppsSessionCallback(
-                    QUERIES_NOTHING_Q, sessionId);
-            commitSession(sessionId);
-            final Bundle response = result.await();
-            assertThat(response.getInt(EXTRA_ID), equalTo(sessionId));
-        } finally {
-            uninstallPackage(TestApp.A);
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void launcherAppsSessionCallback_sessionOwner_canSeeSession() throws Exception {
-        try {
-            adoptShellPermissions();
-            final CountDownLatch countDownLatch = new CountDownLatch(1);
-            final int expectedSessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final LauncherApps launcherApps = sContext.getSystemService(LauncherApps.class);
-            final PackageInstaller.SessionCallback
-                    sessionCallback = new PackageInstaller.SessionCallback() {
-
-                @Override
-                public void onCreated(int sessionId) {
-                    // No-op
-                }
-
-                @Override
-                public void onBadgingChanged(int sessionId) {
-                    // No-op
-                }
-
-                @Override
-                public void onActiveChanged(int sessionId, boolean active) {
-                    // No-op
-                }
-
-                @Override
-                public void onProgressChanged(int sessionId, float progress) {
-                    // No-op
-                }
-
-                @Override
-                public void onFinished(int sessionId, boolean success) {
-                    if (sessionId != expectedSessionId) {
-                        return;
-                    }
-
-                    launcherApps.unregisterPackageInstallerSessionCallback(this);
-                    countDownLatch.countDown();
-                }
-            };
-
-            launcherApps.registerPackageInstallerSessionCallback(sContext.getMainExecutor(),
-                    sessionCallback);
-
-            commitSession(expectedSessionId);
-            assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
-        } finally {
-            uninstallPackage(TestApp.A);
-            dropShellPermissions();
-        }
-    }
-
-    private Result sendCommandAndWaitForLauncherAppsSessionCallback(String sourcePackageName,
-            int expectedSessionId) throws Exception {
-        final Bundle extra = new Bundle();
-        extra.putInt(EXTRA_ID, expectedSessionId);
-        final Result result = sendCommand(sourcePackageName, /* targetPackageName */ null,
-                /* targetUid */ INVALID_UID, extra, ACTION_AWAIT_LAUNCHER_APPS_SESSION_CALLBACK,
-                /* waitForReady */ true);
-        return result;
-    }
-
-    @Test
-    public void launcherApps_getAllPkgInstallerSessions_queriesNothing_cannotSeeSessions()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final Integer[] sessionIds = getSessionInfos(ACTION_GET_ALL_PACKAGE_INSTALLER_SESSIONS,
-                    QUERIES_NOTHING, SessionInfo.INVALID_ID);
-            assertSessionNotVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void launcherApps_getAllPkgInstallerSessions_queriesNothingHasPermission_canSeeSessions()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final Integer[] sessionIds = getSessionInfos(ACTION_GET_ALL_PACKAGE_INSTALLER_SESSIONS,
-                    QUERIES_NOTHING_PERM, SessionInfo.INVALID_ID);
-            assertSessionVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void launcherApps_getAllPkgInstallerSessions_queriesPackage_canSeeSessions()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final Integer[] sessionIds = getSessionInfos(ACTION_GET_ALL_PACKAGE_INSTALLER_SESSIONS,
-                    QUERIES_PACKAGE, SessionInfo.INVALID_ID);
-            assertSessionVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void launcherApps_getAllPkgInstallerSessions_queriesNothingTargetsQ_canSeeSessions()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final Integer[] sessionIds = getSessionInfos(ACTION_GET_ALL_PACKAGE_INSTALLER_SESSIONS,
-                    QUERIES_NOTHING_Q, SessionInfo.INVALID_ID);
-            assertSessionVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void launcherApps_getAllPkgInstallerSessions_sessionOwner_canSeeSessions()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final LauncherApps launcherApps = sContext.getSystemService(LauncherApps.class);
-            final Integer[] sessionIds = launcherApps.getAllPackageInstallerSessions().stream()
-                    .map(i -> i.getSessionId())
-                    .distinct()
-                    .toArray(Integer[]::new);
-            assertSessionVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void packageInstaller_getSessionInfo_queriesNothing_cannotSeeSession()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final Integer[] sessionIds = getSessionInfos(ACTION_GET_SESSION_INFO,
-                    QUERIES_NOTHING, sessionId);
-            assertSessionNotVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void packageInstaller_getSessionInfo_queriesNothingHasPermission_canSeeSession()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final Integer[] sessionIds = getSessionInfos(ACTION_GET_SESSION_INFO,
-                    QUERIES_NOTHING_PERM, sessionId);
-            assertSessionVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void packageInstaller_getSessionInfo_queriesPackage_canSeeSession()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final Integer[] sessionIds = getSessionInfos(ACTION_GET_SESSION_INFO,
-                    QUERIES_PACKAGE, sessionId);
-            assertSessionVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void packageInstaller_getSessionInfo_queriesNothingTargetsQ_canSeeSession()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final Integer[] sessionIds = getSessionInfos(ACTION_GET_SESSION_INFO,
-                    QUERIES_NOTHING_Q, sessionId);
-            assertSessionVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void packageInstaller_getSessionInfo_sessionOwner_canSeeSession()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final PackageInstaller installer = sPm.getPackageInstaller();
-            final SessionInfo info = installer.getSessionInfo(sessionId);
-            assertThat(info, IsNull.notNullValue());
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void packageInstaller_getStagedSessions_queriesNothing_cannotSeeSession()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A).setStaged()
-                    .createSession();
-            final Integer[] sessionIds = getSessionInfos(ACTION_GET_STAGED_SESSIONS,
-                    QUERIES_NOTHING, sessionId);
-            assertSessionNotVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void packageInstaller_getStagedSessions_queriesNothingHasPermission_canSeeSession()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A).setStaged()
-                    .createSession();
-            final Integer[] sessionIds = getSessionInfos(ACTION_GET_STAGED_SESSIONS,
-                    QUERIES_NOTHING_PERM, sessionId);
-            assertSessionVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void packageInstaller_getStagedSessions_queriesPackage_canSeeSession()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A).setStaged()
-                    .createSession();
-            final Integer[] sessionIds = getSessionInfos(ACTION_GET_STAGED_SESSIONS,
-                    QUERIES_PACKAGE, sessionId);
-            assertSessionVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void packageInstaller_getStagedSessions_queriesNothingTargetsQ_canSeeSession()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A).setStaged()
-                    .createSession();
-            final Integer[] sessionIds = getSessionInfos(ACTION_GET_STAGED_SESSIONS,
-                    QUERIES_NOTHING_Q, sessionId);
-            assertSessionVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void packageInstaller_getStagedSessions_sessionOwner_canSeeSession()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A).setStaged()
-                    .createSession();
-            final PackageInstaller installer = sPm.getPackageInstaller();
-            final Integer[] sessionIds = installer.getStagedSessions().stream()
-                    .map(i -> i.getSessionId())
-                    .distinct()
-                    .toArray(Integer[]::new);
-            assertSessionVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void packageInstaller_getAllSessions_queriesNothing_cannotSeeSession()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final Integer[] sessionIds = getSessionInfos(ACTION_GET_ALL_SESSIONS,
-                    QUERIES_NOTHING, sessionId);
-            assertSessionNotVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void packageInstaller_getAllSessions_queriesNothingHasPermission_canSeeSession()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final Integer[] sessionIds = getSessionInfos(ACTION_GET_ALL_SESSIONS,
-                    QUERIES_NOTHING_PERM, sessionId);
-            assertSessionVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void packageInstaller_getAllSessions_queriesPackage_canSeeSession()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final Integer[] sessionIds = getSessionInfos(ACTION_GET_ALL_SESSIONS,
-                    QUERIES_PACKAGE, sessionId);
-            assertSessionVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void packageInstaller_getAllSessions_queriesNothingTargetsQ_canSeeSession()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final Integer[] sessionIds = getSessionInfos(ACTION_GET_ALL_SESSIONS,
-                    QUERIES_NOTHING_Q, sessionId);
-            assertSessionVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    @Test
-    public void packageInstaller_getAllSessions_sessionOwner_canSeeSession()
-            throws Exception {
-        try {
-            adoptShellPermissions();
-            final int sessionId = Install.single(TestApp.A1).setPackageName(TestApp.A)
-                    .createSession();
-            final PackageInstaller installer = sPm.getPackageInstaller();
-            final Integer[] sessionIds = installer.getAllSessions().stream()
-                    .map(i -> i.getSessionId())
-                    .distinct()
-                    .toArray(Integer[]::new);
-            assertSessionVisible(sessionIds, sessionId);
-        } finally {
-            cleanUpSessions();
-            dropShellPermissions();
-        }
-    }
-
-    private Integer[] getSessionInfos(String action, String sourcePackageName, int sessionId)
-            throws Exception {
-        final Bundle extraData = new Bundle();
-        extraData.putInt(EXTRA_ID, sessionId);
-        final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
-                extraData, action);
-        final List<SessionInfo> infos = response.getParcelableArrayList(
-                Intent.EXTRA_RETURN_RESULT, SessionInfo.class);
-        return infos.stream()
-                .map(i -> (i == null ? SessionInfo.INVALID_ID : i.getSessionId()))
-                .distinct()
-                .toArray(Integer[]::new);
-    }
-
-    private void assertSessionVisible(Integer[] sessionIds, int sessionId) {
-        assertThat(sessionIds, hasItemInArray(sessionId));
-    }
-
-    private void assertSessionNotVisible(Integer[] sessionIds, int sessionId) {
-        assertThat(sessionIds, not(hasItemInArray(sessionId)));
-    }
-
-    private static void commitSession(int sessionId) throws Exception {
-        final PackageInstaller.Session session =
-                InstallUtils.openPackageInstallerSession(sessionId);
-        final LocalIntentSender sender = new LocalIntentSender();
-        session.commit(sender.getIntentSender());
-        InstallUtils.assertStatusSuccess(sender.getResult());
-    }
-
-    private void adoptShellPermissions() {
-        InstrumentationRegistry
-                .getInstrumentation()
-                .getUiAutomation()
-                .adoptShellPermissionIdentity(Manifest.permission.INSTALL_PACKAGES);
-    }
-
-    private void dropShellPermissions() {
-        InstrumentationRegistry
-                .getInstrumentation()
-                .getUiAutomation()
-                .dropShellPermissionIdentity();
-    }
-
-    private void cleanUpSessions() {
-        InstallUtils.getPackageInstaller().getMySessions().forEach(info -> {
-            try {
-                InstallUtils.getPackageInstaller().abandonSession(info.getSessionId());
-            } catch (Exception ignore) {
-            }
-        });
-    }
-
-    @Test
     public void queriesResolver_grantsVisibilityToProvider() throws Exception {
         assertNotVisible(QUERIES_NOTHING_PROVIDER, QUERIES_NOTHING_PERM);
 
@@ -1700,27 +955,42 @@ public class AppEnumerationTests {
     @Test
     public void queriesPackage_requestSync_canSeeSyncadapterTarget()
             throws Exception {
-        assertThat(requestSyncAndAwaitStatus(QUERIES_PACKAGE,
-                        ACCOUNT_SYNCADAPTER, TARGET_SYNCADAPTER),
-                is(true));
+        try {
+            addTestAccounts();
+            assertThat(requestSyncAndAwaitStatus(QUERIES_PACKAGE,
+                            ACCOUNT_SYNCADAPTER, TARGET_SYNCADAPTER),
+                    is(true));
+        } finally {
+            removeTestAccounts();
+        }
     }
 
     @Test
     public void queriesNothingSharedUser_requestSync_canSeeSyncadapterSharedUserTarget()
             throws Exception {
-        assertThat(requestSyncAndAwaitStatus(QUERIES_NOTHING_SHARED_USER,
-                        ACCOUNT_SYNCADAPTER_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER),
-                is(true));
+        try {
+            addTestAccounts();
+            assertThat(requestSyncAndAwaitStatus(QUERIES_NOTHING_SHARED_USER,
+                            ACCOUNT_SYNCADAPTER_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER),
+                    is(true));
+        } finally {
+            removeTestAccounts();
+        }
     }
 
     @Test
     public void queriesNothing_requestSync_cannotSeeSyncadapterTarget() {
-        assertThrows(MissingCallbackException.class,
-                () -> requestSyncAndAwaitStatus(QUERIES_NOTHING,
-                        ACCOUNT_SYNCADAPTER, TARGET_SYNCADAPTER));
-        assertThrows(MissingCallbackException.class,
-                () -> requestSyncAndAwaitStatus(QUERIES_NOTHING,
-                        ACCOUNT_SYNCADAPTER_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER));
+        try {
+            addTestAccounts();
+            assertThrows(MissingCallbackException.class,
+                    () -> requestSyncAndAwaitStatus(QUERIES_NOTHING,
+                            ACCOUNT_SYNCADAPTER, TARGET_SYNCADAPTER));
+            assertThrows(MissingCallbackException.class,
+                    () -> requestSyncAndAwaitStatus(QUERIES_NOTHING,
+                            ACCOUNT_SYNCADAPTER_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER));
+        } finally {
+            removeTestAccounts();
+        }
     }
 
     @Test
@@ -1744,84 +1014,6 @@ public class AppEnumerationTests {
             throws Exception {
         assertVisible(QUERIES_NOTHING_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER,
                 this::getSyncAdapterPackagesForAuthorityAsUser);
-    }
-
-    @Test
-    public void launcherAppsIsActivityEnabled_queriesActivityAction_canSeeActivity()
-            throws Exception {
-        final ComponentName targetFilters = ComponentName.createRelative(TARGET_FILTERS,
-                ACTIVITY_CLASS_DUMMY_ACTIVITY);
-        assertThat(QUERIES_ACTIVITY_ACTION + " should be able to see " + targetFilters,
-                launcherAppsIsActivityEnabled(QUERIES_ACTIVITY_ACTION, targetFilters),
-                is(true));
-    }
-
-    @Test
-    public void launcherAppsIsActivityEnabled_queriesNothing_cannotSeeActivity()
-            throws Exception {
-        final ComponentName targetFilters = ComponentName.createRelative(TARGET_FILTERS,
-                ACTIVITY_CLASS_DUMMY_ACTIVITY);
-        assertThat(QUERIES_ACTIVITY_ACTION + " should not be able to see " + targetFilters,
-                launcherAppsIsActivityEnabled(QUERIES_NOTHING, targetFilters),
-                is(false));
-    }
-
-    @Test
-    public void launcherAppsGetSuspendedPackageLauncherExtras_queriesNothingHasPerm_canGetExtras()
-            throws Exception {
-        try {
-            suspendPackagesForUser(true /* suspend */, Arrays.asList(TARGET_NO_API),
-                    UserReference.of(sContext.getUser()), true /* extraPersistableBundle */);
-            Assert.assertNotNull(launcherAppsGetSuspendedPackageLauncherExtras(QUERIES_NOTHING_PERM,
-                            TARGET_NO_API));
-        } finally {
-            setPackagesSuspended(/* suspend */ false, Arrays.asList(TARGET_NO_API));
-        }
-    }
-
-    @Test
-    public void launcherAppsGetSuspendedPackageLauncherExtras_queriesNothing_cannotGetExtras()
-            throws Exception {
-        try {
-            suspendPackagesForUser(true /* suspend */, Arrays.asList(TARGET_NO_API),
-                    UserReference.of(sContext.getUser()), true /* extraPersistableBundle */);
-            Assert.assertNull(launcherAppsGetSuspendedPackageLauncherExtras(QUERIES_NOTHING,
-                    TARGET_NO_API));
-        } finally {
-            setPackagesSuspended(/* suspend */ false, Arrays.asList(TARGET_NO_API));
-        }
-    }
-
-    @Test
-    public void launcherAppsShouldHideFromSuggestions_queriesPackage_canSeeNoApi()
-            throws Exception {
-        setDistractingPackageRestrictions(new String[]{TARGET_NO_API},
-                PackageManager.RESTRICTION_HIDE_FROM_SUGGESTIONS);
-
-        try {
-            final boolean hideFromSuggestions = shouldHideFromSuggestions(
-                    QUERIES_PACKAGE, TARGET_NO_API);
-            assertThat(hideFromSuggestions, is(true));
-        } finally {
-            setDistractingPackageRestrictions(new String[]{TARGET_NO_API},
-                    PackageManager.RESTRICTION_NONE);
-        }
-    }
-
-    @Test
-    public void launcherAppsShouldHideFromSuggestions_queriesNothing_cannotSeeNoApi()
-            throws Exception {
-        setDistractingPackageRestrictions(new String[]{TARGET_NO_API},
-                PackageManager.RESTRICTION_HIDE_FROM_SUGGESTIONS);
-
-        try {
-            final boolean hideFromSuggestions = shouldHideFromSuggestions(
-                    QUERIES_NOTHING, TARGET_NO_API);
-            assertThat(hideFromSuggestions, is(false));
-        } finally {
-            setDistractingPackageRestrictions(new String[]{TARGET_NO_API},
-                    PackageManager.RESTRICTION_NONE);
-        }
     }
 
     @Test
@@ -2123,6 +1315,12 @@ public class AppEnumerationTests {
         }
     }
 
+    private void assertVisible(String sourcePackageName, String targetPackageName)
+            throws Exception {
+        Assert.assertNotNull(sourcePackageName + " should be able to see " + targetPackageName,
+                getPackageInfo(sourcePackageName, targetPackageName));
+    }
+
     private void assertNotVisible(String sourcePackageName, String targetPackageName)
             throws Exception {
         try {
@@ -2224,12 +1422,12 @@ public class AppEnumerationTests {
                 /* targetUid */ INVALID_UID, extras, Constants.ACTION_AWAIT_PACKAGES_SUSPENDED,
                 /* waitForReady */ true);
         try {
-            setPackagesSuspended(true, packagesToSuspend);
+            suspendPackages(true /* suspend */, packagesToSuspend);
             final String[] suspendedPackages = result.await().getStringArray(EXTRA_PACKAGES);
             assertThat(suspendedPackages, arrayContainingInAnyOrder(
                     expectedVisiblePackages.toArray()));
         } finally {
-            setPackagesSuspended(false, packagesToSuspend);
+            suspendPackages(false /* suspend */, packagesToSuspend);
         }
     }
 
@@ -2423,6 +1621,20 @@ public class AppEnumerationTests {
         return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
     }
 
+    private void addTestAccounts() {
+        assertThat(sAccountManager.addAccountExplicitly(ACCOUNT_SYNCADAPTER,
+                null /* password */, null /* userdata */), is(true));
+        assertThat(sAccountManager.addAccountExplicitly(ACCOUNT_SYNCADAPTER_SHARED_USER,
+                null /* password */, null /* userdata */), is(true));
+    }
+
+    private void removeTestAccounts() {
+        assertThat(sAccountManager.removeAccountExplicitly(ACCOUNT_SYNCADAPTER),
+                is(true));
+        assertThat(sAccountManager.removeAccountExplicitly(ACCOUNT_SYNCADAPTER_SHARED_USER),
+                is(true));
+    }
+
     private PendingIntent getSyncAdapterControlPanel(String sourcePackageName, Account account,
             String targetPackageName) throws Exception {
         final ComponentName componentName = new ComponentName(
@@ -2434,27 +1646,6 @@ public class AppEnumerationTests {
         final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
                 extraData, ACTION_GET_SYNCADAPTER_CONTROL_PANEL);
         return response.getParcelable(Intent.EXTRA_RETURN_RESULT, PendingIntent.class);
-    }
-
-    private void setPackagesSuspended(boolean suspend, List<String> packages) {
-        suspendPackagesForUser(suspend, packages, UserReference.of(sContext.getUser()),
-                false /* extraPersistableBundle */);
-    }
-
-    private boolean launcherAppsIsActivityEnabled(String sourcePackageName,
-            ComponentName componentName) throws Exception {
-        final Bundle extraData = new Bundle();
-        extraData.putString(Intent.EXTRA_COMPONENT_NAME, componentName.flattenToString());
-        final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
-                extraData, ACTION_LAUNCHER_APPS_IS_ACTIVITY_ENABLED);
-        return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
-    }
-
-    private Bundle launcherAppsGetSuspendedPackageLauncherExtras(String sourcePackageName,
-            String targetPackageName) throws Exception {
-        final Bundle response = sendCommandBlocking(sourcePackageName, targetPackageName,
-                /* extraData */ null, ACTION_LAUNCHER_APPS_GET_SUSPENDED_PACKAGE_LAUNCHER_EXTRAS);
-        return response.getBundle(Intent.EXTRA_RETURN_RESULT);
     }
 
     private String[] getSharedLibraryDependentPackages(String sourcePackageName) throws Exception {
@@ -2477,22 +1668,6 @@ public class AppEnumerationTests {
         extraData.putString(Intent.EXTRA_INSTALLER_PACKAGE_NAME, installerPackageName);
         sendCommandBlocking(sourcePackageName, targetPackageName,
                 extraData, ACTION_SET_INSTALLER_PACKAGE_NAME);
-    }
-
-    private void setDistractingPackageRestrictions(String[] packagesToRestrict,
-            int distractionFlags) throws Exception {
-        final String[] failed = SystemUtil.callWithShellPermissionIdentity(
-                () -> sPm.setDistractingPackageRestrictions(packagesToRestrict, distractionFlags));
-        assertThat(failed, emptyArray());
-    }
-
-    private boolean shouldHideFromSuggestions(String sourcePackageName, String targetPackageName)
-            throws Exception {
-        final Bundle extraData = new Bundle();
-        extraData.putInt(Intent.EXTRA_USER, Process.myUserHandle().getIdentifier());
-        final Bundle response = sendCommandBlocking(sourcePackageName, targetPackageName, extraData,
-                ACTION_LAUNCHER_APPS_SHOULD_HIDE_FROM_SUGGESTIONS);
-        return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
     }
 
     private int checkUriPermission(String sourcePackageName, String targetPackageName)
@@ -2550,97 +1725,6 @@ public class AppEnumerationTests {
         final Bundle bundle = sendCommandBlocking(sourcePackageName, null /* targetPackageName */,
                 pendingIntent, ACTION_PENDING_INTENT_GET_CREATOR_PACKAGE);
         return bundle.getString(Intent.EXTRA_PACKAGE_NAME);
-    }
-
-    private Result sendCommand(String sourcePackageName, @Nullable String targetPackageName,
-            int targetUid, @Nullable Parcelable intentExtra, String action, boolean waitForReady)
-            throws Exception {
-        final Intent intent = new Intent(action)
-                .setComponent(new ComponentName(sourcePackageName, ACTIVITY_CLASS_TEST))
-                // data uri unique to each activity start to ensure actual launch and not just
-                // redisplay
-                .setData(Uri.parse("test://" + UUID.randomUUID().toString()))
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
-        if (targetPackageName != null) {
-            intent.putExtra(Intent.EXTRA_PACKAGE_NAME, targetPackageName);
-        }
-        if (targetUid > INVALID_UID) {
-            intent.putExtra(Intent.EXTRA_UID, targetUid);
-        }
-        if (intentExtra != null) {
-            if (intentExtra instanceof Intent) {
-                intent.putExtra(Intent.EXTRA_INTENT, intentExtra);
-            } else if (intentExtra instanceof PendingIntent) {
-                intent.putExtra(EXTRA_PENDING_INTENT, intentExtra);
-            } else if (intentExtra instanceof Bundle) {
-                intent.putExtra(EXTRA_DATA, intentExtra);
-            }
-        }
-
-        final ConditionVariable latch = new ConditionVariable();
-        final AtomicReference<Bundle> resultReference = new AtomicReference<>();
-        final RemoteCallback callback = new RemoteCallback(
-                bundle -> {
-                    resultReference.set(bundle);
-                    latch.open();
-                },
-                sResponseHandler);
-        intent.putExtra(EXTRA_REMOTE_CALLBACK, callback);
-        if (waitForReady) {
-            AmUtils.waitForBroadcastIdle();
-            startAndWaitForCommandReady(intent);
-        } else {
-            sContext.startActivity(intent);
-        }
-        return () -> {
-            if (!latch.block(TimeUnit.SECONDS.toMillis(10))) {
-                throw new TimeoutException(
-                        "Latch timed out while awaiting a response from " + sourcePackageName);
-            }
-            final Bundle bundle = resultReference.get();
-            if (bundle != null && bundle.containsKey(EXTRA_ERROR)) {
-                throw Objects.requireNonNull(bundle.getSerializable(EXTRA_ERROR, Exception.class));
-            }
-            return bundle;
-        };
-    }
-
-    private void startAndWaitForCommandReady(Intent intent) throws Exception {
-        final ConditionVariable latchForReady = new ConditionVariable();
-        final RemoteCallback readyCallback = new RemoteCallback(bundle -> latchForReady.open(),
-                sResponseHandler);
-        intent.putExtra(EXTRA_REMOTE_READY_CALLBACK, readyCallback);
-        sContext.startActivity(intent);
-        if (!latchForReady.block(TimeUnit.SECONDS.toMillis(10))) {
-            throw new TimeoutException(
-                    "Latch timed out while awaiting a response from command " + intent.getAction());
-        }
-    }
-
-    private Bundle sendCommandBlocking(String sourcePackageName, @Nullable String targetPackageName,
-            @Nullable Parcelable intentExtra, String action)
-            throws Exception {
-        final Result result = sendCommand(sourcePackageName, targetPackageName,
-                /* targetUid */ INVALID_UID, intentExtra, action, /* waitForReady */ false);
-        return result.await();
-    }
-
-    private Bundle sendCommandBlocking(String sourcePackageName, int targetUid,
-            @Nullable Parcelable intentExtra, String action)
-            throws Exception {
-        final Result result = sendCommand(sourcePackageName, /* targetPackageName */ null,
-                targetUid, intentExtra, action, /* waitForReady */ false);
-        return result.await();
-    }
-
-    private Result sendCommandAndWaitForLauncherAppsCallback(String sourcePackageName,
-            int expectedEventCode) throws Exception {
-        final Bundle extra = new Bundle();
-        extra.putInt(EXTRA_FLAGS, expectedEventCode);
-        final Result result = sendCommand(sourcePackageName, /* targetPackageName */ null,
-                /* targetUid */ INVALID_UID, extra, ACTION_AWAIT_LAUNCHER_APPS_CALLBACK,
-                /* waitForReady */ true);
-        return result;
     }
 
     private void addPreferredActivity() {

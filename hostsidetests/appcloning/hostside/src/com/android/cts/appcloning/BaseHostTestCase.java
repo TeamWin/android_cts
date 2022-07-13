@@ -31,42 +31,42 @@ import java.util.function.BooleanSupplier;
 abstract class BaseHostTestCase extends BaseHostJUnit4Test {
     private int mCurrentUserId = NativeDevice.INVALID_USER_ID;
     private static final String ERROR_MESSAGE_TAG = "[ERROR]";
-    protected ITestDevice mDevice = null;
+    protected static ITestDevice sDevice = null;
 
-    protected void setDevice() {
-        mDevice = getDevice();
+    protected static void setDevice(ITestDevice device) {
+        sDevice = device;
     }
 
     protected String executeShellCommand(String cmd, Object... args) throws Exception {
-        return mDevice.executeShellCommand(String.format(cmd, args));
+        return sDevice.executeShellCommand(String.format(cmd, args));
     }
 
     protected CommandResult executeShellV2Command(String cmd, Object... args) throws Exception {
-        return mDevice.executeShellV2Command(String.format(cmd, args));
+        return sDevice.executeShellV2Command(String.format(cmd, args));
     }
 
     protected boolean isPackageInstalled(String packageName, String userId) throws Exception {
-        return mDevice.isPackageInstalled(packageName, userId);
+        return sDevice.isPackageInstalled(packageName, userId);
     }
 
     // TODO (b/174775905) remove after exposing the check from ITestDevice.
-    protected boolean isHeadlessSystemUserMode() throws DeviceNotAvailableException {
-        String result = mDevice
+    protected static boolean isHeadlessSystemUserMode() throws DeviceNotAvailableException {
+        String result = sDevice
                 .executeShellCommand("getprop ro.fw.mu.headless_system_user").trim();
         return "true".equalsIgnoreCase(result);
     }
 
-    protected boolean supportsMultipleUsers() throws DeviceNotAvailableException {
-        return mDevice.getMaxNumberOfUsersSupported() > 1;
+    protected static boolean supportsMultipleUsers() throws DeviceNotAvailableException {
+        return sDevice.getMaxNumberOfUsersSupported() > 1;
     }
 
-    protected boolean isAtLeastS() throws DeviceNotAvailableException {
-        DeviceSdkLevel deviceSdkLevel = new DeviceSdkLevel(mDevice);
+    protected static boolean isAtLeastS() throws DeviceNotAvailableException {
+        DeviceSdkLevel deviceSdkLevel = new DeviceSdkLevel(sDevice);
         return deviceSdkLevel.isDeviceAtLeastS();
     }
 
     protected boolean isAtLeastT() throws DeviceNotAvailableException {
-        DeviceSdkLevel deviceSdkLevel = new DeviceSdkLevel(mDevice);
+        DeviceSdkLevel deviceSdkLevel = new DeviceSdkLevel(sDevice);
         return deviceSdkLevel.isDeviceAtLeastT();
     }
 
@@ -118,7 +118,7 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
         return mCurrentUserId;
     }
 
-    protected boolean isSuccessful(CommandResult result) {
+    protected static boolean isSuccessful(CommandResult result) {
         if (!CommandStatus.SUCCESS.equals(result.getStatus())) {
             return false;
         }
@@ -133,7 +133,7 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
     private void setCurrentUserId() throws Exception {
         if (mCurrentUserId != NativeDevice.INVALID_USER_ID) return;
 
-        mCurrentUserId = mDevice.getCurrentUser();
+        mCurrentUserId = sDevice.getCurrentUser();
         CLog.i("Current user: %d");
     }
 

@@ -346,7 +346,13 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
         if (!testOpen) {
             topStartCmd += " --ei " + EXTRA_FINISH_DELAY + " 1000";
         }
-        executeShellCommand(topStartCmd + " --windowingMode " + windowingMode);
+        topStartCmd += " --windowingMode " + windowingMode;
+        // Launch top task in the same display area as the bottom task. CTS tests using multiple
+        // tasks assume they will be started in the same task display area.
+        int bottomComponentDisplayAreaFeatureId =
+                mWmState.getTaskDisplayAreaFeatureId(bottomComponent);
+        topStartCmd += " --task-display-area-feature-id " + bottomComponentDisplayAreaFeatureId;
+        executeShellCommand(topStartCmd);
 
         Condition.waitFor("Retrieving correct transition", () -> {
             if (testOpen) {

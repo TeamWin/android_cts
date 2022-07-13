@@ -22,14 +22,18 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PackageManager.PackageInfoFlags;
 import android.os.Bundle;
 
+import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.nene.users.UserReference;
+import com.android.cts.install.lib.InstallUtils;
+import com.android.cts.install.lib.LocalIntentSender;
 
 import org.junit.Assert;
 
@@ -174,6 +178,14 @@ public class Utils {
     }
 
     /**
+     * Suspend/Unsuspend the packages on the current user.
+     **/
+    static void suspendPackages(boolean suspend, List<String> packages) {
+        suspendPackagesForUser(suspend, packages, UserReference.of(getContext().getUser()),
+                false /* extraPersistableBundle */);
+    }
+
+    /**
      * Suspend/Unsuspend the packages on the given user.
      **/
     static void suspendPackagesForUser(boolean suspend, List<String> packages,
@@ -221,5 +233,50 @@ public class Utils {
             // Expected
         }
         Assert.assertNull(packageName + " shouldn't be installed", info);
+    }
+
+    /**
+     * Adopt the permission identity of the shell UID only for the provided permissions.
+     * @param permissions The permissions to adopt or <code>null</code> to adopt all.
+     */
+    static void adoptShellPermissions(@Nullable String... permissions) {
+        InstrumentationRegistry
+                .getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(permissions);
+    }
+
+    /**
+     * Drop the shell permission identity adopted.
+     */
+    static void dropShellPermissions() {
+        InstrumentationRegistry
+                .getInstrumentation()
+                .getUiAutomation()
+                .dropShellPermissionIdentity();
+    }
+
+    /**
+     * Attempt to commit everything staged in this session.
+     */
+    static void commitSession(int sessionId) throws Exception {
+        final PackageInstaller.Session session =
+                InstallUtils.openPackageInstallerSession(sessionId);
+        final LocalIntentSender sender = new LocalIntentSender();
+        session.commit(sender.getIntentSender());
+        InstallUtils.assertStatusSuccess(sender.getResult());
+    }
+
+    /**
+     * Abandon all the sessions owned by you, destroying all staged data and rendering them invalid.
+     */
+    static void cleanUpMySessions() {
+        InstallUtils.getPackageInstaller().getMySessions().forEach(info -> {
+            try {
+                InstallUtils.getPackageInstaller().abandonSession(info.getSessionId());
+            } catch (Exception e) {
+                // Ignore
+            }
+        });
     }
 }

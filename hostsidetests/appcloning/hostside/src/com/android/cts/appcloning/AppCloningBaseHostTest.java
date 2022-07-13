@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 import com.android.tradefed.util.CommandResult;
 
@@ -41,23 +42,27 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
             "content://android.tradefed.contentprovider";
     protected static final String MEDIA_PROVIDER_URL = "content://media";
 
-    public String mCloneUserId;
+    protected static String sCloneUserId;
 
-    private void createAndStartCloneUser() throws Exception {
+    protected static void createAndStartCloneUser() throws Exception {
         // create clone user
-        String output = executeShellCommand(
+        String output = sDevice.executeShellCommand(
                 "pm create-user --profileOf 0 --user-type android.os.usertype.profile.CLONE "
                         + "testUser");
-        mCloneUserId = output.substring(output.lastIndexOf(' ') + 1).replaceAll("[^0-9]",
+        sCloneUserId = output.substring(output.lastIndexOf(' ') + 1).replaceAll("[^0-9]",
                 "");
-        assertThat(mCloneUserId).isNotEmpty();
+        assertThat(sCloneUserId).isNotEmpty();
 
-        CommandResult out = executeShellV2Command("am start-user -w %s", mCloneUserId);
+        CommandResult out = sDevice.executeShellV2Command("am start-user -w " + sCloneUserId);
         assertThat(isSuccessful(out)).isTrue();
     }
 
-    public void baseHostSetup() throws Exception {
-        setDevice();
+    protected static void removeCloneUser() throws Exception {
+        sDevice.executeShellCommand("pm remove-user " + sCloneUserId);
+    }
+
+    public static void baseHostSetup(ITestDevice device) throws Exception {
+        setDevice(device);
 
         assumeTrue("Device doesn't support multiple users", supportsMultipleUsers());
         assumeFalse("Device is in headless system user mode", isHeadlessSystemUserMode());
@@ -67,13 +72,12 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
         createAndStartCloneUser();
     }
 
-    public void baseHostTeardown() throws Exception {
+    public static void baseHostTeardown() throws Exception {
         if (!supportsMultipleUsers() || isHeadlessSystemUserMode() || !isAtLeastS()
                 || usesSdcardFs())
             return;
 
-        // remove the clone user
-        executeShellCommand("pm remove-user %s", mCloneUserId);
+        removeCloneUser();
     }
 
     protected CommandResult runContentProviderCommand(String commandType, String userId,
@@ -83,8 +87,8 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
                 commandType, userId, fullUri, String.join(" ", args));
     }
 
-    protected boolean usesSdcardFs() throws Exception {
-        CommandResult out = executeShellV2Command("cat /proc/mounts");
+    protected static boolean usesSdcardFs() throws Exception {
+        CommandResult out = sDevice.executeShellV2Command("cat /proc/mounts");
         assertThat(isSuccessful(out)).isTrue();
         for (String line : out.getStdout().split("\n")) {
             String[] split = line.split(" ");

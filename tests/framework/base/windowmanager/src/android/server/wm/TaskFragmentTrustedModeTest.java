@@ -18,6 +18,7 @@ package android.server.wm;
 
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.jetpack.second.Components.SECOND_UNTRUSTED_EMBEDDING_ACTIVITY;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.assumeActivityEmbeddingSupportedDevice;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -40,6 +41,7 @@ import android.window.WindowContainerTransaction;
 
 import androidx.annotation.NonNull;
 
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -53,6 +55,13 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
 
     private final ComponentName mTranslucentActivity = new ComponentName(mContext,
             TranslucentActivity.class);
+
+    @Before
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        assumeActivityEmbeddingSupportedDevice();
+    }
 
     /**
      * Verifies the visibility of a task fragment that has overlays on top of activities embedded

@@ -38,6 +38,8 @@
                  android:enableOnBackInvokedCallback="true"
                  android:testOnly="true">
         <uses-library android:name="android.test.runner"/>
+        <uses-library android:name="androidx.window.extensions"
+            android:required="false" />
 
         <activity android:name="android.server.wm.ActivityManagerTestBase$ConfigChangeHandlingActivity"
              android:resizeableActivity="true"

@@ -18,6 +18,7 @@ package android.app.uiautomation.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -34,6 +35,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
@@ -42,6 +44,7 @@ import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.FrameStats;
 import android.view.KeyEvent;
+import android.view.Window;
 import android.view.WindowAnimationFrameStats;
 import android.view.WindowContentFrameStats;
 import android.view.accessibility.AccessibilityEvent;
@@ -459,6 +462,41 @@ public class UiAutomationTest {
             uiAutomation.adoptShellPermissionIdentity(Manifest.permission.BATTERY_STATS);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testScreenshot() throws TimeoutException {
+        UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+
+        // Test with null window
+        Bitmap bitmap = uiAutomation.takeScreenshot(null);
+        assertNull(bitmap);
+
+        Activity activity = null;
+        try {
+
+            // Start an activity.
+            Intent intent = new Intent(getInstrumentation().getContext(),
+                    UiAutomationTestFirstActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            activity = getInstrumentation().startActivitySync(intent);
+
+            // Wait for things to settle.
+            uiAutomation.waitForIdle(
+                    QUIET_TIME_TO_BE_CONSIDERED_IDLE_STATE, TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE);
+
+            // Wait for Activity draw finish
+            getInstrumentation().waitForIdleSync();
+
+            Window window = activity.getWindow();
+            bitmap = uiAutomation.takeScreenshot(window);
+            assertNotNull(bitmap);
+        } finally {
+            // Clean up.
+            if (activity != null) {
+                activity.finish();
+            }
         }
     }
 

@@ -676,6 +676,7 @@ public abstract class AppSearchSessionCtsTestBase {
                                         .build())
                         .build();
         mDb1.setSchemaAsync(new SetSchemaRequest.Builder().addSchemas(schema).build()).get();
+
         // Creates a large batch of Documents, since we have max document size in Framework which is
         // 512KiB, we will create 1KiB * 4000 docs = 4MiB total size > 1MiB binder transaction limit
         char[] chars = new char[1024]; // 1KiB
@@ -3850,5 +3851,105 @@ public abstract class AppSearchSessionCtsTestBase {
                                 .build());
         documents = convertSearchResultsToDocuments(searchResults);
         assertThat(documents).containsExactly(inEmail1);
+    }
+
+    @Test
+    public void testSetSchemaWithIncompatibleNestedSchema() throws Exception {
+        // 1. Set the original schema. This should succeed without any problems.
+        AppSearchSchema originalNestedSchema =
+                new AppSearchSchema.Builder("TypeA")
+                        .addProperty(
+                                new StringPropertyConfig.Builder("prop1")
+                                        .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                                        .build())
+                        .build();
+        SetSchemaRequest originalRequest =
+                new SetSchemaRequest.Builder().addSchemas(originalNestedSchema).build();
+        mDb1.setSchemaAsync(originalRequest).get();
+
+        // 2. Set a new schema with a new type that refers to "TypeA" and an incompatible change to
+        // "TypeA". This should fail.
+        AppSearchSchema newNestedSchema =
+                new AppSearchSchema.Builder("TypeA")
+                        .addProperty(
+                                new StringPropertyConfig.Builder("prop1")
+                                        .setCardinality(PropertyConfig.CARDINALITY_REQUIRED)
+                                        .build())
+                        .build();
+        AppSearchSchema newSchema =
+                new AppSearchSchema.Builder("TypeB")
+                        .addProperty(
+                                new AppSearchSchema.DocumentPropertyConfig.Builder("prop2", "TypeA")
+                                        .build())
+                        .build();
+        final SetSchemaRequest newRequest =
+                new SetSchemaRequest.Builder().addSchemas(newNestedSchema, newSchema).build();
+        Throwable throwable =
+                assertThrows(ExecutionException.class, () -> mDb1.setSchemaAsync(newRequest).get())
+                        .getCause();
+        assertThat(throwable).isInstanceOf(AppSearchException.class);
+        AppSearchException exception = (AppSearchException) throwable;
+        assertThat(exception.getResultCode()).isEqualTo(RESULT_INVALID_SCHEMA);
+        assertThat(exception).hasMessageThat().contains("Schema is incompatible.");
+        assertThat(exception).hasMessageThat().contains("Incompatible types: {TypeA}");
+
+        // 3. Now set that same set of schemas but with forceOverride=true. This should succeed.
+        SetSchemaRequest newRequestForced =
+                new SetSchemaRequest.Builder()
+                        .addSchemas(newNestedSchema, newSchema)
+                        .setForceOverride(true)
+                        .build();
+        mDb1.setSchemaAsync(newRequestForced).get();
+    }
+
+    @Test
+    public void testEmojiSnippet() throws Exception {
+        // Schema registration
+        mDb1.setSchemaAsync(
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                .get();
+
+        // String:     "Luca Brasi sleeps with the 🐟🐟🐟."
+        //              ^    ^     ^      ^    ^   ^ ^  ^ ^
+        // UTF8 idx:    0    5     11     18   23 27 3135 39
+        // UTF16 idx:   0    5     11     18   23 27 2931 33
+        // Breaks into segments: "Luca", "Brasi", "sleeps", "with", "the", "🐟", "🐟"
+        // and "🐟".
+        // Index a document to instance 1.
+        String sicilianMessage = "Luca Brasi sleeps with the 🐟🐟🐟.";
+        AppSearchEmail inEmail1 =
+                new AppSearchEmail.Builder("namespace", "uri1").setBody(sicilianMessage).build();
+        checkIsBatchResultSuccess(
+                mDb1.putAsync(
+                        new PutDocumentsRequest.Builder().addGenericDocuments(inEmail1).build()));
+
+        AppSearchEmail inEmail2 =
+                new AppSearchEmail.Builder("namespace", "uri2")
+                        .setBody("Some other content.")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.putAsync(
+                        new PutDocumentsRequest.Builder().addGenericDocuments(inEmail2).build()));
+
+        // Query for "🐟"
+        SearchResultsShim searchResults =
+                mDb1.search(
+                        "🐟",
+                        new SearchSpec.Builder()
+                                .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
+                                .setSnippetCount(1)
+                                .setSnippetCountPerProperty(1)
+                                .build());
+        List<SearchResult> page = searchResults.getNextPageAsync().get();
+        assertThat(page).hasSize(1);
+        assertThat(page.get(0).getGenericDocument()).isEqualTo(inEmail1);
+        List<SearchResult.MatchInfo> matches = page.get(0).getMatchInfos();
+        assertThat(matches).hasSize(1);
+        assertThat(matches.get(0).getPropertyPath()).isEqualTo("body");
+        assertThat(matches.get(0).getFullText()).isEqualTo(sicilianMessage);
+        assertThat(matches.get(0).getExactMatch()).isEqualTo("🐟");
+        if (mDb1.getFeatures().isFeatureSupported(Features.SEARCH_RESULT_MATCH_INFO_SUBMATCH)) {
+            assertThat(matches.get(0).getSubmatch()).isEqualTo("🐟");
+        }
     }
 }

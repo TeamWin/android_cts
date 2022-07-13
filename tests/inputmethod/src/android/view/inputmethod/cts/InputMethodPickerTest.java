@@ -25,7 +25,6 @@ import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -51,6 +50,7 @@ import java.util.concurrent.TimeUnit;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Instant apps cannot rely on ACTION_CLOSE_SYSTEM_DIALOGS")
 public class InputMethodPickerTest extends ActivityManagerTestBase {
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
@@ -60,8 +60,10 @@ public class InputMethodPickerTest extends ActivityManagerTestBase {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        mImManager = mContext.getSystemService(InputMethodManager.class);
 
+        assumeTrue(mContext.getPackageManager().hasSystemFeature(FEATURE_INPUT_METHODS));
+
+        mImManager = mContext.getSystemService(InputMethodManager.class);
         closeSystemDialogsAndWait();
     }
 
@@ -70,11 +72,9 @@ public class InputMethodPickerTest extends ActivityManagerTestBase {
         closeSystemDialogsAndWait();
     }
 
-    @AppModeFull(reason = "Instant apps cannot rely on ACTION_CLOSE_SYSTEM_DIALOGS")
     @SecurityTest(minPatchLevel = "unknown")
     @Test
     public void testInputMethodPicker_hidesUntrustedOverlays() throws Exception {
-        assumeTrue(mContext.getPackageManager().hasSystemFeature(FEATURE_INPUT_METHODS));
         TestActivity testActivity = TestActivity.startSync(activity -> {
             final View view = new View(activity);
             view.setLayoutParams(new LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
@@ -82,16 +82,12 @@ public class InputMethodPickerTest extends ActivityManagerTestBase {
         });
 
         // Test setup: Show overlay and verify that it worked.
-        getInstrumentation().runOnMainSync(() -> {
-            testActivity.showOverlayWindow();
-        });
+        getInstrumentation().runOnMainSync(testActivity::showOverlayWindow);
         mWmState.waitAndAssertWindowSurfaceShown(TestActivity.OVERLAY_WINDOW_NAME, true);
 
         // Test setup: Show the IME picker and verify that it worked.
-        getInstrumentation().runOnMainSync(() -> {
-            mImManager.showInputMethodPicker();
-        });
-        waitOnMainUntil(() -> mImManager.isInputMethodPickerShown(), TIMEOUT,
+        getInstrumentation().runOnMainSync(mImManager::showInputMethodPicker);
+        waitOnMainUntil(mImManager::isInputMethodPickerShown, TIMEOUT,
                 "Test setup failed: InputMethod picker should be shown");
 
         // Actual Test: Make sure the IME picker hides app overlays.
@@ -104,24 +100,13 @@ public class InputMethodPickerTest extends ActivityManagerTestBase {
      *
      * <p>Regression test for Bug 236101545.</p>
      */
-    @AppModeFull(reason = "Instant apps cannot rely on ACTION_CLOSE_SYSTEM_DIALOGS")
     @Test
     public void testShowInputMethodPicker_noDismissWhenOverlayPopup() throws Exception {
-        assumeTrue(mContext.getPackageManager().hasSystemFeature(FEATURE_INPUT_METHODS));
-        assertFalse("InputMethod picker should be closed initially.",
-                getOnMainSync(mImManager::isInputMethodPickerShown));
-
         TestActivity testActivity = TestActivity.startSync(activity -> {
             final View view = new View(activity);
             view.setLayoutParams(new LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
             return view;
         });
-
-        // Make sure that InputMethodPicker is not shown in the initial state.
-        mContext.sendBroadcast(
-                new Intent(ACTION_CLOSE_SYSTEM_DIALOGS).setFlags(FLAG_RECEIVER_FOREGROUND));
-        waitOnMainUntil(() -> !mImManager.isInputMethodPickerShown(), TIMEOUT,
-                "InputMethod picker should be closed");
 
         // Test the IME picker dialog won't be dismissed when the overlay popup in parallel.
         mImManager.showInputMethodPicker();
