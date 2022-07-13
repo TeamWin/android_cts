@@ -67,6 +67,7 @@ android_test {
         "cts-wm-overlayapp-base",
         "cts-wm-shared",
         "platform-compat-test-rules",
+        "cts_window_jetpack_utils",
     ],
 
     test_suites: [
