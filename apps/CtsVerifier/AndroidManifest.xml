@@ -2118,6 +2118,9 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.wifi" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest" android:value="7.4.5.2" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.ConnectivityManager#registerNetworkCallback|android.net.ConnectivityManager#unregisterNetworkCallback|android.net.ConnectivityManager#getLinkProperties" />
         </activity>
 
         <activity android:name=".net.MultiNetworkConnectivityTestActivity"
@@ -2134,6 +2137,8 @@
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.ConnectivityManager#getNetworkCapabilities|android.net.ConnectivityManager#getAllNetworks|android.net.ConnectivityManager#requestNetwork|android.net.ConnectivityManager#unregisterNetworkCallback|android.net.ConnectivityManager#getActiveNetwork|android.net.ConnectivityManager#getNetworkInfo|android.net.ConnectivityManager#reportNetworkConnectivity" />
         </activity>
 
         <activity android:name=".nfc.NfcTestActivity"

@@ -143,7 +143,7 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
 
       # Load scene.
       its_session_utils.load_scene(cam, props, self.scene,
-                                   self.tablet, chart_distance=0)
+                                   self.tablet, self.chart_distance)
 
       # Determine camera capabilities.
       supported_video_qualities = cam.get_supported_video_qualities(

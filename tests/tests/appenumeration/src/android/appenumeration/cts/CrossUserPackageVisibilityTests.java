@@ -44,6 +44,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.PackageInfoFlags;
 import android.content.pm.SuspendDialogInfo;
 import android.os.Process;
+import android.os.UserHandle;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -545,5 +546,18 @@ public class CrossUserPackageVisibilityTests {
 
         assertThrows(PackageManager.NameNotFoundException.class,
                 () -> mPackageManager.canPackageQuery(TARGET_STUB, TARGET_STUB_SHARED_USER));
+    }
+
+    @Test
+    public void testQueryContentProviders_cannotDetectStubPkg() throws Exception {
+        installPackage(TARGET_STUB_APK);
+        final int uid = mPackageManager.getPackageUid(TARGET_STUB, PackageInfoFlags.of(0));
+        final int crossUid = UserHandle.getUid(mOtherUser.id(), UserHandle.getAppId(uid));
+
+        uninstallPackageForUser(TARGET_STUB, mCurrentUser);
+
+        assertThrows(SecurityException.class,
+                () -> mPackageManager.queryContentProviders(
+                        TARGET_STUB, crossUid, PackageManager.ComponentInfoFlags.of(0)));
     }
 }

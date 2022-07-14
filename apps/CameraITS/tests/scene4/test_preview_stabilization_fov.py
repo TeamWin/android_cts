@@ -144,7 +144,7 @@ class PreviewStabilizationFoVTest(its_base_test.ItsBaseTest):
 
       # Load scene.
       its_session_utils.load_scene(cam, props, self.scene,
-                                   self.tablet, chart_distance=0)
+                                   self.tablet, self.chart_distance)
 
       # Check skip condition
       first_api_level = its_session_utils.get_first_api_level(self.dut.serial)

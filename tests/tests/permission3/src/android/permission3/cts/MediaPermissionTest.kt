@@ -19,6 +19,7 @@ package android.permission3.cts
 import android.Manifest
 import android.os.Build
 import androidx.test.filters.SdkSuppress
+import com.android.compatibility.common.util.CddTest
 import com.android.compatibility.common.util.SystemUtil
 import org.junit.Test
 
@@ -28,6 +29,7 @@ import org.junit.Test
  * treats them as one group and therefore their permission state must always be equal.
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+@CddTest(requirement = "9.1/C-0-1")
 class MediaPermissionTest : BaseUsePermissionTest() {
     private fun assertStorageAndMediaPermissionState(state: Boolean) {
         for (permission in STORAGE_AND_MEDIA_PERMISSIONS) {

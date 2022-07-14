@@ -32,6 +32,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.inputmethod.InputMethodManager;
 
 import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -120,6 +121,10 @@ public final class TestUtils {
     public static void waitOnMainUntil(@NonNull BooleanSupplier condition, long timeout)
             throws TimeoutException {
         waitOnMainUntil(condition, timeout, "");
+    }
+
+    public static boolean isInputMethodPickerShown(@NonNull InputMethodManager imm) {
+        return SystemUtil.runWithShellPermissionIdentity(imm::isInputMethodPickerShown);
     }
 
     /**

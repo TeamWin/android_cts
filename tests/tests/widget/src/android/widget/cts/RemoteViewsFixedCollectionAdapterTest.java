@@ -55,6 +55,7 @@ import android.widget.TextView;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
@@ -433,6 +434,7 @@ public class RemoteViewsFixedCollectionAdapterTest {
     }
 
     @Test
+    @FlakyTest(bugId = 237442832)
     public void testSetRemoteAdapter_emptyCollection() {
         RemoteCollectionItems items = new RemoteCollectionItems.Builder().build();
         mRemoteViews.setRemoteAdapter(R.id.remoteView_list, items);

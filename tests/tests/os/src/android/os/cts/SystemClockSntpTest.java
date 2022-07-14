@@ -36,6 +36,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.net.URI;
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
@@ -71,7 +72,7 @@ public class SystemClockSntpTest {
     @After
     public void tearDown() {
         // Restore NTP server configuration.
-        executeShellCommand("cmd network_time_update_service set_server_config");
+        executeShellCommand("cmd network_time_update_service reset_server_config_for_tests");
         // Clear any stored fake NTP time that may have been introduced by tests.
         executeShellCommand("cmd network_time_update_service clear_time");
         // Try to refresh the NTP time from a real server (this may fail to have any effect if the
@@ -106,11 +107,11 @@ public class SystemClockSntpTest {
         // So the server will not reply to any request.
         runWithShellPermissionIdentity(() -> mServer = new SntpTestServer());
 
-        // Write test server address into settings.
+        // Write test server address into temporary config.
+        URI uri = new URI("ntp", null, mServer.getAddress().getHostAddress(), mServer.getPort(),
+                null, null, null);
         executeShellCommand(
-                "cmd network_time_update_service set_server_config --hostname "
-                        + mServer.getAddress().getHostAddress()
-                        + " --port " + mServer.getPort()
+                "cmd network_time_update_service set_server_config_for_tests --server " + uri
                         + " --timeout_millis " + TEST_NTP_TIMEOUT_MILLIS);
 
         // Clear current NTP value and verify it throws exception.

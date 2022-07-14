@@ -21,6 +21,7 @@ import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.content.pm.PackageManager.FEATURE_INPUT_METHODS;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
+import static android.view.inputmethod.cts.util.TestUtils.isInputMethodPickerShown;
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -87,7 +88,7 @@ public class InputMethodPickerTest extends ActivityManagerTestBase {
 
         // Test setup: Show the IME picker and verify that it worked.
         getInstrumentation().runOnMainSync(mImManager::showInputMethodPicker);
-        waitOnMainUntil(mImManager::isInputMethodPickerShown, TIMEOUT,
+        waitOnMainUntil(() -> isInputMethodPickerShown(mImManager), TIMEOUT,
                 "Test setup failed: InputMethod picker should be shown");
 
         // Actual Test: Make sure the IME picker hides app overlays.
@@ -110,18 +111,18 @@ public class InputMethodPickerTest extends ActivityManagerTestBase {
 
         // Test the IME picker dialog won't be dismissed when the overlay popup in parallel.
         mImManager.showInputMethodPicker();
-        waitOnMainUntil(mImManager::isInputMethodPickerShown, TIMEOUT,
+        waitOnMainUntil(() -> isInputMethodPickerShown(mImManager), TIMEOUT,
                 "InputMethod picker should be shown");
         getInstrumentation().runOnMainSync(() ->
                 testActivity.showOverlayWindow(true /* imeFocusable */));
         SystemClock.sleep(500);
-        assertTrue(getOnMainSync(mImManager::isInputMethodPickerShown));
+        assertTrue(getOnMainSync(() -> isInputMethodPickerShown(mImManager)));
     }
 
     private void closeSystemDialogsAndWait() throws Exception {
         mContext.sendBroadcast(
                 new Intent(ACTION_CLOSE_SYSTEM_DIALOGS).setFlags(FLAG_RECEIVER_FOREGROUND));
-        waitOnMainUntil(() -> !mImManager.isInputMethodPickerShown(), TIMEOUT,
+        waitOnMainUntil(() -> !isInputMethodPickerShown(mImManager), TIMEOUT,
                 "Test assertion failed: InputMethod picker should be closed but isn't");
     }
 }

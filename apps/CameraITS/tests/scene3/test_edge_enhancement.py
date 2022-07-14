@@ -16,6 +16,8 @@
 
 import logging
 import os
+import matplotlib
+from matplotlib import pylab
 from mobly import test_runner
 import numpy as np
 
@@ -26,10 +28,28 @@ import image_processing_utils
 import its_session_utils
 import opencv_processing_utils
 
-EDGE_MODES = {'OFF': 0, 'FAST': 1, 'HQ': 2, 'ZSL': 3}
+EDGE_MODES = {'OFF': 0, 'FAST': 1, 'HQ': 2}
 NAME = os.path.splitext(os.path.basename(__file__))[0]
 NUM_SAMPLES = 4
 SHARPNESS_RTOL = 0.1
+
+
+def plot_results(modes, sharpness_values, log_path):
+  """Plot the results.
+
+  Args:
+    modes: integer edge mode values
+    sharpness_values: float values of sharpness
+    log_path: file save location
+  """
+  pylab.figure(NAME)
+  pylab.suptitle(NAME)
+  pylab.title(str(EDGE_MODES))
+  pylab.xlabel('Edge Enhancement Mode')
+  pylab.ylabel('Image Sharpness')
+  pylab.xticks(modes)
+  pylab.plot(modes, sharpness_values, '-ro')
+  matplotlib.pyplot.savefig(f'{os.path.join(log_path, NAME)}_plot.png')
 
 
 def do_capture_and_determine_sharpness(
@@ -77,7 +97,8 @@ def do_capture_and_determine_sharpness(
       edge_mode_res = cap['metadata']['android.edge.mode']
     sharpness_list.append(
         image_processing_utils.compute_image_sharpness(chart.img))
-
+  logging.debug('edge mode: %d, sharpness values: %s',
+                edge_mode_res, sharpness_list)
   return {'edge_mode': edge_mode_res, 'sharpness': np.mean(sharpness_list)}
 
 
@@ -96,6 +117,7 @@ class EdgeEnhancementTest(its_base_test.ItsBaseTest):
         hidden_physical_id=self.hidden_physical_id) as cam:
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
+      log_path = self.log_path
 
       # Check skip conditions
       camera_properties_utils.skip_unless(
@@ -108,7 +130,7 @@ class EdgeEnhancementTest(its_base_test.ItsBaseTest):
           cam, props, self.scene, self.tablet, self.chart_distance)
 
       # Initialize chart class and locate chart in scene
-      chart = opencv_processing_utils.Chart(cam, props, self.log_path)
+      chart = opencv_processing_utils.Chart(cam, props, log_path)
 
       # Define format
       fmt = 'yuv'
@@ -137,6 +159,7 @@ class EdgeEnhancementTest(its_base_test.ItsBaseTest):
       logging.debug('Reported edge modes: %s', edge_mode_reported_regular)
       logging.debug('Sharpness with EE mode [0,1,2,3]: %s',
                     str(sharpness_regular))
+      plot_results(edge_mode_reported_regular, sharpness_regular, log_path)
 
       logging.debug('Verify HQ is sharper than OFF')
       if (sharpness_regular[EDGE_MODES['HQ']] <=

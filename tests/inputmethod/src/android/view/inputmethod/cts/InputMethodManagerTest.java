@@ -18,6 +18,8 @@ package android.view.inputmethod.cts;
 
 import static android.content.Intent.ACTION_CLOSE_SYSTEM_DIALOGS;
 import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
+import static android.content.pm.PackageManager.FEATURE_INPUT_METHODS;
+import static android.view.inputmethod.cts.util.TestUtils.isInputMethodPickerShown;
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
@@ -26,6 +28,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -35,6 +38,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.SecurityTest;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -93,6 +97,20 @@ public class InputMethodManagerTest {
             runShellCommand("ime reset");
             mNeedsImeReset = false;
         }
+    }
+
+    /**
+     * Verifies that the test API {@link InputMethodManager#isInputMethodPickerShown()} is properly
+     * protected with some permission.
+     *
+     * <p>This is a regression test for Bug 237317525.</p>
+     */
+    @SecurityTest(minPatchLevel = "unknown")
+    @Test
+    public void testIsInputMethodPickerShownProtection() {
+        assumeTrue(mContext.getPackageManager().hasSystemFeature(FEATURE_INPUT_METHODS));
+        assertThrows("InputMethodManager#isInputMethodPickerShown() must not be accessible to "
+                + "normal apps.", SecurityException.class, mImManager::isInputMethodPickerShown);
     }
 
     @Test
@@ -218,12 +236,12 @@ public class InputMethodManagerTest {
         // Make sure that InputMethodPicker is not shown in the initial state.
         mContext.sendBroadcast(
                 new Intent(ACTION_CLOSE_SYSTEM_DIALOGS).setFlags(FLAG_RECEIVER_FOREGROUND));
-        waitOnMainUntil(() -> !mImManager.isInputMethodPickerShown(), TIMEOUT,
+        waitOnMainUntil(() -> !isInputMethodPickerShown(mImManager), TIMEOUT,
                 "InputMethod picker should be closed");
 
         // Test InputMethodManager#showInputMethodPicker() works as expected.
         mImManager.showInputMethodPicker();
-        waitOnMainUntil(() -> mImManager.isInputMethodPickerShown(), TIMEOUT,
+        waitOnMainUntil(() -> isInputMethodPickerShown(mImManager), TIMEOUT,
                 "InputMethod picker should be shown");
 
         // UiDevice.getInstance(Instrumentation) may return a cached instance if it's already called
@@ -246,7 +264,7 @@ public class InputMethodManagerTest {
         // Make sure that InputMethodPicker can be closed with ACTION_CLOSE_SYSTEM_DIALOGS
         mContext.sendBroadcast(
                 new Intent(ACTION_CLOSE_SYSTEM_DIALOGS).setFlags(FLAG_RECEIVER_FOREGROUND));
-        waitOnMainUntil(() -> !mImManager.isInputMethodPickerShown(), TIMEOUT,
+        waitOnMainUntil(() -> !isInputMethodPickerShown(mImManager), TIMEOUT,
                 "InputMethod picker should be closed");
     }
 

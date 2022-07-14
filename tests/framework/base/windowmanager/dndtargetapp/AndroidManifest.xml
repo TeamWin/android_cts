@@ -17,6 +17,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
      package="android.server.wm.dndtargetapp"
      android:targetSandboxVersion="2">
+
+    <queries>
+        <package android:name="android.server.wm.cts" />
+    </queries>
+
     <application android:label="CtsDnDTarget">
         <activity android:name="android.server.wm.dndtargetapp.DropTarget"
              android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"

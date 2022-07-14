@@ -19,6 +19,10 @@
 
     <uses-sdk android:targetSdkVersion="33"/>
 
+    <queries>
+        <package android:name="android.server.wm.cts" />
+    </queries>
+
     <application android:label="CtsBackLegacyApp"
                  android:enableOnBackInvokedCallback="false">
         <activity android:name=".BackNavigationLegacyActivity"

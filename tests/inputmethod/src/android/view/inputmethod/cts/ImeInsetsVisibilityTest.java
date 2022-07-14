@@ -24,6 +24,7 @@ import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeInvisible;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeVisible;
+import static android.view.inputmethod.cts.util.TestUtils.isInputMethodPickerShown;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
@@ -288,7 +289,7 @@ public class ImeInsetsVisibilityTest extends EndToEndImeTestBase {
             }
 
             imm.showInputMethodPicker();
-            TestUtils.waitOnMainUntil(() -> imm.isInputMethodPickerShown() && editText.isLaidOut(),
+            TestUtils.waitOnMainUntil(() -> isInputMethodPickerShown(imm) && editText.isLaidOut(),
                     TIMEOUT, "InputMethod picker should be shown");
             lastEditTextPos = new Point(curEditPos);
             curEditPos = getLocationOnScreenForView(editText);
@@ -300,7 +301,7 @@ public class ImeInsetsVisibilityTest extends EndToEndImeTestBase {
 
             InstrumentationRegistry.getInstrumentation().getContext().sendBroadcast(
                     new Intent(ACTION_CLOSE_SYSTEM_DIALOGS).setFlags(FLAG_RECEIVER_FOREGROUND));
-            TestUtils.waitOnMainUntil(() -> !imm.isInputMethodPickerShown(), TIMEOUT,
+            TestUtils.waitOnMainUntil(() -> !isInputMethodPickerShown(imm), TIMEOUT,
                     "InputMethod picker should be closed");
         }
     }

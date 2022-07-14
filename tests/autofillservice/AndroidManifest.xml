@@ -30,6 +30,10 @@
     the config_preventImeStartupUnlessTextEditor option. -->
     <uses-permission android:name="android.permission.BROADCAST_STICKY"/>
 
+    <queries>
+        <package android:name="com.android.cts.mockime" />
+    </queries>
+
     <application>
 
         <uses-library android:name="android.test.runner"/>

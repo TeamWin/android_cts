@@ -1772,6 +1772,37 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     }
 
     /**
+     * Test that renaming file paths to an external directory such as Android/* and Android/* /*
+     * except Android/media/* /* is not allowed.
+     */
+    @Test
+    public void testRenameFileToAppSpecificDir() throws Exception {
+        final File testFile = new File(getExternalMediaDir(), IMAGE_FILE_NAME);
+        final File testFileNew = new File(getExternalMediaDir(), NONMEDIA_FILE_NAME);
+
+        try {
+            // Create a file in app's external media directory
+            if (!testFile.exists()) {
+                assertThat(testFile.createNewFile()).isTrue();
+            }
+
+            final String androidDirPath = getExternalStorageDir().getPath() + "/Android";
+
+            // Verify that we can't rename a file to Android/ or Android/data or
+            // Android/media directory
+            assertCantRenameFile(testFile, new File(androidDirPath, IMAGE_FILE_NAME));
+            assertCantRenameFile(testFile, new File(androidDirPath + "/data", IMAGE_FILE_NAME));
+            assertCantRenameFile(testFile, new File(androidDirPath + "/media", IMAGE_FILE_NAME));
+
+            // Verify that we can rename a file to app specific media directory.
+            assertCanRenameFile(testFile, testFileNew);
+        } finally {
+            testFile.delete();
+            testFileNew.delete();
+        }
+    }
+
+    /**
      * Test that renaming directories is allowed and aligns to default directory restrictions.
      */
     @Test
