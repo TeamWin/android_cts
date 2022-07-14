@@ -114,7 +114,7 @@ android_test {
 
     compile_multilib: "both",
 
-    manifest: "AndroidManifest-verifierConfig.xml",
+    additional_manifests: ["AndroidManifest-verifierConfig.xml"],
 
     jni_libs: [
         "libctsverifier_jni",
