@@ -542,8 +542,10 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
             Log.v(TAG, "Test EndedOk. " + testId + " str:"+str);
             showView(mProgress, false);
             mResultTest.setText("test completed. " + str);
-            if (mTestAECPassed) {
-                getPassButton().setEnabled(true);;
+            if (!isReportLogOkToPass()) {
+                mResultTest.setText(getResources().getString(R.string.audio_general_reportlogtest));
+            } else if (mTestAECPassed) {
+                getPassButton().setEnabled(true);
             }
         }
 

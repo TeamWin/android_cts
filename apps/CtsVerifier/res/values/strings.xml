@@ -32,6 +32,16 @@
     <string name="finish_button_text">Finish</string>
     <string name="fail_and_next_button_text">Fail and Next</string>
 
+    <!-- Strings for CtsReportLog warning -->
+    <string name="reportlog_warning_title">CTS-Verifier Report Log</string>
+    <string name="reportlog_warning_body">Can\'t create folder for CTS-Verifier Report Logs.
+        \n\nPlease enable Report Log creation by exiting CTS Verifier and running the following commands:
+        \n\n<code>adb shell appops set com.android.cts.verifier android:read_device_identifiers allow</code>
+        \n\n<code>adb shell appops set com.android.cts.verifier MANAGE_EXTERNAL_STORAGE 0</code>
+        \n\nTest instructions are found in the \"Using CTS Verifier\" document found at
+        <a href="https://source.android.com/compatibility/cts/verifier">https://source.android.com/compatibility/cts/verifier</a>
+    </string>
+
     <!-- Strings for TestListActivity -->
     <string name="test_category_audio">Audio</string>
     <string name="test_category_camera">Camera</string>
@@ -783,7 +793,7 @@
     <!-- BLE Advertising Set test strings -->
     <string name="ble_advertising_set_test_name">Bluetooth LE Advertising Set Test</string>
     <string name="ble_advertising_set_test_info">Bluetooth LE Advertising Set tests AdvertisingSet and AdvertisingSetCallback APIs.</string>
-    <string name="ble_advertising_set_test_instruction">Press the \"Set Up\" button first, then start the test by pressing the \"Start Test\" button. UI thread may freeze for a few seconds while enabling/disabling bluetooth adapter.</string>
+    <string name="ble_advertising_set_test_instruction">Press the \"Start Test\" button. UI thread may freeze for a few seconds while enabling/disabling bluetooth adapter.</string>
     <string name="ble_advertising_set_start_test">Start Test</string>
     <string name="ble_advertising_set_running_test">Running Test...</string>
     <string name="ble_advertising_set_finished_test">Finished Test</string>
@@ -5462,6 +5472,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_test_not_run">Test Not Run</string>
     <string name="audio_general_testnotcompleted">Test not completed.</string>
 
+    <string name="audio_general_reportlogtest">[Can\'t Write ReportLog]</string>
 
     <!-- Audio Loopback Latency Test -->
     <string name="audio_loopback_latency_test">Audio Loopback Latency Test</string>

@@ -57,6 +57,7 @@ public class VehiclePropertyVerifier<T> {
     private final Optional<CarPropertyValueVerifier> mCarPropertyValueVerifier;
     private final Optional<AreaIdsVerifier> mAreaIdsVerifier;
     private final ImmutableSet<Integer> mPossibleConfigArrayValues;
+    private final ImmutableSet<Integer> mPossibleCarPropertyValues;
     private final boolean mRequirePropertyValueToBeInConfigArray;
     private final boolean mVerifySetterWithConfigArrayValues;
 
@@ -66,6 +67,7 @@ public class VehiclePropertyVerifier<T> {
             Optional<CarPropertyValueVerifier> carPropertyValueVerifier,
             Optional<AreaIdsVerifier> areaIdsVerifier,
             ImmutableSet<Integer> possibleConfigArrayValues,
+            ImmutableSet<Integer> possibleCarPropertyValues,
             boolean requirePropertyValueToBeInConfigArray,
             boolean verifySetterWithConfigArrayValues) {
         mPropertyId = propertyId;
@@ -79,6 +81,7 @@ public class VehiclePropertyVerifier<T> {
         mCarPropertyValueVerifier = carPropertyValueVerifier;
         mAreaIdsVerifier = areaIdsVerifier;
         mPossibleConfigArrayValues = possibleConfigArrayValues;
+        mPossibleCarPropertyValues = possibleCarPropertyValues;
         mRequirePropertyValueToBeInConfigArray = requirePropertyValueToBeInConfigArray;
         mVerifySetterWithConfigArrayValues = verifySetterWithConfigArrayValues;
     }
@@ -423,6 +426,12 @@ public class VehiclePropertyVerifier<T> {
                             carPropertyValue.getValue())).isTrue();
         }
 
+        if (!mPossibleCarPropertyValues.isEmpty()) {
+            assertWithMessage(mPropertyName + " - areaId: " + areaId + " - source: " + source
+                    + " value must be listed in the Integer set")
+                    .that(carPropertyValue.getValue()).isIn(mPossibleCarPropertyValues);
+        }
+
         mCarPropertyValueVerifier.ifPresent(
                 propertyValueVerifier -> propertyValueVerifier.verify(carPropertyConfig,
                         carPropertyValue));
@@ -474,6 +483,7 @@ public class VehiclePropertyVerifier<T> {
         private Optional<CarPropertyValueVerifier> mCarPropertyValueVerifier = Optional.empty();
         private Optional<AreaIdsVerifier> mAreaIdsVerifier = Optional.empty();
         private ImmutableSet<Integer> mPossibleConfigArrayValues = ImmutableSet.of();
+        private ImmutableSet<Integer> mPossibleCarPropertyValues = ImmutableSet.of();
         private boolean mRequirePropertyValueToBeInConfigArray = false;
         private boolean mVerifySetterWithConfigArrayValues = false;
 
@@ -514,6 +524,12 @@ public class VehiclePropertyVerifier<T> {
             return this;
         }
 
+        public Builder<T> setPossibleCarPropertyValues(
+                ImmutableSet<Integer> possibleCarPropertyValues) {
+            mPossibleCarPropertyValues = possibleCarPropertyValues;
+            return this;
+        }
+
         public Builder<T> requirePropertyValueTobeInConfigArray() {
             mRequirePropertyValueToBeInConfigArray = true;
             return this;
@@ -528,7 +544,8 @@ public class VehiclePropertyVerifier<T> {
             return new VehiclePropertyVerifier<>(mPropertyId, mAccess, mAreaType, mChangeMode,
                     mPropertyType, mRequiredProperty, mConfigArrayVerifier,
                     mCarPropertyValueVerifier, mAreaIdsVerifier, mPossibleConfigArrayValues,
-                    mRequirePropertyValueToBeInConfigArray, mVerifySetterWithConfigArrayValues);
+                    mPossibleCarPropertyValues, mRequirePropertyValueToBeInConfigArray,
+                    mVerifySetterWithConfigArrayValues);
         }
     }
 

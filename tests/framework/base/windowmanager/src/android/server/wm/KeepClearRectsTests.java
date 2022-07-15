@@ -550,6 +550,8 @@ public class KeepClearRectsTests extends WindowManagerTestBase {
 
     @Test
     public void testAccessibilityFocusCreatesKeepClearRect() throws Exception {
+        assumeTrue(ViewConfiguration.get(mContext).isPreferKeepClearForFocusEnabled());
+
         mTestSession.launchTestActivityOnDisplaySync(TestActivity.class, DEFAULT_DISPLAY);
         final TestActivity activity = mTestSession.getActivity();
 
@@ -569,6 +571,8 @@ public class KeepClearRectsTests extends WindowManagerTestBase {
 
     @Test
     public void testAccessibilityAndInputFocusCreateKeepClearRects() throws Exception {
+        assumeTrue(ViewConfiguration.get(mContext).isPreferKeepClearForFocusEnabled());
+
         mTestSession.launchTestActivityOnDisplaySync(TestActivity.class, DEFAULT_DISPLAY);
         final TestActivity activity = mTestSession.getActivity();
 

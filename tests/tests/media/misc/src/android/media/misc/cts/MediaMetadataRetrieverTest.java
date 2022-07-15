@@ -635,8 +635,8 @@ public class MediaMetadataRetrieverTest {
 
         setDataSourceFd(res);
 
-        if (!MediaUtils.hasCodecForResourceAndDomain(res, "video/")) {
-            MediaUtils.skipTest("no video codecs for resource");
+        if (!MediaUtils.hasCodecForResourceAndDomain(mInpPrefix + res, "video/")) {
+            MediaUtils.skipTest("no video codecs for resource: " + mInpPrefix + res);
             return;
         }
 
@@ -764,8 +764,8 @@ public class MediaMetadataRetrieverTest {
 
         setDataSourceFd(res);
 
-        if (!MediaUtils.hasCodecForResourceAndDomain(res, "video/")) {
-            MediaUtils.skipTest("no video codecs for resource");
+        if (!MediaUtils.hasCodecForResourceAndDomain(mInpPrefix + res, "video/")) {
+            MediaUtils.skipTest("no video codecs for resource: " + mInpPrefix + res);
             return;
         }
 
@@ -1008,9 +1008,9 @@ public class MediaMetadataRetrieverTest {
 
         setDataSourceFd(res);
 
-        if (!MediaUtils.hasCodecForResourceAndDomain(res, "video/")
+        if (!MediaUtils.hasCodecForResourceAndDomain(mInpPrefix + res, "video/")
             && mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
-            MediaUtils.skipTest("no video codecs for resource on watch");
+            MediaUtils.skipTest("no video codecs for resource: " + mInpPrefix + res + " on watch");
             return;
         }
 
@@ -1070,9 +1070,10 @@ public class MediaMetadataRetrieverTest {
 
         for (String res : resources) {
             setDataSourceFd(res);
-            if (!MediaUtils.hasCodecForResourceAndDomain(res, "video/")
+            if (!MediaUtils.hasCodecForResourceAndDomain(mInpPrefix + res, "video/")
                     && mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
-                MediaUtils.skipTest("no video codecs for resource on watch");
+                MediaUtils.skipTest("no video codecs for resource: " + mInpPrefix + res +
+                        " on watch");
                 continue;
             }
 
@@ -1124,9 +1125,9 @@ public class MediaMetadataRetrieverTest {
     public void testGetScaledFrameAtTime() {
         String res = "binary_counter_320x240_30fps_600frames.mp4";
         setDataSourceFd(res);
-        if (!MediaUtils.hasCodecForResourceAndDomain(res, "video/")
+        if (!MediaUtils.hasCodecForResourceAndDomain(mInpPrefix + res, "video/")
             && mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
-            MediaUtils.skipTest("no video codecs for resource on watch");
+            MediaUtils.skipTest("no video codecs for resource: " + mInpPrefix + res + " on watch");
             return;
         }
 
@@ -1154,7 +1155,7 @@ public class MediaMetadataRetrieverTest {
     @Test
     public void testGetImageAtIndex() throws Exception {
         if (!MediaUtils.hasDecoder(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
-            MediaUtils.skipTest("no video decoders for resource");
+            MediaUtils.skipTest("no video decoders for HEVC");
             return;
         }
 

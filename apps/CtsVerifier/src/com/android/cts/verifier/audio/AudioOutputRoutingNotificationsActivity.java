@@ -150,9 +150,12 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
 
     @Override
     protected void calculatePass() {
-        getPassButton().setEnabled(mRoutingNotificationReceived || !mSupportsWiredPeripheral);
+        getPassButton().setEnabled(isReportLogOkToPass()
+                && mRoutingNotificationReceived || !mSupportsWiredPeripheral);
         TextView tv = ((TextView) findViewById(R.id.audio_routingnotification_testresult));
-        if (mRoutingNotificationReceived) {
+        if (!isReportLogOkToPass()) {
+            tv.setText(getResources().getString(R.string.audio_general_reportlogtest));
+        } else if (mRoutingNotificationReceived) {
             tv.setText("Test PASSES - Routing notification received");
         } else if (!mSupportsWiredPeripheral) {
             tv.setText("Test PASSES - No peripheral support");

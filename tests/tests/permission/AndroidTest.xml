@@ -21,6 +21,7 @@
     <option name="config-descriptor:metadata" key="parameter" value="secondary_user"/>
     <option name="config-descriptor:metadata" key="token" value="SIM_CARD" />
     <option name="config-descriptor:metadata" key="parameter" value="no_foldable_states" />
+    <option name="config-descriptor:metadata" key="mainline-param" value="com.google.android.permission.apex" />
 
     <object type="module_controller" class="com.android.tradefed.testtype.suite.module.Sdk30ModuleController" />
 

@@ -182,12 +182,15 @@ public class AnalogHeadsetAudioActivity
             mResultsTxt.setText(getResources().getString(R.string.analog_headset_pass_noheadset));
             return true;
         } else {
-            boolean pass = mPlugIntentReceived &&
-                    mHeadsetDeviceInfo != null &&
-                    mPlaybackSuccess &&
-                    (mHasHeadsetHook || mHasPlayPause) && mHasVolUp && mHasVolDown;
+            boolean pass = isReportLogOkToPass()
+                    && mPlugIntentReceived
+                    && mHeadsetDeviceInfo != null
+                    && mPlaybackSuccess
+                    && (mHasHeadsetHook || mHasPlayPause) && mHasVolUp && mHasVolDown;
             if (pass) {
                 mResultsTxt.setText(getResources().getString(R.string.analog_headset_pass));
+            } else if (!isReportLogOkToPass()) {
+                mResultsTxt.setText(getResources().getString(R.string.audio_general_reportlogtest));
             }
             return pass;
         }

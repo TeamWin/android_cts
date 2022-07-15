@@ -32,7 +32,6 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -146,6 +145,8 @@ public class PassFailButtons {
         private final CtsVerifierReportLog mReportLog;
         private final TestResultHistoryCollection mHistoryCollection;
 
+        protected boolean mRequireReportLogToPass;
+
         public Activity() {
             this.mReportLog = new CtsVerifierReportLog(getReportFileName(), getReportSectionName());
             this.mHistoryCollection = new TestResultHistoryCollection();
@@ -158,6 +159,10 @@ public class PassFailButtons {
                 mWakeLock = ((PowerManager) getSystemService(Context.POWER_SERVICE))
                         .newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "PassFailButtons");
                 mWakeLock.acquire();
+            }
+
+            if (!this.mReportLog.isOpen()) {
+                showReportLogWarningDialog(this);
             }
         }
 
@@ -209,6 +214,14 @@ public class PassFailButtons {
         @Override
         public CtsVerifierReportLog getReportLog() {
             return mReportLog;
+        }
+
+        /**
+         * A mechanism to block tests from passing if no ReportLog data has been collected.
+         * @return true if the ReportLog is open OR if the test does not require that.
+         */
+        public boolean isReportLogOkToPass() {
+            return !mRequireReportLogToPass || mReportLog.isOpen();
         }
 
         /**
@@ -526,6 +539,12 @@ public class PassFailButtons {
         args.putInt(INFO_DIALOG_VIEW_ID, viewId);
         activity.showDialog(INFO_DIALOG_ID, args);
     }
+
+    protected static void showReportLogWarningDialog(final android.app.Activity activity) {
+        showInfoDialog(activity,
+                R.string.reportlog_warning_title, R.string.reportlog_warning_body, -1);
+    }
+
 
     protected static Dialog createDialog(final android.app.Activity activity, int id, Bundle args) {
         switch (id) {

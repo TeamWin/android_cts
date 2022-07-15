@@ -462,14 +462,8 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                 VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                 CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                Integer.class).setCarPropertyValueVerifier(
-                (carPropertyConfig, carPropertyValue) -> {
-                    Integer fuelDoorLocation = (Integer) carPropertyValue.getValue();
-                    assertWithMessage(
-                            "INFO_FUEL_DOOR_LOCATION must be a defined port location: "
-                                    + fuelDoorLocation).that(
-                            fuelDoorLocation).isIn(PORT_LOCATION_TYPES);
-                }).build().verify(mCarPropertyManager);
+                Integer.class).setPossibleCarPropertyValues(PORT_LOCATION_TYPES).build()
+                .verify(mCarPropertyManager);
     }
 
     @Test
@@ -478,14 +472,8 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                 VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                 CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                Integer.class).setCarPropertyValueVerifier(
-                (carPropertyConfig, carPropertyValue) -> {
-                    Integer evPortLocation = (Integer) carPropertyValue.getValue();
-                    assertWithMessage(
-                            "INFO_EV_PORT_LOCATION must be a defined port location: "
-                                    + evPortLocation).that(
-                            evPortLocation).isIn(PORT_LOCATION_TYPES);
-                }).build().verify(mCarPropertyManager);
+                Integer.class).setPossibleCarPropertyValues(PORT_LOCATION_TYPES).build()
+                .verify(mCarPropertyManager);
     }
 
     @Test
@@ -1215,13 +1203,8 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                             CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                             VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                             CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                            Integer.class).setCarPropertyValueVerifier(
-                                (carPropertyConfig, carPropertyValue) -> {
-                                    Integer turnSignalState = (Integer) carPropertyValue.getValue();
-                                    assertWithMessage("TURN_SIGNAL_STATE must be a defined state.")
-                                            .that(turnSignalState)
-                                            .isIn(TURN_SIGNAL_STATES);
-                                }).build().verify(mCarPropertyManager);
+                            Integer.class).setPossibleCarPropertyValues(TURN_SIGNAL_STATES).build()
+                            .verify(mCarPropertyManager);
                 });
     }
 
@@ -1233,13 +1216,8 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                             CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                             VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                             CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                            Integer.class).setCarPropertyValueVerifier(
-                                (carPropertyConfig, carPropertyValue) -> {
-                                    Integer headLightsState = (Integer) carPropertyValue.getValue();
-                                    assertWithMessage("HEADLIGHTS_STATE must be a defined state.")
-                                            .that(headLightsState)
-                                            .isIn(VEHICLE_LIGHT_STATES);
-                                }).build().verify(mCarPropertyManager);
+                            Integer.class).setPossibleCarPropertyValues(VEHICLE_LIGHT_STATES)
+                            .build().verify(mCarPropertyManager);
                 });
     }
 
@@ -1251,15 +1229,8 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                             CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                             VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                             CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                            Integer.class).setCarPropertyValueVerifier(
-                                (carPropertyConfig, carPropertyValue) -> {
-                                    Integer highBeamLightsState =
-                                            (Integer) carPropertyValue.getValue();
-                                    assertWithMessage(
-                                            "HIGH_BEAM_LIGHTS_STATE must be a defined state.")
-                                            .that(highBeamLightsState)
-                                            .isIn(VEHICLE_LIGHT_STATES);
-                                }).build().verify(mCarPropertyManager);
+                            Integer.class).setPossibleCarPropertyValues(VEHICLE_LIGHT_STATES)
+                            .build().verify(mCarPropertyManager);
                 });
     }
 
@@ -1271,10 +1242,9 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                             CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                             VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                             CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                            Integer.class).setCarPropertyValueVerifier(
+                            Integer.class).setPossibleCarPropertyValues(VEHICLE_LIGHT_STATES)
+                            .setCarPropertyValueVerifier(
                                 (carPropertyConfig, carPropertyValue) -> {
-                                    Integer fogLightsState = (Integer) carPropertyValue.getValue();
-
                                     assertWithMessage(
                                             "FRONT_FOG_LIGHTS_STATE must not be implemented"
                                                     + "when FOG_LIGHTS_STATE is implemented")
@@ -1288,10 +1258,6 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                                             .that(mCarPropertyManager.getCarPropertyConfig(
                                                     VehiclePropertyIds.REAR_FOG_LIGHTS_STATE))
                                             .isNull();
-
-                                    assertWithMessage("FOG_LIGHTS_STATE must be a defined state.")
-                                            .that(fogLightsState)
-                                            .isIn(VEHICLE_LIGHT_STATES);
                                 }).build().verify(mCarPropertyManager);
                 });
     }
@@ -1304,16 +1270,8 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                             CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                             VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                             CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                            Integer.class).setCarPropertyValueVerifier(
-                                (carPropertyConfig, carPropertyValue) -> {
-                                    Integer hazardLightsState =
-                                            (Integer) carPropertyValue.getValue();
-
-                                    assertWithMessage(
-                                            "HAZARD_LIGHTS_STATE must be a defined state.")
-                                            .that(hazardLightsState)
-                                            .isIn(VEHICLE_LIGHT_STATES);
-                                }).build().verify(mCarPropertyManager);
+                            Integer.class).setPossibleCarPropertyValues(VEHICLE_LIGHT_STATES)
+                            .build().verify(mCarPropertyManager);
                 });
     }
 
@@ -1325,22 +1283,15 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                             CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                             VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                             CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                            Integer.class).setCarPropertyValueVerifier(
+                            Integer.class).setPossibleCarPropertyValues(VEHICLE_LIGHT_STATES)
+                            .setCarPropertyValueVerifier(
                                 (carPropertyConfig, carPropertyValue) -> {
-                                    Integer frontFogLightsState =
-                                            (Integer) carPropertyValue.getValue();
-
                                     assertWithMessage(
                                             "FOG_LIGHTS_STATE must not be implemented"
                                                     + "when FRONT_FOG_LIGHTS_STATE is implemented")
                                             .that(mCarPropertyManager.getCarPropertyConfig(
                                                     VehiclePropertyIds.FOG_LIGHTS_STATE))
                                             .isNull();
-
-                                    assertWithMessage(
-                                            "FRONT_FOG_LIGHTS_STATE must be a defined state.")
-                                            .that(frontFogLightsState)
-                                            .isIn(VEHICLE_LIGHT_STATES);
                                 }).build().verify(mCarPropertyManager);
                 });
     }
@@ -1353,22 +1304,15 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                             CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                             VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                             CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                            Integer.class).setCarPropertyValueVerifier(
+                            Integer.class).setPossibleCarPropertyValues(VEHICLE_LIGHT_STATES)
+                            .setCarPropertyValueVerifier(
                                 (carPropertyConfig, carPropertyValue) -> {
-                                    Integer rearFogLightsState =
-                                            (Integer) carPropertyValue.getValue();
-
                                     assertWithMessage(
                                             "FOG_LIGHTS_STATE must not be implemented"
                                                     + "when REAR_FOG_LIGHTS_STATE is implemented")
                                             .that(mCarPropertyManager.getCarPropertyConfig(
                                                     VehiclePropertyIds.FOG_LIGHTS_STATE))
                                             .isNull();
-
-                                    assertWithMessage(
-                                            "REAR_FOG_LIGHTS_STATE must be a defined state.")
-                                            .that(rearFogLightsState)
-                                            .isIn(VEHICLE_LIGHT_STATES);
                                 }).build().verify(mCarPropertyManager);
                 });
     }

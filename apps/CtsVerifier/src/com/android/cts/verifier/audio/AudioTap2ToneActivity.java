@@ -167,6 +167,8 @@ public class AudioTap2ToneActivity
         String yesString = getResources().getString(R.string.audio_general_yes);
         String noString = getResources().getString(R.string.audio_general_no);
 
+        mRequireReportLogToPass = true;
+
         boolean claimsProAudio = AudioSystemFlags.claimsProAudio(this);
         boolean claimsLowLatencyAudio = AudioSystemFlags.claimsLowLatencyAudio(this);
 
@@ -324,11 +326,14 @@ public class AudioTap2ToneActivity
         }
 
         double averageLatency = mLatencyAve[mActiveTestAPI];
-        boolean pass = averageLatency != 0 && averageLatency <= mMaxRequiredLatency;
+        boolean pass = isReportLogOkToPass()
+                && averageLatency != 0 && averageLatency <= mMaxRequiredLatency;
 
         if (pass) {
             mSpecView.setText("Average: " + averageLatency + " ms <= "
                     + mMaxRequiredLatency + " ms -- PASS");
+        } else if (!isReportLogOkToPass()) {
+            mSpecView.setText(getResources().getString(R.string.audio_general_reportlogtest));
         } else {
             mSpecView.setText("Average: " + averageLatency + " ms > "
                     + mMaxRequiredLatency + " ms -- FAIL");
