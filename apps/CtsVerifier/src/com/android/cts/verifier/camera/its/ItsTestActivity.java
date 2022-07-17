@@ -21,15 +21,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
-import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
-import android.os.Build;
+import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,16 +43,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
@@ -59,6 +57,7 @@ import com.android.cts.verifier.TestResult;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.junit.rules.TestName;
 
 /**
  * Test for Camera features that require that the camera be aimed at a specific test scene.
@@ -81,12 +80,6 @@ public class ItsTestActivity extends DialogTestListActivity {
             Arrays.asList(new String[] {RESULT_PASS, RESULT_FAIL, RESULT_NOT_EXECUTED}));
     private static final int MAX_SUMMARY_LEN = 200;
 
-    private static final int MPC12_CAMERA_LAUNCH_THRESHOLD = 600; // ms
-    private static final int MPC12_JPEG_CAPTURE_THRESHOLD = 1000; // ms
-
-    private static final String MPC_TESTS_REPORT_LOG_NAME = "MediaPerformanceClassLogs";
-    private static final String MPC_TESTS_REPORT_LOG_SECTION = "CameraIts";
-
     private static final Pattern MPC12_CAMERA_LAUNCH_PATTERN =
             Pattern.compile("camera_launch_time_ms:(\\d+(\\.\\d+)?)");
     private static final Pattern MPC12_JPEG_CAPTURE_PATTERN =
@@ -95,8 +88,12 @@ public class ItsTestActivity extends DialogTestListActivity {
     private final ResultReceiver mResultsReceiver = new ResultReceiver();
     private boolean mReceiverRegistered = false;
 
+    public final TestName mTestName = new TestName();
+
     // Initialized in onCreate
     List<String> mToBeTestedCameraIds = null;
+    String mPrimaryRearCameraId = null;
+    String mPrimaryFrontCameraId = null;
 
     // Scenes
     private static final ArrayList<String> mSceneIds = new ArrayList<String> () {{
@@ -132,8 +129,15 @@ public class ItsTestActivity extends DialogTestListActivity {
     private final HashMap<ResultKey, String> mSummaryMap = new HashMap<>();
     // All primary cameras for which MPC level test has run
     private Set<ResultKey> mExecutedMpcTests = null;
-    // Map primary camera id to MPC level
-    private final HashMap<String, Integer> mMpcLevelMap = new HashMap<>();
+    private static final String MPC_LAUNCH_REQ_NUM = "2.2.7.2/7.5/H-1-6";
+    private static final String MPC_JPEG_CAPTURE_REQ_NUM = "2.2.7.2/7.5/H-1-5";
+    // Performance class evaluator used for writing test result
+    PerformanceClassEvaluator mPce = new PerformanceClassEvaluator(mTestName);
+    PerformanceClassEvaluator.CameraLatencyRequirement mJpegLatencyReq =
+            mPce.addR7_5__H_1_5();
+    PerformanceClassEvaluator.CameraLatencyRequirement mLaunchLatencyReq =
+            mPce.addR7_5__H_1_6();
+
 
     final class ResultKey {
         public final String cameraId;
@@ -266,10 +270,7 @@ public class ItsTestActivity extends DialogTestListActivity {
                         JSONArray metrics = sceneResult.getJSONArray("mpc_metrics");
                         for (int i = 0; i < metrics.length(); i++) {
                             String mpcResult = metrics.getString(i);
-                            if (!matchMpcResult(cameraId, mpcResult, MPC12_CAMERA_LAUNCH_PATTERN,
-                                    "2.2.7.2/7.5/H-1-6", MPC12_CAMERA_LAUNCH_THRESHOLD) &&
-                                    !matchMpcResult(cameraId, mpcResult, MPC12_JPEG_CAPTURE_PATTERN,
-                                    "2.2.7.2/7.5/H-1-5", MPC12_JPEG_CAPTURE_THRESHOLD)) {
+                            if (!matchMpcResult(cameraId, mpcResult)) {
                                 Log.e(TAG, "Error parsing MPC result string:" + mpcResult);
                                 return;
                             }
@@ -292,17 +293,6 @@ public class ItsTestActivity extends DialogTestListActivity {
                     }
                     ItsTestActivity.this.getReportLog().setSummary(
                             summary.toString(), 1.0, ResultType.NEUTRAL, ResultUnit.NONE);
-                }
-
-                //  Save MPC info once both front primary and rear primary data are collected.
-                if (mExecutedMpcTests.size() == 4) {
-                    ItsTestActivity.this.getReportLog().addValue(
-                            "Version", "0.0.1", ResultType.NEUTRAL, ResultUnit.NONE);
-                    for (Map.Entry<String, Integer> entry : mMpcLevelMap.entrySet()) {
-                        ItsTestActivity.this.getReportLog().addValue(entry.getKey(),
-                                entry.getValue(), ResultType.NEUTRAL, ResultUnit.NONE);
-                    }
-                    ItsTestActivity.this.getReportLog().submit();
                 }
 
                 // Display current progress
@@ -367,28 +357,44 @@ public class ItsTestActivity extends DialogTestListActivity {
             }
         }
 
-        private boolean matchMpcResult(String cameraId, String mpcResult, Pattern pattern,
-                String reqNum, float threshold) {
-            Matcher matcher = pattern.matcher(mpcResult);
-            boolean match = matcher.matches();
-            final int LATEST_MPC_LEVEL = Build.VERSION_CODES.TIRAMISU;
+        private boolean matchMpcResult(String cameraId, String mpcResult) {
+            Matcher launchMatcher = MPC12_CAMERA_LAUNCH_PATTERN.matcher(mpcResult);
+            boolean launchMatches = launchMatcher.matches();
 
-            if (match) {
-                // Store test result
-                ItsTestActivity.this.getReportLog().addValue("Cam" + cameraId,
-                        mpcResult, ResultType.NEUTRAL, ResultUnit.NONE);
+            Matcher jpegMatcher = MPC12_JPEG_CAPTURE_PATTERN.matcher(mpcResult);
+            boolean jpegMatches = jpegMatcher.matches();
 
-                float latency = Float.parseFloat(matcher.group(1));
-                int mpcLevel = latency < threshold ? LATEST_MPC_LEVEL : 0;
-                mExecutedMpcTests.add(new ResultKey(cameraId, reqNum));
-
-                if (mMpcLevelMap.containsKey(reqNum)) {
-                    mpcLevel = Math.min(mpcLevel, mMpcLevelMap.get(reqNum));
-                }
-                mMpcLevelMap.put(reqNum, mpcLevel);
+            if (!launchMatches && !jpegMatches) {
+                return false;
+            }
+            if (!cameraId.equals(mPrimaryRearCameraId) &&
+                    !cameraId.equals(mPrimaryFrontCameraId)) {
+                return false;
             }
 
-            return match;
+            if (launchMatches) {
+                float latency = Float.parseFloat(launchMatcher.group(1));
+                if (cameraId.equals(mPrimaryRearCameraId)) {
+                    mLaunchLatencyReq.setRearCameraLatency(latency);
+                } else {
+                    mLaunchLatencyReq.setFrontCameraLatency(latency);
+                }
+                mExecutedMpcTests.add(new ResultKey(cameraId, MPC_LAUNCH_REQ_NUM));
+            } else {
+                float latency = Float.parseFloat(jpegMatcher.group(1));
+                if (cameraId.equals(mPrimaryRearCameraId)) {
+                    mJpegLatencyReq.setRearCameraLatency(latency);
+                } else {
+                    mJpegLatencyReq.setFrontCameraLatency(latency);
+                }
+                mExecutedMpcTests.add(new ResultKey(cameraId, MPC_JPEG_CAPTURE_REQ_NUM));
+            }
+
+            // Save MPC info once both front primary and rear primary data are collected.
+            if (mExecutedMpcTests.size() == 4) {
+                mPce.submit();
+            }
+            return true;
         }
     }
 
@@ -397,8 +403,11 @@ public class ItsTestActivity extends DialogTestListActivity {
         // Hide the test if all camera devices are legacy
         CameraManager manager = (CameraManager) this.getSystemService(Context.CAMERA_SERVICE);
         try {
-            ItsUtils.ItsCameraIdList cameraIdList = ItsUtils.getItsCompatibleCameraIds(manager);
+            ItsUtils.ItsCameraIdList cameraIdList =
+                    ItsUtils.getItsCompatibleCameraIds(manager);
             mToBeTestedCameraIds = cameraIdList.mCameraIdCombos;
+            mPrimaryRearCameraId = cameraIdList.mPrimaryRearCameraId;
+            mPrimaryFrontCameraId = cameraIdList.mPrimaryFrontCameraId;
         } catch (ItsException e) {
             Toast.makeText(ItsTestActivity.this,
                     "Received error from camera service while checking device capabilities: "
@@ -498,15 +507,5 @@ public class ItsTestActivity extends DialogTestListActivity {
         setContentView(R.layout.its_main);
         setInfoResources(R.string.camera_its_test, R.string.camera_its_test_info, -1);
         setPassFailButtonClickListeners();
-    }
-
-    @Override
-    public String getReportFileName() {
-        return MPC_TESTS_REPORT_LOG_NAME;
-    }
-
-    @Override
-    public String getReportSectionName() {
-        return MPC_TESTS_REPORT_LOG_SECTION;
     }
 }

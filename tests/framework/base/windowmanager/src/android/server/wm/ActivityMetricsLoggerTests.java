@@ -291,8 +291,12 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         final String startTestActivityCmd = "am start -W " + TEST_ACTIVITY.flattenToShortString();
         SystemUtil.runShellCommand(startTestActivityCmd);
 
-        // Launch another task and make sure a configuration change triggers relaunch.
-        launchAndWaitForActivity(SECOND_ACTIVITY);
+        mWmState.computeState();
+        // On multiple screen devices, tasks may be launched in different task display areas. Make
+        // sure the tasks will be launched in the same TDA.
+        int targetDisplayAreaId = mWmState.getTaskDisplayAreaFeatureId(TEST_ACTIVITY);
+
+        launchAndWaitForActivity(SECOND_ACTIVITY, targetDisplayAreaId);
         separateTestJournal();
 
         final FontScaleSession fontScaleSession = createManagedFontScaleSession();
@@ -435,12 +439,22 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
     }
 
     private void launchAndWaitForActivity(ComponentName activity) {
-        getLaunchActivityBuilder()
+        getLaunchActivityBuilder(activity)
+                .execute();
+    }
+
+    private void launchAndWaitForActivity(ComponentName activity, int targetDisplayAreaId) {
+        getLaunchActivityBuilder(activity)
+                .setLaunchTaskDisplayAreaFeatureId(targetDisplayAreaId)
+                .execute();
+    }
+
+    private LaunchActivityBuilder getLaunchActivityBuilder(ComponentName activity) {
+        return getLaunchActivityBuilder()
                 .setUseInstrumentation()
                 .setTargetActivity(activity)
                 .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
-                .setWaitForLaunched(true)
-                .execute();
+                .setWaitForLaunched(true);
     }
 
     @NonNull

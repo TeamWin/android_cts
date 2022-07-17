@@ -24,9 +24,15 @@ import static android.appenumeration.cts.Constants.EXTRA_PENDING_INTENT;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_CALLBACK;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_READY_CALLBACK;
 import static android.appenumeration.cts.Utils.Result;
+import static android.appenumeration.cts.Utils.ThrowingBiFunction;
+import static android.appenumeration.cts.Utils.ThrowingFunction;
 import static android.os.Process.INVALID_UID;
 
-import android.accounts.AccountManager;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItemInArray;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
@@ -65,7 +71,6 @@ public class AppEnumerationTestsBase {
 
     static Context sContext;
     static PackageManager sPm;
-    static AccountManager sAccountManager;
 
     @Rule
     public TestName name = new TestName();
@@ -78,7 +83,6 @@ public class AppEnumerationTestsBase {
 
         sContext = InstrumentationRegistry.getInstrumentation().getContext();
         sPm = sContext.getPackageManager();
-        sAccountManager = AccountManager.get(sContext);
     }
 
     @AfterClass
@@ -165,6 +169,38 @@ public class AppEnumerationTestsBase {
         final Result result = sendCommand(sourcePackageName, null /* targetPackageName */,
                 targetUid, intentExtra, action, false /* waitForReady */);
         return result.await();
+    }
+
+    void assertVisible(String sourcePackageName, String targetPackageName,
+            ThrowingFunction<String, String[]> commandMethod) throws Exception {
+        final String[] packageNames = commandMethod.apply(sourcePackageName);
+        assertThat("The list of package names should not be null",
+                packageNames, notNullValue());
+        assertThat(sourcePackageName + " should be able to see " + targetPackageName,
+                packageNames, hasItemInArray(targetPackageName));
+    }
+
+    void assertNotVisible(String sourcePackageName, String targetPackageName,
+            ThrowingFunction<String, String[]> commandMethod) throws Exception {
+        final String[] packageNames = commandMethod.apply(sourcePackageName);
+        assertThat("The list of package names should not be null",
+                packageNames, notNullValue());
+        assertThat(sourcePackageName + " should not be able to see " + targetPackageName,
+                packageNames, not(hasItemInArray(targetPackageName)));
+    }
+
+    void assertVisible(String sourcePackageName, String targetPackageName,
+            ThrowingBiFunction<String, String, String[]> commandMethod) throws Exception {
+        final String[] packageNames = commandMethod.apply(sourcePackageName, targetPackageName);
+        assertThat(sourcePackageName + " should be able to see " + targetPackageName,
+                packageNames, hasItemInArray(targetPackageName));
+    }
+
+    void assertNotVisible(String sourcePackageName, String targetPackageName,
+            ThrowingBiFunction<String, String, String[]> commandMethod) throws Exception {
+        final String[] packageNames = commandMethod.apply(sourcePackageName, targetPackageName);
+        assertThat(sourcePackageName + " should not be able to see " + targetPackageName,
+                packageNames, not(hasItemInArray(targetPackageName)));
     }
 
     Integer[] getSessionInfos(String action, String sourcePackageName, int sessionId)

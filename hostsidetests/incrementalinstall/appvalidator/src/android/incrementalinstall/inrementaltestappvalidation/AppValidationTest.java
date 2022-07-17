@@ -24,8 +24,7 @@ import static android.incrementalinstall.common.Consts.NOT_LOADED_COMPONENTS_TAG
 import static android.incrementalinstall.common.Consts.PACKAGE_TO_LAUNCH_TAG;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotEquals;
 
 import android.content.Context;
 import android.content.IntentFilter;
@@ -65,14 +64,14 @@ public class AppValidationTest {
         mContext.registerReceiver(statusReceiver, intentFilter);
         launchTestApp();
         for (String component : loadedComponents) {
-            assertTrue(
+            assertEquals(
                     String.format("Component :%s was not loaded, when it should have.", component),
-                    statusReceiver.verifyComponentInvoked(component));
+                    "true", statusReceiver.verifyComponentInvoked(component));
         }
         for (String component : notLoadedComponents) {
-            assertFalse(
+            assertNotEquals(
                     String.format("Component :%s was loaded, when it shouldn't have.", component),
-                    statusReceiver.verifyComponentInvoked(component));
+                    "true", statusReceiver.verifyComponentInvoked(component));
         }
         mContext.unregisterReceiver(statusReceiver);
     }

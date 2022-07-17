@@ -56,6 +56,7 @@ public class Utils {
     public static final String COMPARE_SCREENSHOT_KEY = "compare_screenshot";
     public static final String DISPLAY_WIDTH_KEY = "display_width";
     public static final String DISPLAY_HEIGHT_KEY = "dislay_height";
+    public static final String DISPLAY_AREA_BOUNDS_KEY = "display_area_bounds";
     public static final String SCROLL_X_POSITION = "scroll_x_position";
     public static final String SCROLL_Y_POSITION = "scroll_y_position";
     public static final String SHOW_SESSION_FLAGS_TO_SET = "show_session_flags_to_set";

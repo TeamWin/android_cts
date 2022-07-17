@@ -25,6 +25,7 @@ import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.StateLogger.logAlways;
 import static android.server.wm.StateLogger.logE;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.WindowManager.LayoutParams.TYPE_INPUT_METHOD_DIALOG;
 import static android.view.WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -771,6 +772,16 @@ public class WindowManagerStateHelper extends WindowManagerState {
     public void assertWindowDisplayed(final String windowName) {
         waitForValidState(WaitForValidActivityState.forWindow(windowName));
         assertTrue(windowName + " is visible", isWindowSurfaceShown(windowName));
+    }
+
+    public void waitAndAssertImePickerShownOnDisplay(int displayId, String message) {
+        if (!Condition.waitFor(message, () -> {
+            computeState();
+            return getMatchingWindowType(TYPE_INPUT_METHOD_DIALOG).stream().anyMatch(
+                    w -> w.getDisplayId() == displayId && w.isSurfaceShown());
+        })) {
+            fail(message);
+        }
     }
 
     void waitAndAssertImeWindowShownOnDisplay(int displayId) {

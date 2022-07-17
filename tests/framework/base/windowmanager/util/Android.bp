@@ -47,6 +47,7 @@ java_test_helper_library {
         "compatibility-device-util-axt",
         "androidx.test.rules",
         "hamcrest-library",
+        "CtsMockInputMethodLib",
     ],
 
     sdk_version: "test_current",

@@ -113,6 +113,18 @@ public class InputMethodManagerTest {
                 + "normal apps.", SecurityException.class, mImManager::isInputMethodPickerShown);
     }
 
+    /**
+     * Verifies that the test API {@link InputMethodManager#addVirtualStylusIdForTestSession()} is
+     * properly protected with some permission.
+     */
+    @Test
+    public void testAddVirtualStylusIdForTestSessionProtection() {
+        assumeTrue(mContext.getPackageManager().hasSystemFeature(FEATURE_INPUT_METHODS));
+        assertThrows("InputMethodManager#addVirtualStylusIdForTestSession() must not be accessible "
+                + "to normal apps.", SecurityException.class,
+                mImManager::addVirtualStylusIdForTestSession);
+    }
+
     @Test
     public void testIsActive() throws Throwable {
         final AtomicReference<EditText> focusedEditTextRef = new AtomicReference<>();

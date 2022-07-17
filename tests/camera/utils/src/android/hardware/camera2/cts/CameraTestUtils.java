@@ -142,8 +142,6 @@ public class CameraTestUtils extends Assert {
 
     public static final String OFFLINE_CAMERA_ID = "offline_camera_id";
     public static final String REPORT_LOG_NAME = "CtsCameraTestCases";
-    public static final String MPC_REPORT_LOG_NAME = "MediaPerformanceClassLogs";
-    public static final String MPC_STREAM_NAME = "CameraCts";
 
     private static final int EXIF_DATETIME_LENGTH = 19;
     private static final int EXIF_DATETIME_ERROR_MARGIN_SEC = 60;
@@ -3813,33 +3811,6 @@ public class CameraTestUtils extends Assert {
         zoomRatios.add(zoomRatioRange.getUpper());
 
         return zoomRatios;
-    }
-
-    public static final int PERFORMANCE_CLASS_NOT_MET = 0;
-    public static final int PERFORMANCE_CLASS_R = Build.VERSION_CODES.R;
-    public static final int PERFORMANCE_CLASS_S = Build.VERSION_CODES.R + 1;
-    public static final int PERFORMANCE_CLASS_T = Build.VERSION_CODES.S + 2;
-    public static final int PERFORMANCE_CLASS_CURRENT = PERFORMANCE_CLASS_T;
-
-    /**
-     * Check whether this mobile device is R performance class as defined in CDD
-     */
-    public static boolean isRPerfClass() {
-        return Build.VERSION.MEDIA_PERFORMANCE_CLASS == PERFORMANCE_CLASS_R;
-    }
-
-    /**
-     * Check whether this mobile device is S performance class as defined in CDD
-     */
-    public static boolean isSPerfClass() {
-        return Build.VERSION.MEDIA_PERFORMANCE_CLASS == PERFORMANCE_CLASS_S;
-    }
-
-    /**
-     * Check whether this mobile device is T performance class as defined in CDD
-     */
-    public static boolean isTPerfClass() {
-        return Build.VERSION.MEDIA_PERFORMANCE_CLASS == PERFORMANCE_CLASS_T;
     }
 
     /**

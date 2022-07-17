@@ -33,6 +33,7 @@ public class PermissionMaxSdkVersionCreateTest {
     private static final String MAX_SDK_IGNORE = "android.content.cts.permission.MAX_SDK_IGNORE";
     private static final String MAX_SDK_CREATE = "android.content.cts.permission.MAX_SDK_CREATE";
     private static final String NO_MAX_SDK = "android.content.cts.permission.NO_MAX_SDK";
+    private static final String CURRENT_MAX_SDK = "android.content.cts.permission.CURRENT_MAX_SDK";
 
     private final PackageManager mPm =
             ApplicationProvider.getApplicationContext().getPackageManager();
@@ -42,6 +43,16 @@ public class PermissionMaxSdkVersionCreateTest {
         try {
             PermissionInfo permissionInfo = mPm.getPermissionInfo(NO_MAX_SDK, 0);
             assertEquals(permissionInfo.name, NO_MAX_SDK);
+        } catch (NameNotFoundException e) {
+            fail("Permission " + NO_MAX_SDK + " not found");
+        }
+    }
+
+    @Test
+    public void testPermissionCurrentMaxSdkVersionCreated() {
+        try {
+            PermissionInfo permissionInfo = mPm.getPermissionInfo(CURRENT_MAX_SDK, 0);
+            assertEquals(permissionInfo.name, CURRENT_MAX_SDK);
         } catch (NameNotFoundException e) {
             fail("Permission " + NO_MAX_SDK + " not found");
         }

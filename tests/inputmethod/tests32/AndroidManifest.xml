@@ -20,6 +20,10 @@
 
     <uses-sdk android:targetSdkVersion="32" />
 
+    <queries>
+        <package android:name="com.android.cts.mockime" />
+    </queries>
+
     <application android:label="CtsInputMethodSdk28TestCases" />
 
     <instrumentation

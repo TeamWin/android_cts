@@ -27,8 +27,10 @@ import static android.os.Build.VERSION_CODES.Q;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_ACTIVITY_TASKS;
 
 import android.app.ActivityManager;
+import android.app.ActivityManager.RunningTaskInfo;
 import android.app.ActivityTaskManager;
 import android.content.ComponentName;
+import android.view.Display;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
@@ -64,7 +66,8 @@ public final class Activities {
     }
 
     /**
-     * Get the {@link ComponentReference} of the activity currently in the foreground.
+     * Get the {@link ComponentReference} of the activity currently in the foreground of the default
+     * display.
      */
     @Experimental
     public ComponentReference foregroundActivity() {
@@ -75,12 +78,16 @@ public final class Activities {
             ActivityManager activityManager =
                     TestApis.context().instrumentedContext().getSystemService(
                             ActivityManager.class);
-            List<ActivityManager.RunningTaskInfo> runningTasks = activityManager.getRunningTasks(1);
-            if (runningTasks.isEmpty()) {
-                return null;
+            List<RunningTaskInfo> runningTasks = activityManager.getRunningTasks(10);
+            for (RunningTaskInfo topTask : runningTasks) {
+                // AM.getRunningTasks() can return the tasks in the non-default displays, we need to
+                // filter them out.
+                if (topTask.getDisplayId() != Display.DEFAULT_DISPLAY) {
+                    continue;
+                }
+                return new ComponentReference(topTask.topActivity);
             }
-
-            return new ComponentReference(runningTasks.get(0).topActivity);
+            return null;
         }
     }
 

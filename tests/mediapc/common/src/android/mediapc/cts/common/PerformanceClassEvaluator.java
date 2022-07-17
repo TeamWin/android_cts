@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.hardware.camera2.CameraMetadata;
 import android.media.MediaFormat;
 import android.os.Build;
 
@@ -1002,7 +1003,493 @@ public class PerformanceClassEvaluator {
         }
     }
 
-    private <R extends Requirement> R addRequirement(R req) {
+    public static class PrimaryCameraRequirement extends Requirement {
+        private static final long MIN_BACK_SENSOR_PERF_CLASS_RESOLUTION = 12000000;
+        private static final long MIN_FRONT_SENSOR_S_PERF_CLASS_RESOLUTION = 5000000;
+        private static final long MIN_FRONT_SENSOR_R_PERF_CLASS_RESOLUTION = 4000000;
+        private static final String TAG = PrimaryCameraRequirement.class.getSimpleName();
+
+        private PrimaryCameraRequirement(String id, RequiredMeasurement<?> ... reqs) {
+            super(id, reqs);
+        }
+
+        public void setPrimaryCameraSupported(boolean hasPrimaryCamera) {
+            this.setMeasuredValue(RequirementConstants.PRIMARY_CAMERA_AVAILABLE,
+                    hasPrimaryCamera);
+        }
+
+        public void setResolution(long resolution) {
+            this.setMeasuredValue(RequirementConstants.PRIMARY_CAMERA_RESOLUTION,
+                    resolution);
+        }
+
+        public void setVideoSizeReqSatisfied(boolean videoSizeReqSatisfied) {
+            this.setMeasuredValue(RequirementConstants.PRIMARY_CAMERA_VIDEO_SIZE_REQ_SATISFIED,
+                    videoSizeReqSatisfied);
+        }
+
+        public void setVideoFps(double videoFps) {
+            this.setMeasuredValue(RequirementConstants.PRIMARY_CAMERA_VIDEO_FPS, videoFps);
+        }
+
+        /**
+         * [2.2.7.2/7.5/H-1-1] MUST have a primary rear facing camera with a resolution of at
+         * least 12 megapixels supporting video capture at 4k@30fps
+         */
+        public static PrimaryCameraRequirement createRearPrimaryCamera() {
+            RequiredMeasurement<Boolean> hasPrimaryCamera = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.PRIMARY_CAMERA_AVAILABLE)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.R, true)
+                .addRequiredValue(Build.VERSION_CODES.S, true)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+
+            RequiredMeasurement<Long> cameraResolution = RequiredMeasurement
+                .<Long>builder()
+                .setId(RequirementConstants.PRIMARY_CAMERA_RESOLUTION)
+                .setPredicate(RequirementConstants.LONG_GTE)
+                .addRequiredValue(Build.VERSION_CODES.R, MIN_BACK_SENSOR_PERF_CLASS_RESOLUTION)
+                .addRequiredValue(Build.VERSION_CODES.S, MIN_BACK_SENSOR_PERF_CLASS_RESOLUTION)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, MIN_BACK_SENSOR_PERF_CLASS_RESOLUTION)
+                .build();
+
+            RequiredMeasurement<Boolean> videoSizeReqSatisfied = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.PRIMARY_CAMERA_VIDEO_SIZE_REQ_SATISFIED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.R, true)
+                .addRequiredValue(Build.VERSION_CODES.S, true)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+
+            RequiredMeasurement<Double> videoFps = RequiredMeasurement
+                .<Double>builder()
+                .setId(RequirementConstants.PRIMARY_CAMERA_VIDEO_FPS)
+                .setPredicate(RequirementConstants.DOUBLE_GTE)
+                .addRequiredValue(Build.VERSION_CODES.R, 29.9)
+                .addRequiredValue(Build.VERSION_CODES.S, 29.9)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 29.9)
+                .build();
+
+            return new PrimaryCameraRequirement(RequirementConstants.R7_5__H_1_1,
+                    hasPrimaryCamera, cameraResolution, videoSizeReqSatisfied,
+                    videoFps);
+        }
+
+        /**
+         * [2.2.7.2/7.5/H-1-2] MUST have a primary front facing camera with a resolution of
+         * at least 4 megapixels supporting video capture at 1080p@30fps.
+         */
+        public static PrimaryCameraRequirement createFrontPrimaryCamera() {
+            RequiredMeasurement<Boolean> hasPrimaryCamera = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.PRIMARY_CAMERA_AVAILABLE)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.R, true)
+                .addRequiredValue(Build.VERSION_CODES.S, true)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+
+            RequiredMeasurement<Long> cameraResolution = RequiredMeasurement
+                .<Long>builder()
+                .setId(RequirementConstants.PRIMARY_CAMERA_RESOLUTION)
+                .setPredicate(RequirementConstants.LONG_GTE)
+                .addRequiredValue(Build.VERSION_CODES.R, MIN_FRONT_SENSOR_R_PERF_CLASS_RESOLUTION)
+                .addRequiredValue(Build.VERSION_CODES.S, MIN_FRONT_SENSOR_S_PERF_CLASS_RESOLUTION)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU,
+                        MIN_FRONT_SENSOR_S_PERF_CLASS_RESOLUTION)
+                .build();
+
+            RequiredMeasurement<Boolean> videoSizeReqSatisfied = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.PRIMARY_CAMERA_VIDEO_SIZE_REQ_SATISFIED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.R, true)
+                .addRequiredValue(Build.VERSION_CODES.S, true)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+
+            RequiredMeasurement<Double> videoFps = RequiredMeasurement
+                .<Double>builder()
+                .setId(RequirementConstants.PRIMARY_CAMERA_VIDEO_FPS)
+                .setPredicate(RequirementConstants.DOUBLE_GTE)
+                .addRequiredValue(Build.VERSION_CODES.R, 29.9)
+                .addRequiredValue(Build.VERSION_CODES.S, 29.9)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 29.9)
+                .build();
+
+            return new PrimaryCameraRequirement(RequirementConstants.R7_5__H_1_2,
+                    hasPrimaryCamera, cameraResolution, videoSizeReqSatisfied,
+                    videoFps);
+        }
+    }
+
+    public static class CameraTimestampSourceRequirement extends Requirement {
+        private static final String TAG = CameraTimestampSourceRequirement.class.getSimpleName();
+        private static final int TIMESTAMP_REALTIME =
+                CameraMetadata.SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME;
+
+        private CameraTimestampSourceRequirement(String id, RequiredMeasurement<?> ... reqs) {
+            super(id, reqs);
+        }
+
+        public void setRearCameraTimestampSource(Integer timestampSource) {
+            this.setMeasuredValue(RequirementConstants.REAR_CAMERA_TIMESTAMP_SOURCE,
+                    timestampSource);
+        }
+
+        public void setFrontCameraTimestampSource(Integer timestampSource) {
+            this.setMeasuredValue(RequirementConstants.FRONT_CAMERA_TIMESTAMP_SOURCE,
+                    timestampSource);
+        }
+        /**
+         * [2.2.7.2/7.5/H-1-4] MUST support CameraMetadata.SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME
+         * for both primary cameras.
+         */
+        public static CameraTimestampSourceRequirement createTimestampSourceReq() {
+            RequiredMeasurement<Integer> rearTimestampSource = RequiredMeasurement
+                .<Integer>builder()
+                .setId(RequirementConstants.REAR_CAMERA_TIMESTAMP_SOURCE)
+                .setPredicate(RequirementConstants.INTEGER_EQ)
+                .addRequiredValue(Build.VERSION_CODES.R, TIMESTAMP_REALTIME)
+                .addRequiredValue(Build.VERSION_CODES.S, TIMESTAMP_REALTIME)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, TIMESTAMP_REALTIME)
+                .build();
+            RequiredMeasurement<Integer> frontTimestampSource = RequiredMeasurement
+                .<Integer>builder()
+                .setId(RequirementConstants.FRONT_CAMERA_TIMESTAMP_SOURCE)
+                .setPredicate(RequirementConstants.INTEGER_EQ)
+                .addRequiredValue(Build.VERSION_CODES.R, TIMESTAMP_REALTIME)
+                .addRequiredValue(Build.VERSION_CODES.S, TIMESTAMP_REALTIME)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, TIMESTAMP_REALTIME)
+                .build();
+
+            return new CameraTimestampSourceRequirement(RequirementConstants.R7_5__H_1_4,
+                    rearTimestampSource, frontTimestampSource);
+        }
+    }
+
+    public static class CameraLatencyRequirement extends Requirement {
+        private static final String TAG = CameraTimestampSourceRequirement.class.getSimpleName();
+
+        private CameraLatencyRequirement(String id, RequiredMeasurement<?> ... reqs) {
+            super(id, reqs);
+        }
+
+        public void setRearCameraLatency(float latency) {
+            this.setMeasuredValue(RequirementConstants.REAR_CAMERA_LATENCY, latency);
+        }
+
+        public void setFrontCameraLatency(float latency) {
+            this.setMeasuredValue(RequirementConstants.FRONT_CAMERA_LATENCY, latency);
+        }
+
+        /**
+         * [2.2.7.2/7.5/H-1-5] MUST have camera2 JPEG capture latency < 1000ms for 1080p resolution
+         * as measured by the CTS camera PerformanceTest under ITS lighting conditions
+         * (3000K) for both primary cameras.
+         */
+        public static CameraLatencyRequirement createJpegLatencyReq() {
+            RequiredMeasurement<Float> rearJpegLatency = RequiredMeasurement
+                .<Float>builder()
+                .setId(RequirementConstants.REAR_CAMERA_LATENCY)
+                .setPredicate(RequirementConstants.FLOAT_LTE)
+                .addRequiredValue(Build.VERSION_CODES.R, 1000.0f)
+                .addRequiredValue(Build.VERSION_CODES.S, 1000.0f)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 1000.0f)
+                .build();
+            RequiredMeasurement<Float> frontJpegLatency = RequiredMeasurement
+                .<Float>builder()
+                .setId(RequirementConstants.FRONT_CAMERA_LATENCY)
+                .setPredicate(RequirementConstants.FLOAT_LTE)
+                .addRequiredValue(Build.VERSION_CODES.R, 1000.0f)
+                .addRequiredValue(Build.VERSION_CODES.S, 1000.0f)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 1000.0f)
+                .build();
+
+            return new CameraLatencyRequirement(RequirementConstants.R7_5__H_1_5,
+                    rearJpegLatency, frontJpegLatency);
+        }
+
+        /**
+         * [2.2.7.2/7.5/H-1-6] MUST have camera2 startup latency (open camera to first
+         * preview frame) < 600ms as measured by the CTS camera PerformanceTest under ITS lighting
+         * conditions (3000K) for both primary cameras.
+         */
+        public static CameraLatencyRequirement createLaunchLatencyReq() {
+            RequiredMeasurement<Float> rearLaunchLatency = RequiredMeasurement
+                .<Float>builder()
+                .setId(RequirementConstants.REAR_CAMERA_LATENCY)
+                .setPredicate(RequirementConstants.FLOAT_LTE)
+                .addRequiredValue(Build.VERSION_CODES.R, 600.0f)
+                .addRequiredValue(Build.VERSION_CODES.S, 600.0f)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 600.0f)
+                .build();
+            RequiredMeasurement<Float> frontLaunchLatency = RequiredMeasurement
+                .<Float>builder()
+                .setId(RequirementConstants.FRONT_CAMERA_LATENCY)
+                .setPredicate(RequirementConstants.FLOAT_LTE)
+                .addRequiredValue(Build.VERSION_CODES.R, 600.0f)
+                .addRequiredValue(Build.VERSION_CODES.S, 600.0f)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 600.0f)
+                .build();
+
+            return new CameraLatencyRequirement(RequirementConstants.R7_5__H_1_6,
+                    rearLaunchLatency, frontLaunchLatency);
+        }
+    }
+
+    public static class CameraRawRequirement extends Requirement {
+        private static final String TAG = CameraRawRequirement.class.getSimpleName();
+
+        private CameraRawRequirement(String id, RequiredMeasurement<?> ... reqs) {
+            super(id, reqs);
+        }
+
+        public void setRearRawSupported(boolean rearRawSupported) {
+            this.setMeasuredValue(RequirementConstants.REAR_CAMERA_RAW_SUPPORTED,
+                    rearRawSupported);
+        }
+
+        /**
+         * [2.2.7.2/7.5/H-1-8] MUST support CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_RAW and
+         * android.graphics.ImageFormat.RAW_SENSOR for the primary back camera.
+         */
+        public static CameraRawRequirement createRawReq() {
+            RequiredMeasurement<Boolean> requirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.REAR_CAMERA_RAW_SUPPORTED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.S, true)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+
+            return new CameraRawRequirement(RequirementConstants.R7_5__H_1_8, requirement);
+        }
+    }
+
+    public static class Camera240FpsRequirement extends Requirement {
+        private static final String TAG = Camera240FpsRequirement.class.getSimpleName();
+
+        private Camera240FpsRequirement(String id, RequiredMeasurement<?> ... reqs) {
+            super(id, reqs);
+        }
+
+        public void setRear240FpsSupported(boolean rear240FpsSupported) {
+            this.setMeasuredValue(RequirementConstants.REAR_CAMERA_240FPS_SUPPORTED,
+                    rear240FpsSupported);
+        }
+
+        /**
+         * [2.2.7.2/7.5/H-1-9] MUST have a rear-facing primary camera supporting 720p or 1080p @ 240fps.
+         */
+        public static Camera240FpsRequirement create240FpsReq() {
+            RequiredMeasurement<Boolean> requirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.REAR_CAMERA_240FPS_SUPPORTED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+
+            return new Camera240FpsRequirement(RequirementConstants.R7_5__H_1_9, requirement);
+        }
+    }
+
+    public static class UltraWideZoomRatioRequirement extends Requirement {
+        private static final String TAG =
+                UltraWideZoomRatioRequirement.class.getSimpleName();
+
+        private UltraWideZoomRatioRequirement(String id, RequiredMeasurement<?> ... reqs) {
+            super(id, reqs);
+        }
+
+        public void setRearUltraWideZoomRatioReqMet(boolean ultrawideZoomRatioReqMet) {
+            this.setMeasuredValue(RequirementConstants.REAR_CAMERA_ULTRAWIDE_ZOOMRATIO_REQ_MET,
+                    ultrawideZoomRatioReqMet);
+        }
+
+        public void setFrontUltraWideZoomRatioReqMet(boolean ultrawideZoomRatioReqMet) {
+            this.setMeasuredValue(RequirementConstants.FRONT_CAMERA_ULTRAWIDE_ZOOMRATIO_REQ_MET,
+                    ultrawideZoomRatioReqMet);
+        }
+
+        /**
+         * [2.2.7.2/7.5/H-1-10] MUST have min ZOOM_RATIO < 1.0 for the primary cameras if
+         * there is an ultrawide RGB camera facing the same direction.
+         */
+        public static UltraWideZoomRatioRequirement createUltrawideZoomRatioReq() {
+            RequiredMeasurement<Boolean> rearRequirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.REAR_CAMERA_ULTRAWIDE_ZOOMRATIO_REQ_MET)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+            RequiredMeasurement<Boolean> frontRequirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.FRONT_CAMERA_ULTRAWIDE_ZOOMRATIO_REQ_MET)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+
+            return new UltraWideZoomRatioRequirement(RequirementConstants.R7_5__H_1_10,
+                    rearRequirement, frontRequirement);
+        }
+    }
+
+    public static class ConcurrentRearFrontRequirement extends Requirement {
+        private static final String TAG = ConcurrentRearFrontRequirement.class.getSimpleName();
+
+        private ConcurrentRearFrontRequirement(String id, RequiredMeasurement<?> ... reqs) {
+            super(id, reqs);
+        }
+
+        public void setConcurrentRearFrontSupported(boolean concurrentRearFrontSupported) {
+            this.setMeasuredValue(RequirementConstants.CONCURRENT_REAR_FRONT_SUPPORTED,
+                    concurrentRearFrontSupported);
+        }
+
+        /**
+         * [2.2.7.2/7.5/H-1-11] MUST implement concurrent front-back streaming on primary cameras.
+         */
+        public static ConcurrentRearFrontRequirement createConcurrentRearFrontReq() {
+            RequiredMeasurement<Boolean> requirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.CONCURRENT_REAR_FRONT_SUPPORTED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+
+            return new ConcurrentRearFrontRequirement(RequirementConstants.R7_5__H_1_11,
+                    requirement);
+        }
+    }
+
+    public static class PreviewStabilizationRequirement extends Requirement {
+        private static final String TAG =
+                PreviewStabilizationRequirement.class.getSimpleName();
+
+        private PreviewStabilizationRequirement(String id, RequiredMeasurement<?> ... reqs) {
+            super(id, reqs);
+        }
+
+        public void setRearPreviewStabilizationSupported(boolean supported) {
+            this.setMeasuredValue(RequirementConstants.REAR_CAMERA_PREVIEW_STABILIZATION_SUPPORTED,
+                    supported);
+        }
+
+        public void setFrontPreviewStabilizationSupported(boolean supported) {
+            this.setMeasuredValue(RequirementConstants.FRONT_CAMERA_PREVIEW_STABILIZATION_SUPPORTED,
+                    supported);
+        }
+
+        /**
+         * [2.2.7.2/7.5/H-1-12] MUST support CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION
+         * for both primary front and primary back camera.
+         */
+        public static PreviewStabilizationRequirement createPreviewStabilizationReq() {
+            RequiredMeasurement<Boolean> rearRequirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.REAR_CAMERA_PREVIEW_STABILIZATION_SUPPORTED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+            RequiredMeasurement<Boolean> frontRequirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.FRONT_CAMERA_PREVIEW_STABILIZATION_SUPPORTED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+
+            return new PreviewStabilizationRequirement(RequirementConstants.R7_5__H_1_12,
+                    rearRequirement, frontRequirement);
+        }
+    }
+
+    public static class LogicalMultiCameraRequirement extends Requirement {
+        private static final String TAG =
+                LogicalMultiCameraRequirement.class.getSimpleName();
+
+        private LogicalMultiCameraRequirement(String id, RequiredMeasurement<?> ... reqs) {
+            super(id, reqs);
+        }
+
+        public void setRearLogicalMultiCameraReqMet(boolean reqMet) {
+            this.setMeasuredValue(RequirementConstants.REAR_CAMERA_LOGICAL_MULTI_CAMERA_REQ_MET,
+                    reqMet);
+        }
+
+        public void setFrontLogicalMultiCameraReqMet(boolean reqMet) {
+            this.setMeasuredValue(RequirementConstants.FRONT_CAMERA_LOGICAL_MULTI_CAMERA_REQ_MET,
+                    reqMet);
+        }
+
+        /**
+         * [2.2.7.2/7.5/H-1-13] MUST support LOGICAL_MULTI_CAMERA capability for the primary
+         * cameras if there are greater than 1 RGB cameras facing the same direction.
+         */
+        public static LogicalMultiCameraRequirement createLogicalMultiCameraReq() {
+            RequiredMeasurement<Boolean> rearRequirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.REAR_CAMERA_LOGICAL_MULTI_CAMERA_REQ_MET)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+            RequiredMeasurement<Boolean> frontRequirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.FRONT_CAMERA_LOGICAL_MULTI_CAMERA_REQ_MET)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+
+            return new LogicalMultiCameraRequirement(RequirementConstants.R7_5__H_1_13,
+                    rearRequirement, frontRequirement);
+        }
+    }
+
+    public static class StreamUseCaseRequirement extends Requirement {
+        private static final String TAG =
+                StreamUseCaseRequirement.class.getSimpleName();
+
+        private StreamUseCaseRequirement(String id, RequiredMeasurement<?> ... reqs) {
+            super(id, reqs);
+        }
+
+        public void setRearStreamUseCaseSupported(boolean supported) {
+            this.setMeasuredValue(RequirementConstants.REAR_CAMERA_STREAM_USECASE_SUPPORTED,
+                    supported);
+        }
+
+        public void setFrontStreamUseCaseSupported(boolean supported) {
+            this.setMeasuredValue(RequirementConstants.FRONT_CAMERA_STREAM_USECASE_SUPPORTED,
+                    supported);
+        }
+
+        /**
+         * [2.2.7.2/7.5/H-1-14] MUST support STREAM_USE_CASE capability for both primary
+         * front and primary back camera.
+         */
+        public static StreamUseCaseRequirement createStreamUseCaseReq() {
+            RequiredMeasurement<Boolean> rearRequirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.REAR_CAMERA_STREAM_USECASE_SUPPORTED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+            RequiredMeasurement<Boolean> frontRequirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.FRONT_CAMERA_STREAM_USECASE_SUPPORTED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.TIRAMISU, true)
+                .build();
+
+            return new StreamUseCaseRequirement(RequirementConstants.R7_5__H_1_14,
+                    rearRequirement, frontRequirement);
+        }
+    }
+
+    public <R extends Requirement> R addRequirement(R req) {
         if (!this.mRequirements.add(req)) {
             throw new IllegalStateException("Requirement " + req.id() + " already added");
         }
@@ -1185,16 +1672,69 @@ public class PerformanceClassEvaluator {
         return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_10());
     }
 
+    public PrimaryCameraRequirement addPrimaryRearCameraReq() {
+        return this.addRequirement(PrimaryCameraRequirement.createRearPrimaryCamera());
+    }
+
+    public PrimaryCameraRequirement addPrimaryFrontCameraReq() {
+        return this.addRequirement(PrimaryCameraRequirement.createFrontPrimaryCamera());
+    }
+
+    public CameraTimestampSourceRequirement addR7_5__H_1_4() {
+        return this.addRequirement(CameraTimestampSourceRequirement.createTimestampSourceReq());
+    }
+
+    public CameraLatencyRequirement addR7_5__H_1_5() {
+        return this.addRequirement(CameraLatencyRequirement.createJpegLatencyReq());
+    }
+
+    public CameraLatencyRequirement addR7_5__H_1_6() {
+        return this.addRequirement(CameraLatencyRequirement.createLaunchLatencyReq());
+    }
+
+    public CameraRawRequirement addR7_5__H_1_8() {
+        return this.addRequirement(CameraRawRequirement.createRawReq());
+    }
+
+    public Camera240FpsRequirement addR7_5__H_1_9() {
+        return this.addRequirement(Camera240FpsRequirement.create240FpsReq());
+    }
+
+    public UltraWideZoomRatioRequirement addR7_5__H_1_10() {
+        return this.addRequirement(UltraWideZoomRatioRequirement.createUltrawideZoomRatioReq());
+    }
+
+    public ConcurrentRearFrontRequirement addR7_5__H_1_11() {
+        return this.addRequirement(ConcurrentRearFrontRequirement.createConcurrentRearFrontReq());
+    }
+
+    public PreviewStabilizationRequirement addR7_5__H_1_12() {
+        return this.addRequirement(PreviewStabilizationRequirement.createPreviewStabilizationReq());
+    }
+
+    public LogicalMultiCameraRequirement addR7_5__H_1_13() {
+        return this.addRequirement(LogicalMultiCameraRequirement.createLogicalMultiCameraReq());
+    }
+
+    public StreamUseCaseRequirement addR7_5__H_1_14() {
+        return this.addRequirement(StreamUseCaseRequirement.createStreamUseCaseReq());
+    }
+
     public void submitAndCheck() {
-        boolean perfClassMet = true;
-        for (Requirement req: this.mRequirements) {
-            perfClassMet &= req.writeLogAndCheck(this.mTestName);
-        }
+        boolean perfClassMet = submit();
 
         // check performance class
         assumeTrue("Build.VERSION.MEDIA_PERFORMANCE_CLASS is not declared", Utils.isPerfClass());
         assertThat(perfClassMet).isTrue();
-
-        this.mRequirements.clear(); // makes sure report isn't submitted twice
     }
+
+    public boolean submit() {
+        boolean perfClassMet = true;
+        for (Requirement req: this.mRequirements) {
+            perfClassMet &= req.writeLogAndCheck(this.mTestName);
+        }
+        this.mRequirements.clear(); // makes sure report isn't submitted twice
+        return perfClassMet;
+    }
+
 }

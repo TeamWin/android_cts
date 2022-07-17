@@ -105,6 +105,10 @@
         android:maxSdkVersion="10001"
         android:protectionLevel="normal"/>
 
+    <permission android:name="android.content.cts.permission.CURRENT_MAX_SDK"
+                android:maxSdkVersion="current"
+                android:protectionLevel="normal"/>
+
     <uses-permission android:name="android.content.cts.REQUIRED_FEATURE_DEFINED"
          android:requiredFeature="android.software.cts"/>
 

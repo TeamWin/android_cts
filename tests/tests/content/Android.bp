@@ -147,4 +147,5 @@ android_test {
         "mts-documentsui",
     ],
     min_sdk_version: "29",
+    replace_max_sdk_version_placeholder: "current",
 }

@@ -18,6 +18,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="android.server.wm.backgroundactivity.cts">
 
+    <queries>
+        <package android:name="android.server.wm.backgroundactivity.appa" />
+        <package android:name="android.server.wm.backgroundactivity.appb" />
+    </queries>
+
     <instrumentation
         android:name="androidx.test.runner.AndroidJUnitRunner"
         android:targetPackage="android.server.wm.backgroundactivity.cts" />

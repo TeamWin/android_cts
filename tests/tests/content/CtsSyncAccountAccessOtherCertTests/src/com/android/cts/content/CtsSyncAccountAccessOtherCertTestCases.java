@@ -43,6 +43,9 @@ import android.content.res.Configuration;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiScrollable;
+import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 import android.util.Log;
 
@@ -140,7 +143,7 @@ public class CtsSyncAccountAccessOtherCertTestCases {
                     } catch (Throwable t) {
                         if (scrollUps < 10) {
                             // The notification we search for is below the fold, scroll to find it
-                            swipeUp(uiDevice);
+                            scrollNotifications();
                             scrollUps++;
                             continue;
                         }
@@ -198,6 +201,18 @@ public class CtsSyncAccountAccessOtherCertTestCases {
             width / 2 /* endX */,
             1 /* endY */,
             50 /* numberOfSteps */);
+    }
+
+    private boolean scrollNotifications() {
+        UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
+        if (!scrollable.exists()) {
+            return false;
+        }
+        try {
+            return scrollable.scrollForward(50);
+        } catch (UiObjectNotFoundException e) {
+            return false;
+        }
     }
 
     private boolean isRunningInVR() {

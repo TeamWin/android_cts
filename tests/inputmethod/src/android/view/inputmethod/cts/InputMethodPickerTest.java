@@ -19,6 +19,7 @@ package android.view.inputmethod.cts;
 import static android.content.Intent.ACTION_CLOSE_SYSTEM_DIALOGS;
 import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.content.pm.PackageManager.FEATURE_INPUT_METHODS;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.isInputMethodPickerShown;
@@ -29,11 +30,15 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.content.Context;
 import android.content.Intent;
+import android.hardware.display.DisplayManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.SecurityTest;
-import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.MultiDisplayTestBase;
+import android.server.wm.WindowManagerState;
+import android.view.Display;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.TestActivity;
@@ -52,7 +57,7 @@ import java.util.concurrent.TimeUnit;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Instant apps cannot rely on ACTION_CLOSE_SYSTEM_DIALOGS")
-public class InputMethodPickerTest extends ActivityManagerTestBase {
+public class InputMethodPickerTest extends MultiDisplayTestBase {
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
 
@@ -117,6 +122,37 @@ public class InputMethodPickerTest extends ActivityManagerTestBase {
                 testActivity.showOverlayWindow(true /* imeFocusable */));
         SystemClock.sleep(500);
         assertTrue(getOnMainSync(() -> isInputMethodPickerShown(mImManager)));
+    }
+
+    @Test
+    public void testShowImePickerOnExternalDisplay() throws Exception {
+        try (MultiDisplayTestBase.VirtualDisplaySession session =
+                new MultiDisplayTestBase.VirtualDisplaySession()) {
+            // Setup a simulated display.
+            WindowManagerState.DisplayContent dc = session.setSimulateDisplay(true).createDisplay();
+            Display simulatedDisplay = mContext.getSystemService(DisplayManager.class)
+                    .getDisplay(dc.mId);
+
+            // Launch a test activity on the simulated display.
+            TestActivity testActivity = TestActivity.startSync(dc.mId, activity -> {
+                final View view = new View(activity);
+                view.setLayoutParams(new LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+                return view;
+            });
+            waitAndAssertActivityStateOnDisplay(testActivity.getComponentName(),
+                    STATE_RESUMED, dc.mId, "Activity launched on external display must be resumed");
+
+            // Verify IME picker will be shown when using InputMethodManager instance from
+            // the display context.
+            final Context displayContext = getInstrumentation().getTargetContext()
+                    .createDisplayContext(simulatedDisplay);
+            final InputMethodManager im = displayContext.getSystemService(InputMethodManager.class);
+            im.showInputMethodPicker();
+            waitOnMainUntil(() -> isInputMethodPickerShown(im), TIMEOUT,
+                    "Test failed: InputMethod picker should be shown");
+            mWmState.waitAndAssertImePickerShownOnDisplay(dc.mId,
+                    "Test failed: InputMethod picker should be shown on display #" + dc.mId);
+        }
     }
 
     private void closeSystemDialogsAndWait() throws Exception {

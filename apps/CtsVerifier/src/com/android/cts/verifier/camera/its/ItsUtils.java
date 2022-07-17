@@ -16,28 +16,24 @@
 
 package com.android.cts.verifier.camera.its;
 
-import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.Image.Plane;
-import android.net.Uri;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 import android.util.Size;
 
 import com.android.ex.camera2.blocking.BlockingCameraManager;
-import com.android.ex.camera2.blocking.BlockingCameraManager.BlockingOpenException;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
 
 import org.json.JSONArray;
@@ -322,6 +318,9 @@ public class ItsUtils {
         // Camera Id combos (ids from CameraIdList, and hidden physical camera Ids
         // in the form of [logical camera id]:[hidden physical camera id]
         public List<String> mCameraIdCombos;
+        // Primary rear and front camera Ids (as defined in MPC)
+        public String mPrimaryRearCameraId;
+        public String mPrimaryFrontCameraId;
     }
 
     public static ItsCameraIdList getItsCompatibleCameraIds(CameraManager manager)
@@ -345,6 +344,18 @@ public class ItsUtils {
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE;
                 final int LOGICAL_MULTI_CAMERA =
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA;
+
+                final Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+                if (facing != null) {
+                    if (facing == CameraMetadata.LENS_FACING_BACK
+                            && outList.mPrimaryRearCameraId == null) {
+                        outList.mPrimaryRearCameraId = id;
+                    } else if (facing == CameraMetadata.LENS_FACING_FRONT
+                            && outList.mPrimaryFrontCameraId == null) {
+                        outList.mPrimaryFrontCameraId = id;
+                    }
+                }
+
                 for (int capability : actualCapabilities) {
                     if (capability == BACKWARD_COMPAT) {
                         haveBC = true;

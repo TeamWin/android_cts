@@ -17,9 +17,6 @@
 package android.appenumeration.cts;
 
 import static android.Manifest.permission.SET_PREFERRED_APPLICATIONS;
-import static android.appenumeration.cts.Constants.ACCOUNT_NAME;
-import static android.appenumeration.cts.Constants.ACCOUNT_TYPE;
-import static android.appenumeration.cts.Constants.ACCOUNT_TYPE_SHARED_USER;
 import static android.appenumeration.cts.Constants.ACTION_APP_ENUMERATION_PREFERRED_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTION_BIND_SERVICE;
 import static android.appenumeration.cts.Constants.ACTION_CAN_PACKAGE_QUERY;
@@ -36,9 +33,6 @@ import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGES_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGE_INFO;
 import static android.appenumeration.cts.Constants.ACTION_GET_PREFERRED_ACTIVITIES;
 import static android.appenumeration.cts.Constants.ACTION_GET_SHAREDLIBRARY_DEPENDENT_PACKAGES;
-import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_CONTROL_PANEL;
-import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY;
-import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_TYPES;
 import static android.appenumeration.cts.Constants.ACTION_GRANT_URI_PERMISSION;
 import static android.appenumeration.cts.Constants.ACTION_HAS_SIGNING_CERTIFICATE;
 import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
@@ -51,7 +45,6 @@ import static android.appenumeration.cts.Constants.ACTION_QUERY_ACTIVITIES;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_PROVIDERS;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_RESOLVER;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_SERVICES;
-import static android.appenumeration.cts.Constants.ACTION_REQUEST_SYNC_AND_AWAIT_STATUS;
 import static android.appenumeration.cts.Constants.ACTION_REVOKE_URI_PERMISSION;
 import static android.appenumeration.cts.Constants.ACTION_SEND_RESULT;
 import static android.appenumeration.cts.Constants.ACTION_SET_INSTALLER_PACKAGE_NAME;
@@ -62,7 +55,6 @@ import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_DUMMY_ACTIVITY
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_NOT_EXPORTED;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_TEST;
 import static android.appenumeration.cts.Constants.AUTHORITY_SUFFIX;
-import static android.appenumeration.cts.Constants.EXTRA_ACCOUNT;
 import static android.appenumeration.cts.Constants.EXTRA_AUTHORITY;
 import static android.appenumeration.cts.Constants.EXTRA_CERT;
 import static android.appenumeration.cts.Constants.EXTRA_DATA;
@@ -100,7 +92,6 @@ import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_CONTACTS;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_EDITOR;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_SHARE;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_WEB;
-import static android.appenumeration.cts.Constants.SERVICE_CLASS_SYNC_ADAPTER;
 import static android.appenumeration.cts.Constants.TARGET_APPWIDGETPROVIDER;
 import static android.appenumeration.cts.Constants.TARGET_APPWIDGETPROVIDER_SHARED_USER;
 import static android.appenumeration.cts.Constants.TARGET_BROWSER;
@@ -120,14 +111,12 @@ import static android.appenumeration.cts.Constants.TARGET_SHARED_USER;
 import static android.appenumeration.cts.Constants.TARGET_STUB;
 import static android.appenumeration.cts.Constants.TARGET_STUB_APK;
 import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER;
-import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER_SHARED_USER;
 import static android.appenumeration.cts.Constants.TARGET_WEB;
 import static android.appenumeration.cts.Constants.TEST_NONEXISTENT_PACKAGE_NAME_1;
 import static android.appenumeration.cts.Constants.TEST_NONEXISTENT_PACKAGE_NAME_2;
 import static android.appenumeration.cts.Constants.TEST_SHARED_LIB_NAME;
 import static android.appenumeration.cts.Utils.Result;
 import static android.appenumeration.cts.Utils.ThrowingBiFunction;
-import static android.appenumeration.cts.Utils.ThrowingFunction;
 import static android.appenumeration.cts.Utils.clearAppDataForUser;
 import static android.appenumeration.cts.Utils.ensurePackageIsInstalled;
 import static android.appenumeration.cts.Utils.ensurePackageIsNotInstalled;
@@ -135,7 +124,6 @@ import static android.appenumeration.cts.Utils.forceStopPackage;
 import static android.appenumeration.cts.Utils.installPackage;
 import static android.appenumeration.cts.Utils.suspendPackages;
 import static android.appenumeration.cts.Utils.uninstallPackage;
-import static android.content.Intent.EXTRA_COMPONENT_NAME;
 import static android.content.Intent.EXTRA_PACKAGES;
 import static android.content.Intent.EXTRA_UID;
 import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
@@ -152,10 +140,6 @@ import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.hasItemInArray;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
@@ -164,14 +148,12 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
-import android.accounts.Account;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SyncAdapterType;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.PackageInfoFlags;
@@ -179,7 +161,6 @@ import android.content.pm.Signature;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Process;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -205,10 +186,6 @@ import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
 public class AppEnumerationTests extends AppEnumerationTestsBase {
-
-    private static final Account ACCOUNT_SYNCADAPTER = new Account(ACCOUNT_NAME, ACCOUNT_TYPE);
-    private static final Account ACCOUNT_SYNCADAPTER_SHARED_USER = new Account(ACCOUNT_NAME,
-            ACCOUNT_TYPE_SHARED_USER);
 
     @Test
     public void systemPackagesQueryable_notEnabled() throws Exception {
@@ -918,105 +895,6 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
     }
 
     @Test
-    public void queriesPackage_getSyncAdapterTypes_canSeeSyncadapterTarget() throws Exception {
-        assertVisible(QUERIES_PACKAGE, TARGET_SYNCADAPTER, this::getSyncAdapterTypes);
-    }
-
-    @Test
-    public void queriesNothing_getSyncAdapterTypes_cannotSeeSyncadapterTarget() throws Exception {
-        assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER, this::getSyncAdapterTypes);
-        assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER_SHARED_USER,
-                this::getSyncAdapterTypes);
-    }
-
-    @Test
-    public void queriesNothingSharedUser_getSyncAdapterTypes_canSeeSyncadapterSharedUserTarget()
-            throws Exception {
-        assertVisible(QUERIES_NOTHING_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER,
-                this::getSyncAdapterTypes);
-    }
-
-    @Test
-    public void queriesPackage_getSyncAdapterPackages_canSeeSyncadapterTarget()
-            throws Exception {
-        assertVisible(QUERIES_PACKAGE, TARGET_SYNCADAPTER,
-                this::getSyncAdapterPackagesForAuthorityAsUser);
-    }
-
-    @Test
-    public void queriesNothing_getSyncAdapterPackages_cannotSeeSyncadapterTarget()
-            throws Exception {
-        assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER,
-                this::getSyncAdapterPackagesForAuthorityAsUser);
-        assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER_SHARED_USER,
-                this::getSyncAdapterPackagesForAuthorityAsUser);
-    }
-
-    @Test
-    public void queriesPackage_requestSync_canSeeSyncadapterTarget()
-            throws Exception {
-        try {
-            addTestAccounts();
-            assertThat(requestSyncAndAwaitStatus(QUERIES_PACKAGE,
-                            ACCOUNT_SYNCADAPTER, TARGET_SYNCADAPTER),
-                    is(true));
-        } finally {
-            removeTestAccounts();
-        }
-    }
-
-    @Test
-    public void queriesNothingSharedUser_requestSync_canSeeSyncadapterSharedUserTarget()
-            throws Exception {
-        try {
-            addTestAccounts();
-            assertThat(requestSyncAndAwaitStatus(QUERIES_NOTHING_SHARED_USER,
-                            ACCOUNT_SYNCADAPTER_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER),
-                    is(true));
-        } finally {
-            removeTestAccounts();
-        }
-    }
-
-    @Test
-    public void queriesNothing_requestSync_cannotSeeSyncadapterTarget() {
-        try {
-            addTestAccounts();
-            assertThrows(MissingCallbackException.class,
-                    () -> requestSyncAndAwaitStatus(QUERIES_NOTHING,
-                            ACCOUNT_SYNCADAPTER, TARGET_SYNCADAPTER));
-            assertThrows(MissingCallbackException.class,
-                    () -> requestSyncAndAwaitStatus(QUERIES_NOTHING,
-                            ACCOUNT_SYNCADAPTER_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER));
-        } finally {
-            removeTestAccounts();
-        }
-    }
-
-    @Test
-    public void queriesPackage_getRunningServiceControlPanel_canSeeSyncadapterTarget()
-            throws Exception {
-        assertThat(getSyncAdapterControlPanel(
-                        QUERIES_PACKAGE, ACCOUNT_SYNCADAPTER, TARGET_SYNCADAPTER),
-                notNullValue());
-    }
-
-    @Test
-    public void queriesNothing_getRunningServiceControlPanel_cannotSeeSyncadapterTarget()
-            throws Exception {
-        assertThat(getSyncAdapterControlPanel(
-                        QUERIES_NOTHING, ACCOUNT_SYNCADAPTER, TARGET_SYNCADAPTER),
-                nullValue());
-    }
-
-    @Test
-    public void queriesNothingSharedUser_getSyncAdapterPackages_canSeeSyncadapterSharedUserTarget()
-            throws Exception {
-        assertVisible(QUERIES_NOTHING_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER,
-                this::getSyncAdapterPackagesForAuthorityAsUser);
-    }
-
-    @Test
     public void queriesPackage_canSeeAppWidgetProviderTarget() throws Exception {
         assumeTrue(sPm.hasSystemFeature(PackageManager.FEATURE_APP_WIDGETS));
 
@@ -1367,38 +1245,6 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
                 + intentAction);
     }
 
-    private void assertVisible(String sourcePackageName, String targetPackageName,
-            ThrowingFunction<String, String[]> commandMethod) throws Exception {
-        final String[] packageNames = commandMethod.apply(sourcePackageName);
-        assertThat("The list of package names should not be null",
-                packageNames, notNullValue());
-        assertThat(sourcePackageName + " should be able to see " + targetPackageName,
-                packageNames, hasItemInArray(targetPackageName));
-    }
-
-    private void assertNotVisible(String sourcePackageName, String targetPackageName,
-            ThrowingFunction<String, String[]> commandMethod) throws Exception {
-        final String[] packageNames = commandMethod.apply(sourcePackageName);
-        assertThat("The list of package names should not be null",
-                packageNames, notNullValue());
-        assertThat(sourcePackageName + " should not be able to see " + targetPackageName,
-                packageNames, not(hasItemInArray(targetPackageName)));
-    }
-
-    private void assertVisible(String sourcePackageName, String targetPackageName,
-            ThrowingBiFunction<String, String, String[]> commandMethod) throws Exception {
-        final String[] packageNames = commandMethod.apply(sourcePackageName, targetPackageName);
-        assertThat(sourcePackageName + " should be able to see " + targetPackageName,
-                packageNames, hasItemInArray(targetPackageName));
-    }
-
-    private void assertNotVisible(String sourcePackageName, String targetPackageName,
-            ThrowingBiFunction<String, String, String[]> commandMethod) throws Exception {
-        final String[] packageNames = commandMethod.apply(sourcePackageName, targetPackageName);
-        assertThat(sourcePackageName + " should not be able to see " + targetPackageName,
-                packageNames, not(hasItemInArray(targetPackageName)));
-    }
-
     private void assertBroadcastRestartedVisible(String sourcePackageName,
             String expectedPackage, String packageToRestart) throws Exception {
         final Bundle extras = new Bundle();
@@ -1579,17 +1425,6 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
         return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
     }
 
-    private String[] getSyncAdapterTypes(String sourcePackageName) throws Exception {
-        final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
-                /* intentExtra */ null, ACTION_GET_SYNCADAPTER_TYPES);
-        final List<SyncAdapterType> types = response.getParcelableArrayList(
-                Intent.EXTRA_RETURN_RESULT, SyncAdapterType.class);
-        return types.stream()
-                .map(type -> type.getPackageName())
-                .distinct()
-                .toArray(String[]::new);
-    }
-
     private String[] getInstalledAppWidgetProviders(String sourcePackageName) throws Exception {
         final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
                 /* intentExtra */ null, ACTION_GET_INSTALLED_APPWIDGET_PROVIDERS);
@@ -1599,53 +1434,6 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
                 .map(info -> info.provider.getPackageName())
                 .distinct()
                 .toArray(String[]::new);
-    }
-
-    private String[] getSyncAdapterPackagesForAuthorityAsUser(String sourcePackageName,
-            String targetPackageName) throws Exception {
-        final Bundle extraData = new Bundle();
-        extraData.putString(EXTRA_AUTHORITY, targetPackageName + AUTHORITY_SUFFIX);
-        extraData.putInt(Intent.EXTRA_USER, Process.myUserHandle().getIdentifier());
-        final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
-                extraData, ACTION_GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY);
-        return response.getStringArray(Intent.EXTRA_PACKAGES);
-    }
-
-    private boolean requestSyncAndAwaitStatus(String sourcePackageName, Account account,
-            String targetPackageName) throws Exception {
-        final Bundle extraData = new Bundle();
-        extraData.putParcelable(EXTRA_ACCOUNT, account);
-        extraData.putString(EXTRA_AUTHORITY, targetPackageName + AUTHORITY_SUFFIX);
-        final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
-                extraData, ACTION_REQUEST_SYNC_AND_AWAIT_STATUS);
-        return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
-    }
-
-    private void addTestAccounts() {
-        assertThat(sAccountManager.addAccountExplicitly(ACCOUNT_SYNCADAPTER,
-                null /* password */, null /* userdata */), is(true));
-        assertThat(sAccountManager.addAccountExplicitly(ACCOUNT_SYNCADAPTER_SHARED_USER,
-                null /* password */, null /* userdata */), is(true));
-    }
-
-    private void removeTestAccounts() {
-        assertThat(sAccountManager.removeAccountExplicitly(ACCOUNT_SYNCADAPTER),
-                is(true));
-        assertThat(sAccountManager.removeAccountExplicitly(ACCOUNT_SYNCADAPTER_SHARED_USER),
-                is(true));
-    }
-
-    private PendingIntent getSyncAdapterControlPanel(String sourcePackageName, Account account,
-            String targetPackageName) throws Exception {
-        final ComponentName componentName = new ComponentName(
-                targetPackageName, SERVICE_CLASS_SYNC_ADAPTER);
-        final Bundle extraData = new Bundle();
-        extraData.putParcelable(EXTRA_ACCOUNT, account);
-        extraData.putString(EXTRA_AUTHORITY, targetPackageName + AUTHORITY_SUFFIX);
-        extraData.putParcelable(EXTRA_COMPONENT_NAME, componentName);
-        final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
-                extraData, ACTION_GET_SYNCADAPTER_CONTROL_PANEL);
-        return response.getParcelable(Intent.EXTRA_RETURN_RESULT, PendingIntent.class);
     }
 
     private String[] getSharedLibraryDependentPackages(String sourcePackageName) throws Exception {

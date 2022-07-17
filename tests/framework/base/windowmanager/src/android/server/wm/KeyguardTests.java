@@ -427,11 +427,14 @@ public class KeyguardTests extends KeyguardTestBase {
                 .setTargetActivity(occludingActivity).execute();
 
         // Launch an activity without SHOW_WHEN_LOCKED and finish it.
+        final int tdaFeatureId = mWmState.getTaskDisplayAreaFeatureId(occludingActivity);
         getLaunchActivityBuilder().setUseInstrumentation()
                 .setMultipleTask(true)
                 // Don't wait for activity visible because keyguard will show.
                 .setWaitForLaunched(false)
-                .setTargetActivity(BROADCAST_RECEIVER_ACTIVITY).execute();
+                .setTargetActivity(BROADCAST_RECEIVER_ACTIVITY)
+                .setLaunchTaskDisplayAreaFeatureId(tdaFeatureId)
+                .execute();
         mWmState.waitForKeyguardShowingAndNotOccluded();
         // The activity should be launched in same TDA to ensure that
         // keyguard is showing and not occluded.
