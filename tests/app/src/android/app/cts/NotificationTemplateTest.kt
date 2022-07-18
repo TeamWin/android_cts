@@ -53,7 +53,7 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inCollapsedState_canShowExact4By3() {
-        val icon = createBitmap(400, 300)
+        val icon = createBitmap(40, 30)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -112,7 +112,7 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigBaseState_canShowExact4By3() {
-        val icon = createBitmap(400, 300)
+        val icon = createBitmap(40, 30)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -158,7 +158,7 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
 
     fun testWideIcon_inBigPicture_canShowExact4By3() {
         val picture = createBitmap(40, 30)
-        val icon = createBitmap(400, 300)
+        val icon = createBitmap(40, 30)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -205,7 +205,7 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigText_canShowExact4By3() {
-        val icon = createBitmap(400, 300)
+        val icon = createBitmap(40, 30)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
