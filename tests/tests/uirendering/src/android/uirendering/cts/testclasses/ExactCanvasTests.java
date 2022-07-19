@@ -125,6 +125,8 @@ public class ExactCanvasTests extends ActivityTestBase {
                     canvas.drawColor(Color.WHITE);
                     p.setColor(Color.BLACK);
                     p.setAntiAlias(false);
+                    // ensure the lines do not hit pixel edges
+                    canvas.translate(0.05f, 0.05f);
                     float[] pts = {
                             0, 0, 80, 80, 80, 0, 0, 80, 40, 50, 60, 50
                     };
