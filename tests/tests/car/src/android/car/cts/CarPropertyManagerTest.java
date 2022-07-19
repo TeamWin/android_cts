@@ -844,12 +844,14 @@ public class CarPropertyManagerTest extends CarApiTestBase {
 
     @Test
     public void testFuelConsumptionUnitsDistanceOverTimeIfSupported() {
-        VehiclePropertyVerifier.newBuilder(
-                VehiclePropertyIds.FUEL_CONSUMPTION_UNITS_DISTANCE_OVER_VOLUME,
-                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
-                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
-                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                Boolean.class).build().verify(mCarPropertyManager);
+        adoptSystemLevelPermission(Car.PERMISSION_VENDOR_EXTENSION, () -> {
+            VehiclePropertyVerifier.newBuilder(
+                    VehiclePropertyIds.FUEL_CONSUMPTION_UNITS_DISTANCE_OVER_VOLUME,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Boolean.class).build().verify(mCarPropertyManager);
+        });
     }
 
     @Test
@@ -951,22 +953,24 @@ public class CarPropertyManagerTest extends CarApiTestBase {
 
     @Test
     public void testFuelDoorOpenIfSupported() {
-        VehiclePropertyVerifier.newBuilder(
-                VehiclePropertyIds.FUEL_DOOR_OPEN,
-                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
-                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
-                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                Boolean.class).build().verify(mCarPropertyManager);
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_ENERGY_PORTS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.FUEL_DOOR_OPEN,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Boolean.class).build().verify(mCarPropertyManager);
+        });
     }
 
     @Test
     public void testEvChargePortOpenIfSupported() {
-        VehiclePropertyVerifier.newBuilder(
-                VehiclePropertyIds.EV_CHARGE_PORT_OPEN,
-                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
-                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
-                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                Boolean.class).build().verify(mCarPropertyManager);
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_ENERGY_PORTS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.EV_CHARGE_PORT_OPEN,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Boolean.class).build().verify(mCarPropertyManager);
+        });
     }
 
     @Test
@@ -1058,11 +1062,13 @@ public class CarPropertyManagerTest extends CarApiTestBase {
 
     @Test
     public void testEvChargeSwitchIfSupported() {
-        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.EV_CHARGE_SWITCH,
-                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
-                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
-                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                Boolean.class).build().verify(mCarPropertyManager);
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_ENERGY, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.EV_CHARGE_SWITCH,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Boolean.class).build().verify(mCarPropertyManager);
+        });
     }
 
     @Test

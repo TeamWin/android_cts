@@ -34,6 +34,9 @@
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller" >
+        <!-- Grant the visibility of blamed apps to the calendar provider for tests of
+             accessing trusted or untrusted calendar attribute. -->
+        <option name="force-queryable" value="true" />
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsBlamedPermissionApp.apk" />
         <option name="test-file-name" value="CtsBlamedPermissionApp2.apk" />

@@ -283,6 +283,7 @@ public class TelephonyManagerTest {
     private static final int RADIO_HAL_VERSION_1_3 = makeRadioVersion(1, 3);
     private static final int RADIO_HAL_VERSION_1_5 = makeRadioVersion(1, 5);
     private static final int RADIO_HAL_VERSION_1_6 = makeRadioVersion(1, 6);
+    private static final int RADIO_HAL_VERSION_2_0 = makeRadioVersion(2, 0);
 
     static {
         EMERGENCY_NUMBER_SOURCE_SET = new HashSet<Integer>();
@@ -1754,6 +1755,10 @@ public class TelephonyManagerTest {
     @Test
     public void testRebootRadio() throws Throwable {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
+        if (mRadioVersion < RADIO_HAL_VERSION_2_0) {
+            Log.d(TAG, "Skipping test since rebootModem is not supported.");
+            return;
+        }
 
         TestThread t = new TestThread(() -> {
             Looper.prepare();

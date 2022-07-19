@@ -28,25 +28,25 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2021_0954 extends StsExtraBusinessLogicHostTestBase {
-    private static final String TEST_PKG = "android.security.cts.CVE_2021_0954";
+public class CVE_2022_20353 extends StsExtraBusinessLogicHostTestBase {
 
-    @AsbSecurityTest(cveBugId = 143559931)
+    @AsbSecurityTest(cveBugId = 221041256)
     @Test
-    public void testPocCVE_2021_0954() throws Exception {
+    public void testPocCVE_2022_20353() {
         try {
+            final String testPkg = "android.security.cts.CVE_2022_20353";
             ITestDevice device = getDevice();
-            uninstallPackage(device, TEST_PKG);
 
-            /* Wake up the screen */
             AdbUtils.runCommandLine("input keyevent KEYCODE_WAKEUP", device);
             AdbUtils.runCommandLine("input keyevent KEYCODE_MENU", device);
             AdbUtils.runCommandLine("input keyevent KEYCODE_HOME", device);
 
-            installPackage("CVE-2021-0954.apk");
-            AdbUtils.runCommandLine(
-                    "pm grant " + TEST_PKG + " android.permission.SYSTEM_ALERT_WINDOW", device);
-            runDeviceTests(TEST_PKG, TEST_PKG + "." + "DeviceTest", "testOverlayButtonPresence");
+            // to generate NOTICE.html if not already present
+            AdbUtils.runCommandLine("am start -a android.settings.LICENSE", device);
+
+            installPackage("CVE-2022-20353.apk");
+
+            runDeviceTests(testPkg, testPkg + ".DeviceTest", "testDefaultRingtonePreference");
         } catch (Exception e) {
             assumeNoException(e);
         }

@@ -69,10 +69,6 @@ public final class ConfigUtils {
                 .addAllowedLogSource("AID_SYSTEM")
                 .addAllowedLogSource("AID_BLUETOOTH")
                 .addAllowedLogSource("com.android.bluetooth")
-                // TODO(b/236681553): Remove this.
-                .addAllowedLogSource("com.android.bluetooth.services")
-                // TODO(b/236681553): Remove this.
-                .addAllowedLogSource("com.google.android.bluetooth.services")
                 .addAllowedLogSource("AID_LMKD")
                 .addAllowedLogSource("AID_MEDIA")
                 .addAllowedLogSource("AID_RADIO")

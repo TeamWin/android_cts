@@ -109,7 +109,7 @@ public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
      */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    @CddTest(requirement = "2.2.7.1/5.1/H-1-5,H-1-6")
+    @CddTest(requirements = {"2.2.7.1/5.1/H-1-5", "2.2.7.1/5.1/H-1-6"})
     public void test720p() throws Exception {
         Assume.assumeTrue(Utils.isSPerfClass() || Utils.isRPerfClass() || !Utils.isPerfClass());
 
@@ -128,7 +128,7 @@ public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
      */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    @CddTest(requirement = "2.2.7.1/5.1/H-1-5,H-1-6")
+    @CddTest(requirements = {"2.2.7.1/5.1/H-1-5", "2.2.7.1/5.1/H-1-6"})
     public void test1080p() throws Exception {
         Assume.assumeTrue(Utils.isTPerfClass() || !Utils.isPerfClass());
         testCodec(m1080pTestFiles, 1080, 1920, REQUIRED_MIN_CONCURRENT_INSTANCES);

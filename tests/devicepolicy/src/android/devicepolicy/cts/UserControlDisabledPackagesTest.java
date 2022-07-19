@@ -45,6 +45,7 @@ import com.android.bedstead.harrier.policies.UserControlDisabledPackages;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.queryable.queries.StringQuery;
@@ -235,6 +236,11 @@ public final class UserControlDisabledPackagesTest {
 
     private void assertPackageStopped(String packageName)
             throws Exception {
+        Poll.forValue("Package " + packageName + " stopped", () -> isPackageStopped(packageName))
+                .toBeEqualTo(true)
+                .errorOnFail()
+                .await();
+
         assertWithMessage("Package %s not stopped", packageName)
                 .that(isPackageStopped(packageName)).isTrue();
     }

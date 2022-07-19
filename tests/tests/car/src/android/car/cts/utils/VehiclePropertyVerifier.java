@@ -160,9 +160,30 @@ public class VehiclePropertyVerifier<T> {
         if (carPropertyConfig.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ) {
             return;
         }
-        if (!mVerifySetterWithConfigArrayValues) {
-            return;
+        if (Boolean.class.equals(carPropertyConfig.getPropertyType())) {
+            verifyBooleanPropertySetter(carPropertyConfig, carPropertyManager);
+        } else if (mVerifySetterWithConfigArrayValues) {
+            verifySetterWithConfigArrayValues(carPropertyConfig, carPropertyManager);
         }
+    }
+
+    private void verifyBooleanPropertySetter(CarPropertyConfig<?> carPropertyConfig,
+            CarPropertyManager carPropertyManager) {
+        for (int areaId : carPropertyConfig.getAreaIds()) {
+            CarPropertyValue<Boolean> currentCarPropertyValue = carPropertyManager.getProperty(
+                    mPropertyId, areaId);
+            verifyCarPropertyValue(carPropertyConfig, currentCarPropertyValue, areaId,
+                    CAR_PROPERTY_VALUE_SOURCE_GETTER);
+            Boolean valueToSet = !currentCarPropertyValue.getValue();
+            verifySetProperty((CarPropertyConfig<Boolean>) carPropertyConfig, carPropertyManager,
+                    areaId, valueToSet);
+            verifySetProperty((CarPropertyConfig<Boolean>) carPropertyConfig, carPropertyManager,
+                    areaId, !valueToSet);
+        }
+    }
+
+    private void verifySetterWithConfigArrayValues(CarPropertyConfig<?> carPropertyConfig,
+            CarPropertyManager carPropertyManager) {
         for (Integer valueToSet : carPropertyConfig.getConfigArray()) {
             for (int areaId : carPropertyConfig.getAreaIds()) {
                 CarPropertyValue<Integer> currentCarPropertyValue = carPropertyManager.getProperty(
@@ -172,19 +193,26 @@ public class VehiclePropertyVerifier<T> {
                 if (currentCarPropertyValue.getValue().equals(valueToSet)) {
                     continue;
                 }
-                SetterCallback setterCallback = new SetterCallback(mPropertyId, mPropertyName,
-                        areaId, valueToSet);
-                assertWithMessage("Failed to register setter callback for " + mPropertyName).that(
-                        carPropertyManager.registerCallback(setterCallback, mPropertyId,
-                                CarPropertyManager.SENSOR_RATE_FASTEST)).isTrue();
-                carPropertyManager.setIntProperty(mPropertyId, areaId, valueToSet);
-                CarPropertyValue<?> updatedCarPropertyValue =
-                        setterCallback.waitForUpdatedCarPropertyValue();
-                verifyCarPropertyValue(carPropertyConfig, updatedCarPropertyValue, areaId,
-                        CAR_PROPERTY_VALUE_SOURCE_CALLBACK);
-                carPropertyManager.unregisterCallback(setterCallback, mPropertyId);
+                verifySetProperty((CarPropertyConfig<Integer>) carPropertyConfig,
+                        carPropertyManager, areaId, valueToSet);
             }
         }
+    }
+
+    private <T> void verifySetProperty(CarPropertyConfig<T> carPropertyConfig,
+            CarPropertyManager carPropertyManager, int areaId, T valueToSet) {
+        SetterCallback setterCallback = new SetterCallback(mPropertyId, mPropertyName, areaId,
+                valueToSet);
+        assertWithMessage("Failed to register setter callback for " + mPropertyName).that(
+                carPropertyManager.registerCallback(setterCallback, mPropertyId,
+                        CarPropertyManager.SENSOR_RATE_FASTEST)).isTrue();
+        carPropertyManager.setProperty(carPropertyConfig.getPropertyType(), mPropertyId, areaId,
+                valueToSet);
+        CarPropertyValue<?> updatedCarPropertyValue =
+                setterCallback.waitForUpdatedCarPropertyValue();
+        verifyCarPropertyValue(carPropertyConfig, updatedCarPropertyValue, areaId,
+                CAR_PROPERTY_VALUE_SOURCE_CALLBACK);
+        carPropertyManager.unregisterCallback(setterCallback, mPropertyId);
     }
 
     private void verifyCarPropertyValueCallback(CarPropertyConfig<?> carPropertyConfig,

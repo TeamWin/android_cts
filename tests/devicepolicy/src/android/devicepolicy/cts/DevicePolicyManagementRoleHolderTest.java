@@ -65,6 +65,7 @@ import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
+import com.android.compatibility.common.util.CddTest;
 import com.android.eventlib.truth.EventLogsSubject;
 import com.android.queryable.queries.ActivityQuery;
 
@@ -140,6 +141,7 @@ public class DevicePolicyManagementRoleHolderTest {
     @EnsureHasNoDpc
     @EnsureHasNoSecondaryUser
     @Test
+    @CddTest(requirements = {"3.9.4/C-3-1"})
     public void createAndProvisionManagedProfile_roleHolderIsInWorkProfile()
             throws ProvisioningException, InterruptedException {
         UserHandle profile = null;
@@ -173,6 +175,7 @@ public class DevicePolicyManagementRoleHolderTest {
     @RequireRunOnPrimaryUser
     @EnsureHasNoSecondaryUser
     @Test
+    @CddTest(requirements = {"3.9.4/C-3-1"})
     public void createAndManageUser_roleHolderIsInManagedUser() throws InterruptedException {
         UserHandle managedUser = null;
         String roleHolderPackageName = null;

@@ -271,5 +271,15 @@
         <intent>
             <action android:name="android.service.carrier.CarrierMessagingService" />
         </intent>
+        <intent>
+            <action android:name="android.telephony.cts.embmstestapp.ACTION_CONTROL_MIDDLEWARE" />
+        </intent>
+        <intent>
+            <action android:name="android.telephony.cts.locationaccessingapp.ACTION_CONTROL" />
+        </intent>
+        <package android:name="android.telephony.cts.financialsms" />
+        <package android:name="android.telephony.cts.sms" />
+        <package android:name="android.telephony.cts.sms23" />
+        <package android:name="android.telephony.cts.externalimsservice" />
     </queries>
 </manifest>
