@@ -43,6 +43,8 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
+
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class ExactCanvasTests extends ActivityTestBase {
@@ -161,6 +163,12 @@ public class ExactCanvasTests extends ActivityTestBase {
         Paint p = new Paint();
         p.setColor(Color.BLACK);
         p.setAntiAlias(true);
+
+        File file = TypefaceTestUtil.getFirstFont(testString, p);
+        if (!file.getName().startsWith("Roboto")) {
+            p.setTypeface(TypefaceTestUtil.getRobotoTypeface(400, false));
+        }
+
         canvas.drawTextOnPath(testString, path, 0f, 0f, p);
     }
 

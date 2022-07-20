@@ -35,9 +35,9 @@ _MAX_STABILIZED_RADIUS_RATIO = 1.2  # radius of circle in stabilized preview
 _ROUNDESS_DELTA_THRESHOLD = 0.05
 
 _MAX_CENTER_THRESHOLD_PERCENT = 0.075
-_MAX_DIMENSION_SIZE = (1920, 1440)  # max mandatory preview stream resolution
+_MAX_AREA = 1920 * 1440  # max mandatory preview stream resolution
 _MIN_CENTER_THRESHOLD_PERCENT = 0.02
-_MIN_DIMENSION_SIZE = (176, 144)  # assume QCIF to be min preview size
+_MIN_AREA = 176 * 144  # assume QCIF to be min preview size
 
 
 def _collect_data(cam, video_size, stabilize):
@@ -93,23 +93,19 @@ def _calculate_center_offset_threshold(image_size):
     threshold value ratio between which the circle centers can differ
   """
 
-  max_diagonal = _point_distance(0, 0,
-                                 _MAX_DIMENSION_SIZE[0], _MAX_DIMENSION_SIZE[1])
-  min_diagonal = _point_distance(0, 0,
-                                 _MIN_DIMENSION_SIZE[0], _MIN_DIMENSION_SIZE[1])
+  img_area = image_size[0] * image_size[1]
 
-  img_diagonal = _point_distance(0, 0, image_size[0], image_size[1])
+  normalized_area = ((img_area - _MIN_AREA) /
+                         (_MAX_AREA - _MIN_AREA))
 
-  normalized_diagonal = ((img_diagonal - min_diagonal) /
-                         (max_diagonal - min_diagonal))
-
-  if normalized_diagonal > 1 or normalized_diagonal < 0:
-    raise AssertionError(f'normalized diagonal > 1 or < 0!'
-                         f' img_diag: {img_diagonal}, '
-                         f' normalized_diagonal: {normalized_diagonal}')
+  if normalized_area > 1 or normalized_area < 0:
+    raise AssertionError(f'normalized area > 1 or < 0! '
+                         f'image_size[0]: {image_size[0]}, '
+                         f'image_size[1]: {image_size[1]}, '
+                         f'normalized_area: {normalized_area}')
 
   # Threshold should be larger for images with smaller resolution
-  normalized_threshold_percent = ((1 - normalized_diagonal) *
+  normalized_threshold_percent = ((1 - normalized_area) *
                                   (_MAX_CENTER_THRESHOLD_PERCENT -
                                    _MIN_CENTER_THRESHOLD_PERCENT))
 
@@ -253,7 +249,8 @@ class PreviewStabilizationFoVTest(its_base_test.ItsBaseTest):
                              f'{_ROUNDESS_DELTA_THRESHOLD}, '
                              f'actual ratio difference: {roundness_diff}. ')
 
-        # Distance between centers
+        # Distance between centers, x_offset and y_offset are relative to the
+        # radius of the circle, so they're normalized. Not pixel values.
         unstab_center = (ustab_circle['x_offset'], ustab_circle['y_offset'])
         logging.debug('unstabilized center: %s', unstab_center)
         stab_center = (stab_circle['x_offset'], stab_circle['y_offset'])

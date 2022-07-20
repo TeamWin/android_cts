@@ -33,6 +33,7 @@ import com.google.common.collect.ImmutableSet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -162,8 +163,8 @@ public class VehiclePropertyVerifier<T> {
         }
         if (Boolean.class.equals(carPropertyConfig.getPropertyType())) {
             verifyBooleanPropertySetter(carPropertyConfig, carPropertyManager);
-        } else if (mVerifySetterWithConfigArrayValues) {
-            verifySetterWithConfigArrayValues(carPropertyConfig, carPropertyManager);
+        } else if (Integer.class.equals(carPropertyConfig.getPropertyType())) {
+            verifyIntegerPropertySetter(carPropertyConfig, carPropertyManager);
         }
     }
 
@@ -182,9 +183,30 @@ public class VehiclePropertyVerifier<T> {
         }
     }
 
+    private void verifyIntegerPropertySetter(CarPropertyConfig<?> carPropertyConfig,
+            CarPropertyManager carPropertyManager) {
+        if (mVerifySetterWithConfigArrayValues) {
+            verifySetterWithConfigArrayValues(carPropertyConfig, carPropertyManager);
+        } else if (!mPossibleCarPropertyValues.isEmpty()) {
+            verifySetterWithPossibleCarPropertyValues(carPropertyConfig, carPropertyManager);
+        }
+    }
+
     private void verifySetterWithConfigArrayValues(CarPropertyConfig<?> carPropertyConfig,
             CarPropertyManager carPropertyManager) {
-        for (Integer valueToSet : carPropertyConfig.getConfigArray()) {
+        verifySetterWithIntegerValues(carPropertyConfig, carPropertyManager,
+                carPropertyConfig.getConfigArray());
+    }
+
+    private void verifySetterWithPossibleCarPropertyValues(CarPropertyConfig<?> carPropertyConfig,
+            CarPropertyManager carPropertyManager) {
+        verifySetterWithIntegerValues(carPropertyConfig, carPropertyManager,
+                mPossibleCarPropertyValues);
+    }
+
+    private void verifySetterWithIntegerValues(CarPropertyConfig<?> carPropertyConfig,
+            CarPropertyManager carPropertyManager, Collection<Integer> valuesToSet) {
+        for (Integer valueToSet : valuesToSet) {
             for (int areaId : carPropertyConfig.getAreaIds()) {
                 CarPropertyValue<Integer> currentCarPropertyValue = carPropertyManager.getProperty(
                         mPropertyId, areaId);

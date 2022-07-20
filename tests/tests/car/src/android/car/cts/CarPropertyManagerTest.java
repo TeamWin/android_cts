@@ -1323,6 +1323,48 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 });
     }
 
+    @Test
+    public void testVehicleCurbWeightIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_PRIVILEGED_CAR_INFO, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.VEHICLE_CURB_WEIGHT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                    Integer.class).setConfigArrayVerifier(configArray -> {
+                assertWithMessage(
+                        "VEHICLE_CURB_WEIGHT configArray must contain the gross weight in "
+                                + "kilograms").that(configArray).hasSize(1);
+                assertWithMessage(
+                        "VEHICLE_CURB_WEIGHT configArray[0] must contain the gross weight in "
+                                + "kilograms and be greater than zero").that(
+                        configArray.get(0)).isGreaterThan(0);
+            }).setCarPropertyValueVerifier((carPropertyConfig, carPropertyValue) -> {
+                Integer curbWeightKg = (Integer) carPropertyValue.getValue();
+                Integer grossWeightKg = carPropertyConfig.getConfigArray().get(0);
+
+                assertWithMessage("VEHICLE_CURB_WEIGHT must be greater than zero").that(
+                        curbWeightKg).isGreaterThan(0);
+                assertWithMessage("VEHICLE_CURB_WEIGHT must be less than the gross weight").that(
+                        curbWeightKg).isLessThan(grossWeightKg);
+            }).build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    public void testTrailerPresentIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_PRIVILEGED_CAR_INFO, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.TRAILER_PRESENT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Integer.class).setPossibleCarPropertyValues(
+                    ImmutableSet.of(/*TrailerState.UNKNOWN=*/
+                            0, /*TrailerState.NOT_PRESENT*/
+                            1, /*TrailerState.PRESENT=*/2, /*TrailerState.ERROR=*/
+                            3)).build().verify(mCarPropertyManager);
+        });
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void testGetProperty() {

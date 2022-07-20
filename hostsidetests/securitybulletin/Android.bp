@@ -43,6 +43,7 @@ java_test_host {
 
 cc_defaults {
     name: "cts_hostsidetests_securitybulletin_defaults",
+    auto_gen_config: false,
     compile_multilib: "both",
     multilib: {
         lib32: {

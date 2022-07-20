@@ -1612,6 +1612,18 @@ def get_first_api_level(device_id):
   return first_api_level
 
 
+def get_vendor_api_level(device_id):
+  """Return the int value for the vendor API level of the device."""
+  cmd = 'adb -s %s shell getprop ro.vendor.api_level' % device_id
+  try:
+    vendor_api_level = int(subprocess.check_output(cmd.split()).rstrip())
+    logging.debug('First vendor API level: %d', vendor_api_level)
+  except (subprocess.CalledProcessError, ValueError):
+    logging.error('No vendor_api_level. Setting to build version.')
+    vendor_api_level = get_build_sdk_version(device_id)
+  return vendor_api_level
+
+
 class ItsSessionUtilsTests(unittest.TestCase):
   """Run a suite of unit tests on this module."""
 

@@ -311,9 +311,11 @@
     </string>
     <string name="clipboard_preview_test_instructions">
         Press the \'Copy\' button to copy the secret code to the clipboard.
-        \n\nUse the clipboard preview UI, or the clipboard editor component to view the secret code.
-        \n\nEnter the secret code using the buttons below.
+        \n\n If nothing happens, press Fail.
+        \n\n If you see the word "FAIL" appear on screen, press Fail.
+        \n\n If you see a confirmation that content has been copied to the clipboard, press Pass.
     </string>
+    <string name="clipboard_preview_test_secret">FAIL</string>
     <string name="clipboard_preview_test_copy_button">Copy</string>
 
 
