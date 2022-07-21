@@ -35,6 +35,7 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.CddTest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -356,6 +357,24 @@ public class BluetoothLeAudioTest extends AndroidTestCase {
             mBluetoothLeAudio.setCodecConfigPreference(0, codecConfig, codecConfig);
         } catch (Exception e) {
             fail("Exception caught from setCodecConfigPreference(): " + e.toString());
+        }
+    }
+
+    @CddTest(requirements = {"3.5/C-0-9"})
+    public void test_getGroupId() {
+        if (!(mHasBluetooth && mIsLeAudioSupported)) return;
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeAudio);
+
+        BluetoothDevice device = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+        try {
+            TestUtils.dropPermissionAsShellUid();
+            TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
+            mBluetoothLeAudio.getGroupId(device);
+        } catch (Exception e) {
+            fail("Exception caught from getGroupId(): " + e.toString());
+        } finally {
+            TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         }
     }
 

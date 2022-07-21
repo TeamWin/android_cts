@@ -730,9 +730,15 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         // Launch activity whose process will be killed
         builder.execute();
 
+        // Get the TaskDisplayArea feature id for the targetActivity so we could launch the
+        // testActivity into the same TDA.
+        final int targetActivityTDAFeatureId = mWmState.getTaskDisplayAreaFeatureId(targetActivity);
+        ActivityOptions activityOptions = getLaunchOptionsForFullscreen();
+        activityOptions.setLaunchTaskDisplayAreaFeatureId(targetActivityTDAFeatureId);
+
         // Start fullscreen activity in another process to put original activity in background.
         final Activity testActivity = new Launcher(FirstActivity.class)
-                .setOptions(getLaunchOptionsForFullscreen())
+                .setOptions(activityOptions)
                 .launch();
         final boolean isTranslucent = isTranslucent(testActivity);
         mWmState.waitForActivityState(

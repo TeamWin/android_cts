@@ -16,17 +16,22 @@
 
 package android.server.wm.jetpack;
 
+import static android.server.wm.jetpack.signed.Components.SIGNED_EMBEDDING_ACTIVITY;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.EMBEDDED_ACTIVITY_ID;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplit;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
 import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
 import static android.server.wm.jetpack.utils.ExtensionUtil.assumeHasDisplayFeatures;
 import static android.server.wm.jetpack.utils.ExtensionUtil.getExtensionWindowLayoutComponent;
 import static android.server.wm.jetpack.utils.ExtensionUtil.getExtensionWindowLayoutInfo;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeNotNull;
 
 import android.app.Activity;
+import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
@@ -106,6 +111,38 @@ public class ActivityEmbeddingIntegrationTests extends ActivityEmbeddingTestBase
                 getActivityBounds(primaryActivity));
 
         newWindowLayoutInfo = getExtensionWindowLayoutInfo(primaryActivity);
+        assertEquals(windowLayoutInfo.getDisplayFeatures().size(),
+                newWindowLayoutInfo.getDisplayFeatures().size());
+    }
+
+    /**
+     * Tests that display features are still reported when using ActivityEmbedding. Same as above,
+     * but using different packages for the host and embedded activities.
+     * Fixed in CL: If2dbc337c4b8cb909914cc28ae4db28a82ff9de3
+     */
+    @Test
+    public void testDisplayFeaturesWithEmbedding_differentPackage() throws Exception {
+        // Start an activity to collect the window layout info.
+        TestConfigChangeHandlingActivity initialActivity = (TestConfigChangeHandlingActivity)
+                startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        WindowLayoutInfo windowLayoutInfo = getExtensionWindowLayoutInfo(initialActivity);
+        assumeHasDisplayFeatures(windowLayoutInfo);
+
+        // Start an activity that will attempt to embed TestActivityKnownEmbeddingCerts. It will be
+        // put in a new task, since it has a different affinity.
+        Bundle extras = new Bundle();
+        extras.putBoolean(EXTRA_EMBED_ACTIVITY, true);
+        extras.putFloat(EXTRA_SPLIT_RATIO, 0.1f);
+        startActivityNoWait(mContext, SIGNED_EMBEDDING_ACTIVITY, extras);
+
+        waitAndAssertResumed(EMBEDDED_ACTIVITY_ID);
+        TestActivityWithId secondaryActivity = getResumedActivityById(EMBEDDED_ACTIVITY_ID);
+        assertNotNull(secondaryActivity);
+        assertTrue(mActivityEmbeddingComponent.isActivityEmbedded(secondaryActivity));
+
+        // Verify that an embedded activity from a different package observes the same number of
+        // features as the initial one.
+        WindowLayoutInfo newWindowLayoutInfo = getExtensionWindowLayoutInfo(secondaryActivity);
         assertEquals(windowLayoutInfo.getDisplayFeatures().size(),
                 newWindowLayoutInfo.getDisplayFeatures().size());
     }

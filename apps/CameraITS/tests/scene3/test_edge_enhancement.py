@@ -87,16 +87,15 @@ def do_capture_and_determine_sharpness(
   for n in range(NUM_SAMPLES):
     cap = cam.do_capture(req, out_surface, repeat_request=req)
     y, _, _ = image_processing_utils.convert_capture_to_planes(cap)
-    chart.img = image_processing_utils.normalize_img(
-        image_processing_utils.get_image_patch(
-            y, chart.xnorm, chart.ynorm, chart.wnorm, chart.hnorm))
+    chart.img = image_processing_utils.get_image_patch(
+        y, chart.xnorm, chart.ynorm, chart.wnorm, chart.hnorm)
     if n == 0:
       image_processing_utils.write_image(
           chart.img, '%s_edge=%d.jpg' % (
               os.path.join(log_path, NAME), edge_mode))
       edge_mode_res = cap['metadata']['android.edge.mode']
     sharpness_list.append(
-        image_processing_utils.compute_image_sharpness(chart.img))
+        image_processing_utils.compute_image_sharpness(chart.img)*255)
   logging.debug('edge mode: %d, sharpness values: %s',
                 edge_mode_res, sharpness_list)
   return {'edge_mode': edge_mode_res, 'sharpness': np.mean(sharpness_list)}
@@ -110,7 +109,6 @@ class EdgeEnhancementTest(its_base_test.ItsBaseTest):
   """
 
   def test_edge_enhancement(self):
-    logging.debug('Starting %s', NAME)
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,

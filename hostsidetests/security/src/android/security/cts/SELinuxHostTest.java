@@ -116,8 +116,6 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     private File devicePcFile;
     private File deviceSvcFile;
     private File seappNeverAllowFile;
-    private File libsepolwrap;
-    private File libcpp;
     private File copyLibcpp;
     private File sepolicyTests;
 
@@ -907,29 +905,8 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         return (os.startsWith("mac") || os.startsWith("darwin"));
     }
 
-    private void setupLibraries() throws Exception {
-        // The host side binary tests are host OS specific. Use Linux
-        // libraries on Linux and Mac libraries on Mac.
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuild);
-        if (isMac()) {
-            libsepolwrap = buildHelper.getTestFile("libsepolwrap.dylib");
-            libcpp = buildHelper.getTestFile("libc++.dylib");
-            copyLibcpp = new File(System.getProperty("java.io.tmpdir") + "/libc++.dylib");
-            Files.copy(libcpp.toPath(), copyLibcpp.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        } else {
-            libsepolwrap = buildHelper.getTestFile("libsepolwrap.so");
-            libcpp = buildHelper.getTestFile("libc++.so");
-            copyLibcpp = new File(System.getProperty("java.io.tmpdir") + "/libc++.so");
-            Files.copy(libcpp.toPath(), copyLibcpp.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        }
-        libsepolwrap.deleteOnExit();
-        libcpp.deleteOnExit();
-        copyLibcpp.deleteOnExit();
-    }
-
     private void assertSepolicyTests(String test, String testExecutable,
             boolean includeVendorSepolicy) throws Exception {
-        setupLibraries();
         sepolicyTests = copyResourceToTempFile(testExecutable);
         sepolicyTests.setExecutable(true);
 
@@ -951,12 +928,6 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         }
 
         ProcessBuilder pb = new ProcessBuilder(args);
-        Map<String, String> env = pb.environment();
-        if (isMac()) {
-            env.put("DYLD_LIBRARY_PATH", System.getProperty("java.io.tmpdir"));
-        } else {
-            env.put("LD_LIBRARY_PATH", System.getProperty("java.io.tmpdir"));
-        }
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
         Process p = pb.start();

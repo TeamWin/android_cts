@@ -364,4 +364,9 @@ public class DebugTest extends AndroidTestCase {
         checkNumber(summary_total_pss);
         checkNumber(summary_total_swap);
     }
+
+    public void testEnableEmulatorTraceOutput() {
+        // The API is no-op and deprecated.
+        Debug.enableEmulatorTraceOutput();
+    }
 }

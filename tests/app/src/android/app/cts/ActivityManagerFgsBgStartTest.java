@@ -32,6 +32,7 @@ import static android.os.PowerExemptionManager.TEMPORARY_ALLOW_LIST_TYPE_NONE;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
+import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
@@ -41,20 +42,25 @@ import android.app.ActivityManager;
 import android.app.BroadcastOptions;
 import android.app.ForegroundServiceStartNotAllowedException;
 import android.app.Instrumentation;
+import android.app.NotificationManager;
 import android.app.cts.android.app.cts.tools.WaitForBroadcast;
 import android.app.cts.android.app.cts.tools.WatchUidRunner;
 import android.app.stubs.CommandReceiver;
 import android.app.stubs.LocalForegroundService;
 import android.app.stubs.LocalForegroundServiceLocation;
+import android.app.stubs.TestNotificationListener;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ServiceInfo;
+import android.media.session.MediaController;
+import android.media.session.MediaSessionManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerExemptionManager;
+import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.AsbSecurityTest;
@@ -75,6 +81,10 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 public class ActivityManagerFgsBgStartTest {
@@ -2059,6 +2069,73 @@ public class ActivityManagerFgsBgStartTest {
                 hiddenApiSettings.close();
             }
         }
+    }
+
+    @Test
+    public void testStartMediaPlaybackFromBg() throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        WatchUidRunner uidWatcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+        // Grant notification listener access in order to query
+        // MediaSessionManager.getActiveSessions().
+        toggleNotificationListenerAccess(true);
+        try {
+            // Enable the FGS background startForeground() restriction.
+            enableFgsRestriction(true, true, null);
+
+            final Bundle bundle = new Bundle();
+            final CountDownLatch latch = new CountDownLatch(1);
+            bundle.putParcelable(Intent.EXTRA_REMOTE_CALLBACK,
+                    new RemoteCallback(result -> latch.countDown()));
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_CREATE_ACTIVE_MEDIA_SESSION,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0 /* flags */, bundle);
+            if (!latch.await(WAITFOR_MSEC, TimeUnit.MILLISECONDS)) {
+                fail("Timed out waiting for the test app to receive the start_media_playback cmd");
+            }
+            uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+
+            final MediaSessionManager mediaSessionManager = mTargetContext.getSystemService(
+                    MediaSessionManager.class);
+            final List<MediaController> mediaControllers = mediaSessionManager.getActiveSessions(
+                    TestNotificationListener.getComponentName());
+            final MediaController controller = findMediaControllerForPkg(mediaControllers,
+                    PACKAGE_NAME_APP1);
+            // Send "play" command and verify that the app moves to FGS state.
+            controller.getTransportControls().play();
+            uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+            controller.getTransportControls().pause();
+            uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_SERVICE);
+            controller.getTransportControls().play();
+            uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+
+            controller.getTransportControls().stop();
+        } finally {
+            toggleNotificationListenerAccess(false);
+            uidWatcher.finish();
+        }
+    }
+
+    private MediaController findMediaControllerForPkg(List<MediaController> mediaControllers,
+            String packageName) {
+        for (MediaController controller : mediaControllers) {
+            if (packageName.equals(controller.getPackageName())) {
+                return controller;
+            }
+        }
+        return null;
+    }
+
+    private void toggleNotificationListenerAccess(boolean on) throws Exception {
+        final String cmd = "cmd notification " + (on ? "allow_listener " : "disallow_listener ")
+                + TestNotificationListener.getId();
+        CtsAppTestUtils.executeShellCmd(mInstrumentation, cmd);
+
+        final NotificationManager nm = mContext.getSystemService(NotificationManager.class);
+        final ComponentName listenerComponent = TestNotificationListener.getComponentName();
+        assertEquals(listenerComponent + " has incorrect listener access",
+                on, nm.isNotificationListenerAccessGranted(listenerComponent));
     }
 
     /**

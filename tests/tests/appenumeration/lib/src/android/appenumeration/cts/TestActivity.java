@@ -73,6 +73,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.content.PeriodicSync;
 import android.content.ServiceConnection;
 import android.content.SyncAdapterType;
 import android.content.SyncStatusObserver;
@@ -102,6 +103,7 @@ import android.view.accessibility.AccessibilityManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -282,6 +284,34 @@ public class TestActivity extends Activity {
                 final ComponentName componentName = intent.getBundleExtra(EXTRA_DATA)
                         .getParcelable(EXTRA_COMPONENT_NAME, ComponentName.class);
                 sendGetSyncAdapterControlPanel(remoteCallback, account, authority, componentName);
+            } else if (Constants.ACTION_REQUEST_PERIODIC_SYNC.equals(action)) {
+                final Account account = intent.getBundleExtra(EXTRA_DATA)
+                        .getParcelable(EXTRA_ACCOUNT, Account.class);
+                final String authority = intent.getBundleExtra(EXTRA_DATA)
+                        .getString(EXTRA_AUTHORITY);
+                requestPeriodicSync(remoteCallback, account, authority);
+            } else if (Constants.ACTION_SET_SYNC_AUTOMATICALLY.equals(action)) {
+                final Account account = intent.getBundleExtra(EXTRA_DATA)
+                        .getParcelable(EXTRA_ACCOUNT, Account.class);
+                final String authority = intent.getBundleExtra(EXTRA_DATA)
+                        .getString(EXTRA_AUTHORITY);
+                setSyncAutomatically(remoteCallback, account, authority);
+            } else if (Constants.ACTION_GET_SYNC_AUTOMATICALLY.equals(action)) {
+                final String authority = intent.getBundleExtra(EXTRA_DATA)
+                        .getString(EXTRA_AUTHORITY);
+                getSyncAutomatically(remoteCallback, authority);
+            } else if (Constants.ACTION_GET_IS_SYNCABLE.equals(action)) {
+                final Account account = intent.getBundleExtra(EXTRA_DATA)
+                        .getParcelable(EXTRA_ACCOUNT, Account.class);
+                final String authority = intent.getBundleExtra(EXTRA_DATA)
+                        .getString(EXTRA_AUTHORITY);
+                getIsSyncable(remoteCallback, account, authority);
+            } else if (Constants.ACTION_GET_PERIODIC_SYNCS.equals(action)) {
+                final Account account = intent.getBundleExtra(EXTRA_DATA)
+                        .getParcelable(EXTRA_ACCOUNT, Account.class);
+                final String authority = intent.getBundleExtra(EXTRA_DATA)
+                        .getString(EXTRA_AUTHORITY);
+                getPeriodicSyncs(remoteCallback, account, authority);
             } else if (Constants.ACTION_AWAIT_LAUNCHER_APPS_CALLBACK.equals(action)) {
                 final int expectedEventCode = intent.getBundleExtra(EXTRA_DATA)
                         .getInt(EXTRA_FLAGS, CALLBACK_EVENT_INVALID);
@@ -780,6 +810,52 @@ public class TestActivity extends Activity {
                 activityManager.getRunningServiceControlPanel(componentName);
         final Bundle result = new Bundle();
         result.putParcelable(EXTRA_RETURN_RESULT, pendingIntent);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void requestPeriodicSync(RemoteCallback remoteCallback, Account account,
+            String authority) {
+        ContentResolver.addPeriodicSync(account, authority, Bundle.EMPTY,
+                TimeUnit.HOURS.toSeconds(1));
+        remoteCallback.sendResult(null);
+        finish();
+    }
+
+    private void setSyncAutomatically(RemoteCallback remoteCallback, Account account,
+            String authority) {
+        ContentResolver.setSyncAutomatically(account, authority, true /* sync */);
+        remoteCallback.sendResult(null);
+        finish();
+    }
+
+    private void getSyncAutomatically(RemoteCallback remoteCallback, String authority) {
+        final boolean ret = ContentResolver.getSyncAutomatically(null /* account */, authority);
+        final Bundle result = new Bundle();
+        result.putBoolean(EXTRA_RETURN_RESULT, ret);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void getIsSyncable(RemoteCallback remoteCallback, Account account,
+            String authority) {
+        final int ret = ContentResolver.getIsSyncable(account, authority);
+        final Bundle result = new Bundle();
+        result.putInt(EXTRA_RETURN_RESULT, ret);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void getPeriodicSyncs(RemoteCallback remoteCallback, Account account,
+            String authority) {
+        final List<PeriodicSync> periodicSyncList =
+                ContentResolver.getPeriodicSyncs(account, authority);
+        final ArrayList<Parcelable> parcelables = new ArrayList<>();
+        for (PeriodicSync sync : periodicSyncList) {
+            parcelables.add(sync);
+        }
+        final Bundle result = new Bundle();
+        result.putParcelableArrayList(EXTRA_RETURN_RESULT, parcelables);
         remoteCallback.sendResult(result);
         finish();
     }

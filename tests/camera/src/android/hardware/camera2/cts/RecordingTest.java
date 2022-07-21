@@ -1235,7 +1235,11 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                         mOutMediaFileName = mDebugFileNameBase + "/test_cslowMo_video_" +
                             captureRate + "fps_" + id + "_" + size.toString() + ".mp4";
 
-                        Log.v(TAG, "previewFrameRate:" + previewFrameRate);
+                        // b/239101664 It appears that video frame rates higher than 30 fps may not
+                        // trigger slow motion recording consistently.
+                        int videoFrameRate = previewFrameRate > VIDEO_FRAME_RATE ?
+                                VIDEO_FRAME_RATE : previewFrameRate;
+                        Log.v(TAG, "videoFrameRate:" + videoFrameRate);
 
                         int cameraId = Integer.valueOf(mCamera.getId());
                         int videoEncoder = MediaRecorder.VideoEncoder.H264;
@@ -1246,7 +1250,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
 
                                 if (profile.videoFrameHeight == size.getHeight() &&
                                         profile.videoFrameWidth == size.getWidth() &&
-                                        profile.videoFrameRate == previewFrameRate) {
+                                        profile.videoFrameRate == videoFrameRate) {
                                     videoEncoder = profile.videoCodec;
                                     // Since mCamcorderProfileList is a list representing different
                                     // resolutions, we can break when a profile with the same
@@ -1256,7 +1260,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                             }
                         }
 
-                        prepareRecording(size, previewFrameRate, captureRate, videoEncoder);
+                        prepareRecording(size, videoFrameRate, captureRate, videoEncoder);
 
                         SystemClock.sleep(PREVIEW_DURATION_MS);
 
@@ -1264,7 +1268,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
 
                         SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
                         // Start recording
-                        startSlowMotionRecording(/*useMediaRecorder*/true, previewFrameRate,
+                        startSlowMotionRecording(/*useMediaRecorder*/true, videoFrameRate,
                                 captureRate, fpsRange, resultListener,
                                 /*useHighSpeedSession*/true);
 
@@ -1277,7 +1281,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                         startConstrainedPreview(fpsRange, previewResultListener);
 
                         // Convert number of frames camera produced into the duration in unit of ms.
-                        float frameDurationMs = 1000.0f / previewFrameRate;
+                        float frameDurationMs = 1000.0f / videoFrameRate;
                         float durationMs = resultListener.getTotalNumFrames() * frameDurationMs;
 
                         // Validation.

@@ -142,13 +142,13 @@ public class PassFailButtons {
 
     public static class Activity extends android.app.Activity implements PassFailActivity {
         private WakeLock mWakeLock;
-        private final CtsVerifierReportLog mReportLog;
+        private CtsVerifierReportLog mReportLog;
         private final TestResultHistoryCollection mHistoryCollection;
 
         protected boolean mRequireReportLogToPass;
 
         public Activity() {
-            this.mReportLog = new CtsVerifierReportLog(getReportFileName(), getReportSectionName());
+            newReportLog();
             this.mHistoryCollection = new TestResultHistoryCollection();
         }
 
@@ -209,6 +209,11 @@ public class PassFailButtons {
             PassFailButtons.setTestResultAndFinishHelper(
                     this, getTestId(), getTestDetails(), passed, getReportLog(),
                     getHistoryCollection());
+        }
+
+        protected CtsVerifierReportLog newReportLog() {
+            return mReportLog = new CtsVerifierReportLog(
+                    getReportFileName(), getReportSectionName());
         }
 
         @Override

@@ -637,6 +637,7 @@ public class PackageManagerShellCommandTest {
             writeFileToSession(session, "hw5_split0", TEST_HW5_SPLIT0);
 
             final CompletableFuture<Boolean> result = new CompletableFuture<>();
+            final CompletableFuture<Integer> status = new CompletableFuture<>();
             session.commit(new IntentSender((IIntentSender) new IIntentSender.Stub() {
                 @Override
                 public void send(int code, Intent intent, String resolvedType,
@@ -645,11 +646,15 @@ public class PackageManagerShellCommandTest {
                     boolean dontKillApp =
                             (session.getInstallFlags() & PackageManager.INSTALL_DONT_KILL_APP) != 0;
                     result.complete(dontKillApp);
+                    status.complete(
+                            intent.getIntExtra(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE));
                 }
             }));
 
             // We are adding split. OK to have the flag.
             assertTrue(result.get());
+            // Verify that the return status is set
+            assertEquals(PackageInstaller.STATUS_SUCCESS, (int) status.get());
         } finally {
             getUiAutomation().dropShellPermissionIdentity();
         }

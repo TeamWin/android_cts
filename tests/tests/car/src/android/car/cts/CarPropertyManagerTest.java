@@ -113,6 +113,10 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     private static final ImmutableSet<Integer> VEHICLE_LIGHT_STATES =
             ImmutableSet.<Integer>builder().add(/*VehicleLightState.OFF=*/0,
                     /*VehicleLightState.ON=*/1, /*VehicleLightState.DAYTIME_RUNNING=*/2).build();
+    private static final ImmutableSet<Integer> VEHICLE_LIGHT_SWITCHES =
+            ImmutableSet.<Integer>builder().add(/*VehicleLightSwitch.OFF=*/0,
+                    /*VehicleLightSwitch.ON=*/1, /*VehicleLightSwitch.DAYTIME_RUNNING=*/2,
+                    /*VehicleLightSwitch.AUTOMATIC=*/256).build();
     /** contains property Ids for the properties required by CDD */
     private final ArraySet<Integer> mPropertyIds = new ArraySet<>();
     private CarPropertyManager mCarPropertyManager;
@@ -664,29 +668,27 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     public void testDoorPosIfSupported() {
         adoptSystemLevelPermission(/* Car.PERMISSION_CONTROL_CAR_DOORS = */
                 "android.car.permission.CONTROL_CAR_DOORS", () -> {
-                VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.DOOR_POS,
-                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
-                    VehicleAreaType.VEHICLE_AREA_TYPE_DOOR,
-                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                    Integer.class).setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
-                            assertWithMessage(
-                                "DOOR_POS Integer value must be greater than or equal 0").that(
-                                    (Integer) carPropertyValue.getValue()).isAtLeast(0);
-                        }).build().verify(mCarPropertyManager);
-            });
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.DOOR_POS,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_DOOR,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues().requireMinValuesToBeZero().build()
+                            .verify(mCarPropertyManager);
+                });
     }
 
     @Test
     public void testDoorMoveIfSupported() {
         adoptSystemLevelPermission(/* Car.PERMISSION_CONTROL_CAR_DOORS = */
                 "android.car.permission.CONTROL_CAR_DOORS", () -> {
-                VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.DOOR_MOVE,
-                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
-                    VehicleAreaType.VEHICLE_AREA_TYPE_DOOR,
-                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                    Integer.class).build().verify(mCarPropertyManager);
-            });
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.DOOR_MOVE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_DOOR,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues()
+                            .requireZeroToBeContainedInMinMaxRanges().build().verify(
+                            mCarPropertyManager);
+                });
     }
 
     @Test
@@ -741,7 +743,7 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                             CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                             VehicleAreaType.VEHICLE_AREA_TYPE_WHEEL,
                             CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS,
-                            Float.class).setCarPropertyValueVerifier(
+                            Float.class).requireMinMaxValues().setCarPropertyValueVerifier(
                                     (carPropertyConfig, carPropertyValue) -> assertWithMessage(
                                             "TIRE_PRESSURE Float value"
                                                     + " at Area ID equals to "
@@ -1351,6 +1353,18 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     }
 
     @Test
+    public void testHeadlightsSwitchIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HEADLIGHTS_SWITCH,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                    .build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
     public void testTrailerPresentIfSupported() {
         adoptSystemLevelPermission(Car.PERMISSION_PRIVILEGED_CAR_INFO, () -> {
             VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.TRAILER_PRESENT,
@@ -1362,6 +1376,86 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                             0, /*TrailerState.NOT_PRESENT*/
                             1, /*TrailerState.PRESENT=*/2, /*TrailerState.ERROR=*/
                             3)).build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    public void testHighBeamLightsSwitchIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HIGH_BEAM_LIGHTS_SWITCH,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                    .build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    public void testFogLightsSwitchIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.FOG_LIGHTS_SWITCH,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                    .setCarPropertyValueVerifier((carPropertyConfig, carPropertyValue) -> {
+                        assertWithMessage("FRONT_FOG_LIGHTS_SWITCH must not be implemented"
+                                + "when FOG_LIGHTS_SWITCH is implemented")
+                                .that(mCarPropertyManager.getCarPropertyConfig(
+                                        VehiclePropertyIds.FRONT_FOG_LIGHTS_SWITCH)).isNull();
+
+                        assertWithMessage("REAR_FOG_LIGHTS_SWITCH must not be implemented"
+                                + "when FOG_LIGHTS_SWITCH is implemented")
+                                .that(mCarPropertyManager.getCarPropertyConfig(
+                                        VehiclePropertyIds.REAR_FOG_LIGHTS_SWITCH)).isNull();
+                    }).build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    public void testHazardLightsSwitchIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HAZARD_LIGHTS_SWITCH,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                    .build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    public void testFrontFogLightsSwitchIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.FRONT_FOG_LIGHTS_SWITCH,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                    .setCarPropertyValueVerifier((carPropertyConfig, carPropertyValue) -> {
+                        assertWithMessage("FOG_LIGHTS_SWITCH must not be implemented"
+                                + "when FRONT_FOG_LIGHTS_SWITCH is implemented")
+                                .that(mCarPropertyManager.getCarPropertyConfig(
+                                        VehiclePropertyIds.FOG_LIGHTS_SWITCH)).isNull();
+                    }).build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    public void testRearFogLightsSwitchIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_EXTERIOR_LIGHTS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.REAR_FOG_LIGHTS_SWITCH,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                    .setCarPropertyValueVerifier((carPropertyConfig, carPropertyValue) -> {
+                        assertWithMessage("FOG_LIGHTS_SWITCH must not be implemented"
+                                + "when REAR_FOG_LIGHTS_SWITCH is implemented")
+                                .that(mCarPropertyManager.getCarPropertyConfig(
+                                        VehiclePropertyIds.FOG_LIGHTS_SWITCH)).isNull();
+                    }).build().verify(mCarPropertyManager);
         });
     }
 

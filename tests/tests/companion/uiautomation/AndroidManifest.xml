@@ -19,6 +19,7 @@
     package="android.companion.cts.uiautomation">
 
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <uses-permission android:name="android.permission.DELIVER_COMPANION_MESSAGES" />
 
     <instrumentation
         android:name="androidx.test.runner.AndroidJUnitRunner"

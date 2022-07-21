@@ -25,7 +25,6 @@
         <package android:name="com.android.cts.mockspellchecker" />
     </queries>
 
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <application android:label="CtsInputMethodTestCases"
          android:multiArch="true"
          android:supportsRtl="true"

@@ -1116,14 +1116,18 @@ public class PinnedStackTests extends ActivityManagerTestBase {
          * 3) Bring the activity in the dynamic stack forward to trigger PiP
          */
         launchActivity(RESUME_WHILE_PAUSING_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        final int taskDisplayAreaFeatureId =
+                mWmState.getTaskDisplayAreaFeatureId(RESUME_WHILE_PAUSING_ACTIVITY);
         // Launch an activity that will enter PiP when it is paused with a delay that is long enough
         // for the next resumeWhilePausing activity to finish resuming, but slow enough to not
         // trigger the current system pause timeout (currently 500ms)
-        launchActivity(PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
+        launchActivityOnTaskDisplayArea(PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
+                taskDisplayAreaFeatureId,
                 extraString(EXTRA_ENTER_PIP_ON_PAUSE, "true"),
                 extraString(EXTRA_ON_PAUSE_DELAY, "350"),
                 extraString(EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP, "true"));
-        launchActivity(RESUME_WHILE_PAUSING_ACTIVITY);
+        launchActivityOnTaskDisplayArea(RESUME_WHILE_PAUSING_ACTIVITY,
+                WINDOWING_MODE_UNDEFINED, taskDisplayAreaFeatureId);
         // if the activity is not launched in same TDA, pip is not triggered.
         assumeTrue("Should launch in same tda",
                 mWmState.getTaskDisplayArea(RESUME_WHILE_PAUSING_ACTIVITY)
@@ -1515,10 +1519,13 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     public void testAutoPipOnLaunchingRegularActivity() {
         // Launch the PIP activity and set its pip params to allow auto-pip.
         launchActivity(PIP_ACTIVITY, extraString(EXTRA_ALLOW_AUTO_PIP, "true"));
+        final int taskDisplayAreaFeatureId =
+                mWmState.getTaskDisplayAreaFeatureId(PIP_ACTIVITY);
         assertPinnedStackDoesNotExist();
 
-        // Launch a regular activity and ensure that there is a pinned stack.
-        launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        // Launch another and ensure that there is a pinned stack.
+        launchActivityOnTaskDisplayArea(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
+                taskDisplayAreaFeatureId);
         // if the activities do not launch in same TDA, pip is not triggered.
         assumeTrue("Should launch in same tda",
                 mWmState.getTaskDisplayArea(PIP_ACTIVITY)

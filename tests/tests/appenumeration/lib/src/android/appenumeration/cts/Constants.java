@@ -137,6 +137,8 @@ public class Constants {
     /** A package that offers an activity which handles preferred activity test intent for the
      *  tests of preferred activity. */
     public static final String TARGET_PREFERRED_ACTIVITY = PKG_BASE + "preferred.activity";
+    /** An authority that offers a syncadapter. */
+    public static final String TARGET_SYNCADAPTER_AUTHORITY = TARGET_SYNCADAPTER + ".authority";
 
     public static final String AUTHORITY_SUFFIX = ".authority";
     private static final String BASE_PATH = "/data/local/tmp/cts/appenumeration/";
@@ -228,6 +230,16 @@ public class Constants {
             PKG_BASE + "cts.action.GET_INSTALLED_APPWIDGET_PROVIDERS";
     public static final String ACTION_REQUEST_SYNC_AND_AWAIT_STATUS =
             PKG_BASE + "cts.action.REQUEST_SYNC_AND_AWAIT_STATUS";
+    public static final String ACTION_REQUEST_PERIODIC_SYNC =
+            PKG_BASE + "cts.action.REQUEST_PERIODIC_SYNC";
+    public static final String ACTION_SET_SYNC_AUTOMATICALLY =
+            PKG_BASE + "cts.action.SET_SYNC_AUTOMATICALLY";
+    public static final String ACTION_GET_SYNC_AUTOMATICALLY =
+            PKG_BASE + "cts.action.GET_SYNC_AUTOMATICALLY";
+    public static final String ACTION_GET_IS_SYNCABLE =
+            PKG_BASE + "cts.action.GET_IS_SYNCABLE";
+    public static final String ACTION_GET_PERIODIC_SYNCS =
+            PKG_BASE + "cts.action.GET_PERIODIC_SYNCS";
     public static final String ACTION_AWAIT_PACKAGES_SUSPENDED =
             PKG_BASE + "cts.action.AWAIT_PACKAGES_SUSPENDED";
     public static final String ACTION_LAUNCHER_APPS_IS_ACTIVITY_ENABLED =

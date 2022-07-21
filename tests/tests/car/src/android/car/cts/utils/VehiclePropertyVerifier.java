@@ -39,6 +39,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class VehiclePropertyVerifier<T> {
     private final static String CAR_PROPERTY_VALUE_SOURCE_GETTER = "Getter";
@@ -61,6 +62,9 @@ public class VehiclePropertyVerifier<T> {
     private final ImmutableSet<Integer> mPossibleCarPropertyValues;
     private final boolean mRequirePropertyValueToBeInConfigArray;
     private final boolean mVerifySetterWithConfigArrayValues;
+    private final boolean mRequireMinMaxValues;
+    private final boolean mRequireMinValuesToBeZero;
+    private final boolean mRequireZeroToBeContainedInMinMaxRanges;
 
     private VehiclePropertyVerifier(int propertyId, int access, int areaType, int changeMode,
             Class<T> propertyType, boolean requiredProperty,
@@ -70,7 +74,10 @@ public class VehiclePropertyVerifier<T> {
             ImmutableSet<Integer> possibleConfigArrayValues,
             ImmutableSet<Integer> possibleCarPropertyValues,
             boolean requirePropertyValueToBeInConfigArray,
-            boolean verifySetterWithConfigArrayValues) {
+            boolean verifySetterWithConfigArrayValues,
+            boolean requireMinMaxValues,
+            boolean requireMinValuesToBeZero,
+            boolean requireZeroToBeContainedInMinMaxRanges) {
         mPropertyId = propertyId;
         mPropertyName = VehiclePropertyIds.toString(propertyId);
         mAccess = access;
@@ -85,6 +92,9 @@ public class VehiclePropertyVerifier<T> {
         mPossibleCarPropertyValues = possibleCarPropertyValues;
         mRequirePropertyValueToBeInConfigArray = requirePropertyValueToBeInConfigArray;
         mVerifySetterWithConfigArrayValues = verifySetterWithConfigArrayValues;
+        mRequireMinMaxValues = requireMinMaxValues;
+        mRequireMinValuesToBeZero = requireMinValuesToBeZero;
+        mRequireZeroToBeContainedInMinMaxRanges = requireZeroToBeContainedInMinMaxRanges;
     }
 
     public static <T> Builder<T> newBuilder(int propertyId, int access, int areaType,
@@ -189,6 +199,8 @@ public class VehiclePropertyVerifier<T> {
             verifySetterWithConfigArrayValues(carPropertyConfig, carPropertyManager);
         } else if (!mPossibleCarPropertyValues.isEmpty()) {
             verifySetterWithPossibleCarPropertyValues(carPropertyConfig, carPropertyManager);
+        } else {
+            verifySetterWithMinMaxValues(carPropertyConfig, carPropertyManager);
         }
     }
 
@@ -208,17 +220,40 @@ public class VehiclePropertyVerifier<T> {
             CarPropertyManager carPropertyManager, Collection<Integer> valuesToSet) {
         for (Integer valueToSet : valuesToSet) {
             for (int areaId : carPropertyConfig.getAreaIds()) {
-                CarPropertyValue<Integer> currentCarPropertyValue = carPropertyManager.getProperty(
-                        mPropertyId, areaId);
-                verifyCarPropertyValue(carPropertyConfig, currentCarPropertyValue, areaId,
-                        CAR_PROPERTY_VALUE_SOURCE_GETTER);
-                if (currentCarPropertyValue.getValue().equals(valueToSet)) {
-                    continue;
-                }
-                verifySetProperty((CarPropertyConfig<Integer>) carPropertyConfig,
-                        carPropertyManager, areaId, valueToSet);
+                verifyIntegerSetProperty(carPropertyConfig, carPropertyManager, areaId, valueToSet);
             }
         }
+    }
+
+    private void verifySetterWithMinMaxValues(CarPropertyConfig<?> carPropertyConfig,
+            CarPropertyManager carPropertyManager) {
+        for (int areaId : carPropertyConfig.getAreaIds()) {
+            if (carPropertyConfig.getMinValue(areaId) == null || carPropertyConfig.getMinValue(
+                    areaId) == null) {
+                continue;
+            }
+            List<Integer> valuesToSet = IntStream.rangeClosed(
+                    ((Integer) carPropertyConfig.getMinValue(areaId)).intValue(),
+                    ((Integer) carPropertyConfig.getMaxValue(areaId)).intValue()).boxed().collect(
+                    Collectors.toList());
+
+            for (Integer valueToSet : valuesToSet) {
+                verifyIntegerSetProperty(carPropertyConfig, carPropertyManager, areaId, valueToSet);
+            }
+        }
+    }
+
+    private void verifyIntegerSetProperty(CarPropertyConfig<?> carPropertyConfig,
+            CarPropertyManager carPropertyManager, int areaId, Integer valueToSet) {
+        CarPropertyValue<Integer> currentCarPropertyValue = carPropertyManager.getProperty(
+                mPropertyId, areaId);
+        verifyCarPropertyValue(carPropertyConfig, currentCarPropertyValue, areaId,
+                CAR_PROPERTY_VALUE_SOURCE_GETTER);
+        if (currentCarPropertyValue.getValue().equals(valueToSet)) {
+            return;
+        }
+        verifySetProperty((CarPropertyConfig<Integer>) carPropertyConfig, carPropertyManager,
+                areaId, valueToSet);
     }
 
     private <T> void verifySetProperty(CarPropertyConfig<T> carPropertyConfig,
@@ -322,6 +357,12 @@ public class VehiclePropertyVerifier<T> {
         assertWithMessage(mPropertyName + " must be " + mPropertyType + " type property")
                 .that(carPropertyConfig.getPropertyType()).isEqualTo(mPropertyType);
 
+        assertWithMessage(mPropertyName + "'s must have at least 1 area ID defined").that(
+                carPropertyConfig.getAreaIds().length).isAtLeast(1);
+        assertWithMessage(mPropertyName + "'s area IDs must all be unique: " + Arrays.toString(
+                carPropertyConfig.getAreaIds())).that(ImmutableSet.copyOf(Arrays.stream(
+                carPropertyConfig.getAreaIds()).boxed().collect(Collectors.toList())).size()
+                == carPropertyConfig.getAreaIds().length).isTrue();
         if (mAreaIdsVerifier.isPresent()) {
             mAreaIdsVerifier.get().verify(carPropertyConfig.getAreaIds());
         } else if (mAreaType == VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL) {
@@ -330,11 +371,6 @@ public class VehiclePropertyVerifier<T> {
                             + areaTypeToString(mAreaType))
                     .that(carPropertyConfig.getAreaIds()).isEqualTo(new int[]{0});
         } else if (mAreaType == VehicleAreaType.VEHICLE_AREA_TYPE_WHEEL) {
-            assertWithMessage(mPropertyName + "'s Area IDs must all be unique").that(
-                    ImmutableSet.copyOf(Arrays.stream(
-                            carPropertyConfig.getAreaIds()).boxed().collect(
-                            Collectors.toList())).size()
-                            == carPropertyConfig.getAreaIds().length).isTrue();
             for (int areaId : carPropertyConfig.getAreaIds()) {
                 assertWithMessage(mPropertyName + "'s area ID: " + areaId
                         + " must be a valid VehicleAreaWheel area ID").that(
@@ -373,12 +409,43 @@ public class VehiclePropertyVerifier<T> {
         for (int areaId : carPropertyConfig.getAreaIds()) {
             T areaIdMinValue = (T) carPropertyConfig.getMinValue(areaId);
             T areaIdMaxValue = (T) carPropertyConfig.getMaxValue(areaId);
+            if (mRequireMinMaxValues) {
+                assertWithMessage(mPropertyName + " - area ID: " + areaId
+                        + " must have min value defined").that(areaIdMinValue).isNotNull();
+                assertWithMessage(mPropertyName + " - area ID: " + areaId
+                        + " must have max value defined").that(areaIdMaxValue).isNotNull();
+            }
+            if (mRequireMinValuesToBeZero) {
+                assertWithMessage(
+                        mPropertyName + " - area ID: " + areaId + " min value must be zero").that(
+                        areaIdMinValue).isEqualTo(0);
+            }
+            if (mRequireZeroToBeContainedInMinMaxRanges) {
+                assertWithMessage(mPropertyName + " - areaId: " + areaId
+                        + "'s max and min range must contain zero").that(
+                        verifyMaxAndMinRangeContainsZero(areaIdMinValue, areaIdMaxValue)).isTrue();
+
+            }
             if (areaIdMinValue == null || areaIdMaxValue == null) {
                 continue;
             }
             assertWithMessage(
                     mPropertyName + " - areaId: " + areaId + "'s max value must be >= min value")
                     .that(verifyMaxAndMin(areaIdMinValue, areaIdMaxValue)).isTrue();
+        }
+    }
+
+    private boolean verifyMaxAndMinRangeContainsZero(T min, T max) {
+        int propertyType = mPropertyId & VehiclePropertyType.MASK;
+        switch (propertyType) {
+            case VehiclePropertyType.INT32:
+                return (Integer) max >= 0 && (Integer) min <= 0;
+            case VehiclePropertyType.INT64:
+                return (Long) max >= 0 && (Long) min <= 0;
+            case VehiclePropertyType.FLOAT:
+                return (Float) max >= 0 && (Float) min <= 0;
+            default:
+                return false;
         }
     }
 
@@ -536,7 +603,9 @@ public class VehiclePropertyVerifier<T> {
         private ImmutableSet<Integer> mPossibleCarPropertyValues = ImmutableSet.of();
         private boolean mRequirePropertyValueToBeInConfigArray = false;
         private boolean mVerifySetterWithConfigArrayValues = false;
-
+        private boolean mRequireMinMaxValues = false;
+        private boolean mRequireMinValuesToBeZero = false;
+        private boolean mRequireZeroToBeContainedInMinMaxRanges = false;
 
         private Builder(int propertyId, int access, int areaType, int changeMode,
                 Class<T> propertyType) {
@@ -590,12 +659,28 @@ public class VehiclePropertyVerifier<T> {
             return this;
         }
 
+        public Builder<T> requireMinMaxValues() {
+            mRequireMinMaxValues = true;
+            return this;
+        }
+
+        public Builder<T> requireMinValuesToBeZero() {
+            mRequireMinValuesToBeZero = true;
+            return this;
+        }
+
+        public Builder<T> requireZeroToBeContainedInMinMaxRanges() {
+            mRequireZeroToBeContainedInMinMaxRanges = true;
+            return this;
+        }
+
         public VehiclePropertyVerifier<T> build() {
             return new VehiclePropertyVerifier<>(mPropertyId, mAccess, mAreaType, mChangeMode,
                     mPropertyType, mRequiredProperty, mConfigArrayVerifier,
                     mCarPropertyValueVerifier, mAreaIdsVerifier, mPossibleConfigArrayValues,
                     mPossibleCarPropertyValues, mRequirePropertyValueToBeInConfigArray,
-                    mVerifySetterWithConfigArrayValues);
+                    mVerifySetterWithConfigArrayValues, mRequireMinMaxValues,
+                    mRequireMinValuesToBeZero, mRequireZeroToBeContainedInMinMaxRanges);
         }
     }
 

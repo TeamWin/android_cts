@@ -78,6 +78,8 @@ private const val IDLE_TIMEOUT_MILLIS: Long = 1000
 private const val UNEXPECTED_TIMEOUT_MILLIS = 1000
 private const val TIMEOUT_MILLIS: Long = 20000
 private const val TV_MIC_INDICATOR_WINDOW_TITLE = "MicrophoneCaptureIndicator"
+private const val MIC_LABEL_NAME = "microphone_toggle_label_qs"
+private const val CAMERA_LABEL_NAME = "camera_toggle_label_qs"
 
 class CameraMicIndicatorsPermissionTest {
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -90,11 +92,9 @@ class CameraMicIndicatorsPermissionTest {
 
     private val isTv = packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
     private val isCar = packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    private val micLabel = getPermissionControllerString(MIC_LABEL_NAME)
+    private val cameraLabel = getPermissionControllerString(CAMERA_LABEL_NAME)
     private var wasEnabled = false
-    private val micLabel = packageManager.getPermissionGroupInfo(
-        Manifest.permission_group.MICROPHONE, 0).loadLabel(packageManager).toString()
-    private val cameraLabel = packageManager.getPermissionGroupInfo(
-        Manifest.permission_group.CAMERA, 0).loadLabel(packageManager).toString()
     private var isScreenOn = false
     private var screenTimeoutBeforeTest: Long = 0L
 
@@ -518,6 +518,20 @@ class CameraMicIndicatorsPermissionTest {
                 throw e
             }
             automatorMethod(remainingTime)
+        }
+    }
+
+    private fun getPermissionControllerString(resourceName: String): String {
+        val permissionControllerPkg = context.packageManager.permissionControllerPackageName
+        try {
+            val permissionControllerContext =
+                context.createPackageContext(permissionControllerPkg, 0)
+            val resourceId =
+                permissionControllerContext.resources.getIdentifier(
+                    resourceName, "string", "com.android.permissioncontroller")
+            return permissionControllerContext.getString(resourceId)
+        } catch (e: PackageManager.NameNotFoundException) {
+            throw RuntimeException(e)
         }
     }
 }

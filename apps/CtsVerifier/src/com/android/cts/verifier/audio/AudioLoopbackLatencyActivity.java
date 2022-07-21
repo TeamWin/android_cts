@@ -127,11 +127,11 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
 
     private TestSpec[] mTestSpecs = new TestSpec[NUM_TEST_ROUTES];
     class TestSpec {
+        private static final String TAG = "AudioLoopbackLatencyActivity.TestSpec";
         // impossibly low latencies (indicating something in the test went wrong).
         protected static final double LOWEST_REASONABLE_LATENCY_MILLIS = 1.0;
 
         final int mRouteId;
-        // final double mMustLatencyMS;
 
         // runtime assigned device ID
         static final int DEVICEID_NONE = -1;
@@ -151,7 +151,6 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         boolean mRouteAvailable; // Have we seen this route/device at any time
         boolean mRouteConnected; // is the route available NOW
         boolean mTestRun;
-        // boolean mTestPass;
 
         TestSpec(int routeId, double requiredConfidence) {
             mRouteId = routeId;
@@ -179,14 +178,6 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
                     StatUtils.calculateMeanAbsoluteDeviation(
                             mMeanLatencyMS, mLatencyMS, mLatencyMS.length);
             mMeanConfidence = StatUtils.calculateMean(mConfidence);
-        }
-
-        boolean getRouteAvailable() {
-            return mRouteAvailable;
-        }
-
-        boolean getTestRun() {
-            return mTestRun;
         }
 
         boolean isMeasurementValid() {
@@ -224,60 +215,42 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         }
 
         // ReportLog Schema (per route)
-        private static final String KEY_ROUTEAVAILABLE = "route_available";
-        private static final String KEY_ROUTECONNECTED = "route_connected";
-        private static final String KEY_ROUTERUN = "route_run";
-        private static final String KEY_LATENCY = "route_latency";
-        private static final String KEY_CONFIDENCE = "route_confidence";
-        private static final String KEY_MEANABSDEVIATION = "route_mean_absolute_deviation";
-        private static final String KEY_IS_PERIPHERAL_ATTACHED = "route_is_peripheral_attached";
-        private static final String KEY_INPUT_PERIPHERAL_NAME = "route_input_peripheral";
-        private static final String KEY_OUTPUT_PERIPHERAL_NAME = "route_output_peripheral";
-        private static final String KEY_TEST_PERIPHERAL = "route_test_peripheral";
-
-        String makeSectionKey(String key) {
-            return Integer.toString(mRouteId) + "_" + key;
-        }
+        private static final String KEY_ROUTEINDEX = "route_index";
+        private static final String KEY_LATENCY = "latency";
+        private static final String KEY_CONFIDENCE = "confidence";
+        private static final String KEY_MEANABSDEVIATION = "mean_absolute_deviation";
+        private static final String KEY_IS_PERIPHERAL_ATTACHED = "is_peripheral_attached";
+        private static final String KEY_INPUT_PERIPHERAL_NAME = "input_peripheral";
+        private static final String KEY_OUTPUT_PERIPHERAL_NAME = "output_peripheral";
+        private static final String KEY_TEST_PERIPHERAL = "test_peripheral";
 
         void recordTestResults(CtsVerifierReportLog reportLog) {
             reportLog.addValue(
-                    makeSectionKey(KEY_ROUTEAVAILABLE),
-                    mRouteAvailable ? 1 : 0,
+                    KEY_ROUTEINDEX,
+                    mRouteId,
                     ResultType.NEUTRAL,
                     ResultUnit.NONE);
 
             reportLog.addValue(
-                    makeSectionKey(KEY_ROUTECONNECTED),
-                    mRouteConnected ? 1 : 0,
-                    ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-
-            reportLog.addValue(
-                    makeSectionKey(KEY_ROUTERUN),
-                    mTestRun ? 1 : 0,
-                    ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-
-            reportLog.addValue(
-                    makeSectionKey(KEY_LATENCY),
+                    KEY_LATENCY,
                     mMeanLatencyMS,
                     ResultType.LOWER_BETTER,
                     ResultUnit.MS);
 
             reportLog.addValue(
-                    makeSectionKey(KEY_CONFIDENCE),
+                    KEY_CONFIDENCE,
                     mMeanConfidence,
                     ResultType.HIGHER_BETTER,
                     ResultUnit.NONE);
 
             reportLog.addValue(
-                    makeSectionKey(KEY_MEANABSDEVIATION),
+                    KEY_MEANABSDEVIATION,
                     mMeanAbsoluteDeviation,
                     ResultType.NEUTRAL,
                     ResultUnit.NONE);
 
             reportLog.addValue(
-                    makeSectionKey(KEY_TEST_PERIPHERAL),
+                    KEY_TEST_PERIPHERAL,
                     mDeviceName,
                     ResultType.NEUTRAL,
                     ResultUnit.NONE);
@@ -476,7 +449,6 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
                     mTestSpecs[TESTROUTE_USB].mDeviceName = devInfo.getProductName().toString();
             }
 
-            // setTestButtonsState();
             enableStartButtons(true);
         }
     }
@@ -535,69 +507,66 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         return setTestNameSuffix(sCurrentDisplayMode, "audio_loopback_latency_activity");
     }
 
-    // Schema
+    // Test-Schema
     private static final String KEY_SAMPLE_RATE = "sample_rate";
     private static final String KEY_IS_PRO_AUDIO = "is_pro_audio";
     private static final String KEY_IS_LOW_LATENCY = "is_low_latency";
     private static final String KEY_TEST_MMAP = "supports_mmap";
     private static final String KEY_TEST_MMAPEXCLUSIVE = "supports_mmap_exclusive";
     private static final String KEY_LEVEL = "level";
-    //
-    // Subclasses should call this explicitly. SubClasses should call submit() after their logs
-    //
+
+    private void recordRouteResults(int routeIndex) {
+        if (mTestSpecs[routeIndex].mTestRun) {
+            CtsVerifierReportLog reportLog = newReportLog();
+
+            int audioLevel = mAudioLevelSeekbar.getProgress();
+            reportLog.addValue(
+                    KEY_LEVEL,
+                    audioLevel,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_IS_PRO_AUDIO,
+                    mClaimsProAudio,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_TEST_MMAP,
+                    mSupportsMMAP,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_TEST_MMAPEXCLUSIVE,
+                    mSupportsMMAPExclusive,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_SAMPLE_RATE,
+                    mNativeAnalyzerThread.getSampleRate(),
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_IS_LOW_LATENCY,
+                    mNativeAnalyzerThread.isLowLatencyStream(),
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            mTestSpecs[routeIndex].recordTestResults(reportLog);
+
+            reportLog.submit();
+        }
+    }
+
     @Override
     public void recordTestResults() {
-        Log.i(TAG, "recordTestResults() mNativeAnalyzerThread:" + mNativeAnalyzerThread);
-
-        // We need to rework that
-        CtsVerifierReportLog reportLog = getReportLog();
-
-        int audioLevel = mAudioLevelSeekbar.getProgress();
-        reportLog.addValue(
-                KEY_LEVEL,
-                audioLevel,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        reportLog.addValue(
-                KEY_IS_PRO_AUDIO,
-                mClaimsProAudio,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        reportLog.addValue(
-                KEY_TEST_MMAP,
-                mSupportsMMAP,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        reportLog.addValue(
-                KEY_TEST_MMAPEXCLUSIVE ,
-                mSupportsMMAPExclusive,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        if (mNativeAnalyzerThread == null) {
-            return; // no test results to report
+        for (int route = 0; route < NUM_TEST_ROUTES; route++) {
+            recordRouteResults(route);
         }
-
-        reportLog.addValue(
-                KEY_SAMPLE_RATE,
-                mNativeAnalyzerThread.getSampleRate(),
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        reportLog.addValue(
-                KEY_IS_LOW_LATENCY,
-                mNativeAnalyzerThread.isLowLatencyStream(),
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        for (TestSpec testSpec : mTestSpecs) {
-            testSpec.recordTestResults(reportLog);
-        }
-
-        reportLog.submit();
     }
 
     private void startAudioTest(Handler messageHandler, int testRouteId) {
@@ -659,6 +628,7 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
 
             mTestPhase++;
             if (mTestPhase >= NUM_TEST_PHASES) {

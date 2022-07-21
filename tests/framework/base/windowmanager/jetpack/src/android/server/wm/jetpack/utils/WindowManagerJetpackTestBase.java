@@ -59,6 +59,7 @@ public class WindowManagerJetpackTestBase {
 
     public static final String ACTIVITY_ID_LABEL = "ActivityID";
     public static final String EXTRA_EMBED_ACTIVITY = "EmbedActivity";
+    public static final String EXTRA_SPLIT_RATIO = "SplitRatio";
 
     public Instrumentation mInstrumentation;
     public Context mContext;

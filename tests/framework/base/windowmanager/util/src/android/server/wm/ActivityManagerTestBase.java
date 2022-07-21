@@ -925,6 +925,16 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void launchActivityOnTaskDisplayArea(ComponentName activityName, int windowingMode,
+            int launchTaskDisplayAreaFeatureId, final CliIntentExtra... extras) {
+        executeShellCommand(getAmStartCmd(activityName, extras)
+                + " --task-display-area-feature-id " + launchTaskDisplayAreaFeatureId
+                + " --windowingMode " + windowingMode);
+        mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
+                .setWindowingMode(windowingMode)
+                .build());
+    }
+
+    protected void launchActivityOnTaskDisplayArea(ComponentName activityName, int windowingMode,
             int launchTaskDisplayAreaFeatureId, int displayId, final CliIntentExtra... extras) {
         executeShellCommand(getAmStartCmd(activityName, displayId, extras)
                 + " --task-display-area-feature-id " + launchTaskDisplayAreaFeatureId

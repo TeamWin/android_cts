@@ -147,18 +147,20 @@ public class TestActivity extends Activity {
         if (mOverlayView != null) {
             throw new IllegalStateException("can only show one overlay at a time.");
         }
-        Context overlayContext = getApplicationContext().createWindowContext(getDisplay(),
-                TYPE_APPLICATION_OVERLAY, null);
-        mOverlayView = new TextView(overlayContext);
-        WindowManager.LayoutParams params = new WindowManager.LayoutParams(MATCH_PARENT,
-                MATCH_PARENT, TYPE_APPLICATION_OVERLAY,
-                (imeFocusable ? FLAG_NOT_FOCUSABLE | FLAG_ALT_FOCUSABLE_IM : FLAG_NOT_FOCUSABLE),
-                PixelFormat.TRANSLUCENT);
-        params.setTitle(OVERLAY_WINDOW_NAME);
-        mOverlayView.setLayoutParams(params);
-        mOverlayView.setText("IME CTS TestActivity OverlayView");
-        mOverlayView.setBackgroundColor(0x77FFFF00);
-        overlayContext.getSystemService(WindowManager.class).addView(mOverlayView, params);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            Context overlayContext = getApplicationContext().createWindowContext(getDisplay(),
+                    TYPE_APPLICATION_OVERLAY, null);
+            mOverlayView = new TextView(overlayContext);
+            WindowManager.LayoutParams params = new WindowManager.LayoutParams(MATCH_PARENT,
+                    MATCH_PARENT, TYPE_APPLICATION_OVERLAY,
+                    imeFocusable ? FLAG_NOT_FOCUSABLE | FLAG_ALT_FOCUSABLE_IM : FLAG_NOT_FOCUSABLE,
+                    PixelFormat.TRANSLUCENT);
+            params.setTitle(OVERLAY_WINDOW_NAME);
+            mOverlayView.setLayoutParams(params);
+            mOverlayView.setText("IME CTS TestActivity OverlayView");
+            mOverlayView.setBackgroundColor(0x77FFFF00);
+            overlayContext.getSystemService(WindowManager.class).addView(mOverlayView, params);
+        });
     }
 
     /**

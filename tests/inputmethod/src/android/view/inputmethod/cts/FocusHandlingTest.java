@@ -79,6 +79,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeCommand;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
@@ -566,7 +567,8 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @Test
     public void testMultiWindowFocusHandleOnDifferentUiThread() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        try (CloseOnce session = CloseOnce.of(new ServiceSession(instrumentation.getContext()));
+        try (CloseOnce session = CloseOnce.of(SystemUtil.runWithShellPermissionIdentity(
+                () -> new ServiceSession(instrumentation.getContext())));
              MockImeSession imeSession = createTestImeSession()) {
             final ImeEventStream stream = imeSession.openEventStream();
             final AtomicBoolean popupTextHasWindowFocus = new AtomicBoolean(false);
@@ -686,7 +688,8 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     public void testOnCheckIsTextEditorRunOnUIThread() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         final CountDownLatch uiThreadSignal = new CountDownLatch(1);
-        try (CloseOnce session = CloseOnce.of(new ServiceSession(instrumentation.getContext()))) {
+        try (CloseOnce session = CloseOnce.of(SystemUtil.runWithShellPermissionIdentity(
+                ()-> new ServiceSession(instrumentation.getContext())))) {
             final AtomicBoolean popupTextHasWindowFocus = new AtomicBoolean(false);
 
             // Create a popupTextView which from Service with different UI thread and set a
