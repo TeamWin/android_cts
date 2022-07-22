@@ -47,6 +47,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
@@ -967,6 +968,66 @@ public class PackageManagerTest {
 
         assertNotNull("Signatures should have been collected when GET_SIGNATURES flag specified",
                 pkgInfo.signatures);
+    }
+
+    private void runTestGetPackageArchiveInfoSameApplicationInfo(long flags) {
+        final String apkPath = mContext.getPackageCodePath();
+        PackageInfo packageInfo = mPackageManager.getPackageArchiveInfo(apkPath,
+                PackageManager.PackageInfoFlags.of(flags));
+
+        ApplicationInfo applicationInfo = null;
+        if (packageInfo.activities != null) {
+            for (ActivityInfo ac : packageInfo.activities) {
+                if (applicationInfo == null) {
+                    applicationInfo = ac.applicationInfo;
+                } else {
+                    assertSame(applicationInfo, ac.applicationInfo);
+                }
+            }
+        }
+        if (packageInfo.receivers != null) {
+            for (ActivityInfo ac : packageInfo.receivers) {
+                if (applicationInfo == null) {
+                    applicationInfo = ac.applicationInfo;
+                } else {
+                    assertSame(applicationInfo, ac.applicationInfo);
+                }
+            }
+        }
+        if (packageInfo.services != null) {
+            for (ServiceInfo si : packageInfo.services) {
+                if (applicationInfo == null) {
+                    applicationInfo = si.applicationInfo;
+                } else {
+                    assertSame(applicationInfo, si.applicationInfo);
+                }
+            }
+        }
+        if (packageInfo.providers != null) {
+            for (ProviderInfo pi : packageInfo.providers) {
+                if (applicationInfo == null) {
+                    applicationInfo = pi.applicationInfo;
+                } else {
+                    assertSame(applicationInfo, pi.applicationInfo);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testGetPackageArchiveInfoSameApplicationInfo() {
+        runTestGetPackageArchiveInfoSameApplicationInfo(PackageManager.GET_META_DATA);
+        runTestGetPackageArchiveInfoSameApplicationInfo(
+                PackageManager.GET_META_DATA | PackageManager.GET_ACTIVITIES);
+        runTestGetPackageArchiveInfoSameApplicationInfo(
+                PackageManager.GET_META_DATA | PackageManager.GET_RECEIVERS);
+        runTestGetPackageArchiveInfoSameApplicationInfo(
+                PackageManager.GET_META_DATA | PackageManager.GET_SERVICES);
+        runTestGetPackageArchiveInfoSameApplicationInfo(
+                PackageManager.GET_META_DATA | PackageManager.GET_PROVIDERS);
+        runTestGetPackageArchiveInfoSameApplicationInfo(
+                PackageManager.GET_META_DATA | PackageManager.GET_ACTIVITIES
+                        | PackageManager.GET_RECEIVERS);
     }
 
     @Test

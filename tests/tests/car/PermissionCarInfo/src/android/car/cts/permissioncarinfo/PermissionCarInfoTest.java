@@ -31,8 +31,8 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.google.common.collect.ImmutableList;
 
-import org.junit.Test;
 import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RequiresDevice
@@ -50,7 +50,8 @@ public final class PermissionCarInfoTest {
                     VehiclePropertyIds.INFO_EV_PORT_LOCATION, VehiclePropertyIds.INFO_DRIVER_SEAT,
                     VehiclePropertyIds.INFO_EXTERIOR_DIMENSIONS,
                     VehiclePropertyIds.ELECTRONIC_TOLL_COLLECTION_CARD_TYPE,
-                    VehiclePropertyIds.ELECTRONIC_TOLL_COLLECTION_CARD_STATUS)
+                    VehiclePropertyIds.ELECTRONIC_TOLL_COLLECTION_CARD_STATUS,
+                    VehiclePropertyIds.GENERAL_SAFETY_REGULATION_COMPLIANCE_REQUIREMENT)
                     .build();
 
     private CarPropertyManager mCarPropertyManager;
