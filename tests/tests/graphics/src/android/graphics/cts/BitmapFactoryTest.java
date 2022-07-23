@@ -41,6 +41,7 @@ import android.media.MediaFormat;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemProperties;
 import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.system.ErrnoException;
@@ -1012,6 +1013,9 @@ public class BitmapFactoryTest {
     public void testDecode10BitHEIFTo10BitBitmap() {
         assumeTrue(
             "Test needs Android T.", ApiLevelUtil.isFirstApiAtLeast(Build.VERSION_CODES.TIRAMISU));
+        assumeTrue(
+            "Test needs VNDK at least T.",
+            SystemProperties.getInt("ro.vndk.version", 0) >= Build.VERSION_CODES.TIRAMISU);
         assumeTrue("No 10-bit HEVC decoder, skip the test.", has10BitHEVCDecoder());
 
         BitmapFactory.Options opt = new BitmapFactory.Options();
@@ -1028,6 +1032,9 @@ public class BitmapFactoryTest {
     public void testDecode10BitHEIFTo8BitBitmap() {
         assumeTrue(
             "Test needs Android T.", ApiLevelUtil.isFirstApiAtLeast(Build.VERSION_CODES.TIRAMISU));
+        assumeTrue(
+            "Test needs VNDK at least T.",
+            SystemProperties.getInt("ro.vndk.version", 0) >= Build.VERSION_CODES.TIRAMISU);
         assumeTrue("No 10-bit HEVC decoder, skip the test.", has10BitHEVCDecoder());
 
         BitmapFactory.Options opt = new BitmapFactory.Options();

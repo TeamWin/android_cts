@@ -37,6 +37,7 @@ import static android.content.pm.PackageManager.MATCH_HIDDEN_UNTIL_INSTALLED_COM
 import static android.content.pm.PackageManager.MATCH_INSTANT;
 import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
 import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
+import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.parsePackageDump;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -200,6 +201,8 @@ public class PackageManagerTest {
     private static final String SHELL_PACKAGE_NAME = "com.android.shell";
     private static final String HELLO_WORLD_PACKAGE_NAME = "com.example.helloworld";
     private static final String HELLO_WORLD_APK = SAMPLE_APK_BASE + "HelloWorld5.apk";
+    private static final String HELLO_WORLD_LOTS_OF_FLAGS_APK =
+            SAMPLE_APK_BASE + "HelloWorldLotsOfFlags.apk";
     private static final String MOCK_LAUNCHER_PACKAGE_NAME = "android.content.cts.mocklauncherapp";
     private static final String MOCK_LAUNCHER_APK = SAMPLE_APK_BASE
             + "CtsContentMockLauncherTestApp.apk";
@@ -1078,6 +1081,17 @@ public class PackageManagerTest {
         PackageInfo pkgInfo = mPackageManager.getPackageInfo(PACKAGE_NAME, GET_META_DATA
                 | GET_PERMISSIONS | GET_ACTIVITIES | GET_PROVIDERS | GET_SERVICES | GET_RECEIVERS);
         assertTestPackageInfo(pkgInfo);
+    }
+
+    @Test
+    public void testPackageSettingsFlags() throws Exception {
+        assertEquals("Success\n", SystemUtil.runShellCommand(
+                "pm install -t " + HELLO_WORLD_LOTS_OF_FLAGS_APK));
+        final String pkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME, "    pkgFlags=[");
+        assertEquals(
+                " DEBUGGABLE HAS_CODE ALLOW_TASK_REPARENTING ALLOW_CLEAR_USER_DATA TEST_ONLY "
+                        + "VM_SAFE_MODE ALLOW_BACKUP LARGE_HEAP ]",
+                pkgFlags);
     }
 
     @Test

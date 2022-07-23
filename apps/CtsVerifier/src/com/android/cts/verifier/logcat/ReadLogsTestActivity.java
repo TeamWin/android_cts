@@ -58,7 +58,14 @@ public class ReadLogsTestActivity extends PassFailButtons.Activity {
 
     private static final int NUM_OF_LINES_FG = 10;
     private static final int NUM_OF_LINES_BG = 0;
-    private static final int LOG_ACCESS_INTERVAL = 1000 * 60 * 2;
+    private static final int LOG_ACCESS_INTERVAL_MILLIS = 1000 * 60 * 2;
+
+    private static final List<String> LOG_CAT_TEST_COMMAND = Arrays.asList("logcat",
+            "-b", "system",
+            "-v", "uid",
+            "-v", "process",
+            "-t", Integer.toString(NUM_OF_LINES_FG));
+
     private volatile long mLastLogAccess = 0;
 
     private static Context sContext;
@@ -67,11 +74,14 @@ public class ReadLogsTestActivity extends PassFailButtons.Activity {
     private static String sAppPackageName;
     private static ExecutorService sExecutorService;
 
+    private static String sLogCatUidFilterRegex;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         sContext = this;
+        sLogCatUidFilterRegex = "^[A-Z]{1}\\(\\s" + sContext.getApplicationInfo().uid;
         sActivityManager = sContext.getSystemService(ActivityManager.class);
         sExecutorService = Executors.newSingleThreadExecutor();
 
@@ -110,9 +120,9 @@ public class ReadLogsTestActivity extends PassFailButtons.Activity {
     public void runLogcatInForegroundAllowOnlyOnce() {
         Log.d(TAG, "Inside runLogcatInForegroundAllowOnlyOnce()");
 
-        if (mLastLogAccess > (SystemClock.elapsedRealtime() - LOG_ACCESS_INTERVAL)) {
+        if (mLastLogAccess > (SystemClock.elapsedRealtime() - LOG_ACCESS_INTERVAL_MILLIS)) {
             String reason = "Please wait for "
-                    + ((mLastLogAccess + LOG_ACCESS_INTERVAL - SystemClock.elapsedRealtime())
+                    + ((mLastLogAccess + LOG_ACCESS_INTERVAL_MILLIS - SystemClock.elapsedRealtime())
                     / 1000) + " seconds before running the test.";
             Toast.makeText(this, reason, Toast.LENGTH_LONG).show();
             return;
@@ -124,9 +134,7 @@ public class ReadLogsTestActivity extends PassFailButtons.Activity {
 
                 // Dump the logcat most recent 10 lines before the compile command,
                 // and check if there are logs about compiling the test package.
-                java.lang.Process logcat = new ProcessBuilder(
-                        Arrays.asList("logcat", "-b", "system", "-t",
-                                Integer.toString(NUM_OF_LINES_FG))).start();
+                Process logcat = new ProcessBuilder(LOG_CAT_TEST_COMMAND).start();
                 reader = new BufferedReader(new InputStreamReader(logcat.getInputStream()));
                 logcat.waitFor();
 
@@ -149,7 +157,7 @@ public class ReadLogsTestActivity extends PassFailButtons.Activity {
                     assertNotNull(logcatOutput.get(0), "logcat output should not be null");
 
                     boolean allowLog = logcatOutput.get(0).contains(SYSTEM_LOG_START);
-                    assertTrue("Allow system log access containe log", allowLog);
+                    assertTrue("Allow system log access contains log", allowLog);
 
                     boolean allowLineCount = lineCount > NUM_OF_LINES_FG;
                     assertTrue("Allow system log access count", allowLineCount);
@@ -195,9 +203,9 @@ public class ReadLogsTestActivity extends PassFailButtons.Activity {
     public void runLogcatInForegroundDontAllow() {
         Log.d(TAG, "Inside runLogcatInForegroundDontAllow()");
 
-        if (mLastLogAccess > (SystemClock.elapsedRealtime() - LOG_ACCESS_INTERVAL)) {
+        if (mLastLogAccess > (SystemClock.elapsedRealtime() - LOG_ACCESS_INTERVAL_MILLIS)) {
             String reason = "Please wait for "
-                    + ((mLastLogAccess + LOG_ACCESS_INTERVAL - SystemClock.elapsedRealtime())
+                    + ((mLastLogAccess + LOG_ACCESS_INTERVAL_MILLIS - SystemClock.elapsedRealtime())
                     / 1000) + " seconds before running the test.";
             Toast.makeText(this, reason, Toast.LENGTH_LONG).show();
             return;
@@ -206,20 +214,17 @@ public class ReadLogsTestActivity extends PassFailButtons.Activity {
         sExecutorService.execute(() -> {
             BufferedReader reader = null;
             try {
-                Process logcat = new ProcessBuilder(
-                        Arrays.asList("logcat", "-b", "system", "-t",
-                                Integer.toString(NUM_OF_LINES_FG))).start();
+                Process logcat = new ProcessBuilder(LOG_CAT_TEST_COMMAND).start();
                 logcat.waitFor();
 
                 // Merge several logcat streams, and take the last N lines
                 reader = new BufferedReader(new InputStreamReader(logcat.getInputStream()));
                 assertNotNull(reader);
 
-                List<String> logcatOutput = new ArrayList<>();
                 String current;
                 int lineCount = 0;
-                while ((current = reader.readLine()) != null) {
-                    logcatOutput.add(current);
+                while ((current = reader.readLine()) != null
+                        && current.matches(sLogCatUidFilterRegex)) {
                     lineCount++;
                 }
 

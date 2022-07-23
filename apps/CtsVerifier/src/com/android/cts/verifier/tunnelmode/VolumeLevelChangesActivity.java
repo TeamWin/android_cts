@@ -209,10 +209,10 @@ public class VolumeLevelChangesActivity extends PassFailButtons.Activity {
 
     private void playVideo() {
         try {
-            mPlayer.start();
             mPlayer.prepare();
+            mPlayer.startCodec();
             mPlayer.setLoopEnabled(true);
-            mPlayer.startThread();
+            mPlayer.play();
         } catch (Exception e) {
             Log.d(TAG, "Could not play the video.", e);
         }

@@ -30,6 +30,7 @@ import static android.server.wm.CliIntentExtra.extraString;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
+import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.UiDeviceUtils.pressWindowButton;
 import static android.server.wm.WindowManagerState.STATE_PAUSED;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
@@ -68,6 +69,7 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_US
 import static android.server.wm.app.Components.PipActivity.EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_FINISH_SELF_ON_RESUME;
+import static android.server.wm.app.Components.PipActivity.EXTRA_FINISH_TRAMPOLINE_ON_RESUME;
 import static android.server.wm.app.Components.PipActivity.EXTRA_IS_SEAMLESS_RESIZE_ENABLED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_NUMBER_OF_CUSTOM_ACTIONS;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ON_PAUSE_DELAY;
@@ -1015,6 +1017,25 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
+    public void testAutoEnterPipFromTaskWithMultipleActivities() {
+        // Try to enter picture-in-picture from an activity that has more than one activity in the
+        // task with auto-enter-pip being enabled
+        launchActivity(LAUNCH_ENTER_PIP_ACTIVITY,
+                extraString(EXTRA_ALLOW_AUTO_PIP, "true"),
+                extraString(EXTRA_ENTER_PIP, "false"));
+
+        // Auto enter pip on going back to home, this assumes device is configured in gesture
+        // navigation mode, otherwise it falls back to non-auto enter pip.
+        pressHomeButton();
+        waitForEnterPip(PIP_ACTIVITY);
+
+        final Task task = mWmState.getTaskByActivity(LAUNCH_ENTER_PIP_ACTIVITY);
+        assertEquals(1, task.mActivities.size());
+        assertPinnedStackExists();
+        waitAndAssertActivityState(PIP_ACTIVITY, STATE_PAUSED, "activity must be paused");
+    }
+
+    @Test
     public void testPipFromTaskWithMultipleActivitiesAndExpandPip() {
         // Try to enter picture-in-picture from an activity that has more than one activity in the
         // task and ensure pinned task can go back to its original task when expand to fullscreen
@@ -1049,7 +1070,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     @Test
     public void testPipFromTaskWithAnotherFinishingActivity() {
         launchActivityNoWait(LAUNCH_ENTER_PIP_ACTIVITY,
-                extraString(EXTRA_FINISH_SELF_ON_RESUME, "true"));
+                extraString(EXTRA_FINISH_TRAMPOLINE_ON_RESUME, "true"));
 
         waitForEnterPip(PIP_ACTIVITY);
         mWmState.waitForActivityRemoved(LAUNCH_ENTER_PIP_ACTIVITY);

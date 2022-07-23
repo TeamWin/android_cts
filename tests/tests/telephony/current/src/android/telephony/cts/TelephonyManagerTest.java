@@ -109,6 +109,7 @@ import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CarrierPrivilegeUtils;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.ShellIdentityUtils;
@@ -1276,23 +1277,49 @@ public class TelephonyManagerTest {
     private static final String ISO_COUNTRY_CODE_PATTERN = "[a-z]{2}";
 
     @Test
+    @ApiTest(apis = "android.telephony.TelephonyManager#getNetworkCountryIso")
     public void testGetNetworkCountryIso() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
 
         String countryCode = mTelephonyManager.getNetworkCountryIso();
-        assertTrue("Country code '" + countryCode + "' did not match "
-                + ISO_COUNTRY_CODE_PATTERN,
-                Pattern.matches(ISO_COUNTRY_CODE_PATTERN, countryCode));
+        ServiceState serviceState = mTelephonyManager.getServiceState();
+        if (serviceState != null && (serviceState.getState()
+                == ServiceState.STATE_IN_SERVICE || serviceState.getState()
+                == ServiceState.STATE_EMERGENCY_ONLY)) {
+            assertTrue("Country code '" + countryCode + "' did not match "
+                    + ISO_COUNTRY_CODE_PATTERN,
+                    Pattern.matches(ISO_COUNTRY_CODE_PATTERN, countryCode));
+        } else {
+            assertTrue("Country code could be empty when out of service",
+                    Pattern.matches(ISO_COUNTRY_CODE_PATTERN, countryCode)
+                    || TextUtils.isEmpty(countryCode));
+        }
+
+        int[] allSubs = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mSubscriptionManager, (sm) -> sm.getActiveSubscriptionIdList());
+        for (int i : allSubs) {
+            countryCode = mTelephonyManager.getNetworkCountryIso(
+                    SubscriptionManager.getSlotIndex(i));
+            serviceState = mTelephonyManager.createForSubscriptionId(i).getServiceState();
+
+            if (serviceState != null && (serviceState.getState()
+                    == ServiceState.STATE_IN_SERVICE || serviceState.getState()
+                    == ServiceState.STATE_EMERGENCY_ONLY)) {
+                assertTrue("Country code '" + countryCode + "' did not match "
+                        + ISO_COUNTRY_CODE_PATTERN + " for slot " + i,
+                        Pattern.matches(ISO_COUNTRY_CODE_PATTERN, countryCode));
+            } else {
+                assertTrue("Country code could be empty when out of service",
+                        Pattern.matches(ISO_COUNTRY_CODE_PATTERN, countryCode)
+                        || TextUtils.isEmpty(countryCode));
+            }
+        }
 
         for (int i = 0; i < mTelephonyManager.getPhoneCount(); i++) {
-            SubscriptionInfo subscriptionInfo =
-                    mSubscriptionManager.getActiveSubscriptionInfoForSimSlotIndex(i);
-            if (subscriptionInfo != null) {
-                countryCode = mTelephonyManager.getNetworkCountryIso(i);
-                assertTrue("Country code '" + countryCode + "' did not match "
-                                + ISO_COUNTRY_CODE_PATTERN + " for slot " + i,
-                        Pattern.matches(ISO_COUNTRY_CODE_PATTERN, countryCode));
-            }
+            countryCode = mTelephonyManager.getNetworkCountryIso(i);
+            assertTrue("Country code must match " + ISO_COUNTRY_CODE_PATTERN + "or empty",
+                    Pattern.matches(ISO_COUNTRY_CODE_PATTERN, countryCode)
+                    || TextUtils.isEmpty(countryCode));
         }
     }
 

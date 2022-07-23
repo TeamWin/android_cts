@@ -49,11 +49,6 @@ import trebuchet.queries.slices.*;
  */
 public class AtraceHostTest extends AtraceHostTestBase {
 
-    private static final String WARNING_STRING =
-        "** Warning: atrace will end vendor support in the next Android Release. **\n" +
-        "** Perfetto is the suggested replacement tool. It will gain vendor      **\n" +
-        "** support. See https://perfetto.dev/docs/quickstart/android-tracing    **\n\n";
-
     private interface FtraceEntryCallback {
         void onTraceEntry(String threadName, int pid, int tid, String eventType, String args);
         void onFinished();
@@ -100,7 +95,7 @@ public class AtraceHostTest extends AtraceHostTestBase {
      * Tests that atrace exists and is runnable with no args
      */
     public void testSimpleRun() {
-        String output = shell("atrace 2> /dev/null");
+        String output = shell("atrace");
         String[] lines = output.split("\\r?\\n");
 
         // check for expected stdout
@@ -115,7 +110,7 @@ public class AtraceHostTest extends AtraceHostTestBase {
      * Tests the output of "atrace --list_categories" to ensure required categories exist.
      */
     public void testCategories() {
-        String output = shell("atrace --list_categories 2> /dev/null");
+        String output = shell("atrace --list_categories");
         String[] categories = output.split("\\r?\\n");
 
         Set<String> requiredCategories = new HashSet<String>(Arrays.asList(
@@ -136,11 +131,6 @@ public class AtraceHostTest extends AtraceHostTestBase {
             }
             fail("Expected categories missing from atrace");
         }
-    }
-
-    public void testStderrWarning() {
-        String output = shell("atrace > /dev/null");
-        assertEquals(WARNING_STRING, output);
     }
 
     public void testTracingIsEnabled() {

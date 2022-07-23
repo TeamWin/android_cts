@@ -22,6 +22,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.inputmethod.InputMethodManager;
+import android.view.inputmethod.InputMethodSubtype;
 
 import androidx.annotation.Nullable;
 
@@ -33,6 +35,9 @@ public class SettingsProvider extends ContentProvider {
 
     private static final String TAG = "SettingsProvider";
     static final String AUTHORITY = "com.android.cts.mockime.provider";
+
+    static final String SET_ADDITIONAL_SUBTYPES_COMMAND = "setAdditionalSubtypes";
+    static final String SET_ADDITIONAL_SUBTYPES_KEY = "subtypes";
 
     @Nullable
     private static ImeSettings sSettings = null;
@@ -78,6 +83,15 @@ public class SettingsProvider extends ContentProvider {
                 throw new SecurityException("Failed to obtain the calling package name.");
             }
             sSettings = new ImeSettings(callingPackageName, extras);
+        } else if (SET_ADDITIONAL_SUBTYPES_COMMAND.equals(method)) {
+            InputMethodSubtype[] additionalSubtypes = extras.getParcelableArray(
+                    SET_ADDITIONAL_SUBTYPES_KEY, InputMethodSubtype.class);
+            if (additionalSubtypes == null) {
+                // IMM#setAdditionalInputMethodSubtypes() doesn't accept null array.
+                additionalSubtypes = new InputMethodSubtype[0];
+            }
+            getContext().getSystemService(InputMethodManager.class)
+                    .setAdditionalInputMethodSubtypes(MockIme.getImeId(), additionalSubtypes);
         } else if ("delete".equals(method)) {
             sSettings = null;
         }

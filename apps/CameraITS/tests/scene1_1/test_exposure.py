@@ -315,7 +315,7 @@ class ExposureTest(its_base_test.ItsBaseTest):
         values = [raw_r_means, raw_gr_means, raw_gb_means, raw_b_means][ch]
         check_line_fit(color, mults, values, thresh_max_level_diff)
 
-    plot_rgb_means(f'RGB (1x: iso={s}, exp={e}', mults,
+    plot_rgb_means(f'RGB (1x: iso={s}, exp={e})', mults,
                    r_means, g_means, b_means, test_name_with_path)
     for ch, color in enumerate(['R', 'G', 'B']):
       values = [r_means, g_means, b_means][ch]

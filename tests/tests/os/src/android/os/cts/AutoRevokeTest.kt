@@ -134,7 +134,11 @@ class AutoRevokeTest {
 
         // Wake up the device
         runShellCommandOrThrow("input keyevent KEYCODE_WAKEUP")
-        runShellCommandOrThrow("input keyevent 82")
+        if ("false".equals(runShellCommandOrThrow("cmd lock_settings get-disabled"))) {
+            // Unlock screen only when it's lock settings enabled to prevent showing "wallpaper
+            // picker" which may cover another UI elements on freeform window configuration.
+            runShellCommandOrThrow("input keyevent 82")
+        }
 
         if (isAutomotiveDevice()) {
             supportedApkPath = APK_PATH_S_APP

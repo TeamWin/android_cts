@@ -54,6 +54,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.RequireMultiUserSupport;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
@@ -174,6 +175,7 @@ public class DevicePolicyManagementRoleHolderTest {
     @EnsureHasDeviceOwner
     @RequireRunOnPrimaryUser
     @EnsureHasNoSecondaryUser
+    @RequireMultiUserSupport
     @Test
     @CddTest(requirements = {"3.9.4/C-3-1"})
     public void createAndManageUser_roleHolderIsInManagedUser() throws InterruptedException {
@@ -316,6 +318,7 @@ public class DevicePolicyManagementRoleHolderTest {
     @EnsureHasNoWorkProfile
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
+    @RequireMultiUserSupport
     public void shouldAllowBypassingDevicePolicyManagementRoleQualification_withUsers_returnsFalse()
             throws Exception {
         resetInternalShouldAllowBypassingState();

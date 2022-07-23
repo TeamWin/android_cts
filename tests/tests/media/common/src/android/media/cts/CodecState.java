@@ -169,13 +169,15 @@ public class CodecState {
         }
     }
 
-    public void start() {
+    public void startCodec() {
         mCodec.start();
         mCodecInputBuffers = mCodec.getInputBuffers();
         if (!mIsTunneled || mIsAudio) {
             mCodecOutputBuffers = mCodec.getOutputBuffers();
         }
+    }
 
+    public void play() {
         if (mAudioTrack != null) {
             mAudioTrack.play();
         }

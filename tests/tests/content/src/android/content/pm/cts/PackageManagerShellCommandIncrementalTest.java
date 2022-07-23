@@ -1168,7 +1168,7 @@ public class PackageManagerShellCommandIncrementalTest {
         return new File(getCodePath(TEST_APP_PACKAGE), splitName);
     }
 
-    private String parsePackageDump(String packageName, String prefix) throws IOException {
+    static String parsePackageDump(String packageName, String prefix) throws IOException {
         final String commandResult = executeShellCommand("pm dump " + packageName);
         final int prefixLength = prefix.length();
         Optional<String> maybeSplits = Arrays.stream(commandResult.split("\\r?\\n"))

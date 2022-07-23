@@ -27,6 +27,7 @@ import android.os.UserManager;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.RequireMultiUserSupport;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
@@ -52,6 +53,7 @@ public class CloneProfileDeviceOwnerTest {
     @EnsureHasDeviceOwner
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @RequireRunOnPrimaryUser
+    @RequireMultiUserSupport
     public void createCloneProfile_hasDeviceOwner_fails() {
         assertThrows(NeneException.class,
                 () -> TestApis.users().createUser()
@@ -67,6 +69,7 @@ public class CloneProfileDeviceOwnerTest {
     @EnsureHasNoDeviceOwner
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @RequireRunOnPrimaryUser
+    @RequireMultiUserSupport
     public void createCloneProfile_noDeviceOwner_succeeds() {
         UserReference cloneUser = TestApis.users().createUser()
                 .parent(TestApis.users().instrumented())

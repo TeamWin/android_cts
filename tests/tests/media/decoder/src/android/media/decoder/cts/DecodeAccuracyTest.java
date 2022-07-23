@@ -25,7 +25,6 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.media.MediaFormat;
-import android.media.cts.MediaCodecTunneledPlayer;
 import android.media.cts.MediaHeavyPresubmitTest;
 import android.media.cts.TestArgs;
 import android.os.Environment;

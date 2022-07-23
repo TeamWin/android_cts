@@ -50,7 +50,13 @@ import com.android.cts.verifier.features.FeatureUtil;
  * adb shell dpm set-device-owner
  *  'com.android.cts.verifier/com.android.cts.verifier.managedprovisioning.DeviceAdminTestReceiver'
  */
-@CddTest(requirement="7.7")
+@CddTest(requirements = {
+        "7.7",
+        "9.11.1/C-3-4", // setRequiredPasswordComplexity behaviour
+        "9.11.1/C-5-1", // setRequiredPasswordComplexity behaviour
+        "9.11.1/C-6-2", // setRequiredPasswordComplexity behaviour
+        "9.11.1/C-8-1", // setRequiredPasswordComplexity behaviour
+})
 public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListActivity {
     private static final String TAG = "DeviceOwnerPositiveTestActivity";
 

@@ -282,6 +282,10 @@ public class MediaRecorderStressTest extends ActivityInstrumentationTestCase2<Me
             mRecorder.reset();
             mRecorder.release();
             output.write(", " + i);
+            if (mRemoveVideo) {
+                removeRecodedVideo(filename);
+            }
+
         }
 
         output.write("\n\n");
@@ -371,6 +375,9 @@ public class MediaRecorderStressTest extends ActivityInstrumentationTestCase2<Me
             mRecorder.release();
             Log.v(TAG, "release video recorder");
             output.write(", " + i);
+            if (mRemoveVideo) {
+                removeRecodedVideo(filename);
+            }
         }
 
         output.write("\n\n");

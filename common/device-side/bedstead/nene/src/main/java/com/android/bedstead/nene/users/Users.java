@@ -40,6 +40,7 @@ import androidx.annotation.CheckResult;
 import androidx.annotation.Nullable;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -483,6 +484,11 @@ public final class Users {
     AdbUser fetchUser(int id) {
         fillCache();
         return mCachedUsers.get(id);
+    }
+
+    @Experimental
+    public boolean supportsMultipleUsers() {
+        return UserManager.supportsMultipleUsers();
     }
 
     static Stream<UserInfo> users() {

@@ -26,7 +26,6 @@ import android.media.ResourceBusyException;
 import android.media.UnsupportedSchemeException;
 import android.media.cts.AudioManagerStub;
 import android.media.cts.AudioManagerStubHelper;
-import android.media.cts.CodecState;
 import android.media.cts.ConnectionStatus;
 import android.media.cts.IConnectionStatus;
 import android.media.cts.InputSurface;

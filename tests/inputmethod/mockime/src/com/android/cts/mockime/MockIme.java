@@ -65,6 +65,7 @@ import android.view.inputmethod.InputBinding;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethod;
+import android.view.inputmethod.InputMethodSubtype;
 import android.view.inputmethod.TextAttribute;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
@@ -396,6 +397,13 @@ public final class MockIme extends InputMethodService {
                                 command.getExtras().getBoolean("imeConsumesInput");
                         return getMemorizedOrCurrentInputConnection().setImeConsumesInput(
                                 imeConsumesInput);
+                    }
+                    case "switchInputMethod(String,InputMethodSubtype)": {
+                        final String id = command.getExtras().getString("id");
+                        final InputMethodSubtype subtype = command.getExtras().getParcelable(
+                                "subtype", InputMethodSubtype.class);
+                        switchInputMethod(id, subtype);
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     }
                     case "setBackDisposition": {
                         final int backDisposition =
@@ -735,6 +743,12 @@ public final class MockIme extends InputMethodService {
             // in IME event.
             mLastDispatchedConfiguration.setTo(getResources().getConfiguration());
         });
+    }
+
+    @Override
+    protected void onCurrentInputMethodSubtypeChanged(InputMethodSubtype newSubtype) {
+        getTracer().onCurrentInputMethodSubtypeChanged(newSubtype,
+                () -> super.onCurrentInputMethodSubtypeChanged(newSubtype));
     }
 
     @Override
@@ -1327,6 +1341,13 @@ public final class MockIme extends InputMethodService {
             final Bundle arguments = new Bundle();
             arguments.putString("name", name);
             recordEventInternal("onVerify", supplier::getAsBoolean, arguments);
+        }
+
+        void onCurrentInputMethodSubtypeChanged(InputMethodSubtype newSubtype,
+                @NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            arguments.putParcelable("newSubtype", newSubtype);
+            recordEventInternal("onCurrentInputMethodSubtypeChanged", runnable, arguments);
         }
 
         void onConfigureWindow(Window win, boolean isFullscreen, boolean isCandidatesOnly,

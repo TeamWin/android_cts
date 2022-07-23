@@ -487,11 +487,13 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
         }
 
         for (CodecState state : mVideoCodecStates.values()) {
-            state.start();
+            state.startCodec();
+            state.play();
         }
 
         for (CodecState state : mAudioCodecStates.values()) {
-            state.start();
+            state.startCodec();
+            state.play();
         }
 
         mDeltaTimeUs = -1;

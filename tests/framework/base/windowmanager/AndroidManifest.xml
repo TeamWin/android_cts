@@ -441,6 +441,8 @@
 
         <activity android:name="android.server.wm.WindowInsetsAnimationTestBase$TestActivity"
              android:theme="@android:style/Theme.Material.NoActionBar"/>
+        <activity android:name="android.server.wm.WindowInsetsAnimationControllerTests$ControllerTestActivity"
+            android:theme="@android:style/Theme.Material.NoActionBar" />
 
         <activity android:name="android.server.wm.ForceRelayoutTestBase$TestActivity"
              android:exported="true"/>

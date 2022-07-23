@@ -566,6 +566,10 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_SUBTITLE = "set_pip_subtitle";
         // Finishes the activity at the end of onResume (after EXTRA_START_ACTIVITY is handled)
         public static final String EXTRA_FINISH_SELF_ON_RESUME = "finish_self_on_resume";
+        // Similar to EXTRA_FINISH_SELF_ON_RESUME but only be used to finish the trampoline
+        // Activity when it receives onResume (after the target Activity is launched).
+        public static final String EXTRA_FINISH_TRAMPOLINE_ON_RESUME =
+                "finish_trampoline_on_resume";
         // Sets the fixed orientation (can be one of {@link ActivityInfo.ScreenOrientation}
         public static final String EXTRA_PIP_ORIENTATION = "fixed_orientation";
         // The amount to delay to artificially introduce in onPause()

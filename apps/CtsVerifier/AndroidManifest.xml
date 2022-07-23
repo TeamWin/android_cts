@@ -2933,6 +2933,32 @@
                        android:value="android.hardware.type.automotive"/>
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.hardware.Camera#getParameters|
+                               android.hardware.Camera#lock|
+                               android.hardware.Camera#setDisplayOrientation|
+                               android.hardware.Camera#setPreviewCallback|
+                               android.hardware.Camera#setParameters|
+                               android.hardware.Camera#setPreviewTexture|
+                               android.hardware.Camera#startPreview|
+                               android.hardware.Camera#stopPreview|
+                               android.hardware.Camera#unlock|
+                               android.media.MediaRecorder#prepare|
+                               android.media.MediaRecorder#release|
+                               android.media.MediaRecorder#reset|
+                               android.media.MediaRecorder#setAudioEncoder|
+                               android.media.MediaRecorder#setAudioSource|
+                               android.media.MediaRecorder#setCamera|
+                               android.media.MediaRecorder#setOnErrorListener|
+                               android.media.MediaRecorder#setOutputFormat|
+                               android.media.MediaRecorder#setOutputFile|
+                               android.media.MediaRecorder#setProfile|
+                               android.media.MediaRecorder#setVideoEncoder|
+                               android.media.MediaRecorder#setVideoEncodingBitRate|
+                               android.media.MediaRecorder#setVideoSize|
+                               android.media.MediaRecorder#setVideoSource|
+                               android.media.MediaRecorder#start|
+                               android.media.MediaRecorder#stop" />
         </activity>
 
         <activity android:name=".camera.its.ItsTestActivity"

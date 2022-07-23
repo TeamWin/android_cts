@@ -39,6 +39,7 @@ android_test {
         "androidx.test.ext.junit",
         "androidx.test.uiautomator",
         "cts-wm-util",
+        "permission-test-util-lib",
         "ub-uiautomator",
     ],
     srcs: [

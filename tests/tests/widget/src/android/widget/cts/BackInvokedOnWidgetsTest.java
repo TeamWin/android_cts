@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
 import android.graphics.Color;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.view.Gravity;
 import android.view.ViewGroup;
@@ -40,7 +41,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+// @AppModeFull because GestureNavRule does not work for
+// instant mode tests (b/238975931)
 @MediumTest
+@AppModeFull
 @RunWith(AndroidJUnit4.class)
 public class BackInvokedOnWidgetsTest {
 
