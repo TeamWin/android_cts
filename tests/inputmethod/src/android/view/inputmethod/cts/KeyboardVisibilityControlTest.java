@@ -41,6 +41,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKey
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.waitForInputViewLayoutStable;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -84,6 +85,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+import android.window.OnBackInvokedDispatcher;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
@@ -112,6 +114,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
@@ -125,6 +128,8 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
     private static final long LAYOUT_STABLE_THRESHOLD = TimeUnit.SECONDS.toMillis(3);
 
     private static final int NEW_KEYBOARD_HEIGHT = 400;
+    private static final PreBackPressProcedure NO_OP_PRE_BACK_PRESS_PROCEDURE =
+            (instrumentation, editorRef) -> {};
 
     @Rule
     public final UnlockScreenRule mUnlockScreenRule = new UnlockScreenRule();
@@ -246,8 +251,16 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
         }
     }
 
+    @FunctionalInterface
+    private interface PreBackPressProcedure {
+        void run(
+                Instrumentation instrumentation,
+                AtomicReference<EditText> editorRef) throws Exception;
+    }
+
     private void verifyHideImeBackPressed(
-            boolean appRequestsBackCallback, boolean imeRequestsBackCallback) throws Exception {
+            boolean appRequestsBackCallback, boolean imeRequestsBackCallback,
+            @NonNull PreBackPressProcedure preBackPressProcedure) throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         final Context context = instrumentation.getTargetContext();
         final InputMethodManager imm = context.getSystemService(InputMethodManager.class);
@@ -268,17 +281,24 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                         .setOnBackCallbackEnabled(imeRequestsBackCallback)
         )) {
             final ImeEventStream stream = imeSession.openEventStream();
-
             final String marker = getTestMarker();
+            final AtomicInteger backCallbackInvocationCount = new AtomicInteger();
 
             if (appRequestsBackCallback) {
                 context.getApplicationInfo().setEnableOnBackInvokedCallback(true);
             }
 
             final EditText editText = launchTestActivity(marker);
+            final AtomicReference<EditText> editorRef = new AtomicReference<>();
+            editorRef.set(editText);
             final TestActivity testActivity = (TestActivity) editText.getContext();
 
-            if (!appRequestsBackCallback) {
+            if (appRequestsBackCallback) {
+                testActivity.getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                        OnBackInvokedDispatcher.PRIORITY_DEFAULT, () -> {
+                            backCallbackInvocationCount.getAndIncrement();
+                        });
+            } else {
                 testActivity.setIgnoreBackKey(true);
             }
 
@@ -299,6 +319,8 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                     View.VISIBLE, TIMEOUT);
             expectImeVisible(TIMEOUT);
 
+            preBackPressProcedure.run(instrumentation, editorRef);
+
             // Pressing back key, expect soft-keyboard will become invisible.
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
             expectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
@@ -306,6 +328,12 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
                     View.GONE, TIMEOUT);
             expectImeInvisible(TIMEOUT);
+
+            if (appRequestsBackCallback) {
+                // Verify that IME callback is removed after IME is hidden.
+                instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
+                assertEquals(1, backCallbackInvocationCount.get());
+            }
         } finally {
             context.getApplicationInfo().setEnableOnBackInvokedCallback(onBackCallbackEnabled);
         }
@@ -313,26 +341,61 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
 
     @Test
     public void testHideImeAfterBackPressed_legacyAppLegacyIme() throws Exception {
-        verifyHideImeBackPressed(false/* appRequestsBackCallback */,
-                false/* imeRequestsBackCallback */);
+        verifyHideImeBackPressed(false /* appRequestsBackCallback */,
+                false /* imeRequestsBackCallback */,
+                (instrumentation, editorRef) -> {} /* pre back press procedure */);
     }
 
     @Test
     public void testHideImeAfterBackPressed_migratedAppLegacyIme() throws Exception {
-        verifyHideImeBackPressed(true/* appRequestsBackCallback */,
-                false/* imeRequestsBackCallback */);
+        verifyHideImeBackPressed(true /* appRequestsBackCallback */,
+                false /* imeRequestsBackCallback */,
+                NO_OP_PRE_BACK_PRESS_PROCEDURE);
     }
 
     @Test
     public void testHideImeAfterBackPressed_migratedAppMigratedIme() throws Exception {
-        verifyHideImeBackPressed(true/* appRequestsBackCallback */,
-                true/* imeRequestsBackCallback */);
+        verifyHideImeBackPressed(true /* appRequestsBackCallback */,
+                true /* imeRequestsBackCallback */,
+                NO_OP_PRE_BACK_PRESS_PROCEDURE);
     }
 
     @Test
     public void testHideImeAfterBackPressed_legacyAppMigratedIme() throws Exception {
-        verifyHideImeBackPressed(false/* appRequestsBackCallback */,
-                true/* imeRequestsBackCallback */);
+        verifyHideImeBackPressed(true /* appRequestsBackCallback */,
+                true /* imeRequestsBackCallback */,
+                NO_OP_PRE_BACK_PRESS_PROCEDURE);
+    }
+
+    @AppModeFull(reason = "KeyguardManager is not accessible from instant apps")
+    @Test
+    public void testHideImeAfterBackPressed_ScreenOffOn() throws Exception {
+        verifyHideImeBackPressed(true /* appRequestsBackCallback */,
+                true /* imeRequestsBackCallback */,
+                (instrumentation, editorRef) -> {
+                    TestUtils.turnScreenOff();
+                    TestUtils.turnScreenOn();
+                    TestUtils.unlockScreen();
+                    expectImeVisible(TIMEOUT);
+                } /* pre back press procedure */);
+    }
+
+    @Test
+    public void testHideImeAfterBackPressed_rootViewChanges() throws Exception {
+        verifyHideImeBackPressed(true /* appRequestsBackCallback */,
+                true /* imeRequestsBackCallback */,
+                (instrumentation, editorRef) -> {
+                    AutoCloseableWrapper<PopupWindow> popupWindowWrapper =
+                            createPopupWindowWrapper(editorRef.get());
+                    instrumentation.waitForIdleSync();
+                    // Verify IME became invisible when the non-ime-focusable PopupWindow is shown.
+                    expectImeInvisible(NOT_EXPECT_TIMEOUT);
+
+                    runOnMainSync(() -> popupWindowWrapper.get().dismiss());
+                    // Verify IME became visible when the non-ime-focusable PopupWindow has
+                    // dismissed.
+                    expectImeVisible(TIMEOUT);
+                } /* pre back press procedure */);
     }
 
     @Test
@@ -850,25 +913,14 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             expectImeVisible(TIMEOUT);
 
             // Create then show a non-ime-focusable PopupWindow with INPUT_METHOD_NOT_NEEDED.
-            try (AutoCloseableWrapper<PopupWindow> popupWindowWrapper = AutoCloseableWrapper.create(
-                    TestUtils.getOnMainSync(() -> {
-                        final PopupWindow popup = new PopupWindow(editorRef.get().getContext());
-                        popup.setInputMethodMode(INPUT_METHOD_NOT_NEEDED);
-                        final TextView textView = new TextView(editorRef.get().getContext());
-                        textView.setText("Popup");
-                        popup.setContentView(textView);
-                        popup.setWidth(MATCH_PARENT);
-                        popup.setHeight(MATCH_PARENT);
-                        // Show the popup window.
-                        popup.showAsDropDown(textView);
-                        return popup;
-                    }), popup -> TestUtils.runOnMainSync(popup::dismiss))
+            try (AutoCloseableWrapper<PopupWindow> popupWindowWrapper =
+                    createPopupWindowWrapper(editorRef.get())
             ) {
                 instrumentation.waitForIdleSync();
                 // Verify IME became invisible when the non-ime-focusable PopupWindow is shown.
                 expectImeInvisible(NOT_EXPECT_TIMEOUT);
 
-                runOnMainSync(() ->popupWindowWrapper.get().dismiss());
+                runOnMainSync(() -> popupWindowWrapper.get().dismiss());
                 // Verify IME became visible when the non-ime-focusable PopupWindow has dismissed.
                 expectImeVisible(TIMEOUT);
             }
@@ -1159,5 +1211,22 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
         WindowManagerState.DisplayArea imeContainer =  wmState.getImeContainer(displayId);
         assertNotNull("ImeContainer not found for display id: " + displayId, imeContainer);
         return imeContainer.isOrganized();
+    }
+
+    private static AutoCloseableWrapper<PopupWindow> createPopupWindowWrapper(
+            @NonNull EditText editor) {
+        return AutoCloseableWrapper.create(
+                TestUtils.getOnMainSync(() -> {
+                    final PopupWindow popup = new PopupWindow(editor.getContext());
+                    popup.setInputMethodMode(INPUT_METHOD_NOT_NEEDED);
+                    final TextView textView = new TextView(editor.getContext());
+                    textView.setText("Popup");
+                    popup.setContentView(textView);
+                    popup.setWidth(MATCH_PARENT);
+                    popup.setHeight(MATCH_PARENT);
+                    // Show the popup window.
+                    popup.showAsDropDown(textView);
+                    return popup;
+                }), popup -> TestUtils.runOnMainSync(popup::dismiss));
     }
 }
