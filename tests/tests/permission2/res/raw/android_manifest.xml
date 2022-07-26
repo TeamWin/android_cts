@@ -6483,6 +6483,12 @@
     <permission android:name="android.permission.MAKE_UID_VISIBLE"
                 android:protectionLevel="signature" />
 
+    <!-- Limits the system as the only handler of the QUERY_PACKAGE_RESTART broadcast
+         @hide -->
+    <permission android:name="android.permission.HANDLE_QUERY_PACKAGE_RESTART"
+                android:protectionLevel="signature" />
+    <uses-permission android:name="android.permission.HANDLE_QUERY_PACKAGE_RESTART" />
+
     <!-- Allows an app to turn on the screen on, e.g. with
          {@link android.os.PowerManager#ACQUIRE_CAUSES_WAKEUP}.
          <p>Intended to only be used by home automation apps.

@@ -372,7 +372,19 @@ public class TextureViewTest {
         WidgetTestUtils.runOnMainAndDrawSync(
                 mSDRActivityRule, textureView, () -> textureView.getBitmap(textureViewScreenshot));
 
-        assertTrue(textureViewScreenshot.sameAs(surfaceViewScreenshot));
+        // sample 5 pixels on the edge for bitmap comparison.
+        // TextureView and SurfaceView use different shaders, so compare these two with tolerance.
+        final int threshold = 2;
+        assertTrue(pixelsAreSame(surfaceViewScreenshot.getPixel(width / 2, 0),
+                textureViewScreenshot.getPixel(width / 2, 0), threshold));
+        assertTrue(pixelsAreSame(surfaceViewScreenshot.getPixel(0, height / 2),
+                textureViewScreenshot.getPixel(0, height / 2), threshold));
+        assertTrue(pixelsAreSame(surfaceViewScreenshot.getPixel(width / 2, height / 2),
+                textureViewScreenshot.getPixel(width / 2, height / 2), threshold));
+        assertTrue(pixelsAreSame(surfaceViewScreenshot.getPixel(width / 2, height - 1),
+                textureViewScreenshot.getPixel(width / 2, height - 1), threshold));
+        assertTrue(pixelsAreSame(surfaceViewScreenshot.getPixel(width - 1, height / 2),
+                textureViewScreenshot.getPixel(width - 1, height / 2), threshold));
     }
 
     @Test

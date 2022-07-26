@@ -19,6 +19,8 @@ package android.car.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.car.Car;
+import android.car.CarInfoManager;
+import android.car.test.AbstractExpectableTestCase;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ServiceConnection;
@@ -47,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Test relies on other server to connect to.")
-public class CarTest {
+public class CarTest extends AbstractExpectableTestCase {
     @ClassRule
     public static final RequiredFeatureRule sRequiredFeatureRule = new RequiredFeatureRule(
             PackageManager.FEATURE_AUTOMOTIVE);
@@ -142,6 +144,31 @@ public class CarTest {
                 Car.API_VERSION_MINOR_INT, Build.VERSION.SDK_INT)).isTrue();
         assertThat(Car.isApiAndPlatformVersionAtLeast(Car.API_VERSION_MAJOR_INT,
                 Car.API_VERSION_MINOR_INT, Build.VERSION.SDK_INT + 1)).isFalse();
+    }
+
+    @Test
+    public void testGetCarManager() throws Exception {
+        mCar = Car.createCar(mContext);
+        Object noSuchService = mCar.getCarManager("No such service");
+        mExpect.that(noSuchService).isNull();
+
+        // TODO(b/217131789): Add expectThat which wraps around mExpect.that.
+        CarInfoManager carInfoManager =
+                (CarInfoManager) mCar.getCarManager(Car.INFO_SERVICE);
+        mExpect.that(carInfoManager).isNotNull();
+
+        CarInfoManager carInfoManager2 =
+                (CarInfoManager) mCar.getCarManager(Car.INFO_SERVICE);
+        mExpect.that(carInfoManager2).isNotNull();
+        mExpect.that(carInfoManager2).isSameInstanceAs(carInfoManager);
+
+        CarInfoManager carInfoManagerByClass = mCar.getCarManager(CarInfoManager.class);
+        mExpect.that(carInfoManagerByClass).isNotNull();
+        mExpect.that(carInfoManagerByClass).isSameInstanceAs(carInfoManager);
+
+        CarInfoManager carInfoManagerByClass2 = mCar.getCarManager(CarInfoManager.class);
+        mExpect.that(carInfoManagerByClass2).isNotNull();
+        mExpect.that(carInfoManagerByClass2).isSameInstanceAs(carInfoManager);
     }
 
     private static void assertConnectedCar(Car car) {

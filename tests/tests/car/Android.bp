@@ -32,6 +32,7 @@ android_test {
     name: "CtsCarTestCases",
     defaults: ["cts_defaults"],
     static_libs: [
+        "android.car.test.utils",
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "truth-prebuilt",

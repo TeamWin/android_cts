@@ -367,9 +367,13 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
 
         @Override
         public void onTaskFragmentError(@NonNull IBinder errorCallbackToken,
+                @Nullable TaskFragmentInfo taskFragmentInfo, int opType,
                 @NonNull Throwable exception) {
-            super.onTaskFragmentError(errorCallbackToken, exception);
+            super.onTaskFragmentError(errorCallbackToken, taskFragmentInfo, opType, exception);
             mErrorToken = errorCallbackToken;
+            if (taskFragmentInfo != null) {
+                mInfos.put(taskFragmentInfo.getFragmentToken(), taskFragmentInfo);
+            }
             mThrowable = exception;
             mErrorLatch.countDown();
         }

@@ -507,21 +507,16 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                 VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
                 CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
-                Integer.class).setCarPropertyValueVerifier(
-                (carPropertyConfig, carPropertyValue) -> {
-                    Integer driverSeat = (Integer) carPropertyValue.getValue();
-                    assertWithMessage("INFO_DRIVER_SEAT must be a defined front seat location: "
-                            + driverSeat).that(driverSeat).isIn(
-                            ImmutableSet.builder().add(VehicleAreaSeat.SEAT_UNKNOWN,
-                                    VehicleAreaSeat.SEAT_ROW_1_LEFT,
-                                    VehicleAreaSeat.SEAT_ROW_1_CENTER,
-                                    VehicleAreaSeat.SEAT_ROW_1_RIGHT).build());
-                }).setAreaIdsVerifier(areaIds -> assertWithMessage(
+                Integer.class).setPossibleCarPropertyValues(ImmutableSet.of(
+                        VehicleAreaSeat.SEAT_UNKNOWN,
+                        VehicleAreaSeat.SEAT_ROW_1_LEFT,
+                        VehicleAreaSeat.SEAT_ROW_1_CENTER,
+                        VehicleAreaSeat.SEAT_ROW_1_RIGHT))
+                .setAreaIdsVerifier(areaIds -> assertWithMessage(
                 "Even though INFO_DRIVER_SEAT is VEHICLE_AREA_TYPE_SEAT, it is meant to be "
                         + "VEHICLE_AREA_TYPE_GLOBAL, so its AreaIds must contain a single 0").that(
-                areaIds).isEqualTo(
-                new int[]{VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL})).build().verify(
-                mCarPropertyManager);
+                areaIds).isEqualTo(new int[]{VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL}))
+                .build().verify(mCarPropertyManager);
     }
 
     @Test
@@ -551,20 +546,11 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                 VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                 CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                Integer.class).setCarPropertyValueVerifier(
-                (carPropertyConfig, carPropertyValue) -> {
-                    Integer electronicTollCollectionCardType =
-                            (Integer) carPropertyValue.getValue();
-                    assertWithMessage(
-                            "ELECTRONIC_TOLL_COLLECTION_CARD_TYPE value must be a valid "
-                                    + "VehicleElectronicTollCollectionCardType").that(
-                            electronicTollCollectionCardType).isIn(ImmutableSet.builder().add(
-                            VehicleElectronicTollCollectionCardType.UNKNOWN,
-                            VehicleElectronicTollCollectionCardType.
-                                    JP_ELECTRONIC_TOLL_COLLECTION_CARD,
-                            VehicleElectronicTollCollectionCardType.
-                                    JP_ELECTRONIC_TOLL_COLLECTION_CARD_V2).build());
-                }).build().verify(mCarPropertyManager);
+                Integer.class).setPossibleCarPropertyValues(ImmutableSet.of(
+                    VehicleElectronicTollCollectionCardType.UNKNOWN,
+                    VehicleElectronicTollCollectionCardType.JP_ELECTRONIC_TOLL_COLLECTION_CARD,
+                    VehicleElectronicTollCollectionCardType.JP_ELECTRONIC_TOLL_COLLECTION_CARD_V2)
+        ).build().verify(mCarPropertyManager);
     }
 
     @Test
@@ -574,22 +560,15 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                 VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                 CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                Integer.class).setCarPropertyValueVerifier(
-                (carPropertyConfig, carPropertyValue) -> {
-                    Integer electronicTollCollectionCardStatus =
-                            (Integer) carPropertyValue.getValue();
-                    assertWithMessage(
-                            "ELECTRONIC_TOLL_COLLECTION_CARD_STATUS value must be a valid "
-                                    + "VehicleElectronicTollCollectionCardStatus").that(
-                            electronicTollCollectionCardStatus).isIn(ImmutableSet.builder().add(
-                            VehicleElectronicTollCollectionCardStatus.UNKNOWN,
-                            VehicleElectronicTollCollectionCardStatus.
-                                    ELECTRONIC_TOLL_COLLECTION_CARD_VALID,
-                            VehicleElectronicTollCollectionCardStatus.
-                                    ELECTRONIC_TOLL_COLLECTION_CARD_INVALID,
-                            VehicleElectronicTollCollectionCardStatus.
-                                    ELECTRONIC_TOLL_COLLECTION_CARD_NOT_INSERTED).build());
-                }).build().verify(mCarPropertyManager);
+                Integer.class).setPossibleCarPropertyValues(ImmutableSet.of(
+                        VehicleElectronicTollCollectionCardStatus.UNKNOWN,
+                        VehicleElectronicTollCollectionCardStatus
+                                .ELECTRONIC_TOLL_COLLECTION_CARD_VALID,
+                        VehicleElectronicTollCollectionCardStatus
+                                .ELECTRONIC_TOLL_COLLECTION_CARD_INVALID,
+                        VehicleElectronicTollCollectionCardStatus
+                                .ELECTRONIC_TOLL_COLLECTION_CARD_NOT_INSERTED)
+        ).build().verify(mCarPropertyManager);
     }
 
     @Test
@@ -627,17 +606,10 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
                 VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                 CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                Integer.class).setCarPropertyValueVerifier(
-                (carPropertyConfig, carPropertyValue) -> {
-                    Integer ignitionState = (Integer) carPropertyValue.getValue();
-                    assertWithMessage(
-                            "IGNITION_STATE must be a defined ignition state: "
-                                    + ignitionState).that(
-                            ignitionState).isIn(ImmutableSet.of(VehicleIgnitionState.UNDEFINED,
-                            VehicleIgnitionState.LOCK, VehicleIgnitionState.OFF,
-                            VehicleIgnitionState.ACC, VehicleIgnitionState.ON,
-                            VehicleIgnitionState.START));
-                }).build().verify(mCarPropertyManager);
+                Integer.class).setPossibleCarPropertyValues(ImmutableSet.of(
+                        VehicleIgnitionState.UNDEFINED, VehicleIgnitionState.LOCK,
+                        VehicleIgnitionState.OFF, VehicleIgnitionState.ACC, VehicleIgnitionState.ON,
+                VehicleIgnitionState.START)).build().verify(mCarPropertyManager);
     }
 
     @Test

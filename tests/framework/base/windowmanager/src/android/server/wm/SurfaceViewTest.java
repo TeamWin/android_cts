@@ -22,10 +22,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
+import android.graphics.Canvas;
 import android.graphics.PixelFormat;
 import android.graphics.Region;
 import android.platform.test.annotations.Presubmit;
-import android.view.KeyEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
@@ -36,7 +36,6 @@ import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.WidgetTestUtils;
 import com.android.compatibility.common.util.WindowUtil;
@@ -45,6 +44,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.concurrent.TimeUnit;
 
 @Presubmit
 @MediumTest
@@ -176,5 +177,23 @@ public class SurfaceViewTest {
         }, false);
         assertTrue(mMockSurfaceView.isDetachedFromWindow());
         assertFalse(mMockSurfaceView.mSurface.isValid());
+    }
+
+    @Test
+    public void testSurfaceRemainsValidWhileCanvasLocked() throws Throwable {
+        assertFalse(mMockSurfaceView.isDetachedFromWindow());
+        assertTrue(mMockSurfaceView.isShown());
+        mMockSurfaceView.awaitSurfaceCreated(3, TimeUnit.SECONDS);
+        assertTrue(mMockSurfaceView.isSurfaceCreatedCalled());
+        Canvas canvas = mMockSurfaceView.getHolder().lockCanvas();
+        assertNotNull(canvas);
+        // Try to detach the surfaceview. Since the surface is locked by the lock canvas called,
+        // the surface will remain valid.
+        mActivityRule.getActivity().runOnUiThread(() ->
+                ((ViewGroup) mMockSurfaceView.getParent()).removeView(mMockSurfaceView));
+        assertTrue(mMockSurfaceView.mSurface.isValid());
+        mMockSurfaceView.getHolder().unlockCanvasAndPost(canvas);
+        PollingCheck.waitFor(() -> mMockSurfaceView.isDetachedFromWindow()
+                && !mMockSurfaceView.isShown());
     }
 }

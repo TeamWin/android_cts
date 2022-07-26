@@ -71,7 +71,6 @@ class EvCompensationBasicTest(its_base_test.ItsBaseTest):
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
       log_path = self.log_path
-      debug = self.debug_mode
       test_name_w_path = os.path.join(log_path, NAME)
 
       # check SKIP conditions
@@ -113,11 +112,6 @@ class EvCompensationBasicTest(its_base_test.ItsBaseTest):
         caps = cam.do_capture([req]*THRESH_CONVERGE_FOR_EV, fmt)
         luma_locked = []
         for i, cap in enumerate(caps):
-          if debug:
-            img = image_processing_utils.convert_capture_to_rgb_image(
-                cap, props)
-            image_processing_utils.write_image(
-                img, f'{test_name_w_path}_ev{ev}_frame{i}.jpg')
           if cap['metadata']['android.control.aeState'] == LOCKED:
             ev_meta = cap['metadata']['android.control.aeExposureCompensation']
             logging.debug('cap EV compensation: %d', ev_meta)
@@ -132,7 +126,8 @@ class EvCompensationBasicTest(its_base_test.ItsBaseTest):
                                   rel_tol=luma_locked_rtol):
                 raise AssertionError(f'AE locked lumas: {luma_locked}, '
                                      f'RTOL: {luma_locked_rtol}')
-      logging.debug('lumas in AE locked captures: %s', str(lumas))
+        logging.debug('lumas per frame ev %d: %s', ev, str(luma_locked))
+      logging.debug('mean lumas in AE locked captures: %s', str(lumas))
       if caps[THRESH_CONVERGE_FOR_EV-1]['metadata'][
           'android.control.aeState'] != LOCKED:
         raise AssertionError(f'No AE lock by {THRESH_CONVERGE_FOR_EV} frame.')

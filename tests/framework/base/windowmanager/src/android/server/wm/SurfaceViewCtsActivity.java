@@ -26,6 +26,9 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 public class SurfaceViewCtsActivity extends Activity {
     private MockSurfaceView mSurfaceView;
 
@@ -65,7 +68,7 @@ public class SurfaceViewCtsActivity extends Activity {
         private boolean mIsOnWindowVisibilityChanged;
         private boolean mIsDispatchDraw;
         private boolean mIsSurfaceChanged;
-        private boolean mSurfaceCreatedCalled;
+        CountDownLatch mSurfaceCreatedLatch = new CountDownLatch(1);
 
         private int mWidthInOnMeasure;
         private int mHeightInOnMeasure;
@@ -174,7 +177,7 @@ public class SurfaceViewCtsActivity extends Activity {
         }
 
         public void surfaceCreated(SurfaceHolder holder) {
-            mSurfaceCreatedCalled = true;
+            mSurfaceCreatedLatch.countDown();
 
             mSurface = holder.getSurface();
 
@@ -195,7 +198,15 @@ public class SurfaceViewCtsActivity extends Activity {
         }
 
         boolean isSurfaceCreatedCalled() {
-            return mSurfaceCreatedCalled;
+            return mSurfaceCreatedLatch.getCount() == 0;
+        }
+
+        boolean awaitSurfaceCreated(long timeout, TimeUnit unit) {
+            try {
+                return mSurfaceCreatedLatch.await(timeout, unit);
+            } catch (InterruptedException e) {
+                return false;
+            }
         }
 
         public void surfaceDestroyed(SurfaceHolder holder) {

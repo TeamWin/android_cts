@@ -243,6 +243,7 @@ class ReprocessEdgeEnhancementTest(its_base_test.ItsBaseTest):
         logging.debug('Check reprocess format: %s', reprocess_format)
         check_edge_modes(sharpnesses_reprocess[reprocess_format])
 
+        # Check reprocessing doesn't make everyting worse
         hq_div_off_reprocess = (
             sharpnesses_reprocess[reprocess_format][EDGE_MODES['HQ']] /
             sharpnesses_reprocess[reprocess_format][EDGE_MODES['OFF']])
@@ -250,11 +251,10 @@ class ReprocessEdgeEnhancementTest(its_base_test.ItsBaseTest):
             sharpness_regular[EDGE_MODES['HQ']] /
             sharpness_regular[EDGE_MODES['OFF']])
         logging.debug('Verify reprocess HQ ~= reg HQ relative to OFF')
-        if not math.isclose(hq_div_off_reprocess, hq_div_off_regular,
-                            rel_tol=SHARPNESS_RTOL):
-          raise AssertionError(f'HQ/OFF_reprocess: {hq_div_off_reprocess:.4f}, '
-                               f'HQ/OFF_reg: {hq_div_off_regular:.4f}, '
-                               f'RTOL: {SHARPNESS_RTOL}')
+        if hq_div_off_reprocess < hq_div_off_regular*(1-SHARPNESS_RTOL):
+          raise AssertionError(
+              f'HQ/OFF_{reprocess_format}: {hq_div_off_reprocess:.4f}, '
+              f'HQ/OFF_reg: {hq_div_off_regular:.4f}, RTOL: {SHARPNESS_RTOL}')
 
 
 if __name__ == '__main__':
