@@ -1431,6 +1431,41 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         });
     }
 
+    @Test
+    public void testSeatBeltBuckledIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_BELT_BUCKLED,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Boolean.class).build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    public void testSeatBeltHeightPosIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_BELT_HEIGHT_POS,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues().build()
+                    .verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    public void testSeatBeltHeightMoveIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_BELT_HEIGHT_MOVE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues()
+                    .requireZeroToBeContainedInMinMaxRanges().build().verify(mCarPropertyManager);
+        });
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void testGetProperty() {

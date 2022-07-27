@@ -21,6 +21,7 @@ import android.os.Build
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.CddTest
 import com.android.compatibility.common.util.SystemUtil
+import org.junit.Assume
 import org.junit.Test
 
 /**
@@ -98,6 +99,8 @@ class MediaPermissionTest : BaseUsePermissionTest() {
 
     @Test
     fun testWhenVisualIsDeniedManuallyThenShouldDenyAllPermissions() {
+        // TODO: Re-enable after b/239249703 is fixed
+        Assume.assumeFalse("skip on TV due to flaky", isTv)
         installPackage(APP_APK_PATH_23)
         grantAppPermissions(android.Manifest.permission.READ_MEDIA_VIDEO, targetSdk = 23)
         revokeAppPermissions(android.Manifest.permission.READ_MEDIA_VIDEO, targetSdk = 23)

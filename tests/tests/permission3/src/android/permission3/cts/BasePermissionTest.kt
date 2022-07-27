@@ -115,6 +115,29 @@ abstract class BasePermissionTest {
                 Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE)
     }
 
+    protected fun getPermissionControllerResString(res: String): String? {
+        try {
+            return mPermissionControllerResources.getString(
+                    mPermissionControllerResources.getIdentifier(
+                            res, "string", "com.android.permissioncontroller"))
+        } catch (e: Resources.NotFoundException) {
+            return null
+        }
+    }
+
+    protected fun byAnyText(vararg texts: String?): BySelector {
+        var regex = ""
+        for (text in texts) {
+            if (text != null) {
+                regex = regex + Pattern.quote(text) + "|"
+            }
+        }
+        if (regex.endsWith("|")) {
+            regex = regex.dropLast(1)
+        }
+        return By.text(Pattern.compile(regex, Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE))
+    }
+
     protected fun installPackage(
         apkPath: String,
         reinstall: Boolean = false,

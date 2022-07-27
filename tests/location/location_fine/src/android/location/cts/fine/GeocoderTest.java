@@ -87,6 +87,7 @@ public class GeocoderTest {
     }
 
     @ApiTest(apis = "android.location.Geocoder#getFromLocation")
+    @AppModeFull(reason = "b/238831704 - Test cases don't apply for Instant apps")
     @Test
     public void testGetFromLocation_sync() throws Exception {
         assumeTrue(Geocoder.isPresent());
@@ -95,6 +96,7 @@ public class GeocoderTest {
     }
 
     @ApiTest(apis = "android.location.Geocoder#getFromLocation")
+    @AppModeFull(reason = "b/238831704 - Test cases don't apply for Instant apps")
     @Test
     public void testGetFromLocation_badInput() {
         GeocodeListener listener = mock(GeocodeListener.class);
@@ -109,6 +111,7 @@ public class GeocoderTest {
     }
 
     @ApiTest(apis = "android.location.Geocoder#getFromLocationName")
+    @AppModeFull(reason = "b/238831704 - Test cases don't apply for Instant apps")
     @Test
     public void testGetFromLocationName() {
         assumeTrue(Geocoder.isPresent());
@@ -119,6 +122,7 @@ public class GeocoderTest {
     }
 
     @ApiTest(apis = "android.location.Geocoder#getFromLocationName")
+    @AppModeFull(reason = "b/238831704 - Test cases don't apply for Instant apps")
     @Test
     public void testGetFromLocationName_sync() throws Exception {
         assumeTrue(Geocoder.isPresent());
@@ -127,6 +131,7 @@ public class GeocoderTest {
     }
 
     @ApiTest(apis = "android.location.Geocoder#getFromLocationName")
+    @AppModeFull(reason = "b/238831704 - Test cases don't apply for Instant apps")
     @Test
     public void testGetFromLocationName_badInput() {
         GeocodeListener listener = mock(GeocodeListener.class);

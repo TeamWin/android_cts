@@ -32,6 +32,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.ColorInt
 import androidx.test.filters.SmallTest
+import com.android.compatibility.common.util.CddTest;
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assume
 import kotlin.test.assertFailsWith
@@ -283,8 +284,9 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
         }
     }
 
+    @CddTest(requirement = "3.8.3.1/C-2-1")
     fun testPromoteBigPicture_withBigPictureUriIcon() {
-        val pictureUri = Uri.parse("content://android.app.stubs.assets/picture_400_by_300.png")
+        val pictureUri = Uri.parse("content://android.app.stubs.assets/picture_800_by_600.png")
         val pictureIcon = Icon.createWithContentUri(pictureUri)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
@@ -385,8 +387,9 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
                 !!.sameAs(picture)).isTrue()
     }
 
+    @CddTest(requirement = "3.8.3.1/C-2-1")
     fun testBigPicture_withBigLargeIcon_withContentUri() {
-        val iconUri = Uri.parse("content://android.app.stubs.assets/picture_400_by_300.png")
+        val iconUri = Uri.parse("content://android.app.stubs.assets/picture_800_by_600.png")
         val icon = Icon.createWithContentUri(iconUri)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)

@@ -45,6 +45,7 @@ private const val MORE_OPTIONS = "More options"
 private const val TIMELINE_7_DAYS_DESCRIPTION = "in the past 7 days"
 private const val DASHBOARD_7_DAYS_DESCRIPTION = "7 days"
 private const val PRIV_DASH_7_DAY_ENABLED = "privacy_dashboard_7_day_toggle"
+private const val REFRESH = "Refresh"
 
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 class PermissionHistoryTest : BasePermissionHubTest() {
@@ -100,9 +101,21 @@ class PermissionHistoryTest : BasePermissionHubTest() {
         waitFindObject(By.textContains(APP_LABEL_1))
 
         openPermissionDashboard()
-        waitFindObject(By.res("android:id/title").textContains("Microphone")).click()
-        waitFindObject(By.textContains(micLabel))
-        waitFindObject(By.textContains(APP_LABEL_1))
+
+        SystemUtil.eventually {
+            try {
+                waitFindObject(By.res("android:id/title")
+                        .textContains("Microphone")).click()
+                waitFindObject(By.textContains(micLabel))
+                waitFindObject(By.textContains(APP_LABEL_1))
+            } catch (e: Exception) {
+                // Sometimes the dashboard was in the state from previous failed tests.
+                // Clicking the refresh button to get the most recent access.
+                waitFindObject(By.textContains(REFRESH)).click()
+                throw e
+            }
+        }
+
         pressBack()
         pressBack()
     }

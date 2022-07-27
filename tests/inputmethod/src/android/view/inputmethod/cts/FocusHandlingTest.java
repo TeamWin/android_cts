@@ -51,11 +51,14 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.Process;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
 import android.text.TextUtils;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -67,6 +70,7 @@ import android.view.inputmethod.cts.util.TestUtils;
 import android.view.inputmethod.cts.util.UnlockScreenRule;
 import android.view.inputmethod.cts.util.WindowFocusHandleService;
 import android.view.inputmethod.cts.util.WindowFocusStealer;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -90,8 +94,11 @@ import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.testng.Assert;
 
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -170,6 +177,90 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             // There shouldn't be onStartInput any more.
             notExpectEvent(stream, editorMatcherRestartingFalse("onStartInput", marker),
                            NOT_EXPECT_TIMEOUT);
+        }
+    }
+
+    @Test
+    public void testSwitchingBetweenEquivalentNonEditableViews() throws Exception {
+        // When avoidable IME prevention is enabled, the onStartInput calls do not happen
+        // TODO(b/240260832): Refine the assumption when testing a non-preemptible IME.
+        Assume.assumeFalse(isPreventImeStartup());
+        try (MockImeSession imeSession = createTestImeSession()) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            final AtomicReference<TextView> viewRef1 = new AtomicReference<>();
+            final AtomicReference<TextView> viewRef2 = new AtomicReference<>();
+            final BlockingQueue<KeyEvent> keyEvents = new LinkedBlockingQueue<>();
+
+            // Skip events relating to showStateInitializeActivity()
+            stream.skipAll();
+
+            final TestActivity testActivity = TestActivity.startSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                final TextView view1 = new Button(activity);
+                view1.setText("View 1");
+                layout.addView(view1);
+                view1.setFocusableInTouchMode(true);
+                viewRef1.set(view1);
+
+                final TextView view2 = new Button(activity) {
+                    @Override
+                    public boolean dispatchKeyEvent(KeyEvent event) {
+                        keyEvents.add(event);
+                        return super.dispatchKeyEvent(event);
+                    }
+                };
+                view2.setText("View 2");
+                layout.addView(view2);
+                view2.setFocusableInTouchMode(true);
+                viewRef2.set(view2);
+
+                return layout;
+            });
+
+            // Since we are focusing a view on a new window, we do expect an onStartInput
+            testActivity.runOnUiThread(() -> viewRef1.get().requestFocus());
+            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()),
+                    EXPECT_TIMEOUT);
+            // Now switch focus to an equivalent non-editable view, however, the focus reason
+            // is going to be different since this time we are not coming from a window switch.
+            testActivity.runOnUiThread(() -> viewRef2.get().requestFocus());
+            // Therefore we expect another call to start input
+            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()),
+                    EXPECT_TIMEOUT);
+
+            // Switch back to view 1, which is still not considered equivalent
+            testActivity.runOnUiThread(() -> viewRef1.get().requestFocus());
+            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()),
+                    EXPECT_TIMEOUT);
+            // Switch to view2, which is now finally fully equivalent
+            testActivity.runOnUiThread(() -> viewRef2.get().requestFocus());
+            // If optimization is enabled, we do not expect another call to onStartInput
+            if (SystemProperties.getBoolean("debug.imm.optimize_noneditable_views", true)) {
+                notExpectEvent(stream, event -> "onStartInput".equals(event.getEventName()),
+                        NOT_EXPECT_TIMEOUT);
+            } else {
+                expectEvent(stream, event -> "onStartInput".equals(event.getEventName()),
+                        EXPECT_TIMEOUT);
+            }
+
+            // Force show the IME and expect it to come up
+            testActivity.runOnUiThread(() ->
+                    viewRef1.get().getWindowInsetsController().show(WindowInsets.Type.ime()));
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                    EXPECT_TIMEOUT);
+
+            final String testInput = "Test";
+            final ImeCommand commitText = imeSession.callCommitText(testInput, 0);
+            expectCommand(stream, commitText, EXPECT_TIMEOUT);
+
+            waitOnMainUntil(() -> !keyEvents.isEmpty(), EXPECT_TIMEOUT);
+            Assert.assertEquals(keyEvents.size(), 1, "Expecting exactly one key event!");
+            final KeyEvent keyEvent = keyEvents.remove();
+            Assert.assertEquals(keyEvent.getAction(), KeyEvent.ACTION_MULTIPLE);
+            Assert.assertEquals(keyEvent.getKeyCode(), KeyEvent.KEYCODE_UNKNOWN);
+            Assert.assertEquals(keyEvent.getCharacters(), testInput);
         }
     }
 

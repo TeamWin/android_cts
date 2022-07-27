@@ -1092,6 +1092,13 @@ public class PackageManagerTest {
                 " DEBUGGABLE HAS_CODE ALLOW_TASK_REPARENTING ALLOW_CLEAR_USER_DATA TEST_ONLY "
                         + "VM_SAFE_MODE ALLOW_BACKUP LARGE_HEAP ]",
                 pkgFlags);
+        final String privatePkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME,
+                "    privatePkgFlags=[");
+        assertEquals(
+                " PRIVATE_FLAG_ACTIVITIES_RESIZE_MODE_RESIZEABLE_VIA_SDK_VERSION "
+                        + "ALLOW_AUDIO_PLAYBACK_CAPTURE "
+                        + "PRIVATE_FLAG_ALLOW_NATIVE_HEAP_POINTER_TAGGING ]",
+                privatePkgFlags);
     }
 
     @Test

@@ -51,27 +51,31 @@ public class InputSurface implements InputSurfaceInterface {
     /**
      * Creates an InputSurface from a Surface.
      */
-    public InputSurface(Surface surface, boolean releaseSurface) {
+    public InputSurface(Surface surface, boolean releaseSurface, boolean useHighBitDepth) {
         if (surface == null) {
             throw new NullPointerException();
         }
         mSurface = surface;
         mReleaseSurface = releaseSurface;
 
-        eglSetup();
+        eglSetup(useHighBitDepth);
+    }
+
+    public InputSurface(Surface surface, boolean useHighBitDepth) {
+        this(surface, true, useHighBitDepth);
     }
 
     /**
      * Creates an InputSurface from a Surface.
      */
     public InputSurface(Surface surface) {
-        this(surface, true);
+        this(surface, true, false);
     }
 
     /**
      * Prepares EGL.  We want a GLES 2.0 context and a surface that supports recording.
      */
-    private void eglSetup() {
+    private void eglSetup(boolean useHighBitDepth) {
         mEGLDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
         if (mEGLDisplay == EGL14.EGL_NO_DISPLAY) {
             throw new RuntimeException("unable to get EGL14 display");
@@ -84,27 +88,31 @@ public class InputSurface implements InputSurfaceInterface {
 
         // Configure EGL for recordable and OpenGL ES 2.0.  We want enough RGB bits
         // to minimize artifacts from possible YUV conversion.
-        int[] attribList = {
-                EGL14.EGL_RED_SIZE, 8,
-                EGL14.EGL_GREEN_SIZE, 8,
-                EGL14.EGL_BLUE_SIZE, 8,
+        int eglColorSize = useHighBitDepth ? 10: 8;
+        int eglAlphaSize = useHighBitDepth ? 2: 0;
+        int recordable = useHighBitDepth ? 0: 1;
+        int[] configAttribList= {
+                EGL14.EGL_RED_SIZE, eglColorSize,
+                EGL14.EGL_GREEN_SIZE, eglColorSize,
+                EGL14.EGL_BLUE_SIZE, eglColorSize,
+                EGL14.EGL_ALPHA_SIZE, eglAlphaSize,
                 EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
-                EGLExt.EGL_RECORDABLE_ANDROID, 1,
+                EGLExt.EGL_RECORDABLE_ANDROID, recordable,
                 EGL14.EGL_NONE
         };
         int[] numConfigs = new int[1];
-        if (!EGL14.eglChooseConfig(mEGLDisplay, attribList, 0, mConfigs, 0, mConfigs.length,
+        if (!EGL14.eglChooseConfig(mEGLDisplay, configAttribList, 0, mConfigs, 0, mConfigs.length,
                 numConfigs, 0)) {
             throw new RuntimeException("unable to find RGB888+recordable ES2 EGL config");
         }
 
         // Configure context for OpenGL ES 2.0.
-        int[] attrib_list = {
+        int[] contextAttribList = {
                 EGL14.EGL_CONTEXT_CLIENT_VERSION, 2,
                 EGL14.EGL_NONE
         };
         mEGLContext = EGL14.eglCreateContext(mEGLDisplay, mConfigs[0], EGL14.EGL_NO_CONTEXT,
-                attrib_list, 0);
+                contextAttribList, 0);
         checkEglError("eglCreateContext");
         if (mEGLContext == null) {
             throw new RuntimeException("null context");
