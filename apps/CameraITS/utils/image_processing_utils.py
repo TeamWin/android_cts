@@ -246,6 +246,14 @@ def decompress_jpeg_to_rgb_image(jpeg_buffer):
   return numpy.array(img).reshape((h, w, 3)) / 255.0
 
 
+def extract_luma_from_patch(cap, patch_x, patch_y, patch_w, patch_h):
+  """Extract luma from capture."""
+  y, _, _ = convert_capture_to_planes(cap)
+  patch = get_image_patch(y, patch_x, patch_y, patch_w, patch_h)
+  luma = compute_image_means(patch)[0]
+  return luma
+
+
 def convert_image_to_numpy_array(image_path):
   """Converts image at image_path to numpy array and returns the array.
 

@@ -21,13 +21,17 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
 import android.graphics.Color;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.view.Gravity;
+import android.view.InputEvent;
+import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.PopupWindow;
 
+import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.filters.MediumTest;
@@ -97,7 +101,45 @@ public class BackInvokedOnWidgetsTest {
     private void doBackGesture() {
         int midHeight = mUiDevice.getDisplayHeight() / 2;
         int midWidth = mUiDevice.getDisplayWidth() / 2;
-        mUiDevice.swipe(0, midHeight, midWidth, midHeight, 100);
+        quickSwipe(0, midHeight, midWidth, midHeight, 10);
         mUiDevice.waitForIdle();
+    }
+
+    private void injectInputEventUnSynced(@NonNull InputEvent event) {
+        mInstrumentation.getUiAutomation().injectInputEvent(event, false /* sync */,
+                false /* waitForAnimations */);
+    }
+
+    /**
+     * Injecting a sequence of motion event to simulate swipe without waiting for sync transaction.
+     */
+    private void quickSwipe(float startX, float startY, float endX, float endY, int steps) {
+        if (steps <= 0) {
+            steps = 1;
+        }
+        final long startDownTime = SystemClock.uptimeMillis();
+        MotionEvent firstDown = MotionEvent.obtain(startDownTime, startDownTime,
+                MotionEvent.ACTION_DOWN, startX, startY, 0);
+        injectInputEventUnSynced(firstDown);
+
+        // inject in every 5 ms.
+        final int delayMillis = 5;
+        long nextEventTime = startDownTime + delayMillis;
+        final float stepGapX = (endX - startX) / steps;
+        final float stepGapY = (endY - startY) / steps;
+        for (int i = 0; i < steps; i++) {
+            SystemClock.sleep(delayMillis);
+            final float nextX = startX + stepGapX * i;
+            final float nextY = startY + stepGapY * i;
+            MotionEvent move = MotionEvent.obtain(startDownTime, nextEventTime,
+                    MotionEvent.ACTION_MOVE, nextX, nextY, 0);
+            injectInputEventUnSynced(move);
+            nextEventTime += delayMillis;
+        }
+
+        SystemClock.sleep(delayMillis);
+        MotionEvent up = MotionEvent.obtain(startDownTime, nextEventTime,
+                MotionEvent.ACTION_UP, endX, endY, 0);
+        injectInputEventUnSynced(up);
     }
 }

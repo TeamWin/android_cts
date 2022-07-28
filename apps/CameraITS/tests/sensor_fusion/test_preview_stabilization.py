@@ -100,7 +100,7 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
   in gyroscope movement. Test is a PASS if rotation is reduced in video.
   """
 
-  def test_preview_stability(self):
+  def test_preview_stabilization(self):
     rot_rig = {}
     log_path = self.log_path
 

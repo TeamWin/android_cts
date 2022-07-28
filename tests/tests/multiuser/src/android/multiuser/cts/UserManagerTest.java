@@ -26,6 +26,8 @@ import static android.os.UserManager.USER_OPERATION_SUCCESS;
 import static android.os.UserManager.USER_TYPE_FULL_SECONDARY;
 import static android.os.UserManager.USER_TYPE_PROFILE_MANAGED;
 
+import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -53,6 +55,8 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
 
@@ -143,8 +147,20 @@ public final class UserManagerTest {
         assertWithMessage("isUserForeground() for current user")
                 .that(mUserManager.isUserForeground()).isTrue();
     }
-    // TODO(b/173541467): add testIsUserForeground_backgroundUser()
-    // TODO(b/179163496): add testIsUserForeground_ tests for profile users
+
+    @Test
+    @RequireRunOnSecondaryUser(switchedToUser = FALSE)
+    public void testIsUserForeground_backgroundUser() throws Exception {
+        assertWithMessage("isUserForeground() for bg user (%s)", sContext.getUser())
+                .that(mUserManager.isUserForeground()).isFalse();
+    }
+
+    @Test
+    @RequireRunOnWorkProfile // TODO(b/239961027): should be @RequireRunOnProfile instead
+    public void testIsUserForeground_profileOfCurrentUser() throws Exception {
+        assertWithMessage("isUserForeground() for profile(%s) of current user", sContext.getUser())
+                .that(mUserManager.isUserForeground()).isFalse();
+    }
 
     @Test
     public void testCloneProfile() throws Exception {

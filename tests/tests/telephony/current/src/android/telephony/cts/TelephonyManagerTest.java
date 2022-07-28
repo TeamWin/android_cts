@@ -5283,10 +5283,8 @@ public class TelephonyManagerTest {
     }
 
     @Test
-    public void testIgnoreInvalidNetworkType() {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            return;
-        }
+    public void testSetAllowedNetworkTypesForReason_ignoreInvalidNetworkType() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
 
         // NETWORK_TYPE_BITMASK_LTE_CA is invalid, should be converted into NETWORK_TYPE_BITMASK_LTE
         long invalidAllowedNetworkTypes = TelephonyManager.NETWORK_TYPE_BITMASK_NR
@@ -5294,6 +5292,7 @@ public class TelephonyManagerTest {
         long expectedAllowedNetworkTypes = TelephonyManager.NETWORK_TYPE_BITMASK_NR
                 | TelephonyManager.NETWORK_TYPE_BITMASK_LTE;
         try {
+            mIsAllowedNetworkTypeChanged = true;
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                     mTelephonyManager,
                     (tm) -> tm.setAllowedNetworkTypesForReason(

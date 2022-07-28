@@ -127,7 +127,7 @@ class PreviewStabilizationFoVTest(its_base_test.ItsBaseTest):
       20%
   """
 
-  def test_fov_with_preview_stabilization(self):
+  def test_preview_stabilization_fov(self):
     log_path = self.log_path
 
     with its_session_utils.ItsSession(

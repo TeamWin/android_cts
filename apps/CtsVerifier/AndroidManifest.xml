@@ -2899,6 +2899,16 @@
                        android:value="android.hardware.type.automotive"/>
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.hardware.Camera#getNumberOfCameras|
+                               android.hardware.Camera#open|
+                               android.hardware.Camera#startPreview|
+                               android.hardware.Camera#stopPreview|
+                               android.hardware.Camera#takePicture|
+                               android.hardware.Camera#setParameters|
+                               android.hardware.Camera#setDisplayOrientation|
+                               android.hardware.Camera.Parameters#setHorizontalViewAngle|
+                               android.hardware.Camera.Parameters#setVerticalViewAngle" />
         </activity>
         <activity
             android:name=".camera.fov.DetermineFovActivity"
@@ -2908,6 +2918,11 @@
                        android:value="android.hardware.type.automotive"/>
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.media.ExifInterface#TAG_ORIENTATION|
+                               android.media.ExifInterface#ORIENTATION_ROTATE_90|
+                               android.media.ExifInterface#ORIENTATION_ROTATE_180|
+                               android.media.ExifInterface#ORIENTATION_ROTATE_270" />
         </activity>
         <activity
             android:name=".camera.fov.CalibrationPreferenceActivity"

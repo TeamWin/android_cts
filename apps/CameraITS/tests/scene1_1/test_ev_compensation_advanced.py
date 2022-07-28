@@ -52,15 +52,6 @@ def create_request_with_ev(ev):
   return req
 
 
-def extract_luma_from_capture(cap):
-  """Extract luma from capture."""
-  y = image_processing_utils.convert_capture_to_planes(cap)[0]
-  patch = image_processing_utils.get_image_patch(
-      y, PATCH_X, PATCH_Y, PATCH_W, PATCH_H)
-  luma = image_processing_utils.compute_image_means(patch)[0]
-  return luma
-
-
 def create_ev_comp_changes(props):
   """Create the ev compensation steps and shifts from control params."""
   ev_compensation_range = props['android.control.aeCompensationRange']
@@ -124,7 +115,8 @@ class EvCompensationAdvancedTest(its_base_test.ItsBaseTest):
             if ev_meta != ev:
               raise AssertionError(
                   f'EV comp capture != request! cap: {ev_meta}, req: {ev}')
-            lumas.append(extract_luma_from_capture(cap))
+            lumas.append(image_processing_utils.extract_luma_from_patch(
+                cap, PATCH_X, PATCH_Y, PATCH_W, PATCH_H))
             break
         if caps[THRESH_CONVERGE_FOR_EV-1]['metadata'][
             'android.control.aeState'] != LOCKED:

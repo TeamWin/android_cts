@@ -23,10 +23,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
+import android.os.SystemClock;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.server.wm.backlegacyapp.Components;
 import android.support.test.uiautomator.UiDevice;
+import android.view.InputEvent;
+import android.view.MotionEvent;
 
+import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.GestureNavRule;
@@ -74,7 +78,45 @@ public class BackNavigationLegacyGestureTest extends ActivityManagerTestBase {
     private void doBackGesture() {
         int midHeight = mUiDevice.getDisplayHeight() / 2;
         int midWidth = mUiDevice.getDisplayWidth() / 2;
-        mUiDevice.swipe(0, midHeight, midWidth, midHeight, 100);
+        quickSwipe(0, midHeight, midWidth, midHeight, 10);
         mUiDevice.waitForIdle();
+    }
+
+    private void injectInputEventUnSynced(@NonNull InputEvent event) {
+        mInstrumentation.getUiAutomation().injectInputEvent(event, false /* sync */,
+                false /* waitForAnimations */);
+    }
+
+    /**
+     * Injecting a sequence of motion event to simulate swipe without waiting for sync transaction.
+     */
+    private void quickSwipe(float startX, float startY, float endX, float endY, int steps) {
+        if (steps <= 0) {
+            steps = 1;
+        }
+        final long startDownTime = SystemClock.uptimeMillis();
+        MotionEvent firstDown = MotionEvent.obtain(startDownTime, startDownTime,
+                MotionEvent.ACTION_DOWN, startX, startY, 0);
+        injectInputEventUnSynced(firstDown);
+
+        // inject in every 5 ms.
+        final int delayMillis = 5;
+        long nextEventTime = startDownTime + delayMillis;
+        final float stepGapX = (endX - startX) / steps;
+        final float stepGapY = (endY - startY) / steps;
+        for (int i = 0; i < steps; i++) {
+            SystemClock.sleep(delayMillis);
+            final float nextX = startX + stepGapX * i;
+            final float nextY = startY + stepGapY * i;
+            MotionEvent move = MotionEvent.obtain(startDownTime, nextEventTime,
+                    MotionEvent.ACTION_MOVE, nextX, nextY, 0);
+            injectInputEventUnSynced(move);
+            nextEventTime += delayMillis;
+        }
+
+        SystemClock.sleep(delayMillis);
+        MotionEvent up = MotionEvent.obtain(startDownTime, nextEventTime,
+                MotionEvent.ACTION_UP, endX, endY, 0);
+        injectInputEventUnSynced(up);
     }
 }

@@ -27,7 +27,7 @@ JPEG_CAPTURE_S_PERFORMANCE_CLASS_THRESHOLD = 1000  # ms
 class JpegCaptureSPerfClassTest(its_base_test.ItsBaseTest):
   """Test jpeg capture latency for S performance class as specified in CDD.
 
-  [7.5/H-1-5] MUST have camera2 JPEG capture latency < 1000ms for 1080p
+  [2.2.7.2/7.5/H-1-5] MUST have camera2 JPEG capture latency < 1000ms for 1080p
   resolution as measured by the CTS camera PerformanceTest under ITS lighting
   conditions (3000K) for both primary cameras.
   """

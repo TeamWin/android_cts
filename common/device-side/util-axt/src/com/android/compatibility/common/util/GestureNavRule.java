@@ -19,17 +19,15 @@ package com.android.compatibility.common.util;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.BySelector;
+import android.graphics.Insets;
+import android.graphics.Rect;
+import android.os.SystemClock;
 import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject2;
-import android.support.test.uiautomator.Until;
-import android.util.ArrayMap;
+import android.view.WindowInsets;
+import android.view.WindowManager;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -37,33 +35,31 @@ import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * Test rule to enable gesture navigation on the device. Designed to be a {@link ClassRule}.
  */
 public class GestureNavRule extends ExternalResource {
-    private static final String SETTINGS_PACKAGE_NAME = "com.android.settings";
     private static final String NAV_BAR_INTERACTION_MODE_RES_NAME = "config_navBarInteractionMode";
-    private static final int NAV_BAR_INTERACTION_MODE_GESTURAL = 2;
+    private static final int NAV_BAR_MODE_3BUTTON = 0;
+    private static final int NAV_BAR_MODE_2BUTTON = 1;
+    private static final int NAV_BAR_MODE_GESTURAL = 2;
+
+    private static final String NAV_BAR_MODE_3BUTTON_OVERLAY =
+            "com.android.internal.systemui.navbar.threebutton";
+    private static final String NAV_BAR_MODE_2BUTTON_OVERLAY =
+            "com.android.internal.systemui.navbar.twobutton";
     private static final String GESTURAL_OVERLAY_NAME =
             "com.android.internal.systemui.navbar.gestural";
 
-    /** Most application's res id must be larger than 0x7f000000 */
-    public static final int MIN_APPLICATION_RES_ID = 0x7f000000;
-    public static final String SETTINGS_CLASS =
-            SETTINGS_PACKAGE_NAME + ".Settings$SystemDashboardActivity";
+    private static final int WAIT_OVERLAY_TIMEOUT = 3000;
+    private static final int PEEK_INTERVAL = 200;
 
-    private final Map<String, Boolean> mSystemGestureOptionsMap = new ArrayMap<>();
     private final Context mTargetContext;
     private final UiDevice mDevice;
+    private final WindowManager mWindowManager;
 
-    // Bounds for actions like swipe and click.
-    private String mEdgeToEdgeNavigationTitle;
-    private String mSystemNavigationTitle;
-    private String mGesturePreferenceTitle;
-    private boolean mConfiguredInSettings;
-    private boolean mRevertOverlay;
+    private final String mOriginalOverlayPackage;
 
     @Override
     protected void before() throws Throwable {
@@ -74,7 +70,9 @@ public class GestureNavRule extends ExternalResource {
 
     @Override
     protected void after() {
-        disableGestureNav();
+        if (!mOriginalOverlayPackage.equals(GESTURAL_OVERLAY_NAME)) {
+            disableGestureNav();
+        }
     }
 
     /**
@@ -85,39 +83,16 @@ public class GestureNavRule extends ExternalResource {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         mDevice = UiDevice.getInstance(instrumentation);
         mTargetContext = instrumentation.getTargetContext();
-        PackageManager packageManager = mTargetContext.getPackageManager();
-        Resources res;
-        try {
-            res = packageManager.getResourcesForApplication(SETTINGS_PACKAGE_NAME);
-        } catch (PackageManager.NameNotFoundException e) {
-            return;
-        }
-        if (res == null) {
-            return;
-        }
 
-        mEdgeToEdgeNavigationTitle = getSettingsString(res, "edge_to_edge_navigation_title");
-        mGesturePreferenceTitle = getSettingsString(res, "gesture_preference_title");
-        mSystemNavigationTitle = getSettingsString(res, "system_navigation_title");
-
-        String text = getSettingsString(res, "edge_to_edge_navigation_title");
-        if (text != null) {
-            mSystemGestureOptionsMap.put(text, false);
-        }
-        text = getSettingsString(res, "swipe_up_to_switch_apps_title");
-        if (text != null) {
-            mSystemGestureOptionsMap.put(text, false);
-        }
-        text = getSettingsString(res, "legacy_navigation_title");
-        if (text != null) {
-            mSystemGestureOptionsMap.put(text, false);
-        }
-
-        mConfiguredInSettings = false;
+        mOriginalOverlayPackage = getCurrentOverlayPackage();
+        mWindowManager = mTargetContext.getSystemService(WindowManager.class);
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean hasSystemGestureFeature() {
+        if (!containsNavigationBar()) {
+            return false;
+        }
         final PackageManager pm = mTargetContext.getPackageManager();
 
         // No bars on embedded devices.
@@ -128,59 +103,21 @@ public class GestureNavRule extends ExternalResource {
                 || pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
     }
 
-
-    private UiObject2 findSystemNavigationObject(String text, boolean addCheckSelector) {
-        BySelector widgetFrameSelector = By.res("android", "widget_frame");
-        BySelector checkboxSelector = By.checkable(true);
-        if (addCheckSelector) {
-            checkboxSelector = checkboxSelector.checked(true);
+    private String getCurrentOverlayPackage() {
+        final int currentNavMode = getCurrentNavMode();
+        switch (currentNavMode) {
+            case NAV_BAR_MODE_GESTURAL:
+                return GESTURAL_OVERLAY_NAME;
+            case NAV_BAR_MODE_2BUTTON:
+                return NAV_BAR_MODE_2BUTTON_OVERLAY;
+            case NAV_BAR_MODE_3BUTTON:
+            default:
+                return NAV_BAR_MODE_3BUTTON_OVERLAY;
         }
-        BySelector textSelector = By.text(text);
-        BySelector targetSelector = By.hasChild(widgetFrameSelector).hasDescendant(textSelector)
-                .hasDescendant(checkboxSelector);
-
-        return mDevice.findObject(targetSelector);
     }
 
-    private boolean launchToSettingsSystemGesture() {
-
-        // Open the Settings app as close as possible to the gesture Fragment
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        ComponentName settingComponent = new ComponentName(SETTINGS_PACKAGE_NAME, SETTINGS_CLASS);
-        intent.setComponent(settingComponent);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        mTargetContext.startActivity(intent);
-
-        // Wait for the app to appear
-        mDevice.wait(Until.hasObject(By.pkg("com.android.settings").depth(0)),
-                5000);
-        mDevice.wait(Until.hasObject(By.text(mGesturePreferenceTitle)), 5000);
-        if (mDevice.findObject(By.text(mGesturePreferenceTitle)) == null) {
-            return false;
-        }
-        mDevice.findObject(By.text(mGesturePreferenceTitle)).click();
-        mDevice.wait(Until.hasObject(By.text(mSystemNavigationTitle)), 5000);
-        if (mDevice.findObject(By.text(mSystemNavigationTitle)) == null) {
-            return false;
-        }
-        mDevice.findObject(By.text(mSystemNavigationTitle)).click();
-        mDevice.wait(Until.hasObject(By.text(mEdgeToEdgeNavigationTitle)), 5000);
-
-        return mDevice.hasObject(By.text(mEdgeToEdgeNavigationTitle));
-    }
-
-    private void leaveSettings() {
-        mDevice.pressBack(); /* Back to Gesture */
-        mDevice.waitForIdle();
-        mDevice.pressBack(); /* Back to System */
-        mDevice.waitForIdle();
-        mDevice.pressBack(); /* back to Settings */
-        mDevice.waitForIdle();
-        mDevice.pressBack(); /* Back to Home */
-        mDevice.waitForIdle();
-
-        mDevice.pressHome(); /* double confirm back to home */
-        mDevice.waitForIdle();
+    private void insetsToRect(Insets insets, Rect outRect) {
+        outRect.set(insets.left, insets.top, insets.right, insets.bottom);
     }
 
     private void enableGestureNav() {
@@ -188,71 +125,68 @@ public class GestureNavRule extends ExternalResource {
             return;
         }
         try {
-            if (mDevice.executeShellCommand("cmd overlay list").contains(GESTURAL_OVERLAY_NAME)) {
+            if (!mDevice.executeShellCommand("cmd overlay list").contains(GESTURAL_OVERLAY_NAME)) {
+                return;
+            }
+        } catch (IOException ignore) {
+            //
+        }
+        monitorOverlayChange(() -> {
+            try {
                 mDevice.executeShellCommand("cmd overlay enable " + GESTURAL_OVERLAY_NAME);
-                mDevice.waitForIdle();
+            } catch (IOException e) {
+                // Do nothing
             }
-        } catch (IOException e) {
-            // Do nothing
-        }
-
-        if (isGestureMode()) {
-            mRevertOverlay = true;
-            return;
-        }
-
-        // Set up the gesture navigation by enabling it via the Settings app
-        boolean isOperatedSettingsToExpectedOption = launchToSettingsSystemGesture();
-        if (isOperatedSettingsToExpectedOption) {
-            for (Map.Entry<String, Boolean> entry : mSystemGestureOptionsMap.entrySet()) {
-                UiObject2 uiObject2 = findSystemNavigationObject(entry.getKey(), true);
-                entry.setValue(uiObject2 != null);
-            }
-            UiObject2 edgeToEdgeObj = mDevice.findObject(By.text(mEdgeToEdgeNavigationTitle));
-            if (edgeToEdgeObj != null) {
-                edgeToEdgeObj.click();
-                mConfiguredInSettings = true;
-            }
-        }
-        mDevice.waitForIdle();
-        leaveSettings();
-
-        mDevice.pressHome();
-        mDevice.waitForIdle();
-
-        mDevice.waitForIdle();
+        });
     }
 
-    /**
-     * Restore the original configured value for the system gesture by operating Settings.
-     */
     private void disableGestureNav() {
         if (!hasSystemGestureFeature()) {
             return;
         }
-
-        if (mRevertOverlay) {
+        monitorOverlayChange(() -> {
             try {
-                mDevice.executeShellCommand("cmd overlay disable " + GESTURAL_OVERLAY_NAME);
-            } catch (IOException e) {
+                mDevice.executeShellCommand("cmd overlay enable " + mOriginalOverlayPackage);
+            } catch (IOException ignore) {
                 // Do nothing
             }
-            if (!isGestureMode()) {
-                return;
-            }
-        }
+        });
+    }
 
-        if (mConfiguredInSettings) {
-            launchToSettingsSystemGesture();
-            for (Map.Entry<String, Boolean> entry : mSystemGestureOptionsMap.entrySet()) {
-                if (entry.getValue()) {
-                    UiObject2 navigationObject = findSystemNavigationObject(entry.getKey(), false);
-                    if (navigationObject != null) {
-                        navigationObject.click();
-                    }
+    private void getCurrentInsetsSize(Rect outSize) {
+        outSize.setEmpty();
+        if (mWindowManager != null) {
+            WindowInsets insets = mWindowManager.getCurrentWindowMetrics().getWindowInsets();
+            Insets navInsets = insets.getInsetsIgnoringVisibility(
+                    WindowInsets.Type.navigationBars());
+            insetsToRect(navInsets, outSize);
+        }
+    }
+
+    // Monitoring the navigation bar insets size change as a hint of gesture mode has changed, not
+    // the best option for every kind of devices. We can consider listening OVERLAY_CHANGED
+    // broadcast in U.
+    private void monitorOverlayChange(Runnable overlayChangeCommand) {
+        if (mWindowManager != null) {
+            final Rect initSize = new Rect();
+            getCurrentInsetsSize(initSize);
+
+            overlayChangeCommand.run();
+            // wait for insets size change
+            final Rect peekSize = new Rect();
+            int t = 0;
+            while (t < WAIT_OVERLAY_TIMEOUT) {
+                SystemClock.sleep(PEEK_INTERVAL);
+                t += PEEK_INTERVAL;
+                getCurrentInsetsSize(peekSize);
+                if (!peekSize.equals(initSize)) {
+                    break;
                 }
             }
-            leaveSettings();
+        } else {
+            // shouldn't happen
+            overlayChangeCommand.run();
+            SystemClock.sleep(WAIT_OVERLAY_TIMEOUT);
         }
     }
 
@@ -266,20 +200,23 @@ public class GestureNavRule extends ExternalResource {
         assumeTrue("Gesture navigation required", isGestureMode);
     }
 
-    private boolean isGestureMode() {
-        // TODO: b/153032202 consider the CTS on GSI case.
+    private int getCurrentNavMode() {
         Resources res = mTargetContext.getResources();
         int naviModeId = res.getIdentifier(NAV_BAR_INTERACTION_MODE_RES_NAME, "integer", "android");
-        int naviMode = res.getInteger(naviModeId);
-        return naviMode == NAV_BAR_INTERACTION_MODE_GESTURAL;
+        return res.getInteger(naviModeId);
     }
 
-    private static String getSettingsString(Resources res, String strResName) {
-        int resIdString = res.getIdentifier(strResName, "string", SETTINGS_PACKAGE_NAME);
-        if (resIdString <= MIN_APPLICATION_RES_ID) {
-            return null;
-        }
+    private boolean containsNavigationBar() {
+        final Rect peekSize = new Rect();
+        getCurrentInsetsSize(peekSize);
+        return peekSize.height() != 0;
+    }
 
-        return res.getString(resIdString);
+    private boolean isGestureMode() {
+        if (!containsNavigationBar()) {
+            return false;
+        }
+        final int naviMode = getCurrentNavMode();
+        return naviMode == NAV_BAR_MODE_GESTURAL;
     }
 }

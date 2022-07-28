@@ -37,6 +37,8 @@ public final class VehicleIgnitionStateTest {
         assertThat(VehicleIgnitionState.toString(VehicleIgnitionState.ACC)).isEqualTo("ACC");
         assertThat(VehicleIgnitionState.toString(VehicleIgnitionState.ON)).isEqualTo("ON");
         assertThat(VehicleIgnitionState.toString(VehicleIgnitionState.START)).isEqualTo("START");
+        int unknownIgnitionState = 255;
+        assertThat(VehicleIgnitionState.toString(unknownIgnitionState)).isEqualTo("0xff");
     }
 
     @Test
