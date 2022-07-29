@@ -52,6 +52,8 @@ NOT_YET_MANDATED = {
     'sensor_fusion': [],
 }
 
+logging.getLogger('matplotlib.font_manager').disabled = True
+
 
 class ItsBaseTest(base_test.BaseTestClass):
   """Base test for CameraITS tests.

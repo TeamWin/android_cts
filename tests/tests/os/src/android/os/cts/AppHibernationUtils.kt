@@ -62,6 +62,10 @@ import org.junit.Assert.assertTrue
 private const val BROADCAST_TIMEOUT_MS = 60000L
 
 const val PROPERTY_SAFETY_CENTER_ENABLED = "safety_center_is_enabled"
+const val HIBERNATION_BOOT_RECEIVER_CLASS_NAME =
+    "com.android.permissioncontroller.hibernation.HibernationOnBootReceiver"
+const val ACTION_SET_UP_HIBERNATION =
+    "com.android.permissioncontroller.action.SET_UP_HIBERNATION"
 
 const val SYSUI_PKG_NAME = "com.android.systemui"
 const val NOTIF_LIST_ID = "com.android.systemui:id/notification_stack_scroller"
@@ -84,35 +88,37 @@ const val APK_PACKAGE_NAME_Q_APP = "android.os.cts.autorevokeqapp"
 fun runBootCompleteReceiver(context: Context, testTag: String) {
     val pkgManager = context.packageManager
     val permissionControllerPkg = pkgManager.permissionControllerPackageName
+    var permissionControllerSetupIntent = Intent(ACTION_SET_UP_HIBERNATION).apply {
+        setPackage(permissionControllerPkg)
+        setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+    }
     val receivers = pkgManager.queryBroadcastReceivers(
-        Intent(Intent.ACTION_BOOT_COMPLETED), /* flags= */ 0)
-    for (ri in receivers) {
-        val pkg = ri.activityInfo.packageName
-        if (pkg == permissionControllerPkg) {
-            val permissionControllerSetupIntent = Intent()
-                .setClassName(pkg, ri.activityInfo.name)
-                .setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
-                .setPackage(permissionControllerPkg)
-            val countdownLatch = CountDownLatch(1)
-            Log.d(testTag, "Sending boot complete broadcast directly to ${ri.activityInfo.name} " +
-                "in package $permissionControllerPkg")
-            context.sendOrderedBroadcast(
-                permissionControllerSetupIntent,
-                /* receiverPermission= */ null,
-                object : BroadcastReceiver() {
-                    override fun onReceive(context: Context?, intent: Intent?) {
-                        countdownLatch.countDown()
-                        Log.d(testTag, "Broadcast received by $permissionControllerPkg")
-                    }
-                },
-                Handler.createAsync(Looper.getMainLooper()),
-                Activity.RESULT_OK,
-                /* initialData= */ null,
-                /* initialExtras= */ null)
-            assertTrue("Timed out while waiting for boot receiver broadcast to be received",
-                countdownLatch.await(BROADCAST_TIMEOUT_MS, TimeUnit.MILLISECONDS))
+        permissionControllerSetupIntent, /* flags= */ 0)
+    if (receivers.size == 0) {
+        // May be on an older, pre-built PermissionController. In this case, try sending directly.
+        permissionControllerSetupIntent = Intent().apply {
+            setPackage(permissionControllerPkg)
+            setClassName(permissionControllerPkg, HIBERNATION_BOOT_RECEIVER_CLASS_NAME)
+            setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
         }
     }
+    val countdownLatch = CountDownLatch(1)
+    Log.d(testTag, "Sending boot complete broadcast directly to $permissionControllerPkg")
+    context.sendOrderedBroadcast(
+        permissionControllerSetupIntent,
+        /* receiverPermission= */ null,
+        object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                countdownLatch.countDown()
+                Log.d(testTag, "Broadcast received by $permissionControllerPkg")
+            }
+        },
+        Handler.createAsync(Looper.getMainLooper()),
+        Activity.RESULT_OK,
+        /* initialData= */ null,
+        /* initialExtras= */ null)
+    assertTrue("Timed out while waiting for boot receiver broadcast to be received",
+        countdownLatch.await(BROADCAST_TIMEOUT_MS, TimeUnit.MILLISECONDS))
 }
 
 fun runAppHibernationJob(context: Context, tag: String) {

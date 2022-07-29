@@ -58,7 +58,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 @AppModeFull(
     reason = "Cannot set system settings as instant app. Also we never show an accessibility " +
-            "notification for instant apps."
+        "notification for instant apps."
 )
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 class AccessibilityPrivacySourceTest {
@@ -243,12 +243,27 @@ class AccessibilityPrivacySourceTest {
             "cmd jobscheduler reset-execution-quota -u " +
                 "${Process.myUserHandle().identifier} $permissionControllerPackage")
 
-        context.sendBroadcast(
-            Intent().apply {
-                setClassName(permissionControllerPackage, AccessibilityOnBootReceiver)
-                setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+        // Setup up permission controller again (simulate a reboot)
+        val permissionControllerSetupIntent =
+            Intent(ACTION_SET_UP_ACCESSIBILITY_CHECK).apply {
                 setPackage(permissionControllerPackage)
-            })
+                setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+            }
+
+        // Query for the setup broadcast receiver
+        val resolveInfos =
+            context.packageManager.queryBroadcastReceivers(permissionControllerSetupIntent, 0)
+
+        if (resolveInfos.size > 0) {
+            context.sendBroadcast(permissionControllerSetupIntent)
+        } else {
+            context.sendBroadcast(
+                Intent().apply {
+                    setClassName(permissionControllerPackage, AccessibilityOnBootReceiver)
+                    setFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+                    setPackage(permissionControllerPackage)
+                })
+        }
 
         // Wait until jobs are set up
         TestUtils.eventually(
@@ -288,6 +303,8 @@ class AccessibilityPrivacySourceTest {
 
         private const val AccessibilityOnBootReceiver =
             "com.android.permissioncontroller.privacysources.AccessibilityOnBootReceiver"
+        private const val ACTION_SET_UP_ACCESSIBILITY_CHECK =
+            "com.android.permissioncontroller.action.SET_UP_ACCESSIBILITY_CHECK"
 
         @get:ClassRule
         @JvmStatic

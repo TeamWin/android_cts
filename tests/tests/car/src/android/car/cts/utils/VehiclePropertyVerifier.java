@@ -32,10 +32,12 @@ import android.car.hardware.property.CarPropertyManager;
 import android.os.SystemClock;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -46,18 +48,24 @@ import java.util.stream.IntStream;
 public class VehiclePropertyVerifier<T> {
     private final static String CAR_PROPERTY_VALUE_SOURCE_GETTER = "Getter";
     private final static String CAR_PROPERTY_VALUE_SOURCE_CALLBACK = "Callback";
-    private static final ImmutableSet<Integer> WHEEL_AREA_IDS = ImmutableSet.of(
+    private static final ImmutableSet<Integer> WHEEL_AREAS = ImmutableSet.of(
             VehicleAreaWheel.WHEEL_LEFT_FRONT, VehicleAreaWheel.WHEEL_LEFT_REAR,
             VehicleAreaWheel.WHEEL_RIGHT_FRONT, VehicleAreaWheel.WHEEL_RIGHT_REAR);
-    private static final ImmutableSet<Integer> WINDOW_AREA_IDS = ImmutableSet.of(
+    private static final ImmutableSet<Integer> ALL_POSSIBLE_WHEEL_AREA_IDS =
+            generateAllPossibleAreaIds(WHEEL_AREAS);
+    private static final ImmutableSet<Integer> WINDOW_AREAS = ImmutableSet.of(
             VehicleAreaWindow.WINDOW_FRONT_WINDSHIELD, VehicleAreaWindow.WINDOW_REAR_WINDSHIELD,
             VehicleAreaWindow.WINDOW_ROW_1_LEFT, VehicleAreaWindow.WINDOW_ROW_1_RIGHT,
             VehicleAreaWindow.WINDOW_ROW_2_LEFT, VehicleAreaWindow.WINDOW_ROW_2_RIGHT,
             VehicleAreaWindow.WINDOW_ROW_3_LEFT, VehicleAreaWindow.WINDOW_ROW_3_RIGHT,
             VehicleAreaWindow.WINDOW_ROOF_TOP_1, VehicleAreaWindow.WINDOW_ROOF_TOP_2);
-    private static final ImmutableSet<Integer> MIRROR_AREA_IDS = ImmutableSet.of(
+    private static final ImmutableSet<Integer> ALL_POSSIBLE_WINDOW_AREA_IDS =
+            generateAllPossibleAreaIds(WINDOW_AREAS);
+    private static final ImmutableSet<Integer> MIRROR_AREAS = ImmutableSet.of(
             VehicleAreaMirror.MIRROR_DRIVER_LEFT, VehicleAreaMirror.MIRROR_DRIVER_RIGHT,
             VehicleAreaMirror.MIRROR_DRIVER_CENTER);
+    private static final ImmutableSet<Integer> ALL_POSSIBLE_MIRROR_AREA_IDS =
+            generateAllPossibleAreaIds(MIRROR_AREAS);
 
     private final int mPropertyId;
     private final String mPropertyName;
@@ -382,23 +390,14 @@ public class VehiclePropertyVerifier<T> {
                             + areaTypeToString(mAreaType))
                     .that(carPropertyConfig.getAreaIds()).isEqualTo(new int[]{0});
         } else if (mAreaType == VehicleAreaType.VEHICLE_AREA_TYPE_WHEEL) {
-            for (int areaId : carPropertyConfig.getAreaIds()) {
-                assertWithMessage(mPropertyName + "'s area ID: " + areaId
-                        + " must be a valid VehicleAreaWheel area ID").that(
-                        WHEEL_AREA_IDS.contains(areaId)).isTrue();
-            }
+            verifyValidAreaIdsForAreaType(carPropertyConfig, ALL_POSSIBLE_WHEEL_AREA_IDS);
+            verifyNoAreaOverlapInAreaIds(carPropertyConfig, WHEEL_AREAS);
         } else if (mAreaType == VehicleAreaType.VEHICLE_AREA_TYPE_WINDOW) {
-            for (int areaId : carPropertyConfig.getAreaIds()) {
-                assertWithMessage(mPropertyName
-                        + "'s area ID must be a valid VehicleAreaWindow area ID").that(areaId).isIn(
-                        WINDOW_AREA_IDS);
-            }
+            verifyValidAreaIdsForAreaType(carPropertyConfig, ALL_POSSIBLE_WINDOW_AREA_IDS);
+            verifyNoAreaOverlapInAreaIds(carPropertyConfig, WINDOW_AREAS);
         } else if (mAreaType == VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR) {
-            for (int areaId : carPropertyConfig.getAreaIds()) {
-                assertWithMessage(mPropertyName
-                        + "'s area ID must be a valid VehicleAreaMirror area ID").that(areaId).isIn(
-                        MIRROR_AREA_IDS);
-            }
+            verifyValidAreaIdsForAreaType(carPropertyConfig, ALL_POSSIBLE_MIRROR_AREA_IDS);
+            verifyNoAreaOverlapInAreaIds(carPropertyConfig, MIRROR_AREAS);
         }
 
         if (mChangeMode == CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS) {
@@ -598,6 +597,51 @@ public class VehiclePropertyVerifier<T> {
             default:
                 return false;
         }
+    }
+
+    private static ImmutableSet<Integer> generateAllPossibleAreaIds(ImmutableSet<Integer> areas) {
+        ImmutableSet.Builder<Integer> allPossibleAreaIdsBuilder = ImmutableSet.builder();
+        for (int i = 1; i <= areas.size(); i++) {
+            allPossibleAreaIdsBuilder.addAll(Sets.combinations(areas, i).stream().map(areaCombo -> {
+                Integer possibleAreaId = 0;
+                for (Integer area : areaCombo) {
+                    possibleAreaId |= area;
+                }
+                return possibleAreaId;
+            }).collect(Collectors.toList()));
+        }
+        return allPossibleAreaIdsBuilder.build();
+    }
+
+    private void verifyValidAreaIdsForAreaType(CarPropertyConfig<?> carPropertyConfig,
+            ImmutableSet<Integer> allPossibleAreaIds) {
+        for (int areaId : carPropertyConfig.getAreaIds()) {
+            assertWithMessage(
+                    mPropertyName + "'s area ID must be a valid " + areaTypeToString(mAreaType)
+                            + " area ID").that(areaId).isIn(allPossibleAreaIds);
+        }
+    }
+
+    private void verifyNoAreaOverlapInAreaIds(CarPropertyConfig<?> carPropertyConfig,
+            ImmutableSet<Integer> areas) {
+        if (carPropertyConfig.getAreaIds().length < 2) {
+            return;
+        }
+        ImmutableSet<Integer> areaIds = ImmutableSet.copyOf(Arrays.stream(
+                carPropertyConfig.getAreaIds()).boxed().collect(Collectors.toList()));
+        List<Integer> areaIdOverlapCheckResults = Sets.combinations(areaIds, 2).stream().map(
+                areaIdPair -> {
+                    List<Integer> areaIdPairAsList = areaIdPair.stream().collect(
+                            Collectors.toList());
+                    return areaIdPairAsList.get(0) & areaIdPairAsList.get(1);
+                }).collect(Collectors.toList());
+
+        assertWithMessage(
+                mPropertyName + " area IDs: " + Arrays.toString(carPropertyConfig.getAreaIds())
+                        + " must contain each area only once (e.g. no bitwise AND overlap) for "
+                        + "the area type: " + areaTypeToString(mAreaType)).that(
+                Collections.frequency(areaIdOverlapCheckResults, 0)
+                        == areaIdOverlapCheckResults.size()).isTrue();
     }
 
     public interface ConfigArrayVerifier {

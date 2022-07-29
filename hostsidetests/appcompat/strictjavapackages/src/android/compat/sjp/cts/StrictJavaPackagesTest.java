@@ -1080,7 +1080,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
      * and shared library jars.
      */
     @Test
-    public void testNoKotlinFilesInClasspaths() {
+    public void testNoKotlinFilesInClasspaths() throws Exception {
+        assumeTrue(mDeviceSdkLevel.isDeviceAtLeastT());
         ImmutableList<String> kotlinFiles =
                 Stream.of(sBootclasspathJars.stream(),
                         sSystemserverclasspathJars.stream(),

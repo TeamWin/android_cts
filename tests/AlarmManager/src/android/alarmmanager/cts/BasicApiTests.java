@@ -393,6 +393,28 @@ public class BasicApiTests {
     }
 
     @Test
+    public void testCancelAll() throws InterruptedException {
+        mMockAlarmReceiver.reset();
+        mMockAlarmReceiver2.reset();
+
+        final long when1Rtc = System.currentTimeMillis() + TEST_ALARM_FUTURITY;
+        mAm.setExact(AlarmManager.RTC_WAKEUP, when1Rtc, mSender);
+
+        final long nowElapsed = SystemClock.elapsedRealtime();
+        // setting the second one to fire after the first one
+        final long when2Elapsed = nowElapsed + TEST_ALARM_FUTURITY + TIME_DELTA;
+        mAm.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, when2Elapsed, "test-tag",
+                mMockAlarmReceiver2, null);
+
+        mAm.cancelAll();
+
+        // wait till some time past the scheduled expiration of the second one
+        Thread.sleep(when2Elapsed - nowElapsed + TIME_DELAY);
+
+        assertFalse(mMockAlarmReceiver.isAlarmed() || mMockAlarmReceiver2.isAlarmed());
+    }
+
+    @Test
     public void testSetAlarmClock() {
         assumeTrue(ApiLevelUtil.isAtLeast(Build.VERSION_CODES.LOLLIPOP));
 

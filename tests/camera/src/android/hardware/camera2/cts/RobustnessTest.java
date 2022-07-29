@@ -33,15 +33,23 @@ import static android.hardware.camera2.cts.CameraTestUtils.getAscendingOrderSize
 import static android.hardware.camera2.cts.CameraTestUtils.isSessionConfigSupported;
 import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.JPEG;
 import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.MAXIMUM;
+import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.MAX_RES;
 import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.PREVIEW;
 import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.PRIV;
 import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.RAW;
 import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.RECORD;
+import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.S1440P;
+import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.S720P;
+import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.USE_CASE_PREVIEW;
+import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.USE_CASE_PREVIEW_VIDEO_STILL;
+import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.USE_CASE_STILL_CAPTURE;
+import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.USE_CASE_VIDEO_CALL;
+import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.USE_CASE_VIDEO_RECORD;
 import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.VGA;
 import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.YUV;
 
-import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
@@ -78,7 +86,6 @@ import android.media.CamcorderProfile;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.ImageWriter;
-import android.util.ArraySet;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Size;
@@ -95,8 +102,8 @@ import org.junit.runners.Parameterized;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -545,7 +552,6 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             MandatoryStreamCombination combination,
             boolean substituteY8, boolean substituteHeic, boolean ultraHighResolution)
             throws Exception {
-
         // Timeout is relaxed by 1 second for LEGACY devices to reduce false positive rate in CTS
         // TODO: This needs to be adjusted based on feedback
         final int TIMEOUT_MULTIPLIER = ultraHighResolution ? 2 : 1;
@@ -2265,7 +2271,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
      */
     @Test
     public void testVerifyMandatoryOutputCombinationTables() throws Exception {
-       final int[][] LEGACY_COMBINATIONS = {
+        final int[][] legacyCombinations = {
             // Simple preview, GPU video processing, or no-preview video recording
             {PRIV, MAXIMUM},
             // No-viewfinder still image capture
@@ -2284,7 +2290,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             {PRIV, PREVIEW,  YUV,  PREVIEW,  JPEG, MAXIMUM}
         };
 
-        final int[][] LIMITED_COMBINATIONS = {
+        final int[][] limitedCombinations = {
             // High-resolution video recording with preview.
             {PRIV, PREVIEW,  PRIV, RECORD },
             // High-resolution in-app video processing with preview.
@@ -2299,7 +2305,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             {YUV , PREVIEW,  YUV,  PREVIEW,  JPEG, MAXIMUM }
         };
 
-        final int[][] BURST_COMBINATIONS = {
+        final int[][] burstCombinations = {
             // Maximum-resolution GPU processing with preview.
             {PRIV, PREVIEW,  PRIV, MAXIMUM },
             // Maximum-resolution in-app processing with preview.
@@ -2308,7 +2314,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             {YUV,  PREVIEW,  YUV,  MAXIMUM },
         };
 
-        final int[][] FULL_COMBINATIONS = {
+        final int[][] fullCombinations = {
             // Video recording with maximum-size video snapshot.
             {PRIV, PREVIEW,  PRIV, PREVIEW,  JPEG, MAXIMUM },
             // Standard video recording plus maximum-resolution in-app processing.
@@ -2317,7 +2323,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             {YUV,  VGA,      YUV,  PREVIEW,  YUV,  MAXIMUM }
         };
 
-        final int[][] RAW_COMBINATIONS = {
+        final int[][] rawCombinations = {
             // No-preview DNG capture.
             {RAW,  MAXIMUM },
             // Standard DNG capture.
@@ -2336,18 +2342,153 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             {YUV,  PREVIEW,  JPEG, MAXIMUM,  RAW, MAXIMUM}
         };
 
-        final int[][] LEVEL_3_COMBINATIONS = {
+        final int[][] level3Combinations = {
             // In-app viewfinder analysis with dynamic selection of output format
             {PRIV, PREVIEW, PRIV, VGA, YUV, MAXIMUM, RAW, MAXIMUM},
             // In-app viewfinder analysis with dynamic selection of output format
             {PRIV, PREVIEW, PRIV, VGA, JPEG, MAXIMUM, RAW, MAXIMUM}
         };
 
-        final int[][][] TABLES =
-                { LEGACY_COMBINATIONS, LIMITED_COMBINATIONS, BURST_COMBINATIONS, FULL_COMBINATIONS,
-                  RAW_COMBINATIONS, LEVEL_3_COMBINATIONS };
+        final int[][] concurrentStreamCombinations = {
+            //In-app video / image processing.
+            {YUV, S1440P},
+            // In-app viewfinder analysis.
+            {PRIV, S1440P},
+            // No viewfinder still image capture.
+            {JPEG, S1440P},
+            // Standard still imaging.
+            {YUV, S720P, JPEG, S1440P},
+            {PRIV, S720P, JPEG, S1440P},
+            // In-app video / processing with preview.
+            {YUV, S720P, YUV, S1440P},
+            {YUV, S720P, PRIV, S1440P},
+            {PRIV, S720P, YUV, S1440P},
+            {PRIV, S720P, PRIV, S1440P}
+        };
 
-        validityCheckConfigurationTables(TABLES);
+        final int[][] ultraHighResolutionsCombinations = {
+            // Ultra high res still image capture with preview.
+            {YUV, MAX_RES, PRIV, PREVIEW},
+            {YUV, MAX_RES, YUV, PREVIEW},
+            {JPEG, MAX_RES, PRIV, PREVIEW},
+            {JPEG, MAX_RES, YUV, PREVIEW},
+            {RAW, MAX_RES, PRIV, PREVIEW},
+            {RAW, MAX_RES, YUV, PREVIEW},
+            // Ultra high res still capture with preview + app based RECORD size analysis.
+            {YUV, MAX_RES, PRIV, PREVIEW, PRIV, RECORD},
+            {YUV, MAX_RES, PRIV, PREVIEW, YUV, RECORD},
+            {JPEG, MAX_RES, PRIV, PREVIEW, PRIV, RECORD},
+            {JPEG, MAX_RES, PRIV, PREVIEW, YUV, RECORD},
+            {RAW, MAX_RES, PRIV, PREVIEW, PRIV, RECORD},
+            {RAW, MAX_RES, PRIV, PREVIEW, YUV, RECORD},
+            // Ultra high res still image capture with preview + default sensor pixel mode analysis
+            // stream
+            {YUV, MAX_RES, PRIV, PREVIEW, JPEG, MAXIMUM},
+            {YUV, MAX_RES, PRIV, PREVIEW, YUV, MAXIMUM},
+            {YUV, MAX_RES, PRIV, PREVIEW, RAW, MAXIMUM},
+            {JPEG, MAX_RES, PRIV, PREVIEW, JPEG, MAXIMUM},
+            {JPEG, MAX_RES, PRIV, PREVIEW, YUV, MAXIMUM},
+            {JPEG, MAX_RES, PRIV, PREVIEW, RAW, MAXIMUM},
+            {RAW, MAX_RES, PRIV, PREVIEW, JPEG, MAXIMUM},
+            {RAW, MAX_RES, PRIV, PREVIEW, YUV, MAXIMUM},
+            {RAW, MAX_RES, PRIV, PREVIEW, RAW, MAXIMUM},
+        };
+
+        final int[][] tenBitOutputCombinations = {
+            // Simple preview, GPU video processing, or no-preview video recording.
+            {PRIV, MAXIMUM},
+            // In-application video/image processing.
+            {YUV, MAXIMUM},
+            // Standard still imaging.
+            {PRIV, PREVIEW, JPEG, MAXIMUM},
+            // Maximum-resolution in-app processing with preview.
+            {PRIV, PREVIEW, YUV, MAXIMUM},
+            // Maximum-resolution two-input in-app processing.
+            {YUV, PREVIEW, YUV, MAXIMUM},
+            // High-resolution video recording with preview.
+            {PRIV, PREVIEW, PRIV, RECORD},
+            // High-resolution recording with in-app snapshot.
+            {PRIV, PREVIEW, PRIV, RECORD, YUV, RECORD},
+            // High-resolution recording with video snapshot.
+            {PRIV, PREVIEW, PRIV, RECORD, JPEG, RECORD}
+        };
+
+        final int[][] streamUseCaseCombinations = {
+            // Simple preview or in-app image processing.
+            {YUV, PREVIEW, USE_CASE_PREVIEW},
+            {PRIV, PREVIEW, USE_CASE_PREVIEW},
+            // Simple video recording or in-app video processing.
+            {YUV, RECORD, USE_CASE_VIDEO_RECORD},
+            {PRIV, RECORD, USE_CASE_VIDEO_RECORD},
+            // Simple JPEG or YUV still image capture.
+            {YUV, MAXIMUM, USE_CASE_STILL_CAPTURE},
+            {JPEG, MAXIMUM, USE_CASE_STILL_CAPTURE},
+            // Multi-purpose stream for preview, video and still image capture.
+            {YUV, S1440P, USE_CASE_PREVIEW_VIDEO_STILL},
+            {PRIV, S1440P, USE_CASE_PREVIEW_VIDEO_STILL},
+            // Simple video call.
+            {YUV, S1440P, USE_CASE_VIDEO_CALL},
+            {PRIV, S1440P, USE_CASE_VIDEO_CALL},
+            // Preview with JPEG or YUV still image capture.
+            {PRIV, PREVIEW, USE_CASE_PREVIEW, YUV, MAXIMUM, USE_CASE_STILL_CAPTURE},
+            {PRIV, PREVIEW, USE_CASE_PREVIEW, JPEG, MAXIMUM, USE_CASE_STILL_CAPTURE},
+            // Preview with video recording or in-app video processing.
+            {PRIV, PREVIEW, USE_CASE_PREVIEW, YUV, RECORD, USE_CASE_VIDEO_RECORD},
+            {PRIV, PREVIEW, USE_CASE_PREVIEW, PRIV, RECORD, USE_CASE_VIDEO_RECORD},
+            // Preview with in-application image processing.
+            {PRIV, PREVIEW, USE_CASE_PREVIEW, YUV, PREVIEW, USE_CASE_PREVIEW},
+            // Preview with video call.
+            {PRIV, PREVIEW, USE_CASE_PREVIEW, YUV, S1440P, USE_CASE_VIDEO_CALL},
+            {PRIV, PREVIEW, USE_CASE_PREVIEW, PRIV, S1440P, USE_CASE_VIDEO_CALL},
+            // {Multi-purpose stream with JPEG or YUV still capture.
+            {YUV, S1440P, USE_CASE_PREVIEW_VIDEO_STILL, YUV, MAXIMUM, USE_CASE_STILL_CAPTURE},
+            {YUV, S1440P, USE_CASE_PREVIEW_VIDEO_STILL, JPEG, MAXIMUM, USE_CASE_STILL_CAPTURE},
+            {PRIV, S1440P, USE_CASE_PREVIEW_VIDEO_STILL, YUV, MAXIMUM, USE_CASE_STILL_CAPTURE},
+            {PRIV, S1440P, USE_CASE_PREVIEW_VIDEO_STILL, JPEG, MAXIMUM, USE_CASE_STILL_CAPTURE},
+            // YUV and JPEG concurrent still image capture (for testing).
+            {YUV, PREVIEW, USE_CASE_STILL_CAPTURE, JPEG, MAXIMUM, USE_CASE_STILL_CAPTURE},
+            // Preview, video record and JPEG or YUV video snapshot.
+            {PRIV, PREVIEW, USE_CASE_PREVIEW, YUV, RECORD, USE_CASE_VIDEO_RECORD, YUV, RECORD,
+                    USE_CASE_STILL_CAPTURE},
+            {PRIV, PREVIEW, USE_CASE_PREVIEW, YUV, RECORD, USE_CASE_VIDEO_RECORD, JPEG, RECORD,
+                    USE_CASE_STILL_CAPTURE},
+            {PRIV, PREVIEW, USE_CASE_PREVIEW, PRIV, RECORD, USE_CASE_VIDEO_RECORD, YUV, RECORD,
+                    USE_CASE_STILL_CAPTURE},
+            {PRIV, PREVIEW, USE_CASE_PREVIEW, PRIV, RECORD, USE_CASE_VIDEO_RECORD, JPEG, RECORD,
+                    USE_CASE_STILL_CAPTURE},
+            // Preview, in-application image processing, and JPEG or YUV still image capture.
+            {PRIV, PREVIEW, USE_CASE_PREVIEW, YUV, PREVIEW, USE_CASE_PREVIEW, YUV, MAXIMUM,
+                    USE_CASE_STILL_CAPTURE},
+            {PRIV, PREVIEW, USE_CASE_PREVIEW, YUV, PREVIEW, USE_CASE_PREVIEW, JPEG, MAXIMUM,
+                    USE_CASE_STILL_CAPTURE},
+        };
+
+        final int[][] previewStabilizationCombinations = {
+            // Stabilized preview, GPU video processing, or no-preview stabilized video recording.
+            {PRIV, S1440P},
+            {YUV, S1440P},
+            // Standard still imaging with stabilized preview.
+            {PRIV, S1440P, JPEG, MAXIMUM},
+            {PRIV, S1440P, YUV, MAXIMUM},
+            {YUV, S1440P, JPEG, MAXIMUM},
+            {YUV, S1440P, YUV, MAXIMUM},
+            // High-resolution recording with stabilized preview and recording stream.
+            {PRIV, PREVIEW, PRIV, S1440P},
+            {PRIV, PREVIEW, YUV, S1440P},
+            {YUV, PREVIEW, PRIV, S1440P},
+            {YUV, PREVIEW, YUV, S1440P},
+        };
+
+        final int[][][] tables =
+                {legacyCombinations, limitedCombinations, burstCombinations, fullCombinations,
+                 rawCombinations, level3Combinations, concurrentStreamCombinations,
+                 ultraHighResolutionsCombinations, tenBitOutputCombinations,
+                 previewStabilizationCombinations};
+
+        final int[][][] useCaseTables = {streamUseCaseCombinations};
+
+        validityCheckConfigurationTables(tables);
+        validityCheckConfigurationTables(useCaseTables, /*useCaseSpecified*/ true);
 
         for (String id : mCameraIdsUnderTest) {
             openDevice(id);
@@ -2363,9 +2504,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             MaxStreamSizes maxSizes = new MaxStreamSizes(mStaticInfo, id, mContext);
             try {
                 if (mStaticInfo.isColorOutputSupported()) {
-                    for (int[] c : LEGACY_COMBINATIONS) {
-                        assertTrue(String.format("Expected static stream combination: %s not " +
-                                    "found among the available mandatory combinations",
+                    for (int[] c : legacyCombinations) {
+                        assertTrue(String.format("Expected static stream combination: %s not "
+                                    + "found among the available mandatory combinations",
                                     maxSizes.combinationToString(c)),
                                 isMandatoryCombinationAvailable(c, maxSizes, combinations));
                     }
@@ -2373,9 +2514,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
                 if (!mStaticInfo.isHardwareLevelLegacy()) {
                     if (mStaticInfo.isColorOutputSupported()) {
-                        for (int[] c : LIMITED_COMBINATIONS) {
-                            assertTrue(String.format("Expected static stream combination: %s not " +
-                                        "found among the available mandatory combinations",
+                        for (int[] c : limitedCombinations) {
+                            assertTrue(String.format("Expected static stream combination: %s not "
+                                        + "found among the available mandatory combinations",
                                         maxSizes.combinationToString(c)),
                                     isMandatoryCombinationAvailable(c, maxSizes, combinations));
                         }
@@ -2383,18 +2524,18 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
                     if (mStaticInfo.isCapabilitySupported(
                             CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_BURST_CAPTURE)) {
-                        for (int[] c : BURST_COMBINATIONS) {
-                            assertTrue(String.format("Expected static stream combination: %s not " +
-                                        "found among the available mandatory combinations",
+                        for (int[] c : burstCombinations) {
+                            assertTrue(String.format("Expected static stream combination: %s not "
+                                        + "found among the available mandatory combinations",
                                         maxSizes.combinationToString(c)),
                                     isMandatoryCombinationAvailable(c, maxSizes, combinations));
                         }
                     }
 
                     if (mStaticInfo.isHardwareLevelAtLeastFull()) {
-                        for (int[] c : FULL_COMBINATIONS) {
-                            assertTrue(String.format("Expected static stream combination: %s not " +
-                                        "found among the available mandatory combinations",
+                        for (int[] c : fullCombinations) {
+                            assertTrue(String.format("Expected static stream combination: %s not "
+                                        + "found among the available mandatory combinations",
                                         maxSizes.combinationToString(c)),
                                     isMandatoryCombinationAvailable(c, maxSizes, combinations));
                         }
@@ -2402,9 +2543,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
                     if (mStaticInfo.isCapabilitySupported(
                             CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
-                        for (int[] c : RAW_COMBINATIONS) {
-                            assertTrue(String.format("Expected static stream combination: %s not " +
-                                        "found among the available mandatory combinations",
+                        for (int[] c : rawCombinations) {
+                            assertTrue(String.format("Expected static stream combination: %s not "
+                                        + "found among the available mandatory combinations",
                                         maxSizes.combinationToString(c)),
                                     isMandatoryCombinationAvailable(c, maxSizes, combinations));
                         }
@@ -2412,12 +2553,104 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
                     if (mStaticInfo.isHardwareLevelAtLeast(
                             CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3)) {
-                        for (int[] c: LEVEL_3_COMBINATIONS) {
-                            assertTrue(String.format("Expected static stream combination: %s not " +
-                                        "found among the available mandatory combinations",
+                        for (int[] c: level3Combinations) {
+                            assertTrue(String.format("Expected static stream combination: %s not "
+                                        + "found among the available mandatory combinations ",
                                         maxSizes.combinationToString(c)),
                                     isMandatoryCombinationAvailable(c, maxSizes, combinations));
                         }
+                    }
+                }
+
+                Set<Set<String>> concurrentCameraIdCombinations =
+                        mCameraManager.getConcurrentCameraIds();
+                boolean isConcurrentCamera = false;
+                for (Set<String> concurrentCameraIdCombination : concurrentCameraIdCombinations) {
+                    if (concurrentCameraIdCombination.contains(id)) {
+                        isConcurrentCamera = true;
+                        break;
+                    }
+                }
+
+                if (isConcurrentCamera && mStaticInfo.isCapabilitySupported(
+                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE)) {
+                    MandatoryStreamCombination[] mandatoryConcurrentStreamCombinations =
+                            mStaticInfo.getCharacteristics().get(
+                                    CameraCharacteristics
+                                            .SCALER_MANDATORY_CONCURRENT_STREAM_COMBINATIONS);
+                    for (int[] c : concurrentStreamCombinations) {
+                        assertTrue(String.format("Expected static stream combination: %s not "
+                                    + "found among the available mandatory concurrent stream "
+                                    + "combinations",
+                                    maxSizes.combinationToString(c)),
+                                isMandatoryCombinationAvailable(c, maxSizes,
+                                        mandatoryConcurrentStreamCombinations));
+                    }
+                }
+
+                if (mStaticInfo.isCapabilitySupported(
+                        CameraCharacteristics
+                                .REQUEST_AVAILABLE_CAPABILITIES_ULTRA_HIGH_RESOLUTION_SENSOR)) {
+                    MandatoryStreamCombination[] maxResolutionStreamCombinations =
+                        mStaticInfo.getCharacteristics().get(
+                                CameraCharacteristics
+                                        .SCALER_MANDATORY_MAXIMUM_RESOLUTION_STREAM_COMBINATIONS);
+                    for (int[] c : ultraHighResolutionsCombinations) {
+                        assertTrue(String.format("Expected static stream combination: %s not "
+                                    + "found among the available mandatory max resolution stream "
+                                    + "combinations",
+                                    maxSizes.combinationToString(c)),
+                                isMandatoryCombinationAvailable(c, maxSizes,
+                                        maxResolutionStreamCombinations));
+                    }
+                }
+
+                if (mStaticInfo.isCapabilitySupported(
+                        CameraCharacteristics
+                                .REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT)) {
+                    MandatoryStreamCombination[] mandatoryTenBitOutputCombinations =
+                        mStaticInfo.getCharacteristics().get(
+                            CameraCharacteristics
+                                    .SCALER_MANDATORY_TEN_BIT_OUTPUT_STREAM_COMBINATIONS);
+                    for (int[] c : tenBitOutputCombinations) {
+                        assertTrue(String.format("Expected static stream combination: %s not "
+                                    + "found among the available mandatory 10 bit output "
+                                    + "combinations",
+                                    maxSizes.combinationToString(c)),
+                                isMandatoryCombinationAvailable(c, maxSizes,
+                                        mandatoryTenBitOutputCombinations));
+                    }
+                }
+
+                if (mStaticInfo.isCapabilitySupported(
+                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_STREAM_USE_CASE)) {
+                    MandatoryStreamCombination[] mandatoryStreamUseCaseCombinations =
+                        mStaticInfo.getCharacteristics().get(
+                                CameraCharacteristics
+                                        .SCALER_MANDATORY_USE_CASE_STREAM_COMBINATIONS);
+                    for (int[] c : streamUseCaseCombinations) {
+                        assertTrue(String.format("Expected static stream combination: %s not "
+                                    + "found among the available mandatory stream use case "
+                                    + "combinations",
+                                    maxSizes.combinationToString(c, /*useCaseSpecified*/ true)),
+                                isMandatoryCombinationAvailable(c, maxSizes,
+                                        /*isInput*/ false,  mandatoryStreamUseCaseCombinations,
+                                        /*useCaseSpecified*/ true));
+                    }
+                }
+
+                if (mStaticInfo.isPreviewStabilizationSupported()) {
+                    MandatoryStreamCombination[] mandatoryPreviewStabilizationCombinations =
+                        mStaticInfo.getCharacteristics().get(
+                            CameraCharacteristics
+                                .SCALER_MANDATORY_PREVIEW_STABILIZATION_OUTPUT_STREAM_COMBINATIONS);
+                    for (int[] c : previewStabilizationCombinations) {
+                        assertTrue(String.format("Expected static stream combination: %s not "
+                                    + "found among the available mandatory preview stabilization"
+                                    + "combinations",
+                                    maxSizes.combinationToString(c)),
+                                isMandatoryCombinationAvailable(c, maxSizes,
+                                        mandatoryPreviewStabilizationCombinations));
                     }
                 }
             } finally {
@@ -2432,7 +2665,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
      */
     @Test
     public void testVerifyReprocessMandatoryOutputCombinationTables() throws Exception {
-        final int[][] LIMITED_COMBINATIONS = {
+        final int[][] limitedCombinations = {
             // Input           Outputs
             {PRIV, MAXIMUM,    JPEG, MAXIMUM},
             {YUV , MAXIMUM,    JPEG, MAXIMUM},
@@ -2444,7 +2677,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             {YUV,  MAXIMUM,    YUV , PREVIEW, YUV , PREVIEW, JPEG, MAXIMUM},
         };
 
-        final int[][] FULL_COMBINATIONS = {
+        final int[][] fullCombinations = {
             // Input           Outputs
             {YUV , MAXIMUM,    PRIV, PREVIEW},
             {YUV , MAXIMUM,    YUV , PREVIEW},
@@ -2456,7 +2689,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             {YUV , MAXIMUM,    PRIV, PREVIEW, YUV , PREVIEW, JPEG, MAXIMUM},
         };
 
-        final int[][] RAW_COMBINATIONS = {
+        final int[][] rawCombinations = {
             // Input           Outputs
             {PRIV, MAXIMUM,    YUV , PREVIEW, RAW , MAXIMUM},
             {YUV , MAXIMUM,    YUV , PREVIEW, RAW , MAXIMUM},
@@ -2470,7 +2703,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             {YUV , MAXIMUM,    YUV , PREVIEW, JPEG, MAXIMUM, RAW , MAXIMUM},
         };
 
-        final int[][] LEVEL_3_COMBINATIONS = {
+        final int[][] level3Combinations = {
             // Input          Outputs
             // In-app viewfinder analysis with YUV->YUV ZSL and RAW
             {YUV , MAXIMUM,   PRIV, PREVIEW, PRIV, VGA, RAW, MAXIMUM},
@@ -2480,8 +2713,26 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             {YUV , MAXIMUM,   PRIV, PREVIEW, PRIV, VGA, RAW, MAXIMUM, JPEG, MAXIMUM},
         };
 
+        final int[][] ultraHighResolutionCombinations = {
+            // Input           Outputs
+            // RAW remosaic reprocessing with separate preview
+            {RAW, MAX_RES,     PRIV, PREVIEW},
+            {RAW, MAX_RES,     YUV, PREVIEW},
+            // Ultra high res RAW -> JPEG / YUV with separate preview
+            {RAW, MAX_RES,     PRIV, PREVIEW, JPEG, MAX_RES},
+            {RAW, MAX_RES,     PRIV, PREVIEW, YUV, MAX_RES},
+            {RAW, MAX_RES,     YUV, PREVIEW, JPEG, MAX_RES},
+            {RAW, MAX_RES,     YUV, PREVIEW, YUV, MAX_RES},
+            // Ultra high res PRIV / YUV -> YUV / JPEG reprocessing with separate preview
+            {YUV, MAX_RES,     YUV, PREVIEW, JPEG, MAX_RES},
+            {YUV, MAX_RES,     PRIV, PREVIEW, JPEG, MAX_RES},
+            {PRIV, MAX_RES,    YUV, PREVIEW, JPEG, MAX_RES},
+            {PRIV, MAX_RES,    PRIV, PREVIEW, JPEG, MAX_RES},
+        };
+
         final int[][][] TABLES =
-                { LIMITED_COMBINATIONS, FULL_COMBINATIONS, RAW_COMBINATIONS, LEVEL_3_COMBINATIONS };
+                {limitedCombinations, fullCombinations, rawCombinations, level3Combinations,
+                 ultraHighResolutionCombinations};
 
         validityCheckConfigurationTables(TABLES);
 
@@ -2507,7 +2758,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
             MaxStreamSizes maxSizes = new MaxStreamSizes(mStaticInfo, id, mContext);
             try {
-                for (int[] c : LIMITED_COMBINATIONS) {
+                for (int[] c : limitedCombinations) {
                     assertTrue(String.format("Expected static reprocessable stream combination:" +
                                 "%s not found among the available mandatory combinations",
                                 maxSizes.reprocessCombinationToString(c)),
@@ -2515,7 +2766,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 }
 
                 if (mStaticInfo.isHardwareLevelAtLeastFull()) {
-                    for (int[] c : FULL_COMBINATIONS) {
+                    for (int[] c : fullCombinations) {
                         assertTrue(String.format(
                                     "Expected static reprocessable stream combination:" +
                                     "%s not found among the available mandatory combinations",
@@ -2526,7 +2777,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
                 if (mStaticInfo.isCapabilitySupported(
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
-                    for (int[] c : RAW_COMBINATIONS) {
+                    for (int[] c : rawCombinations) {
                         assertTrue(String.format(
                                     "Expected static reprocessable stream combination:" +
                                     "%s not found among the available mandatory combinations",
@@ -2537,12 +2788,30 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
                 if (mStaticInfo.isHardwareLevelAtLeast(
                             CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3)) {
-                    for (int[] c : LEVEL_3_COMBINATIONS) {
+                    for (int[] c : level3Combinations) {
                         assertTrue(String.format(
                                     "Expected static reprocessable stream combination:" +
                                     "%s not found among the available mandatory combinations",
                                     maxSizes.reprocessCombinationToString(c)),
                                 isMandatoryCombinationAvailable(c, maxSizes, /*isInput*/ true, cs));
+                    }
+                }
+
+                if (mStaticInfo.isCapabilitySupported(
+                        CameraCharacteristics
+                                .REQUEST_AVAILABLE_CAPABILITIES_ULTRA_HIGH_RESOLUTION_SENSOR)) {
+                    MandatoryStreamCombination[] maxResolutionCombinations =
+                            mStaticInfo.getCharacteristics().get(
+                                    CameraCharacteristics
+                                        .SCALER_MANDATORY_MAXIMUM_RESOLUTION_STREAM_COMBINATIONS);
+                    for (int[] c : ultraHighResolutionCombinations) {
+                        assertTrue(String.format(
+                                "Expected static reprocessable stream combination:"
+                                    + "%s not found among the available mandatory max resolution"
+                                    + "combinations",
+                                    maxSizes.reprocessCombinationToString(c)),
+                                isMandatoryCombinationAvailable(c, maxSizes, /*isInput*/ true,
+                                        maxResolutionCombinations));
                     }
                 }
             } finally {
@@ -2555,12 +2824,19 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             final MaxStreamSizes maxSizes,
             final MandatoryStreamCombination[] availableCombinations) {
         return isMandatoryCombinationAvailable(combination, maxSizes, /*isInput*/ false,
-                availableCombinations);
+                availableCombinations, /*useCaseSpecified*/ false);
     }
 
     private boolean isMandatoryCombinationAvailable(final int[] combination,
             final MaxStreamSizes maxSizes, boolean isInput,
             final MandatoryStreamCombination[] availableCombinations) {
+        return isMandatoryCombinationAvailable(combination, maxSizes, isInput,
+                availableCombinations, /*useCaseSpecified*/ false);
+    }
+
+    private boolean isMandatoryCombinationAvailable(final int[] combination,
+            final MaxStreamSizes maxSizes, boolean isInput,
+            final MandatoryStreamCombination[] availableCombinations, boolean useCaseSpecified) {
         boolean supportYuvReprocess = mStaticInfo.isCapabilitySupported(
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_YUV_REPROCESSING);
         boolean supportOpaqueReprocess = mStaticInfo.isCapabilitySupported(
@@ -2569,18 +2845,34 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         // that have the following layout (format, size). In case "isInput" is set,
         // the first stream configuration entry will contain the input format and size
         // as well as the first matching output.
-        int streamCount = combination.length / 2;
+        // For combinations that contain streamUseCase, the layout will be (format, size, useCase).
+        int streamCount = useCaseSpecified ? combination.length / 3 : combination.length / 2;
 
         List<Pair<Pair<Integer, Boolean>, Size>> currentCombination =
                 new ArrayList<Pair<Pair<Integer, Boolean>, Size>>(streamCount);
-        for (int i = 0; i < combination.length; i += 2) {
+        List<Integer> streamUseCases = new ArrayList<Integer>(streamCount);
+        int i = 0;
+        while (i < combination.length) {
             if (isInput && (i == 0)) {
                 // Skip the combination if the format is not supported for reprocessing.
                 if ((combination[i] == YUV && !supportYuvReprocess) ||
                         (combination[i] == PRIV && !supportOpaqueReprocess)) {
                     return true;
                 }
-                Size sz = maxSizes.getMaxInputSizeForFormat(combination[i]);
+                // Skip the combination if for MAX_RES size, the maximum resolution stream config
+                // map doesn't have the given format in getInputFormats().
+                if (combination[i + 1] == MAX_RES) {
+                    StreamConfigurationMap maxResolutionStreamConfigMap =
+                            mStaticInfo.getCharacteristics().get(
+                                    CameraCharacteristics
+                                            .SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION);
+                    int[] inputFormats = maxResolutionStreamConfigMap.getInputFormats();
+                    int type = combination[i];
+                    if (!Arrays.stream(inputFormats).anyMatch(index -> index == type)) {
+                        return true;
+                    }
+                }
+                Size sz = maxSizes.getMaxInputSizeForFormat(combination[i], combination[i + 1]);
                 currentCombination.add(Pair.create(Pair.create(new Integer(combination[i]),
                             new Boolean(true)), sz));
                 currentCombination.add(Pair.create(Pair.create(new Integer(combination[i]),
@@ -2589,6 +2881,13 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 Size sz = maxSizes.getOutputSizeForFormat(combination[i], combination[i+1]);
                 currentCombination.add(Pair.create(Pair.create(new Integer(combination[i]),
                             new Boolean(false)), sz));
+                if (useCaseSpecified) {
+                    streamUseCases.add(combination[i + 2]);
+                }
+            }
+            i += 2;
+            if (useCaseSpecified) {
+                i += 1;
             }
         }
 
@@ -2598,6 +2897,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     (isInput == c.isReprocessable())) {
                 ArrayList<Pair<Pair<Integer, Boolean>, Size>> expected =
                         new ArrayList<Pair<Pair<Integer, Boolean>, Size>>(currentCombination);
+                ArrayList<Integer> expectedStreamUseCases = new ArrayList<Integer>(streamUseCases);
 
                 for (MandatoryStreamInformation streamInfo : streamInfoList) {
                     Size maxSize = CameraTestUtils.getMaxSize(
@@ -2607,9 +2907,15 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     if (expected.contains(p)) {
                         expected.remove(p);
                     }
+                    if (useCaseSpecified) {
+                        int streamUseCase = (int) streamInfo.getStreamUseCase();
+                        if (expectedStreamUseCases.contains(streamUseCase)) {
+                            expectedStreamUseCases.remove(Integer.valueOf(streamUseCase));
+                        }
+                    }
                 }
 
-                if (expected.isEmpty()) {
+                if (expected.isEmpty() && (!useCaseSpecified || expectedStreamUseCases.isEmpty())) {
                     return true;
                 }
             }
@@ -2622,23 +2928,52 @@ public class RobustnessTest extends Camera2AndroidTestCase {
      * Verify correctness of the configuration tables.
      */
     private void validityCheckConfigurationTables(final int[][][] tables) throws Exception {
+        validityCheckConfigurationTables(tables, false);
+    }
+
+    private void validityCheckConfigurationTables(final int[][][] tables, boolean useCaseSpecified)
+            throws Exception {
         int tableIdx = 0;
         for (int[][] table : tables) {
             int rowIdx = 0;
             for (int[] row : table) {
-                assertTrue(String.format("Odd number of entries for table %d row %d: %s ",
-                                tableIdx, rowIdx, Arrays.toString(row)),
-                        (row.length % 2) == 0);
-                for (int i = 0; i < row.length; i += 2) {
+                if (!useCaseSpecified) {
+                    assertTrue(String.format("Odd number of entries for table %d row %d: %s ",
+                                    tableIdx, rowIdx, Arrays.toString(row)),
+                            (row.length % 2) == 0);
+                } else {
+                    assertTrue(String.format("Incorrect number entries for table with use case "
+                                             + "specified %d row %d: %s ",
+                                    tableIdx, rowIdx, Arrays.toString(row)),
+                            (row.length % 3) == 0);
+                }
+
+                int i = 0;
+                while (i < row.length) {
                     int format = row[i];
                     int maxSize = row[i + 1];
                     assertTrue(String.format("table %d row %d index %d format not valid: %d",
                                     tableIdx, rowIdx, i, format),
-                            format == PRIV || format == JPEG || format == YUV || format == RAW);
+                            format == PRIV || format == JPEG || format == YUV
+                                    || format == RAW);
                     assertTrue(String.format("table %d row %d index %d max size not valid: %d",
                                     tableIdx, rowIdx, i + 1, maxSize),
-                            maxSize == PREVIEW || maxSize == RECORD ||
-                            maxSize == MAXIMUM || maxSize == VGA);
+                            maxSize == PREVIEW || maxSize == RECORD
+                                    || maxSize == MAXIMUM || maxSize == VGA || maxSize == S720P
+                                    || maxSize == S1440P || maxSize == MAX_RES);
+                    if (useCaseSpecified) {
+                        int useCase = row[i + 2];
+                        assertTrue(String.format("table %d row %d index %d use case not valid: %d",
+                                        tableIdx, rowIdx, i + 2, useCase),
+                                useCase == USE_CASE_PREVIEW
+                                        || useCase == USE_CASE_PREVIEW_VIDEO_STILL
+                                        || useCase == USE_CASE_STILL_CAPTURE
+                                        || useCase == USE_CASE_VIDEO_CALL
+                                        || useCase == USE_CASE_VIDEO_RECORD);
+                        i += 3;
+                    } else {
+                        i += 2;
+                    }
                 }
                 rowIdx++;
             }
@@ -2658,16 +2993,47 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         static final int Y8   = ImageFormat.Y8;
         static final int HEIC = ImageFormat.HEIC;
 
-        // Max resolution indices
+        // Max resolution output indices
         static final int PREVIEW = 0;
         static final int RECORD  = 1;
         static final int MAXIMUM = 2;
         static final int VGA = 3;
         static final int VGA_FULL_FOV = 4;
         static final int MAX_30FPS = 5;
-        static final int RESOLUTION_COUNT = 6;
+        static final int S720P = 6;
+        static final int S1440P = 7;
+        static final int MAX_RES = 8;
+        static final int RESOLUTION_COUNT = 9;
+
+        // Max resolution input indices
+        static final int INPUT_MAXIMUM = 0;
+        static final int INPUT_MAX_RES = 1;
+        static final int INPUT_RESOLUTION_COUNT = 2;
 
         static final long FRAME_DURATION_30FPS_NSEC = (long) 1e9 / 30;
+
+        static final int USE_CASE_PREVIEW =
+                CameraMetadata.SCALER_AVAILABLE_STREAM_USE_CASES_PREVIEW;
+        static final int USE_CASE_VIDEO_RECORD =
+                CameraMetadata.SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_RECORD;
+        static final int USE_CASE_STILL_CAPTURE =
+                CameraMetadata.SCALER_AVAILABLE_STREAM_USE_CASES_STILL_CAPTURE;
+        static final int USE_CASE_PREVIEW_VIDEO_STILL =
+                CameraMetadata.SCALER_AVAILABLE_STREAM_USE_CASES_PREVIEW_VIDEO_STILL;
+        static final int USE_CASE_VIDEO_CALL =
+                CameraMetadata.SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL;
+
+        private final Size[] mMaxPrivSizes = new Size[RESOLUTION_COUNT];
+        private final Size[] mMaxJpegSizes = new Size[RESOLUTION_COUNT];
+        private final Size[] mMaxYuvSizes = new Size[RESOLUTION_COUNT];
+        private final Size[] mMaxY8Sizes = new Size[RESOLUTION_COUNT];
+        private final Size[] mMaxHeicSizes = new Size[RESOLUTION_COUNT];
+        private final Size mMaxRawSize;
+        private final Size mMaxResolutionRawSize;
+
+        private final Size[] mMaxPrivInputSizes = new Size[INPUT_RESOLUTION_COUNT];
+        private final Size[] mMaxYuvInputSizes = new Size[INPUT_RESOLUTION_COUNT];
+        private final Size mMaxInputY8Size;
 
         public MaxStreamSizes(StaticMetadata sm, String cameraId, Context context) {
             Size[] privSizes = sm.getAvailableSizesForFormatChecked(ImageFormat.PRIVATE,
@@ -2686,64 +3052,103 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
             Size maxPreviewSize = getMaxPreviewSize(context, cameraId);
 
-            maxRawSize = (rawSizes.length != 0) ? CameraTestUtils.getMaxSize(rawSizes) : null;
-
             StreamConfigurationMap configs = sm.getCharacteristics().get(
                     CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+
+            StreamConfigurationMap maxResConfigs = sm.getCharacteristics().get(
+                    CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION);
+
+            mMaxRawSize = (rawSizes.length != 0) ? CameraTestUtils.getMaxSize(rawSizes) : null;
+            mMaxResolutionRawSize = (maxResConfigs != null)
+                    ? CameraTestUtils.getMaxSize(
+                            maxResConfigs.getOutputSizes(ImageFormat.RAW_SENSOR))
+                    : null;
+
             if (sm.isColorOutputSupported()) {
-                maxPrivSizes[PREVIEW] = getMaxSize(privSizes, maxPreviewSize);
-                maxYuvSizes[PREVIEW]  = getMaxSize(yuvSizes, maxPreviewSize);
-                maxJpegSizes[PREVIEW] = getMaxSize(jpegSizes, maxPreviewSize);
+                mMaxPrivSizes[PREVIEW] = getMaxSize(privSizes, maxPreviewSize);
+                mMaxYuvSizes[PREVIEW]  = getMaxSize(yuvSizes, maxPreviewSize);
+                mMaxJpegSizes[PREVIEW] = getMaxSize(jpegSizes, maxPreviewSize);
 
                 if (sm.isExternalCamera()) {
-                    maxPrivSizes[RECORD] = getMaxExternalRecordingSize(cameraId, configs);
-                    maxYuvSizes[RECORD]  = getMaxExternalRecordingSize(cameraId, configs);
-                    maxJpegSizes[RECORD] = getMaxExternalRecordingSize(cameraId, configs);
+                    mMaxPrivSizes[RECORD] = getMaxExternalRecordingSize(cameraId, configs);
+                    mMaxYuvSizes[RECORD]  = getMaxExternalRecordingSize(cameraId, configs);
+                    mMaxJpegSizes[RECORD] = getMaxExternalRecordingSize(cameraId, configs);
                 } else {
-                    maxPrivSizes[RECORD] = getMaxRecordingSize(cameraId);
-                    maxYuvSizes[RECORD]  = getMaxRecordingSize(cameraId);
-                    maxJpegSizes[RECORD] = getMaxRecordingSize(cameraId);
+                    mMaxPrivSizes[RECORD] = getMaxRecordingSize(cameraId);
+                    mMaxYuvSizes[RECORD]  = getMaxRecordingSize(cameraId);
+                    mMaxJpegSizes[RECORD] = getMaxRecordingSize(cameraId);
                 }
 
-                maxPrivSizes[MAXIMUM] = CameraTestUtils.getMaxSize(privSizes);
-                maxYuvSizes[MAXIMUM] = CameraTestUtils.getMaxSize(yuvSizes);
-                maxJpegSizes[MAXIMUM] = CameraTestUtils.getMaxSize(jpegSizes);
+                if (maxResConfigs != null) {
+                    mMaxYuvSizes[MAX_RES] = CameraTestUtils.getMaxSize(
+                            maxResConfigs.getOutputSizes(ImageFormat.YUV_420_888));
+                    mMaxJpegSizes[MAX_RES] = CameraTestUtils.getMaxSize(
+                            maxResConfigs.getOutputSizes(ImageFormat.JPEG));
+                }
+
+                mMaxPrivSizes[MAXIMUM] = CameraTestUtils.getMaxSize(privSizes);
+                mMaxYuvSizes[MAXIMUM] = CameraTestUtils.getMaxSize(yuvSizes);
+                mMaxJpegSizes[MAXIMUM] = CameraTestUtils.getMaxSize(jpegSizes);
 
                 // Must always be supported, add unconditionally
                 final Size vgaSize = new Size(640, 480);
-                maxPrivSizes[VGA] = vgaSize;
-                maxYuvSizes[VGA] = vgaSize;
-                maxJpegSizes[VGA] = vgaSize;
+                mMaxPrivSizes[VGA] = vgaSize;
+                mMaxYuvSizes[VGA] = vgaSize;
+                mMaxJpegSizes[VGA] = vgaSize;
+
+                final Size s720pSize = new Size(1280, 720);
+                mMaxPrivSizes[S720P] = getMaxSize(configs.getOutputSizes(ImageFormat.PRIVATE),
+                        s720pSize);
+                mMaxYuvSizes[S720P] = getMaxSize(configs.getOutputSizes(ImageFormat.YUV_420_888),
+                        s720pSize);
+                mMaxJpegSizes[S720P] = getMaxSize(configs.getOutputSizes(ImageFormat.JPEG),
+                        s720pSize);
+
+                final Size s1440pSize = new Size(1920, 1440);
+                mMaxPrivSizes[S1440P] = getMaxSize(configs.getOutputSizes(ImageFormat.PRIVATE),
+                        s1440pSize);
+                mMaxYuvSizes[S1440P] = getMaxSize(configs.getOutputSizes(ImageFormat.YUV_420_888),
+                        s1440pSize);
+                mMaxJpegSizes[S1440P] = getMaxSize(configs.getOutputSizes(ImageFormat.JPEG),
+                        s1440pSize);
 
                 if (sm.isMonochromeWithY8()) {
-                    maxY8Sizes[PREVIEW]  = getMaxSize(y8Sizes, maxPreviewSize);
+                    mMaxY8Sizes[PREVIEW]  = getMaxSize(y8Sizes, maxPreviewSize);
                     if (sm.isExternalCamera()) {
-                        maxY8Sizes[RECORD]  = getMaxExternalRecordingSize(cameraId, configs);
+                        mMaxY8Sizes[RECORD]  = getMaxExternalRecordingSize(cameraId, configs);
                     } else {
-                        maxY8Sizes[RECORD]  = getMaxRecordingSize(cameraId);
+                        mMaxY8Sizes[RECORD]  = getMaxRecordingSize(cameraId);
                     }
-                    maxY8Sizes[MAXIMUM] = CameraTestUtils.getMaxSize(y8Sizes);
-                    maxY8Sizes[VGA] = vgaSize;
+                    mMaxY8Sizes[MAXIMUM] = CameraTestUtils.getMaxSize(y8Sizes);
+                    mMaxY8Sizes[VGA] = vgaSize;
+                    mMaxY8Sizes[S720P] = getMaxSize(configs.getOutputSizes(ImageFormat.Y8),
+                            s720pSize);
+                    mMaxY8Sizes[S1440P] = getMaxSize(configs.getOutputSizes(ImageFormat.Y8),
+                            s1440pSize);
                 }
 
                 if (sm.isHeicSupported()) {
-                    maxHeicSizes[PREVIEW] = getMaxSize(heicSizes, maxPreviewSize);
-                    maxHeicSizes[RECORD] = getMaxRecordingSize(cameraId);
-                    maxHeicSizes[MAXIMUM] = CameraTestUtils.getMaxSize(heicSizes);
-                    maxHeicSizes[VGA] = vgaSize;
+                    mMaxHeicSizes[PREVIEW] = getMaxSize(heicSizes, maxPreviewSize);
+                    mMaxHeicSizes[RECORD] = getMaxRecordingSize(cameraId);
+                    mMaxHeicSizes[MAXIMUM] = CameraTestUtils.getMaxSize(heicSizes);
+                    mMaxHeicSizes[VGA] = vgaSize;
+                    mMaxHeicSizes[S720P] = getMaxSize(configs.getOutputSizes(ImageFormat.HEIC),
+                            s720pSize);
+                    mMaxHeicSizes[S1440P] = getMaxSize(configs.getOutputSizes(ImageFormat.HEIC),
+                            s1440pSize);
                 }
             }
             if (sm.isColorOutputSupported() && !sm.isHardwareLevelLegacy()) {
                 // VGA resolution, but with aspect ratio matching full res FOV
-                float fullFovAspect = maxYuvSizes[MAXIMUM].getWidth() /
-                    (float) maxYuvSizes[MAXIMUM].getHeight();
+                float fullFovAspect = mMaxYuvSizes[MAXIMUM].getWidth()
+                        / (float) mMaxYuvSizes[MAXIMUM].getHeight();
                 Size vgaFullFovSize = new Size(640, (int) (640 / fullFovAspect));
 
-                maxPrivSizes[VGA_FULL_FOV] = vgaFullFovSize;
-                maxYuvSizes[VGA_FULL_FOV] = vgaFullFovSize;
-                maxJpegSizes[VGA_FULL_FOV] = vgaFullFovSize;
+                mMaxPrivSizes[VGA_FULL_FOV] = vgaFullFovSize;
+                mMaxYuvSizes[VGA_FULL_FOV] = vgaFullFovSize;
+                mMaxJpegSizes[VGA_FULL_FOV] = vgaFullFovSize;
                 if (sm.isMonochromeWithY8()) {
-                    maxY8Sizes[VGA_FULL_FOV] = vgaFullFovSize;
+                    mMaxY8Sizes[VGA_FULL_FOV] = vgaFullFovSize;
                 }
 
                 // Max resolution that runs at 30fps
@@ -2822,33 +3227,39 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 }
                 assertTrue("No JPEG resolution available at 30fps!", maxJpeg30fpsSize != null);
 
-                maxPrivSizes[MAX_30FPS] = maxPriv30fpsSize;
-                maxYuvSizes[MAX_30FPS] = maxYuv30fpsSize;
-                maxY8Sizes[MAX_30FPS] = maxY830fpsSize;
-                maxJpegSizes[MAX_30FPS] = maxJpeg30fpsSize;
+                mMaxPrivSizes[MAX_30FPS] = maxPriv30fpsSize;
+                mMaxYuvSizes[MAX_30FPS] = maxYuv30fpsSize;
+                mMaxY8Sizes[MAX_30FPS] = maxY830fpsSize;
+                mMaxJpegSizes[MAX_30FPS] = maxJpeg30fpsSize;
             }
 
             Size[] privInputSizes = configs.getInputSizes(ImageFormat.PRIVATE);
-            maxInputPrivSize = privInputSizes != null ?
-                    CameraTestUtils.getMaxSize(privInputSizes) : null;
-            Size[] yuvInputSizes = configs.getInputSizes(ImageFormat.YUV_420_888);
-            maxInputYuvSize = yuvInputSizes != null ?
-                    CameraTestUtils.getMaxSize(yuvInputSizes) : null;
-            Size[] y8InputSizes = configs.getInputSizes(ImageFormat.Y8);
-            maxInputY8Size = y8InputSizes != null ?
-                    CameraTestUtils.getMaxSize(y8InputSizes) : null;
-        }
+            mMaxPrivInputSizes[INPUT_MAXIMUM] = privInputSizes != null
+                    ? CameraTestUtils.getMaxSize(privInputSizes)
+                    : null;
+            Size[] maxResPrivInputSizes = maxResConfigs != null
+                    ? maxResConfigs.getInputSizes(ImageFormat.PRIVATE)
+                    : null;
+            mMaxPrivInputSizes[INPUT_MAX_RES] = maxResPrivInputSizes != null
+                    ? CameraTestUtils.getMaxSize(maxResPrivInputSizes)
+                    : null;
 
-        private final Size[] maxPrivSizes = new Size[RESOLUTION_COUNT];
-        private final Size[] maxJpegSizes = new Size[RESOLUTION_COUNT];
-        private final Size[] maxYuvSizes = new Size[RESOLUTION_COUNT];
-        private final Size[] maxY8Sizes = new Size[RESOLUTION_COUNT];
-        private final Size[] maxHeicSizes = new Size[RESOLUTION_COUNT];
-        private final Size maxRawSize;
-        // TODO: support non maximum reprocess input.
-        private final Size maxInputPrivSize;
-        private final Size maxInputYuvSize;
-        private final Size maxInputY8Size;
+            Size[] yuvInputSizes = configs.getInputSizes(ImageFormat.YUV_420_888);
+            mMaxYuvInputSizes[INPUT_MAXIMUM] = yuvInputSizes != null
+                    ? CameraTestUtils.getMaxSize(yuvInputSizes)
+                    : null;
+            Size[] maxResYuvInputSizes = maxResConfigs != null
+                    ? maxResConfigs.getInputSizes(ImageFormat.YUV_420_888)
+                    : null;
+            mMaxYuvInputSizes[INPUT_MAX_RES] = maxResYuvInputSizes != null
+                    ? CameraTestUtils.getMaxSize(maxResYuvInputSizes)
+                    : null;
+
+            Size[] y8InputSizes = configs.getInputSizes(ImageFormat.Y8);
+            mMaxInputY8Size = y8InputSizes != null
+                    ? CameraTestUtils.getMaxSize(y8InputSizes)
+                    : null;
+        }
 
         public final Size getOutputSizeForFormat(int format, int resolutionIndex) {
             if (resolutionIndex >= RESOLUTION_COUNT) {
@@ -2857,49 +3268,69 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
             switch (format) {
                 case PRIV:
-                    return maxPrivSizes[resolutionIndex];
+                    return mMaxPrivSizes[resolutionIndex];
                 case YUV:
-                    return maxYuvSizes[resolutionIndex];
+                    return mMaxYuvSizes[resolutionIndex];
                 case JPEG:
-                    return maxJpegSizes[resolutionIndex];
+                    return mMaxJpegSizes[resolutionIndex];
                 case Y8:
-                    return maxY8Sizes[resolutionIndex];
+                    return mMaxY8Sizes[resolutionIndex];
                 case HEIC:
-                    return maxHeicSizes[resolutionIndex];
+                    return mMaxHeicSizes[resolutionIndex];
                 case RAW:
-                    return maxRawSize;
+                    if (resolutionIndex == MAX_RES) {
+                        return mMaxResolutionRawSize;
+                    }
+                    return mMaxRawSize;
                 default:
                     return new Size(0, 0);
             }
         }
 
-        public final Size getMaxInputSizeForFormat(int format) {
+        public final Size getMaxInputSizeForFormat(int format, int resolutionIndex) {
+            int inputResolutionIndex = getInputResolutionIndex(resolutionIndex);
+            if (inputResolutionIndex >= INPUT_RESOLUTION_COUNT || inputResolutionIndex == -1) {
+                return new Size(0, 0);
+            }
             switch (format) {
                 case PRIV:
-                    return maxInputPrivSize;
+                    return mMaxPrivInputSizes[inputResolutionIndex];
                 case YUV:
-                    return maxInputYuvSize;
+                    return mMaxYuvInputSizes[inputResolutionIndex];
                 case Y8:
-                    return maxInputY8Size;
+                    return mMaxInputY8Size;
+                case RAW:
+                    return mMaxResolutionRawSize;
                 default:
                     return new Size(0, 0);
             }
         }
 
-        static public String combinationToString(int[] combination) {
+        public static String combinationToString(int[] combination) {
+            return combinationToString(combination, /*useCaseSpecified*/ false);
+        }
+
+        public static String combinationToString(int[] combination, boolean useCaseSpecified) {
             StringBuilder b = new StringBuilder("{ ");
-            for (int i = 0; i < combination.length; i += 2) {
+            int i = 0;
+            while (i < combination.length) {
                 int format = combination[i];
                 int sizeLimit = combination[i + 1];
 
                 appendFormatSize(b, format, sizeLimit);
+                if (useCaseSpecified) {
+                    int streamUseCase = combination[i + 2];
+                    appendStreamUseCase(b, streamUseCase);
+                    i += 1;
+                }
+                i += 2;
                 b.append(" ");
             }
             b.append("}");
             return b.toString();
         }
 
-        static public String reprocessCombinationToString(int[] reprocessCombination) {
+        public static String reprocessCombinationToString(int[] reprocessCombination) {
             // reprocessConfig[0..1] is the input configuration
             StringBuilder b = new StringBuilder("Input: ");
             appendFormatSize(b, reprocessCombination[0], reprocessCombination[1]);
@@ -2918,7 +3349,17 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             return b.toString();
         }
 
-        static private void appendFormatSize(StringBuilder b, int format, int Size) {
+        int getInputResolutionIndex(int resolutionIndex) {
+            switch (resolutionIndex) {
+                case MAXIMUM:
+                    return INPUT_MAXIMUM;
+                case MAX_RES:
+                    return INPUT_MAX_RES;
+            }
+            return -1;
+        }
+
+        private static void appendFormatSize(StringBuilder b, int format, int size) {
             switch (format) {
                 case PRIV:
                     b.append("[PRIV, ");
@@ -2940,7 +3381,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     break;
             }
 
-            switch (Size) {
+            switch (size) {
                 case PREVIEW:
                     b.append("PREVIEW]");
                     break;
@@ -2959,10 +3400,44 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 case MAX_30FPS:
                     b.append("MAX_30FPS]");
                     break;
+                case S720P:
+                    b.append("S720P]");
+                    break;
+                case S1440P:
+                    b.append("S1440P]");
+                    break;
+                case MAX_RES:
+                    b.append("MAX_RES]");
+                    break;
                 default:
                     b.append("UNK]");
                     break;
             }
+        }
+
+        private static void appendStreamUseCase(StringBuilder b, int streamUseCase) {
+            b.append(", ");
+            switch (streamUseCase) {
+                case USE_CASE_PREVIEW:
+                    b.append("USE_CASE_PREVIEW");
+                    break;
+                case USE_CASE_PREVIEW_VIDEO_STILL:
+                    b.append("USE_CASE_PREVIEW_VIDEO_STILL");
+                    break;
+                case USE_CASE_STILL_CAPTURE:
+                    b.append("USE_CASE_STILL_CAPTURE");
+                    break;
+                case USE_CASE_VIDEO_CALL:
+                    b.append("USE_CASE_VIDEO_CALL");
+                    break;
+                case USE_CASE_VIDEO_RECORD:
+                    b.append("USE_CASE_VIDEO_RECORD");
+                    break;
+                default:
+                    b.append("UNK STREAM_USE_CASE");
+                    break;
+            }
+            b.append(";");
         }
     }
 

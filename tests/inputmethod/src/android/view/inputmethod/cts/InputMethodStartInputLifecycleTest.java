@@ -529,12 +529,12 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
             }
 
             if (expectNativeInvalidateInput) {
-                // If InputMethodManager#interruptInput() is expected to be natively supported,
+                // If InputMethodManager#invalidateInput() is expected to be natively supported,
                 // additional View#onCreateInputConnection() must not happen.
                 assertThat(onCreateConnectionCount.get()).isEqualTo(
                         prevOnCreateInputConnectionCount);
             } else {
-                // InputMethodManager#interruptInput() is expected to be falling back into
+                // InputMethodManager#invalidateInput() is expected to be falling back into
                 // InputMethodManager#restartInput(), which triggers View#onCreateInputConnection()
                 // as a consequence.
                 assertThat(onCreateConnectionCount.get()).isGreaterThan(
@@ -546,7 +546,7 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
             assertThat(forkedStream.findFirst(onFinishInputMatcher()).isPresent()).isFalse();
 
             // Make sure that InputMethodManager#updateSelection() will be ignored when there is
-            // no change from the last call of InputMethodManager#interruptInput().
+            // no change from the last call of InputMethodManager#invalidateInput().
             TestUtils.runOnMainSync(() -> {
                 Selection.setSelection(myEditor.mEditable, newSelStart, newSelEnd);
                 final InputMethodManager imm = myEditor.getContext().getSystemService(

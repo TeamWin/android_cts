@@ -17,7 +17,6 @@
 package android.permission.cts;
 
 import static android.Manifest.permission.WRITE_DEVICE_CONFIG;
-import static android.content.Intent.ACTION_BOOT_COMPLETED;
 import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.os.Process.myUserHandle;
 import static android.permission.cts.PermissionUtils.clearAppState;
@@ -104,6 +103,11 @@ public class BaseNotificationListenerCheckTest {
 
     private static final String PROPERTY_JOB_SCHEDULER_RATE_LIMIT_WINDOW_MILLIS =
             "qc_rate_limiting_window_ms";
+
+    private static final String ACTION_SET_UP_NOTIFICATION_LISTENER_CHECK =
+            "com.android.permissioncontroller.action.SET_UP_NOTIFICATION_LISTENER_CHECK";
+    private static final String NotificationListenerOnBootReceiver =
+            "com.android.permissioncontroller.privacysources.SetupPeriodicNotificationListenerCheck";
 
     /**
      * ID for notification shown by
@@ -365,19 +369,21 @@ public class BaseNotificationListenerCheckTest {
         }, UNEXPECTED_TIMEOUT_MILLIS);
 
         // Setup up permission controller again (simulate a reboot)
-        Intent permissionControllerSetupIntent = null;
-        for (ResolveInfo ri : sContext.getPackageManager().queryBroadcastReceivers(
-                new Intent(ACTION_BOOT_COMPLETED), 0)) {
-            String pkg = ri.activityInfo.packageName;
+        Intent permissionControllerSetupIntent = new Intent(
+                ACTION_SET_UP_NOTIFICATION_LISTENER_CHECK).setPackage(
+                PERMISSION_CONTROLLER_PKG).setFlags(FLAG_RECEIVER_FOREGROUND);
 
-            if (pkg.equals(PERMISSION_CONTROLLER_PKG)) {
-                permissionControllerSetupIntent = new Intent()
-                        .setClassName(pkg, ri.activityInfo.name)
-                        .setFlags(FLAG_RECEIVER_FOREGROUND)
-                        .setPackage(PERMISSION_CONTROLLER_PKG);
+        // Query for the setup broadcast receiver
+        List<ResolveInfo> resolveInfos = sContext.getPackageManager().queryBroadcastReceivers(
+                permissionControllerSetupIntent, 0);
 
-                sContext.sendBroadcast(permissionControllerSetupIntent);
-            }
+        if (resolveInfos.size() > 0) {
+            sContext.sendBroadcast(permissionControllerSetupIntent);
+        } else {
+            sContext.sendBroadcast(new Intent()
+                    .setClassName(PERMISSION_CONTROLLER_PKG, NotificationListenerOnBootReceiver)
+                    .setFlags(FLAG_RECEIVER_FOREGROUND)
+                    .setPackage(PERMISSION_CONTROLLER_PKG));
         }
 
         // Wait until jobs are set up
