@@ -45,8 +45,8 @@ public @interface EnsureTestAppInstalled {
     /** A key which uniquely identifies the test app for the test. */
     String key() default DEFAULT_TEST_APP_KEY;
 
-    /** The package name of the testapp. */
-    String packageName();
+    /** The package name of the testapp. Defaults to any test app. */
+    String packageName() default "";
 
     /** The user the testApp should be installed on. */
     UserType onUser() default UserType.INSTRUMENTED_USER;

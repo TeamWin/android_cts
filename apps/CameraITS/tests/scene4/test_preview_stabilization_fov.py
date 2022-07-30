@@ -19,10 +19,10 @@ import os
 
 from mobly import test_runner
 
+import its_base_test
 import camera_properties_utils
 import image_fov_utils
 import image_processing_utils
-import its_base_test
 import its_session_utils
 import opencv_processing_utils
 import video_processing_utils
@@ -109,7 +109,8 @@ def _calculate_center_offset_threshold(image_size):
                                   (_MAX_CENTER_THRESHOLD_PERCENT -
                                    _MIN_CENTER_THRESHOLD_PERCENT))
 
-  return (normalized_threshold_percent + _MIN_CENTER_THRESHOLD_PERCENT)
+  return normalized_threshold_percent + _MIN_CENTER_THRESHOLD_PERCENT
+
 
 class PreviewStabilizationFoVTest(its_base_test.ItsBaseTest):
   """Tests if stabilized preview FoV is within spec.

@@ -191,11 +191,6 @@ final class DevicePolicyManagerWrapper
             doAnswer(answer).when(spy).setDelegatedScopes(any(), any(), any());
             doAnswer(answer).when(spy).retrieveSecurityLogs(any());
 
-            // Used by TimeManagementTest
-            doAnswer(answer).when(spy).setAutoTimeZoneEnabled(any(), anyBoolean());
-            doAnswer(answer).when(spy).setAutoTimeEnabled(any(), anyBoolean());
-            doAnswer(answer).when(spy).getAutoTimeZoneEnabled(any());
-
             // Used by WifiTest
             doAnswer(answer).when(spy).getWifiMacAddress(any());
 

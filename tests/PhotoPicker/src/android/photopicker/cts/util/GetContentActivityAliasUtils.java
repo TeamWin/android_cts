@@ -67,6 +67,11 @@ public class GetContentActivityAliasUtils {
     public static void clearPackageData(String packageName) throws Exception {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .executeShellCommand("pm clear " + packageName);
+
+        // We should ideally be listening to an effective measure to know if package data was
+        // cleared, like listening to a broadcasts or checking a value. But that information is
+        // very package private and not available.
+        Thread.sleep(500);
     }
 
     public static String getDocumentsUiPackageName() {

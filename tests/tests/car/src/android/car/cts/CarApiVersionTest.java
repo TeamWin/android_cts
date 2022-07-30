@@ -61,6 +61,8 @@ public final class CarApiVersionTest extends AbstractExpectableTestCase {
     @Test
     public void testMarshalling() {
         CarApiVersion original = CarApiVersion.forMajorAndMinorVersions(66, 6);
+        expectWithMessage("original.describeContents()").that(original.describeContents())
+                .isEqualTo(0);
         Parcel parcel =  Parcel.obtain();
         try {
             original.writeToParcel(parcel, /* flags= */ 0);
@@ -71,6 +73,8 @@ public final class CarApiVersionTest extends AbstractExpectableTestCase {
             assertWithMessage("CREATOR.createFromParcel()").that(clone).isNotNull();
             expectWithMessage("clone.major").that(clone.getMajorVersion()).isEqualTo(66);
             expectWithMessage("clone.minor").that(clone.getMinorVersion()).isEqualTo(6);
+            expectWithMessage("clone.describeContents()").that(clone.describeContents())
+                    .isEqualTo(0);
 
         } finally {
             parcel.recycle();

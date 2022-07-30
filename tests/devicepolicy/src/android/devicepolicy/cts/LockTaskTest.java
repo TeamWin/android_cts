@@ -60,6 +60,7 @@ import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
+import com.android.bedstead.harrier.annotations.enterprise.RequireHasPolicyExemptApps;
 import com.android.bedstead.harrier.policies.LockTask;
 import com.android.bedstead.harrier.policies.LockTaskFinance;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
@@ -205,10 +206,9 @@ public final class LockTaskTest {
 
     @PolicyAppliesTest(policy = LockTaskFinance.class)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
+    @RequireHasPolicyExemptApps
     public void setLockTaskPackages_includesPolicyExemptApp_lockTaskPackagesIsSet() {
         Set<String> policyExemptApps = TestApis.devicePolicy().getPolicyExemptApps();
-        assumeFalse("OEM does not define any policy-exempt apps",
-                policyExemptApps.isEmpty());
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
                         .getLockTaskPackages(DPC_COMPONENT_NAME);
@@ -290,11 +290,9 @@ public final class LockTaskTest {
 
     @PolicyAppliesTest(policy = LockTaskFinance.class)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
+    @RequireHasPolicyExemptApps
     public void isLockTaskPermitted_includesPolicyExemptApps() {
         Set<String> policyExemptApps = TestApis.devicePolicy().getPolicyExemptApps();
-        // TODO(b/188035301): Add a unit test which ensures this actually gets tested
-        assumeFalse("OEM does not define any policy-exempt apps",
-                policyExemptApps.isEmpty());
         String[] originalLockTaskPackages =
                 sDeviceState.dpc().devicePolicyManager()
                         .getLockTaskPackages(DPC_COMPONENT_NAME);

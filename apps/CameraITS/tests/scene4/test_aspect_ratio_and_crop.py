@@ -22,8 +22,8 @@ import numpy as np
 import its_base_test
 import camera_properties_utils
 import capture_request_utils
-import image_processing_utils
 import image_fov_utils
+import image_processing_utils
 import its_session_utils
 import opencv_processing_utils
 
@@ -158,7 +158,7 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
   ground truth to account for the possibility that the chart is not well
   positioned to be precisely parallel to image sensor plane.
   The test then compares the ground truth ratio with the same ratio measured
-  on images captued using different stream combinations of varying formats
+  on images captured using different stream combinations of varying formats
   ('jpeg' and 'yuv') and resolutions.
   If raw capture is unavailable, a full resolution JPEG image is used to setup
   ground truth. In this case, the ground truth aspect ratio is defined as 1.0

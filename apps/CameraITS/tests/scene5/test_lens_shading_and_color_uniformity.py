@@ -18,10 +18,10 @@ import logging
 import math
 import os.path
 
+import cv2
 from mobly import test_runner
 import numpy
 
-import cv2
 import its_base_test
 import camera_properties_utils
 import capture_request_utils

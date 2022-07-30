@@ -126,6 +126,17 @@ public final class ApiVersionTest {
 //                .testEquals();
 //    }
 
+    @Test
+    public void testAtLeast_wrongTypes() {
+        @SuppressWarnings("rawtypes")
+        ApiVersion myObject = version(42);
+        @SuppressWarnings("rawtypes")
+        ApiVersion otherObject = mFactory.otherType(42);
+
+        assertThrows(IllegalArgumentException.class, () -> myObject.isAtLeast(otherObject));
+        assertThrows(IllegalArgumentException.class, () -> otherObject.isAtLeast(myObject));
+    }
+
     private ApiVersion<?> version(int major, int minor) {
         return mFactory.newApiVersion(major, minor);
     }
@@ -146,6 +157,7 @@ public final class ApiVersionTest {
     private interface ApiVersionFactory<T extends ApiVersion<T>> {
         T newApiVersion(int majorVersion, int minorVersion);
         T newApiVersion(int majorVersion);
+        ApiVersion<?> otherType(int majorVersion);
     }
 
     private static final class CarApiVersionFactory implements ApiVersionFactory<CarApiVersion> {
@@ -158,6 +170,11 @@ public final class ApiVersionTest {
         @Override
         public CarApiVersion newApiVersion(int majorVersion) {
             return CarApiVersion.forMajorVersion(majorVersion);
+        }
+
+        @Override
+        public ApiVersion<?> otherType(int majorVersion) {
+            return PlatformApiVersion.forMajorVersion(majorVersion);
         }
     }
 
@@ -172,6 +189,11 @@ public final class ApiVersionTest {
         @Override
         public PlatformApiVersion newApiVersion(int majorVersion) {
             return PlatformApiVersion.forMajorVersion(majorVersion);
+        }
+
+        @Override
+        public ApiVersion<?> otherType(int majorVersion) {
+            return CarApiVersion.forMajorVersion(majorVersion);
         }
     }
 }

@@ -51,6 +51,7 @@ import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.AppOp;
+import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.Permission;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeNone;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnAffiliatedDeviceOwnerSecondaryUser;
@@ -89,6 +90,7 @@ import java.util.stream.Collectors;
 public final class Policy {
 
     // TODO(b/219750042): If we leave over appops and permissions then the delegate will have them
+    private static final String DELEGATE_KEY = "delegate";
     private static final String DELEGATE_PACKAGE_NAME = "com.android.Delegate";
 
     // Delegate scopes to be used for a "CannotSet" state. All delegate scopes except the ones which
@@ -173,9 +175,17 @@ public final class Policy {
     }
 
     @AutoAnnotation
+    public static EnterprisePolicy enterprisePolicy(int[] dpc, Permission[] permissions,
+            AppOp[] appOps, String[] delegatedScopes) {
+        return new AutoAnnotation_Policy_enterprisePolicy(
+                dpc, permissions, appOps, delegatedScopes);
+    }
+
+    @AutoAnnotation
     private static EnsureTestAppInstalled ensureTestAppInstalled(
-            String packageName, UserType onUser, boolean isPrimary) {
-        return new AutoAnnotation_Policy_ensureTestAppInstalled(packageName, onUser, isPrimary);
+            String key, String packageName, UserType onUser, boolean isPrimary) {
+        return new AutoAnnotation_Policy_ensureTestAppInstalled(
+                key, packageName, onUser, isPrimary);
     }
 
     @AutoAnnotation
@@ -326,11 +336,8 @@ public final class Policy {
      *
      * <p>These are states which should be run where the policy is able to be applied.
      */
-    public static List<Annotation> policyAppliesStates(String policyName,
-            EnterprisePolicy enterprisePolicy) {
+    public static List<Annotation> policyAppliesStates(EnterprisePolicy enterprisePolicy) {
         Set<Annotation> annotations = new HashSet<>();
-
-        validateFlags(policyName, enterprisePolicy.dpc());
 
         for (Map.Entry<Function<EnterprisePolicy, Set<Annotation>>, Set<Integer>> annotation :
                 ANNOTATIONS_MAP.entrySet()) {
@@ -342,7 +349,7 @@ public final class Policy {
         for (AppOp appOp : enterprisePolicy.appOps()) {
             // TODO(b/219750042): Currently we only test that app ops apply to the current user
             Annotation[] withAppOpAnnotations = new Annotation[]{
-                    ensureTestAppInstalled(DELEGATE_PACKAGE_NAME,
+                    ensureTestAppInstalled(DELEGATE_KEY, DELEGATE_PACKAGE_NAME,
                             UserType.INSTRUMENTED_USER, /* isPrimary= */ true),
                     ensureTestAppHasAppOp(new String[]{appOp.appliedWith()})
             };
@@ -393,11 +400,8 @@ public final class Policy {
      *
      * <p>These are states which should be run where the policy is not able to be applied.
      */
-    public static List<Annotation> policyDoesNotApplyStates(String policyName,
-            EnterprisePolicy enterprisePolicy) {
+    public static List<Annotation> policyDoesNotApplyStates(EnterprisePolicy enterprisePolicy) {
         Set<Annotation> annotations = new HashSet<>();
-
-        validateFlags(policyName, enterprisePolicy.dpc());
 
         for (Map.Entry<Function<EnterprisePolicy, Set<Annotation>>, Set<Integer>> annotation :
                 ANNOTATIONS_MAP.entrySet()) {
@@ -419,13 +423,10 @@ public final class Policy {
     /**
      * Get parameterized test runs where the policy cannot be set for the given policy.
      */
-    public static List<Annotation> cannotSetPolicyStates(String policyName,
-            EnterprisePolicy enterprisePolicy, boolean includeDeviceAdminStates,
-            boolean includeNonDeviceAdminStates) {
+    public static List<Annotation> cannotSetPolicyStates(
+            EnterprisePolicy enterprisePolicy,
+            boolean includeDeviceAdminStates, boolean includeNonDeviceAdminStates) {
         Set<Annotation> annotations = new HashSet<>();
-
-        validateFlags(policyName, enterprisePolicy.dpc());
-
         if (includeDeviceAdminStates) {
             int allFlags = 0;
             for (int p : enterprisePolicy.dpc()) {
@@ -490,10 +491,8 @@ public final class Policy {
      * Get state annotations where the policy can be set for the given policy.
      */
     public static List<Annotation> canSetPolicyStates(
-            String policyName, EnterprisePolicy enterprisePolicy, boolean singleTestOnly) {
+            EnterprisePolicy enterprisePolicy, boolean singleTestOnly) {
         Set<Annotation> annotations = new HashSet<>();
-
-        validateFlags(policyName, enterprisePolicy.dpc());
 
         int allFlags = 0;
         for (int p : enterprisePolicy.dpc()) {
@@ -515,7 +514,7 @@ public final class Policy {
         for (AppOp appOp : enterprisePolicy.appOps()) {
             // TODO(b/219750042): Currently we only test that app ops can be set as the primary user
             Annotation[] withAppOpAnnotations = new Annotation[]{
-                    ensureTestAppInstalled(
+                    ensureTestAppInstalled(DELEGATE_KEY,
                             DELEGATE_PACKAGE_NAME, UserType.INSTRUMENTED_USER,
                             /* isPrimary= */ true),
                     ensureTestAppHasAppOp(new String[]{appOp.appliedWith()})
@@ -547,7 +546,8 @@ public final class Policy {
         return annotationList;
     }
 
-    private static void validateFlags(String policyName, int[] values) {
+    /** Validate flags used by a DPC policy. */
+    public static void validateFlags(String policyName, int[] values) {
         int usedAppliedByFlags = 0;
 
         for (int value : values) {

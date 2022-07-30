@@ -19,12 +19,12 @@ from mobly import test_runner
 
 import its_base_test
 import camera_properties_utils
-import its_session_utils
-import video_processing_utils
 import capture_request_utils
-import image_processing_utils
-import opencv_processing_utils
 import image_fov_utils
+import image_processing_utils
+import its_session_utils
+import opencv_processing_utils
+import video_processing_utils
 
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _VIDEO_RECORDING_DURATION_SECONDS = 3
@@ -79,7 +79,7 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
   RAW as ground truth to account for the possibility that the chart is not well
   positioned to be precisely parallel to image sensor plane.
   The test then compares the ground truth ratio with the same ratio measured
-  on videos captued using different formats.
+  on videos captured using different formats.
 
   If RAW capture is unavailable, a full resolution JPEG image is used to setup
   ground truth. In this case, the ground truth aspect ratio is defined as 1.0

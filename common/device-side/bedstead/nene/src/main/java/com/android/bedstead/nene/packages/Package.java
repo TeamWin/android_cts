@@ -779,6 +779,16 @@ public final class Package {
         return stringBuilder.toString();
     }
 
+    /** {@code true} if the package exists on any user on the device as is not uninstalled. */
+    @TargetApi(S)
+    public boolean isInstalled() {
+        Versions.requireMinimumVersion(S);
+
+        try (PermissionContext p = TestApis.permissions().withPermission(QUERY_ALL_PACKAGES)) {
+            return packageInfoFromAnyUser(0) != null;
+        }
+    }
+
     /** {@code true} if the package exists on the device. */
     public boolean exists() {
         if (Versions.meetsMinimumSdkVersionRequirement(S)) {

@@ -496,6 +496,63 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
     }
 
     /**
+     * Create a new {@link EnterprisePolicy} by merging a group of policies.
+     *
+     * <p>Each policy will have flags validated.
+     *
+     * <p>If policies support different delegation scopes, then they cannot be merged and an
+     * exception will be thrown. These policies require separate tests.
+     */
+    private static EnterprisePolicy mergePolicies(Class<?>[] policies) {
+        if (policies.length == 0) {
+            throw new IllegalStateException("Cannot merge 0 policies");
+        } else if (policies.length == 1) {
+            // Nothing to merge, just return the only one
+            return policies[0].getAnnotation(EnterprisePolicy.class);
+        }
+
+        Set<Integer> dpc = new HashSet<>();
+        Set<EnterprisePolicy.Permission> permissions = new HashSet<>();
+        Set<EnterprisePolicy.AppOp> appOps = new HashSet<>();
+        Set<String> delegatedScopes = new HashSet<>();
+
+        for (Class<?> policy : policies) {
+            EnterprisePolicy enterprisePolicy = policy.getAnnotation(EnterprisePolicy.class);
+            Policy.validateFlags(policy.getName(), enterprisePolicy.dpc());
+
+            for (int dpcPolicy : enterprisePolicy.dpc()) {
+                dpc.add(dpcPolicy);
+            }
+
+            for (EnterprisePolicy.Permission permission : enterprisePolicy.permissions()) {
+                permissions.add(permission);
+            }
+
+            for (EnterprisePolicy.AppOp appOp : enterprisePolicy.appOps()) {
+                appOps.add(appOp);
+            }
+
+            if (enterprisePolicy.delegatedScopes().length > 0) {
+                Set<String> newDelegatedScopes = Set.of(enterprisePolicy.delegatedScopes());
+                if (!delegatedScopes.isEmpty()
+                        && !delegatedScopes.containsAll(newDelegatedScopes)) {
+                    throw new IllegalStateException("Cannot merge multiple policies which define "
+                            + "different delegated scopes. You should separate this into multiple "
+                            + "tests.");
+                }
+
+                delegatedScopes = newDelegatedScopes;
+            }
+        }
+
+        return Policy.enterprisePolicy(dpc.stream().mapToInt(Integer::intValue).toArray(),
+                permissions.toArray(new EnterprisePolicy.Permission[0]),
+                appOps.toArray(new EnterprisePolicy.AppOp[0]),
+                delegatedScopes.toArray(new String[0]));
+
+    }
+
+    /**
      * Parse enterprise-specific annotations.
      *
      * <p>To be used before general annotation processing.
@@ -506,36 +563,30 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
             Annotation annotation = annotations.get(index);
             if (annotation instanceof PolicyAppliesTest) {
                 annotations.remove(index);
-                Class<?> policy = ((PolicyAppliesTest) annotation).policy();
 
-                EnterprisePolicy enterprisePolicy =
-                        policy.getAnnotation(EnterprisePolicy.class);
                 List<Annotation> replacementAnnotations =
-                        Policy.policyAppliesStates(policy.getName(), enterprisePolicy);
+                        Policy.policyAppliesStates(
+                                mergePolicies(((PolicyAppliesTest) annotation).policy()));
                 replacementAnnotations.sort(BedsteadJUnit4::annotationSorter);
 
                 annotations.addAll(index, replacementAnnotations);
                 index += replacementAnnotations.size();
             } else if (annotation instanceof PolicyDoesNotApplyTest) {
                 annotations.remove(index);
-                Class<?> policy = ((PolicyDoesNotApplyTest) annotation).policy();
 
-                EnterprisePolicy enterprisePolicy =
-                        policy.getAnnotation(EnterprisePolicy.class);
                 List<Annotation> replacementAnnotations =
-                        Policy.policyDoesNotApplyStates(policy.getName(), enterprisePolicy);
+                        Policy.policyDoesNotApplyStates(
+                                mergePolicies(((PolicyDoesNotApplyTest) annotation).policy()));
                 replacementAnnotations.sort(BedsteadJUnit4::annotationSorter);
 
                 annotations.addAll(index, replacementAnnotations);
                 index += replacementAnnotations.size();
             } else if (annotation instanceof CannotSetPolicyTest) {
                 annotations.remove(index);
-                Class<?> policy = ((CannotSetPolicyTest) annotation).policy();
 
-                EnterprisePolicy enterprisePolicy =
-                        policy.getAnnotation(EnterprisePolicy.class);
                 List<Annotation> replacementAnnotations =
-                        Policy.cannotSetPolicyStates(policy.getName(), enterprisePolicy,
+                        Policy.cannotSetPolicyStates(
+                                mergePolicies(((CannotSetPolicyTest) annotation).policy()),
                                 ((CannotSetPolicyTest) annotation).includeDeviceAdminStates(),
                                 ((CannotSetPolicyTest) annotation).includeNonDeviceAdminStates());
                 replacementAnnotations.sort(BedsteadJUnit4::annotationSorter);
@@ -544,14 +595,12 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
                 index += replacementAnnotations.size();
             } else if (annotation instanceof CanSetPolicyTest) {
                 annotations.remove(index);
-                Class<?> policy = ((CanSetPolicyTest) annotation).policy();
                 boolean singleTestOnly = ((CanSetPolicyTest) annotation).singleTestOnly();
 
-                EnterprisePolicy enterprisePolicy =
-                        policy.getAnnotation(EnterprisePolicy.class);
                 List<Annotation> replacementAnnotations =
                         Policy.canSetPolicyStates(
-                                policy.getName(), enterprisePolicy, singleTestOnly);
+                                mergePolicies(((CanSetPolicyTest) annotation).policy()),
+                                singleTestOnly);
                 replacementAnnotations.sort(BedsteadJUnit4::annotationSorter);
 
                 annotations.addAll(index, replacementAnnotations);

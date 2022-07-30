@@ -16,10 +16,12 @@
 
 package com.android.bedstead.harrier.annotations.enterprise;
 
-import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.PRECEDENCE_NOT_IMPORTANT;
+import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.EARLY;
+import static com.android.bedstead.nene.packages.CommonPackages.FEATURE_DEVICE_ADMIN;
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
-import com.android.bedstead.harrier.annotations.meta.RequiresBedsteadJUnit4;
+import com.android.bedstead.harrier.annotations.FailureMode;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -27,36 +29,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark a test as testing the states where a policy is not allowed to be applied.
+ * Mark that a test requires that policy exempt apps are defined.
  *
- * <p>An example is running with a device owner for a policy only applicable to profile owners.
- *
- * <p>This will generate parameterized runs for all matching states.
+ * <p>Your test configuration may be configured so that this test is only run on a device with
+ * policy exempt apps. Otherwise, you can use {@code DeviceState} to ensure that the device enters
+ * the correct state for the method.
  */
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@RequiresBedsteadJUnit4
-public @interface CannotSetPolicyTest {
-    /**
-     * The policy being tested.
-     *
-     * <p>If multiple policies are specified, then they will be merged so that all valid states for
-     * all specified policies are considered as valid.
-     *
-     * <p>This is used to calculate which states are required to be tested.
-     */
-    Class<?>[] policy();
+@RequireFeature(FEATURE_DEVICE_ADMIN)
+public @interface RequireHasPolicyExemptApps {
 
-    /**
-     * If true, then this will run in states where the app is a device admin but is not one which is
-     * allowed to make the call.
-     */
-    boolean includeDeviceAdminStates() default true;
-
-    /**
-     * If true, then this will run in states where the app is not a device admin.
-     */
-    boolean includeNonDeviceAdminStates() default true;
+    /** Behaviour if there are no policy exempt apps. */
+    FailureMode failureMode() default FailureMode.SKIP;
 
     /**
      * Weight sets the order that annotations will be resolved.
@@ -68,5 +53,6 @@ public @interface CannotSetPolicyTest {
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default PRECEDENCE_NOT_IMPORTANT;
+    int weight() default EARLY;
+
 }

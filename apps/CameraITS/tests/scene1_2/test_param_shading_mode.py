@@ -32,6 +32,7 @@ _NUM_SWITCH_LOOPS = 3
 _SHADING_MODES = {0: 'LSC_OFF', 1: 'LSC_FAST', 2: 'LSC_HQ'}
 _NUM_SHADING_MODES = len(_SHADING_MODES)
 _THRESHOLD_DIFF_RATIO = 0.15
+_VGA_W, _VGA_H = 640, 480
 
 
 def create_plots(shading_maps, reference_maps, num_map_gains, log_path):
@@ -76,9 +77,8 @@ class ParamShadingModeTest(its_base_test.ItsBaseTest):
 
   Lens shading correction modes are OFF=0, FAST=1, and HQ=2.
 
-  Uses smallest yuv size matching the aspect ratio of largest yuv size to
-  reduce some USB bandwidth overhead since we are only looking at output
-  metadata in this test.
+  Uses VGA sized captures to reduce some USB bandwidth overhead since we are
+  only looking at output metadata in this test.
 
   First asserts all modes are supported. Then runs 2 captures.
 
@@ -118,13 +118,11 @@ class ParamShadingModeTest(its_base_test.ItsBaseTest):
                        % str(props.get('android.shading.availableModes')),
                        [*_SHADING_MODES])
 
-      # get smallest matching fmt
+      # define fmt
       mono_camera = camera_properties_utils.mono_camera(props)
       cam.do_3a(mono_camera=mono_camera)
-      largest_yuv_fmt = capture_request_utils.get_largest_yuv_format(props)
-      largest_yuv_size = (largest_yuv_fmt['width'], largest_yuv_fmt['height'])
-      cap_fmt = capture_request_utils.get_smallest_yuv_format(
-          props, match_ar=largest_yuv_size)
+      cap_fmt = {'format': 'yuv', 'width': _VGA_W, 'height': _VGA_H}
+      logging.debug('Capture format: %s', str(cap_fmt))
 
       # cap1
       reference_maps = [[] for mode in range(_NUM_SHADING_MODES)]

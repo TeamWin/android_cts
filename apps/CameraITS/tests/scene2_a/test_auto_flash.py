@@ -17,10 +17,10 @@
 import logging
 import os.path
 
+import its_base_test
 import camera_properties_utils
 import capture_request_utils
 import image_processing_utils
-import its_base_test
 import its_session_utils
 import lighting_control_utils
 from mobly import test_runner
@@ -58,6 +58,7 @@ def turn_off_tablet(tablet_device):
 
 
 def take_captures_with_flash(cam, fmt):
+  """Take capture required sequence to trigger auto flash."""
   # Run precapture sequence by setting the aePrecapture trigger to
   # START and capture intent set to Preview.
   preview_req_start = capture_request_utils.auto_capture_request()

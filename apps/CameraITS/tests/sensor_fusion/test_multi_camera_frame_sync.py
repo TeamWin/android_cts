@@ -18,12 +18,13 @@ import logging
 import multiprocessing
 import os
 import time
+
+import cv2
 import matplotlib
 from matplotlib import pylab
 from mobly import test_runner
 import numpy
 
-import cv2
 import its_base_test
 import camera_properties_utils
 import capture_request_utils

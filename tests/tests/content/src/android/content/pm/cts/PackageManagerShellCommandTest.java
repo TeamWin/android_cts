@@ -1336,7 +1336,7 @@ public class PackageManagerShellCommandTest {
         assumeTrue(getContext().getUserId() == UserHandle.USER_SYSTEM);
         AtomicInteger dataLoaderType = new AtomicInteger(-1);
 
-        runPackageVerifierTest("Failure [INSTALL_FAILED_VERIFICATION_FAILURE: Install not allowed]",
+        runPackageVerifierTest("Failure [INSTALL_FAILED_VERIFICATION_FAILURE: Install not allowed",
                 (context, intent) -> {
                     int verificationId = intent.getIntExtra(EXTRA_VERIFICATION_ID, -1);
                     assertNotEquals(-1, verificationId);

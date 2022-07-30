@@ -40,9 +40,12 @@ public @interface CanSetPolicyTest {
     /**
      * The policy being tested.
      *
+     * <p>If multiple policies are specified, then they will be merged so that all valid states for
+     * all specified policies are considered as valid.
+     *
      * <p>This is used to calculate which states are required to be tested.
      */
-    Class<?> policy();
+    Class<?>[] policy();
 
     /**
      * If true, this test will only be run in a single state.

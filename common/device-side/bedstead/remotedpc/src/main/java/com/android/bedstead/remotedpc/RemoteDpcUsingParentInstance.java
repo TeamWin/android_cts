@@ -38,4 +38,9 @@ public final class RemoteDpcUsingParentInstance extends RemoteDpc {
     public RemoteDevicePolicyManager devicePolicyManager() {
         return super.devicePolicyManager().getParentProfileInstance(componentName());
     }
+
+    @Override
+    public boolean isParentInstance() {
+        return true;
+    }
 }

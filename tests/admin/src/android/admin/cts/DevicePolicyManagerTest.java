@@ -598,19 +598,6 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testSetAutoTimeRequired_failIfNotDeviceOrProfileOwner() {
-        if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testSetAutoTimeRequired_failIfNotDeviceOrProfileOwner");
-            return;
-        }
-        try {
-            mDevicePolicyManager.setAutoTimeRequired(mComponent, true);
-            fail("did not throw expected SecurityException");
-        } catch (SecurityException e) {
-            assertProfileOwnerMessage(e.getMessage());
-        }
-    }
-
     public void testAddPersistentPreferredActivity_failIfNotProfileOwner() {
         if (!mDeviceAdmin) {
             Log.w(TAG, "Skipping testAddPersistentPreferredActivity_failIfNotProfileOwner");

@@ -15,8 +15,8 @@
 
 
 import logging
-import os
 import math
+import os
 import matplotlib
 from matplotlib import pylab
 from mobly import test_runner
@@ -157,7 +157,7 @@ class ReprocessEdgeEnhancementTest(its_base_test.ItsBaseTest):
       # Initialize chart class and locate chart in scene
       chart = opencv_processing_utils.Chart(cam, props, self.log_path)
 
-      # If reprocessing is supported, ZSL edge mode must be avaiable.
+      # If reprocessing is supported, ZSL edge mode must be available
       if not camera_properties_utils.edge_mode(props, EDGE_MODES['ZSL']):
         raise AssertionError('ZSL android.edge.mode not available!')
 

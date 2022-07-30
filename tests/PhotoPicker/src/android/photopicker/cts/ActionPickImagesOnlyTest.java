@@ -29,7 +29,10 @@ import static android.photopicker.cts.util.PhotoPickerUiUtils.findItemList;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertThrows;
+
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Intent;
 import android.net.Uri;
@@ -135,5 +138,22 @@ public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
         assertPickerUriFormat(uri, mContext.getUserId());
         assertPersistedGrant(uri, mContext.getContentResolver());
         assertRedactedReadOnlyAccess(uri);
+    }
+
+    @Test
+    public void testMimeTypeFilter() throws Exception {
+        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+        intent.setType("audio/*");
+        assertThrows(ActivityNotFoundException.class,
+                () -> mActivity.startActivityForResult(intent, REQUEST_CODE));
+    }
+
+    @Test
+    public void testExtraMimeTypeFilter() throws Exception {
+        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"audio/*"});
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+        final GetResultActivity.Result res = mActivity.getResult();
+        assertThat(res.resultCode).isEqualTo(Activity.RESULT_CANCELED);
     }
 }

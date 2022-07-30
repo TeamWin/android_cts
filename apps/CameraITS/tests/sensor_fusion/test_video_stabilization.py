@@ -157,7 +157,7 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
       rot_rig['cntl'] = self.rotator_cntl
       rot_rig['ch'] = self.rotator_ch
       if rot_rig['cntl'].lower() != 'arduino':
-        raise AssertionError(f'You must use the arduino controller for {_NAME}.')
+        raise AssertionError(f'You must use an arduino controller for {_NAME}.')
 
       # Create list of video qualities to test
       supported_video_qualities = cam.get_supported_video_qualities(

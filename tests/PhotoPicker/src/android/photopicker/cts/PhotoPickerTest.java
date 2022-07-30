@@ -18,6 +18,7 @@ package android.photopicker.cts;
 
 import static android.photopicker.cts.util.GetContentActivityAliasUtils.clearPackageData;
 import static android.photopicker.cts.util.GetContentActivityAliasUtils.getDocumentsUiPackageName;
+import static android.photopicker.cts.util.PhotoPickerAssertionsUtils.assertContainsMimeType;
 import static android.photopicker.cts.util.PhotoPickerAssertionsUtils.assertMimeType;
 import static android.photopicker.cts.util.PhotoPickerAssertionsUtils.assertPersistedGrant;
 import static android.photopicker.cts.util.PhotoPickerAssertionsUtils.assertPickerUriFormat;
@@ -570,6 +571,89 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         final int count = clipData.getItemCount();
         assertThat(count).isEqualTo(itemCount);
         for (int i = 0; i < count; i++) {
+            final Uri uri = clipData.getItemAt(i).getUri();
+            assertPickerUriFormat(uri, mContext.getUserId());
+            assertPersistedGrant(uri, mContext.getContentResolver());
+            assertRedactedReadOnlyAccess(uri);
+            assertMimeType(uri, mimeType);
+        }
+    }
+
+    @Test
+    public void testExtraMimeTypeFilter() throws Exception {
+        final int dngVideoCount = 2;
+        // Creates 2 videos with mime type: "video/dng"
+        mUriList.addAll(createDNGVideosAndGetUris(dngVideoCount, mContext.getUserId()));
+
+        final int mp4VideoCount = 3;
+        // Creates 3 videos with mime type: "video/mp4"
+        mUriList.addAll(createVideosAndGetUris(mp4VideoCount, mContext.getUserId()));
+
+        final int imageCount = 4;
+        // Creates 4 images with mime type: "image/dng"
+        mUriList.addAll(createImagesAndGetUris(imageCount, mContext.getUserId()));
+
+        Intent intent = new Intent(mAction);
+        addMultipleSelectionFlag(intent);
+
+        if (Intent.ACTION_GET_CONTENT.equals(intent.getAction())) {
+            intent.setType("*/*");
+        }
+        final String[] mimeTypes = new String[]{"video/dng", "image/dng"};
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+        launchPhotoPickerForIntent(intent);
+
+        final int totalCount = dngVideoCount + imageCount;
+        final List<UiObject> itemList = findItemList(totalCount);
+        final int itemCount = itemList.size();
+        assertThat(itemCount).isAtLeast(totalCount);
+        for (int i = 0; i < itemCount; i++) {
+            clickAndWait(mDevice, itemList.get(i));
+        }
+
+        clickAndWait(mDevice, findAddButton());
+
+        final ClipData clipData = mActivity.getResult().data.getClipData();
+        assertWithMessage("Expected number of items returned to be: " + itemCount)
+                .that(clipData.getItemCount()).isEqualTo(itemCount);
+        for (int i = 0; i < itemCount; i++) {
+            final Uri uri = clipData.getItemAt(i).getUri();
+            assertPickerUriFormat(uri, mContext.getUserId());
+            assertPersistedGrant(uri, mContext.getContentResolver());
+            assertRedactedReadOnlyAccess(uri);
+            assertContainsMimeType(uri, mimeTypes);
+        }
+    }
+
+    @Test
+    public void testMimeTypeFilterPriority() throws Exception {
+        final int videoCount = 2;
+        mUriList.addAll(createDNGVideosAndGetUris(videoCount, mContext.getUserId()));
+        final int imageCount = 1;
+        mUriList.addAll(createImagesAndGetUris(imageCount, mContext.getUserId()));
+
+        Intent intent = new Intent(mAction);
+        addMultipleSelectionFlag(intent);
+        // setType has lower priority than EXTRA_MIME_TYPES filters.
+        intent.setType("image/*");
+        final String mimeType = "video/dng";
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[] {mimeType});
+        launchPhotoPickerForIntent(intent);
+
+        // find all items
+        final List<UiObject> itemList = findItemList(-1);
+        final int itemCount = itemList.size();
+        assertThat(itemCount).isAtLeast(videoCount);
+        for (int i = 0; i < itemCount; i++) {
+            clickAndWait(mDevice, itemList.get(i));
+        }
+
+        clickAndWait(mDevice, findAddButton());
+
+        final ClipData clipData = mActivity.getResult().data.getClipData();
+        assertWithMessage("Expected number of items returned to be: " + itemCount)
+                .that(clipData.getItemCount()).isEqualTo(itemCount);
+        for (int i = 0; i < itemCount; i++) {
             final Uri uri = clipData.getItemAt(i).getUri();
             assertPickerUriFormat(uri, mContext.getUserId());
             assertPersistedGrant(uri, mContext.getContentResolver());

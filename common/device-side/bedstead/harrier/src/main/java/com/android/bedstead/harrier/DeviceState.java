@@ -19,16 +19,12 @@ package com.android.bedstead.harrier;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.app.ActivityManager.STOP_USER_ON_SWITCH_DEFAULT;
 import static android.app.ActivityManager.STOP_USER_ON_SWITCH_FALSE;
-import static android.content.Intent.ACTION_MAIN;
-import static android.content.Intent.CATEGORY_HOME;
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.os.Build.VERSION.SDK_INT;
 
 import static com.android.bedstead.harrier.Defaults.DEFAULT_PASSWORD;
 import static com.android.bedstead.harrier.annotations.EnsureTestAppInstalled.DEFAULT_TEST_APP_KEY;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
-import static com.android.bedstead.nene.utils.Versions.U;
 import static com.android.bedstead.nene.utils.Versions.meetsSdkVersionRequirements;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -87,6 +83,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
+import com.android.bedstead.harrier.annotations.enterprise.RequireHasPolicyExemptApps;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasNoProfileAnnotation;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasNoUserAnnotation;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasProfileAnnotation;
@@ -811,8 +808,16 @@ public final class DeviceState extends HarrierRule {
             }
     
             if (annotation instanceof RequireMultiUserSupport) {
-                requireMultiUserSupport();
+                RequireMultiUserSupport requireMultiUserSupportAnnotation =
+                        (RequireMultiUserSupport) annotation;
+                requireMultiUserSupport(requireMultiUserSupportAnnotation.failureMode());
                 continue;
+            }
+
+            if (annotation instanceof RequireHasPolicyExemptApps) {
+                RequireHasPolicyExemptApps requireHasPolicyExemptAppsAnnotation =
+                        (RequireHasPolicyExemptApps) annotation;
+                requireHasPolicyExemptApps(requireHasPolicyExemptAppsAnnotation.failureMode());
             }
         }
 
@@ -1915,9 +1920,14 @@ public final class DeviceState extends HarrierRule {
 
     private void ensureTestAppInstalled(
             String key, String packageName, UserType onUser, boolean isPrimary) {
-        TestApp testApp = mTestAppProvider.query()
-                .wherePackageName().isEqualTo(packageName)
-                .get();
+        TestApp testApp;
+        if (packageName.isEmpty()) {
+            testApp = mTestAppProvider.any();
+        } else {
+            testApp = mTestAppProvider.query()
+                    .wherePackageName().isEqualTo(packageName)
+                    .get();
+        }
 
         TestAppInstance testAppInstance = ensureTestAppInstalled(
                 testApp, resolveUserTypeToUser(onUser));
@@ -2617,8 +2627,13 @@ public final class DeviceState extends HarrierRule {
         TestApis.activities().clearAllActivities();
     }
 
-    private void requireMultiUserSupport() {
-        assumeTrue("This test is only supported on multi user devices",
-                TestApis.users().supportsMultipleUsers());
+    private void requireMultiUserSupport(FailureMode failureMode) {
+        checkFailOrSkip("This test is only supported on multi user devices",
+                TestApis.users().supportsMultipleUsers(), failureMode);
+    }
+
+    private void requireHasPolicyExemptApps(FailureMode failureMode) {
+        checkFailOrSkip("OEM does not define any policy-exempt apps",
+                TestApis.devicePolicy().getPolicyExemptApps().isEmpty(), failureMode);
     }
 }

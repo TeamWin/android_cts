@@ -453,6 +453,24 @@ public final class DevicePolicy {
         }
     }
 
+    /**
+     * Returns true if the AutoTimeRequired policy is set to true for the given user.
+     */
+    @Experimental
+    public boolean autoTimeRequired(UserReference user) {
+        return TestApis.context().androidContextAsUser(user)
+                .getSystemService(DevicePolicyManager.class)
+                .getAutoTimeRequired();
+    }
+
+    /**
+     * Returns true if the AutoTimeRequired policy is set to true for the instrumented user.
+     */
+    @Experimental
+    public boolean autoTimeRequired() {
+        return autoTimeRequired(TestApis.users().instrumented());
+    }
+
     private static class DefaultBlockingCallback extends BlockingCallback<Boolean> {
         public void triggerCallback(Boolean success) {
             callbackTriggered(success);

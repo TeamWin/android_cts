@@ -80,6 +80,12 @@ public class PhotoPickerAssertionsUtils {
         assertThat(resultMimeType).isEqualTo(expectedMimeType);
     }
 
+    public static void assertContainsMimeType(Uri uri, String[] expectedMimeTypes) {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final String resultMimeType = context.getContentResolver().getType(uri);
+        assertThat(Arrays.asList(expectedMimeTypes).contains(resultMimeType)).isTrue();
+    }
+
     public static void assertRedactedReadOnlyAccess(Uri uri) throws Exception {
         assertThat(uri).isNotNull();
         final String[] projection = new String[]{ PickerMediaColumns.MIME_TYPE };

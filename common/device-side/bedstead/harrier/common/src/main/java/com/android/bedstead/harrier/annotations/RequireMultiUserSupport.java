@@ -22,12 +22,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to indicate that a test requires multi-user support.
+ * Mark that a test requires multi-user support.
  *
- * <p>This can be enforced by using {@code DeviceState}.
+ * <p>Your test configuration may be configured so that this test is only run on a device with
+ * multi-user support. Otherwise, you can use {@code DeviceState} to ensure that the device enters
+ * the correct state for the method.
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 //@Experimental
 public @interface RequireMultiUserSupport {
+
+    /** Behaviour if the device does not support multiple users */
+    FailureMode failureMode() default FailureMode.SKIP;
 }

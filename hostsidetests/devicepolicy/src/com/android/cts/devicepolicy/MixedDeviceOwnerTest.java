@@ -164,28 +164,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Test
-    public void testSetTime() throws Exception {
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".TimeManagementTest", "testSetTime");
-        }, new DevicePolicyEventWrapper.Builder(EventId.SET_TIME_VALUE)
-                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .build());
-
-        executeDeviceTestMethod(".TimeManagementTest", "testSetTime_failWhenAutoTimeEnabled");
-    }
-
-    @Test
-    public void testSetTimeZone() throws Exception {
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".TimeManagementTest", "testSetTimeZone");
-        }, new DevicePolicyEventWrapper.Builder(EventId.SET_TIME_ZONE_VALUE)
-                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .build());
-
-        executeDeviceTestMethod(".TimeManagementTest", "testSetTimeZone_failIfAutoTimeZoneEnabled");
-    }
-
-    @Test
     public void testLockScreenInfo() throws Exception {
         executeDeviceTestClass(".LockScreenInfoTest");
 
@@ -521,17 +499,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     public void testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted()
             throws Exception {
         super.testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted();
-    }
-
-    @Override
-    public void testApplicationHidden() throws Exception {
-        if (isHeadlessSystemUserMode()) {
-            // Must run on user 0 because the test has a broadcast receiver that listen to packages
-            // added / removed intents
-            mUserId = mDeviceOwnerUserId;
-            CLog.d("testApplicationHidden(): setting mUserId as %d before running it", mUserId);
-        }
-        super.testApplicationHidden();
     }
 
     @Override

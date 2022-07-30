@@ -138,7 +138,7 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
       rot_rig['cntl'] = self.rotator_cntl
       rot_rig['ch'] = self.rotator_ch
       if rot_rig['cntl'].lower() != 'arduino':
-        raise AssertionError(f'You must use the arduino controller for {_NAME}.')
+        raise AssertionError(f'You must use an arduino controller for {_NAME}.')
 
       # List of video resolutions to test
       supported_preview_sizes = cam.get_supported_preview_sizes(self.camera_id)

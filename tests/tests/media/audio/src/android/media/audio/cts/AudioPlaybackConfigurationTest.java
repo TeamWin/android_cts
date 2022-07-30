@@ -16,9 +16,20 @@
 
 package android.media.audio.cts;
 
+import static android.app.AppOpsManager.MODE_ALLOWED;
+import static android.app.AppOpsManager.MODE_IGNORED;
+import static android.app.AppOpsManager.OPSTR_PLAY_AUDIO;
 import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_ALL;
 import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_NONE;
 import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_SYSTEM;
+import static android.media.AudioManager.ADJUST_MUTE;
+import static android.media.AudioManager.ADJUST_UNMUTE;
+import static android.media.AudioManager.STREAM_NOTIFICATION;
+import static android.media.AudioTrack.WRITE_NON_BLOCKING;
+import static android.media.cts.AudioHelper.createSoundDataInShortByteBuffer;
+
+import static com.android.compatibility.common.util.AppOpsUtils.getOpMode;
+import static com.android.compatibility.common.util.AppOpsUtils.setOpMode;
 
 import android.annotation.Nullable;
 import android.annotation.RawRes;
@@ -26,8 +37,10 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioAttributes;
 import android.media.AudioAttributes.CapturePolicy;
+import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioPlaybackConfiguration;
+import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.media.SoundPool;
 import android.media.audio.cts.R;
@@ -43,6 +56,7 @@ import com.android.internal.annotations.GuardedBy;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,9 +71,16 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
     private final static int TEST_TIMEOUT_SOUNDPOOL_LOAD_MS = 3000;
     private final static long MEDIAPLAYER_PREPARE_TIMEOUT_MS = 2000;
 
+    private static final int TEST_AUDIO_TRACK_SAMPLERATE = 48000;
+    private static final double TEST_AUDIO_TRACK_FREQUENCY = 440.0;
+    private static final int TEST_AUDIO_TRACK_CHANNELS = 2;
+    private static final int TEST_AUDIO_TRACK_PLAY_SECONDS = 2;
+    private static final double TEST_AUDIO_TRACK_SWEEP = 0;
+
     // not declared inside test so it can be released in case of failure
     private MediaPlayer mMp;
     private SoundPool mSp;
+    private AudioTrack mAt;
 
     @Override
     protected void setUp() throws Exception {
@@ -68,15 +89,22 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
 
     @Override
     protected void tearDown() throws Exception {
+        super.tearDown();
         // try/catch for every method in case the tests left the objects in various states
         if (mMp != null) {
-            try { mMp.stop(); } catch (Exception e) {}
-            try { mMp.release(); } catch (Exception e) {}
+            try {
+                mMp.stop();
+            } catch (Exception ignored) { }
+            mMp.release();
             mMp = null;
         }
         if (mSp != null) {
-            try { mSp.release(); } catch (Exception e) {}
+            mSp.release();
             mSp = null;
+        }
+        if (mAt != null) {
+            mAt.release();
+            mAt = null;
         }
     }
 
@@ -413,6 +441,102 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         }
     }
 
+    public void testMuteFromAppOpsNotification() throws Exception {
+        if (!isValidPlatform("testMuteFromAppOpsNotification")) return;
+
+        verifyMuteUnmuteNotifications(
+                /* mute= */() -> {
+                    try {
+                        setOpMode(getContext().getPackageName(), OPSTR_PLAY_AUDIO, MODE_IGNORED);
+                    } catch (IOException e) {
+                        fail("Failed to set AppOps ignore for play audio: " + e);
+                    }
+                },
+                /* unmute= */() -> {
+                    try {
+                        if (getOpMode(getContext().getPackageName(), OPSTR_PLAY_AUDIO)
+                                != MODE_ALLOWED) {
+                            setOpMode(getContext().getPackageName(), OPSTR_PLAY_AUDIO,
+                                    MODE_ALLOWED);
+                        }
+                    } catch (IOException e) {
+                        fail("Failed to set AppOps allow for play audio: " + e);
+                    }
+                });
+    }
+
+    public void testMuteFromStreamVolumeNotification() throws Exception {
+        if (!isValidPlatform("testMuteFromStreamVolumeNotification")) return;
+
+        AudioManager am = new AudioManager(getContext());
+        assertNotNull("Could not create AudioManager", am);
+
+        verifyMuteUnmuteNotifications(
+                () -> am.adjustStreamVolume(STREAM_NOTIFICATION, ADJUST_MUTE, /* flags= */0),
+                () -> am.adjustStreamVolume(STREAM_NOTIFICATION, ADJUST_UNMUTE, /* flags= */0));
+    }
+
+    private void verifyMuteUnmuteNotifications(Runnable mute, Runnable unmute) throws Exception {
+        AudioManager am = new AudioManager(getContext());
+        assertNotNull("Could not create AudioManager", am);
+
+        MyAudioPlaybackCallback callback = new MyAudioPlaybackCallback();
+
+        final AudioAttributes aa = (new AudioAttributes.Builder())
+                .setUsage(TEST_USAGE)
+                .setContentType(TEST_CONTENT)
+                .build();
+
+        try {
+            am.registerAudioPlaybackCallback(callback, null /*handler*/);
+
+            // query how many active players before starting the MediaPlayer
+            final int nbActivePlayersBeforeStart = am.getActivePlaybackConfigurations().size();
+
+            mAt = new AudioTrack.Builder()
+                    .setAudioAttributes(aa)
+                    .setAudioFormat(new AudioFormat.Builder()
+                            .setSampleRate(TEST_AUDIO_TRACK_SAMPLERATE)
+                            .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .build())
+                    .build();
+            ByteBuffer audioData = createSoundDataInShortByteBuffer(
+                    TEST_AUDIO_TRACK_PLAY_SECONDS * TEST_AUDIO_TRACK_SAMPLERATE
+                            * TEST_AUDIO_TRACK_CHANNELS, TEST_AUDIO_TRACK_SAMPLERATE,
+                    TEST_AUDIO_TRACK_FREQUENCY, TEST_AUDIO_TRACK_SWEEP);
+            mAt.write(audioData, audioData.remaining(), WRITE_NON_BLOCKING);
+            mAt.play();
+
+            assertTrue("onPlaybackConfigChanged new player, device expected",
+                    callback.waitForCallbacks(2,
+                            TEST_TIMING_TOLERANCE_MS + PLAY_ROUTING_TIMING_TOLERANCE_MS));
+
+            // mute with Runnable
+            callback.reset();
+            mute.run();
+
+            assertTrue("onPlaybackConfigChanged for AppOps mute expected",
+                    callback.waitForCallbacks(1,
+                            TEST_TIMING_TOLERANCE_MS + PLAY_ROUTING_TIMING_TOLERANCE_MS));
+            assertEquals("number of active players after AppOps mute not expected",
+                    nbActivePlayersBeforeStart, am.getActivePlaybackConfigurations().size());
+
+            // unmute with Runnable
+            callback.reset();
+            unmute.run();
+
+            assertTrue("onPlaybackConfigChanged for AppOps unmute expected",
+                    callback.waitForCallbacks(1,
+                            TEST_TIMING_TOLERANCE_MS + PLAY_ROUTING_TIMING_TOLERANCE_MS));
+            assertEquals("number of active players after AppOps unmute not expected",
+                    nbActivePlayersBeforeStart + 1, am.getActivePlaybackConfigurations().size());
+        } finally {
+            am.unregisterAudioPlaybackCallback(callback);
+            unmute.run();
+        }
+    }
+
     private @Nullable MediaPlayer createPreparedMediaPlayer(
             @RawRes int resID, AudioAttributes aa, int session) throws Exception {
         final TestUtils.Monitor onPreparedCalled = new TestUtils.Monitor();
@@ -468,6 +592,7 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 mCalled = 0;
                 mConfigs = new ArrayList<AudioPlaybackConfiguration>();
             }
+            mOnCalledMonitor.reset();
         }
 
         int getCbInvocationNumber() {

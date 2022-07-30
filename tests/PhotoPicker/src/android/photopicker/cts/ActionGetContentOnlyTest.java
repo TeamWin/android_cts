@@ -41,6 +41,7 @@ import androidx.test.uiautomator.UiSelector;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -73,12 +74,49 @@ public class ActionGetContentOnlyTest extends PhotoPickerBaseTest {
     public static void setUpBeforeClass() throws Exception {
         sDocumentsUiPackageName = getDocumentsUiPackageName();
         sGetContentTakeOverActivityAliasState = GetContentActivityAliasUtils.enableAndGetOldState();
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+
         clearPackageData(sDocumentsUiPackageName);
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         GetContentActivityAliasUtils.restoreState(sGetContentTakeOverActivityAliasState);
+    }
+
+    @Test
+    public void testMimeTypeFilter() throws Exception {
+        final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("audio/*");
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+        mDevice.waitForIdle();
+        // Should open documentsUi
+        assertThatShowsDocumentsUiButtons();
+
+        // We don't test the result of the picker here because the intention of the test is only to
+        // test that DocumentsUi is opened.
+    }
+
+    @Test
+    public void testExtraMimeTypeFilter() throws Exception {
+        final Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("image/*");
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"video/*", "audio/*"});
+        mActivity.startActivityForResult(intent, REQUEST_CODE);
+        mDevice.waitForIdle();
+        // Should open documentsUi
+        assertThatShowsDocumentsUiButtons();
+
+        // We don't test the result of the picker here because the intention of the test is only to
+        // test that DocumentsUi is opened.
     }
 
     @Test
@@ -133,6 +171,13 @@ public class ActionGetContentOnlyTest extends PhotoPickerBaseTest {
         for (int i = 0; i < count; i++) {
             assertReadOnlyAccess(clipData.getItemAt(i).getUri(), mContext.getContentResolver());
         }
+    }
+
+    private void assertThatShowsDocumentsUiButtons() {
+        // Assert that "Recent files" header for DocumentsUi shows
+        // Add a short timeout wait for DocumentsUi to show
+        assertThat(new UiObject(new UiSelector().resourceId(sDocumentsUiPackageName
+                + ":id/header_title")).waitForExists(SHORT_TIMEOUT)).isTrue();
     }
 
     private UiObject findSaveButton() {
