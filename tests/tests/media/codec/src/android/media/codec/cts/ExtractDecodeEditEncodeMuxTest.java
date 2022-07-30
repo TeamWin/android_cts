@@ -863,9 +863,15 @@ public class ExtractDecodeEditEncodeMuxTest
                 ByteBuffer decoderInputBuffer = audioDecoderInputBuffers[decoderInputBufferIndex];
                 int size = audioExtractor.readSampleData(decoderInputBuffer, 0);
                 long presentationTime = audioExtractor.getSampleTime();
+                int flags = audioExtractor.getSampleFlags();
                 if (VERBOSE) {
                     Log.d(TAG, "audio extractor: returned buffer of size " + size);
                     Log.d(TAG, "audio extractor: returned buffer for time " + presentationTime);
+                }
+                audioExtractorDone = !audioExtractor.advance();
+                if (audioExtractorDone) {
+                    if (VERBOSE) Log.d(TAG, "audio extractor: EOS");
+                    flags = flags | MediaCodec.BUFFER_FLAG_END_OF_STREAM;
                 }
                 if (size >= 0) {
                     audioDecoder.queueInputBuffer(
@@ -873,19 +879,9 @@ public class ExtractDecodeEditEncodeMuxTest
                             0,
                             size,
                             presentationTime,
-                            audioExtractor.getSampleFlags());
+                            flags);
+                    audioExtractedFrameCount++;
                 }
-                audioExtractorDone = !audioExtractor.advance();
-                if (audioExtractorDone) {
-                    if (VERBOSE) Log.d(TAG, "audio extractor: EOS");
-                    audioDecoder.queueInputBuffer(
-                            decoderInputBufferIndex,
-                            0,
-                            0,
-                            0,
-                            MediaCodec.BUFFER_FLAG_END_OF_STREAM);
-                }
-                audioExtractedFrameCount++;
                 // We extracted a frame, let's try something else next.
                 break;
             }

@@ -40,7 +40,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
@@ -394,6 +393,11 @@ public class LocationAccessCheckTest {
      * Force a run of the location check.
      */
     private static void runLocationCheck() throws Throwable {
+        // If the job isn't setup, do it before running a location check
+        if (!isLocationAccessJobSetup(myUserHandle().getIdentifier())) {
+            setupLocationAccessCheckJob();
+        }
+
         // Sleep a little bit to make sure we don't have overlap in timing
         Thread.sleep(1000);
 
@@ -681,7 +685,29 @@ public class LocationAccessCheckTest {
             }
         }, UNEXPECTED_TIMEOUT_MILLIS);
 
-        // Setup up permission controller again (simulate a reboot)
+        setupLocationAccessCheckJob();
+
+        // Wait until jobs are set up
+        eventually(() -> {
+            assertTrue("LocationAccessCheck job not found",
+                    isLocationAccessJobSetup(currentUserId));
+        }, UNEXPECTED_TIMEOUT_MILLIS);
+    }
+
+    private static boolean isLocationAccessJobSetup(int currentUserId) throws Exception {
+        JobSchedulerServiceDumpProto dump = getJobSchedulerDump();
+        for (RegisteredJob job : dump.registeredJobs) {
+            if (job.dump.sourceUserId == currentUserId
+                    && job.dump.sourcePackageName.equals(PERMISSION_CONTROLLER_PKG)
+                    && job.dump.jobInfo.service.className.contains("LocationAccessCheck")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void setupLocationAccessCheckJob() {
+        // Setup location access check
         Intent permissionControllerSetupIntent = new Intent(
                 ACTION_SET_UP_LOCATION_ACCESS_CHECK).setPackage(
                 PERMISSION_CONTROLLER_PKG).setFlags(FLAG_RECEIVER_FOREGROUND);
@@ -698,21 +724,6 @@ public class LocationAccessCheckTest {
                     .setFlags(FLAG_RECEIVER_FOREGROUND)
                     .setPackage(PERMISSION_CONTROLLER_PKG));
         }
-
-        // Wait until jobs are set up
-        eventually(() -> {
-            JobSchedulerServiceDumpProto dump = getJobSchedulerDump();
-
-            for (RegisteredJob job : dump.registeredJobs) {
-                if (job.dump.sourceUserId == currentUserId
-                        && job.dump.sourcePackageName.equals(PERMISSION_CONTROLLER_PKG)
-                        && job.dump.jobInfo.service.className.contains("LocationAccessCheck")) {
-                    return;
-                }
-            }
-
-            fail("Permission controller jobs not found");
-        }, UNEXPECTED_TIMEOUT_MILLIS);
     }
 
     /**

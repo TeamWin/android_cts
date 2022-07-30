@@ -22,7 +22,6 @@ import android.companion.AssociationInfo
 import android.companion.CompanionDeviceManager
 import android.companion.CompanionException
 import android.companion.cts.common.CompanionActivity
-import android.companion.cts.common.DEVICE_DISPLAY_NAME_A
 import android.content.Intent
 import android.os.OutcomeReceiver
 import android.os.SystemClock
@@ -43,7 +42,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import libcore.util.EmptyArray
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -55,9 +53,13 @@ import org.junit.runner.RunWith
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 @RunWith(AndroidJUnit4::class)
 class SystemDataTransferTest : UiAutomationTestBase(null, null) {
+    /**
+     * Message codes defined in [com.android.server.companion.transport.CompanionTransportManager].
+     */
     companion object {
         private const val MESSAGE_RESPONSE_SUCCESS = 0x33838567
         private const val MESSAGE_RESPONSE_FAILURE = 0x33706573
+        private const val MESSAGE_REQUEST_PERMISSION_RESTORE = 0x63826983
 
         private const val SYSTEM_DATA_TRANSFER_RESPONSE_DELAY = 5_000L // Wait 5 seconds
         private const val SYSTEM_DATA_TRANSFER_TIMEOUT = 10_000L // 10 seconds
@@ -131,72 +133,65 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
 
     @Test(expected = CompanionException::class)
     fun test_startSystemDataTransfer_requiresUserConsent() {
-        CompanionActivity.launchAndWait(context)
+        val association = associate()
 
-        // Create a self-managed association so we aren't sending data to a random device
-        val associationId = createSelfManagedAssociation(DEVICE_DISPLAY_NAME_A)
-
-        val bytes = generateResponse(success = true, "SUCCESS")
+        // Generate data packet with successful response
+        val bytes = generatePacket(MESSAGE_RESPONSE_SUCCESS, "SUCCESS")
         val input = ByteArrayInputStream(bytes)
         val output = ByteArrayOutputStream()
 
         // This will fail due to lack of user consent
-        startSystemDataTransfer(associationId, input, output)
+        startSystemDataTransfer(association.id, input, output)
     }
 
     @Test
-    @Ignore("Null passed in for a non-null parameter. See b/239455439")
     fun test_startSystemDataTransfer_success() {
-        CompanionActivity.launchAndWait(context)
-
-        // Create a self-managed association so we aren't sending data to a random device
-        val associationId = createSelfManagedAssociation(DEVICE_DISPLAY_NAME_A)
-
-        // First time request permission transfer should prompt a dialog
-        val pendingUserConsent = cdm.buildPermissionTransferUserConsentIntent(associationId)
-        assertNotNull(pendingUserConsent)
-        CompanionActivity.startIntentSender(pendingUserConsent)
-        confirmationUi.waitUntilSystemDataTransferConfirmationVisible()
-        confirmationUi.clickPositiveButton()
-        val (resultCode: Int, _: Intent?) = CompanionActivity.waitForActivityResult()
-        assertEquals(expected = RESULT_OK, actual = resultCode)
+        val association = associate()
+        requestPermissionTransferUserConsent(association.id)
 
         // Generate data packet with successful response
-        val bytes = generateResponse(success = true, "SUCCESS")
+        val bytes = generatePacket(MESSAGE_RESPONSE_SUCCESS, "SUCCESS")
         val input = ByteArrayInputStream(bytes)
         val output = ByteArrayOutputStream()
 
-        startSystemDataTransfer(associationId, input, output)
+        startSystemDataTransfer(association.id, input, output)
     }
 
     @Test(expected = CompanionException::class)
     fun test_startSystemDataTransfer_failure() {
-        CompanionActivity.launchAndWait(context)
-
-        // Create a self-managed association so we aren't sending data to a random device
-        val associationId = createSelfManagedAssociation(DEVICE_DISPLAY_NAME_A)
-
-        // First time request permission transfer should prompt a dialog
-        val pendingUserConsent = cdm.buildPermissionTransferUserConsentIntent(associationId)
-        assertNotNull(pendingUserConsent)
-        CompanionActivity.startIntentSender(pendingUserConsent)
-        confirmationUi.waitUntilSystemDataTransferConfirmationVisible()
-        confirmationUi.clickPositiveButton()
-        val (resultCode: Int, _: Intent?) = CompanionActivity.waitForActivityResult()
-        assertEquals(expected = RESULT_OK, actual = resultCode)
+        val association = associate()
+        requestPermissionTransferUserConsent(association.id)
 
         // Generate data packet with failure as response
-        val bytes = generateResponse(success = false, "FAILURE")
+        val bytes = generatePacket(MESSAGE_RESPONSE_FAILURE, "FAILURE")
         val input = ByteArrayInputStream(bytes)
         val output = ByteArrayOutputStream()
 
         // Delay input so that CDM can first send permission restore data before receiving result
-        startSystemDataTransfer(associationId, input, output)
+        startSystemDataTransfer(association.id, input, output)
     }
 
-    private fun generateResponse(success: Boolean, data: String? = null): ByteArray {
+    @Test
+    fun test_receivePermissionRestore() {
+        val association = associate()
+
+        // Generate data packet with permission restore request
+        val bytes = generatePacket(MESSAGE_REQUEST_PERMISSION_RESTORE)
+        val input = ByteArrayInputStream(bytes)
+        val output = ByteArrayOutputStream()
+
+        // "Receive" permission restore request
+        cdm.attachSystemDataTransport(association.id, input, output)
+        SystemClock.sleep(2000) // Wait to actually send data
+
+        // Assert CDM sends a response
+        val expected = generatePacket(MESSAGE_RESPONSE_SUCCESS)
+        val actual = output.toByteArray()
+        assertEquals(expected.decodeToString(), actual.decodeToString())
+    }
+
+    private fun generatePacket(message: Int, data: String? = null): ByteArray {
         val bytes = data?.toByteArray(StandardCharsets.UTF_8) ?: EmptyArray.BYTE
-        val message = if (success) MESSAGE_RESPONSE_SUCCESS else MESSAGE_RESPONSE_FAILURE
 
         // Construct data packet with header + data
         return ByteBuffer.allocate(bytes.size + 12)
@@ -244,8 +239,8 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         // Synchronously start system data transfer
         val latch = CountDownLatch(1)
         val err = AtomicReference<CompanionException>()
-        val callback = object : OutcomeReceiver<Void, CompanionException> {
-            override fun onResult(result: Void) {
+        val callback = object : OutcomeReceiver<Void?, CompanionException> {
+            override fun onResult(result: Void?) {
                 latch.countDown()
             }
 

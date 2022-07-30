@@ -104,14 +104,15 @@ class PermissionHistoryTest : BasePermissionHubTest() {
 
         SystemUtil.eventually {
             try {
-                waitFindObject(By.res("android:id/title")
-                        .textContains("Microphone")).click()
+                waitFindObject(By.hasChild(By.textContains("Microphone"))
+                        .hasChild(By.textStartsWith("Used by")))
+                        .click()
                 waitFindObject(By.textContains(micLabel))
                 waitFindObject(By.textContains(APP_LABEL_1))
             } catch (e: Exception) {
                 // Sometimes the dashboard was in the state from previous failed tests.
                 // Clicking the refresh button to get the most recent access.
-                waitFindObject(By.textContains(REFRESH)).click()
+                waitFindObject(By.descContains(REFRESH)).click()
                 throw e
             }
         }

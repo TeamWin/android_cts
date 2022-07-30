@@ -10,11 +10,11 @@ import android.companion.AssociationRequest
 import android.companion.BluetoothDeviceFilter
 import android.companion.BluetoothDeviceFilterUtils
 import android.companion.CompanionDeviceManager
-import android.companion.CompanionDeviceManager.REASON_USER_REJECTED
-import android.companion.CompanionDeviceManager.REASON_DISCOVERY_TIMEOUT
 import android.companion.CompanionDeviceManager.REASON_CANCELED
-import android.companion.CompanionDeviceManager.RESULT_USER_REJECTED
+import android.companion.CompanionDeviceManager.REASON_DISCOVERY_TIMEOUT
+import android.companion.CompanionDeviceManager.REASON_USER_REJECTED
 import android.companion.CompanionDeviceManager.RESULT_DISCOVERY_TIMEOUT
+import android.companion.CompanionDeviceManager.RESULT_USER_REJECTED
 import android.companion.DeviceFilter
 import android.companion.cts.common.CompanionActivity
 import android.companion.cts.common.DEVICE_PROFILES
@@ -32,8 +32,6 @@ import android.net.MacAddress
 import android.os.Parcelable
 import android.os.SystemClock.sleep
 import androidx.test.uiautomator.UiDevice
-import org.junit.Assume
-import org.junit.Assume.assumeFalse
 import java.util.regex.Pattern
 import kotlin.test.assertContains
 import kotlin.test.assertContentEquals
@@ -42,6 +40,8 @@ import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.seconds
+import org.junit.Assume
+import org.junit.Assume.assumeFalse
 
 open class UiAutomationTestBase(
     protected val profile: String?,
@@ -86,6 +86,18 @@ open class UiAutomationTestBase(
         restoreDiscoveryTimeout()
 
         super.tearDown()
+    }
+
+    /**
+     * Execute UI flow to request user consent for permission transfer for a given association
+     * and grant permission.
+     */
+    fun requestPermissionTransferUserConsent(associationId: Int) {
+        val pendingUserConsent = cdm.buildPermissionTransferUserConsentIntent(associationId)
+        CompanionActivity.startIntentSender(pendingUserConsent!!)
+        confirmationUi.waitUntilSystemDataTransferConfirmationVisible()
+        confirmationUi.clickPositiveButton()
+        CompanionActivity.waitForActivityResult()
     }
 
     protected fun test_userRejected(

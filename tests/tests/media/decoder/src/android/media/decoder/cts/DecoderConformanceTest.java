@@ -22,7 +22,6 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.media.cts.MediaTestBase;
 import android.media.cts.Preconditions;
 import android.media.cts.TestArgs;
 import android.os.ParcelFileDescriptor;
@@ -68,7 +67,7 @@ import static org.junit.Assume.assumeTrue;
  */
 @AppModeFull(reason = "There should be no instant apps specific behavior related to conformance")
 @RunWith(Parameterized.class)
-public class DecoderConformanceTest extends MediaTestBase {
+public class DecoderConformanceTest {
     private enum Status {
         FAIL,
         PASS,
@@ -118,18 +117,6 @@ public class DecoderConformanceTest extends MediaTestBase {
         mDecoderName = decodername;
         mMediaType = mediaType;
         mTestVector = testvector;
-    }
-
-    @Before
-    @Override
-    public void setUp() throws Throwable {
-        super.setUp();
-    }
-
-    @After
-    @Override
-    public void tearDown() {
-        super.tearDown();
     }
 
     private static List<String> readResourceLines(String fileName) throws Exception {
