@@ -43,6 +43,7 @@ import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.OutputSurface;
 import android.media.cts.Preconditions;
 import android.media.cts.TestArgs;
+import android.media.cts.TestUtils;
 import android.net.Uri;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -1299,6 +1300,10 @@ public class VideoEncoderTest extends MediaTestBase {
             String[] encoders = MediaUtils.getEncoderNamesForMime(mediaType);
             for (String encoder : encoders) {
                 if (TestArgs.shouldSkipCodec(encoder)) {
+                    continue;
+                }
+                if (!TestUtils.isTestableCodecInCurrentMode(encoder)) {
+                    Log.d(TAG, "Skipping tests for codec: " + encoder);
                     continue;
                 }
                 CodecCapabilities caps = getCodecCapabities(encoder, mediaType, true);

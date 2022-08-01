@@ -751,6 +751,17 @@ public class TestUtils {
     }
 
     /**
+     * Queries {@link ContentResolver} for an audio file and returns a {@link Cursor} with the given
+     * columns.
+     */
+    @NonNull
+    public static Cursor queryAudioFile(File file, String... projection) {
+        return queryFile(getContentResolver(),
+                MediaStore.Audio.Media.getContentUri(sStorageVolumeName), file,
+                /*includePending*/ true, projection);
+    }
+
+    /**
      * Queries {@link ContentResolver} for a file and returns the corresponding mime type for its
      * entry in the database.
      */

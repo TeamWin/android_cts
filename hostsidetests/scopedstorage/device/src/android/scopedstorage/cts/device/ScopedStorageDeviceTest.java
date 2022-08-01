@@ -79,6 +79,7 @@ import static android.scopedstorage.cts.lib.TestUtils.installAppWithStoragePermi
 import static android.scopedstorage.cts.lib.TestUtils.isAppInstalled;
 import static android.scopedstorage.cts.lib.TestUtils.listAs;
 import static android.scopedstorage.cts.lib.TestUtils.openWithMediaProvider;
+import static android.scopedstorage.cts.lib.TestUtils.queryAudioFile;
 import static android.scopedstorage.cts.lib.TestUtils.queryFile;
 import static android.scopedstorage.cts.lib.TestUtils.queryFileExcludingPending;
 import static android.scopedstorage.cts.lib.TestUtils.queryImageFile;
@@ -3020,6 +3021,45 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
                 assertThat(c.getCount()).isEqualTo(0);
                 Log.i(TAG, "Verified that " + imageFilePath + " was excluded in default query");
             }
+        }
+    }
+
+    /**
+     * Test that renaming a file to {@link Environment#DIRECTORY_RINGTONES} sets
+     * {@link MediaStore.Audio.AudioColumns#IS_RINGTONE}
+     */
+
+    @Test
+    public void testRenameToRingtoneDirectory() throws Exception {
+        final File fileInDownloads = new File(getDownloadDir(), AUDIO_FILE_NAME);
+        final File fileInRingtones = new File(getRingtonesDir(), AUDIO_FILE_NAME);
+
+        try {
+            assertThat(fileInDownloads.createNewFile()).isTrue();
+            assertThat(MediaStore.scanFile(getContentResolver(), fileInDownloads)).isNotNull();
+
+            assertCanRenameFile(fileInDownloads, fileInRingtones);
+
+            try (Cursor c = queryAudioFile(fileInRingtones,
+                    MediaStore.Audio.AudioColumns.IS_RINGTONE)) {
+                assertTrue(c.moveToFirst());
+                assertWithMessage("Expected " + MediaStore.Audio.AudioColumns.IS_RINGTONE
+                        + " to be set after renaming to " + fileInRingtones)
+                        .that(c.getInt(0)).isEqualTo(1);
+            }
+
+            assertCanRenameFile(fileInRingtones, fileInDownloads);
+
+            try (Cursor c = queryAudioFile(fileInDownloads,
+                    MediaStore.Audio.AudioColumns.IS_RINGTONE)) {
+                assertTrue(c.moveToFirst());
+                assertWithMessage("Expected " + MediaStore.Audio.AudioColumns.IS_RINGTONE
+                        + " to be unset after renaming to " + fileInDownloads)
+                        .that(c.getInt(0)).isEqualTo(0);
+            }
+        } finally {
+            fileInDownloads.delete();
+            fileInRingtones.delete();
         }
     }
 

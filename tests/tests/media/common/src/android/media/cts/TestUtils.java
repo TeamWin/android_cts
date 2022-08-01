@@ -190,6 +190,7 @@ public final class TestUtils {
         if (name.startsWith("c2.android.")) {
             return true;
         }
+        Log.d(TAG, "Test mode MTS does not test codec " + name);
         return false;
     }
 

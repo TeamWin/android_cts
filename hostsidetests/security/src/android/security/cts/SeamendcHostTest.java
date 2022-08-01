@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.stream.Stream;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -149,6 +150,7 @@ public class SeamendcHostTest extends BaseHostJUnit4Test {
      *
      * @throws Exception
      */
+    @Ignore // Until b/240573438 is fixed.
     @Test
     public void testSeamendcAgainstPrecompiledPolicies() throws Exception {
         File seamendcBinary = File.createTempFile("seamendc+apex", "binary");
@@ -172,6 +174,7 @@ public class SeamendcHostTest extends BaseHostJUnit4Test {
      *
      * @throws Exception
      */
+    @Ignore // Until b/240573438 is fixed.
     @Test
     public void testSeamendcAgainstSecilc() throws Exception {
         File secilcBinaryWithApex = File.createTempFile("secilc+apex", "binary");
