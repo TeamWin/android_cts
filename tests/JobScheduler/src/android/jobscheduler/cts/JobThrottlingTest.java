@@ -129,6 +129,7 @@ public class JobThrottlingTest {
     private TestAppInterface mTestAppInterface;
     private DeviceConfigStateHelper mDeviceConfigStateHelper;
     private DeviceConfigStateHelper mActivityManagerDeviceConfigStateHelper;
+    private DeviceConfigStateHelper mTareDeviceConfigStateHelper;
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
@@ -193,6 +194,7 @@ public class JobThrottlingTest {
                         .setInt("min_ready_non_active_jobs_count", 0).build());
         mActivityManagerDeviceConfigStateHelper =
                 new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ACTIVITY_MANAGER);
+        mTareDeviceConfigStateHelper = new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_TARE);
         toggleAutoRestrictedBucketOnBgRestricted(false);
         // Make sure the screen doesn't turn off when the test turns it on.
         mInitialDisplayTimeout =
@@ -1058,6 +1060,9 @@ public class JobThrottlingTest {
         assumeFalse("not testable in automotive device", mAutomotiveDevice); // Test needs battery
         assumeFalse("not testable in leanback device", mLeanbackOnly); // Test needs battery
 
+        // This test is designed for the old quota system.
+        mTareDeviceConfigStateHelper.set("enable_tare", "false");
+
         // Reduce allowed time for testing.
         mDeviceConfigStateHelper.set("qc_allowed_time_per_period_rare_ms", "60000");
         setChargingState(false);
@@ -1206,6 +1211,7 @@ public class JobThrottlingTest {
         }
         mDeviceConfigStateHelper.restoreOriginalValues();
         mActivityManagerDeviceConfigStateHelper.restoreOriginalValues();
+        mTareDeviceConfigStateHelper.restoreOriginalValues();
         Settings.Global.putString(mContext.getContentResolver(),
                 Settings.Global.ENABLE_RESTRICTED_BUCKET, mInitialRestrictedBucketEnabled);
         if (isAirplaneModeOn() != mInitialAirplaneModeState) {

@@ -19,6 +19,7 @@ package android.widget.cts;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -27,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Point;
 import android.os.SystemClock;
@@ -74,6 +76,7 @@ import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -89,6 +92,8 @@ public class EditTextTest {
     @Rule
     public ActivityTestRule<EditTextCtsActivity> mActivityRule =
             new ActivityTestRule<>(EditTextCtsActivity.class);
+    public ActivityTestRule<EditTextCursorCtsActivity> mEmptyActivityRule =
+            new ActivityTestRule<>(EditTextCursorCtsActivity.class, false, false);
 
     @Before
     public void setup() {
@@ -759,5 +764,85 @@ public class EditTextTest {
                 .findObject(By.res("android.widget.cts", "edittext_simple1"));
         object.click();
         SystemClock.sleep(ViewConfiguration.getDoubleTapTimeout() + 50);
+    }
+
+    @Test
+    public void testCursorNotBlinkingOnNewActivity_WithoutFocus() {
+        Activity testActivity = mEmptyActivityRule.launchActivity(null);
+        EditText et = testActivity.findViewById(R.id.edittext_simple1);
+        boolean isBlinking = shouldBlinkMock(et);
+        assertFalse(isBlinking);
+    }
+
+    @Test
+    public void testCursorBlinkingOnNewActivity_WithFocus() {
+        Activity testActivity = mEmptyActivityRule.launchActivity(null);
+        EditText et = testActivity.findViewById(R.id.edittext_simple1);
+
+        mInstrumentation.runOnMainSync(() -> {
+            et.requestFocus();
+        });
+
+        boolean isBlinking = shouldBlinkMock(et);
+        assertTrue(isBlinking);
+    }
+
+
+    @Test
+    public void testSuspendAndResumeBlinkingCursor() {
+        Activity testActivity = mEmptyActivityRule.launchActivity(null);
+        final EditText et = testActivity.findViewById(R.id.edittext_simple1);
+
+        mInstrumentation.runOnMainSync(() -> {
+            et.requestFocus();
+        });
+
+        UiDevice device =  UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+
+        boolean isBlinking = shouldBlinkMock(et);
+        assertTrue(isBlinking);
+
+        //send activity to the background,
+        device.pressHome();
+
+        final CountDownLatch visibilityLatch = new CountDownLatch(1);
+        //pause to allow visibility to get updated.
+        try {
+            visibilityLatch.await(2, TimeUnit.SECONDS);
+        } catch (Exception e) { }
+
+
+        isBlinking = shouldBlinkMock(et);
+        assertFalse(isBlinking);
+
+        Intent resumeActivity = new Intent(mInstrumentation.getContext(),
+                EditTextCursorCtsActivity.class);
+        resumeActivity.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        mActivity.startActivity(resumeActivity);
+
+        //pause to allow visibility to get updated.
+        try {
+            visibilityLatch.await(2, TimeUnit.SECONDS);
+        } catch (Exception e) { }
+
+        mInstrumentation.runOnMainSync(() -> {
+            et.requestFocus();
+        });
+
+        isBlinking = shouldBlinkMock(et);
+        assertTrue(isBlinking);
+    }
+
+    private boolean shouldBlinkMock(EditText editText) {
+        if (!editText.isCursorVisible() || !editText.isFocused()
+                 || editText.getWindowVisibility() != editText.VISIBLE) return false;
+
+        int start = editText.getSelectionStart();
+        if (start < 0) return false;
+
+        int end = editText.getSelectionEnd();
+        if (end < 0) return false;
+
+        return start == end;
     }
 }

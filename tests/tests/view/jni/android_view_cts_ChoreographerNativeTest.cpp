@@ -490,7 +490,10 @@ static void android_view_cts_ChoreographerNativeTest_testRefreshRateCallbackMixe
     // Ensure that callbacks are seen by the looper instance at approximately
     // the same time, and provide enough time for the looper instance to process
     // the delayed callback and the requested vsync signal if needed.
-    ALooper_pollAll(vsyncPeriod * 5, nullptr, nullptr, nullptr);
+    int pollResult;
+    do {
+        pollResult = ALooper_pollOnce(vsyncPeriod * 5, nullptr, nullptr, nullptr);
+    } while (pollResult != ALOOPER_POLL_TIMEOUT && pollResult != ALOOPER_POLL_ERROR);
     verifyRefreshRateCallback<RefreshRateCallback>(env, cb, 1);
     verifyCallback(env, cb64, 1, start,
                    DELAY_PERIOD + NOMINAL_VSYNC_PERIOD * 15);

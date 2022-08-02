@@ -1469,6 +1469,78 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     }
 
     @Test
+    public void testSeatForeAftPosIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_FORE_AFT_POS,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues().build()
+                    .verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    public void testSeatForeAftMoveIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_FORE_AFT_MOVE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues()
+                    .requireZeroToBeContainedInMinMaxRanges().build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    public void testSeatBackrestAngle1PosIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_BACKREST_ANGLE_1_POS,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues().build()
+                    .verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    public void testSeatBackrestAngle1MoveIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_BACKREST_ANGLE_1_MOVE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues()
+                    .requireZeroToBeContainedInMinMaxRanges().build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    public void testSeatBackrestAngle2PosIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_BACKREST_ANGLE_2_POS,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues().build()
+                    .verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    public void testSeatBackrestAngle2MoveIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_BACKREST_ANGLE_2_MOVE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues()
+                    .requireZeroToBeContainedInMinMaxRanges().build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
     public void testHvacDefrosterIfSupported() {
         adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE, () -> {
             VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HVAC_DEFROSTER,

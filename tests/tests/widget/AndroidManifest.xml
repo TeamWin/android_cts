@@ -46,6 +46,15 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.widget.cts.EditTextCursorCtsActivity"
+                  android:label="Empty test activity"
+                  android:launchMode="singleTop"
+                  android:exported="true">
+            <intent-filter>
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+            </intent-filter>
+        </activity>
+
         <activity android:name="android.widget.cts.AbsoluteLayoutCtsActivity"
              android:label="AbsoluteLayoutCtsActivity"
              android:exported="true">

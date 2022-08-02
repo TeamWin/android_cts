@@ -37,6 +37,7 @@ import android.content.IntentFilter;
 import android.os.BatteryManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.provider.DeviceConfig;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 import android.util.LongArray;
@@ -47,6 +48,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.AppStandbyUtils;
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -105,6 +107,9 @@ public class AppStandbyTests {
     private static boolean sOrigAppStandbyEnabled;
     // Test app's alarm history to help predict when a subsequent alarm is going to get deferred.
     private static TestAlarmHistory sAlarmHistory;
+    // Make sure TARE isn't enabled for any of these tests.
+    private static final DeviceConfigStateHelper sTareDeviceConfigStateHelper =
+            new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_TARE);
     private static Context sContext = InstrumentationRegistry.getTargetContext();
     private static UiDevice sUiDevice = UiDevice.getInstance(
             InstrumentationRegistry.getInstrumentation());
@@ -133,6 +138,8 @@ public class AppStandbyTests {
             // Give system sometime to initialize itself.
             Thread.sleep(100);
         }
+        // These tests are designed for the old quota system.
+        sTareDeviceConfigStateHelper.set("enable_tare", "false");
     }
 
     @Before
@@ -266,6 +273,7 @@ public class AppStandbyTests {
         if (!sOrigAppStandbyEnabled) {
             AppStandbyUtils.setAppStandbyEnabledAtRuntime(sOrigAppStandbyEnabled);
         }
+        sTareDeviceConfigStateHelper.restoreOriginalValues();
     }
 
     private void updateAlarmManagerConstants() {

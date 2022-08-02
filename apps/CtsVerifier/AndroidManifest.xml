@@ -4938,6 +4938,8 @@
                        android:value="android.hardware.type.automotive" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.media.MediaCodecInfo.CodecCapabilities#FEATURE_TunneledPlayback" />
         </activity>
 
         <activity android:name=".tv.TvInputDiscoveryTestActivity"

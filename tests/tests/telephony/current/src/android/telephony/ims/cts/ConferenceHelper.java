@@ -61,8 +61,9 @@ public class ConferenceHelper {
             for (Map.Entry<String, TestImsCallSessionImpl> entry : mSessions.entrySet()) {
                 TestImsCallSessionImpl callSession = entry.getValue();
                 boolean isOnHold = callSession.isSessionOnHold();
+                String foreGroundSessionCallId = mForeGroundSession.getCallId();
 
-                if (isOnHold) {
+                if (isOnHold && !callSession.getCallId().equals(foreGroundSessionCallId)) {
                     return callSession;
                 }
             }

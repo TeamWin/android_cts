@@ -465,7 +465,6 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
                     if (mListener == null) {
                         return;
                     }
-                    invokeSessionTerminated();
                     mConferenceHelper.getBackGroundSession().invokeSessionTerminated();
                     Log.d(LOG_TAG, "invokeCallSessionMergeComplete");
                     mListener.callSessionMergeComplete(mConfSession);
