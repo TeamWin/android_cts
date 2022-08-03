@@ -311,6 +311,7 @@
     </string>
     <string name="clipboard_preview_test_instructions">
         Press the \'Copy\' button to copy the secret code to the clipboard.
+        \nDo not press any other buttons after you press the \'Copy\' button.
         \n\n If nothing happens, press Fail.
         \n\n If you see the word "FAIL" appear on screen, press Fail.
         \n\n If you see a confirmation that content has been copied to the clipboard, press Pass.
@@ -999,6 +1000,7 @@
         should disable battery optimizations for an app and to allow a user to remove the app from
         the exemption list.
     </string>
+    <string name="ibo_auto_power_modes_enabled">Auto power modes enabled.</string>
     <string name="ibo_test_start_unexempt_app">
         Remove the test app from the ignore battery optimizations list to begin the test. (Try going
         to the App Info page and make sure the system is optimizing battery for the app.)

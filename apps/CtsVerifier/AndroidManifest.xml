@@ -3219,6 +3219,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest" android:value="2.2.3/3.8.3/H-0-1|3.8.3.1/C-1-5|3.8.3.1/C-3-1|3.8.3.1/C-3-2|3.8.3.2/C-0-1|3.8.3.2/C-0-2|3.8.3.2/C-1-1" />
         </activity>
 
         <activity android:name=".notifications.NotificationPrivacyVerifierActivity"
@@ -3233,6 +3234,7 @@
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive" />
             <meta-data android:name="display_mode" android:value="multi_display_mode" />
+            <meta-data android:name="CddTest" android:value="3.8.3.1/C-1-4|2.2.3/3.8.10/H-1-1" />
         </activity>
 
         <activity android:name=".notifications.ShowWhenLockedActivity"
@@ -3283,6 +3285,7 @@
                        android:value="android.hardware.type.automotive:android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest" android:value="3.8.3.3/C-1-1" />
         </activity>
 
         <activity android:name=".notifications.AttentionManagementVerifierActivity"
@@ -3297,6 +3300,7 @@
                     android:value="android.hardware.type.watch:android.software.leanback" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest" android:value="2.2.3/3.8.4/H-1-1|3.8.3.3/C-1-1|3.8.3.3/C-1-3" />
         </activity>
 
         <activity android:name=".notifications.ToastVerifierActivity"
@@ -3309,6 +3313,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.widget.Toast#makeText" />
         </activity>
 
         <activity android:name=".notifications.BubblesVerifierActivity"
@@ -3323,6 +3329,8 @@
                        android:value="android.hardware.type.watch:android.software.leanback:android.hardware.type.automotive" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.app.Notification.Builder#setBubbleMetadata|android.app.NotificationManager#notify" />
         </activity>
 
         <activity android:name=".notifications.BubbleActivity"
@@ -3378,6 +3386,7 @@
                 android:value="android.hardware.type.watch:android.software.leanback:android.hardware.type.automotive" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest" android:value="3.8.1/C-4-1" />
         </activity>
 
         <activity android:name=".qstiles.TileServiceVerifierActivity"

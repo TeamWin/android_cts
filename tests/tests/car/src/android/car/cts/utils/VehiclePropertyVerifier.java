@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assume.assumeNotNull;
 
 import android.car.VehicleAreaMirror;
+import android.car.VehicleAreaSeat;
 import android.car.VehicleAreaType;
 import android.car.VehicleAreaWheel;
 import android.car.VehicleAreaWindow;
@@ -66,6 +67,15 @@ public class VehiclePropertyVerifier<T> {
             VehicleAreaMirror.MIRROR_DRIVER_CENTER);
     private static final ImmutableSet<Integer> ALL_POSSIBLE_MIRROR_AREA_IDS =
             generateAllPossibleAreaIds(MIRROR_AREAS);
+    private static final ImmutableSet<Integer> SEAT_AREAS = ImmutableSet.of(
+            VehicleAreaSeat.SEAT_ROW_1_LEFT, VehicleAreaSeat.SEAT_ROW_1_CENTER,
+            VehicleAreaSeat.SEAT_ROW_1_RIGHT, VehicleAreaSeat.SEAT_ROW_2_LEFT,
+            VehicleAreaSeat.SEAT_ROW_2_CENTER, VehicleAreaSeat.SEAT_ROW_2_RIGHT,
+            VehicleAreaSeat.SEAT_ROW_3_LEFT, VehicleAreaSeat.SEAT_ROW_3_CENTER,
+            VehicleAreaSeat.SEAT_ROW_3_RIGHT);
+    private static final ImmutableSet<Integer> ALL_POSSIBLE_SEAT_AREA_IDS =
+            generateAllPossibleAreaIds(SEAT_AREAS);
+
 
     private final int mPropertyId;
     private final String mPropertyName;
@@ -84,6 +94,7 @@ public class VehiclePropertyVerifier<T> {
     private final boolean mRequireMinMaxValues;
     private final boolean mRequireMinValuesToBeZero;
     private final boolean mRequireZeroToBeContainedInMinMaxRanges;
+    private final boolean mPossiblyDependentOnHvacPowerOn;
 
     private VehiclePropertyVerifier(int propertyId, int access, int areaType, int changeMode,
             Class<T> propertyType, boolean requiredProperty,
@@ -96,7 +107,8 @@ public class VehiclePropertyVerifier<T> {
             boolean verifySetterWithConfigArrayValues,
             boolean requireMinMaxValues,
             boolean requireMinValuesToBeZero,
-            boolean requireZeroToBeContainedInMinMaxRanges) {
+            boolean requireZeroToBeContainedInMinMaxRanges,
+            boolean possiblyDependentOnHvacPowerOn) {
         mPropertyId = propertyId;
         mPropertyName = VehiclePropertyIds.toString(propertyId);
         mAccess = access;
@@ -114,6 +126,7 @@ public class VehiclePropertyVerifier<T> {
         mRequireMinMaxValues = requireMinMaxValues;
         mRequireMinValuesToBeZero = requireMinValuesToBeZero;
         mRequireZeroToBeContainedInMinMaxRanges = requireZeroToBeContainedInMinMaxRanges;
+        mPossiblyDependentOnHvacPowerOn = possiblyDependentOnHvacPowerOn;
     }
 
     public static <T> Builder<T> newBuilder(int propertyId, int access, int areaType,
@@ -180,9 +193,31 @@ public class VehiclePropertyVerifier<T> {
         }
 
         verifyCarPropertyConfig(carPropertyConfig);
+
+        if (mPossiblyDependentOnHvacPowerOn) {
+            CarPropertyConfig<?> hvacPowerOnCarPropertyConfig =
+                    carPropertyManager.getCarPropertyConfig(VehiclePropertyIds.HVAC_POWER_ON);
+            if (hvacPowerOnCarPropertyConfig != null
+                    && hvacPowerOnCarPropertyConfig.getConfigArray().contains(mPropertyId)) {
+                turnOnHvacPower(carPropertyManager, hvacPowerOnCarPropertyConfig);
+            }
+        }
+
         verifyCarPropertyValueGetter(carPropertyConfig, carPropertyManager);
         verifyCarPropertyValueCallback(carPropertyConfig, carPropertyManager);
         verifyCarPropertyValueSetter(carPropertyConfig, carPropertyManager);
+    }
+
+    private void turnOnHvacPower(CarPropertyManager carPropertyManager,
+            CarPropertyConfig<?> hvacPowerOnCarPropertyConfig) {
+        for (int areaId : hvacPowerOnCarPropertyConfig.getAreaIds()) {
+            if (carPropertyManager.getProperty(VehiclePropertyIds.HVAC_POWER_ON,
+                    areaId).getValue().equals(true)) {
+                continue;
+            }
+            verifySetProperty((CarPropertyConfig<Boolean>) hvacPowerOnCarPropertyConfig,
+                    carPropertyManager, areaId, Boolean.TRUE);
+        }
     }
 
     private void verifyCarPropertyValueSetter(CarPropertyConfig<?> carPropertyConfig,
@@ -398,6 +433,9 @@ public class VehiclePropertyVerifier<T> {
         } else if (mAreaType == VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR) {
             verifyValidAreaIdsForAreaType(carPropertyConfig, ALL_POSSIBLE_MIRROR_AREA_IDS);
             verifyNoAreaOverlapInAreaIds(carPropertyConfig, MIRROR_AREAS);
+        } else if (mAreaType == VehicleAreaType.VEHICLE_AREA_TYPE_SEAT) {
+            verifyValidAreaIdsForAreaType(carPropertyConfig, ALL_POSSIBLE_SEAT_AREA_IDS);
+            verifyNoAreaOverlapInAreaIds(carPropertyConfig, SEAT_AREAS);
         }
 
         if (mChangeMode == CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS) {
@@ -673,6 +711,7 @@ public class VehiclePropertyVerifier<T> {
         private boolean mRequireMinMaxValues = false;
         private boolean mRequireMinValuesToBeZero = false;
         private boolean mRequireZeroToBeContainedInMinMaxRanges = false;
+        private boolean mPossiblyDependentOnHvacPowerOn = false;
 
         private Builder(int propertyId, int access, int areaType, int changeMode,
                 Class<T> propertyType) {
@@ -741,13 +780,19 @@ public class VehiclePropertyVerifier<T> {
             return this;
         }
 
+        public Builder<T> setPossiblyDependentOnHvacPowerOn() {
+            mPossiblyDependentOnHvacPowerOn = true;
+            return this;
+        }
+
         public VehiclePropertyVerifier<T> build() {
             return new VehiclePropertyVerifier<>(mPropertyId, mAccess, mAreaType, mChangeMode,
                     mPropertyType, mRequiredProperty, mConfigArrayVerifier,
                     mCarPropertyValueVerifier, mAreaIdsVerifier, mPossibleConfigArrayValues,
                     mPossibleCarPropertyValues, mRequirePropertyValueToBeInConfigArray,
                     mVerifySetterWithConfigArrayValues, mRequireMinMaxValues,
-                    mRequireMinValuesToBeZero, mRequireZeroToBeContainedInMinMaxRanges);
+                    mRequireMinValuesToBeZero, mRequireZeroToBeContainedInMinMaxRanges,
+                    mPossiblyDependentOnHvacPowerOn);
         }
     }
 

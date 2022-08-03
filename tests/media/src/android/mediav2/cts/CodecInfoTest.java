@@ -27,6 +27,8 @@ import android.view.Display;
 
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Ignore;
@@ -95,9 +97,16 @@ public class CodecInfoTest {
      * default 10-bit profiles, those are excluded from this test.
      */
     @Test
+    // TODO (b/228237404) Remove the following once there is a reliable way to query HDR
+    // display capabilities at native level, till then limit the test to vendor codecs
+    @NonMediaMainlineTest
+    @ApiTest(apis = "MediaCodecInfo.CodecCapabilities#profileLevels")
     public void testHDRDisplayCapabilities() {
         Assume.assumeTrue("Test needs Android 13", IS_AT_LEAST_T);
         Assume.assumeTrue("Test is applicable for video codecs", mMediaType.startsWith("video/"));
+        // TODO (b/228237404) Remove the following once there is a reliable way to query HDR
+        // display capabilities at native level, till then limit the test to vendor codecs
+        Assume.assumeTrue("Test is restricted to vendor codecs", isVendorCodec(mCodecName));
 
         int[] Hdr10Profiles = mProfileHdr10Map.get(mMediaType);
         int[] Hdr10PlusProfiles = mProfileHdr10PlusMap.get(mMediaType);

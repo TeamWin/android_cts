@@ -20,9 +20,9 @@ TestBeds:
     # Test configuration for scenes[0:4, 6, _change]
     Controllers:
         AndroidDevice:
-          - serial: <device_id>
+          - serial: <device_id>  # quotes are needed if serial id is entirely numeric
             label: dut
-          - serial: <tablet_id>
+          - serial: <tablet_id>  # quotes are needed if serial id is entirely numeric
             label: tablet
     TestParams:
       brightness: 192
@@ -37,7 +37,7 @@ TestBeds:
     # Test configuration for sensor_fusion/test_sensor_fusion.py
     Controllers:
         AndroidDevice:
-          - serial: <device-id>
+          - serial: <device-id>  # quotes are needed if serial id is entirely numeric
             label: dut
     TestParams:
       fps: 30

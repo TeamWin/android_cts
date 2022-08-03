@@ -256,7 +256,6 @@ public class UsageStatsTest {
                 REVOKE_RUNTIME_PERMISSIONS);
     }
 
-
     private static void assertLessThan(long left, long right) {
         assertTrue("Expected " + left + " to be less than " + right, left < right);
     }
@@ -313,6 +312,36 @@ public class UsageStatsTest {
     private void launchSubActivities(Class<? extends Activity>[] activityClasses) {
         for (Class<? extends Activity> clazz : activityClasses) {
             launchSubActivity(clazz);
+        }
+    }
+
+    @Test
+    public void testTogglingViaSettings() throws Exception {
+        final String initialAppStandbyEnabled = getSetting(Settings.Global.APP_STANDBY_ENABLED);
+        final String initialAdaptiveBatteryManagementEnabled =
+                getSetting(Settings.Global.ADAPTIVE_BATTERY_MANAGEMENT_ENABLED);
+        try {
+            // Right now, this test only runs when we've already confirmed that app standby is
+            // enabled via the command-line.
+            assertTrue(mUsageStatsManager.isAppStandbyEnabled());
+
+            setSetting(Settings.Global.APP_STANDBY_ENABLED, "0");
+            // Need to wait a bit for the setting change to propagate
+            waitUntil(() -> mUsageStatsManager.isAppStandbyEnabled(), false);
+            assertFalse(AppStandbyUtils.isAppStandbyEnabled());
+
+            setSetting(Settings.Global.APP_STANDBY_ENABLED, "1");
+            setSetting(Settings.Global.ADAPTIVE_BATTERY_MANAGEMENT_ENABLED, "0");
+            waitUntil(() -> mUsageStatsManager.isAppStandbyEnabled(), false);
+            assertFalse(AppStandbyUtils.isAppStandbyEnabled());
+
+            setSetting(Settings.Global.ADAPTIVE_BATTERY_MANAGEMENT_ENABLED, "1");
+            waitUntil(() -> mUsageStatsManager.isAppStandbyEnabled(), true);
+            assertTrue(AppStandbyUtils.isAppStandbyEnabled());
+        } finally {
+            setSetting(Settings.Global.APP_STANDBY_ENABLED, initialAppStandbyEnabled);
+            setSetting(Settings.Global.ADAPTIVE_BATTERY_MANAGEMENT_ENABLED,
+                    initialAdaptiveBatteryManagementEnabled);
         }
     }
 

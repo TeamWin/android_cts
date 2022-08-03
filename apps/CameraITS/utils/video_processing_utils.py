@@ -33,7 +33,11 @@ ITS_SUPPORTED_QUALITIES = (
     'LOW',
     'VGA'
 )
-QCIF_SIZE = '176x144'
+
+LOW_RESOLUTION_SIZES = (
+    '176x144',
+    '192x144',
+)
 
 
 def extract_key_frames_from_video(log_path, video_file_name):

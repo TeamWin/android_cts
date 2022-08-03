@@ -52,6 +52,7 @@ import androidx.annotation.GuardedBy;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 
 import com.google.common.collect.ImmutableSet;
@@ -62,9 +63,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @SmallTest
 @RequiresDevice
@@ -1607,6 +1610,63 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                     VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                     CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                     Float[].class).build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testHvacPowerOnIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HVAC_POWER_ON,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Boolean.class).setConfigArrayVerifier(configArray -> {
+                CarPropertyConfig<?> hvacPowerOnCarPropertyConfig =
+                        mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.HVAC_POWER_ON);
+                for (int powerDependentProperty : configArray) {
+                    CarPropertyConfig<?> powerDependentCarPropertyConfig =
+                            mCarPropertyManager.getCarPropertyConfig(powerDependentProperty);
+                    if (powerDependentCarPropertyConfig == null) {
+                        continue;
+                    }
+                    assertWithMessage(
+                            "HVAC_POWER_ON configArray must only contain VehicleAreaSeat type "
+                                    + "properties: " + VehiclePropertyIds.toString(
+                                    powerDependentProperty)).that(
+                            powerDependentCarPropertyConfig.getAreaType()).isEqualTo(
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT);
+                    assertWithMessage(
+                            "HVAC_POWER_ON's area IDs must match the area IDs of power dependent "
+                                    + "property: " + VehiclePropertyIds.toString(
+                                    powerDependentProperty)).that(Arrays.stream(
+                            powerDependentCarPropertyConfig.getAreaIds()).boxed().collect(
+                            Collectors.toList())).containsExactlyElementsIn(Arrays.stream(
+                            hvacPowerOnCarPropertyConfig.getAreaIds()).boxed().collect(
+                            Collectors.toList()));
+                }
+            }).build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testHvacFanSpeedIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HVAC_FAN_SPEED,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Integer.class).requireMinMaxValues().setPossiblyDependentOnHvacPowerOn().build()
+                    .verify(mCarPropertyManager);
         });
     }
 
