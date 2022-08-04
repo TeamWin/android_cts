@@ -30,6 +30,7 @@ import android.test.MoreAsserts;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.util.StringBuilderPrinter;
+import android.view.MotionEvent;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.SurroundingText;
@@ -75,6 +76,7 @@ public class EditorInfoTest {
         info.extras = b;
         info.hintLocales = LocaleList.forLanguageTags("en-PH,en-US");
         info.contentMimeTypes = new String[]{"image/gif", "image/png"};
+        info.setInitialToolType(MotionEvent.TOOL_TYPE_FINGER);
 
         assertEquals(0, info.describeContents());
 
@@ -99,6 +101,7 @@ public class EditorInfoTest {
         assertEquals(info.label.toString(), targetInfo.label.toString());
         assertEquals(info.extras.getString(key), targetInfo.extras.getString(key));
         assertEquals(info.hintLocales, targetInfo.hintLocales);
+        assertEquals(info.getInitialToolType(), targetInfo.getInitialToolType());
         MoreAsserts.assertEquals(info.contentMimeTypes, targetInfo.contentMimeTypes);
 
         StringBuilder sb = new StringBuilder();

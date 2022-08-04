@@ -139,8 +139,6 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
     @Test
     public void testConfigurationUpdatesWhenRotatingWhileFullscreen() {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
-        // TODO(b/209920544) remove assumeFalse after issue fix.
-        assumeFalse(ENABLE_SHELL_TRANSITIONS);
 
         final RotationSession rotationSession = createManagedRotationSession();
         rotationSession.set(ROTATION_0);
@@ -164,8 +162,6 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
     public void testConfigurationUpdatesWhenRotatingWhileDocked() {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
-        // TODO(b/209920544) remove assumeFalse after issue fix.
-        assumeFalse(ENABLE_SHELL_TRANSITIONS);
         final ActivitySessionClient resizeableActivityClient = createManagedActivityClientSession();
         final RotationSession rotationSession = createManagedRotationSession();
         rotationSession.set(ROTATION_0);
@@ -192,8 +188,6 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
     public void testConfigurationUpdatesWhenRotatingToSideFromDocked() {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
-        // TODO(b/209920544) remove assumeFalse after issue fix.
-        assumeFalse(ENABLE_SHELL_TRANSITIONS);
         final ActivitySessionClient resizeableActivityClient = createManagedActivityClientSession();
         final RotationSession rotationSession = createManagedRotationSession();
         rotationSession.set(ROTATION_0);
@@ -551,8 +545,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
     @Test
     public void testTranslucentActivityPermitted() throws Exception {
         assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
-        // TODO(b/209920544) remove assumeFalse after issue fix.
-        assumeFalse(ENABLE_SHELL_TRANSITIONS);
+
         disableIgnoreOrientationRequest();
 
         final RotationSession rotationSession = createManagedRotationSession();
@@ -653,8 +646,6 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
     public void testAppOrientationWhenRotating() throws Exception {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
 
-        // TODO(b/209920544) remove assumeFalse after issue fix.
-        assumeFalse(ENABLE_SHELL_TRANSITIONS);
         // Start resizeable activity that handles configuration changes.
         separateTestJournal();
         launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
@@ -726,8 +717,6 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
      */
     private void assertDisplayContextDoesntChangeOrientationWhenRotating(
             Function<Activity, Context> baseContextSupplier) {
-        // TODO(b/209920544) remove assumeFalse after issue fix.
-        assumeFalse(ENABLE_SHELL_TRANSITIONS);
         RotationSession rotationSession = createManagedRotationSession();
         rotationSession.set(ROTATION_0);
 

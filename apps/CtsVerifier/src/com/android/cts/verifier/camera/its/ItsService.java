@@ -1036,7 +1036,9 @@ public class ItsService extends Service implements SensorEventListener {
             @Override
             public void onImageAvailable(ImageReader reader) {
                 Image i = reader.acquireNextImage();
-                i.close();
+                if (i != null) {
+                    i.close();
+                }
             }
         };
     }

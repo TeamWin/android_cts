@@ -26,6 +26,9 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.timeout;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
 import android.hardware.cts.R;
 import android.hardware.input.InputManager;
 import android.os.Handler;
@@ -36,6 +39,7 @@ import android.view.KeyEvent;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Test;
@@ -44,6 +48,7 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+@ApiTest(apis = {"android.view.InputDevice#getKeyCodeForKeyLocation"})
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class KeyboardLayoutChangeTest extends InputHidTestCase {
@@ -200,5 +205,12 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
         mInOrderInputDeviceChangedListener.verify(mInputDeviceChangedListener,
                 timeout(KEYBOARD_LAYOUT_CHANGE_TIMEOUT)).onInputDeviceChanged(
                 eq(device.getId()));
+    }
+
+    public static class CtsKeyboardLayoutProvider extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Nothing to do at this time.
+        }
     }
 }

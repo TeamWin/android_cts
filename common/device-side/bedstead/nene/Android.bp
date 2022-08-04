@@ -58,6 +58,9 @@ android_test {
     srcs: [
         "src/test/java/**/*.java"
     ],
+    exclude_srcs: [
+        "src/test/java/**/benchmarking/*.java"
+    ],
     test_suites: [
         "general-tests",
     ],
@@ -73,6 +76,18 @@ android_test {
         "testng" // for assertThrows
     ],
     data: [":NeneTestApp1"],
+    manifest: "src/test/AndroidManifest.xml",
+    min_sdk_version: "29"
+}
+
+android_library {
+    name: "NeneBenchmarkProcessor",
+    srcs: [
+        "src/test/java/**/benchmarking/*.java",
+        "src/test/java/**/benchmarking/*.proto",
+    ],
+    static_libs: [
+    ],
     manifest: "src/test/AndroidManifest.xml",
     min_sdk_version: "29"
 }

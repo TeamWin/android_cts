@@ -220,7 +220,8 @@ public final class TestUtils {
         // Inject stylus ACTION_DOWN
         long downTime = SystemClock.uptimeMillis();
         final MotionEvent downEvent =
-                getMotionEvent(downTime, downTime, MotionEvent.ACTION_DOWN, x, y);
+                getMotionEvent(downTime, downTime, MotionEvent.ACTION_DOWN, x, y,
+                        MotionEvent.TOOL_TYPE_STYLUS);
         injectMotionEvent(downEvent, true /* sync */);
         return downEvent;
     }
@@ -240,9 +241,31 @@ public final class TestUtils {
 
         // Inject stylus ACTION_DOWN
         long downTime = SystemClock.uptimeMillis();
-        final MotionEvent upEvent = getMotionEvent(downTime, downTime, MotionEvent.ACTION_UP, x, y);
+        final MotionEvent upEvent = getMotionEvent(downTime, downTime, MotionEvent.ACTION_UP, x, y,
+                MotionEvent.TOOL_TYPE_STYLUS);
         injectMotionEvent(upEvent, true /* sync */);
         return upEvent;
+    }
+
+    /**
+     * Inject a finger touch action event to the screen using given view's coordinates.
+     * @param view  view whose coordinates are used to compute the event location.
+     * @return the injected MotionEvent.
+     */
+    public static MotionEvent injectFingerEventOnViewCenter(@NonNull View view, int action) {
+        final int[] xy = new int[2];
+        view.getLocationOnScreen(xy);
+
+        // Inject finger touch event
+        int x = xy[0] + view.getWidth() / 2;
+        int y = xy[1] + view.getHeight() / 2;
+        final long downTime = SystemClock.uptimeMillis();
+
+        MotionEvent event = getMotionEvent(
+                downTime, downTime, action, x, y, MotionEvent.TOOL_TYPE_FINGER);
+        injectMotionEvent(event, true /* sync */);
+
+        return event;
     }
 
     /**
@@ -271,7 +294,8 @@ public final class TestUtils {
             float x = startX + incrementX * i + xy[0];
             float y = startY + incrementY * i + xy[1];
             final MotionEvent moveEvent =
-                    getMotionEvent(time, time, MotionEvent.ACTION_MOVE, x, y);
+                    getMotionEvent(time, time, MotionEvent.ACTION_MOVE, x, y,
+                            MotionEvent.TOOL_TYPE_STYLUS);
             injectMotionEvent(moveEvent, true /* sync */);
             injectedEvents.add(moveEvent);
         }
@@ -298,16 +322,16 @@ public final class TestUtils {
     }
 
     private static MotionEvent getMotionEvent(long downTime, long eventTime, int action,
-            float x, float y) {
-        return getMotionEvent(downTime, eventTime, action, (int) x, (int) y, 0);
+            float x, float y, int toolType) {
+        return getMotionEvent(downTime, eventTime, action, (int) x, (int) y, 0, toolType);
     }
 
     private static MotionEvent getMotionEvent(long downTime, long eventTime, int action,
-            int x, int y, int displayId) {
+            int x, int y, int displayId, int toolType) {
         // Stylus related properties.
         MotionEvent.PointerProperties[] properties =
                 new MotionEvent.PointerProperties[] { new MotionEvent.PointerProperties() };
-        properties[0].toolType = MotionEvent.TOOL_TYPE_STYLUS;
+        properties[0].toolType = toolType;
         properties[0].id = 1;
         MotionEvent.PointerCoords[] coords =
                 new MotionEvent.PointerCoords[] { new MotionEvent.PointerCoords() };

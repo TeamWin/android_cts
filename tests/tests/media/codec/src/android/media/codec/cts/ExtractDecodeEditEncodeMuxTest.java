@@ -42,6 +42,8 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.CodecProfileLevel;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -130,38 +132,43 @@ public class ExtractDecodeEditEncodeMuxTest
         super(MediaStubActivity.class);
     }
 
+    @CddTest(requirements = {"5.2", "5.3"})
     public void testExtractDecodeEditEncodeMuxQCIF() throws Throwable {
         if(!setSize(176, 144)) return;
         setSource("video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz.mp4");
         setCopyVideo();
-        setVideoMimeType(MediaFormat.MIMETYPE_VIDEO_AVC);
+        setOutputVideoMimeType(MediaFormat.MIMETYPE_VIDEO_AVC);
         TestWrapper.runTest(this);
     }
 
+    @CddTest(requirements = {"5.2", "5.3"})
     public void testExtractDecodeEditEncodeMuxQVGA() throws Throwable {
         if(!setSize(320, 240)) return;
         setSource("video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz.mp4");
         setCopyVideo();
-        setVideoMimeType(MediaFormat.MIMETYPE_VIDEO_AVC);
+        setOutputVideoMimeType(MediaFormat.MIMETYPE_VIDEO_AVC);
         TestWrapper.runTest(this);
     }
 
+    @CddTest(requirements = {"5.2", "5.3"})
     public void testExtractDecodeEditEncodeMux720p() throws Throwable {
         if(!setSize(1280, 720)) return;
         setSource("video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz.mp4");
         setCopyVideo();
-        setVideoMimeType(MediaFormat.MIMETYPE_VIDEO_AVC);
+        setOutputVideoMimeType(MediaFormat.MIMETYPE_VIDEO_AVC);
         TestWrapper.runTest(this);
     }
 
+    @CddTest(requirements = {"5.2", "5.3"})
     public void testExtractDecodeEditEncodeMux2160pHevc() throws Throwable {
         if(!setSize(3840, 2160)) return;
         setSource("video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz.mp4");
         setCopyVideo();
-        setVideoMimeType(MediaFormat.MIMETYPE_VIDEO_HEVC);
+        setOutputVideoMimeType(MediaFormat.MIMETYPE_VIDEO_HEVC);
         TestWrapper.runTest(this);
     }
 
+    @CddTest(requirements = {"5.1.1", "5.1.2"})
     public void testExtractDecodeEditEncodeMuxAudio() throws Throwable {
         if(!setSize(1280, 720)) return;
         setSource("video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz.mp4");
@@ -170,11 +177,13 @@ public class ExtractDecodeEditEncodeMuxTest
         TestWrapper.runTest(this);
     }
 
+    @CddTest(requirements = {"5.1.1", "5.1.2", "5.2", "5.3"})
     public void testExtractDecodeEditEncodeMuxAudioVideo() throws Throwable {
         if(!setSize(1280, 720)) return;
         setSource("video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz.mp4");
         setCopyAudio();
         setCopyVideo();
+        setOutputVideoMimeType(MediaFormat.MIMETYPE_VIDEO_AVC);
         setVerifyAudioFormat();
         TestWrapper.runTest(this);
     }
@@ -289,7 +298,7 @@ public class ExtractDecodeEditEncodeMuxTest
         mOutputFile = sb.toString();
     }
 
-    private void setVideoMimeType(String mimeType) {
+    private void setOutputVideoMimeType(String mimeType) {
         mOutputVideoMimeType = mimeType;
     }
 
@@ -305,44 +314,52 @@ public class ExtractDecodeEditEncodeMuxTest
 
         MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
 
-        // We avoid the device-specific limitations on width and height by using values
-        // that are multiples of 16, which all tested devices seem to be able to handle.
-        MediaFormat outputVideoFormat =
-                MediaFormat.createVideoFormat(mOutputVideoMimeType, mWidth, mHeight);
+        String videoEncoderName = null;
+        MediaFormat outputVideoFormat = null;
+        if (mCopyVideo) {
+            // We avoid the device-specific limitations on width and height by using values
+            // that are multiples of 16, which all tested devices seem to be able to handle.
+            outputVideoFormat =
+                    MediaFormat.createVideoFormat(mOutputVideoMimeType, mWidth, mHeight);
 
-        // Set some properties. Failing to specify some of these can cause the MediaCodec
-        // configure() call to throw an unhelpful exception.
-        outputVideoFormat.setInteger(
-                MediaFormat.KEY_COLOR_FORMAT, OUTPUT_VIDEO_COLOR_FORMAT);
-        outputVideoFormat.setInteger(MediaFormat.KEY_BIT_RATE, OUTPUT_VIDEO_BIT_RATE);
-        outputVideoFormat.setInteger(MediaFormat.KEY_FRAME_RATE, OUTPUT_VIDEO_FRAME_RATE);
-        outputVideoFormat.setInteger(
-                MediaFormat.KEY_I_FRAME_INTERVAL, OUTPUT_VIDEO_IFRAME_INTERVAL);
-        if (VERBOSE) Log.d(TAG, "video format: " + outputVideoFormat);
+            // Set some properties. Failing to specify some of these can cause the MediaCodec
+            // configure() call to throw an unhelpful exception.
+            outputVideoFormat.setInteger(
+                    MediaFormat.KEY_COLOR_FORMAT, OUTPUT_VIDEO_COLOR_FORMAT);
+            outputVideoFormat.setInteger(MediaFormat.KEY_BIT_RATE, OUTPUT_VIDEO_BIT_RATE);
+            outputVideoFormat.setInteger(MediaFormat.KEY_FRAME_RATE, OUTPUT_VIDEO_FRAME_RATE);
+            outputVideoFormat.setInteger(
+                    MediaFormat.KEY_I_FRAME_INTERVAL, OUTPUT_VIDEO_IFRAME_INTERVAL);
+            if (VERBOSE) Log.d(TAG, "video format: " + outputVideoFormat);
 
-        String videoEncoderName = mcl.findEncoderForFormat(outputVideoFormat);
-        if (videoEncoderName == null) {
-            // Don't fail CTS if they don't have an AVC codec (not here, anyway).
-            Log.e(TAG, "Unable to find an appropriate codec for " + outputVideoFormat);
-            return;
+            videoEncoderName = mcl.findEncoderForFormat(outputVideoFormat);
+            if (videoEncoderName == null) {
+                // Don't fail CTS if they don't have an AVC codec (not here, anyway).
+                Log.e(TAG, "Unable to find an appropriate codec for " + outputVideoFormat);
+                return;
+            }
+            if (VERBOSE) Log.d(TAG, "video found codec: " + videoEncoderName);
         }
-        if (VERBOSE) Log.d(TAG, "video found codec: " + videoEncoderName);
 
-        MediaFormat outputAudioFormat =
-                MediaFormat.createAudioFormat(
-                        OUTPUT_AUDIO_MIME_TYPE, OUTPUT_AUDIO_SAMPLE_RATE_HZ,
-                        OUTPUT_AUDIO_CHANNEL_COUNT);
-        outputAudioFormat.setInteger(MediaFormat.KEY_BIT_RATE, OUTPUT_AUDIO_BIT_RATE);
-        // TODO: Bug workaround --- uncomment once fixed.
-        // outputAudioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, OUTPUT_AUDIO_AAC_PROFILE);
+        String audioEncoderName = null;
+        MediaFormat outputAudioFormat = null;
+        if (mCopyAudio) {
+            outputAudioFormat =
+                    MediaFormat.createAudioFormat(
+                            OUTPUT_AUDIO_MIME_TYPE, OUTPUT_AUDIO_SAMPLE_RATE_HZ,
+                            OUTPUT_AUDIO_CHANNEL_COUNT);
+            outputAudioFormat.setInteger(MediaFormat.KEY_BIT_RATE, OUTPUT_AUDIO_BIT_RATE);
+            // TODO: Bug workaround --- uncomment once fixed.
+            // outputAudioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, OUTPUT_AUDIO_AAC_PROFILE);
 
-        String audioEncoderName = mcl.findEncoderForFormat(outputAudioFormat);
-        if (audioEncoderName == null) {
-            // Don't fail CTS if they don't have an AAC codec (not here, anyway).
-            Log.e(TAG, "Unable to find an appropriate codec for " + outputAudioFormat);
-            return;
+            audioEncoderName = mcl.findEncoderForFormat(outputAudioFormat);
+            if (audioEncoderName == null) {
+                // Don't fail CTS if they don't have an AAC codec (not here, anyway).
+                Log.e(TAG, "Unable to find an appropriate codec for " + outputAudioFormat);
+                return;
+            }
+            if (VERBOSE) Log.d(TAG, "audio found codec: " + audioEncoderName);
         }
-        if (VERBOSE) Log.d(TAG, "audio found codec: " + audioEncoderName);
 
         MediaExtractor videoExtractor = null;
         MediaExtractor audioExtractor = null;

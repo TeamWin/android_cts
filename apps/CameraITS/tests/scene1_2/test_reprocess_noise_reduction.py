@@ -121,7 +121,7 @@ class ReprocessNoiseReductionTest(its_base_test.ItsBaseTest):
       its_session_utils.load_scene(
           cam, props, self.scene, self.tablet, self.chart_distance)
 
-      # If reprocessing is supported, ZSL NR mode must be avaiable.
+      # If reprocessing is supported, ZSL NR mode must be available.
       if not camera_properties_utils.noise_reduction_mode(
           props, _NR_MODES['ZSL']):
         raise KeyError('Reprocessing supported, so ZSL must be supported.')

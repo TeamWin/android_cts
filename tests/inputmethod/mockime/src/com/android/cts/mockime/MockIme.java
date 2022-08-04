@@ -1007,6 +1007,14 @@ public final class MockIme extends InputMethodService {
     }
 
     @Override
+    public void onUpdateEditorToolType(int toolType) {
+        if (mEvents != null) {
+            mEvents.clear();
+        }
+        getTracer().onUpdateEditorToolType(toolType, () -> super.onUpdateEditorToolType(toolType));
+    }
+
+    @Override
     public void onFinishStylusHandwriting() {
         getTracer().onFinishStylusHandwriting(() -> super.onFinishStylusHandwriting());
     }
@@ -1421,6 +1429,12 @@ public final class MockIme extends InputMethodService {
 
         void onFinishInput(@NonNull Runnable runnable) {
             recordEventInternal("onFinishInput", runnable);
+        }
+
+        void onUpdateEditorToolType(int toolType, @NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            arguments.putInt("toolType", toolType);
+            recordEventInternal("onUpdateEditorToolType", runnable, arguments);
         }
 
         boolean onKeyDown(int keyCode, KeyEvent event, @NonNull BooleanSupplier supplier) {

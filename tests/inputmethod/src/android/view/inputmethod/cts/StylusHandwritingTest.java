@@ -40,6 +40,7 @@ import android.hardware.input.InputManager;
 import android.inputmethodservice.InputMethodService;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.util.Pair;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -61,6 +62,7 @@ import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
@@ -75,6 +77,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 /**
  * IMF and end-to-end Stylus handwriting tests.
@@ -755,6 +758,125 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
                     .getReturnBooleanValue());
         }
+    }
+
+    /**
+     * Inject stylus top on an editor and verify stylus source is detected with
+     * {@link InputMethodService#onUpdateEditorToolType(int)} lifecycle method.
+     */
+    @Test
+    public void testOnViewClicked_withStylusTap() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final String marker2 = getTestMarker();
+            final Pair<EditText, EditText> pair = launchTestActivity(marker, marker2);
+            final EditText focusedEditText = pair.first;
+            final EditText unfocusedEditText = pair.second;
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+
+            final int startX = focusedEditText.getWidth() / 2;
+            final int startY = focusedEditText.getHeight() / 2;
+
+            // Tap with stylus on focused editor
+            TestUtils.injectStylusDownEvent(focusedEditText, startX, startY);
+            MotionEvent event = TestUtils.injectStylusUpEvent(focusedEditText, startX, startY);
+            int toolType = event.getToolType(event.getActionIndex());
+
+            expectEvent(
+                    stream,
+                    updateEditorToolTypeMatcher(toolType),
+                    TIMEOUT);
+
+            // Tap with stylus on unfocused editor
+            TestUtils.injectStylusDownEvent(unfocusedEditText, startX, startY);
+            event = TestUtils.injectStylusUpEvent(unfocusedEditText, startX, startY);
+            expectEvent(stream, startInputMatcher(toolType, marker2), TIMEOUT);
+            expectEvent(
+                    stream,
+                    updateEditorToolTypeMatcher(event.getToolType(event.getActionIndex())),
+                    TIMEOUT);
+        }
+    }
+
+    /**
+     * Inject finger top on an editor and verify stylus source is detected with
+     * {@link InputMethodService#onUpdateEditorToolType(int)} lifecycle method.
+     */
+    @Test
+    public void testOnViewClicked_withFingerTap() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final String marker2 = getTestMarker();
+            final Pair<EditText, EditText> pair = launchTestActivity(marker, marker2);
+            final EditText focusedEditText = pair.first;
+            final EditText unfocusedEditText = pair.second;
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+
+            TestUtils.injectFingerEventOnViewCenter(focusedEditText, MotionEvent.ACTION_DOWN);
+            MotionEvent upEvent =
+                    TestUtils.injectFingerEventOnViewCenter(focusedEditText, MotionEvent.ACTION_UP);
+            int toolTypeFinger = upEvent.getToolType(upEvent.getActionIndex());
+            assertEquals(
+                    "tool type finger must match", MotionEvent.TOOL_TYPE_FINGER, toolTypeFinger);
+            expectEvent(
+                    stream,
+                    updateEditorToolTypeMatcher(toolTypeFinger),
+                    TIMEOUT);
+
+            // tap on unfocused editor
+            TestUtils.injectFingerEventOnViewCenter(unfocusedEditText, MotionEvent.ACTION_DOWN);
+            upEvent = TestUtils.injectFingerEventOnViewCenter(
+                    unfocusedEditText, MotionEvent.ACTION_UP);
+            toolTypeFinger = upEvent.getToolType(upEvent.getActionIndex());
+            assertEquals(
+                    "tool type finger must match", MotionEvent.TOOL_TYPE_FINGER, toolTypeFinger);
+            expectEvent(stream, startInputMatcher(toolTypeFinger, marker2), TIMEOUT);
+            expectEvent(
+                    stream,
+                    updateEditorToolTypeMatcher(MotionEvent.TOOL_TYPE_FINGER),
+                    TIMEOUT);
+        }
+    }
+
+    private static Predicate<ImeEvent> startInputMatcher(int toolType, String marker) {
+        return event -> {
+            if (!TextUtils.equals("onStartInput", event.getEventName())) {
+                return false;
+            }
+            EditorInfo info = event.getArguments().getParcelable("editorInfo");
+            return info.getInitialToolType() == toolType
+                    && TextUtils.equals(marker, info.privateImeOptions);
+        };
+    }
+
+    private static Predicate<ImeEvent> updateEditorToolTypeMatcher(int expectedToolType) {
+        return event -> {
+            if (!TextUtils.equals("onUpdateEditorToolType", event.getEventName())) {
+                return false;
+            }
+            final int actualToolType = event.getArguments().getInt("toolType");
+            return actualToolType == expectedToolType;
+        };
     }
 
     /**

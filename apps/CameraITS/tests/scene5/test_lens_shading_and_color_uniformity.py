@@ -146,6 +146,7 @@ class LensShadingAndColorUniformityTest(its_base_test.ItsBaseTest):
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
       log_path = self.log_path
+      debug_mode = self.debug_mode
 
       # Check SKIP conditions.
       camera_properties_utils.skip_unless(
@@ -163,7 +164,16 @@ class LensShadingAndColorUniformityTest(its_base_test.ItsBaseTest):
       req = capture_request_utils.auto_capture_request()
       w, h = capture_request_utils.get_available_output_sizes('yuv', props)[0]
       out_surface = {'format': 'yuv', 'width': w, 'height': h}
-      cap = cam.do_capture(req, out_surface)
+      if debug_mode:
+        out_surfaces = [{'format': 'raw'}, out_surface]
+        cap_raw, cap = cam.do_capture(req, out_surfaces)
+        img_raw = image_processing_utils.convert_capture_to_rgb_image(
+            cap_raw, props=props)
+        image_processing_utils.write_image(img_raw, '%s_raw.png' % (
+            os.path.join(log_path, _NAME)), True)
+        logging.debug('Captured RAW %dx%d', img_raw.shape[1], img_raw.shape[0])
+      else:
+        cap = cam.do_capture(req, out_surface)
       logging.debug('Captured YUV %dx%d', w, h)
       # Get Y channel
       img_y = image_processing_utils.convert_capture_to_planes(cap)[0]

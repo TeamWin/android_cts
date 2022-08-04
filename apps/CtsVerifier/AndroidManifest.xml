@@ -3603,6 +3603,14 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.WifiNetworkSpecifier.Builder#build
+                       |android.net.wifi.WifiNetworkSpecifier.Builder#setSsidPattern
+                       |android.net.wifi.WifiNetworkSpecifier.Builder#setBssidPattern
+                       |android.net.wifi.WifiNetworkSpecifier.Builder#setWpa2Passphrase
+                       |android.net.wifi.WifiNetworkSpecifier.Builder#setWpa2Passphrase
+                       |android.net.NetworkRequest.Builder#setNetworkSpecifier
+                       |android.net.ConnectivityManager#requestNetwork" />
         </activity>
 
         <activity android:name=".wifi.NetworkRequestPatternNetworkSpecifierTestActivity"
@@ -3610,6 +3618,14 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.WifiNetworkSpecifier.Builder#build
+                       |android.net.wifi.WifiNetworkSpecifier.Builder#setSsidPattern
+                       |android.net.wifi.WifiNetworkSpecifier.Builder#setBssidPattern
+                       |android.net.wifi.WifiNetworkSpecifier.Builder#setWpa2Passphrase
+                       |android.net.wifi.WifiNetworkSpecifier.Builder#setWpa2Passphrase
+                       |android.net.NetworkRequest.Builder#setNetworkSpecifier
+                       |android.net.ConnectivityManager#requestNetwork" />
         </activity>
 
         <activity android:name=".wifi.NetworkRequestUnavailableNetworkSpecifierTestActivity"
@@ -3617,6 +3633,14 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.WifiNetworkSpecifier.Builder#build
+                       |android.net.wifi.WifiNetworkSpecifier.Builder#setSsidPattern
+                       |android.net.wifi.WifiNetworkSpecifier.Builder#setBssidPattern
+                       |android.net.wifi.WifiNetworkSpecifier.Builder#setWpa2Passphrase
+                       |android.net.wifi.WifiNetworkSpecifier.Builder#setWpa2Passphrase
+                       |android.net.NetworkRequest.Builder#setNetworkSpecifier
+                       |android.net.ConnectivityManager#requestNetwork" />
         </activity>
 
         <activity android:name=".wifi.NetworkRequestInvalidCredentialNetworkSpecifierTestActivity"
@@ -3624,6 +3648,14 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.WifiNetworkSpecifier.Builder#build
+                       |android.net.wifi.WifiNetworkSpecifier.Builder#setSsid
+                       |android.net.wifi.WifiNetworkSpecifier.Builder#setBssid
+                       |android.net.wifi.WifiNetworkSpecifier.Builder#setWpa2Passphrase
+                       |android.net.wifi.WifiNetworkSpecifier.Builder#setWpa2Passphrase
+                       |android.net.NetworkRequest.Builder#setNetworkSpecifier
+                       |android.net.ConnectivityManager#requestNetwork" />
         </activity>
 
         <activity android:name=".wifi.NetworkSuggestionSsidTestActivity"
@@ -3631,6 +3663,19 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.WifiNetworkSuggestion.Builder#build
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setSsid
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setBssid
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setWpa2Passphrase
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setWpa3Passphrase
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setIsMetered
+                       |android.net.wifi.WifiManager#addNetworkSuggestions
+                       |android.net.wifi.WifiManager#addSuggestionUserApprovalStatusListener
+                       |android.net.wifi.WifiManager#getNetworkSuggestions
+                       |android.net.wifi.WifiManager#removeNetworkSuggestions
+                       |android.net.wifi.WifiManager#removeSuggestionConnectionStatusListener
+                       |android.net.wifi.WifiManager#addSuggestionConnectionStatusListener" />
         </activity>
 
         <activity android:name=".wifi.NetworkSuggestionSsidBssidTestActivity"
@@ -3638,6 +3683,19 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.WifiNetworkSuggestion.Builder#build
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setSsid
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setBssid
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setWpa2Passphrase
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setWpa3Passphrase
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setIsMetered
+                       |android.net.wifi.WifiManager#addNetworkSuggestions
+                       |android.net.wifi.WifiManager#addSuggestionUserApprovalStatusListener
+                       |android.net.wifi.WifiManager#getNetworkSuggestions
+                       |android.net.wifi.WifiManager#removeNetworkSuggestions
+                       |android.net.wifi.WifiManager#removeSuggestionConnectionStatusListener
+                       |android.net.wifi.WifiManager#addSuggestionConnectionStatusListener" />
         </activity>
 
         <activity android:name=".wifi.NetworkSuggestionSsidPostConnectTestActivity"
@@ -3645,6 +3703,19 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.WifiNetworkSuggestion.Builder#build
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setSsid
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setBssid
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setWpa2Passphrase
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setWpa3Passphrase
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setIsMetered
+                       |android.net.wifi.WifiManager#addNetworkSuggestions
+                       |android.net.wifi.WifiManager#addSuggestionUserApprovalStatusListener
+                       |android.net.wifi.WifiManager#getNetworkSuggestions
+                       |android.net.wifi.WifiManager#removeNetworkSuggestions
+                       |android.net.wifi.WifiManager#removeSuggestionConnectionStatusListener
+                       |android.net.wifi.WifiManager#addSuggestionConnectionStatusListener" />
         </activity>
 
         <activity android:name=".wifi.NetworkSuggestionConnectionFailureTestActivity"
@@ -3652,6 +3723,19 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.WifiNetworkSuggestion.Builder#build
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setSsid
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setBssid
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setWpa2Passphrase
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setWpa3Passphrase
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setIsMetered
+                       |android.net.wifi.WifiManager#addNetworkSuggestions
+                       |android.net.wifi.WifiManager#addSuggestionUserApprovalStatusListener
+                       |android.net.wifi.WifiManager#getNetworkSuggestions
+                       |android.net.wifi.WifiManager#removeNetworkSuggestions
+                       |android.net.wifi.WifiManager#removeSuggestionConnectionStatusListener
+                       |android.net.wifi.WifiManager#addSuggestionConnectionStatusListener" />
         </activity>
 
         <activity android:name=".wifi.NetworkSuggestionModificationInPlaceTestActivity"
@@ -3659,6 +3743,19 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.WifiNetworkSuggestion.Builder#build
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setSsid
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setBssid
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setWpa2Passphrase
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setWpa3Passphrase
+                       |android.net.wifi.WifiNetworkSuggestion.Builder#setIsMetered
+                       |android.net.wifi.WifiManager#addNetworkSuggestions
+                       |android.net.wifi.WifiManager#addSuggestionUserApprovalStatusListener
+                       |android.net.wifi.WifiManager#getNetworkSuggestions
+                       |android.net.wifi.WifiManager#removeNetworkSuggestions
+                       |android.net.wifi.WifiManager#removeSuggestionConnectionStatusListener
+                       |android.net.wifi.WifiManager#addSuggestionConnectionStatusListener" />
         </activity>
 
         <activity android:name=".p2p.GoNegRequesterTestListActivity"
@@ -3822,6 +3919,9 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.PublishConfig.Builder#setPublishType
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOpenPassiveSubscribeTestActivity"
@@ -3829,6 +3929,9 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.SubscribeConfig.Builder#setSubscribeType
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOpenPassiveSubscribeAcceptAnyTestActivity"
@@ -3836,6 +3939,10 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.SubscribeConfig.Builder#setSubscribeType
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#Builder
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPassphraseUnsolicitedPublishTestActivity"
@@ -3843,6 +3950,9 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.PublishConfig.Builder#setPublishType
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPassphrasePassiveSubscribeTestActivity"
@@ -3850,6 +3960,10 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.SubscribeConfig.Builder#setSubscribeType
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#setPskPassphrase
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPassphrasePassiveSubscribeAcceptAnyTestActivity"
@@ -3857,6 +3971,10 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.SubscribeConfig.Builder#setSubscribeType
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#setPskPassphrase
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPmkUnsolicitedPublishTestActivity"
@@ -3864,6 +3982,10 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.PublishConfig.Builder#setPublishType
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#setPmk
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPmkPassiveSubscribeTestActivity"
@@ -3871,6 +3993,10 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.SubscribeConfig.Builder#setSubscribeType
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#setPmk
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPmkPassiveSubscribeAcceptAnyTestActivity"
@@ -3878,6 +4004,11 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.SubscribeConfig.Builder#setSubscribeType
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#setPmk
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#Builder" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOpenSolicitedPublishTestActivity"
@@ -3885,6 +4016,9 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.PublishConfig.Builder#setPublishType
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOpenActiveSubscribeTestActivity"
@@ -3892,6 +4026,9 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.SubscribeConfig.Builder#setSubscribeType
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOpenActiveSubscribeAcceptAnyTestActivity"
@@ -3899,6 +4036,10 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.SubscribeConfig.Builder#setSubscribeType
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#Builder
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPassphraseSolicitedPublishTestActivity"
@@ -3906,6 +4047,10 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.PublishConfig.Builder#setPublishType
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#setPassphrase
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPassphraseActiveSubscribeTestActivity"
@@ -3913,6 +4058,10 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.SubscribeConfig.Builder#setSubscribeType
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#setPskPassphrase
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPassphraseActiveSubscribeAcceptAnyTestActivity"
@@ -3920,6 +4069,11 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.SubscribeConfig.Builder#setSubscribeType
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#setPskPassphrase
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#Builder
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPmkSolicitedPublishTestActivity"
@@ -3927,6 +4081,10 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.PublishConfig.Builder#setPublishType
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#setPmk
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPmkActiveSubscribeTestActivity"
@@ -3934,6 +4092,10 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.SubscribeConfig.Builder#setSubscribeType
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#setPmk
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPmkActiveSubscribeAcceptAnyTestActivity"
@@ -3941,6 +4103,11 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.SubscribeConfig.Builder#setSubscribeType
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#setPmk
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#Builder" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOobOpenResponderTestActivity"
@@ -3948,6 +4115,8 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.WifiAwareSession#createNetworkSpecifierOpen" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOobOpenInitiatorTestActivity"
@@ -3955,6 +4124,8 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.WifiAwareSession#createNetworkSpecifierOpen" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOobPassphraseResponderTestActivity"
@@ -3962,6 +4133,8 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.WifiAwareSession#createNetworkSpecifierPassphrase" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOobPassphraseInitiatorTestActivity"
@@ -3969,6 +4142,8 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.WifiAwareSession#createNetworkSpecifierPassphrase" />
         </activity>
 
         <activity android:name=".wifiaware.DiscoveryRangingPublishTestActivity"
@@ -3976,6 +4151,12 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.rtt.RangingRequest.Builder#addWifiAwarePeer
+                       |android.net.wifi.aware.PublishConfig.Builder#setRangingEnabled
+                       |android.net.wifi.rtt.WifiRttManager#startRanging
+                       |android.net.wifi.aware.WifiAwareManager#attach
+                       |android.net.wifi.aware.WifiAwareSession#publish" />
         </activity>
 
         <activity android:name=".wifiaware.DiscoveryRangingSubscribeTestActivity"
@@ -3983,6 +4164,12 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.rtt.RangingRequest.Builder#addWifiAwarePeer
+                       |android.net.wifi.aware.SubscribeConfig.Builder#setMaxDistanceMm
+                       |android.net.wifi.rtt.WifiRttManager#startRanging
+                       |android.net.wifi.aware.WifiAwareManager#attach
+                       |android.net.wifi.aware.WifiAwareSession#subscrible" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOpenSolicitedPublishAcceptAnyTestActivity"
@@ -3990,6 +4177,10 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#Builder
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build
+                       |android.net.NetworkCapabilities#TRANSPORT_WIFI_AWARE" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPmkUnsolicitedPublishAcceptAnyTestActivity"
@@ -3997,6 +4188,10 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#Builder
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#build
+                       |android.net.NetworkCapabilities#TRANSPORT_WIFI_AWARE" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPmkSolicitedPublishAcceptAnyTestActivity"
@@ -4004,6 +4199,9 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#Builder
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#setPmk" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPassphraseUnsolicitedPublishAcceptAnyTestActivity"
@@ -4011,6 +4209,9 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#Builder
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#setPskPassphrase" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPassphraseSolicitedPublishAcceptAnyTestActivity"
@@ -4018,6 +4219,9 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#Builder
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#setPskPassphrase" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOpenUnsolicitedPublishAcceptAnyTestActivity"
@@ -4025,6 +4229,9 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#Builder
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#setPskPassphrase" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathForceChannelSetupSubscribeTestActivity"
@@ -4032,6 +4239,9 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#Builder
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#setChannelFrequencyMhz" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathForceChannelSetupPublishTestActivity"
@@ -4039,6 +4249,9 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#Builder
+                       |android.net.wifi.aware.WifiAwareNetworkSpecifier.Builder#setChannelFrequencyMhz" />
         </activity>
 
         <activity-alias
