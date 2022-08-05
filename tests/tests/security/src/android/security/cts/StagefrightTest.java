@@ -1809,6 +1809,12 @@ public class StagefrightTest extends StsExtraBusinessLogicTestCase {
      before any existing test methods
      ***********************************************************/
     @Test
+    @AsbSecurityTest(cveBugId = 223210917)
+    public void testStagefright_cve_2022_22083() throws Exception {
+         doStagefrightTest(R.raw.cve_2022_22083);
+    }
+
+    @Test
     @AsbSecurityTest(cveBugId = 223209610)
     public void testStagefright_cve_2022_22087() throws Exception {
          doStagefrightTest(R.raw.cve_2022_22087);

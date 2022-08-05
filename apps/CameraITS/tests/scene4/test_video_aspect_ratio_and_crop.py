@@ -152,6 +152,8 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
       full_or_better = camera_properties_utils.full_or_better(props)
       raw_avlb = camera_properties_utils.raw16(props)
 
+      # Converge 3A.
+      cam.do_3a()
       req = capture_request_utils.auto_capture_request()
       ref_img_name_stem = f'{os.path.join(self.log_path, _NAME)}'
 

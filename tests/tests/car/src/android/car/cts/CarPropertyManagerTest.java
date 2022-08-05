@@ -56,6 +56,7 @@ import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 
 import org.junit.Assert;
 import org.junit.Assume;
@@ -122,10 +123,30 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     private static final ImmutableSet<Integer> HVAC_TEMPERATURE_DISPLAY_UNITS =
             ImmutableSet.<Integer>builder().add(VehicleUnit.CELSIUS,
                     VehicleUnit.FAHRENHEIT).build();
+    private static final ImmutableSet<Integer> SINGLE_HVAC_FAN_DIRECTIONS = ImmutableSet.of(
+            /*VehicleHvacFanDirection.FACE=*/0x1, /*VehicleHvacFanDirection.FLOOR=*/0x2,
+            /*VehicleHvacFanDirection.DEFROST=*/0x4);
+    private static final ImmutableSet<Integer> ALL_POSSIBLE_HVAC_FAN_DIRECTIONS =
+            generateAllPossibleHvacFanDirections();
 
     /** contains property Ids for the properties required by CDD */
     private final ArraySet<Integer> mPropertyIds = new ArraySet<>();
     private CarPropertyManager mCarPropertyManager;
+
+    private static ImmutableSet<Integer> generateAllPossibleHvacFanDirections() {
+        ImmutableSet.Builder<Integer> allPossibleFanDirectionsBuilder = ImmutableSet.builder();
+        for (int i = 1; i <= SINGLE_HVAC_FAN_DIRECTIONS.size(); i++) {
+            allPossibleFanDirectionsBuilder.addAll(Sets.combinations(SINGLE_HVAC_FAN_DIRECTIONS,
+                    i).stream().map(hvacFanDirectionCombo -> {
+                Integer possibleHvacFanDirection = 0;
+                for (Integer hvacFanDirection : hvacFanDirectionCombo) {
+                    possibleHvacFanDirection |= hvacFanDirection;
+                }
+                return possibleHvacFanDirection;
+            }).collect(Collectors.toList()));
+        }
+        return allPossibleFanDirectionsBuilder.build();
+    }
 
     private static void verifyWheelTickConfigArray(int supportedWheels, int wheelToVerify,
             int configArrayIndex, int wheelTicksToUm) {
@@ -1667,6 +1688,100 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                     CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                     Integer.class).requireMinMaxValues().setPossiblyDependentOnHvacPowerOn().build()
                     .verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testHvacFanDirectionAvailableIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HVAC_FAN_DIRECTION_AVAILABLE,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                    Integer[].class).setPossiblyDependentOnHvacPowerOn().setAreaIdsVerifier(
+                    areaIds -> {
+                        CarPropertyConfig<?> hvacFanDirectionCarPropertyConfig =
+                                mCarPropertyManager.getCarPropertyConfig(
+                                        VehiclePropertyIds.HVAC_FAN_DIRECTION);
+                        assertWithMessage("HVAC_FAN_DIRECTION must be implemented if "
+                                + "HVAC_FAN_DIRECTION_AVAILABLE is implemented").that(
+                                hvacFanDirectionCarPropertyConfig).isNotNull();
+
+                        assertWithMessage(
+                                "HVAC_FAN_DIRECTION_AVAILABLE area IDs must match the area IDs of "
+                                        + "HVAC_FAN_DIRECTION").that(Arrays.stream(
+                                areaIds).boxed().collect(
+                                Collectors.toList())).containsExactlyElementsIn(Arrays.stream(
+                                hvacFanDirectionCarPropertyConfig.getAreaIds()).boxed().collect(
+                                Collectors.toList()));
+
+                    }).setCarPropertyValueVerifier((carPropertyConfig, carPropertyValue) -> {
+                Integer[] fanDirectionValues = (Integer[]) carPropertyValue.getValue();
+                assertWithMessage(
+                        "HVAC_FAN_DIRECTION_AVAILABLE area ID: " + carPropertyValue.getAreaId()
+                                + " must have at least 1 direction defined").that(
+                        fanDirectionValues.length).isAtLeast(1);
+                assertWithMessage(
+                        "HVAC_FAN_DIRECTION_AVAILABLE area ID: " + carPropertyValue.getAreaId()
+                                + " values all must all be unique: " + Arrays.toString(
+                                fanDirectionValues)).that(fanDirectionValues.length).isEqualTo(
+                        ImmutableSet.copyOf(fanDirectionValues).size());
+                for (Integer fanDirection : fanDirectionValues) {
+                    assertWithMessage("HVAC_FAN_DIRECTION_AVAILABLE's area ID: "
+                            + carPropertyValue.getAreaId()
+                            + " must be a valid combination of fan directions").that(
+                            fanDirection).isIn(ALL_POSSIBLE_HVAC_FAN_DIRECTIONS);
+                }
+            }).build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testHvacFanDirectionIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HVAC_FAN_DIRECTION,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Integer.class).setPossiblyDependentOnHvacPowerOn().setAreaIdsVerifier(
+                    areaIds -> {
+                        CarPropertyConfig<?> hvacFanDirectionAvailableCarPropertyConfig =
+                                mCarPropertyManager.getCarPropertyConfig(
+                                        VehiclePropertyIds.HVAC_FAN_DIRECTION_AVAILABLE);
+                        assertWithMessage("HVAC_FAN_DIRECTION_AVAILABLE must be implemented if "
+                                + "HVAC_FAN_DIRECTION is implemented").that(
+                                hvacFanDirectionAvailableCarPropertyConfig).isNotNull();
+
+                        assertWithMessage("HVAC_FAN_DIRECTION area IDs must match the area IDs of "
+                                + "HVAC_FAN_DIRECTION_AVAILABLE").that(Arrays.stream(
+                                areaIds).boxed().collect(
+                                Collectors.toList())).containsExactlyElementsIn(Arrays.stream(
+                                hvacFanDirectionAvailableCarPropertyConfig.getAreaIds()).boxed()
+                                .collect(Collectors.toList()));
+
+                    }).setCarPropertyValueVerifier((carPropertyConfig, carPropertyValue) -> {
+                CarPropertyValue<Integer[]> hvacFanDirectionAvailableCarPropertyValue =
+                        mCarPropertyManager.getProperty(
+                                VehiclePropertyIds.HVAC_FAN_DIRECTION_AVAILABLE,
+                                carPropertyValue.getAreaId());
+                assertWithMessage("HVAC_FAN_DIRECTION_AVAILABLE value must be available").that(
+                        hvacFanDirectionAvailableCarPropertyValue).isNotNull();
+
+                assertWithMessage("HVAC_FAN_DIRECTION area ID " + carPropertyValue.getAreaId()
+                        + " value must be in list for HVAC_FAN_DIRECTION_AVAILABLE").that(
+                        carPropertyValue.getValue()).isIn(
+                        Arrays.asList(hvacFanDirectionAvailableCarPropertyValue.getValue()));
+            }).build().verify(mCarPropertyManager);
         });
     }
 

@@ -204,6 +204,9 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.security.cts.ActivityManagerTest$ActivityOptionsActivity" />
+        <activity android:name="android.security.cts.ActivityManagerTest$BaseActivity" />
+
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

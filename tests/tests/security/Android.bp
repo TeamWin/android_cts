@@ -35,6 +35,7 @@ android_test {
         "platform-test-annotations",
         "sts-device-util",
         "hamcrest-library",
+        "NeneInternal",
     ],
     libs: [
         "android.test.runner",

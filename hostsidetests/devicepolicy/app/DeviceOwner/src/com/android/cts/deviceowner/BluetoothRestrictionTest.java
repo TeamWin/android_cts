@@ -16,8 +16,6 @@
 
 package com.android.cts.deviceowner;
 
-import static android.os.Process.BLUETOOTH_UID;
-
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.bluetooth.BluetoothAdapter;
@@ -28,6 +26,7 @@ import android.os.UserManager;
 import android.util.DebugUtils;
 import android.util.Log;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.internal.util.ArrayUtils;
 
 /**
@@ -134,11 +133,8 @@ public class BluetoothRestrictionTest extends BaseDeviceOwnerTest {
             return;
         }
 
-        String bluetoothPackageName = mContext.getPackageManager()
-                .getPackagesForUid(BLUETOOTH_UID)[0];
-
-        ComponentName oppLauncherComponent = new ComponentName(
-                bluetoothPackageName, OPP_LAUNCHER_CLASS);
+        ComponentName oppLauncherComponent =
+                new ComponentName(TestApis.bluetooth().findPackageName(), OPP_LAUNCHER_CLASS);
 
         // First verify DISALLOW_BLUETOOTH.
         testOppDisabledWhenRestrictionSet(UserManager.DISALLOW_BLUETOOTH,
@@ -146,8 +142,8 @@ public class BluetoothRestrictionTest extends BaseDeviceOwnerTest {
 
         // Verify DISALLOW_BLUETOOTH_SHARING which leaves bluetooth workable but the sharing
         // component should be disabled.
-        testOppDisabledWhenRestrictionSet(UserManager.DISALLOW_BLUETOOTH_SHARING,
-                oppLauncherComponent);
+        testOppDisabledWhenRestrictionSet(
+                UserManager.DISALLOW_BLUETOOTH_SHARING, oppLauncherComponent);
     }
 
     /** Verifies that a given restriction disables the bluetooth sharing component. */

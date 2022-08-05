@@ -15,8 +15,6 @@
  */
 package com.android.cts.managedprofile;
 
-import static android.os.Process.BLUETOOTH_UID;
-
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
@@ -32,6 +30,7 @@ import android.os.UserManager;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.internal.util.ArrayUtils;
 
 import junit.framework.TestCase;
@@ -113,8 +112,7 @@ public class BluetoothSharingRestrictionTest extends BaseManagedProfileTest {
                 : new int[] {PackageManager.COMPONENT_ENABLED_STATE_DISABLED};
 
         sUiAutomation.adoptShellPermissionIdentity(INTERACT_ACROSS_USERS_PERMISSION);
-        String bluetoothPackageName = context.getPackageManager()
-                .getPackagesForUid(BLUETOOTH_UID)[0];
+        String bluetoothPackageName = TestApis.bluetooth().findPackageName();
         sUiAutomation.dropShellPermissionIdentity();
 
         ComponentName oppLauncherComponent = new ComponentName(
