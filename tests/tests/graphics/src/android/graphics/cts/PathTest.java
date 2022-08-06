@@ -27,6 +27,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Path.Direction;
 import android.graphics.RectF;
 
 import androidx.test.filters.SmallTest;
@@ -46,6 +47,13 @@ public class PathTest {
     private static final float BOTTOM = 50.0f;
     private static final float XCOORD = 40.0f;
     private static final float YCOORD = 40.0f;
+    private static final int SQUARE = 10;
+    private static final int WIDTH = 100;
+    private static final int HEIGHT = 100;
+    private static final int START_X = 10;
+    private static final int START_Y = 20;
+    private static final int OFFSET_X = 30;
+    private static final int OFFSET_Y = 40;
 
     @Test
     public void testConstructor() {
@@ -402,6 +410,21 @@ public class PathTest {
     }
 
     @Test
+    public void testResetPreservesFillType() {
+        Path path = new Path();
+
+        final Path.FillType defaultFillType = path.getFillType();
+        final Path.FillType fillType = Path.FillType.INVERSE_EVEN_ODD;
+
+        // This test is only meaningful if it changes from the default.
+        assertFalse(fillType.equals(defaultFillType));
+
+        path.setFillType(fillType);
+        path.reset();
+        assertEquals(path.getFillType(), fillType);
+    }
+
+    @Test
     public void testToggleInverseFillType() {
         Path path = new Path();
         assertTrue(path.isEmpty());
@@ -492,6 +515,51 @@ public class PathTest {
         assertTrue(path.approximate(0.25f).length > 20);
     }
 
+    @Test
+    public void testPathOffset() {
+        Path actualPath = new Path();
+        actualPath.addRect(START_X, START_Y, START_X + SQUARE, START_Y + SQUARE, Direction.CW);
+        actualPath.offset(OFFSET_X, OFFSET_Y);
+
+        Path expectedPath = new Path();
+        expectedPath.addRect(START_X + OFFSET_X, START_Y + OFFSET_Y, START_X + OFFSET_X + SQUARE,
+                START_Y + OFFSET_Y + SQUARE, Direction.CW);
+
+        verifyPathsAreEquivalent(actualPath, expectedPath);
+    }
+
+    @Test
+    public void testPathOffset2() {
+        Path actualPath = new Path();
+        actualPath.moveTo(0, 0);
+        actualPath.offset(OFFSET_X, OFFSET_Y);
+        actualPath.lineTo(OFFSET_X + 20, OFFSET_Y);
+
+
+        Path expectedPath = new Path();
+        expectedPath.moveTo(OFFSET_X, OFFSET_Y);
+        expectedPath.lineTo(OFFSET_X + 20, OFFSET_Y);
+
+        Paint paint = new Paint();
+        paint.setColor(Color.RED);
+        paint.setStyle(Paint.Style.STROKE);
+        verifyPathsAreEquivalent(actualPath, expectedPath, paint);
+    }
+
+    @Test
+    public void testPathOffsetWithDestination() {
+        Path initialPath = new Path();
+        initialPath.addRect(START_X, START_Y, START_X + SQUARE, START_Y + SQUARE, Direction.CW);
+        Path actualPath = new Path();
+        initialPath.offset(OFFSET_X, OFFSET_Y, actualPath);
+
+        Path expectedPath = new Path();
+        expectedPath.addRect(START_X + OFFSET_X, START_Y + OFFSET_Y, START_X + OFFSET_X + SQUARE,
+                START_Y + OFFSET_Y + SQUARE, Direction.CW);
+
+        verifyPathsAreEquivalent(actualPath, expectedPath);
+    }
+
     /** This test just ensures the process doesn't crash. The actual output is not interesting
      *  hence the lack of asserts, as the only behavior that's being asserted is that it
      *  doesn't crash.
@@ -523,25 +591,26 @@ public class PathTest {
     }
 
     private static void verifyPathsAreEquivalent(Path actual, Path expected) {
-        Bitmap actualBitmap = drawAndGetBitmap(actual);
-        Bitmap expectedBitmap = drawAndGetBitmap(expected);
+        Paint paint = new Paint();
+        paint.setColor(Color.RED);
+        verifyPathsAreEquivalent(actual, expected, paint);
+    }
+
+    private static void verifyPathsAreEquivalent(Path actual, Path expected, Paint paint) {
+        Bitmap actualBitmap = drawAndGetBitmap(actual, paint);
+        Bitmap expectedBitmap = drawAndGetBitmap(expected, paint);
         assertTrue(actualBitmap.sameAs(expectedBitmap));
     }
 
-    private static final int WIDTH = 100;
-    private static final int HEIGHT = 100;
-
-    private static Bitmap drawAndGetBitmap(Path path) {
+    private static Bitmap drawAndGetBitmap(Path path, Paint paint) {
         Bitmap bitmap = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888);
         bitmap.eraseColor(Color.BLACK);
-        Paint paint = new Paint();
-        paint.setColor(Color.RED);
         Canvas canvas = new Canvas(bitmap);
         canvas.drawPath(path, paint);
         return bitmap;
     }
 
-    private void addRectToPath(Path path) {
+    private static void addRectToPath(Path path) {
         RectF rect = new RectF(LEFT, TOP, RIGHT, BOTTOM);
         path.addRect(rect, Path.Direction.CW);
     }

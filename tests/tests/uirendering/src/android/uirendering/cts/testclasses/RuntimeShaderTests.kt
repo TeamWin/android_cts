@@ -35,12 +35,12 @@ import android.uirendering.cts.testinfrastructure.CanvasClient
 import android.util.Half
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
+import com.android.compatibility.common.util.ApiTest
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
-
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 
 @MediumTest
 @RunWith(AndroidJUnit4::class)
@@ -373,6 +373,37 @@ class RuntimeShaderTests : ActivityTestBase() {
         createTest().addCanvasClient(CanvasClient
                 { canvas: Canvas, width: Int, height: Int -> canvas.drawRect(rect, paint) },
                 true).runWithVerifier(RectVerifier(Color.WHITE, Color.BLUE, rect))
+    }
+
+    @Test
+    @ApiTest(apis = arrayOf("android.graphics.Shader#setLocalMatrix"))
+    fun testComposeShaderLocalMatrix() {
+        val shaderA = RuntimeShader(simpleRedShader)
+
+        // Create a runtime shader that calls a decal image shader with translation local matrix.
+        val bitmap = Bitmap.createBitmap(20, 20, Bitmap.Config.ARGB_8888, true)
+        bitmap.eraseColor(Color.GREEN)
+        val bitmapShader = BitmapShader(bitmap, Shader.TileMode.DECAL, Shader.TileMode.DECAL)
+        val matrix = Matrix()
+        matrix.setTranslate(100f, 0f)
+        bitmapShader.setLocalMatrix(matrix)
+        val shaderB = RuntimeShader(samplingShader)
+        shaderB.setInputShader("inputShader", bitmapShader)
+
+        // This compose shader will have a local matrix that compensates for the image shader's
+        // translation.
+        val composeShader = ComposeShader(shaderA, shaderB, BlendMode.SRC_OVER)
+        matrix.setTranslate(-100f, 0f)
+        composeShader.setLocalMatrix(matrix)
+
+        val paint = Paint()
+        paint.shader = composeShader
+
+        val rect = Rect(0, 0, 20, 20)
+
+        createTest().addCanvasClient(CanvasClient
+                { canvas: Canvas, width: Int, height: Int -> canvas.drawRect(rect, paint) },
+                true).runWithVerifier(RectVerifier(Color.WHITE, Color.GREEN, rect, 0))
     }
 
     @Test

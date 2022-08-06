@@ -1099,6 +1099,29 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
         assertThat(kotlinFiles).isEmpty();
     }
 
+    /**
+     * Ensure that all classes from protobuf libraries are jarjared before
+     * included in BOOTCLASSPATH, SYSTEMSERVERCLASSPATH and shared library jars
+     */
+    @Test
+    public void testNoProtobufClassesWithoutJarjar() {
+        assertWithMessage("Classes from protobuf libraries must not be included in bootclasspath "
+            + "and systemserverclasspath without being jarjared.")
+                .that(Stream.of(sBootclasspathJars.stream(),
+                                sSystemserverclasspathJars.stream(),
+                                sSharedLibJars.stream())
+                        .reduce(Stream::concat).orElseGet(Stream::empty)
+                        .parallel()
+                        .filter(jarPath -> {
+                            return sJarsToClasses
+                                    .get(jarPath)
+                                    .stream()
+                                    .anyMatch(cls -> cls.startsWith("Lcom/google/protobuf/"));
+                        })
+                        .collect(ImmutableList.toImmutableList())
+                ).isEmpty();
+    }
+
     private static File pullJarFromDevice(INativeDevice device,
             String remoteJarPath) throws DeviceNotAvailableException {
         File jar = device.pullFile(remoteJarPath);

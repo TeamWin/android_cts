@@ -30,13 +30,13 @@ import android.os.Handler
 import android.os.Looper
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
-import org.junit.After
-import org.junit.Assert.assertTrue
-import org.junit.Assert.assertNotNull
-import org.junit.Before
-import org.junit.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import org.junit.After
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
 
 class TouchScreenTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -110,6 +110,7 @@ class TouchScreenTest {
             verifier.assertReceivedMove()
 
             // ACTION_UP
+            touchScreen.sendBtnTouch(false)
             touchScreen.sendUp(0 /*id*/)
             verifier.assertReceivedUp()
         }
@@ -140,6 +141,7 @@ class TouchScreenTest {
             verifier.assertReceivedPointerUp(0)
 
             // ACTION_UP
+            touchScreen.sendBtnTouch(false)
             touchScreen.sendUp(1 /*id*/)
             verifier.assertReceivedUp()
         }
@@ -165,6 +167,7 @@ class TouchScreenTest {
             verifier.assertReceivedCancel()
 
             // No event
+            touchScreen.sendBtnTouch(false)
             touchScreen.sendUp(0 /*id*/)
             activity.assertNoEvents()
         }
@@ -180,6 +183,7 @@ class TouchScreenTest {
 
         touchScreen.use {
             // ACTION_DOWN
+            touchScreen.sendBtnTouch(true)
             touchScreen.sendDown(0 /*id*/, pointer1)
             verifier.assertReceivedDown()
 
@@ -197,6 +201,7 @@ class TouchScreenTest {
             verifier.assertReceivedPointerCancel(1)
 
             // ACTION_UP
+            touchScreen.sendBtnTouch(false)
             touchScreen.sendUp(0 /*id*/)
             verifier.assertReceivedUp()
         }

@@ -553,6 +553,13 @@ public abstract class BaseDefaultPermissionGrantPolicyTest extends BusinessLogic
 
     public static void appendPackagePregrantedPerms(PackageInfo packageInfo, String reason,
             boolean fixed, Set<String> pregrantedPerms, SparseArray<UidState> outUidStates) {
+        appendPackagePregrantedPerms(packageInfo, reason, fixed, false, pregrantedPerms,
+                outUidStates);
+    }
+
+    public static void appendPackagePregrantedPerms(PackageInfo packageInfo, String reason,
+            boolean fixed, boolean fromRole, Set<String> pregrantedPerms,
+            SparseArray<UidState> outUidStates) {
         final int uid = packageInfo.applicationInfo.uid;
         UidState uidState = outUidStates.get(uid);
         if (uidState == null) {
@@ -561,6 +568,12 @@ public abstract class BaseDefaultPermissionGrantPolicyTest extends BusinessLogic
         }
         for (String requestedPermission : packageInfo.requestedPermissions) {
             if (pregrantedPerms.contains(requestedPermission)) {
+                // Role permissions are not fixed. If we're already getting a fixed pregrant, don't
+                // override with a non-fixed role pregrant
+                if (fromRole && uidState.grantedPermissions.getOrDefault(requestedPermission,
+                        false)) {
+                    continue;
+                }
                 uidState.addGrantedPermission(packageInfo.packageName, reason, requestedPermission,
                         fixed);
             }
