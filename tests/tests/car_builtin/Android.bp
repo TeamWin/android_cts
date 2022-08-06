@@ -43,8 +43,9 @@ android_test {
         "cts-wm-util",
         "testng",
     ],
-
     sdk_version: "module_current",
+    min_sdk_version: "33", //CTS tests needs to run upto N-2 version to support mainline
+    target_sdk_version: "34",
     data: [
         ":CtsCarBuiltinSimpleApp",
     ],

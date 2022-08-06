@@ -339,3 +339,48 @@ android_test {
     ],
     v4_signature: true,
 }
+
+//-----------------------------------------------------------
+android_test {
+    name: "HelloVerifierAllow",
+    defaults: ["hello_world_defaults"],
+    srcs: ["src_verifier/**/*.java"],
+    manifest: "AndroidManifestVerifierAllow.xml",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "mts",
+        "cts",
+        "general-tests",
+    ],
+    v4_signature: true,
+}
+
+//-----------------------------------------------------------
+android_test {
+    name: "HelloVerifierReject",
+    defaults: ["hello_world_defaults"],
+    srcs: ["src_verifier/**/*.java"],
+    manifest: "AndroidManifestVerifierReject.xml",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "mts",
+        "cts",
+        "general-tests",
+    ],
+    v4_signature: true,
+}
+
+//-----------------------------------------------------------
+android_test {
+    name: "HelloVerifierDelayedReject",
+    defaults: ["hello_world_defaults"],
+    srcs: ["src_verifier/**/*.java"],
+    manifest: "AndroidManifestVerifierDelayedReject.xml",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "mts",
+        "cts",
+        "general-tests",
+    ],
+    v4_signature: true,
+}

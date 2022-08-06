@@ -16,14 +16,12 @@
 
 package android.car.cts;
 
-
-import static android.car.PlatformApiVersion.TIRAMISU_0;
-import static android.car.PlatformApiVersion.TIRAMISU_1;
 import static android.os.Build.VERSION_CODES.TIRAMISU;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.car.PlatformApiVersion;
+import android.car.annotation.ApiRequirements;
 import android.car.test.AbstractExpectableTestCase;
 import android.os.Parcel;
 
@@ -33,20 +31,32 @@ public final class PlatformApiVersionTest extends AbstractExpectableTestCase {
 
     @Test
     public void testTiramisu() {
-        assertWithMessage("TIRAMISU_0").that(TIRAMISU_0).isNotNull();
-        expectWithMessage("TIRAMISU_0.major").that(TIRAMISU_0.getMajorVersion())
+        PlatformApiVersion version = PlatformApiVersion.VERSION_CODES.TIRAMISU_0;
+
+        assertWithMessage("TIRAMISU_0").that(version).isNotNull();
+        expectWithMessage("TIRAMISU_0.major").that(version.getMajorVersion())
                 .isEqualTo(TIRAMISU);
-        expectWithMessage("TIRAMISU_0.minor").that(TIRAMISU_0.getMinorVersion())
+        expectWithMessage("TIRAMISU_0.minor").that(version.getMinorVersion())
                 .isEqualTo(0);
+
+        PlatformApiVersion fromEnum = ApiRequirements.PlatformVersion.TIRAMISU_0.get();
+        assertWithMessage("TIRAMISU_0 from enum").that(fromEnum).isNotNull();
+        expectWithMessage("TIRAMISU_0 from enum").that(fromEnum).isSameInstanceAs(version);
     }
 
     @Test
     public void testTiramisu_1() {
-        assertWithMessage("TIRAMISU_1").that(TIRAMISU_1).isNotNull();
-        expectWithMessage("TIRAMISU_1.major").that(TIRAMISU_1.getMajorVersion())
+        PlatformApiVersion version = PlatformApiVersion.VERSION_CODES.TIRAMISU_1;
+
+        assertWithMessage("TIRAMISU_1").that(version).isNotNull();
+        expectWithMessage("TIRAMISU_1.major").that(version.getMajorVersion())
                 .isEqualTo(TIRAMISU);
-        expectWithMessage("TIRAMISU_1.minor").that(TIRAMISU_1.getMinorVersion())
+        expectWithMessage("TIRAMISU_1.minor").that(version.getMinorVersion())
                 .isEqualTo(1);
+
+        PlatformApiVersion fromEnum = ApiRequirements.PlatformVersion.TIRAMISU_1.get();
+        assertWithMessage("TIRAMISU_1 from enum").that(fromEnum).isNotNull();
+        expectWithMessage("TIRAMISU_1 from enum").that(fromEnum).isSameInstanceAs(version);
     }
 
     @Test

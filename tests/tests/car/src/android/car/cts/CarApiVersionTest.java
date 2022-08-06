@@ -15,15 +15,13 @@
  */
 package android.car.cts;
 
-import static android.car.CarApiVersion.TIRAMISU_0;
-import static android.car.CarApiVersion.TIRAMISU_1;
-import static android.car.CarApiVersion.UPSIDE_DOWN_CAKE_0;
 import static android.os.Build.VERSION_CODES.TIRAMISU;
 import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.car.CarApiVersion;
+import android.car.annotation.ApiRequirements;
 import android.car.test.AbstractExpectableTestCase;
 import android.os.Parcel;
 
@@ -32,29 +30,44 @@ import org.junit.Test;
 public final class CarApiVersionTest extends AbstractExpectableTestCase {
 
     @Test
-    public void testTiramisu_0() {
-        assertWithMessage("TIRAMISU_0").that(TIRAMISU_1).isNotNull();
-        expectWithMessage("TIRAMISU_0.major").that(TIRAMISU_0.getMajorVersion())
+    public void testTiramisu() {
+        CarApiVersion version = CarApiVersion.VERSION_CODES.TIRAMISU_0;
+
+        assertWithMessage("TIRAMISU_0").that(version).isNotNull();
+        expectWithMessage("TIRAMISU_0.major").that(version.getMajorVersion())
                 .isEqualTo(TIRAMISU);
-        expectWithMessage("TIRAMISU_0.minor").that(TIRAMISU_0.getMinorVersion())
+        expectWithMessage("TIRAMISU_0.minor").that(version.getMinorVersion())
                 .isEqualTo(0);
+
+        CarApiVersion fromEnum = ApiRequirements.CarVersion.TIRAMISU_0.get();
+        assertWithMessage("TIRAMISU_0 from enum").that(fromEnum).isNotNull();
+        expectWithMessage("TIRAMISU_0 from enum").that(fromEnum).isSameInstanceAs(version);
+
     }
 
     @Test
     public void testTiramisu_1() {
-        assertWithMessage("TIRAMISU_1").that(TIRAMISU_1).isNotNull();
-        expectWithMessage("TIRAMISU_1.major").that(TIRAMISU_1.getMajorVersion())
+        CarApiVersion version = CarApiVersion.VERSION_CODES.TIRAMISU_1;
+
+        assertWithMessage("TIRAMISU_1").that(version).isNotNull();
+        expectWithMessage("TIRAMISU_1.major").that(version.getMajorVersion())
                 .isEqualTo(TIRAMISU);
-        expectWithMessage("TIRAMISU_1.minor").that(TIRAMISU_1.getMinorVersion())
+        expectWithMessage("TIRAMISU_1.minor").that(version.getMinorVersion())
                 .isEqualTo(1);
+
+        CarApiVersion fromEnum = ApiRequirements.CarVersion.TIRAMISU_1.get();
+        assertWithMessage("TIRAMISU_1 from enum").that(fromEnum).isNotNull();
+        expectWithMessage("TIRAMISU_1 from enum").that(fromEnum).isSameInstanceAs(version);
     }
 
     @Test
     public void testUpsideDownCake_0() {
-        assertWithMessage("UPSIDE_DOWN_CAKE_0").that(UPSIDE_DOWN_CAKE_0).isNotNull();
-        expectWithMessage("UPSIDE_DOWN_CAKE_0.major").that(UPSIDE_DOWN_CAKE_0.getMajorVersion())
+        CarApiVersion version = CarApiVersion.VERSION_CODES.UPSIDE_DOWN_CAKE_0;
+
+        assertWithMessage("UPSIDE_DOWN_CAKE_0").that(version).isNotNull();
+        expectWithMessage("UPSIDE_DOWN_CAKE_0.major").that(version.getMajorVersion())
                 .isEqualTo(UPSIDE_DOWN_CAKE);
-        expectWithMessage("UPSIDE_DOWN_CAKE_0.minor").that(UPSIDE_DOWN_CAKE_0.getMinorVersion())
+        expectWithMessage("UPSIDE_DOWN_CAKE_0.minor").that(version.getMinorVersion())
                 .isEqualTo(0);
     }
 

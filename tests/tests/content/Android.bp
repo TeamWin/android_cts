@@ -96,6 +96,11 @@ android_test {
         "HelloWorldUsingSdk1",
         "HelloWorldUsingSdk1And2",
         "HelloWorldUsingSdk3",
+        "HelloWorldNoAppStorage",
+        "HelloWorldLotsOfFlags",
+        "HelloVerifierAllow",
+        "HelloVerifierReject",
+        "HelloVerifierDelayedReject",
     ],
     per_testcase_directory: true,
     data: [

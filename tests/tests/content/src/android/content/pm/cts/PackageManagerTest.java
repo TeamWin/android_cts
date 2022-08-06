@@ -1146,9 +1146,13 @@ public class PackageManagerTest {
                 "android.content.cts.permission.TEST_GRANTED");
 
         // Check usesPermissionFlags
+        boolean requestedAccessFineLocation = false;
+        boolean requestedAccessCoarseLocation = false;
         for (int i = 0; i < pkgInfo.requestedPermissions.length; i++) {
             final String name = pkgInfo.requestedPermissions[i];
             final int flags = pkgInfo.requestedPermissionsFlags[i];
+
+            // Verify "never for location" flag
             final boolean neverForLocation = (flags
                     & PackageInfo.REQUESTED_PERMISSION_NEVER_FOR_LOCATION) != 0;
             if ("android.content.cts.permission.TEST_GRANTED".equals(name)) {
@@ -1156,7 +1160,22 @@ public class PackageManagerTest {
             } else {
                 assertFalse(name + " with flags " + flags, neverForLocation);
             }
+
+            // Verify "implicit" flag
+            final boolean hasImplicitFlag =
+                    (flags & PackageInfo.REQUESTED_PERMISSION_IMPLICIT) != 0;
+            if ("android.permission.ACCESS_FINE_LOCATION".equals(name)) {
+                assertFalse(name + " with flags " + flags, hasImplicitFlag);
+                requestedAccessFineLocation = true;
+            }
+            if ("android.permission.ACCESS_COARSE_LOCATION".equals(name)) {
+                assertTrue(name + " with flags " + flags, hasImplicitFlag);
+                requestedAccessCoarseLocation = true;
+            }
         }
+        assertTrue("expected ACCESS_FINE_LOCATION to be requested", requestedAccessFineLocation);
+        assertTrue("expected ACCESS_COARSE_LOCATION to be requested",
+                requestedAccessCoarseLocation);
 
         // Check declared permissions
         PermissionInfo declaredPermission = (PermissionInfo) findPackageItemOrFail(

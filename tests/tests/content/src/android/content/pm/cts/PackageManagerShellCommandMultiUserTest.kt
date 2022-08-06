@@ -38,6 +38,7 @@ import com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_U
 import com.android.bedstead.nene.users.UserReference
 import com.android.compatibility.common.util.SystemUtil
 import com.google.common.truth.Truth.assertThat
+import java.io.File
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -48,7 +49,6 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.File
 
 @EnsureHasSecondaryUser
 @RunWith(BedsteadJUnit4::class)
@@ -128,7 +128,7 @@ class PackageManagerShellCommandMultiUserTest {
         // Set the test override to invalid.
         setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest", "invalid")
         setSystemProperty("debug.pm.prune_unused_shared_libraries_delay", "invalid")
-        setSystemProperty("debug.pm.adb_verifier_override_package", "invalid")
+        setSystemProperty("debug.pm.adb_verifier_override_packages", "invalid")
     }
 
     @Test

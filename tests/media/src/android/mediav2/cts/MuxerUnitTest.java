@@ -151,22 +151,6 @@ public class MuxerUnitTest {
         }
 
         @Test
-        @Ignore("TODO(b/146417874)")
-        public void testIfWriteOnlyFdIsRejected() {
-            MediaMuxer muxer = null;
-            try (FileOutputStream fOut = new FileOutputStream(mOutMedia)) {
-                muxer = new MediaMuxer(fOut.getFD(), MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM);
-                fail("fd with write only attribute accepted by constructor");
-            } catch (Exception e) {
-                // expected
-            } finally {
-                if (null != muxer) muxer.release();
-            }
-            assertTrue(mOutMedia.delete());
-        }
-
-        @Test
-        @Ignore("TODO(b/146417874)")
         public void testIfNonSeekableFdIsRejected() {
             MediaMuxer muxer = null;
             try {
@@ -765,8 +749,7 @@ public class MuxerUnitTest {
 
         private native boolean nativeTestIfInvalidFdIsRejected();
         private native boolean nativeTestIfReadOnlyFdIsRejected(String outPath);
-        private native boolean nativeTestIfWriteOnlyFdIsRejected(String outPath);
-        private native boolean nativeTestIfNonSeekableFdIsRejected(String outPath);
+        private native boolean nativeTestIfNonSeekableFdIsRejected();
         private native boolean nativeTestIfInvalidOutputFormatIsRejected(String outPath);
 
         private native boolean nativeTestIfInvalidMediaFormatIsRejected(String outPath);
@@ -790,31 +773,21 @@ public class MuxerUnitTest {
         private native boolean nativeTestIfWriteSampleDataSucceedsAfterStop(String outPath);
 
         @Test
-        @Ignore("TODO(b/146417874)")
         public void testIfInvalidFdIsRejected() {
             assertTrue(nativeTestIfInvalidFdIsRejected());
         }
 
         @Test
-        @Ignore("TODO(b/146417874)")
         public void testIfReadOnlyFdIsRejected() {
             assertTrue(nativeTestIfReadOnlyFdIsRejected(mOutLoc));
         }
 
         @Test
-        @Ignore("TODO(b/146417874)")
-        public void testIfWriteOnlyFdIsRejected() {
-            assertTrue(nativeTestIfWriteOnlyFdIsRejected(mOutLoc));
-        }
-
-        @Test
-        @Ignore("TODO(b/146417874)")
         public void testIfNonSeekableFdIsRejected() {
-            assertTrue(nativeTestIfNonSeekableFdIsRejected(mOutLoc));
+            assertTrue(nativeTestIfNonSeekableFdIsRejected());
         }
 
         @Test
-        @Ignore("TODO(b/146417874)")
         public void testIfInvalidOutputFormatIsRejected() {
             assertTrue(nativeTestIfInvalidOutputFormatIsRejected(mOutLoc));
         }
