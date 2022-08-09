@@ -36,16 +36,19 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.sysprop.BluetoothProperties;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.CddTest;
 
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
@@ -518,6 +521,75 @@ public class BluetoothAdapterTest extends AndroidTestCase {
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
         // Verify throws RuntimeException when trying to save sysprop for later (permission denied)
         assertThrows(RuntimeException.class, () -> mAdapter.clearBluetooth());
+    }
+
+    @CddTest(requirements = {"3.5/C-0-9"})
+    public void test_getProfileProxy() {
+        if (!mHasBluetooth) return;
+
+        BluetoothProfile.ServiceListener listener = new BluetoothProfile.ServiceListener() {
+            @Override
+            public void onServiceConnected(int profile, BluetoothProfile proxy) { }
+            @Override
+            public void onServiceDisconnected(int profile) { }
+        };
+
+        assertFalse(mAdapter.getProfileProxy(mContext, null, BluetoothProfile.HEADSET));
+        assertFalse(mAdapter.getProfileProxy(null, listener, BluetoothProfile.HEADSET));
+
+        // Profiles in BluetoothProperties that are not changed by Developer options in Settings app
+        assertEquals(BluetoothProperties.isProfileHfpAgEnabled().orElse(false).booleanValue(),
+                mAdapter.getProfileProxy(mContext, listener, BluetoothProfile.HEADSET));
+        assertEquals(BluetoothProperties.isProfileA2dpSourceEnabled().orElse(false).booleanValue(),
+                mAdapter.getProfileProxy(mContext, listener, BluetoothProfile.A2DP));
+        assertEquals(BluetoothProperties.isProfileA2dpSinkEnabled().orElse(false).booleanValue(),
+                mAdapter.getProfileProxy(mContext, listener, BluetoothProfile.A2DP_SINK));
+        assertEquals(
+                BluetoothProperties.isProfileAvrcpControllerEnabled().orElse(false).booleanValue(),
+                mAdapter.getProfileProxy(mContext, listener, BluetoothProfile.AVRCP_CONTROLLER));
+        assertEquals(BluetoothProperties.isProfileHidHostEnabled().orElse(false).booleanValue(),
+                mAdapter.getProfileProxy(mContext, listener, BluetoothProfile.HID_HOST));
+        assertEquals(BluetoothProperties.isProfilePanNapEnabled().orElse(false)
+                || BluetoothProperties.isProfilePanPanuEnabled().orElse(false),
+                mAdapter.getProfileProxy(mContext, listener, BluetoothProfile.PAN));
+        assertEquals(BluetoothProperties.isProfilePbapServerEnabled().orElse(false).booleanValue(),
+                mAdapter.getProfileProxy(mContext, listener, BluetoothProfile.PBAP));
+        assertEquals(BluetoothProperties.isProfileMapServerEnabled().orElse(false).booleanValue(),
+                mAdapter.getProfileProxy(mContext, listener, BluetoothProfile.MAP));
+        assertEquals(BluetoothProperties.isProfileHfpHfEnabled().orElse(false).booleanValue(),
+                mAdapter.getProfileProxy(mContext, listener, BluetoothProfile.HEADSET_CLIENT));
+        assertEquals(BluetoothProperties.isProfileSapServerEnabled().orElse(false).booleanValue(),
+                mAdapter.getProfileProxy(mContext, listener, BluetoothProfile.SAP));
+        assertEquals(BluetoothProperties.isProfilePbapClientEnabled().orElse(false).booleanValue(),
+                mAdapter.getProfileProxy(mContext, listener, BluetoothProfile.PBAP_CLIENT));
+        assertEquals(BluetoothProperties.isProfileMapClientEnabled().orElse(false).booleanValue(),
+                mAdapter.getProfileProxy(mContext, listener, BluetoothProfile.MAP_CLIENT));
+        assertEquals(BluetoothProperties.isProfileHidDeviceEnabled().orElse(false).booleanValue(),
+                mAdapter.getProfileProxy(mContext, listener, BluetoothProfile.HID_DEVICE));
+        assertEquals(
+                BluetoothProperties.isProfileAshaCentralEnabled().orElse(false).booleanValue(),
+                mAdapter.getProfileProxy(mContext, listener, BluetoothProfile.HEARING_AID));
+
+        boolean leAudioBroadcastSourceSupported = (mAdapter.isLeAudioBroadcastSourceSupported()
+                == BluetoothStatusCodes.FEATURE_SUPPORTED);
+        assertEquals(leAudioBroadcastSourceSupported,
+                mAdapter.getProfileProxy(mContext, listener, BluetoothProfile.LE_AUDIO_BROADCAST));
+
+        boolean leAudioBroadcastAssistantSupported =
+                mAdapter.isLeAudioBroadcastAssistantSupported()
+                        == BluetoothStatusCodes.FEATURE_SUPPORTED;
+        assertEquals(leAudioBroadcastAssistantSupported, mAdapter.getProfileProxy(
+                mContext, listener, BluetoothProfile.LE_AUDIO_BROADCAST_ASSISTANT));
+
+        // Profiles in BluetoothProperties that can be changed by Developer options in Settings app
+        boolean leAudioSupported = (mAdapter.isLeAudioSupported()
+                == BluetoothStatusCodes.FEATURE_SUPPORTED);
+        assertEquals(leAudioSupported, mAdapter.getProfileProxy(
+                mContext, listener, BluetoothProfile.LE_AUDIO));
+        assertEquals(leAudioSupported, mAdapter.getProfileProxy(
+                mContext, listener, BluetoothProfile.VOLUME_CONTROL));
+        assertEquals(leAudioSupported, mAdapter.getProfileProxy(
+                mContext, listener, BluetoothProfile.CSIP_SET_COORDINATOR));
     }
 
     public void test_BluetoothProfile_getConnectionStateName() {

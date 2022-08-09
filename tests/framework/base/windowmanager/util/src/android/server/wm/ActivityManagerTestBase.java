@@ -1150,10 +1150,6 @@ public abstract class ActivityManagerTestBase {
         return sIsTablet;
     }
 
-    protected boolean isOperatorTierDevice() {
-        return hasDeviceFeature("com.google.android.tv.operator_tier");
-    }
-
     protected void waitAndAssertActivityState(ComponentName activityName,
             String state, String message) {
         mWmState.waitForActivityState(activityName, state);

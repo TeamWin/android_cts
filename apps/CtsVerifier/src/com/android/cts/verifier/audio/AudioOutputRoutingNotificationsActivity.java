@@ -32,6 +32,7 @@ import android.widget.TextView;
 
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
+import com.android.cts.verifier.audio.audiolib.AudioDeviceUtils;
 import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.R;
 
@@ -131,12 +132,8 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
             String msg = mContext.getResources().getString(
                     R.string.audio_routingnotification_trackRoutingMsg);
             AudioDeviceInfo routedDevice = audioTrack.getRoutedDevice();
-            CharSequence deviceName = routedDevice != null ? routedDevice.getProductName() : "none";
-            mConnectedPeripheralName = deviceName.toString();
-            int deviceType = routedDevice != null ? routedDevice.getType() : -1;
-            textView.setText(msg + " - " +
-                             deviceName + " [0x" + Integer.toHexString(deviceType) + "]" +
-                             " - " + mNumRoutingNotifications);
+            mConnectedPeripheralName = AudioDeviceUtils.formatDeviceName(routedDevice);
+            textView.setText(msg + ": " + mConnectedPeripheralName);
             mRoutingNotificationReceived = true;
             calculatePass();
         }

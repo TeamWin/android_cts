@@ -33,6 +33,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -62,6 +63,7 @@ import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+import com.android.compatibility.common.util.GestureNavRule;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
@@ -69,6 +71,7 @@ import com.android.cts.mockime.MockImeSession;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -95,6 +98,9 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     private Context mContext;
     private int mHwInitialState;
     private boolean mShouldRestoreInitialHwState;
+
+    @ClassRule
+    public static GestureNavRule sGestureNavRule = new GestureNavRule();
 
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
@@ -554,6 +560,119 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     .getReturnBooleanValue());
 
             TestUtils.injectStylusUpEvent(editText, endX, endY);
+        }
+    }
+
+    /**
+     * Inject Stylus events on top of focused editor and verify Handwriting is started and then
+     * inject events on navbar to swipe to home and make sure motionEvents are consumed by
+     * Handwriting window.
+     */
+    @Test
+    public void testStylusSession_stylusWouldNotTriggerNavbarGestures() throws Exception {
+        sGestureNavRule.assumeGestureNavigationMode();
+
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+
+            addVirtualStylusIdForTestSession();
+            final int touchSlop = getTouchSlop();
+            final int startX = editText.getWidth() / 2;
+            final int startY = editText.getHeight() / 2;
+            final int endX = startX + 2 * touchSlop;
+            final int endY = startY;
+            final int number = 5;
+            TestUtils.injectStylusDownEvent(editText, startX, startY);
+            TestUtils.injectStylusMoveEvents(editText, startX, startY, endX, endY, number);
+            // Handwriting should already be initiated before ACTION_UP.
+            // keyboard shouldn't show up.
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+            // Handwriting should start
+            expectEvent(
+                    stream,
+                    editorMatcher("onStartStylusHandwriting", marker),
+                    TIMEOUT);
+            // Inject stylus swipe up on navbar.
+            TestUtils.injectNavBarToHomeGestureEvents(
+                    ((Activity) editText.getContext()), MotionEvent.TOOL_TYPE_STYLUS);
+
+            // Handwriting is finished if navigation gesture is executed.
+            // Make sure handwriting isn't finished.
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onFinishStylusHandwriting", marker),
+                    TIMEOUT_1_S);
+        }
+    }
+
+    /**
+     * Inject Stylus events on top of focused editor and verify Handwriting is started and then
+     * inject finger touch events on navbar to swipe to home and make sure user can swipe to home.
+     */
+    @Test
+    public void testStylusSession_fingerTriggersNavbarGestures() throws Exception {
+        sGestureNavRule.assumeGestureNavigationMode();
+
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+
+            addVirtualStylusIdForTestSession();
+            final int touchSlop = getTouchSlop();
+            final int startX = editText.getWidth() / 2;
+            final int startY = editText.getHeight() / 2;
+            final int endX = startX + 2 * touchSlop;
+            final int endY = startY;
+            final int number = 5;
+            TestUtils.injectStylusDownEvent(editText, startX, startY);
+            TestUtils.injectStylusMoveEvents(editText, startX, startY, endX, endY, number);
+            // Handwriting should already be initiated before ACTION_UP.
+            // keyboard shouldn't show up.
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+            // Handwriting should start
+            expectEvent(
+                    stream,
+                    editorMatcher("onStartStylusHandwriting", marker),
+                    TIMEOUT);
+            // Inject finger swipe up on navbar.
+            TestUtils.injectNavBarToHomeGestureEvents(
+                    ((Activity) editText.getContext()), MotionEvent.TOOL_TYPE_FINGER);
+
+            // Handwriting is finished if navigation gesture is executed.
+            // Make sure handwriting is finished to ensure swipe to home works.
+            expectEvent(
+                    stream,
+                    editorMatcher("onFinishStylusHandwriting", marker),
+                    TIMEOUT_1_S);
         }
     }
 

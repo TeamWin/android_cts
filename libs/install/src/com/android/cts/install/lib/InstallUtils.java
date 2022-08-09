@@ -52,6 +52,8 @@ public class InstallUtils {
     private static final int NUM_MAX_POLLS = 5;
     private static final int POLL_WAIT_TIME_MILLIS = 200;
     private static final long GET_UIAUTOMATION_TIMEOUT_MS = 60000;
+    private static final String CLASS_NAME_PROCESS_BROADCAST =
+            "com.android.cts.install.lib.testapp.ProcessBroadcast";
 
     private static UiAutomation getUiAutomation() {
         final long start = SystemClock.uptimeMillis();
@@ -138,9 +140,9 @@ public class InstallUtils {
     public static void assertStatusSuccess(Intent result) {
         int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
                 PackageInstaller.STATUS_FAILURE);
-        if (status == -1) {
+        if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
             throw new AssertionError("PENDING USER ACTION");
-        } else if (status > 0) {
+        } else if (status != PackageInstaller.STATUS_SUCCESS) {
             String message = result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
             throw new AssertionError(message == null ? "UNKNOWN FAILURE" : message);
         }
@@ -218,8 +220,7 @@ public class InstallUtils {
      */
     public static void processUserData(String packageName) {
         Intent intent = new Intent();
-        intent.setComponent(new ComponentName(packageName,
-                "com.android.cts.install.lib.testapp.ProcessUserData"));
+        intent.setComponent(new ComponentName(packageName, CLASS_NAME_PROCESS_BROADCAST));
         intent.setAction("PROCESS_USER_DATA");
         Context context = InstrumentationRegistry.getTargetContext();
 
@@ -267,8 +268,7 @@ public class InstallUtils {
      */
     public static int getUserDataVersion(String packageName) {
         Intent intent = new Intent();
-        intent.setComponent(new ComponentName(packageName,
-                "com.android.cts.install.lib.testapp.ProcessUserData"));
+        intent.setComponent(new ComponentName(packageName, CLASS_NAME_PROCESS_BROADCAST));
         intent.setAction("GET_USER_DATA_VERSION");
         Context context = InstrumentationRegistry.getTargetContext();
 
@@ -301,6 +301,28 @@ public class InstallUtils {
         }
 
         return noResponse;
+    }
+
+    /**
+     * Tells the app to request audio focus.
+     */
+    public static void requestAudioFocus(String packageName) {
+        Intent intent = new Intent();
+        intent.setComponent(new ComponentName(packageName, CLASS_NAME_PROCESS_BROADCAST));
+        intent.setAction("REQUEST_AUDIO_FOCUS");
+        Context context = InstrumentationRegistry.getTargetContext();
+        context.sendBroadcast(intent);
+    }
+
+    /**
+     * Tells the app to abandon audio focus.
+     */
+    public static void abandonAudioFocus(String packageName) {
+        Intent intent = new Intent();
+        intent.setComponent(new ComponentName(packageName, CLASS_NAME_PROCESS_BROADCAST));
+        intent.setAction("ABANDON_AUDIO_FOCUS");
+        Context context = InstrumentationRegistry.getTargetContext();
+        context.sendBroadcast(intent);
     }
 
     /**

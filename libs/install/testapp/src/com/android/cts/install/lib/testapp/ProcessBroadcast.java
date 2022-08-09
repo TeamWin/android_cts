@@ -20,6 +20,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
 import android.os.Process;
 import android.system.ErrnoException;
 import android.system.Os;
@@ -32,10 +34,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 /**
- * A broadcast receiver to check for and update user app data version
- * and user handle compatibility.
+ * A broadcast receiver to handle intents sent by tests.
+ *
+ * PROCESS_USER_DATA: check for and update user app data version and user handle compatibility.
+ * GET_USER_DATA_VERSION: return user app data version
+ * REQUEST_AUDIO_FOCUS: request audio focus
+ * ABANDON_AUDIO_FOCUS: abandon audio focus
  */
-public class ProcessUserData extends BroadcastReceiver {
+public class ProcessBroadcast extends BroadcastReceiver {
 
     /**
      * Exception thrown in case of issue with user data.
@@ -52,7 +58,8 @@ public class ProcessUserData extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (intent.getAction().equals("PROCESS_USER_DATA")) {
+        final String action = intent.getAction();
+        if ("PROCESS_USER_DATA".equals(action)) {
             try {
                 processUserData(context);
                 setResultCode(1);
@@ -60,9 +67,27 @@ public class ProcessUserData extends BroadcastReceiver {
                 setResultCode(0);
                 setResultData(e.getMessage());
             }
-        } else if (intent.getAction().equals("GET_USER_DATA_VERSION")) {
+        } else if ("GET_USER_DATA_VERSION".equals(action)) {
             setResultCode(getUserDataVersion(context));
+        } else if ("REQUEST_AUDIO_FOCUS".equals(action)) {
+            requestAudioFocus(context);
+        } else if ("ABANDON_AUDIO_FOCUS".equals(action)) {
+            abandonAudioFocus(context);
         }
+    }
+
+    private void requestAudioFocus(Context context) {
+        AudioManager audioManager = context.getSystemService(AudioManager.class);
+        final AudioFocusRequest afr =
+                new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN).build();
+        audioManager.requestAudioFocus(afr);
+    }
+
+    private void abandonAudioFocus(Context context) {
+        AudioManager audioManager = context.getSystemService(AudioManager.class);
+        final AudioFocusRequest afr =
+                new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN).build();
+        audioManager.abandonAudioFocusRequest(afr);
     }
 
     /**
