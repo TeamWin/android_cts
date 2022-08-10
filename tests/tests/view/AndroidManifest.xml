@@ -423,6 +423,7 @@
         </activity>
 
         <activity android:name="android.view.cts.input.InputDeviceKeyLayoutMapTestActivity"
+             android:configChanges="keyboardHidden|navigation"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

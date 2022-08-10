@@ -22,13 +22,19 @@ import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.SystemClock;
 import android.view.PixelCopy;
-import android.view.Surface;
-import android.view.Window;
 import android.view.PixelCopy.OnPixelCopyFinishedListener;
+import android.view.Surface;
 import android.view.SurfaceView;
+import android.view.View;
+import android.view.Window;
+
+import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 
 public class SynchronousPixelCopy implements OnPixelCopyFinishedListener {
+    private static final long TIMEOUT_MILLIS = 1000;
     private static Handler sHandler;
     static {
         HandlerThread thread = new HandlerThread("PixelCopyHelper");
@@ -81,10 +87,16 @@ public class SynchronousPixelCopy implements OnPixelCopyFinishedListener {
     }
 
     private int getResultLocked() {
-        try {
-            this.wait(250);
-        } catch (InterruptedException e) {
-            fail("PixelCopy request didn't complete within 250ms");
+        long now = SystemClock.uptimeMillis();
+        final long end = now + TIMEOUT_MILLIS;
+        while (mStatus == -1 && now <= end) {
+            try {
+                this.wait(end - now);
+            } catch (InterruptedException e) { }
+            now = SystemClock.uptimeMillis();
+        }
+        if (mStatus == -1) {
+            fail("PixelCopy request didn't complete within " + TIMEOUT_MILLIS + "ms");
         }
         return mStatus;
     }
@@ -95,5 +107,107 @@ public class SynchronousPixelCopy implements OnPixelCopyFinishedListener {
             mStatus = copyResult;
             this.notify();
         }
+    }
+
+    private static final class BlockingResult implements Executor,
+            Consumer<PixelCopy.CopyResult> {
+        private PixelCopy.CopyResult mResult;
+
+        public PixelCopy.CopyResult getResult() {
+            synchronized (this) {
+                long now = SystemClock.uptimeMillis();
+                final long end = now + TIMEOUT_MILLIS;
+                while (mResult == null && now <= end) {
+                    try {
+                        this.wait(end - now);
+                    } catch (InterruptedException e) { }
+                    now = SystemClock.uptimeMillis();
+                }
+                if (mResult == null) {
+                    fail("PixelCopy request didn't complete within " + TIMEOUT_MILLIS + "ms");
+                }
+                return mResult;
+            }
+        }
+
+        @Override
+        public void execute(Runnable command) {
+            command.run();
+        }
+
+        @Override
+        public void accept(PixelCopy.CopyResult copyResult) {
+            synchronized (this) {
+                mResult = copyResult;
+                this.notify();
+            }
+        }
+    }
+
+    /** happy lint */
+    public static PixelCopy.CopyResult copySurface(Surface source,
+            Consumer<PixelCopy.Request> func) {
+        BlockingResult resultWaiter = new BlockingResult();
+        PixelCopy.Request request = PixelCopy.ofSurface(source, resultWaiter, resultWaiter);
+        if (func != null) {
+            func.accept(request);
+        }
+        request.request();
+        return resultWaiter.getResult();
+    }
+
+    /** happy lint */
+    public static PixelCopy.CopyResult copySurface(Surface source) {
+        return copySurface(source, null);
+    }
+
+    /** happy lint */
+    public static PixelCopy.CopyResult copySurface(SurfaceView source,
+            Consumer<PixelCopy.Request> func) {
+        BlockingResult resultWaiter = new BlockingResult();
+        PixelCopy.Request request = PixelCopy.ofSurface(source, resultWaiter, resultWaiter);
+        if (func != null) {
+            func.accept(request);
+        }
+        request.request();
+        return resultWaiter.getResult();
+    }
+
+    /** happy lint */
+    public static PixelCopy.CopyResult copySurface(SurfaceView source) {
+        return copySurface(source, null);
+    }
+
+    /** happy lint */
+    public static PixelCopy.CopyResult copyWindow(View source, Consumer<PixelCopy.Request> func) {
+        BlockingResult resultWaiter = new BlockingResult();
+        PixelCopy.Request request = PixelCopy.ofWindow(source, resultWaiter, resultWaiter);
+        if (func != null) {
+            func.accept(request);
+        }
+        request.request();
+        return resultWaiter.getResult();
+    }
+
+    /** happy lint */
+    public static PixelCopy.CopyResult copyWindow(View source) {
+        return copyWindow(source, null);
+    }
+
+    /** happy lint */
+    public static PixelCopy.CopyResult copyWindow(Window source,
+            Consumer<PixelCopy.Request> func) {
+        BlockingResult resultWaiter = new BlockingResult();
+        PixelCopy.Request request = PixelCopy.ofWindow(source, resultWaiter, resultWaiter);
+        if (func != null) {
+            func.accept(request);
+        }
+        request.request();
+        return resultWaiter.getResult();
+    }
+
+    /** happy lint */
+    public static PixelCopy.CopyResult copyWindow(Window source) {
+        return copyWindow(source, null);
     }
 }

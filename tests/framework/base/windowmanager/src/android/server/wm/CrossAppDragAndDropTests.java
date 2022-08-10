@@ -37,8 +37,14 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState.Task;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject;
+import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiSelector;
 import android.util.Log;
 import android.view.Display;
+
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -231,6 +237,8 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
             moveActivitiesToSplitScreen(sourceComponentName, targetComponentName);
         }
 
+        clearTargetSdkWarning();
+
         Point p1 = getWindowCenter(sourceComponentName);
         assertNotNull(p1);
         Point p2 = getWindowCenter(targetComponentName);
@@ -286,6 +294,18 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
             assertTrue("Missing " + resultKey, results.containsKey(resultKey));
             assertEquals(resultKey + " result mismatch,", expectedResult,
                     results.get(resultKey));
+        }
+    }
+
+    private static void clearTargetSdkWarning() {
+        try {
+            // Clear the target SDK warning message if it's there
+            UiDevice.getInstance(getInstrumentation());
+            waitForIdle();
+            UiObject okButton = new UiObject(new UiSelector().resourceId("android:id/button1"));
+            okButton.click();
+        } catch (UiObjectNotFoundException e) {
+            // Nothing to clear if the button isn't there
         }
     }
 

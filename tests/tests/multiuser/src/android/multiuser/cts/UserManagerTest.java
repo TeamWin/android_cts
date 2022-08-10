@@ -27,6 +27,7 @@ import static android.os.UserManager.USER_TYPE_FULL_SECONDARY;
 import static android.os.UserManager.USER_TYPE_PROFILE_MANAGED;
 
 import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
+import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -55,10 +56,12 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -74,6 +77,8 @@ import java.util.stream.Collectors;
 
 @RunWith(BedsteadJUnit4.class)
 public final class UserManagerTest {
+
+    private static final String TAG = UserManagerTest.class.getSimpleName();
 
     @ClassRule
     @Rule
@@ -143,12 +148,16 @@ public final class UserManagerTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.os.UserManager#isUserForeground"})
+    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
+    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
     public void testIsUserForeground_currentUser() throws Exception {
         assertWithMessage("isUserForeground() for current user")
                 .that(mUserManager.isUserForeground()).isTrue();
     }
 
     @Test
+    @ApiTest(apis = {"android.os.UserManager#isUserForeground"})
     @RequireRunOnSecondaryUser(switchedToUser = FALSE)
     public void testIsUserForeground_backgroundUser() throws Exception {
         assertWithMessage("isUserForeground() for bg user (%s)", sContext.getUser())
@@ -156,11 +165,41 @@ public final class UserManagerTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.os.UserManager#isUserForeground"})
     @RequireRunOnWorkProfile // TODO(b/239961027): should be @RequireRunOnProfile instead
     public void testIsUserForeground_profileOfCurrentUser() throws Exception {
         assertWithMessage("isUserForeground() for profile(%s) of current user", sContext.getUser())
                 .that(mUserManager.isUserForeground()).isFalse();
     }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#isUserVisible"})
+    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
+    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
+    public void testIsUserVisible_currentUser() throws Exception {
+        assertWithMessage("isUserVisible() for current user (id=%s)", sContext.getUser())
+                .that(mUserManager.isUserVisible()).isTrue();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#isUserVisible"})
+    @RequireRunOnSecondaryUser(switchedToUser = FALSE)
+    public void testIsUserVisible_backgroundUser() throws Exception {
+        assertWithMessage("isUserVisible() for background user (id=%s)", sContext.getUser())
+                .that(mUserManager.isUserVisible()).isFalse();
+    }
+
+    // TODO(b/239824814): add testIsUserVisible_ tests for:
+    // - running profile of current user
+    // - stopped profile of current user
+    // - running profile of background user on primary display
+    // - stopped profile of background user on primary display
+    // - background user associated with secondary display and
+    //   - running profile of it
+    //   - stopped profile of it
+    // - when calling user doesn't match userId
+    //   - caller has INTERACT_ACROSS_USER permission
+    //   - caller doesn't have INTERACT_ACROSS_USER permission
 
     @Test
     public void testCloneProfile() throws Exception {

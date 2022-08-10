@@ -21,7 +21,7 @@ import static android.os.ParcelFileDescriptor.MODE_CREATE;
 import static android.os.ParcelFileDescriptor.MODE_READ_WRITE;
 import static android.scopedstorage.cts.lib.RedactionTestHelper.assertExifMetadataMatch;
 import static android.scopedstorage.cts.lib.RedactionTestHelper.assertExifMetadataMismatch;
-import static android.scopedstorage.cts.lib.RedactionTestHelper.getExifMetadata;
+import static android.scopedstorage.cts.lib.RedactionTestHelper.getExifMetadataFromFile;
 import static android.scopedstorage.cts.lib.RedactionTestHelper.getExifMetadataFromRawResource;
 import static android.scopedstorage.cts.lib.TestUtils.BYTES_DATA2;
 import static android.scopedstorage.cts.lib.TestUtils.STR_DATA2;
@@ -135,6 +135,7 @@ import android.os.Process;
 import android.os.storage.StorageManager;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.scopedstorage.cts.lib.RedactionTestHelper;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.StructStat;
@@ -876,7 +877,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
                 // EXIF tags and might misleadingly think there are not tags to redact
                 out.getFD().sync();
 
-                HashMap<String, String> exif = getExifMetadata(jpgFile);
+                HashMap<String, String> exif = getExifMetadataFromFile(jpgFile);
                 assertExifMetadataMatch(exif, originalExif);
 
                 HashMap<String, String> exifFromTestApp =
@@ -1325,7 +1326,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
                 // Sync file to disk to ensure file is fully written to the lower fs.
                 out.getFD().sync();
             }
-            HashMap<String, String> exif = getExifMetadata(imgFile);
+            HashMap<String, String> exif = getExifMetadataFromFile(imgFile);
             assertExifMetadataMatch(exif, originalExif);
 
             // Install test app
@@ -1519,6 +1520,10 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
 
             // Assert we can read from the file
             assertFileContent(otherAppImageFile, BYTES_DATA1);
+
+            // Assert has access to redacted information
+            RedactionTestHelper.assertConsistentNonRedactedAccess(otherAppImageFile,
+                    R.raw.img_with_metadata);
 
             // Assert we can delete the file
             assertThat(otherAppImageFile.delete()).isTrue();

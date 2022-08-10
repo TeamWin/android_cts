@@ -92,6 +92,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.storage.StorageManager;
 import android.platform.test.annotations.AppModeInstant;
 import android.provider.MediaStore;
+import android.scopedstorage.cts.lib.RedactionTestHelper;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.util.Log;
@@ -221,6 +222,25 @@ public class ScopedStorageTest {
         assertCanCreateFile(topLevelPdf);
         // It can even create a music file in Pictures
         assertCanCreateFile(musicFileInMovies);
+    }
+
+    @Test
+    public void testManageExternalStorageCanReadRedactedContents() throws Exception {
+        pollForManageExternalStorageAllowed();
+
+        final File otherAppImage = new File(getDcimDir(), "other" + IMAGE_FILE_NAME);
+
+        try {
+            // Create file as another app
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppImage.getPath())).isTrue();
+
+            // Assert has access to redacted information
+            RedactionTestHelper.assertConsistentNonRedactedAccess(otherAppImage,
+                    R.raw.img_with_metadata);
+
+        } finally {
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppImage.getAbsolutePath());
+        }
     }
 
     @Test

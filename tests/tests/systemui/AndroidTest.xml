@@ -31,6 +31,11 @@
         <option name="test-file-name" value="CtsVpnFirewallApp.apk" />
     </target_preparer>
 
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="input keyevent KEYCODE_WAKEUP" />
+        <option name="run-command" value="wm dismiss-keyguard" />
+    </target_preparer>
+
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.systemui.cts" />
         <option name="runtime-hint" value="10m19s" />

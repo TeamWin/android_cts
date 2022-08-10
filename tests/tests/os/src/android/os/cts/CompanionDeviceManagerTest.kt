@@ -46,6 +46,7 @@ import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionId
 import com.android.compatibility.common.util.ThrowingSupplier
 import com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject
 import com.android.compatibility.common.util.click
+import java.io.Serializable
 import org.hamcrest.CoreMatchers.containsString
 import org.junit.After
 import org.junit.Assert.assertFalse
@@ -57,7 +58,6 @@ import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.Serializable
 
 /**
  * Test for [CompanionDeviceManager]
@@ -195,34 +195,6 @@ class CompanionDeviceManagerTest {
 
         deviceForNotifications!!.click()
 
-        waitForIdle()
-    }
-
-    @AppModeFull(reason = "Companion API for non-instant apps only")
-    @Test
-    fun testRequestPermissionTransfer() {
-        installApk("--user $userId $TEST_APP_APK_LOCATION")
-        startApp(TEST_APP_PACKAGE_NAME)
-
-        uiDevice.waitAndFind(By.desc("name filter")).text = ""
-        uiDevice.waitForIdle()
-
-        click("Associate")
-
-        uiDevice.wait(Until.findObject(DEVICE_LIST_SELECTOR), 20_000)
-                ?.findObject(DEVICE_LIST_ITEM_SELECTOR)
-                ?.click()
-                ?: throw AssertionError("Empty device list")
-        waitForIdle()
-
-        val allowSystemDataTransferButton = getEventually({
-            click("Request permission transfer")
-            waitFindNode(hasIdThat(containsString("btn_positive")),
-                    failMsg = "The system data transfer dialog is not showing up",
-                    timeoutMs = 5_000)
-                    .assertNotNull { "System data transfer dialog is not implemented" }
-        }, 60_000)
-        allowSystemDataTransferButton!!.click()
         waitForIdle()
     }
 

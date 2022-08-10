@@ -16,39 +16,36 @@
 
 package android.security.cts;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
+
 import com.android.compatibility.common.util.MetricsReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
+import com.android.sts.common.HostsideMainlineModuleDetector;
+import com.android.sts.common.PocPusher;
+import com.android.sts.common.RegexUtils;
 import com.android.sts.common.tradefed.testtype.StsExtraBusinessLogicHostTestBase;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
-import com.android.tradefed.testtype.IBuildReceiver;
-import com.android.tradefed.testtype.IAbi;
-import com.android.tradefed.testtype.IAbiReceiver;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.device.NativeDevice;
 import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.ddmlib.Log;
+import com.android.tradefed.testtype.IAbi;
 
-import org.junit.rules.TestName;
-import org.junit.Rule;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.runner.RunWith;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 
-import java.util.Map;
-import java.util.HashMap;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-import java.util.concurrent.Callable;
 import java.math.BigInteger;
-
-import static org.junit.Assert.*;
-import static org.junit.Assume.*;
-import static org.hamcrest.core.Is.is;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SecurityTestCase extends StsExtraBusinessLogicHostTestBase {
 

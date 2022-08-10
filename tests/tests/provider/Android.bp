@@ -55,6 +55,8 @@ android_test {
         ":CtsProviderGalleryTestApp",
         ":CtsProviderMultiAuthorityApp"
     ],
+
+    host_required: ["compatibility-host-provider-preconditions"],
 }
 
 filegroup {

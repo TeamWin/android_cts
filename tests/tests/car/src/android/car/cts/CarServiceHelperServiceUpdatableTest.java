@@ -20,8 +20,8 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.hamcrest.CoreMatchers.containsStringIgnoringCase;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
-import static org.testng.Assert.fail;
 
 import android.app.UiAutomation;
 import android.car.Car;

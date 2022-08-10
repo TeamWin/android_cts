@@ -17,21 +17,22 @@
 package android.car.cts;
 
 import static android.os.Build.VERSION_CODES.TIRAMISU;
+import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.car.PlatformApiVersion;
+import android.car.PlatformVersion;
 import android.car.annotation.ApiRequirements;
 import android.car.test.AbstractExpectableTestCase;
 import android.os.Parcel;
 
 import org.junit.Test;
 
-public final class PlatformApiVersionTest extends AbstractExpectableTestCase {
+public final class PlatformVersionTest extends AbstractExpectableTestCase {
 
     @Test
-    public void testTiramisu() {
-        PlatformApiVersion version = PlatformApiVersion.VERSION_CODES.TIRAMISU_0;
+    public void testTiramisu_0() {
+        PlatformVersion version = PlatformVersion.VERSION_CODES.TIRAMISU_0;
 
         assertWithMessage("TIRAMISU_0").that(version).isNotNull();
         expectWithMessage("TIRAMISU_0.major").that(version.getMajorVersion())
@@ -39,14 +40,14 @@ public final class PlatformApiVersionTest extends AbstractExpectableTestCase {
         expectWithMessage("TIRAMISU_0.minor").that(version.getMinorVersion())
                 .isEqualTo(0);
 
-        PlatformApiVersion fromEnum = ApiRequirements.PlatformVersion.TIRAMISU_0.get();
+        PlatformVersion fromEnum = ApiRequirements.PlatformVersion.TIRAMISU_0.get();
         assertWithMessage("TIRAMISU_0 from enum").that(fromEnum).isNotNull();
         expectWithMessage("TIRAMISU_0 from enum").that(fromEnum).isSameInstanceAs(version);
     }
 
     @Test
     public void testTiramisu_1() {
-        PlatformApiVersion version = PlatformApiVersion.VERSION_CODES.TIRAMISU_1;
+        PlatformVersion version = PlatformVersion.VERSION_CODES.TIRAMISU_1;
 
         assertWithMessage("TIRAMISU_1").that(version).isNotNull();
         expectWithMessage("TIRAMISU_1.major").that(version.getMajorVersion())
@@ -54,14 +55,29 @@ public final class PlatformApiVersionTest extends AbstractExpectableTestCase {
         expectWithMessage("TIRAMISU_1.minor").that(version.getMinorVersion())
                 .isEqualTo(1);
 
-        PlatformApiVersion fromEnum = ApiRequirements.PlatformVersion.TIRAMISU_1.get();
+        PlatformVersion fromEnum = ApiRequirements.PlatformVersion.TIRAMISU_1.get();
         assertWithMessage("TIRAMISU_1 from enum").that(fromEnum).isNotNull();
         expectWithMessage("TIRAMISU_1 from enum").that(fromEnum).isSameInstanceAs(version);
     }
 
     @Test
+    public void testUpSideDownCake_0() {
+        PlatformVersion version = PlatformVersion.VERSION_CODES.UPSIDE_DOWN_CAKE_0;
+
+        assertWithMessage("UPSIDE_DOWN_CAKE_0").that(version).isNotNull();
+        expectWithMessage("UPSIDE_DOWN_CAKE_0.major").that(version.getMajorVersion())
+                .isEqualTo(UPSIDE_DOWN_CAKE);
+        expectWithMessage("UPSIDE_DOWN_CAKE_0.minor").that(version.getMinorVersion())
+                .isEqualTo(0);
+
+        PlatformVersion fromEnum = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0.get();
+        assertWithMessage("UPSIDE_DOWN_CAKE_0 from enum").that(fromEnum).isNotNull();
+        expectWithMessage("UPSIDE_DOWN_CAKE_0 from enum").that(fromEnum).isSameInstanceAs(version);
+    }
+
+    @Test
     public void testMarshalling() {
-        PlatformApiVersion original = PlatformApiVersion.forMajorAndMinorVersions(66, 6);
+        PlatformVersion original = PlatformVersion.forMajorAndMinorVersions(66, 6);
         expectWithMessage("original.describeContents()").that(original.describeContents())
                 .isEqualTo(0);
         Parcel parcel =  Parcel.obtain();
@@ -69,7 +85,7 @@ public final class PlatformApiVersionTest extends AbstractExpectableTestCase {
             original.writeToParcel(parcel, /* flags= */ 0);
             parcel.setDataPosition(0);
 
-            PlatformApiVersion clone = PlatformApiVersion.CREATOR.createFromParcel(parcel);
+            PlatformVersion clone = PlatformVersion.CREATOR.createFromParcel(parcel);
 
             assertWithMessage("CREATOR.createFromParcel()").that(clone).isNotNull();
             expectWithMessage("clone.major").that(clone.getMajorVersion()).isEqualTo(66);
@@ -84,7 +100,7 @@ public final class PlatformApiVersionTest extends AbstractExpectableTestCase {
 
     @Test
     public void testNewArray() {
-        PlatformApiVersion[] array = PlatformApiVersion.CREATOR.newArray(42);
+        PlatformVersion[] array = PlatformVersion.CREATOR.newArray(42);
 
         assertWithMessage("CREATOR.newArray()").that(array).isNotNull();
     }

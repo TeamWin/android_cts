@@ -33,13 +33,13 @@ import android.text.style.ClickableSpan
 import android.view.View
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.modules.utils.build.SdkLevel
+import java.util.concurrent.TimeUnit
+import java.util.regex.Pattern
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import java.util.concurrent.TimeUnit
-import java.util.regex.Pattern
 
 abstract class BaseUsePermissionTest : BasePermissionTest() {
     companion object {
@@ -281,6 +281,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
     protected inline fun requestAppPermissions(
         vararg permissions: String?,
+        expectTargetSdkWarning: Boolean = false,
         block: () -> Unit
     ): Instrumentation.ActivityResult {
         // Request the permissions
@@ -293,6 +294,12 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             }
         )
         waitForIdle()
+
+        // Clear the low target SDK warning message if it's expected
+        if (expectTargetSdkWarning) {
+            clearTargetSdkWarning()
+        }
+
         // Notification permission prompt is shown first, so get it out of the way
         clickNotificationPermissionRequestAllowButtonIfAvailable()
         // Perform the post-request action
@@ -303,9 +310,12 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     protected inline fun requestAppPermissionsAndAssertResult(
         permissions: Array<out String?>,
         permissionAndExpectedGrantResults: Array<out Pair<String?, Boolean>>,
+        expectTargetSdkWarning: Boolean = false,
         block: () -> Unit
     ) {
-        val result = requestAppPermissions(*permissions, block = block)
+        val result = requestAppPermissions(
+            *permissions, expectTargetSdkWarning = expectTargetSdkWarning, block = block
+        )
         assertEquals(Activity.RESULT_OK, result.resultCode)
         assertEquals(
             result.resultData!!.getStringArrayExtra("$APP_PACKAGE_NAME.PERMISSIONS")!!.size,
@@ -329,10 +339,12 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
     protected inline fun requestAppPermissionsAndAssertResult(
         vararg permissionAndExpectedGrantResults: Pair<String?, Boolean>,
+        expectTargetSdkWarning: Boolean = false,
         block: () -> Unit
     ) = requestAppPermissionsAndAssertResult(
         permissionAndExpectedGrantResults.map { it.first }.toTypedArray(),
         permissionAndExpectedGrantResults,
+        expectTargetSdkWarning,
         block
     )
 

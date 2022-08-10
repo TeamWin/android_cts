@@ -20,6 +20,7 @@
 
     <queries>
         <package android:name="android.server.wm.cts" />
+        <package android:name="android.server.wm.dndsourceapp" />
     </queries>
 
     <application android:label="CtsDnDTarget">

@@ -17,22 +17,22 @@
 package android.car.cts;
 
 import static android.car.Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME;
-import static android.car.media.CarAudioManager.*;
+import static android.car.media.CarAudioManager.AUDIO_FEATURE_DYNAMIC_ROUTING;
+import static android.car.media.CarAudioManager.AUDIO_FEATURE_VOLUME_GROUP_MUTING;
+import static android.car.media.CarAudioManager.CarVolumeCallback;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
-import static org.testng.Assert.assertThrows;
-import static org.testng.Assert.expectThrows;
 
 import android.app.UiAutomation;
 import android.car.Car;
 import android.car.media.CarAudioManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.util.Pair;
 import android.view.KeyEvent;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -98,7 +98,7 @@ public final class CarAudioManagerTest extends CarApiTestBase {
 
     @Test
     public void isAudioFeatureEnabled_withNonAudioFeature_fails() {
-        IllegalArgumentException exception = expectThrows(IllegalArgumentException.class,
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> mCarAudioManager.isAudioFeatureEnabled(-1));
 
         assertThat(exception).hasMessageThat().contains("Unknown Audio Feature");
@@ -114,7 +114,7 @@ public final class CarAudioManagerTest extends CarApiTestBase {
     public void registerCarVolumeCallback_nonNullCallback_throwsPermissionError() {
         mCallback = new SyncCarVolumeCallback();
 
-        Exception e = expectThrows(SecurityException.class,
+        Exception e = assertThrows(SecurityException.class,
                 () -> mCarAudioManager.registerCarVolumeCallback(mCallback));
 
         assertThat(e.getMessage()).contains(PERMISSION_CAR_CONTROL_AUDIO_VOLUME);
@@ -215,7 +215,7 @@ public final class CarAudioManagerTest extends CarApiTestBase {
         runWithCarControlAudioVolumePermission(
                 () -> mCarAudioManager.registerCarVolumeCallback(mCallback));
 
-        Exception e = expectThrows(SecurityException.class,
+        Exception e = assertThrows(SecurityException.class,
                 () -> mCarAudioManager.unregisterCarVolumeCallback(mCallback));
 
         assertThat(e.getMessage()).contains(PERMISSION_CAR_CONTROL_AUDIO_VOLUME);

@@ -20,18 +20,18 @@ import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.car.CarApiVersion;
+import android.car.CarVersion;
 import android.car.annotation.ApiRequirements;
 import android.car.test.AbstractExpectableTestCase;
 import android.os.Parcel;
 
 import org.junit.Test;
 
-public final class CarApiVersionTest extends AbstractExpectableTestCase {
+public final class CarVersionTest extends AbstractExpectableTestCase {
 
     @Test
-    public void testTiramisu() {
-        CarApiVersion version = CarApiVersion.VERSION_CODES.TIRAMISU_0;
+    public void testTiramisu_0() {
+        CarVersion version = CarVersion.VERSION_CODES.TIRAMISU_0;
 
         assertWithMessage("TIRAMISU_0").that(version).isNotNull();
         expectWithMessage("TIRAMISU_0.major").that(version.getMajorVersion())
@@ -39,7 +39,7 @@ public final class CarApiVersionTest extends AbstractExpectableTestCase {
         expectWithMessage("TIRAMISU_0.minor").that(version.getMinorVersion())
                 .isEqualTo(0);
 
-        CarApiVersion fromEnum = ApiRequirements.CarVersion.TIRAMISU_0.get();
+        CarVersion fromEnum = ApiRequirements.CarVersion.TIRAMISU_0.get();
         assertWithMessage("TIRAMISU_0 from enum").that(fromEnum).isNotNull();
         expectWithMessage("TIRAMISU_0 from enum").that(fromEnum).isSameInstanceAs(version);
 
@@ -47,7 +47,7 @@ public final class CarApiVersionTest extends AbstractExpectableTestCase {
 
     @Test
     public void testTiramisu_1() {
-        CarApiVersion version = CarApiVersion.VERSION_CODES.TIRAMISU_1;
+        CarVersion version = CarVersion.VERSION_CODES.TIRAMISU_1;
 
         assertWithMessage("TIRAMISU_1").that(version).isNotNull();
         expectWithMessage("TIRAMISU_1.major").that(version.getMajorVersion())
@@ -55,14 +55,14 @@ public final class CarApiVersionTest extends AbstractExpectableTestCase {
         expectWithMessage("TIRAMISU_1.minor").that(version.getMinorVersion())
                 .isEqualTo(1);
 
-        CarApiVersion fromEnum = ApiRequirements.CarVersion.TIRAMISU_1.get();
+        CarVersion fromEnum = ApiRequirements.CarVersion.TIRAMISU_1.get();
         assertWithMessage("TIRAMISU_1 from enum").that(fromEnum).isNotNull();
         expectWithMessage("TIRAMISU_1 from enum").that(fromEnum).isSameInstanceAs(version);
     }
 
     @Test
     public void testUpsideDownCake_0() {
-        CarApiVersion version = CarApiVersion.VERSION_CODES.UPSIDE_DOWN_CAKE_0;
+        CarVersion version = CarVersion.VERSION_CODES.UPSIDE_DOWN_CAKE_0;
 
         assertWithMessage("UPSIDE_DOWN_CAKE_0").that(version).isNotNull();
         expectWithMessage("UPSIDE_DOWN_CAKE_0.major").that(version.getMajorVersion())
@@ -73,7 +73,7 @@ public final class CarApiVersionTest extends AbstractExpectableTestCase {
 
     @Test
     public void testMarshalling() {
-        CarApiVersion original = CarApiVersion.forMajorAndMinorVersions(66, 6);
+        CarVersion original = CarVersion.forMajorAndMinorVersions(66, 6);
         expectWithMessage("original.describeContents()").that(original.describeContents())
                 .isEqualTo(0);
         Parcel parcel =  Parcel.obtain();
@@ -81,7 +81,7 @@ public final class CarApiVersionTest extends AbstractExpectableTestCase {
             original.writeToParcel(parcel, /* flags= */ 0);
             parcel.setDataPosition(0);
 
-            CarApiVersion clone = CarApiVersion.CREATOR.createFromParcel(parcel);
+            CarVersion clone = CarVersion.CREATOR.createFromParcel(parcel);
 
             assertWithMessage("CREATOR.createFromParcel()").that(clone).isNotNull();
             expectWithMessage("clone.major").that(clone.getMajorVersion()).isEqualTo(66);
@@ -96,7 +96,7 @@ public final class CarApiVersionTest extends AbstractExpectableTestCase {
 
     @Test
     public void testNewArray() {
-        CarApiVersion[] array = CarApiVersion.CREATOR.newArray(42);
+        CarVersion[] array = CarVersion.CREATOR.newArray(42);
 
         assertWithMessage("CREATOR.newArray()").that(array).isNotNull();
         expectWithMessage("CREATOR.newArray()").that(array).hasLength(42);

@@ -251,7 +251,7 @@ public class AttestKeyTest {
         // Even though we asked for an attestation, we only get one cert.
         assertThat(attestedEcKeyCertChain.length, is(1));
 
-        verifyCombinedChain(attestKeyCertChain, attestedEcKeyCertChain);
+        verifyCombinedChain(useStrongBox, attestKeyCertChain, attestedEcKeyCertChain);
 
         final X509Certificate attestationEcKeyCert = (X509Certificate) attestedEcKeyCertChain[0];
         final Attestation ecKeyAttestation = Attestation.loadFromCertificate(attestationEcKeyCert);
@@ -269,7 +269,7 @@ public class AttestKeyTest {
         // Even though we asked for an attestation, we only get one cert.
         assertThat(attestedRsaKeyCertChain.length, is(1));
 
-        verifyCombinedChain(attestKeyCertChain, attestedRsaKeyCertChain);
+        verifyCombinedChain(useStrongBox, attestKeyCertChain, attestedRsaKeyCertChain);
 
         final X509Certificate attestationRsaKeyCert = (X509Certificate) attestedRsaKeyCertChain[0];
         final Attestation rsaKeyAttestation =
@@ -288,7 +288,7 @@ public class AttestKeyTest {
         return mKeyStore.getCertificateChain(spec.getKeystoreAlias());
     }
 
-    private void verifyCombinedChain(Certificate[] attestKeyCertChain,
+    private void verifyCombinedChain(boolean useStrongBox, Certificate[] attestKeyCertChain,
             Certificate[] attestedKeyCertChain) throws GeneralSecurityException {
         Certificate[] combinedChain = Stream.concat(Arrays.stream(attestedKeyCertChain),
                                                     Arrays.stream(attestKeyCertChain))
@@ -300,6 +300,6 @@ public class AttestKeyTest {
             ++i;
         }
 
-        verifyCertificateChain((Certificate[]) combinedChain, false /* expectStrongBox */);
+        verifyCertificateChain((Certificate[]) combinedChain, useStrongBox);
     }
 }

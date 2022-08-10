@@ -37,9 +37,6 @@ android_test {
         "compatibility-device-util-axt",
         "truth-prebuilt",
         "ctstestrunner-axt",
-        // TODO: remove once Android migrates to JUnit 4.12,
-        // which provides assertThrows
-        "testng",
         "libprotobuf-java-lite",
         "vehicle-property-verifier",
     ],

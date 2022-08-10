@@ -16,7 +16,7 @@
 package android.scopedstorage.cts;
 
 import static android.scopedstorage.cts.lib.RedactionTestHelper.EXIF_METADATA_QUERY;
-import static android.scopedstorage.cts.lib.RedactionTestHelper.getExifMetadata;
+import static android.scopedstorage.cts.lib.RedactionTestHelper.getExifMetadataFromFile;
 import static android.scopedstorage.cts.lib.TestUtils.CAN_OPEN_FILE_FOR_READ_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.CAN_OPEN_FILE_FOR_WRITE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.CAN_READ_WRITE_QUERY;
@@ -253,7 +253,7 @@ public class ScopedStorageTestHelper extends Activity {
         if (getIntent().hasExtra(INTENT_EXTRA_PATH)) {
             final String filePath = getIntent().getStringExtra(INTENT_EXTRA_PATH);
             if (EXIF_METADATA_QUERY.equals(queryType)) {
-                intent.putExtra(queryType, getExifMetadata(new File(filePath)));
+                intent.putExtra(queryType, getExifMetadataFromFile(new File(filePath)));
             }
         } else {
             throw new IllegalStateException(
