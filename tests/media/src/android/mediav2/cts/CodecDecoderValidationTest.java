@@ -96,7 +96,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
         // mediaType, array list of test files (underlying elementary stream is same, except they
         // are placed in different containers), ref file, rms error, checksum, sample rate,
         // channel count, width, height, SupportClass
-        final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
+        final List<Object[]> exhaustiveArgsList = new ArrayList<>(Arrays.asList(new Object[][]{
                 // vp9 test vectors with no-show frames signalled in alternate ways
                 {MEDIA_TYPE_VP9, new String[]{"bbb_340x280_768kbps_30fps_vp9.webm",
                         "bbb_340x280_768kbps_30fps_split_non_display_frame_vp9.webm"},
@@ -335,12 +335,6 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                         "audio/bbb_1ch_44kHz_s16le_3s.raw", 0.0f, -1L, 44100, 1, -1, -1, CODEC_ALL},
                 {MEDIA_TYPE_RAW, new String[]{"audio/bbb_1ch_48kHz.wav"},
                         "audio/bbb_1ch_48kHz_s16le_3s.raw", 0.0f, -1L, 48000, 1, -1, -1, CODEC_ALL},
-                {MEDIA_TYPE_RAW, new String[]{"audio/highres_1ch_176kHz.wav"},
-                        "audio/highres_1ch_176kHz_s16le_5s.raw", 0.0f, -1L, 176400, 1, -1, -1,
-                        CODEC_ALL},
-                {MEDIA_TYPE_RAW, new String[]{"audio/highres_1ch_192kHz.wav"},
-                        "audio/highres_1ch_192kHz_s16le_5s.raw", 0.0f, -1L, 192000, 1, -1, -1,
-                        CODEC_ALL},
                 {MEDIA_TYPE_RAW, new String[]{"audio/bbb_2ch_8kHz.wav"},
                         "audio/bbb_2ch_8kHz_s16le_3s.raw", 0.0f, -1L, 8000, 2, -1, -1, CODEC_ALL},
                 {MEDIA_TYPE_RAW, new String[]{"audio/bbb_2ch_16kHz.wav"},
@@ -360,12 +354,6 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                         CODEC_ALL},
                 {MEDIA_TYPE_RAW, new String[]{"audio/highres_2ch_96kHz.wav"},
                         "audio/highres_2ch_96kHz_s16le_5s.raw", 0.0f, -1L, 96000, 2, -1, -1,
-                        CODEC_ALL},
-                {MEDIA_TYPE_RAW, new String[]{"audio/highres_2ch_176kHz.wav"},
-                        "audio/highres_2ch_176kHz_s16le_5s.raw", 0.0f, -1L, 176400, 2, -1, -1,
-                        CODEC_ALL},
-                {MEDIA_TYPE_RAW, new String[]{"audio/highres_2ch_192kHz.wav"},
-                        "audio/highres_2ch_192kHz_s16le_5s.raw", 0.0f, -1L, 192000, 2, -1, -1,
                         CODEC_ALL},
                 {MEDIA_TYPE_RAW, new String[]{"audio/sd_2ch_48kHz.wav"},
                         "audio/sd_2ch_48kHz_f32le.raw", 0.0f, -1L, 48000, 2, -1, -1, CODEC_ALL},
@@ -592,7 +580,25 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                         null, -1.0f, -1L, 44100, 2, -1, -1, CODEC_DEFAULT},
                 {MEDIA_TYPE_AAC, new String[]{"audio/bbb_2ch_48kHz_usac.m4a"},
                         null, -1.0f, -1L, 48000, 2, -1, -1, CODEC_DEFAULT},
-        });
+        }));
+        if (IS_AT_LEAST_U) {
+            exhaustiveArgsList.addAll(Arrays.asList(new Object[][]{
+                    // Support for 176kHz and 192kHz for c2.android.raw.decoder was added in
+                    // Android U
+                    {MEDIA_TYPE_RAW, new String[]{"audio/highres_1ch_176kHz.wav"},
+                            "audio/highres_1ch_176kHz_s16le_5s.raw", 0.0f, -1L, 176400, 1, -1, -1,
+                            CODEC_ALL},
+                    {MEDIA_TYPE_RAW, new String[]{"audio/highres_1ch_192kHz.wav"},
+                            "audio/highres_1ch_192kHz_s16le_5s.raw", 0.0f, -1L, 192000, 1, -1, -1,
+                            CODEC_ALL},
+                    {MEDIA_TYPE_RAW, new String[]{"audio/highres_2ch_176kHz.wav"},
+                            "audio/highres_2ch_176kHz_s16le_5s.raw", 0.0f, -1L, 176400, 2, -1, -1,
+                            CODEC_ALL},
+                    {MEDIA_TYPE_RAW, new String[]{"audio/highres_2ch_192kHz.wav"},
+                            "audio/highres_2ch_192kHz_s16le_5s.raw", 0.0f, -1L, 192000, 2, -1, -1,
+                            CODEC_ALL},
+            }));
+        }
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
     }
 

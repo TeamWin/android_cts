@@ -209,7 +209,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     }
 
     protected fun clearTargetSdkWarning() =
-        click(By.res("android:id/button1"))
+        waitFindObjectOrNull(By.res("android:id/button1"))?.click()?.also { waitForIdle() }
 
     protected fun clickPermissionReviewContinue() {
         if (isAutomotive || isWatch) {

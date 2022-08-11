@@ -1565,6 +1565,181 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     }
 
     @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testSeatHeightPosIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_HEIGHT_POS,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues().build()
+                    .verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testSeatHeightMoveIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_HEIGHT_MOVE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues()
+                    .requireZeroToBeContainedInMinMaxRanges().build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testSeatDepthPosIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_DEPTH_POS,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues().build()
+                    .verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testSeatDepthMoveIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_DEPTH_MOVE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues()
+                    .requireZeroToBeContainedInMinMaxRanges().build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testSeatTiltPosIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_TILT_POS,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues().build()
+                    .verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testSeatTiltMoveIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_TILT_MOVE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues()
+                    .requireZeroToBeContainedInMinMaxRanges().build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testSeatLumbarForeAftPosIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_LUMBAR_FORE_AFT_POS,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues().build()
+                    .verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testSeatLumbarForeAftMoveIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_LUMBAR_FORE_AFT_MOVE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues()
+                    .requireZeroToBeContainedInMinMaxRanges().build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testSeatLumbarSideSupportPosIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_LUMBAR_SIDE_SUPPORT_POS,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues().build()
+                    .verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testSeatLumbarSideSupportMoveIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_LUMBAR_SIDE_SUPPORT_MOVE,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues()
+                    .requireZeroToBeContainedInMinMaxRanges().build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
     public void testHvacDefrosterIfSupported() {
         adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE, () -> {
             VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HVAC_DEFROSTER,
@@ -1782,6 +1957,313 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                         carPropertyValue.getValue()).isIn(
                         Arrays.asList(hvacFanDirectionAvailableCarPropertyValue.getValue()));
             }).build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testHvacTemperatureCurrentIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HVAC_TEMPERATURE_CURRENT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Float.class).setPossiblyDependentOnHvacPowerOn().build().verify(
+                    mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testHvacTemperatureSetIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE, () -> {
+            VehiclePropertyVerifier.Builder<Float> hvacTempSetVerifierBuilder =
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HVAC_TEMPERATURE_SET,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Float.class).setPossiblyDependentOnHvacPowerOn().setConfigArrayVerifier(
+                            configArray -> {
+                                assertWithMessage(
+                                        "HVAC_TEMPERATURE_SET config array must be size 6").that(
+                                        configArray.size()).isEqualTo(6);
+
+                                assertWithMessage(
+                                        "HVAC_TEMPERATURE_SET lower bound must be less than the "
+                                                + "upper bound for "
+                                                + "the supported temperatures in Celsius").that(
+                                        configArray.get(0)).isLessThan(configArray.get(1));
+                                assertWithMessage(
+                                        "HVAC_TEMPERATURE_SET increment in Celsius must be "
+                                                + "greater than 0").that(
+                                        configArray.get(2)).isGreaterThan(0);
+                                assertWithMessage(
+                                        "HVAC_TEMPERATURE_SET increment in Celsius must be less "
+                                                + "than the "
+                                                + "difference between the upper and lower bound "
+                                                + "supported "
+                                                + "temperatures").that(
+                                        configArray.get(2)).isLessThan(
+                                        configArray.get(1) - configArray.get(0));
+                                assertWithMessage(
+                                        "HVAC_TEMPERATURE_SET increment in Celsius must evenly "
+                                        + "space the gap "
+                                                + "between upper and lower bound").that(
+                                        (configArray.get(1) - configArray.get(0)) % configArray.get(
+                                                2)).isEqualTo(0);
+
+                                assertWithMessage(
+                                        "HVAC_TEMPERATURE_SET lower bound must be less than the "
+                                        + "upper bound for "
+                                                + "the supported temperatures in Fahrenheit").that(
+                                        configArray.get(3)).isLessThan(configArray.get(4));
+                                assertWithMessage(
+                                        "HVAC_TEMPERATURE_SET increment in Fahrenheit must be "
+                                        + "greater than 0").that(
+                                        configArray.get(5)).isGreaterThan(0);
+                                assertWithMessage(
+                                        "HVAC_TEMPERATURE_SET increment in Fahrenheit must be "
+                                        + "less than the "
+                                                + "difference between the upper and lower bound "
+                                                + "supported "
+                                                + "temperatures").that(
+                                        configArray.get(5)).isLessThan(
+                                        configArray.get(4) - configArray.get(3));
+                                assertWithMessage(
+                                        "HVAC_TEMPERATURE_SET increment in Fahrenheit must evenly"
+                                                + " space the gap "
+                                                + "between upper and lower bound").that(
+                                        (configArray.get(4) - configArray.get(3)) % configArray.get(
+                                                5)).isEqualTo(0);
+
+                            });
+
+            CarPropertyConfig<?> hvacTempSetConfig = mCarPropertyManager.getCarPropertyConfig(
+                    VehiclePropertyIds.HVAC_TEMPERATURE_SET);
+            if (hvacTempSetConfig != null) {
+                ImmutableSet.Builder<Float> possibleHvacTempSetValuesBuilder =
+                        ImmutableSet.builder();
+                for (int possibleHvacTempSetValue = hvacTempSetConfig.getConfigArray().get(0);
+                        possibleHvacTempSetValue <= hvacTempSetConfig.getConfigArray().get(1);
+                        possibleHvacTempSetValue += hvacTempSetConfig.getConfigArray().get(2)) {
+                    possibleHvacTempSetValuesBuilder.add((float) possibleHvacTempSetValue / 10.0f);
+                }
+                hvacTempSetVerifierBuilder.setPossibleCarPropertyValues(
+                        possibleHvacTempSetValuesBuilder.build());
+            }
+
+            hvacTempSetVerifierBuilder.build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testHvacAcOnIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HVAC_AC_ON,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Boolean.class).setPossiblyDependentOnHvacPowerOn().build().verify(
+                    mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testHvacMaxAcOnIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HVAC_MAX_AC_ON,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Boolean.class).setPossiblyDependentOnHvacPowerOn().build().verify(
+                    mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testHvacMaxDefrostOnIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HVAC_MAX_DEFROST_ON,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Boolean.class).setPossiblyDependentOnHvacPowerOn().build().verify(
+                    mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testHvacRecircOnIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HVAC_RECIRC_ON,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Boolean.class).setPossiblyDependentOnHvacPowerOn().build().verify(
+                    mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testHvacAutoOnIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HVAC_AUTO_ON,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Boolean.class).setPossiblyDependentOnHvacPowerOn().build().verify(
+                    mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testHvacSeatTemperatureIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HVAC_SEAT_TEMPERATURE,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Integer.class).setPossiblyDependentOnHvacPowerOn().requireMinMaxValues()
+                    .requireZeroToBeContainedInMinMaxRanges().build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testHvacActualFanSpeedRpmIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HVAC_ACTUAL_FAN_SPEED_RPM,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Integer.class).setPossiblyDependentOnHvacPowerOn().build().verify(
+                    mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testHvacAutoRecircOnIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HVAC_AUTO_RECIRC_ON,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Boolean.class).setPossiblyDependentOnHvacPowerOn().build().verify(
+                    mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testHvacSeatVentilationIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HVAC_SEAT_VENTILATION,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Integer.class).setPossiblyDependentOnHvacPowerOn().requireMinMaxValues()
+                    .requireMinValuesToBeZero().build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testHvacDualOnIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.HVAC_DUAL_ON,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Boolean.class).setPossiblyDependentOnHvacPowerOn().setAreaIdsVerifier(
+                    areaIds -> {
+                        CarPropertyConfig<?> hvacTempSetCarPropertyConfig =
+                                mCarPropertyManager.getCarPropertyConfig(
+                                        VehiclePropertyIds.HVAC_TEMPERATURE_SET);
+                        if (hvacTempSetCarPropertyConfig == null) {
+                            return;
+                        }
+                        ImmutableSet<Integer> hvacTempSetAreaIds = ImmutableSet.copyOf(
+                                Arrays.stream(
+                                        hvacTempSetCarPropertyConfig.getAreaIds()).boxed().collect(
+                                        Collectors.toList()));
+                        ImmutableSet.Builder<Integer> allPossibleHvacDualOnAreaIdsBuilder =
+                                ImmutableSet.builder();
+                        for (int i = 2; i <= hvacTempSetAreaIds.size(); i++) {
+                            allPossibleHvacDualOnAreaIdsBuilder.addAll(Sets.combinations(
+                                    hvacTempSetAreaIds, i).stream().map(areaIdCombo -> {
+                                Integer possibleHvacDualOnAreaId = 0;
+                                for (Integer areaId : areaIdCombo) {
+                                    possibleHvacDualOnAreaId |= areaId;
+                                }
+                                return possibleHvacDualOnAreaId;
+                            }).collect(Collectors.toList()));
+                        }
+                        ImmutableSet<Integer> allPossibleHvacDualOnAreaIds =
+                                allPossibleHvacDualOnAreaIdsBuilder.build();
+                        for (int areaId : areaIds) {
+                            assertWithMessage("HVAC_DUAL_ON area ID: " + areaId
+                                    + " must be a combination of HVAC_TEMPERATURE_SET area IDs: "
+                                    + Arrays.toString(
+                                    hvacTempSetCarPropertyConfig.getAreaIds())).that(areaId).isIn(
+                                    allPossibleHvacDualOnAreaIds);
+
+                        }
+                    }).build().verify(mCarPropertyManager);
         });
     }
 

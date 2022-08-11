@@ -83,7 +83,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
      * Launches and finishes {@link SimpleSaveActivity}, returning how long it took.
      */
     private long launchSimpleSaveActivity(PostLaunchAction action) throws Exception {
-        Log.v(TAG, "launchPreSimpleSaveActivity(): " + action);
+        Log.v(TAG, "launchSimpleSaveActivity(): " + action);
         sReplier.assertNoUnhandledFillRequests();
 
         if (action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL) {
@@ -175,7 +175,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
             // Asserts isEnabled() status.
             assertAutofillEnabled(activity, action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL);
         } finally {
-            activity.finish();
+            mUiBot.waitForWindowChange(() -> activity.finish());
         }
         return SystemClock.elapsedRealtime() - before;
     }

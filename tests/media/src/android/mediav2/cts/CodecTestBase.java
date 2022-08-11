@@ -597,6 +597,9 @@ abstract class CodecTestBase {
     public static final boolean IS_AT_LEAST_T =
             ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU) ||
                     ApiLevelUtil.codenameEquals("Tiramisu");
+    public static final boolean IS_AT_LEAST_U =
+            ApiLevelUtil.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE) ||
+                    ApiLevelUtil.codenameEquals("UpsideDownCake");
     // TODO (b/223868241) Update the following to check for Build.VERSION_CODES.TIRAMISU once
     // TIRAMISU is set correctly
     public static final boolean FIRST_SDK_IS_AT_LEAST_T =

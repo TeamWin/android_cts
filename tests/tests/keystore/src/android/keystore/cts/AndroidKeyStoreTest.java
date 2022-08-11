@@ -2113,7 +2113,7 @@ public class AndroidKeyStoreTest {
         Signature.getInstance("NONEwithECDSA").initVerify(publicKey);
     }
 
-    private static final int MIN_SUPPORTED_KEY_COUNT = 1500;
+    private static final int MIN_SUPPORTED_KEY_COUNT = 1200;
     private static final Duration LARGE_NUMBER_OF_KEYS_TEST_MAX_DURATION = Duration.ofMinutes(4);
     private static final Duration LARGE_NUMBER_OF_KEYS_TEST_MAX_DURATION_WATCH
             = Duration.ofMinutes(6);
