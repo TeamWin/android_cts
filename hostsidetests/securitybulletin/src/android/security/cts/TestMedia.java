@@ -16,27 +16,26 @@
 
 package android.security.cts;
 
-import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.log.LogUtil.CLog;
-import com.android.compatibility.common.util.CrashUtils;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeThat;
 
 import android.platform.test.annotations.AsbSecurityTest;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import com.android.compatibility.common.util.CrashUtils;
+import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-import static org.junit.Assert.*;
-import static org.junit.Assume.*;
 import junit.framework.Assert;
-import java.util.Arrays;
-import java.util.ArrayList;
 
-import static org.junit.Assume.*;
-import static org.hamcrest.CoreMatchers.*;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.util.Arrays;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class TestMedia extends SecurityTestCase {
-
+public class TestMedia extends NonRootSecurityTestCase {
 
     /******************************************************************************
      * To prevent merge conflicts, add tests for N below this comment, before any

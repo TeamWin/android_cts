@@ -25,7 +25,7 @@ import android.voiceinteraction.common.Utils;
 public class TestVoiceInteractionServiceActivity extends Activity {
     static final String TAG = "TestVoiceInteractionServiceActivity";
 
-    void triggerHotwordDetectionServiceTest(int serviceType, int testEvent) {
+    public void triggerHotwordDetectionServiceTest(int serviceType, int testEvent) {
         Intent serviceIntent = new Intent();
         if (serviceType == Utils.HOTWORD_DETECTION_SERVICE_NONE) {
             serviceIntent.setComponent(new ComponentName(this,

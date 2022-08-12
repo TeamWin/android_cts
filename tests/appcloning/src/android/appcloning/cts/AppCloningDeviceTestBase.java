@@ -41,13 +41,12 @@ public class AppCloningDeviceTestBase {
         }
 
         // create user
-        String output = SystemUtil.runShellCommand(command);
+        String output = SystemUtil.runShellCommandOrThrow(command);
         String userId = output.substring(output.lastIndexOf(' ') + 1)
                 .replaceAll("[^0-9]", "");
         assertThat(userId).isNotEmpty();
 
-        output = SystemUtil.runShellCommand("am start-user -w " + userId);
-        assertThat(isSuccessful(output)).isTrue();
+        output = SystemUtil.runShellCommandOrThrow("am start-user -w " + userId);
         return Integer.parseInt(userId);
     }
 
@@ -57,18 +56,6 @@ public class AppCloningDeviceTestBase {
      */
     protected void removeUser(int userId) {
         assertThat(userId).isNotEqualTo(0);
-        SystemUtil.runShellCommand("pm remove-user " + userId);
-    }
-
-    /**
-     * Verify command result signifies success or not
-     * @param output command result
-     * @return true if command was successfully executed
-     */
-    protected boolean isSuccessful(String output) {
-        if (output != null && output.contains("[ERROR]")) {
-            return false;
-        }
-        return true;
+        SystemUtil.runShellCommandOrThrow("pm remove-user " + userId);
     }
 }

@@ -18,12 +18,15 @@ package android.security.cts;
 import static org.junit.Assume.*;
 
 import android.platform.test.annotations.AsbSecurityTest;
+
+import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2022_22082 extends SecurityTestCase {
+public class CVE_2022_22082 extends NonRootSecurityTestCase {
 
     /**
      * CVE-2022-22082
@@ -38,7 +41,8 @@ public class CVE_2022_22082 extends SecurityTestCase {
         AdbUtils.pushResource("/cve_2022_22082.dsf", "/sdcard/cve_2022_22082.dsf", getDevice());
         AdbUtils.runCommandLine("logcat -c", getDevice());
         AdbUtils.runCommandLine(
-                "am start -a android.intent.action.VIEW -t audio/dsf -d file:///sdcard/cve_2022_22082.dsf",
+                "am start -a android.intent.action.VIEW -t audio/dsf -d"
+                        + " file:///sdcard/cve_2022_22082.dsf",
                 getDevice());
         Thread.sleep(10000);
         AdbUtils.assertNoCrashes(getDevice(), "media.extractor");

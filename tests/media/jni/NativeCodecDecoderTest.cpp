@@ -322,7 +322,7 @@ bool CodecDecoderTest::testSimpleDecode(const char* decoder, const char* testFil
             mOutputBuff = loopCounter == 0 ? ref : test;
             mOutputBuff->reset();
             AMediaExtractor_seekTo(mExtractor, 0, AMEDIAEXTRACTOR_SEEK_CLOSEST_SYNC);
-            /* TODO(b/147348711) */
+            /* TODO(b/149981033) */
             /* Instead of create and delete codec at every iteration, we would like to create
              * once and use it for all iterations and delete before exiting */
             mCodec = AMediaCodec_createCodecByName(decoder);
@@ -440,7 +440,7 @@ bool CodecDecoderTest::testFlush(const char* decoder, const char* testFile, int 
         char log[1000];
         snprintf(log, sizeof(log), "codec: %s, file: %s, async mode: %s:: \n", decoder, testFile,
                  (isAsync ? "async" : "sync"));
-        /* TODO(b/147348711) */
+        /* TODO(b/149981033) */
         /* Instead of create and delete codec at every iteration, we would like to create
          * once and use it for all iterations and delete before exiting */
         mCodec = AMediaCodec_createCodecByName(decoder);
@@ -546,7 +546,7 @@ bool CodecDecoderTest::testOnlyEos(const char* decoder, const char* testFile, in
                  (isAsync ? "async" : "sync"));
         mOutputBuff = loopCounter == 0 ? ref : test;
         mOutputBuff->reset();
-        /* TODO(b/147348711) */
+        /* TODO(b/149981033) */
         /* Instead of create and delete codec at every iteration, we would like to create
          * once and use it for all iterations and delete before exiting */
         mCodec = AMediaCodec_createCodecByName(decoder);
@@ -616,7 +616,7 @@ bool CodecDecoderTest::testSimpleDecodeQueueCSD(const char* decoder, const char*
                          (eosType ? "eos with last frame" : "eos separate"));
                 mOutputBuff = loopCounter == 0 ? ref : test;
                 mOutputBuff->reset();
-                /* TODO(b/147348711) */
+                /* TODO(b/149981033) */
                 /* Instead of create and delete codec at every iteration, we would like to create
                  * once and use it for all iterations and delete before exiting */
                 mCodec = AMediaCodec_createCodecByName(decoder);

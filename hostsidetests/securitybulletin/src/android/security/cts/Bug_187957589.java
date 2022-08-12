@@ -15,15 +15,19 @@
  */
 
 package android.security.cts;
+
 import static org.junit.Assume.assumeFalse;
 
 import android.platform.test.annotations.AsbSecurityTest;
+
+import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class Bug_187957589 extends SecurityTestCase {
+public class Bug_187957589 extends NonRootSecurityTestCase {
     /**
      * b/187957589
      * Vulnerability Behaviour: out of bounds write in noteAtomLogged for negative atom ids.

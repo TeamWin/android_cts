@@ -16,44 +16,41 @@
 
 package android.security.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
+
 import com.android.compatibility.common.util.CrashUtils;
 import com.android.compatibility.common.util.MetricsReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
+import com.android.ddmlib.CollectingOutputReceiver;
 import com.android.ddmlib.IShellOutputReceiver;
 import com.android.ddmlib.NullOutputReceiver;
-import com.android.ddmlib.CollectingOutputReceiver;
+import com.android.sts.common.tradefed.testtype.SecurityTestCase;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.device.NativeDevice;
 import com.android.tradefed.log.LogUtil.CLog;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.concurrent.TimeoutException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.concurrent.TimeUnit;
-import java.util.Scanner;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.concurrent.Callable;
-import java.util.Collections;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.regex.Pattern;
-import java.lang.Thread;
-
-import static org.junit.Assert.*;
-import static org.junit.Assume.*;
 
 public class AdbUtils {
 

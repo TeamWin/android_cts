@@ -16,6 +16,7 @@
 package android.media.decoder.cts;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -66,6 +67,7 @@ import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 
@@ -214,6 +216,8 @@ public class DecodeAccuracyTestBase {
                 return false;
             }
             configureVideoFormat(mediaFormat, videoFormat);
+            Assume.assumeTrue("Decoder " + codecName + " doesn't support format " + mediaFormat,
+                    MediaUtils.supports(codecName, mediaFormat));
             setRenderToSurface(surface != null);
             return createDecoder(mediaFormat) && configureDecoder(surface, mediaFormat);
         }

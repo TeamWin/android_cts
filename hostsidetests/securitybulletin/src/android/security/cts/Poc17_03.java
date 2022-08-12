@@ -16,17 +16,20 @@
 
 package android.security.cts;
 
-import java.util.concurrent.Callable;
-
-import android.platform.test.annotations.AsbSecurityTest;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-
 import static org.junit.Assert.*;
 
+import android.platform.test.annotations.AsbSecurityTest;
+
+import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.util.concurrent.Callable;
+
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class Poc17_03 extends SecurityTestCase {
+public class Poc17_03 extends NonRootSecurityTestCase {
 
     /**
      *  b/31824853

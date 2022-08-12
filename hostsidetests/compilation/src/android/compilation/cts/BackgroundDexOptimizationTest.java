@@ -30,10 +30,8 @@ import com.google.common.io.ByteStreams;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -48,12 +46,6 @@ import java.util.concurrent.TimeoutException;
  * Tests background dex optimization which runs as idle job.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-// Tests for post boot optimization must run first because they reboot the device into a clean
-// state, which can benefit other tests so that they don't have to reboot again.
-// Tests for idle optimizations won't work without a reboot in some cases. See
-// `testIdleOptimization*` for more details. However, we can't do a reboot for every test case
-// because it will cause the test to time out.
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
     private static final long REBOOT_TIMEOUT_MS = 600_000;
     private static final long JOB_START_TIMEOUT_MS = 10_000;
@@ -93,49 +85,6 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
         assertThat(mDevice.waitForBootComplete(REBOOT_TIMEOUT_MS)).isTrue();
         // Turn off the display to simulate the idle state in terms of power consumption.
         toggleScreenOn(false);
-    }
-
-    @Test
-    // Add an "A" in the name to make it run before other tests.
-    public void testAPostBootOptimizationCompleted() throws Exception {
-        // Should reboot to put the device into known states (= post boot optimization not run yet).
-        rebootAndCheckDexOptEnabled();
-
-        // Note that post boot job runs only once until it is completed.
-        completePostBootOptimization();
-    }
-
-    @Test
-    // Add an "A" in the name to make it run before other tests.
-    public void testAPostBootOptimizationCancelled() throws Exception {
-        // Should reboot to put the device into known states (= post boot optimization not run yet).
-        rebootAndCheckDexOptEnabled();
-
-        reinstallAppPackage();
-        LastDeviceExecutionTime timeBefore = getLastExecutionTime();
-        postJobSchedulerJob(CMD_START_POST_BOOT);
-
-        // Wait until it is started.
-        pollingCheck("Post boot start timeout", JOB_START_TIMEOUT_MS,
-                () -> getLastExecutionTime().startTime >= timeBefore.deviceCurrentTime);
-
-        // Now cancel it.
-        executeShellCommand(CMD_CANCEL_POST_BOOT);
-
-        // Wait until it is completed or cancelled. We cannot prevent faster devices with small
-        // number of APKs to complete very quickly, so completion while cancelling can happen.
-        pollingCheck("Post boot cancel timeout", DEXOPT_CANCEL_TIMEOUT_MS,
-                () -> getLastExecutionTime().duration >= 0);
-
-        int status = getLastDexOptStatus();
-        assertThat(status).isAnyOf(STATUS_OK, STATUS_DEX_OPT_FAILED, STATUS_CANCELLED);
-        if (status == STATUS_CANCELLED) {
-            assertThat(checkFinishedPostBootUpdate()).isFalse();
-            // If cancelled, we can complete it by running it again.
-            completePostBootOptimization();
-        } else {
-            assertThat(checkFinishedPostBootUpdate()).isTrue();
-        }
     }
 
     @Test
@@ -367,14 +316,6 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
         }
 
         fail(message.toString());
-    }
-
-    private void rebootAndCheckDexOptEnabled() throws Exception {
-        mDevice.reboot();
-        assertThat(mDevice.waitForBootComplete(REBOOT_TIMEOUT_MS)).isTrue();
-        // This requires PackageManager to be alive. So run after reboot as the previous failure
-        // may have device in booting state.
-        assumeTrue(checkDexOptEnabled());
     }
 
     private void ensurePostBootOptimizationCompleted() throws Exception {

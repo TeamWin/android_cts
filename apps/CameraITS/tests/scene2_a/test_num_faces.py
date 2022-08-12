@@ -19,20 +19,74 @@ import os.path
 
 import cv2
 from mobly import test_runner
+import numpy as np
 
 import its_base_test
 import camera_properties_utils
 import capture_request_utils
+import error_util
 import image_processing_utils
 import its_session_utils
 
-FD_MODE_OFF = 0
-FD_MODE_SIMPLE = 1
-FD_MODE_FULL = 2
+FD_MODE_OFF, FD_MODE_SIMPLE, FD_MODE_FULL = 0, 1, 2
+HAARCASCADE_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(cv2.__file__)), 'opencv', 'haarcascades',
+    'haarcascade_frontalface_default.xml')
 NAME = os.path.splitext(os.path.basename(__file__))[0]
 NUM_TEST_FRAMES = 20
 NUM_FACES = 3
 W, H = 640, 480
+
+
+def load_opencv_haarcascade_file():
+  """Return Haar Cascade file for face detection."""
+  logging.info('Haar Cascade file location: %s', HAARCASCADE_FILE)
+  if os.path.isfile(HAARCASCADE_FILE):
+    return HAARCASCADE_FILE
+  else:
+    raise error_util.CameraItsError('haarcascade_frontalface_default.xml file '
+                                    f'must be in {HAARCASCADE_FILE}')
+
+
+def match_face_locations(faces_cropped, faces_opencv, mode):
+  """Assert face locations between two methods.
+
+  Method determines if center of opencv face boxes is within face detection
+  face boxes.
+
+  Args:
+    faces_cropped: list of lists with (l, r, t, b) for each face.
+    faces_opencv: list of lists with (x, y, w, h) for each face.
+    mode: int indicating face detection mode
+  """
+  # turn faces_opencv into list of center locations
+  faces_opencv_centers = [(x+w//2, y+h//2) for (x, y, w, h) in faces_opencv]
+  logging.debug('opencv face centers: %s', str(faces_opencv_centers))
+  for (x, y) in faces_opencv_centers:
+    centered = False
+    for (l, r, t, b) in faces_cropped:
+      if (l < x < r) and (t < y < b):
+        centered = True
+        break
+    if not centered:
+      raise AssertionError('Face rectangle in wrong location! '
+                           f'mode: {mode}, faces l,r,t,b: {faces_cropped}, '
+                           f'opencv x,y: {x},{y}')
+
+
+def find_opencv_faces(img):
+  """Finds face rectangles with openCV."""
+
+  # prep opencv
+  opencv_haarcascade_file = load_opencv_haarcascade_file()
+  face_cascade = cv2.CascadeClassifier(opencv_haarcascade_file)
+  img_255 = img * 255
+  gray = cv2.cvtColor(img_255.astype(np.uint8), cv2.COLOR_RGB2GRAY)
+
+  # find face rectangles with opencv
+  faces_opencv = face_cascade.detectMultiScale(gray, 1.1, 4)
+  logging.debug('%s', str(faces_opencv))
+  return faces_opencv
 
 
 def check_face_bounding_box(rect, aw, ah, index):
@@ -101,26 +155,30 @@ def check_face_landmarks(face, fd_mode, index):
     raise AssertionError(f'Unknown face detection mode: {fd_mode}.')
 
 
-def draw_face_rectangles(img, faces, crop):
-  """Draw rectangles on top of image.
+def correct_faces_for_crop(faces, img, crop):
+  """Correct face rectangles for sensor crop.
 
   Args:
-    img:    image array
-    faces:  list of dicts with face information
-    crop:   dict; crop region size with 'top, right, left, bottom' as keys
+    faces: list of dicts with face information
+    img: np image array
+    crop: dict of crop region size with 'top, right, left, bottom' as keys
   Returns:
-    img with face rectangles drawn on it
+    list of face locations (left, right, top, bottom) corrected
   """
+  faces_corrected = []
   cw, ch = crop['right'] - crop['left'], crop['bottom'] - crop['top']
   logging.debug('crop region: %s', str(crop))
+  w = img.shape[1]
+  h = img.shape[0]
   for rect in [face['bounds'] for face in faces]:
     logging.debug('rect: %s', str(rect))
-    top_left = (int(round((rect['left'] - crop['left']) * img.shape[1] / cw)),
-                int(round((rect['top'] - crop['top']) * img.shape[0] / ch)))
-    bot_rght = (int(round((rect['right'] - crop['left']) * img.shape[1] / cw)),
-                int(round((rect['bottom'] - crop['top']) * img.shape[0] / ch)))
-    cv2.rectangle(img, top_left, bot_rght, (0, 1, 0), 2)
-  return img
+    left = int(round((rect['left'] - crop['left']) * w / cw))
+    right = int(round((rect['right'] - crop['left']) * w / cw))
+    top = int(round((rect['top'] - crop['top']) * h / ch))
+    bottom = int(round((rect['bottom'] - crop['top']) * h / ch))
+    faces_corrected.append([left, right, top, bottom])
+  logging.debug('faces_corrected: %s', str(faces_corrected))
+  return faces_corrected
 
 
 class NumFacesTest(its_base_test.ItsBaseTest):
@@ -135,6 +193,7 @@ class NumFacesTest(its_base_test.ItsBaseTest):
         hidden_physical_id=self.hidden_physical_id) as cam:
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
+      debug_mode = self.debug_mode
 
       # Load chart for scene
       its_session_utils.load_scene(
@@ -180,35 +239,49 @@ class NumFacesTest(its_base_test.ItsBaseTest):
             fnd_faces = len(faces)
             logging.debug('Found %d face(s), expected %d.',
                           fnd_faces, NUM_FACES)
-            # draw boxes around faces
+
+            # draw boxes around faces in green
             crop_region = cap['metadata']['android.scaler.cropRegion']
-            img = draw_face_rectangles(img, faces, crop_region)
+            faces_cropped = correct_faces_for_crop(faces, img, crop_region)
+            for (l, r, t, b) in faces_cropped:
+              cv2.rectangle(img, (l, t), (r, b), (0, 1, 0), 2)
+
+            # Draw opencv boxes and center points in red
+            faces_opencv = find_opencv_faces(img)
+            for (x, y, w, h) in faces_opencv:
+              cv2.rectangle(img, (x, y), (x+w, y+h), (1, 0, 0), 2)
+              if debug_mode:
+                cv2.circle(img, (x+w//2, y+h//2), 2, (1, 0, 0), 2)
+
             # save image with rectangles
             img_name = f'{file_name_stem}_fd_mode_{fd_mode}.jpg'
             image_processing_utils.write_image(img, img_name)
             if fnd_faces != NUM_FACES:
               raise AssertionError('Wrong num of faces found! '
                                    f'Found: {fnd_faces}, expected: {NUM_FACES}')
+            # Reasonable scores for faces
+            face_scores = [face['score'] for face in faces]
+            for score in face_scores:
+              if not 1 <= score <= 100:
+                raise AssertionError(f'score not between [1:100]! {score}')
+
+            # Face bounds should be within active array
+            face_rectangles = [face['bounds'] for face in faces]
+            for j, rect in enumerate(face_rectangles):
+              check_face_bounding_box(rect, aw, ah, j)
+
+            # Face landmarks (if provided) are within face bounding box
+            for k, face in enumerate(faces):
+              check_face_landmarks(face, fd_mode, k)
+
+            # Match location of opencv and face detection mode faces
+            if fd_mode:  # non-zero value for ON
+              match_face_locations(faces_cropped, faces_opencv, fd_mode)
+
           if not faces:
             continue
-
           logging.debug('Frame %d face metadata:', i)
           logging.debug(' Faces: %s', str(faces))
-
-          # Reasonable scores for faces
-          face_scores = [face['score'] for face in faces]
-          for score in face_scores:
-            if not 1 <= score <= 100:
-              raise AssertionError(f'score not between [1:100]! {score}')
-
-          # Face bounds should be within active array
-          face_rectangles = [face['bounds'] for face in faces]
-          for j, rect in enumerate(face_rectangles):
-            check_face_bounding_box(rect, aw, ah, j)
-
-          # Face landmarks (if provided) are within face bounding box
-          for k, face in enumerate(faces):
-            check_face_landmarks(face, fd_mode, k)
 
 
 if __name__ == '__main__':

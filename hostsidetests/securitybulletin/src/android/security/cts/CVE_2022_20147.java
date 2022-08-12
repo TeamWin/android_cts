@@ -22,15 +22,16 @@ import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.compatibility.common.util.CrashUtils;
 import com.android.compatibility.common.util.CrashUtils.Config.BacktraceFilterPattern;
+import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.regex.Pattern;
 
-import org.junit.runner.RunWith;
-import org.junit.Test;
-
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2022_20147 extends SecurityTestCase {
+public class CVE_2022_20147 extends NonRootSecurityTestCase {
     /**
      * b/221216105
      * Vulnerability Behaviour: SIGSEGV in self

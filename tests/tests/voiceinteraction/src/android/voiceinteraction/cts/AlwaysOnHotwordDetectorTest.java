@@ -17,14 +17,11 @@
 package android.voiceinteraction.cts;
 
 import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
+import static android.voiceinteraction.cts.testcore.VoiceInteractionDetectionHelper.testHotwordDetection;
 
-import static com.google.common.truth.Truth.assertThat;
-
-import android.content.Intent;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.voiceinteraction.common.Utils;
 
-import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.Rule;
@@ -45,34 +42,22 @@ public class AlwaysOnHotwordDetectorTest extends AbstractVoiceInteractionBasicTe
     @Test
     public void testAlwaysOnHotwordDetector_startRecognitionWithData() {
         // creates detector
-        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
+        testHotwordDetection(mActivityTestRule, mContext,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
+                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
 
-        testHotwordDetection(Utils.DSP_DETECTOR_ENROLL_FAKE_DSP_MODEL,
+        testHotwordDetection(mActivityTestRule, mContext,
+                Utils.DSP_DETECTOR_ENROLL_FAKE_DSP_MODEL,
                 Utils.DSP_DETECTOR_AVAILABILITY_RESULT_INTENT,
-                AlwaysOnHotwordDetector.STATE_KEYPHRASE_ENROLLED);
+                AlwaysOnHotwordDetector.STATE_KEYPHRASE_ENROLLED,
+                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
 
-        testHotwordDetection(Utils.DSP_DETECTOR_START_RECOGNITION_WITH_DATA_TEST,
+        testHotwordDetection(mActivityTestRule, mContext,
+                Utils.DSP_DETECTOR_START_RECOGNITION_WITH_DATA_TEST,
                 Utils.DSP_DETECTOR_START_RECOGNITION_RESULT_INTENT,
-                Utils.DSP_DETECTOR_START_RECOGNITION_RESULT_SUCCESS);
-    }
-
-    private void testHotwordDetection(int testType, String expectedIntent, int expectedResult) {
-        final BlockingBroadcastReceiver receiver = new BlockingBroadcastReceiver(mContext,
-                expectedIntent);
-        receiver.register();
-        perform(testType);
-        final Intent intent = receiver.awaitForBroadcast(TEST_RESULT_AWAIT_TIMEOUT_MS);
-        receiver.unregisterQuietly();
-
-        assertThat(intent).isNotNull();
-        assertThat(intent.getIntExtra(Utils.KEY_TEST_RESULT, -1)).isEqualTo(expectedResult);
-    }
-
-    private void perform(int testType) {
-        mActivityTestRule.getScenario().onActivity(
-                activity -> activity.triggerHotwordDetectionServiceTest(
-                        Utils.HOTWORD_DETECTION_SERVICE_BASIC, testType));
+                Utils.DSP_DETECTOR_START_RECOGNITION_RESULT_SUCCESS,
+                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
     }
 }

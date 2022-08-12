@@ -124,6 +124,14 @@
             android:isolatedProcess="true"
             android:exported="true">
         </service>
+        <service android:name="android.attentionservice.cts.CtsTestAttentionService"
+                 android:label="CtsTestAttentionService"
+                 android:permission="android.permission.BIND_ATTENTION_SERVICE"
+                 android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.attention.AttentionService"/>
+            </intent-filter>
+        </service>
       <receiver android:name="VoiceInteractionTestReceiver"
            android:exported="true"/>
     </application>

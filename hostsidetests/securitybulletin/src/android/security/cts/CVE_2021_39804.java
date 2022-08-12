@@ -20,18 +20,16 @@ import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.compatibility.common.util.CrashUtils;
 import com.android.compatibility.common.util.CrashUtils.Config.BacktraceFilterPattern;
-import com.android.sts.common.tradefed.testtype.StsExtraBusinessLogicHostTestBase;
-import com.android.tradefed.device.ITestDevice;
+import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-import org.junit.After;
-import org.junit.runner.RunWith;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2021_39804 extends SecurityTestCase {
+public class CVE_2021_39804 extends NonRootSecurityTestCase {
 
     /**
      * b/215002587
