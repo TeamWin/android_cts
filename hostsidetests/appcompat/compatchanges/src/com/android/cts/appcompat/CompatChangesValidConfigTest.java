@@ -73,7 +73,8 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
             "OVERRIDE_MIN_ASPECT_RATIO",
             "OVERRIDE_MIN_ASPECT_RATIO_PORTRAIT_ONLY",
             "OVERRIDE_MIN_ASPECT_RATIO_LARGE",
-            "OVERRIDE_MIN_ASPECT_RATIO_MEDIUM"
+            "OVERRIDE_MIN_ASPECT_RATIO_MEDIUM",
+            "OVERRIDE_MIN_ASPECT_RATIO_TO_ALIGN_WITH_SPLIT_SCREEN"
     );
 
     /**

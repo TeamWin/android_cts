@@ -506,7 +506,7 @@
         <activity android:name="android.server.wm.CompatChangeTests$NonResizeableLargeAspectRatioActivity"
                   android:resizeableActivity="false"
                   android:screenOrientation="portrait"
-                  android:minAspectRatio="3"
+                  android:minAspectRatio="4"
                   android:exported="true"/>
 
         <activity android:name="android.server.wm.CompatChangeTests$SupportsSizeChangesPortraitActivity"

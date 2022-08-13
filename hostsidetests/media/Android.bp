@@ -23,7 +23,7 @@ java_test_host {
     defaults: ["cts_defaults"],
     srcs: [
         "src/**/*.java",
-        ":CtsMediaSessionTestCommon",
+        ":CtsMediaBetterTogetherHostSideTestCommon",
     ],
     // tag this module as a cts test artifact
     test_suites: [
@@ -44,6 +44,6 @@ java_test_host {
 }
 
 filegroup {
-    name: "CtsMediaSessionTestCommon",
+    name: "CtsMediaBetterTogetherHostSideTestCommon",
     srcs: ["common/**/*.java"],
 }

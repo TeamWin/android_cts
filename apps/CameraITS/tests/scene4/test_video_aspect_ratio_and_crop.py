@@ -168,6 +168,10 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
 
       run_crop_test = full_or_better and raw_avlb
 
+      # Get ffmpeg version being used.
+      ffmpeg_version = video_processing_utils.get_ffmpeg_version()
+      logging.debug('ffmpeg_version: %s', ffmpeg_version)
+
       for quality_profile_id_pair in supported_video_qualities:
         quality = quality_profile_id_pair.split(':')[0]
         profile_id = quality_profile_id_pair.split(':')[-1]

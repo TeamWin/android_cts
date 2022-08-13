@@ -32,6 +32,7 @@ import android.os.ParcelFileDescriptor;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
+import org.junit.Rule;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -44,6 +45,9 @@ import java.util.concurrent.TimeUnit;
 public abstract class CarApiTestBase {
 
     protected static final long DEFAULT_WAIT_TIMEOUT_MS = 1000;
+
+    @Rule
+    public final PlatformApiCheckerRule mPlatformApiCheckerRule = new PlatformApiCheckerRule();
 
     // Enums in FuelType
     final static List<Integer> EXPECTED_FUEL_TYPES =

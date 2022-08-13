@@ -32,6 +32,7 @@ import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
 
@@ -48,6 +49,7 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.SystemUserOnly;
+import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -151,6 +153,27 @@ public final class UserManagerTest {
     @ApiTest(apis = {"android.os.UserManager#isUserForeground"})
     // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
     @RequireRunOnPrimaryUser(switchedToUser = TRUE)
+    public void testIsUserForeground_differentContext_noPermission() throws Exception {
+        Context context = getContextForOtherUser();
+        UserManager um = context.getSystemService(UserManager.class);
+
+        assertThrows(SecurityException.class, () -> um.isUserForeground());
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#isUserForeground"})
+    @EnsureHasPermission(INTERACT_ACROSS_USERS)
+    public void testIsUserForeground_differentContext_withPermission() throws Exception {
+        Context userContext = sContext.createContextAsUser(UserHandle.of(-42), /* flags= */ 0);
+        UserManager um = userContext.getSystemService(UserManager.class);
+
+        assertWithMessage("isUserForeground() for unknown user").that(um.isUserForeground())
+                .isFalse();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#isUserForeground"})
+    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
     public void testIsUserForeground_currentUser() throws Exception {
         assertWithMessage("isUserForeground() for current user")
                 .that(mUserManager.isUserForeground()).isTrue();
@@ -174,6 +197,25 @@ public final class UserManagerTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserVisible"})
+    public void testIsUserVisible_differentContext_noPermission() throws Exception {
+        Context context = sContext.createContextAsUser(UserHandle.of(-42), /* flags= */ 0);
+        UserManager um = context.getSystemService(UserManager.class);
+
+        assertThrows(SecurityException.class, () -> um.isUserVisible());
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#isUserVisible"})
+    @EnsureHasPermission(INTERACT_ACROSS_USERS)
+    public void testIsUserVisible_differentContext_withPermission() throws Exception {
+        Context context = getContextForOtherUser();
+        UserManager um = context.getSystemService(UserManager.class);
+
+        assertWithMessage("isUserVisible() for unknown user").that(um.isUserVisible()).isFalse();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#isUserVisible"})
     // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
     @RequireRunOnPrimaryUser(switchedToUser = TRUE)
     public void testIsUserVisible_currentUser() throws Exception {
@@ -189,17 +231,43 @@ public final class UserManagerTest {
                 .that(mUserManager.isUserVisible()).isFalse();
     }
 
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#isUserVisible"})
+    // TODO(b/239961027): should be @RequireRunOnProfile instead
+    @RequireRunOnWorkProfile(switchedToParentUser = TRUE)
+    public void testIsUserVisible_startedProfileOfCurrentUser() throws Exception {
+        assertWithMessage("isUserVisible() for profile of current user (%s)",
+                sContext.getUser()).that(mUserManager.isUserVisible()).isTrue();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#isUserVisible"})
+    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
+    // Cannot use @RunOnProfile as it will stop the profile
+    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
+    // TODO(b/239961027): should be @EnsureHasProfile instead of @EnsureHasWorkProfile
+    @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
+    @EnsureHasPermission(INTERACT_ACROSS_USERS)
+    public void testIsUserVisible_stoppedProfileOfCurrentUser() throws Exception {
+        UserReference profile = sDeviceState.workProfile();
+        Log.d(TAG, "Stopping profile " + profile + " (called from " + sContext.getUser() + ")");
+        profile.stop();
+
+        Context context = getContextForUser(profile.userHandle().getIdentifier());
+        UserManager um = context.getSystemService(UserManager.class);
+
+        assertWithMessage("isUserVisible() for stopped profile (id=%s) of current user",
+                profile.id()).that(um.isUserVisible()).isFalse();
+    }
+
     // TODO(b/239824814): add testIsUserVisible_ tests for:
-    // - running profile of current user
-    // - stopped profile of current user
-    // - running profile of background user on primary display
-    // - stopped profile of background user on primary display
-    // - background user associated with secondary display and
-    //   - running profile of it
-    //   - stopped profile of it
-    // - when calling user doesn't match userId
-    //   - caller has INTERACT_ACROSS_USER permission
-    //   - caller doesn't have INTERACT_ACROSS_USER permission
+    // - profiles of background user on primary display (probably will only work on automotive)
+    // - when running
+    // - when stopped
+    // - background user associated with secondary display and65
+
+    // - running profile of it
+    // - stopped profile of it
 
     @Test
     public void testCloneProfile() throws Exception {
@@ -505,5 +573,23 @@ public final class UserManagerTest {
         } finally {
             profilesCreated.forEach(this::removeUser);
         }
+    }
+
+    private Context getContextForOtherUser() {
+        // TODO(b/240207590): TestApis.context().instrumentedContextForUser(TestApis.users()
+        // .nonExisting() doesn't work, it throws:
+        // IllegalStateException: Own package not found for user 1: package=android.multiuser.cts
+        // There might be some bug (or WAI :-) on ContextImpl that makes it behave different for
+        // negative user ids. Anyways, for the purpose of this test, this workaround is fine (i.e.
+        // the context user id is passed to the binder call and the service checks if it matches the
+        // caller or the caller has the proper permission when it doesn't.
+        return getContextForUser(-42);
+    }
+
+    private Context getContextForUser(int userId) {
+        Log.d(TAG, "Getting context for user " + userId);
+        Context context = sContext.createContextAsUser(UserHandle.of(userId), /* flags= */ 0);
+        Log.d(TAG, "Got it: " + context);
+        return context;
     }
 }

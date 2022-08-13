@@ -36,6 +36,7 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
+import android.os.RemoteException;
 import android.provider.Settings;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -87,26 +88,14 @@ public class TextViewIntegrationTest {
             UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
 
     @Before
-    public void setup() throws Exception {
+    public void setup() throws RemoteException {
         Assume.assumeTrue(
                 ApplicationProvider.getApplicationContext().getPackageManager()
                         .hasSystemFeature(FEATURE_TOUCHSCREEN));
-        workAroundNotificationShadeWindowIssue();
         mSimpleTextClassifier = new SimpleTextClassifier();
         sDevice.wakeUp();
         dismissKeyguard();
         closeSystemDialog();
-    }
-
-    // Somehow there is a stale "NotificationShade" window from SysUI stealing the inputs.
-    // The window is in the "exiting" state and seems never finish exiting.
-    // The workaround here is to (hopefully) reset its state by expanding the notification panel
-    // and collapsing it again.
-    private void workAroundNotificationShadeWindowIssue() throws InterruptedException {
-        ShellUtils.runShellCommand("cmd statusbar expand-notifications");
-        Thread.sleep(1000);
-        ShellUtils.runShellCommand("cmd statusbar collapse");
-        Thread.sleep(1000);
     }
 
     private void dismissKeyguard() {

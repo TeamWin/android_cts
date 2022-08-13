@@ -147,6 +147,10 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
           vendor_api_level >= its_session_utils.ANDROID13_API_LEVEL and
           _VIDEO_STABILIZATION_MODE in supported_stabilization_modes)
 
+      # Get ffmpeg version being used.
+      ffmpeg_version = video_processing_utils.get_ffmpeg_version()
+      logging.debug('ffmpeg_version: %s', ffmpeg_version)
+
       # Raise error if not FRONT or REAR facing camera
       facing = props['android.lens.facing']
       if (facing != camera_properties_utils.LENS_FACING_FRONT and

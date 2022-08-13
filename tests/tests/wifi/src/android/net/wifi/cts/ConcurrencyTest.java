@@ -53,6 +53,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.modules.utils.build.SdkLevel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -291,7 +292,8 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
                 || state == NetworkInfo.DetailedState.DISCONNECTED) {
             state = waitForNextNetworkState();
         }
-        if (state != NetworkInfo.DetailedState.CONNECTING) {
+        if (SdkLevel.isAtLeastT()
+                && state != NetworkInfo.DetailedState.CONNECTING) {
             return false;
         }
         state = waitForNextNetworkState();

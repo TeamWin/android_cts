@@ -52,6 +52,7 @@ import android.os.HandlerThread;
 import android.os.Parcel;
 import android.util.Log;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.internal.annotations.GuardedBy;
 
@@ -455,6 +456,8 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         }
     }
 
+    @ApiTest(apis = {"android.media.AudioManager#getActivePlaybackConfigurations",
+            "android.media.AudioManager.AudioPlaybackCallback#onPlaybackConfigChanged"})
     public void testMuteFromAppOpsNotification() throws Exception {
         if (!isValidPlatform("testMuteFromAppOpsNotification")) return;
 
@@ -479,6 +482,8 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 });
     }
 
+    @ApiTest(apis = {"android.media.AudioManager#getActivePlaybackConfigurations",
+            "android.media.AudioManager.AudioPlaybackCallback#onPlaybackConfigChanged"})
     public void testMuteFromStreamVolumeNotification() throws Exception {
         if (!isValidPlatform("testMuteFromStreamVolumeNotification")) return;
 
@@ -492,6 +497,8 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 () -> am.adjustStreamVolume(STREAM_NOTIFICATION, ADJUST_UNMUTE, /* flags= */0));
     }
 
+    @ApiTest(apis = {"android.media.AudioManager#getActivePlaybackConfigurations",
+            "android.media.AudioManager.AudioPlaybackCallback#onPlaybackConfigChanged"})
     public void testMuteFromClientVolumeNotification() throws Exception {
         if (!isValidPlatform("testMuteFromClientVolumeNotification")) return;
 
@@ -499,6 +506,8 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 /*unmute=*/() -> mAt.setVolume(1.f));
     }
 
+    @ApiTest(apis = {"android.media.AudioManager#getActivePlaybackConfigurations",
+            "android.media.AudioManager.AudioPlaybackCallback#onPlaybackConfigChanged"})
     public void testMuteFromVolumeShaperNotification() throws Exception {
         if (!isValidPlatform("testMuteFromVolumeShaperNotification")) return;
         verifyMuteUnmuteNotifications(/*mute=*/
@@ -529,6 +538,13 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
 
             // query how many active players before starting the MediaPlayer
             final int nbActivePlayersBeforeStart = am.getActivePlaybackConfigurations().size();
+            final int bufferSizeInBytes =
+                    TEST_AUDIO_TRACK_PLAY_SECONDS * TEST_AUDIO_TRACK_SAMPLERATE
+                            * TEST_AUDIO_TRACK_CHANNELS;
+
+            ByteBuffer audioData = createSoundDataInShortByteBuffer(bufferSizeInBytes,
+                    TEST_AUDIO_TRACK_SAMPLERATE, TEST_AUDIO_TRACK_FREQUENCY,
+                    TEST_AUDIO_TRACK_SWEEP);
 
             mAt = new AudioTrack.Builder()
                     .setAudioAttributes(aa)
@@ -537,11 +553,9 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                             .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
                             .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
                             .build())
+                    .setBufferSizeInBytes(bufferSizeInBytes)
                     .build();
-            ByteBuffer audioData = createSoundDataInShortByteBuffer(
-                    TEST_AUDIO_TRACK_PLAY_SECONDS * TEST_AUDIO_TRACK_SAMPLERATE
-                            * TEST_AUDIO_TRACK_CHANNELS, TEST_AUDIO_TRACK_SAMPLERATE,
-                    TEST_AUDIO_TRACK_FREQUENCY, TEST_AUDIO_TRACK_SWEEP);
+
             mAt.write(audioData, audioData.remaining(), WRITE_NON_BLOCKING);
             mAt.play();
 

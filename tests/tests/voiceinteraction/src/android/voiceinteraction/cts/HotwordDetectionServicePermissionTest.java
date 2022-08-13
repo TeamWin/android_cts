@@ -18,13 +18,12 @@ package android.voiceinteraction.cts;
 
 import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
 import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
-import static android.voiceinteraction.cts.testcore.VoiceInteractionDetectionHelper.performAndGetDetectionResult;
-import static android.voiceinteraction.cts.testcore.VoiceInteractionDetectionHelper.testHotwordDetection;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.media.AudioManager;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
@@ -35,10 +34,12 @@ import android.voiceinteraction.common.Utils;
 import android.voiceinteraction.service.EventPayloadParcelable;
 import android.voiceinteraction.service.MainHotwordDetectionService;
 
+import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.RequiresDevice;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
@@ -91,24 +92,50 @@ public final class HotwordDetectionServicePermissionTest
         }
 
         // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
-                Utils.HOTWORD_DETECTION_SERVICE_PERMISSION);
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
 
         verifyDetectedResult(
-                performAndGetDetectionResult(
-                        mActivityTestRule, mContext,
-                        Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST,
-                        Utils.HOTWORD_DETECTION_SERVICE_PERMISSION),
+                performAndGetDetectionResult(Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST),
                 MainHotwordDetectionService.DETECTED_RESULT);
 
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
-                Utils.HOTWORD_DETECTION_SERVICE_PERMISSION);
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
+    }
+
+    private void testHotwordDetection(int testType, String expectedIntent, int expectedResult) {
+        final BlockingBroadcastReceiver receiver = new BlockingBroadcastReceiver(mContext,
+                expectedIntent);
+        receiver.register();
+        perform(testType);
+        final Intent intent = receiver.awaitForBroadcast(TEST_RESULT_AWAIT_TIMEOUT_MS);
+        receiver.unregisterQuietly();
+
+        assertThat(intent).isNotNull();
+        assertThat(intent.getIntExtra(Utils.KEY_TEST_RESULT, -1)).isEqualTo(expectedResult);
+    }
+
+    @NonNull
+    private Parcelable performAndGetDetectionResult(int testType) {
+        final BlockingBroadcastReceiver receiver = new BlockingBroadcastReceiver(mContext,
+                Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT_INTENT);
+        receiver.register();
+        perform(testType);
+        final Intent intent = receiver.awaitForBroadcast(TEST_RESULT_AWAIT_TIMEOUT_MS);
+        receiver.unregisterQuietly();
+
+        assertThat(intent).isNotNull();
+        final Parcelable result = intent.getParcelableExtra(Utils.KEY_TEST_RESULT);
+        assertThat(result).isNotNull();
+        return result;
+    }
+
+    private void perform(int testType) {
+        mActivityTestRule.getScenario().onActivity(
+                activity -> activity.triggerHotwordDetectionServiceTest(
+                        Utils.HOTWORD_DETECTION_SERVICE_PERMISSION, testType));
     }
 
     // TODO: Implement HotwordDetectedResult#equals to override the Bundle equality check; then

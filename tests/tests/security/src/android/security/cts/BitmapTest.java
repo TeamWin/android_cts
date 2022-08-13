@@ -25,10 +25,11 @@ import android.graphics.Bitmap;
 import android.os.BadParcelableException;
 import android.os.IBinder;
 import android.platform.test.annotations.AsbSecurityTest;
-import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import com.google.common.util.concurrent.AbstractFuture;
 
@@ -80,8 +81,10 @@ public class BitmapTest extends StsExtraBusinessLogicTestCase {
     public void tearDown() {
         if (mRemoteConnection != null) {
             final Context context = mInstrumentation.getContext();
-            context.stopService(mIntent);
             context.unbindService(mRemoteConnection);
+            try {
+                mRemote.exit();
+            } catch (Exception ex) { }
             mRemote = null;
             mRemoteConnection = null;
         }
@@ -94,8 +97,7 @@ public class BitmapTest extends StsExtraBusinessLogicTestCase {
             mIntent.setComponent(new ComponentName(
                     "android.security.cts", "android.security.cts.BitmapService"));
             mRemoteConnection = new PeerConnection();
-            context.bindService(mIntent, mRemoteConnection,
-                    Context.BIND_AUTO_CREATE | Context.BIND_IMPORTANT);
+            context.bindService(mIntent, mRemoteConnection, Context.BIND_AUTO_CREATE);
             mRemote = mRemoteConnection.get();
         }
         return mRemote;

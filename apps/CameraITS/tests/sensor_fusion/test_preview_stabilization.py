@@ -128,6 +128,10 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
           'Preview Stabilization not supported',
       )
 
+      # Get ffmpeg version being used.
+      ffmpeg_version = video_processing_utils.get_ffmpeg_version()
+      logging.debug('ffmpeg_version: %s', ffmpeg_version)
+
       # Raise error if not FRONT or REAR facing camera
       facing = props['android.lens.facing']
       if (facing != camera_properties_utils.LENS_FACING_BACK

@@ -20,7 +20,6 @@ android_test {
     name: "CtsVoiceInteractionTestCases",
     defaults: ["cts_defaults"],
     static_libs: [
-        "CtsAttentionServiceDevice",
         "CtsVoiceInteractionCommon",
         "ctstestrunner-axt",
         "compatibility-device-util-axt",

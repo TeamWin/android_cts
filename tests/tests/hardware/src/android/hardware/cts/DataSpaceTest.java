@@ -37,11 +37,14 @@ import androidx.test.annotation.UiThreadTest;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+@ApiTest(apis = {"android.hardware.DataSpace#NamedDataSpace"})
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 public class DataSpaceTest {
@@ -198,7 +201,7 @@ public class DataSpaceTest {
 
     @UiThreadTest
     @Test
-    public void getDataSpaceWithFormatYUV420_888() {
+    public void getDataSpaceWithFormatYV12() {
         mTex = new int[1];
         glGenTextures(1, mTex, 0);
 
@@ -208,7 +211,7 @@ public class DataSpaceTest {
 
         mSurface = new Surface(mSurfaceTexture);
         mWriter = new ImageWriter.Builder(mSurface)
-                .setImageFormat(ImageFormat.YUV_420_888)
+                .setImageFormat(ImageFormat.YV12)
                 .build();
 
         Image inputImage = null;
