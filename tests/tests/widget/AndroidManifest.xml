@@ -54,6 +54,14 @@
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
             </intent-filter>
         </activity>
+        <activity android:name="android.widget.cts.TextViewMouseInteractionActivity"
+             android:label="TextViewMouseInteractionActivity"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
+            </intent-filter>
+        </activity>
 
         <activity android:name="android.widget.cts.AbsoluteLayoutCtsActivity"
              android:label="AbsoluteLayoutCtsActivity"

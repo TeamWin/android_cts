@@ -58,6 +58,7 @@ import android.text.TextUtils;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.After;
@@ -1008,6 +1009,7 @@ public class MediaRouter2Test {
     }
 
     @Test
+    @ApiTest(apis = {"android.media.MediaRouter2.RouteCallback#onRoutesUpdated"})
     public void testCallbacksAreCalledWhenVolumeChanged() throws Exception {
         if (mAudioManager.isVolumeFixed()) {
             return;
@@ -1027,25 +1029,25 @@ public class MediaRouter2Test {
 
         final int targetVolume = originalVolume == minVolume
                 ? originalVolume + 1 : originalVolume - 1;
-        final CountDownLatch latch = new CountDownLatch(1);
-        RouteCallback routeCallback = new RouteCallback() {
-            @Override
-            public void onRoutesChanged(List<MediaRoute2Info> routes) {
-                for (MediaRoute2Info route : routes) {
-                    if (route.getId().equals(selectedSystemRoute.getId())
-                            && route.getVolume() == targetVolume) {
-                        latch.countDown();
-                        break;
+        final CountDownLatch volumeUpdatedLatch = new CountDownLatch(1);
+        RouteCallback routeCallback =
+                new RouteCallback() {
+                    @Override
+                    public void onRoutesUpdated(List<MediaRoute2Info> routes) {
+                        for (MediaRoute2Info route : routes) {
+                            if (route.getId().equals(selectedSystemRoute.getId())
+                                    && route.getVolume() == targetVolume) {
+                                volumeUpdatedLatch.countDown();
+                                break;
+                            }
+                        }
                     }
-                }
-            }
-        };
+                };
 
         mRouter2.registerRouteCallback(mExecutor, routeCallback, LIVE_AUDIO_DISCOVERY_PREFERENCE);
-
         try {
             mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0);
-            assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertTrue(volumeUpdatedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         } finally {
             mRouter2.unregisterRouteCallback(routeCallback);
             mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0);
@@ -1072,6 +1074,7 @@ public class MediaRouter2Test {
         routeCallback.onRoutesAdded(null);
         routeCallback.onRoutesChanged(null);
         routeCallback.onRoutesRemoved(null);
+        routeCallback.onRoutesUpdated(null);
 
         TransferCallback transferCallback = new TransferCallback() {};
         transferCallback.onTransfer(null, null);

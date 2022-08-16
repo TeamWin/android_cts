@@ -23,6 +23,7 @@ import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
 
+import com.android.annotations.Nullable;
 import com.android.os.AtomsProto;
 import com.android.os.StatsLog;
 import com.android.tradefed.build.IBuildInfo;
@@ -76,11 +77,45 @@ public class AppStartStatsTests extends DeviceTestCase implements IBuildReceiver
     }
 
     public void testAppStartOccurred() throws Exception {
+        runTestAppStartOccurredCommon(null, atom -> {
+            assertThat(atom.getType()).isEqualTo(
+                    AtomsProto.AppStartOccurred.TransitionType.COLD);
+            assertThat(atom.getProcessState()).isEqualTo(
+                    AtomsProto.AppStartOccurred.AppProcessState.PROCESS_STATE_NONEXISTENT);
+        });
+    }
+
+    public void testAppStartOccurredWarm() throws Exception {
+        runTestAppStartOccurredCommon(() -> {
+            DeviceUtils.executeBackgroundService(getDevice(), "action.end_immediately");
+            Thread.sleep(WAIT_TIME_MS);
+        }, atom -> {
+            assertThat(atom.getType()).isEqualTo(
+                    AtomsProto.AppStartOccurred.TransitionType.WARM);
+            assertThat(atom.getProcessState()).isEqualTo(
+                    AtomsProto.AppStartOccurred.AppProcessState.PROCESS_STATE_CACHED_EMPTY);
+        });
+    }
+
+    private interface RunnableWithException {
+        void run() throws Exception;
+    }
+
+    private interface ConsumerWithException<T> {
+        void accept(T t) throws Exception;
+    }
+
+    private void runTestAppStartOccurredCommon(@Nullable RunnableWithException prolog,
+            @Nullable ConsumerWithException<AtomsProto.AppStartOccurred> epilog) throws Exception {
         final int atomTag = AtomsProto.Atom.APP_START_OCCURRED_FIELD_NUMBER;
         ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 atomTag,  /*uidInAttributionChain=*/false);
         getDevice().executeShellCommand(getGlobalHibernationCommand(
                 DeviceUtils.STATSD_ATOM_TEST_PKG, false));
+
+        if (prolog != null) {
+            prolog.run();
+        }
 
         DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 STATSD_CTS_FOREGROUND_ACTIVITY, "action", "action.sleep_top", WAIT_TIME_MS);
@@ -97,6 +132,9 @@ public class AppStartStatsTests extends DeviceTestCase implements IBuildReceiver
         assertThat(atom.getActivityStartTimestampMillis()).isGreaterThan(0L);
         assertThat(atom.getTransitionDelayMillis()).isGreaterThan(0);
         assertThat(atom.getIsHibernating()).isFalse();
+        if (epilog != null) {
+            epilog.accept(atom);
+        }
     }
 
     public void testHibernatingAppStartOccurred() throws Exception {

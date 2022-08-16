@@ -30,6 +30,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.annotation.NonNull;
 import android.content.Context;
 import android.media.MediaRoute2Info;
 import android.media.MediaRoute2ProviderService;
@@ -49,6 +50,7 @@ import android.platform.test.annotations.LargeTest;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.After;
@@ -165,7 +167,11 @@ public class MediaRoute2ProviderServiceTest {
     }
 
     @Test
-    public void testNotifyRoutesInvokesMediaRouter2RouteCallback() throws Exception {
+    @ApiTest(apis = {"android.media.MediaRoute2ProviderService#notifyRoutes",
+            "android.media.MediaRouter2.RouteCallback#onRoutesAdded",
+            "android.media.MediaRouter2.RouteCallback#onRoutesChanged",
+            "android.media.MediaRouter2.RouteCallback#onRoutesRemoved"})
+    public void testNotifyRoutesInvokesMediaRouter2DeprecatedRouteCallback() throws Exception {
         final String routeId0 = "routeId0";
         final String routeName0 = "routeName0";
         final String routeId1 = "routeId1";
@@ -277,6 +283,117 @@ public class MediaRoute2ProviderServiceTest {
             assertTrue(onRoutesRemovedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         } finally {
             mRouter2.unregisterRouteCallback(routeCallback);
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.media.MediaRoute2ProviderService#notifyRoutes",
+            "android.media.MediaRouter2.RouteCallback#onRoutesUpdated"})
+    public void testNotifyRoutesInvokesMediaRouter2RouteCallback() throws Exception {
+        final String routeId0 = "routeId0";
+        final String routeName0 = "routeName0";
+        final String routeId1 = "routeId1";
+        final String routeName1 = "routeName1";
+        final List<String> features = Collections.singletonList("customFeature");
+
+        final List<MediaRoute2Info> routes = new ArrayList<>();
+        routes.add(new MediaRoute2Info.Builder(routeId0, routeName0).addFeatures(features).build());
+        routes.add(new MediaRoute2Info.Builder(routeId1, routeName1).addFeatures(features).build());
+
+        final List<MediaRoute2Info> testRoutes = new ArrayList<>();
+        testRoutes.add(new MediaRoute2Info.Builder(routes.get(0)).build());
+        testRoutes.add(new MediaRoute2Info.Builder(routes.get(1)).build());
+
+        final int newConnectionState = MediaRoute2Info.CONNECTION_STATE_CONNECTED;
+        CountDownLatch routesAddedLatch = new CountDownLatch(1);
+        CountDownLatch routesChangedLatch = new CountDownLatch(1);
+        CountDownLatch routesRemovedLatch = new CountDownLatch(1);
+        RouteCallback routeCallback =
+                new RouteCallback() {
+                    @Override
+                    public void onRoutesUpdated(List<MediaRoute2Info> routes) {
+                        if (routesAddedLatch.getCount() == 1) {
+                            assertContainsExpectedRoutes(routes, testRoutes);
+                            routesAddedLatch.countDown();
+                            return;
+                        }
+
+                        if (routesChangedLatch.getCount() == 1) {
+                            assertContainsExpectedRoutes(routes, testRoutes);
+                            routesChangedLatch.countDown();
+                            return;
+                        }
+
+                        if (routesRemovedLatch.getCount() == 1) {
+                            assertNotContainsExpectedRoutes(routes, testRoutes);
+                            routesRemovedLatch.countDown();
+                            return;
+                        }
+                    }
+                };
+
+        mRouter2.registerRouteCallback(
+                mExecutor,
+                routeCallback,
+                new RouteDiscoveryPreference.Builder(features, true).build());
+        try {
+            mService.notifyRoutes(routes);
+            assertTrue(routesAddedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+            // Change the connection state of route2 in order to invoke onRoutesUpdated()
+            MediaRoute2Info newRoute2 =
+                    new MediaRoute2Info.Builder(routes.get(1))
+                            .setConnectionState(newConnectionState)
+                            .build();
+            routes.set(1, newRoute2);
+            testRoutes.set(1, newRoute2);
+            mService.notifyRoutes(routes);
+            assertTrue(routesChangedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+            // Now remove all the routes
+            routes.clear();
+            mService.notifyRoutes(routes);
+            assertTrue(routesRemovedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        } finally {
+            mRouter2.unregisterRouteCallback(routeCallback);
+        }
+    }
+
+    /**
+     * Asserts {@code routes} contains all items in {@code expectedRoutes}. Assertion will fail if
+     * id, name, or features do not match.
+     * @param routes
+     * @param expectedRoutes
+     */
+    private static void assertContainsExpectedRoutes(
+            List<MediaRoute2Info> routes, List<MediaRoute2Info> expectedRoutes) {
+        for (MediaRoute2Info testRoute : expectedRoutes) {
+            MediaRoute2Info matchingRoute =
+                    routes.stream()
+                            .filter(r -> r.getOriginalId().equals(testRoute.getOriginalId()))
+                            .findFirst()
+                            .orElse(null);
+
+            assertNotNull("No route found.", matchingRoute);
+            assertEquals(testRoute.getName(), matchingRoute.getName());
+            assertEquals(testRoute.getFeatures(), matchingRoute.getFeatures());
+        }
+    }
+
+    /**
+     * Asserts {@code routes} does <i><b>not</b></i> contain all items in {@code expectedRoutes}.
+     * @param routes
+     * @param expectedRoutes
+     */
+    private static void assertNotContainsExpectedRoutes(@NonNull List<MediaRoute2Info> routes,
+            @NonNull List<MediaRoute2Info> expectedRoutes) {
+        for (MediaRoute2Info removedRoute : expectedRoutes) {
+            MediaRoute2Info matchingRoute =
+                    routes.stream()
+                            .filter(r -> r.getOriginalId().equals(removedRoute.getOriginalId()))
+                            .findFirst()
+                            .orElse(null);
+            assertNull(matchingRoute);
         }
     }
 

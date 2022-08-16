@@ -3,11 +3,6 @@ guangzhu@google.com
 normancheung@google.com
 jdesprez@google.com
 
-# Android Partner Eng Approvers
-aaronholden@google.com
-yuji@google.com
-nickrose@google.com
-
 # File Specific Approvers
 per-file Backup* = file:platform/frameworks/base:/services/backup/OWNERS
 per-file cts-meerkat.xml = alanstokes@google.com, brufino@google.com, lus@google.com, rickywai@google.com
