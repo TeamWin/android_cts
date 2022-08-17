@@ -114,6 +114,7 @@ android_test {
         ":CtsStorageEscalationApp29Full",
         ":CtsStorageEscalationApp29Scoped",
         ":CtsVictimPermissionDefinerApp",
+        ":CtsAppThatRequestsMultiplePermissionsWithMinMaxSdk",
     ],
     per_testcase_directory: true,
 }

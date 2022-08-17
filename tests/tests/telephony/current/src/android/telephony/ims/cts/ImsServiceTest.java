@@ -43,7 +43,7 @@ import android.telephony.TelephonyManager;
 import android.telephony.cts.AsyncSmsMessageListener;
 import android.telephony.cts.CarrierCapability;
 import android.telephony.cts.SmsReceiverHelper;
-import android.telephony.cts.TelephonyUtils;
+import android.telephony.cts.util.TelephonyUtils;
 import android.telephony.ims.ImsException;
 import android.telephony.ims.ImsManager;
 import android.telephony.ims.ImsMmTelManager;

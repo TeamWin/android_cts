@@ -29,7 +29,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
-import android.telephony.cts.TelephonyUtils;
+import android.telephony.cts.util.TelephonyUtils;
 import android.telephony.gba.UaSecurityProtocolIdentifier;
 import android.util.Log;
 

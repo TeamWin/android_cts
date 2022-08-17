@@ -22,7 +22,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.platform.test.annotations.AppModeFull;
 import android.telephony.TelephonyManager;
-import android.telephony.cts.TelephonyUtils;
+import android.telephony.cts.util.TelephonyUtils;
 
 import androidx.test.InstrumentationRegistry;
 

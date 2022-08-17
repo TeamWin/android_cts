@@ -2133,7 +2133,7 @@ public class ItsService extends Service implements SensorEventListener {
         int fileFormat = MediaRecorder.OutputFormat.DEFAULT;
 
         String outputFilePath = getOutputMediaFile(cameraDeviceId, videoSize,
-                /* quality= */"preview", fileFormat, /* stabilized= */ true);
+                /* quality= */"preview", fileFormat, stabilize);
         assert outputFilePath != null;
 
         mMediaRecorder = new MediaRecorder(this);

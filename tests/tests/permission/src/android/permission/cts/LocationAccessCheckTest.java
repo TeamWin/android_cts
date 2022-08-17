@@ -606,6 +606,12 @@ public class LocationAccessCheckTest {
                         + PERMISSION_CONTROLLER_PKG);
     }
 
+    @Before
+    public void bypassBatterySavingRestrictions() {
+        runShellCommand("cmd tare set-vip " + myUserHandle().getIdentifier()
+                + " " + PERMISSION_CONTROLLER_PKG + " true");
+    }
+
     /**
      * Enable location access check
      */
@@ -747,6 +753,12 @@ public class LocationAccessCheckTest {
     @After
     public void locationUnbind() throws Throwable {
         unbindService();
+    }
+
+    @After
+    public void resetBatterySavingRestrictions() {
+        runShellCommand("cmd tare set-vip " + myUserHandle().getIdentifier()
+                + " " + PERMISSION_CONTROLLER_PKG + " default");
     }
 
     @Test

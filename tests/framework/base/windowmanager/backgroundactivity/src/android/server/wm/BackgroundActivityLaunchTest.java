@@ -760,7 +760,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
             if (objectText == null) {
                 continue;
             }
-            if (objectText.equalsIgnoreCase("CREATE")) {
+            if (objectText.equalsIgnoreCase("CREATE") || objectText.equalsIgnoreCase("ALLOW")) {
                 object.click();
                 buttonClicked = true;
                 break;

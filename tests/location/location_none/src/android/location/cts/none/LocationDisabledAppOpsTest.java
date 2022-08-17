@@ -34,6 +34,8 @@ import android.os.UserHandle;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,6 +56,11 @@ public class LocationDisabledAppOpsTest {
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.location.LocationManager#setLocationEnabledForUser",
+            "android.app.AppOpsManager#noteOpNoThrow",
+            "android.app.AppOpsManager#checkOpNoThrow",
+    })
     public void testLocationAppOpIsIgnoredForAppsWhenLocationIsDisabled() {
         PackageTagsList ignoreList = mLm.getIgnoreSettingsAllowlist();
 
@@ -85,7 +92,8 @@ public class LocationDisabledAppOpsTest {
                             mode[0] = mAom.noteOpNoThrow(
                                     OPSTR_FINE_LOCATION, ai.uid, ai.packageName);
                         });
-                        if (mode[0] == MODE_ALLOWED && !ignoreList.containsAll(pi.packageName)) {
+                        if (mode[0] == MODE_ALLOWED && !ignoreList.containsAll(pi.packageName)
+                                && !mLm.isProviderPackage(null, pi.packageName, null)) {
                             bypassedNoteOps.add(pi.packageName);
                         }
 
@@ -95,7 +103,8 @@ public class LocationDisabledAppOpsTest {
                             mode[0] = mAom
                                     .checkOpNoThrow(OPSTR_FINE_LOCATION, ai.uid, ai.packageName);
                         });
-                        if (mode[0] == MODE_ALLOWED && !ignoreList.includes(pi.packageName)) {
+                        if (mode[0] == MODE_ALLOWED && !ignoreList.includes(pi.packageName)
+                                && !mLm.isProviderPackage(null, pi.packageName, null)) {
                             bypassedCheckOps.add(pi.packageName);
                         }
 

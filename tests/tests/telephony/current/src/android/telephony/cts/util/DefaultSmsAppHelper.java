@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.telephonyprovider.cts;
+package android.telephony.cts.util;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
@@ -34,8 +34,8 @@ import org.junit.Assume;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 
-class DefaultSmsAppHelper {
-    static void ensureDefaultSmsApp() {
+public class DefaultSmsAppHelper {
+    public static void ensureDefaultSmsApp() {
         if (!hasTelephony() || !hasSms()) {
             return;
         }
@@ -71,7 +71,7 @@ class DefaultSmsAppHelper {
         }
     }
 
-    static void stopBeingDefaultSmsApp() {
+    public static void stopBeingDefaultSmsApp() {
         if (!hasSms()) {
             return;
         }
@@ -106,17 +106,19 @@ class DefaultSmsAppHelper {
         }
     }
 
-    static void assumeTelephony() {
+    public static void assumeTelephony() {
         Assume.assumeTrue(hasTelephony());
     }
 
-    static boolean hasTelephony() {
+    public static boolean hasTelephony() {
         Context context = ApplicationProvider.getApplicationContext();
         return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
     }
 
-    static boolean hasSms() {
-        TelephonyManager telephonyManager = (TelephonyManager) ApplicationProvider.getApplicationContext().getSystemService(Context.TELEPHONY_SERVICE);
+    public static boolean hasSms() {
+        TelephonyManager telephonyManager = (TelephonyManager)
+                ApplicationProvider.getApplicationContext().getSystemService(
+                        Context.TELEPHONY_SERVICE);
         return telephonyManager.isSmsCapable();
     }
 }

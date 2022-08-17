@@ -199,6 +199,7 @@ public class DataSpaceTest {
         }
     }
 
+    @ApiTest(apis = {"android.hardware.DataSpace#DATASPACE_JFIF"})
     @UiThreadTest
     @Test
     public void getDataSpaceWithFormatYV12() {
@@ -221,7 +222,7 @@ public class DataSpaceTest {
 
             mSurfaceTexture.updateTexImage();
 
-            // test default dataspace value of ImageFormat.YUV_420_888 format.
+            // test default dataspace value of ImageFormat.YV12 format.
             assertEquals(DataSpace.DATASPACE_JFIF, mSurfaceTexture.getDataSpace());
         } finally {
             if (inputImage != null) {

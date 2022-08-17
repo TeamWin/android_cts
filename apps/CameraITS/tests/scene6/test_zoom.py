@@ -235,8 +235,10 @@ class ZoomTest(its_base_test.ItsBaseTest):
         test_tols, size = get_test_tols_and_cap_size(
             cam, props, self.chart_distance, debug)
       else:
-        fl = props['android.lens.info.availableFocalLengths'][0]
-        test_tols = {fl: (RADIUS_RTOL, OFFSET_RTOL)}
+        test_tols = {}
+        fls = props['android.lens.info.availableFocalLengths']
+        for fl in fls:
+          test_tols[fl] = (RADIUS_RTOL, OFFSET_RTOL)
         yuv_size = capture_request_utils.get_largest_yuv_format(props)
         size = [yuv_size['width'], yuv_size['height']]
       logging.debug('capture size: %s', str(size))

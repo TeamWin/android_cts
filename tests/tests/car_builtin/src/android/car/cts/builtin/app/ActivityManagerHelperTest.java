@@ -41,6 +41,7 @@ import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.WindowManagerState;
 import android.util.Log;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -269,6 +270,7 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
                 .isEqualTo(expectedLaunchAllowed);
     }
 
+    @FlakyTest(bugId = 242066634)
     @Test
     public void testStopAllTasksForUser() throws Exception {
         int initialCurrentUserId = getCurrentUserId();

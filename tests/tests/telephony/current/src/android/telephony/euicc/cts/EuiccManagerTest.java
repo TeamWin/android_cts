@@ -30,7 +30,7 @@ import android.content.IntentFilter;
 import android.telephony.TelephonyManager;
 import android.telephony.UiccCardInfo;
 import android.telephony.UiccPortInfo;
-import android.telephony.cts.TelephonyUtils;
+import android.telephony.cts.util.TelephonyUtils;
 import android.telephony.euicc.DownloadableSubscription;
 import android.telephony.euicc.EuiccCardManager;
 import android.telephony.euicc.EuiccInfo;

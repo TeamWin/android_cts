@@ -454,6 +454,9 @@ public class CameraErrorCollector extends ErrorCollector {
         boolean succ = true;
         for (int i = 0; i < expected.length; ++i) {
             if (i < actual.length) {
+                if (actual[i].equals(expected[i])) {
+                    continue;
+                }
                 // Avoid printing multiple errors for the same rectangle
                 if (!expectRectsAreSimilar(
                         msg, expected[i].getRect(), actual[i].getRect(), errorPercent)) {

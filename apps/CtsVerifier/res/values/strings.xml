@@ -5219,8 +5219,8 @@ You should be prompted to select credentials; choose the ones you just installed
           The \"Pass\" button will be enabled if device connect and disconnect messages are received.
     </string>
     <string name="audio_dev_notification_clearmsgs">Clear Messages</string>
-    <string name="audio_dev_notification_connectMsg">CONNECT DETECTED</string>
-    <string name="audio_dev_notification_disconnectMsg">DISCONNECT DETECTED</string>
+    <string name="audio_dev_notification_connectMsg">CONNECT DETECTED - %1$S</string>
+    <string name="audio_dev_notification_disconnectMsg">DISCONNECT DETECTED - %1$S</string>
 
     <string name="audio_out_devices_notifications_test">Audio Output Devices Notifications Test</string>
     <string name="audio_out_devices_infotext">Tests whether wired output peripheral

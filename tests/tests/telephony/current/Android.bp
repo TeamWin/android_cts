@@ -94,10 +94,3 @@ android_test {
     ],
     per_testcase_directory: true,
 }
-
-filegroup {
-    name: "cts-telephony-utils",
-    srcs: [
-        "src/android/telephony/cts/TelephonyUtils.java",
-    ],
-}

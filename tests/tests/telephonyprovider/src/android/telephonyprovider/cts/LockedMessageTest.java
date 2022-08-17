@@ -16,7 +16,7 @@
 
 package android.telephonyprovider.cts;
 
-import static android.telephonyprovider.cts.DefaultSmsAppHelper.assumeTelephony;
+import static android.telephony.cts.util.DefaultSmsAppHelper.assumeTelephony;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
@@ -27,6 +27,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Telephony;
+import android.telephony.cts.util.DefaultSmsAppHelper;
 
 import androidx.test.filters.SmallTest;
 

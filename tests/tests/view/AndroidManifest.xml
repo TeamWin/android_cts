@@ -416,6 +416,7 @@
         </activity>
 
         <activity android:name="android.view.cts.InputEventInterceptTestActivity"
+             android:theme="@style/no_starting_window"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

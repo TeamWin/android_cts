@@ -27,6 +27,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.Process
 import android.permission.PermissionControllerManager
 import android.permission.PermissionControllerManager.HIBERNATION_ELIGIBILITY_ELIGIBLE
 import android.permission.PermissionControllerManager.HIBERNATION_ELIGIBILITY_UNKNOWN
@@ -46,11 +47,13 @@ import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.DisableAnimationRule
 import com.android.compatibility.common.util.FreezeRotationRule
 import com.android.compatibility.common.util.SystemUtil
+import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
-import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.UiAutomatorUtils
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import org.hamcrest.CoreMatchers
 import org.hamcrest.Matchers
 import org.junit.After
@@ -65,8 +68,6 @@ import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 /**
  * Integration test for app hibernation.
@@ -122,6 +123,11 @@ class AppHibernationIntegrationTest {
             runShellCommandOrThrow("cmd statusbar collapse"),
             CoreMatchers.equalTo(""))
 
+        // Disable battery saving restrictions
+        runShellCommandOrThrow("cmd tare set-vip " +
+                "${Process.myUserHandle().identifier} " +
+                "${context.packageManager.permissionControllerPackageName} true")
+
         // Wake up the device
         runShellCommandOrThrow("input keyevent KEYCODE_WAKEUP")
         runShellCommandOrThrow("input keyevent 82")
@@ -129,6 +135,10 @@ class AppHibernationIntegrationTest {
 
     @After
     fun cleanUp() {
+        // Reset battery saving restrictions
+        runShellCommandOrThrow("cmd tare set-vip " +
+                "${Process.myUserHandle().identifier} " +
+                "${context.packageManager.permissionControllerPackageName} default")
         goHome()
         runWithShellPermissionIdentity {
             DeviceConfig.setProperty(NAMESPACE_APP_HIBERNATION, HIBERNATION_ENABLED_KEY,

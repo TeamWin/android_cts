@@ -72,6 +72,7 @@ import android.view.WindowInsets.Type;
 
 import androidx.test.rule.ActivityTestRule;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.WindowUtil;
 
 import org.hamcrest.CustomTypeSafeMatcher;
@@ -249,6 +250,7 @@ public class DisplayCutoutTests {
     }
 
     @Test
+    @CddTest(requirements = {"3.8.15/C-1-2,C-1-3,C-1-4"})
     public void testDisplayCutout_default() {
         runTest(LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT,
                 (activity, insets, displayCutout, which) -> {
@@ -267,6 +269,7 @@ public class DisplayCutoutTests {
     }
 
     @Test
+    @CddTest(requirements = {"3.8.15/C-1-2,C-1-3,C-1-4"})
     public void testDisplayCutout_shortEdges() {
         runTest(LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES, (a, insets, cutout, which) -> {
             if (which == ROOT) {
@@ -292,6 +295,7 @@ public class DisplayCutoutTests {
     }
 
     @Test
+    @CddTest(requirements = {"3.8.15/C-1-2,C-1-3,C-1-4"})
     public void testDisplayCutout_never() {
         runTest(LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER, (a, insets, displayCutout, which) -> {
             assertThat("must not layout in cutout area in never mode", displayCutout, nullValue());
@@ -299,6 +303,7 @@ public class DisplayCutoutTests {
     }
 
     @Test
+    @CddTest(requirements = {"3.8.15/C-1-2,C-1-3,C-1-4"})
     public void testDisplayCutout_always() {
         runTest(LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS, (a, insets, displayCutout, which) -> {
             if (which == ROOT) {

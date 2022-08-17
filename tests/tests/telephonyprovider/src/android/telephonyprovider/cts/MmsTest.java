@@ -16,7 +16,7 @@
 
 package android.telephonyprovider.cts;
 
-import static android.telephonyprovider.cts.DefaultSmsAppHelper.assumeTelephony;
+import static android.telephony.cts.util.DefaultSmsAppHelper.assumeTelephony;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
@@ -36,6 +36,7 @@ import android.provider.Telephony.Mms.Inbox;
 import android.provider.Telephony.Mms.Outbox;
 import android.provider.Telephony.Mms.Sent;
 import android.provider.Telephony.Sms;
+import android.telephony.cts.util.DefaultSmsAppHelper;
 
 import androidx.test.filters.SmallTest;
 

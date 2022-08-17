@@ -45,6 +45,8 @@ import android.view.WindowInsets.Type;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -573,6 +575,7 @@ public class WindowInsetsTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.view.WindowInsets#CONSUMED"})
     public void testConsumedInstance() {
         assertTrue(WindowInsets.CONSUMED.isConsumed());
     }

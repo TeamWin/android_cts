@@ -37,6 +37,7 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Before;
@@ -56,7 +57,7 @@ public class DecoderTestAacFormat {
             ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
     private static final boolean sIsAtLeastT =
             ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU);
-
+    private static final String MIMETYPE_AAC = MediaFormat.MIMETYPE_AUDIO_AAC;
     @Before
     public void setUp() throws Exception {
         final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
@@ -67,6 +68,7 @@ public class DecoderTestAacFormat {
      * Verify downmixing to stereo at decoding of MPEG-4 HE-AAC 5.0 and 5.1 channel streams
      */
     @Test
+    @CddTest(requirements = {"5.1.2/C-2-1", "5.1.2/C-7-1", "5.1.2/C-7-2"})
     public void testHeAacM4aMultichannelDownmix() throws Exception {
         Log.i(TAG, "START testDecodeHeAacMcM4a");
 
@@ -101,7 +103,7 @@ public class DecoderTestAacFormat {
                 assertEquals("Number of channels differs for codec:" + codecName
                                 + " when downmixing with KEY_AAC_MAX_OUTPUT_CHANNEL_COUNT",
                         2, aacDownmixParams.getNumChannels());
-                if (sIsAtLeastT) {
+                if (sIsAtLeastT && DecoderTest.isDefaultCodec(codecName, MIMETYPE_AAC)) {
                     // KEY_CHANNEL_MASK expected to work starting with T
                     assertEquals("Wrong channel mask with KEY_AAC_MAX_OUTPUT_CHANNEL_COUNT",
                             AudioFormat.CHANNEL_OUT_STEREO,
@@ -168,7 +170,7 @@ public class DecoderTestAacFormat {
         assertEquals("wrong number of tracks", 1, extractor.getTrackCount());
         MediaFormat format = extractor.getTrackFormat(0);
         String mime = format.getString(MediaFormat.KEY_MIME);
-        assertTrue("not an audio file", mime.startsWith("audio/"));
+        assertTrue("not an aac audio file", mime.equals(MIMETYPE_AAC));
 
         MediaCodec decoder;
         if (decoderName == null) {
@@ -276,7 +278,7 @@ public class DecoderTestAacFormat {
                 } catch (NullPointerException e) {
                     fail("KEY_SAMPLE_RATE not found on output format");
                 }
-                if (sIsAtLeastT) {
+                if (sIsAtLeastT && DecoderTest.isDefaultCodec(decoderName, MIMETYPE_AAC)) {
                     try {
                         audioParams.setChannelMask(
                                 outputFormat.getInteger(MediaFormat.KEY_CHANNEL_MASK));

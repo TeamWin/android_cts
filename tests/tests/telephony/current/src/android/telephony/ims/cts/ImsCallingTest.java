@@ -39,7 +39,7 @@ import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.InCallServiceStateValidator;
 import android.telephony.cts.InCallServiceStateValidator.InCallServiceCallbacks;
-import android.telephony.cts.TelephonyUtils;
+import android.telephony.cts.util.TelephonyUtils;
 import android.telephony.ims.feature.ImsFeature;
 import android.telephony.ims.feature.MmTelFeature;
 import android.telephony.ims.stub.ImsFeatureConfiguration;

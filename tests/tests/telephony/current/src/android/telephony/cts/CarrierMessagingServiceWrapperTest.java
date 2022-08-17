@@ -30,6 +30,7 @@ import android.service.carrier.MessagePdu;
 import android.telephony.SmsMessage;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.telephony.cts.util.TelephonyUtils;
 
 import androidx.test.InstrumentationRegistry;
 

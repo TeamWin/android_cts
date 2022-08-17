@@ -37,7 +37,7 @@ import android.os.PersistableBundle;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
-import android.telephony.cts.TelephonyUtils;
+import android.telephony.cts.util.TelephonyUtils;
 import android.telephony.ims.DelegateRegistrationState;
 import android.telephony.ims.DelegateRequest;
 import android.telephony.ims.FeatureTagState;

@@ -28,6 +28,7 @@ import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.content.res.Resources
 import android.net.Uri
 import android.os.Build
+import android.os.Process
 import android.os.UserHandle
 import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig
@@ -132,6 +133,11 @@ class AutoRevokeTest {
                 runShellCommandOrThrow("cmd statusbar collapse"),
                 equalTo(""))
 
+        // Disable battery saving restrictions
+        runShellCommandOrThrow("cmd tare set-vip " +
+                "${Process.myUserHandle().identifier} " +
+                "${context.packageManager.permissionControllerPackageName} true")
+
         // Wake up the device
         runShellCommandOrThrow("input keyevent KEYCODE_WAKEUP")
         if ("false".equals(runShellCommandOrThrow("cmd lock_settings get-disabled"))) {
@@ -155,6 +161,10 @@ class AutoRevokeTest {
 
     @After
     fun cleanUp() {
+        // Reset battery saving restrictions
+        runShellCommandOrThrow("cmd tare set-vip " +
+                "${Process.myUserHandle().identifier} " +
+                "${context.packageManager.permissionControllerPackageName} default")
         goHome()
     }
 
@@ -670,9 +680,9 @@ class AutoRevokeTest {
         val parent = waitFindObject(
             By.clickable(true)
                 .hasDescendant(By.textStartsWith("Remove permissions"))
-                .hasDescendant(By.clazz(Switch::class.java.name))
+                .hasDescendant(By.checkable(true))
         )
-        return parent.findObject(By.clazz(Switch::class.java.name))
+        return parent.findObject(By.checkable(true))
     }
 
     private fun waitForIdle() {

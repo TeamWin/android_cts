@@ -185,8 +185,7 @@ class AutoFlashTest(its_base_test.ItsBaseTest):
       logging.debug('AE_STATE (cap): %s', ae_state)
       flash_state = FLASH_STATES[metadata['android.flash.state']]
       logging.debug('FLASH_STATE: %s', flash_state)
-      # FLASH_REQUIRED and FLASH_FIRED
-      if ae_state == 'FLASH_REQUIRED' and flash_state == 'FLASH_STATE_FIRED':
+      if flash_state == 'FLASH_STATE_FIRED':
         logging.debug('Flash fired')
         flash_fired = True
         flash_exp_x_iso = exp*iso

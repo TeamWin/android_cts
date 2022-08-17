@@ -292,7 +292,7 @@ public final class Policy {
                                 isPrimary);
 
                         return new DynamicParameterizedAnnotation(
-                                annotation.annotationType().getSimpleName() + "Delegate:" + scope,
+                                annotation.annotationType().getSimpleName() + "Delegate_" + scope,
                                 newAnnotations);
                     }).collect(Collectors.toSet());
         };

@@ -1777,7 +1777,15 @@ public final class DeviceState extends HarrierRule {
         mUsersSetPasswords.clear();
 
         for (UserReference user : mCreatedUsers) {
-            user.remove();
+            try {
+                user.remove();
+            } catch (NeneException e) {
+                if (user.exists()) {
+                    // Otherwise it's probably just already removed
+                    throw new NeneException("Could not remove user", e);
+                }
+            }
+
         }
 
         mCreatedUsers.clear();

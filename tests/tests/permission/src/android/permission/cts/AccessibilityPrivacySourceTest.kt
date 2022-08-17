@@ -97,12 +97,18 @@ class AccessibilityPrivacySourceTest {
         InstrumentedAccessibilityService.disableAllServices()
         runShellCommand("input keyevent KEYCODE_WAKEUP")
         resetPermissionController()
+        // Bypass battery saving restrictions
+        runShellCommand("cmd tare set-vip " +
+                "${Process.myUserHandle().identifier} $permissionControllerPackage true")
         cancelNotifications(permissionControllerPackage)
     }
 
     @After
     fun cleanup() {
         cancelNotifications(permissionControllerPackage)
+        // Reset battery saving restrictions
+        runShellCommand("cmd tare set-vip " +
+                "${Process.myUserHandle().identifier} $permissionControllerPackage default")
         runWithShellPermissionIdentity { safetyCenterManager?.clearAllSafetySourceDataForTests() }
     }
 

@@ -93,6 +93,7 @@
         <option name="push" value="CtsStorageEscalationApp29Full.apk->/data/local/tmp/cts/permissions/CtsStorageEscalationApp29Full.apk" />
         <option name="push" value="CtsStorageEscalationApp29Scoped.apk->/data/local/tmp/cts/permissions/CtsStorageEscalationApp29Scoped.apk" />
         <option name="push" value="CtsAppThatHasNotificationListener.apk->/data/local/tmp/cts/permissions/CtsAppThatHasNotificationListener.apk" />
+        <option name="push" value="CtsAppThatRequestsMultiplePermissionsWithMinMaxSdk.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsMultiplePermissionsWithMinMaxSdk.apk" />
     </target_preparer>
 
     <!-- Remove additional apps if installed -->
