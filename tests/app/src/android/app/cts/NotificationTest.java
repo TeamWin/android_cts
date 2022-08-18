@@ -22,6 +22,7 @@ import static android.graphics.drawable.Icon.TYPE_RESOURCE;
 
 import android.app.Notification;
 import android.app.Notification.Action.Builder;
+import android.app.Notification.CallStyle;
 import android.app.Notification.MessagingStyle;
 import android.app.Notification.MessagingStyle.Message;
 import android.app.NotificationChannel;
@@ -979,6 +980,20 @@ public class NotificationTest extends AndroidTestCase {
                     .build();
 
         assertFalse(mNotification.hasImage());
+    }
+
+    public void testCallStyle_setsChronometerExtra() {
+        Person person = new Person.Builder().setName("Test name").build();
+        PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0,
+                new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        CallStyle cs = CallStyle.forIncomingCall(person, pendingIntent, pendingIntent);
+        Notification.Builder builder = new Notification.Builder(mContext, CHANNEL.getId())
+                .setStyle(cs)
+                .setUsesChronometer(true);
+
+        Notification notification = builder.build();
+        Bundle extras = notification.extras;
+        assertTrue(extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER));
     }
 
     private static void assertMessageEquals(

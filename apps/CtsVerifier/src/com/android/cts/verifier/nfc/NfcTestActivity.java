@@ -16,6 +16,13 @@
 
 package com.android.cts.verifier.nfc;
 
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.nfc.tech.MifareUltralight;
+import android.nfc.tech.Ndef;
+import android.nfc.tech.TagTechnology;
+import android.os.Bundle;
+
 import com.android.cts.verifier.ArrayTestListAdapter;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -26,14 +33,6 @@ import com.android.cts.verifier.nfc.hcef.HceFEmulatorTestActivity;
 import com.android.cts.verifier.nfc.hcef.HceFReaderTestActivity;
 import com.android.cts.verifier.nfc.offhost.OffhostUiccEmulatorTestActivity;
 import com.android.cts.verifier.nfc.offhost.OffhostUiccReaderTestActivity;
-
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.nfc.tech.MifareUltralight;
-import android.nfc.tech.Ndef;
-import android.nfc.tech.TagTechnology;
-import android.os.Build;
-import android.os.Bundle;
 
 /** Activity that lists all the NFC tests. */
 public class NfcTestActivity extends PassFailButtons.TestListActivity {
@@ -54,22 +53,6 @@ public class NfcTestActivity extends PassFailButtons.TestListActivity {
         setPassFailButtonClickListeners();
 
         ArrayTestListAdapter adapter = new ArrayTestListAdapter(this);
-
-        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC_BEAM)) {
-            adapter.add(TestListItem.newCategory(this, R.string.nfc_pee_2_pee));
-            adapter.add(TestListItem.newTest(this, R.string.nfc_ndef_push_sender,
-                    NdefPushSenderActivity.class.getName(),
-                    new Intent(this, NdefPushSenderActivity.class), null));
-            adapter.add(TestListItem.newTest(this, R.string.nfc_ndef_push_receiver,
-                    NdefPushReceiverActivity.class.getName(),
-                    new Intent(this, NdefPushReceiverActivity.class), null));
-
-            if ("MNC".equals(Build.VERSION.CODENAME) || Build.VERSION.SDK_INT >= 23) {
-                adapter.add(TestListItem.newTest(this, R.string.nfc_llcp_version_check,
-                        LlcpVersionActivity.class.getName(),
-                        new Intent(this, LlcpVersionActivity.class), null));
-            }
-        }
 
         adapter.add(TestListItem.newCategory(this, R.string.nfc_tag_verification));
         adapter.add(TestListItem.newTest(this, R.string.nfc_ndef,

@@ -39,6 +39,7 @@ import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Set of tests for Managed Profile use cases.
@@ -597,9 +598,21 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     private void assertActivityInForeground(String fullActivityName, int userId)
             throws DeviceNotAvailableException {
-        String commandOutput =
-                getDevice().executeShellCommand("dumpsys activity activities | grep Resumed:");
-        assertThat(commandOutput).contains("u" + userId + " " + fullActivityName);
+        final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
+        while (System.nanoTime() <= deadline) {
+            String commandOutput = getDevice().executeShellCommand(
+                    "dumpsys activity activities | grep Resumed:");
+            if (commandOutput.contains("u" + userId + " " + fullActivityName)) {
+                return;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e){
+                e.printStackTrace();
+                Thread.currentThread().interrupt();
+            }
+        }
+        fail("Activity " + fullActivityName + " didn't become foreground");
     }
 
     private void changeUserRestrictionOrFail(String key, boolean value, int userId)

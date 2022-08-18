@@ -43,6 +43,22 @@ public final class PlatformVersionTest extends AbstractExpectableTestCase {
         PlatformVersion fromEnum = ApiRequirements.PlatformVersion.TIRAMISU_0.get();
         assertWithMessage("TIRAMISU_0 from enum").that(fromEnum).isNotNull();
         expectWithMessage("TIRAMISU_0 from enum").that(fromEnum).isSameInstanceAs(version);
+
+        String toString = version.toString();
+        expectWithMessage("TIRAMISU_0.toString()").that(toString)
+                .matches(".*PlatformVersion.*name=TIRAMISU_0.*major=" + TIRAMISU + ".*minor=0.*");
+        PlatformVersion clone = clone(version);
+        expectWithMessage("TIRAMISU_0.toString() from parcel").that(clone.toString())
+                .isEqualTo(toString);
+
+        PlatformVersion anonymous = PlatformVersion.forMajorAndMinorVersions(
+                version.getMajorVersion(), version.getMinorVersion());
+        expectWithMessage("TIRAMISU_0").that(version).isEqualTo(anonymous);
+        expectWithMessage("anonymous").that(anonymous).isEqualTo(version);
+        expectWithMessage("TIRAMISU_0's hashcode").that(version.hashCode())
+                .isEqualTo(anonymous.hashCode());
+        expectWithMessage("anonymous' hashcode").that(anonymous.hashCode())
+                .isEqualTo(version.hashCode());
     }
 
     @Test
@@ -58,6 +74,22 @@ public final class PlatformVersionTest extends AbstractExpectableTestCase {
         PlatformVersion fromEnum = ApiRequirements.PlatformVersion.TIRAMISU_1.get();
         assertWithMessage("TIRAMISU_1 from enum").that(fromEnum).isNotNull();
         expectWithMessage("TIRAMISU_1 from enum").that(fromEnum).isSameInstanceAs(version);
+
+        String toString = version.toString();
+        expectWithMessage("TIRAMISU_1.toString()").that(toString)
+                .matches(".*PlatformVersion.*name=TIRAMISU_1.*major=" + TIRAMISU + ".*minor=1.*");
+        PlatformVersion clone = clone(version);
+        expectWithMessage("TIRAMISU_1.toString() from parcel").that(clone.toString())
+                .isEqualTo(toString);
+
+        PlatformVersion anonymous = PlatformVersion.forMajorAndMinorVersions(
+                version.getMajorVersion(), version.getMinorVersion());
+        expectWithMessage("TIRAMISU_1").that(version).isEqualTo(anonymous);
+        expectWithMessage("anonymous").that(anonymous).isEqualTo(version);
+        expectWithMessage("TIRAMISU_1's hashcode").that(version.hashCode())
+                .isEqualTo(anonymous.hashCode());
+        expectWithMessage("anonymous' hashcode").that(anonymous.hashCode())
+                .isEqualTo(version.hashCode());
     }
 
     @Test
@@ -73,6 +105,23 @@ public final class PlatformVersionTest extends AbstractExpectableTestCase {
         PlatformVersion fromEnum = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0.get();
         assertWithMessage("UPSIDE_DOWN_CAKE_0 from enum").that(fromEnum).isNotNull();
         expectWithMessage("UPSIDE_DOWN_CAKE_0 from enum").that(fromEnum).isSameInstanceAs(version);
+
+        String toString = version.toString();
+        expectWithMessage("UPSIDE_DOWN_CAKE_0.toString()").that(toString)
+                .matches(".*PlatformVersion.*name=UPSIDE_DOWN_CAKE_0.*major=" + UPSIDE_DOWN_CAKE
+                        + ".*minor=0.*");
+        PlatformVersion clone = clone(version);
+        expectWithMessage("UPSIDE_DOWN_CAKE_0.toString() from parcel").that(clone.toString())
+                .isEqualTo(toString);
+
+        PlatformVersion anonymous = PlatformVersion.forMajorAndMinorVersions(
+                version.getMajorVersion(), version.getMinorVersion());
+        expectWithMessage("UPSIDE_DOWN_CAKE_0").that(version).isEqualTo(anonymous);
+        expectWithMessage("anonymous").that(anonymous).isEqualTo(version);
+        expectWithMessage("UPSIDE_DOWN_CAKE_0's hashcode").that(version.hashCode())
+                .isEqualTo(anonymous.hashCode());
+        expectWithMessage("anonymous' hashcode").that(anonymous.hashCode())
+                .isEqualTo(version.hashCode());
     }
 
     @Test
@@ -80,22 +129,15 @@ public final class PlatformVersionTest extends AbstractExpectableTestCase {
         PlatformVersion original = PlatformVersion.forMajorAndMinorVersions(66, 6);
         expectWithMessage("original.describeContents()").that(original.describeContents())
                 .isEqualTo(0);
-        Parcel parcel =  Parcel.obtain();
-        try {
-            original.writeToParcel(parcel, /* flags= */ 0);
-            parcel.setDataPosition(0);
 
-            PlatformVersion clone = PlatformVersion.CREATOR.createFromParcel(parcel);
-
-            assertWithMessage("CREATOR.createFromParcel()").that(clone).isNotNull();
-            expectWithMessage("clone.major").that(clone.getMajorVersion()).isEqualTo(66);
-            expectWithMessage("clone.minor").that(clone.getMinorVersion()).isEqualTo(6);
-            expectWithMessage("clone.describeContents()").that(clone.describeContents())
-                    .isEqualTo(0);
-
-        } finally {
-            parcel.recycle();
-        }
+        PlatformVersion clone = clone(original);
+        assertWithMessage("CREATOR.createFromParcel()").that(clone).isNotNull();
+        expectWithMessage("clone.major").that(clone.getMajorVersion()).isEqualTo(66);
+        expectWithMessage("clone.minor").that(clone.getMinorVersion()).isEqualTo(6);
+        expectWithMessage("clone.describeContents()").that(clone.describeContents())
+                .isEqualTo(0);
+        expectWithMessage("clone.equals()").that(clone).isEqualTo(original);
+        expectWithMessage("clone.hashCode()").that(clone.hashCode()).isEqualTo(original.hashCode());
     }
 
     @Test
@@ -104,4 +146,17 @@ public final class PlatformVersionTest extends AbstractExpectableTestCase {
 
         assertWithMessage("CREATOR.newArray()").that(array).isNotNull();
     }
+
+    private PlatformVersion clone(PlatformVersion original) {
+        Parcel parcel =  Parcel.obtain();
+        try {
+            original.writeToParcel(parcel, /* flags= */ 0);
+            parcel.setDataPosition(0);
+
+            return PlatformVersion.CREATOR.createFromParcel(parcel);
+        } finally {
+            parcel.recycle();
+        }
+    }
+
 }

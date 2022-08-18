@@ -36,6 +36,7 @@ import static org.junit.Assert.fail;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
@@ -58,11 +59,14 @@ import android.os.Looper;
 import android.os.Parcel;
 import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -94,6 +98,11 @@ public class MediaSessionTest {
     private static final long TEST_QUEUE_ID = 12L;
     private static final long TEST_ACTION = 55L;
     private static final int TEST_TOO_MANY_SESSION_COUNT = 1000;
+
+    private static final String TEST_SESSION_TAG_FOREIGN_PACKAGE =
+            "test-session-tag-foreign-package";
+    private static final String TEST_FOREIGN_PACKAGE_NAME = "fakepackage";
+    private static final String TEST_FOREIGN_PACKAGE_CLASS = "com.fakepackage.media.FakeReceiver";
 
     private AudioManager mAudioManager;
     private Handler mHandler = new Handler(Looper.getMainLooper());
@@ -448,6 +457,47 @@ public class MediaSessionTest {
         // Also try to dispatch media key event. System would try to send key event via pending
         // intent, but it would no-op because there's no receiver.
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.media.session.MediaSession#setMediaButtonBroadcastReceiver"})
+    @AsbSecurityTest(cveBugId = 238177121)
+    public void setMediaButtonBroadcastReceiver_withForeignPackageName_fails() throws Exception {
+        Utils.assertMediaPlaybackStarted(getContext());
+
+        // Create Media Session
+        MyContextWrapper contextWrapper = new MyContextWrapper(getContext());
+        MediaSession mediaSession =
+                new MediaSession(contextWrapper, TEST_SESSION_TAG_FOREIGN_PACKAGE);
+
+        // Bypass client-side check
+        contextWrapper.mOverridePackageName = TEST_FOREIGN_PACKAGE_NAME;
+
+        try {
+            mediaSession.setMediaButtonBroadcastReceiver(
+                    new ComponentName(TEST_FOREIGN_PACKAGE_NAME, TEST_FOREIGN_PACKAGE_CLASS));
+            fail("Component name with different package name was registered.");
+        } catch (IllegalArgumentException ex) {
+            // Expected.
+        } finally {
+            mediaSession.release();
+        }
+    }
+
+    static class MyContextWrapper extends ContextWrapper {
+        String mOverridePackageName;
+
+        MyContextWrapper(Context base) {
+            super(base);
+        }
+
+        @Override
+        public String getPackageName() {
+            if (mOverridePackageName != null) {
+                return mOverridePackageName;
+            }
+            return super.getPackageName();
+        }
     }
 
     /**

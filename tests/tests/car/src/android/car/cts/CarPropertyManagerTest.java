@@ -694,12 +694,116 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     public void testDoorLockIfSupported() {
         adoptSystemLevelPermission(/* Car.PERMISSION_CONTROL_CAR_DOORS = */
                 "android.car.permission.CONTROL_CAR_DOORS", () -> {
-                VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.DOOR_LOCK,
+                    VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.DOOR_LOCK,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_DOOR,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class).build().verify(mCarPropertyManager);
+                });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testMirrorZPosIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_MIRRORS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.MIRROR_Z_POS,
                     CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
-                    VehicleAreaType.VEHICLE_AREA_TYPE_DOOR,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR,
                     CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
-                    Boolean.class).build().verify(mCarPropertyManager);
-            });
+                    Integer.class).requireMinMaxValues()
+                    .requireZeroToBeContainedInMinMaxRanges().build()
+                    .verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testMirrorZMoveIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_MIRRORS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.MIRROR_Z_MOVE,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Integer.class).requireMinMaxValues()
+                    .requireZeroToBeContainedInMinMaxRanges().build()
+                    .verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testMirrorYPosIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_MIRRORS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.MIRROR_Y_POS,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Integer.class).requireMinMaxValues()
+                    .requireZeroToBeContainedInMinMaxRanges().build()
+                    .verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testMirrorYMoveIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_MIRRORS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.MIRROR_Y_MOVE,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                    Integer.class).requireMinMaxValues()
+                    .requireZeroToBeContainedInMinMaxRanges().build()
+                    .verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testMirrorLockIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_MIRRORS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.MIRROR_LOCK,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE, Boolean.class)
+                    .build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testMirrorFoldIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_MIRRORS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.MIRROR_FOLD,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE, Boolean.class)
+                    .build().verify(mCarPropertyManager);
+        });
     }
 
     @Test

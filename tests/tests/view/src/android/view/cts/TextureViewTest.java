@@ -391,15 +391,28 @@ public class TextureViewTest {
     public void testCropRect() throws Throwable {
         final TextureViewCtsActivity activity = mActivityRule.launchActivity(/*startIntent*/ null);
         activity.waitForSurface();
-        mActivityRule.runOnUiThread(activity::removeCover);
-        TextureView textureView = activity.getTextureView();
+        final TextureView textureView = activity.getTextureView();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, textureView, () -> {
+            activity.removeCover();
+            // This test is sensitive to GPU sampling precision, so cap the size of the textureview
+            // to a known small value that will not have float precision issues when being
+            // sampled, specifically when running on GPUs limited to fp16 precision
+            ViewGroup.LayoutParams params = textureView.getLayoutParams();
+            params.width = 100;
+            params.height = 100;
+            textureView.setLayoutParams(params);
+        });
         int textureWidth = textureView.getWidth();
         int textureHeight = textureView.getHeight();
+        assertEquals(100, textureWidth);
+        assertEquals(100, textureHeight);
         SurfaceTexture surfaceTexture = textureView.getSurfaceTexture();
         Surface surface = new Surface(surfaceTexture);
         assertTrue(surface.isValid());
         ImageWriter writer = ImageWriter.newInstance(surface, /*maxImages*/ 1);
         Image image = writer.dequeueInputImage();
+        assertEquals(100, image.getWidth());
+        assertEquals(100, image.getHeight());
         Image.Plane plane = image.getPlanes()[0];
         Bitmap bitmap = Bitmap.createBitmap(plane.getRowStride() / 4, image.getHeight(),
                 Bitmap.Config.ARGB_8888);

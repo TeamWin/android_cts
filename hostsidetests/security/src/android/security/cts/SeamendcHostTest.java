@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -171,6 +172,7 @@ public class SeamendcHostTest extends BaseHostJUnit4Test {
      *
      * @throws Exception
      */
+    @Ignore // b/242588354
     @Test
     public void testSeamendcAgainstPrecompiledPolicies() throws Exception {
         File seamendcBinary = File.createTempFile("seamendc+apex", "binary");
@@ -201,6 +203,7 @@ public class SeamendcHostTest extends BaseHostJUnit4Test {
      *
      * @throws Exception
      */
+    @Ignore // b/242588354
     @Test
     public void testSeamendcAgainstSecilc() throws Exception {
         File secilcBinaryWithApex = File.createTempFile("secilc+apex", "binary");

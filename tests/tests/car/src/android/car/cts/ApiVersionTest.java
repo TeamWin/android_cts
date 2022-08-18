@@ -16,7 +16,6 @@
 
 package android.car.cts;
 
-import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertThrows;
@@ -68,8 +67,9 @@ public final class ApiVersionTest {
     public void testToString() {
         String string = version(42, 108).toString();
 
-        assertThat(string).contains("major=42");
-        assertThat(string).contains("minor=108");
+        assertWithMessage("version(42, 108).toString()").that(string).contains("major=42");
+        assertWithMessage("version(42, 108).toString()").that(string).contains("minor=108");
+        assertWithMessage("version(42, 108).toString()").that(string).doesNotContain("name=");
     }
 
     @Test
@@ -109,6 +109,7 @@ public final class ApiVersionTest {
     }
 
     // TODO(b/236153976): comment back once guava is supported
+    // (then also add check for different string but same versions)
 //    @Test
 //    public void testEqualsAndHashcode() {
 //        new EqualsTester()

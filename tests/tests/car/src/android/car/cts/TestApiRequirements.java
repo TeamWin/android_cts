@@ -33,10 +33,13 @@ import java.lang.annotation.Target;
  * <p> For items marked with this, the client need to make sure to check car API version using
  * {@link android.car.Car#getCarApiVersion()}. This annotation will only be used by Car-lib APIs.
  *
+ * @deprecated use annotations supported by {@code android.car.test.ApiCheckerRule} instead
+ *
  * @hide
  */
 @Retention(RUNTIME)
 @Target({ANNOTATION_TYPE, FIELD, TYPE, METHOD})
+@Deprecated
 public @interface TestApiRequirements {
 
     // TODO(b/237015981): Later this annotation may not be mandatory as this information can be

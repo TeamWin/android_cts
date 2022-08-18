@@ -36,7 +36,10 @@ import java.lang.annotation.Annotation;
  * equal to {@link TestApiRequirements#minPlatformVersion()}, also test should throw
  * {@link PlatformVersionMismatchException} for all platform lower than
  * {@link TestApiRequirements#minPlatformVersion()}.
+ *
+ * @deprecated use {@code android.car.test.ApiCheckerRule} instead
  */
+@Deprecated
 public final class PlatformApiCheckerRule implements TestRule {
 
     private static final String TAG = PlatformApiCheckerRule.class.getSimpleName();

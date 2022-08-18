@@ -496,6 +496,9 @@ public class JobThrottlingTest {
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
         assumeFalse("not testable in leanback device", mLeanbackOnly);
 
+        // This test is designed for the old quota system.
+        mTareDeviceConfigStateHelper.set("enable_tare", "false");
+
         setRestrictedBucketEnabled(true);
 
         // Disable coalescing
@@ -524,6 +527,9 @@ public class JobThrottlingTest {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
         assumeFalse("not testable in leanback device", mLeanbackOnly);
+
+        // This test is designed for the old quota system.
+        mTareDeviceConfigStateHelper.set("enable_tare", "false");
 
         setRestrictedBucketEnabled(true);
 
@@ -556,6 +562,9 @@ public class JobThrottlingTest {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
         assumeFalse("not testable in leanback device", mLeanbackOnly);
+
+        // This test is designed for the old quota system.
+        mTareDeviceConfigStateHelper.set("enable_tare", "false");
 
         setRestrictedBucketEnabled(true);
 
@@ -599,6 +608,9 @@ public class JobThrottlingTest {
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
         assumeFalse("not testable in leanback device", mLeanbackOnly);
 
+        // This test is designed for the old quota system.
+        mTareDeviceConfigStateHelper.set("enable_tare", "false");
+
         setRestrictedBucketEnabled(true);
 
         // Disable coalescing and the parole session
@@ -639,6 +651,9 @@ public class JobThrottlingTest {
 
         assumeTrue(mHasWifi);
         ensureSavedWifiNetwork(mWifiManager);
+
+        // This test is designed for the old quota system.
+        mTareDeviceConfigStateHelper.set("enable_tare", "false");
 
         setRestrictedBucketEnabled(true);
 
@@ -689,6 +704,9 @@ public class JobThrottlingTest {
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
         assumeFalse("not testable in leanback device", mLeanbackOnly);
 
+        // This test is designed for the old quota system.
+        mTareDeviceConfigStateHelper.set("enable_tare", "false");
+
         setChargingState(false);
         setTestPackageStandbyBucket(Bucket.NEVER);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
@@ -700,6 +718,9 @@ public class JobThrottlingTest {
     public void testUidActiveBypassesStandby() throws Exception {
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
         assumeFalse("not testable in leanback device", mLeanbackOnly);
+
+        // This test is designed for the old quota system.
+        mTareDeviceConfigStateHelper.set("enable_tare", "false");
 
         setChargingState(false);
         setTestPackageStandbyBucket(Bucket.NEVER);
@@ -982,6 +1003,9 @@ public class JobThrottlingTest {
 
         assumeTrue(mHasWifi);
         ensureSavedWifiNetwork(mWifiManager);
+
+        // This test is designed for the old quota system.
+        mTareDeviceConfigStateHelper.set("enable_tare", "false");
 
         setRestrictedBucketEnabled(true);
         setTestPackageStandbyBucket(Bucket.RESTRICTED);

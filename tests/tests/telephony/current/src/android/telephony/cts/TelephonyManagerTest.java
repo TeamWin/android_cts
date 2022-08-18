@@ -113,6 +113,7 @@ import androidx.test.InstrumentationRegistry;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CarrierPrivilegeUtils;
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
 import com.android.internal.telephony.uicc.IccUtils;
@@ -215,7 +216,7 @@ public class TelephonyManagerTest {
     private static final String PLMN_A = "123456";
     private static final String PLMN_B = "78901";
     private static final List<String> FPLMN_TEST = Arrays.asList(PLMN_A, PLMN_B);
-    private static final int MAX_FPLMN_NUM = 100;
+    private static final int MAX_FPLMN_NUM = 1000;
     private static final int MIN_FPLMN_NUM = 3;
 
     private static final String THERMAL_MITIGATION_COMMAND_BASE = "cmd phone thermal-mitigation ";
@@ -400,7 +401,7 @@ public class TelephonyManagerTest {
         mRadioVersion = makeRadioVersion(radioVersion.first, radioVersion.second);
         IntentFilter filter = new IntentFilter(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED);
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.READ_PHONE_STATE");
+                .adoptShellPermissionIdentity(android.Manifest.permission.READ_PHONE_STATE);
         saveAllowedNetworkTypesForAllReasons();
     }
 
@@ -715,7 +716,7 @@ public class TelephonyManagerTest {
         try {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .adoptShellPermissionIdentity(
-                            "android.permission.READ_PRIVILEGED_PHONE_STATE");
+                        android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
             mTelephonyManager.getPhoneAccountHandle();
         } catch (SecurityException e) {
             fail("TelephonyManager#getPhoneAccountHandle requires READ_PRIVILEGED_PHONE_STATE");
@@ -1048,6 +1049,7 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.telephony.TelephonyManager#getPhoneAccountHandle"})
     public void testGetPhoneAccountHandle() {
         TelecomManager telecomManager = getContext().getSystemService(TelecomManager.class);
         PhoneAccountHandle defaultAccount = telecomManager
@@ -1055,7 +1057,7 @@ public class TelephonyManagerTest {
         try {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .adoptShellPermissionIdentity(
-                            "android.permission.READ_PRIVILEGED_PHONE_STATE");
+                        android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
             PhoneAccountHandle phoneAccountHandle = mTelephonyManager.getPhoneAccountHandle();
             assertEquals(phoneAccountHandle, defaultAccount);
         } catch (SecurityException e) {
@@ -1419,8 +1421,8 @@ public class TelephonyManagerTest {
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     TelephonyManager::resetSettings,
-                    "android.permission.NETWORK_SETTINGS",
-                    "android.permission.MODIFY_PHONE_STATE");
+                    android.Manifest.permission.NETWORK_SETTINGS,
+                    android.Manifest.permission.MODIFY_PHONE_STATE);
         } catch (SecurityException e) {
             e.printStackTrace();
             fail(e.toString());
@@ -1444,8 +1446,8 @@ public class TelephonyManagerTest {
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     TelephonyManager::resetSettings,
-                    "android.permission.NETWORK_SETTINGS",
-                    "android.permission.MODIFY_PHONE_STATE");
+                    android.Manifest.permission.NETWORK_SETTINGS,
+                    android.Manifest.permission.MODIFY_PHONE_STATE);
         } catch (SecurityException e) {
             e.printStackTrace();
             fail(e.toString());
@@ -1878,7 +1880,7 @@ public class TelephonyManagerTest {
             }
         }
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.READ_PHONE_STATE");
+                .adoptShellPermissionIdentity(android.Manifest.permission.READ_PHONE_STATE);
         assertThat(mTelephonyManager.getServiceState().getState()).isEqualTo(
                 ServiceState.STATE_IN_SERVICE);
     }
@@ -2936,7 +2938,7 @@ public class TelephonyManagerTest {
             // This should result in no-op.
             ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     (tm) -> tm.switchMultiSimConfig(mTelephonyManager.getActiveModemCount()),
-                    SecurityException.class, "android.permission.MODIFY_PHONE_STATE");
+                    SecurityException.class, android.Manifest.permission.MODIFY_PHONE_STATE);
         } catch (SecurityException e) {
             fail("TelephonyManager#switchMultiSimConfig should require MODIFY_PHONE_STATE"
                     + "permission to access.");
@@ -3503,8 +3505,10 @@ public class TelephonyManagerTest {
             // Expected
         }
 
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+        InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(
+                        android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
         try {
             mTelephonyManager.isApplicationOnUicc(TelephonyManager.APPTYPE_SIM);
         } catch (SecurityException se) {
@@ -3516,9 +3520,10 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.telephony.TelephonyManager#requestModemActivityInfo"})
     public void testRequestModemActivityInfo() throws Exception {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
+                .adoptShellPermissionIdentity(android.Manifest.permission.MODIFY_PHONE_STATE);
         try {
             // Get one instance of activity info and make sure it's valid
             CompletableFuture<ModemActivityInfo> future1 = new CompletableFuture<>();
@@ -3691,11 +3696,15 @@ public class TelephonyManagerTest {
                 TelephonyManager.SIM_STATE_PRESENT).contains(simCardState));
     }
     @Test
+    @ApiTest(apis = {"android.telephony.TelephonyManager#getUiccCardsInfo",
+            "android.telephony.TelephonyManager#getSimCardState"})
     public void getSimCardStateTest() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
 
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+        InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(
+                        android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
         List<UiccCardInfo> cardsInfo = mTelephonyManager.getUiccCardsInfo();
         for (UiccCardInfo cardInfo : cardsInfo) {
             for (UiccPortInfo portInfo : cardInfo.getPorts()) {
@@ -4618,6 +4627,66 @@ public class TelephonyManagerTest {
 
     }
 
+    @Test
+    @ApiTest(apis = {"android.telephony.CarrierConfigManager#KEY_CARRIER_METERED_APN_TYPES_STRINGS",
+            "android.telephony.CarrierConfigManager#KEY_CARRIER_METERED_ROAMING_APN_TYPES_STRINGS",
+            "android.telephony.TelephonyManager#isApnMetered"})
+    public void testIsApnMetered() throws Exception {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
+
+        PersistableBundle carrierConfig = new PersistableBundle();
+        carrierConfig.putStringArray(
+                CarrierConfigManager.KEY_CARRIER_METERED_APN_TYPES_STRINGS,
+                new String[] {ApnSetting.TYPE_MMS_STRING});
+        carrierConfig.putStringArray(
+                CarrierConfigManager.KEY_CARRIER_METERED_ROAMING_APN_TYPES_STRINGS,
+                new String[] {ApnSetting.TYPE_MMS_STRING});
+        overrideCarrierConfig(carrierConfig);
+
+        try {
+            InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation()
+                    .adoptShellPermissionIdentity(
+                            android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
+            PollingCheck.waitFor(5000, () -> !mTelephonyManager.isApnMetered(ApnSetting.TYPE_DUN),
+                    "Timeout when waiting for DUN APN to become unmetered");
+
+            assertTrue(mTelephonyManager.isApnMetered(ApnSetting.TYPE_MMS));
+            assertFalse(mTelephonyManager.isApnMetered(ApnSetting.TYPE_DUN));
+        } finally {
+            // Restore the original carrier config
+            overrideCarrierConfig(null);
+            // Revoke the permission READ_PRIVILEGED_PHONE_STATE
+            InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+
+        carrierConfig.putStringArray(
+                CarrierConfigManager.KEY_CARRIER_METERED_APN_TYPES_STRINGS,
+                new String[] {ApnSetting.TYPE_DUN_STRING});
+        carrierConfig.putStringArray(
+                CarrierConfigManager.KEY_CARRIER_METERED_ROAMING_APN_TYPES_STRINGS,
+                new String[] {ApnSetting.TYPE_DUN_STRING});
+        overrideCarrierConfig(carrierConfig);
+        try {
+            InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation()
+                    .adoptShellPermissionIdentity(
+                            android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
+            PollingCheck.waitFor(5000, () -> mTelephonyManager.isApnMetered(ApnSetting.TYPE_DUN),
+                    "Timeout when waiting for DUN APN to become metered");
+
+            assertFalse(mTelephonyManager.isApnMetered(ApnSetting.TYPE_MMS));
+            assertTrue(mTelephonyManager.isApnMetered(ApnSetting.TYPE_DUN));
+        } finally {
+            overrideCarrierConfig(null);
+            InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
     /**
      * Validate Emergency Number address that only contains the dialable character.
      *
@@ -5009,12 +5078,15 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.telephony.TelephonyManager#checkCarrierPrivilegesForPackage"})
     public void testCheckCarrierPrivilegesForPackageEnforcesReadPrivilege() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
 
         try {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+            InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation()
+                    .adoptShellPermissionIdentity(
+                            android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
             mTelephonyManager.checkCarrierPrivilegesForPackage(mSelfPackageName);
         } catch (SecurityException e) {
             fail("TelephonyManager#checkCarrierPrivilegesForPackage requires "
@@ -5039,6 +5111,7 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.telephony.TelephonyManager#checkCarrierPrivilegesForPackageAnyPhone"})
     public void testCheckCarrierPrivilegesForPackageAnyPhone() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
 
@@ -5052,7 +5125,7 @@ public class TelephonyManagerTest {
         try {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .adoptShellPermissionIdentity(
-                            "android.permission.READ_PRIVILEGED_PHONE_STATE");
+                        android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
             mTelephonyManager.checkCarrierPrivilegesForPackageAnyPhone(mSelfPackageName);
         } catch (SecurityException e) {
             fail("TelephonyManager#checkCarrierPrivilegesForPackageAnyPhone should not throw "
@@ -5064,12 +5137,15 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.telephony.TelephonyManager#getCarrierPackageNamesForIntentAndPhone"})
     public void testGetCarrierPackageNamesForIntentAndPhoneEnforcesReadPrivilege() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
 
         try {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+            InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation()
+                    .adoptShellPermissionIdentity(
+                            android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
             Intent intent = new Intent();
             int phoneId = 1;
             mTelephonyManager.getCarrierPackageNamesForIntentAndPhone(intent, phoneId);
@@ -5101,12 +5177,15 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.telephony.TelephonyManager#getPackagesWithCarrierPrivileges"})
     public void testGetPackagesWithCarrierPrivilegesEnforcesReadPrivilege() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
 
         try {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+            InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation()
+                    .adoptShellPermissionIdentity(
+                            android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
             mTelephonyManager.getPackagesWithCarrierPrivileges();
         } catch (SecurityException e) {
             fail("TelephonyManager#getPackagesWithCarrierPrivileges requires "
@@ -5131,14 +5210,18 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.telephony.TelephonyManager#getSimSlotMapping",
+            "android.telephony.TelephonyManager#setSimSlotMapping"})
     public void testSimSlotMapping() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+        InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(
+                        android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
         Collection<UiccSlotMapping> simSlotMapping = mTelephonyManager.getSimSlotMapping();
         // passing slotMapping combination
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
+                .adoptShellPermissionIdentity(android.Manifest.permission.MODIFY_PHONE_STATE);
         try {
             mTelephonyManager.setSimSlotMapping(simSlotMapping);
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -5232,11 +5315,14 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.telephony.TelephonyManager#getUiccSlotsInfo"})
     public void getUiccSlotInfoTest() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
 
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+        InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(
+                        android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
         UiccSlotInfo[] slotInfos = mTelephonyManager.getUiccSlotsInfo();
 
         if (slotInfos == null) {
@@ -5317,11 +5403,14 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.telephony.TelephonyManager#getSimSlotMapping"})
     public void getSimSlotMappingTest() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
 
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+        InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(
+                        android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
         try {
             Collection<UiccSlotMapping> simSlotMapping = mTelephonyManager.getSimSlotMapping();
             assertTrue(isSlotMappingValid(simSlotMapping));

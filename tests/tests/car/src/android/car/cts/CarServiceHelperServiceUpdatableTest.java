@@ -144,6 +144,35 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
                 .contains("dumpServiceStacks ANR file path=/data/anr/anr_");
     }
 
+    @Test
+    public void testSendUserLifecycleEventAndOnUserCreated() throws Exception {
+        // Add listener to check if user started
+        CarUserManager carUserManager = (CarUserManager) getCar()
+                .getCarManager(Car.CAR_USER_SERVICE);
+        LifecycleListener listener = new LifecycleListener();
+        carUserManager.addListener(Runnable::run, listener);
+
+        NewUserResponse response = null;
+        UserManager userManager = null;
+        try {
+            // get create User permissions
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity(android.Manifest.permission.CREATE_USERS);
+
+            // CreateUser
+            userManager = mContext.getSystemService(UserManager.class);
+            response = userManager.createUser(new NewUserRequest.Builder().build());
+            assertThat(response.isSuccessful()).isTrue();
+
+            int userId = response.getUser().getIdentifier();
+            listener.assertEventReceived(userId, CarUserManager.USER_LIFECYCLE_EVENT_TYPE_CREATED);
+        } finally {
+            carUserManager.removeListener(listener);
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
     @FlakyTest(bugId = 222167696)
     @Test
     public void testSendUserLifecycleEventAndOnUserRemoved() throws Exception {
