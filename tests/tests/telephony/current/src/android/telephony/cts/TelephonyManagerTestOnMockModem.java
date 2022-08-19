@@ -55,6 +55,7 @@ public class TelephonyManagerTestOnMockModem {
     private static MockModemManager sMockModemManager;
     private static TelephonyManager sTelephonyManager;
     private static final String ALLOW_MOCK_MODEM_PROPERTY = "persist.radio.allow_mock_modem";
+    private static final String BOOT_ALLOW_MOCK_MODEM_PROPERTY = "ro.boot.radio.allow_mock_modem";
     private static final boolean DEBUG = !"user".equals(Build.TYPE);
     private static boolean sIsMultiSimDevice;
 
@@ -128,8 +129,10 @@ public class TelephonyManagerTestOnMockModem {
 
     private static void enforceMockModemDeveloperSetting() throws Exception {
         boolean isAllowed = SystemProperties.getBoolean(ALLOW_MOCK_MODEM_PROPERTY, false);
+        boolean isAllowedForBoot =
+                SystemProperties.getBoolean(BOOT_ALLOW_MOCK_MODEM_PROPERTY, false);
         // Check for developer settings for user build. Always allow for debug builds
-        if (!isAllowed && !DEBUG) {
+        if (!(isAllowed || isAllowedForBoot) && !DEBUG) {
             throw new IllegalStateException(
                 "!! Enable Mock Modem before running this test !! "
                     + "Developer options => Allow Mock Modem");

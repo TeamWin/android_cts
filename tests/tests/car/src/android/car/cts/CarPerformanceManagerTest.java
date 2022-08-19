@@ -20,8 +20,6 @@ import static android.os.Process.setThreadPriority;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assume.assumeTrue;
-
 import android.app.UiAutomation;
 import android.car.Car;
 import android.car.os.CarPerformanceManager;
@@ -30,6 +28,8 @@ import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -43,15 +43,8 @@ public class CarPerformanceManagerTest extends CarApiTestBase {
     private CarPerformanceManager mCarPerformanceManager;
     private ThreadPolicyWithPriority mOriginalPolicyWithPriority;
 
-    private boolean isApiAndPlatformSupported() {
-        return Car.isApiAndPlatformVersionAtLeast(
-                /* requiredApiVersionMajor= */ 33, /* requiredApiVersionMinor= */ 1,
-                /* minPlatformSdkInt= */ 33) && Car.PLATFORM_VERSION_MINOR_INT >= 1;
-    }
-
     private void setThreadPriorityGotThreadPriorityVerify(ThreadPolicyWithPriority p)
             throws Exception {
-        assumeTrue("Thread management is not supported", isApiAndPlatformSupported());
         mCarPerformanceManager.setThreadPriority(p);
 
         ThreadPolicyWithPriority gotP = mCarPerformanceManager.getThreadPriority();
@@ -70,9 +63,8 @@ public class CarPerformanceManagerTest extends CarApiTestBase {
                 Car.CAR_PERFORMANCE_SERVICE);
         assertThat(mCarPerformanceManager).isNotNull();
 
-        if (isApiAndPlatformSupported()) {
-            mOriginalPolicyWithPriority = mCarPerformanceManager.getThreadPriority();
-        }
+        // TODO(b/242210521): Refactored CarPerformanceManagerTest to use ApiCheckerRule.
+        mOriginalPolicyWithPriority = mCarPerformanceManager.getThreadPriority();
     }
 
     @After
@@ -85,12 +77,20 @@ public class CarPerformanceManagerTest extends CarApiTestBase {
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.car.hardware.os.CarPerformanceManager#setThreadPriority(ThreadPolicyWithPriority)",
+            "android.car.hardware.os.CarPerformanceManager#getThreadPriority"})
+    @TestApiRequirements(minPlatformVersion = TestApiRequirements.TestPlatformVersion.TIRAMISU_1)
     public void testSetThreadPriorityDefault() throws Exception {
         setThreadPriorityGotThreadPriorityVerify(new ThreadPolicyWithPriority(
                 ThreadPolicyWithPriority.SCHED_DEFAULT, /* priority= */ 0));
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.car.hardware.os.CarPerformanceManager#setThreadPriority(ThreadPolicyWithPriority)",
+            "android.car.hardware.os.CarPerformanceManager#getThreadPriority"})
+    @TestApiRequirements(minPlatformVersion = TestApiRequirements.TestPlatformVersion.TIRAMISU_1)
     public void testSetThreadPriorityFIFOMinPriority() throws Exception {
         setThreadPriorityGotThreadPriorityVerify(new ThreadPolicyWithPriority(
                 ThreadPolicyWithPriority.SCHED_FIFO,
@@ -98,6 +98,10 @@ public class CarPerformanceManagerTest extends CarApiTestBase {
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.car.hardware.os.CarPerformanceManager#setThreadPriority(ThreadPolicyWithPriority)",
+            "android.car.hardware.os.CarPerformanceManager#getThreadPriority"})
+    @TestApiRequirements(minPlatformVersion = TestApiRequirements.TestPlatformVersion.TIRAMISU_1)
     public void testSetThreadPriorityFIFOMaxPriority() throws Exception {
         setThreadPriorityGotThreadPriorityVerify(new ThreadPolicyWithPriority(
                 ThreadPolicyWithPriority.SCHED_FIFO,
@@ -105,6 +109,10 @@ public class CarPerformanceManagerTest extends CarApiTestBase {
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.car.hardware.os.CarPerformanceManager#setThreadPriority(ThreadPolicyWithPriority)",
+            "android.car.hardware.os.CarPerformanceManager#getThreadPriority"})
+    @TestApiRequirements(minPlatformVersion = TestApiRequirements.TestPlatformVersion.TIRAMISU_1)
     public void testSetThreadPriorityRRMinPriority() throws Exception {
         setThreadPriorityGotThreadPriorityVerify(new ThreadPolicyWithPriority(
                 ThreadPolicyWithPriority.SCHED_RR,
@@ -112,6 +120,10 @@ public class CarPerformanceManagerTest extends CarApiTestBase {
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.car.hardware.os.CarPerformanceManager#setThreadPriority(ThreadPolicyWithPriority)",
+            "android.car.hardware.os.CarPerformanceManager#getThreadPriority"})
+    @TestApiRequirements(minPlatformVersion = TestApiRequirements.TestPlatformVersion.TIRAMISU_1)
     public void testSetThreadPriorityRRMaxPriority() throws Exception {
         setThreadPriorityGotThreadPriorityVerify(new ThreadPolicyWithPriority(
                 ThreadPolicyWithPriority.SCHED_RR,
@@ -119,8 +131,11 @@ public class CarPerformanceManagerTest extends CarApiTestBase {
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.car.hardware.os.CarPerformanceManager#setThreadPriority(ThreadPolicyWithPriority)",
+            "android.car.hardware.os.CarPerformanceManager#getThreadPriority"})
+    @TestApiRequirements(minPlatformVersion = TestApiRequirements.TestPlatformVersion.TIRAMISU_1)
     public void testSetThreadPriorityDefaultKeepNiceValue() throws Exception {
-        assumeTrue("Thread management is not supported", isApiAndPlatformSupported());
         int expectedNiceValue = 10;
 
         // Resume the test scheduling policy to default policy.

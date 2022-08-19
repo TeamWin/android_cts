@@ -295,12 +295,12 @@ public class BasicApiTests {
         mAm.cancel(mSender);
     }
 
-    private static final String DOZE_ON_OUTPUT = "deep idle mode";
-    private static final String DOZE_OFF_OUTPUT = "deep state: ACTIVE";
-
     private void toggleIdleMode(boolean on) {
-        SystemUtil.runShellCommand("cmd deviceidle " + (on ? "force-idle deep" : "unforce"),
-                output -> output.contains(on ? DOZE_ON_OUTPUT : DOZE_OFF_OUTPUT));
+        SystemUtil.runShellCommand("cmd deviceidle " + (on ? "force-idle deep" : "unforce"));
+        if (!on) {
+            // Make sure the device doesn't stay idle, even after unforcing.
+            SystemUtil.runShellCommand("cmd deviceidle motion");
+        }
         PollingCheck.waitFor(10_000, () -> (on == mPowerManager.isDeviceIdleMode()),
                 "Could not set doze state to " + on);
     }

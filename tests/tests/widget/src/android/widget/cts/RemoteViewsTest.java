@@ -628,6 +628,8 @@ public class RemoteViewsTest {
 
         mRemoteViews.setBitmap(R.id.remoteView_absolute, "setImageBitmap", bitmap);
         assertThrowsOnReapply(ActionException.class);
+
+        assertEquals(bitmap.getAllocationByteCount(), mRemoteViews.estimateMemoryUsage());
     }
 
     @Test

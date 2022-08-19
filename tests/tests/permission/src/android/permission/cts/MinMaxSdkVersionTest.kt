@@ -21,6 +21,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.permission.cts.PermissionUtils.install
+import android.platform.test.annotations.AppModeFull
 import android.support.test.uiautomator.UiDevice
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
@@ -34,6 +35,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 @CddTest(requirement = "9.1/C-0-1")
+@AppModeFull(reason = "Instant apps cannot read state of other packages.")
 class MinMaxSdkVersionTest {
     private var mInstrumentation: Instrumentation? = null
     private var mUiDevice: UiDevice? = null
