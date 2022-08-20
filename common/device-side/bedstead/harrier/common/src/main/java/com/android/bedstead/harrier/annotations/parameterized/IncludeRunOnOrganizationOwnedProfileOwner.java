@@ -30,9 +30,9 @@ import java.lang.annotation.Target;
 /** Parameterize a test so that it runs on an organization-owned managed profile. */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@ParameterizedAnnotation
+@ParameterizedAnnotation(shadows = IncludeRunOnProfileOwnerProfileWithNoDeviceOwner.class)
 @RequireRunOnWorkProfile(isOrganizationOwned = true)
-public @interface IncludeRunOnOrganizationOwnedManagedProfile {
+public @interface IncludeRunOnOrganizationOwnedProfileOwner {
     /**
      * Weight sets the order that annotations will be resolved.
      *

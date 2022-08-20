@@ -62,15 +62,19 @@ import static android.appenumeration.cts.Constants.EXTRA_FLAGS;
 import static android.appenumeration.cts.Constants.EXTRA_PENDING_INTENT;
 import static android.appenumeration.cts.Constants.QUERIES_ACTIVITY_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_APK;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_PERM;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_PROVIDER;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_PROVIDER_APK;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_Q;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_RECEIVES_NON_PERSISTABLE_URI;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_RECEIVES_NON_PERSISTABLE_URI_APK;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_RECEIVES_PERM_URI;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_RECEIVES_PERM_URI_APK;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI_APK;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_RECEIVES_URI;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_RECEIVES_URI_APK;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SEES_INSTALLER;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SEES_INSTALLER_APK;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SHARED_USER;
@@ -141,7 +145,9 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -157,21 +163,23 @@ import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.PackageInfoFlags;
+import android.content.pm.ServiceInfo;
 import android.content.pm.Signature;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
-
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.hamcrest.core.IsNull;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -184,8 +192,29 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(Parameterized.class)
 public class AppEnumerationTests extends AppEnumerationTestsBase {
+
+    private static final String SKIP_APP_FILTER_CACHE = "0";
+    private static final String USE_APP_FILTER_CACHE = "1";
+
+    @Parameterized.Parameter
+    public String mUseAppFilterCache;
+
+    @Parameterized.Parameters
+    public static Iterable<Object> initParameters() {
+        return Arrays.asList(SKIP_APP_FILTER_CACHE, USE_APP_FILTER_CACHE);
+    }
+
+    @Before
+    public void onBefore() throws Exception {
+        setSystemProperty("debug.pm.use_app_filter_cache", mUseAppFilterCache);
+    }
+
+    @After
+    public void onAfter() throws Exception {
+        setSystemProperty("debug.pm.use_app_filter_cache", "invalid");
+    }
 
     @Test
     public void systemPackagesQueryable_notEnabled() throws Exception {
@@ -259,6 +288,9 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
 
     @Test
     public void startActivityWithNoPermissionUri_canSeeProvider() throws Exception {
+        uninstallPackage(QUERIES_NOTHING_RECEIVES_URI);
+        installPackage(QUERIES_NOTHING_RECEIVES_URI_APK);
+
         assertNotVisible(QUERIES_NOTHING_RECEIVES_URI, QUERIES_NOTHING_PERM);
 
         // send with uri but no grant flags; shouldn't be visible
@@ -277,6 +309,9 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
 
     @Test
     public void startActivityWithUri_canSeePermissionProtectedProvider() throws Exception {
+        uninstallPackage(QUERIES_NOTHING_RECEIVES_PERM_URI);
+        installPackage(QUERIES_NOTHING_RECEIVES_PERM_URI_APK);
+
         assertNotVisible(QUERIES_NOTHING_RECEIVES_PERM_URI, QUERIES_NOTHING_PERM);
 
         // send with uri but no grant flags; shouldn't be visible
@@ -314,6 +349,9 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
 
     @Test
     public void startActivityWithPersistableUriGrant_canSeeProviderAfterUpdated() throws Exception {
+        uninstallPackage(QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI);
+        installPackage(QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI_APK);
+
         assertNotVisible(QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI, QUERIES_NOTHING_PERM);
 
         // send with persistable uri grant flags; should be visible
@@ -462,6 +500,9 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
 
     @Test
     public void whenStarted_canSeeCaller() throws Exception {
+        uninstallPackage(QUERIES_NOTHING);
+        installPackage(QUERIES_NOTHING_APK);
+
         // let's first make sure that the target cannot see the caller.
         assertNotVisible(QUERIES_NOTHING, QUERIES_NOTHING_PERM);
         // now let's start the target and make sure that it can see the caller as part of that call
@@ -546,6 +587,9 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
     @Test
     public void queriesNothing_getNamesForUids_consistentVisibility()
             throws Exception {
+        uninstallPackage(QUERIES_NOTHING);
+        installPackage(QUERIES_NOTHING_APK);
+
         final int targetSharedUid = sPm.getPackageUid(TARGET_SHARED_USER, PackageInfoFlags.of(0));
         final int targetUid = sPm.getPackageUid(TARGET_FILTERS, PackageInfoFlags.of(0));
         Assert.assertNull(getNamesForUids(QUERIES_NOTHING, targetSharedUid)[0]);
@@ -871,6 +915,9 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
 
     @Test
     public void queriesResolver_grantsVisibilityToProvider() throws Exception {
+        uninstallPackage(QUERIES_NOTHING_PROVIDER);
+        installPackage(QUERIES_NOTHING_PROVIDER_APK);
+
         assertNotVisible(QUERIES_NOTHING_PROVIDER, QUERIES_NOTHING_PERM);
 
         String[] result = sendCommandBlocking(
@@ -1191,6 +1238,15 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
         } finally {
             ensurePackageIsNotInstalled(TARGET_STUB);
         }
+    }
+
+    @Test
+    public void testSelfVisibility() throws Exception {
+        ServiceInfo serviceInfo = sContext.getPackageManager().getServiceInfo(
+                new ComponentName(sContext,
+                        "android.appenumeration.cts.TestPmComponentDiscoveryService"),
+                PackageManager.GET_META_DATA);
+        assertNotNull(serviceInfo);
     }
 
     private void assertVisible(String sourcePackageName, String targetPackageName)
@@ -1530,5 +1586,9 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
         SystemUtil.runWithShellPermissionIdentity(() -> {
             sPm.clearPackagePreferredActivities(TARGET_PREFERRED_ACTIVITY);
         }, SET_PREFERRED_APPLICATIONS);
+    }
+
+    private void setSystemProperty(String name, String value) throws Exception {
+        assertEquals("", SystemUtil.runShellCommand("setprop " + name + " " + value));
     }
 }

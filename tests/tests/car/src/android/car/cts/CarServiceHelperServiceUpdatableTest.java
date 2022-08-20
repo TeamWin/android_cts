@@ -16,6 +16,8 @@
 
 package android.car.cts;
 
+import static com.android.compatibility.common.util.SystemUtil.eventually;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -88,9 +90,9 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
         // Should be parked already, but it doesn't hurt to make sure
         executeShellCommand("cmd car_service emulate-driving-state park");
 
-        assertWithMessage("CarServiceHelperService dump")
+        eventually(()-> assertWithMessage("CarServiceHelperService dump")
                 .that(dumpCarServiceHelper())
-                .contains("Safe to run device policy operations: true");
+                .contains("Safe to run device policy operations: true"));
     }
 
     @Test
@@ -100,9 +102,9 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
         try {
             executeShellCommand("cmd car_service emulate-driving-state drive");
 
-            assertWithMessage("CarServiceHelperService dump")
-            .that(dumpCarServiceHelper())
-                    .contains("Safe to run device policy operations: false");
+            eventually(() -> assertWithMessage("CarServiceHelperService dump")
+                    .that(dumpCarServiceHelper())
+                    .contains("Safe to run device policy operations: false"));
         } finally {
             executeShellCommand("cmd car_service emulate-driving-state park");
         }
@@ -115,9 +117,9 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
         // Should be parked already, but it doesn't hurt to make sure
         executeShellCommand("cmd car_service emulate-driving-state park");
 
-        assertWithMessage("CarServiceHelperService dump")
+        eventually(()-> assertWithMessage("CarServiceHelperService dump")
                 .that(dumpCarServiceHelper("--is-operation-safe", "7"))
-                .contains("Operation REBOOT is SAFE. Reason: NONE");
+                .contains("Operation REBOOT is SAFE. Reason: NONE"));
     }
 
     @Test
@@ -127,9 +129,9 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
         try {
             executeShellCommand("cmd car_service emulate-driving-state drive");
 
-            assertWithMessage("CarServiceHelperService dump")
+            eventually(()-> assertWithMessage("CarServiceHelperService dump")
                     .that(dumpCarServiceHelper("--is-operation-safe", "7"))
-                    .contains("Operation REBOOT is UNSAFE. Reason: DRIVING_DISTRACTION");
+                    .contains("Operation REBOOT is UNSAFE. Reason: DRIVING_DISTRACTION"));
         } finally {
             executeShellCommand("cmd car_service emulate-driving-state park");
         }

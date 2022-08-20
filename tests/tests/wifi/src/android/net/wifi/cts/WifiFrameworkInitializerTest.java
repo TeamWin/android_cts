@@ -17,11 +17,7 @@
 package android.net.wifi.cts;
 
 import android.net.wifi.WifiFrameworkInitializer;
-import android.os.Build;
-
-import androidx.test.filters.SdkSuppress;
-
-import com.android.compatibility.common.util.CddTest;
+import android.test.AndroidTestCase;
 
 public class WifiFrameworkInitializerTest extends WifiJUnit3TestBase {
     /**
@@ -40,35 +36,5 @@ public class WifiFrameworkInitializerTest extends WifiJUnit3TestBase {
                     + "WifiFrameworkInitializer.registerServiceWrappers() outside of "
                     + "SystemServiceRegistry!");
         } catch (IllegalStateException expected) {}
-    }
-
-    /**
-     * setBinderCallsStatsInitializer is only meant to be called once, by ActivityThread. Any
-     * further calls should throw, so make sure that an adonal call will fail.
-     */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
-    @CddTest(requirements = {"C-0-1"})
-    public void testSetBinderCallsStatsInitializer_failsWhenCalledTwice() throws Exception {
-        // The first call to setBinderCallsStatsInitializer happens in activityThread.
-
-        try {
-            // The second call should throw an exception.
-            WifiFrameworkInitializer.setBinderCallsStatsInitializer(context -> {});
-            fail("Expected WifiFrameWorkInitializer.setBinderCallsStatsInitializer() to fail"
-                    + " when called twice");
-        } catch (IllegalStateException expected) { }
-    }
-
-    /**
-     * The consumer for WifiFrameworkInitializer should never be set to null so check that it
-     * fails when setting null value is attempted.
-     */
-    @CddTest(requirements = {"C-0-1"})
-    public void testSetBinderCallsStatsInitializer_failsWhenSettingNullConsumer() throws Exception {
-        try {
-            WifiFrameworkInitializer.setBinderCallsStatsInitializer(null);
-            fail("Expected WifiFrameWorkInitializer.setBinderCallsStatsInitializer() to fail"
-                    + " when passed a null consumer");
-        } catch (IllegalArgumentException expected) { }
     }
 }

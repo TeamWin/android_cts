@@ -167,21 +167,13 @@ class ReprocessEdgeEnhancementTest(its_base_test.ItsBaseTest):
       if camera_properties_utils.private_reprocess(props):
         reprocess_formats.append('private')
 
-      size = capture_request_utils.get_available_output_sizes('jpg', props)[0]
-      logging.debug('image W: %d, H: %d', size[0], size[1])
-      out_surface = {'width': size[0], 'height': size[1], 'format': 'jpg'}
+      out_surface = capture_request_utils.get_largest_jpeg_format(props)
+      logging.debug('image W: %d, H: %d',
+                    out_surface['width'], out_surface['height'])
 
       # Get proper sensitivity, exposure time, and focus distance.
       mono_camera = camera_properties_utils.mono_camera(props)
       s, e, _, _, fd = cam.do_3a(get_results=True, mono_camera=mono_camera)
-
-      # Initialize plot
-      pylab.figure('reprocess_result')
-      pylab.suptitle(NAME)
-      pylab.title(str(EDGE_MODES))
-      pylab.xlabel('Edge Enhancement Mode')
-      pylab.ylabel('Image Sharpness')
-      pylab.xticks(EDGE_MODES_VALUES)
 
       # Get the sharpness for each edge mode for regular requests
       sharpness_regular = []
@@ -197,8 +189,14 @@ class ReprocessEdgeEnhancementTest(its_base_test.ItsBaseTest):
         edge_mode_reported_regular.append(ret['edge_mode'])
         sharpness_regular.append(ret['sharpness'])
 
+      # Initialize plot
+      pylab.figure('reprocess_result')
+      pylab.title(NAME)
+      pylab.xlabel('Edge Enhance Mode')
+      pylab.ylabel('Sharpness')
+      pylab.xticks(EDGE_MODES_VALUES)
       pylab.plot(EDGE_MODES_VALUES, sharpness_regular,
-                 '-'+PLOT_COLORS['none']+'o', label='None')
+                 f"-{PLOT_COLORS['none']}o", label='None')
       logging.debug('Sharpness for edge modes with regular request: %s',
                     str(sharpness_regular))
 
@@ -228,8 +226,7 @@ class ReprocessEdgeEnhancementTest(its_base_test.ItsBaseTest):
 
         # Add to plot and log results
         pylab.plot(EDGE_MODES_VALUES, sharpnesses,
-                   '-'+PLOT_COLORS[reprocess_format]+'o',
-                   label=reprocess_format)
+                   f'-{PLOT_COLORS[reprocess_format]}o', label=reprocess_format)
         logging.debug('Sharpness for edge modes w/ %s reprocess fmt: %s',
                       reprocess_format, str(sharpnesses))
       # Finalize plot

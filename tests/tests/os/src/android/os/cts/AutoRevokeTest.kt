@@ -28,7 +28,6 @@ import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.content.res.Resources
 import android.net.Uri
 import android.os.Build
-import android.os.Process
 import android.os.UserHandle
 import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig
@@ -133,11 +132,6 @@ class AutoRevokeTest {
                 runShellCommandOrThrow("cmd statusbar collapse"),
                 equalTo(""))
 
-        // Disable battery saving restrictions
-        runShellCommandOrThrow("cmd tare set-vip " +
-                "${Process.myUserHandle().identifier} " +
-                "${context.packageManager.permissionControllerPackageName} true")
-
         // Wake up the device
         runShellCommandOrThrow("input keyevent KEYCODE_WAKEUP")
         if ("false".equals(runShellCommandOrThrow("cmd lock_settings get-disabled"))) {
@@ -161,10 +155,6 @@ class AutoRevokeTest {
 
     @After
     fun cleanUp() {
-        // Reset battery saving restrictions
-        runShellCommandOrThrow("cmd tare set-vip " +
-                "${Process.myUserHandle().identifier} " +
-                "${context.packageManager.permissionControllerPackageName} default")
         goHome()
     }
 

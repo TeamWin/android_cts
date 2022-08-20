@@ -75,6 +75,7 @@ public class MediaPlayerFlakyNetworkTest extends MediaPlayerTestBase {
     private CtsTestServer mServer;
 
     @Before
+    @Override
     public void setUp() throws Throwable {
         super.setUp();
     }

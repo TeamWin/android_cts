@@ -32,12 +32,9 @@ import android.graphics.Shader
 import android.uirendering.cts.bitmapverifiers.RectVerifier
 import android.uirendering.cts.testinfrastructure.ActivityTestBase
 import android.uirendering.cts.testinfrastructure.CanvasClient
-import android.util.Half
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import com.android.compatibility.common.util.ApiTest
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -316,31 +313,32 @@ class RuntimeShaderTests : ActivityTestBase() {
                 Color.valueOf(0.5f, 0.0f, 0.5f).toArgb(), rect))
     }
 
+    private fun getRotateSrgb(): ColorSpace {
+        val srgb = ColorSpace.get(ColorSpace.Named.SRGB) as ColorSpace.Rgb
+        val rotatedPrimaries = FloatArray(srgb.primaries.size)
+        for (i in rotatedPrimaries.indices) {
+            rotatedPrimaries[i] = srgb.primaries[(i + 2) % srgb.primaries.size]
+        }
+        return ColorSpace.Rgb("Rotated sRGB", rotatedPrimaries, srgb.whitePoint,
+                              srgb.transferParameters!!)
+    }
+
     @Test
     fun testInputBuffer() {
-        val unpremulColor = Color.valueOf(0.75f, 0.0f, 1.0f, 0.5f)
-
-        // create a buffer and put an unpremul value into it
-        val srcBuf = ByteBuffer.allocate(8)
-        srcBuf.order(ByteOrder.LITTLE_ENDIAN)
-        srcBuf.putShort(Half(unpremulColor.red()).halfValue())
-        srcBuf.putShort(Half(unpremulColor.green()).halfValue())
-        srcBuf.putShort(Half(unpremulColor.blue()).halfValue())
-        srcBuf.putShort(Half(unpremulColor.alpha()).halfValue())
-        srcBuf.rewind()
+        val unpremulColor = Color.valueOf(0.0f, 0.0f, 1.0f, 0.5f)
 
         // create a bitmap with the unpremul value and set a colorspace to something that is
         // different from the destination
-        val bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.RGBA_F16,
-                true, ColorSpace.get(ColorSpace.Named.BT2020))
-        bitmap.copyPixelsFromBuffer(srcBuf)
+        val bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888, true)
         bitmap.setPremultiplied(false)
+        bitmap.setPixel(0, 0, unpremulColor.toArgb())
+        bitmap.setColorSpace(getRotateSrgb())
 
         val bitmapShader = BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
         val shader = RuntimeShader(sampleComparisonShader)
         shader.setFloatUniform("expectedSample", unpremulColor.components)
 
-        val rect = Rect(0, 0, 1, 1)
+        val rect = Rect(10, 10, 80, 80)
         val paint = Paint()
         paint.shader = shader
         paint.blendMode = BlendMode.SRC
@@ -536,7 +534,7 @@ class RuntimeShaderTests : ActivityTestBase() {
         uniform vec4 expectedSample;
         vec4 main(vec2 coord) {
           vec4 sampledValue = inputShader.eval(coord);
-          if (sampledValue == expectedSample) {
+          if (sampledValue.rgb == expectedSample.rgb) {
             return vec4(0.0, 1.0, 0.0, 1.0);
           }
           return vec4(1.0, 0.0, 0.0, 1.0);

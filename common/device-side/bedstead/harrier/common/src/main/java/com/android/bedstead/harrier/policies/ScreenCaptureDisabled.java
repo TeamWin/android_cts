@@ -17,7 +17,7 @@
 package com.android.bedstead.harrier.policies;
 
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PARENT_INSTANCE_OF_COPE_PROFILE_OWNER_PROFILE;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_GLOBALLY;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
@@ -31,7 +31,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  * {@code DevicePolicyManager#setScreenCaptureDisabled(ComponentName, boolean)}.
  */
 @EnterprisePolicy(dpc = {
-        APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PARENT_INSTANCE_OF_COPE_PROFILE_OWNER_PROFILE
+        APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE
                 | APPLIES_GLOBALLY, APPLIED_BY_PROFILE_OWNER | APPLIES_TO_OWN_USER})
 public final class ScreenCaptureDisabled {
 }

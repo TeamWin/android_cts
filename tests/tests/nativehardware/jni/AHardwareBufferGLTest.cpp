@@ -2654,6 +2654,7 @@ class R8Test : public AHardwareBufferGLTest {};
 // Verify that if we can allocate an R8 AHB we can render to it.
 TEST_P(R8Test, Write) {
     AHardwareBuffer_Desc desc = GetParam();
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_FRAMEBUFFER;
     if (!SetUpBuffer(desc)) {
         return;
     }

@@ -502,6 +502,11 @@ def main():
                     args.states.append(state.__class__)
                     break
 
+        # We calculate annotations before filtering so we properly exclude all
+        all_include_annotations = []
+        for state in states:
+            all_include_annotations.extend(state.include_annotations())
+
         states = [m for m in states if m.__class__ in args.states]
 
         first_state = None
@@ -520,10 +525,6 @@ def main():
         # Move to start
         states.insert(0, states.pop(states.index(first_state)))
         needs_to_enter_state = False
-
-        all_include_annotations = []
-        for state in states:
-            all_include_annotations.extend(state.include_annotations())
 
         try:
             for i, state in enumerate(states):

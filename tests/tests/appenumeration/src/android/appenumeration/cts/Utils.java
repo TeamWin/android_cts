@@ -19,6 +19,7 @@ package android.appenumeration.cts;
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -97,7 +98,7 @@ public class Utils {
      **/
     private static void installPackageForUser(String apkPath, UserReference user,
             String installerPackageName) {
-        assertThat(new File(apkPath).exists()).isTrue();
+        assertWithMessage(apkPath).that(new File(apkPath).exists()).isTrue();
         final StringBuilder cmd = new StringBuilder("pm install ");
         if (user != null) {
             cmd.append("--user ").append(user.id()).append(" ");
@@ -106,8 +107,8 @@ public class Utils {
             cmd.append("-i ").append(installerPackageName).append(" ");
         }
         cmd.append(apkPath);
-        final String result = runShellCommand(cmd.toString());
-        assertThat(result.trim()).contains("Success");
+        final String result = runShellCommand(cmd.toString()).trim();
+        assertWithMessage(result).that(result).contains("Success");
     }
 
     /**

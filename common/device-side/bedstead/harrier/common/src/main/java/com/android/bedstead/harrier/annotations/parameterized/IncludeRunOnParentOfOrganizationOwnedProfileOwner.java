@@ -17,9 +17,9 @@
 package com.android.bedstead.harrier.annotations.parameterized;
 
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.EARLY;
-import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.LATE;
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
@@ -29,14 +29,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Parameterize a test so that it runs on the parent of a corporate-owned profile owner.
+ * Parameterize a test so that it runs on the parent of an organization-owned profile owner.
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation(shadows = IncludeRunOnParentOfProfileOwnerWithNoDeviceOwner.class)
 @RequireRunOnPrimaryUser
-// TODO(scottjonathan): Add annotation to create corporate-owned profile
-public @interface IncludeRunOnParentOfCorporateOwnedProfileOwner {
+@EnsureHasWorkProfile(isOrganizationOwned = true, dpcIsPrimary = true)
+public @interface IncludeRunOnParentOfOrganizationOwnedProfileOwner {
     /**
      * Weight sets the order that annotations will be resolved.
      *

@@ -35,12 +35,14 @@ PATCH_Y = 0.5 - PATCH_H/2
 THRESHOLD_MAX_RMS_DIFF = 0.03
 
 
-def do_capture_and_extract_rgb_means(req, cam, size, img_type, log_path, debug):
+def do_capture_and_extract_rgb_means(
+    req, cam, props, size, img_type, log_path, debug):
   """Do capture and extra rgb_means of center patch.
 
   Args:
     req: capture request
     cam: camera object
+    props: camera properties dict
     size: [width, height]
     img_type: string of 'yuv' or 'jpeg'
     log_path: location for saving image
@@ -50,7 +52,15 @@ def do_capture_and_extract_rgb_means(req, cam, size, img_type, log_path, debug):
     center patch RGB means
   """
   out_surface = {'width': size[0], 'height': size[1], 'format': img_type}
-  cap = cam.do_capture(req, out_surface)
+  if debug:
+    out_surfaces = [{'format': 'raw'}, out_surface]
+    cap_raw, cap = cam.do_capture(req, out_surfaces)
+    img_raw = image_processing_utils.convert_capture_to_rgb_image(
+        cap_raw, props=props)
+    image_processing_utils.write_image(img_raw, '%s_raw_%s_w%d_h%d.png' % (
+        os.path.join(log_path, NAME), img_type, size[0], size[1]), True)
+  else:
+    cap = cam.do_capture(req, out_surface)
   logging.debug('e_cap: %d, s_cap: %d',
                 cap['metadata']['android.sensor.exposureTime'],
                 cap['metadata']['android.sensor.sensitivity'])
@@ -68,7 +78,7 @@ def do_capture_and_extract_rgb_means(req, cam, size, img_type, log_path, debug):
     raise AssertionError(f"{cap['height']} != {size[1]}")
 
   if debug:
-    image_processing_utils.write_image(img, '%s_%s_w%d_h%d.jpg'%(
+    image_processing_utils.write_image(img, '%s_%s_w%d_h%d.png'%(
         os.path.join(log_path, NAME), img_type, size[0], size[1]))
 
   if img_type == 'jpg':
@@ -118,12 +128,12 @@ class YuvJpegAllTest(its_base_test.ItsBaseTest):
       for size in capture_request_utils.get_available_output_sizes(
           'yuv', props):
         rgbs.append(do_capture_and_extract_rgb_means(
-            req, cam, size, 'yuv', log_path, debug))
+            req, cam, props, size, 'yuv', log_path, debug))
 
       for size in capture_request_utils.get_available_output_sizes(
           'jpg', props):
         rgbs.append(do_capture_and_extract_rgb_means(
-            req, cam, size, 'jpg', log_path, debug))
+            req, cam, props, size, 'jpg', log_path, debug))
 
       # Plot means vs format
       pylab.figure(NAME)

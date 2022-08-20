@@ -27,14 +27,17 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
 import android.test.suitebuilder.annotation.SmallTest;
+import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
@@ -169,6 +172,20 @@ public class CarTest extends AbstractExpectableTestCase {
         CarInfoManager carInfoManagerByClass2 = mCar.getCarManager(CarInfoManager.class);
         mExpect.that(carInfoManagerByClass2).isNotNull();
         mExpect.that(carInfoManagerByClass2).isSameInstanceAs(carInfoManager);
+    }
+
+    @ApiTest(apis = {"android.car.Car#getPlatformVersion"})
+    @Test
+    public void testPlatformVersionIsNotEmulated() {
+        assertSystemPropertyNotSet(Car.PROPERTY_EMULATED_PLATFORM_VERSION_MAJOR);
+        assertSystemPropertyNotSet(Car.PROPERTY_EMULATED_PLATFORM_VERSION_MINOR);
+    }
+
+    private void assertSystemPropertyNotSet(String property) {
+        String value = SystemProperties.get(property);
+        if (!TextUtils.isEmpty(value)) {
+            throw new AssertionError("Property '" + property + "' is set; value is " + value);
+        }
     }
 
     private static void assertConnectedCar(Car car) {

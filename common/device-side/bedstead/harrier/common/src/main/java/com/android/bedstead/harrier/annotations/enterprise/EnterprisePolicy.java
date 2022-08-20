@@ -88,14 +88,14 @@ public @interface EnterprisePolicy {
     int APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE = 1 << 7;
     /** A policy that can be applied by a profile owner of an affiliated profile */
     int APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE = 1 << 8;
-    /** A policy that can be applied by a profile owner of a cope profile */
-    int APPLIED_BY_COPE_PROFILE_OWNER = 1 << 9;
+    /** A policy that can be applied by a profile owner of an organization owned profile */
+    int APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE = 1 << 9;
 
-    /** A policy that can be applied by a profile owner of an affiliated or unaffiliated profile.
-     * This does not include cope profiles. */
+    /** A policy that can be applied by a profile owner of an affiliated or unaffiliated profile. */
     int APPLIED_BY_PROFILE_OWNER_PROFILE =
             APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE
-                    | APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE;
+                    | APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE
+                    | APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE;
     /**
      * A policy that can be applied by a Profile Owner for a User (not Profile) with no Device
      * Owner.
@@ -122,11 +122,11 @@ public @interface EnterprisePolicy {
             APPLIED_BY_PROFILE_OWNER_PROFILE
             | APPLIED_BY_PROFILE_OWNER_USER;
 
-    int APPLIED_BY_PARENT_INSTANCE_OF_NON_COPE_PROFILE_OWNER_PROFILE = 1 << 13;
-    int APPLIED_BY_PARENT_INSTANCE_OF_COPE_PROFILE_OWNER_PROFILE = 1 << 14;
+    int APPLIED_BY_PARENT_INSTANCE_OF_NON_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE = 1 << 13;
+    int APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE = 1 << 14;
 
     int APPLIED_BY_PARENT_INSTANCE_OF_PROFILE_OWNER_PROFILE =
-            APPLIED_BY_PARENT_INSTANCE_OF_NON_COPE_PROFILE_OWNER_PROFILE | APPLIED_BY_PARENT_INSTANCE_OF_COPE_PROFILE_OWNER_PROFILE;
+            APPLIED_BY_PARENT_INSTANCE_OF_NON_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE | APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE;
 
     int APPLIED_BY_PARENT_INSTANCE_OF_PROFILE_OWNER_USER = 1 << 15;
 

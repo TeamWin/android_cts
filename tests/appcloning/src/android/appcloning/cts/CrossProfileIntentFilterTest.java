@@ -18,6 +18,7 @@ package android.appcloning.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.Intent;
@@ -31,6 +32,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.bedstead.harrier.annotations.RequireMultiUserSupport;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.modules.utils.build.SdkLevel;
 
 import com.google.common.base.Throwables;
 
@@ -47,6 +49,8 @@ public class CrossProfileIntentFilterTest extends AppCloningDeviceTestBase {
     public void setUp() {
         mContext = InstrumentationRegistry.getTargetContext();
         mPackageManager = mContext.getPackageManager();
+
+        assumeTrue(SdkLevel.isAtLeastU());
     }
 
 

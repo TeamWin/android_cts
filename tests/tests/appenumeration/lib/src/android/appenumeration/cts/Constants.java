@@ -147,12 +147,20 @@ public class Constants {
     public static final String TARGET_STUB_SHARED_USER_APK =
             BASE_PATH + "CtsAppEnumerationStubSharedUser.apk";
     public static final String TARGET_FILTERS_APK = BASE_PATH + "CtsAppEnumerationFilters.apk";
-    public static final String QUERIES_NOTHING_SEES_INSTALLER_APK =
-            BASE_PATH + "CtsAppEnumerationQueriesNothingSeesInstaller.apk";
+    public static final String QUERIES_NOTHING_APK =
+            BASE_PATH + "CtsAppEnumerationQueriesNothing.apk";
+    public static final String QUERIES_NOTHING_PROVIDER_APK =
+            BASE_PATH + "CtsAppEnumerationQueriesNothingHasProvider.apk";
     public static final String QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI_APK =
             BASE_PATH + "CtsAppEnumerationQueriesNothingReceivesPersistableUri.apk";
     public static final String QUERIES_NOTHING_RECEIVES_NON_PERSISTABLE_URI_APK =
             BASE_PATH + "CtsAppEnumerationQueriesNothingReceivesNonPersistableUri.apk";
+    public static final String QUERIES_NOTHING_RECEIVES_PERM_URI_APK =
+            BASE_PATH + "CtsAppEnumerationQueriesNothingReceivesPermissionProtectedUri.apk";
+    public static final String QUERIES_NOTHING_RECEIVES_URI_APK =
+            BASE_PATH + "CtsAppEnumerationQueriesNothingReceivesUri.apk";
+    public static final String QUERIES_NOTHING_SEES_INSTALLER_APK =
+            BASE_PATH + "CtsAppEnumerationQueriesNothingSeesInstaller.apk";
 
     public static final String[] ALL_QUERIES_TARGETING_R_PACKAGES = {
             QUERIES_NOTHING,

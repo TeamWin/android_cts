@@ -37,6 +37,7 @@ import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.util.Log;
 
@@ -1509,6 +1510,12 @@ public final class DeviceState extends HarrierRule {
                         resolvedProfileType,
                         forUserReference);
         if (profile != null) {
+            // We can't remove an organization owned profile
+            ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner(profile);
+            if (profileOwner != null && profileOwner.isOrganizationOwned()) {
+                profileOwner.setIsOrganizationOwned(false);
+            }
+
             removeAndRecordUser(profile);
         }
     }
@@ -1601,6 +1608,14 @@ public final class DeviceState extends HarrierRule {
      * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
      * test has run.
      */
+    public BlockingBroadcastReceiver registerBroadcastReceiver(IntentFilter intentFilter) {
+        return registerBroadcastReceiver(intentFilter, /* checker= */ null);
+    }
+
+    /**
+     * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
+     * test has run.
+     */
     public BlockingBroadcastReceiver registerBroadcastReceiver(
             String action, Function<Intent, Boolean> checker) {
         BlockingBroadcastReceiver broadcastReceiver =
@@ -1615,9 +1630,32 @@ public final class DeviceState extends HarrierRule {
      * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
      * test has run.
      */
+    public BlockingBroadcastReceiver registerBroadcastReceiver(
+            IntentFilter intentfilter, Function<Intent, Boolean> checker) {
+        BlockingBroadcastReceiver broadcastReceiver =
+                new BlockingBroadcastReceiver(mContext, intentfilter, checker);
+        broadcastReceiver.register();
+        mRegisteredBroadcastReceivers.add(broadcastReceiver);
+
+        return broadcastReceiver;
+    }
+
+    /**
+     * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
+     * test has run.
+     */
     public BlockingBroadcastReceiver registerBroadcastReceiverForUser(
             UserReference user, String action) {
         return registerBroadcastReceiverForUser(user, action, /* checker= */ null);
+    }
+
+    /**
+     * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
+     * test has run.
+     */
+    public BlockingBroadcastReceiver registerBroadcastReceiverForUser(
+            UserReference user, IntentFilter intentFilter) {
+        return registerBroadcastReceiverForUser(user, intentFilter, /* checker= */ null);
     }
 
     /**
@@ -1642,8 +1680,34 @@ public final class DeviceState extends HarrierRule {
      * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
      * test has run.
      */
+    public BlockingBroadcastReceiver registerBroadcastReceiverForUser(
+            UserReference user, IntentFilter intentFilter, Function<Intent, Boolean> checker) {
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            BlockingBroadcastReceiver broadcastReceiver =
+                    new BlockingBroadcastReceiver(
+                            TestApis.context().androidContextAsUser(user), intentFilter, checker);
+            broadcastReceiver.register();
+            mRegisteredBroadcastReceivers.add(broadcastReceiver);
+
+            return broadcastReceiver;
+        }
+    }
+
+    /**
+     * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
+     * test has run.
+     */
     public BlockingBroadcastReceiver registerBroadcastReceiverForAllUsers(String action) {
         return registerBroadcastReceiverForAllUsers(action, /* checker= */ null);
+    }
+
+    /**
+     * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
+     * test has run.
+     */
+    public BlockingBroadcastReceiver registerBroadcastReceiverForAllUsers(IntentFilter intentFilter) {
+        return registerBroadcastReceiverForAllUsers(intentFilter, /* checker= */ null);
     }
 
     /**
@@ -1662,6 +1726,24 @@ public final class DeviceState extends HarrierRule {
 
                 return broadcastReceiver;
             }
+    }
+
+    /**
+     * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
+     * test has run.
+     */
+    public BlockingBroadcastReceiver registerBroadcastReceiverForAllUsers(
+            IntentFilter intentFilter, Function<Intent, Boolean> checker) {
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            BlockingBroadcastReceiver broadcastReceiver =
+                    new BlockingBroadcastReceiver(mContext, intentFilter, checker);
+            broadcastReceiver.registerForAllUsers();
+
+            mRegisteredBroadcastReceivers.add(broadcastReceiver);
+
+            return broadcastReceiver;
+        }
     }
 
     private UserReference resolveUserTypeToUser(UserType userType) {

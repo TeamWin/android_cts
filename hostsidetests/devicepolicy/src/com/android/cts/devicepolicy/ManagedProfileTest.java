@@ -139,9 +139,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 "testCannotWipeParentProfile", mProfileUserId);
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ParentProfileTest",
-                "testCannotCallAutoTimeMethodsOnParentProfile", mProfileUserId);
-
-        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ParentProfileTest",
                 "testCannotCallSetDefaultSmsApplicationOnParentProfile", mProfileUserId);
     }
 

@@ -18,14 +18,13 @@ package android.devicepolicy.cts;
 
 import static android.content.Intent.ACTION_PACKAGE_ADDED;
 import static android.content.Intent.ACTION_PACKAGE_REMOVED;
-import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
-
-import static com.android.bedstead.nene.permissions.CommonPermissions.QUERY_ALL_PACKAGES;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.stats.devicepolicy.EventId;
 
@@ -35,6 +34,7 @@ import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.annotations.enterprise.RequireHasPolicyExemptApps;
 import com.android.bedstead.harrier.policies.ApplicationHidden;
 import com.android.bedstead.harrier.policies.ApplicationHiddenSystemOnly;
@@ -42,14 +42,15 @@ import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
-import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
 import java.util.Set;
+import java.util.function.Function;
 
 @RunWith(BedsteadJUnit4.class)
 public class ApplicationHiddenTest {
@@ -62,6 +63,25 @@ public class ApplicationHiddenTest {
             TestApis.packages().find("non.existing.package");
     private static final PackageManager sLocalPackageManager =
             TestApis.context().instrumentedContext().getPackageManager();
+
+    // TODO: All references to isApplicationHidden and setApplicationHidden which are not part of
+    //  the "act" step of the test should run through a Nene API, once those APIs are permission
+    //  accessible
+
+    private static final IntentFilter sPackageAddedIntentFilter = new IntentFilter();
+    private static final IntentFilter sPackageRemovedIntentFilter = new IntentFilter();
+    static {
+        sPackageAddedIntentFilter.addAction(ACTION_PACKAGE_ADDED);
+        sPackageRemovedIntentFilter.addAction(ACTION_PACKAGE_REMOVED);
+        sPackageAddedIntentFilter.addDataScheme("package");
+        sPackageRemovedIntentFilter.addDataScheme("package");
+    }
+
+    @Before
+    public void ensureSystemPackageInstalled() {
+        SYSTEM_PACKAGE.installExisting(TestApis.users().instrumented());
+        SYSTEM_PACKAGE.installExisting(sDeviceState.dpc().user());
+    }
 
     @CanSetPolicyTest(policy = {ApplicationHidden.class, ApplicationHiddenSystemOnly.class})
     public void isApplicationHidden_systemApp_isHidden_returnsTrue() {
@@ -157,13 +177,14 @@ public class ApplicationHiddenTest {
                 sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName());
 
         try {
+            sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
+                    sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
+                    false);
 
             try (BlockingBroadcastReceiver broadcastReceiver =
-                         sDeviceState.registerBroadcastReceiver(ACTION_PACKAGE_ADDED,
-                                 (intent) -> intent.getData() != null
-                                         && intent.getData().getSchemeSpecificPart().equals(
-                                         SYSTEM_PACKAGE.packageName()))) {
-
+                         sDeviceState.registerBroadcastReceiverForAllUsers(
+                                 sPackageRemovedIntentFilter,
+                                 isSchemeSpecificPart(SYSTEM_PACKAGE.packageName()))) {
                 boolean result = sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                         sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
                         true);
@@ -172,15 +193,26 @@ public class ApplicationHiddenTest {
                 broadcastReceiver.awaitForBroadcastOrFail();
             }
 
-            try (PermissionContext p = TestApis.permissions().withPermission(QUERY_ALL_PACKAGES)) {
-                assertThat(sLocalPackageManager.getPackageInfo(
-                        SYSTEM_PACKAGE.packageName(),
-                        PackageManager.PackageInfoFlags.of(0))).isNull();
-                assertThat(sLocalPackageManager.getPackageInfo(
-                        SYSTEM_PACKAGE.packageName(),
-                        PackageManager.PackageInfoFlags.of(
-                                MATCH_UNINSTALLED_PACKAGES))).isNotNull();
-            }
+            assertThat(SYSTEM_PACKAGE.installedOnUser()).isFalse();
+            assertThat(SYSTEM_PACKAGE.exists()).isTrue();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
+                    sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
+                    originalValue);
+        }
+    }
+
+    @PolicyDoesNotApplyTest(policy = {ApplicationHidden.class, ApplicationHiddenSystemOnly.class})
+    public void setApplicationHidden_systemApp_true_applicationIsNotHidden() throws Exception {
+        boolean originalValue = sDeviceState.dpc().devicePolicyManager().isApplicationHidden(
+                sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName());
+
+        try {
+            sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
+                    sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
+                    true);
+
+            assertThat(SYSTEM_PACKAGE.installedOnUser()).isTrue();
         } finally {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
@@ -195,11 +227,14 @@ public class ApplicationHiddenTest {
                 sDeviceState.dpc().componentName(), sDeviceState.testApp().packageName());
 
         try {
+            sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
+                    sDeviceState.dpc().componentName(), sDeviceState.testApp().packageName(),
+                    false);
+
             try (BlockingBroadcastReceiver broadcastReceiver =
-                         sDeviceState.registerBroadcastReceiver(ACTION_PACKAGE_ADDED,
-                                 (intent) -> intent.getData() != null
-                                         && intent.getData().getSchemeSpecificPart().equals(
-                                         sDeviceState.testApp().packageName()))) {
+                         sDeviceState.registerBroadcastReceiverForAllUsers(
+                                 sPackageRemovedIntentFilter,
+                                 isSchemeSpecificPart(sDeviceState.testApp().packageName()))) {
 
                 boolean result = sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                         sDeviceState.dpc().componentName(), sDeviceState.testApp().packageName(),
@@ -209,15 +244,8 @@ public class ApplicationHiddenTest {
                 broadcastReceiver.awaitForBroadcastOrFail();
             }
 
-            try (PermissionContext p = TestApis.permissions().withPermission(QUERY_ALL_PACKAGES)) {
-                assertThat(sLocalPackageManager.getPackageInfo(
-                        sDeviceState.testApp().packageName(),
-                        PackageManager.PackageInfoFlags.of(0))).isNull();
-                assertThat(sLocalPackageManager.getPackageInfo(
-                        sDeviceState.testApp().packageName(),
-                        PackageManager.PackageInfoFlags.of(
-                                MATCH_UNINSTALLED_PACKAGES))).isNotNull();
-            }
+            assertThat(sDeviceState.testApp().testApp().pkg().installedOnUser()).isFalse();
+            assertThat(sDeviceState.testApp().testApp().pkg().exists()).isTrue();
         } finally {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), sDeviceState.testApp().packageName(),
@@ -235,10 +263,9 @@ public class ApplicationHiddenTest {
                     true);
 
             try (BlockingBroadcastReceiver broadcastReceiver =
-                         sDeviceState.registerBroadcastReceiver(ACTION_PACKAGE_REMOVED,
-                                 (intent) -> intent.getData() != null
-                                         && intent.getData().getSchemeSpecificPart().equals(
-                                         SYSTEM_PACKAGE.packageName()))) {
+                         sDeviceState.registerBroadcastReceiverForAllUsers(
+                                 sPackageAddedIntentFilter,
+                                 isSchemeSpecificPart(SYSTEM_PACKAGE.packageName()))) {
 
                 boolean result = sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                         sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
@@ -248,11 +275,7 @@ public class ApplicationHiddenTest {
                 broadcastReceiver.awaitForBroadcastOrFail();
             }
 
-            try (PermissionContext p = TestApis.permissions().withPermission(QUERY_ALL_PACKAGES)) {
-                assertThat(sLocalPackageManager.getPackageInfo(
-                        SYSTEM_PACKAGE.packageName(),
-                        PackageManager.PackageInfoFlags.of(0))).isNotNull();
-            }
+            assertThat(SYSTEM_PACKAGE.installedOnUser()).isTrue();
         } finally {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
@@ -271,10 +294,9 @@ public class ApplicationHiddenTest {
                     true);
 
             try (BlockingBroadcastReceiver broadcastReceiver =
-                         sDeviceState.registerBroadcastReceiver(ACTION_PACKAGE_REMOVED,
-                                 (intent) -> intent.getData() != null
-                                         && intent.getData().getSchemeSpecificPart().equals(
-                                         sDeviceState.testApp().packageName()))) {
+                         sDeviceState.registerBroadcastReceiverForAllUsers(
+                                 sPackageAddedIntentFilter,
+                                 isSchemeSpecificPart(sDeviceState.testApp().packageName()))) {
 
                 boolean result = sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                         sDeviceState.dpc().componentName(), sDeviceState.testApp().packageName(),
@@ -284,11 +306,7 @@ public class ApplicationHiddenTest {
                 broadcastReceiver.awaitForBroadcastOrFail();
             }
 
-            try (PermissionContext p = TestApis.permissions().withPermission(QUERY_ALL_PACKAGES)) {
-                assertThat(sLocalPackageManager.getPackageInfo(
-                        sDeviceState.testApp().packageName(),
-                        PackageManager.PackageInfoFlags.of(0))).isNotNull();
-            }
+            assertThat(sDeviceState.testApp().testApp().pkg().installedOnUser()).isTrue();
         } finally {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                     sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
@@ -308,11 +326,7 @@ public class ApplicationHiddenTest {
                         true);
 
                 assertThat(result).isFalse();
-                try (PermissionContext p = TestApis.permissions().withPermission(QUERY_ALL_PACKAGES)) {
-                    assertThat(sLocalPackageManager.getPackageInfo(
-                            packageName,
-                            PackageManager.PackageInfoFlags.of(0))).isNotNull();
-                }
+                assertThat(TestApis.packages().find(packageName).installedOnUser()).isTrue();
             } finally {
                 sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                         sDeviceState.dpc().componentName(), SYSTEM_PACKAGE.packageName(),
@@ -404,5 +418,10 @@ public class ApplicationHiddenTest {
                 true);
 
         assertThat(result).isFalse();
+    }
+
+    private Function<Intent, Boolean> isSchemeSpecificPart(String part) {
+        return (intent) -> intent.getData() != null
+                && intent.getData().getSchemeSpecificPart().equals(part);
     }
 }

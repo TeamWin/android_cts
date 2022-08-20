@@ -18,6 +18,9 @@ package android.hardware.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -151,5 +154,35 @@ public class HardwareBufferTest {
             }
         }
 
+    }
+
+    @Test
+    public void testGetId() {
+        HardwareBuffer buffer1 = HardwareBuffer.create(2, 4, HardwareBuffer.RGBA_8888, 1,
+                HardwareBuffer.USAGE_CPU_READ_RARELY);
+        assertNotNull(buffer1);
+        HardwareBuffer buffer2 = HardwareBuffer.create(2, 4, HardwareBuffer.RGBA_8888, 1,
+                HardwareBuffer.USAGE_CPU_READ_RARELY);
+        assertNotNull(buffer2);
+        assertNotEquals(0, buffer1.getId());
+        assertNotEquals(0, buffer2.getId());
+        assertNotEquals(buffer1.getId(), buffer2.getId());
+        buffer1.close();
+        buffer2.close();
+    }
+
+    @Test
+    public void testClosedFails() {
+        HardwareBuffer buffer = HardwareBuffer.create(2, 4, HardwareBuffer.RGBA_8888, 1,
+                HardwareBuffer.USAGE_CPU_READ_RARELY);
+        assertNotNull(buffer);
+        assertFalse(buffer.isClosed());
+        assertEquals(2, buffer.getWidth());
+        buffer.close();
+        assertTrue(buffer.isClosed());
+        assertThrows(IllegalStateException.class, buffer::getWidth);
+        assertThrows(IllegalStateException.class, buffer::getHeight);
+        assertThrows(IllegalStateException.class, buffer::getId);
+        assertTrue(buffer.isClosed());
     }
 }

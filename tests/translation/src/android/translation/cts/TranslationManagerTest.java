@@ -16,6 +16,8 @@
 
 package android.translation.cts;
 
+import static android.translation.cts.Helper.COMMAND_CREATE_TRANSLATOR;
+import static android.translation.cts.OtherProcessService1.EXTRA_COMMAND;
 import static android.view.translation.TranslationSpec.DATA_FORMAT_TEXT;
 
 import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLifecycle.RESUMED;
@@ -26,6 +28,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.Application;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.icu.util.ULocale;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -49,6 +52,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ActivitiesWatcher;
 import com.android.compatibility.common.util.ActivitiesWatcher.ActivityWatcher;
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.RequiredServiceRule;
 
 import org.junit.After;
@@ -197,6 +201,40 @@ public class TranslationManagerTest {
         assertThat(source.isUiTranslationEnabled()).isEqualTo(expected.isUiTranslationEnabled());
         assertThat(source.getSupportedTranslationFlags()).isEqualTo(
                 expected.getSupportedTranslationFlags());
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.translation.TranslationManager#createOnDeviceTranslator")
+    public void testDifferentSessionIdForDifferentProcess() throws Exception {
+        enableCtsTranslationService();
+        // Create a Translator running on otherTranslationProcess1 process
+        final Intent intentCreateTranslator1 = new Intent(sContext, OtherProcessService1.class);
+        intentCreateTranslator1.putExtra(EXTRA_COMMAND, COMMAND_CREATE_TRANSLATOR);
+        sContext.startService(intentCreateTranslator1);
+        // Wait TranslationService connected
+        try {
+            mServiceWatcher.waitOnConnected();
+        } catch (InterruptedException e) {
+            Log.w(TAG, "Exception waiting for onConnected");
+        }
+        CtsTranslationService translationService = mServiceWatcher.getService();
+        assertThat(translationService).isNotNull();
+        // Wait session created and stop service
+        translationService.waitForSessionCreated();
+        sContext.stopService(intentCreateTranslator1);
+        final int translationId1 = translationService.getLastSessionId();
+
+        // Create a Translator running on otherTranslationProcess2 process
+        translationService.initSessionCreatedLatch();
+        final Intent intentCreateTranslator2 = new Intent(sContext, OtherProcessService2.class);
+        intentCreateTranslator2.putExtra(EXTRA_COMMAND, COMMAND_CREATE_TRANSLATOR);
+        sContext.startService(intentCreateTranslator2);
+        // Wait session created and stop service
+        translationService.waitForSessionCreated();
+        sContext.stopService(intentCreateTranslator2);
+        final int translationId2 = translationService.getLastSessionId();
+
+        assertThat(translationId1).isNotEqualTo(translationId2);
     }
 
     @Test

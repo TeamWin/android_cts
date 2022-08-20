@@ -18,6 +18,8 @@ package android.appcloning.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import com.android.compatibility.common.util.SystemUtil;
 
 public class AppCloningDeviceTestBase {
@@ -41,12 +43,12 @@ public class AppCloningDeviceTestBase {
         }
 
         // create user
-        String output = SystemUtil.runShellCommandOrThrow(command);
+        String output = SystemUtil.runShellCommand(command);
         String userId = output.substring(output.lastIndexOf(' ') + 1)
                 .replaceAll("[^0-9]", "");
-        assertThat(userId).isNotEmpty();
+        assumeTrue(userId != null && !userId.trim().isEmpty());
 
-        output = SystemUtil.runShellCommandOrThrow("am start-user -w " + userId);
+        SystemUtil.runShellCommandOrThrow("am start-user -w " + userId);
         return Integer.parseInt(userId);
     }
 

@@ -592,20 +592,13 @@ class OutputManager {
 abstract class CodecTestBase {
     public static final boolean IS_Q = ApiLevelUtil.getApiLevel() == Build.VERSION_CODES.Q;
     public static final boolean IS_AT_LEAST_R = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
-    // Checking for CODENAME helps in cases when build version on the development branch isn't
-    // updated yet but CODENAME is updated.
     public static final boolean IS_AT_LEAST_T =
-            ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU) ||
-                    ApiLevelUtil.codenameEquals("Tiramisu");
-    public static final boolean IS_AT_LEAST_U =
-            ApiLevelUtil.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE) ||
-                    ApiLevelUtil.codenameEquals("UpsideDownCake");
-    // TODO (b/223868241) Update the following to check for Build.VERSION_CODES.TIRAMISU once
-    // TIRAMISU is set correctly
+            ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU);
+    public static final boolean IS_AT_LEAST_U = ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU);
     public static final boolean FIRST_SDK_IS_AT_LEAST_T =
-            ApiLevelUtil.isFirstApiAfter(Build.VERSION_CODES.S_V2);
+            ApiLevelUtil.isFirstApiAtLeast(Build.VERSION_CODES.TIRAMISU);
     public static final boolean VNDK_IS_AT_LEAST_T =
-            SystemProperties.getInt("ro.vndk.version", 0) > Build.VERSION_CODES.S_V2;
+            SystemProperties.getInt("ro.vndk.version", 0) >= Build.VERSION_CODES.TIRAMISU;
     public static final boolean IS_HDR_EDITING_SUPPORTED = isHDREditingSupported();
     private static final String LOG_TAG = CodecTestBase.class.getSimpleName();
     enum SupportClass {
