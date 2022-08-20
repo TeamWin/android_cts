@@ -283,6 +283,9 @@ public class MediaCodecResourceTest {
             if (mediaCodecInfo.isEncoder()) {
                 continue;
             }
+            if (mediaCodecInfo.getSupportedTypes().length == 0) {
+                continue;
+            }
             String mime = mediaCodecInfo.getSupportedTypes()[0];
             CodecCapabilities codecCapabilities = mediaCodecInfo.getCapabilitiesForType(mime);
             VideoCapabilities videoCapabilities = codecCapabilities.getVideoCapabilities();

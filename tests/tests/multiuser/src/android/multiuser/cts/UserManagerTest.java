@@ -41,6 +41,7 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.UserInfo;
+import android.content.pm.UserProperties;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.NewUserRequest;
@@ -82,6 +83,7 @@ import org.junit.runner.RunWith;
 
 import java.time.Duration;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -732,6 +734,35 @@ public final class UserManagerTest {
         assertThrows(IllegalArgumentException.class,
                 () -> startBackgroundUserOnSecondaryDisplay(user, Display.DEFAULT_DISPLAY));
 
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#getUserProperties"})
+    @AppModeFull
+    @EnsureHasPermission({CREATE_USERS, QUERY_USERS})
+    public void testGetUserProperties_system() {
+        final UserHandle fullUser = TestApis.users().instrumented().userHandle();
+        final UserProperties properties = mUserManager.getUserProperties(fullUser);
+        assertThat(properties).isNotNull();
+
+        assertThat(properties.getShowInLauncher()).isIn(Arrays.asList(
+                UserProperties.SHOW_IN_LAUNCHER_WITH_PARENT));
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#getUserProperties"})
+    @AppModeFull
+    @EnsureHasWorkProfile
+    @RequireFeature(FEATURE_MANAGED_USERS)
+    @EnsureHasPermission({CREATE_USERS, QUERY_USERS})
+    public void testGetUserProperties_managedProfile() {
+        final UserHandle profile = sDeviceState.workProfile().userHandle();
+        final UserProperties properties = mUserManager.getUserProperties(profile);
+        assertThat(properties).isNotNull();
+
+        assertThat(properties.getShowInLauncher()).isIn(Arrays.asList(
+                UserProperties.SHOW_IN_LAUNCHER_WITH_PARENT,
+                UserProperties.SHOW_IN_LAUNCHER_SEPARATE));
     }
 
     private Context getContextForOtherUser() {

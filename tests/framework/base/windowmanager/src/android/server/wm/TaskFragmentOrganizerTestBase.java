@@ -203,7 +203,7 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
 
         private final Map<IBinder, TaskFragmentInfo> mInfos = new ArrayMap<>();
         private final Map<IBinder, TaskFragmentInfo> mRemovedInfos = new ArrayMap<>();
-        private IBinder mTaskFragToken;
+        private int mParentTaskId;
         private Configuration mParentConfig;
         private IBinder mErrorToken;
         private Throwable mThrowable;
@@ -335,41 +335,44 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
         }
 
         @Override
-        public void onTaskFragmentAppeared(@NonNull TaskFragmentInfo taskFragmentInfo) {
-            super.onTaskFragmentAppeared(taskFragmentInfo);
+        public void onTaskFragmentAppeared(@NonNull WindowContainerTransaction wct,
+                @NonNull TaskFragmentInfo taskFragmentInfo) {
+            super.onTaskFragmentAppeared(wct, taskFragmentInfo);
             mInfos.put(taskFragmentInfo.getFragmentToken(), taskFragmentInfo);
             mAppearedLatch.countDown();
         }
 
         @Override
-        public void onTaskFragmentInfoChanged(@NonNull TaskFragmentInfo taskFragmentInfo) {
-            super.onTaskFragmentInfoChanged(taskFragmentInfo);
+        public void onTaskFragmentInfoChanged(@NonNull WindowContainerTransaction wct,
+                @NonNull TaskFragmentInfo taskFragmentInfo) {
+            super.onTaskFragmentInfoChanged(wct, taskFragmentInfo);
             mInfos.put(taskFragmentInfo.getFragmentToken(), taskFragmentInfo);
             mChangedLatch.countDown();
         }
 
         @Override
-        public void onTaskFragmentVanished(@NonNull TaskFragmentInfo taskFragmentInfo) {
-            super.onTaskFragmentVanished(taskFragmentInfo);
+        public void onTaskFragmentVanished(@NonNull WindowContainerTransaction wct,
+                @NonNull TaskFragmentInfo taskFragmentInfo) {
+            super.onTaskFragmentVanished(wct, taskFragmentInfo);
             mInfos.remove(taskFragmentInfo.getFragmentToken());
             mRemovedInfos.put(taskFragmentInfo.getFragmentToken(), taskFragmentInfo);
             mVanishedLatch.countDown();
         }
 
         @Override
-        public void onTaskFragmentParentInfoChanged(@NonNull IBinder fragmentToken,
-                @NonNull Configuration parentConfig) {
-            super.onTaskFragmentParentInfoChanged(fragmentToken, parentConfig);
-            mTaskFragToken = fragmentToken;
+        public void onTaskFragmentParentInfoChanged(@NonNull WindowContainerTransaction wct,
+                int taskId, @NonNull Configuration parentConfig) {
+            super.onTaskFragmentParentInfoChanged(wct, taskId, parentConfig);
+            mParentTaskId = taskId;
             mParentConfig = parentConfig;
             mParentChangedLatch.countDown();
         }
 
         @Override
-        public void onTaskFragmentError(@NonNull IBinder errorCallbackToken,
-                @Nullable TaskFragmentInfo taskFragmentInfo, int opType,
-                @NonNull Throwable exception) {
-            super.onTaskFragmentError(errorCallbackToken, taskFragmentInfo, opType, exception);
+        public void onTaskFragmentError(@NonNull WindowContainerTransaction wct,
+                @NonNull IBinder errorCallbackToken, @Nullable TaskFragmentInfo taskFragmentInfo,
+                int opType, @NonNull Throwable exception) {
+            super.onTaskFragmentError(wct, errorCallbackToken, taskFragmentInfo, opType, exception);
             mErrorToken = errorCallbackToken;
             if (taskFragmentInfo != null) {
                 mInfos.put(taskFragmentInfo.getFragmentToken(), taskFragmentInfo);

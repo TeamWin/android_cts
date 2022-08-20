@@ -22,16 +22,20 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
+
 import android.provider.Telephony;
 import android.telephony.cts.util.DefaultSmsAppHelper;
 
 import androidx.test.filters.SmallTest;
+
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -328,5 +332,55 @@ public class SmsTest {
 
         DefaultSmsAppHelper.ensureDefaultSmsApp();
     }
-}
 
+    /**
+     * Verifies sql injection is not allowed within a URI.
+     */
+    @Test
+    @ApiTest(apis = "com.android.providers.telephony.MmsSmsProvider#query")
+    public void query_msgParameter_sqlInjection() {
+        Uri uriWithSqlInjection = Uri.parse("content://mms-sms/pending?protocol=sms&message=1 "
+                + "union select type,name,tbl_name,rootpage,sql,1,1,1,1,1 FROM SQLITE_MASTER; --");
+        Cursor uriWithSqlInjectionCur = mContentResolver.query(uriWithSqlInjection, null,
+                null, null, null);
+        assertNull(uriWithSqlInjectionCur);
+    }
+
+    /**
+     * Verifies query() returns non-null cursor when valid URI is passed to it.
+     */
+    @Test
+    @ApiTest(apis = "com.android.providers.telephony.MmsSmsProvider#query")
+    public void query_msgParameter_withoutSqlInjection() {
+        Uri uriWithoutSqlInjection = Uri.parse("content://mms-sms/pending?protocol=sms&message=1");
+        Cursor uriWithoutSqlInjectionCur = mContentResolver.query(uriWithoutSqlInjection,
+                null, null, null, null);
+        assertNotNull(uriWithoutSqlInjectionCur);
+    }
+
+    /**
+     * Verifies sql injection is not allowed within a URI.
+     */
+    @Test
+    @ApiTest(apis = "com.android.providers.telephony.MmsSmsProvider#query")
+    public void query_threadIdParameter_sqlInjection() {
+        Uri uriWithSqlInjection = Uri.parse("content://mms-sms/conversations?simple=true&"
+                + "thread_type=1 union select type,name,tbl_name,rootpage,sql FROM SQLITE_MASTER;; --");
+        Cursor uriWithSqlInjectionCur = mContentResolver.query(uriWithSqlInjection,
+                new String[]{"1","2","3","4","5"}, null, null, null);
+        assertNull(uriWithSqlInjectionCur);
+    }
+
+    /**
+     * Verifies query() returns non-null cursor when valid URI is passed to it.
+     */
+    @Test
+    @ApiTest(apis = "com.android.providers.telephony.MmsSmsProvider#query")
+    public void query_threadIdParameter_withoutSqlInjection() {
+        Uri uriWithoutSqlInjection = Uri.parse(
+                "content://mms-sms/conversations?simple=true&thread_type=1");
+        Cursor uriWithoutSqlInjectionCur = mContentResolver.query(uriWithoutSqlInjection,
+                new String[]{"1","2","3","4","5"}, null, null, null);
+        assertNotNull(uriWithoutSqlInjectionCur);
+    }
+}
