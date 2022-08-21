@@ -95,7 +95,7 @@ public class BaseNotificationListenerCheckTest {
     private static final String PROPERTY_NOTIFICATION_LISTENER_CHECK_INTERVAL_MILLIS =
             "notification_listener_check_interval_millis";
 
-    private static final Long OVERRIDE_NOTIFICATION_LISTENER_CHECK_INTERVAL_MILLIS =
+    protected static final Long OVERRIDE_NOTIFICATION_LISTENER_CHECK_INTERVAL_MILLIS =
             SECONDS.toMillis(1);
 
     private static final String PROPERTY_JOB_SCHEDULER_MAX_JOB_PER_RATE_LIMIT_WINDOW =

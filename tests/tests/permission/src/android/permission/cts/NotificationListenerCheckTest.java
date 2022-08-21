@@ -151,6 +151,25 @@ public class NotificationListenerCheckTest extends BaseNotificationListenerCheck
     }
 
     @Test
+    public void notificationIsShownAgainAfterDisableAndReenableAppNotificationListener()
+            throws Throwable {
+        runNotificationListenerCheck();
+
+        eventually(() -> assertNotNull(getNotification(true)), UNEXPECTED_TIMEOUT_MILLIS);
+
+        // Disallow NLS, and run NLS check job. This  should clear NLS off notified list
+        disallowTestAppNotificationListenerService();
+        runNotificationListenerCheck();
+
+        // Re-allow NLS, and run NLS check job. This work now that it's cleared NLS off notified
+        // list
+        allowTestAppNotificationListenerService();
+        runNotificationListenerCheck();
+
+        eventually(() -> assertNotNull(getNotification(true)), UNEXPECTED_TIMEOUT_MILLIS);
+    }
+
+    @Test
     public void removeNotificationOnUninstall() throws Throwable {
         runNotificationListenerCheck();
 
