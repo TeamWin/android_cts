@@ -509,6 +509,8 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
             fmt == 'raw'):
           cv2_distort = camera_properties_utils.get_distortion_matrix(
               physical_props[i])
+          if not np.any(cv2_distort):
+            raise AssertionError(f'Camera {i} has no distortion matrix!')
           image_processing_utils.write_image(img/255, '%s_%s_%s.jpg' % (
               os.path.join(log_path, NAME), fmt, i))
           img = cv2.undistort(img, k[i], cv2_distort)

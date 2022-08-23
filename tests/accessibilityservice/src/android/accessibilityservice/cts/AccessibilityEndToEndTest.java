@@ -29,15 +29,11 @@ import static android.accessibilityservice.cts.utils.RunOnMainUtils.getOnMain;
 import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_HIDE_TOOLTIP;
 import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_TOOLTIP;
 
-import static org.hamcrest.Matchers.in;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.core.IsNull.notNullValue;
-import static org.hamcrest.core.IsNull.nullValue;
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -731,8 +727,8 @@ public class AccessibilityEndToEndTest {
                         "android.accessibilityservice.cts:id/buttonWithTooltip")
                 .get(0);
         assertFalse(hasTooltipShowing(R.id.buttonWithTooltip));
-        assertThat(ACTION_SHOW_TOOLTIP, in(buttonNode.getActionList()));
-        assertThat(ACTION_HIDE_TOOLTIP, not(in(buttonNode.getActionList())));
+        assertThat(buttonNode.getActionList()).contains(ACTION_SHOW_TOOLTIP);
+        assertThat(buttonNode.getActionList()).doesNotContain(ACTION_HIDE_TOOLTIP);
         sUiAutomation.executeAndWaitForEvent(
                 () -> buttonNode.performAction(ACTION_SHOW_TOOLTIP.getId()),
                 filterForEventTypeWithAction(
@@ -742,8 +738,8 @@ public class AccessibilityEndToEndTest {
 
         // The button should now be showing the tooltip, so it should have the option to hide it.
         buttonNode.refresh();
-        assertThat(ACTION_HIDE_TOOLTIP, in(buttonNode.getActionList()));
-        assertThat(ACTION_SHOW_TOOLTIP, not(in(buttonNode.getActionList())));
+        assertThat(buttonNode.getActionList()).contains(ACTION_HIDE_TOOLTIP);
+        assertThat(buttonNode.getActionList()).doesNotContain(ACTION_SHOW_TOOLTIP);
         assertTrue(hasTooltipShowing(R.id.buttonWithTooltip));
     }
 
@@ -755,9 +751,9 @@ public class AccessibilityEndToEndTest {
                         "android.accessibilityservice.cts:id/buttonWithTooltip")
                 .get(0);
         final AccessibilityNodeInfo beforeNode = buttonNode.getTraversalBefore();
-        assertThat(beforeNode, notNullValue());
-        assertThat(beforeNode.getViewIdResourceName(),
-                equalTo("android.accessibilityservice.cts:id/edittext"));
+        assertThat(beforeNode).isNotNull();
+        assertThat(beforeNode.getViewIdResourceName()).isEqualTo(
+                "android.accessibilityservice.cts:id/edittext");
 
         sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
                 () -> mActivity.findViewById(R.id.buttonWithTooltip)
@@ -766,7 +762,7 @@ public class AccessibilityEndToEndTest {
                 DEFAULT_TIMEOUT_MS);
 
         buttonNode.refresh();
-        assertThat(buttonNode.getTraversalBefore(), nullValue());
+        assertThat(buttonNode.getTraversalBefore()).isNull();
     }
 
     @MediumTest
@@ -777,9 +773,9 @@ public class AccessibilityEndToEndTest {
                         "android.accessibilityservice.cts:id/edittext")
                 .get(0);
         final AccessibilityNodeInfo afterNode = editNode.getTraversalAfter();
-        assertThat(afterNode, notNullValue());
-        assertThat(afterNode.getViewIdResourceName(),
-                equalTo("android.accessibilityservice.cts:id/buttonWithTooltip"));
+        assertThat(afterNode).isNotNull();
+        assertThat(afterNode.getViewIdResourceName()).isEqualTo(
+                "android.accessibilityservice.cts:id/buttonWithTooltip");
 
         sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
                 () -> mActivity.findViewById(R.id.edittext)
@@ -788,7 +784,7 @@ public class AccessibilityEndToEndTest {
                 DEFAULT_TIMEOUT_MS);
 
         editNode.refresh();
-        assertThat(editNode.getTraversalAfter(), nullValue());
+        assertThat(editNode.getTraversalAfter()).isNull();
     }
 
     @MediumTest
@@ -807,9 +803,9 @@ public class AccessibilityEndToEndTest {
                 .get(0);
         editNode.refresh();
         final AccessibilityNodeInfo labelForNode = editNode.getLabelFor();
-        assertThat(labelForNode, notNullValue());
+        assertThat(labelForNode).isNotNull();
         // Labeled node should indicate that it is labeled by the other one
-        assertThat(labelForNode.getLabeledBy(), equalTo(editNode));
+        assertThat(labelForNode.getLabeledBy()).isEqualTo(editNode);
     }
 
     @MediumTest
@@ -908,7 +904,7 @@ public class AccessibilityEndToEndTest {
         final int hoverLeft = buttonLocation[0] + button.getWidth() + touchableSize / 2;
         final int hoverMiddle = (hoverLeft + hoverRight) / 2;
         final View.OnHoverListener listener = CtsMouseUtil.installHoverListener(button, false);
-        enableTouchExploration(sInstrumentation, true);
+        enableTouchExploration(true);
 
         try {
             // common downTime for touch explorer injected events
@@ -948,7 +944,7 @@ public class AccessibilityEndToEndTest {
         } catch (TimeoutException e) {
             fail("Accessibility events should be received as expected " + e.getMessage());
         } finally {
-            enableTouchExploration(sInstrumentation, false);
+            enableTouchExploration(false);
         }
     }
 
@@ -971,7 +967,7 @@ public class AccessibilityEndToEndTest {
         final int targetX = target.getWidth() / 2;
         final int targetY = target.getHeight() / 2;
         final View.OnHoverListener listener = CtsMouseUtil.installHoverListener(target, false);
-        enableTouchExploration(sInstrumentation, true);
+        enableTouchExploration(true);
 
         try {
             final long downTime = SystemClock.uptimeMillis();
@@ -1009,7 +1005,7 @@ public class AccessibilityEndToEndTest {
         } catch (TimeoutException e) {
             fail("Accessibility events should be received as expected " + e.getMessage());
         } finally {
-            enableTouchExploration(sInstrumentation, false);
+            enableTouchExploration(false);
         }
     }
 
@@ -1027,7 +1023,7 @@ public class AccessibilityEndToEndTest {
         }
     }
 
-    private static void enableTouchExploration(Instrumentation instrumentation, boolean enabled)
+    private static void enableTouchExploration(boolean enabled)
             throws InterruptedException {
         final int TIMEOUT_FOR_SERVICE_ENABLE = 10000; // millis; 10s
         final Object waitObject = new Object();
@@ -1039,19 +1035,18 @@ public class AccessibilityEndToEndTest {
             }
         };
         final AccessibilityManager manager =
-                (AccessibilityManager) instrumentation.getContext().getSystemService(
+                (AccessibilityManager) sInstrumentation.getContext().getSystemService(
                         Service.ACCESSIBILITY_SERVICE);
         manager.addTouchExplorationStateChangeListener(serviceListener);
 
-        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
-        final AccessibilityServiceInfo info = uiAutomation.getServiceInfo();
+        final AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
         assert info != null;
         if (enabled) {
             info.flags |= AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
         } else {
             info.flags &= ~AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
         }
-        uiAutomation.setServiceInfo(info);
+        sUiAutomation.setServiceInfo(info);
 
         final long timeoutTime = System.currentTimeMillis() + TIMEOUT_FOR_SERVICE_ENABLE;
         synchronized (waitObject) {

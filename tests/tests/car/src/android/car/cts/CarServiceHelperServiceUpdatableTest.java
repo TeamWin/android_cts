@@ -34,6 +34,7 @@ import android.os.NewUserRequest;
 import android.os.NewUserResponse;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
 
@@ -168,7 +169,12 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
 
             int userId = response.getUser().getIdentifier();
             listener.assertEventReceived(userId, CarUserManager.USER_LIFECYCLE_EVENT_TYPE_CREATED);
+             // check the dump stack
+            assertUserLifecycleEventLogged(CarUserManager.USER_LIFECYCLE_EVENT_TYPE_CREATED,
+                    userId);
         } finally {
+            // Clean up the user that was previously created.
+            userManager.removeUser(response.getUser());
             carUserManager.removeListener(listener);
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
@@ -200,11 +206,16 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
             int userId = response.getUser().getIdentifier();
             startUser(userId);
             listener.assertEventReceived(userId, CarUserManager.USER_LIFECYCLE_EVENT_TYPE_STARTING);
+            // check the dump stack
+            assertUserLifecycleEventLogged(CarUserManager.USER_LIFECYCLE_EVENT_TYPE_STARTING,
+                    userId);
 
             // TestOnUserRemoved call
             userRemoved = userManager.removeUser(response.getUser());
+            listener.assertEventReceived(userId, CarUserManager.USER_LIFECYCLE_EVENT_TYPE_REMOVED);
             // check the dump stack
-            assertLastUserRemoved(userId);
+            assertUserLifecycleEventLogged(CarUserManager.USER_LIFECYCLE_EVENT_TYPE_REMOVED,
+                    userId);
         } finally {
             if (!userRemoved && response != null && response.isSuccessful()) {
                 userManager.removeUser(response.getUser());
@@ -224,11 +235,17 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
         return executeShellCommand(cmd.toString());
     }
 
-    private void assertLastUserRemoved(int userId) throws Exception {
+    private void assertUserLifecycleEventLogged(int eventType, int userId) throws Exception {
+        assertUserLifecycleEventLogged(eventType, UserHandle.USER_NULL, userId);
+    }
+
+    private void assertUserLifecycleEventLogged(int eventType, int fromUserId, int toUserId)
+            throws Exception {
         // check for the logcat
         // TODO(b/210874444): Use logcat helper from
         // cts/tests/tests/car_builtin/src/android/car/cts/builtin/util/LogcatHelper.java
-        String match = "car_service_on_user_removed: " + userId;
+        String match = String.format("car_service_on_user_lifecycle: [%d,%d,%d]", eventType,
+                fromUserId, toUserId);
         long timeout = 60_000;
         long startTime = SystemClock.elapsedRealtime();
         UiAutomation automation = InstrumentationRegistry.getInstrumentation().getUiAutomation();

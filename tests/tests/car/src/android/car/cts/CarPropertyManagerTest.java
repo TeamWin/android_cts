@@ -49,6 +49,7 @@ import android.util.ArraySet;
 import android.util.SparseArray;
 
 import androidx.annotation.GuardedBy;
+import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -64,9 +65,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -81,6 +86,7 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     private static final int ONCHANGE_RATE_EVENT_COUNTER = 1;
     private static final int UI_RATE_EVENT_COUNTER = 5;
     private static final int FAST_OR_FASTEST_EVENT_COUNTER = 10;
+    private static final long ASYNC_WAIT_TIMEOUT_IN_SEC = 15_000;
     private static final ImmutableSet<Integer> PORT_LOCATION_TYPES =
             ImmutableSet.<Integer>builder().add(PortLocationType.UNKNOWN,
                     PortLocationType.FRONT_LEFT, PortLocationType.FRONT_RIGHT,
@@ -2514,7 +2520,8 @@ public class CarPropertyManagerTest extends CarApiTestBase {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void testGetProperty() {
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getProperty"})
+    public void testGetAllSupportedReadablePropertiesSync() {
         List<CarPropertyConfig> configs = mCarPropertyManager.getPropertyList(mPropertyIds);
         for (CarPropertyConfig cfg : configs) {
             if (cfg.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ) {
@@ -2544,6 +2551,119 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Test for {@link CarPropertyManager#getPropertiesAsync}
+     *
+     * Generates GetPropertyRequest objects for supported readable properties and verifies if there
+     * are no exceptions or request timeouts.
+     */
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getPropertiesAsync"})
+    public void testGetAllSupportedReadablePropertiesAsync() throws Exception {
+        Executor executor = Executors.newFixedThreadPool(1);
+        Set<Integer> pendingRequests = new ArraySet<>();
+        List<CarPropertyManager.GetPropertyRequest> getPropertyRequests = new ArrayList<>();
+        List<CarPropertyConfig> configs = mCarPropertyManager.getPropertyList();
+        for (CarPropertyConfig cfg : configs) {
+            if (cfg.getAccess() != CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ
+                    && cfg.getAccess() != CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
+                continue;
+            }
+            int[] areaIds = cfg.getAreaIds();
+            int propId = cfg.getPropertyId();
+            for (int areaId : areaIds) {
+                CarPropertyManager.GetPropertyRequest gpr =
+                        mCarPropertyManager.generateGetPropertyRequest(propId, areaId);
+                getPropertyRequests.add(gpr);
+                pendingRequests.add(gpr.getRequestId());
+            }
+        }
+
+        TestGetPropertyAsyncCallback testGetPropertyAsyncCallback =
+                new TestGetPropertyAsyncCallback(pendingRequests);
+        mCarPropertyManager.getPropertiesAsync(getPropertyRequests, /* cancellationSignal= */ null,
+                executor, testGetPropertyAsyncCallback);
+        testGetPropertyAsyncCallback.waitAndFinish();
+        assertWithMessage(testGetPropertyAsyncCallback.getResultList().toString()).that(
+                testGetPropertyAsyncCallback.getErrorList().isEmpty()).isTrue();
+    }
+
+    private static final class TestGetPropertyAsyncCallback extends
+            CarPropertyManager.GetPropertyCallback {
+        private final CountDownLatch mCountDownLatch;
+        private final Set<Integer> mPendingRequests;
+        private final int mNumberOfRequests;
+        private final Object mLock = new Object();
+        @GuardedBy("mLock")
+        private final List<String> mErrorList = new ArrayList<>();
+        @GuardedBy("mLock")
+        private final List<String> mResultList = new ArrayList<>();
+
+        TestGetPropertyAsyncCallback(Set<Integer> pendingRequests) {
+            mNumberOfRequests = pendingRequests.size();
+            mCountDownLatch = new CountDownLatch(mNumberOfRequests);
+            mPendingRequests = pendingRequests;
+        }
+
+        @Override
+        public void onSuccess(@NonNull CarPropertyManager.GetPropertyResult getPropertyResult) {
+            int requestId = getPropertyResult.getRequestId();
+            synchronized (mLock) {
+                if (!mPendingRequests.contains(requestId)) {
+                    mErrorList.add("Request ID: " + requestId + " not present");
+                    return;
+                } else {
+                    mPendingRequests.remove(requestId);
+                    mResultList.add("Request ID: " + requestId + " complete with onSuccess()");
+                }
+            }
+            mCountDownLatch.countDown();
+        }
+
+        @Override
+        public void onFailure(@NonNull CarPropertyManager.GetPropertyError getPropertyError) {
+            int requestId = getPropertyError.getRequestId();
+            synchronized (mLock) {
+                if (!mPendingRequests.contains(requestId)) {
+                    mErrorList.add("Request ID: " + requestId + " not present");
+                    return;
+                } else {
+                    mResultList.add("Request ID: " + requestId + " complete with onFailure()");
+                    mPendingRequests.remove(requestId);
+                }
+            }
+            mCountDownLatch.countDown();
+        }
+
+        public void waitAndFinish() throws InterruptedException {
+            boolean res = mCountDownLatch.await(ASYNC_WAIT_TIMEOUT_IN_SEC, TimeUnit.SECONDS);
+            synchronized (mLock) {
+                if (!res) {
+                    mErrorList.add(
+                            "Not enough responses received for getPropertiesAsync before timeout "
+                                    + "(10s), expected " + mNumberOfRequests + " responses, got "
+                                    + mPendingRequests.size());
+                }
+            }
+        }
+
+        public List<String> getErrorList() {
+            List<String> errorList;
+            synchronized (mLock) {
+                errorList = new ArrayList<>(mErrorList);
+            }
+            return errorList;
+        }
+
+        public List<String> getResultList() {
+            List<String> resultList;
+            synchronized (mLock) {
+                resultList = new ArrayList<>(mResultList);
+            }
+            return resultList;
         }
     }
 

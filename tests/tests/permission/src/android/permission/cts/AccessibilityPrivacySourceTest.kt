@@ -120,6 +120,23 @@ class AccessibilityPrivacySourceTest {
     }
 
     @Test
+    fun testJobSendsNotificationOnEnable() {
+        mAccessibilityServiceRule.enableService()
+        runJobAndWaitUntilCompleted()
+        assertNotificationExist(permissionControllerPackage, ACCESSIBILITY_NOTIFICATION_ID)
+
+        setDeviceConfigPrivacyProperty(ACCESSIBILITY_LISTENER_ENABLED, true.toString())
+        cancelNotification(permissionControllerPackage, ACCESSIBILITY_NOTIFICATION_ID)
+        InstrumentedAccessibilityService.disableAllServices()
+        setDeviceConfigPrivacyProperty(ACCESSIBILITY_LISTENER_ENABLED, false.toString())
+
+        // enable service again and verify a notification
+        mAccessibilityServiceRule.enableService()
+        runJobAndWaitUntilCompleted()
+        assertNotificationExist(permissionControllerPackage, ACCESSIBILITY_NOTIFICATION_ID)
+    }
+
+    @Test
     fun testJobSendsIssuesToSafetyCenter() {
         mAccessibilityServiceRule.enableService()
         runJobAndWaitUntilCompleted()

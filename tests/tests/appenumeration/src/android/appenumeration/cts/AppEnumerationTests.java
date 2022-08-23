@@ -96,6 +96,7 @@ import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_CONTACTS;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_EDITOR;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_SHARE;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_WEB;
+import static android.appenumeration.cts.Constants.SERVICE_CLASS_SELF_VISIBILITY_SERVICE;
 import static android.appenumeration.cts.Constants.TARGET_APPWIDGETPROVIDER;
 import static android.appenumeration.cts.Constants.TARGET_APPWIDGETPROVIDER_SHARED_USER;
 import static android.appenumeration.cts.Constants.TARGET_BROWSER;
@@ -587,9 +588,6 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
     @Test
     public void queriesNothing_getNamesForUids_consistentVisibility()
             throws Exception {
-        uninstallPackage(QUERIES_NOTHING);
-        installPackage(QUERIES_NOTHING_APK);
-
         final int targetSharedUid = sPm.getPackageUid(TARGET_SHARED_USER, PackageInfoFlags.of(0));
         final int targetUid = sPm.getPackageUid(TARGET_FILTERS, PackageInfoFlags.of(0));
         Assert.assertNull(getNamesForUids(QUERIES_NOTHING, targetSharedUid)[0]);
@@ -1242,9 +1240,8 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
 
     @Test
     public void testSelfVisibility() throws Exception {
-        ServiceInfo serviceInfo = sContext.getPackageManager().getServiceInfo(
-                new ComponentName(sContext,
-                        "android.appenumeration.cts.TestPmComponentDiscoveryService"),
+        final ServiceInfo serviceInfo = sPm.getServiceInfo(
+                new ComponentName(sContext, SERVICE_CLASS_SELF_VISIBILITY_SERVICE),
                 PackageManager.GET_META_DATA);
         assertNotNull(serviceInfo);
     }

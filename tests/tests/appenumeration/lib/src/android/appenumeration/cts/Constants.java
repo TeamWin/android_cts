@@ -190,6 +190,9 @@ public class Constants {
     public static final String SERVICE_CLASS_SYNC_ADAPTER =
             PKG_BASE + "testapp.MockSyncAdapterService";
 
+    public static final String SERVICE_CLASS_SELF_VISIBILITY_SERVICE =
+            PKG_BASE + "cts.TestPmComponentDiscoveryService";
+
     public static final String ACTION_MANIFEST_ACTIVITY = PKG_BASE + "action.ACTIVITY";
     public static final String ACTION_MANIFEST_SERVICE = PKG_BASE + "action.SERVICE";
     public static final String ACTION_MANIFEST_PROVIDER = PKG_BASE + "action.PROVIDER";
