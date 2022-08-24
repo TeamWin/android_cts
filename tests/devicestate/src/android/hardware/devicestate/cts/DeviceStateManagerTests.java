@@ -18,8 +18,8 @@ package android.hardware.devicestate.cts;
 
 import static android.hardware.devicestate.DeviceStateManager.MAXIMUM_DEVICE_STATE;
 import static android.hardware.devicestate.DeviceStateManager.MINIMUM_DEVICE_STATE;
-import static android.hardware.devicestate.cts.DeviceStateUtils.assertValidState;
-import static android.hardware.devicestate.cts.DeviceStateUtils.runWithControlDeviceStatePermission;
+import static android.server.wm.DeviceStateUtils.assertValidState;
+import static android.server.wm.DeviceStateUtils.runWithControlDeviceStatePermission;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertEquals;

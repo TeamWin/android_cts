@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.hardware.devicestate.cts;
+package android.server.wm;
 
 import static android.hardware.devicestate.DeviceStateManager.MAXIMUM_DEVICE_STATE;
 import static android.hardware.devicestate.DeviceStateManager.MINIMUM_DEVICE_STATE;
@@ -26,7 +26,7 @@ import androidx.annotation.NonNull;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
 
-/** Utility methods for {@DeviceStateManager} CTS tests. */
+/** Utility methods for CTS tests requiring the use of {@DeviceStateManager}. */
 public final class DeviceStateUtils {
     /**
      * Runs the supplied {@code runnable} with the

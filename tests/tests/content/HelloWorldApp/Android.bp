@@ -384,3 +384,18 @@ android_test {
     ],
     v4_signature: true,
 }
+
+//-----------------------------------------------------------
+android_test {
+    name: "HelloVerifierDisabled",
+    defaults: ["hello_world_defaults"],
+    srcs: ["src_verifier/**/*.java"],
+    manifest: "AndroidManifestVerifierDisabled.xml",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "mts",
+        "cts",
+        "general-tests",
+    ],
+    v4_signature: true,
+}

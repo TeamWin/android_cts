@@ -2076,7 +2076,7 @@ public class KeyPairGeneratorTest {
             }
         }
         fail(((message != null) ? message + ". " : "")
-                + "Expected one of " + Arrays.asList(expected)
+                + "Expected one of " + Arrays.toString(expected)
                 + ", actual: <" + actual + ">");
     }
 

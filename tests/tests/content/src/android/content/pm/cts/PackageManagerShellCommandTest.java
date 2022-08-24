@@ -161,6 +161,7 @@ public class PackageManagerShellCommandTest {
     private static final String TEST_VERIFIER_ALLOW = "HelloVerifierAllow.apk";
     private static final String TEST_VERIFIER_REJECT = "HelloVerifierReject.apk";
     private static final String TEST_VERIFIER_DELAYED_REJECT = "HelloVerifierDelayedReject.apk";
+    private static final String TEST_VERIFIER_DISABLED = "HelloVerifierDisabled.apk";
 
     private static final String PACKAGE_MIME_TYPE = "application/vnd.android.package-archive";
 
@@ -185,7 +186,6 @@ public class PackageManagerShellCommandTest {
     private String mPackageVerifier = null;
     private String mUnusedStaticSharedLibsMinCachePeriod = null;
     private long mStreamingVerificationTimeoutMs = DEFAULT_STREAMING_VERIFICATION_TIMEOUT_MS;
-    private int mSecondUser = -1;
 
     private static PackageInstaller getPackageInstaller() {
         return getPackageManager().getPackageInstaller();
@@ -325,11 +325,6 @@ public class PackageManagerShellCommandTest {
         setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest", "invalid");
         setSystemProperty("debug.pm.prune_unused_shared_libraries_delay", "invalid");
         setSystemProperty("debug.pm.adb_verifier_override_packages", "invalid");
-
-        if (mSecondUser != -1) {
-            stopUser(mSecondUser);
-            removeUser(mSecondUser);
-        }
     }
 
     private boolean checkIncrementalDeliveryFeature() {
@@ -1586,6 +1581,82 @@ public class PackageManagerShellCommandTest {
     }
 
     @Test
+    public void testPackageVerifierWithOneVerifierDisabledAtRunTime() throws Exception {
+        // PackageManager.verifyPendingInstall() call only works with user 0 as verifier is expected
+        // to be user 0. So skip the test if it is not user 0.
+        // TODO(b/232317379) Fix this in proper way
+        assumeTrue(getContext().getUserId() == UserHandle.USER_SYSTEM);
+        installPackage(TEST_VERIFIER_REJECT);
+        assertTrue(isAppInstalled(TEST_VERIFIER_PACKAGE));
+        runPackageVerifierTest("Failure [INSTALL_FAILED_VERIFICATION_FAILURE: Install not allowed",
+                (context, intent) -> {
+                    int verificationId = intent.getIntExtra(EXTRA_VERIFICATION_ID, -1);
+                    assertNotEquals(-1, verificationId);
+
+                    int sessionId = intent.getIntExtra(EXTRA_SESSION_ID, -1);
+                    assertNotEquals(-1, sessionId);
+
+                    // This one allows, the other one rejects.
+                    getPackageManager().verifyPendingInstall(verificationId, VERIFICATION_ALLOW);
+                });
+
+        // We can't disable the test package, but we can disable the second verifier package
+        disablePackage(TEST_VERIFIER_PACKAGE);
+        // Expect the installation to success, even though the second verifier would reject it
+        // if the verifier is enabled
+        runPackageVerifierTest(
+                (context, intent) -> {
+                    int verificationId = intent.getIntExtra(EXTRA_VERIFICATION_ID, -1);
+                    assertNotEquals(-1, verificationId);
+
+                    int sessionId = intent.getIntExtra(EXTRA_SESSION_ID, -1);
+                    assertNotEquals(-1, sessionId);
+
+                    getPackageManager().verifyPendingInstall(verificationId, VERIFICATION_ALLOW);
+                });
+
+    }
+
+    @Test
+    public void testPackageVerifierWithOneVerifierDisabledAtManifest() throws Exception {
+        // PackageManager.verifyPendingInstall() call only works with user 0 as verifier is expected
+        // to be user 0. So skip the test if it is not user 0.
+        // TODO(b/232317379) Fix this in proper way
+        assumeTrue(getContext().getUserId() == UserHandle.USER_SYSTEM);
+        // The second verifier package is disabled in its manifest
+        installPackage(TEST_VERIFIER_REJECT);
+        assertTrue(isAppInstalled(TEST_VERIFIER_PACKAGE));
+        runPackageVerifierTest("Failure [INSTALL_FAILED_VERIFICATION_FAILURE: Install not allowed",
+                (context, intent) -> {
+                    int verificationId = intent.getIntExtra(EXTRA_VERIFICATION_ID, -1);
+                    assertNotEquals(-1, verificationId);
+
+                    int sessionId = intent.getIntExtra(EXTRA_SESSION_ID, -1);
+                    assertNotEquals(-1, sessionId);
+
+                    // This one allows, the other one rejects.
+                    getPackageManager().verifyPendingInstall(verificationId, VERIFICATION_ALLOW);
+                });
+        // Uninstall the second verifier first to allow for the new verifier installation
+        uninstallPackageSilently(TEST_VERIFIER_PACKAGE);
+        installPackage(TEST_VERIFIER_DISABLED);
+        assertTrue(isAppInstalled(TEST_VERIFIER_PACKAGE));
+        // Expect the installation to success, even though the second verifier would reject it
+        // if the verifier is enabled
+        runPackageVerifierTest(
+                (context, intent) -> {
+                    int verificationId = intent.getIntExtra(EXTRA_VERIFICATION_ID, -1);
+                    assertNotEquals(-1, verificationId);
+
+                    int sessionId = intent.getIntExtra(EXTRA_SESSION_ID, -1);
+                    assertNotEquals(-1, sessionId);
+
+                    getPackageManager().verifyPendingInstall(verificationId, VERIFICATION_ALLOW);
+                });
+
+    }
+
+    @Test
     public void testAppWithNoAppStorageUpdateSuccess() throws Exception {
         installPackage(TEST_HW_NO_APP_STORAGE);
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
@@ -1944,30 +2015,14 @@ public class PackageManagerShellCommandTest {
         assertEquals("", executeShellCommand("setprop " + name + " " + value));
     }
 
-    private int createUser(String name) throws IOException {
-        final String output = executeShellCommand("pm create-user " + name);
-        if (output.startsWith("Success")) {
-            return Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
+    private void disablePackage(String packageName) {
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            getPackageManager().setApplicationEnabledSetting(packageName,
+                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED, 0);
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
         }
-        throw new IllegalStateException(String.format("Failed to create user: %s", output));
-    }
-
-    private void removeUser(int userId) throws IOException {
-        executeShellCommand("pm remove-user " + userId);
-    }
-
-    private boolean startUser(int userId) throws IOException {
-        String cmd = "am start-user -w " + userId;
-        final String output = executeShellCommand(cmd);
-        if (output.startsWith("Error")) {
-            return false;
-        }
-        String state = executeShellCommand("am get-started-user-state " + userId);
-        return state.contains("RUNNING_UNLOCKED");
-    }
-
-    private void stopUser(int userId) throws IOException {
-        executeShellCommand("am stop-user -w -f " + userId);
     }
 }
 

@@ -18,12 +18,6 @@ package android.hardware.devicestate.cts;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
-import static android.hardware.devicestate.cts.DeviceStateUtils.assertValidState;
-import static android.hardware.devicestate.DeviceStateManager.MAXIMUM_DEVICE_STATE;
-import static android.hardware.devicestate.DeviceStateManager.MINIMUM_DEVICE_STATE;
-
-import static org.junit.Assert.assertTrue;
-
 import android.hardware.devicestate.DeviceStateManager;
 import android.hardware.devicestate.DeviceStateRequest;
 import android.server.wm.ActivityManagerTestBase;
@@ -31,17 +25,13 @@ import android.server.wm.ActivityManagerTestBase;
 import androidx.annotation.CallSuper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-import com.android.compatibility.common.util.SystemUtil;
-import com.android.compatibility.common.util.ThrowingRunnable;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.runner.RunWith;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.concurrent.GuardedBy;
 

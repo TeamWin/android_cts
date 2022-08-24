@@ -2951,13 +2951,6 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 verifySetGetSoftApConfig(softApConfigBuilder.build());
             }
 
-            // Test 11 AX control config.
-            if (callback.getCurrentSoftApCapability()
-                    .areFeaturesSupported(SoftApCapability.SOFTAP_FEATURE_IEEE80211_AX)) {
-                softApConfigBuilder.setIeee80211axEnabled(true);
-                verifySetGetSoftApConfig(softApConfigBuilder.build());
-            }
-
             // Test 11 BE control config
             if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
                 if (callback.getCurrentSoftApCapability()
@@ -2968,6 +2961,12 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             }
 
             if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
+                // Test 11 AX control config.
+                if (callback.getCurrentSoftApCapability()
+                        .areFeaturesSupported(SoftApCapability.SOFTAP_FEATURE_IEEE80211_AX)) {
+                    softApConfigBuilder.setIeee80211axEnabled(true);
+                    verifySetGetSoftApConfig(softApConfigBuilder.build());
+                }
                 softApConfigBuilder.setBridgedModeOpportunisticShutdownEnabled(false);
                 verifySetGetSoftApConfig(softApConfigBuilder.build());
             }

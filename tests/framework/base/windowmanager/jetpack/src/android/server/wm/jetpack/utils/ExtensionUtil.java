@@ -16,9 +16,6 @@
 
 package android.server.wm.jetpack.utils;
 
-import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getActivityBounds;
-import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getMaximumActivityBounds;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -33,13 +30,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.window.extensions.WindowExtensions;
 import androidx.window.extensions.WindowExtensionsProvider;
+import androidx.window.extensions.area.WindowAreaComponent;
 import androidx.window.extensions.layout.DisplayFeature;
 import androidx.window.extensions.layout.FoldingFeature;
 import androidx.window.extensions.layout.WindowLayoutComponent;
 import androidx.window.extensions.layout.WindowLayoutInfo;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -54,7 +50,7 @@ public class ExtensionUtil {
 
     private static final String EXTENSION_TAG = "Extension";
 
-    public static final Version MINIMUM_EXTENSION_VERSION = new Version(1, 0, 0, "");
+    public static final Version MINIMUM_STABLE_EXTENSION_VERSION = new Version(1, 0, 0, "");
 
     @NonNull
     public static Version getExtensionVersion() {
@@ -75,7 +71,7 @@ public class ExtensionUtil {
     public static boolean isExtensionVersionValid() {
         final Version version = getExtensionVersion();
         // Check that the extension version on the device is at least the minimum valid version.
-        return version.compareTo(MINIMUM_EXTENSION_VERSION) >= 0;
+        return version.compareTo(MINIMUM_STABLE_EXTENSION_VERSION) >= 0;
     }
 
     @Nullable
@@ -95,7 +91,7 @@ public class ExtensionUtil {
         assumeTrue("Device does not support extensions", extensionNotNull);
         // If extensions are on the device, make sure that the version is valid.
         assertTrue("Extension version is invalid, must be at least "
-                + MINIMUM_EXTENSION_VERSION.toString(), isExtensionVersionValid());
+                + MINIMUM_STABLE_EXTENSION_VERSION.toString(), isExtensionVersionValid());
     }
 
     @Nullable
@@ -264,5 +260,18 @@ public class ExtensionUtil {
                 })
                 .filter(d -> otherOrientationBounds.contains(d.getBounds()))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Returns the {@link WindowAreaComponent} available in {@link WindowExtensions} if available.
+     * If the component is not available, returns null.
+     */
+    @Nullable
+    public static WindowAreaComponent getExtensionWindowAreaComponent() {
+        WindowExtensions extension = getWindowExtensions();
+        if (extension == null || extension.getVendorApiLevel() < 2) {
+            return null;
+        }
+        return extension.getWindowAreaComponent();
     }
 }

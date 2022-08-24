@@ -639,6 +639,10 @@ public abstract class ActivityManagerTestBase {
             pressWakeupButton();
             pressUnlockButton();
         }
+        // Press back key to dismiss some system dialogs (e.g. DeprecatedTargetSdkVersionDialog)
+        // in case the test failed by unexpected focus / visibility changes.
+        pressBackButton();
+
         launchHomeActivityNoWait();
         removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
 

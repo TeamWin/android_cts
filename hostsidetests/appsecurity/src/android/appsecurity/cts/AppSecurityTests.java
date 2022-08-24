@@ -27,7 +27,6 @@ import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RestrictedBuildTest;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -440,27 +439,5 @@ public class AppSecurityTests extends BaseAppSecurityTest {
         } finally {
             getDevice().uninstallPackage(DUPLICATE_PERMISSION_SAME_PERMISSION_GROUP_PKG);
         }
-    }
-
-    /**
-     * Tests that only allowed packages can declare install-constraints tags.
-     */
-    @Test
-    public void testInstallConstraintsNonMatchingPackage() throws Exception {
-        String pkg = "com.android.cts.installConstraints.nonmatchingpackagename";
-        try {
-            getDevice().uninstallPackage(pkg);
-
-            String message = installPackage("CtsInstallConstraintsNonMatchingPackageApp.apk");
-            assertNotNull(message);
-            assertTrue(message.contains("install-constraints cannot be used by this package"));
-        } finally {
-            getDevice().uninstallPackage(pkg);
-        }
-    }
-
-    private String installPackage(String apkFileName) throws Exception {
-        return getDevice().installPackage(
-                new CompatibilityBuildHelper(getBuild()).getTestFile(apkFileName), false);
     }
 }

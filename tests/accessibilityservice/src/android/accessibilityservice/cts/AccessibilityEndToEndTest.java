@@ -1009,6 +1009,67 @@ public class AccessibilityEndToEndTest {
         }
     }
 
+    @Test
+    public void testDirectAccessibilityConnection_NavigateHierarchy() throws Throwable {
+        View layoutView = mActivity.findViewById(R.id.buttonLayout);
+        AccessibilityNodeInfo layoutNode = layoutView.createAccessibilityNodeInfo();
+
+        assertThat(layoutNode).isNotNull();
+        layoutNode.makeQueryableFromAppProcess(layoutView.getRootView());
+
+        // Access this node's children.
+        assertThat(layoutNode.getChildCount()).isGreaterThan(0);
+        for (int i = layoutNode.getChildCount() - 1; i >= 0; i--) {
+            assertThat(layoutNode.getChild(i)).isNotNull();
+        }
+
+        // Find the root node by accessing parents going up the hierarchy.
+        AccessibilityNodeInfo rootNode = layoutNode;
+        while (rootNode.getParent() != null) {
+            rootNode = rootNode.getParent();
+        }
+        assertThat(rootNode).isEqualTo(layoutView.getRootView().createAccessibilityNodeInfo());
+
+        // Find more nodes, starting from the root.
+        assertThat(rootNode.findAccessibilityNodeInfosByViewId(
+                "android.accessibilityservice.cts:id/button")).isNotEmpty();
+        assertThat(rootNode.findAccessibilityNodeInfosByText(
+                mActivity.getString(R.string.button_title))).isNotEmpty();
+
+        // Find and search the focus.
+        try {
+            // Enable touch exploration, needed for performAction(ACTION_ACCESSIBILITY_FOCUS).
+            enableTouchExploration(true);
+            final AccessibilityNodeInfo buttonNode = rootNode.findAccessibilityNodeInfosByViewId(
+                    "android.accessibilityservice.cts:id/button").get(0);
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> assertTrue(
+                            buttonNode.performAction(
+                                    AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)),
+                    filterForEventType(AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED),
+                    DEFAULT_TIMEOUT_MS);
+            assertThat(rootNode.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY)).isEqualTo(
+                    buttonNode);
+            assertThat(rootNode.focusSearch(View.FOCUS_FORWARD)).isNotNull();
+        } finally {
+            enableTouchExploration(false);
+        }
+    }
+
+    @Test
+    public void testDirectAccessibilityConnection_CanPerformAction() {
+        View button = mActivity.findViewById(R.id.button);
+        AtomicBoolean clicked = new AtomicBoolean(false);
+        button.setOnClickListener((view) -> clicked.set(true));
+        AccessibilityNodeInfo buttonNode = button.createAccessibilityNodeInfo();
+
+        assertThat(buttonNode).isNotNull();
+        buttonNode.makeQueryableFromAppProcess(button.getRootView());
+
+        assertThat(buttonNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)).isTrue();
+        assertThat(clicked.get()).isTrue();
+    }
+
     private static void assertPackageName(AccessibilityNodeInfo node, String packageName) {
         if (node == null) {
             return;

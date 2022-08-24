@@ -16,7 +16,7 @@
 
 package android.hardware.devicestate.cts;
 
-import static android.hardware.devicestate.cts.DeviceStateUtils.runWithControlDeviceStatePermission;
+import static android.server.wm.DeviceStateUtils.runWithControlDeviceStatePermission;
 
 import android.hardware.devicestate.DeviceStateManager;
 import android.hardware.devicestate.DeviceStateRequest;

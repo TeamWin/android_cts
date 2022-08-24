@@ -101,6 +101,7 @@ android_test {
         "HelloVerifierAllow",
         "HelloVerifierReject",
         "HelloVerifierDelayedReject",
+        "HelloVerifierDisabled",
     ],
     per_testcase_directory: true,
     data: [
