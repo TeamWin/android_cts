@@ -23,6 +23,7 @@ import static android.server.wm.app.Components.PipActivity.ACTION_FINISH;
 import static android.server.wm.app.Components.PipActivity.ACTION_LAUNCH_TRANSLUCENT_ACTIVITY;
 import static android.server.wm.app.Components.PipActivity.ACTION_MOVE_TO_BACK;
 import static android.server.wm.app.Components.PipActivity.ACTION_ON_PIP_REQUESTED;
+import static android.server.wm.app.Components.PipActivity.ACTION_SET_ON_PAUSE_REMOTE_CALLBACK;
 import static android.server.wm.app.Components.PipActivity.ACTION_SET_REQUESTED_ORIENTATION;
 import static android.server.wm.app.Components.PipActivity.ACTION_UPDATE_PIP_STATE;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ALLOW_AUTO_PIP;
@@ -42,6 +43,7 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_FINISH_SELF_ON_
 import static android.server.wm.app.Components.PipActivity.EXTRA_IS_SEAMLESS_RESIZE_ENABLED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_NUMBER_OF_CUSTOM_ACTIONS;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ON_PAUSE_DELAY;
+import static android.server.wm.app.Components.PipActivity.EXTRA_PIP_ON_PAUSE_CALLBACK;
 import static android.server.wm.app.Components.PipActivity.EXTRA_PIP_ORIENTATION;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_DENOMINATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_NUMERATOR;
@@ -54,6 +56,7 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_START_ACTIVITY;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SUBTITLE;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TAP_TO_FINISH;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TITLE;
+import static android.server.wm.app.Components.PipActivity.IS_IN_PIP_MODE_RESULT;
 import static android.server.wm.app.Components.PipActivity.UI_STATE_STASHED_RESULT;
 import static android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD;
 
@@ -87,6 +90,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     private boolean mEnteredPictureInPicture;
     private boolean mEnterPipOnBackPressed;
     private RemoteCallback mCb;
+    private RemoteCallback mOnPauseCallback;
 
     private Handler mHandler = new Handler();
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -150,6 +154,14 @@ public class PipActivity extends AbstractLifecycleLogActivity {
                         break;
                     case ACTION_LAUNCH_TRANSLUCENT_ACTIVITY:
                         startActivity(new Intent(PipActivity.this, TranslucentTestActivity.class));
+                        break;
+                    case ACTION_SET_ON_PAUSE_REMOTE_CALLBACK:
+                        mOnPauseCallback = intent.getParcelableExtra(
+                                EXTRA_PIP_ON_PAUSE_CALLBACK, RemoteCallback.class);
+                        // Signals the caller that we have received the mOnPauseCallback
+                        final RemoteCallback setCallback = intent.getParcelableExtra(
+                                EXTRA_SET_PIP_CALLBACK, RemoteCallback.class);
+                        setCallback.sendResult(Bundle.EMPTY);
                         break;
                 }
             }
@@ -291,6 +303,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         filter.addAction(ACTION_ON_PIP_REQUESTED);
         filter.addAction(ACTION_CHANGE_ASPECT_RATIO);
         filter.addAction(ACTION_LAUNCH_TRANSLUCENT_ACTIVITY);
+        filter.addAction(ACTION_SET_ON_PAUSE_REMOTE_CALLBACK);
         registerReceiver(mReceiver, filter, Context.RECEIVER_EXPORTED);
 
         // Don't dump configuration when entering PIP to avoid the verifier getting the intermediate
@@ -327,6 +340,12 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         // Enter PIP on move to background
         if (parseBooleanExtra(EXTRA_ENTER_PIP_ON_PAUSE)) {
             enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
+        }
+
+        if (mOnPauseCallback != null) {
+            Bundle res = new Bundle(1);
+            res.putBoolean(IS_IN_PIP_MODE_RESULT, isInPictureInPictureMode());
+            mOnPauseCallback.sendResult(res);
         }
     }
 

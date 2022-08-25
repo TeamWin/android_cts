@@ -16,8 +16,12 @@
 
 package android.media.mediatranscoding.cts;
 
-import static org.testng.Assert.assertThrows;
-
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -47,6 +51,7 @@ import android.util.Log;
 
 import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.MediaUtils;
 
@@ -69,11 +74,17 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Presubmit
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 @RequiresDevice
 @AppModeFull(reason = "Instant apps cannot access the SD card")
 @SdkSuppress(minSdkVersion = 31, codeName = "S")
-public class MediaTranscodingManagerTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaTranscodingManagerTest {
     private static final String TAG = "MediaTranscodingManagerTest";
     /** The time to wait for the transcode operation to complete before failing the test. */
     private static final int TRANSCODE_TIMEOUT_SECONDS = 10;
@@ -162,10 +173,9 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
         return format;
     }
 
-    @Override
+    @Before
     public void setUp() throws Exception {
         Log.d(TAG, "setUp");
-        super.setUp();
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mContentResolver = mContext.getContentResolver();
 
@@ -188,11 +198,10 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
         mDestinationUri = generateNewUri(mContext, "transcoded.mp4");
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
         InstrumentationRegistry
                 .getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
-        super.tearDown();
     }
 
     // Skip the test for TV, Car and Watch devices.
@@ -207,6 +216,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     /**
      * Verify that setting null destination uri will throw exception.
      */
+    @Test
     public void testCreateTranscodingRequestWithNullDestinationUri() throws Exception {
         if (shouldSkip()) {
             return;
@@ -222,6 +232,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     /**
      * Verify that setting invalid pid will throw exception.
      */
+    @Test
     public void testCreateTranscodingWithInvalidClientPid() throws Exception {
         if (shouldSkip()) {
             return;
@@ -238,6 +249,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     /**
      * Verify that setting invalid uid will throw exception.
      */
+    @Test
     public void testCreateTranscodingWithInvalidClientUid() throws Exception {
         if (shouldSkip()) {
             return;
@@ -254,6 +266,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     /**
      * Verify that setting null source uri will throw exception.
      */
+    @Test
     public void testCreateTranscodingRequestWithNullSourceUri() throws Exception {
         if (shouldSkip()) {
             return;
@@ -269,6 +282,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     /**
      * Verify that not setting source uri will throw exception.
      */
+    @Test
     public void testCreateTranscodingRequestWithoutSourceUri() throws Exception {
         if (shouldSkip()) {
             return;
@@ -284,6 +298,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     /**
      * Verify that not setting destination uri will throw exception.
      */
+    @Test
     public void testCreateTranscodingRequestWithoutDestinationUri() throws Exception {
         if (shouldSkip()) {
             return;
@@ -300,6 +315,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     /**
      * Verify that setting video transcoding without setting video format will throw exception.
      */
+    @Test
     public void testCreateTranscodingRequestWithoutVideoFormat() throws Exception {
         if (shouldSkip()) {
             return;
@@ -353,6 +369,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     }
 
     // Tests transcoding from invalid file uri and expects failure.
+    @Test
     public void testTranscodingInvalidSrcUri() throws Exception {
         if (shouldSkip()) {
             return;
@@ -370,6 +387,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
 
     // Tests transcoding to a uri in res folder and expects failure as test could not write to res
     // folder.
+    @Test
     public void testTranscodingToResFolder() throws Exception {
         if (shouldSkip()) {
             return;
@@ -384,6 +402,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     }
 
     // Tests transcoding to a uri in internal cache folder and expects success.
+    @Test
     public void testTranscodingToCacheDir() throws Exception {
         if (shouldSkip()) {
             return;
@@ -398,6 +417,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     }
 
     // Tests transcoding to a uri in internal files directory and expects success.
+    @Test
     public void testTranscodingToInternalFilesDir() throws Exception {
         if (shouldSkip()) {
             return;
@@ -410,6 +430,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 TranscodingSession.RESULT_SUCCESS);
     }
 
+    @Test
     public void testHevcTranscoding720PVideo30FramesWithoutAudio() throws Exception {
         if (shouldSkip()) {
             return;
@@ -418,6 +439,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 "Video_HEVC_720p_30Frames.mp4"), false /* testFileDescriptor */);
     }
 
+    @Test
     public void testAvcTranscoding1080PVideo30FramesWithoutAudio() throws Exception {
         if (shouldSkip()) {
             return;
@@ -426,6 +448,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 false /* testFileDescriptor */);
     }
 
+    @Test
     public void testHevcTranscoding1080PVideo30FramesWithoutAudio() throws Exception {
         if (shouldSkip()) {
             return;
@@ -436,6 +459,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     }
 
     // Enable this after fixing b/175641397
+    @Test
     public void testHevcTranscoding1080PVideo1FrameWithAudio() throws Exception {
         if (shouldSkip()) {
             return;
@@ -444,6 +468,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 "Video_HEVC_1Frame_Audio.mp4"), false /* testFileDescriptor */);
     }
 
+    @Test
     public void testHevcTranscoding1080PVideo37FramesWithAudio() throws Exception {
         if (shouldSkip()) {
             return;
@@ -452,6 +477,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 "Video_HEVC_37Frames_Audio.mp4"), false /* testFileDescriptor */);
     }
 
+    @Test
     public void testHevcTranscoding1080PVideo72FramesWithAudio() throws Exception {
         if (shouldSkip()) {
             return;
@@ -461,6 +487,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     }
 
     // This test will only run when the device support decoding and encoding 4K video.
+    @Test
     public void testHevcTranscoding4KVideo64FramesWithAudio() throws Exception {
         if (shouldSkip()) {
             return;
@@ -469,6 +496,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 "Video_4K_HEVC_64Frames_Audio.mp4"), false /* testFileDescriptor */);
     }
 
+    @Test
     public void testHevcTranscodingWithFileDescriptor() throws Exception {
         if (shouldSkip()) {
             return;
@@ -604,6 +632,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
         assertNotNull(videoTrackFormat);
     }
 
+    @Test
     public void testVideoFormatResolverValidArgs() {
         if (shouldSkip()) {
             return;
@@ -612,6 +641,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 FRAME_RATE);
     }
 
+    @Test
     public void testVideoFormatResolverAv1Mime() {
         if (shouldSkip()) {
             return;
@@ -646,6 +676,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
         });
     }
 
+    @Test
     public void testVideoFormatResolverZeroWidth() {
         if (shouldSkip()) {
             return;
@@ -654,6 +685,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 HEIGHT, FRAME_RATE);
     }
 
+    @Test
     public void testVideoFormatResolverZeroHeight() {
         if (shouldSkip()) {
             return;
@@ -662,6 +694,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 0 /* height */, FRAME_RATE);
     }
 
+    @Test
     public void testVideoFormatResolverZeroFrameRate() {
         if (shouldSkip()) {
             return;
@@ -670,6 +703,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 HEIGHT, 0 /* frameRate */);
     }
 
+    @Test
     public void testVideoFormatResolverNegativeWidth() {
         if (shouldSkip()) {
             return;
@@ -678,6 +712,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 HEIGHT, FRAME_RATE);
     }
 
+    @Test
     public void testVideoFormatResolverNegativeHeight() {
         if (shouldSkip()) {
             return;
@@ -686,6 +721,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 -HEIGHT, FRAME_RATE);
     }
 
+    @Test
     public void testVideoFormatResolverNegativeFrameRate() {
         if (shouldSkip()) {
             return;
@@ -694,6 +730,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 HEIGHT, -FRAME_RATE);
     }
 
+    @Test
     public void testVideoFormatResolverMissingWidth() {
         if (shouldSkip()) {
             return;
@@ -702,6 +739,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 HEIGHT /* height */, FRAME_RATE);
     }
 
+    @Test
     public void testVideoFormatResolverMissingHeight() {
         if (shouldSkip()) {
             return;
@@ -710,6 +748,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 INT_NOT_SET /* height */, FRAME_RATE);
     }
 
+    @Test
     public void testVideoFormatResolverMissingFrameRate() {
         if (shouldSkip()) {
             return;
@@ -729,6 +768,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 MediaFormat.KEY_BIT_RATE));
     }
 
+    @Test
     public void testCancelTranscoding() throws Exception {
         if (shouldSkip()) {
             return;
@@ -785,6 +825,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
         assertTrue("Fails to cancel transcoding", finishedOnTime);
     }
 
+    @Test
     public void testTranscodingProgressUpdate() throws Exception {
         if (shouldSkip()) {
             return;
@@ -837,6 +878,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 progressUpdateCount.get() > 10);
     }
 
+    @Test
     public void testAddingClientUids() throws Exception {
         if (shouldSkip()) {
             return;

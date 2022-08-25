@@ -3950,6 +3950,14 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     public void testActiveCountryCodeChangedCallback() throws Exception {
+        if (!hasLocationFeature()) {
+            // skip the test if location is not supported
+            return;
+        }
+        if (!isLocationEnabled()) {
+            fail("Please enable location for this test - since country code is not available"
+                    + " when location is disabled!");
+        }
         TestActiveCountryCodeChangedCallback testCountryCodeChangedCallback =
                 new TestActiveCountryCodeChangedCallback();
         TestExecutor executor = new TestExecutor();

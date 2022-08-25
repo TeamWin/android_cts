@@ -56,7 +56,9 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiObject2;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.ShellUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -202,6 +204,18 @@ public class TextViewIntegrationTest {
         Thread.sleep(1000);
 
         assertThat(mSimpleTextClassifier.getClassifyTextInvocationCount()).isEqualTo(1);
+    }
+
+    // TODO: re-use now. Refactor to have a folder/test class for toolbar
+    @Test
+    @ApiTest(apis = "android.view.View#startActionMode")
+    public void smartSelection_toolbarContainerNoContentDescription() throws Exception {
+        smartSelectionInternal();
+
+        UiObject2 toolbarContainer =
+                sDevice.findObject(By.res("android", "floating_popup_container"));
+        assertThat(toolbarContainer).isNotNull();
+        assertThat(toolbarContainer.getContentDescription()).isNull();
     }
 
     private void smartSelectionInternal() {

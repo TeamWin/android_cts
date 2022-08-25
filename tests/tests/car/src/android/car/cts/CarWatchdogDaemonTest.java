@@ -21,8 +21,6 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assume.assumeTrue;
-
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Process;
@@ -45,7 +43,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.lang.Math;
 import java.nio.file.Files;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -180,7 +177,7 @@ public final class CarWatchdogDaemonTest {
             if (line.contains("collector failed to access")) {
                 errorLines += "\n" + line;
             }
-            if (line.matches("Top N Writes:")) {
+            if (line.matches("Top N Storage I/O Writes:")) {
                 curSection = Section.WRITTEN_BYTES_HEADER_SECTION;
                 continue;
             }

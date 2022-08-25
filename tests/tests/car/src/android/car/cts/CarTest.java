@@ -17,9 +17,12 @@
 package android.car.cts;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.car.Car;
 import android.car.CarInfoManager;
+import android.car.CarVersion;
+import android.car.PlatformVersion;
 import android.car.test.AbstractExpectableTestCase;
 import android.content.ComponentName;
 import android.content.Context;
@@ -172,6 +175,26 @@ public class CarTest extends AbstractExpectableTestCase {
         CarInfoManager carInfoManagerByClass2 = mCar.getCarManager(CarInfoManager.class);
         mExpect.that(carInfoManagerByClass2).isNotNull();
         mExpect.that(carInfoManagerByClass2).isSameInstanceAs(carInfoManager);
+    }
+
+    @ApiTest(apis = {"android.car.Car#getCarVersion"})
+    @Test
+    public void testGetCarVersion() {
+        CarVersion version = Car.getCarVersion();
+
+        assertWithMessage("Car.getCarVersion()").that(version).isNotNull();
+        assertWithMessage("Car.getCarVersion().toString()").that(version.toString())
+            .contains("name=Car.CAR_VERSION");
+    }
+
+    @ApiTest(apis = {"android.car.Car#getPlatformVersion"})
+    @Test
+    public void testGetPlatformVersion() {
+        PlatformVersion version = Car.getPlatformVersion();
+
+        assertWithMessage("Car.getPlatformVersion()").that(version).isNotNull();
+        assertWithMessage("Car.getPlatformVersion().toString()").that(version.toString())
+            .contains("name=Car.PLATFORM_VERSION");
     }
 
     @ApiTest(apis = {"android.car.Car#getPlatformVersion"})

@@ -43,7 +43,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.UserInfo;
 import android.content.pm.UserProperties;
 import android.graphics.Bitmap;
-import android.os.Build;
 import android.os.NewUserRequest;
 import android.os.NewUserResponse;
 import android.os.PersistableBundle;
@@ -59,6 +58,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
@@ -209,6 +209,7 @@ public final class UserManagerTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserVisible"})
+    @EnsureDoesNotHavePermission(INTERACT_ACROSS_USERS)
     public void testIsUserVisible_differentContext_noPermission() throws Exception {
         Context context = sContext.createContextAsUser(UserHandle.of(-42), /* flags= */ 0);
         UserManager um = context.getSystemService(UserManager.class);
@@ -260,7 +261,7 @@ public final class UserManagerTest {
     @RequireRunOnPrimaryUser(switchedToUser = TRUE)
     // TODO(b/239961027): should be @EnsureHasProfile instead of @EnsureHasWorkProfile
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
-    @EnsureHasPermission(INTERACT_ACROSS_USERS) // need to call isUserVisible() on other context
+    @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call isUserVisible() on other context
     public void testIsUserVisible_stoppedProfileOfCurrentUser() throws Exception {
         UserReference profile = sDeviceState.workProfile();
         Log.d(TAG, "Stopping profile " + profile + " (called from " + sContext.getUser() + ")");
@@ -279,89 +280,164 @@ public final class UserManagerTest {
     @RequireRunOnPrimaryUser(switchedToUser = TRUE)
     @EnsureHasSecondaryUser(switchedToUser = FALSE)
     public void testIsUserVisible_backgroundUserOnSecondaryDisplay() throws Exception {
-        UserReference user = sDeviceState.secondaryUser();
-        int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
-        startBackgroundUserOnSecondaryDisplay(user, displayId);
-        try {
-            TestApp testApp = sDeviceState.testApps().any();
-            try (TestAppInstance instance = testApp.install(user)) {
+        runTestOnSecondaryDisplay((user, displayId, instance) ->
                 assertWithMessage("isUserVisible() for background user (id=%s) on display %s",
-                        user.id(), displayId).that(instance.userManager().isUserVisible()).isTrue();
-            }
-        } finally {
-            user.stop();
+                    user.id(), displayId)
+                            .that(instance.userManager().isUserVisible()).isTrue());
         }
-    }
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserVisible"})
     @RequireHeadlessSystemUserMode// non-HSUM cannot have profiles on secondary users
     @RequireRunOnSecondaryUser
+    @RequireFeature(FEATURE_MANAGED_USERS) // TODO(b/239961027): remove if supports other profiles
     public void testIsUserVisible_startedProfileOfBackgroundUserOnSecondaryDisplay()
             throws Exception {
-        Log.d(TAG, "Creating bg user and profile");
-        try (UserReference user = TestApis.users().createUser().name("parent_user").create()) {
-            Log.d(TAG, "user: id=" + user.id());
-            try (UserReference profile = TestApis.users().createUser()
-                    .name("profile_of_" + user.id())
-                    // TODO(b/239961027): type should be just PROFILE_TYPE_NAME
-                    .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
-                    .parent(user)
-                    .create()) {
-                Log.d(TAG, "profile: id=" + profile.id());
-
-                int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
-                startBackgroundUserOnSecondaryDisplay(user, displayId);
-                startBackgroundUserOnSecondaryDisplay(profile, displayId);
-
-                TestApp testApp = sDeviceState.testApps().any();
-                try (TestAppInstance instance = testApp.install(profile)) {
-                    assertWithMessage("isUserVisible() for started profile (id=%s) of baground user"
-                            + " (id=%s) on display %s", profile.id(), user.id(), displayId)
-                                    .that(instance.userManager().isUserVisible()).isTrue();
-                } // test instance
-            } // new profile
-        } // new user
+        runTestOnSecondaryDisplay(/* startProfile= */ true, (user, profile, displayId, instance) ->
+                assertWithMessage("isUserVisible() for started profile (id=%s) of bg user (id=%s) "
+                    + "on display %s", profile.id(), user.id(), displayId)
+                            .that(instance.userManager().isUserVisible()).isTrue());
     }
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserVisible"})
     @RequireHeadlessSystemUserMode// non-HSUM cannot have profiles on secondary users
     @RequireRunOnSecondaryUser
-    @EnsureHasPermission(INTERACT_ACROSS_USERS) // need to call isUserVisible() on other context
+    @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call isUserVisible() on other context
+    @RequireFeature(FEATURE_MANAGED_USERS) // TODO(b/239961027): remove if supports other profiles
     public void testIsUserVisible_stoppedProfileOfBackgroundUserOnSecondaryDisplay()
             throws Exception {
-        Log.d(TAG, "Creating bg user and profile");
-        try (UserReference user = TestApis.users().createUser().name("parent_user").create()) {
-            Log.d(TAG, "user: id=" + user.id());
-            try (UserReference profile = TestApis.users().createUser()
-                    .name("profile_of_" + user.id())
-                    // TODO(b/239961027): type should be just PROFILE_TYPE_NAME
-                    .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
-                    .parent(user)
-                    .create()) {
-                Log.d(TAG, "profile: id=" + profile.id());
 
-                int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
-                startBackgroundUserOnSecondaryDisplay(user, displayId);
-
-                // Make sure it's stopped, as it could have been automatically started with parent
-                // user
-                Log.d(TAG, "Stopping profile " + profile.id());
-                profile.stop();
-
-                TestApis.packages().instrumented().installExisting(profile);
-
-                Context context = getContextForUser(profile.userHandle().getIdentifier());
-                UserManager um = context.getSystemService(UserManager.class);
-
-                assertWithMessage("isUserVisible() for stopped profile (id=%s) of background user "
-                        + "(id=%s) on secondary display (id=%s)", profile.id(), user.id(),
-                        displayId).that(um.isUserVisible()).isFalse();
-            } // new profile
-        } // new user
+        runTestOnSecondaryDisplay(/* startProfile= */ false, (user, profile, displayId, instance) ->
+                assertWithMessage("isUserVisible() for stoppedprofile (id=%s) of bg user (id=%s) "
+                + "on display %s", profile.id(), user.id(), displayId)
+                            .that(instance.userManager().isUserVisible()).isFalse()
+        );
     }
 
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#getVisibleUsers"})
+    @EnsureDoesNotHavePermission(INTERACT_ACROSS_USERS)
+    public void testGetVisibleUsers_noPermission() throws Exception {
+        Context context = getContextForOtherUser();
+        UserManager um = context.getSystemService(UserManager.class);
+
+        assertThrows(SecurityException.class, () -> um.getVisibleUsers());
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#getVisibleUsers"})
+    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
+    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
+    @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call getVisibleUsers()
+    public void testGetVisibleUsers_currentUser() throws Exception {
+        List<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
+
+        assertWithMessage("getVisibleUsers()").that(visibleUsers)
+                .contains(TestApis.users().current().userHandle());
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#getVisibleUsers"})
+    @RequireRunOnSecondaryUser(switchedToUser = FALSE)
+    @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call getVisibleUsers()
+    public void testGetVisibleUsers_backgroundUser() throws Exception {
+        List<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
+
+        assertWithMessage("getVisibleUsers()").that(visibleUsers)
+                .contains(TestApis.users().current().userHandle());
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#getVisibleUsers"})
+    // TODO(b/239961027): should be @RequireRunOnProfile instead
+    @RequireRunOnWorkProfile(switchedToParentUser = TRUE)
+    @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call getVisibleUsers()
+    public void testGetVisibleUsers_startedProfileOfCurrentUser() throws Exception {
+        UserReference myUser = TestApis.users().instrumented();
+        List<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
+
+        assertWithMessage("getVisibleUsers()").that(visibleUsers)
+                .containsAtLeast(myUser.userHandle(), myUser.parent().userHandle());
+    }
+
+    @FlakyTest(bugId = 242364454)
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#getVisibleUsers"})
+    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
+    // Cannot use @RunOnProfile as it will stop the profile
+    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
+    // TODO(b/239961027): should be @EnsureHasProfile instead of @EnsureHasWorkProfile
+    @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
+    @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call getVisibleUsers()
+    public void testGetVisibleUsers_stoppedProfileOfCurrentUser() throws Exception {
+        UserReference profile = sDeviceState.workProfile();
+        Log.d(TAG, "Stopping profile " + profile + " (called from " + sContext.getUser() + ")");
+        profile.stop();
+
+        Context context = getContextForUser(profile.userHandle().getIdentifier());
+        UserManager um = context.getSystemService(UserManager.class);
+
+        List<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
+
+        assertWithMessage("getVisibleUsers()").that(visibleUsers)
+                .contains(TestApis.users().current().userHandle());
+        assertWithMessage("getVisibleUsers()").that(visibleUsers)
+                .doesNotContain(profile.userHandle());
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#getVisibleUsers"})
+    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
+    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
+    @EnsureHasSecondaryUser(switchedToUser = FALSE)
+    @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call getVisibleUsers()
+    public void testGetVisibleUsers_backgroundUserOnSecondaryDisplay() throws Exception {
+        // TODO(b/239982558): this test fails when the whole test class is ran and the feature is
+        // enabled because it cannot start the user in the background (most likely beucase there's
+        // another user started that was not stopped). For now, it's not worth to fix it, as that
+        // restriction might go away (if the startBgUser() method automatically stops the previous
+        // user)
+        runTestOnSecondaryDisplay((user, displayId, instance) ->
+                assertWithMessage("getVisibleUsers()")
+                        .that(mUserManager.getVisibleUsers())
+                        .containsExactly(TestApis.users().current().userHandle(),
+                                user.userHandle()));
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#getVisibleUsers"})
+    @RequireHeadlessSystemUserMode// non-HSUM cannot have profiles on secondary users
+    @RequireRunOnSecondaryUser
+    @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call getVisibleUsers()
+    @RequireFeature(FEATURE_MANAGED_USERS) // TODO(b/239961027): remove if supports other profiles
+    public void testGetVisibleUsers_startedProfileOfBackgroundUserOnSecondaryDisplay()
+            throws Exception {
+        runTestOnSecondaryDisplay(/* startProfile= */ true,
+                (user, profile, display, instance) -> assertWithMessage("getVisibleUsers()")
+                        .that(mUserManager.getVisibleUsers())
+                        .containsAtLeast(TestApis.users().current().userHandle(), user.userHandle(),
+                                profile.userHandle()));
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#getVisibleUsers"})
+    @RequireHeadlessSystemUserMode// non-HSUM cannot have profiles on secondary users
+    @RequireRunOnSecondaryUser
+    @RequireFeature(FEATURE_MANAGED_USERS) // TODO(b/239961027): remove if supports other profiles
+    @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call getVisibleUsers()
+    public void testGetVisibleUsers_stoppedProfileOfBackgroundUserOnSecondaryDisplay()
+            throws Exception {
+
+        runTestOnSecondaryDisplay(/* startProfile= */ false, (user, profile, display, instance) -> {
+            List<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
+
+            assertWithMessage("getVisibleUsers()").that(visibleUsers)
+                    .containsAtLeast(TestApis.users().current().userHandle(), user.userHandle());
+            assertWithMessage("getVisibleUsers()").that(visibleUsers)
+                    .doesNotContain(profile.userHandle());
+        });
+    }
 
     @Test
     public void testCloneProfile() throws Exception {
@@ -403,6 +479,11 @@ public final class UserManagerTest {
     @Test
     @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasPermission({CREATE_USERS, QUERY_USERS})
+    @ApiTest(apis = {
+            "android.os.UserManager#createProfile",
+            "android.os.UserManager#isManagedProfile",
+            "android.os.UserManager#isProfile",
+            "android.os.UserManager#isUserOfType"})
     public void testManagedProfile() throws Exception {
         UserHandle userHandle = null;
 
@@ -421,10 +502,7 @@ public final class UserManagerTest {
                     .createPackageContextAsUser("android", 0, userHandle)
                     .getSystemService(UserManager.class);
 
-            // TODO(b/222584163): Remove the if{} clause after v33 Sdk bump.
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S_V2) {
-                assertThat(umOfProfile.isManagedProfile()).isTrue();
-            }
+            assertThat(umOfProfile.isManagedProfile()).isTrue();
             assertThat(umOfProfile.isManagedProfile(userHandle.getIdentifier())).isTrue();
             assertThat(umOfProfile.isProfile()).isTrue();
             assertThat(umOfProfile.isUserOfType(UserManager.USER_TYPE_PROFILE_MANAGED)).isTrue();
@@ -435,16 +513,18 @@ public final class UserManagerTest {
 
     @Test
     @EnsureHasPermission({QUERY_USERS})
+    @ApiTest(apis = {
+            "android.os.UserManager#isSystemUser",
+            "android.os.UserManager#isUserOfType",
+            "android.os.UserManager#isProfile",
+            "android.os.UserManager#isManagedProfile",
+            "android.os.UserManager#isCloneProfile"})
     public void testSystemUser() throws Exception {
         final UserManager umOfSys = sContext
                 .createPackageContextAsUser("android", 0, UserHandle.SYSTEM)
                 .getSystemService(UserManager.class);
 
-        // TODO(b/222584163): Remove the if{} clause after v33 Sdk bump.
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S_V2) {
-            assertThat(umOfSys.isSystemUser()).isTrue();
-        }
-
+        assertThat(umOfSys.isSystemUser()).isTrue();
         // We cannot demand what type of user SYSTEM is, but we can say some things it isn't.
         assertThat(umOfSys.isUserOfType(UserManager.USER_TYPE_PROFILE_CLONE)).isFalse();
         assertThat(umOfSys.isUserOfType(UserManager.USER_TYPE_PROFILE_MANAGED)).isFalse();
@@ -458,6 +538,10 @@ public final class UserManagerTest {
 
     @Test
     @SystemUserOnly(reason = "Restricted users are only supported on system user.")
+    @ApiTest(apis = {
+            "android.os.UserManager#isRestrictedProfile",
+            "android.os.UserManager#getRestrictedProfileParent",
+            "android.os.UserManager#createRestrictedProfile"})
     public void testRestrictedUser() throws Exception {
         UserHandle user = null;
         try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
@@ -476,10 +560,8 @@ public final class UserManagerTest {
 
             final Context userContext = sContext.createPackageContextAsUser("system", 0, user);
             final UserManager userUm = userContext.getSystemService(UserManager.class);
-            // TODO(b/222584163): Remove the if{} clause after v33 Sdk bump.
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S_V2) {
-                assertThat(userUm.isRestrictedProfile()).isTrue();
-            }
+
+            assertThat(userUm.isRestrictedProfile()).isTrue();
             assertThat(userUm.getRestrictedProfileParent().isSystem()).isTrue();
         } finally {
             removeUser(user);
@@ -528,6 +610,13 @@ public final class UserManagerTest {
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.os.UserManager#supportsMultipleUsers",
+            "android.os.UserManager#createUser",
+            "android.os.UserManager#getUserName",
+            "android.os.UserManager#isUserNameSet",
+            "android.os.UserManager#getUserType",
+            "android.os.UserManager#isUserOfType"})
     public void testCreateUser_withNewUserRequest_shouldCreateUserWithCorrectProperties()
             throws PackageManager.NameNotFoundException {
         // TODO: (b/233197356): Replace with bedstead annotation.
@@ -548,10 +637,7 @@ public final class UserManagerTest {
                     .getSystemService(UserManager.class);
 
             assertThat(userManagerOfNewUser.getUserName()).isEqualTo(request.getName());
-            // TODO(b/222584163): Remove the if{} clause after v33 Sdk bump.
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S_V2) {
-                assertThat(userManagerOfNewUser.isUserNameSet()).isTrue();
-            }
+            assertThat(userManagerOfNewUser.isUserNameSet()).isTrue();
             assertThat(userManagerOfNewUser.getUserType()).isEqualTo(request.getUserType());
             assertThat(userManagerOfNewUser.isUserOfType(request.getUserType())).isEqualTo(true);
             // We can not test userIcon and accountOptions,
@@ -781,6 +867,81 @@ public final class UserManagerTest {
         Context context = sContext.createContextAsUser(UserHandle.of(userId), /* flags= */ 0);
         Log.d(TAG, "Got it: " + context);
         return context;
+    }
+
+    /**
+     * Starts a new user in background in on secondary display and run a test on it.
+     *
+     * @param test to be run
+     */
+    private void runTestOnSecondaryDisplay(BackgroundUserOnSecondaryDisplayTester test) {
+        UserReference user = sDeviceState.secondaryUser();
+        int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
+        startBackgroundUserOnSecondaryDisplay(user, displayId);
+        try {
+            TestApp testApp = sDeviceState.testApps().any();
+            try (TestAppInstance instance = testApp.install(user)) {
+                test.run(user, displayId, instance);
+            }
+        } finally {
+            user.stop();
+        }
+    }
+
+    /**
+     * Starts a new user (which has a profile) in background on a secondary display and run a test
+     * on it.
+     *
+     * @param test to be run
+     * @param startProfile whether the user profile should be started as well
+     */
+    private void runTestOnSecondaryDisplay(boolean startProfile,
+            BackgroundUserAndProfileOnSecondaryDisplayTester tester) {
+        Log.d(TAG, "Creating bg user and profile");
+        try (UserReference user = TestApis.users().createUser().name("parent_user").create()) {
+            Log.d(TAG, "user: id=" + user.id());
+            try (UserReference profile = TestApis.users().createUser()
+                    .name("profile_of_" + user.id())
+                    // TODO(b/239961027): type should be just PROFILE_TYPE_NAME
+                    .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                    .parent(user)
+                    .create()) {
+                Log.d(TAG, "profile: id=" + profile.id());
+
+                int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
+                startBackgroundUserOnSecondaryDisplay(user, displayId);
+                try {
+                    if (startProfile) {
+                        startBackgroundUserOnSecondaryDisplay(profile, displayId);
+                    } else {
+                        // Make sure it's stopped, as it could have been automatically started with
+                        // parent user
+                        Log.d(TAG, "Stopping profile " + profile.id()); profile.stop();
+                    }
+                    try {
+                        TestApp testApp = sDeviceState.testApps().any();
+                        try (TestAppInstance instance = testApp.install(profile)) {
+                            tester.run(user, profile, displayId, instance);
+                        } // test instance
+                    } finally {
+                        if (startProfile) {
+                            profile.stop();
+                        }
+                    } // startBackgroundUserOnSecondaryDisplay
+                } finally {
+                    user.stop();
+                } // startBackgroundUserOnSecondaryDisplay
+            } // new profile
+        } // new user
+    }
+
+    private interface BackgroundUserOnSecondaryDisplayTester {
+        void run(UserReference user, int displayId, TestAppInstance instance);
+    }
+
+    private interface BackgroundUserAndProfileOnSecondaryDisplayTester {
+        void run(UserReference user, UserReference profile, int displayId,
+                TestAppInstance instance);
     }
 
     // TODO(b/240736142): temporary workaround until proper annotation or test API is available

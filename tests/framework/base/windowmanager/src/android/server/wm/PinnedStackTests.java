@@ -55,6 +55,7 @@ import static android.server.wm.app.Components.PipActivity.ACTION_FINISH_LAUNCH_
 import static android.server.wm.app.Components.PipActivity.ACTION_LAUNCH_TRANSLUCENT_ACTIVITY;
 import static android.server.wm.app.Components.PipActivity.ACTION_MOVE_TO_BACK;
 import static android.server.wm.app.Components.PipActivity.ACTION_ON_PIP_REQUESTED;
+import static android.server.wm.app.Components.PipActivity.ACTION_SET_ON_PAUSE_REMOTE_CALLBACK;
 import static android.server.wm.app.Components.PipActivity.ACTION_START_LAUNCH_INTO_PIP_CONTAINER;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ALLOW_AUTO_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP;
@@ -73,6 +74,7 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_FINISH_TRAMPOLI
 import static android.server.wm.app.Components.PipActivity.EXTRA_IS_SEAMLESS_RESIZE_ENABLED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_NUMBER_OF_CUSTOM_ACTIONS;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ON_PAUSE_DELAY;
+import static android.server.wm.app.Components.PipActivity.EXTRA_PIP_ON_PAUSE_CALLBACK;
 import static android.server.wm.app.Components.PipActivity.EXTRA_PIP_ORIENTATION;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_DENOMINATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_NUMERATOR;
@@ -80,6 +82,7 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_START_ACTIVITY;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SUBTITLE;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TAP_TO_FINISH;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TITLE;
+import static android.server.wm.app.Components.PipActivity.IS_IN_PIP_MODE_RESULT;
 import static android.server.wm.app.Components.PipActivity.UI_STATE_STASHED_RESULT;
 import static android.server.wm.app.Components.RESUME_WHILE_PAUSING_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
@@ -196,6 +199,39 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     public void testEnterPictureInPictureMode() {
         pinnedStackTester(getAmStartCmd(PIP_ACTIVITY, extraString(EXTRA_ENTER_PIP, "true")),
                 PIP_ACTIVITY, PIP_ACTIVITY, false /* isFocusable */);
+    }
+
+    @Test
+    public void testIsInPictureInPictureModeInOnPause() throws Exception {
+        // Launch the activity that requests enter pip when receives onUserLeaveHint
+        launchActivity(PIP_ACTIVITY,
+                extraString(EXTRA_ENTER_PIP_ON_USER_LEAVE_HINT, " true"));
+
+        assertIsInPictureInPictureModeInOnPause();
+    }
+
+    @Test
+    public void testAutoEnterPipIsInPictureInPictureModeInOnPause() throws Exception {
+        // Launch the activity that supports auto-enter-pip
+        launchActivity(PIP_ACTIVITY,
+                extraString(EXTRA_ALLOW_AUTO_PIP, "true"));
+
+        assertIsInPictureInPictureModeInOnPause();
+    }
+
+    private void assertIsInPictureInPictureModeInOnPause() throws Exception {
+        final CompletableFuture<Boolean> future = new CompletableFuture<>();
+        final RemoteCallback onPauseCallback = new RemoteCallback(
+                (Bundle result) -> future.complete(result.getBoolean(IS_IN_PIP_MODE_RESULT)));
+        mBroadcastActionTrigger.doActionWithRemoteCallback(ACTION_SET_ON_PAUSE_REMOTE_CALLBACK,
+                EXTRA_PIP_ON_PAUSE_CALLBACK, onPauseCallback);
+
+        pressHomeButton();
+
+        // Ensure Activity#isInPictureInPictureMode returns true when in onPause
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY);
+        assertPinnedStackExists();
+        Truth.assertThat(future.get(5000, TimeUnit.MILLISECONDS)).isEqualTo(true);
     }
 
     // This test is black-listed in cts-known-failures.xml (b/35314835).

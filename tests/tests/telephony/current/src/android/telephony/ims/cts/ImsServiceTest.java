@@ -73,6 +73,7 @@ import android.util.Pair;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import org.junit.After;
@@ -765,6 +766,7 @@ public class ImsServiceTest {
     }
 
     @Test
+    @ApiTest(apis = "android.telephony.SmsManager#sendTextMessage")
     public void testMmTelSendSms() throws Exception {
         if (!ImsUtils.shouldRunSmsImsTests(sTestSub)) {
             return;
@@ -787,11 +789,15 @@ public class ImsServiceTest {
                         Activity.RESULT_CANCELED));
 
         // Ensure we receive correct PDU on the other side.
-        Assert.assertArrayEquals(EXPECTED_PDU, sServiceConnector.getCarrierService()
+        byte[] pduWithStatusReport = EXPECTED_PDU.clone();
+        pduWithStatusReport[1] = sServiceConnector.getCarrierService()
+                .getMmTelFeature().getSmsImplementation().sentPdu[1];
+        Assert.assertArrayEquals(pduWithStatusReport, sServiceConnector.getCarrierService()
                 .getMmTelFeature().getSmsImplementation().sentPdu);
     }
 
     @Test
+    @ApiTest(apis = "android.telephony.SmsManager#sendTextMessage")
     public void testMmTelSendSmsDeliveryReportQCompat() throws Exception {
         if (!ImsUtils.shouldRunSmsImsTests(sTestSub)) {
             return;
@@ -807,15 +813,19 @@ public class ImsServiceTest {
 
         // Ensure we receive correct PDU on the other side.
         // Set TP-Status-Report-Request bit as well for this case.
+        byte messageRef = sServiceConnector.getCarrierService()
+                .getMmTelFeature().getSmsImplementation().sentPdu[1];
         byte[] pduWithStatusReport = EXPECTED_PDU.clone();
         pduWithStatusReport[0] |= 0x20;
+        pduWithStatusReport[1] = messageRef;
         Assert.assertArrayEquals(pduWithStatusReport, sServiceConnector.getCarrierService()
                 .getMmTelFeature().getSmsImplementation().sentPdu);
-
+        byte[] pduStatusReport = STATUS_REPORT_PDU.clone();
+        pduStatusReport[2] = messageRef;
         // Ensure the API works on Q as well as in R+, where it was deprecated.
         sServiceConnector.getCarrierService().getMmTelFeature().getSmsImplementation()
-                .sendReportWaitForAcknowledgeSmsReportPQ(0, SmsMessage.FORMAT_3GPP,
-                        STATUS_REPORT_PDU);
+                .sendReportWaitForAcknowledgeSmsReportPQ(messageRef, SmsMessage.FORMAT_3GPP,
+                        pduStatusReport);
 
         // Wait for delivered PendingIntent
         Intent intent = AsyncSmsMessageListener.getInstance().waitForMessageDeliveredIntent(
@@ -827,6 +837,7 @@ public class ImsServiceTest {
     }
 
     @Test
+    @ApiTest(apis = "android.telephony.SmsManager#sendTextMessage")
     public void testMmTelSendSmsDeliveryReportR() throws Exception {
         if (!ImsUtils.shouldRunSmsImsTests(sTestSub)) {
             return;
@@ -842,14 +853,19 @@ public class ImsServiceTest {
 
         // Ensure we receive correct PDU on the other side.
         // Set TP-Status-Report-Request bit as well for this case.
+        byte messageRef = sServiceConnector.getCarrierService()
+                .getMmTelFeature().getSmsImplementation().sentPdu[1];
         byte[] pduWithStatusReport = EXPECTED_PDU.clone();
         pduWithStatusReport[0] |= 0x20;
+        pduWithStatusReport[1] = messageRef;
         Assert.assertArrayEquals(pduWithStatusReport, sServiceConnector.getCarrierService()
                 .getMmTelFeature().getSmsImplementation().sentPdu);
 
+        byte[] pduStatusReport = STATUS_REPORT_PDU.clone();
+        pduStatusReport[2] = messageRef;
         sServiceConnector.getCarrierService().getMmTelFeature().getSmsImplementation()
                 .sendReportWaitForAcknowledgeSmsReportR(123456789, SmsMessage.FORMAT_3GPP,
-                        STATUS_REPORT_PDU);
+                        pduStatusReport);
 
         // Wait for delivered PendingIntent
         Intent intent = AsyncSmsMessageListener.getInstance().waitForMessageDeliveredIntent(
@@ -861,6 +877,7 @@ public class ImsServiceTest {
     }
 
     @Test
+    @ApiTest(apis = "android.telephony.SmsManager#sendTextMessage")
     public void testMmTelSendSmsRSuccess() throws Exception {
         if (!ImsUtils.shouldRunSmsImsTests(sTestSub)) {
             return;
@@ -882,11 +899,15 @@ public class ImsServiceTest {
                     Activity.RESULT_CANCELED));
 
         // Ensure we receive correct PDU on the other side.
-        Assert.assertArrayEquals(EXPECTED_PDU, sServiceConnector.getCarrierService()
+        byte[] pduWithStatusReport = EXPECTED_PDU.clone();
+        pduWithStatusReport[1] = sServiceConnector.getCarrierService()
+                .getMmTelFeature().getSmsImplementation().sentPdu[1];
+        Assert.assertArrayEquals(pduWithStatusReport, sServiceConnector.getCarrierService()
                 .getMmTelFeature().getSmsImplementation().sentPdu);
     }
 
     @Test
+    @ApiTest(apis = "android.telephony.SmsManager#sendTextMessage")
     public void testMmTelSendSmsNetworkError() throws Exception {
         if (!ImsUtils.shouldRunSmsImsTests(sTestSub)) {
             return;
@@ -912,7 +933,10 @@ public class ImsServiceTest {
         assertEquals(41, intent.getIntExtra("errorCode", 0));
 
         // Ensure we receive correct PDU on the other side.
-        Assert.assertArrayEquals(EXPECTED_PDU, sServiceConnector.getCarrierService()
+        byte[] pduWithStatusReport = EXPECTED_PDU.clone();
+        pduWithStatusReport[1] = sServiceConnector.getCarrierService()
+                .getMmTelFeature().getSmsImplementation().sentPdu[1];
+        Assert.assertArrayEquals(pduWithStatusReport, sServiceConnector.getCarrierService()
                 .getMmTelFeature().getSmsImplementation().sentPdu);
     }
 

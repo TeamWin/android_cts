@@ -10899,6 +10899,7 @@ package android.content {
     method public String getSettingsActivity();
     method public boolean isAlwaysSyncable();
     method public boolean isUserVisible();
+    method @NonNull @RequiresPermission(anyOf={"android.permission.MANAGE_USERS", "android.permission.INTERACT_ACROSS_USERS"}) public java.util.List<android.os.UserHandle> getVisibleUsers();
     method public static android.content.SyncAdapterType newKey(String, String);
     method public boolean supportsUploading();
     method public void writeToParcel(android.os.Parcel, int);

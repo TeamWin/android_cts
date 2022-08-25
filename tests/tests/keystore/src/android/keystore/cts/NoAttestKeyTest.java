@@ -20,23 +20,23 @@ import static android.security.keystore.KeyProperties.KEY_ALGORITHM_EC;
 import static android.security.keystore.KeyProperties.KEY_ALGORITHM_RSA;
 import static android.security.keystore.KeyProperties.PURPOSE_ATTEST_KEY;
 import static android.security.keystore.KeyProperties.PURPOSE_SIGN;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 import android.content.pm.PackageManager;
 import android.keystore.cts.util.TestUtils;
 import android.security.keystore.KeyGenParameterSpec;
+
 import androidx.test.platform.app.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.CddTest;
+
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.ProviderException;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
@@ -103,10 +103,15 @@ public class NoAttestKeyTest {
         // The device does not have the attest key feature, so attempting to create and use a
         // key with ATTEST_KEY purpose should fail.
         try {
-            Certificate attestKeyCertChain[] = generateKeyPair(algorithm,
+            Certificate[] attestKeyCertChain = generateKeyPair(algorithm,
                     new KeyGenParameterSpec.Builder(attestKeyAlias, PURPOSE_ATTEST_KEY)
                             .setAttestationChallenge("challenge".getBytes())
                             .setIsStrongBoxBacked(useStrongBox)
+                            .build());
+            Certificate[] attestedKeyCertChain = generateKeyPair(KEY_ALGORITHM_EC,
+                    new KeyGenParameterSpec.Builder(attestedKeyAlias, PURPOSE_SIGN)
+                            .setAttestationChallenge("challenge".getBytes())
+                            .setAttestKeyAlias(attestKeyAlias)
                             .build());
             fail("Expected that use of PURPOSE_ATTEST_KEY should fail with StrongBox = "
                     + useStrongBox + " and algorithm = " + algorithm + " as the "

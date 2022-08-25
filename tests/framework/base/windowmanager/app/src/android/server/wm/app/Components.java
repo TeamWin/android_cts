@@ -528,6 +528,10 @@ public class Components extends ComponentsBase {
         // Intent action that will request the activity to start a new translucent activity
         public static final String ACTION_LAUNCH_TRANSLUCENT_ACTIVITY =
                 "android.server.wm.app.LaunchIntoPip.launch_translucent_activity";
+        // Intent action that sets a RemoteCallback in PipActivity that will receive the
+        // isInPictureInPictureMode result
+        public static final String ACTION_SET_ON_PAUSE_REMOTE_CALLBACK =
+                "android.server.wm.app.PipActivity.set_on_pause_remote_callback";
 
         // Adds an assertion that we do not ever get onStop() before we enter picture in picture
         public static final String EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP =
@@ -604,8 +608,12 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_CLOSE_ACTION = "set_pip_close_action";
         // Supplied when a callback is expected for pip
         public static final String EXTRA_SET_PIP_CALLBACK = "set_pip_callback";
+        // Supplied when a callback is expected for pip when activity receives onPause
+        public static final String EXTRA_PIP_ON_PAUSE_CALLBACK = "pip_on_pause_callback";
         // Result key for obtaining the PictureInPictureUiState#isStashed result
         public static final String UI_STATE_STASHED_RESULT = "ui_state_stashed_result";
+        // Result key for obtaining the Activity#isInPictureInPictureMode result
+        public static final String IS_IN_PIP_MODE_RESULT = "is_in_pip_mode_result";
     }
 
     /**

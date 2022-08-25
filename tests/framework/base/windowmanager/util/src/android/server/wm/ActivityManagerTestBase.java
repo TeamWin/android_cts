@@ -400,6 +400,23 @@ public abstract class ActivityManagerTestBase {
             mContext.sendBroadcast(createIntentWithAction(broadcastAction));
         }
 
+        void doActionWithRemoteCallback(String broadcastAction,
+                String callbackName, RemoteCallback callback) {
+            try {
+                // We need also a RemoteCallback to ensure the callback passed in is properly set
+                // in the Activity before moving forward.
+                final CompletableFuture<Boolean> future = new CompletableFuture<>();
+                final RemoteCallback setCallback = new RemoteCallback(
+                        (Bundle result) -> future.complete(true));
+                mContext.sendBroadcast(createIntentWithAction(broadcastAction)
+                        .putExtra(callbackName, callback)
+                        .putExtra(EXTRA_SET_PIP_CALLBACK, setCallback));
+                assertTrue(future.get(5000, TimeUnit.MILLISECONDS));
+            } catch (Exception e) {
+                logE("doActionWithRemoteCallback failed", e);
+            }
+        }
+
         void finishBroadcastReceiverActivity() {
             mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
                     .putExtra(EXTRA_FINISH_BROADCAST, true));
@@ -639,9 +656,6 @@ public abstract class ActivityManagerTestBase {
             pressWakeupButton();
             pressUnlockButton();
         }
-        // Press back key to dismiss some system dialogs (e.g. DeprecatedTargetSdkVersionDialog)
-        // in case the test failed by unexpected focus / visibility changes.
-        pressBackButton();
 
         launchHomeActivityNoWait();
         removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
