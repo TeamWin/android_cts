@@ -519,9 +519,15 @@ public final class MockIme extends InputMethodService {
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     }
                     case "getStylusHandwritingWindowVisibility": {
+                        if (getStylusHandwritingWindow() == null) {
+                            return false;
+                        }
                         View decorView = getStylusHandwritingWindow().getDecorView();
                         return decorView != null && decorView.isAttachedToWindow()
                                 && decorView.getVisibility() == View.VISIBLE;
+                    }
+                    case "hasStylusHandwritingWindow": {
+                        return getStylusHandwritingWindow() != null;
                     }
                     case "setStylusHandwritingInkView": {
                         View inkView = new View(attrContext);

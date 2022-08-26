@@ -16,6 +16,8 @@
 
 package android.mediav2.cts;
 
+import static org.junit.Assert.assertTrue;
+
 import android.media.MediaFormat;
 
 import androidx.test.filters.SmallTest;
@@ -28,8 +30,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
-
-import static org.junit.Assert.assertTrue;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)

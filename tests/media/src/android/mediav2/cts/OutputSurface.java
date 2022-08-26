@@ -16,6 +16,8 @@
 
 package android.mediav2.cts;
 
+import static org.junit.Assert.assertTrue;
+
 import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.opengl.EGLConfig;
@@ -25,9 +27,6 @@ import android.opengl.EGLSurface;
 import android.opengl.GLES20;
 import android.util.Log;
 import android.view.Surface;
-
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
 
 
 /**

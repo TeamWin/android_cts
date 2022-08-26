@@ -17,6 +17,7 @@
 package android.server.wm.jetpack;
 
 import static android.server.wm.jetpack.utils.ExtensionUtil.MINIMUM_STABLE_EXTENSION_VERSION;
+import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
 import static android.server.wm.jetpack.utils.ExtensionUtil.getExtensionVersion;
 
 import static org.junit.Assert.assertTrue;
@@ -44,6 +45,7 @@ public class WindowExtensionsImplTest {
     @ApiTest(apis = {"androidx.window.extensions.WindowExtensions#getVendorApiLevel"})
     @Test
     public void testVerifiesExtensionVendorApiLevel() {
+        assumeExtensionSupportedDevice();
         assertTrue(getExtensionVersion().compareTo(MINIMUM_STABLE_EXTENSION_VERSION) >= 0);
     }
 }

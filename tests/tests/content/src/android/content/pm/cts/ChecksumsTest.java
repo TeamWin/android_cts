@@ -377,25 +377,6 @@ public class ChecksumsTest {
 
     @LargeTest
     @Test
-    public void testAllChecksums() throws Exception {
-        LocalListener receiver = new LocalListener();
-        PackageManager pm = getPackageManager();
-        pm.requestChecksums(V2V3_PACKAGE_NAME, true, ALL_CHECKSUMS, TRUST_NONE,
-                receiver);
-        ApkChecksum[] checksums = receiver.getResult();
-        assertNotNull(checksums);
-        assertEquals(checksums.length, 7);
-        assertEquals(checksums[0].getType(), TYPE_WHOLE_MERKLE_ROOT_4K_SHA256);
-        assertEquals(checksums[1].getType(), TYPE_WHOLE_MD5);
-        assertEquals(checksums[2].getType(), TYPE_WHOLE_SHA1);
-        assertEquals(checksums[3].getType(), TYPE_WHOLE_SHA256);
-        assertEquals(checksums[4].getType(), TYPE_WHOLE_SHA512);
-        assertEquals(checksums[5].getType(), TYPE_PARTIAL_MERKLE_ROOT_1M_SHA256);
-        assertEquals(checksums[6].getType(), TYPE_PARTIAL_MERKLE_ROOT_1M_SHA512);
-    }
-
-    @LargeTest
-    @Test
     public void testFixedAllChecksums() throws Exception {
         installPackage(TEST_FIXED_APK);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));

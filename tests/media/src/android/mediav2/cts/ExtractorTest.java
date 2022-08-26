@@ -16,6 +16,13 @@
 
 package android.mediav2.cts;
 
+import static android.mediav2.cts.CodecTestBase.hasDecoder;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
+
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaCodec;
@@ -63,12 +70,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.zip.CRC32;
-
-import static android.mediav2.cts.CodecTestBase.hasDecoder;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
 class TestMediaDataSource extends MediaDataSource {
     private static final String LOG_TAG = TestMediaDataSource.class.getSimpleName();

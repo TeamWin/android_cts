@@ -23,14 +23,16 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.car.PlatformVersion;
 import android.car.annotation.ApiRequirements;
-import android.car.test.AbstractExpectableTestCase;
 import android.os.Parcel;
+
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Test;
 
-public final class PlatformVersionTest extends AbstractExpectableTestCase {
+public final class PlatformVersionTest extends AbstractCarLessTestCase {
 
     @Test
+    @ApiTest(apis = {"android.car.PlatformVersion.VERSION_CODES#TIRAMISU_0"})
     public void testTiramisu_0() {
         PlatformVersion version = PlatformVersion.VERSION_CODES.TIRAMISU_0;
 
@@ -62,6 +64,7 @@ public final class PlatformVersionTest extends AbstractExpectableTestCase {
     }
 
     @Test
+    @ApiTest(apis = {"android.car.PlatformVersion.VERSION_CODES#TIRAMISU_1"})
     public void testTiramisu_1() {
         PlatformVersion version = PlatformVersion.VERSION_CODES.TIRAMISU_1;
 
@@ -93,6 +96,7 @@ public final class PlatformVersionTest extends AbstractExpectableTestCase {
     }
 
     @Test
+    @ApiTest(apis = {"android.car.PlatformVersion.VERSION_CODES#UPSIDE_DOWN_CAKE_0"})
     public void testUpSideDownCake_0() {
         PlatformVersion version = PlatformVersion.VERSION_CODES.UPSIDE_DOWN_CAKE_0;
 
@@ -125,6 +129,7 @@ public final class PlatformVersionTest extends AbstractExpectableTestCase {
     }
 
     @Test
+    @ApiTest(apis = {"android.car.PlatformVersion#CREATOR"})
     public void testMarshalling() {
         PlatformVersion original = PlatformVersion.forMajorAndMinorVersions(66, 6);
         expectWithMessage("original.describeContents()").that(original.describeContents())
@@ -141,6 +146,7 @@ public final class PlatformVersionTest extends AbstractExpectableTestCase {
     }
 
     @Test
+    @ApiTest(apis = {"android.car.PlatformVersion#CREATOR"})
     public void testNewArray() {
         PlatformVersion[] array = PlatformVersion.CREATOR.newArray(42);
 

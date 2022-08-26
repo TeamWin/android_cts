@@ -16,6 +16,9 @@
 
 package android.mediav2.cts;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaDataSource;
 import android.media.MediaExtractor;
@@ -25,6 +28,8 @@ import android.util.Log;
 
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
+
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,16 +37,11 @@ import org.junit.experimental.runners.Enclosed;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
-
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 @RunWith(Enclosed.class)
 public class ExtractorUnitTest {

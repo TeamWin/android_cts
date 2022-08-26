@@ -16,22 +16,36 @@
 
 package android.mediav2.cts;
 
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_Format32bitABGR2101010;
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
+import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_HdrEditing;
+import static android.mediav2.cts.CodecTestBase.FIRST_SDK_IS_AT_LEAST_T;
+import static android.mediav2.cts.CodecTestBase.IS_AT_LEAST_T;
+import static android.mediav2.cts.CodecTestBase.VNDK_IS_AT_LEAST_T;
+import static android.mediav2.cts.CodecTestBase.isVendorCodec;
+import static android.mediav2.cts.CodecTestBase.mContext;
+import static android.mediav2.cts.CodecTestBase.mProfileHdr10Map;
+import static android.mediav2.cts.CodecTestBase.mProfileHdr10PlusMap;
+import static android.mediav2.cts.CodecTestBase.mProfileHdrMap;
+import static android.mediav2.cts.CodecTestBase.selectCodecs;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.hardware.display.DisplayManager;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.MediaCodecList;
-import android.media.MediaFormat;
 import android.os.Build;
-import android.util.Log;
 import android.view.Display;
 
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiTest;
 
-import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -41,12 +55,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.IntStream;
-
-import static android.media.MediaCodecInfo.CodecCapabilities.*;
-import static android.media.MediaCodecInfo.CodecProfileLevel.*;
-import static android.mediav2.cts.CodecTestBase.*;
-import static android.view.Display.HdrCapabilities.*;
-import static org.junit.Assert.*;
 
 @SmallTest
 @RunWith(Parameterized.class)

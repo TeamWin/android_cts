@@ -128,6 +128,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
+import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.CompletionInfo;
@@ -155,6 +156,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
@@ -7422,6 +7424,27 @@ public class TextViewTest {
                 info.isLongClickable());
         assertTrue("info should have ACTION_LONG_CLICK",
                 actionList.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_LONG_CLICK));
+    }
+
+    @ApiTest(apis = {"android.view.View#setAccessibilityDataPrivate",
+            "android.view.accessibility.AccessibilityEvent#setAccessibilityDataPrivate"})
+    @UiThreadTest
+    @Test
+    public void testOnPopulateA11yEvent_checksAccessibilityDataPrivateBeforePopulating() {
+        mTextView = findTextView(R.id.textview_text);
+        mTextView.setAccessibilityDataPrivate(View.ACCESSIBILITY_DATA_PRIVATE_YES);
+
+        final AccessibilityEvent eventAdp = new AccessibilityEvent();
+        eventAdp.setAccessibilityDataPrivate(true);
+        mTextView.onPopulateAccessibilityEventInternal(eventAdp);
+        assertFalse("event should have populated text when ADP is true on both event & view",
+                eventAdp.getText().isEmpty());
+
+        final AccessibilityEvent eventNotAdp = new AccessibilityEvent();
+        eventNotAdp.setAccessibilityDataPrivate(false);
+        mTextView.onPopulateAccessibilityEventInternal(eventNotAdp);
+        assertTrue("event should not populate text when view ADP=true but event ADP=false",
+                eventNotAdp.getText().isEmpty());
     }
 
     @Test

@@ -16,6 +16,12 @@
 
 package android.mediav2.cts;
 
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_Format32bitABGR2101010;
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
@@ -28,7 +34,6 @@ import android.view.Surface;
 
 import androidx.test.filters.LargeTest;
 
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,11 +48,6 @@ import java.util.Collection;
 import java.util.List;
 
 import javax.microedition.khronos.opengles.GL10;
-
-import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_Format32bitABGR2101010;
-import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
 
 @RunWith(Parameterized.class)
 public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {

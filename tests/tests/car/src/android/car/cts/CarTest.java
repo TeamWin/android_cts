@@ -24,6 +24,7 @@ import android.car.CarInfoManager;
 import android.car.CarVersion;
 import android.car.PlatformVersion;
 import android.car.test.AbstractExpectableTestCase;
+import android.car.test.ApiCheckerRule;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ServiceConnection;
@@ -45,6 +46,7 @@ import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -60,6 +62,12 @@ public class CarTest extends AbstractExpectableTestCase {
     public static final RequiredFeatureRule sRequiredFeatureRule = new RequiredFeatureRule(
             PackageManager.FEATURE_AUTOMOTIVE);
 
+    @Rule
+    public final ApiCheckerRule mApiCheckerRule = new ApiCheckerRule.Builder()
+            // TODO(b/242315785): remove disable... when rule supports @AddedInOrBefore
+            .disableAnnotationsCheck()
+            .build();
+
     private static final long DEFAULT_WAIT_TIMEOUT_MS = 2000;
 
     private Context mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -74,6 +82,9 @@ public class CarTest extends AbstractExpectableTestCase {
         }
     }
 
+    @ApiTest(apis = {
+            "android.car.Car#isConnected", "android.car.Car#isConnecting", "android.car.Car#connect"
+    })
     @Test
     public void testConnection() throws Exception {
         mServiceConnectionListener = new DefaultServiceConnectionListener();
@@ -89,24 +100,28 @@ public class CarTest extends AbstractExpectableTestCase {
         assertThat(mCar.isConnecting()).isFalse();
     }
 
+    @ApiTest(apis = {"android.car.Car#createCar(Context)"})
     @Test
     public void testBlockingCreateCar() throws Exception {
         mCar = Car.createCar(mContext);
         assertConnectedCar(mCar);
     }
 
+    @ApiTest(apis = {"android.car.Car#getCarConnectionType"})
     @Test
     public void testConnectionType() throws Exception {
         createCarAndRunOnReady((car) -> assertThat(car.getCarConnectionType()).isEqualTo(
                 Car.CONNECTION_TYPE_EMBEDDED));
     }
 
+    @ApiTest(apis = {"android.car.Car#isFeatureEnabled(String)"})
     @Test
     public void testIsFeatureEnabled() throws Exception {
         createCarAndRunOnReady(
                 (car) -> assertThat(car.isFeatureEnabled(Car.AUDIO_SERVICE)).isTrue());
     }
 
+    @ApiTest(apis = {"android.car.Car#createCar(Context,Handler,long,CarServiceLifecycleListener)"})
     @Test
     public void testCreateCarWaitForever() throws Exception {
         CarServiceLifecycleListenerImpl listenerImpl = new CarServiceLifecycleListenerImpl(null);
@@ -116,6 +131,7 @@ public class CarTest extends AbstractExpectableTestCase {
         listenerImpl.waitForReady(DEFAULT_WAIT_TIMEOUT_MS);
     }
 
+    @ApiTest(apis = {"android.car.Car#createCar(Context,Handler,long,CarServiceLifecycleListener)"})
     @Test
     public void testCreateCarNoWait() throws Exception {
         CarServiceLifecycleListenerImpl listenerImpl = new CarServiceLifecycleListenerImpl(null);
@@ -128,6 +144,8 @@ public class CarTest extends AbstractExpectableTestCase {
     }
 
     @Test
+    @ApiTest(apis = {"android.car.Car#isApiVersionAtLeast(int)",
+            "android.car.Car#isApiAndPlatformVersionAtLeast(int,int)"})
     public void testApiVersion() throws Exception {
         int ApiVersionTooHigh = 1000000;
         int MinorApiVersionTooHigh = 1000000;
@@ -152,6 +170,8 @@ public class CarTest extends AbstractExpectableTestCase {
                 Car.API_VERSION_MINOR_INT, Build.VERSION.SDK_INT + 1)).isFalse();
     }
 
+    @ApiTest(apis =
+            {"android.car.Car#getCarManager(String)", "android.car.Car#getCarManager(Class)"})
     @Test
     public void testGetCarManager() throws Exception {
         mCar = Car.createCar(mContext);
@@ -184,7 +204,7 @@ public class CarTest extends AbstractExpectableTestCase {
 
         assertWithMessage("Car.getCarVersion()").that(version).isNotNull();
         assertWithMessage("Car.getCarVersion().toString()").that(version.toString())
-            .contains("name=Car.CAR_VERSION");
+                .contains("name=Car.CAR_VERSION");
     }
 
     @ApiTest(apis = {"android.car.Car#getPlatformVersion"})
@@ -194,7 +214,7 @@ public class CarTest extends AbstractExpectableTestCase {
 
         assertWithMessage("Car.getPlatformVersion()").that(version).isNotNull();
         assertWithMessage("Car.getPlatformVersion().toString()").that(version.toString())
-            .contains("name=Car.PLATFORM_VERSION");
+        .contains("name=Car.PLATFORM_VERSION");
     }
 
     @ApiTest(apis = {"android.car.Car#getPlatformVersion"})

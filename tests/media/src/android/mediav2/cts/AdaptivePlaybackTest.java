@@ -16,6 +16,9 @@
 
 package android.mediav2.cts;
 
+import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_ALL;
+import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_OPTIONAL;
+
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
@@ -39,8 +42,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
-import static android.mediav2.cts.CodecTestBase.SupportClass.*;
 
 @RunWith(Parameterized.class)
 public class AdaptivePlaybackTest extends CodecDecoderTestBase {

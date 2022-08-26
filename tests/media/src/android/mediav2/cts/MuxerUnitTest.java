@@ -16,6 +16,11 @@
 
 package android.mediav2.cts;
 
+import static android.system.Os.pipe;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
@@ -34,14 +39,9 @@ import org.junit.runner.RunWith;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-
-import static android.system.Os.pipe;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * Tests MediaMuxer API that are independent of MediaMuxer.OutputFormat. Constructors,

@@ -45,6 +45,12 @@
         <activity android:name=".drivingstate.NonDistractionOptimizedActivity">
             <meta-data android:name="distractionOptimized" android:value="false"/>
         </activity>
+
+        <!-- Setting the car target version to TIRAMISU_1 to allow tests checking car target version
+             to pass, e.g.
+             CarServiceHelperServiceUpdatableTest#testSendUserLifecycleEventAndOnUserCreated,
+             CarServiceHelperServiceUpdatableTest#testSendUserLifecycleEventAndOnUserRemoved -->
+        <meta-data android:name="android.car.targetCarVersion" android:value="33:1"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

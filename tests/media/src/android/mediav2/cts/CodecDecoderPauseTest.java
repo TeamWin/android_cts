@@ -16,6 +16,10 @@
 
 package android.mediav2.cts;
 
+import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_ALL;
+
+import static org.junit.Assert.assertTrue;
+
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -31,9 +35,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
-import static android.mediav2.cts.CodecTestBase.SupportClass.*;
-import static org.junit.Assert.assertTrue;
 
 /**
  * The following test validates that the decode can be paused

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package android.car.cts;
 
-package android.mediav2.cts;
+import android.car.test.AbstractExpectableTestCase;
+import android.car.test.ApiCheckerRule;
 
-import junit.framework.Assert;
-
-import java.io.File;
+import org.junit.Rule;
 
 /**
- * Static methods used to validate preconditions in the media CTS suite
- * to simplify failure diagnosis.
+ * Base class for tests that don't need to connect to a {@code android.car.Car} object.
+ *
+ * <p>Typically used to test POJO-like (Plain-Old Java Objects) classes.
  */
+abstract class AbstractCarLessTestCase extends AbstractExpectableTestCase {
 
-public final class Preconditions {
-    private static final String TAG = "Preconditions";
-
-    public static void assertTestFileExists(String pathName) {
-        File testFile = new File(pathName);
-        Assert.assertTrue("Test Setup Error, missing file: " + pathName, testFile.exists());
-    }
-
-    private Preconditions() {}
+    @Rule
+    public final ApiCheckerRule mApiCheckerRule = new ApiCheckerRule.Builder().build();
 }
