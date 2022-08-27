@@ -15,17 +15,7 @@
  */
 package android.media.codec.cts;
 
-import android.app.ActivityManager;
-import android.content.Context;
-import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
-import android.media.MediaCodecInfo.AudioCapabilities;
-import android.media.MediaCodecInfo.CodecCapabilities;
-import android.media.MediaCodecInfo.CodecProfileLevel;
-import android.media.MediaCodecInfo.VideoCapabilities;
 import static android.media.MediaCodecInfo.CodecProfileLevel.*;
-import android.media.MediaCodecList;
-import android.media.MediaFormat;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_AVC;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_H263;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_HEVC;
@@ -37,13 +27,22 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.ActivityManager;
+import android.content.Context;
+import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
+import android.media.MediaCodecInfo.AudioCapabilities;
+import android.media.MediaCodecInfo.CodecCapabilities;
+import android.media.MediaCodecInfo.CodecProfileLevel;
+import android.media.MediaCodecInfo.VideoCapabilities;
+import android.media.MediaCodecList;
+import android.media.MediaFormat;
 import android.media.cts.MediaPlayerTestBase;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Range;
 import android.util.Size;
 
-import androidx.annotation.CallSuper;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiLevelUtil;

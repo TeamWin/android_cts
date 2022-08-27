@@ -19,6 +19,7 @@ package android.appenumeration.cts;
 public class Constants {
     public static final String PKG_BASE = "android.appenumeration.";
     public static final String TEST_PKG = "android.appenumeration.cts";
+    public static final String MOCK_SPELL_CHECKER_PKG = "com.android.cts.mockspellchecker";
 
     /** The shared library for getting dependent packages */
     public static final String TEST_SHARED_LIB_NAME = "android.test.runner";
@@ -161,6 +162,7 @@ public class Constants {
             BASE_PATH + "CtsAppEnumerationQueriesNothingReceivesUri.apk";
     public static final String QUERIES_NOTHING_SEES_INSTALLER_APK =
             BASE_PATH + "CtsAppEnumerationQueriesNothingSeesInstaller.apk";
+    public static final String CTS_MOCK_SPELL_CHECKER_APK = BASE_PATH + "CtsMockSpellChecker.apk";
 
     public static final String[] ALL_QUERIES_TARGETING_R_PACKAGES = {
             QUERIES_NOTHING,
@@ -301,6 +303,8 @@ public class Constants {
             PKG_BASE + "cts.action.GET_CONTENT_PROVIDER_MIME_TYPE";
     public static final String ACTION_APP_ENUMERATION_PREFERRED_ACTIVITY =
             PKG_BASE + "cts.action.APP_ENUMERATION_PREFERRED_ACTIVITY";
+    public static final String ACTION_GET_ENABLED_SPELL_CHECKER_INFOS =
+            PKG_BASE + "cts.action.GET_ENABLED_SPELL_CHECKER_INFOS";
 
     public static final String ACCOUNT_NAME = "CtsAppEnumerationTests";
     public static final String ACCOUNT_TYPE = "android.appenumeration.account.type";

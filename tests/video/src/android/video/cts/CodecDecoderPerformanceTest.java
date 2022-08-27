@@ -16,6 +16,8 @@
 
 package android.video.cts;
 
+import static org.junit.Assert.assertTrue;
+
 import android.media.MediaFormat;
 import android.util.Log;
 
@@ -29,8 +31,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
 public class CodecDecoderPerformanceTest extends CodecDecoderPerformanceTestBase {

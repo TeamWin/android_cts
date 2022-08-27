@@ -6597,6 +6597,7 @@ Follow the instructions on the screen to measure the frequency response for the 
         \nAll tests are required to pass on all Android T+ launched TV devices, if the radio technology is supported.
         \nIf the TV device is launched on older Android letters, all tests will be disabled. Press Pass to pass this case.
     </string>
+    <string name="is_reference_device_checkbox_text">Is Reference Device</string>
     <string name="uwb_precision">Uwb Precision Test</string>
     <string name="uwb_short_range">Uwb Short Range Test</string>
     <string name="uwb_precision_instruction">
@@ -6615,14 +6616,24 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="report_reference_device">Report Reference Device</string>
     <string name="uwb_not_supported">Uwb is not supported on device. Finishing activity. </string>
     <string name="ble">BLE</string>
+    <string name="start_test_presence">Start Test</string>
+    <string name="stop_test_presence">Stop Test</string>
+    <string name="start_advertising_presence">Start Advertising</string>
+    <string name="stop_advertising_presence">Stop Advertising</string>
+    <string name="device_id_info_presence">You are advertising with deviceId: %1$d</string>
+    <string name="device_found_presence">Reference device found. %1$d of 1000 samples collected</string>
+    <string name="reference_device_id_input_presence">Enter the device ID displayed on the advertising device</string>
 
     <!-- Strings for BLE RSSI Precision Test -->
     <string name="ble_rssi_precision_name">BLE RSSI Precision Test</string>
     <string name="ble_rssi_precision_test_instructions">
-        1. Take 1000 scan measurements with the DUT at 1m distance from the reference device transmitting at ADVERTISE_TX_POWER_HIGH in line of sight environment
-        \n2. Sort the measurements and compute the range as 975th measurement - 25th measurement
-        \n3. Report the range below. Must be within 18dBm for tests to pass
-        \n4. Report the reference device used
+        Place the device under test (DUT) at 1m from the reference device (advertising device) in line of sight environment
+        \nDUT instructions
+        \n1. Ensure that the reference device is already advertising.
+        \n2. Input the device ID of the reference device (displayed on the reference device) into the provided field and click "Start Test"
+        \n3. The test is automatically stopped and passed (or failed )when all the required data is collected
+        \nReference device instructions
+        \n1. Ensure that the "Is reference device" checkbox is checked, then click, "Start Advertising"
     </string>
     <string name="report_ble_rssi_range">Report RSSI Range (dBm)</string>
 

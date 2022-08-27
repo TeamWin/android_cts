@@ -518,9 +518,6 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      */
     private void runSizeCompatTest(ComponentName activity, int windowingMode, double resizeRatio,
             boolean inSizeCompatModeAfterResize) {
-        // TODO(b/208918131): Remove once real cause is found.
-        assumeFalse(ENABLE_SHELL_TRANSITIONS);
-
         launchActivity(activity, windowingMode);
 
         assertSizeCompatMode(activity, /* expectedInSizeCompatMode= */ false);

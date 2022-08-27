@@ -42,6 +42,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
@@ -176,6 +177,10 @@ public class MediaTranscodingManagerTest {
     @Before
     public void setUp() throws Exception {
         Log.d(TAG, "setUp");
+
+        Assume.assumeTrue("Media transcoding disabled",
+                SystemProperties.getBoolean("sys.fuse.transcode_enabled", false));
+
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mContentResolver = mContext.getContentResolver();
 

@@ -21,6 +21,7 @@ import static android.mediapc.cts.CodecTestBase.SELECT_HARDWARE;
 import static android.mediapc.cts.CodecTestBase.SELECT_VIDEO;
 import static android.mediapc.cts.CodecTestBase.getMimesOfAvailableCodecs;
 import static android.mediapc.cts.CodecTestBase.selectHardwareCodecs;
+
 import static org.junit.Assert.assertTrue;
 
 import android.media.MediaCodec;
@@ -30,17 +31,21 @@ import android.media.MediaFormat;
 import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.mediapc.cts.common.Utils;
 import android.util.Log;
+
 import androidx.test.filters.LargeTest;
+
 import com.android.compatibility.common.util.CddTest;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
 
 public class VideoCodecRequirementsTest {
     private static final String LOG_TAG = VideoCodecRequirementsTest.class.getSimpleName();

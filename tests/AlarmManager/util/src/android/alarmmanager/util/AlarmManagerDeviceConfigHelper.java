@@ -86,8 +86,12 @@ public class AlarmManagerDeviceConfigHelper {
 
     public static void commitAndAwaitPropagation(DeviceConfig.Properties propertiesToSet) {
         final int currentVersion = getCurrentConfigVersion();
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> assertTrue(DeviceConfig.setProperties(propertiesToSet)));
+        try {
+            assertTrue("setProperties returned false", SystemUtil.callWithShellPermissionIdentity(
+                    () -> DeviceConfig.setProperties(propertiesToSet)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         PollingCheck.waitFor(UPDATE_TIMEOUT, () -> (getCurrentConfigVersion() > currentVersion),
                 "Could not update config within " + UPDATE_TIMEOUT + "ms. Current version: "
                         + currentVersion);

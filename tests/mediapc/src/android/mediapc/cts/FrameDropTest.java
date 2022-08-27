@@ -18,15 +18,19 @@ package android.mediapc.cts;
 
 import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.mediapc.cts.common.Utils;
+
 import androidx.test.filters.LargeTest;
+
 import com.android.compatibility.common.util.CddTest;
-import java.util.Collection;
+
 import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import java.util.Collection;
 
 /**
  * The following test class validates the frame drops of a playback for the hardware decoders

@@ -86,6 +86,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.hamcrest.Description;
@@ -114,6 +115,7 @@ import java.util.function.Function;
  */
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
+@CddTest(requirements = {"3.10/C-1-1,C-1-2"})
 public class AccessibilityWindowQueryTest {
     private static final String LOG_TAG = "AccessibilityWindowQueryTest";
     private static String CONTENT_VIEW_RES_NAME =

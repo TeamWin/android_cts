@@ -16,16 +16,15 @@
 
 package android.media.codec.cts;
 
+import static org.junit.Assert.assertEquals;
+
 import android.media.MediaCodec;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
-import android.media.cts.MediaCodecWrapper;
 import android.media.cts.MediaHeavyPresubmitTest;
 import android.media.cts.TestArgs;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
-
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.MediaUtils;
 
@@ -40,8 +39,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * Verification test for video encoder and decoder.

@@ -36,6 +36,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,6 +52,7 @@ import org.mockito.MockitoAnnotations;
  */
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
+@CddTest(requirements = {"3.10/C-1-1,C-1-2"})
 public class AccessibilityFingerprintGestureTest {
     private static final int FINGERPRINT_CALLBACK_TIMEOUT = 3000;
 

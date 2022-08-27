@@ -84,7 +84,6 @@ java_genrule_host {
         "treble_sepolicy_tests",
     ],
     tool_files: [
-        ":precompiled_sepolicy-without_apex",
         ":apex_sepolicy-33.cil",
         ":apex_sepolicy-decompiled.cil",
     ],
@@ -99,7 +98,6 @@ java_genrule_host {
         "-f $(location sepolicy-analyze) " +
         "-f $(location sepolicy_tests) " +
         "-f $(location treble_sepolicy_tests) " +
-        "-f $(location :precompiled_sepolicy-without_apex) " +
         "-f $(location :apex_sepolicy-33.cil) " +
         "-f $(location :apex_sepolicy-decompiled.cil)",
 }

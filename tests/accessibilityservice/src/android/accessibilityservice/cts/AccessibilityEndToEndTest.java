@@ -76,7 +76,6 @@ import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
-import android.test.suitebuilder.annotation.MediumTest;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.InputDevice;
@@ -94,9 +93,12 @@ import android.widget.EditText;
 import android.widget.ListView;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.CtsMouseUtil;
 
 import org.junit.After;
@@ -121,6 +123,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * are generated and their correct dispatch verified.
  */
 @RunWith(AndroidJUnit4.class)
+@CddTest(requirements = {"3.10/C-1-1,C-1-2"})
 public class AccessibilityEndToEndTest {
 
     private static final String LOG_TAG = "AccessibilityEndToEndTest";
@@ -177,6 +180,8 @@ public class AccessibilityEndToEndTest {
     @MediumTest
     @Presubmit
     @Test
+    @ApiTest(apis = {"android.view.View#setSelected",
+            "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
     public void testTypeViewSelectedAccessibilityEvent() throws Throwable {
         // create and populate the expected event
         final AccessibilityEvent expected = AccessibilityEvent.obtain();
@@ -221,6 +226,8 @@ public class AccessibilityEndToEndTest {
     @MediumTest
     @Presubmit
     @Test
+    @ApiTest(apis = {"android.view.View#performClick",
+            "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
     public void testTypeViewClickedAccessibilityEvent() throws Throwable {
         // create and populate the expected event
         final AccessibilityEvent expected = AccessibilityEvent.obtain();
@@ -260,6 +267,8 @@ public class AccessibilityEndToEndTest {
     @MediumTest
     @Presubmit
     @Test
+    @ApiTest(apis = {"android.view.View#performLongClick",
+            "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
     public void testTypeViewLongClickedAccessibilityEvent() throws Throwable {
         // create and populate the expected event
         final AccessibilityEvent expected = AccessibilityEvent.obtain();
@@ -299,6 +308,8 @@ public class AccessibilityEndToEndTest {
     @MediumTest
     @Presubmit
     @Test
+    @ApiTest(apis = {"android.view.View#requestFocus",
+            "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
     public void testTypeViewFocusedAccessibilityEvent() throws Throwable {
         // create and populate the expected event
         final AccessibilityEvent expected = AccessibilityEvent.obtain();
@@ -315,7 +326,7 @@ public class AccessibilityEndToEndTest {
 
         AccessibilityEvent awaitedEvent =
             sUiAutomation.executeAndWaitForEvent(
-                    () -> mActivity.runOnUiThread(() -> button.requestFocus()),
+                    () -> mActivity.runOnUiThread(button::requestFocus),
                     (event) -> equalsAccessiblityEvent(event, expected),
                     DEFAULT_TIMEOUT_MS);
         assertNotNull("Did not receive expected event: " + expected, awaitedEvent);
@@ -324,6 +335,8 @@ public class AccessibilityEndToEndTest {
     @MediumTest
     @Presubmit
     @Test
+    @ApiTest(apis = {"android.text.Editable#replace",
+            "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
     public void testTypeViewTextChangedAccessibilityEvent() throws Throwable {
         // focus the edit text
         final EditText editText = (EditText) mActivity.findViewById(R.id.edittext);
@@ -395,6 +408,8 @@ public class AccessibilityEndToEndTest {
     @MediumTest
     @Presubmit
     @Test
+    @ApiTest(apis = {"android.view.ViewManager#addView",
+            "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
     public void testTypeWindowStateChangedAccessibilityEvent() throws Throwable {
         // create and populate the expected event
         final AccessibilityEvent expected = AccessibilityEvent.obtain();
@@ -434,6 +449,8 @@ public class AccessibilityEndToEndTest {
     @MediumTest
     @Presubmit
     @Test
+    @ApiTest(apis = {"android.app.Activity#finish",
+            "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
     public void testTypeWindowsChangedAccessibilityEvent() throws Throwable {
         // create and populate the expected event
         final AccessibilityEvent expected = AccessibilityEvent.obtain();
@@ -455,6 +472,8 @@ public class AccessibilityEndToEndTest {
     @SuppressWarnings("deprecation")
     @Presubmit
     @Test
+    @ApiTest(apis = {"android.app.NotificationManager#notify",
+            "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
     public void testTypeNotificationStateChangedAccessibilityEvent() throws Throwable {
         // No notification UI on televisions.
         if ((mActivity.getResources().getConfiguration().uiMode
@@ -464,12 +483,12 @@ public class AccessibilityEndToEndTest {
             return;
         }
         PackageManager pm = sInstrumentation.getTargetContext().getPackageManager();
-        if (pm.hasSystemFeature(pm.FEATURE_WATCH)) {
+        if (pm.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             Log.i(LOG_TAG, "Skipping: testTypeNotificationStateChangedAccessibilityEvent" +
                     " - Watches have different notification system.");
             return;
         }
-        if (pm.hasSystemFeature(pm.FEATURE_AUTOMOTIVE)) {
+        if (pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
             Log.i(LOG_TAG, "Skipping: testTypeNotificationStateChangedAccessibilityEvent" +
                     " - Automotive handle notifications differently.");
             return;
@@ -487,8 +506,6 @@ public class AccessibilityEndToEndTest {
             channel.enableLights(true);
             channel.setBypassDnd(true);
             notificationManager.createNotificationChannel(channel);
-            NotificationChannel created =
-                    notificationManager.getNotificationChannel(channel.getId());
             final int notificationId = 1;
             final Notification notification =
                     new Notification.Builder(mActivity, channel.getId())
@@ -546,6 +563,7 @@ public class AccessibilityEndToEndTest {
 
     @MediumTest
     @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#interrupt"})
     public void testInterrupt_notifiesService() {
         sInstrumentation
                 .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
@@ -579,7 +597,8 @@ public class AccessibilityEndToEndTest {
 
     @MediumTest
     @Test
-    public void testPackageNameCannotBeFaked() throws Exception {
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo#getPackageName"})
+    public void testPackageNameCannotBeFaked() {
         mActivity.runOnUiThread(() -> {
             // Set the activity to report fake package for events and nodes
             mActivity.setReportedPackageName("foo.bar.baz");
@@ -608,6 +627,7 @@ public class AccessibilityEndToEndTest {
     @MediumTest
     @Presubmit
     @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo#getPackageName"})
     public void testPackageNameCannotBeFakedAppWidget() throws Exception {
         if (!hasAppWidgets()) {
             return;
@@ -687,14 +707,13 @@ public class AccessibilityEndToEndTest {
     @MediumTest
     @Presubmit
     @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo#isHeading"})
     public void testViewHeadingReportedToAccessibility() throws Exception {
-        final EditText editText = (EditText) getOnMain(sInstrumentation, () -> {
-            return mActivity.findViewById(R.id.edittext);
-        });
+        final EditText editText = (EditText) getOnMain(sInstrumentation,
+                () -> mActivity.findViewById(R.id.edittext));
         // Make sure the edittext was populated properly from xml
-        final boolean editTextIsHeading = getOnMain(sInstrumentation, () -> {
-            return editText.isAccessibilityHeading();
-        });
+        final boolean editTextIsHeading = getOnMain(sInstrumentation,
+                editText::isAccessibilityHeading);
         assertTrue("isAccessibilityHeading not populated properly from xml", editTextIsHeading);
 
         final AccessibilityNodeInfo editTextNode = sUiAutomation.getRootInActiveWindow()
@@ -716,6 +735,7 @@ public class AccessibilityEndToEndTest {
     @MediumTest
     @Presubmit
     @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo#getTooltipText"})
     public void testTooltipTextReportedToAccessibility() {
         final AccessibilityNodeInfo buttonNode = sUiAutomation.getRootInActiveWindow()
                 .findAccessibilityNodeInfosByViewId(
@@ -728,6 +748,7 @@ public class AccessibilityEndToEndTest {
 
     @MediumTest
     @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo#getActionList"})
     public void testTooltipTextActionsReportedToAccessibility() throws Exception {
         final AccessibilityNodeInfo buttonNode = sUiAutomation.getRootInActiveWindow()
                 .findAccessibilityNodeInfosByViewId(
@@ -752,6 +773,7 @@ public class AccessibilityEndToEndTest {
 
     @MediumTest
     @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo#getTraversalBefore"})
     public void testTraversalBeforeReportedToAccessibility() throws Exception {
         final AccessibilityNodeInfo buttonNode = sUiAutomation.getRootInActiveWindow()
                 .findAccessibilityNodeInfosByViewId(
@@ -774,6 +796,7 @@ public class AccessibilityEndToEndTest {
 
     @MediumTest
     @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo#getTraversalAfter"})
     public void testTraversalAfterReportedToAccessibility() throws Exception {
         final AccessibilityNodeInfo editNode = sUiAutomation.getRootInActiveWindow()
                 .findAccessibilityNodeInfosByViewId(
@@ -796,6 +819,7 @@ public class AccessibilityEndToEndTest {
 
     @MediumTest
     @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo#getLabelFor"})
     public void testLabelForReportedToAccessibility() throws Exception {
         sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(() -> mActivity
                 .findViewById(R.id.edittext).setLabelFor(R.id.buttonWithTooltip)),
@@ -817,6 +841,7 @@ public class AccessibilityEndToEndTest {
 
     @MediumTest
     @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo#performAction"})
     public void testA11yActionTriggerMotionEventActionOutside() throws Exception {
         final View.OnTouchListener listener = mock(View.OnTouchListener.class);
         final AccessibilityNodeInfo button = sUiAutomation.getRootInActiveWindow()
@@ -863,6 +888,7 @@ public class AccessibilityEndToEndTest {
 
     @MediumTest
     @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo#getTouchDelegateInfo"})
     public void testTouchDelegateInfoReportedToAccessibility() {
         final Button button = getOnMain(sInstrumentation, () -> mActivity.findViewById(
                 R.id.button));
@@ -891,6 +917,8 @@ public class AccessibilityEndToEndTest {
 
     @MediumTest
     @Test
+    @ApiTest(apis = {"android.view.View#onHoverEvent",
+            "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
     public void testTouchDelegateWithEbtBetweenView_ReHoverDelegate_FocusTargetAgain()
             throws Throwable {
         mActivity.waitForEnterAnimationComplete();
@@ -957,6 +985,8 @@ public class AccessibilityEndToEndTest {
 
     @MediumTest
     @Test
+    @ApiTest(apis = {"android.view.View#onHoverEvent",
+            "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
     public void testTouchDelegateCoverParentWithEbt_HoverChildAndBack_FocusTargetAgain()
             throws Throwable {
         mActivity.waitForEnterAnimationComplete();
@@ -1017,6 +1047,7 @@ public class AccessibilityEndToEndTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.view.View#isAccessibilityDataPrivate"})
     public void testAccessibilityDataPrivate_visibleToAccessibilityTool() throws Throwable {
         // Relevant view structure:
         //   containerView (LinearLayout, accessibilityDataPrivate=auto)
@@ -1078,6 +1109,7 @@ public class AccessibilityEndToEndTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.view.View#isAccessibilityDataPrivate"})
     public void testAccessibilityDataPrivate_checkAdpProperty_topDown() {
         // Accessing the View#isAccessibilityDataPrivate() property causes both the View & its
         // parent hierarchy to cache their values.
@@ -1091,6 +1123,7 @@ public class AccessibilityEndToEndTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.view.View#isAccessibilityDataPrivate"})
     public void testAccessibilityDataPrivate_checkAdpProperty_bottomUp() {
         // Accessing the View#isAccessibilityDataPrivate() property causes both the View & its
         // parent hierarchy to cache their values.
@@ -1104,6 +1137,10 @@ public class AccessibilityEndToEndTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.view.View#isAccessibilityDataPrivate",
+            "android.view.accessibility.AccessibilityNodeInfo#findAccessibilityNodeInfosByViewId",
+            "android.view.accessibility.AccessibilityNodeInfo#findAccessibilityNodeInfosByText",
+            "android.view.accessibility.AccessibilityNodeInfo#getChild"})
     public void testAccessibilityDataPrivate_hiddenFromSearches() {
         setAccessibilityTool(false);
         final AccessibilityNodeInfo root = sUiAutomation.getRootInActiveWindow();
@@ -1124,6 +1161,8 @@ public class AccessibilityEndToEndTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.view.View#isAccessibilityDataPrivate",
+            "android.accessibilityservice.AccessibilityService#findFocus"})
     public void testAccessibilityDataPrivate_hiddenFromFindFocus() throws Throwable {
         try {
             // Set up initial a11y focus on the ADP view while UIAutomation isAccessibilityTool.
@@ -1148,6 +1187,9 @@ public class AccessibilityEndToEndTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.view.View#isAccessibilityDataPrivate",
+            "android.view.accessibility.AccessibilityNodeInfo#findAccessibilityNodeInfosByViewId",
+            "android.view.accessibility.AccessibilityNodeInfo#getChild"})
     public void testAccessibilityDataPrivate_excludedFromParent() {
         setAccessibilityTool(false);
         final AccessibilityNodeInfo parentContainer =
@@ -1159,6 +1201,8 @@ public class AccessibilityEndToEndTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.view.View#isAccessibilityDataPrivate",
+            "android.view.accessibility.AccessibilityNodeInfo#findAccessibilityNodeInfosByViewId"})
     public void testAccessibilityDataPrivate_innerChildHidden() {
         setAccessibilityTool(false);
 
@@ -1167,6 +1211,8 @@ public class AccessibilityEndToEndTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.view.View#isAccessibilityDataPrivate",
+            "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
     public void testAccessibilityDataPrivate_hiddenFromEventPropagation() {
         setAccessibilityTool(false);
         final View innerView = mActivity.findViewById(R.id.innerView);
@@ -1190,6 +1236,7 @@ public class AccessibilityEndToEndTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.view.View#isAccessibilityDataPrivate"})
     public void testAccessibilityDataPrivate_hiddenIfFilterTouchesWhenObscured() {
         setAccessibilityTool(false);
         View containerView = mActivity.findViewById(R.id.containerView);
@@ -1204,6 +1251,8 @@ public class AccessibilityEndToEndTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.view.View#isAccessibilityDataPrivate",
+            "android.view.View#setAccessibilityDataPrivate"})
     public void testAccessibilityDataPrivate_changingValueUpdatesChildren_noFirst() {
         setAccessibilityTool(false);
         // The view starts as ADP=true as defined in the XML.
@@ -1232,6 +1281,8 @@ public class AccessibilityEndToEndTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.view.View#isAccessibilityDataPrivate",
+            "android.view.View#setAccessibilityDataPrivate"})
     public void testAccessibilityDataPrivate_changingValueUpdatesChildren_yesFirst() {
         setAccessibilityTool(false);
         // The view starts as ADP=true as defined in the XML.
@@ -1262,6 +1313,8 @@ public class AccessibilityEndToEndTest {
     // TODO(b/240199303): Use a new activity with FLAG_SECURE to test the window & views are ADP
 
     @Test
+    @ApiTest(apis = {
+            "android.view.accessibility.AccessibilityNodeInfo#makeQueryableFromAppProcess"})
     public void testDirectAccessibilityConnection_NavigateHierarchy() throws Throwable {
         View layoutView = mActivity.findViewById(R.id.buttonLayout);
         AccessibilityNodeInfo layoutNode = layoutView.createAccessibilityNodeInfo();
@@ -1309,6 +1362,8 @@ public class AccessibilityEndToEndTest {
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.view.accessibility.AccessibilityNodeInfo#makeQueryableFromAppProcess"})
     public void testDirectAccessibilityConnection_CanPerformAction() {
         View button = mActivity.findViewById(R.id.button);
         AtomicBoolean clicked = new AtomicBoolean(false);

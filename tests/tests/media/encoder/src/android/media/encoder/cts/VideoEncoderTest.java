@@ -39,7 +39,6 @@ import android.media.cts.CodecUtils;
 import android.media.cts.InputSurface;
 import android.media.cts.MediaHeavyPresubmitTest;
 import android.media.cts.MediaTestBase;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.OutputSurface;
 import android.media.cts.Preconditions;
 import android.media.cts.TestArgs;
@@ -52,10 +51,6 @@ import android.util.Range;
 import android.util.Size;
 import android.view.Surface;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.SmallTest;
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.After;
@@ -66,10 +61,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
-import java.lang.Throwable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -81,13 +74,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 @MediaHeavyPresubmitTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")

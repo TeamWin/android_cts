@@ -19,6 +19,9 @@ package com.android.cts.mockime;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
+import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_DELETE;
+import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_INSERT;
+import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_SELECT;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -35,6 +38,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.Parcelable;
 import android.os.Process;
 import android.os.ResultReceiver;
 import android.os.StrictMode;
@@ -56,8 +60,10 @@ import android.view.WindowManager;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.CorrectionInfo;
 import android.view.inputmethod.CursorAnchorInfo;
+import android.view.inputmethod.DeleteGesture;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.ExtractedTextRequest;
+import android.view.inputmethod.HandwritingGesture;
 import android.view.inputmethod.InlineSuggestion;
 import android.view.inputmethod.InlineSuggestionsRequest;
 import android.view.inputmethod.InlineSuggestionsResponse;
@@ -66,6 +72,8 @@ import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethod;
 import android.view.inputmethod.InputMethodSubtype;
+import android.view.inputmethod.InsertGesture;
+import android.view.inputmethod.SelectGesture;
 import android.view.inputmethod.TextAttribute;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
@@ -93,6 +101,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 import java.util.function.Supplier;
 
 /**
@@ -366,6 +375,31 @@ public final class MockIme extends InputMethodService {
                         final Bundle data = command.getExtras().getBundle("data");
                         return getMemorizedOrCurrentInputConnection().performPrivateCommand(action,
                                 data);
+                    }
+                    case "performHandwritingGesture": {
+                        int type = command.getExtras().getInt("type");
+
+                        Class<? extends Parcelable> clazz = null;
+                        switch (type) {
+                            case GESTURE_TYPE_SELECT:
+                                clazz = SelectGesture.class;
+                                break;
+                            case GESTURE_TYPE_INSERT:
+                                clazz = InsertGesture.class;
+                                break;
+                            case GESTURE_TYPE_DELETE:
+                                clazz = DeleteGesture.class;
+                                break;
+                        }
+                        HandwritingGesture gesture =
+                                (HandwritingGesture) command.getExtras().getParcelable(
+                                        "gesture", clazz);
+                        IntConsumer consumer = value ->
+                                getTracer().onPerformHandwritingGestureResult(
+                                        value, command.getId(), () -> {});
+                        getMemorizedOrCurrentInputConnection()
+                                .performHandwritingGesture(gesture, Runnable::run, consumer);
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     }
                     case "requestCursorUpdates": {
                         final int cursorUpdateMode = command.getExtras().getInt("cursorUpdateMode");
@@ -1575,6 +1609,13 @@ public final class MockIme extends InputMethodService {
             arguments.putInt("ConfigUpdates", configuration.diff(
                     mIme.mLastDispatchedConfiguration));
             recordEventInternal("onConfigurationChanged", runnable, arguments);
+        }
+
+        void onPerformHandwritingGestureResult(int result, long requestId, Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            arguments.putInt("result", result);
+            arguments.putLong("requestId", requestId);
+            recordEventInternal("onPerformHandwritingGestureResult", runnable, arguments);
         }
     }
 }

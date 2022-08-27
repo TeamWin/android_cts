@@ -37,6 +37,8 @@ import android.widget.TextView;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -45,6 +47,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 
+@CddTest(requirements = {"3.10/C-1-1,C-1-2"})
 public class AccessibilityDragAndDropTest {
     private static Instrumentation sInstrumentation;
     private static UiAutomation sUiAutomation;

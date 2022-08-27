@@ -25,7 +25,6 @@ import static android.accessibilityservice.cts.utils.GestureUtils.longClick;
 import static android.accessibilityservice.cts.utils.GestureUtils.startingAt;
 import static android.app.UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.timeout;
@@ -57,6 +56,8 @@ import android.view.accessibility.AccessibilityEvent;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -69,6 +70,7 @@ import org.mockito.MockitoAnnotations;
 
 /** Verify that motion events are recognized as accessibility gestures. */
 @RunWith(AndroidJUnit4.class)
+@CddTest(requirements = {"3.10/C-1-1,C-1-2"})
 public class AccessibilityGestureDetectorTest {
 
     // Constants

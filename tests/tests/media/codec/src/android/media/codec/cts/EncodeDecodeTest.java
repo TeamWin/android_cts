@@ -16,6 +16,11 @@
 
 package android.media.codec.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
+
 import android.graphics.ImageFormat;
 import android.media.Image;
 import android.media.MediaCodec;
@@ -39,6 +44,11 @@ import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -48,16 +58,6 @@ import java.util.Collection;
 import java.util.List;
 
 import javax.microedition.khronos.opengles.GL10;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
 /**
  * Generates a series of video frames, encodes them, decodes them, and tests for significant

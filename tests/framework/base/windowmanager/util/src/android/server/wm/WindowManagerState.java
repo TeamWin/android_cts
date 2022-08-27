@@ -975,6 +975,15 @@ public class WindowManagerState {
                 .collect(Collectors.toList());
     }
 
+    public boolean allActivitiesResumed() {
+        for (Task rootTask : mRootTasks) {
+            final Activity nonResumedActivity =
+                    rootTask.getActivity((a) -> !a.state.equals(STATE_RESUMED));
+            if (nonResumedActivity != null) return false;
+        }
+        return true;
+    }
+
     public boolean hasNotificationShade() {
         computeState();
         return !getMatchingWindowType(TYPE_NOTIFICATION_SHADE).isEmpty();
@@ -1224,27 +1233,23 @@ public class WindowManagerState {
             //                    don't treat them as regular root tasks
             collectDescendantsOfTypeIf(Task.class, t -> t.isRootTask(), this,
                     mRootTasks);
-            ArrayList<Task> rootOrganizedTasks = new ArrayList<>();
-            for (int i = mRootTasks.size() -1; i >= 0; --i) {
+
+            ArrayList<Task> nonOrganizedRootTasks = new ArrayList<>();
+            for (int i = 0; i < mRootTasks.size(); i++) {
                 final Task task = mRootTasks.get(i);
-                // Skip tasks created by an organizer
                 if (task.mCreatedByOrganizer) {
-                    mRootTasks.remove(task);
-                    rootOrganizedTasks.add(task);
+                    // Get all tasks inside the root-task created by an organizer
+                    List<Task> nonOrganizedDescendants = new ArrayList<>();
+                    collectDescendantsOfTypeIf(Task.class, t -> !t.mCreatedByOrganizer, task,
+                            nonOrganizedDescendants);
+                    nonOrganizedRootTasks.addAll(nonOrganizedDescendants);
+                } else {
+                    nonOrganizedRootTasks.add(task);
                 }
             }
-            // Add root tasks controlled by an organizer
-            while (rootOrganizedTasks.size() > 0) {
-                final Task task = rootOrganizedTasks.remove(0);
-                for (int i = task.mChildren.size() - 1; i >= 0; i--) {
-                    final Task child = (Task) task.mChildren.get(i);
-                    if (!child.mCreatedByOrganizer) {
-                        mRootTasks.add(child);
-                    } else {
-                        rootOrganizedTasks.add(child);
-                    }
-                }
-            }
+
+            mRootTasks.clear();
+            mRootTasks.addAll(nonOrganizedRootTasks);
         }
 
         boolean containsActivity(ComponentName activityName) {

@@ -17,6 +17,9 @@
 package android.view.inputmethod.cts;
 
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_DELETE;
+import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_INSERT;
+import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_SELECT;
 
 import static com.android.cts.mocka11yime.MockA11yImeEventStreamUtils.editorMatcherForA11yIme;
 import static com.android.cts.mocka11yime.MockA11yImeEventStreamUtils.expectA11yImeCommand;
@@ -25,6 +28,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -37,9 +41,12 @@ import static org.junit.Assert.fail;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.ClipDescription;
+import android.graphics.PointF;
+import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Parcelable;
 import android.os.Process;
 import android.os.SystemClock;
 import android.text.Annotation;
@@ -50,12 +57,16 @@ import android.util.Pair;
 import android.view.KeyEvent;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.CorrectionInfo;
+import android.view.inputmethod.DeleteGesture;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
+import android.view.inputmethod.HandwritingGesture;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
 import android.view.inputmethod.InputContentInfo;
+import android.view.inputmethod.InsertGesture;
+import android.view.inputmethod.SelectGesture;
 import android.view.inputmethod.SurroundingText;
 import android.view.inputmethod.TextAttribute;
 import android.view.inputmethod.TextSnapshot;
@@ -72,6 +83,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.cts.inputmethod.LegacyImeClientTestUtils;
 import com.android.cts.mocka11yime.MockA11yImeEventStream;
 import com.android.cts.mocka11yime.MockA11yImeSession;
@@ -94,11 +106,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.IntConsumer;
+import java.util.function.Predicate;
 
 /**
  * Provides basic tests for APIs defined in {@link InputConnection}.
@@ -1519,6 +1534,152 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             assertTrue("Default IC#getSurroundingText() returns null.",
                     result.isNullReturnValue());
         });
+    }
+
+    /**
+     * Test
+     * {@link InputConnection#performHandwritingGesture(HandwritingGesture, Executor, IntConsumer)}
+     * works as expected for {@link SelectGesture}.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.inputmethod.SelectGesture.Builder#setGranularity",
+            "android.view.inputmethod.SelectGesture.Builder#setSelectionArea",
+            "android.view.inputmethod.SelectGesture.Builder#setGranularity",
+            "android.view.inputmethod.InputConnection#performHandwritingGesture"})
+    public void testPerformHandwritingSelectGesture() throws Exception {
+        SelectGesture.Builder builder = new SelectGesture.Builder();
+        testPerformHandwritingGesture(
+                builder.setGranularity(HandwritingGesture.GRANULARITY_WORD)
+                .setSelectionArea(new RectF(1, 2, 3, 4))
+                        .setFallbackText("").build(),
+                InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
+    }
+
+    /**
+     * Test
+     * {@link InputConnection#performHandwritingGesture(HandwritingGesture, Executor, IntConsumer)}
+     * works as expected for {@link SelectGesture} by returning
+     * {@link InputConnection#HANDWRITING_GESTURE_RESULT_FAILED}.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.inputmethod.SelectGesture.Builder#setGranularity",
+            "android.view.inputmethod.SelectGesture.Builder#setSelectionArea",
+            "android.view.inputmethod.SelectGesture.Builder#setFallbackText",
+            "android.view.inputmethod.InputConnection#performHandwritingGesture"})
+    public void testPerformHandwritingSelectGesture_failed() throws Exception {
+        SelectGesture.Builder builder = new SelectGesture.Builder();
+        testPerformHandwritingGesture(
+                builder.setGranularity(HandwritingGesture.GRANULARITY_WORD)
+                        .setSelectionArea(new RectF(1, 2, 3, 4))
+                        .setFallbackText("").build(),
+                InputConnection.HANDWRITING_GESTURE_RESULT_FAILED);
+    }
+
+    /**
+     * Test
+     * InputConnection#performHandwritingGesture(HandwritingGesture, Executor, IntConsumer)}
+     * works as expected  for {@link InsertGesture}.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.inputmethod.InsertGesture.Builder#setInsertionPoint",
+            "android.view.inputmethod.InsertGesture.Builder#setFallbackText",
+            "android.view.inputmethod.InsertGesture.Builder#setTextToInsert",
+            "android.view.inputmethod.InputConnection#performHandwritingGesture"})
+    public void testPerformHandwritingInsertGesture() throws Exception {
+        InsertGesture.Builder builder = new InsertGesture.Builder();
+        testPerformHandwritingGesture(builder.setTextToInsert("text")
+                        .setInsertionPoint(new PointF(1, 1)).setFallbackText("").build(),
+                InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
+    }
+
+    /**
+     * Test
+     * InputConnection#performHandwritingGesture(HandwritingGesture, Executor, IntConsumer)}}
+     * works as expected for {@link DeleteGesture}.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.inputmethod.DeleteGesture.Builder#setGranularity",
+            "android.view.inputmethod.DeleteGesture.Builder#setSelectionArea",
+            "android.view.inputmethod.DeleteGesture.Builder#setFallbackText",
+            "android.view.inputmethod.InputConnection#performHandwritingGesture"})
+    public void testPerformHandwritingDeleteGesture() throws Exception {
+        DeleteGesture.Builder builder = new DeleteGesture.Builder();
+        testPerformHandwritingGesture(
+                builder.setGranularity(HandwritingGesture.GRANULARITY_WORD)
+                        .setDeletionArea(new RectF(1, 2, 3, 4))
+                        .setFallbackText("").build(),
+                InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
+    }
+
+    private <T extends HandwritingGesture> void testPerformHandwritingGesture(
+            T gesture, int returnResult) throws Exception {
+        final int expectedResult = returnResult;
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final AtomicReference<Class<? extends Parcelable>> classRef = new AtomicReference<>();
+        switch (gesture.getGestureType()) {
+            case GESTURE_TYPE_SELECT:
+                classRef.set(SelectGesture.class);
+                break;
+            case GESTURE_TYPE_INSERT:
+                classRef.set(InsertGesture.class);
+                break;
+            case GESTURE_TYPE_DELETE:
+                classRef.set(DeleteGesture.class);
+                break;
+        }
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public void performHandwritingGesture(
+                    HandwritingGesture gesture, Executor executor, IntConsumer consumer) {
+                assertNotNull(executor);
+                assertNotNull(consumer);
+                if (returnResult > InputConnection.HANDWRITING_GESTURE_RESULT_UNKNOWN) {
+                    consumer.accept(returnResult);
+                    // Intentionally try to send second time. This update should be ignored
+                    // and never sent back to IME.
+                    consumer.accept(InputConnection.HANDWRITING_GESTURE_RESULT_UNSUPPORTED);
+                }
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putParcelable("gesture", classRef.get().cast(gesture));
+                });
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            ImeCommand command =
+                    session.callPerformHandwritingGesture(
+                            classRef.get().cast(gesture), gesture.getGestureType());
+
+            expectCommand(stream, command, TIMEOUT);
+            methodCallVerifier.assertCalledOnce(args -> {
+                assertEquals(gesture, args.getParcelable("gesture", classRef.get()));
+            });
+
+            long requestId = command.getId();
+            ImeEvent callbackEvent = expectEvent(
+                    stream, onPerformHandwritingGestureResultMatcher(requestId), TIMEOUT);
+            assertEquals(expectedResult, callbackEvent.getArguments().getInt("result"));
+
+            // Verify that the second callback was filtered out.
+            notExpectEvent(stream, onPerformHandwritingGestureResultMatcher(requestId),
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    private static Predicate<ImeEvent> onPerformHandwritingGestureResultMatcher(
+            long requestId) {
+        return event -> {
+            if (!TextUtils.equals("onPerformHandwritingGestureResult", event.getEventName())) {
+                return false;
+            }
+            return event.getArguments().getLong("requestId") == requestId;
+        };
     }
 
     /**

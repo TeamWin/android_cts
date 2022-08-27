@@ -16,6 +16,8 @@
 
 package android.jobscheduler.cts;
 
+import static com.android.compatibility.common.util.TestUtils.waitUntil;
+
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.UiModeManager;
@@ -91,17 +93,10 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
     }
 
     /**
-     * Performs idle maintenance, will update idle state if screen-on changed.
+     * Simulated for idle, and then perform idle maintenance now.
      */
     private void triggerIdleMaintenance() throws Exception {
-        triggerIdleMaintenance(mUiDevice);
-    }
-
-    /**
-     * Performs idle maintenance, will update idle state if screen-on changed.
-     */
-    static void triggerIdleMaintenance(UiDevice uiDevice) throws Exception {
-        uiDevice.executeShellCommand("cmd activity idle-maintenance");
+        mUiDevice.executeShellCommand("cmd activity idle-maintenance");
         // Wait a moment to let that happen before proceeding.
         Thread.sleep(2_000);
     }

@@ -146,8 +146,6 @@ public class AppStandbyTests {
     public void setUp() throws Exception {
         mAlarmScheduler = new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER);
         mAlarmCount = new AtomicInteger(0);
-        updateAlarmManagerConstants();
-        setBatteryCharging(false);
 
         // To make sure it doesn't get pinned to working_set on older versions.
         AppOpsUtils.setUidMode(Utils.getPackageUid(TEST_APP_PACKAGE), OPSTR_SCHEDULE_EXACT_ALARM,
@@ -156,6 +154,9 @@ public class AppStandbyTests {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(TestAlarmReceiver.ACTION_REPORT_ALARM_EXPIRED);
         sContext.registerReceiver(mAlarmStateReceiver, intentFilter);
+
+        setBatteryCharging(false);
+        updateAlarmManagerConstants();
         assumeTrue("App Standby not enabled on device", AppStandbyUtils.isAppStandbyEnabled());
     }
 

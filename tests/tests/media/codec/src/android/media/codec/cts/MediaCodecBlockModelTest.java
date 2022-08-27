@@ -20,7 +20,6 @@ import android.content.res.AssetFileDescriptor;
 import android.hardware.HardwareBuffer;
 import android.media.Image;
 import android.media.MediaCodec;
-import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.CodecException;
 import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
@@ -36,6 +35,7 @@ import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
@@ -49,8 +49,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import androidx.test.filters.SdkSuppress;
 
 /**
  * MediaCodec tests with CONFIGURE_FLAG_USE_BLOCK_MODEL.

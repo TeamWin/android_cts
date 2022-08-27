@@ -18,6 +18,7 @@ package android.mediapc.cts;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_SecurePlayback;
 import static android.media.MediaDrm.SECURITY_LEVEL_HW_SECURE_ALL;
+
 import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
@@ -33,18 +34,21 @@ import android.mediapc.cts.common.Utils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.WindowManager;
+
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.CddTest;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Tests the basic aspects of the media performance class.

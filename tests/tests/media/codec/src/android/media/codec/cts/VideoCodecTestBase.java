@@ -16,6 +16,9 @@
 
 package android.media.codec.cts;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+
 import android.media.MediaCodec;
 import android.media.MediaCodec.CodecException;
 import android.media.MediaCodecInfo;
@@ -34,9 +37,6 @@ import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import com.android.compatibility.common.util.MediaUtils;
-
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
 
 import java.io.File;
 import java.io.FileInputStream;

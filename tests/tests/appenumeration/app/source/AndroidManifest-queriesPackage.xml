@@ -27,6 +27,7 @@
         <package android:name="android.appenumeration.appwidgetprovider" />
         <package android:name="android.appenumeration.preferred.activity" />
         <package android:name="com.android.cts.install.lib.testapp.A" />
+        <package android:name="com.android.cts.mockspellchecker" />
     </queries>
 
     <application android:debuggable="true">

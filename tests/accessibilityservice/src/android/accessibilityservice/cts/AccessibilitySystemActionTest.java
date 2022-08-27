@@ -18,6 +18,7 @@ package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 import static android.app.UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES;
+
 import static org.junit.Assert.fail;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
@@ -39,6 +40,8 @@ import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -52,6 +55,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
+@CddTest(requirements = {"3.10/C-1-1,C-1-2"})
 public class AccessibilitySystemActionTest {
     // intent actions to trigger system action callbacks
     private final static String INTENT_ACTION_SYSTEM_ACTION_CALLBACK_OVERRIDE_BACK = "android.accessibility.cts.end2endtests.action.system_action_callback_override_back";

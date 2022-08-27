@@ -99,6 +99,8 @@ import android.os.RemoteCallback;
 import android.os.UserHandle;
 import android.util.SparseArray;
 import android.view.accessibility.AccessibilityManager;
+import android.view.textservice.SpellCheckerInfo;
+import android.view.textservice.TextServicesManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -407,6 +409,8 @@ public class TestActivity extends Activity {
                 final String authority = intent.getBundleExtra(EXTRA_DATA)
                         .getString(EXTRA_AUTHORITY);
                 sendGetContentProviderMimeType(remoteCallback, authority);
+            } else if (Constants.ACTION_GET_ENABLED_SPELL_CHECKER_INFOS.equals(action)) {
+                sendGetEnabledSpellCheckerInfos(remoteCallback);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -1057,6 +1061,16 @@ public class TestActivity extends Activity {
         } catch (SecurityException e) {
             sendError(remoteCallback, e);
         }
+    }
+
+    private void sendGetEnabledSpellCheckerInfos(RemoteCallback remoteCallback) {
+        final TextServicesManager tsm = getSystemService(TextServicesManager.class);
+        final ArrayList<SpellCheckerInfo> infos =
+                new ArrayList<>(tsm.getEnabledSpellCheckerInfos());
+        final Bundle result = new Bundle();
+        result.putParcelableArrayList(EXTRA_RETURN_RESULT, infos);
+        remoteCallback.sendResult(result);
+        finish();
     }
 
     @Override

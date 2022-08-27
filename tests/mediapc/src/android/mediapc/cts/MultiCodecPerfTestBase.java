@@ -19,6 +19,7 @@ package android.mediapc.cts;
 import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_SecurePlayback;
 import static android.mediapc.cts.CodecDecoderTestBase.WIDEVINE_UUID;
 import static android.mediapc.cts.CodecTestBase.selectHardwareCodecs;
+
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -31,20 +32,19 @@ import android.media.UnsupportedSchemeException;
 import android.mediapc.cts.common.Utils;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
-import android.net.Network;
 import android.os.Build;
 import android.util.Log;
 import android.util.Pair;
+
+import org.junit.Assume;
+import org.junit.Before;
+
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.Assume;
-import org.junit.Before;
 
 public class MultiCodecPerfTestBase {
     private static final String LOG_TAG = MultiCodecPerfTestBase.class.getSimpleName();

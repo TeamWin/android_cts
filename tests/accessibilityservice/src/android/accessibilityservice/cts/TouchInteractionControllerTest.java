@@ -71,6 +71,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -90,6 +92,7 @@ import java.util.concurrent.Executors;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
 @Presubmit
+@CddTest(requirements = {"3.10/C-1-1,C-1-2"})
 public class TouchInteractionControllerTest {
     // Constants
     private static final float GESTURE_LENGTH_MM = 15.0f;

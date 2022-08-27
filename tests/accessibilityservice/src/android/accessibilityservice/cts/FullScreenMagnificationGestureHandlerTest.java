@@ -59,6 +59,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -72,6 +74,7 @@ import org.junit.runner.RunWith;
  */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
+@CddTest(requirements = {"3.10/C-1-1,C-1-2"})
 public class FullScreenMagnificationGestureHandlerTest {
 
     private static final double MIN_SCALE = 1.2;

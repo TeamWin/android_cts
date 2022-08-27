@@ -31,15 +31,25 @@ import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.util.StringBuilderPrinter;
 import android.view.MotionEvent;
+import android.view.inputmethod.DeleteGesture;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.HandwritingGesture;
 import android.view.inputmethod.InputConnection;
+import android.view.inputmethod.InsertGesture;
+import android.view.inputmethod.SelectGesture;
 import android.view.inputmethod.SurroundingText;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -51,6 +61,10 @@ public class EditorInfoTest {
     private static final int REQUEST_LONGEST_AVAILABLE_TEXT = OVER_SIZED_TEXT_LENGTH; //
 
     @Test
+    @ApiTest(apis={"android.view.inputmethod.EditorInfo#setSupportedHandwritingGestures",
+            "android.view.inputmethod.EditorInfo#setInitialToolType",
+            "android.view.inputmethod.EditorInfo#getSupportedHandwritingGestures",
+            "android.view.inputmethod.EditorInfo#getInitialToolType"})
     public void testEditorInfo() {
         EditorInfo info = new EditorInfo();
         CharSequence testInitialText = createTestText(TEST_TEXT_LENGTH);
@@ -77,6 +91,7 @@ public class EditorInfoTest {
         info.hintLocales = LocaleList.forLanguageTags("en-PH,en-US");
         info.contentMimeTypes = new String[]{"image/gif", "image/png"};
         info.setInitialToolType(MotionEvent.TOOL_TYPE_FINGER);
+        info.setSupportedHandwritingGestures(Arrays.asList(SelectGesture.class));
 
         assertEquals(0, info.describeContents());
 
@@ -102,6 +117,8 @@ public class EditorInfoTest {
         assertEquals(info.extras.getString(key), targetInfo.extras.getString(key));
         assertEquals(info.hintLocales, targetInfo.hintLocales);
         assertEquals(info.getInitialToolType(), targetInfo.getInitialToolType());
+        assertEquals(info.getSupportedHandwritingGestures(),
+                targetInfo.getSupportedHandwritingGestures());
         MoreAsserts.assertEquals(info.contentMimeTypes, targetInfo.contentMimeTypes);
 
         StringBuilder sb = new StringBuilder();
@@ -111,6 +128,26 @@ public class EditorInfoTest {
 
         assertFalse(TextUtils.isEmpty(sb.toString()));
         assertFalse(sb.toString().contains(testInitialText));
+    }
+
+    @ApiTest(apis={"android.view.inputmethod.EditorInfo#setSupportedHandwritingGestures",
+            "android.view.inputmethod.EditorInfo#getSupportedHandwritingGestures"})
+    @Test
+    public void testSupportedHandwritingGestures() {
+        EditorInfo info = new EditorInfo();
+        info.setSupportedHandwritingGestures(new ArrayList<>());
+        assertTrue(info.getSupportedHandwritingGestures().isEmpty());
+
+        info.setSupportedHandwritingGestures(Arrays.asList(SelectGesture.class));
+        assertEquals(info.getSupportedHandwritingGestures().get(0), SelectGesture.class);
+
+        info.setSupportedHandwritingGestures(Arrays.asList(SelectGesture.class, InsertGesture.class,
+                DeleteGesture.class));
+        List<Class<? extends HandwritingGesture>> gestures = info.getSupportedHandwritingGestures();
+        assertEquals(gestures.size(), 3);
+        assertTrue(gestures.contains(SelectGesture.class));
+        assertTrue(gestures.contains(DeleteGesture.class));
+        assertTrue(gestures.contains(InsertGesture.class));
     }
 
     @Test

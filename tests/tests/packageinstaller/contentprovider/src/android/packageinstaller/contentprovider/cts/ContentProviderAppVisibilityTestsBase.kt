@@ -80,7 +80,7 @@ open class ContentProviderAppVisibilityTestsBase {
         intent.putExtra(Intent.EXTRA_INTENT, getContentSchemeIntent(contentProviderType,
                                                                     permissionPattern))
 
-        mScenario = ActivityScenario.launch(intent)
+        mScenario = ActivityScenario.launchActivityForResult(intent)
         mUiDevice.wait(Until.findObject(By.text(INSTALL_FAIL_DIALOG_TEXT)), DEFAULT_TIMEOUT)
         mDialog = mUiDevice.findObject(By.text(INSTALL_FAIL_DIALOG_TEXT))
         mButton = mUiDevice.findObject(By.text("OK"))

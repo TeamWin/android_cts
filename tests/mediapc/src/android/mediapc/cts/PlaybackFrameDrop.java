@@ -16,6 +16,8 @@
 
 package android.mediapc.cts;
 
+import static android.mediapc.cts.FrameDropTestBase.DECODE_31S;
+
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -24,8 +26,6 @@ import android.view.Surface;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-
-import static android.mediapc.cts.FrameDropTestBase.DECODE_31S;
 
 /**
  * The following class calculates the frame drops for the given array of testFiles playback.

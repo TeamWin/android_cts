@@ -658,6 +658,8 @@ public abstract class ActivityManagerTestBase {
         }
 
         launchHomeActivityNoWait();
+        // TODO(b/242933292): Consider removing all the tasks belonging to android.server.wm
+        // instead of removing all and then waiting for allActivitiesResumed.
         removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
 
         runWithShellPermission(() -> {
@@ -667,6 +669,14 @@ public abstract class ActivityManagerTestBase {
             // state.
             mAtm.clearLaunchParamsForPackages(TEST_PACKAGES);
         });
+
+        // removeRootTaskWithActivityTypes() removes all the tasks apart from home. In a few cases,
+        // the systemUI might have a few tasks that need to be displayed all the time.
+        // For such tasks, systemUI might have a restart-logic that restarts those tasks. Those
+        // restarts can interfere with the test state. To avoid that, its better to wait for all
+        // the activities to come in the resumed state.
+        mWmState.waitForWithAmState(WindowManagerState::allActivitiesResumed, "Root Tasks should "
+                + "be either empty or resumed");
     }
 
     /** It always executes after {@link org.junit.After}. */

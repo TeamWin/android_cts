@@ -78,7 +78,9 @@ public class BackgroundRestrictedAlarmsTest {
     private ComponentName mAlarmScheduler;
     private AlarmManagerDeviceConfigHelper mConfigHelper = new AlarmManagerDeviceConfigHelper();
     private UiDevice mUiDevice;
-    private DeviceConfigStateHelper mDeviceConfigStateHelper;
+    private DeviceConfigStateHelper mDeviceConfigStateHelper =
+            new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ACTIVITY_MANAGER);
+
     private volatile int mAlarmCount;
 
     private final BroadcastReceiver mAlarmStateReceiver = new BroadcastReceiver() {
@@ -97,17 +99,15 @@ public class BackgroundRestrictedAlarmsTest {
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mAlarmScheduler = new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER);
         mAlarmCount = 0;
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(TestAlarmReceiver.ACTION_REPORT_ALARM_EXPIRED);
+        mContext.registerReceiver(mAlarmStateReceiver, intentFilter);
         updateAlarmManagerConstants();
-        mDeviceConfigStateHelper =
-                new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ACTIVITY_MANAGER);
         mDeviceConfigStateHelper.set("bg_auto_restricted_bucket_on_bg_restricted", "false");
         SystemUtil.runWithShellPermissionIdentity(() ->
                 DeviceConfig.setSyncDisabledMode(Settings.Config.SYNC_DISABLED_MODE_UNTIL_REBOOT));
         AppOpsUtils.setOpMode(TEST_APP_PACKAGE, OPSTR_RUN_ANY_IN_BACKGROUND, MODE_IGNORED);
         makeUidIdle();
-        final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(TestAlarmReceiver.ACTION_REPORT_ALARM_EXPIRED);
-        mContext.registerReceiver(mAlarmStateReceiver, intentFilter);
         setAppStandbyBucket("active");
     }
 

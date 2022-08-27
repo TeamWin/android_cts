@@ -85,6 +85,7 @@ android_test {
         ":CtsAppEnumerationAppWidgetProviderSharedUidTarget",
         ":CtsAppEnumerationQueriesPackage",
         ":CtsAppEnumerationForceQueryable",
+        ":CtsMockSpellChecker",
     ],
     per_testcase_directory: true,
 }

@@ -51,7 +51,6 @@ import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibility.cts.common.ShellCommandBuilder;
-import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.accessibilityservice.cts.AccessibilityGestureDispatchTest.GestureDispatchActivity;
@@ -80,7 +79,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.After;
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -98,6 +98,7 @@ import java.util.List;
  */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
+@CddTest(requirements = {"3.10/C-1-1,C-1-2"})
 public class TouchExplorerTest {
     // Constants
     private static final float GESTURE_LENGTH_MMS = 15.0f;

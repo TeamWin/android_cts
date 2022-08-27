@@ -22,12 +22,10 @@ import static android.mediapc.cts.CodecTestBase.selectHardwareCodecs;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
 
 import android.media.MediaFormat;
 import android.mediapc.cts.common.Utils;
 import android.os.Build;
-import android.util.Log;
 import android.view.Surface;
 
 import androidx.test.rule.ActivityTestRule;

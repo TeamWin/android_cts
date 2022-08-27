@@ -29,6 +29,8 @@ import android.view.Display;
 
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -42,6 +44,7 @@ import org.junit.runner.RunWith;
  * TODO: Extend coverage with a more precise signal if a device is compatible with the button
  */
 @RunWith(AndroidJUnit4.class)
+@CddTest(requirements = {"3.10/C-1-1,C-1-2"})
 public class AccessibilityButtonTest {
 
     private InstrumentedAccessibilityServiceTestRule<StubAccessibilityButtonService> mServiceRule =

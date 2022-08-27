@@ -30,7 +30,6 @@ import android.os.Build.VERSION_CODES;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.service.ambientcontext.AmbientContextDetectionResult;
-import android.text.TextUtils;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -60,7 +59,7 @@ public class CtsAmbientContextDetectionServiceDeviceTest {
     private static final String FAKE_APP_PACKAGE = "foo.bar.baz";
     public static final String CTS_PACKAGE_NAME =
             CtsAmbientContextDetectionService.class.getPackage().getName();
-    private static final String CTS_SERVICE_NAME = CTS_PACKAGE_NAME + "/"
+    private static final String CTS_SERVICE_NAME = CTS_PACKAGE_NAME + "/."
                     + CtsAmbientContextDetectionService.class.getSimpleName();
     private static final int USER_ID = UserHandle.myUserId();
 
@@ -70,9 +69,6 @@ public class CtsAmbientContextDetectionServiceDeviceTest {
             .setDensityLevel(AmbientContextEvent.LEVEL_MEDIUM)
             .build();
     private static final int TEMPORARY_SERVICE_DURATION = 5000;
-
-    private final boolean mIsTestable =
-            !TextUtils.isEmpty(getAmbientContextDetectionServiceComponent());
 
     @Rule
     public final DeviceConfigStateChangerRule mLookAllTheseRules =
@@ -85,7 +81,6 @@ public class CtsAmbientContextDetectionServiceDeviceTest {
     public void setUp() {
         assumeTrue("VERSION.SDK_INT=" + VERSION.SDK_INT,
                 VERSION.SDK_INT >= VERSION_CODES.TIRAMISU);
-        assumeTrue("Feature not available on this device. Skipping test.", mIsTestable);
         clearTestableAmbientContextDetectionService();
         CtsAmbientContextDetectionService.reset();
         bindToTestService();

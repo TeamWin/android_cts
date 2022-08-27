@@ -33,7 +33,6 @@ import android.media.cts.YUVImage;
 import android.os.Build;
 import android.util.Log;
 import android.util.Pair;
-import android.util.Range;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.compatibility.common.util.DeviceReportLog;
@@ -48,7 +47,6 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Random;
-import java.util.Scanner;
 
 /**
  * This tries to test video encoder / decoder performance by running encoding / decoding

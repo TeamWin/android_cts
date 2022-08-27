@@ -29,6 +29,8 @@ import android.platform.test.annotations.Presubmit;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,6 +41,7 @@ import org.junit.runner.RunWith;
  * Verify that accessibility services can control the accessibility volume.
  */
 @RunWith(AndroidJUnit4.class)
+@CddTest(requirements = {"3.10/C-1-1,C-1-2"})
 public class AccessibilityVolumeTest {
     Instrumentation mInstrumentation;
     AudioManager mAudioManager;

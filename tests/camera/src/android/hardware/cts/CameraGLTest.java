@@ -236,6 +236,9 @@ public class CameraGLTest {
                 // Draw the frame (and update the SurfaceTexture) so that future
                 // onFrameAvailable won't be silenced.
                 mGLView.requestRender();
+                // Wait for the draw done signal, otherwise drawing sequence maybe
+                // bleed into next iteration of tests.
+                mRenderer.waitForDrawDone();
             }
         }
 
@@ -578,7 +581,6 @@ public class CameraGLTest {
                             setBurstCount(kLoopCount + kFirstTestedFrame);
                     mSurfaceTextureCallbackResult = false;
                     mSurfaceTextureDone.close();
-                    mRenderer.resetDrawCondition();
 
                     mRenderer.setCameraSizing(mCamera.getParameters().getPreviewSize());
                     if (LOGV) Log.v(TAG, "Starting preview");
@@ -687,10 +689,6 @@ public class CameraGLTest {
 
         public void setCameraSizing(Camera.Size previewSize) {
             mCameraRatio = (float)previewSize.width/previewSize.height;
-        }
-
-        public void resetDrawCondition() {
-            mDrawDone.close();
         }
 
         public boolean waitForDrawDone() {

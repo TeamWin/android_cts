@@ -36,6 +36,7 @@ import android.widget.Button;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.TestUtils;
 
 import org.junit.AfterClass;
@@ -50,6 +51,7 @@ import java.util.List;
 
 // Test that an AccessibilityService can display an accessibility overlay
 @RunWith(AndroidJUnit4.class)
+@CddTest(requirements = {"3.10/C-1-1,C-1-2"})
 public class AccessibilityOverlayTest {
 
     private static UiAutomation sUiAutomation;

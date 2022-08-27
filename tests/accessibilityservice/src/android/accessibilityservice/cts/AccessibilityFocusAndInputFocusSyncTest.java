@@ -53,6 +53,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BitmapUtils;
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.AfterClass;
@@ -75,6 +76,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * sync between accessibility and input focus.
  */
 @RunWith(AndroidJUnit4.class)
+@CddTest(requirements = {"3.10/C-1-1,C-1-2"})
 public class AccessibilityFocusAndInputFocusSyncTest {
     /**
      * The delay time is for next UI frame rendering out.

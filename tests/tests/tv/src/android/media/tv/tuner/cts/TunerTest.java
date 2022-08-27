@@ -432,7 +432,8 @@ public class TunerTest {
                         status.getInnerFec();
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_MODULATION:
-                        status.getModulation();
+                        if (info.getType() != FrontendSettings.TYPE_DVBT)
+                            status.getModulation();
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_SPECTRAL:
                         status.getSpectralInversion();
@@ -701,17 +702,10 @@ public class TunerTest {
 
         if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
             // TODO: get real CiCam id from MediaCas
+            // only tuner hal1.1 support CiCam
             res = mTuner.connectFrontendToCiCam(0);
-        } else {
-            assertEquals(Tuner.INVALID_LTS_ID, mTuner.connectFrontendToCiCam(0));
-        }
-
-        if (res != Tuner.INVALID_LTS_ID) {
-            assertEquals(mTuner.disconnectFrontendToCiCam(0), Tuner.RESULT_SUCCESS);
-        } else {
-            // Make sure the connectFrontendToCiCam only fails because the current device
-            // does not support connecting frontend to cicam
-            assertEquals(mTuner.disconnectFrontendToCiCam(0), Tuner.RESULT_UNAVAILABLE);
+            if (res != Tuner.INVALID_LTS_ID)
+                assertEquals(mTuner.disconnectFrontendToCiCam(0), Tuner.RESULT_SUCCESS);
         }
     }
 

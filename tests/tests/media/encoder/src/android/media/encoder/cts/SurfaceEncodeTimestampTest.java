@@ -40,8 +40,8 @@ import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import androidx.test.filters.SmallTest;
 import androidx.test.filters.SdkSuppress;
+import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
 

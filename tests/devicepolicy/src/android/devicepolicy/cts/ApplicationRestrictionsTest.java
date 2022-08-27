@@ -375,6 +375,16 @@ public final class ApplicationRestrictionsTest {
         }
     }
 
+    @Postsubmit(reason = "New test")
+    @CanSetPolicyTest(policy = ApplicationRestrictions.class, singleTestOnly = true)
+    public void setApplicationRestrictions_invalidPackageName_throwsException() {
+        Bundle bundle =
+                createBundle("setApplicationRestrictions_invalidPackageName_throwsException");
+        assertThrows(IllegalArgumentException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().setApplicationRestrictions(
+                        sDeviceState.dpc().componentName(), "/../blah", bundle));
+    }
+
     // Should be consistent with createBundle
     private void assertEqualToBundle(String id, Bundle bundle) {
         assertWithMessage("bundle0 size")

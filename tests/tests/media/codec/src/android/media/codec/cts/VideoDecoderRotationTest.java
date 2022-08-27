@@ -23,21 +23,20 @@ import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.TestArgs;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
-import android.util.Size;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
-import org.junit.Test;
 
 /**
  * Tests to check if MediaCodec decoding works with rotation.

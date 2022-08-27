@@ -16,6 +16,10 @@
 
 package android.video.cts;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
+
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -27,16 +31,13 @@ import android.os.SystemProperties;
 import android.util.Range;
 import android.view.Surface;
 
+import org.junit.Before;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.junit.Before;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
 class CodecPerformanceTestBase {
     private static final String LOG_TAG = CodecPerformanceTestBase.class.getSimpleName();
