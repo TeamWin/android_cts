@@ -24,12 +24,12 @@ import android.content.pm.PackageManager
 import android.content.res.Resources.NotFoundException
 import android.hardware.SensorPrivacyManager
 import android.hardware.SensorPrivacyManager.OnSensorPrivacyChangedListener
-import android.hardware.SensorPrivacyManager.TOGGLE_TYPE_HARDWARE
-import android.hardware.SensorPrivacyManager.TOGGLE_TYPE_SOFTWARE
 import android.hardware.SensorPrivacyManager.OnSensorPrivacyChangedListener.SensorPrivacyChangedParams
 import android.hardware.SensorPrivacyManager.Sensors.CAMERA
 import android.hardware.SensorPrivacyManager.Sensors.MICROPHONE
 import android.hardware.SensorPrivacyManager.Sources.OTHER
+import android.hardware.SensorPrivacyManager.TOGGLE_TYPE_HARDWARE
+import android.hardware.SensorPrivacyManager.TOGGLE_TYPE_SOFTWARE
 import android.os.PowerManager
 import android.platform.test.annotations.AppModeFull
 import android.platform.test.annotations.AsbSecurityTest
@@ -42,6 +42,10 @@ import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.UiAutomatorUtils
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.regex.Pattern
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -51,10 +55,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import java.util.regex.Pattern
 
 abstract class SensorPrivacyBaseTest(
     val sensor: Int,
@@ -510,7 +510,9 @@ abstract class SensorPrivacyBaseTest(
         intent.putExtra(RETRY_CAM_EXTRA, retryCameraOnError)
         context.startActivity(intent)
         // Wait for app to open
-        UiAutomatorUtils.waitFindObject(By.textContains(ACTIVITY_TITLE_SNIP))
+        eventually {
+            UiAutomatorUtils.waitFindObject(By.textContains(ACTIVITY_TITLE_SNIP))
+        }
 
         context.sendBroadcast(Intent(SHOW_OVERLAY_ACTION))
     }

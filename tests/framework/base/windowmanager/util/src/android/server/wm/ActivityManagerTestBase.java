@@ -649,13 +649,22 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    @Before
-    public void setUp() throws Exception {
-        if (isKeyguardLocked() || !Objects.requireNonNull(
-                mContext.getSystemService(PowerManager.class)).isInteractive()) {
+    public static void wakeUpAndUnlock(Context context) {
+        final KeyguardManager keyguardManager = context.getSystemService(KeyguardManager.class);
+        final PowerManager powerManager = context.getSystemService(PowerManager.class);
+        if (keyguardManager == null || powerManager == null) {
+            return;
+        }
+
+        if (keyguardManager.isKeyguardLocked() || !powerManager.isInteractive()) {
             pressWakeupButton();
             pressUnlockButton();
         }
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        wakeUpAndUnlock(mContext);
 
         launchHomeActivityNoWait();
         // TODO(b/242933292): Consider removing all the tasks belonging to android.server.wm

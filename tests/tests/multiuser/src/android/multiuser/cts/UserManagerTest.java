@@ -24,6 +24,7 @@ import static android.multiuser.cts.PermissionHelper.adoptShellPermissionIdentit
 import static android.multiuser.cts.TestingUtils.getBooleanProperty;
 import static android.os.UserManager.USER_OPERATION_SUCCESS;
 import static android.os.UserManager.USER_TYPE_FULL_SECONDARY;
+import static android.os.UserManager.USER_TYPE_PROFILE_CLONE;
 import static android.os.UserManager.USER_TYPE_PROFILE_MANAGED;
 
 import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
@@ -34,11 +35,13 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeNoException;
+import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.UserInfo;
 import android.content.pm.UserProperties;
@@ -74,6 +77,7 @@ import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -87,6 +91,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RunWith(BedsteadJUnit4.class)
@@ -440,14 +445,16 @@ public final class UserManagerTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.os.UserManager#createProfile"})
     public void testCloneProfile() throws Exception {
+        assumeTrue(mUserManager.supportsMultipleUsers());
         UserHandle userHandle = null;
 
         // Need CREATE_USERS permission to create user in test
         try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
             try {
                 userHandle = mUserManager.createProfile(
-                    "Clone profile", UserManager.USER_TYPE_PROFILE_CLONE, new HashSet<>());
+                    "Clone profile", USER_TYPE_PROFILE_CLONE, new HashSet<>());
             } catch (UserManager.UserOperationException e) {
                 // Not all devices and user types support these profiles; skip if this one doesn't.
                 assumeNoException("Couldn't create clone profile", e);
@@ -473,6 +480,54 @@ public final class UserManagerTest {
             assertThat(cloneUsers.size()).isEqualTo(1);
         } finally {
             removeUser(userHandle);
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#createProfile"})
+    public void testRemoveCloneProfile_shouldSendProfileRemovedBroadcast() {
+        assumeTrue(mUserManager.supportsMultipleUsers());
+        BlockingBroadcastReceiver broadcastReceiver = null;
+        UserHandle userHandle = null;
+        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
+            try {
+                userHandle = mUserManager.createProfile("Clone profile",
+                        USER_TYPE_PROFILE_CLONE, new HashSet<>());
+                broadcastReceiver = sDeviceState
+                        .registerBroadcastReceiver(
+                                Intent.ACTION_PROFILE_REMOVED, userIsEqual(userHandle)
+                );
+                assumeNotNull(userHandle);
+                removeUser(userHandle);
+                assumeNotNull(broadcastReceiver);
+                broadcastReceiver.awaitForBroadcastOrFail();
+            } catch (UserManager.UserOperationException e) {
+                assumeNoException("Couldn't create clone profile", e);
+            }
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#createProfile"})
+    @RequireFeature(FEATURE_MANAGED_USERS)
+    public void testRemoveManagedProfile_shouldSendProfileRemovedBroadcast() {
+        BlockingBroadcastReceiver broadcastReceiver = null;
+        UserHandle userHandle = null;
+        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
+            try {
+                userHandle = mUserManager.createProfile("Managed profile",
+                        USER_TYPE_PROFILE_MANAGED, new HashSet<>());
+                broadcastReceiver = sDeviceState
+                        .registerBroadcastReceiver(
+                                Intent.ACTION_PROFILE_REMOVED, userIsEqual(userHandle)
+                        );
+                assumeNotNull(userHandle);
+                removeUser(userHandle);
+                assumeNotNull(broadcastReceiver);
+                broadcastReceiver.awaitForBroadcastOrFail();
+            } catch (UserManager.UserOperationException e) {
+                assumeNoException("Couldn't create managed profile", e);
+            }
         }
     }
 
@@ -977,5 +1032,14 @@ public final class UserManagerTest {
             return sContext.getSystemService(ActivityManager.class)
                     .startUserInBackgroundOnSecondaryDisplay(userId, displayId);
         }
+    }
+
+    private Function<Intent, Boolean> userIsEqual(UserHandle userHandle) {
+        try {
+            return (intent) -> userHandle.equals(intent.getParcelableExtra(intent.EXTRA_USER));
+        } catch (NullPointerException e) {
+            assumeNoException("User handle is null", e);
+        }
+        return (intent) -> false;
     }
 }

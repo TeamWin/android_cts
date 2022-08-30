@@ -1320,7 +1320,7 @@ public class AccessibilityEndToEndTest {
         AccessibilityNodeInfo layoutNode = layoutView.createAccessibilityNodeInfo();
 
         assertThat(layoutNode).isNotNull();
-        layoutNode.makeQueryableFromAppProcess(layoutView.getRootView());
+        layoutNode.enableQueryFromAppProcess(layoutView.getRootView());
 
         // Access this node's children.
         assertThat(layoutNode.getChildCount()).isGreaterThan(0);
@@ -1371,7 +1371,7 @@ public class AccessibilityEndToEndTest {
         AccessibilityNodeInfo buttonNode = button.createAccessibilityNodeInfo();
 
         assertThat(buttonNode).isNotNull();
-        buttonNode.makeQueryableFromAppProcess(button.getRootView());
+        buttonNode.enableQueryFromAppProcess(button.getRootView());
 
         assertThat(buttonNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)).isTrue();
         assertThat(clicked.get()).isTrue();

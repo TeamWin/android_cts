@@ -257,7 +257,13 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
         @NonNull
         public TaskFragmentCreationParams generateTaskFragParams(@NonNull IBinder ownerToken,
                 @NonNull Rect bounds, int windowingMode) {
-            return new TaskFragmentCreationParams.Builder(getOrganizerToken(), new Binder(),
+            return generateTaskFragParams(new Binder(), ownerToken, bounds, windowingMode);
+        }
+
+        @NonNull
+        public TaskFragmentCreationParams generateTaskFragParams(@NonNull IBinder fragmentToken,
+                @NonNull IBinder ownerToken, @NonNull Rect bounds, int windowingMode) {
+            return new TaskFragmentCreationParams.Builder(getOrganizerToken(), fragmentToken,
                     ownerToken)
                     .setInitialBounds(bounds)
                     .setWindowingMode(windowingMode)

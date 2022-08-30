@@ -66,7 +66,7 @@ public class ProfileManager {
                 "<InputDevInfo ChanCounts=\"1,2\" ChanPosMasks=\"12,16\" ChanIndexMasks=\"1,3\" Encodings=\"21,4\" SampleRates=\"44100,48000,88200,96000\"/>" +
             "</PeripheralProfile>" +
             "<PeripheralProfile ProfileName=\"Behringer UMC204HD\" ProfileDescription=\"Behringer UMC204HD\" ProductName=\"USB-Audio - UMC204HD 192k\">" +
-                "<OutputDevInfo ChanCounts=\"2,3,4\" ChanPosMasks=\"12\" ChanIndexMasks=\"3,7,15\" Encodings=\"22,4,2\" SampleRates=\"44100,48000,88200,96000,176400,192000\"/>" +
+                "<OutputDevInfo ChanCounts=\"2,3,4\" ChanPosMasks=\"204\" ChanIndexMasks=\"3,7,15\" Encodings=\"22,4,2\" SampleRates=\"44100,48000,88200,96000,176400,192000\"/>" +
                 "<InputDevInfo ChanCounts=\"1,2\" ChanPosMasks=\"16,12\" ChanIndexMasks=\"1,3\" Encodings=\"22,4\" SampleRates=\"44100,48000,88200,96000,176400,192000\"/>" +
             "</PeripheralProfile>" +
             "<PeripheralProfile ProfileName=\"Roland Rubix24\" ProfileDescription=\"Roland Rubix24\" ProductName=\"USB-Audio - Rubix24\">" +

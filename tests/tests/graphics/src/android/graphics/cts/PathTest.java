@@ -19,6 +19,7 @@ package android.graphics.cts;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.graphics.Bitmap;
@@ -28,10 +29,13 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Path.Direction;
+import android.graphics.PathIterator;
 import android.graphics.RectF;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -582,6 +586,77 @@ public class PathTest {
         pathAbuser.isEmpty();
         pathAbuser.isRect(null);
         pathAbuser.destroy();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.graphics.Path#moveTo", "android.graphics.Path#lineTo",
+            "android.graphics.Path#quadTo", "android.graphics.Path#conicTo",
+            "android.graphics.Path#cubicTo", "android.graphics.Path#close",
+            "android.graphics.Path#getGenerationId",
+    })
+    public void testGenerationId() {
+        Path path = new Path();
+        path.moveTo(1f, 2f);
+        int generationId = path.getGenerationId();
+
+        path.lineTo(3f, 4f);
+        assertNotEquals(generationId, path.getGenerationId());
+        generationId = path.getGenerationId();
+
+        path.moveTo(5f, 6f);
+        assertNotEquals(generationId, path.getGenerationId());
+        generationId = path.getGenerationId();
+
+        path.quadTo(7f, 8f, 9f, 10f);
+        assertNotEquals(generationId, path.getGenerationId());
+        generationId = path.getGenerationId();
+
+        path.conicTo(11f, 12f, 13f, 14f, 2f);
+        assertNotEquals(generationId, path.getGenerationId());
+        generationId = path.getGenerationId();
+
+        path.cubicTo(15f, 16f, 17f, 18f, 19f, 20f);
+        assertNotEquals(generationId, path.getGenerationId());
+        generationId = path.getGenerationId();
+
+        path.close();
+        assertNotEquals(generationId, path.getGenerationId());
+    }
+
+    @Test
+    @ApiTest(apis = {"android.graphics.Path#moveTo", "android.graphics.Path#lineTo",
+            "android.graphics.PathIterator#next",
+            "android.graphics.Path#isInterpolatable",
+            "android.graphics.Path#interpolate",
+    })
+    public void testPathInterpolation() {
+        Path startPath = new Path();
+        Path endPath = new Path();
+        startPath.moveTo(100f, 100f);
+        startPath.lineTo(200f, 300f);
+        endPath.moveTo(200f, 200f);
+        endPath.lineTo(600f, 700f);
+
+        Path interpolatedPath = new Path();
+        assertTrue(startPath.isInterpolatable(endPath));
+
+        startPath.interpolate(endPath, .5f, interpolatedPath);
+        PathIterator iterator = interpolatedPath.iterator();
+        float[] points = new float[8];
+        int verb = iterator.next(points, 0);
+        assertEquals(PathIterator.VERB_MOVE, verb);
+        assertEquals(150f, points[0], .001f);
+        assertEquals(150f, points[1], .001f);
+        verb = iterator.next(points, 0);
+        assertEquals(PathIterator.VERB_LINE, verb);
+        assertEquals(400f, points[2], .001f);
+        assertEquals(500f, points[3], .001f);
+    }
+
+    private void assertPointsEqual(float[] points1, float[] points2, int numToCheck) {
+        for (int i = 0; i < numToCheck; ++i) {
+            assertEquals("point " + i + "not equal", points1[i], points2[i], 0f);
+        }
     }
 
     private static final class PathAbuser extends Path {

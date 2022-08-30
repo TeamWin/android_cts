@@ -32,6 +32,7 @@ import android.autofillservice.cts.testcore.CannedAugmentedFillResponse;
 import android.autofillservice.cts.testcore.CtsAugmentedAutofillService;
 import android.autofillservice.cts.testcore.InlineUiBot;
 import android.content.IntentSender;
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.service.autofill.Dataset;
 import android.view.autofill.AutofillId;
@@ -165,6 +166,7 @@ public class InlineAugmentedAuthTest
         assertThat(unField.getText().toString()).isEqualTo("");
     }
 
+    @FlakyTest(bugId = 244112879)
     @Test
     public void testDatasetAuth_resultCancel() throws Exception {
         // Set services

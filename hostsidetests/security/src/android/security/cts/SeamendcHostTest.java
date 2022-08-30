@@ -331,16 +331,10 @@ public class SeamendcHostTest extends BaseHostJUnit4Test {
                         mOdmPolicyCil);
         File seamendcOutWithApex = runSeamendc(secilcOutWithoutApex, mApexSepolicyDecompiledCil);
 
-        // system/sepolicy/com.android.sepolicy/33/shell.te
         assertSourceNotEqual(secilcOutWithoutApex, seamendcOutWithApex, "shell");
         assertTargetEqual(secilcOutWithoutApex, seamendcOutWithApex, "shell");
+
         assertSourceEqual(secilcOutWithApex, seamendcOutWithApex, "shell");
         assertTargetEqual(secilcOutWithApex, seamendcOutWithApex, "shell");
-
-        // system/sepolicy/com.android.sepolicy/33/sdk_sandbox.te
-        assertSourceNotEqual(secilcOutWithoutApex, seamendcOutWithApex, "sdk_sandbox");
-        assertTargetEqual(secilcOutWithoutApex, seamendcOutWithApex, "sdk_sandbox");
-        assertSourceEqual(secilcOutWithApex, seamendcOutWithApex, "sdk_sandbox");
-        assertTargetEqual(secilcOutWithApex, seamendcOutWithApex, "sdk_sandbox");
     }
 }
