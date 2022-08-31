@@ -584,13 +584,23 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     }
 
     private void assertChooserActivityInForeground(int userId)
-            throws DeviceNotAvailableException {
-        assertActivityInForeground("android/com.android.internal.app.ChooserActivity", userId);
+            throws Exception {
+        try {
+            assertActivityInForeground("android/com.android.internal.app.ChooserActivity", userId);
+        } catch (Exception e) {
+            CLog.v("ChooserActivity is not the default");
+            assertActivityInForeground(resolveActivity("android.intent.action.CHOOSER"), userId);
+        }
     }
 
     private void assertResolverActivityInForeground(int userId)
-            throws DeviceNotAvailableException {
-        assertActivityInForeground("android/com.android.internal.app.ResolverActivity", userId);
+            throws Exception {
+        try {
+            assertActivityInForeground("android/com.android.internal.app.ResolverActivity", userId);
+        } catch (Exception e) {
+            CLog.v("ResolverActivity is not the default");
+            assertActivityInForeground(resolveActivity("android.intent.action.SEND"), userId);
+        }
     }
 
     private void assertActivityInForeground(String fullActivityName, int userId)
@@ -620,5 +630,18 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     private String changeUserRestriction(String key, boolean value, int userId)
             throws DeviceNotAvailableException {
         return changeUserRestriction(key, value, userId, MANAGED_PROFILE_PKG);
+    }
+
+    private String resolveActivity(String action) throws Exception  {
+        // Template output of 'pm resolve-activity -a {action} --brief' :
+        // priority=0 preferredOrder=0 match=0x0 specificIndex=-1 isDefault=false
+        // com.bar/.foo or com.bar/com.bar.foo
+        final String[] outputs = getDevice().executeShellCommand(
+                    "pm resolve-activity -a " + action + " --brief").split("\n");
+
+        assertTrue("Result of shell command: 'pm resolve-activity -a " + action
+                   + " --brief' is " + outputs[0], outputs.length >= 2);
+
+        return outputs[1];
     }
 }

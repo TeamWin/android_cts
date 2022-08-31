@@ -438,7 +438,7 @@ public class ManifestTestListAdapter extends TestListAdapter {
         return true;
     }
 
-    private boolean matchAllConfigs(String[] configs) {
+    public static boolean matchAllConfigs(Context context, String[] configs) {
         if (configs != null) {
             for (String config : configs) {
                 switch (config) {
@@ -457,14 +457,14 @@ public class ManifestTestListAdapter extends TestListAdapter {
                         }
                         break;
                     case CONFIG_VOICE_CAPABLE:
-                        TelephonyManager telephonyManager = mContext.getSystemService(
+                        TelephonyManager telephonyManager = context.getSystemService(
                                 TelephonyManager.class);
                         if (!telephonyManager.isVoiceCapable()) {
                             return false;
                         }
                         break;
                     case CONFIG_HAS_RECENTS:
-                        if (!getSystemResourceFlag("config_hasRecents")) {
+                        if (!getSystemResourceFlag(context, "config_hasRecents")) {
                             return false;
                         }
                         break;
@@ -482,14 +482,14 @@ public class ManifestTestListAdapter extends TestListAdapter {
                         }
                         break;
                     case CONFIG_QUICK_SETTINGS_SUPPORTED:
-                        if (!getSystemResourceFlag("config_quickSettingsSupported")) {
+                        if (!getSystemResourceFlag(context, "config_quickSettingsSupported")) {
                             return false;
                         }
                         break;
                     case CONFIG_HAS_MIC_TOGGLE:
-                        return isHardwareToggleSupported(SensorPrivacyManager.Sensors.MICROPHONE);
+                        return isHardwareToggleSupported(context, SensorPrivacyManager.Sensors.MICROPHONE);
                     case CONFIG_HAS_CAMERA_TOGGLE:
-                        return isHardwareToggleSupported(SensorPrivacyManager.Sensors.CAMERA);
+                        return isHardwareToggleSupported(context, SensorPrivacyManager.Sensors.CAMERA);
                     default:
                         break;
                 }
@@ -519,8 +519,8 @@ public class ManifestTestListAdapter extends TestListAdapter {
         }
     }
 
-    private boolean getSystemResourceFlag(String key) {
-        final Resources systemRes = mContext.getResources().getSystem();
+    private static boolean getSystemResourceFlag(Context context, String key) {
+        final Resources systemRes = context.getResources().getSystem();
         final int id = systemRes.getIdentifier(key, "bool", "android");
         if (id == Resources.ID_NULL) {
             // The flag being queried should exist in
@@ -551,7 +551,7 @@ public class ManifestTestListAdapter extends TestListAdapter {
         for (TestListItem test : tests) {
             if (!hasAnyFeature(test.excludedFeatures) && hasAllFeatures(test.requiredFeatures)
                     && hasAllActions(test.requiredActions)
-                    && matchAllConfigs(test.requiredConfigs)
+                    && matchAllConfigs(mContext, test.requiredConfigs)
                     && matchDisplayMode(test.displayMode, mode)) {
                 if (test.applicableFeatures == null || hasAnyFeature(test.applicableFeatures)) {
                     // Add suffix in test name if the test is in the folded mode.
@@ -593,9 +593,9 @@ public class ManifestTestListAdapter extends TestListAdapter {
     }
 
     @SuppressLint("NewApi")
-    private boolean isHardwareToggleSupported(final int sensorType) {
+    private static boolean isHardwareToggleSupported(Context context, final int sensorType) {
         boolean isToggleSupported = false;
-        SensorPrivacyManager sensorPrivacyManager = mContext.getSystemService(
+        SensorPrivacyManager sensorPrivacyManager = context.getSystemService(
                 SensorPrivacyManager.class);
         if (sensorPrivacyManager != null) {
             isToggleSupported = sensorPrivacyManager.supportsSensorToggle(

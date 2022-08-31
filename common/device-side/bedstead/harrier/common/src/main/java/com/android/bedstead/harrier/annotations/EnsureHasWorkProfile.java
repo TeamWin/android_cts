@@ -17,6 +17,7 @@
 package com.android.bedstead.harrier.annotations;
 
 import static com.android.bedstead.harrier.OptionalBoolean.ANY;
+import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
 import static com.android.bedstead.harrier.UserType.PRIMARY_USER;
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.MIDDLE;
 
@@ -74,6 +75,11 @@ public @interface EnsureHasWorkProfile {
      * Should we ensure that we are switched to the parent of the profile.
      */
     OptionalBoolean switchedToParentUser() default ANY;
+
+    /**
+     * Is the profile in quiet mode?
+     */
+    OptionalBoolean isQuietModeEnabled() default FALSE;
 
     /**
      * Weight sets the order that annotations will be resolved.

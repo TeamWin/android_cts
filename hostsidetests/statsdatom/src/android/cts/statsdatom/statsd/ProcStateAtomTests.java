@@ -269,7 +269,7 @@ public class ProcStateAtomTests extends DeviceTestCase implements IBuildReceiver
         // Now forcibly bring the app out of cache (#4 above).
         executeForegroundActivity(getDevice(), ACTION_SHOW_APPLICATION_OVERLAY);
         // Now check the data *before* the app enters cache again (to avoid another cache event).
-
+        Thread.sleep(cacheTime);  //the app out of cache need some time
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         // First, clear out any incidental cached states of step #1, prior to step #2.
         AtomTestUtils.popUntilFind(data, BG_STATES, PROC_STATE_FUNCTION);

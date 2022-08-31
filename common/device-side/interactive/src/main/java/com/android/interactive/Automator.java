@@ -49,7 +49,7 @@ public final class Automator {
     private final Context mContext = TestApis.context().instrumentedContext();
     private final String mAutomationFile;
     private boolean mHasInitialised = false;
-    private Map<String, Automation> mAutomationClasses = new HashMap<>();
+    private Map<String, Automation<?>> mAutomationClasses = new HashMap<>();
 
     /**
      * Create an {@link Automator} for the given automation APK.
@@ -97,6 +97,8 @@ public final class Automator {
                     Class<?> cls = dLoader.loadClass(className);
                     String automationFor = getAutomationFor(cls);
                     if (automationFor != null) {
+                        // TODO: We need to check that the data type of the automation matches the
+                        //  data type of the step
                         mAutomationClasses.put(automationFor,
                                 new AutomationExecutor(cls.newInstance()));
                     }
@@ -141,7 +143,9 @@ public final class Automator {
      *
      * <p>{@link #canAutomate(Step)} should be returning true before calling this.
      */
-    public void automate(Step step) throws Throwable {
-        mAutomationClasses.get(step.getClass().getCanonicalName()).automate();
+    public <E> E automate(Step<E> step) throws Throwable {
+        // Unchecked cast is okay as we've verified the types when inserting into the map
+        return ((Automation<E>)mAutomationClasses.get(step.getClass().getCanonicalName()))
+                .automate();
     }
 }

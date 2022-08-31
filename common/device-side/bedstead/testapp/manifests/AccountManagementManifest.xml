@@ -19,8 +19,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.android.bedstead.testapp.AccountManagementApp">
 
-    <application
-        android:testOnly="true">
+    <application android:testOnly="true"  android:label="AccountManagementApp">
 
         <service android:name=".TestAppAccountAuthenticatorService" android:exported="true">
             <intent-filter>

@@ -31,7 +31,8 @@ android_library {
         "guava",
         "Queryable",
         "NeneCommonAndroid",
-        "RemoteFrameworkClasses"
+        "RemoteFrameworkClasses",
+        "androidx.test.uiautomator_uiautomator",
     ],
     min_sdk_version: "29"
 }
@@ -48,7 +49,8 @@ android_library {
         "guava",
         "Queryable",
         "NeneCommonAndroid",
-        "RemoteFrameworkClasses"
+        "RemoteFrameworkClasses",
+        "androidx.test.uiautomator_uiautomator",
     ],
     min_sdk_version: "29"
 }
@@ -56,7 +58,7 @@ android_library {
 android_test {
     name: "NeneTest",
     srcs: [
-        "src/test/java/**/*.java"
+        "src/test/java/**/*.java",
     ],
     exclude_srcs: [
         "src/test/java/**/benchmarking/*.java"
@@ -80,13 +82,26 @@ android_test {
     min_sdk_version: "29"
 }
 
-android_library {
-    name: "NeneBenchmarkProcessor",
+android_test {
+    name: "NeneBenchmarks",
     srcs: [
         "src/test/java/**/benchmarking/*.java",
         "src/test/java/**/benchmarking/*.proto",
     ],
+    test_suites: [
+        "general-tests",
+    ],
     static_libs: [
+        "TestApp",
+        "Nene",
+        "EventLib",
+        "Harrier",
+        "androidx.benchmark_benchmark-common",
+        "androidx.benchmark_benchmark-junit4",
+        "androidx.test.ext.junit",
+        "ctstestrunner-axt",
+        "compatibility-device-util-axt",
+        "collector-device-lib",
     ],
     manifest: "src/test/AndroidManifest.xml",
     min_sdk_version: "29"

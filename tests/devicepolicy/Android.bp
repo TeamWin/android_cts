@@ -47,7 +47,7 @@ android_test {
 }
 
 android_test {
-    name: "CtsDevicePolicyInteractiveTestCases",
+    name: "CtsInteractiveDevicePolicyTestCases",
     defaults: ["cts_defaults"],
     static_libs: [
         "compatibility-device-util-axt",

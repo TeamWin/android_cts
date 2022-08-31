@@ -18,6 +18,7 @@ package com.android.bedstead.nene.utils;
 
 import static android.os.Build.VERSION_CODES.S;
 
+import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
@@ -278,9 +279,16 @@ public final class ShellCommandUtils {
     }
 
     /**
+     * Get a {@link Instrumentation}.
+     */
+    public static Instrumentation instrumentation() {
+        return InstrumentationRegistry.getInstrumentation();
+    }
+
+    /**
      * Get a {@link UiAutomation}.
      */
     public static UiAutomation uiAutomation() {
-        return InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        return instrumentation().getUiAutomation();
     }
 }

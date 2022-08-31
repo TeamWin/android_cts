@@ -54,7 +54,6 @@ import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureGlobalSettingSet;
 import com.android.bedstead.harrier.annotations.EnsureHasAppOp;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
-import com.android.bedstead.harrier.annotations.EnsureOnLauncher;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.EnsurePasswordSet;
@@ -68,9 +67,11 @@ import com.android.bedstead.harrier.annotations.OtherUser;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireInstantApp;
 import com.android.bedstead.harrier.annotations.RequireLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequireMultiUserSupport;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
 import com.android.bedstead.harrier.annotations.RequireNotLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
@@ -170,6 +171,7 @@ public final class DeviceState extends HarrierRule {
     private static final String SWITCHED_TO_USER = "switchedToUser";
     private static final String SWITCHED_TO_PARENT_USER = "switchedToParentUser";
     public static final String INSTALL_INSTRUMENTED_APP = "installInstrumentedApp";
+    private static final String IS_QUIET_MODE_ENABLED = "isQuietModeEnabled";
     public static final String FOR_USER = "forUser";
     public static final String DPC_IS_PRIMARY = "dpcIsPrimary";
     public static final String AFFILIATION_IDS = "affiliationIds";
@@ -306,6 +308,9 @@ public final class DeviceState extends HarrierRule {
             // Ensure that tests only see events from the current test
             EventLogs.resetLogs();
 
+            // Avoid cached activities on screen
+            TestApis.activities().clearAllActivities();
+
             mMinSdkVersionCurrentTest = mMinSdkVersion;
             List<Annotation> annotations = getAnnotations(description);
             applyAnnotations(annotations, /* isTest= */ true);
@@ -349,9 +354,20 @@ public final class DeviceState extends HarrierRule {
                         annotation.annotationType()
                                 .getMethod(INSTALL_INSTRUMENTED_APP).invoke(annotation);
 
+                OptionalBoolean isQuietModeEnabled =
+                        annotation.annotationType().getMethod(IS_QUIET_MODE_ENABLED) == null
+                                ? OptionalBoolean.ANY
+                                : (OptionalBoolean)
+                                        annotation.annotationType().getMethod(
+                                                IS_QUIET_MODE_ENABLED).invoke(annotation);
+
                 boolean dpcIsPrimary = false;
                 boolean useParentInstance = false;
                 if (ensureHasProfileAnnotation.hasProfileOwner()) {
+                    // TODO(b/206441366): Add instant app support
+                    requireNotInstantApp(
+                            "Instant Apps cannot run Enterprise Tests", FailureMode.SKIP);
+
                     dpcIsPrimary = (boolean)
                             annotation.annotationType()
                                     .getMethod(DPC_IS_PRIMARY).invoke(annotation);
@@ -372,7 +388,7 @@ public final class DeviceState extends HarrierRule {
                 ensureHasProfile(
                         ensureHasProfileAnnotation.value(), installInstrumentedApp,
                         forUser, ensureHasProfileAnnotation.hasProfileOwner(),
-                        dpcIsPrimary, useParentInstance, switchedToParentUser);
+                        dpcIsPrimary, useParentInstance, switchedToParentUser, isQuietModeEnabled);
 
                 ((ProfileOwner) profileOwner(
                         workProfile()).devicePolicyController()).setIsOrganizationOwned(
@@ -803,11 +819,6 @@ public final class DeviceState extends HarrierRule {
                 continue;
             }
 
-            if (annotation instanceof EnsureOnLauncher) {
-                ensureOnLauncher();
-              continue;
-            }
-    
             if (annotation instanceof RequireMultiUserSupport) {
                 RequireMultiUserSupport requireMultiUserSupportAnnotation =
                         (RequireMultiUserSupport) annotation;
@@ -819,6 +830,23 @@ public final class DeviceState extends HarrierRule {
                 RequireHasPolicyExemptApps requireHasPolicyExemptAppsAnnotation =
                         (RequireHasPolicyExemptApps) annotation;
                 requireHasPolicyExemptApps(requireHasPolicyExemptAppsAnnotation.failureMode());
+                continue;
+            }
+
+            if (annotation instanceof RequireInstantApp) {
+                RequireInstantApp requireInstantAppAnnotation =
+                        (RequireInstantApp) annotation;
+                requireInstantApp(requireInstantAppAnnotation.reason(),
+                        requireInstantAppAnnotation.failureMode());
+                continue;
+            }
+
+            if (annotation instanceof RequireNotInstantApp) {
+                RequireNotInstantApp requireNotInstantAppAnnotation =
+                        (RequireNotInstantApp) annotation;
+                requireNotInstantApp(requireNotInstantAppAnnotation.reason(),
+                        requireNotInstantAppAnnotation.failureMode());
+                continue;
             }
         }
 
@@ -1451,7 +1479,8 @@ public final class DeviceState extends HarrierRule {
             boolean hasProfileOwner,
             boolean profileOwnerIsPrimary,
             boolean useParentInstance,
-            OptionalBoolean switchedToParentUser) {
+            OptionalBoolean switchedToParentUser,
+            OptionalBoolean isQuietModeEnabled) {
         com.android.bedstead.nene.users.UserType resolvedUserType =
                 requireUserSupported(profileType, FailureMode.SKIP);
 
@@ -1469,6 +1498,12 @@ public final class DeviceState extends HarrierRule {
         }
 
         profile.start();
+
+        if (isQuietModeEnabled == OptionalBoolean.TRUE) {
+            profile.setQuietMode(true);
+        } else if (isQuietModeEnabled == OptionalBoolean.FALSE) {
+            profile.setQuietMode(false);
+        }
 
         if (installInstrumentedApp.equals(OptionalBoolean.TRUE)) {
             TestApis.packages().find(sContext.getPackageName()).installExisting(
@@ -2698,6 +2733,8 @@ public final class DeviceState extends HarrierRule {
     }
 
     private void withoutPermission(String... permission) {
+        requireNotInstantApp("Uses withoutPermission", FailureMode.SKIP);
+
         if (mPermissionContext == null) {
             mPermissionContext = TestApis.permissions().withoutPermission(permission);
         } else {
@@ -2713,10 +2750,6 @@ public final class DeviceState extends HarrierRule {
         TestApis.settings().global().putString(key, value);
     }
 
-    private void ensureOnLauncher() {
-        TestApis.activities().clearAllActivities();
-    }
-
     private void requireMultiUserSupport(FailureMode failureMode) {
         checkFailOrSkip("This test is only supported on multi user devices",
                 TestApis.users().supportsMultipleUsers(), failureMode);
@@ -2724,6 +2757,16 @@ public final class DeviceState extends HarrierRule {
 
     private void requireHasPolicyExemptApps(FailureMode failureMode) {
         checkFailOrSkip("OEM does not define any policy-exempt apps",
-                TestApis.devicePolicy().getPolicyExemptApps().isEmpty(), failureMode);
+                !TestApis.devicePolicy().getPolicyExemptApps().isEmpty(), failureMode);
+    }
+
+    private void requireInstantApp(String reason, FailureMode failureMode) {
+        checkFailOrSkip("Test only runs as an instant-app: " + reason,
+                TestApis.packages().instrumented().isInstantApp(), failureMode);
+    }
+
+    private void requireNotInstantApp(String reason, FailureMode failureMode) {
+        checkFailOrSkip("Test does not run as an instant-app: " + reason,
+                TestApis.packages().instrumented().isInstantApp(), failureMode);
     }
 }

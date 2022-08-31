@@ -18,6 +18,8 @@ package com.android.bedstead.remotedpc;
 
 import static android.os.UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES;
 
+import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
+
 import android.content.ComponentName;
 import android.os.Build;
 import android.os.UserHandle;
@@ -25,6 +27,7 @@ import android.os.UserHandle;
 import androidx.annotation.Nullable;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
 import com.android.bedstead.nene.devicepolicy.DevicePolicyController;
 import com.android.bedstead.nene.devicepolicy.ProfileOwner;
@@ -223,6 +226,31 @@ public class RemoteDpc extends RemotePolicyManager {
                 .clearUserRestriction(remoteDpc.componentName(), DISALLOW_INSTALL_UNKNOWN_SOURCES);
 
         return remoteDpc;
+    }
+
+    /**
+     * Create a work profile with RemoteDpc as the profile owner.
+     *
+     * <p>If called for Android versions prior to Q an exception will be thrown
+     */
+    @Experimental
+    public static RemoteDpc createWorkProfile(UserReference parent) {
+        // It'd be ideal if this method could be in TestApis.devicePolicy() but the dependency
+        // direction wouldn't allow it
+        if (parent == null) {
+            throw new NullPointerException();
+        }
+
+        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.Q)) {
+            throw new NeneException("Cannot use RemoteDPC across users prior to Q");
+        }
+
+        UserReference profile = TestApis.users().createUser()
+                .type(TestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME))
+                .parent(parent)
+                .createAndStart();
+
+        return setAsProfileOwner(profile);
     }
 
     private static void ensureInstalled(UserReference user) {

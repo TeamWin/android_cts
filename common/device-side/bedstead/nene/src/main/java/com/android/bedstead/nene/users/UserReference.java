@@ -34,6 +34,7 @@ import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.Intent;
 import android.content.pm.UserInfo;
+import android.os.Build;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
@@ -508,6 +509,11 @@ public class UserReference implements AutoCloseable {
         if (!Versions.meetsMinimumSdkVersionRequirement(P)) {
             return false;
         }
+
+        if (isQuietModeEnabled() == enabled) {
+            return true;
+        }
+
         try (PermissionContext p = TestApis.permissions().withPermission(MODIFY_QUIET_MODE)) {
             BlockingBroadcastReceiver r = BlockingBroadcastReceiver.create(
                             TestApis.context().instrumentedContext(),
@@ -525,6 +531,18 @@ public class UserReference implements AutoCloseable {
                 r.unregisterQuietly();
             }
         }
+    }
+
+    /**
+     * Returns true if this user is a profile and quiet mode is enabled. Otherwise false.
+     */
+    @Experimental
+    public boolean isQuietModeEnabled() {
+        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.N)) {
+            // Quiet mode not supported by < N
+            return false;
+        }
+        return mUserManager.isQuietModeEnabled(userHandle());
     }
 
     @Override

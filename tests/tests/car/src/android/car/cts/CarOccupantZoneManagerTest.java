@@ -251,7 +251,7 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
                         UserHandle.of(userId), 0);
                 assertWithMessage(
                         "Re-assigning the same user to zoneId:%s", info.zoneId).that(
-                        result).isEqualTo(CarOccupantZoneManager.USER_ASSIGN_RESULT_OK);
+                        result).isEqualTo(CarOccupantZoneManager.USER_ASSIGNMENT_RESULT_OK);
             }
         }
     }
@@ -297,10 +297,10 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
         // We would not create this many users. So keep it simple.
         UserHandle invalidUser = UserHandle.of(Integer.MAX_VALUE);
         assertWithMessage(
-                "Invalid user should return USER_ASSIGN_RESULT_FAIL_NON_VISIBLE_USER").that(
+                "Check USER_ASSIGNMENT_RESULT_FAIL_NON_VISIBLE_USER").that(
                 mCarOccupantZoneManager.assignVisibleUserToOccupantZone(zone, invalidUser,
                         0)).isEqualTo(
-                                CarOccupantZoneManager.USER_ASSIGN_RESULT_FAIL_NON_VISIBLE_USER);
+                CarOccupantZoneManager.USER_ASSIGNMENT_RESULT_FAIL_NON_VISIBLE_USER);
     }
 
     @Test
@@ -315,7 +315,7 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
         assertWithMessage("Driver zone must exist").that(driverZone).isNotNull();
         assertWithMessage("Unassigning driver zone should fail").that(
                 mCarOccupantZoneManager.unassignOccupantZone(driverZone)).isEqualTo(
-                CarOccupantZoneManager.USER_ASSIGN_RESULT_FAIL_DRIVER_ZONE);
+                CarOccupantZoneManager.USER_ASSIGNMENT_RESULT_FAIL_DRIVER_ZONE);
     }
 
     @Test
@@ -332,14 +332,14 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
             int originalUser = mCarOccupantZoneManager.getUserForOccupant(zone);
             assertWithMessage("Unassigning passenger zone should work").that(
                     mCarOccupantZoneManager.unassignOccupantZone(zone)).isEqualTo(
-                    CarOccupantZoneManager.USER_ASSIGN_RESULT_OK);
+                    CarOccupantZoneManager.USER_ASSIGNMENT_RESULT_OK);
             if (originalUser == CarOccupantZoneManager.INVALID_USER_ID) {
                 continue;
             }
             assertWithMessage("Reassigning the same valid user should work").that(
                     mCarOccupantZoneManager.assignVisibleUserToOccupantZone(zone,
                             UserHandle.of(originalUser), 0)).isEqualTo(
-                            CarOccupantZoneManager.USER_ASSIGN_RESULT_OK);
+                            CarOccupantZoneManager.USER_ASSIGNMENT_RESULT_OK);
         }
     }
 

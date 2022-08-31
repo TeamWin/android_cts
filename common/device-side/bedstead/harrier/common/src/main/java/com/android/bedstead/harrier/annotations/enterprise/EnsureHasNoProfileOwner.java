@@ -21,6 +21,7 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDevic
 
 import com.android.bedstead.harrier.UserType;
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
+import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -35,6 +36,8 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
+// TODO(b/206441366): Add instant app support
+@RequireNotInstantApp(reason = "Instant Apps cannot run Enterprise Tests")
 public @interface EnsureHasNoProfileOwner {
     /** Which user type the profile owner should not be attached to. */
     UserType onUser() default INSTRUMENTED_USER;

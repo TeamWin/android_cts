@@ -22,6 +22,7 @@ import static com.android.bedstead.nene.packages.CommonPackages.FEATURE_DEVICE_A
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
 import com.android.bedstead.nene.devicepolicy.DeviceOwnerType;
 
 import java.lang.annotation.ElementType;
@@ -47,6 +48,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @RequireFeature(FEATURE_DEVICE_ADMIN)
+// TODO(b/206441366): Add instant app support
+@RequireNotInstantApp(reason = "Instant Apps cannot run Enterprise Tests")
 public @interface EnsureHasDeviceOwner {
 
     int DO_PO_WEIGHT = MIDDLE;

@@ -23,9 +23,15 @@ import static android.appenumeration.cts.Constants.EXTRA_ID;
 import static android.appenumeration.cts.Constants.EXTRA_PENDING_INTENT;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_CALLBACK;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_READY_CALLBACK;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_PERM;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SHARED_USER;
+import static android.appenumeration.cts.Constants.QUERIES_PACKAGE;
 import static android.appenumeration.cts.Utils.Result;
 import static android.appenumeration.cts.Utils.ThrowingBiFunction;
 import static android.appenumeration.cts.Utils.ThrowingFunction;
+import static android.appenumeration.cts.Utils.allowTestApiAccess;
+import static android.appenumeration.cts.Utils.resetTestApiAccess;
 import static android.os.Process.INVALID_UID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -77,6 +83,11 @@ public class AppEnumerationTestsBase {
 
     @BeforeClass
     public static void setup() {
+        allowTestApiAccess(QUERIES_NOTHING);
+        allowTestApiAccess(QUERIES_NOTHING_SHARED_USER);
+        allowTestApiAccess(QUERIES_NOTHING_PERM);
+        allowTestApiAccess(QUERIES_PACKAGE);
+
         sResponseThread = new HandlerThread("response");
         sResponseThread.start();
         sResponseHandler = new Handler(sResponseThread.getLooper());
@@ -87,6 +98,11 @@ public class AppEnumerationTestsBase {
 
     @AfterClass
     public static void tearDown() {
+        resetTestApiAccess(QUERIES_NOTHING);
+        resetTestApiAccess(QUERIES_NOTHING_SHARED_USER);
+        resetTestApiAccess(QUERIES_NOTHING_PERM);
+        resetTestApiAccess(QUERIES_PACKAGE);
+
         sResponseThread.quit();
     }
 

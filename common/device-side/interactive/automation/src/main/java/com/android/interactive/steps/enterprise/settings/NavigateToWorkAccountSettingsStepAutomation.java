@@ -17,13 +17,16 @@
 package com.android.interactive.steps.enterprise.settings;
 
 import com.android.interactive.Automation;
+import com.android.interactive.Nothing;
 import com.android.interactive.annotations.AutomationFor;
 
 @AutomationFor("com.android.interactive.steps.enterprise.settings.NavigateToWorkAccountSettingsStep")
-public final class NavigateToWorkAccountSettingsStepAutomation implements Automation {
+public final class NavigateToWorkAccountSettingsStepAutomation implements Automation<Nothing> {
     @Override
-    public void automate() {
+    public Nothing automate() {
         // There is only one Settings app
         new NavigateToPersonalAccountSettingsStepAutomation().automate();
+
+        return Nothing.NOTHING;
     }
 }

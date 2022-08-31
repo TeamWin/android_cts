@@ -19,7 +19,7 @@ package com.android.interactive;
 /**
  * An automatic implementation of a Step.
  */
-public interface Automation {
+public interface Automation<E> {
 
     /**
      * Run the automation.
@@ -33,5 +33,5 @@ public interface Automation {
      * <p>If the step can be completed successfully and no exception is thrown, then the test will
      * continue as if the step had been completed manually.
      */
-    void automate() throws Throwable;
+    E automate() throws Throwable;
 }

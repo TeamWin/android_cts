@@ -4363,11 +4363,23 @@
                 android:value="7.4.3/C-7-1" />
         </activity>
 
+        <activity-alias android:name=".CtsVerifierActivity"
+                        android:targetActivity=".TestListActivity"
+                        android:exported="true"
+                        android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
         <activity-alias
-            android:name=".CtsVerifierActivity"
-            android:label="@string/app_name"
+            android:name=".CtsInteractiveContinueActivity"
+            android:label="Continue Test"
             android:exported="true"
-            android:targetActivity=".TestListActivity">
+            android:targetActivity=".CtsInteractiveActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -6513,11 +6525,14 @@
                        android:value="multi_display_mode" />
         </activity>
 
+        <activity android:name=".CtsInteractiveActivity" android:exported="true" android:label="CTSInteractive" />
+
         <activity android:name=".TestListActivity" android:label="@string/app_name" />
 
         <activity android:name=".ReportViewerActivity"
                   android:configChanges="keyboardHidden|orientation|screenSize"
                   android:label="@string/report_viewer" />
+
     </application>
 
     <queries>

@@ -15,21 +15,21 @@
   ~ limitations under the License.
   -->
 <configuration description="Config for CTS Device Policy test cases">
-    <option name="test-suite-tag" value="cts" />
+    <option name="test-suite-tag" value="cts-interactive" />
     <option name="config-descriptor:metadata" key="component" value="framework" />
     <!-- Instant apps can never be device admin / profile owner / device owner so positive tests
          here are not applicable -->
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
     <option name="config-descriptor:metadata" key="parameter" value="multi_abi" />
     <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
-    <option name="config-descriptor:metadata" key="parameter" value="multiuser" />
+<!--    <option name="config-descriptor:metadata" key="parameter" value="multiuser" />-->
     <option name="config-descriptor:metadata" key="parameter" value="no_foldable_states" />
 
     <target_preparer class="com.android.tradefed.targetprep.RunOnSystemUserTargetPreparer"/>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="install-arg" value="-t" />
-        <option name="test-file-name" value="CtsDevicePolicyInteractiveTestCases.apk" />
+        <option name="test-file-name" value="CtsInteractiveDevicePolicyTestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.devicepolicy.cts" />

@@ -15,6 +15,7 @@
   ~ limitations under the License.
   -->
 <configuration description="Config for Nene test cases">
+    <option name="instrumentation-arg" key="androidx.benchmark.suppressErrors" value="ACTIVITY-MISSING,LOW-BATTERY" />
     <option name="config-descriptor:metadata" key="parameter" value="multiuser" />
     <target_preparer class="com.android.tradefed.targetprep.RunOnSystemUserTargetPreparer"/>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">

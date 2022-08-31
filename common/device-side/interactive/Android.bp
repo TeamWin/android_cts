@@ -2,8 +2,15 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_library {
+java_library_host {
     name: "InteractiveCommon",
+    srcs: [
+        "common/src/main/java/**/*.java",
+    ]
+}
+
+android_library {
+    name: "InteractiveCommonAndroid",
     srcs: [
         "common/src/main/java/**/*.java",
     ],
@@ -22,7 +29,7 @@ android_library {
     min_sdk_version: "29",
     static_libs: [
         "Nene",
-        "InteractiveCommon"
+        "InteractiveCommonAndroid"
     ],
     resource_dirs: ["src/main/res"]
 }

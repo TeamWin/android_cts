@@ -16,9 +16,11 @@
 
 package com.android.interactive.steps;
 
+import com.android.interactive.Nothing;
 import com.android.interactive.Step;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A step which is a composition of other steps.
@@ -26,18 +28,18 @@ import java.util.List;
  * <p>This can be useful if it's easier to automate the composite step, but several steps are
  * appropriate for manual interaction.
  */
-public class CompositionStep extends Step {
+public class CompositionStep extends Step<Nothing> {
 
-    private final List<Class<? extends Step>> mSteps;
+    private final List<Class<? extends Step<Nothing>>> mSteps;
     private boolean mPassed = false;
 
-    protected CompositionStep(List<Class<? extends Step>> steps) {
+    protected CompositionStep(List<Class<? extends Step<Nothing>>> steps) {
         mSteps = steps;
     }
 
     @Override
-    public boolean hasPassed() {
-        return mPassed;
+    public Optional<Nothing> getValue() {
+        return mPassed ? Optional.of(Nothing.NOTHING) : Optional.empty();
     }
 
     @Override
@@ -47,7 +49,7 @@ public class CompositionStep extends Step {
 
     @Override
     public void interact() {
-        for (Class<? extends Step> step : mSteps) {
+        for (Class<? extends Step<Nothing>> step : mSteps) {
             Step.execute(step);
         }
         mPassed = true;

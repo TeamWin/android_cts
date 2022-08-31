@@ -27,9 +27,10 @@ import com.android.queryable.Queryable;
  */
 public interface IntentFilterQuery<E extends Queryable> extends Query<IntentFilter> {
 
+    // TODO: Apply the recursive helper to all query types
     /** Create a {@link IntentFilterQueryHelper}*/
-    static IntentFilterQuery<IntentFilterQuery<?>> intentFilter() {
-        return new IntentFilterQueryHelper<>();
+    static IntentFilterQueryHelper.IntentFilterQueryHelperRecursive intentFilter() {
+        return new IntentFilterQueryHelper.IntentFilterQueryHelperRecursive();
     }
 
     /** Query for the actions on a intent filter.*/

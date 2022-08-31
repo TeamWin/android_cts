@@ -49,7 +49,6 @@ import android.app.admin.DevicePolicyManager;
 import android.content.PermissionChecker;
 import android.os.Build;
 import android.os.Bundle;
-import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 
 import com.android.bedstead.harrier.annotations.EnsureBluetoothDisabled;
@@ -80,9 +79,11 @@ import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireInstantApp;
 import com.android.bedstead.harrier.annotations.RequireLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequireNotCnGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
 import com.android.bedstead.harrier.annotations.RequireNotLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
@@ -339,7 +340,6 @@ public class DeviceStateTest {
 
     @Test
     @EnsureDoesNotHavePermission(TEST_PERMISSION_1)
-    @AppModeFull // withoutPermission does not work on instant apps
     public void ensureDoesNotHavePermission_permissionIsDenied() {
         assertThat(TestApis.context().instrumentedContext()
                 .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_DENIED);
@@ -347,7 +347,6 @@ public class DeviceStateTest {
 
     @Test
     @EnsureDoesNotHavePermission({TEST_PERMISSION_1, TEST_PERMISSION_2})
-    @AppModeFull // withoutPermission does not work on instant apps
     public void ensureDoesNotHavePermission_multiplePermissions_permissionsAreDenied() {
         assertThat(TestApis.context().instrumentedContext()
                 .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_DENIED);
@@ -360,7 +359,6 @@ public class DeviceStateTest {
     @EnsureDoesNotHavePermission(TEST_PERMISSION_2)
     @RequireSdkVersion(min = Build.VERSION_CODES.R,
             reason = "Used permissions not available prior to R")
-    @AppModeFull // withoutPermission does not work on instant apps
     public void ensureHasPermissionAndDoesNotHavePermission_permissionsAreCorrect() {
         assertThat(TestApis.context().instrumentedContext()
                 .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_GRANTED);
@@ -1081,5 +1079,17 @@ public class DeviceStateTest {
     public void ensureNotDemoModeAnnotation_deviceIsNotInDemoMode() {
         assertThat(TestApis.settings().global().getInt(Settings.Global.DEVICE_DEMO_MODE))
                 .isEqualTo(0);
+    }
+
+    @RequireInstantApp(reason = "Testing RequireInstantApp")
+    @Test
+    public void requireInstantAppAnnotation_isInstantApp() {
+        assertThat(TestApis.packages().instrumented().isInstantApp()).isTrue();
+    }
+
+    @RequireNotInstantApp(reason = "Testing RequireNotInstantApp")
+    @Test
+    public void requireNotInstantAppAnnotation_isNotInstantApp() {
+        assertThat(TestApis.packages().instrumented().isInstantApp()).isFalse();
     }
 }

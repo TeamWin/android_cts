@@ -34,11 +34,18 @@ import java.util.Set;
  */
 public class IntentFilterQueryHelper<E extends Queryable> implements IntentFilterQuery<E> {
 
+    public static class IntentFilterQueryHelperRecursive extends IntentFilterQueryHelper<
+            IntentFilterQueryHelperRecursive> {
+        IntentFilterQueryHelperRecursive() {
+            super();
+        }
+    }
+
     private final transient E mQuery;
     private final SetQueryHelper<E, String, StringQuery<?>> mActionsQueryHelper;
     private final SetQueryHelper<E, String, StringQuery<?>> mCategoriesQueryHelper;
 
-    IntentFilterQueryHelper() {
+    private IntentFilterQueryHelper() {
         mQuery = (E) this;
         mActionsQueryHelper = new SetQueryHelper<>(mQuery);
         mCategoriesQueryHelper = new SetQueryHelper<>(mQuery);

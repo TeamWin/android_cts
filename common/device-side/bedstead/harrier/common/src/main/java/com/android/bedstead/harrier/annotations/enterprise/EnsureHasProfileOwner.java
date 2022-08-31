@@ -23,6 +23,7 @@ import static com.android.bedstead.nene.packages.CommonPackages.FEATURE_DEVICE_A
 import com.android.bedstead.harrier.UserType;
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -39,6 +40,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @RequireFeature(FEATURE_DEVICE_ADMIN)
+// TODO(b/206441366): Add instant app support
+@RequireNotInstantApp(reason = "Instant Apps cannot run Enterprise Tests")
 public @interface EnsureHasProfileOwner {
     /** Which user type the work profile should be attached to. */
     UserType onUser() default INSTRUMENTED_USER;

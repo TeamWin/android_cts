@@ -19,7 +19,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.android.bedstead.testapp.NotEmptyTestApp">
 
-    <application>
+    <application android:label="NotEmptyTestApp">
         <meta-data android:name="test-metadata-key" android:value="test-metadata-value" />
     </application>
     <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="29"/>

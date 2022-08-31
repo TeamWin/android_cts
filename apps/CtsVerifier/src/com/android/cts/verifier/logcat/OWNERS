@@ -1,7 +1,3 @@
 # Bug Component: 36824
 
-cbrubaker@google.com
-eunjeongshin@google.com
-jsharkey@google.com
-vishwath@google.com
-wenhaowang@google.com
+include platform/frameworks/base:/services/core/java/com/android/server/logcat/OWNERS

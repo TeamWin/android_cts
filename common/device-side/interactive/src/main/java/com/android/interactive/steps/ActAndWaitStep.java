@@ -16,15 +16,17 @@
 
 package com.android.interactive.steps;
 
+import com.android.interactive.Nothing;
 import com.android.interactive.Step;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
  * A {@link Step} where the user is asked to perform some action and the test will poll for it
  * to be complete.
  */
-public class ActAndWaitStep extends Step {
+public class ActAndWaitStep extends Step<Nothing> {
 
     private final String mInstruction;
     private final Supplier<Boolean> mChecker;
@@ -35,8 +37,8 @@ public class ActAndWaitStep extends Step {
     }
 
     @Override
-    public boolean hasPassed() {
-        return validate();
+    public Optional<Nothing> getValue() {
+        return validate(Nothing.NOTHING);
     }
 
     @Override
@@ -46,7 +48,7 @@ public class ActAndWaitStep extends Step {
     }
 
     @Override
-    public boolean validate() {
-        return mChecker.get();
+    public Optional<Nothing> validate(Nothing b) {
+        return mChecker.get() ? Optional.of(Nothing.NOTHING) : Optional.empty();
     }
 }

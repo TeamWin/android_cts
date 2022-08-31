@@ -18,21 +18,18 @@ package com.android.interactive.steps.enterprise.settings;
 
 import android.widget.TextView;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiScrollable;
 import androidx.test.uiautomator.UiSelector;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.interactive.Automation;
+import com.android.interactive.Nothing;
 import com.android.interactive.annotations.AutomationFor;
 
 @AutomationFor("com.android.interactive.steps.enterprise.settings.NavigateToDeviceAdminAppsSectionStep")
-public class NavigateToDeviceAdminAppsSectionStepAutomation implements Automation {
+public class NavigateToDeviceAdminAppsSectionStepAutomation implements Automation<Nothing> {
     @Override
-    public void automate() throws Throwable {
-        // TODO: Standardise UI interaction patterns
-        UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-
+    public Nothing automate() throws Throwable {
         // Move to "Advanced Settings"
         UiScrollable settingsItem = new UiScrollable(new UiSelector()
                 .className("androidx.recyclerview.widget.RecyclerView"));
@@ -40,7 +37,9 @@ public class NavigateToDeviceAdminAppsSectionStepAutomation implements Automatio
                 .className(TextView.class), "More security settings").click();
 
         // Move to Device Admin Apps screen
-        device.findObject(new UiSelector().text("Device admin apps").className(
+        TestApis.ui().device().findObject(new UiSelector().text("Device admin apps").className(
                 TextView.class)).click();
+
+        return Nothing.NOTHING;
     }
 }

@@ -16,33 +16,34 @@
 
 package com.android.interactive.steps.enterprise.settings;
 
+import static com.android.interactive.Nothing.NOTHING;
+
 import android.widget.Button;
 import android.widget.TextView;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiSelector;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.interactive.Automation;
+import com.android.interactive.Nothing;
 import com.android.interactive.annotations.AutomationFor;
 
 @AutomationFor("com.android.interactive.steps.enterprise.settings.AccountsRemoveWorkProfileStep")
-public final class AccountsRemoveWorkProfileStepAutomation implements Automation {
+public final class AccountsRemoveWorkProfileStepAutomation implements Automation<Nothing> {
     @Override
-    public void automate() throws Throwable {
-        // TODO: Standardise UI interaction patterns
-        UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-
+    public Nothing automate() throws Throwable {
         // Move to "Work" tab
-        device.findObject(new UiSelector().text("Work").className(
+        TestApis.ui().device().findObject(new UiSelector().text("Work").className(
                 TextView.class)).click();
 
         // Press "Remove work profile"
-        device.findObject(new UiSelector().text("Remove work profile").className(
+        TestApis.ui().device().findObject(new UiSelector().text("Remove work profile").className(
                 TextView.class)).click();
 
         // Confirm
-        device.findObject(new UiSelector().text("Delete").className(
+        TestApis.ui().device().findObject(new UiSelector().text("Delete").className(
                 Button.class)).click();
+
+        return NOTHING;
     }
 }

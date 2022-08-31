@@ -36,6 +36,7 @@ import com.android.queryable.queries.StringQueryHelper;
 public final class TestAppQueryBuilder implements Queryable {
     private final TestAppProvider mProvider;
 
+    StringQueryHelper<TestAppQueryBuilder> mLabel = new StringQueryHelper<>(this);
     StringQueryHelper<TestAppQueryBuilder> mPackageName = new StringQueryHelper<>(this);
     BundleQueryHelper<TestAppQueryBuilder> mMetadata = new BundleQueryHelper<>(this);
     IntegerQueryHelper<TestAppQueryBuilder> mMinSdkVersion = new IntegerQueryHelper<>(this);
@@ -56,6 +57,13 @@ public final class TestAppQueryBuilder implements Queryable {
             throw new NullPointerException();
         }
         mProvider = provider;
+    }
+
+    /**
+     * Query for a {@link TestApp} which declares the given label.
+     */
+    public StringQuery<TestAppQueryBuilder> whereLabel() {
+        return mLabel;
     }
 
     /**
@@ -167,6 +175,10 @@ public final class TestAppQueryBuilder implements Queryable {
             return false;
         }
 
+        if (!StringQueryHelper.matches(mLabel, details.label())) {
+            return false;
+        }
+
         if (!BundleQueryHelper.matches(mMetadata, details.mMetadata)) {
             return false;
         }
@@ -233,6 +245,7 @@ public final class TestAppQueryBuilder implements Queryable {
     public String describeQuery(String fieldName) {
         return "{" + Queryable.joinQueryStrings(
                 mPackageName.describeQuery("packageName"),
+                mLabel.describeQuery("label"),
                 mMetadata.describeQuery("metadata"),
                 mMinSdkVersion.describeQuery("minSdkVersion"),
                 mMaxSdkVersion.describeQuery("maxSdkVersion"),

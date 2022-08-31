@@ -22,13 +22,13 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A {@link FrameworkMethod} which forwards calls to a wrapped {@link FrameworkMethod} except
  * that it injects a parameter and adds the parameter to the name.
  */
 public final class FrameworkMethodWithParameter extends FrameworkMethod {
-
     private final FrameworkMethod mWrappedFrameworkMethod;
     private final Object mInjectedParam;
 
@@ -116,12 +116,22 @@ public final class FrameworkMethodWithParameter extends FrameworkMethod {
 
     @Override
     public boolean equals(Object obj) {
-        return mWrappedFrameworkMethod.equals(obj);
+        if (obj == this) {
+            return true;
+        }
+
+        if (obj instanceof FrameworkMethodWithParameter) {
+            FrameworkMethodWithParameter other = (FrameworkMethodWithParameter) obj;
+            return Objects.equals(mWrappedFrameworkMethod, other.mWrappedFrameworkMethod)
+                    && Objects.equals(mInjectedParam, other.mInjectedParam);
+        }
+
+        return false;
     }
 
     @Override
     public int hashCode() {
-        return mWrappedFrameworkMethod.hashCode();
+        return Objects.hash(mWrappedFrameworkMethod, mInjectedParam);
     }
 
     @Override

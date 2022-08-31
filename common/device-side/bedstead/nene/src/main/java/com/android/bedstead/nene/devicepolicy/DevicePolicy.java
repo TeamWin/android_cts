@@ -20,6 +20,7 @@ import static android.Manifest.permission.CREATE_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.TIRAMISU;
 
 import static com.android.bedstead.nene.permissions.CommonPermissions.FORCE_DEVICE_POLICY_MANAGER_LOGS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_ADMINS;
@@ -469,6 +470,15 @@ public final class DevicePolicy {
     @Experimental
     public boolean autoTimeRequired() {
         return autoTimeRequired(TestApis.users().instrumented());
+    }
+
+    /**
+     * Access APIs related to Device Policy resource overriding.
+     */
+    @TargetApi(TIRAMISU)
+    public DevicePolicyResources resources() {
+        Versions.requireMinimumVersion(TIRAMISU);
+        return DevicePolicyResources.sInstance;
     }
 
     private static class DefaultBlockingCallback extends BlockingCallback<Boolean> {

@@ -72,7 +72,7 @@ public class TlsHandshakeStatsTests extends DeviceTestCase implements IBuildRece
         assertThat(data.size()).isAtLeast(2);
         AtomsProto.TlsHandshakeReported atom = data.get(0).getAtom().getTlsHandshakeReported();
         AtomsProto.TlsHandshakeReported atom2 = data.get(1).getAtom().getTlsHandshakeReported();
-        assertThat(atom.getProtocol().toString()).contains("TLS_V1_2");
-        assertThat(atom2.getProtocol().toString()).contains("TLS_V1_2");
+        assertThat(atom.getProtocol().toString()).contains("TLS_V1_3");
+        assertThat(atom2.getProtocol().toString()).contains("TLS_V1_3");
     }
 }

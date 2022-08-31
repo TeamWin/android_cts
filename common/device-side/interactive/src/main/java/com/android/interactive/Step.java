@@ -33,14 +33,16 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.utils.Poll;
 
-import org.junit.Assert;
-
 import java.time.Duration;
+import java.util.Optional;
 
 /**
  * An atomic manual interaction step.
+ *
+ * <p>Steps can return data to the test (the return type is {@code E}. {@code Void} should be used
+ * for steps with no return value.
  */
-public abstract class Step {
+public abstract class Step<E> {
 
     private static final String LOG_TAG = "Interactive.Step";
 
@@ -58,7 +60,7 @@ public abstract class Step {
     private static final WindowManager sWindowManager =
             TestApis.context().instrumentedContext().getSystemService(WindowManager.class);
 
-    private boolean mPassed = false;
+    private Optional<E> mValue = Optional.empty();
     private boolean mFailed = false;
 
     /**
@@ -67,8 +69,8 @@ public abstract class Step {
      * <p>This will first try to execute the step automatically, falling back to manual
      * interaction if that fails.
      */
-    public static void execute(Class<? extends Step> stepClass) {
-        Step step;
+    public static <E> E execute(Class<? extends Step<E>> stepClass) {
+        Step<E> step;
         try {
             step = stepClass.newInstance();
         } catch (InstantiationException | IllegalAccessException e) {
@@ -78,20 +80,20 @@ public abstract class Step {
         if (TestApis.instrumentation().arguments().getBoolean("ENABLE_AUTOMATION", true)) {
             if (sAutomator.canAutomate(step)) {
                 try {
-                    sAutomator.automate(step);
+                    E returnValue = sAutomator.automate(step);
 
                     // If it reaches this point then it has passed
-                    Log.i(LOG_TAG, "Succeeded with automatic resolution of " + stepClass);
-                    return;
+                    Log.i(LOG_TAG, "Succeeded with automatic resolution of " + step);
+                    return returnValue;
                 } catch (Throwable t) {
-                    Log.e(LOG_TAG, "Error attempting automation of " + stepClass, t);
+                    Log.e(LOG_TAG, "Error attempting automation of " + step, t);
                     // TODO: If an automation fails we might be in a bad state so should re-run the
                     // entire test fully manually - we need to store the fact that the current test
                     // is manual only - and reset that at the end of the test - and throw a
                     // RestartTestException
                 }
             } else {
-                Log.i(LOG_TAG, "No automation for " + stepClass);
+                Log.i(LOG_TAG, "No automation for " + step);
             }
         }
 
@@ -100,32 +102,42 @@ public abstract class Step {
             step.interact();
 
             // Wait until we've reached a valid ending point
-            Step finalStep = step;
             try {
-                Poll.forValue("passed", step::hasPassed)
-                        .toBeEqualTo(true)
-                        .terminalValue((b) -> finalStep.hasFailed())
-                        .errorOnFail()
+                E value = Poll.forValue("value", step::getValue)
+                        .toMeet(Optional::isPresent)
+                        .terminalValue((b) -> step.hasFailed())
+                        .errorOnFail("Expected value from step. No value provided or step failed.")
                         .timeout(MAX_STEP_DURATION)
-                        .await();
+                        .await()
+                        .get();
 
                 // After the test has been marked passed, we validate ourselves
-                Poll.forValue("validated", step::validate)
-                        .toBeEqualTo(true)
-                        .errorOnFail()
+                return Poll.forValue("validated", () -> step.validate(value))
+                        .toMeet(Optional::isPresent)
+                        .errorOnFail("Step did not pass validation.")
                         .timeout(MAX_STEP_DURATION)
-                        .await();
+                        .await()
+                        .get();
             } finally {
                 step.close();
             }
-        } else {
-            Assert.fail("Could not automatically or manually pass test");
         }
+        throw new AssertionError("Could not automatically or manually pass test");
     }
 
-
     protected final void pass() {
-        mPassed = true;
+        try {
+            pass((E) Nothing.NOTHING);
+        } catch (ClassCastException e) {
+            throw new IllegalStateException("You cannot call pass() for a step which requires a"
+                    + " return value. If no return value is required, the step should use Nothing"
+                    + " (not Void)");
+        }
+
+    }
+
+    protected final void pass(E value) {
+        mValue = Optional.of(value);
         close();
     }
 
@@ -137,8 +149,8 @@ public abstract class Step {
     /**
      * Returns true if the manual step has concluded successfully.
      */
-    public boolean hasPassed() {
-        return mPassed;
+    public Optional<E> getValue() {
+        return mValue;
     }
 
     /**
@@ -187,7 +199,7 @@ public abstract class Step {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
 
-        params.gravity = Gravity.BOTTOM;
+        params.gravity = Gravity.TOP; // TMP
         params.x = 0;
         params.y = 0;
 
@@ -200,7 +212,7 @@ public abstract class Step {
         });
     }
 
-    private void close() {
+    protected void close() {
         if (mInstructionView != null) {
             TestApis.context().instrumentationContext().getMainExecutor().execute(() -> {
                 try {
@@ -224,8 +236,8 @@ public abstract class Step {
      *
      * <p>This implementation must apply to all Android devices.
      */
-    public boolean validate() {
+    public Optional<E> validate(E value) {
         // By default there is no validation
-        return true;
+        return Optional.of(value);
     }
 }

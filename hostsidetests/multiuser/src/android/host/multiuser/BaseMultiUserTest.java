@@ -57,7 +57,7 @@ public abstract class BaseMultiUserTest extends BaseHostJUnit4Test {
     private static final String FEATURE_AUTOMOTIVE = "feature:android.hardware.type.automotive";
 
     protected static final long LOGCAT_POLL_INTERVAL_MS = 1000;
-    protected static final long USER_SWITCH_COMPLETE_TIMEOUT_MS = 360_000;
+    protected static final long USER_SWITCH_COMPLETE_TIMEOUT_MS = 480_000;
 
     /** Whether multi-user is supported. */
     protected int mInitialUserId;

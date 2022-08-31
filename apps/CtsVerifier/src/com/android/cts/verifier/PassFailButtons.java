@@ -632,6 +632,12 @@ public class PassFailButtons {
             TestResult.setFailedResult(activity, testId, testDetails, reportLog, historyCollection);
         }
 
+        // We store results here straight into the content provider so it can be fetched by the
+        // CTSInteractive host
+        TestResultsProvider.setTestResult(
+                activity, testId, passed ? 1 : 2, testDetails, reportLog, historyCollection,
+                null);
+
         activity.finish();
     }
 

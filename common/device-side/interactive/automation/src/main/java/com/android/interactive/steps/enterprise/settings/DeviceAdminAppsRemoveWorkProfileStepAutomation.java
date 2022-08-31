@@ -20,22 +20,19 @@ import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiScrollable;
 import androidx.test.uiautomator.UiSelector;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.interactive.Automation;
+import com.android.interactive.Nothing;
 import com.android.interactive.annotations.AutomationFor;
 
 @AutomationFor("com.android.interactive.steps.enterprise.settings.DeviceAdminAppsRemoveWorkProfileStep")
-public final class DeviceAdminAppsRemoveWorkProfileStepAutomation implements Automation {
+public final class DeviceAdminAppsRemoveWorkProfileStepAutomation implements Automation<Nothing> {
 
     @Override
-    public void automate() throws Throwable {
-        // TODO: Standardise UI interaction patterns
-        UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-
+    public Nothing automate() throws Throwable {
         UiScrollable settingsItem = new UiScrollable(new UiSelector()
                 .className("androidx.recyclerview.widget.RecyclerView"));
         settingsItem.getChildByText(new UiSelector()
@@ -49,7 +46,9 @@ public final class DeviceAdminAppsRemoveWorkProfileStepAutomation implements Aut
                 .className(Button.class), "Remove work profile").click();
 
         // Confirm
-        device.findObject(new UiSelector().text("Delete").className(
+        TestApis.ui().device().findObject(new UiSelector().text("Delete").className(
                 Button.class)).click();
+
+        return Nothing.NOTHING;
     }
 }

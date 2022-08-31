@@ -21,6 +21,7 @@ package com.android.bedstead.nene.benchmarking;
  * metadata.
  *
  * <p>An example use of a benchmark instance is as follows:
+ *
  * <pre>{@code
  * @Test
  * public void myBenchmark() {
@@ -36,25 +37,38 @@ package com.android.bedstead.nene.benchmarking;
  * }
  * }</pre>
  */
-public interface Benchmark {
+public abstract class Benchmark {
+    private final BenchmarkMetadata mMetadata;
+
+    protected Benchmark(BenchmarkMetadata metadata) {
+        mMetadata = metadata;
+    }
+
     /** Sets up state required by {@link #beforeIteration} (called once per test run). */
-    void beforeBenchmark();
+    public void beforeBenchmark() {}
 
     /** Sets up state required by {@link #run} (called before every {@link #run} call). */
-    void beforeIteration();
+    public void beforeIteration() {}
 
     /** Executes the benchmark. */
-    void run();
+    public abstract void run();
 
     /**
-     * Tears down any state produced by {@link #run} or {@link #beforeIteration} (called after
-     * every {@link #run} call).
+     * Tears down any state produced by {@link #run} or {@link #beforeIteration} (called after every
+     * {@link #run} call).
      */
-    void afterIteration();
+    public void afterIteration() {}
 
     /** Tears down any state produced by {@link #beforeBenchmark} (called once per test run). */
-    void afterBenchmark();
+    public void afterBenchmark() {}
 
     /** Returns the {@link BenchmarkMetadata} for this benchmark. */
-    BenchmarkMetadata metadata();
+    public final BenchmarkMetadata metadata() {
+        return mMetadata;
+    }
+
+    @Override
+    public final String toString() {
+        return metadata().getName();
+    }
 }

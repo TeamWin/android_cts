@@ -24,7 +24,7 @@ import java.lang.reflect.InvocationTargetException;
  * <p>This is used to avoid having multiple places need to deal with the reflection involved in
  * dynamic loading of automations.
  */
-public class AutomationExecutor implements Automation {
+public class AutomationExecutor<E> implements Automation<E> {
 
     private final Object mObject;
 
@@ -35,9 +35,9 @@ public class AutomationExecutor implements Automation {
     /**
      * Call the {@link Automation#automate()} method on the wrapped {@link Automation}.
      */
-    public void automate() throws Throwable {
+    public E automate() throws Throwable {
         try {
-            mObject.getClass().getMethod("automate").invoke(mObject);
+            return (E) mObject.getClass().getMethod("automate").invoke(mObject);
         } catch (InvocationTargetException e) {
             throw e.getCause();
         } catch (IllegalAccessException | NoSuchMethodException e) {

@@ -17,6 +17,7 @@
 package com.android.bedstead.nene;
 
 import com.android.bedstead.nene.accessibility.Accessibility;
+import com.android.bedstead.nene.accounts.Accounts;
 import com.android.bedstead.nene.activities.Activities;
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.bluetooth.Bluetooth;
@@ -32,6 +33,7 @@ import com.android.bedstead.nene.permissions.Permissions;
 import com.android.bedstead.nene.roles.Roles;
 import com.android.bedstead.nene.settings.Settings;
 import com.android.bedstead.nene.systemproperties.SystemProperties;
+import com.android.bedstead.nene.ui.Ui;
 import com.android.bedstead.nene.users.Users;
 
 /**
@@ -123,6 +125,18 @@ public final class TestApis {
     @Experimental
     public static Roles roles() {
         return Roles.sInstance;
+    }
+
+    /** Access Test APIs related to accounts. */
+    @Experimental
+    public static Accounts accounts() {
+        return Accounts.sInstance;
+    }
+
+    /** Access Test APIs related to ui. */
+    @Experimental
+    public static Ui ui() {
+        return Ui.sInstance;
     }
 
     /** @deprecated Use statically */

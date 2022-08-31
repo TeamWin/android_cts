@@ -16,26 +16,26 @@
 
 package android.devicepolicy.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
-import com.android.bedstead.harrier.annotations.EnsureOnLauncher;
 import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
 import com.android.compatibility.common.util.CddTest;
 import com.android.interactive.Step;
 import com.android.interactive.annotations.Interactive;
 import com.android.interactive.steps.enterprise.settings.AccountsRemoveWorkProfileStep;
-import com.android.interactive.steps.enterprise.settings.ConfirmPersonalAccountsAreSeparateToWorkStep;
-import com.android.interactive.steps.enterprise.settings.ConfirmWorkAccountsAreSeparateToPersonalStep;
+import com.android.interactive.steps.enterprise.settings.AreWorkAccountsSeparateToPersonalStep;
 import com.android.interactive.steps.enterprise.settings.DeviceAdminAppsRemoveWorkProfileStep;
+import com.android.interactive.steps.enterprise.settings.IsDeviceAdminTestAppBadgedStep;
+import com.android.interactive.steps.enterprise.settings.IsItPossibleToDeactivateRemoteDPCStep;
+import com.android.interactive.steps.enterprise.settings.IsRemoteDPCActivatedStep;
+import com.android.interactive.steps.enterprise.settings.IsRemoteDPCBadgedStep;
 import com.android.interactive.steps.enterprise.settings.NavigateToDeviceAdminAppsSectionStep;
 import com.android.interactive.steps.enterprise.settings.NavigateToPersonalAccountSettingsStep;
 import com.android.interactive.steps.enterprise.settings.NavigateToWorkAccountSettingsStep;
 import com.android.interactive.steps.enterprise.settings.NavigateToWorkSecuritySettingsStep;
-import com.android.interactive.steps.enterprise.settings.VerifyDeviceAdminTestAppIsNotBadgedStep;
-import com.android.interactive.steps.enterprise.settings.VerifyRemoteDPCCannotBeDeactivatedStep;
-import com.android.interactive.steps.enterprise.settings.VerifyRemoteDPCIsActivatedStep;
-import com.android.interactive.steps.enterprise.settings.VerifyRemoteDPCIsBadgedStep;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -53,37 +53,21 @@ public final class SettingsAppTest {
     @EnsureHasWorkProfile
     @Interactive
     @CddTest(requirements = {"3.9.2/C-1-7"})
-    @EnsureOnLauncher // We need to ensure the settings screen (which can be cached) is not open
-    public void accountSettings_hasPersonalCategory() {
+    public void accountSettings_hasWorkAndPersonalCategories() {
         // TODO: Add an account and verify that account is listed in the personal category - and
         //   that one added on the work profile is not listed in the personal category
         // Launch personal settings app (or combined app) + navigate to accounts page
         Step.execute(NavigateToPersonalAccountSettingsStep.class);
 
         // Confirm that personal accounts are visually separate from any work accounts
-        Step.execute(ConfirmPersonalAccountsAreSeparateToWorkStep.class);
+        assertThat(Step.execute(AreWorkAccountsSeparateToPersonalStep.class)).isTrue();
     }
 
-    @Test
-    @EnsureHasWorkProfile
-    @Interactive
-    @CddTest(requirements = {"3.9.2/C-1-7"})
-    @EnsureOnLauncher // We need to ensure the settings screen (which can be cached) is not open
-    public void accountSettings_hasWorkCategory() {
-        // TODO: Add an account to work profile and verify that account is listed in the work
-        //  category - and that one added on the personal profile is not listed in the work category
-        // Launch work settings app (or combined app) + navigate to the accounts page
-        Step.execute(NavigateToWorkAccountSettingsStep.class);
-
-        // Confirm that personal accounts are visually separate from any work accounts
-        Step.execute(ConfirmWorkAccountsAreSeparateToPersonalStep.class);
-    }
 
     @Test
     @EnsureHasWorkProfile
     @Interactive
     // TODO(b/221134166): Annotate correct Cdd requirement
-    @EnsureOnLauncher // We need to ensure the settings screen (which can be cached) is not open
     public void accountSettings_removeWorkProfile() {
         // Launch work settings app (or combined app) + navigate to the accounts page
         Step.execute(NavigateToWorkAccountSettingsStep.class);
@@ -96,7 +80,6 @@ public final class SettingsAppTest {
     @EnsureHasWorkProfile
     @Interactive
     // TODO(b/221134166): Annotate correct Cdd requirement
-    @EnsureOnLauncher // We need to ensure the settings screen (which can be cached) is not open
     // Available Device Admin not in the managed profile
     @EnsureTestAppInstalled(packageName = "com.android.bedstead.testapp.DeviceAdminTestApp")
     public void deviceAdminSettings_correctlyListsManagedProfileAndNonManagedProfileAdmins() {
@@ -107,14 +90,14 @@ public final class SettingsAppTest {
         Step.execute(NavigateToDeviceAdminAppsSectionStep.class);
 
         // Verify that the non-managed-profile device admin is listed and unbadged
-        Step.execute(VerifyDeviceAdminTestAppIsNotBadgedStep.class);
+        assertThat(Step.execute(IsDeviceAdminTestAppBadgedStep.class)).isFalse();
 
         // Verify that the test dpc admin is badged
-        Step.execute(VerifyRemoteDPCIsBadgedStep.class);
+        assertThat(Step.execute(IsRemoteDPCBadgedStep.class)).isTrue();
 
         // Find the "RemoteDPC" Device admin and verify that it is activated
-        Step.execute(VerifyRemoteDPCIsActivatedStep.class);
-        Step.execute(VerifyRemoteDPCCannotBeDeactivatedStep.class);
+        assertThat(Step.execute(IsRemoteDPCActivatedStep.class)).isTrue();
+        assertThat(Step.execute(IsItPossibleToDeactivateRemoteDPCStep.class)).isFalse();
 
         // Verify the remove work profile button works
         Step.execute(DeviceAdminAppsRemoveWorkProfileStep.class);

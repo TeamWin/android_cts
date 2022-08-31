@@ -69,6 +69,13 @@ public class TestResult {
             ReportLog reportLog, TestResultHistoryCollection historyCollection) {
         Log.i(TAG, "setPassedResult(activity=" + activity + ", testId=" + testId
                 + ", testDetails=" + testDetails);
+
+        // We store results here straight into the content provider so it can be fetched by the
+        // CTSInteractive host
+        TestResultsProvider.setTestResult(
+                activity, testId, 1, testDetails, reportLog, historyCollection,
+                null);
+
         activity.setResult(Activity.RESULT_OK, createResult(activity, TEST_RESULT_PASSED, testId,
                 testDetails, reportLog, historyCollection));
     }
@@ -89,6 +96,13 @@ public class TestResult {
             ReportLog reportLog, TestResultHistoryCollection historyCollection) {
         Log.e(TAG, "setFailedResult(activity=" + activity + ", testId=" + testId
                 + ", testDetails=" + testDetails);
+
+        // We store results here straight into the content provider so it can be fetched by the
+        // CTSInteractive host
+        TestResultsProvider.setTestResult(
+                activity, testId, 2, testDetails, reportLog, historyCollection,
+                null);
+
         activity.setResult(Activity.RESULT_OK, createResult(activity, TEST_RESULT_FAILED, testId,
                 testDetails, reportLog, historyCollection));
     }

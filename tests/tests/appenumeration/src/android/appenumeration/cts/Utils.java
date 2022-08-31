@@ -280,4 +280,24 @@ public class Utils {
             }
         });
     }
+
+    /**
+     * Grants access to APIs marked as {@code @TestApi}.
+     */
+    static void allowTestApiAccess(String pgkName)  {
+        final StringBuilder cmd = new StringBuilder("am compat enable ALLOW_TEST_API_ACCESS ");
+        cmd.append(pgkName);
+        final String result = runShellCommand(cmd.toString()).trim();
+        assertWithMessage(result).that(result).startsWith("Enabled change");
+    }
+
+    /**
+     * Resets access to APIs marked as {@code @TestApi}.
+     */
+    static void resetTestApiAccess(String pgkName)  {
+        final StringBuilder cmd = new StringBuilder("am compat reset ALLOW_TEST_API_ACCESS ");
+        cmd.append(pgkName);
+        final String result = runShellCommand(cmd.toString()).trim();
+        assertWithMessage(result).that(result).startsWith("Reset change");
+    }
 }

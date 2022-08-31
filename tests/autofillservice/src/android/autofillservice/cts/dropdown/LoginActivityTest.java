@@ -519,14 +519,34 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         final Rect usernamePickerBoundaries1 = mUiBot.assertDatasets("DUDE").getVisibleBounds();
         Log.v(TAG,
                 "Username1 at " + usernameBoundaries1 + "; picker at " + usernamePickerBoundaries1);
-        // TODO(b/37566627): assertions below might be too aggressive - use range instead?
-        if (pickerAndViewBoundsMatches) {
-            if (usernamePickerBoundaries1.top < usernameBoundaries1.bottom) {
-                assertThat(usernamePickerBoundaries1.bottom).isEqualTo(usernameBoundaries1.top);
-            } else {
-                assertThat(usernamePickerBoundaries1.top).isEqualTo(usernameBoundaries1.bottom);
-            }
 
+        if (pickerAndViewBoundsMatches) {
+            boolean isMockImeAvailable = sMockImeSessionRule.getMockImeSession() != null;
+            if (!isMockImeAvailable) {
+                // If Mock IME cannot be installed, depending on the height of the IME,
+                // picker may not be displayed just-below/just-above EditText.
+                // So, picker should be allowed to overlap with EditText.
+                // And it should be visible to the user.
+                // Gets the Activity visible frame to appWindowFrame.
+                // And checks whether all of the following conditions are matched.
+                //   1) Picker.top    <= Username1.bottom
+                //   2) Picker.bottom >= Username1.top
+                //   3) Picker        ∈ appWindowFrame
+                final Rect appWindowFrame = new Rect();
+                mActivity.getWindow().getDecorView().getWindowVisibleDisplayFrame(appWindowFrame);
+                Log.v(TAG, "appWindowFrame at " + appWindowFrame);
+
+                assertThat(usernamePickerBoundaries1.top).isAtMost(usernameBoundaries1.bottom);
+                assertThat(usernamePickerBoundaries1.bottom).isAtLeast(usernameBoundaries1.top);
+                assertThat(appWindowFrame.contains(usernamePickerBoundaries1)).isTrue();
+            } else {
+                // TODO(b/37566627): assertions below might be too aggressive - use range instead?
+                if (usernamePickerBoundaries1.top < usernameBoundaries1.bottom) {
+                    assertThat(usernamePickerBoundaries1.bottom).isEqualTo(usernameBoundaries1.top);
+                } else {
+                    assertThat(usernamePickerBoundaries1.top).isEqualTo(usernameBoundaries1.bottom);
+                }
+            }
             assertThat(usernamePickerBoundaries1.left).isEqualTo(usernameBoundaries1.left);
         }
 

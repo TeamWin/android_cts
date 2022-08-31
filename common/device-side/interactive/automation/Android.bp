@@ -4,9 +4,8 @@ android_app {
         "src/main/java/**/*.java"
     ],
     static_libs: [
-        "InteractiveCommon",
+        "InteractiveCommonAndroid",
         "Nene",
-        "androidx.test.uiautomator_uiautomator",
         "testng"
     ],
     manifest: "src/main/AndroidManifest.xml",
