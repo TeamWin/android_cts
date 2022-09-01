@@ -157,6 +157,23 @@ class AccessibilityPrivacySourceTest {
     }
 
     @Test
+    fun testAccessibilityListenerSendsIssueToSafetyCenter() {
+        setDeviceConfigPrivacyProperty(ACCESSIBILITY_LISTENER_ENABLED, true.toString())
+        val automation = getAutomation()
+        mAccessibilityServiceRule.enableService()
+        TestUtils.eventually(
+            {
+                assertSafetyCenterIssueExist(
+                    SC_ACCESSIBILITY_SOURCE_ID,
+                    safetyCenterIssueId,
+                    SC_ACCESSIBILITY_ISSUE_TYPE_ID,
+                    automation)
+            },
+            TIMEOUT_MILLIS)
+        automation.destroy()
+    }
+
+    @Test
     fun testJobWithDisabledServiceDoesNotSendNotification() {
         runJobAndWaitUntilCompleted()
         assertEmptyNotification(permissionControllerPackage, ACCESSIBILITY_NOTIFICATION_ID)

@@ -186,6 +186,12 @@ public class ManifestTestListAdapter extends TestListAdapter {
             for (DisplayMode mode : DisplayMode.values()) {
                 allRows = getRowsWithDisplayMode(mode.toString());
                 mDisplayModesTests.put(mode.toString(), allRows);
+                PackageManager packageManager = mContext.getPackageManager();
+                boolean isCustomLauncher = packageManager.hasSystemFeature("com.google.android.tv.custom_launcher");
+                if (isCustomLauncher) {
+                    mDisabledTests.add(
+                    "com.android.cts.verifier.net.ConnectivityBackgroundTestActivity");
+                }
             }
         }
 

@@ -314,6 +314,13 @@ public class LoginActivity extends AbstractAutoFillActivity {
     }
 
     /**
+     * Visits the {@code cancel} button in the UiThread.
+     */
+    public void onCancel(Visitor<Button> v) {
+        syncRunOnUiThread(() -> v.visit(mCancelButton));
+    }
+
+    /**
      * Gets the {@code password} view.
      */
     public EditText getPassword() {

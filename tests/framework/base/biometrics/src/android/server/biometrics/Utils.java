@@ -38,6 +38,7 @@ import com.android.server.biometrics.nano.BiometricServiceStateProto;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.security.KeyStore;
 import java.util.List;
 import java.util.function.BooleanSupplier;
@@ -60,6 +61,23 @@ public class Utils {
      */
     public interface SensorStatesSupplier {
         SensorStates getSensorStates() throws Exception;
+    }
+
+    /**
+     * The Biometric {@link com.android.server.biometrics.SensorConfig}.
+     * Parsed sensor config. See core/res/res/values/config.xml config_biometric_sensors
+     */
+    public static class SensorConfig {
+        public final int id;
+        public final int modality;
+        public final int strength;
+
+        public SensorConfig(String config) {
+            String[] elems = config.split(":");
+            id = Integer.parseInt(elems[0]);
+            modality = Integer.parseInt(elems[1]);
+            strength = Integer.parseInt(elems[2]);
+        }
     }
 
     /**
@@ -276,15 +294,47 @@ public class Utils {
     }
 
     /**
-     * Retrieves HIDL biometric sensor configuration defined in config_biometric_sensors.
+     * Retrieves Fps HIDL biometric sensor configuration defined in config_biometric_sensors.
      *
      * @param context The system context.
      * @return List of biometric sensors on the device, in decreasing strength, otherwise null.
      */
     @Nullable
-    public static String[] getSensorConfiguration(Context context) {
+    public static SensorConfig[] getFpsHidlSensorConfig(Context context) {
         final int sensorConfigId = context.getResources().getSystem().getIdentifier(
                 "config_biometric_sensors", "array", "android");
-        return context.getResources().getSystem().getStringArray(sensorConfigId);
+        final String[] configStrings = context.getResources().getSystem().getStringArray(
+                sensorConfigId);
+        final SensorConfig[] hidlConfigs = new SensorConfig[configStrings.length];
+        int fpsSensors = 0;
+        for (int i = 0; i < configStrings.length; ++i) {
+            final SensorConfig config = new SensorConfig(configStrings[i]);
+            if (config.modality == 2 /* TYPE_FINGERPRINT */) {
+                hidlConfigs[fpsSensors++] = config;
+            }
+        }
+        return hidlConfigs;
+    }
+
+    /**
+     * Retrieves AIDL HAL declared instances.
+     * {@link ServiceManager#getDeclaredInstances()}
+     *
+     * @param descriptor The descriptor of AIDL HAL.
+     * @return List of declared AIDL HAL instances on the device, otherwise null.
+     */
+    @Nullable
+    public static String[] getDeclaredInstancesFromServiceManager(String descriptor) {
+        String[] instances;
+        try {
+            instances = (String[]) Class.forName("android.os.ServiceManager").getDeclaredMethod(
+                    "getDeclaredInstances", String.class).invoke(null, descriptor);
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException
+                | InvocationTargetException e) {
+            e.printStackTrace();
+            Log.d(TAG, "Can not get declared AIDL instance " + descriptor);
+            return null;
+        }
+        return instances;
     }
 }

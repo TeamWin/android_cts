@@ -236,7 +236,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Landroid/app/sdksandbox/ILoadSdkCallback;",
                     "Landroid/app/sdksandbox/IRequestSurfacePackageCallback;",
                     "Landroid/app/sdksandbox/ISdkSandboxManager;",
-                    "Landroid/app/sdksandbox/ISdkSandboxLifecycleCallback;",
+                    "Landroid/app/sdksandbox/ISdkSandboxProcessDeathCallback;",
                     "Landroid/app/sdksandbox/ISendDataCallback;",
                     "Landroid/app/sdksandbox/ISharedPreferencesSyncCallback;",
                     "Landroid/app/sdksandbox/ISdkToServiceCallback;"
@@ -737,6 +737,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 "Lcom/android/sdksandbox/IDataReceivedCallback;",
                 "Lcom/android/sdksandbox/ILoadSdkInSandboxCallback;",
                 "Lcom/android/sdksandbox/IRequestSurfacePackageFromSdkCallback;",
+                "Lcom/android/sdksandbox/ISdkSandboxDisabledCallback;",
                 "Lcom/android/sdksandbox/ISdkSandboxManagerToSdkSandboxCallback;",
                 "Lcom/android/sdksandbox/ISdkSandboxService;",
                 "Lcom/android/sdksandbox/SandboxLatencyInfo-IA;",

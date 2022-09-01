@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import libcore.util.EmptyArray
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -131,6 +132,10 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         assertNotNull(pendingUserConsent2)
     }
 
+    /**
+     * Test that calling system data transfer API without first having acquired user consent
+     * results in triggering error callback.
+     */
     @Test(expected = CompanionException::class)
     fun test_startSystemDataTransfer_requiresUserConsent() {
         val association = associate()
@@ -144,6 +149,10 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         startSystemDataTransfer(association.id, input, output)
     }
 
+    /**
+     * Test that system data transfer triggers success callback when CDM receives successful
+     * response from the device whose permissions are being restored.
+     */
     @Test
     fun test_startSystemDataTransfer_success() {
         val association = associate()
@@ -157,6 +166,10 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         startSystemDataTransfer(association.id, input, output)
     }
 
+    /**
+     * Test that system data transfer triggers error callback when CDM receives failure response
+     * from the device whose permissions are being restored.
+     */
     @Test(expected = CompanionException::class)
     fun test_startSystemDataTransfer_failure() {
         val association = associate()
@@ -171,6 +184,11 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         startSystemDataTransfer(association.id, input, output)
     }
 
+    /**
+     * Test that CDM sends a response to incoming request to restore permissions.
+     *
+     * This test uses a mock request with an empty body, so just assert that CDM sends any response.
+     */
     @Test
     fun test_receivePermissionRestore() {
         val association = associate()
@@ -185,9 +203,7 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         SystemClock.sleep(2000) // Wait to actually send data
 
         // Assert CDM sends a response
-        val expected = generatePacket(MESSAGE_RESPONSE_SUCCESS)
-        val actual = output.toByteArray()
-        assertEquals(expected.decodeToString(), actual.decodeToString())
+        assertTrue(isResponse(output.toByteArray()))
     }
 
     private fun generatePacket(message: Int, data: String? = null): ByteArray {
@@ -200,6 +216,16 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
                 .putInt(bytes.size) // data size
                 .put(bytes) // actual data
                 .array()
+    }
+
+    /**
+     * Message is a response if the first byte of the message is 0x33.
+     *
+     * See [com.android.server.companion.transport.CompanionTransportManager].
+     */
+    private fun isResponse(packet: ByteArray): Boolean {
+        val message = ByteBuffer.wrap(packet).int
+        return (message and 0xFF000000.toInt()) == 0x33000000
     }
 
     /**

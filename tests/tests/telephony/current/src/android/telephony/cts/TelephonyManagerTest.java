@@ -2657,19 +2657,14 @@ public class TelephonyManagerTest {
     @Test
     public void testIsPotentialEmergencyNumber() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_CALLING));
-
+        //NOTE: TelephonyManager#isPotentialEmergencyNumber is a hidden
+        //and now deprecated API (from Android-U). This test is updated to make sure we never
+        //do a "potential" match, but always use "exact" matching since it can cause issues
+        //in countries where regular numbers can end up being treated as emergency numbers.
         String countryIso = mTelephonyManager.getNetworkCountryIso();
         String potentialEmergencyAddress = "91112345";
-        // According to com.android.i18n.phonenumbers.ShortNumberInfo, in
-        // these countries, if extra digits are added to an emergency number,
-        // it no longer connects to the emergency service.
-        if (countryIso.equals("br") || countryIso.equals("cl") || countryIso.equals("ni")) {
-            assertFalse(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                    (tm) -> tm.isPotentialEmergencyNumber(potentialEmergencyAddress)));
-        } else {
-            assertTrue(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                    (tm) -> tm.isPotentialEmergencyNumber(potentialEmergencyAddress)));
-        }
+        assertFalse(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.isPotentialEmergencyNumber(potentialEmergencyAddress)));
     }
 
     /**

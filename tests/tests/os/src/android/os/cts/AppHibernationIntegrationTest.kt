@@ -67,6 +67,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import org.junit.Ignore
 
 /**
  * Integration test for app hibernation.
@@ -137,6 +138,7 @@ class AppHibernationIntegrationTest {
     }
 
     @Test
+    @Ignore("b/201545116")
     fun testUnusedApp_getsForceStopped() {
         withUnusedThresholdMs(TEST_UNUSED_THRESHOLD) {
             withApp(APK_PATH_S_APP, APK_PACKAGE_NAME_S_APP) {

@@ -193,6 +193,7 @@ class AutoRevokeTest {
 
     @AppModeFull(reason = "Uses separate apps for testing")
     @Test
+    @Ignore("b/201545116")
     fun testUnusedApp_uninstallApp() {
         assumeFalse(
             "Unused apps screen may be unavailable on TV",
@@ -298,6 +299,7 @@ class AutoRevokeTest {
 
     @AppModeFull(reason = "Uses separate apps for testing")
     @Test
+    @Ignore("b/201545116")
     fun testPermissionEventCleanupService_scrubsEvents() {
         val unusedThreshold = 15_000L
         withUnusedThresholdMs(unusedThreshold) {
@@ -327,6 +329,7 @@ class AutoRevokeTest {
 
     @AppModeFull(reason = "Uses separate apps for testing")
     @Test
+    @Ignore("b/201545116")
     fun testPreMinAutoRevokeVersionUnusedApp_doesntGetPermissionRevoked() {
         withUnusedThresholdMs(3L) {
             withDummyApp(preMinVersionApkPath, preMinVersionAppPackageName) {
@@ -449,6 +452,7 @@ class AutoRevokeTest {
     @AppModeFull(reason = "Uses separate apps for testing")
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     @Test
+    @Ignore("b/201545116")
     fun testAutoRevoke_showsUpInSafetyCenter() {
         withSafetyCenterEnabled {
             withUnusedThresholdMs(3L) {
@@ -488,6 +492,7 @@ class AutoRevokeTest {
     @AppModeFull(reason = "Uses separate apps for testing")
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     @Test
+    @Ignore("b/201545116")
     fun testAutoRevoke_goToUnusedAppsPage_removesSafetyCenterIssue() {
         withSafetyCenterEnabled {
             withUnusedThresholdMs(3L) {

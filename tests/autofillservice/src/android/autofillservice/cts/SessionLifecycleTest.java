@@ -55,11 +55,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
 import android.view.autofill.AutofillValue;
+import android.view.View;
 
 import com.android.compatibility.common.util.Timeout;
 
@@ -454,6 +456,18 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase.ManualActivity
                                 createPresentation("dataset3"))
                                         .setField(ID_USERNAME, "filled").build())
                         .build());
+
+        boolean isMockImeAvailable = sMockImeSessionRule.getMockImeSession() != null;
+        if (!isMockImeAvailable) {
+            // If Mock IME cannot be installed,
+            // it works fine for portrait but for the platforms that the default orientation
+            // is landscape, (e.g. automotive.)
+            // the ID_CANCEL button may not be visible depending on the height of the IME.
+            LoginActivity loginActivity = LoginActivity.getCurrentActivity();
+            loginActivity.onCancel(v -> {
+                    v.getParent().requestChildFocus(v, v);
+            });
+        }
 
         // Tap "Cancel".
         mUiBot.selectByRelativeId(ID_CANCEL);

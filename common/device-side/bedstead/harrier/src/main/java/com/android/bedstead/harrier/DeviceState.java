@@ -2767,6 +2767,6 @@ public final class DeviceState extends HarrierRule {
 
     private void requireNotInstantApp(String reason, FailureMode failureMode) {
         checkFailOrSkip("Test does not run as an instant-app: " + reason,
-                TestApis.packages().instrumented().isInstantApp(), failureMode);
+                !TestApis.packages().instrumented().isInstantApp(), failureMode);
     }
 }

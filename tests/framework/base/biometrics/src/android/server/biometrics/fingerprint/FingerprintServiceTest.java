@@ -30,6 +30,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
@@ -43,6 +44,7 @@ import android.server.biometrics.BiometricServiceState;
 import android.server.biometrics.SensorStates;
 import android.server.biometrics.TestSessionList;
 import android.server.biometrics.Utils;
+import android.server.biometrics.Utils.SensorConfig;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.TestJournalProvider.TestJournal;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
@@ -71,7 +73,8 @@ import java.util.List;
 public class FingerprintServiceTest extends ActivityManagerTestBase
         implements TestSessionList.Idler {
     private static final String TAG = "FingerprintServiceTest";
-
+    private static final String DESCRIPTOR =
+            "android.hardware.biometrics.fingerprint.IFingerprint";
     private static final String DUMPSYS_FINGERPRINT = "dumpsys fingerprint --proto --state";
     private static final int FINGERPRINT_ERROR_VENDOR_BASE = 1000;
     private static final long WAIT_MS = 2000;
@@ -252,8 +255,13 @@ public class FingerprintServiceTest extends ActivityManagerTestBase
             // and do not dispatch an acquired event via BiometricPrompt
             final boolean verifyPartial = !hasUdfps();
             if (verifyPartial) {
-                final String[] configs = Utils.getSensorConfiguration(mContext);
-                if (configs == null || configs.length == 0) {
+                final SensorConfig[] fpsHidlConfigs = Utils.getFpsHidlSensorConfig(mContext);
+                final String[] fpsAidlHal = Utils.getDeclaredInstancesFromServiceManager(
+                        DESCRIPTOR);
+                final boolean hasAidlHal = fpsAidlHal != null && fpsAidlHal.length > 0;
+                final boolean hasHidlHal = fpsHidlConfigs != null && fpsHidlConfigs.length > 0;
+                assumeFalse("Device has both AIDL & HIDL HAL, skip.", hasAidlHal && hasHidlHal);
+                if (fpsHidlConfigs == null || fpsHidlConfigs.length == 0) {
                     // AIDL HAL do not need config_biometric_sensors.
                     testSessions.first().notifyAcquired(userId, 2 /* AcquiredInfo.PARTIAL */);
                 } else {

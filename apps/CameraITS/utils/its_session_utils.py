@@ -639,7 +639,7 @@ class ItsSession(object):
       preview_request_idle: Preview request with aePrecaptureTrigger set to Idle
       still_capture_req: Single still capture request.
       out_surface: Specifications of the output image formats and
-        sizes to use for capture.
+        sizes to use for capture. Supports yuv and jpeg.
     Returns:
       An object which contains following fields:
       * data: the image data as a numpy array of bytes.
@@ -655,36 +655,101 @@ class ItsSession(object):
     cmd['stillCaptureRequest'] = [still_capture_req]
     cmd['outputSurfaces'] = [out_surface]
 
+    fmt = out_surface['format'] if 'format' in out_surface else 'yuv'
+    if fmt == 'jpg': fmt = 'jpeg'
+
+    # we only have 1 capture request and 1 surface by definition.
+    ncap = 1
+
+    cam_id = None
+    bufs = {}
+    yuv_bufs = {}
+    if self._hidden_physical_id:
+      out_surface['physicalCamera'] = self._hidden_physical_id
+
+    if 'physicalCamera' in out_surface:
+      cam_id = out_surface['physicalCamera']
+    else:
+      cam_id = self._camera_id
+
+    bufs[cam_id] = {
+        'raw': [],
+        'raw10': [],
+        'raw12': [],
+        'rawStats': [],
+        'dng': [],
+        'jpeg': [],
+        'y8': []
+    }
+
+    # Only allow yuv output to multiple targets
+    yuv_surface = None
+    if cam_id == self._camera_id:
+      if 'physicalCamera' not in out_surface:
+        if out_surface['format'] == 'yuv':
+          yuv_surface = out_surface
+    else:
+      if ('physicalCamera' in out_surface and
+          out_surface['physicalCamera'] == cam_id):
+        if out_surface['format'] == 'yuv':
+          yuv_surface = out_surface
+
+    # Compute the buffer size of YUV targets
+    yuv_maxsize_1d = 0
+    if yuv_surface is not None:
+      if ('width' not in yuv_surface and 'height' not in yuv_surface):
+        if self.props is None:
+          raise error_util.CameraItsError('Camera props are unavailable')
+        yuv_maxsize_2d = capture_request_utils.get_available_output_sizes(
+            'yuv', self.props)[0]
+        # YUV420 size = 1.5 bytes per pixel
+        yuv_maxsize_1d = (yuv_maxsize_2d[0] * yuv_maxsize_2d[1] * 3) // 2
+      if 'width' in yuv_surface and 'height' in yuv_surface:
+        yuv_size = (yuv_surface['width'] * yuv_surface['height'] * 3) // 2
+      else:
+        yuv_size = yuv_maxsize_1d
+
+      yuv_bufs[cam_id] = {yuv_size: []}
+
     cam_ids = self._camera_id
     self.sock.settimeout(self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT)
     logging.debug('Capturing image with ON_AUTO_FLASH.')
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
-    bufs = {}
-    bufs[self._camera_id] = {'jpeg': []}
-    formats = ['jpeg']
-    rets = []
     nbufs = 0
-    mds = []
-    physical_mds = []
-    widths = None
-    heights = None
-    ncap = 1
+    md = None
+    physical_md = None
+    width = None
+    height = None
     capture_results_returned = False
-    yuv_bufs = {}
-    while not capture_results_returned:
+    while nbufs < ncap or not capture_results_returned:
       json_obj, buf = self.__read_response_from_socket()
       if json_obj['tag'] in ItsSession.IMAGE_FORMAT_LIST_1 and buf is not None:
         fmt = json_obj['tag'][:-5]
         bufs[self._camera_id][fmt].append(buf)
         nbufs += 1
+      elif json_obj['tag'] == 'yuvImage':
+        buf_size = numpy.product(buf.shape)
+        yuv_bufs[self._camera_id][buf_size].append(buf)
+        nbufs += 1
       elif json_obj['tag'] == 'captureResults':
         capture_results_returned = True
-        mds.append(json_obj['objValue']['captureResult'])
-        physical_mds.append(json_obj['objValue']['physicalResults'])
+        md = json_obj['objValue']['captureResult']
+        physical_md = json_obj['objValue']['physicalResults']
         outputs = json_obj['objValue']['outputs']
-        widths = [out['width'] for out in outputs]
-        heights = [out['height'] for out in outputs]
+        returned_fmt = outputs[0]['format']
+        if fmt != returned_fmt:
+          raise AssertionError(
+              f'Incorrect format. Requested: {fmt}, '
+              f'Received: {returned_fmt}')
+        width = outputs[0]['width']
+        height = outputs[0]['height']
+        requested_width = out_surface['width']
+        requested_height = out_surface['height']
+        if requested_width != width or requested_height != height:
+          raise AssertionError(
+              f'Incorrect size. Requested: {requested_width}x{requested_height}, '
+              f'Received: {width}x{height}')
       else:
         tag_string = unicodedata.normalize('NFKD', json_obj['tag']).encode(
             'ascii', 'ignore')
@@ -703,34 +768,28 @@ class ItsSession(object):
                 fmt = x[:-5].decode('UTF-8')
                 bufs[physical_id][fmt].append(buf)
                 nbufs += 1
-    rets = []
-    for j, fmt in enumerate(formats):
-      objs = []
-      if 'physicalCamera' in cmd['outputSurfaces'][j]:
-        cam_id = cmd['outputSurfaces'][j]['physicalCamera']
-      else:
-        cam_id = self._camera_id
-      for i in range(ncap):
-        obj = {}
-        obj['width'] = widths[j]
-        obj['height'] = heights[j]
-        obj['format'] = fmt
-        if cam_id == self._camera_id:
-          obj['metadata'] = mds[i]
-        else:
-          for physical_md in physical_mds[i]:
-            if cam_id in physical_md:
-              obj['metadata'] = physical_md[cam_id]
-              break
-        obj['data'] = bufs[cam_id][fmt][i]
-        objs.append(obj)
-      rets.append(objs if ncap > 1 else objs[0])
-    self.sock.settimeout(self.SOCK_TIMEOUT)
-    if len(rets) > 1 or (isinstance(rets[0], dict) and
-                         isinstance(still_capture_req, list)):
-      return rets
+
+    if 'physicalCamera' in out_surface:
+      cam_id = out_surface['physicalCamera']
     else:
-      return rets[0]
+      cam_id = self._camera_id
+    ret = {}
+    ret['width'] = width
+    ret['height'] = height
+    ret['format'] = fmt
+    if cam_id == self._camera_id:
+      ret['metadata'] = md
+    else:
+      if cam_id in physical_md:
+        ret['metadata'] = physical_md[cam_id]
+
+    if fmt == 'yuv':
+      buf_size = (width * height * 3) // 2
+      ret['data'] = yuv_bufs[cam_id][buf_size][0]
+    else:
+      ret['data'] = bufs[cam_id][fmt][0]
+
+    return ret
 
   def do_capture(self,
                  cap_request,

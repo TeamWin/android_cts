@@ -35,6 +35,9 @@ FLASH_STATES = {0: 'FLASH_STATE_UNAVAILABLE', 1: 'FLASH_STATE_CHARGING',
 _GRAD_DELTA_ATOL = 15  # gradiant for tablets as screen aborbs energy
 _MEAN_DELTA_ATOL = 15  # mean used for reflective charts
 
+_FORMAT_NAMES = ['jpeg', 'yuv']
+_SIZES = [(4032, 3024), (4032, 2268)]
+
 _PATCH_H = 0.25  # center 25%
 _PATCH_W = 0.25
 _PATCH_X = 0.5 - _PATCH_W/2
@@ -98,6 +101,7 @@ class AutoFlashTest(its_base_test.ItsBaseTest):
     logging.debug('AE_MODES: %s', str(AE_MODES))
     logging.debug('AE_STATES: %s', str(AE_STATES))
     logging.debug('FLASH_STATES: %s', str(FLASH_STATES))
+    failure_messages = []
 
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
@@ -124,109 +128,123 @@ class AutoFlashTest(its_base_test.ItsBaseTest):
       # turn OFF tablet to darken scene
       if self.tablet:
         turn_off_tablet(self.tablet)
-      fmt_name = 'jpeg'
-      fmt = {'format': fmt_name}
-      logging.debug('Testing %s format.', fmt_name)
-      no_flash_exp_x_iso = 0
-      no_flash_mean = 0
-      no_flash_grad = 0
-      flash_exp_x_iso = []
 
-      # take capture with no flash as baseline
-      logging.debug('Taking reference frame with no flash.')
-      cam.do_3a(do_af=False)
-      no_flash_req = capture_request_utils.auto_capture_request()
-      no_flash_req[
-          'android.control.captureIntent'] = _CAPTURE_INTENT_STILL_CAPTURE
-      cap = cam.do_capture(no_flash_req, fmt)
-      metadata = cap['metadata']
-      exp = int(metadata['android.sensor.exposureTime'])
-      iso = int(metadata['android.sensor.sensitivity'])
-      logging.debug('No auto_flash ISO: %d, exp: %d ns', iso, exp)
-      logging.debug('AE_MODE (cap): %s',
-                    AE_MODES[metadata['android.control.aeMode']])
-      logging.debug('AE_STATE (cap): %s',
-                    AE_STATES[metadata['android.control.aeState']])
-      no_flash_exp_x_iso = exp * iso
-      y, _, _ = image_processing_utils.convert_capture_to_planes(
-          cap, props)
-      patch = image_processing_utils.get_image_patch(
-          y, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
-      no_flash_mean = image_processing_utils.compute_image_means(
-          patch)[0]*255
-      no_flash_grad = image_processing_utils.compute_image_max_gradients(
-          patch)[0]*255
-      image_processing_utils.write_image(
-          y, f'{test_name}_{fmt_name}_no_flash_Y.jpg')
+      for fmt_name in _FORMAT_NAMES:
+        for width, height in _SIZES:
+          out_surfaces = {'format': fmt_name, 'width': width, 'height': height}
+          logging.debug('Testing %s format, size: %dx%d',
+                        fmt_name, width, height)
+          no_flash_exp_x_iso = 0
+          no_flash_mean = 0
+          no_flash_grad = 0
+          flash_exp_x_iso = []
 
-      # log results
-      logging.debug('No flash exposure X ISO %d', no_flash_exp_x_iso)
-      logging.debug('No flash Y grad: %.4f', no_flash_grad)
-      logging.debug('No flash Y mean: %.4f', no_flash_mean)
+          # take capture with no flash as baseline
+          logging.debug('Taking reference frame with no flash.')
+          cam.do_3a(do_af=False)
+          no_flash_req = capture_request_utils.auto_capture_request()
+          no_flash_req[
+              'android.control.captureIntent'] = _CAPTURE_INTENT_STILL_CAPTURE
+          cap = cam.do_capture(no_flash_req, out_surfaces)
+          metadata = cap['metadata']
+          exp = int(metadata['android.sensor.exposureTime'])
+          iso = int(metadata['android.sensor.sensitivity'])
+          logging.debug('No auto_flash ISO: %d, exp: %d ns', iso, exp)
+          logging.debug('AE_MODE (cap): %s',
+                        AE_MODES[metadata['android.control.aeMode']])
+          logging.debug('AE_STATE (cap): %s',
+                        AE_STATES[metadata['android.control.aeState']])
+          no_flash_exp_x_iso = exp * iso
+          y, _, _ = image_processing_utils.convert_capture_to_planes(
+              cap, props)
+          patch = image_processing_utils.get_image_patch(
+              y, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
+          no_flash_mean = image_processing_utils.compute_image_means(
+              patch)[0]*255
+          no_flash_grad = image_processing_utils.compute_image_max_gradients(
+              patch)[0]*255
+          image_processing_utils.write_image(
+              y, f'{test_name}_{fmt_name}_{width}x{height}_no_flash_Y.jpg')
 
-      # take capture with auto flash enabled
-      logging.debug('Taking capture with auto flash enabled.')
-      flash_fired = False
+          # log results
+          logging.debug('No flash exposure X ISO %d', no_flash_exp_x_iso)
+          logging.debug('No flash Y grad: %.4f', no_flash_grad)
+          logging.debug('No flash Y mean: %.4f', no_flash_mean)
 
-      cap = take_captures_with_flash(cam, fmt)
-      y, _, _ = image_processing_utils.convert_capture_to_planes(
-          cap, props)
-      # Save captured image
-      image_processing_utils.write_image(y,
-                                         f'{test_name}_{fmt_name}_flash_Y.jpg')
-      # evaluate captured image
-      metadata = cap['metadata']
-      exp = int(metadata['android.sensor.exposureTime'])
-      iso = int(metadata['android.sensor.sensitivity'])
-      logging.debug('cap ISO: %d, exp: %d ns', iso, exp)
-      logging.debug('AE_MODE (cap): %s',
-                    AE_MODES[metadata['android.control.aeMode']])
-      ae_state = AE_STATES[metadata['android.control.aeState']]
-      logging.debug('AE_STATE (cap): %s', ae_state)
-      flash_state = FLASH_STATES[metadata['android.flash.state']]
-      logging.debug('FLASH_STATE: %s', flash_state)
-      if flash_state == 'FLASH_STATE_FIRED':
-        logging.debug('Flash fired')
-        flash_fired = True
-        flash_exp_x_iso = exp*iso
-        y, _, _ = image_processing_utils.convert_capture_to_planes(
-            cap, props)
-        patch = image_processing_utils.get_image_patch(
-            y, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
-        flash_mean = image_processing_utils.compute_image_means(
-            patch)[0]*255
-        flash_grad = image_processing_utils.compute_image_max_gradients(
-            patch)[0]*255
+          # take capture with auto flash enabled
+          logging.debug('Taking capture with auto flash enabled.')
+          flash_fired = False
 
-      if not flash_fired:
-        raise AssertionError('Flash was not fired.')
+          cap = take_captures_with_flash(cam, out_surfaces)
+          y, _, _ = image_processing_utils.convert_capture_to_planes(
+              cap, props)
+          # Save captured image
+          image_processing_utils.write_image(y,
+                                             (
+                                                 f'{test_name}_{fmt_name}_'
+                                                 f'{width}x{height}_'
+                                                 f'flash_Y.jpg')
+                                             )
+          # evaluate captured image
+          metadata = cap['metadata']
+          exp = int(metadata['android.sensor.exposureTime'])
+          iso = int(metadata['android.sensor.sensitivity'])
+          logging.debug('cap ISO: %d, exp: %d ns', iso, exp)
+          logging.debug('AE_MODE (cap): %s',
+                        AE_MODES[metadata['android.control.aeMode']])
+          ae_state = AE_STATES[metadata['android.control.aeState']]
+          logging.debug('AE_STATE (cap): %s', ae_state)
+          flash_state = FLASH_STATES[metadata['android.flash.state']]
+          logging.debug('FLASH_STATE: %s', flash_state)
+          if flash_state == 'FLASH_STATE_FIRED':
+            logging.debug('Flash fired')
+            flash_fired = True
+            flash_exp_x_iso = exp*iso
+            y, _, _ = image_processing_utils.convert_capture_to_planes(
+                cap, props)
+            patch = image_processing_utils.get_image_patch(
+                y, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
+            flash_mean = image_processing_utils.compute_image_means(
+                patch)[0]*255
+            flash_grad = image_processing_utils.compute_image_max_gradients(
+                patch)[0]*255
 
-      # log results
-      logging.debug('Flash exposure X ISO %d', flash_exp_x_iso)
-      logging.debug('Flash frames Y grad: %.4f', flash_grad)
-      logging.debug('Flash frames Y mean: %.4f', flash_mean)
+          if not flash_fired:
+            raise AssertionError(f'Flash was not fired. '
+                                 f'Format: {fmt_name}, Size: {width}x{height}')
 
-      # assert correct behavior
-      grad_delta = flash_grad - no_flash_grad
-      mean_delta = flash_mean - no_flash_mean
-      if not (grad_delta > _GRAD_DELTA_ATOL or
-              mean_delta > _MEAN_DELTA_ATOL):
-        raise AssertionError(
-            f'grad FLASH-OFF: {grad_delta:.3f}, ATOL: {_GRAD_DELTA_ATOL}, '
-            f'mean FLASH-OFF: {mean_delta:.3f}, ATOL: {_MEAN_DELTA_ATOL}')
+          # log results
+          logging.debug('Flash exposure X ISO %d', flash_exp_x_iso)
+          logging.debug('Flash frames Y grad: %.4f', flash_grad)
+          logging.debug('Flash frames Y mean: %.4f', flash_mean)
 
-      # Ensure that the flash is turned OFF after flash was fired.
-      req = capture_request_utils.auto_capture_request()
-      req['android.control.captureIntent'] = _CAPTURE_INTENT_STILL_CAPTURE
-      cap = cam.do_capture(req, fmt)
-      flash_state_after = FLASH_STATES[cap['metadata']['android.flash.state']]
-      logging.debug('FLASH_STATE after flash fired: %s', flash_state_after)
-      if flash_state_after != 'FLASH_STATE_READY':
-        raise AssertionError('Flash should turn OFF after it was fired.')
+          # document incorrect behavior
+          grad_delta = flash_grad - no_flash_grad
+          mean_delta = flash_mean - no_flash_mean
+          if not (grad_delta > _GRAD_DELTA_ATOL or
+                  mean_delta > _MEAN_DELTA_ATOL):
+            failure_messages.append(
+                f'format: {fmt_name}, size: {width}x{height}, '
+                f'grad FLASH-OFF: {grad_delta:.3f}, ATOL: {_GRAD_DELTA_ATOL}, '
+                f'mean FLASH-OFF: {mean_delta:.3f}, ATOL: {_MEAN_DELTA_ATOL}')
+
+          # Ensure that the flash is turned OFF after flash was fired.
+          req = capture_request_utils.auto_capture_request()
+          req['android.control.captureIntent'] = _CAPTURE_INTENT_STILL_CAPTURE
+          cap = cam.do_capture(req, out_surfaces)
+          flash_state_after = FLASH_STATES[cap['metadata']
+                                           ['android.flash.state']]
+          logging.debug('FLASH_STATE after flash fired: %s', flash_state_after)
+          if flash_state_after != 'FLASH_STATE_READY':
+            raise AssertionError('Flash should turn OFF after it was fired.')
 
       # turn lights back ON
       lighting_control_utils.set_lighting_state(
           arduino_serial_port, self.lighting_ch, 'ON')
+
+      # assert correct behavior for all formats
+      if failure_messages:
+        raise AssertionError('\n'.join(failure_messages))
 
 if __name__ == '__main__':
   test_runner.main()

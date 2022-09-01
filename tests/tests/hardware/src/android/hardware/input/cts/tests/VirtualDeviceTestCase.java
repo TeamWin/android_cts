@@ -203,11 +203,16 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
         final MotionEvent downEvent = MotionEvent.obtain(downTime, downTime,
                 MotionEvent.ACTION_DOWN, p.x, p.y, 0 /* metaState */);
         downEvent.setDisplayId(displayId);
-        mInstrumentation.sendPointerSync(downEvent);
         final MotionEvent upEvent = MotionEvent.obtain(downTime, SystemClock.elapsedRealtime(),
                 MotionEvent.ACTION_UP, p.x, p.y, 0 /* metaState */);
         upEvent.setDisplayId(displayId);
-        mInstrumentation.sendPointerSync(upEvent);
+
+        try {
+            mInstrumentation.sendPointerSync(downEvent);
+            mInstrumentation.sendPointerSync(upEvent);
+        } catch (IllegalArgumentException e) {
+            fail("Failed to sending taps to the activity. Is the device unlocked?");
+        }
 
         verifyEvents(ImmutableList.of(downEvent, upEvent));
     }

@@ -1607,6 +1607,45 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     }
 
     @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testCabinLightsSwitchIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.CABIN_LIGHTS_SWITCH,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                    .build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testReadingLightsSwitchIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_INTERIOR_LIGHTS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.READING_LIGHTS_SWITCH,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).setPossibleCarPropertyValues(VEHICLE_LIGHT_SWITCHES)
+                    .build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#setProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
     public void testSeatBeltBuckledIfSupported() {
         adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
             VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_BELT_BUCKLED,
