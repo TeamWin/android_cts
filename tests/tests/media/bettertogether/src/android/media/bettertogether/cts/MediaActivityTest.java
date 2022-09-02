@@ -16,11 +16,8 @@
 
 package android.media.bettertogether.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.Manifest;
 import android.app.Activity;
@@ -133,10 +130,17 @@ public class MediaActivityTest {
             activityReferenceObtained.open();
         });
         activityReferenceObtained.block(/* timeoutMs= */ 10000);
-        assertNotNull("Failed to acquire activity reference.", mActivity);
-        assertNotNull("Failed to bring MediaSessionTestActivity due to the screen lock setting."
-                + " Ensure screen lock isn't set before running CTS test.",
-                mActivity.getMediaController());
+
+        assertWithMessage("Failed to acquire activity reference.")
+                .that(mActivity)
+                .isNotNull();
+
+        assertWithMessage(
+                "Failed to bring MediaSessionTestActivity due to the screen lock setting. Ensure "
+                        + "screen lock isn't set before running CTS test.")
+                .that(mActivity.getMediaController())
+                .isNotNull();
+
         mInstrumentation.waitForIdleSync();
     }
 
@@ -187,12 +191,13 @@ public class MediaActivityTest {
         }
 
         // The key event can be ignored and show volume panel instead. Use polling.
-        assertTrue("failed to adjust stream volume that foreground activity want",
-                pollingCheck(() -> {
+        assertWithMessage("failed to adjust stream volume that foreground activity want")
+                .that(pollingCheck(() -> {
                     sendKeyEvent(testKeyCode);
                     return mStreamVolumeMap.get(testStream)
                             != mAudioManager.getStreamVolume(testStream);
-                }));
+                }))
+                .isTrue();
     }
 
     /**
@@ -220,10 +225,10 @@ public class MediaActivityTest {
 
         // Volume may not have been changed because the target stream's volume level was minimum.
         // Try again with the up key.
-        assertTrue(pollingCheck(() -> {
+        assertThat(pollingCheck(() -> {
             sendKeyEvent(KeyEvent.KEYCODE_VOLUME_UP);
             return checkAnyStreamVolumeChanged();
-        }));
+        })).isTrue();
     }
 
     @Test
@@ -237,7 +242,7 @@ public class MediaActivityTest {
             @Override
             public boolean onMediaButtonEvent(Intent mediaButtonIntent) {
                 KeyEvent event = mediaButtonIntent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
-                assertEquals(testKeyEvent, event.getKeyCode());
+                assertThat(event.getKeyCode()).isEqualTo(testKeyEvent);
                 latch.countDown();
                 return true;
             }
@@ -245,7 +250,7 @@ public class MediaActivityTest {
 
         sendKeyEvent(testKeyEvent);
 
-        assertTrue(latch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+        assertThat(latch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS)).isTrue();
     }
 
     @Test
@@ -256,7 +261,8 @@ public class MediaActivityTest {
         mSession.setCallback(new MediaSession.Callback() {
             @Override
             public boolean onMediaButtonEvent(Intent mediaButtonIntent) {
-                fail("Released session shouldn't be able to receive key event in any case");
+                assertWithMessage("Released session shouldn't be able"
+                        + " to receive key event in any case").fail();
                 latch.countDown();
                 return true;
             }
@@ -265,7 +271,7 @@ public class MediaActivityTest {
 
         sendKeyEvent(testKeyEvent);
 
-        assertFalse(latch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+        assertThat(latch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS)).isFalse();
     }
 
     private void sendKeyEvent(int keyCode) {
@@ -300,7 +306,7 @@ public class MediaActivityTest {
             try {
                 Thread.sleep(TIME_SLICE);
             } catch (InterruptedException e) {
-                fail("unexpected InterruptedException");
+                assertWithMessage("unexpected InterruptedException").fail();
             }
         }
         return pollingCount >= 0;

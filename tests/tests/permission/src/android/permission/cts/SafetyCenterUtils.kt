@@ -88,6 +88,16 @@ object SafetyCenterUtils {
     }
 
     @JvmStatic
+    fun deleteDeviceConfigPrivacyProperty(
+        propertyName: String,
+        uiAutomation: UiAutomation = instrumentation.uiAutomation
+    ) {
+        runWithShellPermissionIdentity(uiAutomation) {
+            DeviceConfig.deleteProperty(DeviceConfig.NAMESPACE_PRIVACY, propertyName)
+        }
+    }
+
+    @JvmStatic
     private fun getSafetyCenterIssues(
         automation: UiAutomation = instrumentation.uiAutomation
     ): List<SafetyCenterIssue> {

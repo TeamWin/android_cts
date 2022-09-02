@@ -985,13 +985,19 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
                 String[] tokens = line.split("\\{|\\}");
                 String componentName = tokens[1];
                 // Skip to user id line.
-                i += 4;
-                line = lines[i].trim();
-                // Line is User ID: <N>
-                tokens = line.split(":");
-                int userId = Integer.parseInt(tokens[1].trim());
-                CLog.w("Cleaning up device owner " + userId + " " + componentName);
-                removeAdmin(componentName, userId);
+                for (int j = i + 1; j < lines.length; ++j) {
+                    line = lines[j].trim();
+                    // Line is User ID: <N>
+                    if (line.contains("User ID:")) {
+                        tokens = line.split(":");
+                        int userId = Integer.parseInt(tokens[1].trim());
+                        CLog.w("Cleaning up device owner " + userId + " " + componentName);
+                        removeAdmin(componentName, userId);
+                        return;
+                    }
+                }
+                throw new RuntimeException(
+                        "Error finding a user id for this device owner in dumpsys.");
             }
         }
     }

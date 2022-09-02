@@ -16,8 +16,6 @@
 
 package android.cts.statsdatom.bluetooth;
 
-import static android.cts.statsdatom.statsd.AtomTestCase.FEATURE_BLUETOOTH_LE;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import android.cts.statsdatom.lib.AtomTestUtils;
@@ -39,6 +37,8 @@ import java.util.List;
 import java.util.Set;
 
 public class BluetoothStatsTests extends DeviceTestCase implements IBuildReceiver {
+    private static final String FEATURE_BLUETOOTH_LE = "android.hardware.bluetooth_le";
+
     private IBuildInfo mCtsBuild;
 
     @Override

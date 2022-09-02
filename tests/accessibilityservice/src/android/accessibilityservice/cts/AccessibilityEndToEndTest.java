@@ -1314,13 +1314,13 @@ public class AccessibilityEndToEndTest {
 
     @Test
     @ApiTest(apis = {
-            "android.view.accessibility.AccessibilityNodeInfo#makeQueryableFromAppProcess"})
+            "android.view.accessibility.AccessibilityNodeInfo#setQueryFromAppProcessEnabled"})
     public void testDirectAccessibilityConnection_NavigateHierarchy() throws Throwable {
         View layoutView = mActivity.findViewById(R.id.buttonLayout);
         AccessibilityNodeInfo layoutNode = layoutView.createAccessibilityNodeInfo();
 
         assertThat(layoutNode).isNotNull();
-        layoutNode.enableQueryFromAppProcess(layoutView.getRootView());
+        layoutNode.setQueryFromAppProcessEnabled(layoutView.getRootView(), true);
 
         // Access this node's children.
         assertThat(layoutNode.getChildCount()).isGreaterThan(0);
@@ -1363,7 +1363,7 @@ public class AccessibilityEndToEndTest {
 
     @Test
     @ApiTest(apis = {
-            "android.view.accessibility.AccessibilityNodeInfo#makeQueryableFromAppProcess"})
+            "android.view.accessibility.AccessibilityNodeInfo#setQueryFromAppProcessEnabled"})
     public void testDirectAccessibilityConnection_CanPerformAction() {
         View button = mActivity.findViewById(R.id.button);
         AtomicBoolean clicked = new AtomicBoolean(false);
@@ -1371,10 +1371,30 @@ public class AccessibilityEndToEndTest {
         AccessibilityNodeInfo buttonNode = button.createAccessibilityNodeInfo();
 
         assertThat(buttonNode).isNotNull();
-        buttonNode.enableQueryFromAppProcess(button.getRootView());
+        buttonNode.setQueryFromAppProcessEnabled(button.getRootView(), true);
 
         assertThat(buttonNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)).isTrue();
         assertThat(clicked.get()).isTrue();
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.view.accessibility.AccessibilityNodeInfo#setQueryFromAppProcessEnabled"})
+    public void testDirectAccessibilityConnection_CanDisable() {
+        View layoutView = mActivity.findViewById(R.id.buttonLayout);
+        AccessibilityNodeInfo layoutNode = layoutView.createAccessibilityNodeInfo();
+        assertThat(layoutNode).isNotNull();
+
+        layoutNode.setQueryFromAppProcessEnabled(layoutView.getRootView(), true);
+        assertThat(layoutNode.getParent()).isNotNull();
+
+        layoutNode.setQueryFromAppProcessEnabled(layoutView.getRootView(), false);
+        try {
+            layoutNode.getParent();
+            fail("Should not be able to navigate node tree on node without any connection.");
+        } catch (IllegalStateException e) {
+            // expected due to undefined connection ID
+        }
     }
 
     private static void assertPackageName(AccessibilityNodeInfo node, String packageName) {

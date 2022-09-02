@@ -113,6 +113,16 @@
                        android:resource="@xml/keyboard_layouts" />
         </receiver>
 
+        <service android:name="android.hardware.cts.HardwareBufferTestService$JavaLocal" />
+
+        <service android:name="android.hardware.cts.HardwareBufferTestService$JavaRemote"
+            android:process=":java" />
+
+        <service android:name="android.hardware.cts.HardwareBufferTestService$NativeLocal" />
+
+        <service android:name="android.hardware.cts.HardwareBufferTestService$NativeRemote"
+            android:process=":native" />
+
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

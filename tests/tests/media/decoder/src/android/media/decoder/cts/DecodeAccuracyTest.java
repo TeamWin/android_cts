@@ -19,10 +19,7 @@ import static junit.framework.TestCase.assertTrue;
 
 import static org.junit.Assert.fail;
 
-import android.media.decoder.cts.R;
-
 import android.annotation.TargetApi;
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.media.MediaFormat;
 import android.media.cts.MediaHeavyPresubmitTest;
@@ -32,31 +29,23 @@ import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.view.View;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.compatibility.common.util.MediaUtils;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.FileOutputStream;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.Timeout;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-import org.junit.Test;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @TargetApi(24)
 @RunWith(Parameterized.class)

@@ -27,6 +27,10 @@ import static org.junit.Assume.assumeThat;
 
 import android.app.UiAutomation;
 import android.car.Car;
+import android.car.test.ApiCheckerRule;
+import android.car.test.ApiCheckerRule.SupportedVersionTest;
+import android.car.test.ApiCheckerRule.UnsupportedVersionTest;
+import android.car.test.ApiCheckerRule.UnsupportedVersionTest.Behavior;
 import android.car.user.CarUserManager;
 import android.car.user.CarUserManager.UserLifecycleEvent;
 import android.car.user.CarUserManager.UserLifecycleListener;
@@ -41,9 +45,11 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -60,6 +66,11 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     private static final int TIMEOUT_MS = 60_000;
     private static final int WAIT_TIME_MS = 1_000;
 
+    // TODO(b/242350638): move to super class (although it would need to call
+    // disableAnnotationsCheck()
+    @Rule
+    public final ApiCheckerRule mApiCheckerRule = new ApiCheckerRule.Builder().build();
+
     @Before
     public void setUp() throws Exception {
         super.setUp();
@@ -67,15 +78,24 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     }
 
     @Test
+    // TODO(b/244222267): Change into @ApiTest with @ApiCheckerRule.IgnoreInvalidApi.
+    // Note: Tie this test to the car api version codes so that we can know which version those
+    // tests are targeting for but the goal of the test is really for testing internal behavior of
+    // that car version.
+    @ApiTest(apis = {"android.car.Car#API_VERSION_MINOR_INT"})
     public void testCarServiceHelperServiceDump_list() throws Exception {
         assumeSystemServerDumpSupported();
-
         assertWithMessage("System server dumper")
                 .that(executeShellCommand("dumpsys system_server_dumper --list"))
                 .contains("CarServiceHelper");
     }
 
     @Test
+    // TODO(b/244222267): Change into @ApiTest with @ApiCheckerRule.IgnoreInvalidApi.
+    // Note: Tie this test to the car api version codes so that we can know which version those
+    // tests are targeting for but the goal of the test is really for testing internal behavior of
+    // that car version.
+    @ApiTest(apis = {"android.car.Car#API_VERSION_MINOR_INT"})
     public void testCarServiceHelperServiceDump_carServiceProxy() throws Exception {
         assumeSystemServerDumpSupported();
 
@@ -85,6 +105,11 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     }
 
     @Test
+    // TODO(b/244222267): Change into @ApiTest with @ApiCheckerRule.IgnoreInvalidApi.
+    // Note: Tie this test to the car api version codes so that we can know which version those
+    // tests are targeting for but the goal of the test is really for testing internal behavior of
+    // that car version.
+    @ApiTest(apis = {"android.car.Car#API_VERSION_MINOR_INT"})
     public void testCarServiceHelperServiceDump_safeMode() throws Exception {
         assumeSystemServerDumpSupported();
 
@@ -97,6 +122,11 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     }
 
     @Test
+    // TODO(b/244222267): Change into @ApiTest with @ApiCheckerRule.IgnoreInvalidApi.
+    // Note: Tie this test to the car api version codes so that we can know which version those
+    // tests are targeting for but the goal of the test is really for testing internal behavior of
+    // that car version.
+    @ApiTest(apis = {"android.car.Car#API_VERSION_MINOR_INT"})
     public void testCarServiceHelperServiceDump_unsafeMode() throws Exception {
         assumeSystemServerDumpSupported();
 
@@ -112,6 +142,11 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     }
 
     @Test
+    // TODO(b/244222267): Change into @ApiTest with @ApiCheckerRule.IgnoreInvalidApi.
+    // Note: Tie this test to the car api version codes so that we can know which version those
+    // tests are targeting for but the goal of the test is really for testing internal behavior of
+    // that car version.
+    @ApiTest(apis = {"android.car.Car#API_VERSION_MINOR_INT"})
     public void testCarServiceHelperServiceDump_safeOperation() throws Exception {
         assumeSystemServerDumpSupported();
 
@@ -124,6 +159,11 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     }
 
     @Test
+    // TODO(b/244222267): Change into @ApiTest with @ApiCheckerRule.IgnoreInvalidApi.
+    // Note: Tie this test to the car api version codes so that we can know which version those
+    // tests are targeting for but the goal of the test is really for testing internal behavior of
+    // that car version.
+    @ApiTest(apis = {"android.car.Car#API_VERSION_MINOR_INT"})
     public void testCarServiceHelperServiceDump_unsafeOperation() throws Exception {
         assumeSystemServerDumpSupported();
 
@@ -139,6 +179,11 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     }
 
     @Test
+    // TODO(b/244222267): Change into @ApiTest with @ApiCheckerRule.IgnoreInvalidApi.
+    // Note: Tie this test to the car api version codes so that we can know which version those
+    // tests are targeting for but the goal of the test is really for testing internal behavior of
+    // that car version.
+    @ApiTest(apis = {"android.car.Car#API_VERSION_MINOR_INT"})
     public void testCarServiceHelperServiceDump_serviceStacks() throws Exception {
         assumeSystemServerDumpSupported();
 
@@ -148,7 +193,23 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     }
 
     @Test
-    public void testSendUserLifecycleEventAndOnUserCreated() throws Exception {
+    @ApiTest(apis = {"android.car.user.CarUserManager#USER_LIFECYCLE_EVENT_TYPE_CREATED"})
+    @SupportedVersionTest(unsupportedVersionTest =
+            "testSendUserLifecycleEventAndOnUserCreated_unsupportedVersion")
+    public void testSendUserLifecycleEventAndOnUserCreated_supportedVersion() throws Exception {
+        testSendUserLifecycleEventAndOnUserCreated(/*onSupportedVersion=*/ true);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.user.CarUserManager#USER_LIFECYCLE_EVENT_TYPE_CREATED"})
+    @UnsupportedVersionTest(behavior = Behavior.EXPECT_PASS,
+            supportedVersionTest = "testSendUserLifecycleEventAndOnUserCreated_supportedVersion")
+    public void testSendUserLifecycleEventAndOnUserCreated_unsupportedVersion() throws Exception {
+        testSendUserLifecycleEventAndOnUserCreated(/*onSupportedVersion=*/ false);
+    }
+
+    private void testSendUserLifecycleEventAndOnUserCreated(boolean onSupportedVersion)
+            throws Exception {
         // Add listener to check if user started
         CarUserManager carUserManager = (CarUserManager) getCar()
                 .getCarManager(Car.CAR_USER_SERVICE);
@@ -168,10 +229,16 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
             assertThat(response.isSuccessful()).isTrue();
 
             int userId = response.getUser().getIdentifier();
-            listener.assertEventReceived(userId, CarUserManager.USER_LIFECYCLE_EVENT_TYPE_CREATED);
-             // check the dump stack
-            assertUserLifecycleEventLogged(CarUserManager.USER_LIFECYCLE_EVENT_TYPE_CREATED,
-                    userId);
+            if (onSupportedVersion) {
+                listener.assertEventReceived(
+                        userId, CarUserManager.USER_LIFECYCLE_EVENT_TYPE_CREATED);
+                // check the dump stack
+                assertUserLifecycleEventLogged(
+                        CarUserManager.USER_LIFECYCLE_EVENT_TYPE_CREATED, userId);
+            } else {
+                listener.assertEventNotReceived(
+                        userId, CarUserManager.USER_LIFECYCLE_EVENT_TYPE_CREATED);
+            }
         } finally {
             // Clean up the user that was previously created.
             userManager.removeUser(response.getUser());
@@ -183,7 +250,24 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
 
     @FlakyTest(bugId = 222167696)
     @Test
-    public void testSendUserLifecycleEventAndOnUserRemoved() throws Exception {
+    @ApiTest(apis = {"android.car.user.CarUserManager#USER_LIFECYCLE_EVENT_TYPE_REMOVED"})
+    @SupportedVersionTest(unsupportedVersionTest =
+            "testSendUserLifecycleEventAndOnUserRemoved_unsupportedVersion")
+    public void testSendUserLifecycleEventAndOnUserRemoved_supportedVersion() throws Exception {
+        testSendUserLifecycleEventAndOnUserRemoved(/*onSupportedVersion=*/ true);
+    }
+
+    @FlakyTest(bugId = 222167696)
+    @Test
+    @ApiTest(apis = {"android.car.user.CarUserManager#USER_LIFECYCLE_EVENT_TYPE_REMOVED"})
+    @UnsupportedVersionTest(behavior = Behavior.EXPECT_PASS,
+            supportedVersionTest = "testSendUserLifecycleEventAndOnUserRemoved_supportedVersion")
+    public void testSendUserLifecycleEventAndOnUserRemoved_unsupportedVersion() throws Exception {
+        testSendUserLifecycleEventAndOnUserRemoved(/*onSupportedVersion=*/ false);
+    }
+
+    private void testSendUserLifecycleEventAndOnUserRemoved(boolean onSupportedVersion)
+            throws Exception {
         // Add listener to check if user started
         CarUserManager carUserManager = (CarUserManager) getCar()
                 .getCarManager(Car.CAR_USER_SERVICE);
@@ -212,10 +296,17 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
 
             // TestOnUserRemoved call
             userRemoved = userManager.removeUser(response.getUser());
-            listener.assertEventReceived(userId, CarUserManager.USER_LIFECYCLE_EVENT_TYPE_REMOVED);
-            // check the dump stack
-            assertUserLifecycleEventLogged(CarUserManager.USER_LIFECYCLE_EVENT_TYPE_REMOVED,
-                    userId);
+
+            if (onSupportedVersion) {
+                listener.assertEventReceived(
+                        userId, CarUserManager.USER_LIFECYCLE_EVENT_TYPE_REMOVED);
+                // check the dump stack
+                assertUserLifecycleEventLogged(
+                        CarUserManager.USER_LIFECYCLE_EVENT_TYPE_REMOVED, userId);
+            } else {
+                listener.assertEventNotReceived(
+                        userId, CarUserManager.USER_LIFECYCLE_EVENT_TYPE_REMOVED);
+            }
         } finally {
             if (!userRemoved && response != null && response.isSuccessful()) {
                 userManager.removeUser(response.getUser());
@@ -302,6 +393,20 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
             }
 
             fail("Event" + eventType + " was not received within timeoutMs: " + TIMEOUT_MS);
+        }
+
+
+        public void assertEventNotReceived(int userId, int eventType)
+                throws InterruptedException {
+            long startTime = SystemClock.elapsedRealtime();
+            while (SystemClock.elapsedRealtime() - startTime < TIMEOUT_MS) {
+                boolean result = checkEvent(userId, eventType);
+                if (result) {
+                    fail("Event" + eventType
+                            + " was not expected but was received within timeoutMs: " + TIMEOUT_MS);
+                }
+                Thread.sleep(WAIT_TIME_MS);
+            }
         }
 
         private boolean checkEvent(int userId, int eventType) {

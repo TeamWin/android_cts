@@ -18,6 +18,7 @@ android_test {
     static_libs: [
         "ctstestrunner-axt",
         "cts-media-common",
+        "truth-prebuilt",
     ],
     resource_dirs: ["res"],
     aaptflags: [

@@ -37,8 +37,15 @@ import android.view.inputmethod.EditorBoundsInfo;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -89,6 +96,28 @@ public class CursorAnchorInfoTest {
     };
 
     @Test
+    @ApiTest(
+            apis = {
+                    "android.view.inputmethod.CursorAnchorInfo#getComposingText",
+                    "android.view.inputmethod.CursorAnchorInfo#getEditorBoundsInfo",
+                    "android.view.inputmethod.CursorAnchorInfo#getInsertionMarkerFlags",
+                    "android.view.inputmethod.CursorAnchorInfo#getInsertionMarkerHorizontal",
+                    "android.view.inputmethod.CursorAnchorInfo#getInsertionMarkerTop",
+                    "android.view.inputmethod.CursorAnchorInfo#getInsertionMarkerBaseline",
+                    "android.view.inputmethod.CursorAnchorInfo#getInsertionMarkerBottom",
+                    "android.view.inputmethod.CursorAnchorInfo#getSelectionStart",
+                    "android.view.inputmethod.CursorAnchorInfo#getSelectionEnd",
+                    "android.view.inputmethod.CursorAnchorInfo#getMatrix",
+                    "android.view.inputmethod.CursorAnchorInfo#getVisibleLineBounds",
+                    "android.view.inputmethod.CursorAnchorInfo.Builder#build",
+                    "android.view.inputmethod.CursorAnchorInfo.Builder#setComposingText",
+                    "android.view.inputmethod.CursorAnchorInfo.Builder#setEditorBoundsInfo",
+                    "android.view.inputmethod.CursorAnchorInfo.Builder#setMatrix",
+                    "android.view.inputmethod.CursorAnchorInfo.Builder#setInsertionMarkerLocation",
+                    "android.view.inputmethod.CursorAnchorInfo.Builder#setSelectinRange",
+                    "android.view.inputmethod.CursorAnchorInfo.Builder#setVisibleLineBounds",
+            }
+    )
     public void testBuilder() {
         final int selectionStart = 30;
         final int selectionEnd = 40;
@@ -115,11 +144,13 @@ public class CursorAnchorInfoTest {
                         insertionMarkerBaseline, insertionMarkerBottom, insertionMarkerFlags)
                 .setMatrix(transformMatrix)
                 .setEditorBoundsInfo(boundsInfo);
+
         for (int i = 0; i < MANY_BOUNDS.length; i++) {
             final RectF bounds = MANY_BOUNDS[i];
             final int flags = MANY_FLAGS_ARRAY[i];
             builder.addCharacterBounds(i, bounds.left, bounds.top, bounds.right, bounds.bottom,
                     flags);
+            builder.addVisibleLineBounds(bounds.left, bounds.top, bounds.right, bounds.bottom);
         }
 
         final CursorAnchorInfo info = builder.build();
@@ -134,6 +165,7 @@ public class CursorAnchorInfoTest {
         assertEquals(insertionMarkerBottom, info.getInsertionMarkerBottom(), EPSILON);
         assertEquals(transformMatrix, info.getMatrix());
         assertEquals(boundsInfo, info.getEditorBoundsInfo());
+        assertEquals(Arrays.asList(MANY_BOUNDS), info.getVisibleLineBounds());
         assertEquals(MANY_BOUNDS[0],
                 info.getEditorBoundsInfo().getEditorBounds());
         assertEquals(MANY_BOUNDS[1],
@@ -163,6 +195,7 @@ public class CursorAnchorInfoTest {
         assertEquals(insertionMarkerBaseline, info2.getInsertionMarkerBaseline(), EPSILON);
         assertEquals(insertionMarkerBottom, info2.getInsertionMarkerBottom(), EPSILON);
         assertEquals(boundsInfo, info2.getEditorBoundsInfo());
+        assertEquals(Arrays.asList(MANY_BOUNDS), info2.getVisibleLineBounds());
         assertEquals(transformMatrix, info2.getMatrix());
         for (int i = 0; i < MANY_BOUNDS.length; i++) {
             final RectF expectedBounds = MANY_BOUNDS[i];
@@ -191,6 +224,7 @@ public class CursorAnchorInfoTest {
         assertEquals(insertionMarkerBaseline, info3.getInsertionMarkerBaseline(), EPSILON);
         assertEquals(insertionMarkerBottom, info3.getInsertionMarkerBottom(), EPSILON);
         assertEquals(boundsInfo, info3.getEditorBoundsInfo());
+        assertEquals(Arrays.asList(MANY_BOUNDS), info3.getVisibleLineBounds());
         assertEquals(transformMatrix, info3.getMatrix());
         for (int i = 0; i < MANY_BOUNDS.length; i++) {
             final RectF expectedBounds = MANY_BOUNDS[i];
@@ -218,10 +252,21 @@ public class CursorAnchorInfoTest {
         assertEquals(Float.NaN, uninitializedInfo.getInsertionMarkerBaseline(), EPSILON);
         assertEquals(Float.NaN, uninitializedInfo.getInsertionMarkerBottom(), EPSILON);
         assertEquals(null, uninitializedInfo.getEditorBoundsInfo());
+        assertEquals(new ArrayList<>(), uninitializedInfo.getVisibleLineBounds());
         assertEquals(new Matrix(), uninitializedInfo.getMatrix());
     }
 
     @Test
+    @ApiTest(
+            apis = {
+                    "android.view.inputmethod.CursorAnchorInfo.Builder#build",
+                    "android.view.inputmethod.CursorAnchorInfo.Builder#setComposingText",
+                    "android.view.inputmethod.CursorAnchorInfo.Builder#setMatrix",
+                    "android.view.inputmethod.CursorAnchorInfo.Builder#setInsertionMarkerLocation",
+                    "android.view.inputmethod.CursorAnchorInfo.Builder#setSelectinRange",
+                    "android.view.inputmethod.CursorAnchorInfo.Builder#setVisibleLineBounds",
+            }
+    )
     public void testEquality() {
         final Matrix matrix1 = new Matrix();
         matrix1.setTranslate(10.0f, 20.0f);
@@ -251,6 +296,8 @@ public class CursorAnchorInfoTest {
         final float insertionMarkerTop2 = 200.1f;
         final float insertionMarkerBaseline2 = 210.4f;
         final float insertionMarkerBottom2 = 211.0f;
+        final List<RectF> visibleLineBounds1 = Arrays.asList(MANY_BOUNDS[0], MANY_BOUNDS[1]);
+        final List<RectF> visibleLineBounds2 = Arrays.asList(MANY_BOUNDS[2], MANY_BOUNDS[3]);
 
         // Default instance should be equal.
         assertEquals(new Builder().build(), new Builder().build());
@@ -377,6 +424,32 @@ public class CursorAnchorInfoTest {
                         insertionMarkerHorizontal1, insertionMarkerTop1,
                         insertionMarkerBaseline1, insertionMarkerBottom1,
                         insertionMarkerFlags2).build());
+        {
+            CursorAnchorInfo.Builder builder1 = new Builder().setMatrix(matrix1);
+            for (RectF rectF : visibleLineBounds1) {
+                builder1.addVisibleLineBounds(rectF.left, rectF.top, rectF.right, rectF.bottom);
+            }
+
+            CursorAnchorInfo.Builder builder2 = new Builder().setMatrix(matrix1);
+            for (RectF rectF : visibleLineBounds1) {
+                builder2.addVisibleLineBounds(rectF.left, rectF.top, rectF.right, rectF.bottom);
+            }
+
+            assertEquals(builder1.build(), builder2.build());
+        }
+        {
+            CursorAnchorInfo.Builder builder1 = new Builder().setMatrix(matrix1);
+            for (RectF rectF : visibleLineBounds1) {
+                builder1.addVisibleLineBounds(rectF.left, rectF.top, rectF.right, rectF.bottom);
+            }
+
+            CursorAnchorInfo.Builder builder2 = new Builder().setMatrix(matrix1);
+            for (RectF rectF : visibleLineBounds2) {
+                builder2.addVisibleLineBounds(rectF.left, rectF.top, rectF.right, rectF.bottom);
+            }
+
+            assertNotEquals(builder1.build(), builder2.build());
+        }
     }
 
     @Test
@@ -457,6 +530,41 @@ public class CursorAnchorInfoTest {
     }
 
     @Test
+    @ApiTest(apis = "android.view.inputmethod.CursorAnchorInfo.Builder#setVisibleLineBounds")
+    public void testMatrixIsRequiredForVisibleLineBounds() {
+        final List<RectF> visibleLineBounds = Arrays.asList(MANY_BOUNDS);
+        final Matrix transformMatrix = new Matrix();
+
+        final Builder builder = new Builder();
+        try {
+            // Should succeed as coordinate transformation matrix is not required if no
+            // positional information is specified.
+            builder.build();
+        } catch (IllegalArgumentException ex) {
+            fail();
+        }
+
+        for (RectF rectF: visibleLineBounds) {
+            builder.addVisibleLineBounds(rectF.left, rectF.top, rectF.right, rectF.bottom);
+        }
+        try {
+            // Should fail since visible line bounds requires coordinates transformation matrix.
+            builder.build();
+            fail();
+        } catch (IllegalArgumentException ex) {
+        }
+
+        builder.setMatrix(transformMatrix);
+        try {
+            // Should succeed as coordinate transformation matrix is provided.
+            builder.build();
+        } catch (IllegalArgumentException ex) {
+            fail();
+        }
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.CursorAnchorInfo.Builder#addCharacterBounds")
     public void testBuilderAddCharacterBounds() {
         // A negative index should be rejected.
         try {
@@ -464,6 +572,30 @@ public class CursorAnchorInfoTest {
             fail();
         } catch (IllegalArgumentException ex) {
         }
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.CursorAnchorInfo.Builder#clearVisibleLineBounds")
+    public void testBuilderClearVisibleLineBounds() {
+        CursorAnchorInfo.Builder builder = new Builder().setMatrix(Matrix.IDENTITY_MATRIX);
+        for (RectF rectF: MANY_BOUNDS) {
+            builder.addVisibleLineBounds(rectF.left, rectF.top, rectF.right, rectF.bottom);
+        }
+
+        // Making sure visible line bounds are added correctly.
+        assertEquals(Arrays.asList(MANY_BOUNDS), builder.build().getVisibleLineBounds());
+
+        builder.clearVisibleLineBounds();
+        // No visible line bounds is returned after clearVisibleLineBounds is called.
+        assertEquals(Collections.emptyList(), builder.build().getVisibleLineBounds());
+
+        // Add more line bounds and verify again.
+        List<RectF> rectFs = Arrays.asList(MANY_BOUNDS[1], MANY_BOUNDS[0]);
+
+        for (RectF rectF: rectFs) {
+            builder.addVisibleLineBounds(rectF.left, rectF.top, rectF.right, rectF.bottom);
+        }
+        assertEquals(rectFs, builder.build().getVisibleLineBounds());
     }
 
     private static CursorAnchorInfo cloneViaParcel(CursorAnchorInfo src) {

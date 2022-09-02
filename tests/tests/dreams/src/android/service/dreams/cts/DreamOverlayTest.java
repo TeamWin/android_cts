@@ -99,7 +99,7 @@ public class DreamOverlayTest extends ActivityManagerTestBase {
                 ComponentName.unflattenFromString(DREAM_SERVICE_COMPONENT);
         final ComponentName dreamActivity = mDreamCoordinator.setActiveDream(dreamService);
 
-        mDreamCoordinator.startDream(dreamService);
+        mDreamCoordinator.startDream();
         waitAndAssertTopResumedActivity(dreamActivity, Display.DEFAULT_DISPLAY,
                 "Dream activity should be the top resumed activity");
         // Wait on count down latch.

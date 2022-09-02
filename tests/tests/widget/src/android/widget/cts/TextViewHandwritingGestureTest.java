@@ -43,6 +43,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.List;
+
 @RunWith(AndroidJUnit4.class)
 public class TextViewHandwritingGestureTest {
     private static final int WIDTH = 200;
@@ -87,6 +89,18 @@ public class TextViewHandwritingGestureTest {
         mLocationOnScreen = mEditText.getLocationOnScreen();
         mLocationOnScreen[0] += mEditText.getTotalPaddingLeft();
         mLocationOnScreen[1] += mEditText.getTotalPaddingTop();
+    }
+
+    @Test
+    @ApiTest(apis = "android.widget.TextView#onCreateInputConnection")
+    public void onCreateInputConnection_reportsSupportedGestures() {
+        EditorInfo editorInfo = new EditorInfo();
+        mEditText.onCreateInputConnection(editorInfo);
+
+        List<Class<? extends HandwritingGesture>> gestures =
+                editorInfo.getSupportedHandwritingGestures();
+        assertThat(gestures).containsAtLeast(
+                SelectGesture.class, DeleteGesture.class, InsertGesture.class);
     }
 
     @Test

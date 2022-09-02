@@ -19,6 +19,7 @@ package android.media.decoder.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -31,6 +32,7 @@ import android.media.cts.MediaTestBase;
 import android.media.cts.OutputSurface;
 import android.media.cts.Preconditions;
 import android.media.cts.TestArgs;
+import android.opengl.GLES20;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -38,18 +40,11 @@ import android.view.Surface;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 
-import android.opengl.GLES20;
-
-import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import javax.microedition.khronos.opengles.GL10;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -61,10 +56,7 @@ import java.util.Vector;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.zip.CRC32;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
+import javax.microedition.khronos.opengles.GL10;
 
 @MediaHeavyPresubmitTest
 @AppModeFull

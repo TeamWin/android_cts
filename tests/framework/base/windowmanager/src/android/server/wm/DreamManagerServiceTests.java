@@ -83,7 +83,7 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
         startFullscreenTestActivity();
         mDreamActivityName = mDreamCoordinator.setActiveDream(TEST_DREAM_SERVICE);
 
-        mDreamCoordinator.startDream(TEST_DREAM_SERVICE);
+        mDreamCoordinator.startDream();
         waitAndAssertTopResumedActivity(mDreamActivityName, DEFAULT_DISPLAY,
                 "Dream activity should be the top resumed activity");
         mWmState.waitForValidState(mWmState.getHomeActivityName());
@@ -104,7 +104,7 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
     public void testDreamServiceStopsTimely() throws Exception {
         mDreamActivityName = mDreamCoordinator.setActiveDream(TEST_DREAM_SERVICE);
 
-        mDreamCoordinator.startDream(TEST_DREAM_SERVICE);
+        mDreamCoordinator.startDream();
         waitAndAssertTopResumedActivity(mDreamActivityName, DEFAULT_DISPLAY,
                 "Dream activity should be the top resumed activity");
         mWmState.waitForValidState(mWmState.getHomeActivityName());
@@ -124,7 +124,7 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
         startFullscreenTestActivity();
         mDreamActivityName = mDreamCoordinator.setActiveDream(TEST_STUBBORN_DREAM_SERVICE);
 
-        mDreamCoordinator.startDream(TEST_STUBBORN_DREAM_SERVICE);
+        mDreamCoordinator.startDream();
         waitAndAssertTopResumedActivity(mDreamActivityName, DEFAULT_DISPLAY,
                 "Dream activity should be the top resumed activity");
         mWmState.waitForValidState(mWmState.getHomeActivityName());
@@ -149,7 +149,7 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
         final RotationSession rotationSession = createManagedRotationSession();
         rotationSession.set(Surface.ROTATION_0);
         mDreamActivityName = mDreamCoordinator.setActiveDream(TEST_DREAM_SERVICE);
-        mDreamCoordinator.startDream(TEST_DREAM_SERVICE);
+        mDreamCoordinator.startDream();
         rotationSession.set(Surface.ROTATION_90);
 
         waitAndAssertTopResumedActivity(mDreamActivityName, DEFAULT_DISPLAY,
@@ -243,7 +243,7 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
     private class DreamingState implements AutoCloseable {
         public DreamingState(ComponentName dream) {
             mDreamActivityName = mDreamCoordinator.setActiveDream(dream);
-            mDreamCoordinator.startDream(dream);
+            mDreamCoordinator.startDream();
             waitAndAssertDreaming();
         }
 

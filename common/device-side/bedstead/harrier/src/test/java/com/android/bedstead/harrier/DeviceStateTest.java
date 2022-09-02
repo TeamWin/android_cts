@@ -49,6 +49,7 @@ import android.app.admin.DevicePolicyManager;
 import android.content.PermissionChecker;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.UserManager;
 import android.provider.Settings;
 
 import com.android.bedstead.harrier.annotations.EnsureBluetoothDisabled;
@@ -81,6 +82,7 @@ import com.android.bedstead.harrier.annotations.RequireGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireInstantApp;
 import com.android.bedstead.harrier.annotations.RequireLowRamDevice;
+import com.android.bedstead.harrier.annotations.RequireMultipleUsersOnMultipleDisplays;
 import com.android.bedstead.harrier.annotations.RequireNotCnGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
@@ -794,6 +796,13 @@ public class DeviceStateTest {
     public void requireNotLowRamDeviceAnnotation_isNotLowRamDevice() {
         assertThat(TestApis.context().instrumentedContext().getSystemService(ActivityManager.class)
                 .isLowRamDevice()).isFalse();
+    }
+
+    @Test
+    @RequireMultipleUsersOnMultipleDisplays(reason = "Test")
+    public void requireMultipleUsersOnMultipleDisplaysAnnotation_supported() {
+        assertThat(TestApis.context().instrumentedContext().getSystemService(UserManager.class)
+                .isUsersOnSecondaryDisplaysEnabled()).isTrue();
     }
 
     @Test

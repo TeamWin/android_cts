@@ -81,6 +81,8 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ServiceTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -563,6 +565,16 @@ public class StrictModeTest {
     }
 
     @Test
+    @ApiTest(apis={"StrictMode.VmPolicy.Builder#permitExplicitGc"})
+    public void testPermitExplicitGc() throws Exception {
+        StrictMode.setThreadPolicy(
+                new StrictMode.ThreadPolicy.Builder().permitExplicitGc().penaltyLog().build());
+
+        assertNoViolation(() -> Runtime.getRuntime().gc());
+    }
+
+    @Test
+    @ApiTest(apis={"StrictMode.VmPolicy.Builder#detectUnbufferedIo"})
     public void testUnbufferedIoGZipInput() throws Exception {
         StrictMode.setThreadPolicy(
                 new StrictMode.ThreadPolicy.Builder().detectUnbufferedIo().penaltyLog().build());

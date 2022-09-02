@@ -15,16 +15,13 @@
  */
 package android.media.bettertogether.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import android.media.MediaDescription;
 import android.media.browse.MediaBrowser.MediaItem;
 import android.media.cts.NonMediaMainlineTest;
 import android.os.Parcel;
 import android.text.TextUtils;
+
+import static com.google.common.truth.Truth.assertThat;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -41,6 +38,7 @@ public class MediaItemTest {
     private static final String MEDIA_ID = "test_media_id";
     private static final String TITLE = "test_title";
     private static final String SUBTITLE = "test_subtitle";
+    private static final int CONTENT_DESCRIPTION = 0;
 
     @Test
     public void testBrowsableMediaItem() {
@@ -49,13 +47,13 @@ public class MediaItemTest {
                 .setTitle(TITLE).setSubtitle(SUBTITLE).build();
         MediaItem mediaItem = new MediaItem(description, MediaItem.FLAG_BROWSABLE);
 
-        assertEquals(description.toString(), mediaItem.getDescription().toString());
-        assertEquals(MEDIA_ID, mediaItem.getMediaId());
-        assertEquals(MediaItem.FLAG_BROWSABLE, mediaItem.getFlags());
-        assertTrue(mediaItem.isBrowsable());
-        assertFalse(mediaItem.isPlayable());
-        assertEquals(0, mediaItem.describeContents());
-        assertFalse(TextUtils.isEmpty(mediaItem.toString()));
+        assertThat(mediaItem.getDescription().toString()).isEqualTo(description.toString());
+        assertThat(mediaItem.getMediaId()).isEqualTo(MEDIA_ID);
+        assertThat(mediaItem.getFlags()).isEqualTo(MediaItem.FLAG_BROWSABLE);
+        assertThat(mediaItem.isBrowsable()).isTrue();
+        assertThat(mediaItem.isPlayable()).isFalse();
+        assertThat(mediaItem.describeContents()).isEqualTo(CONTENT_DESCRIPTION);
+        assertThat(TextUtils.isEmpty(mediaItem.toString())).isFalse();
 
         // Test writeToParcel
         Parcel p = Parcel.obtain();
@@ -63,9 +61,12 @@ public class MediaItemTest {
         p.setDataPosition(0);
 
         MediaItem mediaItemFromParcel = MediaItem.CREATOR.createFromParcel(p);
-        assertNotNull(mediaItemFromParcel);
-        assertEquals(mediaItem.getFlags(), mediaItemFromParcel.getFlags());
-        assertEquals(description.toString(), mediaItem.getDescription().toString());
+
+        assertThat(mediaItemFromParcel).isNotNull();
+        assertThat(mediaItemFromParcel.getFlags()).isEqualTo(mediaItem.getFlags());
+        assertThat(mediaItemFromParcel.getDescription().toString())
+                .isEqualTo(description.toString());
+
         p.recycle();
     }
 
@@ -76,13 +77,13 @@ public class MediaItemTest {
                 .setTitle(TITLE).setSubtitle(SUBTITLE).build();
         MediaItem mediaItem = new MediaItem(description, MediaItem.FLAG_PLAYABLE);
 
-        assertEquals(description.toString(), mediaItem.getDescription().toString());
-        assertEquals(MEDIA_ID, mediaItem.getMediaId());
-        assertEquals(MediaItem.FLAG_PLAYABLE, mediaItem.getFlags());
-        assertFalse(mediaItem.isBrowsable());
-        assertTrue(mediaItem.isPlayable());
-        assertEquals(0, mediaItem.describeContents());
-        assertFalse(TextUtils.isEmpty(mediaItem.toString()));
+        assertThat(mediaItem.getDescription().toString()).isEqualTo(description.toString());
+        assertThat(mediaItem.getMediaId()).isEqualTo(MEDIA_ID);
+        assertThat(mediaItem.getFlags()).isEqualTo(MediaItem.FLAG_PLAYABLE);
+        assertThat(mediaItem.isBrowsable()).isFalse();
+        assertThat(mediaItem.isPlayable()).isTrue();
+        assertThat(mediaItem.describeContents()).isEqualTo(CONTENT_DESCRIPTION);
+        assertThat(TextUtils.isEmpty(mediaItem.toString())).isFalse();
 
         // Test writeToParcel
         Parcel p = Parcel.obtain();
@@ -90,9 +91,12 @@ public class MediaItemTest {
         p.setDataPosition(0);
 
         MediaItem mediaItemFromParcel = MediaItem.CREATOR.createFromParcel(p);
-        assertNotNull(mediaItemFromParcel);
-        assertEquals(mediaItem.getFlags(), mediaItemFromParcel.getFlags());
-        assertEquals(description.toString(), mediaItem.getDescription().toString());
+
+        assertThat(mediaItemFromParcel).isNotNull();
+        assertThat(mediaItemFromParcel.getFlags()).isEqualTo(mediaItem.getFlags());
+        assertThat(mediaItemFromParcel.getDescription().toString())
+                .isEqualTo(description.toString());
+
         p.recycle();
     }
 }

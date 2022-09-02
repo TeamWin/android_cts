@@ -1624,6 +1624,25 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
+    public void testAutoPipOnLaunchingActivityWithNoAnimation() {
+        // Launch the PIP activity and set its pip params to allow auto-pip.
+        launchActivity(PIP_ACTIVITY, extraString(EXTRA_ALLOW_AUTO_PIP, "true"));
+        assertPinnedStackDoesNotExist();
+
+        int windowingMode = mWmState.getTaskByActivity(PIP_ACTIVITY).getWindowingMode();
+        // Skip the test if freeform, since desktops may manually request PIP immediately after
+        // the test activity launch.
+        assumeFalse(windowingMode == WINDOWING_MODE_FREEFORM);
+
+        // Launch a regular activity with FLAG_ACTIVITY_NO_ANIMATION and
+        // ensure that there is pinned stack.
+        launchActivityWithNoAnimation(TEST_ACTIVITY);
+        waitForEnterPip(PIP_ACTIVITY);
+        assertPinnedStackExists();
+        waitAndAssertActivityState(PIP_ACTIVITY, STATE_PAUSED, "activity must be paused");
+    }
+
+    @Test
     public void testMaxNumberOfActions() {
         final int maxNumberActions = ActivityTaskManager.getMaxNumPictureInPictureActions(mContext);
         assertThat(maxNumberActions, greaterThanOrEqualTo(3));

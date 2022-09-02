@@ -28,6 +28,7 @@ import static android.content.Intent.ACTION_MAIN;
 import static android.content.Intent.CATEGORY_HOME;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION;
 import static android.content.Intent.FLAG_ACTIVITY_NO_USER_ACTION;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
@@ -334,8 +335,14 @@ public abstract class ActivityManagerTestBase {
         return "am start -n " + getActivityName(activityName) + " -d " + data;
     }
 
-    protected static String getAmStartCmdOverHome(final ComponentName activityName) {
-        return "am start --activity-task-on-home -n " + getActivityName(activityName);
+    protected static String getAmStartCmdWithNoAnimation(final ComponentName activityName,
+            final CliIntentExtra... extras) {
+        return appendKeyValuePairs(
+                new StringBuilder("am start -n ")
+                        .append(getActivityName(activityName))
+                        .append(" -f 0x")
+                        .append(toHexString(FLAG_ACTIVITY_NO_ANIMATION)),
+                extras);
     }
 
     protected static String getAmStartCmdWithDismissKeyguard(
@@ -870,6 +877,12 @@ public abstract class ActivityManagerTestBase {
 
     protected void launchActivityWithData(final ComponentName activityName, String data) {
         executeShellCommand(getAmStartCmdWithData(activityName, data));
+        mWmState.waitForValidState(activityName);
+    }
+
+    protected void launchActivityWithNoAnimation(final ComponentName activityName,
+            final CliIntentExtra... extras) {
+        executeShellCommand(getAmStartCmdWithNoAnimation(activityName, extras));
         mWmState.waitForValidState(activityName);
     }
 
