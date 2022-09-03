@@ -43,6 +43,7 @@ import android.platform.test.annotations.AppModeFull;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -64,6 +65,7 @@ public class PermissionFlagsTest {
             TMP_DIR + "CtsAppThatRequestsLocationPermission28.apk";
 
     @After
+    @Before
     public void uninstallTestApp() {
         uninstallApp(APP_PKG);
     }

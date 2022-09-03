@@ -27,26 +27,34 @@ import static android.content.Intent.EXTRA_RETURN_RESULT;
 
 import android.os.Bundle;
 import android.view.textservice.SpellCheckerInfo;
+import android.view.textservice.TextServicesManager;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import org.junit.After;
-import org.junit.Before;
+import com.android.compatibility.common.util.PollingCheck;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 public class TextServicesEnumerationTests extends AppEnumerationTestsBase {
+    private static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(5);
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeClass
+    public static void prepareSpellChecker() throws Exception {
         installPackage(CTS_MOCK_SPELL_CHECKER_APK);
+
+        PollingCheck.check("Failed to wait for " + MOCK_SPELL_CHECKER_PKG
+                + " getting ready", TIMEOUT_MS, () -> hasSpellChecker(MOCK_SPELL_CHECKER_PKG));
     }
 
-    @After
-    public void cleanUp() throws Exception {
+    @AfterClass
+    public static void cleanUp() throws Exception {
         uninstallPackage(MOCK_SPELL_CHECKER_PKG);
     }
 
@@ -74,5 +82,12 @@ public class TextServicesEnumerationTests extends AppEnumerationTestsBase {
                 .map(info -> info.getPackageName())
                 .distinct()
                 .toArray(String[]::new);
+    }
+
+    private static boolean hasSpellChecker(String packageName) {
+        final List<SpellCheckerInfo> spellCheckerInfos = sContext.getSystemService(
+                TextServicesManager.class).getEnabledSpellCheckerInfos();
+        return spellCheckerInfos.stream()
+                .anyMatch(info -> info.getPackageName().equals(packageName));
     }
 }

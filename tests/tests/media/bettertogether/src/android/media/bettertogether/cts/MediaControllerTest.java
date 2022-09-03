@@ -18,13 +18,8 @@ package android.media.bettertogether.cts;
 import static android.media.cts.Utils.compareRemoteUserInfo;
 import static android.media.session.PlaybackState.STATE_PLAYING;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.Context;
 import android.content.Intent;
@@ -99,7 +94,8 @@ public class MediaControllerTest {
 
     @Test
     public void testGetPackageName() {
-        assertEquals(getContext().getPackageName(), mController.getPackageName());
+        assertThat(mController.getPackageName())
+                .isEqualTo(getContext().getPackageName());
     }
 
     @Test
@@ -131,48 +127,49 @@ public class MediaControllerTest {
 
         // Note: No need to wait since the AIDL call is not oneway.
         PlaybackState stateOut = mController.getPlaybackState();
-        assertNotNull(stateOut);
-        assertEquals(testState, stateOut.getState());
-        assertEquals(testPosition, stateOut.getPosition(), positionDelta);
-        assertEquals(testSpeed, stateOut.getPlaybackSpeed(), 0.0f);
-        assertEquals(testActions, stateOut.getActions());
-        assertEquals(testActiveQueueItemId, stateOut.getActiveQueueItemId());
-        assertEquals(testBufferedPosition, stateOut.getBufferedPosition());
-        assertEquals(testErrorMsg, stateOut.getErrorMessage().toString());
-        assertNotNull(stateOut.getExtras());
-        assertEquals(EXTRAS_VALUE, stateOut.getExtras().get(EXTRAS_KEY));
+        assertThat(stateOut).isNotNull();
+        assertThat(stateOut.getState()).isEqualTo(testState);
+        assertThat((double) stateOut.getPosition()).isWithin(positionDelta).of(testPosition);
+        assertThat(stateOut.getPlaybackSpeed()).isWithin(0.0f).of(testSpeed);
+        assertThat(stateOut.getActions()).isEqualTo(testActions);
+        assertThat(stateOut.getActiveQueueItemId()).isEqualTo(testActiveQueueItemId);
+        assertThat(stateOut.getBufferedPosition()).isEqualTo(testBufferedPosition);
+        assertThat(stateOut.getErrorMessage().toString()).isEqualTo(testErrorMsg);
+        assertThat(stateOut.getExtras()).isNotNull();
+        assertThat(stateOut.getExtras().get(EXTRAS_KEY)).isEqualTo(EXTRAS_VALUE);
     }
 
     @Test
     public void testGetRatingType() {
-        assertEquals("Default rating type of a session must be Rating.RATING_NONE",
-                Rating.RATING_NONE, mController.getRatingType());
+        assertWithMessage("Default rating type of a session must be Rating.RATING_NONE")
+                .that(mController.getRatingType())
+                .isEqualTo(Rating.RATING_NONE);
 
         mSession.setRatingType(Rating.RATING_5_STARS);
         // Note: No need to wait since the AIDL call is not oneway.
-        assertEquals(Rating.RATING_5_STARS, mController.getRatingType());
+        assertThat(mController.getRatingType()).isEqualTo(Rating.RATING_5_STARS);
     }
 
     @Test
     public void testGetSessionToken() {
-        assertEquals(mSession.getSessionToken(), mController.getSessionToken());
+        assertThat(mController.getSessionToken()).isEqualTo(mSession.getSessionToken());
     }
 
     @Test
     public void testGetSessionInfo() {
         Bundle sessionInfo = mController.getSessionInfo();
-        assertNotNull(sessionInfo);
-        assertEquals(EXTRAS_VALUE, sessionInfo.getString(EXTRAS_KEY));
+        assertThat(sessionInfo).isNotNull();
+        assertThat(sessionInfo.getString(EXTRAS_KEY)).isEqualTo(EXTRAS_VALUE);
 
         Bundle cachedSessionInfo = mController.getSessionInfo();
-        assertEquals(EXTRAS_VALUE, cachedSessionInfo.getString(EXTRAS_KEY));
+        assertThat(cachedSessionInfo.getString(EXTRAS_KEY)).isEqualTo(EXTRAS_VALUE);
     }
 
     @Test
     public void testGetSessionInfoReturnsAnEmptyBundleWhenNotSet() {
         MediaSession session = new MediaSession(getContext(), "test_tag", /*sessionInfo=*/ null);
         try {
-            assertTrue(session.getController().getSessionInfo().isEmpty());
+            assertThat(session.getController().getSessionInfo().isEmpty()).isTrue();
         } finally {
             session.release();
         }
@@ -180,7 +177,7 @@ public class MediaControllerTest {
 
     @Test
     public void testGetTag() {
-        assertEquals(SESSION_TAG, mController.getTag());
+        assertThat(mController.getTag()).isEqualTo(SESSION_TAG);
     }
 
     @Test
@@ -192,11 +189,11 @@ public class MediaControllerTest {
             extras.putString(EXTRAS_KEY, EXTRAS_VALUE);
             mController.sendCommand(command, extras, new ResultReceiver(null));
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnCommandCalled);
-            assertNotNull(mCallback.mCommandCallback);
-            assertEquals(command, mCallback.mCommand);
-            assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnCommandCalled).isTrue();
+            assertThat(mCallback.mCommandCallback).isNotNull();
+            assertThat(mCallback.mCommand).isEqualTo(command);
+            assertThat(mCallback.mExtras.getString(EXTRAS_KEY)).isEqualTo(EXTRAS_VALUE);
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
         }
     }
 
@@ -207,14 +204,14 @@ public class MediaControllerTest {
 
         try {
             mController.sendCommand(/*command=*/ null, args, resultReceiver);
-            fail();
+            assertWithMessage("Unreachable statement.").fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         }
 
         try {
             mController.sendCommand(/*command=*/ "", args, resultReceiver);
-            fail();
+            assertWithMessage("Unreachable statement.").fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         }
@@ -229,9 +226,9 @@ public class MediaControllerTest {
             mController.getTransportControls().setPlaybackSpeed(testSpeed);
             mWaitLock.wait(TIME_OUT_MS);
 
-            assertTrue(mCallback.mOnSetPlaybackSpeedCalled);
-            assertEquals(testSpeed, mCallback.mSpeed, 0.0f);
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnSetPlaybackSpeedCalled).isTrue();
+            assertThat(mCallback.mSpeed).isWithin(0.0f).of(testSpeed);
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
         }
     }
 
@@ -273,16 +270,16 @@ public class MediaControllerTest {
             // test setVolumeTo
             mController.setVolumeTo(7, 0);
             mWaitLock.wait(TIME_OUT_MS);
-            assertEquals(7, vp.getCurrentVolume());
+            assertThat(vp.getCurrentVolume()).isEqualTo(7);
 
             // test adjustVolume
             mController.adjustVolume(AudioManager.ADJUST_LOWER, 0);
             mWaitLock.wait(TIME_OUT_MS);
-            assertEquals(6, vp.getCurrentVolume());
+            assertThat(vp.getCurrentVolume()).isEqualTo(6);
 
             mController.adjustVolume(AudioManager.ADJUST_RAISE, 0);
             mWaitLock.wait(TIME_OUT_MS);
-            assertEquals(7, vp.getCurrentVolume());
+            assertThat(vp.getCurrentVolume()).isEqualTo(7);
         }
     }
 
@@ -295,61 +292,63 @@ public class MediaControllerTest {
             mCallback.reset();
             controls.play();
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnPlayCalled);
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnPlayCalled).isTrue();
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             controls.pause();
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnPauseCalled);
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnPauseCalled).isTrue();
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             controls.stop();
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnStopCalled);
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnStopCalled).isTrue();
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             controls.fastForward();
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnFastForwardCalled);
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnFastForwardCalled).isTrue();
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             controls.rewind();
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnRewindCalled);
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnRewindCalled).isTrue();
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             controls.skipToPrevious();
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnSkipToPreviousCalled);
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnSkipToPreviousCalled).isTrue();
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             controls.skipToNext();
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnSkipToNextCalled);
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnSkipToNextCalled).isTrue();
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             final long seekPosition = 1000;
             controls.seekTo(seekPosition);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnSeekToCalled);
-            assertEquals(seekPosition, mCallback.mSeekPosition);
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnSeekToCalled).isTrue();
+            assertThat(mCallback.mSeekPosition).isEqualTo(seekPosition);
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             final Rating rating = Rating.newStarRating(Rating.RATING_5_STARS, 3f);
             controls.setRating(rating);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnSetRatingCalled);
-            assertEquals(rating.getRatingStyle(), mCallback.mRating.getRatingStyle());
-            assertEquals(rating.getStarRating(), mCallback.mRating.getStarRating(), 0d);
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnSetRatingCalled).isTrue();
+            assertThat(mCallback.mRating.getRatingStyle()).isEqualTo(rating.getRatingStyle());
+            assertThat(mCallback.mRating.getStarRating())
+                    .isWithin(0.0f)
+                    .of(rating.getStarRating());
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             final String mediaId = "test-media-id";
@@ -357,37 +356,37 @@ public class MediaControllerTest {
             extras.putString(EXTRAS_KEY, EXTRAS_VALUE);
             controls.playFromMediaId(mediaId, extras);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnPlayFromMediaIdCalled);
-            assertEquals(mediaId, mCallback.mMediaId);
-            assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnPlayFromMediaIdCalled).isTrue();
+            assertThat(mCallback.mMediaId).isEqualTo(mediaId);
+            assertThat(mCallback.mExtras.getString(EXTRAS_KEY)).isEqualTo(EXTRAS_VALUE);
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             final String query = "test-query";
             controls.playFromSearch(query, extras);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnPlayFromSearchCalled);
-            assertEquals(query, mCallback.mQuery);
-            assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnPlayFromSearchCalled).isTrue();
+            assertThat(mCallback.mQuery).isEqualTo(query);
+            assertThat(mCallback.mExtras.getString(EXTRAS_KEY)).isEqualTo(EXTRAS_VALUE);
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             final Uri uri = Uri.parse("content://test/popcorn.mod");
             controls.playFromUri(uri, extras);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnPlayFromUriCalled);
-            assertEquals(uri, mCallback.mUri);
-            assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnPlayFromUriCalled).isTrue();
+            assertThat(mCallback.mUri).isEqualTo(uri);
+            assertThat(mCallback.mExtras.getString(EXTRAS_KEY)).isEqualTo(EXTRAS_VALUE);
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             final String action = "test-action";
             controls.sendCustomAction(action, extras);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnCustomActionCalled);
-            assertEquals(action, mCallback.mAction);
-            assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnCustomActionCalled).isTrue();
+            assertThat(mCallback.mAction).isEqualTo(action);
+            assertThat(mCallback.mExtras.get(EXTRAS_KEY)).isEqualTo(EXTRAS_VALUE);
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             mCallback.mOnCustomActionCalled = false;
@@ -395,58 +394,58 @@ public class MediaControllerTest {
                     new CustomAction.Builder(action, action, -1).setExtras(extras).build();
             controls.sendCustomAction(customAction, extras);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnCustomActionCalled);
-            assertEquals(action, mCallback.mAction);
-            assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnCustomActionCalled).isTrue();
+            assertThat(mCallback.mAction).isEqualTo(action);
+            assertThat(mCallback.mExtras.getString(EXTRAS_KEY)).isEqualTo(EXTRAS_VALUE);
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             final long queueItemId = 1000;
             controls.skipToQueueItem(queueItemId);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnSkipToQueueItemCalled);
-            assertEquals(queueItemId, mCallback.mQueueItemId);
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnSkipToQueueItemCalled).isTrue();
+            assertThat(mCallback.mQueueItemId).isEqualTo(queueItemId);
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             controls.prepare();
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnPrepareCalled);
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnPrepareCalled).isTrue();
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             controls.prepareFromMediaId(mediaId, extras);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnPrepareFromMediaIdCalled);
-            assertEquals(mediaId, mCallback.mMediaId);
-            assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnPrepareFromMediaIdCalled).isTrue();
+            assertThat(mCallback.mMediaId).isEqualTo(mediaId);
+            assertThat(mCallback.mExtras.getString(EXTRAS_KEY)).isEqualTo(EXTRAS_VALUE);
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             controls.prepareFromSearch(query, extras);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnPrepareFromSearchCalled);
-            assertEquals(query, mCallback.mQuery);
-            assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnPrepareFromSearchCalled).isTrue();
+            assertThat(mCallback.mQuery).isEqualTo(query);
+            assertThat(mCallback.mExtras.getString(EXTRAS_KEY)).isEqualTo(EXTRAS_VALUE);
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             controls.prepareFromUri(uri, extras);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnPrepareFromUriCalled);
-            assertEquals(uri, mCallback.mUri);
-            assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mOnPrepareFromUriCalled).isTrue();
+            assertThat(mCallback.mUri).isEqualTo(uri);
+            assertThat(mCallback.mExtras.getString(EXTRAS_KEY)).isEqualTo(EXTRAS_VALUE);
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             mCallback.reset();
             KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_STOP);
             mController.dispatchMediaButtonEvent(event);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnMediaButtonEventCalled);
+            assertThat(mCallback.mOnMediaButtonEventCalled).isTrue();
             // KeyEvent doesn't override equals.
-            assertEquals(KeyEvent.ACTION_DOWN, mCallback.mKeyEvent.getAction());
-            assertEquals(KeyEvent.KEYCODE_MEDIA_STOP, mCallback.mKeyEvent.getKeyCode());
-            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
+            assertThat(mCallback.mKeyEvent.getAction()).isEqualTo(KeyEvent.ACTION_DOWN);
+            assertThat(mCallback.mKeyEvent.getKeyCode()).isEqualTo(KeyEvent.KEYCODE_MEDIA_STOP);
+            assertThat(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo)).isTrue();
 
             // just call the callback once directly so it's marked as tested
             try {
@@ -485,14 +484,14 @@ public class MediaControllerTest {
     public void testRegisterCallbackWithNullThrowsIAE() {
         try {
             mController.registerCallback(/*handler=*/ null);
-            fail();
+            assertWithMessage("Unreachable statement").fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         }
 
         try {
             mController.registerCallback(/*handler=*/ null, mHandler);
-            fail();
+            assertWithMessage("Unreachable statement").fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         }
@@ -504,7 +503,7 @@ public class MediaControllerTest {
         mController.registerCallback(callback, mHandler);
 
         Handler initialHandler = mController.getHandlerForCallback(callback);
-        assertEquals(mHandler.getLooper(), initialHandler.getLooper());
+        assertThat(initialHandler.getLooper()).isEqualTo(mHandler.getLooper());
 
         // Create a separate handler with a new looper.
         HandlerThread handlerThread = new HandlerThread("Test thread");
@@ -515,8 +514,8 @@ public class MediaControllerTest {
         Handler currentHandlerInController = mController.getHandlerForCallback(callback);
 
         // The handler should not have been replaced.
-        assertEquals(initialHandler, currentHandlerInController);
-        assertNotEquals(handlerThread.getLooper(), currentHandlerInController.getLooper());
+        assertThat(currentHandlerInController).isEqualTo(initialHandler);
+        assertThat(currentHandlerInController.getLooper()).isNotEqualTo(handlerThread.getLooper());
 
         handlerThread.quitSafely();
     }
@@ -525,7 +524,7 @@ public class MediaControllerTest {
     public void testUnregisterCallbackWithNull() {
         try {
             mController.unregisterCallback(/*handler=*/ null);
-            fail();
+            assertWithMessage("Unreachable statement").fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         }
@@ -535,17 +534,18 @@ public class MediaControllerTest {
     public void testUnregisterCallbackShouldRemoveCallback() {
         MediaController.Callback callback = new MediaController.Callback() {};
         mController.registerCallback(callback, mHandler);
-        assertEquals(mHandler.getLooper(), mController.getHandlerForCallback(callback).getLooper());
+        assertThat(mController.getHandlerForCallback(callback).getLooper())
+                .isEqualTo(mHandler.getLooper());
 
         mController.unregisterCallback(callback);
-        assertNull(mController.getHandlerForCallback(callback));
+        assertThat(mController.getHandlerForCallback(callback)).isNull();
     }
 
     @Test
     public void testDispatchMediaButtonEventWithNullKeyEvent() {
         try {
             mController.dispatchMediaButtonEvent(/*keyEvent=*/ null);
-            fail();
+            assertWithMessage("Unreachable statement").fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         }
@@ -554,7 +554,7 @@ public class MediaControllerTest {
     @Test
     public void testDispatchMediaButtonEventWithNonMediaKeyEventReturnsFalse() {
         KeyEvent keyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_CAPS_LOCK);
-        assertFalse(mController.dispatchMediaButtonEvent(keyEvent));
+        assertThat(mController.dispatchMediaButtonEvent(keyEvent)).isFalse();
     }
 
     @Test
@@ -562,10 +562,10 @@ public class MediaControllerTest {
         final int arrayLength = 5;
         MediaController.PlaybackInfo[] playbackInfoArrayInitializedWithNulls =
                 MediaController.PlaybackInfo.CREATOR.newArray(arrayLength);
-        assertNotNull(playbackInfoArrayInitializedWithNulls);
-        assertEquals(arrayLength, playbackInfoArrayInitializedWithNulls.length);
+        assertThat(playbackInfoArrayInitializedWithNulls).isNotNull();
+        assertThat(playbackInfoArrayInitializedWithNulls.length).isEqualTo(arrayLength);
         for (MediaController.PlaybackInfo playbackInfo : playbackInfoArrayInitializedWithNulls) {
-            assertNull(playbackInfo);
+            assertThat(playbackInfo).isNull();
         }
     }
 
@@ -575,28 +575,28 @@ public class MediaControllerTest {
 
         try {
             transportControls.playFromMediaId(/*mediaId=*/ null, /*extras=*/ new Bundle());
-            fail();
+            assertWithMessage("Unreachable statement").fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         }
 
         try {
             transportControls.playFromMediaId(/*mediaId=*/ "", /*extras=*/ new Bundle());
-            fail();
+            assertWithMessage("Unreachable statement").fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         }
 
         try {
             transportControls.prepareFromMediaId(/*mediaId=*/ null, /*extras=*/ new Bundle());
-            fail();
+            assertWithMessage("Unreachable statement").fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         }
 
         try {
             transportControls.prepareFromMediaId(/*mediaId=*/ "", /*extras=*/ new Bundle());
-            fail();
+            assertWithMessage("Unreachable statement").fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         }
@@ -608,28 +608,28 @@ public class MediaControllerTest {
 
         try {
             transportControls.playFromUri(/*uri=*/ null, /*extras=*/ new Bundle());
-            fail();
+            assertWithMessage("Unreachable statement").fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         }
 
         try {
             transportControls.playFromUri(Uri.EMPTY, /*extras=*/ new Bundle());
-            fail();
+            assertWithMessage("Unreachable statement").fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         }
 
         try {
             transportControls.prepareFromUri(/*uri=*/ null, /*extras=*/ new Bundle());
-            fail();
+            assertWithMessage("Unreachable statement").fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         }
 
         try {
             transportControls.prepareFromUri(Uri.EMPTY, /*extras=*/ new Bundle());
-            fail();
+            assertWithMessage("Unreachable statement").fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         }
@@ -644,11 +644,11 @@ public class MediaControllerTest {
             // These calls should not crash. Null query is accepted on purpose.
             transportControls.playFromSearch(/*query=*/ null, /*extras=*/ new Bundle());
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnPlayFromSearchCalled);
+            assertThat(mCallback.mOnPlayFromSearchCalled).isTrue();
 
             transportControls.prepareFromSearch(/*query=*/ null, /*extras=*/ new Bundle());
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnPrepareFromSearchCalled);
+            assertThat(mCallback.mOnPrepareFromSearchCalled).isTrue();
         }
     }
 
@@ -659,21 +659,21 @@ public class MediaControllerTest {
         try {
             transportControls.sendCustomAction((PlaybackState.CustomAction) null,
                     /*args=*/ new Bundle());
-            fail();
+            assertWithMessage("Unreachable statement").fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         }
 
         try {
             transportControls.sendCustomAction(/*action=*/ (String) null, /*args=*/ new Bundle());
-            fail();
+            assertWithMessage("Unreachable statement").fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         }
 
         try {
             transportControls.sendCustomAction(/*action=*/ "", /*args=*/ new Bundle());
-            fail();
+            assertWithMessage("Unreachable statement").fail();
         } catch (IllegalArgumentException ex) {
             // Expected
         }

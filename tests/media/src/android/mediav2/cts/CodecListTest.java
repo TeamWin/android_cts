@@ -24,6 +24,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Test;
@@ -31,6 +32,11 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 
+/**
+ * Checks if all required codecs are listed in media codec list. The scope of this test is to
+ * only check if the device has advertised all the required codecs. Their functionality and other
+ * cdd requirements are not verified.
+ */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class CodecListTest {
@@ -43,10 +49,9 @@ public class CodecListTest {
     }
 
     /**
-     * Tests if the device under test has support for required components as guided by CDD.
-     * The test only checks for the components availability. It doesn't check if the component
-     * adheres to additional requirements (support for min profile/level, ...) set by cdd.
+     * Tests if the device under test has support for required codecs as guided by cdd
      */
+    @CddTest(requirements = {"2.2.2", "2.3.2", "2.4.2", "2.5.2", "2.6"})
     @Test
     public void testCddRequiredCodecsAvailability() {
         final boolean needAudio = mediaTypePrefix == null || mediaTypePrefix.startsWith("audio");

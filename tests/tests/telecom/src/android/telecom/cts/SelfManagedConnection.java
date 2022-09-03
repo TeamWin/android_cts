@@ -91,6 +91,7 @@ public class SelfManagedConnection extends Connection {
 
     @Override
     public void onHold() {
+        this.setOnHold();
         mOnHoldLatch.countDown();
     }
 

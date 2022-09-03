@@ -35,16 +35,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * HDR10 Metadata is an aid for a display device to show the content in an optimal manner. It
+ * Test to validate hdr static and dynamic metadata in encoders
+ * HDR Metadata is an aid for a display device to show the content in an optimal manner. It
  * contains the HDR content and mastering device properties that are used by the display device
- * to map the content according to its own color gamut and peak brightness. This information is
- * part of the elementary stream. Generally this information is placed at scene change intervals
- * or even at every frame level. If the encoder is configured with hdr info, then it is
- * expected to place this information in the elementary stream as-is. This test validates the
- * same. The test feeds per-frame or per-scene info at various points and expects the encoder
- * to place the hdr info in the elementary stream at exactly those points
+ * to map the content according to its own color gamut and peak brightness. This information can
+ * be part of container and/or elementary stream. If the encoder is configured with hdr metadata,
+ * then it is expected to place this information in the elementary stream as-is. The same
+ * goes for container as well. This test validates the same.
  *
- * Restrict hdr info test for Android T and above
+ * Restrict hdr metadata test for Android T and above
  */
 @RunWith(Parameterized.class)
 // P010 support was added in Android T, hence limit the following tests to Android T and above
@@ -82,10 +81,12 @@ public class EncoderHDRInfoTest extends HDREncoderTestBase {
             exhaustiveArgsList.add(new Object[]{mediaType, 512000, 352, 288, null,
                     HDR_DYNAMIC_INFO});
         }
-
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
     }
 
+    /**
+     * @see EncoderHDRInfoTest
+     */
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     @CddTest(requirements = {"5.12/C-6-4"})

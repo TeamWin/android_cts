@@ -15,11 +15,8 @@
  */
 package android.media.bettertogether.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Instrumentation;
 import android.content.ComponentName;
@@ -91,18 +88,20 @@ public class MediaBrowserTest {
     public void testMediaBrowser() throws Throwable {
         resetCallbacks();
         createMediaBrowser(TEST_BROWSER_SERVICE);
-        runOnMainThread(() -> assertFalse(mMediaBrowser.isConnected()));
+        runOnMainThread(() -> assertThat(mMediaBrowser.isConnected()).isFalse());
 
         connectMediaBrowserService();
-        runOnMainThread(() -> assertTrue(mMediaBrowser.isConnected()));
+        runOnMainThread(() -> assertThat(mMediaBrowser.isConnected()).isTrue());
 
         runOnMainThread(() -> {
-            assertEquals(TEST_BROWSER_SERVICE, mMediaBrowser.getServiceComponent());
-            assertEquals(StubMediaBrowserService.MEDIA_ID_ROOT, mMediaBrowser.getRoot());
-            assertEquals(StubMediaBrowserService.EXTRAS_VALUE,
-                    mMediaBrowser.getExtras().getString(StubMediaBrowserService.EXTRAS_KEY));
-            assertEquals(StubMediaBrowserService.sSession.getSessionToken(),
-                    mMediaBrowser.getSessionToken());
+            assertThat(mMediaBrowser.getServiceComponent())
+                    .isEqualTo(TEST_BROWSER_SERVICE);
+            assertThat(mMediaBrowser.getRoot())
+                    .isEqualTo(StubMediaBrowserService.MEDIA_ID_ROOT);
+            assertThat(mMediaBrowser.getExtras().getString(StubMediaBrowserService.EXTRAS_KEY))
+                    .isEqualTo(StubMediaBrowserService.EXTRAS_VALUE);
+            assertThat(mMediaBrowser.getSessionToken())
+                    .isEqualTo(StubMediaBrowserService.sSession.getSessionToken());
         });
 
         disconnectMediaBrowser();
@@ -118,33 +117,33 @@ public class MediaBrowserTest {
     public void testThrowingISEWhileNotConnected() throws Throwable {
         resetCallbacks();
         createMediaBrowser(TEST_BROWSER_SERVICE);
-        runOnMainThread(() -> assertFalse(mMediaBrowser.isConnected()));
+        runOnMainThread(() -> assertThat(mMediaBrowser.isConnected()).isFalse());
 
         runOnMainThread(() -> {
             try {
                 mMediaBrowser.getExtras();
-                fail();
+                assertWithMessage("Unreachable statement.").fail();
             } catch (IllegalStateException e) {
                 // Expected
             }
 
             try {
                 mMediaBrowser.getRoot();
-                fail();
+                assertWithMessage("Unreachable statement.").fail();
             } catch (IllegalStateException e) {
                 // Expected
             }
 
             try {
                 mMediaBrowser.getServiceComponent();
-                fail();
+                assertWithMessage("Unreachable statement.").fail();
             } catch (IllegalStateException e) {
                 // Expected
             }
 
             try {
                 mMediaBrowser.getSessionToken();
-                fail();
+                assertWithMessage("Unreachable statement.").fail();
             } catch (IllegalStateException e) {
                 // Expected
             }
@@ -159,7 +158,7 @@ public class MediaBrowserTest {
         runOnMainThread(() -> {
             try {
                 mMediaBrowser.connect();
-                fail();
+                assertWithMessage("Unreachable statement.").fail();
             } catch (IllegalStateException e) {
                 // expected
             }
@@ -245,11 +244,15 @@ public class MediaBrowserTest {
         try {
             Thread.sleep(SLEEP_MS);
         } catch (InterruptedException e) {
-            fail("Unexpected InterruptedException occurred.");
+            assertWithMessage("Unexpected InterruptedException occurred.").fail();
         }
-        assertEquals(0, mConnectionCallback.mConnectedCount);
-        assertEquals(0, mConnectionCallback.mConnectionFailedCount);
-        assertEquals(0, mConnectionCallback.mConnectionSuspendedCount);
+
+        assertThat(mConnectionCallback.mConnectedCount)
+                .isEqualTo(0);
+        assertThat(mConnectionCallback.mConnectionFailedCount)
+                .isEqualTo(0);
+        assertThat(mConnectionCallback.mConnectionSuspendedCount)
+                .isEqualTo(0);
     }
 
     @Test
@@ -266,12 +269,13 @@ public class MediaBrowserTest {
             }
         }.run();
 
-        assertEquals(StubMediaBrowserService.MEDIA_ID_ROOT, mSubscriptionCallback.mLastParentId);
-        assertEquals(StubMediaBrowserService.MEDIA_ID_CHILDREN.length,
-                mSubscriptionCallback.mLastChildMediaItems.size());
+        assertThat(mSubscriptionCallback.mLastParentId)
+                .isEqualTo(StubMediaBrowserService.MEDIA_ID_ROOT);
+        assertThat(mSubscriptionCallback.mLastChildMediaItems.size())
+                .isEqualTo(StubMediaBrowserService.MEDIA_ID_CHILDREN.length);
         for (int i = 0; i < StubMediaBrowserService.MEDIA_ID_CHILDREN.length; ++i) {
-            assertEquals(StubMediaBrowserService.MEDIA_ID_CHILDREN[i],
-                    mSubscriptionCallback.mLastChildMediaItems.get(i).getMediaId());
+            assertThat(mSubscriptionCallback.mLastChildMediaItems.get(i).getMediaId())
+                    .isEqualTo(StubMediaBrowserService.MEDIA_ID_CHILDREN[i]);
         }
 
         // Test unsubscribe.
@@ -284,10 +288,11 @@ public class MediaBrowserTest {
         try {
             Thread.sleep(SLEEP_MS);
         } catch (InterruptedException e) {
-            fail("Unexpected InterruptedException occurred.");
+            assertWithMessage("Unexpected InterruptedException occurred.").fail();
         }
         // onChildrenLoaded should not be called.
-        assertEquals(0, mSubscriptionCallback.mChildrenLoadedCount);
+        assertThat(mSubscriptionCallback.mChildrenLoadedCount)
+                .isEqualTo(0);
     }
 
     @Test
@@ -298,7 +303,7 @@ public class MediaBrowserTest {
             try {
                 final String nullMediaId = null;
                 mMediaBrowser.subscribe(nullMediaId, mSubscriptionCallback);
-                fail();
+                assertWithMessage("Unreachable statement.").fail();
             } catch (IllegalArgumentException e) {
                 // Expected
             }
@@ -306,7 +311,7 @@ public class MediaBrowserTest {
             try {
                 final String emptyMediaId = "";
                 mMediaBrowser.subscribe(emptyMediaId, mSubscriptionCallback);
-                fail();
+                assertWithMessage("Unreachable statement.").fail();
             } catch (IllegalArgumentException e) {
                 // Expected
             }
@@ -314,7 +319,7 @@ public class MediaBrowserTest {
             try {
                 final MediaBrowser.SubscriptionCallback nullCallback = null;
                 mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, nullCallback);
-                fail();
+                assertWithMessage("Unreachable statement.").fail();
             } catch (IllegalArgumentException e) {
                 // Expected
             }
@@ -323,7 +328,7 @@ public class MediaBrowserTest {
                 final Bundle nullOptions = null;
                 mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, nullOptions,
                         mSubscriptionCallback);
-                fail();
+                assertWithMessage("Unreachable statement.").fail();
             } catch (IllegalArgumentException e) {
                 // Expected
             }
@@ -349,18 +354,19 @@ public class MediaBrowserTest {
                     return mSubscriptionCallback.mChildrenLoadedWithOptionCount > 0;
                 }
             }.run();
-            assertEquals(StubMediaBrowserService.MEDIA_ID_ROOT,
-                    mSubscriptionCallback.mLastParentId);
+            assertThat(mSubscriptionCallback.mLastParentId)
+                    .isEqualTo(StubMediaBrowserService.MEDIA_ID_ROOT);
             if (page != lastPage) {
-                assertEquals(pageSize, mSubscriptionCallback.mLastChildMediaItems.size());
+                assertThat(mSubscriptionCallback.mLastChildMediaItems.size()).isEqualTo(pageSize);
             } else {
-                assertEquals((StubMediaBrowserService.MEDIA_ID_CHILDREN.length - 1) % pageSize + 1,
-                        mSubscriptionCallback.mLastChildMediaItems.size());
+                assertThat(mSubscriptionCallback.mLastChildMediaItems.size())
+                        .isEqualTo((StubMediaBrowserService.MEDIA_ID_CHILDREN.length - 1)
+                                % pageSize + 1);
             }
             // Check whether all the items in the current page are loaded.
             for (int i = 0; i < mSubscriptionCallback.mLastChildMediaItems.size(); ++i) {
-                assertEquals(StubMediaBrowserService.MEDIA_ID_CHILDREN[page * pageSize + i],
-                        mSubscriptionCallback.mLastChildMediaItems.get(i).getMediaId());
+                assertThat(mSubscriptionCallback.mLastChildMediaItems.get(i).getMediaId())
+                        .isEqualTo(StubMediaBrowserService.MEDIA_ID_CHILDREN[page * pageSize + i]);
             }
         }
 
@@ -375,10 +381,10 @@ public class MediaBrowserTest {
         try {
             Thread.sleep(SLEEP_MS);
         } catch (InterruptedException e) {
-            fail("Unexpected InterruptedException occurred.");
+            assertWithMessage("Unexpected InterruptedException occurred.").fail();
         }
         // onChildrenLoaded should not be called.
-        assertEquals(0, mSubscriptionCallback.mChildrenLoadedCount);
+        assertThat(mSubscriptionCallback.mChildrenLoadedCount).isEqualTo(0);
     }
 
     @Test
@@ -395,7 +401,8 @@ public class MediaBrowserTest {
             }
         }.run();
 
-        assertEquals(StubMediaBrowserService.MEDIA_ID_INVALID, mSubscriptionCallback.mLastErrorId);
+        assertThat(mSubscriptionCallback.mLastErrorId)
+                .isEqualTo(StubMediaBrowserService.MEDIA_ID_INVALID);
     }
 
     @Test
@@ -418,10 +425,12 @@ public class MediaBrowserTest {
             }
         }.run();
 
-        assertEquals(StubMediaBrowserService.MEDIA_ID_INVALID, mSubscriptionCallback.mLastErrorId);
-        assertEquals(page, mSubscriptionCallback.mLastOptions.getInt(MediaBrowser.EXTRA_PAGE));
-        assertEquals(pageSize,
-                mSubscriptionCallback.mLastOptions.getInt(MediaBrowser.EXTRA_PAGE_SIZE));
+        assertThat(mSubscriptionCallback.mLastErrorId)
+                .isEqualTo(StubMediaBrowserService.MEDIA_ID_INVALID);
+        assertThat(mSubscriptionCallback.mLastOptions.getInt(MediaBrowser.EXTRA_PAGE))
+                .isEqualTo(page);
+        assertThat(mSubscriptionCallback.mLastOptions.getInt(MediaBrowser.EXTRA_PAGE_SIZE))
+                .isEqualTo(pageSize);
     }
 
     @Test
@@ -438,11 +447,11 @@ public class MediaBrowserTest {
         try {
             Thread.sleep(SLEEP_MS);
         } catch (InterruptedException e) {
-            fail("Unexpected InterruptedException occurred.");
+            assertWithMessage("Unexpected InterruptedException occurred.").fail();
         }
-        assertEquals(0, mSubscriptionCallback.mChildrenLoadedCount);
-        assertEquals(0, mSubscriptionCallback.mChildrenLoadedWithOptionCount);
-        assertNull(mSubscriptionCallback.mLastParentId);
+        assertThat(mSubscriptionCallback.mChildrenLoadedCount).isEqualTo(0);
+        assertThat(mSubscriptionCallback.mChildrenLoadedWithOptionCount).isEqualTo(0);
+        assertThat(mSubscriptionCallback.mLastParentId).isNull();
     }
 
     @Test
@@ -452,7 +461,7 @@ public class MediaBrowserTest {
             try {
                 final String nullMediaId = null;
                 mMediaBrowser.unsubscribe(nullMediaId);
-                fail();
+                assertWithMessage("Unreachable statement.").fail();
             } catch (IllegalArgumentException e) {
                 // Expected
             }
@@ -460,7 +469,7 @@ public class MediaBrowserTest {
             try {
                 final String emptyMediaId = "";
                 mMediaBrowser.unsubscribe(emptyMediaId);
-                fail();
+                assertWithMessage("Unreachable statement.").fail();
             } catch (IllegalArgumentException e) {
                 // Expected
             }
@@ -468,7 +477,7 @@ public class MediaBrowserTest {
             try {
                 final MediaBrowser.SubscriptionCallback nullCallback = null;
                 mMediaBrowser.unsubscribe(StubMediaBrowserService.MEDIA_ID_ROOT, nullCallback);
-                fail();
+                assertWithMessage("Unreachable statement.").fail();
             } catch (IllegalArgumentException e) {
                 // Expected
             }
@@ -514,12 +523,12 @@ public class MediaBrowserTest {
         try {
             Thread.sleep(SLEEP_MS);
         } catch (InterruptedException e) {
-            fail("Unexpected InterruptedException occurred.");
+            assertWithMessage("Unexpected InterruptedException occurred.").fail();
         }
 
         // onChildrenLoaded should not be called.
         for (StubSubscriptionCallback callback : subscriptionCallbacks) {
-            assertEquals(0, callback.mChildrenLoadedWithOptionCount);
+            assertThat(callback.mChildrenLoadedWithOptionCount).isEqualTo(0);
         }
     }
 
@@ -571,7 +580,7 @@ public class MediaBrowserTest {
             try {
                 Thread.sleep(SLEEP_MS);
             } catch (InterruptedException e) {
-                fail("Unexpected InterruptedException occurred.");
+                assertWithMessage("Unexpected InterruptedException occurred.").fail();
             }
 
             // Only the remaining subscriptionCallbacks should be called.
@@ -579,9 +588,11 @@ public class MediaBrowserTest {
                 int childrenLoadedWithOptionsCount = subscriptionCallbacks
                         .get(orderOfRemovingCallbacks[j]).mChildrenLoadedWithOptionCount;
                 if (j <= i) {
-                    assertEquals(0, childrenLoadedWithOptionsCount);
+                    assertThat(childrenLoadedWithOptionsCount)
+                            .isEqualTo(0);
                 } else {
-                    assertEquals(1, childrenLoadedWithOptionsCount);
+                    assertThat(childrenLoadedWithOptionsCount)
+                            .isEqualTo(1);
                 }
             }
         }
@@ -602,8 +613,8 @@ public class MediaBrowserTest {
             }
         }.run();
 
-        assertEquals(StubMediaBrowserService.MEDIA_ID_CHILDREN[0],
-                mItemCallback.mLastMediaItem.getMediaId());
+        assertThat(mItemCallback.mLastMediaItem.getMediaId())
+                .isEqualTo(StubMediaBrowserService.MEDIA_ID_CHILDREN[0]);
     }
 
     @Test
@@ -615,7 +626,7 @@ public class MediaBrowserTest {
             try {
                 // Calling getItem() with empty mediaId will throw IAE.
                 mMediaBrowser.getItem("",  mItemCallback);
-                fail();
+                assertWithMessage("Unreachable statement.").fail();
             } catch (IllegalArgumentException e) {
                 // Expected
             }
@@ -623,7 +634,7 @@ public class MediaBrowserTest {
             try {
                 // Calling getItem() with null mediaId will throw IAE.
                 mMediaBrowser.getItem(null,  mItemCallback);
-                fail();
+                assertWithMessage("Unreachable statement.").fail();
             } catch (IllegalArgumentException e) {
                 // Expected
             }
@@ -631,7 +642,7 @@ public class MediaBrowserTest {
             try {
                 // Calling getItem() with null itemCallback will throw IAE.
                 mMediaBrowser.getItem("media_id",  null);
-                fail();
+                assertWithMessage("Unreachable statement.").fail();
             } catch (IllegalArgumentException e) {
                 // Expected
             }
@@ -654,7 +665,8 @@ public class MediaBrowserTest {
             }
         }.run();
 
-        assertEquals(mItemCallback.mLastErrorId, mediaId);
+        assertThat(mItemCallback.mLastErrorId)
+                .isEqualTo(mediaId);
     }
 
     @Test
@@ -671,7 +683,8 @@ public class MediaBrowserTest {
             }
         }.run();
 
-        assertEquals(StubMediaBrowserService.MEDIA_ID_INVALID, mItemCallback.mLastErrorId);
+        assertThat(mItemCallback.mLastErrorId)
+                .isEqualTo(StubMediaBrowserService.MEDIA_ID_INVALID);
     }
 
     @Test
@@ -686,10 +699,10 @@ public class MediaBrowserTest {
         try {
             Thread.sleep(SLEEP_MS);
         } catch (InterruptedException e) {
-            fail("Unexpected InterruptedException occurred.");
+            assertWithMessage("Unexpected InterruptedException occurred.").fail();
         }
-        assertNull(mItemCallback.mLastMediaItem);
-        assertNull(mItemCallback.mLastErrorId);
+        assertThat(mItemCallback.mLastMediaItem).isNull();
+        assertThat(mItemCallback.mLastErrorId).isNull();
     }
 
     private void createMediaBrowser(final ComponentName component) throws Throwable {

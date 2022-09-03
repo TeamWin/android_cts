@@ -34,6 +34,8 @@ import android.view.Surface;
 
 import androidx.test.filters.LargeTest;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,6 +51,20 @@ import java.util.List;
 
 import javax.microedition.khronos.opengles.GL10;
 
+/**
+ * Color Primaries, Color Standard and Color Transfer are essential information to display the
+ * decoded YUV on an RGB display accurately. Tests
+ * {@link EncoderColorAspectsTest#testColorAspects()} and
+ * {@link DecoderColorAspectsTest#testColorAspects()} checks if the encoder and decoder
+ * components are signalling the configured color aspects correctly.
+ * This test verifies if the device decoder/display is using this color aspects correctly
+ *
+ * Test pipeline:
+ *  [[ Input RGB frames -> encoder -> muxer -> decoder -> display -> Output RGB frames ]]
+ *
+ * Assuming no quantization losses, the input rgb pixel values and output rgb pixel values are
+ * expected to be within tolerance limits.
+ */
 @RunWith(Parameterized.class)
 public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
     private final String LOG_TAG = EncodeDecodeAccuracyTest.class.getSimpleName();
@@ -483,10 +499,11 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
     }
 
     /**
-     * Current test encodes RGB frames at high bitrates (this is to ensure very minor quantization
-     * losses). The Color Aspects information is passed in the bitstream or container format. The
-     * decoder is expected to produce the color information accurately
+     * @see EncodeDecodeAccuracyTest
      */
+    @ApiTest(apis = {"android.media.MediaFormat#KEY_COLOR_RANGE",
+                     "android.media.MediaFormat#KEY_COLOR_STANDARD",
+                     "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testEncodeDecodeAccuracyRGB() throws IOException, InterruptedException {

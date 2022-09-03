@@ -32,6 +32,9 @@ import android.media.MediaMuxer;
 import android.util.Log;
 import android.util.Pair;
 
+import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,7 +50,20 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * Validate profile and level configuration for listed encoder components
+ * EncoderProfileLevelTest validates the profile, level information advertised by the component
+ * in its codec capabilities. The test sets profile and level keys in mediaformat and uses it
+ * during encoder configuration. Upon successful configuration, frames are queued for encoding
+ * (byte buffer mode) and the encoded output (bitstream) is expected to contain the same profile
+ * and level information that was used during configure.
+ * NOTE: The test configures profile, level information basing on standard guidelines, not
+ * arbitrarily so encoders ARE expected to place these values in the bitstream as-is.
+ *
+ * The test additionally checks if the output format returned by component contains same profile
+ * and level information.
+ *
+ * As per cdd, if a device contains an encoder capable of encoding a profile/level combination
+ * then it should contain a decoder capable of decoding the same profile/level combination. This
+ * is verified.
  */
 @RunWith(Parameterized.class)
 public class EncoderProfileLevelTest extends CodecEncoderTestBase {
@@ -599,8 +615,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
         } else if (profile != -1) {
             return profile;
         } else {
-            Log.e(LOG_TAG,
-                    "format doesn't contain either KEY_AAC_PROFILE or KEY_PROFILE");
+            Log.e(LOG_TAG, "format doesn't contain either KEY_AAC_PROFILE or KEY_PROFILE");
             return -1;
         }
     }
@@ -663,12 +678,17 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
     }
 
     /**
-     * Sets profile and level keys in config format for encoder and validates the keys in output
-     * format if component supports the configuration and also verifies whether cdd mandated
-     * (profile, level) combination is supported
-     * Write the encoder output in all container formats that can hold the mime and validates the
-     * keys in extracted format.
+     * @see EncoderProfileLevelTest
+     * Besides the above, the test muxes the encoder output in all supported container formats
+     * and checks if muxers and extractors on device are signalling profile/level information
+     * correctly
      */
+    @CddTest(requirements = {"2.2.2/5.1/H-0-3", "2.2.2/5.1/H-0-4", "2.2.2/5.1/H-0-5", "5/C-0-3",
+                             "5.2.1/C-1-1", "5.2.2/C-2-1", "5.2.3/C-2-1", "5.2.4/C-1-2",
+                             "5.2.5/C-1-1"})
+    @ApiTest(apis = {"android.media.MediaFormat#KEY_PROFILE",
+                     "android.media.MediaFormat#KEY_AAC_PROFILE",
+                     "android.media.MediaFormat#KEY_LEVEL"})
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testValidateProfileLevel() throws IOException, InterruptedException {
         int[] profiles;
@@ -744,9 +764,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                                             + "format :" + format + " for mime: " + mMime,
                                     selectCodecs(mMime, formats, null, false).isEmpty());
                         }
-                        Log.w(LOG_TAG,
-                                "Component: " + mCodecName + " doesn't support cdd format: " +
-                                        format);
+                        Log.d(LOG_TAG, mCodecName + " doesn't support format: " + format);
                     }
                     continue;
                 }
@@ -790,26 +808,25 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                 Assume.assumeTrue(outFormat.containsKey(MediaFormat.KEY_LEVEL));
                 // TODO (b/166300446) avc mime fails validation
                 if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_AVC)) {
-                    Log.w(LOG_TAG, "Skip validation after muxing for mime = " + mMime);
+                    Log.w(LOG_TAG, "Skip validation for mime = " + mMime);
                     continue;
                 }
                 // TODO (b/166305723) hevc mime fails validation
                 if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
-                    Log.w(LOG_TAG, "Skip validation after muxing for mime = " + mMime);
+                    Log.w(LOG_TAG, "Skip validation for mime = " + mMime);
                     continue;
                 }
                 // TODO (b/166300448) h263 and mpeg4 mimes fails validation
                 if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_H263) ||
-                            mMime.equals(MediaFormat.MIMETYPE_VIDEO_MPEG4)) {
-                    Log.w(LOG_TAG, "Skip validation after muxing for mime = " + mMime);
+                        mMime.equals(MediaFormat.MIMETYPE_VIDEO_MPEG4)) {
+                    Log.w(LOG_TAG, "Skip validation for mime = " + mMime);
                     continue;
                 }
                 // TODO (b/184889671) aac for profile AACObjectHE fails validation
                 // TODO (b/184890155) aac for profile AACObjectLD, AACObjectELD fails validation
                 if (mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC) &&
-                            profile != AACObjectLC) {
-                    Log.w(LOG_TAG, "Skip validation after muxing for mime = " + mMime +
-                            " profile " + profile);
+                        profile != AACObjectLC) {
+                    Log.w(LOG_TAG, "Skip validation for mime = " + mMime + " profile " + profile);
                     continue;
                 }
 

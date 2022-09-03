@@ -47,7 +47,6 @@ import com.android.os.AtomsProto.OverlayStateChanged;
 import com.android.os.AtomsProto.SyncStateChanged;
 import com.android.os.AtomsProto.TestAtomReported;
 import com.android.os.AtomsProto.UiEventReported;
-import com.android.os.AtomsProto.VibratorStateChanged;
 import com.android.os.AtomsProto.WakelockStateChanged;
 import com.android.os.StatsLog.EventMetricData;
 import com.android.tradefed.build.IBuildInfo;
@@ -639,33 +638,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         AtomTestUtils.assertStatesOccurredInOrder(stateSet, data,
                 /* wait = */ 0 /* don't verify time differences between state changes */,
                 atom -> atom.getSyncStateChanged().getState().getNumber());
-    }
-
-    public void testVibratorState() throws Exception {
-        if (!DeviceUtils.checkDeviceFor(getDevice(), "checkVibratorSupported")) return;
-
-        final int atomTag = Atom.VIBRATOR_STATE_CHANGED_FIELD_NUMBER;
-        final String name = "testVibratorState";
-
-        Set<Integer> onState = new HashSet<>(
-                Arrays.asList(VibratorStateChanged.State.ON_VALUE));
-        Set<Integer> offState = new HashSet<>(
-                Arrays.asList(VibratorStateChanged.State.OFF_VALUE));
-
-        // Add state sets to the list in order.
-        List<Set<Integer>> stateSet = Arrays.asList(onState, offState);
-
-        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                atomTag, /*useUidAttributionChain=*/true);
-
-        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", name);
-
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
-        // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-
-        AtomTestUtils.assertStatesOccurredInOrder(stateSet, data, 300,
-                atom -> atom.getVibratorStateChanged().getState().getNumber());
     }
 
     public void testWakelockState() throws Exception {

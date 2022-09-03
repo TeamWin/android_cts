@@ -25,11 +25,8 @@ import static android.media.bettertogether.cts.MediaSessionTestService.STEP_SET_
 import static android.media.browse.MediaBrowser.MediaItem.FLAG_PLAYABLE;
 import static android.media.cts.Utils.compareRemoteUserInfo;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Instrumentation;
 import android.content.ComponentName;
@@ -141,8 +138,8 @@ public class MediaBrowserServiceTest {
                 }, mRootHints);
             mMediaBrowser.connect();
         });
-        assertTrue(onConnectedLatch.await(TIME_OUT_MS, TimeUnit.MILLISECONDS));
-        assertNotNull(mMediaBrowserService);
+        assertThat(onConnectedLatch.await(TIME_OUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+        assertThat(mMediaBrowserService).isNotNull();
     }
 
     @After
@@ -157,8 +154,8 @@ public class MediaBrowserServiceTest {
 
     @Test
     public void testGetSessionToken() {
-        assertEquals(StubMediaBrowserService.sSession.getSessionToken(),
-                mMediaBrowserService.getSessionToken());
+        assertThat(mMediaBrowserService.getSessionToken())
+                .isEqualTo(StubMediaBrowserService.sSession.getSessionToken());
     }
 
     @Test
@@ -166,11 +163,11 @@ public class MediaBrowserServiceTest {
         getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, mSubscriptionCallback);
         });
-        assertTrue(mOnChildrenLoadedLatch.await(TIME_OUT_MS));
+        assertThat(mOnChildrenLoadedLatch.await(TIME_OUT_MS)).isTrue();
 
         mOnChildrenLoadedLatch.reset();
         mMediaBrowserService.notifyChildrenChanged(StubMediaBrowserService.MEDIA_ID_ROOT);
-        assertTrue(mOnChildrenLoadedLatch.await(TIME_OUT_MS));
+        assertThat(mOnChildrenLoadedLatch.await(TIME_OUT_MS)).isTrue();
     }
 
     @Test
@@ -178,7 +175,7 @@ public class MediaBrowserServiceTest {
         try {
             mMediaBrowserService.notifyChildrenChanged(
                     StubMediaBrowserService.MEDIA_ID_ROOT, /*options=*/ null);
-            fail();
+            assertWithMessage("This code is unreachable.").fail();
         } catch (IllegalArgumentException e) {
             // Expected
         }
@@ -196,11 +193,11 @@ public class MediaBrowserServiceTest {
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, options,
                     mSubscriptionCallback);
         });
-        assertTrue(mOnChildrenLoadedWithOptionsLatch.await(TIME_OUT_MS));
+        assertThat(mOnChildrenLoadedWithOptionsLatch.await(TIME_OUT_MS)).isTrue();
 
         mOnChildrenLoadedWithOptionsLatch.reset();
         mMediaBrowserService.notifyChildrenChanged(StubMediaBrowserService.MEDIA_ID_ROOT);
-        assertTrue(mOnChildrenLoadedWithOptionsLatch.await(TIME_OUT_MS));
+        assertThat(mOnChildrenLoadedWithOptionsLatch.await(TIME_OUT_MS)).isTrue();
 
         // Notify that the items overlapping with the given options are changed.
         mOnChildrenLoadedWithOptionsLatch.reset();
@@ -211,7 +208,7 @@ public class MediaBrowserServiceTest {
         overlappingOptions.putInt(MediaBrowser.EXTRA_PAGE, overlappingNewPage);
         mMediaBrowserService.notifyChildrenChanged(
                 StubMediaBrowserService.MEDIA_ID_ROOT, overlappingOptions);
-        assertTrue(mOnChildrenLoadedWithOptionsLatch.await(TIME_OUT_MS));
+        assertThat(mOnChildrenLoadedWithOptionsLatch.await(TIME_OUT_MS)).isTrue();
 
         // Notify that the items non-overlapping with the given options are changed.
         mOnChildrenLoadedWithOptionsLatch.reset();
@@ -220,7 +217,7 @@ public class MediaBrowserServiceTest {
         nonOverlappingOptions.putInt(MediaBrowser.EXTRA_PAGE, page + 1);
         mMediaBrowserService.notifyChildrenChanged(
                 StubMediaBrowserService.MEDIA_ID_ROOT, nonOverlappingOptions);
-        assertFalse(mOnChildrenLoadedWithOptionsLatch.await(WAIT_TIME_FOR_NO_RESPONSE_MS));
+        assertThat(mOnChildrenLoadedWithOptionsLatch.await(WAIT_TIME_FOR_NO_RESPONSE_MS)).isFalse();
     }
 
     @Test
@@ -229,18 +226,18 @@ public class MediaBrowserServiceTest {
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_CHILDREN_DELAYED,
                     mSubscriptionCallback);
         });
-        assertFalse(mOnChildrenLoadedLatch.await(WAIT_TIME_FOR_NO_RESPONSE_MS));
+        assertThat(mOnChildrenLoadedLatch.await(WAIT_TIME_FOR_NO_RESPONSE_MS)).isFalse();
 
         mMediaBrowserService.sendDelayedNotifyChildrenChanged();
-        assertTrue(mOnChildrenLoadedLatch.await(TIME_OUT_MS));
+        assertThat(mOnChildrenLoadedLatch.await(TIME_OUT_MS)).isTrue();
 
         mOnChildrenLoadedLatch.reset();
         mMediaBrowserService.notifyChildrenChanged(
                 StubMediaBrowserService.MEDIA_ID_CHILDREN_DELAYED);
-        assertFalse(mOnChildrenLoadedLatch.await(WAIT_TIME_FOR_NO_RESPONSE_MS));
+        assertThat(mOnChildrenLoadedLatch.await(WAIT_TIME_FOR_NO_RESPONSE_MS)).isFalse();
 
         mMediaBrowserService.sendDelayedNotifyChildrenChanged();
-        assertTrue(mOnChildrenLoadedLatch.await(TIME_OUT_MS));
+        assertThat(mOnChildrenLoadedLatch.await(TIME_OUT_MS)).isTrue();
     }
 
     @Test
@@ -249,30 +246,33 @@ public class MediaBrowserServiceTest {
             mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_CHILDREN_DELAYED,
                     mItemCallback);
         });
-        assertFalse(mOnItemLoadedLatch.await(WAIT_TIME_FOR_NO_RESPONSE_MS));
+        assertThat(mOnItemLoadedLatch.await(WAIT_TIME_FOR_NO_RESPONSE_MS)).isFalse();
 
         mMediaBrowserService.sendDelayedItemLoaded();
-        assertTrue(mOnItemLoadedLatch.await(TIME_OUT_MS));
+        assertThat(mOnItemLoadedLatch.await(TIME_OUT_MS)).isTrue();
     }
 
     @Test
     public void testGetBrowserInfo() throws Exception {
         // StubMediaBrowserService stores the browser info in its onGetRoot().
-        assertTrue(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo));
+        assertThat(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo))
+                .isTrue();
 
         StubMediaBrowserService.clearBrowserInfo();
         getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, mSubscriptionCallback);
         });
-        assertTrue(mOnChildrenLoadedLatch.await(TIME_OUT_MS));
-        assertTrue(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo));
+        assertThat(mOnChildrenLoadedLatch.await(TIME_OUT_MS)).isTrue();
+        assertThat(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo))
+                .isTrue();
 
         StubMediaBrowserService.clearBrowserInfo();
         getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_CHILDREN[0], mItemCallback);
         });
-        assertTrue(mOnItemLoadedLatch.await(TIME_OUT_MS));
-        assertTrue(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo));
+        assertThat(mOnItemLoadedLatch.await(TIME_OUT_MS)).isTrue();
+        assertThat(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo))
+                .isTrue();
     }
 
     @Test
@@ -284,8 +284,8 @@ public class MediaBrowserServiceTest {
         extras.putString(key, val);
 
         MediaBrowserService.BrowserRoot browserRoot = new BrowserRoot(id, extras);
-        assertEquals(id, browserRoot.getRootId());
-        assertEquals(val, browserRoot.getExtras().getString(key));
+        assertThat(browserRoot.getRootId()).isEqualTo(id);
+        assertThat(browserRoot.getExtras().getString(key)).isEqualTo(val);
     }
 
     /**
@@ -326,13 +326,13 @@ public class MediaBrowserServiceTest {
 
     private void assertRootHints(MediaItem item) {
         Bundle rootHints = item.getDescription().getExtras();
-        assertNotNull(rootHints);
-        assertEquals(mRootHints.getBoolean(BrowserRoot.EXTRA_RECENT),
-                rootHints.getBoolean(BrowserRoot.EXTRA_RECENT));
-        assertEquals(mRootHints.getBoolean(BrowserRoot.EXTRA_OFFLINE),
-                rootHints.getBoolean(BrowserRoot.EXTRA_OFFLINE));
-        assertEquals(mRootHints.getBoolean(BrowserRoot.EXTRA_SUGGESTED),
-                rootHints.getBoolean(BrowserRoot.EXTRA_SUGGESTED));
+        assertThat(rootHints).isNotNull();
+        assertThat(rootHints.getBoolean(BrowserRoot.EXTRA_RECENT))
+                .isEqualTo(mRootHints.getBoolean(BrowserRoot.EXTRA_RECENT));
+        assertThat(rootHints.getBoolean(BrowserRoot.EXTRA_OFFLINE))
+                .isEqualTo(mRootHints.getBoolean(BrowserRoot.EXTRA_OFFLINE));
+        assertThat(rootHints.getBoolean(BrowserRoot.EXTRA_SUGGESTED))
+                .isEqualTo(mRootHints.getBoolean(BrowserRoot.EXTRA_SUGGESTED));
     }
 
     private static class TestCountDownLatch {

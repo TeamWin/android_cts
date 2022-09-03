@@ -26,15 +26,12 @@ import android.companion.CompanionDeviceManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.MacAddress
+import android.os.Process
 import android.os.SystemClock.sleep
 import android.os.SystemClock.uptimeMillis
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
-import org.junit.After
-import org.junit.Assume.assumeTrue
-import org.junit.AssumptionViolatedException
-import org.junit.Before
 import java.io.IOException
 import kotlin.test.assertContains
 import kotlin.test.assertContentEquals
@@ -45,6 +42,10 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import org.junit.After
+import org.junit.Assume.assumeTrue
+import org.junit.AssumptionViolatedException
+import org.junit.Before
 
 /**
  * A base class for CompanionDeviceManager [Tests][org.junit.Test] to extend.
@@ -153,6 +154,30 @@ const val TAG = "CtsCompanionDeviceManagerTestCases"
 
 fun <T> assumeThat(message: String, obj: T, assumption: (T) -> Boolean) {
     if (!assumption(obj)) throw AssumptionViolatedException(message)
+}
+
+fun assertApplicationBinds(cdm: CompanionDeviceManager) {
+    assertTrue {
+        waitFor(timeout = 3.seconds, interval = 100.milliseconds) {
+            cdm.isCompanionApplicationBound
+        }
+    }
+}
+
+fun assertApplicationUnbinds(cdm: CompanionDeviceManager) {
+    assertTrue {
+        waitFor(timeout = 1.seconds, interval = 100.milliseconds) {
+            !cdm.isCompanionApplicationBound
+        }
+    }
+}
+
+fun assertApplicationRemainsBound(cdm: CompanionDeviceManager) {
+    assertFalse {
+        waitFor(timeout = 3.seconds, interval = 100.milliseconds) {
+            !cdm.isCompanionApplicationBound
+        }
+    }
 }
 
 fun <T> assertEmpty(list: Collection<T>) = assertTrue("Collection is not empty") { list.isEmpty() }
@@ -300,3 +325,8 @@ fun Instrumentation.setSystemProp(name: String, value: String) =
 fun MacAddress.toUpperCaseString() = toString().toUpperCase()
 
 fun sleepFor(duration: Duration) = sleep(duration.inWholeMilliseconds)
+
+fun killProcess(name: String) {
+    val pid = SystemUtil.runShellCommand("pgrep -A $name").trim()
+    Process.killProcess(Integer.valueOf(pid))
+}

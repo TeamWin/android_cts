@@ -333,15 +333,15 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
 
     /**
      * The test decodes video assets with color bars and outputs frames to OpenGL input surface.
-     * The OpenGL fragment shader reads the frame buffers as externl textures and renders to
+     * The OpenGL fragment shader reads the frame buffers as external textures and renders to
      * a pbuffer. The output RGB values are read and compared against the expected values.
      */
     @ApiTest(apis = {"android.media.MediaCodec#dequeueOutputBuffer",
                      "android.media.MediaCodec#releaseOutputBuffer",
                      "android.media.MediaCodec.Callback#onOutputBufferAvailable",
-                     "android.media.MediaFormat#setInteger(KEY_COLOR_RANGE)",
-                     "android.media.MediaFormat#setInteger(KEY_COLOR_STANDARD)",
-                     "android.media.MediaFormat#setInteger(KEY_COLOR_TRANSFER)"})
+                     "android.media.MediaFormat#KEY_COLOR_RANGE",
+                     "android.media.MediaFormat#KEY_COLOR_STANDARD",
+                     "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testDecodeGlAccuracyRGB() throws IOException, InterruptedException {

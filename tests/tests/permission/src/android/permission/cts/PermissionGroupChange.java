@@ -66,7 +66,8 @@ public class PermissionGroupChange {
     }
 
     @Before
-    public void wakeUpScreen() {
+    public void uninstallAndWakeUpScreen() {
+        runShellCommand("pm uninstall " + APP_PKG_NAME);
         SystemUtil.runShellCommand("input keyevent KEYCODE_WAKEUP");
     }
 

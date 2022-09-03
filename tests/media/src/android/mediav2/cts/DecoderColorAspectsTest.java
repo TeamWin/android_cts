@@ -21,6 +21,8 @@ import android.media.MediaFormat;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -35,6 +37,17 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Color Primaries, Color Standard and Color Transfer are essential information to display the
+ * decoded YUV on an RGB display accurately. These 3 parameters can be signalled via containers
+ * (mp4, mkv, ...) and some video standards also allow signalling this information in elementary
+ * stream. Avc, Hevc, Av1, ... allow signalling this information in elementary stream, vpx relies
+ * on webm/mkv or some other container for signalling.
+ *
+ * The test checks if the muxer and/or decoder propagates this information from file to application
+ * correctly on their own. Whether this information is used by the device during display is
+ * beyond the scope of this test.
+ */
 @RunWith(Parameterized.class)
 public class DecoderColorAspectsTest extends CodecDecoderTestBase {
     private static final String LOG_TAG = DecoderColorAspectsTest.class.getSimpleName();
@@ -67,7 +80,7 @@ public class DecoderColorAspectsTest extends CodecDecoderTestBase {
         final boolean needAudio = true;
         final boolean needVideo = true;
 
-        // testClip, colorRange, colorStandard, colorTransfer
+        // mediatype, testClip, colorRange, colorStandard, colorTransfer, areColorAspectsInStream
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 // h264 clips
                 {MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_qcif_color_bt709_lr_sdr_avc.mp4",
@@ -252,6 +265,12 @@ public class DecoderColorAspectsTest extends CodecDecoderTestBase {
         tearDownSurface();
     }
 
+    /**
+     * @see DecoderColorAspectsTest
+     */
+    @ApiTest(apis = {"android.media.MediaFormat#KEY_COLOR_RANGE",
+                     "android.media.MediaFormat#KEY_COLOR_STANDARD",
+                     "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testColorAspects() throws IOException, InterruptedException {

@@ -121,6 +121,7 @@ public class WebViewDeviceSideStartupTest
         StrictMode.VmPolicy oldVmPolicy = StrictMode.getVmPolicy();
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
                 .detectAll()
+                .permitExplicitGc()
                 .penaltyLog()
                 .penaltyDeath()
                 .build());

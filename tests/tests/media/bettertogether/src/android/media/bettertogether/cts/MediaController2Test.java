@@ -16,11 +16,8 @@
 
 package android.media.bettertogether.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -151,14 +148,14 @@ public class MediaController2Test {
 
         try {
             MediaController2.Builder builder = new MediaController2.Builder(null, token);
-            fail("null context shouldn't be accepted!");
+            assertWithMessage("null context shouldn't be accepted!").fail();
         } catch (IllegalArgumentException e) {
             // Expected
         }
 
         try {
             MediaController2.Builder builder = new MediaController2.Builder(mContext, null);
-            fail("null token shouldn't be accepted!");
+            assertWithMessage("null token shouldn't be accepted!").fail();
         } catch (IllegalArgumentException e) {
             // Expected
         }
@@ -166,7 +163,7 @@ public class MediaController2Test {
         try {
             MediaController2.Builder builder = new MediaController2.Builder(mContext, token);
             builder.setConnectionHints(null);
-            fail("null connectionHints shouldn't be accepted!");
+            assertWithMessage("null connectionHints shouldn't be accepted!").fail();
         } catch (IllegalArgumentException e) {
             // Expected
         }
@@ -174,7 +171,7 @@ public class MediaController2Test {
         try {
             MediaController2.Builder builder = new MediaController2.Builder(mContext, token);
             builder.setControllerCallback(null, new MediaController2.ControllerCallback() {});
-            fail("null Executor shouldn't be accepted!");
+            assertWithMessage("null Executor shouldn't be accepted!").fail();
         } catch (IllegalArgumentException e) {
             // Expected
         }
@@ -182,7 +179,7 @@ public class MediaController2Test {
         try {
             MediaController2.Builder builder = new MediaController2.Builder(mContext, token);
             builder.setControllerCallback(Executors.newSingleThreadExecutor(), null);
-            fail("null ControllerCallback shouldn't be accepted!");
+            assertWithMessage("null ControllerCallback shouldn't be accepted!").fail();
         } catch (IllegalArgumentException e) {
             // Expected
         }
@@ -219,11 +216,12 @@ public class MediaController2Test {
             MediaController2 controller = new MediaController2.Builder(mContext, session.getToken())
                     .setConnectionHints(connectionHints)
                     .build();
-            assertTrue(latch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+            assertThat(latch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS)).isTrue();
 
             Bundle connectionHintsOut = controllerInfoList.get(0).getConnectionHints();
-            assertTrue(connectionHintsOut.containsKey(testKey));
-            assertEquals(frameworkParcelable, connectionHintsOut.getParcelable(testKey));
+            assertThat(connectionHintsOut.containsKey(testKey)).isTrue();
+            assertThat((Session2Token) connectionHintsOut.getParcelable(testKey))
+                    .isEqualTo(frameworkParcelable);
         }
     }
 
@@ -241,7 +239,7 @@ public class MediaController2Test {
         try (MediaController2 controller = new MediaController2.Builder(mContext, token)
                 .setConnectionHints(connectionHints)
                 .build()) {
-            fail("Custom Parcelables shouldn't be accepted!");
+            assertWithMessage("Custom Parcelables shouldn't be accepted!").fail();
         } catch (IllegalArgumentException e) {
             // Expected
         }
@@ -251,10 +249,10 @@ public class MediaController2Test {
     public void testCreatingControllerWithoutCallback() throws Exception {
         try (MediaController2 controller =
                      new MediaController2.Builder(mContext, mSession.getToken()).build()) {
-            assertTrue(mSessionCallback.mOnConnectedLatch.await(
-                    WAIT_TIME_MS, TimeUnit.MILLISECONDS));
-            assertEquals(mContext.getPackageName(),
-                    mSessionCallback.mControllerInfo.getPackageName());
+            assertThat(mSessionCallback.mOnConnectedLatch.await(
+                    WAIT_TIME_MS, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(mSessionCallback.mControllerInfo.getPackageName())
+                    .isEqualTo(mContext.getPackageName());
         }
     }
 
@@ -265,17 +263,18 @@ public class MediaController2Test {
                      new MediaController2.Builder(mContext, mSession.getToken())
                              .setControllerCallback(sHandlerExecutor, controllerCallback)
                              .build()) {
-            assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
-            assertEquals(controller, controllerCallback.mController);
-            assertEquals(mSession.getToken(), controller.getConnectedToken());
+            assertThat(controllerCallback.awaitOnConnected(WAIT_TIME_MS)).isTrue();
+            assertThat(controllerCallback.mController).isEqualTo(controller);
+            assertThat(controller.getConnectedToken()).isEqualTo(mSession.getToken());
 
             Bundle extrasFromConnectedSessionToken =
                     controller.getConnectedToken().getExtras();
-            assertNotNull(extrasFromConnectedSessionToken);
-            assertEquals(TEST_VALUE, extrasFromConnectedSessionToken.getString(TEST_KEY));
+            assertThat(extrasFromConnectedSessionToken).isNotNull();
+            assertThat(extrasFromConnectedSessionToken.getString(TEST_KEY))
+                    .isEqualTo(TEST_VALUE);
         } finally {
-            assertTrue(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS));
-            assertNull(controllerCallback.mController.getConnectedToken());
+            assertThat(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS)).isTrue();
+            assertThat(controllerCallback.mController.getConnectedToken()).isNull();
         }
     }
 
@@ -286,11 +285,12 @@ public class MediaController2Test {
                      new MediaController2.Builder(mContext, mSession.getToken())
                              .setControllerCallback(sHandlerExecutor, controllerCallback)
                              .build()) {
-            assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
-            assertEquals(controller, controllerCallback.mController);
-            assertTrue(controllerCallback.mAllowedCommands.hasCommand(ALLOWED_COMMAND_CODE));
+            assertThat(controllerCallback.awaitOnConnected(WAIT_TIME_MS)).isTrue();
+            assertThat(controllerCallback.mController).isEqualTo(controller);
+            assertThat(controllerCallback.mAllowedCommands.hasCommand(ALLOWED_COMMAND_CODE))
+                    .isTrue();
         } finally {
-            assertTrue(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS));
+            assertThat(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS)).isTrue();
         }
     }
 
@@ -301,7 +301,7 @@ public class MediaController2Test {
                      new MediaController2.Builder(mContext, mSession.getToken())
                              .setControllerCallback(sHandlerExecutor, controllerCallback)
                              .build()) {
-            assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
+            assertThat(controllerCallback.awaitOnConnected(WAIT_TIME_MS)).isTrue();
 
             String commandStr = "test_command";
             String commandExtraKey = "test_extra_key";
@@ -316,14 +316,17 @@ public class MediaController2Test {
             commandArg.putString(commandArgKey, commandArgValue);
             mSession.sendSessionCommand(mSessionCallback.mControllerInfo, command, commandArg);
 
-            assertTrue(controllerCallback.awaitOnSessionCommand(WAIT_TIME_MS));
-            assertEquals(controller, controllerCallback.mController);
-            assertEquals(commandStr, controllerCallback.mCommand.getCustomAction());
-            assertEquals(commandExtraValue,
-                    controllerCallback.mCommand.getCustomExtras().getString(commandExtraKey));
-            assertEquals(commandArgValue, controllerCallback.mCommandArgs.getString(commandArgKey));
+            assertThat(controllerCallback.awaitOnSessionCommand(WAIT_TIME_MS)).isTrue();
+            assertThat(controllerCallback.mController)
+                    .isEqualTo(controller);
+            assertThat(controllerCallback.mCommand.getCustomAction())
+                    .isEqualTo(commandStr);
+            assertThat(controllerCallback.mCommand.getCustomExtras().getString(commandExtraKey))
+                    .isEqualTo(commandExtraValue);
+            assertThat(controllerCallback.mCommandArgs.getString(commandArgKey))
+                    .isEqualTo(commandArgValue);
         } finally {
-            assertTrue(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS));
+            assertThat(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS)).isTrue();
         }
     }
 
@@ -334,7 +337,7 @@ public class MediaController2Test {
                      new MediaController2.Builder(mContext, mSession.getToken())
                              .setControllerCallback(sHandlerExecutor, controllerCallback)
                              .build()) {
-            assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
+            assertThat(controllerCallback.awaitOnConnected(WAIT_TIME_MS)).isTrue();
 
             String commandStr = "test_command";
             String commandExtraKey = "test_extra_key";
@@ -349,14 +352,15 @@ public class MediaController2Test {
             commandArg.putString(commandArgKey, commandArgValue);
             controller.sendSessionCommand(command, commandArg);
 
-            assertTrue(controllerCallback.awaitOnCommandResult(WAIT_TIME_MS));
-            assertEquals(controller, controllerCallback.mController);
-            assertEquals(SESSION_RESULT_CODE, controllerCallback.mCommandResult.getResultCode());
-            assertEquals(SESSION_RESULT_VALUE,
-                    controllerCallback.mCommandResult.getResultData()
-                            .getString(SESSION_RESULT_KEY));
+            assertThat(controllerCallback.awaitOnCommandResult(WAIT_TIME_MS)).isTrue();
+            assertThat(controllerCallback.mController).isEqualTo(controller);
+            assertThat(controllerCallback.mCommandResult.getResultCode())
+                    .isEqualTo(SESSION_RESULT_CODE);
+            assertThat(
+                    controllerCallback.mCommandResult.getResultData().getString(SESSION_RESULT_KEY))
+                    .isEqualTo(SESSION_RESULT_VALUE);
         } finally {
-            assertTrue(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS));
+            assertThat(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS)).isTrue();
         }
     }
 
@@ -367,7 +371,7 @@ public class MediaController2Test {
                      new MediaController2.Builder(mContext, mSession.getToken())
                              .setControllerCallback(sHandlerExecutor, controllerCallback)
                              .build()) {
-            assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
+            assertThat(controllerCallback.awaitOnConnected(WAIT_TIME_MS)).isTrue();
 
             String commandStr = "test_command_";
             String commandExtraKey = "test_extra_key_";
@@ -384,11 +388,11 @@ public class MediaController2Test {
                 Object token = controller.sendSessionCommand(command, commandArg);
                 controller.cancelSessionCommand(token);
             }
-            assertTrue(controllerCallback.awaitOnCommandResult(WAIT_TIME_MS));
-            assertEquals(Session2Command.Result.RESULT_INFO_SKIPPED,
-                    controllerCallback.mCommandResult.getResultCode());
+            assertThat(controllerCallback.awaitOnCommandResult(WAIT_TIME_MS)).isTrue();
+            assertThat(controllerCallback.mCommandResult.getResultCode())
+                    .isEqualTo(Session2Command.Result.RESULT_INFO_SKIPPED);
         } finally {
-            assertTrue(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS));
+            assertThat(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS)).isTrue();
         }
     }
 

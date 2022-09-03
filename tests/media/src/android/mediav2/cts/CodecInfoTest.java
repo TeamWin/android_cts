@@ -44,6 +44,7 @@ import android.view.Display;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.Assume;
 import org.junit.Test;
@@ -56,6 +57,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.IntStream;
 
+/**
+ * Check if information advertised by components are in accordance with cdd guidelines and device
+ * peripherals. The scope of this test is to only check if the information advertised is ok.
+ * Their functionality however is not verified here.
+ */
 @SmallTest
 @RunWith(Parameterized.class)
 public class CodecInfoTest {
@@ -100,14 +106,17 @@ public class CodecInfoTest {
     }
 
     /**
-     * Tests if the devices on T or later, if decoder for a mediaType supports HDR profiles then
-     * it should be capable of displaying the same. Since HLG profiles can't be distinguished from
-     * default 10-bit profiles, those are excluded from this test.
+     * For all the available decoders on the device, the test checks if their decoding
+     * capabilities are in sync with the device's display capabilities. That is, if a video
+     * decoder advertises support for a HDR profile then the device should be capable of
+     * displaying the same with out any tone mapping. Else, the decoder should not advertise such
+     * support.
      */
     @Test
     // TODO (b/228237404) Remove the following once there is a reliable way to query HDR
     // display capabilities at native level, till then limit the test to vendor codecs
     @NonMediaMainlineTest
+    @CddTest(requirements = "5.1.7/C-2-1")
     @ApiTest(apis = "MediaCodecInfo.CodecCapabilities#profileLevels")
     public void testHDRDisplayCapabilities() {
         Assume.assumeTrue("Test needs Android 13", IS_AT_LEAST_T);
@@ -139,10 +148,11 @@ public class CodecInfoTest {
     }
 
     /**
-     * Tests if the device under test has support for necessary color formats.
-     * The test only checks if the decoder/encoder is advertising the required color format. It
-     * doesn't validate its support.
+     * Checks if the video codecs available on the device advertise support for mandatory color
+     * formats. The test only checks if the decoder/encoder is advertising the required color
+     * format. It doesn't verify if it actually supports by decoding/encoding.
      */
+    @CddTest(requirements = {"5.1.7/C-1-2", "5.1.7/C-4-1", "5.12/C-6-5", "5.12/C-7-3"})
     @Test
     public void testColorFormatSupport() throws IOException {
         Assume.assumeTrue("Test is applicable for video codecs", mMediaType.startsWith("video/"));
@@ -193,8 +203,10 @@ public class CodecInfoTest {
     }
 
     /**
-     * Tests if a device supports encoding for a given mediaType, then it must support decoding it
+     * For all the available encoders on the device, the test checks if their encoding
+     * capabilities are in sync with the device's decoding capabilities.
      */
+    @CddTest(requirements = "5/C-0-3")
     @Test
     public void testDecoderAvailability() {
         Assume.assumeTrue("Test is applicable only for encoders", mCodecInfo.isEncoder());

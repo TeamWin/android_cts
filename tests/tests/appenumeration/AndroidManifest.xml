@@ -29,6 +29,7 @@
         <package android:name="android.appenumeration.stub" />
         <package android:name="android.appenumeration.stub.shareduid" />
         <package android:name="com.android.cts.ctsshim" />
+        <package android:name="com.android.cts.mockspellchecker" />
     </queries>
 
     <!-- It's merged from Harrier library. Remove it since this test should not hold it. -->

@@ -58,6 +58,7 @@ import android.annotation.NonNull;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.PendingIntent;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -531,6 +532,16 @@ public class PackageManagerTest {
         results = pi.queryIntentComponents(0);
         assertEquals(1, results.size());
         mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
+
+        intent = new Intent();
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setComponent(
+                new ComponentName("android", "com.android.internal.app.ResolverActivity"));
+        try {
+            mContext.startActivity(intent);
+        } catch (ActivityNotFoundException ignore) {
+
+        }
     }
 
     private void checkActivityInfoName(String expectedName, List<ResolveInfo> resolves) {

@@ -30,6 +30,9 @@ import android.media.MediaFormat;
 
 import androidx.test.filters.LargeTest;
 
+import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,12 +45,24 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * The following test validates decoder for the given input clip. For audio components, we check
- * if the output buffers timestamp is strictly increasing. If possible the decoded output rms is
- * compared against a reference value and the error is expected to be within a tolerance of 5%. For
- * video components, we check if the output buffers timestamp is identical to the sorted input pts
- * list. Also for video standard post mpeg4, the decoded output checksum is compared against
- * reference checksum.
+ * The tests accepts multiple test vectors packaged in different way. For instance, Avc elementary
+ * stream can be packed in mp4, avi, mkv, ts, 3gp, webm, ... These clips when decoded, are
+ * expected to yield same output. Similarly for Vpx, av1, no-show frame can be packaged in-to
+ * separate NALs or can be combined with a display frame in to one NAL. Both these scenarios
+ * are expected to give same output. The test decodes all the test vectors it is given and
+ * compares their outputs against each other. In short, the tests validate extractors, codecs
+ * together.
+ *
+ * Additionally, as the test runs mediacodec in byte buffer mode.
+ * 1. For normative codecs we expect the decoded output to be identical to reference decoded
+ * output. The reference decoded output is sent to the test as crc32 checksum.
+ * 2. For non normative codecs, the decoded output is checked for consistency.
+ * 3. For lossless audio codecs, we check if the rms error of the decoded output is 0.
+ * 4. For lossy audio codecs, we check if the rms error is within 5% of reference rms error.
+ * 5. For video components the test expects the output timestamp list to be identical to input
+ * timestamp list.
+ * 6. For audio components, the test expect the output timestamps to be strictly increasing.
+ * 7. The test also checks correctness of essential keys of output format of mediacodec.
  */
 @RunWith(Parameterized.class)
 public class CodecDecoderValidationTest extends CodecDecoderTestBase {
@@ -606,8 +621,12 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
     }
 
     /**
-     * Test decodes and compares decoded output of two files.
+     * Extract, Decode and Validate
      */
+    @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
+                     "MediaCodecInfo.CodecCapabilities#COLOR_FormatYUVP010",
+                     "android.media.AudioFormat#ENCODING_PCM_16BIT"})
+    @CddTest(requirements = "5.1.3")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testDecodeAndValidate() throws IOException, InterruptedException {

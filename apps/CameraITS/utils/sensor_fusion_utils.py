@@ -665,7 +665,7 @@ def conv_acceleration_to_movement(gyro_events, video_delay_time):
 
   Args:
     gyro_events: sorted dict of entries with 'time', 'x', 'y', and 'z'
-    video_delay_time: time at which video starts
+    video_delay_time: time at which video starts (and the video's duration)
 
   Returns:
     'z' acceleration converted to movement for times around VIDEO playing.

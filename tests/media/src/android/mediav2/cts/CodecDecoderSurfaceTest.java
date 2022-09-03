@@ -30,6 +30,8 @@ import android.view.Surface;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.filters.LargeTest;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -45,6 +47,18 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Test mediacodec api, video decoders and their interactions in surface mode.
+ *
+ * When video decoders are configured in surface mode, the getOutputImage() returns null. So
+ * there is no way to validate the decoded output frame analytically. The tests in this class
+ * however ensures that,
+ * 1. The number of decoded frames are equal to the number of input frames.
+ * 2. The output timestamp list is same as the input timestamp list.
+ * 3. The timestamp information obtained is consistent with results seen in bytebuffer mode
+ *
+ * The test verifies all the above needs by running mediacodec in both sync and async mode.
+ */
 @RunWith(Parameterized.class)
 public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     private static final String LOG_TAG = CodecDecoderSurfaceTest.class.getSimpleName();
@@ -193,9 +207,12 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     }
 
     /**
-     * Tests decoder for codec is in sync and async mode with surface.
-     * In these scenarios, Timestamp and it's ordering is verified.
+     * Checks if the component under test can decode the test file to surface. The test runs
+     * mediacodec in both synchronous and asynchronous mode. It expects consistent output
+     * timestamp list in all runs and this list to be identical to the reference list. The
+     * reference list is obtained from the same decoder running in byte buffer mode
      */
+    @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleDecodeToSurface() throws IOException, InterruptedException {
@@ -245,10 +262,25 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     }
 
     /**
-     * Tests flush when codec is in sync and async mode with surface. In these scenarios,
-     * Timestamp and the ordering is verified.
+     * Checks component and framework behaviour to flush API when the codec is operating in
+     * surface mode. While the component is decoding the test clip to surface, mediacodec flush()
+     * is called.
+     *
+     * The flush API is called at various points.
+     * 1. In running state but before queueing any input (might have to resubmit csd as they may
+     * not have been processed)
+     * 2. In running state, after queueing 1 frame
+     * 3. In running state, after queueing n frames
+     * 4. In eos state
+     *
+     * In all these cases, the test expects the timestamps received to be strictly increasing. In
+     * cases 3, 4 the test expects the output timestamp list to be identical to the reference list.
+     * The reference list is obtained from the same decoder running in byte buffer mode.
+     *
+     * // TODO(b/147576107): The test runs mediacodec in sync mode. The test fails in async mode
      */
     @Ignore("TODO(b/147576107)")
+    @ApiTest(apis = {"android.media.MediaCodec#flush"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testFlush() throws IOException, InterruptedException {
@@ -346,9 +378,27 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     }
 
     /**
-     * Tests reconfigure when codec is in sync and async mode with surface. In these scenarios,
-     * Timestamp and the ordering is verified.
+     * Checks component and framework behaviour for resolution change in surface mode. The
+     * resolution change is not seamless (AdaptivePlayback) but done via reconfigure.
+     *
+     * The reconfiguring of media codec component happens at various points.
+     * 1. After initial configuration (stopped state)
+     * 2. In running state, before queueing any input
+     * 3. In running state, after queuing n frames
+     * 4. In eos state
+     *    a. reconfigure with same clip
+     *    b. reconfigure with different clip (different resolution)
+     *
+     * In all these cases, the test expects the timestamps received to be strictly increasing. In
+     * cases 3, 4 the test expects the output timestamp list to be identical to the reference
+     * list. The reference list is obtained from the same decoder running in byte buffer mode.
+     *
+     * The test runs mediacodec in synchronous and asynchronous mode.
+     *
+     * During reconfiguration, the mode of operation is toggled. That is, if first configure
+     * operates the codec in sync mode, then next configure operates the codec in async mode, ...
      */
+    @ApiTest(apis = "android.media.MediaCodec#configure")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testReconfigure() throws IOException, InterruptedException {
@@ -471,6 +521,10 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     private native boolean nativeTestSimpleDecode(String decoder, Surface surface, String mime,
             String testFile, String refFile, int colorFormat, float rmsError, long checksum);
 
+    /**
+     * Tests is similar to {@link #testSimpleDecodeToSurface()} but uses ndk api
+     */
+    @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleDecodeToSurfaceNative() throws IOException {
@@ -485,6 +539,10 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     private native boolean nativeTestFlush(String decoder, Surface surface, String mime,
             String testFile, int colorFormat);
 
+    /**
+     * Test is similar to {@link #testFlush()} but uses ndk api
+     */
+    @ApiTest(apis = {"android.media.MediaCodec#flush"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testFlushNative() throws IOException {

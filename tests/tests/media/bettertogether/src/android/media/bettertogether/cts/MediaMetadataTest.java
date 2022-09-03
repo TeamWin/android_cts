@@ -15,10 +15,8 @@
  */
 package android.media.bettertogether.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.graphics.Bitmap;
 import android.media.MediaDescription;
@@ -48,8 +46,8 @@ public class MediaMetadataTest {
     public void builder_defaultConstructor_hasNoData() {
         MediaMetadata metadata = new MediaMetadata.Builder().build();
 
-        assertEquals(0, metadata.size());
-        assertTrue(metadata.keySet().isEmpty());
+        assertThat(metadata.size()).isEqualTo(0);
+        assertThat(metadata.keySet().isEmpty()).isTrue();
     }
 
     @Test
@@ -59,9 +57,9 @@ public class MediaMetadataTest {
                 .putText(MediaMetadata.METADATA_KEY_TITLE, testTitle)
                 .build();
 
-        assertTrue(metadata.containsKey(MediaMetadata.METADATA_KEY_TITLE));
+        assertThat(metadata.containsKey(MediaMetadata.METADATA_KEY_TITLE)).isTrue();
         CharSequence titleOut = metadata.getText(MediaMetadata.METADATA_KEY_TITLE);
-        assertTrue(TextUtils.equals(testTitle, titleOut));
+        assertThat(TextUtils.equals(testTitle, titleOut)).isTrue();
     }
 
     @Test
@@ -71,9 +69,9 @@ public class MediaMetadataTest {
                 .putString(MediaMetadata.METADATA_KEY_TITLE, testTitle)
                 .build();
 
-        assertTrue(metadata.containsKey(MediaMetadata.METADATA_KEY_TITLE));
+        assertThat(metadata.containsKey(MediaMetadata.METADATA_KEY_TITLE)).isTrue();
         String titleOut = metadata.getString(MediaMetadata.METADATA_KEY_TITLE);
-        assertTrue(TextUtils.equals(testTitle, titleOut));
+        assertThat(TextUtils.equals(testTitle, titleOut)).isTrue();
     }
 
     @Test
@@ -83,9 +81,9 @@ public class MediaMetadataTest {
                 .putLong(MediaMetadata.METADATA_KEY_YEAR, testYear)
                 .build();
 
-        assertTrue(metadata.containsKey(MediaMetadata.METADATA_KEY_YEAR));
+        assertThat(metadata.containsKey(MediaMetadata.METADATA_KEY_YEAR)).isTrue();
         long yearOut = metadata.getLong(MediaMetadata.METADATA_KEY_YEAR);
-        assertEquals(testYear, yearOut);
+        assertThat(yearOut).isEqualTo(testYear);
     }
 
     @Test
@@ -95,9 +93,9 @@ public class MediaMetadataTest {
                 .putRating(MediaMetadata.METADATA_KEY_RATING, testHeartRating)
                 .build();
 
-        assertTrue(metadata.containsKey(MediaMetadata.METADATA_KEY_RATING));
+        assertThat(metadata.containsKey(MediaMetadata.METADATA_KEY_RATING)).isTrue();
         Rating ratingOut = metadata.getRating(MediaMetadata.METADATA_KEY_RATING);
-        assertEquals(testHeartRating, ratingOut);
+        assertThat(ratingOut).isEqualTo(testHeartRating);
     }
 
     @Test
@@ -105,7 +103,7 @@ public class MediaMetadataTest {
         MediaMetadata.Builder builder = new MediaMetadata.Builder();
         try {
             builder.putText(MediaMetadata.METADATA_KEY_YEAR, "test");
-            fail();
+            assertWithMessage("Unreachable statement.").fail();
         } catch (IllegalArgumentException e) {
             // expected
         }
@@ -116,7 +114,7 @@ public class MediaMetadataTest {
         MediaMetadata.Builder builder = new MediaMetadata.Builder();
         try {
             builder.putString(MediaMetadata.METADATA_KEY_YEAR, "test");
-            fail();
+            assertWithMessage("Unreachable statement.").fail();
         } catch (IllegalArgumentException e) {
             // expected
         }
@@ -127,7 +125,7 @@ public class MediaMetadataTest {
         MediaMetadata.Builder builder = new MediaMetadata.Builder();
         try {
             builder.putLong(MediaMetadata.METADATA_KEY_TITLE, 2021);
-            fail();
+            assertWithMessage("Unreachable statement.").fail();
         } catch (IllegalArgumentException e) {
             // expected
         }
@@ -139,7 +137,7 @@ public class MediaMetadataTest {
         MediaMetadata.Builder builder = new MediaMetadata.Builder();
         try {
             builder.putRating(MediaMetadata.METADATA_KEY_TITLE, testHeartRating);
-            fail();
+            assertWithMessage("Unreachable statement.").fail();
         } catch (IllegalArgumentException e) {
             // expected
         }
@@ -152,7 +150,7 @@ public class MediaMetadataTest {
         MediaMetadata.Builder builder = new MediaMetadata.Builder();
         try {
             builder.putBitmap(MediaMetadata.METADATA_KEY_TITLE, testBitmap);
-            fail();
+            assertWithMessage("Unreachable statement.").fail();
         } catch (IllegalArgumentException e) {
             // expected
         }
@@ -166,7 +164,7 @@ public class MediaMetadataTest {
                 .build();
 
         MediaMetadata copiedMetadata = new MediaMetadata.Builder(originalMetadata).build();
-        assertEquals(originalMetadata, copiedMetadata);
+        assertThat(copiedMetadata).isEqualTo(originalMetadata);
     }
 
     @Test
@@ -182,8 +180,8 @@ public class MediaMetadataTest {
                 .putLong(MediaMetadata.METADATA_KEY_YEAR, testYear)
                 .build();
 
-        assertEquals(originalMetadata, metadataToCompare);
-        assertEquals(originalMetadata.hashCode(), metadataToCompare.hashCode());
+        assertThat(metadataToCompare).isEqualTo(originalMetadata);
+        assertThat(metadataToCompare.hashCode()).isEqualTo(originalMetadata.hashCode());
     }
 
     @Test
@@ -197,8 +195,8 @@ public class MediaMetadataTest {
                 .build();
         MediaMetadata emptyMetadata = new MediaMetadata.Builder().build();
 
-        assertEquals(originalMetadata, emptyMetadata);
-        assertEquals(originalMetadata.hashCode(), emptyMetadata.hashCode());
+        assertThat(emptyMetadata).isEqualTo(originalMetadata);
+        assertThat(emptyMetadata.hashCode()).isEqualTo(originalMetadata.hashCode());
     }
 
     @Test
@@ -211,11 +209,11 @@ public class MediaMetadataTest {
                 .putBitmap(MediaMetadata.METADATA_KEY_ART, testBitmap)
                 .build();
 
-        assertEquals(2, metadata.size());
+        assertThat(metadata.size()).isEqualTo(2);
         Set<String> keySet = metadata.keySet();
-        assertEquals(2, keySet.size());
-        assertTrue(keySet.contains(MediaMetadata.METADATA_KEY_RATING));
-        assertTrue(keySet.contains(MediaMetadata.METADATA_KEY_ART));
+        assertThat(keySet.size()).isEqualTo(2);
+        assertThat(keySet.contains(MediaMetadata.METADATA_KEY_RATING)).isTrue();
+        assertThat(keySet.contains(MediaMetadata.METADATA_KEY_ART)).isTrue();
     }
 
     @Test
@@ -225,7 +223,7 @@ public class MediaMetadataTest {
                 .putLong(MediaMetadata.METADATA_KEY_YEAR, testYear)
                 .build();
 
-        assertEquals(0, metadata.describeContents());
+        assertThat(metadata.describeContents()).isEqualTo(0);
     }
 
     @Test
@@ -243,7 +241,7 @@ public class MediaMetadataTest {
         MediaMetadata metadataOut = MediaMetadata.CREATOR.createFromParcel(parcel);
         parcel.recycle();
 
-        assertEquals(originalMetadata, metadataOut);
+        assertThat(metadataOut).isEqualTo(originalMetadata);
     }
 
     @Test
@@ -265,18 +263,19 @@ public class MediaMetadataTest {
                 .build();
 
         MediaDescription mediaDescription = metadata.getDescription();
-        assertTrue(TextUtils.equals(testMediaId, mediaDescription.getMediaId()));
-        assertTrue(TextUtils.equals(testTitle, mediaDescription.getTitle()));
-        assertTrue(TextUtils.equals(testSubtitle, mediaDescription.getSubtitle()));
-        assertTrue(TextUtils.equals(testDescription, mediaDescription.getDescription()));
-        assertNotNull(mediaDescription.getIconBitmap());
-        assertTrue(TextUtils.equals(testMediaUri, mediaDescription.getMediaUri().toString()));
+        assertThat(TextUtils.equals(testMediaId, mediaDescription.getMediaId())).isTrue();
+        assertThat(TextUtils.equals(testTitle, mediaDescription.getTitle())).isTrue();
+        assertThat(TextUtils.equals(testSubtitle, mediaDescription.getSubtitle())).isTrue();
+        assertThat(TextUtils.equals(testDescription, mediaDescription.getDescription())).isTrue();
+        assertThat(mediaDescription.getIconBitmap()).isNotNull();
+        assertThat(
+                TextUtils.equals(testMediaUri, mediaDescription.getMediaUri().toString())).isTrue();
     }
 
     @Test
     public void getBitmapDimensionLimit_returnsIntegerMaxWhenNotSet() {
         MediaMetadata metadata = new MediaMetadata.Builder().build();
-        assertEquals(Integer.MAX_VALUE, metadata.getBitmapDimensionLimit());
+        assertThat(metadata.getBitmapDimensionLimit()).isEqualTo(Integer.MAX_VALUE);
     }
 
     @Test
@@ -293,12 +292,12 @@ public class MediaMetadataTest {
                 .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, testBitmap)
                 .setBitmapDimensionLimit(testBitmapDimensionLimit)
                 .build();
-        assertEquals(testBitmapDimensionLimit, metadata.getBitmapDimensionLimit());
+        assertThat(metadata.getBitmapDimensionLimit()).isEqualTo(testBitmapDimensionLimit);
 
         Bitmap scaledDownBitmap = metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);
-        assertNotNull(scaledDownBitmap);
-        assertTrue(scaledDownBitmap.getWidth() <= testBitmapDimensionLimit);
-        assertTrue(scaledDownBitmap.getHeight() <= testBitmapDimensionLimit);
+        assertThat(scaledDownBitmap).isNotNull();
+        assertThat(scaledDownBitmap.getWidth() <= testBitmapDimensionLimit).isTrue();
+        assertThat(scaledDownBitmap.getHeight() <= testBitmapDimensionLimit).isTrue();
     }
 
     @Test
@@ -316,12 +315,12 @@ public class MediaMetadataTest {
                 .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, testBitmap)
                 .setBitmapDimensionLimit(testBitmapDimensionLimit)
                 .build();
-        assertEquals(testBitmapDimensionLimit, metadata.getBitmapDimensionLimit());
+        assertThat(metadata.getBitmapDimensionLimit()).isEqualTo(testBitmapDimensionLimit);
 
         Bitmap notScaledDownBitmap = metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);
-        assertNotNull(notScaledDownBitmap);
-        assertEquals(originalWidth, notScaledDownBitmap.getWidth());
-        assertEquals(originalHeight, notScaledDownBitmap.getHeight());
+        assertThat(notScaledDownBitmap).isNotNull();
+        assertThat(notScaledDownBitmap.getWidth()).isEqualTo(originalWidth);
+        assertThat(notScaledDownBitmap.getHeight()).isEqualTo(originalHeight);
     }
 
     @Test
@@ -330,13 +329,14 @@ public class MediaMetadataTest {
         MediaMetadata metadata = new MediaMetadata.Builder()
                 .setBitmapDimensionLimit(testBitmapDimensionLimit)
                 .build();
-        assertEquals(testBitmapDimensionLimit, metadata.getBitmapDimensionLimit());
+        assertThat(metadata.getBitmapDimensionLimit()).isEqualTo(testBitmapDimensionLimit);
 
         // Using copy constructor, unset the limit by passing Integer.MAX_VALUE to the limit.
         MediaMetadata copiedMetadataWithLimitUnset = new MediaMetadata.Builder()
                 .setBitmapDimensionLimit(Integer.MAX_VALUE)
                 .build();
-        assertEquals(Integer.MAX_VALUE, copiedMetadataWithLimitUnset.getBitmapDimensionLimit());
+        assertThat(copiedMetadataWithLimitUnset.getBitmapDimensionLimit())
+                .isEqualTo(Integer.MAX_VALUE);
     }
 
 }

@@ -96,7 +96,7 @@ class AAudioStreamTest : public AAudioCtsBase,
         EXPECT_EQ(AAUDIO_OK, AAudioStream_waitForStateChange(stream(),
                                                              AAUDIO_STREAM_STATE_UNKNOWN,
                                                              &state,
-                                                             500 * NANOS_PER_MILLISECOND));
+                                                             DEFAULT_STATE_TIMEOUT));
         EXPECT_EQ(AAUDIO_STREAM_STATE_CLOSING, state);
     }
 

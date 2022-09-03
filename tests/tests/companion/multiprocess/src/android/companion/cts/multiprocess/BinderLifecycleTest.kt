@@ -18,16 +18,13 @@ package android.companion.cts.multiprocess
 
 import android.companion.cts.common.DEVICE_DISPLAY_NAME_A
 import android.companion.cts.common.TestBase
-import android.companion.cts.common.waitFor
-import android.os.Process
+import android.companion.cts.common.assertApplicationBinds
+import android.companion.cts.common.assertApplicationRemainsBound
+import android.companion.cts.common.assertApplicationUnbinds
+import android.companion.cts.common.killProcess
 import android.os.SystemClock
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.android.compatibility.common.util.SystemUtil
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -46,11 +43,11 @@ class BinderLifecycleTest : TestBase() {
 
         // Publish device's presence and wait for callback.
         cdm.notifyDeviceAppeared(associationId)
-        assertApplicationBinds()
+        assertApplicationBinds(cdm)
 
         // Kill primary process
         killProcess(":primary")
-        assertApplicationUnbinds()
+        assertApplicationUnbinds(cdm)
     }
 
     @Test
@@ -60,42 +57,13 @@ class BinderLifecycleTest : TestBase() {
 
         // Publish device's presence and wait for callback.
         cdm.notifyDeviceAppeared(associationId)
-        assertApplicationBinds()
+        assertApplicationBinds(cdm)
 
         // Wait for secondary service to start
         SystemClock.sleep(2000)
 
         // Kill secondary process
         killProcess(":secondary")
-        assertApplicationRemainsBound()
-    }
-
-    private fun killProcess(name: String) {
-        val pid = SystemUtil.runShellCommand("pgrep -A $name").trim()
-        Process.killProcess(Integer.valueOf(pid))
-    }
-
-    private fun assertApplicationBinds() {
-        assertTrue {
-            waitFor(timeout = 3.seconds, interval = 100.milliseconds) {
-                cdm.isCompanionApplicationBound
-            }
-        }
-    }
-
-    private fun assertApplicationUnbinds() {
-        assertTrue {
-            waitFor(timeout = 1.seconds, interval = 100.milliseconds) {
-                !cdm.isCompanionApplicationBound
-            }
-        }
-    }
-
-    private fun assertApplicationRemainsBound() {
-        assertFalse {
-            waitFor(timeout = 3.seconds, interval = 100.milliseconds) {
-                !cdm.isCompanionApplicationBound
-            }
-        }
+        assertApplicationRemainsBound(cdm)
     }
 }

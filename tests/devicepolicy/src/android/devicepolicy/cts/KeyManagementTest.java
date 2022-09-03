@@ -485,6 +485,23 @@ public final class KeyManagementTest {
         }
     }
 
+    // TODO(b/199148889): To be tested with targetSDKVersion U+.
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = KeySelection.class, singleTestOnly = true)
+    public void grantKeyPairToWifiAuth_nonExistent_throwsIllegalArgumentException() {
+        Assert.assertThrows(IllegalArgumentException.class,
+                () -> sDeviceState.dpc().devicePolicyManager()
+                        .grantKeyPairToWifiAuth(NON_EXISTENT_ALIAS));
+    }
+
+    @Ignore("TODO(b/199148889): To be tested with targetSDKVersion pre U.")
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = KeySelection.class, singleTestOnly = true)
+    public void grantKeyPairToWifiAuth_nonExistent_returnsFalse() {
+        assertThat(sDeviceState.dpc().devicePolicyManager()
+                .grantKeyPairToWifiAuth(NON_EXISTENT_ALIAS)).isFalse();
+    }
+
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeySelection.class)
     public void isKeyPairGrantedToWifiAuth_default_returnsFalse() {
@@ -540,6 +557,24 @@ public final class KeyManagementTest {
             sDeviceState.dpcOnly().devicePolicyManager()
                     .removeKeyPair(sDeviceState.dpcOnly().componentName(), RSA_ALIAS);
         }
+    }
+    // TODO(b/199148889): To be tested with targetSDKVersion U+.
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = KeySelection.class, singleTestOnly = true)
+    public void grantKeyPairToApp_nonExistent_throwsIllegalArgumentException() {
+        Assert.assertThrows(IllegalArgumentException.class,
+                () -> sDeviceState.dpc().devicePolicyManager()
+                        .grantKeyPairToApp(sDeviceState.dpc().componentName(), NON_EXISTENT_ALIAS,
+                                sContext.getPackageName()));
+    }
+
+    @Ignore("TODO(b/199148889): To be tested with targetSDKVersions pre U.")
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = KeySelection.class, singleTestOnly = true)
+    public void grantKeyPairToApp_nonExistent_returnsFalse() {
+        assertThat(sDeviceState.dpc().devicePolicyManager()
+                        .grantKeyPairToApp(sDeviceState.dpc().componentName(), NON_EXISTENT_ALIAS,
+                                sContext.getPackageName())).isFalse();
     }
 
     @Postsubmit(reason = "new test")

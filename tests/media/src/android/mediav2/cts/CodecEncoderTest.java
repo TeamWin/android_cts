@@ -28,6 +28,8 @@ import android.util.Log;
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -41,13 +43,19 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Validate encode functionality of listed encoder components
+ * Test mediacodec api, encoders and their interactions in bytebuffer mode.
  *
- * The test aims to test all encoders advertised in MediaCodecList. Hence we are not using
- * MediaCodecList#findEncoderForFormat to create codec. Further, it can so happen that the
- * test clip chosen is not supported by component (codecCapabilities.isFormatSupported()
- * fails), then it is better to remove the format but not skip testing the component. The idea
- * of these tests are not to cover CDD requirements but to test components and their plugins
+ * The test feeds raw input data (audio/video) to the component and receives compressed bitstream
+ * from the component.
+ * 1. For audio components, the test expects the output timestamps to be strictly increasing.
+ * 2. For video components the test expects the output count to be identical to input count and
+ * the output timestamp list to be identical to input timestamp list.
+ * 3. As encoders are expected to give consistent output for a given input and configuration
+ * parameters, the test checks for consistency across runs.
+ * The test however does not validate the integrity of the encoder output. That is done by
+ * CodecEncoderValidationTest. This test checks only the framework <-> plugin <-> encoder
+ * interactions.
+ * The test runs mediacodec in synchronous and asynchronous mode.
  */
 @RunWith(Parameterized.class)
 public class CodecEncoderTest extends CodecEncoderTestBase {
@@ -147,14 +155,18 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     }
 
     /**
-     * Tests encoder for combinations:
-     * 1. Codec Sync Mode, Signal Eos with Last frame
-     * 2. Codec Sync Mode, Signal Eos Separately
-     * 3. Codec Async Mode, Signal Eos with Last frame
-     * 4. Codec Async Mode, Signal Eos Separately
-     * In all these scenarios, Timestamp ordering is verified. The output has to be
-     * consistent (not flaky) in all runs.
+     * Checks if the component under test can encode the test file correctly. The encoding
+     * happens in synchronous, asynchronous mode, eos flag signalled with last raw frame and
+     * eos flag signalled separately after sending all raw frames. It expects consistent
+     * output in all these runs. That is, the ByteBuffer info and output timestamp list has to be
+     * same in all the runs. Further for audio, the output timestamp has to be strictly
+     * increasing. For video the output timestamp list has to be same as input timestamp list. As
+     * encoders are expected to give consistent output for a given input and configuration
+     * parameters, the test checks for consistency across runs. Although the test collects the
+     * output in a byte buffer, no analysis is done that checks the integrity of the bitstream.
      */
+    @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
+                     "android.media.AudioFormat#ENCODING_PCM_16BIT"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleEncode() throws IOException, InterruptedException {
@@ -231,6 +243,11 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     private native boolean nativeTestSimpleEncode(String encoder, String file, String mime,
             int[] list0, int[] list1, int[] list2, int colorFormat);
 
+    /**
+     * Test is similar to {@link #testSimpleEncode()} but uses ndk api
+     */
+    @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
+                     "android.media.AudioFormat#ENCODING_PCM_16BIT"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleEncodeNative() throws IOException {
@@ -246,10 +263,20 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     }
 
     /**
-     * Tests flush when codec is in sync and async mode. In these scenarios, Timestamp
-     * ordering is verified. The output has to be consistent (not flaky) in all runs
+     * Checks component and framework behaviour to flush API when the codec is operating in
+     * byte buffer mode. While the component is encoding the test clip, mediacodec flush() api is
+     * called.
+     * The flush API is called at various points.
+     * 1. In running state, before queueing any input
+     * 2. In running state, after queueing n frames
+     * 3. In eos state
+     * For all audio components and video components with B frames configured to zero, the test
+     * expects output timestamps received to be strictly increasing. In cases 2 and 3, for video
+     * components, the output timestamp list should be identical to input timestamp list. The
+     * test runs mediacodec in synchronous and asynchronous mode.
      */
     @Ignore("TODO(b/147576107, b/148652492, b/148651699)")
+    @ApiTest(apis = {"android.media.MediaCodec#flush"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testFlush() throws IOException, InterruptedException {
@@ -338,7 +365,11 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     private native boolean nativeTestFlush(String encoder, String file, String mime,
             int[] list0, int[] list1, int[] list2, int colorFormat);
 
+    /**
+     * Test is similar to {@link #testFlush()} but uses ndk api
+     */
     @Ignore("TODO(b/147576107, b/148652492, b/148651699)")
+    @ApiTest(apis = {"android.media.MediaCodec#flush"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testFlushNative() throws IOException {
@@ -354,11 +385,24 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     }
 
     /**
-     * Tests reconfigure when codec is in sync and async mode. In these
-     * scenarios, Timestamp ordering is verified. The output has to be consistent (not flaky)
-     * in all runs
+     * Checks component and framework behaviour on parameter (resolution, samplerate/channel
+     * count, ...) change. The reconfiguring of media codec component happens at various points.
+     * 1. After initial configuration (stopped state)
+     * 2. In running state, before queueing any input
+     * 3. In running state, after encoding n frames (running state - frames queued 'n')
+     * 4. In eos state
+     *    a. reconfigure with same clip
+     *    b. reconfigure with different clip (different resolution)
+     * For all audio components and video components with B frames configured to zero, the test
+     * expects output timestamps received to be strictly increasing. For video components the
+     * test expects output timestamp list to be identical to input timestamp list. Further, test
+     * also checks if the output is consistent across runs. During reconfiguration, the mode of
+     * operation is also changed. That is first configure operates the codec in sync mode, then
+     * next configure operates the codec in async mode, ... The test also operates in synchronous
+     * and asynchronous mode.
      */
     @Ignore("TODO(b/148523403)")
+    @ApiTest(apis = {"android.media.MediaCodec#configure"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testReconfigure() throws IOException, InterruptedException {
@@ -477,7 +521,11 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     private native boolean nativeTestReconfigure(String encoder, String file, String mime,
             int[] list0, int[] list1, int[] list2, int colorFormat);
 
+    /**
+     * Test is similar to {@link #testReconfigure()} but uses ndk api
+     */
     @Ignore("TODO(b/147348711, b/149981033)")
+    @ApiTest(apis = {"android.media.MediaCodec#configure"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testReconfigureNative() throws IOException {
@@ -493,8 +541,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     }
 
     /**
-     * Tests encoder for only EOS frame
+     * Tests encoder plugin for only EOS frame
      */
+    @ApiTest(apis = "android.media.MediaCodec#BUFFER_FLAG_END_OF_STREAM")
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testOnlyEos() throws IOException, InterruptedException {
@@ -543,6 +592,10 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     private native boolean nativeTestOnlyEos(String encoder, String mime, int[] list0, int[] list1,
             int[] list2, int colorFormat);
 
+    /**
+     * Test is similar to {@link #testOnlyEos()} but uses ndk api
+     */
+    @ApiTest(apis = "android.media.MediaCodec#BUFFER_FLAG_END_OF_STREAM")
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testOnlyEosNative() throws IOException {
@@ -558,8 +611,12 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     }
 
     /**
-     * Test set parameters : force key frame
+     * Test video encoders for feature "request-sync". Video encoders are expected to give a sync
+     * frame upon request. The test requests encoder to provide key frame every 'n' seconds.  The
+     * test feeds encoder input for 'm' seconds. At the end, it expects to receive m/n key frames
+     * at least. Also it checks if the key frame received is not too far from the point of request.
      */
+    @ApiTest(apis = "android.media.MediaCodec#PARAMETER_KEY_REQUEST_SYNC_FRAME")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSetForceSyncFrame() throws IOException, InterruptedException {
@@ -634,6 +691,10 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     private native boolean nativeTestSetForceSyncFrame(String encoder, String file, String mime,
             int[] list0, int[] list1, int[] list2, int colorFormat);
 
+    /**
+     * Test is similar to {@link #testSetForceSyncFrame()} but uses ndk api
+     */
+    @ApiTest(apis = "android.media.MediaCodec#PARAMETER_KEY_REQUEST_SYNC_FRAME")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSetForceSyncFrameNative() throws IOException {
@@ -650,8 +711,13 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     }
 
     /**
-     * Test set parameters : change bitrate dynamically
+     * Test video encoders for feature adaptive bitrate. Video encoders are expected to honor
+     * bitrate changes upon request. The test requests encoder to encode at new bitrate every 'n'
+     * seconds.  The test feeds encoder input for 'm' seconds. At the end, it expects the output
+     * file size to be around {sum of (n * Bi) for i in the range [0, (m/n)]} and Bi is the
+     * bitrate chosen for the interval 'n' seconds
      */
+    @ApiTest(apis = "android.media.MediaCodec#PARAMETER_KEY_VIDEO_BITRATE")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testAdaptiveBitRate() throws IOException, InterruptedException {
@@ -728,6 +794,10 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     private native boolean nativeTestAdaptiveBitRate(String encoder, String file, String mime,
             int[] list0, int[] list1, int[] list2, int colorFormat);
 
+    /**
+     * Test is similar to {@link #testAdaptiveBitRate()} but uses ndk api
+     */
+    @ApiTest(apis = "android.media.MediaCodec#PARAMETER_KEY_VIDEO_BITRATE")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testAdaptiveBitRateNative() throws IOException {

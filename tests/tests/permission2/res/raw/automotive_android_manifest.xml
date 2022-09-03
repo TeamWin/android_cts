@@ -480,6 +480,6 @@
         android:description="@string/car_permission_desc_control_car_app_launch"/>
     <permission android:name="android.car.permission.MANAGE_THREAD_PRIORITY"
         android:protectionLevel="signature|privileged"
-        android:label="@string/car_permission_label_thread_priority"
-        android:description="@string/car_permission_desc_thread_priority"/>
+        android:label="@string/car_permission_label_manage_thread_priority"
+        android:description="@string/car_permission_desc_manage_thread_priority"/>
 </manifest>

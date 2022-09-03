@@ -874,6 +874,7 @@ class AppOpsLoggingTest {
      * Realistic end-to-end test for sending a SMS message
      */
     @Test
+    @Ignore // TODO(b/244623752): Enable again after the test consistently passes.
     fun sendSms() {
         assumeTrue(context.packageManager.hasSystemFeature(FEATURE_TELEPHONY))
 

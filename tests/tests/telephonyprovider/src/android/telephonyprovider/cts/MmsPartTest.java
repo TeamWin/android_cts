@@ -30,6 +30,10 @@ import android.net.Uri;
 import android.provider.Telephony;
 import android.telephony.cts.util.DefaultSmsAppHelper;
 
+import com.android.compatibility.common.util.ApiTest;
+
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -126,6 +130,20 @@ public class MmsPartTest {
         assertThat(cursorUpdate).isEqualTo(1);
         assertThatMmsPartInsertSucceeded(insertPartUri, SRC_NAME, MMS_BODY_UPDATE);
 
+    }
+
+    /**
+     *  Verifies uri path outside the directory of mms parts  is not allowed.
+     */
+    @Test
+    @ApiTest(apis = "com.android.providers.telephony.MmsProvider#update")
+    public void testMmsPartUpdate_invalidUri() {
+        ContentValues cv = new ContentValues();
+        Uri uri = Uri.parse("content://mms/resetFilePerm/..%2F..%2F..%2F..%2F..%2F..%2F..%2F..%2F.."
+                + "%2F..%2F..%2F..%2F..%2Fdata%2Fuser_de%2F0%2Fcom.android.providers.telephony"
+                + "%2Fdatabases");
+        int cursorUpdate = mContentResolver.update(uri, cv, null, null);
+        assertThat(cursorUpdate).isEqualTo(0);
     }
 
     @Test

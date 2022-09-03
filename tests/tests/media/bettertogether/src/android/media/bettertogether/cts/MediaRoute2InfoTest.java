@@ -16,12 +16,9 @@
 
 package android.media.bettertogether.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 
 import android.media.MediaRoute2Info;
 import android.media.cts.NonMediaMainlineTest;
@@ -123,25 +120,25 @@ public class MediaRoute2InfoTest {
                 .setExtras(extras)
                 .build();
 
-        assertEquals(TEST_ID, routeInfo.getId());
-        assertEquals(TEST_NAME, routeInfo.getName());
+        assertThat(routeInfo.getId()).isEqualTo(TEST_ID);
+        assertThat(routeInfo.getName()).isEqualTo(TEST_NAME);
 
-        assertEquals(2, routeInfo.getFeatures().size());
-        assertEquals(TEST_ROUTE_TYPE_0, routeInfo.getFeatures().get(0));
-        assertEquals(TEST_ROUTE_TYPE_1, routeInfo.getFeatures().get(1));
+        assertThat(routeInfo.getFeatures().size()).isEqualTo(2);
+        assertThat(routeInfo.getFeatures().get(0)).isEqualTo(TEST_ROUTE_TYPE_0);
+        assertThat(routeInfo.getFeatures().get(1)).isEqualTo(TEST_ROUTE_TYPE_1);
 
-        assertEquals(TEST_ICON_URI, routeInfo.getIconUri());
-        assertEquals(TEST_DESCRIPTION, routeInfo.getDescription());
-        assertEquals(TEST_CONNECTION_STATE, routeInfo.getConnectionState());
-        assertEquals(TEST_CLIENT_PACKAGE_NAME, routeInfo.getClientPackageName());
-        assertEquals(TEST_VOLUME_HANDLING, routeInfo.getVolumeHandling());
-        assertEquals(TEST_VOLUME_MAX, routeInfo.getVolumeMax());
-        assertEquals(TEST_VOLUME, routeInfo.getVolume());
+        assertThat(routeInfo.getIconUri()).isEqualTo(TEST_ICON_URI);
+        assertThat(routeInfo.getDescription()).isEqualTo(TEST_DESCRIPTION);
+        assertThat(routeInfo.getConnectionState()).isEqualTo(TEST_CONNECTION_STATE);
+        assertThat(routeInfo.getClientPackageName()).isEqualTo(TEST_CLIENT_PACKAGE_NAME);
+        assertThat(routeInfo.getVolumeHandling()).isEqualTo(TEST_VOLUME_HANDLING);
+        assertThat(routeInfo.getVolumeMax()).isEqualTo(TEST_VOLUME_MAX);
+        assertThat(routeInfo.getVolume()).isEqualTo(TEST_VOLUME);
 
         Bundle extrasOut = routeInfo.getExtras();
-        assertNotNull(extrasOut);
-        assertTrue(extrasOut.containsKey(TEST_KEY));
-        assertEquals(TEST_VALUE, extrasOut.getString(TEST_KEY));
+        assertThat(extrasOut).isNotNull();
+        assertThat(extrasOut.containsKey(TEST_KEY)).isTrue();
+        assertThat(extrasOut.getString(TEST_KEY)).isEqualTo(TEST_VALUE);
     }
 
     @Test
@@ -151,7 +148,7 @@ public class MediaRoute2InfoTest {
                 .setExtras(null)
                 .build();
 
-        assertNull(routeInfo.getExtras());
+        assertThat(routeInfo.getExtras()).isNull();
     }
 
     @Test
@@ -164,7 +161,7 @@ public class MediaRoute2InfoTest {
                 .addFeatures(routeTypes)
                 .build();
 
-        assertEquals(routeTypes, routeInfo.getFeatures());
+        assertThat(routeInfo.getFeatures()).isEqualTo(routeTypes);
     }
 
     @Test
@@ -177,8 +174,8 @@ public class MediaRoute2InfoTest {
                 .addFeature(TEST_ROUTE_TYPE_1)
                 .build();
 
-        assertEquals(1, routeInfo.getFeatures().size());
-        assertEquals(TEST_ROUTE_TYPE_1, routeInfo.getFeatures().get(0));
+        assertThat(routeInfo.getFeatures().size()).isEqualTo(1);
+        assertThat(routeInfo.getFeatures().get(0)).isEqualTo(TEST_ROUTE_TYPE_1);
     }
 
     @Test
@@ -212,8 +209,8 @@ public class MediaRoute2InfoTest {
                 .setExtras(extras)
                 .build();
 
-        assertEquals(routeInfo1, routeInfo2);
-        assertEquals(routeInfo1.hashCode(), routeInfo2.hashCode());
+        assertThat(routeInfo1).isEqualTo(routeInfo2);
+        assertThat(routeInfo1.hashCode()).isEqualTo(routeInfo2.hashCode());
     }
 
     @Test
@@ -236,8 +233,8 @@ public class MediaRoute2InfoTest {
 
         MediaRoute2Info routeInfo2 = new MediaRoute2Info.Builder(routeInfo1).build();
 
-        assertEquals(routeInfo1, routeInfo2);
-        assertEquals(routeInfo1.hashCode(), routeInfo2.hashCode());
+        assertThat(routeInfo2).isEqualTo(routeInfo1);
+        assertThat(routeInfo2.hashCode()).isEqualTo(routeInfo1.hashCode());
     }
 
     @Test
@@ -259,30 +256,30 @@ public class MediaRoute2InfoTest {
                 .build();
 
         // Now, we will use copy constructor
-        assertNotEquals(routeInfo, new MediaRoute2Info.Builder(routeInfo)
+        assertThat(new MediaRoute2Info.Builder(routeInfo)
                 .addFeature("randomRouteType")
-                .build());
-        assertNotEquals(routeInfo, new MediaRoute2Info.Builder(routeInfo)
+                .build()).isNotEqualTo(routeInfo);
+        assertThat(new MediaRoute2Info.Builder(routeInfo)
                 .setIconUri(Uri.parse("randomUri"))
-                .build());
-        assertNotEquals(routeInfo, new MediaRoute2Info.Builder(routeInfo)
+                .build()).isNotEqualTo(routeInfo);
+        assertThat(new MediaRoute2Info.Builder(routeInfo)
                 .setDescription("randomDescription")
-                .build());
-        assertNotEquals(routeInfo, new MediaRoute2Info.Builder(routeInfo)
+                .build()).isNotEqualTo(routeInfo);
+        assertThat(new MediaRoute2Info.Builder(routeInfo)
                 .setConnectionState(TEST_CONNECTION_STATE + 1)
-                .build());
-        assertNotEquals(routeInfo, new MediaRoute2Info.Builder(routeInfo)
+                .build()).isNotEqualTo(routeInfo);
+        assertThat(new MediaRoute2Info.Builder(routeInfo)
                 .setClientPackageName("randomPackageName")
-                .build());
-        assertNotEquals(routeInfo, new MediaRoute2Info.Builder(routeInfo)
+                .build()).isNotEqualTo(routeInfo);
+        assertThat(new MediaRoute2Info.Builder(routeInfo)
                 .setVolumeHandling(TEST_VOLUME_HANDLING + 1)
-                .build());
-        assertNotEquals(routeInfo, new MediaRoute2Info.Builder(routeInfo)
+                .build()).isNotEqualTo(routeInfo);
+        assertThat(new MediaRoute2Info.Builder(routeInfo)
                 .setVolumeMax(TEST_VOLUME_MAX + 100)
-                .build());
-        assertNotEquals(routeInfo, new MediaRoute2Info.Builder(routeInfo)
+                .build()).isNotEqualTo(routeInfo);
+        assertThat(new MediaRoute2Info.Builder(routeInfo)
                 .setVolume(TEST_VOLUME + 10)
-                .build());
+                .build()).isNotEqualTo(routeInfo);
         // Note: Extras will not affect the equals.
     }
 
@@ -309,14 +306,14 @@ public class MediaRoute2InfoTest {
         parcel.setDataPosition(0);
 
         MediaRoute2Info routeInfoFromParcel = parcel.readParcelable(null);
-        assertEquals(routeInfo, routeInfoFromParcel);
-        assertEquals(routeInfo.hashCode(), routeInfoFromParcel.hashCode());
+        assertThat(routeInfoFromParcel).isEqualTo(routeInfo);
+        assertThat(routeInfoFromParcel.hashCode()).isEqualTo(routeInfo.hashCode());
 
         // Check extras
         Bundle extrasOut = routeInfoFromParcel.getExtras();
-        assertNotNull(extrasOut);
-        assertTrue(extrasOut.containsKey(TEST_KEY));
-        assertEquals(TEST_VALUE, extrasOut.getString(TEST_KEY));
+        assertThat(extrasOut).isNotNull();
+        assertThat(extrasOut.containsKey(TEST_KEY)).isTrue();
+        assertThat(extrasOut.getString(TEST_KEY)).isEqualTo(TEST_VALUE);
         parcel.recycle();
 
         // In order to mark writeToParcel as tested, we let's just call it directly.
@@ -338,6 +335,6 @@ public class MediaRoute2InfoTest {
                 .setVolumeMax(TEST_VOLUME_MAX)
                 .setVolume(TEST_VOLUME)
                 .build();
-        assertEquals(0, routeInfo.describeContents());
+        assertThat(routeInfo.describeContents()).isEqualTo(0);
     }
 }

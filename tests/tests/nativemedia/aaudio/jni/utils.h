@@ -72,7 +72,7 @@ class StreamBuilderHelper {
             EXPECT_EQ(AAUDIO_OK, AAudioStream_waitForStateChange(stream(),
                                                                  state,
                                                                  &state,
-                                                                 500 * NANOS_PER_MILLISECOND));
+                                                                 DEFAULT_STATE_TIMEOUT));
         }
     }
 

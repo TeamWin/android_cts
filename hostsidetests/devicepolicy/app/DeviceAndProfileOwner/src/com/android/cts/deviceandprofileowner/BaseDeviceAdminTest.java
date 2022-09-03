@@ -115,6 +115,15 @@ public abstract class BaseDeviceAdminTest extends InstrumentationTestCase {
                 super.onComplianceAcknowledgementRequired(context, intent);
             }
         }
+
+        @Override
+        public void onPasswordChanged(@NonNull Context context, @NonNull Intent intent,
+                @NonNull UserHandle user) {
+            super.onPasswordChanged(context, intent, user);
+            if (mOnPasswordChangedCalled != null) {
+                mOnPasswordChangedCalled.countDown();
+            }
+        }
     }
 
     private static final String TAG = BaseDeviceAdminTest.class.getSimpleName();
@@ -130,7 +139,7 @@ public abstract class BaseDeviceAdminTest extends InstrumentationTestCase {
     protected boolean mIsAutomotive;
     protected boolean mIsDeviceOwnerTest;
     static CountDownLatch mOnPasswordExpiryTimeoutCalled;
-
+    static CountDownLatch mOnPasswordChangedCalled;
     protected final String mTag = getClass().getSimpleName();
 
     @Override

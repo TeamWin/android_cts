@@ -82,6 +82,7 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
     private static final int BANDS_BACKGROUND = 3;
 
     private int mCurrentTest = TEST_NONE;
+    // We can pass the test even if all of them don't PASS, but all test must be RUN
     private boolean mTestsDone[] = new boolean[TEST_COUNT];
     final OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
 
@@ -651,7 +652,13 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
         }
         sb.append("\n");
 
-        getPassButton().setEnabled(allTestsPassed);
+        // NOTE: The requirements for this test are a SHOULD or STRONGLY RECOMMEND in the CDD
+        // Allow a pass even if not all tests pass.
+        boolean allTestsRun = true;
+        for (boolean done : mTestsDone) {
+            allTestsRun &= done;
+        }
+        getPassButton().setEnabled(allTestsRun);
         return sb.toString();
     }
 

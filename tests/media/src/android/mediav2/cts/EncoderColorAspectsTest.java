@@ -36,6 +36,7 @@ import android.view.Surface;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Assume;
 import org.junit.Test;
@@ -50,7 +51,21 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Validate ColorAspects configuration for listed encoder components
+ * Color Primaries, Color Standard and Color Transfer are essential information to display the
+ * decoded YUV on an RGB display accurately. These 3 parameters can be signalled via containers
+ * (mp4, mkv, ...) and some video standards also allow signalling this information in elementary
+ * stream. Avc, Hevc, Av1, ... allow signalling this information in elementary stream, vpx relies
+ * on webm/mkv or some other container for signalling.
+ *
+ * If the encoder is configured with color aspects, then it is expected to place this information
+ * in the elementary stream as-is if possible. The same goes for container as well. The test
+ * validates this.
+ *
+ * Hybrid log gamma transfer characteristics are applicable for high bit depth profiles. Standard
+ * gamma curve characteristics are applicable for standard dynamic ranges. The test doesn't
+ * exhaustively try all combinations of primaries, standard, transfer on all encoding profiles.
+ * SDR specific characteristics are restricted to sdr profiles and HLG/HDR specific profiles are
+ * restricted to HLG/HDR profiles.
  */
 @RunWith(Parameterized.class)
 public class EncoderColorAspectsTest extends CodecEncoderTestBase {
@@ -149,6 +164,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                 MediaFormat.MIMETYPE_VIDEO_HEVC,
                 MediaFormat.MIMETYPE_VIDEO_VP8,
                 MediaFormat.MIMETYPE_VIDEO_VP9};
+        // ColorAspects for SDR Profiles
         int[] ranges = {-1,
                 UNSPECIFIED,
                 MediaFormat.COLOR_RANGE_FULL,
@@ -162,7 +178,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                 UNSPECIFIED,
                 MediaFormat.COLOR_TRANSFER_LINEAR,
                 MediaFormat.COLOR_TRANSFER_SDR_VIDEO};
-
+        // ColorAspects for HDR profiles
         String[] mediaTypesHighBitDepth = {MediaFormat.MIMETYPE_VIDEO_AVC,
                 MediaFormat.MIMETYPE_VIDEO_HEVC,
                 MediaFormat.MIMETYPE_VIDEO_VP9,
@@ -260,6 +276,20 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
         }
     }
 
+    /**
+     * ColorAspects are passed to the encoder at the time of configuration. The encoder is
+     * expected to pass this information to outputFormat() so that muxer can use this information
+     * to populate color metadata. If the bitstream is capable of capturing color metadata
+     * losslessly then encoder is also expected to use this information during bitstream
+     * generation. Although a given media type can be muxed using many containers, the test does
+     * not use all available ones. Instead the most preferred one is selected.
+     * vpx streams are muxed using webm writer and others are muxed using mp4 writer.
+     * Briefly, the test checks OMX/c2 framework, plugins, encoder, muxer ability to SIGNAL color
+     * metadata.
+     */
+    @ApiTest(apis = {"android.media.MediaFormat#KEY_COLOR_RANGE",
+                     "android.media.MediaFormat#KEY_COLOR_STANDARD",
+                     "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testColorAspects() throws IOException, InterruptedException {

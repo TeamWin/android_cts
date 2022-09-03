@@ -32,6 +32,8 @@ import android.view.Surface;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,6 +48,19 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Test mediacodec api, video encoders and their interactions in surface mode.
+ *
+ * The test decodes an input clip to surface. This decoded output is fed as input to encoder.
+ * Assuming no frame drops, the test expects,
+ * 1. The number of encoded frames to be identical to number of frames present in input clip.
+ * 2. As encoders are expected to give consistent output for a given input and configuration
+ * parameters, the test checks for consistency across runs.
+ * 3. The encoder output timestamps list should be identical to decoder input timestamp list.
+ * 4. The output of encoder is further verified for PSNR to check for obvious visual artifacts.
+ *
+ * The test runs mediacodec in synchronous and asynchronous mode.
+ */
 @RunWith(Parameterized.class)
 public class CodecEncoderSurfaceTest {
     private static final String LOG_TAG = CodecEncoderSurfaceTest.class.getSimpleName();
@@ -483,9 +498,15 @@ public class CodecEncoderSurfaceTest {
     }
 
     /**
-     * Tests listed encoder components for sync and async mode in surface mode.The output has to
-     * be consistent (not flaky) in all runs.
+     * Checks if the component under test can encode from surface properly. The test runs
+     * mediacodec in both synchronous and asynchronous mode. The test feeds the encoder input
+     * surface with output of decoder. Assuming no frame drops, the number of output frames from
+     * encoder should be identical to number of input frames to decoder. Also the timestamps
+     * should be identical. As encoder output is deterministic, the test expects consistent
+     * output in all runs. The output is written to a file using muxer. This file is validated
+     * for PSNR to check if the encoding happened successfully with out any obvious artifacts.
      */
+    @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface"})
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleEncodeFromSurface() throws IOException, InterruptedException {
@@ -580,6 +601,10 @@ public class CodecEncoderSurfaceTest {
     private native boolean nativeTestSimpleEncode(String encoder, String decoder, String mime,
             String testFile, String muxFile, int bitrate, int framerate, int colorFormat);
 
+    /**
+     * Test is similar to {@link #testSimpleEncodeFromSurface()} but uses ndk api
+     */
+    @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface"})
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleEncodeFromSurfaceNative() throws IOException {

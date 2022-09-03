@@ -35,7 +35,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Test to validate hdr static info in decoders
+ * HDR Metadata is an aid for a display device to show the content in an optimal manner. It
+ * contains the HDR content and mastering device properties that are used by the display device
+ * to map the content according to its own color gamut and peak brightness. This information can
+ * be part of container and/or elementary stream.
+ *
+ * The test checks if the muxer and/or decoder propagates this information from file to application
+ * correctly. Whether this information is used by the device during display is beyond the scope
+ * of this test.
  */
 @RunWith(Parameterized.class)
 // P010 support was added in Android T, hence limit the following tests to Android T and above
@@ -104,6 +111,9 @@ public class DecoderHDRInfoTest extends HDRDecoderTestBase {
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
     }
 
+    /**
+     * @see DecoderHDRInfoTest
+     */
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     @CddTest(requirements = {"5.3.5/C-3-1", "5.3.7/C-4-1", "5.3.9"})

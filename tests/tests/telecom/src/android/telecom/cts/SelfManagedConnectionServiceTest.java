@@ -20,11 +20,13 @@ import android.content.Context;
 import android.database.Cursor;
 import android.media.AudioManager;
 import android.net.Uri;
+import android.os.Bundle;
 import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
 import android.telecom.Connection;
 import android.telecom.ConnectionService;
+import android.telecom.DisconnectCause;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -35,13 +37,15 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Predicate;
 
+import static android.media.AudioManager.MODE_IN_CALL;
 import static android.media.AudioManager.MODE_IN_COMMUNICATION;
 import static android.telecom.cts.TestUtils.TEST_SELF_MANAGED_HANDLE_1;
-import static android.telecom.cts.TestUtils.TEST_SELF_MANAGED_HANDLE_4;
 import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 import static android.telecom.cts.TestUtils.waitOnAllHandlers;
 
 import static org.junit.Assert.assertNotEquals;
+
+import com.android.compatibility.common.util.ApiTest;
 
 /**
  * CTS tests for the self-managed {@link android.telecom.ConnectionService} APIs.
@@ -252,7 +256,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         // Ensure that the connection defaulted to voip audio mode.
         assertTrue(connection.getAudioModeIsVoip());
         // Ensure AudioManager has correct voip mode.
-        verifyAudioMode();
+        verifyAudioMode(MODE_IN_COMMUNICATION);
 
         // Expect there to be no managed calls at the moment.
         assertFalse(mTelecomManager.isInManagedCall());
@@ -393,7 +397,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         // Ensure that the connection defaulted to voip audio mode.
         assertTrue(connection.getAudioModeIsVoip());
         // Ensure AudioManager has correct voip mode.
-        verifyAudioMode();
+        verifyAudioMode(MODE_IN_COMMUNICATION);
 
         // Expect there to be no managed calls at the moment.
         assertFalse(mTelecomManager.isInManagedCall());
@@ -404,6 +408,106 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         assertFalse(NewOutgoingCallBroadcastReceiver.isNewOutgoingCallBroadcastReceived());
 
         setDisconnectedAndVerify(connection, isLoggedCall(handle), callLogEntryLatch);
+    }
+
+    /**
+     * Test the scenario where OEM tries to toggle {@link android.telecom.Connection
+     * #setAudioModeIsVoip(boolean)} to false. Telecom should restrict this action as it can cause
+     * unwanted behavior such as audio issues.
+     *
+     * @throws Exception ;should not hit exception.
+     */
+    @ApiTest(apis = {"android.telecom.Connection#setAudioModeIsVoip"})
+    public void testAudioModeRemainsVoip() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        SelfManagedConnection connection = null;
+
+        try {
+            connection = placeSelfManagedCallAndGetConnection(TEST_SELF_MANAGED_HANDLE_1,
+                    TEST_ADDRESS_1);
+
+            // verify audio mode is voip
+            assertTrue(connection.getAudioModeIsVoip());
+
+            // send request to change audioModeIsVoip to FALSE
+            connection.setAudioModeIsVoip(false);
+
+            // verify audio mode is STILL voip (expected)
+            assertTrue(connection.getAudioModeIsVoip());
+        } finally {
+            if (connection != null) {
+                // disconnect call
+                connection.disconnectAndDestroy();
+                // verify the call was disconnected
+                assertIsInCall(false);
+                assertIsInManagedCall(false);
+            }
+        }
+    }
+
+    /**
+     * Test the scenario where a user starts a self-managed call and while that call is active,
+     * starts a sim based call.  This test verifies the audio mode is correct at every point.
+     *
+     * @throws Exception ;should not hit exception.
+     */
+    @ApiTest(apis = {"android.telecom.Connection#setAudioModeIsVoip"})
+    public void testSelfManagedAndSimBasedCallSwapping() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        SelfManagedConnection selfManagedConnection = null;
+
+        Bundle extras = new Bundle();
+        extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,
+                TestUtils.TEST_SIM_PHONE_ACCOUNT.getAccountHandle());
+
+        try {
+            // 1. start a self-managed call
+            selfManagedConnection = placeSelfManagedCallAndGetConnection(TEST_SELF_MANAGED_HANDLE_1,
+                    TEST_ADDRESS_1);
+
+            // 2. assert self-managed call is active
+            setActiveAndVerify(selfManagedConnection);
+
+            // 3. assert audio mode is MODE_IN_COMMUNICATION
+            verifyAudioMode(MODE_IN_COMMUNICATION);
+
+            // 4. start an incoming SIM based call
+            placeAndVerifyCall(extras);
+            Connection simBasedConnection = verifyConnectionForOutgoingCall();
+
+            // 5. assert incoming call is active
+            Call outgoingCall = getInCallService().getLastCall();
+            simBasedConnection.setActive();
+            assertCallState(outgoingCall, Call.STATE_ACTIVE);
+
+            // 6. assert audio mode id MODE_IN_CALL
+            verifyAudioMode(MODE_IN_CALL);
+
+            // 7. end incoming SIM based call
+            simBasedConnection.setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
+            simBasedConnection.destroy();
+
+            // 8. assert the incoming call is disconnected
+            assertCallState(getInCallService().getLastCall(), Call.STATE_DISCONNECTED);
+
+            // 9. un-hold and assert self-managed call becomes active
+            setActiveAndVerify(selfManagedConnection);
+
+            // 10. assert audio mode is MODE_IN_COMMUNICATION
+            verifyAudioMode(MODE_IN_COMMUNICATION);
+
+        } finally {
+            if (selfManagedConnection != null) {
+                // disconnect call
+                selfManagedConnection.disconnectAndDestroy();
+            }
+        }
     }
 
     /**
@@ -737,13 +841,13 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         verifyCallLogging(callLogLatch, shouldCallBeLogged, connection.getAddress());
     }
 
-    private void verifyAudioMode() {
+    private void verifyAudioMode(int mode) {
         AudioManager am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         waitUntilConditionIsTrueOrTimeout(
                 new Condition() {
                     @Override
                     public Object expected() {
-                        return MODE_IN_COMMUNICATION;
+                        return mode;
                     }
 
                     @Override
@@ -752,7 +856,52 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
                     }
                 },
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
-                "Expected audio mode to be " + MODE_IN_COMMUNICATION
+                "Expected audio mode to be " + mode
         );
     }
+
+    /**
+     * helper method that creates and returns a self-managed connection with a given handle
+     * and address.  Additionally, some checks are made to ensure the self-managed connection was
+     * successful.
+     */
+    private SelfManagedConnection placeSelfManagedCallAndGetConnection(PhoneAccountHandle handle,
+            Uri address) throws Exception {
+        // place a self-managed call
+        assertIsOutgoingCallPermitted(true, TestUtils.TEST_SELF_MANAGED_HANDLE_1);
+
+        TestUtils.placeOutgoingCall(getInstrumentation(), mTelecomManager, handle, address);
+
+        // Ensure Telecom bound to the self managed CS
+        if (!CtsSelfManagedConnectionService.waitForBinding()) {
+            fail("Could not bind to Self-Managed ConnectionService");
+        }
+
+        SelfManagedConnection connection = TestUtils.waitForAndGetConnection(address);
+
+        assertNotNull("Self-Managed Connection should NOT be null.", connection);
+        assertTrue("Self-Managed Connection should be outgoing.", !connection.isIncomingCall());
+
+        // The self-managed ConnectionService must NOT have been prompted to show its incoming call
+        // UI for an outgoing call.
+        assertEquals(connection.getOnShowIncomingUiInvokeCounter().getInvokeCount(), 0);
+
+        setActiveAndVerify(connection);
+
+        // Ensure that the connection defaulted to voip audio mode.
+        assertTrue(connection.getAudioModeIsVoip());
+        // Ensure AudioManager has correct voip mode.
+        verifyAudioMode(MODE_IN_COMMUNICATION);
+
+        // Expect there to be no managed calls at the moment.
+        assertFalse(mTelecomManager.isInManagedCall());
+        // But there should be a call (including self-managed).
+        assertTrue(mTelecomManager.isInCall());
+
+        // Expect that the new outgoing call broadcast did not fire for the self-managed calls.
+        assertFalse(NewOutgoingCallBroadcastReceiver.isNewOutgoingCallBroadcastReceived());
+
+        return connection;
+    }
+
 }

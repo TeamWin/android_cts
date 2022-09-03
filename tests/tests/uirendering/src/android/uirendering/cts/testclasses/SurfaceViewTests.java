@@ -34,6 +34,7 @@ import android.view.View;
 import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -90,6 +91,7 @@ public class SurfaceViewTests extends ActivityTestBase {
         return a;
     }
 
+    @FlakyTest(bugId = 244426304)
     @Test
     public void testMovingWhiteSurfaceView() {
         // A moving SurfaceViews with white content against a white background should be invisible

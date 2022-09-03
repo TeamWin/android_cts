@@ -20,7 +20,6 @@ import os
 import time
 
 from mobly import test_runner
-import numpy as np
 
 import its_base_test
 import camera_properties_utils
@@ -45,33 +44,6 @@ _VIDEO_QUALITIES_TESTED = ('CIF:3', '480P:4', '720P:5', '1080P:6', 'QVGA:7',
                            'VGA:9')
 _VIDEO_STABILIZATION_FACTOR = 0.6  # 60% of gyro movement allowed
 _VIDEO_STABILIZATION_MODE = 1
-
-
-def _conv_acceleration_to_movement(gyro_events):
-  """Convert gyro_events time and speed to movement during video time.
-
-  Args:
-    gyro_events: sorted dict of entries with 'time', 'x', 'y', and 'z'
-
-  Returns:
-    'z' acceleration converted to movement for times around VIDEO playing.
-  """
-  gyro_times = np.array([e['time'] for e in gyro_events])
-  gyro_speed = np.array([e['z'] for e in gyro_events])
-  gyro_time_min = gyro_times[0]
-  logging.debug('gyro start time: %dns', gyro_time_min)
-  logging.debug('gyro stop time: %dns', gyro_times[-1])
-  gyro_rotations = []
-  video_time_start = gyro_time_min + _VIDEO_DELAY_TIME*_SEC_TO_NSEC
-  video_time_stop = video_time_start + _VIDEO_DURATION*_SEC_TO_NSEC
-  logging.debug('video start time: %dns', video_time_start)
-  logging.debug('video stop time: %dns', video_time_stop)
-
-  for i, t in enumerate(gyro_times):
-    if video_time_start <= t <= video_time_stop:
-      gyro_rotations.append((gyro_times[i]-gyro_times[i-1])/_SEC_TO_NSEC *
-                            gyro_speed[i])
-  return np.array(gyro_rotations)
 
 
 def _collect_data(cam, video_profile, video_quality, rot_rig):
@@ -223,7 +195,8 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
         # Extract gyro rotations
         sensor_fusion_utils.plot_gyro_events(
             gyro_events, f'{_NAME}_{video_quality}', log_path)
-        gyro_rots = _conv_acceleration_to_movement(gyro_events)
+        gyro_rots = sensor_fusion_utils.conv_acceleration_to_movement(
+            gyro_events, _VIDEO_DELAY_TIME)
         max_gyro_angles.append(sensor_fusion_utils.calc_max_rotation_angle(
             gyro_rots, 'Gyro'))
         logging.debug(

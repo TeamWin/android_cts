@@ -27,7 +27,9 @@ import static org.junit.Assume.assumeThat;
 
 import android.app.UiAutomation;
 import android.car.Car;
+import android.car.annotation.ApiRequirements;
 import android.car.test.ApiCheckerRule;
+import android.car.test.ApiCheckerRule.IgnoreInvalidApi;
 import android.car.test.ApiCheckerRule.SupportedVersionTest;
 import android.car.test.ApiCheckerRule.UnsupportedVersionTest;
 import android.car.test.ApiCheckerRule.UnsupportedVersionTest.Behavior;
@@ -78,24 +80,25 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     }
 
     @Test
-    // TODO(b/244222267): Change into @ApiTest with @ApiCheckerRule.IgnoreInvalidApi.
-    // Note: Tie this test to the car api version codes so that we can know which version those
-    // tests are targeting for but the goal of the test is really for testing internal behavior of
-    // that car version.
-    @ApiTest(apis = {"android.car.Car#API_VERSION_MINOR_INT"})
-    public void testCarServiceHelperServiceDump_list() throws Exception {
-        assumeSystemServerDumpSupported();
+    @ApiTest(apis = {
+            "com.android.internal.car.CarServiceHelperServiceUpdatable.dump(PrintWriter,String[])"
+    })
+    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
+    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
+            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
+    public void testCarServiceHelperServiceDump() throws Exception {
         assertWithMessage("System server dumper")
                 .that(executeShellCommand("dumpsys system_server_dumper --list"))
                 .contains("CarServiceHelper");
     }
 
     @Test
-    // TODO(b/244222267): Change into @ApiTest with @ApiCheckerRule.IgnoreInvalidApi.
-    // Note: Tie this test to the car api version codes so that we can know which version those
-    // tests are targeting for but the goal of the test is really for testing internal behavior of
-    // that car version.
-    @ApiTest(apis = {"android.car.Car#API_VERSION_MINOR_INT"})
+    @ApiTest(apis = {
+            "com.android.internal.car.CarServiceHelperServiceUpdatable.dump(PrintWriter,String[])"
+    })
+    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
+    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
+            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     public void testCarServiceHelperServiceDump_carServiceProxy() throws Exception {
         assumeSystemServerDumpSupported();
 
@@ -105,11 +108,12 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     }
 
     @Test
-    // TODO(b/244222267): Change into @ApiTest with @ApiCheckerRule.IgnoreInvalidApi.
-    // Note: Tie this test to the car api version codes so that we can know which version those
-    // tests are targeting for but the goal of the test is really for testing internal behavior of
-    // that car version.
-    @ApiTest(apis = {"android.car.Car#API_VERSION_MINOR_INT"})
+    @ApiTest(apis = {
+            "com.android.internal.car.CarServiceHelperServiceUpdatable.dump(PrintWriter,String[])"
+    })
+    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
+    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
+            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     public void testCarServiceHelperServiceDump_safeMode() throws Exception {
         assumeSystemServerDumpSupported();
 
@@ -122,11 +126,12 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     }
 
     @Test
-    // TODO(b/244222267): Change into @ApiTest with @ApiCheckerRule.IgnoreInvalidApi.
-    // Note: Tie this test to the car api version codes so that we can know which version those
-    // tests are targeting for but the goal of the test is really for testing internal behavior of
-    // that car version.
-    @ApiTest(apis = {"android.car.Car#API_VERSION_MINOR_INT"})
+    @ApiTest(apis = {
+            "com.android.internal.car.CarServiceHelperServiceUpdatable.dump(PrintWriter,String[])"
+    })
+    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
+    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
+            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     public void testCarServiceHelperServiceDump_unsafeMode() throws Exception {
         assumeSystemServerDumpSupported();
 
@@ -142,11 +147,12 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     }
 
     @Test
-    // TODO(b/244222267): Change into @ApiTest with @ApiCheckerRule.IgnoreInvalidApi.
-    // Note: Tie this test to the car api version codes so that we can know which version those
-    // tests are targeting for but the goal of the test is really for testing internal behavior of
-    // that car version.
-    @ApiTest(apis = {"android.car.Car#API_VERSION_MINOR_INT"})
+    @ApiTest(apis = {
+            "com.android.internal.car.CarServiceHelperServiceUpdatable.dump(PrintWriter,String[])"
+    })
+    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
+    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
+            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     public void testCarServiceHelperServiceDump_safeOperation() throws Exception {
         assumeSystemServerDumpSupported();
 
@@ -159,11 +165,12 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     }
 
     @Test
-    // TODO(b/244222267): Change into @ApiTest with @ApiCheckerRule.IgnoreInvalidApi.
-    // Note: Tie this test to the car api version codes so that we can know which version those
-    // tests are targeting for but the goal of the test is really for testing internal behavior of
-    // that car version.
-    @ApiTest(apis = {"android.car.Car#API_VERSION_MINOR_INT"})
+    @ApiTest(apis = {
+            "com.android.internal.car.CarServiceHelperServiceUpdatable.dump(PrintWriter,String[])"
+    })
+    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
+    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
+            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     public void testCarServiceHelperServiceDump_unsafeOperation() throws Exception {
         assumeSystemServerDumpSupported();
 
@@ -179,11 +186,12 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     }
 
     @Test
-    // TODO(b/244222267): Change into @ApiTest with @ApiCheckerRule.IgnoreInvalidApi.
-    // Note: Tie this test to the car api version codes so that we can know which version those
-    // tests are targeting for but the goal of the test is really for testing internal behavior of
-    // that car version.
-    @ApiTest(apis = {"android.car.Car#API_VERSION_MINOR_INT"})
+    @ApiTest(apis = {
+            "com.android.internal.car.CarServiceHelperServiceUpdatable.dump(PrintWriter,String[])"
+    })
+    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
+    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
+            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     public void testCarServiceHelperServiceDump_serviceStacks() throws Exception {
         assumeSystemServerDumpSupported();
 

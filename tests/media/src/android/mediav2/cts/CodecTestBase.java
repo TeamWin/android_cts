@@ -543,8 +543,6 @@ class OutputManager {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         OutputManager that = (OutputManager) o;
-        // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
-        // produce multiple progressive frames?) For now, do not verify timestamps.
         boolean isEqual = this.equalsInterlaced(o);
         if (!outPtsList.equals(that.outPtsList)) {
             isEqual = false;
@@ -553,6 +551,8 @@ class OutputManager {
         return isEqual;
     }
 
+    // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
+    // produce multiple progressive frames?) For now, do not verify timestamps.
     public boolean equalsInterlaced(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

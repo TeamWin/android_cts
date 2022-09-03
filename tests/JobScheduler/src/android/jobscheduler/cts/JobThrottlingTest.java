@@ -191,7 +191,8 @@ public class JobThrottlingTest {
                 new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_JOB_SCHEDULER);
         mDeviceConfigStateHelper.set(
                 new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_JOB_SCHEDULER)
-                        .setInt("min_ready_non_active_jobs_count", 0).build());
+                        .setInt("min_ready_non_active_jobs_count", 0)
+                        .setBoolean("fc_enable_flexibility", false).build());
         mActivityManagerDeviceConfigStateHelper =
                 new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ACTIVITY_MANAGER);
         mTareDeviceConfigStateHelper = new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_TARE);

@@ -33,9 +33,13 @@ public class NeneBenchmarksTest {
 
         benchmark.beforeBenchmark();
         while (state.keepRunning()) {
+            state.pauseTiming();
             benchmark.beforeIteration();
+            state.resumeTiming();
             benchmark.run();
+            state.pauseTiming();
             benchmark.afterIteration();
+            state.resumeTiming();
         }
         benchmark.afterBenchmark();
     }

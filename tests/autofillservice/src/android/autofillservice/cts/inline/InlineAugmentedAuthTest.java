@@ -32,12 +32,13 @@ import android.autofillservice.cts.testcore.CannedAugmentedFillResponse;
 import android.autofillservice.cts.testcore.CtsAugmentedAutofillService;
 import android.autofillservice.cts.testcore.InlineUiBot;
 import android.content.IntentSender;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.service.autofill.Dataset;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
 import android.widget.EditText;
+
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Test;
 import org.junit.rules.TestRule;
