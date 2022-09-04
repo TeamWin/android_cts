@@ -1955,7 +1955,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                         WifiSsid.fromBytes(TEST_SSID_UNQUOTED.getBytes(StandardCharsets.UTF_8)),
                         softApConfig.getWifiSsid());
                 assertEquals(TEST_PASSPHRASE, softApConfig.getPassphrase());
-                assertEquals(testBand, softApConfig.getBand());
+                // Automotive mode can force the LOHS to specific bands
+                if (!hasAutomotiveFeature()) {
+                    assertEquals(testBand, softApConfig.getBand());
+                }
                 assertTrue(lohsSoftApCallback.getCurrentSoftApInfo().getFrequency() > 0);
                 stopLocalOnlyHotspot(callback, wifiEnabled);
             }
