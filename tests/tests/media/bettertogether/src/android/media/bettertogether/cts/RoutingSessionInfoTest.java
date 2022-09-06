@@ -19,11 +19,9 @@ package android.media.bettertogether.cts;
 import static android.media.MediaRoute2Info.PLAYBACK_VOLUME_FIXED;
 import static android.media.MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 
 import android.content.res.Resources;
 import android.media.RoutingSessionInfo;
@@ -190,35 +188,35 @@ public class RoutingSessionInfoTest {
                 .setControlHints(controlHints)
                 .build();
 
-        assertEquals(TEST_ID, sessionInfo.getId());
-        assertEquals(TEST_CLIENT_PACKAGE_NAME, sessionInfo.getClientPackageName());
-        assertEquals(TEST_NAME, sessionInfo.getName());
+        assertThat(sessionInfo.getId()).isEqualTo(TEST_ID);
+        assertThat(sessionInfo.getClientPackageName()).isEqualTo(TEST_CLIENT_PACKAGE_NAME);
+        assertThat(sessionInfo.getName()).isEqualTo(TEST_NAME);
 
-        assertEquals(2, sessionInfo.getSelectedRoutes().size());
-        assertEquals(TEST_ROUTE_ID_0, sessionInfo.getSelectedRoutes().get(0));
-        assertEquals(TEST_ROUTE_ID_1, sessionInfo.getSelectedRoutes().get(1));
+        assertThat(sessionInfo.getSelectedRoutes().size()).isEqualTo(2);
+        assertThat(sessionInfo.getSelectedRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_0);
+        assertThat(sessionInfo.getSelectedRoutes().get(1)).isEqualTo(TEST_ROUTE_ID_1);
 
-        assertEquals(2, sessionInfo.getSelectableRoutes().size());
-        assertEquals(TEST_ROUTE_ID_2, sessionInfo.getSelectableRoutes().get(0));
-        assertEquals(TEST_ROUTE_ID_3, sessionInfo.getSelectableRoutes().get(1));
+        assertThat(sessionInfo.getSelectableRoutes().size()).isEqualTo(2);
+        assertThat(sessionInfo.getSelectableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_2);
+        assertThat(sessionInfo.getSelectableRoutes().get(1)).isEqualTo(TEST_ROUTE_ID_3);
 
-        assertEquals(2, sessionInfo.getDeselectableRoutes().size());
-        assertEquals(TEST_ROUTE_ID_4, sessionInfo.getDeselectableRoutes().get(0));
-        assertEquals(TEST_ROUTE_ID_5, sessionInfo.getDeselectableRoutes().get(1));
+        assertThat(sessionInfo.getDeselectableRoutes().size()).isEqualTo(2);
+        assertThat(sessionInfo.getDeselectableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_4);
+        assertThat(sessionInfo.getDeselectableRoutes().get(1)).isEqualTo(TEST_ROUTE_ID_5);
 
-        assertEquals(2, sessionInfo.getTransferableRoutes().size());
-        assertEquals(TEST_ROUTE_ID_6, sessionInfo.getTransferableRoutes().get(0));
-        assertEquals(TEST_ROUTE_ID_7, sessionInfo.getTransferableRoutes().get(1));
+        assertThat(sessionInfo.getTransferableRoutes().size()).isEqualTo(2);
+        assertThat(sessionInfo.getTransferableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_6);
+        assertThat(sessionInfo.getTransferableRoutes().get(1)).isEqualTo(TEST_ROUTE_ID_7);
 
         //Note: Individual tests for volume handling were added below, as its value depends on
         // config_volumeAdjustmentForRemoteGroupSessions. See b/228021646 for more details.
-        assertEquals(TEST_VOLUME_MAX, sessionInfo.getVolumeMax());
-        assertEquals(TEST_VOLUME, sessionInfo.getVolume());
+        assertThat(sessionInfo.getVolumeMax()).isEqualTo(TEST_VOLUME_MAX);
+        assertThat(sessionInfo.getVolume()).isEqualTo(TEST_VOLUME);
 
         Bundle controlHintsOut = sessionInfo.getControlHints();
-        assertNotNull(controlHintsOut);
-        assertTrue(controlHintsOut.containsKey(TEST_KEY));
-        assertEquals(TEST_VALUE, controlHintsOut.getString(TEST_KEY));
+        assertThat(controlHintsOut).isNotNull();
+        assertThat(controlHintsOut.containsKey(TEST_KEY)).isTrue();
+        assertThat(controlHintsOut.getString(TEST_KEY)).isEqualTo(TEST_VALUE);
     }
 
     @Test
@@ -238,21 +236,21 @@ public class RoutingSessionInfoTest {
                 .addTransferableRoute(TEST_ROUTE_ID_7)
                 .build();
 
-        assertEquals(2, newSessionInfo.getSelectedRoutes().size());
-        assertEquals(TEST_ROUTE_ID_0, newSessionInfo.getSelectedRoutes().get(0));
-        assertEquals(TEST_ROUTE_ID_1, newSessionInfo.getSelectedRoutes().get(1));
+        assertThat(newSessionInfo.getSelectedRoutes().size()).isEqualTo(2);
+        assertThat(newSessionInfo.getSelectedRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_0);
+        assertThat(newSessionInfo.getSelectedRoutes().get(1)).isEqualTo(TEST_ROUTE_ID_1);
 
-        assertEquals(2, newSessionInfo.getSelectableRoutes().size());
-        assertEquals(TEST_ROUTE_ID_2, newSessionInfo.getSelectableRoutes().get(0));
-        assertEquals(TEST_ROUTE_ID_3, newSessionInfo.getSelectableRoutes().get(1));
+        assertThat(newSessionInfo.getSelectableRoutes().size()).isEqualTo(2);
+        assertThat(newSessionInfo.getSelectableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_2);
+        assertThat(newSessionInfo.getSelectableRoutes().get(1)).isEqualTo(TEST_ROUTE_ID_3);
 
-        assertEquals(2, newSessionInfo.getDeselectableRoutes().size());
-        assertEquals(TEST_ROUTE_ID_4, newSessionInfo.getDeselectableRoutes().get(0));
-        assertEquals(TEST_ROUTE_ID_5, newSessionInfo.getDeselectableRoutes().get(1));
+        assertThat(newSessionInfo.getDeselectableRoutes().size()).isEqualTo(2);
+        assertThat(newSessionInfo.getDeselectableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_4);
+        assertThat(newSessionInfo.getDeselectableRoutes().get(1)).isEqualTo(TEST_ROUTE_ID_5);
 
-        assertEquals(2, newSessionInfo.getTransferableRoutes().size());
-        assertEquals(TEST_ROUTE_ID_6, newSessionInfo.getTransferableRoutes().get(0));
-        assertEquals(TEST_ROUTE_ID_7, newSessionInfo.getTransferableRoutes().get(1));
+        assertThat(newSessionInfo.getTransferableRoutes().size()).isEqualTo(2);
+        assertThat(newSessionInfo.getTransferableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_6);
+        assertThat(newSessionInfo.getTransferableRoutes().get(1)).isEqualTo(TEST_ROUTE_ID_7);
     }
 
     @Test
@@ -277,17 +275,17 @@ public class RoutingSessionInfoTest {
 
                 .build();
 
-        assertEquals(1, sessionInfo.getSelectedRoutes().size());
-        assertEquals(TEST_ROUTE_ID_0, sessionInfo.getSelectedRoutes().get(0));
+        assertThat(sessionInfo.getSelectedRoutes().size()).isEqualTo(1);
+        assertThat(sessionInfo.getSelectedRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_0);
 
-        assertEquals(1, sessionInfo.getSelectableRoutes().size());
-        assertEquals(TEST_ROUTE_ID_2, sessionInfo.getSelectableRoutes().get(0));
+        assertThat(sessionInfo.getSelectableRoutes().size()).isEqualTo(1);
+        assertThat(sessionInfo.getSelectableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_2);
 
-        assertEquals(1, sessionInfo.getDeselectableRoutes().size());
-        assertEquals(TEST_ROUTE_ID_4, sessionInfo.getDeselectableRoutes().get(0));
+        assertThat(sessionInfo.getDeselectableRoutes().size()).isEqualTo(1);
+        assertThat(sessionInfo.getDeselectableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_4);
 
-        assertEquals(1, sessionInfo.getTransferableRoutes().size());
-        assertEquals(TEST_ROUTE_ID_6, sessionInfo.getTransferableRoutes().get(0));
+        assertThat(sessionInfo.getTransferableRoutes().size()).isEqualTo(1);
+        assertThat(sessionInfo.getTransferableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_6);
     }
 
     @Test
@@ -311,17 +309,17 @@ public class RoutingSessionInfoTest {
                 .removeTransferableRoute(TEST_ROUTE_ID_7)
                 .build();
 
-        assertEquals(1, newSessionInfo.getSelectedRoutes().size());
-        assertEquals(TEST_ROUTE_ID_0, newSessionInfo.getSelectedRoutes().get(0));
+        assertThat(newSessionInfo.getSelectedRoutes().size()).isEqualTo(1);
+        assertThat(newSessionInfo.getSelectedRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_0);
 
-        assertEquals(1, newSessionInfo.getSelectableRoutes().size());
-        assertEquals(TEST_ROUTE_ID_2, newSessionInfo.getSelectableRoutes().get(0));
+        assertThat(newSessionInfo.getSelectableRoutes().size()).isEqualTo(1);
+        assertThat(newSessionInfo.getSelectableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_2);
 
-        assertEquals(1, newSessionInfo.getDeselectableRoutes().size());
-        assertEquals(TEST_ROUTE_ID_4, newSessionInfo.getDeselectableRoutes().get(0));
+        assertThat(newSessionInfo.getDeselectableRoutes().size()).isEqualTo(1);
+        assertThat(newSessionInfo.getDeselectableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_4);
 
-        assertEquals(1, newSessionInfo.getTransferableRoutes().size());
-        assertEquals(TEST_ROUTE_ID_6, newSessionInfo.getTransferableRoutes().get(0));
+        assertThat(newSessionInfo.getTransferableRoutes().size()).isEqualTo(1);
+        assertThat(newSessionInfo.getTransferableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_6);
     }
 
     @Test
@@ -348,12 +346,12 @@ public class RoutingSessionInfoTest {
                 .addSelectedRoute(TEST_ROUTE_ID_0)
                 .build();
 
-        assertEquals(1, sessionInfo.getSelectedRoutes().size());
-        assertEquals(TEST_ROUTE_ID_0, sessionInfo.getSelectedRoutes().get(0));
+        assertThat(sessionInfo.getSelectedRoutes().size()).isEqualTo(1);
+        assertThat(sessionInfo.getSelectedRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_0);
 
-        assertTrue(sessionInfo.getSelectableRoutes().isEmpty());
-        assertTrue(sessionInfo.getDeselectableRoutes().isEmpty());
-        assertTrue(sessionInfo.getTransferableRoutes().isEmpty());
+        assertThat(sessionInfo.getSelectableRoutes().isEmpty()).isTrue();
+        assertThat(sessionInfo.getDeselectableRoutes().isEmpty()).isTrue();
+        assertThat(sessionInfo.getTransferableRoutes().isEmpty()).isTrue();
     }
 
     @Test
@@ -379,12 +377,12 @@ public class RoutingSessionInfoTest {
                 .addSelectedRoute(TEST_ROUTE_ID_0)
                 .build();
 
-        assertEquals(1, newSessionInfo.getSelectedRoutes().size());
-        assertEquals(TEST_ROUTE_ID_0, newSessionInfo.getSelectedRoutes().get(0));
+        assertThat(newSessionInfo.getSelectedRoutes().size()).isEqualTo(1);
+        assertThat(newSessionInfo.getSelectedRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_0);
 
-        assertTrue(newSessionInfo.getSelectableRoutes().isEmpty());
-        assertTrue(newSessionInfo.getDeselectableRoutes().isEmpty());
-        assertTrue(newSessionInfo.getTransferableRoutes().isEmpty());
+        assertThat(newSessionInfo.getSelectableRoutes().isEmpty()).isTrue();
+        assertThat(newSessionInfo.getDeselectableRoutes().isEmpty()).isTrue();
+        assertThat(newSessionInfo.getTransferableRoutes().isEmpty()).isTrue();
     }
 
     @Test
@@ -426,8 +424,8 @@ public class RoutingSessionInfoTest {
                 .setControlHints(controlHints)
                 .build();
 
-        assertEquals(sessionInfo1, sessionInfo2);
-        assertEquals(sessionInfo1.hashCode(), sessionInfo2.hashCode());
+        assertThat(sessionInfo2).isEqualTo(sessionInfo1);
+        assertThat(sessionInfo2.hashCode()).isEqualTo(sessionInfo1.hashCode());
     }
 
     @Test
@@ -454,8 +452,8 @@ public class RoutingSessionInfoTest {
 
         RoutingSessionInfo sessionInfo2 = new RoutingSessionInfo.Builder(sessionInfo1).build();
 
-        assertEquals(sessionInfo1, sessionInfo2);
-        assertEquals(sessionInfo1.hashCode(), sessionInfo2.hashCode());
+        assertThat(sessionInfo2).isEqualTo(sessionInfo1);
+        assertThat(sessionInfo2.hashCode()).isEqualTo(sessionInfo1.hashCode());
     }
 
     @Test
@@ -480,50 +478,50 @@ public class RoutingSessionInfoTest {
                 .setControlHints(controlHints)
                 .build();
 
-        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
-                .setName(TEST_OTHER_NAME).build());
+        assertThat(new RoutingSessionInfo.Builder(sessionInfo)
+                .setName(TEST_OTHER_NAME).build()).isNotEqualTo(sessionInfo);
 
         // Now, we will use copy constructor
-        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
+        assertThat(new RoutingSessionInfo.Builder(sessionInfo)
                 .addSelectedRoute("randomRoute")
-                .build());
-        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
+                .build()).isNotEqualTo(sessionInfo);
+        assertThat(new RoutingSessionInfo.Builder(sessionInfo)
                 .addSelectableRoute("randomRoute")
-                .build());
-        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
+                .build()).isNotEqualTo(sessionInfo);
+        assertThat(new RoutingSessionInfo.Builder(sessionInfo)
                 .addDeselectableRoute("randomRoute")
-                .build());
-        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
+                .build()).isNotEqualTo(sessionInfo);
+        assertThat(new RoutingSessionInfo.Builder(sessionInfo)
                 .addTransferableRoute("randomRoute")
-                .build());
+                .build()).isNotEqualTo(sessionInfo);
 
-        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
+        assertThat(new RoutingSessionInfo.Builder(sessionInfo)
                 .removeSelectedRoute(TEST_ROUTE_ID_1)
-                .build());
-        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
+                .build()).isNotEqualTo(sessionInfo);
+        assertThat(new RoutingSessionInfo.Builder(sessionInfo)
                 .removeSelectableRoute(TEST_ROUTE_ID_3)
-                .build());
-        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
+                .build()).isNotEqualTo(sessionInfo);
+        assertThat(new RoutingSessionInfo.Builder(sessionInfo)
                 .removeDeselectableRoute(TEST_ROUTE_ID_5)
-                .build());
-        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
+                .build()).isNotEqualTo(sessionInfo);
+        assertThat(new RoutingSessionInfo.Builder(sessionInfo)
                 .removeTransferableRoute(TEST_ROUTE_ID_7)
-                .build());
+                .build()).isNotEqualTo(sessionInfo);
 
-        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
+        assertThat(new RoutingSessionInfo.Builder(sessionInfo)
                 .clearSelectedRoutes()
                 // Note: Calling build() with empty selected routes will throw IAE.
                 .addSelectedRoute(TEST_ROUTE_ID_0)
-                .build());
-        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
+                .build()).isNotEqualTo(sessionInfo);
+        assertThat(new RoutingSessionInfo.Builder(sessionInfo)
                 .clearSelectableRoutes()
-                .build());
-        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
+                .build()).isNotEqualTo(sessionInfo);
+        assertThat(new RoutingSessionInfo.Builder(sessionInfo)
                 .clearDeselectableRoutes()
-                .build());
-        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
+                .build()).isNotEqualTo(sessionInfo);
+        assertThat(new RoutingSessionInfo.Builder(sessionInfo)
                 .clearTransferableRoutes()
-                .build());
+                .build()).isNotEqualTo(sessionInfo);
 
         /*
         Note: Using session with only one selected route, as volume handling of group sessions
@@ -534,14 +532,15 @@ public class RoutingSessionInfoTest {
                 .setVolumeHandling(PLAYBACK_VOLUME_FIXED)
                 .addSelectedRoute(TEST_ROUTE_ID_0);
 
-        assertNotEquals(oneRouteSession.build(), oneRouteSession
+        assertThat(oneRouteSession.build()).isNotEqualTo(
+                oneRouteSession
                 .setVolumeHandling(PLAYBACK_VOLUME_VARIABLE)
                 .build());
 
-        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
-                .setVolumeMax(TEST_VOLUME_MAX + 1).build());
-        assertNotEquals(sessionInfo, new RoutingSessionInfo.Builder(sessionInfo)
-                .setVolume(TEST_VOLUME + 1).build());
+        assertThat(new RoutingSessionInfo.Builder(sessionInfo)
+                .setVolumeMax(TEST_VOLUME_MAX + 1).build()).isNotEqualTo(sessionInfo);
+        assertThat(new RoutingSessionInfo.Builder(sessionInfo)
+                .setVolume(TEST_VOLUME + 1).build()).isNotEqualTo(sessionInfo);
 
         // Note: ControlHints will not affect the equals.
     }
@@ -573,14 +572,14 @@ public class RoutingSessionInfoTest {
         parcel.setDataPosition(0);
 
         RoutingSessionInfo sessionInfoFromParcel = parcel.readParcelable(null);
-        assertEquals(sessionInfo, sessionInfoFromParcel);
-        assertEquals(sessionInfo.hashCode(), sessionInfoFromParcel.hashCode());
+        assertThat(sessionInfoFromParcel).isEqualTo(sessionInfo);
+        assertThat(sessionInfoFromParcel.hashCode()).isEqualTo(sessionInfo.hashCode());
 
         // Check controlHints
         Bundle controlHintsOut = sessionInfoFromParcel.getControlHints();
-        assertNotNull(controlHintsOut);
-        assertTrue(controlHintsOut.containsKey(TEST_KEY));
-        assertEquals(TEST_VALUE, controlHintsOut.getString(TEST_KEY));
+        assertThat(controlHintsOut).isNotNull();
+        assertThat(controlHintsOut.containsKey(TEST_KEY)).isTrue();
+        assertThat(controlHintsOut.getString(TEST_KEY)).isEqualTo(TEST_VALUE);
         parcel.recycle();
 
         // In order to mark writeToParcel as tested, we let's just call it directly.
@@ -599,7 +598,7 @@ public class RoutingSessionInfoTest {
                 .addDeselectableRoute(TEST_ROUTE_ID_4)
                 .addTransferableRoute(TEST_ROUTE_ID_6)
                 .build();
-        assertEquals(0, sessionInfo.describeContents());
+        assertThat(sessionInfo.describeContents()).isEqualTo(0);
     }
 
     @Test
@@ -621,7 +620,7 @@ public class RoutingSessionInfoTest {
         int expectedVolumeHandling = volumeAdjustmentForRemoteGroupSessions
                 ? PLAYBACK_VOLUME_VARIABLE : PLAYBACK_VOLUME_FIXED;
 
-        assertEquals(expectedVolumeHandling, sessionInfo.getVolumeHandling());
+        assertThat(sessionInfo.getVolumeHandling()).isEqualTo(expectedVolumeHandling);
     }
 
     @Test
@@ -633,6 +632,6 @@ public class RoutingSessionInfoTest {
                 .setVolumeHandling(PLAYBACK_VOLUME_VARIABLE)
                 .build();
 
-        assertEquals(PLAYBACK_VOLUME_VARIABLE, sessionInfo.getVolumeHandling());
+        assertThat(sessionInfo.getVolumeHandling()).isEqualTo(PLAYBACK_VOLUME_VARIABLE);
     }
 }

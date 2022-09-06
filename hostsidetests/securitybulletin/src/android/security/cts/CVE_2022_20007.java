@@ -37,10 +37,12 @@ public class CVE_2022_20007 extends StsExtraBusinessLogicHostTestBase {
         final String testClass = testPkg + "." + "DeviceTest";
         final String testApp = "CVE-2022-20007.apk";
         final String testAttackerApp = "CVE-2022-20007-Attacker.apk";
+        final String testSecondApp = "CVE-2022-20007-Second.apk";
         ITestDevice device = getDevice();
         try {
             installPackage(testApp);
             installPackage(testAttackerApp);
+            installPackage(testSecondApp);
             AdbUtils.runCommandLine("input keyevent KEYCODE_WAKEUP", device);
             AdbUtils.runCommandLine("input keyevent KEYCODE_MENU", device);
             AdbUtils.runCommandLine("input keyevent KEYCODE_HOME", device);

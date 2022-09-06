@@ -16,13 +16,7 @@
 
 package android.media.bettertogether.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static com.google.common.truth.Truth.assertThat;
 
 import android.app.Notification;
 import android.content.ComponentName;
@@ -137,9 +131,11 @@ public class MediaSession2ServiceTest {
         mControllers.add(controller);
 
         // onGetSession() should be called.
-        assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-        assertEquals(controllerInfoList.get(0).getPackageName(), mContext.getPackageName());
-        assertTrue(TestUtils.equals(controllerInfoList.get(0).getConnectionHints(), testHints));
+        assertThat(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+        assertThat(controllerInfoList.get(0).getPackageName())
+                .isEqualTo(mContext.getPackageName());
+        assertThat(TestUtils.equals(controllerInfoList.get(0).getConnectionHints(), testHints))
+                .isTrue();
     }
 
     /**
@@ -187,13 +183,15 @@ public class MediaSession2ServiceTest {
             mControllers.add(controller);
 
             // MediaSession2.SessionCallback#onConnect() should be called.
-            assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-            assertEquals(controllerInfoList.get(0).getPackageName(), mContext.getPackageName());
-            assertTrue(TestUtils.equals(controllerInfoList.get(0).getConnectionHints(), testHints));
+            assertThat(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(controllerInfoList.get(0).getPackageName())
+                    .isEqualTo(mContext.getPackageName());
+            assertThat(TestUtils.equals(controllerInfoList.get(0).getConnectionHints(), testHints))
+                    .isTrue();
 
             // The controller should be connected to the right session.
-            assertNotEquals(mToken, controller.getConnectedToken());
-            assertEquals(testSession.getToken(), controller.getConnectedToken());
+            assertThat(controller.getConnectedToken()).isNotEqualTo(mToken);
+            assertThat(controller.getConnectedToken()).isEqualTo(testSession.getToken());
         }
     }
 
@@ -217,14 +215,13 @@ public class MediaSession2ServiceTest {
         MediaController2 controller1 = createConnectedController(mToken);
         MediaController2 controller2 = createConnectedController(mToken);
 
-        assertNotEquals(mToken, controller1.getConnectedToken());
-        assertNotEquals(mToken, controller2.getConnectedToken());
+        assertThat(controller1.getConnectedToken()).isNotEqualTo(mToken);
+        assertThat(controller2.getConnectedToken()).isNotEqualTo(mToken);
 
-        assertNotEquals(controller1.getConnectedToken(),
-                controller2.getConnectedToken());
-        assertEquals(2, tokens.size());
-        assertEquals(tokens.get(0), controller1.getConnectedToken());
-        assertEquals(tokens.get(1), controller2.getConnectedToken());
+        assertThat(controller1.getConnectedToken()).isNotEqualTo(controller2.getConnectedToken());
+        assertThat(tokens.size()).isEqualTo(2);
+        assertThat(controller1.getConnectedToken()).isEqualTo(tokens.get(0));
+        assertThat(controller2.getConnectedToken()).isEqualTo(tokens.get(1));
     }
 
     /**
@@ -250,8 +247,8 @@ public class MediaSession2ServiceTest {
                 .build();
 
         // MediaController2.ControllerCallback#onDisconnected() should be called.
-        assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-        assertNull(controller.getConnectedToken());
+        assertThat(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+        assertThat(controller.getConnectedToken()).isNull();
     }
 
     @Test
@@ -275,11 +272,11 @@ public class MediaSession2ServiceTest {
         MediaController2 controller2 = createConnectedController(mToken);
 
         controller1.close();
-        assertFalse(latch.await(WAIT_TIME_FOR_NO_RESPONSE_MS, TimeUnit.MILLISECONDS));
+        assertThat(latch.await(WAIT_TIME_FOR_NO_RESPONSE_MS, TimeUnit.MILLISECONDS)).isFalse();
 
         // Service should be closed only when all controllers are closed.
         controller2.close();
-        assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertThat(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
     }
 
     @Test
@@ -302,11 +299,11 @@ public class MediaSession2ServiceTest {
         MediaController2 controller2 = createConnectedController(mToken);
 
         controller1.close();
-        assertFalse(latch.await(WAIT_TIME_FOR_NO_RESPONSE_MS, TimeUnit.MILLISECONDS));
+        assertThat(latch.await(WAIT_TIME_FOR_NO_RESPONSE_MS, TimeUnit.MILLISECONDS)).isFalse();
 
         // Service should be closed only when all controllers are closed.
         controller2.close();
-        assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertThat(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
     }
 
     @Test
@@ -319,12 +316,12 @@ public class MediaSession2ServiceTest {
                 .build()) {
             service.addSession(session);
             List<MediaSession2> sessions = service.getSessions();
-            assertTrue(sessions.contains(session));
-            assertEquals(2, sessions.size());
+            assertThat(sessions.contains(session)).isTrue();
+            assertThat(sessions.size()).isEqualTo(2);
 
             service.removeSession(session);
             sessions = service.getSessions();
-            assertFalse(sessions.contains(session));
+            assertThat(sessions.contains(session)).isFalse();
         }
     }
 
@@ -338,12 +335,12 @@ public class MediaSession2ServiceTest {
                 .build()) {
             service.addSession(session);
             List<MediaSession2> sessions = service.getSessions();
-            assertTrue(sessions.contains(session));
-            assertEquals(2, sessions.size());
+            assertThat(sessions.contains(session)).isTrue();
+            assertThat(sessions.size()).isEqualTo(2);
 
             session.close();
             sessions = service.getSessions();
-            assertFalse(sessions.contains(session));
+            assertThat(sessions.contains(session)).isFalse();
         }
     }
 
@@ -359,7 +356,7 @@ public class MediaSession2ServiceTest {
                     @Override
                     MediaSession2Service.MediaNotification onUpdateNotification(
                             MediaSession2 session) {
-                        assertEquals(testSession, session);
+                        assertThat(session).isEqualTo(testSession);
                         switch ((int) latch.getCount()) {
                             case 2:
 
@@ -373,7 +370,7 @@ public class MediaSession2ServiceTest {
 
         testSession.setPlaybackActive(true);
         testSession.setPlaybackActive(false);
-        assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertThat(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
         // Add fake call for preventing this from being missed by CTS coverage.
         if (StubMediaSession2Service.getInstance() != null) {
@@ -388,10 +385,10 @@ public class MediaSession2ServiceTest {
         MediaSession2Service service = StubMediaSession2Service.getInstance();
 
         Intent serviceIntent = new Intent(MediaSession2Service.SERVICE_INTERFACE);
-        assertNotNull(service.onBind(serviceIntent));
+        assertThat(service.onBind(serviceIntent)).isNotNull();
 
         Intent wrongIntent = new Intent("wrongIntent");
-        assertNull(service.onBind(wrongIntent));
+        assertThat(service.onBind(wrongIntent)).isNull();
     }
 
     @Test
@@ -403,8 +400,8 @@ public class MediaSession2ServiceTest {
 
         MediaSession2Service.MediaNotification notification =
                 new MediaSession2Service.MediaNotification(testId, testNotification);
-        assertEquals(testId, notification.getNotificationId());
-        assertSame(testNotification, notification.getNotification());
+        assertThat(notification.getNotificationId()).isEqualTo(testId);
+        assertThat(notification.getNotification()).isEqualTo(testNotification);
     }
 
     private MediaController2 createConnectedController(Session2Token token)
@@ -421,7 +418,7 @@ public class MediaSession2ServiceTest {
                 }).build();
 
         mControllers.add(controller);
-        assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertThat(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
         return controller;
     }
 

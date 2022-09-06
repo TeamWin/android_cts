@@ -15,13 +15,8 @@
  */
 package android.media.bettertogether.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.PendingIntent;
 import android.content.Context;
@@ -102,15 +97,15 @@ public class MediaRouterTest {
         RouteInfo prevSelectedRoute = mMediaRouter.getSelectedRoute(
                 MediaRouter.ROUTE_TYPE_LIVE_AUDIO | MediaRouter.ROUTE_TYPE_LIVE_VIDEO
                 | MediaRouter.ROUTE_TYPE_REMOTE_DISPLAY);
-        assertNotNull(prevSelectedRoute);
+        assertThat(prevSelectedRoute).isNotNull();
 
         UserRouteInfo userRoute = mMediaRouter.createUserRoute(mTestCategory);
         mMediaRouter.addUserRoute(userRoute);
         mMediaRouter.selectRoute(userRoute.getSupportedTypes(), userRoute);
 
         RouteInfo nowSelectedRoute = mMediaRouter.getSelectedRoute(MediaRouter.ROUTE_TYPE_USER);
-        assertEquals(userRoute, nowSelectedRoute);
-        assertEquals(mTestCategory, nowSelectedRoute.getCategory());
+        assertThat(nowSelectedRoute).isEqualTo(userRoute);
+        assertThat(nowSelectedRoute.getCategory()).isEqualTo(mTestCategory);
 
         mMediaRouter.selectRoute(prevSelectedRoute.getSupportedTypes(), prevSelectedRoute);
     }
@@ -121,22 +116,23 @@ public class MediaRouterTest {
     @Test
     public void testGetRouteCount() {
         final int count = mMediaRouter.getRouteCount();
-        assertTrue("By default, a media router has at least one route.", count > 0);
+        assertWithMessage("By default, a media router has at least one route.")
+                .that(count > 0).isTrue();
 
         UserRouteInfo userRoute0 = mMediaRouter.createUserRoute(mTestCategory);
         mMediaRouter.addUserRoute(userRoute0);
-        assertEquals(count + 1, mMediaRouter.getRouteCount());
+        assertThat(mMediaRouter.getRouteCount()).isEqualTo(count + 1);
 
         mMediaRouter.removeUserRoute(userRoute0);
-        assertEquals(count, mMediaRouter.getRouteCount());
+        assertThat(mMediaRouter.getRouteCount()).isEqualTo(count);
 
         UserRouteInfo userRoute1 = mMediaRouter.createUserRoute(mTestCategory);
         mMediaRouter.addUserRoute(userRoute0);
         mMediaRouter.addUserRoute(userRoute1);
-        assertEquals(count + 2, mMediaRouter.getRouteCount());
+        assertThat(mMediaRouter.getRouteCount()).isEqualTo(count + 2);
 
         mMediaRouter.clearUserRoutes();
-        assertEquals(count, mMediaRouter.getRouteCount());
+        assertThat(mMediaRouter.getRouteCount()).isEqualTo(count);
     }
 
     /**
@@ -150,8 +146,8 @@ public class MediaRouterTest {
         mMediaRouter.addUserRoute(userRoute1);
 
         int count = mMediaRouter.getRouteCount();
-        assertEquals(userRoute0, mMediaRouter.getRouteAt(count - 2));
-        assertEquals(userRoute1, mMediaRouter.getRouteAt(count - 1));
+        assertThat(mMediaRouter.getRouteAt(count - 2)).isEqualTo(userRoute0);
+        assertThat(mMediaRouter.getRouteAt(count - 1)).isEqualTo(userRoute1);
     }
 
     /**
@@ -161,26 +157,26 @@ public class MediaRouterTest {
     public void testDefaultRouteInfo() {
         RouteInfo route = mMediaRouter.getDefaultRoute();
 
-        assertNotNull(route.getCategory());
-        assertNotNull(route.getName());
-        assertNotNull(route.getName(mContext));
-        assertTrue(route.isEnabled());
-        assertFalse(route.isConnecting());
-        assertEquals(RouteInfo.DEVICE_TYPE_UNKNOWN, route.getDeviceType());
-        assertEquals(RouteInfo.PLAYBACK_TYPE_LOCAL, route.getPlaybackType());
-        assertNull(route.getDescription());
-        assertNull(route.getStatus());
-        assertNull(route.getIconDrawable());
-        assertNull(route.getGroup());
+        assertThat(route.getCategory()).isNotNull();
+        assertThat(route.getName()).isNotNull();
+        assertThat(route.getName(mContext)).isNotNull();
+        assertThat(route.isEnabled()).isTrue();
+        assertThat(route.isConnecting()).isFalse();
+        assertThat(route.getDeviceType()).isEqualTo(RouteInfo.DEVICE_TYPE_UNKNOWN);
+        assertThat(route.getPlaybackType()).isEqualTo(RouteInfo.PLAYBACK_TYPE_LOCAL);
+        assertThat(route.getDescription()).isNull();
+        assertThat(route.getStatus()).isNull();
+        assertThat(route.getIconDrawable()).isNull();
+        assertThat(route.getGroup()).isNull();
 
         Object tag = new Object();
         route.setTag(tag);
-        assertEquals(tag, route.getTag());
-        assertEquals(AudioManager.STREAM_MUSIC, route.getPlaybackStream());
+        assertThat(route.getTag()).isEqualTo(tag);
+        assertThat(route.getPlaybackStream()).isEqualTo(AudioManager.STREAM_MUSIC);
 
         int curVolume = route.getVolume();
         int maxVolume = route.getVolumeMax();
-        assertTrue(curVolume <= maxVolume);
+        assertThat(curVolume <= maxVolume).isTrue();
     }
 
     /**
@@ -189,18 +185,18 @@ public class MediaRouterTest {
     @Test
     public void testUserRouteInfo() {
         UserRouteInfo userRoute = mMediaRouter.createUserRoute(mTestCategory);
-        assertTrue(userRoute.isEnabled());
-        assertFalse(userRoute.isConnecting());
-        assertEquals(mTestCategory, userRoute.getCategory());
-        assertEquals(RouteInfo.DEVICE_TYPE_UNKNOWN, userRoute.getDeviceType());
-        assertEquals(RouteInfo.PLAYBACK_TYPE_REMOTE, userRoute.getPlaybackType());
+        assertThat(userRoute.isEnabled()).isTrue();
+        assertThat(userRoute.isConnecting()).isFalse();
+        assertThat(userRoute.getCategory()).isEqualTo(mTestCategory);
+        assertThat(userRoute.getDeviceType()).isEqualTo(RouteInfo.DEVICE_TYPE_UNKNOWN);
+        assertThat(userRoute.getPlaybackType()).isEqualTo(RouteInfo.PLAYBACK_TYPE_REMOTE);
 
         // Test setName by CharSequence object.
         userRoute.setName(mTestRouteName);
-        assertEquals(mTestRouteName, userRoute.getName());
+        assertThat(userRoute.getName()).isEqualTo(mTestRouteName);
 
         userRoute.setName(null);
-        assertNull(userRoute.getName());
+        assertThat(userRoute.getName()).isNull();
 
         // Test setName by resource ID.
         // The getName() method tries to find the resource in application resources which was stored
@@ -208,49 +204,50 @@ public class MediaRouterTest {
         // find the resource in a given context's resources. So if we call getName(Context) with a
         // context which has the same resources, two methods will return the same value.
         userRoute.setName(TEST_ROUTE_NAME_RESOURCE_ID);
-        assertEquals(mTestRouteName, userRoute.getName());
-        assertEquals(mTestRouteName, userRoute.getName(mContext));
+        assertThat(userRoute.getName()).isEqualTo(mTestRouteName);
+        assertThat(userRoute.getName(mContext)).isEqualTo(mTestRouteName);
 
         userRoute.setDescription(TEST_ROUTE_DESCRIPTION);
-        assertEquals(TEST_ROUTE_DESCRIPTION, userRoute.getDescription());
+        assertThat(userRoute.getDescription()).isEqualTo(TEST_ROUTE_DESCRIPTION);
 
         userRoute.setStatus(TEST_STATUS);
-        assertEquals(TEST_STATUS, userRoute.getStatus());
+        assertThat(userRoute.getStatus()).isEqualTo(TEST_STATUS);
 
         Object tag = new Object();
         userRoute.setTag(tag);
-        assertEquals(tag, userRoute.getTag());
+        assertThat(userRoute.getTag()).isEqualTo(tag);
 
         userRoute.setPlaybackStream(TEST_PLAYBACK_STREAM);
-        assertEquals(TEST_PLAYBACK_STREAM, userRoute.getPlaybackStream());
+        assertThat(userRoute.getPlaybackStream()).isEqualTo(TEST_PLAYBACK_STREAM);
 
         userRoute.setIconDrawable(mTestIconDrawable);
-        assertEquals(mTestIconDrawable, userRoute.getIconDrawable());
+        assertThat(userRoute.getIconDrawable()).isEqualTo(mTestIconDrawable);
 
         userRoute.setIconDrawable(null);
-        assertNull(userRoute.getIconDrawable());
+        assertThat(userRoute.getIconDrawable()).isNull();
 
         userRoute.setIconResource(TEST_ICON_RESOURCE_ID);
-        assertTrue(getBitmap(mTestIconDrawable).sameAs(getBitmap(userRoute.getIconDrawable())));
+        assertThat(getBitmap(mTestIconDrawable).sameAs(getBitmap(userRoute.getIconDrawable())))
+                .isTrue();
 
         userRoute.setVolumeMax(TEST_MAX_VOLUME);
-        assertEquals(TEST_MAX_VOLUME, userRoute.getVolumeMax());
+        assertThat(userRoute.getVolumeMax()).isEqualTo(TEST_MAX_VOLUME);
 
         userRoute.setVolume(TEST_VOLUME);
-        assertEquals(TEST_VOLUME, userRoute.getVolume());
+        assertThat(userRoute.getVolume()).isEqualTo(TEST_VOLUME);
 
         Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
         PendingIntent mediaButtonIntent = PendingIntent.getBroadcast(mContext, 0, intent,
                 PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE_UNAUDITED);
         RemoteControlClient rcc = new RemoteControlClient(mediaButtonIntent);
         userRoute.setRemoteControlClient(rcc);
-        assertEquals(rcc, userRoute.getRemoteControlClient());
+        assertThat(userRoute.getRemoteControlClient()).isEqualTo(rcc);
 
         userRoute.setVolumeHandling(TEST_VOLUME_HANDLING);
-        assertEquals(TEST_VOLUME_HANDLING, userRoute.getVolumeHandling());
+        assertThat(userRoute.getVolumeHandling()).isEqualTo(TEST_VOLUME_HANDLING);
 
         userRoute.setPlaybackType(TEST_PLAYBACK_TYPE);
-        assertEquals(TEST_PLAYBACK_TYPE, userRoute.getPlaybackType());
+        assertThat(userRoute.getPlaybackType()).isEqualTo(TEST_PLAYBACK_TYPE);
     }
 
     /**
@@ -261,7 +258,7 @@ public class MediaRouterTest {
         // Create a route with a groupable category.
         // A route does not belong to any group until it is added to a media router or to a group.
         UserRouteInfo userRoute0 = mMediaRouter.createUserRoute(mTestGroupableCategory);
-        assertNull(userRoute0.getGroup());
+        assertThat(userRoute0.getGroup()).isNull();
 
         // Call addUserRoute(UserRouteInfo).
         // For the route whose category is groupable, this method does not directly add the route in
@@ -269,9 +266,9 @@ public class MediaRouterTest {
         // and puts the route inside that group.
         mMediaRouter.addUserRoute(userRoute0);
         RouteGroup routeGroup = userRoute0.getGroup();
-        assertNotNull(routeGroup);
-        assertEquals(1, routeGroup.getRouteCount());
-        assertEquals(userRoute0, routeGroup.getRouteAt(0));
+        assertThat(routeGroup).isNotNull();
+        assertThat(routeGroup.getRouteCount()).isEqualTo(1);
+        assertThat(routeGroup.getRouteAt(0)).isEqualTo(userRoute0);
 
         // Create another two routes with the same category.
         UserRouteInfo userRoute1 = mMediaRouter.createUserRoute(mTestGroupableCategory);
@@ -279,51 +276,52 @@ public class MediaRouterTest {
 
         // Add userRoute2 at the end of the group.
         routeGroup.addRoute(userRoute2);
-        assertSame(routeGroup, userRoute2.getGroup());
-        assertEquals(2, routeGroup.getRouteCount());
-        assertEquals(userRoute0, routeGroup.getRouteAt(0));
-        assertEquals(userRoute2, routeGroup.getRouteAt(1));
+        assertThat(userRoute2.getGroup()).isSameInstanceAs(routeGroup);
+        assertThat(routeGroup.getRouteCount()).isEqualTo(2);
+        assertThat(routeGroup.getRouteAt(0)).isEqualTo(userRoute0);
+        assertThat(routeGroup.getRouteAt(1)).isEqualTo(userRoute2);
 
         // To place routes in order, add userRoute1 to the group between userRoute0 and userRoute2.
         routeGroup.addRoute(userRoute1, 1);
-        assertSame(routeGroup, userRoute1.getGroup());
-        assertEquals(3, routeGroup.getRouteCount());
-        assertEquals(userRoute0, routeGroup.getRouteAt(0));
-        assertEquals(userRoute1, routeGroup.getRouteAt(1));
-        assertEquals(userRoute2, routeGroup.getRouteAt(2));
+        assertThat(userRoute1.getGroup()).isSameInstanceAs(routeGroup);
+        assertThat(routeGroup.getRouteCount()).isEqualTo(3);
+        assertThat(routeGroup.getRouteAt(0)).isEqualTo(userRoute0);
+        assertThat(routeGroup.getRouteAt(1)).isEqualTo(userRoute1);
+        assertThat(routeGroup.getRouteAt(2)).isEqualTo(userRoute2);
 
         // Remove userRoute0.
         routeGroup.removeRoute(userRoute0);
-        assertNull(userRoute0.getGroup());
-        assertEquals(2, routeGroup.getRouteCount());
-        assertEquals(userRoute1, routeGroup.getRouteAt(0));
-        assertEquals(userRoute2, routeGroup.getRouteAt(1));
+        assertThat(userRoute0.getGroup()).isNull();
+        assertThat(routeGroup.getRouteCount()).isEqualTo(2);
+        assertThat(routeGroup.getRouteAt(0)).isEqualTo(userRoute1);
+        assertThat(routeGroup.getRouteAt(1)).isEqualTo(userRoute2);
 
         // Remove userRoute1 which is the first route in the group now.
         routeGroup.removeRoute(0);
-        assertNull(userRoute1.getGroup());
-        assertEquals(1, routeGroup.getRouteCount());
-        assertEquals(userRoute2, routeGroup.getRouteAt(0));
+        assertThat(userRoute1.getGroup()).isNull();
+        assertThat(routeGroup.getRouteCount()).isEqualTo(1);
+        assertThat(routeGroup.getRouteAt(0)).isEqualTo(userRoute2);
 
         // Routes in different categories cannot be added to the same group.
         UserRouteInfo userRouteInAnotherCategory = mMediaRouter.createUserRoute(mTestCategory);
         try {
             // This will throw an IllegalArgumentException.
             routeGroup.addRoute(userRouteInAnotherCategory);
-            fail();
+            assertWithMessage("Unreachable statement.").fail();
         } catch (IllegalArgumentException exception) {
             // Expected
         }
 
         // Set an icon for the group.
         routeGroup.setIconDrawable(mTestIconDrawable);
-        assertEquals(mTestIconDrawable, routeGroup.getIconDrawable());
+        assertThat(routeGroup.getIconDrawable()).isEqualTo(mTestIconDrawable);
 
         routeGroup.setIconDrawable(null);
-        assertNull(routeGroup.getIconDrawable());
+        assertThat(routeGroup.getIconDrawable()).isNull();
 
         routeGroup.setIconResource(TEST_ICON_RESOURCE_ID);
-        assertTrue(getBitmap(mTestIconDrawable).sameAs(getBitmap(routeGroup.getIconDrawable())));
+        assertThat(getBitmap(mTestIconDrawable).sameAs(getBitmap(routeGroup.getIconDrawable())))
+                .isTrue();
     }
 
     /**
@@ -341,30 +339,31 @@ public class MediaRouterTest {
         // context which has the same resources, two methods will return the same value.
         CharSequence categoryName = mContext.getText(
                 TEST_CATEGORY_NAME_RESOURCE_ID);
-        assertEquals(categoryName, routeCategory.getName());
-        assertEquals(categoryName, routeCategory.getName(mContext));
+        assertThat(routeCategory.getName()).isEqualTo(categoryName);
+        assertThat(routeCategory.getName(mContext)).isEqualTo(categoryName);
 
-        assertFalse(routeCategory.isGroupable());
-        assertEquals(MediaRouter.ROUTE_TYPE_USER, routeCategory.getSupportedTypes());
+        assertThat(routeCategory.isGroupable()).isFalse();
+        assertThat(routeCategory.getSupportedTypes()).isEqualTo(MediaRouter.ROUTE_TYPE_USER);
 
         final int count = mMediaRouter.getCategoryCount();
-        assertTrue("By default, a media router has at least one route category.", count > 0);
+        assertWithMessage("By default, a media router has at least one route category.")
+                .that(count > 0).isTrue();
 
         UserRouteInfo userRoute = mMediaRouter.createUserRoute(routeCategory);
         mMediaRouter.addUserRoute(userRoute);
-        assertEquals(count + 1, mMediaRouter.getCategoryCount());
-        assertEquals(routeCategory, mMediaRouter.getCategoryAt(count));
+        assertThat(mMediaRouter.getCategoryCount()).isEqualTo(count + 1);
+        assertThat(mMediaRouter.getCategoryAt(count)).isEqualTo(routeCategory);
 
         List<RouteInfo> routesInCategory = new ArrayList<RouteInfo>();
         routeCategory.getRoutes(routesInCategory);
-        assertEquals(1, routesInCategory.size());
+        assertThat(routesInCategory.size()).isEqualTo(1);
 
         RouteInfo route = routesInCategory.get(0);
-        assertEquals(userRoute, route);
+        assertThat(route).isEqualTo(userRoute);
 
         // Test getName() for category whose name is set with CharSequence object.
         RouteCategory newRouteCategory = mMediaRouter.createRouteCategory(categoryName, false);
-        assertEquals(categoryName, newRouteCategory.getName());
+        assertThat(newRouteCategory.getName()).isEqualTo(categoryName);
     }
 
     @Test
@@ -381,8 +380,8 @@ public class MediaRouterTest {
         callback.reset();
         UserRouteInfo userRoute = mMediaRouter.createUserRoute(mTestCategory);
         mMediaRouter.addUserRoute(userRoute);
-        assertTrue(callback.mOnRouteAddedCalled);
-        assertEquals(userRoute, callback.mAddedRoute);
+        assertThat(callback.mOnRouteAddedCalled).isTrue();
+        assertThat(callback.mAddedRoute).isEqualTo(userRoute);
         // Call the callback methods directly so they are marked as tested
         mrc.onRouteAdded(mMediaRouter, callback.mAddedRoute);
         mrsc.onRouteAdded(mMediaRouter, callback.mAddedRoute);
@@ -392,10 +391,10 @@ public class MediaRouterTest {
         // Test onRouteSelected() and onRouteUnselected().
         callback.reset();
         mMediaRouter.selectRoute(MediaRouter.ROUTE_TYPE_USER, userRoute);
-        assertTrue(callback.mOnRouteUnselectedCalled);
-        assertEquals(prevSelectedRoute, callback.mUnselectedRoute);
-        assertTrue(callback.mOnRouteSelectedCalled);
-        assertEquals(userRoute, callback.mSelectedRoute);
+        assertThat(callback.mOnRouteUnselectedCalled).isTrue();
+        assertThat(callback.mUnselectedRoute).isEqualTo(prevSelectedRoute);
+        assertThat(callback.mOnRouteSelectedCalled).isTrue();
+        assertThat(callback.mSelectedRoute).isEqualTo(userRoute);
         // Call the callback methods directly so they are marked as tested
         mrc.onRouteUnselected(mMediaRouter, MediaRouter.ROUTE_TYPE_USER, callback.mUnselectedRoute);
         mrc.onRouteSelected(mMediaRouter, MediaRouter.ROUTE_TYPE_USER, callback.mSelectedRoute);
@@ -407,24 +406,24 @@ public class MediaRouterTest {
         // It is called when the route's name, description, status or tag is updated.
         callback.reset();
         userRoute.setName(mTestRouteName);
-        assertTrue(callback.mOnRouteChangedCalled);
-        assertEquals(userRoute, callback.mChangedRoute);
+        assertThat(callback.mOnRouteChangedCalled).isTrue();
+        assertThat(callback.mChangedRoute).isEqualTo(userRoute);
         // Call the callback methods directly so they are marked as tested
         mrc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
         mrsc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
 
         callback.reset();
         userRoute.setDescription(TEST_ROUTE_DESCRIPTION);
-        assertTrue(callback.mOnRouteChangedCalled);
-        assertEquals(userRoute, callback.mChangedRoute);
+        assertThat(callback.mOnRouteChangedCalled).isTrue();
+        assertThat(callback.mChangedRoute).isEqualTo(userRoute);
         // Call the callback methods directly so they are marked as tested
         mrc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
         mrsc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
 
         callback.reset();
         userRoute.setStatus(TEST_STATUS);
-        assertTrue(callback.mOnRouteChangedCalled);
-        assertEquals(userRoute, callback.mChangedRoute);
+        assertThat(callback.mOnRouteChangedCalled).isTrue();
+        assertThat(callback.mChangedRoute).isEqualTo(userRoute);
         // Call the callback methods directly so they are marked as tested
         mrc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
         mrsc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
@@ -432,8 +431,8 @@ public class MediaRouterTest {
         callback.reset();
         Object tag = new Object();
         userRoute.setTag(tag);
-        assertTrue(callback.mOnRouteChangedCalled);
-        assertEquals(userRoute, callback.mChangedRoute);
+        assertThat(callback.mOnRouteChangedCalled).isTrue();
+        assertThat(callback.mChangedRoute).isEqualTo(userRoute);
         // Call the callback methods directly so they are marked as tested
         mrc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
         mrsc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
@@ -442,8 +441,8 @@ public class MediaRouterTest {
         userRoute.setVolumeMax(TEST_MAX_VOLUME);
         callback.reset();
         userRoute.setVolume(TEST_VOLUME);
-        assertTrue(callback.mOnRouteVolumeChangedCalled);
-        assertEquals(userRoute, callback.mVolumeChangedRoute);
+        assertThat(callback.mOnRouteVolumeChangedCalled).isTrue();
+        assertThat(callback.mVolumeChangedRoute).isEqualTo(userRoute);
         // Call the callback methods directly so they are marked as tested
         mrc.onRouteVolumeChanged(mMediaRouter, callback.mVolumeChangedRoute);
         mrsc.onRouteVolumeChanged(mMediaRouter, callback.mVolumeChangedRoute);
@@ -451,8 +450,8 @@ public class MediaRouterTest {
         // Test onRouteRemoved().
         callback.reset();
         mMediaRouter.removeUserRoute(userRoute);
-        assertTrue(callback.mOnRouteRemovedCalled);
-        assertEquals(userRoute, callback.mRemovedRoute);
+        assertThat(callback.mOnRouteRemovedCalled).isTrue();
+        assertThat(callback.mRemovedRoute).isEqualTo(userRoute);
         // Call the callback methods directly so they are marked as tested
         mrc.onRouteRemoved(mMediaRouter, callback.mRemovedRoute);
         mrsc.onRouteRemoved(mMediaRouter, callback.mRemovedRoute);
@@ -470,13 +469,13 @@ public class MediaRouterTest {
         mMediaRouter.addUserRoute(groupableRoute0);
 
         RouteGroup group = groupableRoute0.getGroup();
-        assertTrue(callback.mOnRouteAddedCalled);
-        assertEquals(group, callback.mAddedRoute);
+        assertThat(callback.mOnRouteAddedCalled).isTrue();
+        assertThat(callback.mAddedRoute).isEqualTo(group);
 
-        assertTrue(callback.mOnRouteGroupedCalled);
-        assertEquals(groupableRoute0, callback.mGroupedRoute);
-        assertEquals(group, callback.mGroup);
-        assertEquals(0, callback.mRouteIndexInGroup);
+        assertThat(callback.mOnRouteGroupedCalled).isTrue();
+        assertThat(callback.mGroupedRoute).isEqualTo(groupableRoute0);
+        assertThat(callback.mGroup).isEqualTo(group);
+        assertThat(callback.mRouteIndexInGroup).isEqualTo(0);
         // Call the callback methods directly so they are marked as tested
         mrc.onRouteGrouped(mMediaRouter, callback.mGroupedRoute, callback.mGroup,
                 callback.mRouteIndexInGroup);
@@ -486,9 +485,9 @@ public class MediaRouterTest {
         // Add another route to the group.
         callback.reset();
         group.addRoute(groupableRoute1);
-        assertTrue(callback.mOnRouteGroupedCalled);
-        assertEquals(groupableRoute1, callback.mGroupedRoute);
-        assertEquals(1, callback.mRouteIndexInGroup);
+        assertThat(callback.mOnRouteGroupedCalled).isTrue();
+        assertThat(callback.mGroupedRoute).isEqualTo(groupableRoute1);
+        assertThat(callback.mRouteIndexInGroup).isEqualTo(1);
         // Call the callback methods directly so they are marked as tested
         mrc.onRouteGrouped(mMediaRouter, callback.mGroupedRoute, callback.mGroup,
                 callback.mRouteIndexInGroup);
@@ -499,10 +498,10 @@ public class MediaRouterTest {
         // called.
         callback.reset();
         group.removeRoute(groupableRoute1);
-        assertTrue(callback.mOnRouteUngroupedCalled);
-        assertEquals(groupableRoute1, callback.mUngroupedRoute);
-        assertTrue(callback.mOnRouteChangedCalled);
-        assertEquals(group, callback.mChangedRoute);
+        assertThat(callback.mOnRouteUngroupedCalled).isTrue();
+        assertThat(callback.mUngroupedRoute).isEqualTo(groupableRoute1);
+        assertThat(callback.mOnRouteChangedCalled).isTrue();
+        assertThat(callback.mChangedRoute).isEqualTo(group);
         // Call the callback methods directly so they are marked as tested
         mrc.onRouteUngrouped(mMediaRouter, callback.mUngroupedRoute, callback.mGroup);
         mrc.onRouteChanged(mMediaRouter, callback.mChangedRoute);
@@ -512,10 +511,10 @@ public class MediaRouterTest {
         // When a group has no routes, the group is removed from the media router.
         callback.reset();
         group.removeRoute(0);
-        assertTrue(callback.mOnRouteUngroupedCalled);
-        assertEquals(groupableRoute0, callback.mUngroupedRoute);
-        assertTrue(callback.mOnRouteRemovedCalled);
-        assertEquals(group, callback.mRemovedRoute);
+        assertThat(callback.mOnRouteUngroupedCalled).isTrue();
+        assertThat(callback.mUngroupedRoute).isEqualTo(groupableRoute0);
+        assertThat(callback.mOnRouteRemovedCalled).isTrue();
+        assertThat(callback.mRemovedRoute).isEqualTo(group);
         // Call the callback methods directly so they are marked as tested
         mrc.onRouteUngrouped(mMediaRouter, callback.mUngroupedRoute, callback.mGroup);
         mrc.onRouteRemoved(mMediaRouter, callback.mRemovedRoute);
@@ -523,13 +522,13 @@ public class MediaRouterTest {
         mrsc.onRouteRemoved(mMediaRouter, callback.mRemovedRoute);
 
         // In this case, onRouteChanged() is not called.
-        assertFalse(callback.mOnRouteChangedCalled);
+        assertThat(callback.mOnRouteChangedCalled).isFalse();
 
         // Try removing the callback.
         mMediaRouter.removeCallback(callback);
         callback.reset();
         mMediaRouter.addUserRoute(groupableRoute0);
-        assertFalse(callback.mOnRouteAddedCalled);
+        assertThat(callback.mOnRouteAddedCalled).isFalse();
 
         mMediaRouter.selectRoute(prevSelectedRoute.getSupportedTypes(), prevSelectedRoute);
     }
@@ -551,7 +550,7 @@ public class MediaRouterTest {
         callback.reset();
         Object tag0 = new Object();
         prevSelectedRoute.setTag(tag0);
-        assertFalse(callback.mOnRouteChangedCalled);
+        assertThat(callback.mOnRouteChangedCalled).isFalse();
 
         // Remove mCallback and add it again with flag MediaRouter.CALLBACK_FLAG_UNFILTERED_EVENTS.
         // This flag will make the callback be invoked even when the types do not match.
@@ -562,7 +561,7 @@ public class MediaRouterTest {
         callback.reset();
         Object tag1 = new Object();
         prevSelectedRoute.setTag(tag1);
-        assertTrue(callback.mOnRouteChangedCalled);
+        assertThat(callback.mOnRouteChangedCalled).isTrue();
     }
 
     /**
@@ -577,17 +576,17 @@ public class MediaRouterTest {
         userRoute.setVolumeCallback(callback);
 
         userRoute.requestSetVolume(TEST_VOLUME);
-        assertTrue(callback.mOnVolumeSetRequestCalled);
-        assertEquals(userRoute, callback.mRouteInfo);
-        assertEquals(TEST_VOLUME, callback.mVolume);
+        assertThat(callback.mOnVolumeSetRequestCalled).isTrue();
+        assertThat(callback.mRouteInfo).isEqualTo(userRoute);
+        assertThat(callback.mVolume).isEqualTo(TEST_VOLUME);
         // Call the callback method directly so it is marked as tested
         mrvc.onVolumeSetRequest(callback.mRouteInfo, callback.mVolume);
 
         callback.reset();
         userRoute.requestUpdateVolume(TEST_VOLUME_DIRECTION);
-        assertTrue(callback.mOnVolumeUpdateRequestCalled);
-        assertEquals(userRoute, callback.mRouteInfo);
-        assertEquals(TEST_VOLUME_DIRECTION, callback.mDirection);
+        assertThat(callback.mOnVolumeUpdateRequestCalled).isTrue();
+        assertThat(callback.mRouteInfo).isEqualTo(userRoute);
+        assertThat(callback.mDirection).isEqualTo(TEST_VOLUME_DIRECTION);
         // Call the callback method directly so it is marked as tested
         mrvc.onVolumeUpdateRequest(callback.mRouteInfo, callback.mDirection);
     }

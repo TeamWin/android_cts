@@ -16,9 +16,7 @@
 
 package android.media.bettertogether.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static com.google.common.truth.Truth.assertThat;
 
 import android.media.Session2Command;
 import android.media.Session2CommandGroup;
@@ -48,9 +46,9 @@ public class Session2CommandGroupTest {
         Session2CommandGroup.Builder builder = new Session2CommandGroup.Builder()
                 .addCommand(testCommand);
         Session2CommandGroup commandGroup = builder.build();
-        assertTrue(commandGroup.hasCommand(TEST_COMMAND_CODE_1));
-        assertTrue(commandGroup.hasCommand(testCommand));
-        assertFalse(commandGroup.hasCommand(TEST_COMMAND_CODE_2));
+        assertThat(commandGroup.hasCommand(TEST_COMMAND_CODE_1)).isTrue();
+        assertThat(commandGroup.hasCommand(testCommand)).isTrue();
+        assertThat(commandGroup.hasCommand(TEST_COMMAND_CODE_2)).isFalse();
     }
 
     @Test
@@ -62,8 +60,8 @@ public class Session2CommandGroupTest {
         Session2CommandGroup commandGroup = builder.build();
 
         Set<Session2Command> commands = commandGroup.getCommands();
-        assertTrue(commands.contains(command1));
-        assertFalse(commands.contains(command2));
+        assertThat(commands.contains(command1)).isTrue();
+        assertThat(commands.contains(command2)).isFalse();
     }
 
     @Test
@@ -73,7 +71,7 @@ public class Session2CommandGroupTest {
         Session2CommandGroup.Builder builder = new Session2CommandGroup.Builder()
                 .addCommand(command);
         Session2CommandGroup commandGroup = builder.build();
-        assertEquals(expected, commandGroup.describeContents());
+        assertThat(commandGroup.describeContents()).isEqualTo(expected);
     }
 
     @Test
@@ -87,7 +85,7 @@ public class Session2CommandGroupTest {
         dest.setDataPosition(0);
         Session2CommandGroup commandGroupFromParcel =
                 Session2CommandGroup.CREATOR.createFromParcel(dest);
-        assertEquals(commandGroup.getCommands(), commandGroupFromParcel.getCommands());
+        assertThat(commandGroupFromParcel.getCommands()).isEqualTo(commandGroup.getCommands());
         dest.recycle();
     }
 
@@ -98,7 +96,7 @@ public class Session2CommandGroupTest {
         Session2CommandGroup commandGroup = builder.build();
         Session2CommandGroup.Builder newBuilder = new Session2CommandGroup.Builder(commandGroup);
         Session2CommandGroup newCommandGroup = newBuilder.build();
-        assertEquals(commandGroup.getCommands(), newCommandGroup.getCommands());
+        assertThat(newCommandGroup.getCommands()).isEqualTo(commandGroup.getCommands());
     }
 
     @Test
@@ -113,8 +111,8 @@ public class Session2CommandGroupTest {
         builder.removeCommand(testCommand1)
                 .removeCommand(testCommand2);
         Session2CommandGroup commandGroup = builder.build();
-        assertFalse(commandGroup.hasCommand(testCommand1));
-        assertFalse(commandGroup.hasCommand(testCommand2));
-        assertTrue(commandGroup.hasCommand(testCommand3));
+        assertThat(commandGroup.hasCommand(testCommand1)).isFalse();
+        assertThat(commandGroup.hasCommand(testCommand2)).isFalse();
+        assertThat(commandGroup.hasCommand(testCommand3)).isTrue();
     }
 }

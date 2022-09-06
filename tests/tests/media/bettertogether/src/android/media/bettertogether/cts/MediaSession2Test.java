@@ -16,13 +16,8 @@
 
 package android.media.bettertogether.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.PendingIntent;
 import android.content.ComponentName;
@@ -122,14 +117,14 @@ public class MediaSession2Test {
         MediaSession2.Builder builder;
         try {
             builder = new MediaSession2.Builder(null);
-            fail("null context shouldn't be allowed");
+            assertWithMessage("null context shouldn't be allowed").fail();
         } catch (IllegalArgumentException e) {
             // expected. pass-through
         }
         try {
             builder = new MediaSession2.Builder(mContext);
             builder.setId(null);
-            fail("null id shouldn't be allowed");
+            assertWithMessage("null id shouldn't be allowed").fail();
         } catch (IllegalArgumentException e) {
             // expected. pass-through
         }
@@ -151,7 +146,7 @@ public class MediaSession2Test {
     @Test
     public void testBuilder_createSessionWithoutId() {
         try (MediaSession2 session = new MediaSession2.Builder(mContext).build()) {
-            assertEquals("", session.getId());
+            assertThat(session.getId()).isEqualTo("");
         }
     }
 
@@ -163,7 +158,7 @@ public class MediaSession2Test {
             MediaSession2 session1 = builder.build();
             MediaSession2 session2 = builder.build()
         ) {
-            fail("Duplicated id shouldn't be allowed");
+            assertWithMessage("Duplicated id shouldn't be allowed").fail();
         } catch (IllegalStateException e) {
             // expected. pass-through
         }
@@ -182,9 +177,10 @@ public class MediaSession2Test {
                 .setExtras(extras)
                 .build()) {
             Bundle extrasOut = session.getToken().getExtras();
-            assertNotNull(extrasOut);
-            assertTrue(extrasOut.containsKey(testKey));
-            assertEquals(frameworkParcelable, extrasOut.getParcelable(testKey));
+            assertThat(extrasOut).isNotNull();
+            assertThat(extrasOut.containsKey(testKey)).isTrue();
+            assertThat((Session2Token) extrasOut.getParcelable(testKey))
+                    .isEqualTo(frameworkParcelable);
         }
     }
 
@@ -199,7 +195,7 @@ public class MediaSession2Test {
         try (MediaSession2 session = new MediaSession2.Builder(mContext)
                 .setExtras(extras)
                 .build()) {
-            fail("Custom Parcelables shouldn't be accepted!");
+            assertWithMessage("Custom Parcelables shouldn't be accepted!").fail();
         } catch (IllegalArgumentException e) {
             // Expected
         }
@@ -212,12 +208,12 @@ public class MediaSession2Test {
                 .setExtras(extras)
                 .build()) {
             Session2Token token = session.getToken();
-            assertEquals(Process.myUid(), token.getUid());
-            assertEquals(mContext.getPackageName(), token.getPackageName());
-            assertNull(token.getServiceName());
-            assertEquals(Session2Token.TYPE_SESSION, token.getType());
-            assertEquals(0, token.describeContents());
-            assertTrue(token.getExtras().isEmpty());
+            assertThat(token.getUid()).isEqualTo(Process.myUid());
+            assertThat(token.getPackageName()).isEqualTo(mContext.getPackageName());
+            assertThat(token.getServiceName()).isNull();
+            assertThat(token.getType()).isEqualTo(Session2Token.TYPE_SESSION);
+            assertThat(token.describeContents()).isEqualTo(0);
+            assertThat(token.getExtras().isEmpty()).isTrue();
         }
     }
 
@@ -226,7 +222,7 @@ public class MediaSession2Test {
         try (MediaSession2 session = new MediaSession2.Builder(mContext)
                 .build()) {
             Session2Token token = session.getToken();
-            assertTrue(token.getExtras().isEmpty());
+            assertThat(token.getExtras().isEmpty()).isTrue();
         }
     }
 
@@ -241,18 +237,18 @@ public class MediaSession2Test {
                     new MediaController2.Builder(mContext, session.getToken())
                             .setControllerCallback(sHandlerExecutor, callback)
                             .build();
-            assertTrue(callback.awaitOnConnected(WAIT_TIME_MS));
+            assertThat(callback.awaitOnConnected(WAIT_TIME_MS)).isTrue();
 
             List<MediaSession2.ControllerInfo> controllers = session.getConnectedControllers();
             boolean found = false;
             for (MediaSession2.ControllerInfo controllerInfo : controllers) {
                 if (Objects.equals(sessionCallback.mController, controllerInfo)) {
-                    assertEquals(Process.myUid(), controllerInfo.getUid());
+                    assertThat(controllerInfo.getUid()).isEqualTo(Process.myUid());
                     found = true;
                     break;
                 }
             }
-            assertTrue(found);
+            assertThat(found).isTrue();
         }
     }
 
@@ -267,13 +263,13 @@ public class MediaSession2Test {
                     new MediaController2.Builder(mContext, session.getToken())
                             .setControllerCallback(sHandlerExecutor, callback)
                             .build();
-            assertTrue(callback.awaitOnConnected(WAIT_TIME_MS));
+            assertThat(callback.awaitOnConnected(WAIT_TIME_MS)).isTrue();
             controller.close();
-            assertTrue(sessionCallback.awaitOnDisconnect(WAIT_TIME_MS));
+            assertThat(sessionCallback.awaitOnDisconnect(WAIT_TIME_MS)).isTrue();
 
             List<MediaSession2.ControllerInfo> controllers = session.getConnectedControllers();
             for (MediaSession2.ControllerInfo controllerInfo : controllers) {
-                assertNotEquals(sessionCallback.mController, controllerInfo);
+                assertThat(controllerInfo).isNotEqualTo(sessionCallback.mController);
             }
         }
     }
@@ -294,14 +290,14 @@ public class MediaSession2Test {
             Session2Token tokenOut = Session2Token.CREATOR.createFromParcel(parcel);
             parcel.recycle();
 
-            assertEquals(Process.myUid(), tokenOut.getUid());
-            assertEquals(mContext.getPackageName(), tokenOut.getPackageName());
-            assertNull(tokenOut.getServiceName());
-            assertEquals(Session2Token.TYPE_SESSION, tokenOut.getType());
+            assertThat(tokenOut.getUid()).isEqualTo(Process.myUid());
+            assertThat(tokenOut.getPackageName()).isEqualTo(mContext.getPackageName());
+            assertThat(tokenOut.getServiceName()).isNull();
+            assertThat(tokenOut.getType()).isEqualTo(Session2Token.TYPE_SESSION);
 
             Bundle extrasOut = tokenOut.getExtras();
-            assertNotNull(extrasOut);
-            assertEquals(TEST_VALUE, extrasOut.getString(TEST_KEY));
+            assertThat(extrasOut).isNotNull();
+            assertThat(extrasOut.getString(TEST_KEY)).isEqualTo(TEST_VALUE);
         }
     }
 
@@ -356,14 +352,14 @@ public class MediaSession2Test {
                             .build();
 
             // 2. Wait until all the controllers are connected.
-            assertTrue(callback1.awaitOnConnected(WAIT_TIME_MS));
-            assertTrue(callback2.awaitOnConnected(WAIT_TIME_MS));
+            assertThat(callback1.awaitOnConnected(WAIT_TIME_MS)).isTrue();
+            assertThat(callback2.awaitOnConnected(WAIT_TIME_MS)).isTrue();
 
             // 3. Call MediaSession2#broadcastSessionCommand() and check both controller's
             // onSessionCommand is called.
             session.broadcastSessionCommand(command, null);
-            assertTrue(latch1.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
-            assertTrue(latch2.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+            assertThat(latch1.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(latch2.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS)).isTrue();
         }
     }
 
@@ -383,25 +379,26 @@ public class MediaSession2Test {
                             .setConnectionHints(testConnectionHints)
                             .setControllerCallback(sHandlerExecutor, controllerCallback)
                             .build();
-            assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
-            assertTrue(sessionCallback.awaitOnConnect(WAIT_TIME_MS));
-            assertEquals(session, sessionCallback.mSession);
+            assertThat(controllerCallback.awaitOnConnected(WAIT_TIME_MS)).isTrue();
+            assertThat(sessionCallback.awaitOnConnect(WAIT_TIME_MS)).isTrue();
+            assertThat(sessionCallback.mSession).isEqualTo(session);
             MediaSession2.ControllerInfo controllerInfo = sessionCallback.mController;
 
             // Check whether the controllerInfo is the right one.
-            assertEquals(mContext.getPackageName(), controllerInfo.getPackageName());
+            assertThat(controllerInfo.getPackageName()).isEqualTo(mContext.getPackageName());
             MediaSessionManager.RemoteUserInfo remoteUserInfo = controllerInfo.getRemoteUserInfo();
-            assertEquals(Process.myPid(), remoteUserInfo.getPid());
-            assertEquals(Process.myUid(), remoteUserInfo.getUid());
-            assertEquals(mContext.getPackageName(), remoteUserInfo.getPackageName());
-            assertTrue(TestUtils.equals(testConnectionHints, controllerInfo.getConnectionHints()));
+            assertThat(remoteUserInfo.getPid()).isEqualTo(Process.myPid());
+            assertThat(remoteUserInfo.getUid()).isEqualTo(Process.myUid());
+            assertThat(remoteUserInfo.getPackageName()).isEqualTo(mContext.getPackageName());
+            assertThat(TestUtils.equals(testConnectionHints, controllerInfo.getConnectionHints()))
+                    .isTrue();
 
             // Test onDisconnect
             controller.close();
-            assertTrue(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS));
-            assertTrue(sessionCallback.awaitOnDisconnect(WAIT_TIME_MS));
-            assertEquals(session, sessionCallback.mSession);
-            assertEquals(controllerInfo, sessionCallback.mController);
+            assertThat(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS)).isTrue();
+            assertThat(sessionCallback.awaitOnDisconnect(WAIT_TIME_MS)).isTrue();
+            assertThat(sessionCallback.mSession).isEqualTo(session);
+            assertThat(sessionCallback.mController).isEqualTo(controllerInfo);
         }
     }
 
@@ -416,9 +413,9 @@ public class MediaSession2Test {
                     new MediaController2.Builder(mContext, session.getToken())
                             .setControllerCallback(sHandlerExecutor, controllerCallback)
                             .build();
-            assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
-            assertTrue(sessionCallback.awaitOnPostConnect(WAIT_TIME_MS));
-            assertEquals(Process.myUid(), sessionCallback.mController.getUid());
+            assertThat(controllerCallback.awaitOnConnected(WAIT_TIME_MS)).isTrue();
+            assertThat(sessionCallback.awaitOnPostConnect(WAIT_TIME_MS)).isTrue();
+            assertThat(sessionCallback.mController.getUid()).isEqualTo(Process.myUid());
         }
     }
 
@@ -441,7 +438,7 @@ public class MediaSession2Test {
                     new MediaController2.Builder(mContext, session.getToken())
                             .setControllerCallback(sHandlerExecutor, callback)
                             .build();
-            assertFalse(sessionCallback.awaitOnPostConnect(WAIT_TIME_MS));
+            assertThat(sessionCallback.awaitOnPostConnect(WAIT_TIME_MS)).isFalse();
         }
     }
 
@@ -458,8 +455,8 @@ public class MediaSession2Test {
                             .setControllerCallback(sHandlerExecutor, controllerCallback)
                             .build();
             // Wait for connection
-            assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
-            assertTrue(sessionCallback.awaitOnConnect(WAIT_TIME_MS));
+            assertThat(controllerCallback.awaitOnConnected(WAIT_TIME_MS)).isTrue();
+            assertThat(sessionCallback.awaitOnConnect(WAIT_TIME_MS)).isTrue();
             MediaSession2.ControllerInfo controllerInfo = sessionCallback.mController;
 
             // Test onSessionCommand
@@ -476,16 +473,17 @@ public class MediaSession2Test {
             commandArg.putString(commandArgKey, commandArgValue);
             controller.sendSessionCommand(command, commandArg);
 
-            assertTrue(sessionCallback.awaitOnSessionCommand(WAIT_TIME_MS));
-            assertEquals(session, sessionCallback.mSession);
-            assertEquals(controllerInfo, sessionCallback.mController);
-            assertEquals(commandStr, sessionCallback.mCommand.getCustomAction());
-            assertEquals(commandExtraValue,
-                    sessionCallback.mCommand.getCustomExtras().getString(commandExtraKey));
-            assertEquals(commandArgValue, sessionCallback.mCommandArgs.getString(commandArgKey));
+            assertThat(sessionCallback.awaitOnSessionCommand(WAIT_TIME_MS)).isTrue();
+            assertThat(sessionCallback.mSession).isEqualTo(session);
+            assertThat(sessionCallback.mController).isEqualTo(controllerInfo);
+            assertThat(sessionCallback.mCommand.getCustomAction()).isEqualTo(commandStr);
+            assertThat(sessionCallback.mCommand.getCustomExtras().getString(commandExtraKey))
+                    .isEqualTo(commandExtraValue);
+            assertThat(sessionCallback.mCommandArgs.getString(commandArgKey))
+                    .isEqualTo(commandArgValue);
 
             controller.close();
-            assertTrue(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS));
+            assertThat(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS)).isTrue();
         }
     }
 
@@ -515,7 +513,7 @@ public class MediaSession2Test {
                             .setControllerCallback(sHandlerExecutor, controllerCallback)
                             .build();
             // Wait for connection
-            assertTrue(sessionCallback.awaitOnConnect(WAIT_TIME_MS));
+            assertThat(sessionCallback.awaitOnConnect(WAIT_TIME_MS)).isTrue();
             MediaSession2.ControllerInfo controllerInfo = sessionCallback.mController;
 
             // Test onCommandResult
@@ -532,15 +530,15 @@ public class MediaSession2Test {
             commandArg.putString(commandArgKey, commandArgValue);
             session.sendSessionCommand(controllerInfo, command, commandArg);
 
-            assertTrue(sessionCallback.awaitOnCommandResult(WAIT_TIME_MS));
-            assertEquals(session, sessionCallback.mSession);
-            assertEquals(controllerInfo, sessionCallback.mController);
-            assertEquals(resultCode, sessionCallback.mCommandResult.getResultCode());
-            assertEquals(commandResultValue,
-                    sessionCallback.mCommandResult.getResultData().getString(commandResultKey));
+            assertThat(sessionCallback.awaitOnCommandResult(WAIT_TIME_MS)).isTrue();
+            assertThat(sessionCallback.mSession).isEqualTo(session);
+            assertThat(sessionCallback.mController).isEqualTo(controllerInfo);
+            assertThat(sessionCallback.mCommandResult.getResultCode()).isEqualTo(resultCode);
+            assertThat(sessionCallback.mCommandResult.getResultData().getString(commandResultKey))
+                    .isEqualTo(commandResultValue);
 
             controller.close();
-            assertTrue(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS));
+            assertThat(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS)).isTrue();
         }
     }
 
@@ -553,7 +551,7 @@ public class MediaSession2Test {
                 .setSessionCallback(sHandlerExecutor, sessionCallback)
                 .build()) {
             session.setPlaybackActive(testInitialPlaybackActive);
-            assertEquals(testInitialPlaybackActive, session.isPlaybackActive());
+            assertThat(session.isPlaybackActive()).isEqualTo(testInitialPlaybackActive);
 
             Controller2Callback controllerCallback = new Controller2Callback();
             MediaController2 controller =
@@ -561,21 +559,22 @@ public class MediaSession2Test {
                             .setControllerCallback(sHandlerExecutor, controllerCallback)
                             .build();
             // Wait for connection
-            assertTrue(controllerCallback.awaitOnConnected(WAIT_TIME_MS));
+            assertThat(controllerCallback.awaitOnConnected(WAIT_TIME_MS)).isTrue();
 
             // Check initial value
-            assertEquals(testInitialPlaybackActive, controller.isPlaybackActive());
+            assertThat(controller.isPlaybackActive()).isEqualTo(testInitialPlaybackActive);
 
             // Change playback active change and wait for changes
             session.setPlaybackActive(testPlaybackActive);
-            assertEquals(testPlaybackActive, session.isPlaybackActive());
-            assertTrue(controllerCallback.awaitOnPlaybackActiveChanged(WAIT_TIME_MS));
+            assertThat(session.isPlaybackActive()).isEqualTo(testPlaybackActive);
+            assertThat(controllerCallback.awaitOnPlaybackActiveChanged(WAIT_TIME_MS)).isTrue();
 
-            assertEquals(testPlaybackActive, controllerCallback.getNotifiedPlaybackActive());
-            assertEquals(testPlaybackActive, controller.isPlaybackActive());
+            assertThat(controllerCallback.getNotifiedPlaybackActive())
+                    .isEqualTo(testPlaybackActive);
+            assertThat(controller.isPlaybackActive()).isEqualTo(testPlaybackActive);
 
             controller.close();
-            assertTrue(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS));
+            assertThat(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS)).isTrue();
         }
     }
 
@@ -591,7 +590,7 @@ public class MediaSession2Test {
                             .setControllerCallback(sHandlerExecutor, controllerCallback)
                             .build();
             // Wait for connection
-            assertTrue(sessionCallback.awaitOnConnect(WAIT_TIME_MS));
+            assertThat(sessionCallback.awaitOnConnect(WAIT_TIME_MS)).isTrue();
             MediaSession2.ControllerInfo controllerInfo = sessionCallback.mController;
 
             String commandStr = "test_command_";
@@ -609,12 +608,12 @@ public class MediaSession2Test {
                 Object token = session.sendSessionCommand(controllerInfo, command, commandArg);
                 session.cancelSessionCommand(controllerInfo, token);
             }
-            assertTrue(sessionCallback.awaitOnCommandResult(WAIT_TIME_MS));
-            assertEquals(Session2Command.Result.RESULT_INFO_SKIPPED,
-                    sessionCallback.mCommandResult.getResultCode());
+            assertThat(sessionCallback.awaitOnCommandResult(WAIT_TIME_MS)).isTrue();
+            assertThat(sessionCallback.mCommandResult.getResultCode())
+                    .isEqualTo(Session2Command.Result.RESULT_INFO_SKIPPED);
 
             controller.close();
-            assertTrue(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS));
+            assertThat(controllerCallback.awaitOnDisconnected(WAIT_TIME_MS)).isTrue();
         }
     }
 

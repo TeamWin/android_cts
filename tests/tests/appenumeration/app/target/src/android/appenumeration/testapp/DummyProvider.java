@@ -35,7 +35,7 @@ public class DummyProvider extends ContentProvider {
 
     @Override
     public String getType(Uri uri) {
-        return "got/theMIME";
+        return null;
     }
 
     @Override

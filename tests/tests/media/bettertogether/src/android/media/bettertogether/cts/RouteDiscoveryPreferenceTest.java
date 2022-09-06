@@ -16,11 +16,9 @@
 
 package android.media.bettertogether.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 
 import android.media.RouteDiscoveryPreference;
 import android.media.cts.NonMediaMainlineTest;
@@ -73,10 +71,10 @@ public class RouteDiscoveryPreferenceTest {
         RouteDiscoveryPreference preference =
                 new RouteDiscoveryPreference.Builder(preferredFeatures, true /* isActiveScan */)
                         .build();
-        assertEquals(preferredFeatures, preference.getPreferredFeatures());
-        assertTrue(preference.shouldPerformActiveScan());
+        assertThat(preference.getPreferredFeatures()).isEqualTo(preferredFeatures);
+        assertThat(preference.shouldPerformActiveScan()).isTrue();
 
-        assertEquals(0, preference.describeContents());
+        assertThat(preference.describeContents()).isEqualTo(0);
     }
 
     @Test
@@ -86,9 +84,9 @@ public class RouteDiscoveryPreferenceTest {
         RouteDiscoveryPreference preference =
                 new RouteDiscoveryPreference.Builder(preferredFeatures, true /* isActiveScan */)
                         .build();
-        assertEquals(preferredFeatures, preference.getPreferredFeatures());
-        assertTrue(preference.shouldPerformActiveScan());
-        assertEquals(0, preference.describeContents());
+        assertThat(preference.getPreferredFeatures()).isEqualTo(preferredFeatures);
+        assertThat(preference.shouldPerformActiveScan()).isTrue();
+        assertThat(preference.describeContents()).isEqualTo(0);
     }
 
     @Test
@@ -108,8 +106,8 @@ public class RouteDiscoveryPreferenceTest {
                 .setPreferredFeatures(newFeatures)
                 .build();
 
-        assertEquals(newFeatures, newPreference.getPreferredFeatures());
-        assertTrue(newPreference.shouldPerformActiveScan());
+        assertThat(newPreference.getPreferredFeatures()).isEqualTo(newFeatures);
+        assertThat(newPreference.shouldPerformActiveScan()).isTrue();
     }
 
     @Test
@@ -126,8 +124,8 @@ public class RouteDiscoveryPreferenceTest {
                 .setShouldPerformActiveScan(false)
                 .build();
 
-        assertEquals(features, newPreference.getPreferredFeatures());
-        assertFalse(newPreference.shouldPerformActiveScan());
+        assertThat(newPreference.getPreferredFeatures()).isEqualTo(features);
+        assertThat(newPreference.shouldPerformActiveScan()).isFalse();
     }
 
     @Test
@@ -142,7 +140,7 @@ public class RouteDiscoveryPreferenceTest {
                 new RouteDiscoveryPreference.Builder(preferredFeatures, true /* isActiveScan */)
                         .build();
 
-        assertEquals(preference1, preference2);
+        assertThat(preference2).isEqualTo(preference1);
     }
 
     @Test
@@ -156,7 +154,7 @@ public class RouteDiscoveryPreferenceTest {
         RouteDiscoveryPreference preference2 =
                 new RouteDiscoveryPreference.Builder(preference1).build();
 
-        assertEquals(preference1, preference2);
+        assertThat(preference2).isEqualTo(preference1);
     }
 
     @Test
@@ -170,12 +168,12 @@ public class RouteDiscoveryPreferenceTest {
         RouteDiscoveryPreference preferenceWithDifferentFeatures =
                 new RouteDiscoveryPreference.Builder(new ArrayList<>(), true /* isActiveScan */)
                         .build();
-        assertNotEquals(preference, preferenceWithDifferentFeatures);
+        assertThat(preferenceWithDifferentFeatures).isNotEqualTo(preference);
 
         RouteDiscoveryPreference preferenceWithDifferentActiveScan =
                 new RouteDiscoveryPreference.Builder(preferredFeatures, false /* isActiveScan */)
                         .build();
-        assertNotEquals(preference, preferenceWithDifferentActiveScan);
+        assertThat(preferenceWithDifferentActiveScan).isNotEqualTo(preference);
     }
 
     @Test
@@ -192,13 +190,13 @@ public class RouteDiscoveryPreferenceTest {
                 new RouteDiscoveryPreference.Builder(preference)
                         .setPreferredFeatures(newFeatures)
                         .build();
-        assertNotEquals(preference, preferenceWithDifferentFeatures);
+        assertThat(preferenceWithDifferentFeatures).isNotEqualTo(preference);
 
         RouteDiscoveryPreference preferenceWithDifferentActiveScan =
                 new RouteDiscoveryPreference.Builder(preference)
                         .setShouldPerformActiveScan(false)
                         .build();
-        assertNotEquals(preference, preferenceWithDifferentActiveScan);
+        assertThat(preferenceWithDifferentActiveScan).isNotEqualTo(preference);
     }
 
     @Test
@@ -214,7 +212,7 @@ public class RouteDiscoveryPreferenceTest {
         parcel.setDataPosition(0);
 
         RouteDiscoveryPreference preferenceFromParcel = parcel.readParcelable(null);
-        assertEquals(preference, preferenceFromParcel);
+        assertThat(preferenceFromParcel).isEqualTo(preference);
         parcel.recycle();
 
         // In order to mark writeToParcel as tested, we let's just call it directly.

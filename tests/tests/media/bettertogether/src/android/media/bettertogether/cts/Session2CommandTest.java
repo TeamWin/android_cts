@@ -16,10 +16,8 @@
 
 package android.media.bettertogether.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.media.Session2Command;
 import android.os.Bundle;
@@ -54,7 +52,7 @@ public class Session2CommandTest {
     public void testConstructorWithCommandCodeCustom() {
         try {
             Session2Command command = new Session2Command(Session2Command.COMMAND_CODE_CUSTOM);
-            fail();
+            assertWithMessage("Unreachable statement.").fail();
         } catch (IllegalArgumentException e) {
             // Expected IllegalArgumentException
         }
@@ -64,7 +62,7 @@ public class Session2CommandTest {
     public void testConstructorWithNullAction() {
         try {
             Session2Command command = new Session2Command(null, null);
-            fail();
+            assertWithMessage("Unreachable statement.").fail();
         } catch (IllegalArgumentException e) {
             // Expected IllegalArgumentException
         }
@@ -73,38 +71,39 @@ public class Session2CommandTest {
     @Test
     public void testGetCommandCode() {
         Session2Command commandWithCode = new Session2Command(TEST_COMMAND_CODE);
-        assertEquals(TEST_COMMAND_CODE, commandWithCode.getCommandCode());
+        assertThat(commandWithCode.getCommandCode()).isEqualTo(TEST_COMMAND_CODE);
 
         Session2Command commandWithAction = new Session2Command(TEST_CUSTOM_ACTION,
                 mTestCustomExtras);
-        assertEquals(Session2Command.COMMAND_CODE_CUSTOM, commandWithAction.getCommandCode());
+        assertThat(commandWithAction.getCommandCode())
+                .isEqualTo(Session2Command.COMMAND_CODE_CUSTOM);
     }
 
     @Test
     public void testGetCustomAction() {
         Session2Command commandWithCode = new Session2Command(TEST_COMMAND_CODE);
-        assertNull(commandWithCode.getCustomAction());
+        assertThat(commandWithCode.getCustomAction()).isNull();
 
         Session2Command commandWithAction = new Session2Command(TEST_CUSTOM_ACTION,
                 mTestCustomExtras);
-        assertEquals(TEST_CUSTOM_ACTION, commandWithAction.getCustomAction());
+        assertThat(commandWithAction.getCustomAction()).isEqualTo(TEST_CUSTOM_ACTION);
     }
 
     @Test
     public void testGetCustomExtras() {
         Session2Command commandWithCode = new Session2Command(TEST_COMMAND_CODE);
-        assertNull(commandWithCode.getCustomExtras());
+        assertThat(commandWithCode.getCustomExtras()).isNull();
 
         Session2Command commandWithAction = new Session2Command(TEST_CUSTOM_ACTION,
                 mTestCustomExtras);
-        assertEquals(mTestCustomExtras, commandWithAction.getCustomExtras());
+        assertThat(commandWithAction.getCustomExtras()).isEqualTo(mTestCustomExtras);
     }
 
     @Test
     public void testDescribeContents() {
         final int expected = 0;
         Session2Command command = new Session2Command(TEST_COMMAND_CODE);
-        assertEquals(expected, command.describeContents());
+        assertThat(command.describeContents()).isEqualTo(expected);
     }
 
     @Test
@@ -113,36 +112,36 @@ public class Session2CommandTest {
         Parcel dest = Parcel.obtain();
         command.writeToParcel(dest, 0);
         dest.setDataPosition(0);
-        assertEquals(command.getCommandCode(), dest.readInt());
-        assertEquals(command.getCustomAction(), dest.readString());
-        assertEquals(command.getCustomExtras(), dest.readBundle());
+        assertThat(dest.readInt()).isEqualTo(command.getCommandCode());
+        assertThat(dest.readString()).isEqualTo(command.getCustomAction());
+        assertThat(dest.readBundle()).isEqualTo(command.getCustomExtras());
     }
 
     @Test
     public void testEquals() {
         Session2Command commandWithCode1 = new Session2Command(TEST_COMMAND_CODE);
         Session2Command commandWithCode2 = new Session2Command(TEST_COMMAND_CODE);
-        assertTrue(commandWithCode1.equals(commandWithCode2));
+        assertThat(commandWithCode1.equals(commandWithCode2)).isTrue();
 
         Session2Command commandWithAction1 = new Session2Command(TEST_CUSTOM_ACTION,
                 mTestCustomExtras);
         Session2Command commandWithAction2 = new Session2Command(TEST_CUSTOM_ACTION,
                 mTestCustomExtras);
-        assertTrue(commandWithAction1.equals(commandWithAction2));
+        assertThat(commandWithAction1.equals(commandWithAction2)).isTrue();
     }
 
     @Test
     public void testHashCode() {
         Session2Command commandWithCode1 = new Session2Command(TEST_COMMAND_CODE);
         Session2Command commandWithCode2 = new Session2Command(TEST_COMMAND_CODE);
-        assertEquals(commandWithCode1.hashCode(), commandWithCode2.hashCode());
+        assertThat(commandWithCode2.hashCode()).isEqualTo(commandWithCode1.hashCode());
     }
 
     @Test
     public void testGetResultCodeAndData() {
         Session2Command.Result result = new Session2Command.Result(TEST_RESULT_CODE,
                 mTestResultData);
-        assertEquals(TEST_RESULT_CODE, result.getResultCode());
-        assertEquals(mTestResultData, result.getResultData());
+        assertThat(result.getResultCode()).isEqualTo(TEST_RESULT_CODE);
+        assertThat(result.getResultData()).isEqualTo(mTestResultData);
     }
 }

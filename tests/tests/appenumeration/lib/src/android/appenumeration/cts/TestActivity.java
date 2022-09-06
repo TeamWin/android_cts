@@ -405,10 +405,6 @@ public class TestActivity extends Activity {
                         Intent.EXTRA_PACKAGE_NAME);
                 awaitPackageRestartedBroadcast(remoteCallback, packageName,
                         Intent.ACTION_PACKAGE_RESTARTED, TIMEOUT_MS);
-            } else if (Constants.ACTION_GET_CONTENT_PROVIDER_MIME_TYPE.equals(action)) {
-                final String authority = intent.getBundleExtra(EXTRA_DATA)
-                        .getString(EXTRA_AUTHORITY);
-                sendGetContentProviderMimeType(remoteCallback, authority);
             } else if (Constants.ACTION_GET_ENABLED_SPELL_CHECKER_INFOS.equals(action)) {
                 sendGetEnabledSpellCheckerInfos(remoteCallback);
             } else {
@@ -965,16 +961,6 @@ public class TestActivity extends Activity {
         }
         final Bundle result = new Bundle();
         result.putParcelableArrayList(EXTRA_RETURN_RESULT, parcelables);
-        remoteCallback.sendResult(result);
-        finish();
-    }
-
-    private void sendGetContentProviderMimeType(RemoteCallback remoteCallback, String authority) {
-        final Uri uri = Uri.parse("content://" + authority);
-        final ContentResolver resolver = getContentResolver();
-        final String mimeType = resolver.getType(uri);
-        final Bundle result = new Bundle();
-        result.putString(EXTRA_RETURN_RESULT, mimeType);
         remoteCallback.sendResult(result);
         finish();
     }

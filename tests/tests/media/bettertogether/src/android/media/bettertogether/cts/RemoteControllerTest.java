@@ -16,10 +16,8 @@
 
 package android.media.bettertogether.cts;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.Context;
 import android.media.RemoteController;
@@ -96,7 +94,7 @@ public class RemoteControllerTest {
     @UiThreadTest
     @Test
     public void testGetEstimatedMediaPosition() {
-        assertTrue(createRemoteController().getEstimatedMediaPosition() < 0);
+        assertThat(createRemoteController().getEstimatedMediaPosition() < 0).isTrue();
     }
 
     @UiThreadTest
@@ -104,8 +102,8 @@ public class RemoteControllerTest {
     public void testSendMediaKeyEvent() {
         RemoteController remoteController = createRemoteController();
         for (Integer mediaKeyEvent : MEDIA_KEY_EVENT) {
-            assertFalse(remoteController.sendMediaKeyEvent(
-                    new KeyEvent(KeyEvent.ACTION_DOWN, mediaKeyEvent)));
+            assertThat(remoteController.sendMediaKeyEvent(
+                    new KeyEvent(KeyEvent.ACTION_DOWN, mediaKeyEvent))).isFalse();
         }
     }
 
@@ -114,42 +112,42 @@ public class RemoteControllerTest {
     public void testSeekTo_negativeValues() {
         try {
             createRemoteController().seekTo(-1);
-            fail("timeMs must be >= 0");
+            assertWithMessage("timeMs must be >= 0").fail();
         } catch (IllegalArgumentException expected) { }
     }
 
     @UiThreadTest
     @Test
     public void testSeekTo() {
-        assertTrue(createRemoteController().seekTo(0));
+        assertThat(createRemoteController().seekTo(0)).isTrue();
     }
 
     @UiThreadTest
     @Test
     public void testSetArtworkConfiguration() {
-        assertTrue(createRemoteController().setArtworkConfiguration(1, 1));
+        assertThat(createRemoteController().setArtworkConfiguration(1, 1)).isTrue();
     }
 
     @UiThreadTest
     @Test
     public void testClearArtworkConfiguration() {
-        assertTrue(createRemoteController().clearArtworkConfiguration());
+        assertThat(createRemoteController().clearArtworkConfiguration()).isTrue();
     }
 
     @UiThreadTest
     @Test
     public void testSetSynchronizationMode_unregisteredRemoteController() {
         RemoteController remoteController = createRemoteController();
-        assertFalse(remoteController.setSynchronizationMode(
-                RemoteController.POSITION_SYNCHRONIZATION_NONE));
-        assertFalse(remoteController.setSynchronizationMode(
-                RemoteController.POSITION_SYNCHRONIZATION_CHECK));
+        assertThat(remoteController.setSynchronizationMode(
+                RemoteController.POSITION_SYNCHRONIZATION_NONE)).isFalse();
+        assertThat(remoteController.setSynchronizationMode(
+                RemoteController.POSITION_SYNCHRONIZATION_CHECK)).isFalse();
     }
 
     @UiThreadTest
     @Test
     public void testEditMetadata() {
-        assertNotNull(createRemoteController().editMetadata());
+        assertThat(createRemoteController().editMetadata()).isNotNull();
     }
 
     @UiThreadTest
@@ -164,11 +162,11 @@ public class RemoteControllerTest {
         }
 
         for (Method method : OnClientUpdateListener.class.getDeclaredMethods()) {
-            assertTrue("Method not found: " + method.getName(),
-                    methodMap.containsKey(method.getName()));
+            assertWithMessage("Method not found: " + method.getName())
+                    .that(methodMap.containsKey(method.getName())).isTrue();
             List<Method> implementedMethodList = methodMap.get(method.getName());
-            assertTrue("Method signature changed: " + method,
-                    matchMethod(method, implementedMethodList));
+            assertWithMessage("Method signature changed: " + method)
+                    .that(matchMethod(method, implementedMethodList)).isTrue();
         }
     }
 
