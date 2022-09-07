@@ -15,11 +15,14 @@
  */
 package android.service.dreams.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
 
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.DreamCoordinator;
 import android.service.dreams.DreamService;
@@ -34,7 +37,7 @@ public class DreamServiceTest extends ActivityManagerTestBase {
     private static final String DREAM_SERVICE_COMPONENT =
             "android.app.dream.cts.app/.SeparateProcessDreamService";
 
-    private DreamCoordinator mDreamCoordinator = new DreamCoordinator(mContext);
+    private final DreamCoordinator mDreamCoordinator = new DreamCoordinator(mContext);
 
     @Before
     public void setup() {
@@ -80,4 +83,33 @@ public class DreamServiceTest extends ActivityManagerTestBase {
         mDreamCoordinator.stopDream();
     }
 
+    @Test
+    public void testMetadataParsing() throws PackageManager.NameNotFoundException {
+        final String dreamComponent = "android.app.dream.cts.app/.TestDreamService";
+        final String testSettingsActivity =
+                "android.app.dream.cts.app/.TestDreamSettingsActivity";
+        final DreamService.DreamMetadata metadata = getDreamMetadata(dreamComponent);
+
+        assertThat(metadata.settingsActivity).isEqualTo(
+                ComponentName.unflattenFromString(testSettingsActivity));
+        assertThat(metadata.showComplications).isFalse();
+    }
+
+    @Test
+    public void testMetadataParsing_invalidSettingsActivity()
+            throws PackageManager.NameNotFoundException {
+        final String dreamComponent =
+                "android.app.dream.cts.app/.TestDreamServiceWithInvalidSettings";
+        final DreamService.DreamMetadata metadata = getDreamMetadata(dreamComponent);
+
+        assertThat(metadata.settingsActivity).isNull();
+    }
+
+    private DreamService.DreamMetadata getDreamMetadata(String dreamComponent)
+            throws PackageManager.NameNotFoundException {
+        final ServiceInfo si = mContext.getPackageManager().getServiceInfo(
+                ComponentName.unflattenFromString(dreamComponent),
+                PackageManager.ComponentInfoFlags.of(PackageManager.GET_META_DATA));
+        return DreamService.getDreamMetadata(mContext, si);
+    }
 }

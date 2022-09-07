@@ -436,9 +436,9 @@ public class SystemMediaRouter2Test {
 
             List<RoutingController> controllersFromGetControllers =
                     mSystemRouter2ForCts.getControllers();
-            assertThat(controllersFromGetControllers.size()).isEqualTo(2);
-            assertThat(createRouteMap(controllersFromGetControllers.get(1).getSelectedRoutes())
-                    .containsKey(ROUTE_ID1)).isTrue();
+            assertThat(controllersFromGetControllers).hasSize(2);
+            assertThat(createRouteMap(controllersFromGetControllers.get(1).getSelectedRoutes()))
+                    .containsKey(ROUTE_ID1);
 
             // onSessionCreationFailed should not be called.
             assertThat(failureLatch.await(WAIT_MS, TimeUnit.MILLISECONDS)).isFalse();
@@ -549,7 +549,7 @@ public class SystemMediaRouter2Test {
             assertThat(stopLatch.await(WAIT_MS, TimeUnit.MILLISECONDS)).isFalse();
 
             // Created controllers should have proper info
-            assertThat(createdControllers.size()).isEqualTo(2);
+            assertThat(createdControllers).hasSize(2);
             RoutingController controller1 = createdControllers.get(0);
             RoutingController controller2 = createdControllers.get(1);
 
@@ -605,7 +605,7 @@ public class SystemMediaRouter2Test {
 
             List<RoutingController> controllersFromGetControllers =
                     mSystemRouter2ForCts.getControllers();
-            assertThat(controllersFromGetControllers.size()).isEqualTo(2);
+            assertThat(controllersFromGetControllers).hasSize(2);
             assertThat(createRouteMap(controllersFromGetControllers.get(1).getSelectedRoutes())
                     .containsKey(ROUTE_ID1)).isTrue();
 
@@ -665,7 +665,7 @@ public class SystemMediaRouter2Test {
             mSystemRouter2ForCts.transferTo(route);
             assertThat(onTransferLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
-            assertThat(controllers.size()).isEqualTo(1);
+            assertThat(controllers).hasSize(1);
             RoutingController controller = controllers.get(0);
 
             mSystemRouter2ForCts.stop();
@@ -721,7 +721,7 @@ public class SystemMediaRouter2Test {
                 }
 
                 if (onControllerUpdatedLatchForSelect.getCount() != 0) {
-                    assertThat(controller.getSelectedRoutes().size()).isEqualTo(2);
+                    assertThat(controller.getSelectedRoutes()).hasSize(2);
                     assertThat(createRouteMap(controller.getSelectedRoutes())
                             .containsKey(ROUTE_ID1)).isTrue();
                     assertThat(createRouteMap(controller.getSelectedRoutes())
@@ -734,7 +734,7 @@ public class SystemMediaRouter2Test {
                     controllers.add(controller);
                     onControllerUpdatedLatchForSelect.countDown();
                 } else {
-                    assertThat(controller.getSelectedRoutes().size()).isEqualTo(1);
+                    assertThat(controller.getSelectedRoutes()).hasSize(1);
                     assertThat(createRouteMap(controller.getSelectedRoutes())
                             .containsKey(ROUTE_ID1)).isTrue();
                     assertThat(createRouteMap(controller.getSelectedRoutes())
@@ -755,7 +755,7 @@ public class SystemMediaRouter2Test {
             mSystemRouter2ForCts.transferTo(routeToBegin);
             assertThat(onTransferLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
-            assertThat(controllers.size()).isEqualTo(1);
+            assertThat(controllers).hasSize(1);
             RoutingController controller = controllers.get(0);
             assertThat(createRouteMap(controller.getSelectableRoutes())
                     .containsKey(ROUTE_ID4_TO_SELECT_AND_DESELECT)).isTrue();
@@ -770,7 +770,7 @@ public class SystemMediaRouter2Test {
                     .isTrue();
 
             // Note that the updated controller is a different instance.
-            assertThat(controllers.size()).isEqualTo(2);
+            assertThat(controllers).hasSize(2);
             assertThat(controllers.get(0).getId()).isEqualTo(controllers.get(1).getId());
             RoutingController updatedController = controllers.get(1);
             updatedController.deselectRoute(routeToSelectAndDeselect);
@@ -813,7 +813,7 @@ public class SystemMediaRouter2Test {
                         || !TextUtils.equals(controllers.get(0).getId(), controller.getId())) {
                     return;
                 }
-                assertThat(controller.getSelectedRoutes().size()).isEqualTo(1);
+                assertThat(controller.getSelectedRoutes()).hasSize(1);
                 assertThat(createRouteMap(controller.getSelectedRoutes())
                         .containsKey(ROUTE_ID1)).isFalse();
                 assertThat(createRouteMap(controller.getSelectedRoutes())
@@ -828,7 +828,7 @@ public class SystemMediaRouter2Test {
             mSystemRouter2ForCts.transferTo(routeToBegin);
             assertThat(onTransferLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
-            assertThat(controllers.size()).isEqualTo(1);
+            assertThat(controllers).hasSize(1);
             RoutingController controller = controllers.get(0);
 
             // Transfer to ROUTE_ID5_TO_TRANSFER_TO
@@ -874,7 +874,7 @@ public class SystemMediaRouter2Test {
             mSystemRouter2ForCts.unregisterTransferCallback(transferCallback);
         }
 
-        assertThat(controllers.size()).isEqualTo(1);
+        assertThat(controllers).hasSize(1);
 
         // test setSessionVolume
         RoutingController targetController = controllers.get(0);
@@ -953,7 +953,7 @@ public class SystemMediaRouter2Test {
             mSystemRouter2ForCts.transferTo(route);
             assertThat(onTransferLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
-            assertThat(controllers.size()).isEqualTo(1);
+            assertThat(controllers).hasSize(1);
             RoutingController controller = controllers.get(0);
 
             // Release controller. Future calls should be ignored.

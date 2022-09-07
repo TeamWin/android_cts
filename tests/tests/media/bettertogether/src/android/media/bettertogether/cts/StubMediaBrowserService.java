@@ -16,6 +16,8 @@
 
 package android.media.bettertogether.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.annotation.NonNull;
 import android.media.MediaDescription;
 import android.media.browse.MediaBrowser.MediaItem;
@@ -23,8 +25,6 @@ import android.media.session.MediaSession;
 import android.media.session.MediaSessionManager;
 import android.os.Bundle;
 import android.service.media.MediaBrowserService;
-
-import junit.framework.Assert;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -100,7 +100,7 @@ public class StubMediaBrowserService extends MediaBrowserService {
             sBrowserInfo = getCurrentBrowserInfo();
             result.sendResult(mediaItems);
         } else if (MEDIA_ID_CHILDREN_DELAYED.equals(parentMediaId)) {
-            Assert.assertNull(mPendingLoadChildrenResult);
+            assertThat(mPendingLoadChildrenResult).isNull();
             mPendingLoadChildrenResult = result;
             mPendingRootHints = getBrowserRootHints();
             result.detach();

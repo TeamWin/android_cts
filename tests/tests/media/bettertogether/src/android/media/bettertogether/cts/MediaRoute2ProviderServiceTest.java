@@ -128,7 +128,7 @@ public class MediaRoute2ProviderServiceTest {
 
     @Test
     public void testGetSessionInfoAndGetAllSessionInfo() {
-        assertThat(mService.getAllSessionInfo().size()).isEqualTo(0);
+        assertThat(mService.getAllSessionInfo()).isEmpty();
 
         // Add a session
         RoutingSessionInfo sessionInfo1 = new RoutingSessionInfo.Builder(
@@ -136,8 +136,7 @@ public class MediaRoute2ProviderServiceTest {
                 .addSelectedRoute(ROUTE_ID1)
                 .build();
         mService.notifySessionCreated(MediaRoute2ProviderService.REQUEST_ID_NONE, sessionInfo1);
-        assertThat(mService.getAllSessionInfo().size()).isEqualTo(1);
-        assertThat(mService.getAllSessionInfo().get(0)).isEqualTo(sessionInfo1);
+        assertThat(mService.getAllSessionInfo()).containsExactly(sessionInfo1);
         assertThat(mService.getSessionInfo(SESSION_ID_1)).isEqualTo(sessionInfo1);
 
         // Add another session
@@ -147,19 +146,18 @@ public class MediaRoute2ProviderServiceTest {
                 .build();
         mService.notifySessionCreated(
                 MediaRoute2ProviderService.REQUEST_ID_NONE, sessionInfo2);
-        assertThat(mService.getAllSessionInfo().size()).isEqualTo(2);
+        assertThat(mService.getAllSessionInfo()).hasSize(2);
         assertThat(mService.getSessionInfo(SESSION_ID_2)).isEqualTo(sessionInfo2);
 
         // Remove the first session
         mService.notifySessionReleased(SESSION_ID_1);
         assertThat(mService.getSessionInfo(SESSION_ID_1)).isNull();
-        assertThat(mService.getAllSessionInfo().size()).isEqualTo(1);
-        assertThat(mService.getAllSessionInfo().get(0)).isEqualTo(sessionInfo2);
+        assertThat(mService.getAllSessionInfo()).containsExactly(sessionInfo2);
         assertThat(mService.getSessionInfo(SESSION_ID_2)).isEqualTo(sessionInfo2);
 
         // Remove the remaining session
         mService.notifySessionReleased(SESSION_ID_2);
-        assertThat(mService.getAllSessionInfo().size()).isEqualTo(0);
+        assertThat(mService.getAllSessionInfo()).isEmpty();
         assertThat(mService.getSessionInfo(SESSION_ID_2)).isNull();
     }
 
@@ -193,7 +191,7 @@ public class MediaRoute2ProviderServiceTest {
                 if (!features.equals(routes.get(0).getFeatures())) {
                     return;
                 }
-                assertThat(routes.size()).isEqualTo(2);
+                assertThat(routes).hasSize(2);
 
                 MediaRoute2Info route0;
                 MediaRoute2Info route1;
@@ -223,7 +221,7 @@ public class MediaRoute2ProviderServiceTest {
                 if (!features.equals(routes.get(0).getFeatures())) {
                     return;
                 }
-                assertThat(routes.size()).isEqualTo(1);
+                assertThat(routes).hasSize(1);
                 assertThat(routes.get(0).getOriginalId()).isEqualTo(routeId1);
                 assertThat(routes.get(0).getConnectionState()).isEqualTo(newConnectionState);
                 onRoutesChangedLatch.countDown();
@@ -234,7 +232,7 @@ public class MediaRoute2ProviderServiceTest {
                 if (!features.equals(routes.get(0).getFeatures())) {
                     return;
                 }
-                assertThat(routes.size()).isEqualTo(2);
+                assertThat(routes).hasSize(2);
 
                 MediaRoute2Info route0;
                 MediaRoute2Info route1;

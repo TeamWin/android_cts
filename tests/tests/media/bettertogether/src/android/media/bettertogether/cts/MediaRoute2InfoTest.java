@@ -123,9 +123,8 @@ public class MediaRoute2InfoTest {
         assertThat(routeInfo.getId()).isEqualTo(TEST_ID);
         assertThat(routeInfo.getName()).isEqualTo(TEST_NAME);
 
-        assertThat(routeInfo.getFeatures().size()).isEqualTo(2);
-        assertThat(routeInfo.getFeatures().get(0)).isEqualTo(TEST_ROUTE_TYPE_0);
-        assertThat(routeInfo.getFeatures().get(1)).isEqualTo(TEST_ROUTE_TYPE_1);
+        assertThat(routeInfo.getFeatures())
+                .containsExactly(TEST_ROUTE_TYPE_0, TEST_ROUTE_TYPE_1).inOrder();
 
         assertThat(routeInfo.getIconUri()).isEqualTo(TEST_ICON_URI);
         assertThat(routeInfo.getDescription()).isEqualTo(TEST_DESCRIPTION);
@@ -174,8 +173,7 @@ public class MediaRoute2InfoTest {
                 .addFeature(TEST_ROUTE_TYPE_1)
                 .build();
 
-        assertThat(routeInfo.getFeatures().size()).isEqualTo(1);
-        assertThat(routeInfo.getFeatures().get(0)).isEqualTo(TEST_ROUTE_TYPE_1);
+        assertThat(routeInfo.getFeatures()).containsExactly(TEST_ROUTE_TYPE_1);
     }
 
     @Test

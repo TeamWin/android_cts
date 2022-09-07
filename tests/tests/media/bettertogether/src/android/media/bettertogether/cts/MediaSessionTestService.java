@@ -16,7 +16,7 @@
 
 package android.media.bettertogether.cts;
 
-import static org.junit.Assert.assertTrue;
+import static com.google.common.truth.Truth.assertThat;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -70,7 +70,7 @@ public class MediaSessionTestService extends RemoteService {
     }
 
     private void testSeriesOfSetQueue_check() throws Exception {
-        assertTrue(mAllItemsNotified.await(TIMEOUT_MS, MILLISECONDS));
+        assertThat(mAllItemsNotified.await(TIMEOUT_MS, MILLISECONDS)).isTrue();
     }
 
     private void testSeriesOfSetQueue_cleanUp() {
@@ -99,7 +99,7 @@ public class MediaSessionTestService extends RemoteService {
     }
 
     private void testSetQueue_check() throws Exception {
-        assertTrue(mQueueNotified.await(TIMEOUT_MS, MILLISECONDS));
+        assertThat(mQueueNotified.await(TIMEOUT_MS, MILLISECONDS)).isTrue();
     }
 
     private void testSetQueue_cleanUp() {

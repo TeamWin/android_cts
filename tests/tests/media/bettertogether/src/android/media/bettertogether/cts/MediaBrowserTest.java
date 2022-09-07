@@ -18,6 +18,8 @@ package android.media.bettertogether.cts;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertThrows;
+
 import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.media.browse.MediaBrowser;
@@ -120,33 +122,17 @@ public class MediaBrowserTest {
         runOnMainThread(() -> assertThat(mMediaBrowser.isConnected()).isFalse());
 
         runOnMainThread(() -> {
-            try {
-                mMediaBrowser.getExtras();
-                assertWithMessage("Unreachable statement.").fail();
-            } catch (IllegalStateException e) {
-                // Expected
-            }
+            assertThrows(IllegalStateException.class,
+                    () -> mMediaBrowser.getExtras());
 
-            try {
-                mMediaBrowser.getRoot();
-                assertWithMessage("Unreachable statement.").fail();
-            } catch (IllegalStateException e) {
-                // Expected
-            }
+            assertThrows(IllegalStateException.class,
+                    () -> mMediaBrowser.getRoot());
 
-            try {
-                mMediaBrowser.getServiceComponent();
-                assertWithMessage("Unreachable statement.").fail();
-            } catch (IllegalStateException e) {
-                // Expected
-            }
+            assertThrows(IllegalStateException.class,
+                    () -> mMediaBrowser.getServiceComponent());
 
-            try {
-                mMediaBrowser.getSessionToken();
-                assertWithMessage("Unreachable statement.").fail();
-            } catch (IllegalStateException e) {
-                // Expected
-            }
+            assertThrows(IllegalStateException.class,
+                    () -> mMediaBrowser.getSessionToken());
         });
     }
 
@@ -156,12 +142,8 @@ public class MediaBrowserTest {
         createMediaBrowser(TEST_BROWSER_SERVICE);
         connectMediaBrowserService();
         runOnMainThread(() -> {
-            try {
-                mMediaBrowser.connect();
-                assertWithMessage("Unreachable statement.").fail();
-            } catch (IllegalStateException e) {
-                // expected
-            }
+            assertThrows(IllegalStateException.class,
+                    () -> mMediaBrowser.connect());
         });
     }
 
@@ -271,8 +253,8 @@ public class MediaBrowserTest {
 
         assertThat(mSubscriptionCallback.mLastParentId)
                 .isEqualTo(StubMediaBrowserService.MEDIA_ID_ROOT);
-        assertThat(mSubscriptionCallback.mLastChildMediaItems.size())
-                .isEqualTo(StubMediaBrowserService.MEDIA_ID_CHILDREN.length);
+        assertThat(mSubscriptionCallback.mLastChildMediaItems)
+                .hasSize(StubMediaBrowserService.MEDIA_ID_CHILDREN.length);
         for (int i = 0; i < StubMediaBrowserService.MEDIA_ID_CHILDREN.length; ++i) {
             assertThat(mSubscriptionCallback.mLastChildMediaItems.get(i).getMediaId())
                     .isEqualTo(StubMediaBrowserService.MEDIA_ID_CHILDREN[i]);
@@ -300,38 +282,26 @@ public class MediaBrowserTest {
         createMediaBrowser(TEST_BROWSER_SERVICE);
 
         runOnMainThread(() -> {
-            try {
+            assertThrows(IllegalArgumentException.class, () -> {
                 final String nullMediaId = null;
                 mMediaBrowser.subscribe(nullMediaId, mSubscriptionCallback);
-                assertWithMessage("Unreachable statement.").fail();
-            } catch (IllegalArgumentException e) {
-                // Expected
-            }
+            });
 
-            try {
+            assertThrows(IllegalArgumentException.class, () -> {
                 final String emptyMediaId = "";
                 mMediaBrowser.subscribe(emptyMediaId, mSubscriptionCallback);
-                assertWithMessage("Unreachable statement.").fail();
-            } catch (IllegalArgumentException e) {
-                // Expected
-            }
+            });
 
-            try {
+            assertThrows(IllegalArgumentException.class, () -> {
                 final MediaBrowser.SubscriptionCallback nullCallback = null;
                 mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, nullCallback);
-                assertWithMessage("Unreachable statement.").fail();
-            } catch (IllegalArgumentException e) {
-                // Expected
-            }
+            });
 
-            try {
+            assertThrows(IllegalArgumentException.class, () -> {
                 final Bundle nullOptions = null;
                 mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, nullOptions,
                         mSubscriptionCallback);
-                assertWithMessage("Unreachable statement.").fail();
-            } catch (IllegalArgumentException e) {
-                // Expected
-            }
+            });
         });
     }
 
@@ -357,10 +327,10 @@ public class MediaBrowserTest {
             assertThat(mSubscriptionCallback.mLastParentId)
                     .isEqualTo(StubMediaBrowserService.MEDIA_ID_ROOT);
             if (page != lastPage) {
-                assertThat(mSubscriptionCallback.mLastChildMediaItems.size()).isEqualTo(pageSize);
+                assertThat(mSubscriptionCallback.mLastChildMediaItems).hasSize(pageSize);
             } else {
-                assertThat(mSubscriptionCallback.mLastChildMediaItems.size())
-                        .isEqualTo((StubMediaBrowserService.MEDIA_ID_CHILDREN.length - 1)
+                assertThat(mSubscriptionCallback.mLastChildMediaItems)
+                        .hasSize((StubMediaBrowserService.MEDIA_ID_CHILDREN.length - 1)
                                 % pageSize + 1);
             }
             // Check whether all the items in the current page are loaded.
@@ -458,29 +428,20 @@ public class MediaBrowserTest {
     public void testUnsubscribeWithIllegalArguments() throws Throwable {
         createMediaBrowser(TEST_BROWSER_SERVICE);
         runOnMainThread(() -> {
-            try {
+            assertThrows(IllegalArgumentException.class, () -> {
                 final String nullMediaId = null;
                 mMediaBrowser.unsubscribe(nullMediaId);
-                assertWithMessage("Unreachable statement.").fail();
-            } catch (IllegalArgumentException e) {
-                // Expected
-            }
+            });
 
-            try {
+            assertThrows(IllegalArgumentException.class, () -> {
                 final String emptyMediaId = "";
                 mMediaBrowser.unsubscribe(emptyMediaId);
-                assertWithMessage("Unreachable statement.").fail();
-            } catch (IllegalArgumentException e) {
-                // Expected
-            }
+            });
 
-            try {
+            assertThrows(IllegalArgumentException.class, () -> {
                 final MediaBrowser.SubscriptionCallback nullCallback = null;
                 mMediaBrowser.unsubscribe(StubMediaBrowserService.MEDIA_ID_ROOT, nullCallback);
-                assertWithMessage("Unreachable statement.").fail();
-            } catch (IllegalArgumentException e) {
-                // Expected
-            }
+            });
         });
     }
 
@@ -623,29 +584,20 @@ public class MediaBrowserTest {
         createMediaBrowser(TEST_BROWSER_SERVICE);
 
         runOnMainThread(() -> {
-            try {
+            assertThrows(IllegalArgumentException.class, () -> {
                 // Calling getItem() with empty mediaId will throw IAE.
                 mMediaBrowser.getItem("",  mItemCallback);
-                assertWithMessage("Unreachable statement.").fail();
-            } catch (IllegalArgumentException e) {
-                // Expected
-            }
+            });
 
-            try {
+            assertThrows(IllegalArgumentException.class, () -> {
                 // Calling getItem() with null mediaId will throw IAE.
                 mMediaBrowser.getItem(null,  mItemCallback);
-                assertWithMessage("Unreachable statement.").fail();
-            } catch (IllegalArgumentException e) {
-                // Expected
-            }
+            });
 
-            try {
+            assertThrows(IllegalArgumentException.class, () -> {
                 // Calling getItem() with null itemCallback will throw IAE.
                 mMediaBrowser.getItem("media_id",  null);
-                assertWithMessage("Unreachable statement.").fail();
-            } catch (IllegalArgumentException e) {
-                // Expected
-            }
+            });
         });
     }
 

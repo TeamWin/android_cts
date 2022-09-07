@@ -21,6 +21,8 @@ import static android.media.session.PlaybackState.STATE_PLAYING;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertThrows;
+
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
@@ -202,19 +204,11 @@ public class MediaControllerTest {
         Bundle args = new Bundle();
         ResultReceiver resultReceiver = new ResultReceiver(mHandler);
 
-        try {
-            mController.sendCommand(/*command=*/ null, args, resultReceiver);
-            assertWithMessage("Unreachable statement.").fail();
-        } catch (IllegalArgumentException ex) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> mController.sendCommand(/*command=*/ null, args, resultReceiver));
 
-        try {
-            mController.sendCommand(/*command=*/ "", args, resultReceiver);
-            assertWithMessage("Unreachable statement.").fail();
-        } catch (IllegalArgumentException ex) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> mController.sendCommand(/*command=*/ "", args, resultReceiver));
     }
 
     @Test
@@ -482,19 +476,11 @@ public class MediaControllerTest {
 
     @Test
     public void testRegisterCallbackWithNullThrowsIAE() {
-        try {
-            mController.registerCallback(/*handler=*/ null);
-            assertWithMessage("Unreachable statement").fail();
-        } catch (IllegalArgumentException ex) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> mController.registerCallback(/*handler=*/ null));
 
-        try {
-            mController.registerCallback(/*handler=*/ null, mHandler);
-            assertWithMessage("Unreachable statement").fail();
-        } catch (IllegalArgumentException ex) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> mController.registerCallback(/*handler=*/ null, mHandler));
     }
 
     @Test
@@ -522,12 +508,8 @@ public class MediaControllerTest {
 
     @Test
     public void testUnregisterCallbackWithNull() {
-        try {
-            mController.unregisterCallback(/*handler=*/ null);
-            assertWithMessage("Unreachable statement").fail();
-        } catch (IllegalArgumentException ex) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> mController.unregisterCallback(/*handler=*/ null));
     }
 
     @Test
@@ -543,12 +525,8 @@ public class MediaControllerTest {
 
     @Test
     public void testDispatchMediaButtonEventWithNullKeyEvent() {
-        try {
-            mController.dispatchMediaButtonEvent(/*keyEvent=*/ null);
-            assertWithMessage("Unreachable statement").fail();
-        } catch (IllegalArgumentException ex) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> mController.dispatchMediaButtonEvent(/*keyEvent=*/ null));
     }
 
     @Test
@@ -573,66 +551,37 @@ public class MediaControllerTest {
     public void testTransportControlsPlayAndPrepareFromMediaIdWithIllegalArgumentsThrowsIAE() {
         MediaController.TransportControls transportControls = mController.getTransportControls();
 
-        try {
-            transportControls.playFromMediaId(/*mediaId=*/ null, /*extras=*/ new Bundle());
-            assertWithMessage("Unreachable statement").fail();
-        } catch (IllegalArgumentException ex) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> transportControls
+                        .playFromMediaId(/*mediaId=*/ null, /*extras=*/ new Bundle()));
 
-        try {
-            transportControls.playFromMediaId(/*mediaId=*/ "", /*extras=*/ new Bundle());
-            assertWithMessage("Unreachable statement").fail();
-        } catch (IllegalArgumentException ex) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> transportControls.playFromMediaId(/*mediaId=*/ "", /*extras=*/ new Bundle()));
 
-        try {
-            transportControls.prepareFromMediaId(/*mediaId=*/ null, /*extras=*/ new Bundle());
-            assertWithMessage("Unreachable statement").fail();
-        } catch (IllegalArgumentException ex) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> transportControls
+                        .prepareFromMediaId(/*mediaId=*/ null, /*extras=*/ new Bundle()));
 
-        try {
-            transportControls.prepareFromMediaId(/*mediaId=*/ "", /*extras=*/ new Bundle());
-            assertWithMessage("Unreachable statement").fail();
-        } catch (IllegalArgumentException ex) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> transportControls
+                        .prepareFromMediaId(/*mediaId=*/ "", /*extras=*/ new Bundle()));
     }
 
     @Test
     public void testTransportControlsPlayAndPrepareFromUriWithIllegalArgumentsThrowsIAE() {
         MediaController.TransportControls transportControls = mController.getTransportControls();
 
-        try {
-            transportControls.playFromUri(/*uri=*/ null, /*extras=*/ new Bundle());
-            assertWithMessage("Unreachable statement").fail();
-        } catch (IllegalArgumentException ex) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> transportControls.playFromUri(/*uri=*/ null, /*extras=*/ new Bundle()));
 
-        try {
-            transportControls.playFromUri(Uri.EMPTY, /*extras=*/ new Bundle());
-            assertWithMessage("Unreachable statement").fail();
-        } catch (IllegalArgumentException ex) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> transportControls.playFromUri(Uri.EMPTY, /*extras=*/ new Bundle()));
 
-        try {
-            transportControls.prepareFromUri(/*uri=*/ null, /*extras=*/ new Bundle());
-            assertWithMessage("Unreachable statement").fail();
-        } catch (IllegalArgumentException ex) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> transportControls.prepareFromUri(/*uri=*/ null, /*extras=*/ new Bundle()));
 
-        try {
-            transportControls.prepareFromUri(Uri.EMPTY, /*extras=*/ new Bundle());
-            assertWithMessage("Unreachable statement").fail();
-        } catch (IllegalArgumentException ex) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> transportControls.prepareFromUri(Uri.EMPTY, /*extras=*/ new Bundle()));
     }
 
     @Test
@@ -656,27 +605,16 @@ public class MediaControllerTest {
     public void testSendCustomActionWithIllegalArgumentsThrowsIAE() {
         MediaController.TransportControls transportControls = mController.getTransportControls();
 
-        try {
-            transportControls.sendCustomAction((PlaybackState.CustomAction) null,
-                    /*args=*/ new Bundle());
-            assertWithMessage("Unreachable statement").fail();
-        } catch (IllegalArgumentException ex) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> transportControls.sendCustomAction((PlaybackState.CustomAction) null,
+                        /*args=*/ new Bundle()));
 
-        try {
-            transportControls.sendCustomAction(/*action=*/ (String) null, /*args=*/ new Bundle());
-            assertWithMessage("Unreachable statement").fail();
-        } catch (IllegalArgumentException ex) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> transportControls
+                        .sendCustomAction(/*action=*/ (String) null, /*args=*/ new Bundle()));
 
-        try {
-            transportControls.sendCustomAction(/*action=*/ "", /*args=*/ new Bundle());
-            assertWithMessage("Unreachable statement").fail();
-        } catch (IllegalArgumentException ex) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> transportControls.sendCustomAction(/*action=*/ "", /*args=*/ new Bundle()));
     }
 
     private class MediaSessionCallback extends MediaSession.Callback {

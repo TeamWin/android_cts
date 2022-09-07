@@ -30,6 +30,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.DisplayUtil;
 
 import org.junit.After;
@@ -110,5 +111,12 @@ public class SetFrameRateTest {
     public void testInvalidParams() throws InterruptedException {
         FrameRateCtsActivity activity = mActivityRule.getActivity();
         activity.testInvalidParams();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.Surface#clearFrameRate"})
+    public void testClearFrameRate() throws InterruptedException {
+        FrameRateCtsActivity activity = mActivityRule.getActivity();
+        activity.testClearFrameRate();
     }
 }

@@ -17,7 +17,8 @@
 package android.media.bettertogether.cts;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assert.assertThrows;
 
 import android.app.PendingIntent;
 import android.content.ComponentName;
@@ -114,20 +115,15 @@ public class MediaSession2Test {
 
     @Test
     public void testBuilder_setIllegalArguments() {
-        MediaSession2.Builder builder;
-        try {
-            builder = new MediaSession2.Builder(null);
-            assertWithMessage("null context shouldn't be allowed").fail();
-        } catch (IllegalArgumentException e) {
-            // expected. pass-through
-        }
-        try {
-            builder = new MediaSession2.Builder(mContext);
-            builder.setId(null);
-            assertWithMessage("null id shouldn't be allowed").fail();
-        } catch (IllegalArgumentException e) {
-            // expected. pass-through
-        }
+        assertThrows("null context shouldn't be allowed",
+                IllegalArgumentException.class,
+                () -> new MediaSession2.Builder(null));
+
+        assertThrows("null id shouldn't be allowed",
+                IllegalArgumentException.class, () -> {
+                    final MediaSession2.Builder builder = new MediaSession2.Builder(mContext);
+                    builder.setId(null);
+                });
     }
 
     @Test
@@ -154,14 +150,11 @@ public class MediaSession2Test {
     public void testBuilder_createSessionWithDupId() {
         final String dupSessionId = "TEST_SESSION_DUP_ID";
         MediaSession2.Builder builder = new MediaSession2.Builder(mContext).setId(dupSessionId);
-        try (
-            MediaSession2 session1 = builder.build();
-            MediaSession2 session2 = builder.build()
-        ) {
-            assertWithMessage("Duplicated id shouldn't be allowed").fail();
-        } catch (IllegalStateException e) {
-            // expected. pass-through
-        }
+        assertThrows("Duplicated id shouldn't be allowed",
+                IllegalStateException.class, () -> {
+                    MediaSession2 session1 = builder.build();
+                    MediaSession2 session2 = builder.build();
+                });
     }
 
     @Test
@@ -192,13 +185,11 @@ public class MediaSession2Test {
         Bundle extras = new Bundle();
         extras.putParcelable(testKey, customParcelable);
 
-        try (MediaSession2 session = new MediaSession2.Builder(mContext)
-                .setExtras(extras)
-                .build()) {
-            assertWithMessage("Custom Parcelables shouldn't be accepted!").fail();
-        } catch (IllegalArgumentException e) {
-            // Expected
-        }
+        assertThrows("Custom Parcelables shouldn't be accepted!",
+                IllegalArgumentException.class,
+                () -> new MediaSession2.Builder(mContext)
+                        .setExtras(extras)
+                        .build());
     }
 
     @Test

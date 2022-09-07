@@ -17,10 +17,10 @@
 import logging
 import os.path
 
-import its_base_test
 import camera_properties_utils
 import capture_request_utils
 import image_processing_utils
+import its_base_test
 import its_session_utils
 import lighting_control_utils
 from mobly import test_runner
@@ -35,8 +35,8 @@ FLASH_STATES = {0: 'FLASH_STATE_UNAVAILABLE', 1: 'FLASH_STATE_CHARGING',
 _GRAD_DELTA_ATOL = 15  # gradiant for tablets as screen aborbs energy
 _MEAN_DELTA_ATOL = 15  # mean used for reflective charts
 
-_FORMAT_NAMES = ['jpeg', 'yuv']
-_SIZES = [(4032, 3024), (4032, 2268)]
+_FORMAT_NAMES = ('jpeg', 'yuv')
+_SIZES = ((4032, 3024), (4032, 2268))
 
 _PATCH_H = 0.25  # center 25%
 _PATCH_W = 0.25
@@ -179,12 +179,8 @@ class AutoFlashTest(its_base_test.ItsBaseTest):
           y, _, _ = image_processing_utils.convert_capture_to_planes(
               cap, props)
           # Save captured image
-          image_processing_utils.write_image(y,
-                                             (
-                                                 f'{test_name}_{fmt_name}_'
-                                                 f'{width}x{height}_'
-                                                 f'flash_Y.jpg')
-                                             )
+          image_processing_utils.write_image(
+              y, f'{test_name}_{fmt_name}_{width}x{height}_flash_Y.jpg')
           # evaluate captured image
           metadata = cap['metadata']
           exp = int(metadata['android.sensor.exposureTime'])
@@ -210,7 +206,7 @@ class AutoFlashTest(its_base_test.ItsBaseTest):
                 patch)[0]*255
 
           if not flash_fired:
-            raise AssertionError(f'Flash was not fired. '
+            raise AssertionError('Flash was not fired. '
                                  f'Format: {fmt_name}, Size: {width}x{height}')
 
           # log results

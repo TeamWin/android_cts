@@ -17,7 +17,8 @@
 package android.media.bettertogether.cts;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assert.assertThrows;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -146,43 +147,33 @@ public class MediaController2Test {
         final Session2Token token = new Session2Token(
                 mContext, new ComponentName(mContext, this.getClass()));
 
-        try {
-            MediaController2.Builder builder = new MediaController2.Builder(null, token);
-            assertWithMessage("null context shouldn't be accepted!").fail();
-        } catch (IllegalArgumentException e) {
-            // Expected
-        }
+        assertThrows("null context shouldn't be accepted!", IllegalArgumentException.class,
+                () -> new MediaController2.Builder(null, token));
 
-        try {
-            MediaController2.Builder builder = new MediaController2.Builder(mContext, null);
-            assertWithMessage("null token shouldn't be accepted!").fail();
-        } catch (IllegalArgumentException e) {
-            // Expected
-        }
+        assertThrows("null token shouldn't be accepted!", IllegalArgumentException.class,
+                () -> new MediaController2.Builder(mContext, null));
 
-        try {
-            MediaController2.Builder builder = new MediaController2.Builder(mContext, token);
-            builder.setConnectionHints(null);
-            assertWithMessage("null connectionHints shouldn't be accepted!").fail();
-        } catch (IllegalArgumentException e) {
-            // Expected
-        }
+        assertThrows("null connectionHints shouldn't be accepted!",
+                IllegalArgumentException.class, () -> {
+                    MediaController2.Builder builder =
+                            new MediaController2.Builder(mContext, token);
+                    builder.setConnectionHints(null);
+                });
 
-        try {
-            MediaController2.Builder builder = new MediaController2.Builder(mContext, token);
-            builder.setControllerCallback(null, new MediaController2.ControllerCallback() {});
-            assertWithMessage("null Executor shouldn't be accepted!").fail();
-        } catch (IllegalArgumentException e) {
-            // Expected
-        }
+        assertThrows("null Executor shouldn't be accepted!",
+                IllegalArgumentException.class, () -> {
+                    MediaController2.Builder builder =
+                            new MediaController2.Builder(mContext, token);
+                    builder.setControllerCallback(null,
+                            new MediaController2.ControllerCallback() {});
+                });
 
-        try {
-            MediaController2.Builder builder = new MediaController2.Builder(mContext, token);
-            builder.setControllerCallback(Executors.newSingleThreadExecutor(), null);
-            assertWithMessage("null ControllerCallback shouldn't be accepted!").fail();
-        } catch (IllegalArgumentException e) {
-            // Expected
-        }
+        assertThrows("null ControllerCallback shouldn't be accepted!",
+                IllegalArgumentException.class, () -> {
+                    MediaController2.Builder builder =
+                            new MediaController2.Builder(mContext, token);
+                    builder.setControllerCallback(Executors.newSingleThreadExecutor(), null);
+                });
     }
 
     @Test
@@ -236,13 +227,11 @@ public class MediaController2Test {
         Bundle connectionHints = new Bundle();
         connectionHints.putParcelable(testKey, customParcelable);
 
-        try (MediaController2 controller = new MediaController2.Builder(mContext, token)
-                .setConnectionHints(connectionHints)
-                .build()) {
-            assertWithMessage("Custom Parcelables shouldn't be accepted!").fail();
-        } catch (IllegalArgumentException e) {
-            // Expected
-        }
+        assertThrows("Custom Parcelables shouldn't be accepted!",
+                IllegalArgumentException.class,
+                () -> new MediaController2.Builder(mContext, token)
+                        .setConnectionHints(connectionHints)
+                        .build());
     }
 
     @Test

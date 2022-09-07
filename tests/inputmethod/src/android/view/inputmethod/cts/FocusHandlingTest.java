@@ -191,9 +191,6 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             final AtomicReference<TextView> viewRef2 = new AtomicReference<>();
             final BlockingQueue<KeyEvent> keyEvents = new LinkedBlockingQueue<>();
 
-            // Skip events relating to showStateInitializeActivity()
-            stream.skipAll();
-
             final TestActivity testActivity = TestActivity.startSync(activity -> {
                 final LinearLayout layout = new LinearLayout(activity);
                 layout.setOrientation(LinearLayout.VERTICAL);
@@ -219,22 +216,14 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                 return layout;
             });
 
+            // Skip events relating to showStateInitializeActivity()
+            stream.skipAll();
+
             // Since we are focusing a view on a new window, we do expect an onStartInput
             testActivity.runOnUiThread(() -> viewRef1.get().requestFocus());
             expectEvent(stream, event -> "onStartInput".equals(event.getEventName()),
                     EXPECT_TIMEOUT);
-            // Now switch focus to an equivalent non-editable view, however, the focus reason
-            // is going to be different since this time we are not coming from a window switch.
-            testActivity.runOnUiThread(() -> viewRef2.get().requestFocus());
-            // Therefore we expect another call to start input
-            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()),
-                    EXPECT_TIMEOUT);
-
-            // Switch back to view 1, which is still not considered equivalent
-            testActivity.runOnUiThread(() -> viewRef1.get().requestFocus());
-            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()),
-                    EXPECT_TIMEOUT);
-            // Switch to view2, which is now finally fully equivalent
+            // Switch to view2, which should now be considered equivalent
             testActivity.runOnUiThread(() -> viewRef2.get().requestFocus());
             // If optimization is enabled, we do not expect another call to onStartInput
             if (SystemProperties.getBoolean("debug.imm.optimize_noneditable_views", true)) {

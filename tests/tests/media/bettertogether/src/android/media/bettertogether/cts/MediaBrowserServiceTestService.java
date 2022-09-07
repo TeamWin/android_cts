@@ -16,7 +16,7 @@
 
 package android.media.bettertogether.cts;
 
-import static org.junit.Assert.assertTrue;
+import static com.google.common.truth.Truth.assertThat;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -77,11 +77,11 @@ public class MediaBrowserServiceTestService extends RemoteService {
             mMediaBrowser.connect();
             mMediaBrowser.subscribe(parentMediaId, subscriptionCallback);
         });
-        assertTrue(subscribed.await(TIMEOUT_MS, MILLISECONDS));
+        assertThat(subscribed.await(TIMEOUT_MS, MILLISECONDS)).isTrue();
     }
 
     private void testSeriesOfNotifyChildrenChanged_check() throws Exception {
-        assertTrue(mAllItemsNotified.await(TIMEOUT_MS, MILLISECONDS));
+        assertThat(mAllItemsNotified.await(TIMEOUT_MS, MILLISECONDS)).isTrue();
     }
 
     private void testSeriesOfNotifyChildrenChanged_cleanUp() {

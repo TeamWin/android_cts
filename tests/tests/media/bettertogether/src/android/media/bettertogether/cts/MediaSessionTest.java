@@ -16,6 +16,7 @@
 package android.media.bettertogether.cts;
 
 import static android.media.AudioAttributes.USAGE_GAME;
+import static android.media.AudioAttributes.USAGE_MEDIA;
 import static android.media.bettertogether.cts.MediaSessionTestService.KEY_EXPECTED_QUEUE_SIZE;
 import static android.media.bettertogether.cts.MediaSessionTestService.KEY_EXPECTED_TOTAL_NUMBER_OF_ITEMS;
 import static android.media.bettertogether.cts.MediaSessionTestService.KEY_SESSION_TOKEN;
@@ -26,12 +27,8 @@ import static android.media.bettertogether.cts.MediaSessionTestService.TEST_SERI
 import static android.media.bettertogether.cts.MediaSessionTestService.TEST_SET_QUEUE;
 import static android.media.cts.Utils.compareRemoteUserInfo;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.PendingIntent;
 import android.content.ComponentName;
@@ -131,16 +128,18 @@ public class MediaSessionTest {
      */
     @Test
     public void testCreateSession() throws Exception {
-        assertNotNull(mSession.getSessionToken());
-        assertFalse("New session should not be active", mSession.isActive());
+        assertThat(mSession.getSessionToken()).isNotNull();
+        assertWithMessage("New session should not be active").that(mSession.isActive()).isFalse();
 
         // Verify by getting the controller and checking all its fields
         MediaController controller = mSession.getController();
-        assertNotNull(controller);
+        assertThat(controller).isNotNull();
         verifyNewSession(controller);
     }
 
     @Test
+    // Needed for assertThat(sessionToken).isEqualTo(sessionToken).
+    @SuppressWarnings("TruthSelfEquals")
     public void testSessionTokenEquals() {
         MediaSession anotherSession = null;
         try {
@@ -148,10 +147,10 @@ public class MediaSessionTest {
             MediaSession.Token sessionToken = mSession.getSessionToken();
             MediaSession.Token anotherSessionToken = anotherSession.getSessionToken();
 
-            assertTrue(sessionToken.equals(sessionToken));
-            assertFalse(sessionToken.equals(null));
-            assertFalse(sessionToken.equals(mSession));
-            assertFalse(sessionToken.equals(anotherSessionToken));
+            assertThat(sessionToken).isEqualTo(sessionToken);
+            assertThat(sessionToken).isNotNull();
+            assertThat(sessionToken).isNotEqualTo(mSession);
+            assertThat(sessionToken).isNotEqualTo(anotherSessionToken);
         } finally {
             if (anotherSession != null) {
                 anotherSession.release();
@@ -166,23 +165,23 @@ public class MediaSessionTest {
     public void testSessionToken() throws Exception {
         MediaSession.Token sessionToken = mSession.getSessionToken();
 
-        assertNotNull(sessionToken);
-        assertEquals(0, sessionToken.describeContents());
+        assertThat(sessionToken).isNotNull();
+        assertThat(sessionToken.describeContents()).isEqualTo(0);
 
         // Test writeToParcel
         Parcel p = Parcel.obtain();
         sessionToken.writeToParcel(p, 0);
         p.setDataPosition(0);
         MediaSession.Token tokenFromParcel = MediaSession.Token.CREATOR.createFromParcel(p);
-        assertEquals(tokenFromParcel, sessionToken);
+        assertThat(tokenFromParcel).isEqualTo(sessionToken);
         p.recycle();
 
         final int arraySize = 5;
         MediaSession.Token[] tokenArray = MediaSession.Token.CREATOR.newArray(arraySize);
-        assertNotNull(tokenArray);
-        assertEquals(arraySize, tokenArray.length);
+        assertThat(tokenArray).isNotNull();
+        assertThat(tokenArray.length).isEqualTo(arraySize);
         for (MediaSession.Token tokenElement : tokenArray) {
-            assertNull(tokenElement);
+            assertThat(tokenElement).isNull();
         }
     }
 
@@ -203,21 +202,21 @@ public class MediaSessionTest {
             extras.putString(TEST_KEY, TEST_VALUE);
             mSession.setExtras(extras);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnExtraChangedCalled);
+            assertThat(mCallback.mOnExtraChangedCalled).isTrue();
             // just call the callback once directly so it's marked as tested
             callback.onExtrasChanged(mCallback.mExtras);
 
             Bundle extrasOut = mCallback.mExtras;
-            assertNotNull(extrasOut);
-            assertEquals(TEST_VALUE, extrasOut.get(TEST_KEY));
+            assertThat(extrasOut).isNotNull();
+            assertThat(extrasOut.get(TEST_KEY)).isEqualTo(TEST_VALUE);
 
             extrasOut = controller.getExtras();
-            assertNotNull(extrasOut);
-            assertEquals(TEST_VALUE, extrasOut.get(TEST_KEY));
+            assertThat(extrasOut).isNotNull();
+            assertThat(extrasOut.get(TEST_KEY)).isEqualTo(TEST_VALUE);
 
             // test setFlags
             mSession.setFlags(5);
-            assertEquals(5, controller.getFlags());
+            assertThat(controller.getFlags()).isEqualTo(5);
 
             // test setMetadata
             mCallback.resetLocked();
@@ -225,34 +224,34 @@ public class MediaSessionTest {
                     new MediaMetadata.Builder().putString(TEST_KEY, TEST_VALUE).build();
             mSession.setMetadata(metadata);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnMetadataChangedCalled);
+            assertThat(mCallback.mOnMetadataChangedCalled).isTrue();
             // just call the callback once directly so it's marked as tested
             callback.onMetadataChanged(mCallback.mMediaMetadata);
 
             MediaMetadata metadataOut = mCallback.mMediaMetadata;
-            assertNotNull(metadataOut);
-            assertEquals(TEST_VALUE, metadataOut.getString(TEST_KEY));
+            assertThat(metadataOut).isNotNull();
+            assertThat(metadataOut.getString(TEST_KEY)).isEqualTo(TEST_VALUE);
 
             metadataOut = controller.getMetadata();
-            assertNotNull(metadataOut);
-            assertEquals(TEST_VALUE, metadataOut.getString(TEST_KEY));
+            assertThat(metadataOut).isNotNull();
+            assertThat(metadataOut.getString(TEST_KEY)).isEqualTo(TEST_VALUE);
 
             // test setPlaybackState
             mCallback.resetLocked();
             PlaybackState state = new PlaybackState.Builder().setActions(TEST_ACTION).build();
             mSession.setPlaybackState(state);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnPlaybackStateChangedCalled);
+            assertThat(mCallback.mOnPlaybackStateChangedCalled).isTrue();
             // just call the callback once directly so it's marked as tested
             callback.onPlaybackStateChanged(mCallback.mPlaybackState);
 
             PlaybackState stateOut = mCallback.mPlaybackState;
-            assertNotNull(stateOut);
-            assertEquals(TEST_ACTION, stateOut.getActions());
+            assertThat(stateOut).isNotNull();
+            assertThat(stateOut.getActions()).isEqualTo(TEST_ACTION);
 
             stateOut = controller.getPlaybackState();
-            assertNotNull(stateOut);
-            assertEquals(TEST_ACTION, stateOut.getActions());
+            assertThat(stateOut).isNotNull();
+            assertThat(stateOut.getActions()).isEqualTo(TEST_ACTION);
 
             // test setQueue and setQueueTitle
             mCallback.resetLocked();
@@ -262,61 +261,62 @@ public class MediaSessionTest {
             queue.add(item);
             mSession.setQueue(queue);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnQueueChangedCalled);
+            assertThat(mCallback.mOnQueueChangedCalled).isTrue();
             // just call the callback once directly so it's marked as tested
             callback.onQueueChanged(mCallback.mQueue);
 
             mSession.setQueueTitle(TEST_VALUE);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnQueueTitleChangedCalled);
+            assertThat(mCallback.mOnQueueTitleChangedCalled).isTrue();
 
-            assertEquals(TEST_VALUE, mCallback.mTitle);
-            assertEquals(queue.size(), mCallback.mQueue.size());
-            assertEquals(TEST_QUEUE_ID, mCallback.mQueue.get(0).getQueueId());
-            assertEquals(TEST_VALUE, mCallback.mQueue.get(0).getDescription().getMediaId());
+            assertThat(mCallback.mTitle).isEqualTo(TEST_VALUE);
+            assertThat(mCallback.mQueue.size()).isEqualTo(queue.size());
+            assertThat(mCallback.mQueue.get(0).getQueueId()).isEqualTo(TEST_QUEUE_ID);
+            assertThat(mCallback.mQueue.get(0).getDescription().getMediaId()).isEqualTo(TEST_VALUE);
 
-            assertEquals(TEST_VALUE, controller.getQueueTitle());
-            assertEquals(queue.size(), controller.getQueue().size());
-            assertEquals(TEST_QUEUE_ID, controller.getQueue().get(0).getQueueId());
-            assertEquals(TEST_VALUE, controller.getQueue().get(0).getDescription().getMediaId());
+            assertThat(controller.getQueueTitle()).isEqualTo(TEST_VALUE);
+            assertThat(controller.getQueue().size()).isEqualTo(queue.size());
+            assertThat(controller.getQueue().get(0).getQueueId()).isEqualTo(TEST_QUEUE_ID);
+            assertThat(controller.getQueue().get(0).getDescription().getMediaId())
+                    .isEqualTo(TEST_VALUE);
 
             mCallback.resetLocked();
             mSession.setQueue(null);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnQueueChangedCalled);
+            assertThat(mCallback.mOnQueueChangedCalled).isTrue();
             // just call the callback once directly so it's marked as tested
             callback.onQueueChanged(mCallback.mQueue);
 
             mSession.setQueueTitle(null);
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnQueueTitleChangedCalled);
+            assertThat(mCallback.mOnQueueTitleChangedCalled).isTrue();
             // just call the callback once directly so it's marked as tested
             callback.onQueueTitleChanged(mCallback.mTitle);
 
-            assertNull(mCallback.mTitle);
-            assertNull(mCallback.mQueue);
-            assertNull(controller.getQueueTitle());
-            assertNull(controller.getQueue());
+            assertThat(mCallback.mTitle).isNull();
+            assertThat(mCallback.mQueue).isNull();
+            assertThat(controller.getQueueTitle()).isNull();
+            assertThat(controller.getQueue()).isNull();
 
             // test setSessionActivity
             Intent intent = new Intent("cts.MEDIA_SESSION_ACTION");
             PendingIntent pi = PendingIntent.getActivity(getContext(), 555, intent,
                     PendingIntent.FLAG_MUTABLE_UNAUDITED);
             mSession.setSessionActivity(pi);
-            assertEquals(pi, controller.getSessionActivity());
+            assertThat(controller.getSessionActivity()).isEqualTo(pi);
 
             // test setActivity
             mSession.setActive(true);
-            assertTrue(mSession.isActive());
+            assertThat(mSession.isActive()).isTrue();
 
             // test sendSessionEvent
             mCallback.resetLocked();
             mSession.sendSessionEvent(TEST_SESSION_EVENT, extras);
             mWaitLock.wait(TIME_OUT_MS);
 
-            assertTrue(mCallback.mOnSessionEventCalled);
-            assertEquals(TEST_SESSION_EVENT, mCallback.mEvent);
-            assertEquals(TEST_VALUE, mCallback.mExtras.getString(TEST_KEY));
+            assertThat(mCallback.mOnSessionEventCalled).isTrue();
+            assertThat(mCallback.mEvent).isEqualTo(TEST_SESSION_EVENT);
+            assertThat(mCallback.mExtras.getString(TEST_KEY)).isEqualTo(TEST_VALUE);
             // just call the callback once directly so it's marked as tested
             callback.onSessionEvent(mCallback.mEvent, mCallback.mExtras);
 
@@ -324,7 +324,7 @@ public class MediaSessionTest {
             mCallback.resetLocked();
             mSession.release();
             mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mCallback.mOnSessionDestroyedCalled);
+            assertThat(mCallback.mOnSessionDestroyedCalled).isTrue();
             // just call the callback once directly so it's marked as tested
             callback.onSessionDestroyed();
         }
@@ -356,13 +356,13 @@ public class MediaSessionTest {
         try {
             CountDownLatch latch = new CountDownLatch(2);
             MediaButtonBroadcastReceiver.setCallback((keyEvent) -> {
-                assertEquals(keyCode, keyEvent.getKeyCode());
+                assertThat(keyEvent.getKeyCode()).isEqualTo(keyCode);
                 switch ((int) latch.getCount()) {
                     case 2:
-                        assertEquals(KeyEvent.ACTION_DOWN, keyEvent.getAction());
+                        assertThat(keyEvent.getAction()).isEqualTo(KeyEvent.ACTION_DOWN);
                         break;
                     case 1:
-                        assertEquals(KeyEvent.ACTION_UP, keyEvent.getAction());
+                        assertThat(keyEvent.getAction()).isEqualTo(KeyEvent.ACTION_UP);
                         break;
                 }
                 latch.countDown();
@@ -371,7 +371,7 @@ public class MediaSessionTest {
             // System would try to dispatch event.
             simulateMediaKeyInput(keyCode);
 
-            assertTrue(latch.await(TIME_OUT_MS, TimeUnit.MILLISECONDS));
+            assertThat(latch.await(TIME_OUT_MS, TimeUnit.MILLISECONDS)).isTrue();
         } finally {
             MediaButtonBroadcastReceiver.setCallback(null);
         }
@@ -402,13 +402,13 @@ public class MediaSessionTest {
         try {
             CountDownLatch latch = new CountDownLatch(2);
             MediaButtonReceiverService.setCallback((keyEvent) -> {
-                assertEquals(keyCode, keyEvent.getKeyCode());
+                assertThat(keyEvent.getKeyCode()).isEqualTo(keyCode);
                 switch ((int) latch.getCount()) {
                     case 2:
-                        assertEquals(KeyEvent.ACTION_DOWN, keyEvent.getAction());
+                        assertThat(keyEvent.getAction()).isEqualTo(KeyEvent.ACTION_DOWN);
                         break;
                     case 1:
-                        assertEquals(KeyEvent.ACTION_UP, keyEvent.getAction());
+                        assertThat(keyEvent.getAction()).isEqualTo(KeyEvent.ACTION_UP);
                         break;
                 }
                 latch.countDown();
@@ -417,7 +417,7 @@ public class MediaSessionTest {
             // System would try to dispatch event.
             simulateMediaKeyInput(keyCode);
 
-            assertTrue(latch.await(TIME_OUT_MS, TimeUnit.MILLISECONDS));
+            assertThat(latch.await(TIME_OUT_MS, TimeUnit.MILLISECONDS)).isTrue();
         } finally {
             MediaButtonReceiverService.setCallback(null);
         }
@@ -472,13 +472,13 @@ public class MediaSessionTest {
         try {
             CountDownLatch latch = new CountDownLatch(2);
             MediaButtonBroadcastReceiver.setCallback((keyEvent) -> {
-                assertEquals(keyCode, keyEvent.getKeyCode());
+                assertThat(keyEvent.getKeyCode()).isEqualTo(keyCode);
                 switch ((int) latch.getCount()) {
                     case 2:
-                        assertEquals(KeyEvent.ACTION_DOWN, keyEvent.getAction());
+                        assertThat(keyEvent.getAction()).isEqualTo(KeyEvent.ACTION_DOWN);
                         break;
                     case 1:
-                        assertEquals(KeyEvent.ACTION_UP, keyEvent.getAction());
+                        assertThat(keyEvent.getAction()).isEqualTo(KeyEvent.ACTION_UP);
                         break;
                 }
                 latch.countDown();
@@ -487,7 +487,7 @@ public class MediaSessionTest {
             // System would try to dispatch event.
             simulateMediaKeyInput(keyCode);
 
-            assertTrue(latch.await(TIME_OUT_MS, TimeUnit.MILLISECONDS));
+            assertThat(latch.await(TIME_OUT_MS, TimeUnit.MILLISECONDS)).isTrue();
         } finally {
             MediaButtonBroadcastReceiver.setCallback(null);
         }
@@ -500,10 +500,10 @@ public class MediaSessionTest {
     public void testVolumeProvider() {
         VolumeProvider vp = new VolumeProvider(VolumeProvider.VOLUME_CONTROL_RELATIVE,
                 TEST_MAX_VOLUME, TEST_CURRENT_VOLUME, TEST_VOLUME_CONTROL_ID) {};
-        assertEquals(VolumeProvider.VOLUME_CONTROL_RELATIVE, vp.getVolumeControl());
-        assertEquals(TEST_MAX_VOLUME, vp.getMaxVolume());
-        assertEquals(TEST_CURRENT_VOLUME, vp.getCurrentVolume());
-        assertEquals(TEST_VOLUME_CONTROL_ID, vp.getVolumeControlId());
+        assertThat(vp.getVolumeControl()).isEqualTo(VolumeProvider.VOLUME_CONTROL_RELATIVE);
+        assertThat(vp.getMaxVolume()).isEqualTo(TEST_MAX_VOLUME);
+        assertThat(vp.getCurrentVolume()).isEqualTo(TEST_CURRENT_VOLUME);
+        assertThat(vp.getVolumeControlId()).isEqualTo(TEST_VOLUME_CONTROL_ID);
     }
 
     /**
@@ -520,7 +520,7 @@ public class MediaSessionTest {
             mCallback.resetLocked();
             try {
                 mSession.setPlaybackToRemote(null);
-                fail("Expected IAE for setPlaybackToRemote(null)");
+                assertWithMessage("Expected IAE for setPlaybackToRemote(null)").fail();
             } catch (IllegalArgumentException e) {
                 // expected
             }
@@ -532,7 +532,7 @@ public class MediaSessionTest {
             for (int i = 0; i < MAX_AUDIO_INFO_CHANGED_CALLBACK_COUNT; ++i) {
                 mCallback.mOnAudioInfoChangedCalled = false;
                 mWaitLock.wait(TIME_OUT_MS);
-                assertTrue(mCallback.mOnAudioInfoChangedCalled);
+                assertThat(mCallback.mOnAudioInfoChangedCalled).isTrue();
                 info = mCallback.mPlaybackInfo;
                 if (info != null && info.getCurrentVolume() == TEST_CURRENT_VOLUME
                         && info.getMaxVolume() == TEST_MAX_VOLUME
@@ -543,30 +543,33 @@ public class MediaSessionTest {
                     break;
                 }
             }
-            assertNotNull(info);
-            assertEquals(MediaController.PlaybackInfo.PLAYBACK_TYPE_REMOTE, info.getPlaybackType());
-            assertEquals(TEST_MAX_VOLUME, info.getMaxVolume());
-            assertEquals(TEST_CURRENT_VOLUME, info.getCurrentVolume());
-            assertEquals(VolumeProvider.VOLUME_CONTROL_FIXED, info.getVolumeControl());
-            assertEquals(TEST_VOLUME_CONTROL_ID, info.getVolumeControlId());
+            assertThat(info).isNotNull();
+            assertThat(info.getPlaybackType())
+                    .isEqualTo(MediaController.PlaybackInfo.PLAYBACK_TYPE_REMOTE);
+            assertThat(info.getMaxVolume()).isEqualTo(TEST_MAX_VOLUME);
+            assertThat(info.getCurrentVolume()).isEqualTo(TEST_CURRENT_VOLUME);
+            assertThat(info.getVolumeControl()).isEqualTo(VolumeProvider.VOLUME_CONTROL_FIXED);
+            assertThat(info.getVolumeControlId()).isEqualTo(TEST_VOLUME_CONTROL_ID);
 
             info = controller.getPlaybackInfo();
-            assertNotNull(info);
-            assertEquals(MediaController.PlaybackInfo.PLAYBACK_TYPE_REMOTE, info.getPlaybackType());
-            assertEquals(TEST_MAX_VOLUME, info.getMaxVolume());
-            assertEquals(TEST_CURRENT_VOLUME, info.getCurrentVolume());
-            assertEquals(VolumeProvider.VOLUME_CONTROL_FIXED, info.getVolumeControl());
-            assertEquals(TEST_VOLUME_CONTROL_ID, info.getVolumeControlId());
+            assertThat(info).isNotNull();
+            assertThat(info.getPlaybackType())
+                    .isEqualTo(MediaController.PlaybackInfo.PLAYBACK_TYPE_REMOTE);
+            assertThat(info.getMaxVolume()).isEqualTo(TEST_MAX_VOLUME);
+            assertThat(info.getCurrentVolume()).isEqualTo(TEST_CURRENT_VOLUME);
+            assertThat(info.getVolumeControl()).isEqualTo(VolumeProvider.VOLUME_CONTROL_FIXED);
+            assertThat(info.getVolumeControlId()).isEqualTo(TEST_VOLUME_CONTROL_ID);
 
             // test setPlaybackToLocal
             AudioAttributes attrs = new AudioAttributes.Builder().setUsage(USAGE_GAME).build();
             mSession.setPlaybackToLocal(attrs);
 
             info = controller.getPlaybackInfo();
-            assertNotNull(info);
-            assertEquals(MediaController.PlaybackInfo.PLAYBACK_TYPE_LOCAL, info.getPlaybackType());
-            assertEquals(attrs, info.getAudioAttributes());
-            assertNull(info.getVolumeControlId());
+            assertThat(info).isNotNull();
+            assertThat(info.getPlaybackType())
+                    .isEqualTo(MediaController.PlaybackInfo.PLAYBACK_TYPE_LOCAL);
+            assertThat(info.getAudioAttributes()).isEqualTo(attrs);
+            assertThat(info.getVolumeControlId()).isNull();
         }
     }
 
@@ -588,73 +591,73 @@ public class MediaSessionTest {
 
         sessionCallback.reset(1);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PLAY);
-        assertTrue(sessionCallback.await(TIME_OUT_MS));
-        assertEquals(1, sessionCallback.mOnPlayCalledCount);
-        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
+        assertThat(sessionCallback.await(TIME_OUT_MS)).isTrue();
+        assertThat(sessionCallback.mOnPlayCalledCount).isEqualTo(1);
+        assertThat(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo)).isTrue();
 
         sessionCallback.reset(1);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PAUSE);
-        assertTrue(sessionCallback.await(TIME_OUT_MS));
-        assertTrue(sessionCallback.mOnPauseCalled);
-        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
+        assertThat(sessionCallback.await(TIME_OUT_MS)).isTrue();
+        assertThat(sessionCallback.mOnPauseCalled).isTrue();
+        assertThat(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo)).isTrue();
 
         sessionCallback.reset(1);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_NEXT);
-        assertTrue(sessionCallback.await(TIME_OUT_MS));
-        assertTrue(sessionCallback.mOnSkipToNextCalled);
-        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
+        assertThat(sessionCallback.await(TIME_OUT_MS)).isTrue();
+        assertThat(sessionCallback.mOnSkipToNextCalled).isTrue();
+        assertThat(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo)).isTrue();
 
         sessionCallback.reset(1);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PREVIOUS);
-        assertTrue(sessionCallback.await(TIME_OUT_MS));
-        assertTrue(sessionCallback.mOnSkipToPreviousCalled);
-        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
+        assertThat(sessionCallback.await(TIME_OUT_MS)).isTrue();
+        assertThat(sessionCallback.mOnSkipToPreviousCalled).isTrue();
+        assertThat(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo)).isTrue();
 
         sessionCallback.reset(1);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_STOP);
-        assertTrue(sessionCallback.await(TIME_OUT_MS));
-        assertTrue(sessionCallback.mOnStopCalled);
-        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
+        assertThat(sessionCallback.await(TIME_OUT_MS)).isTrue();
+        assertThat(sessionCallback.mOnStopCalled).isTrue();
+        assertThat(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo)).isTrue();
 
         sessionCallback.reset(1);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_FAST_FORWARD);
-        assertTrue(sessionCallback.await(TIME_OUT_MS));
-        assertTrue(sessionCallback.mOnFastForwardCalled);
-        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
+        assertThat(sessionCallback.await(TIME_OUT_MS)).isTrue();
+        assertThat(sessionCallback.mOnFastForwardCalled).isTrue();
+        assertThat(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo)).isTrue();
 
         sessionCallback.reset(1);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_REWIND);
-        assertTrue(sessionCallback.await(TIME_OUT_MS));
-        assertTrue(sessionCallback.mOnRewindCalled);
-        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
+        assertThat(sessionCallback.await(TIME_OUT_MS)).isTrue();
+        assertThat(sessionCallback.mOnRewindCalled).isTrue();
+        assertThat(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo)).isTrue();
 
         // Test PLAY_PAUSE button twice.
         // First, simulate PLAY_PAUSE button while in STATE_PAUSED.
         sessionCallback.reset(1);
         setPlaybackState(PlaybackState.STATE_PAUSED);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
-        assertTrue(sessionCallback.await(TIME_OUT_MS));
-        assertEquals(1, sessionCallback.mOnPlayCalledCount);
-        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
+        assertThat(sessionCallback.await(TIME_OUT_MS)).isTrue();
+        assertThat(sessionCallback.mOnPlayCalledCount).isEqualTo(1);
+        assertThat(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo)).isTrue();
 
         // Next, simulate PLAY_PAUSE button while in STATE_PLAYING.
         sessionCallback.reset(1);
         setPlaybackState(PlaybackState.STATE_PLAYING);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
-        assertTrue(sessionCallback.await(TIME_OUT_MS));
-        assertTrue(sessionCallback.mOnPauseCalled);
-        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
+        assertThat(sessionCallback.await(TIME_OUT_MS)).isTrue();
+        assertThat(sessionCallback.mOnPauseCalled).isTrue();
+        assertThat(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo)).isTrue();
 
         // Double tap of PLAY_PAUSE is the next track instead of changing PLAY/PAUSE.
         sessionCallback.reset(2);
         setPlaybackState(PlaybackState.STATE_PLAYING);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
-        assertFalse(sessionCallback.await(WAIT_MS));
-        assertTrue(sessionCallback.mOnSkipToNextCalled);
-        assertEquals(0, sessionCallback.mOnPlayCalledCount);
-        assertFalse(sessionCallback.mOnPauseCalled);
-        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
+        assertThat(sessionCallback.await(WAIT_MS)).isFalse();
+        assertThat(sessionCallback.mOnSkipToNextCalled).isTrue();
+        assertThat(sessionCallback.mOnPlayCalledCount).isEqualTo(0);
+        assertThat(sessionCallback.mOnPauseCalled).isFalse();
+        assertThat(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo)).isTrue();
 
         // Test if PLAY_PAUSE double tap is considered as two single taps when another media
         // key is pressed.
@@ -663,23 +666,23 @@ public class MediaSessionTest {
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_STOP);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
-        assertTrue(sessionCallback.await(TIME_OUT_MS));
-        assertEquals(2, sessionCallback.mOnPlayCalledCount);
-        assertTrue(sessionCallback.mOnStopCalled);
-        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
+        assertThat(sessionCallback.await(TIME_OUT_MS)).isTrue();
+        assertThat(sessionCallback.mOnPlayCalledCount).isEqualTo(2);
+        assertThat(sessionCallback.mOnStopCalled).isTrue();
+        assertThat(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo)).isTrue();
 
         // Test if media keys are handled in order.
         sessionCallback.reset(2);
         setPlaybackState(PlaybackState.STATE_PAUSED);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_STOP);
-        assertTrue(sessionCallback.await(TIME_OUT_MS));
-        assertEquals(1, sessionCallback.mOnPlayCalledCount);
-        assertTrue(sessionCallback.mOnStopCalled);
-        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
+        assertThat(sessionCallback.await(TIME_OUT_MS)).isTrue();
+        assertThat(sessionCallback.mOnPlayCalledCount).isEqualTo(1);
+        assertThat(sessionCallback.mOnStopCalled).isTrue();
+        assertThat(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo)).isTrue();
         synchronized (mWaitLock) {
-            assertEquals(PlaybackState.STATE_STOPPED,
-                    mSession.getController().getPlaybackState().getState());
+            assertThat(mSession.getController().getPlaybackState().getState())
+                    .isEqualTo(PlaybackState.STATE_STOPPED);
         }
     }
 
@@ -701,8 +704,9 @@ public class MediaSessionTest {
         mSession.setCallback(null, mHandler);
 
         controller.getTransportControls().pause();
-        assertFalse(sessionCallback.await(WAIT_MS));
-        assertFalse("Callback shouldn't be called.", sessionCallback.mOnPauseCalled);
+        assertThat(sessionCallback.await(WAIT_MS)).isFalse();
+        assertWithMessage("Callback shouldn't be called.")
+                .that(sessionCallback.mOnPauseCalled).isFalse();
     }
 
     private void setPlaybackState(int state) {
@@ -767,13 +771,13 @@ public class MediaSessionTest {
 
         try {
             new QueueItem(/*description=*/null, TEST_QUEUE_ID);
-            fail();
+            assertWithMessage("Unreachable statement.").fail();
         } catch (IllegalArgumentException e) {
             // Expected
         }
         try {
             new QueueItem(descriptionBuilder.build(), QueueItem.UNKNOWN_ID);
-            fail();
+            assertWithMessage("Unreachable statement.").fail();
         } catch (IllegalArgumentException e) {
             // Expected
         }
@@ -784,15 +788,15 @@ public class MediaSessionTest {
         item.writeToParcel(p, 0);
         p.setDataPosition(0);
         QueueItem other = QueueItem.CREATOR.createFromParcel(p);
-        assertEquals(item.toString(), other.toString());
+        assertThat(other.toString()).isEqualTo(item.toString());
         p.recycle();
 
         final int arraySize = 5;
         QueueItem[] queueItemArray = QueueItem.CREATOR.newArray(arraySize);
-        assertNotNull(queueItemArray);
-        assertEquals(arraySize, queueItemArray.length);
+        assertThat(queueItemArray).isNotNull();
+        assertThat(queueItemArray.length).isEqualTo(arraySize);
         for (QueueItem elem : queueItemArray) {
-            assertNull(elem);
+            assertThat(elem).isNull();
         }
     }
 
@@ -803,24 +807,24 @@ public class MediaSessionTest {
                 .setTitle("title");
 
         QueueItem item = new QueueItem(descriptionBuilder.build(), TEST_QUEUE_ID);
-        assertEquals(TEST_QUEUE_ID, item.getQueueId());
-        assertEquals("media-id", item.getDescription().getMediaId());
-        assertEquals("title", item.getDescription().getTitle());
-        assertEquals(0, item.describeContents());
+        assertThat(item.getQueueId()).isEqualTo(TEST_QUEUE_ID);
+        assertThat(item.getDescription().getMediaId()).isEqualTo("media-id");
+        assertThat(item.getDescription().getTitle()).isEqualTo("title");
+        assertThat(item.describeContents()).isEqualTo(0);
 
-        assertFalse(item.equals(null));
-        assertFalse(item.equals(descriptionBuilder.build()));
+        assertThat(item.equals(null)).isFalse();
+        assertThat(item).isNotEqualTo(descriptionBuilder.build());
 
         QueueItem sameItem = new QueueItem(descriptionBuilder.build(), TEST_QUEUE_ID);
-        assertTrue(item.equals(sameItem));
+        assertThat(item.equals(sameItem)).isTrue();
 
         QueueItem differentQueueId = new QueueItem(
                 descriptionBuilder.build(), TEST_QUEUE_ID + 1);
-        assertFalse(item.equals(differentQueueId));
+        assertThat(item.equals(differentQueueId)).isFalse();
 
         QueueItem differentDescription = new QueueItem(
                 descriptionBuilder.setTitle("title2").build(), TEST_QUEUE_ID);
-        assertFalse(item.equals(differentDescription));
+        assertThat(item.equals(differentDescription)).isFalse();
     }
 
     @Test
@@ -836,8 +840,9 @@ public class MediaSessionTest {
             session = new MediaSession(
                     mContext, "testSessionInfoWithFrameworkParcelable", sessionInfo);
             Bundle sessionInfoOut = session.getController().getSessionInfo();
-            assertTrue(sessionInfoOut.containsKey(testKey));
-            assertEquals(frameworkParcelable, sessionInfoOut.getParcelable(testKey));
+            assertThat(sessionInfoOut.containsKey(testKey)).isTrue();
+            assertThat((AudioAttributes) sessionInfoOut.getParcelable(testKey))
+                    .isEqualTo(frameworkParcelable);
         } finally {
             if (session != null) {
                 session.release();
@@ -859,7 +864,7 @@ public class MediaSessionTest {
         try {
             session = new MediaSession(
                     mContext, "testSessionInfoWithCustomParcelable", sessionInfo);
-            fail("Custom Parcelable shouldn't be accepted!");
+            assertWithMessage("Custom Parcelable shouldn't be accepted!").fail();
         } catch (IllegalArgumentException e) {
             // Expected
         } finally {
@@ -880,7 +885,7 @@ public class MediaSessionTest {
             for (int i = 0; i < TEST_TOO_MANY_SESSION_COUNT; i++) {
                 sessions.add(new MediaSession(mContext, "testSessionCreationLimit"));
             }
-            fail("The number of session should be limited!");
+            assertWithMessage("The number of session should be limited!").fail();
         } catch (RuntimeException e) {
             // Expected
         } finally {
@@ -907,7 +912,7 @@ public class MediaSessionTest {
                 // Call release() many times with the same session.
                 sessionToReleaseMultipleTimes.release();
             }
-            fail("The number of session should be limited!");
+            assertWithMessage("The number of session should be limited!").fail();
         } catch (RuntimeException e) {
             // Expected
         } finally {
@@ -935,7 +940,7 @@ public class MediaSessionTest {
                     // Do nothing
                 }
             }
-            fail("The number of session should be limited!");
+            assertWithMessage("The number of session should be limited!").fail();
         } catch (RuntimeException e) {
             // Expected
         } finally {
@@ -1016,30 +1021,38 @@ public class MediaSessionTest {
      * @param controller The controller for the session
      */
     private void verifyNewSession(MediaController controller) {
-        assertEquals("New session has unexpected configuration", 0L, controller.getFlags());
-        assertNull("New session has unexpected configuration", controller.getExtras());
-        assertNull("New session has unexpected configuration", controller.getMetadata());
-        assertEquals("New session has unexpected configuration",
-                getContext().getPackageName(), controller.getPackageName());
-        assertNull("New session has unexpected configuration", controller.getPlaybackState());
-        assertNull("New session has unexpected configuration", controller.getQueue());
-        assertNull("New session has unexpected configuration", controller.getQueueTitle());
-        assertEquals("New session has unexpected configuration", Rating.RATING_NONE,
-                controller.getRatingType());
-        assertNull("New session has unexpected configuration", controller.getSessionActivity());
+        assertWithMessage("New session has unexpected configuration")
+                .that(controller.getFlags()).isEqualTo(0);
+        assertWithMessage("New session has unexpected configuration")
+                .that(controller.getExtras()).isNull();
+        assertWithMessage("New session has unexpected configuration")
+                .that(controller.getMetadata()).isNull();
+        assertWithMessage("New session has unexpected configuration")
+                .that(controller.getPackageName()).isEqualTo(getContext().getPackageName());
+        assertWithMessage("New session has unexpected configuration")
+                .that(controller.getPlaybackState()).isNull();
+        assertWithMessage("New session has unexpected configuration")
+                .that(controller.getQueue()).isNull();
+        assertWithMessage("New session has unexpected configuration")
+                .that(controller.getQueueTitle()).isNull();
+        assertWithMessage("New session has unexpected configuration")
+                .that(controller.getRatingType()).isEqualTo(Rating.RATING_NONE);
+        assertWithMessage("New session has unexpected configuration")
+                .that(controller.getSessionActivity()).isNull();
 
-        assertNotNull(controller.getSessionToken());
-        assertNotNull(controller.getTransportControls());
+        assertThat(controller.getSessionToken()).isNotNull();
+        assertThat(controller.getTransportControls()).isNotNull();
 
         MediaController.PlaybackInfo info = controller.getPlaybackInfo();
-        assertNotNull(info);
+        assertThat(info).isNotNull();
         info.toString(); // Test that calling PlaybackInfo.toString() does not crash.
-        assertEquals(MediaController.PlaybackInfo.PLAYBACK_TYPE_LOCAL, info.getPlaybackType());
+        assertThat(info.getPlaybackType())
+                .isEqualTo(MediaController.PlaybackInfo.PLAYBACK_TYPE_LOCAL);
         AudioAttributes attrs = info.getAudioAttributes();
-        assertNotNull(attrs);
-        assertEquals(AudioAttributes.USAGE_MEDIA, attrs.getUsage());
-        assertEquals(mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC),
-                info.getCurrentVolume());
+        assertThat(attrs).isNotNull();
+        assertThat(attrs.getUsage()).isEqualTo(USAGE_MEDIA);
+        assertThat(info.getCurrentVolume())
+                .isEqualTo(mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC));
     }
 
     private class MediaControllerCallback extends MediaController.Callback {

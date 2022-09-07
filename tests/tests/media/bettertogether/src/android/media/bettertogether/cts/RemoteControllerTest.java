@@ -19,6 +19,8 @@ package android.media.bettertogether.cts;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertThrows;
+
 import android.content.Context;
 import android.media.RemoteController;
 import android.media.RemoteController.OnClientUpdateListener;
@@ -110,10 +112,8 @@ public class RemoteControllerTest {
     @UiThreadTest
     @Test
     public void testSeekTo_negativeValues() {
-        try {
-            createRemoteController().seekTo(-1);
-            assertWithMessage("timeMs must be >= 0").fail();
-        } catch (IllegalArgumentException expected) { }
+        assertThrows("timeMs must be >= 0", IllegalArgumentException.class,
+                () -> createRemoteController().seekTo(-1));
     }
 
     @UiThreadTest

@@ -17,7 +17,8 @@
 package android.media.bettertogether.cts;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assert.assertThrows;
 
 import android.media.Session2Command;
 import android.os.Bundle;
@@ -50,22 +51,14 @@ public class Session2CommandTest {
 
     @Test
     public void testConstructorWithCommandCodeCustom() {
-        try {
-            Session2Command command = new Session2Command(Session2Command.COMMAND_CODE_CUSTOM);
-            assertWithMessage("Unreachable statement.").fail();
-        } catch (IllegalArgumentException e) {
-            // Expected IllegalArgumentException
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> new Session2Command(Session2Command.COMMAND_CODE_CUSTOM));
     }
 
     @Test
     public void testConstructorWithNullAction() {
-        try {
-            Session2Command command = new Session2Command(null, null);
-            assertWithMessage("Unreachable statement.").fail();
-        } catch (IllegalArgumentException e) {
-            // Expected IllegalArgumentException
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> new Session2Command(null, null));
     }
 
     @Test

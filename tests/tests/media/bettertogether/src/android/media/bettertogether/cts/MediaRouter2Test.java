@@ -358,7 +358,7 @@ public class MediaRouter2Test {
             assertThat(stopLatch.await(WAIT_MS, TimeUnit.MILLISECONDS)).isFalse();
 
             // Created controllers should have proper info
-            assertThat(createdControllers.size()).isEqualTo(2);
+            assertThat(createdControllers).hasSize(2);
             RoutingController controller1 = createdControllers.get(0);
             RoutingController controller2 = createdControllers.get(1);
 
@@ -484,7 +484,7 @@ public class MediaRouter2Test {
             mRouter2.unregisterRouteCallback(routeCallback);
         }
 
-        assertThat(controllers.size()).isEqualTo(1);
+        assertThat(controllers).hasSize(1);
         // test requestSetSessionVolume
 
         RoutingController targetController = controllers.get(0);
@@ -604,27 +604,27 @@ public class MediaRouter2Test {
                 }
 
                 if (onControllerUpdatedLatchForSelect.getCount() != 0) {
-                    assertThat(controller.getSelectedRoutes().size()).isEqualTo(2);
-                    assertThat(getOriginalRouteIds(controller.getSelectedRoutes())
-                            .contains(ROUTE_ID1)).isTrue();
-                    assertThat(getOriginalRouteIds(controller.getSelectedRoutes())
-                            .contains(ROUTE_ID4_TO_SELECT_AND_DESELECT)).isTrue();
-                    assertThat(getOriginalRouteIds(controller.getSelectableRoutes())
-                            .contains(ROUTE_ID4_TO_SELECT_AND_DESELECT)).isFalse();
-                    assertThat(getOriginalRouteIds(controller.getDeselectableRoutes())
-                            .contains(ROUTE_ID4_TO_SELECT_AND_DESELECT)).isTrue();
+                    assertThat(controller.getSelectedRoutes()).hasSize(2);
+                    assertThat(getOriginalRouteIds(controller.getSelectedRoutes()))
+                            .contains(ROUTE_ID1);
+                    assertThat(getOriginalRouteIds(controller.getSelectedRoutes()))
+                            .contains(ROUTE_ID4_TO_SELECT_AND_DESELECT);
+                    assertThat(getOriginalRouteIds(controller.getSelectableRoutes()))
+                            .doesNotContain(ROUTE_ID4_TO_SELECT_AND_DESELECT);
+                    assertThat(getOriginalRouteIds(controller.getDeselectableRoutes()))
+                            .contains(ROUTE_ID4_TO_SELECT_AND_DESELECT);
 
                     onControllerUpdatedLatchForSelect.countDown();
                 } else {
-                    assertThat(controller.getSelectedRoutes().size()).isEqualTo(1);
-                    assertThat(getOriginalRouteIds(controller.getSelectedRoutes())
-                            .contains(ROUTE_ID1)).isTrue();
-                    assertThat(getOriginalRouteIds(controller.getSelectedRoutes())
-                            .contains(ROUTE_ID4_TO_SELECT_AND_DESELECT)).isFalse();
-                    assertThat(getOriginalRouteIds(controller.getSelectableRoutes())
-                            .contains(ROUTE_ID4_TO_SELECT_AND_DESELECT)).isTrue();
-                    assertThat(getOriginalRouteIds(controller.getDeselectableRoutes())
-                            .contains(ROUTE_ID4_TO_SELECT_AND_DESELECT)).isFalse();
+                    assertThat(controller.getSelectedRoutes()).hasSize(1);
+                    assertThat(getOriginalRouteIds(controller.getSelectedRoutes()))
+                            .contains(ROUTE_ID1);
+                    assertThat(getOriginalRouteIds(controller.getSelectedRoutes()))
+                            .doesNotContain(ROUTE_ID4_TO_SELECT_AND_DESELECT);
+                    assertThat(getOriginalRouteIds(controller.getSelectableRoutes()))
+                            .contains(ROUTE_ID4_TO_SELECT_AND_DESELECT);
+                    assertThat(getOriginalRouteIds(controller.getDeselectableRoutes()))
+                            .doesNotContain(ROUTE_ID4_TO_SELECT_AND_DESELECT);
 
                     onControllerUpdatedLatchForDeselect.countDown();
                 }
@@ -642,10 +642,10 @@ public class MediaRouter2Test {
             mRouter2.transferTo(routeToBegin);
             assertThat(onTransferLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
-            assertThat(controllers.size()).isEqualTo(1);
+            assertThat(controllers).hasSize(1);
             RoutingController controller = controllers.get(0);
-            assertThat(getOriginalRouteIds(controller.getSelectableRoutes())
-                    .contains(ROUTE_ID4_TO_SELECT_AND_DESELECT)).isTrue();
+            assertThat(getOriginalRouteIds(controller.getSelectableRoutes()))
+                    .contains(ROUTE_ID4_TO_SELECT_AND_DESELECT);
 
             // Select ROUTE_ID4_TO_SELECT_AND_DESELECT
             MediaRoute2Info routeToSelectAndDeselect = routes.get(
@@ -700,11 +700,11 @@ public class MediaRouter2Test {
                         || !TextUtils.equals(controllers.get(0).getId(), controller.getId())) {
                     return;
                 }
-                assertThat(controller.getSelectedRoutes().size()).isEqualTo(1);
-                assertThat(getOriginalRouteIds(controller.getSelectedRoutes()).contains(
-                        ROUTE_ID1)).isFalse();
-                assertThat(getOriginalRouteIds(controller.getSelectedRoutes())
-                        .contains(ROUTE_ID5_TO_TRANSFER_TO)).isTrue();
+                assertThat(controller.getSelectedRoutes()).hasSize(1);
+                assertThat(getOriginalRouteIds(controller.getSelectedRoutes()))
+                        .doesNotContain(ROUTE_ID1);
+                assertThat(getOriginalRouteIds(controller.getSelectedRoutes()))
+                        .contains(ROUTE_ID5_TO_TRANSFER_TO);
                 onControllerUpdatedLatch.countDown();
             }
         };
@@ -719,7 +719,7 @@ public class MediaRouter2Test {
             mRouter2.transferTo(routeToBegin);
             assertThat(onTransferLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
-            assertThat(controllers.size()).isEqualTo(1);
+            assertThat(controllers).hasSize(1);
             RoutingController controller = controllers.get(0);
 
             // Transfer to ROUTE_ID5_TO_TRANSFER_TO
@@ -768,11 +768,11 @@ public class MediaRouter2Test {
                         || !TextUtils.equals(controllers.get(0).getId(), controller.getId())) {
                     return;
                 }
-                assertThat(controller.getSelectedRoutes().size()).isEqualTo(1);
-                assertThat(getOriginalRouteIds(controller.getSelectedRoutes()).contains(
-                        ROUTE_ID1)).isFalse();
-                assertThat(getOriginalRouteIds(controller.getSelectedRoutes())
-                        .contains(ROUTE_ID5_TO_TRANSFER_TO)).isTrue();
+                assertThat(controller.getSelectedRoutes()).hasSize(1);
+                assertThat(getOriginalRouteIds(controller.getSelectedRoutes()))
+                        .doesNotContain(ROUTE_ID1);
+                assertThat(getOriginalRouteIds(controller.getSelectedRoutes()))
+                        .contains(ROUTE_ID5_TO_TRANSFER_TO);
                 onControllerUpdatedLatch.countDown();
             }
         };
@@ -787,7 +787,7 @@ public class MediaRouter2Test {
             mRouter2.transferTo(routeToBegin);
             assertThat(onTransferLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
-            assertThat(controllers.size()).isEqualTo(1);
+            assertThat(controllers).hasSize(1);
 
             // Transfer to ROUTE_ID5_TO_TRANSFER_TO
             MediaRoute2Info routeToTransferTo = routes.get(ROUTE_ID5_TO_TRANSFER_TO);
@@ -861,7 +861,7 @@ public class MediaRouter2Test {
             mRouter2.transferTo(routeTransferFrom);
             assertThat(onTransferLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
-            assertThat(controllers.size()).isEqualTo(1);
+            assertThat(controllers).hasSize(1);
             RoutingController controller = controllers.get(0);
 
             mRouter2.stop();
@@ -941,7 +941,7 @@ public class MediaRouter2Test {
             mRouter2.transferTo(routeTransferFrom);
             assertThat(onTransferLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
 
-            assertThat(controllers.size()).isEqualTo(1);
+            assertThat(controllers).hasSize(1);
             RoutingController controller = controllers.get(0);
 
             // Release controller. Future calls should be ignored.

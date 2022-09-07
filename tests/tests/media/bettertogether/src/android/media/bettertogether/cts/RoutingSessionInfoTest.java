@@ -192,21 +192,17 @@ public class RoutingSessionInfoTest {
         assertThat(sessionInfo.getClientPackageName()).isEqualTo(TEST_CLIENT_PACKAGE_NAME);
         assertThat(sessionInfo.getName()).isEqualTo(TEST_NAME);
 
-        assertThat(sessionInfo.getSelectedRoutes().size()).isEqualTo(2);
-        assertThat(sessionInfo.getSelectedRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_0);
-        assertThat(sessionInfo.getSelectedRoutes().get(1)).isEqualTo(TEST_ROUTE_ID_1);
+        assertThat(sessionInfo.getSelectedRoutes())
+                .containsExactly(TEST_ROUTE_ID_0, TEST_ROUTE_ID_1).inOrder();
 
-        assertThat(sessionInfo.getSelectableRoutes().size()).isEqualTo(2);
-        assertThat(sessionInfo.getSelectableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_2);
-        assertThat(sessionInfo.getSelectableRoutes().get(1)).isEqualTo(TEST_ROUTE_ID_3);
+        assertThat(sessionInfo.getSelectableRoutes())
+                .containsExactly(TEST_ROUTE_ID_2, TEST_ROUTE_ID_3).inOrder();
 
-        assertThat(sessionInfo.getDeselectableRoutes().size()).isEqualTo(2);
-        assertThat(sessionInfo.getDeselectableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_4);
-        assertThat(sessionInfo.getDeselectableRoutes().get(1)).isEqualTo(TEST_ROUTE_ID_5);
+        assertThat(sessionInfo.getDeselectableRoutes())
+                .containsExactly(TEST_ROUTE_ID_4, TEST_ROUTE_ID_5).inOrder();
 
-        assertThat(sessionInfo.getTransferableRoutes().size()).isEqualTo(2);
-        assertThat(sessionInfo.getTransferableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_6);
-        assertThat(sessionInfo.getTransferableRoutes().get(1)).isEqualTo(TEST_ROUTE_ID_7);
+        assertThat(sessionInfo.getTransferableRoutes())
+                .containsExactly(TEST_ROUTE_ID_6, TEST_ROUTE_ID_7).inOrder();
 
         //Note: Individual tests for volume handling were added below, as its value depends on
         // config_volumeAdjustmentForRemoteGroupSessions. See b/228021646 for more details.
@@ -236,21 +232,17 @@ public class RoutingSessionInfoTest {
                 .addTransferableRoute(TEST_ROUTE_ID_7)
                 .build();
 
-        assertThat(newSessionInfo.getSelectedRoutes().size()).isEqualTo(2);
-        assertThat(newSessionInfo.getSelectedRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_0);
-        assertThat(newSessionInfo.getSelectedRoutes().get(1)).isEqualTo(TEST_ROUTE_ID_1);
+        assertThat(newSessionInfo.getSelectedRoutes())
+                .containsExactly(TEST_ROUTE_ID_0, TEST_ROUTE_ID_1).inOrder();
 
-        assertThat(newSessionInfo.getSelectableRoutes().size()).isEqualTo(2);
-        assertThat(newSessionInfo.getSelectableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_2);
-        assertThat(newSessionInfo.getSelectableRoutes().get(1)).isEqualTo(TEST_ROUTE_ID_3);
+        assertThat(newSessionInfo.getSelectableRoutes())
+                .containsExactly(TEST_ROUTE_ID_2, TEST_ROUTE_ID_3).inOrder();
 
-        assertThat(newSessionInfo.getDeselectableRoutes().size()).isEqualTo(2);
-        assertThat(newSessionInfo.getDeselectableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_4);
-        assertThat(newSessionInfo.getDeselectableRoutes().get(1)).isEqualTo(TEST_ROUTE_ID_5);
+        assertThat(newSessionInfo.getDeselectableRoutes())
+                .containsExactly(TEST_ROUTE_ID_4, TEST_ROUTE_ID_5).inOrder();
 
-        assertThat(newSessionInfo.getTransferableRoutes().size()).isEqualTo(2);
-        assertThat(newSessionInfo.getTransferableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_6);
-        assertThat(newSessionInfo.getTransferableRoutes().get(1)).isEqualTo(TEST_ROUTE_ID_7);
+        assertThat(newSessionInfo.getTransferableRoutes())
+                .containsExactly(TEST_ROUTE_ID_6, TEST_ROUTE_ID_7).inOrder();
     }
 
     @Test
@@ -275,17 +267,13 @@ public class RoutingSessionInfoTest {
 
                 .build();
 
-        assertThat(sessionInfo.getSelectedRoutes().size()).isEqualTo(1);
-        assertThat(sessionInfo.getSelectedRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_0);
+        assertThat(sessionInfo.getSelectedRoutes()).containsExactly(TEST_ROUTE_ID_0);
 
-        assertThat(sessionInfo.getSelectableRoutes().size()).isEqualTo(1);
-        assertThat(sessionInfo.getSelectableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_2);
+        assertThat(sessionInfo.getSelectableRoutes()).containsExactly(TEST_ROUTE_ID_2);
 
-        assertThat(sessionInfo.getDeselectableRoutes().size()).isEqualTo(1);
-        assertThat(sessionInfo.getDeselectableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_4);
+        assertThat(sessionInfo.getDeselectableRoutes()).containsExactly(TEST_ROUTE_ID_4);
 
-        assertThat(sessionInfo.getTransferableRoutes().size()).isEqualTo(1);
-        assertThat(sessionInfo.getTransferableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_6);
+        assertThat(sessionInfo.getTransferableRoutes()).containsExactly(TEST_ROUTE_ID_6);
     }
 
     @Test
@@ -309,17 +297,13 @@ public class RoutingSessionInfoTest {
                 .removeTransferableRoute(TEST_ROUTE_ID_7)
                 .build();
 
-        assertThat(newSessionInfo.getSelectedRoutes().size()).isEqualTo(1);
-        assertThat(newSessionInfo.getSelectedRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_0);
+        assertThat(newSessionInfo.getSelectedRoutes()).containsExactly(TEST_ROUTE_ID_0);
 
-        assertThat(newSessionInfo.getSelectableRoutes().size()).isEqualTo(1);
-        assertThat(newSessionInfo.getSelectableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_2);
+        assertThat(newSessionInfo.getSelectableRoutes()).containsExactly(TEST_ROUTE_ID_2);
 
-        assertThat(newSessionInfo.getDeselectableRoutes().size()).isEqualTo(1);
-        assertThat(newSessionInfo.getDeselectableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_4);
+        assertThat(newSessionInfo.getDeselectableRoutes()).containsExactly(TEST_ROUTE_ID_4);
 
-        assertThat(newSessionInfo.getTransferableRoutes().size()).isEqualTo(1);
-        assertThat(newSessionInfo.getTransferableRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_6);
+        assertThat(newSessionInfo.getTransferableRoutes()).containsExactly(TEST_ROUTE_ID_6);
     }
 
     @Test
@@ -346,8 +330,7 @@ public class RoutingSessionInfoTest {
                 .addSelectedRoute(TEST_ROUTE_ID_0)
                 .build();
 
-        assertThat(sessionInfo.getSelectedRoutes().size()).isEqualTo(1);
-        assertThat(sessionInfo.getSelectedRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_0);
+        assertThat(sessionInfo.getSelectedRoutes()).containsExactly(TEST_ROUTE_ID_0);
 
         assertThat(sessionInfo.getSelectableRoutes().isEmpty()).isTrue();
         assertThat(sessionInfo.getDeselectableRoutes().isEmpty()).isTrue();
@@ -377,8 +360,7 @@ public class RoutingSessionInfoTest {
                 .addSelectedRoute(TEST_ROUTE_ID_0)
                 .build();
 
-        assertThat(newSessionInfo.getSelectedRoutes().size()).isEqualTo(1);
-        assertThat(newSessionInfo.getSelectedRoutes().get(0)).isEqualTo(TEST_ROUTE_ID_0);
+        assertThat(newSessionInfo.getSelectedRoutes()).containsExactly(TEST_ROUTE_ID_0);
 
         assertThat(newSessionInfo.getSelectableRoutes().isEmpty()).isTrue();
         assertThat(newSessionInfo.getDeselectableRoutes().isEmpty()).isTrue();

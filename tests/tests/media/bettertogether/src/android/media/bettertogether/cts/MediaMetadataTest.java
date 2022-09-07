@@ -16,7 +16,8 @@
 package android.media.bettertogether.cts;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assert.assertThrows;
 
 import android.graphics.Bitmap;
 import android.media.MediaDescription;
@@ -47,7 +48,7 @@ public class MediaMetadataTest {
         MediaMetadata metadata = new MediaMetadata.Builder().build();
 
         assertThat(metadata.size()).isEqualTo(0);
-        assertThat(metadata.keySet().isEmpty()).isTrue();
+        assertThat(metadata.keySet()).isEmpty();
     }
 
     @Test
@@ -101,46 +102,34 @@ public class MediaMetadataTest {
     @Test
     public void builder_putText_throwsIAE_withNonTextKey() {
         MediaMetadata.Builder builder = new MediaMetadata.Builder();
-        try {
-            builder.putText(MediaMetadata.METADATA_KEY_YEAR, "test");
-            assertWithMessage("Unreachable statement.").fail();
-        } catch (IllegalArgumentException e) {
-            // expected
-        }
+
+        assertThrows(IllegalArgumentException.class,
+                () -> builder.putText(MediaMetadata.METADATA_KEY_YEAR, "test"));
     }
 
     @Test
     public void builder_putString_throwsIAE_withNonTextKey() {
         MediaMetadata.Builder builder = new MediaMetadata.Builder();
-        try {
-            builder.putString(MediaMetadata.METADATA_KEY_YEAR, "test");
-            assertWithMessage("Unreachable statement.").fail();
-        } catch (IllegalArgumentException e) {
-            // expected
-        }
+
+        assertThrows(IllegalArgumentException.class,
+                () -> builder.putString(MediaMetadata.METADATA_KEY_YEAR, "test"));
     }
 
     @Test
     public void builder_putLong_throwsIAE_withNonLongKey() {
         MediaMetadata.Builder builder = new MediaMetadata.Builder();
-        try {
-            builder.putLong(MediaMetadata.METADATA_KEY_TITLE, 2021);
-            assertWithMessage("Unreachable statement.").fail();
-        } catch (IllegalArgumentException e) {
-            // expected
-        }
+
+        assertThrows(IllegalArgumentException.class,
+                () -> builder.putLong(MediaMetadata.METADATA_KEY_TITLE, 2021));
     }
 
     @Test
     public void builder_putRating_throwsIAE_withNonRatingKey() {
         Rating testHeartRating = Rating.newHeartRating(/*hasHeart=*/ true);
         MediaMetadata.Builder builder = new MediaMetadata.Builder();
-        try {
-            builder.putRating(MediaMetadata.METADATA_KEY_TITLE, testHeartRating);
-            assertWithMessage("Unreachable statement.").fail();
-        } catch (IllegalArgumentException e) {
-            // expected
-        }
+
+        assertThrows(IllegalArgumentException.class,
+                () -> builder.putRating(MediaMetadata.METADATA_KEY_TITLE, testHeartRating));
     }
 
     @Test
@@ -148,12 +137,9 @@ public class MediaMetadataTest {
         Bitmap testBitmap = Bitmap.createBitmap(/*width=*/ 16, /*height=*/16,
                 Bitmap.Config.ARGB_8888);
         MediaMetadata.Builder builder = new MediaMetadata.Builder();
-        try {
-            builder.putBitmap(MediaMetadata.METADATA_KEY_TITLE, testBitmap);
-            assertWithMessage("Unreachable statement.").fail();
-        } catch (IllegalArgumentException e) {
-            // expected
-        }
+
+        assertThrows(IllegalArgumentException.class,
+                () -> builder.putBitmap(MediaMetadata.METADATA_KEY_TITLE, testBitmap));
     }
 
     @Test
@@ -211,9 +197,8 @@ public class MediaMetadataTest {
 
         assertThat(metadata.size()).isEqualTo(2);
         Set<String> keySet = metadata.keySet();
-        assertThat(keySet.size()).isEqualTo(2);
-        assertThat(keySet.contains(MediaMetadata.METADATA_KEY_RATING)).isTrue();
-        assertThat(keySet.contains(MediaMetadata.METADATA_KEY_ART)).isTrue();
+        assertThat(keySet).containsExactly(
+                MediaMetadata.METADATA_KEY_RATING, MediaMetadata.METADATA_KEY_ART);
     }
 
     @Test

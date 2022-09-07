@@ -18,6 +18,8 @@ package android.media.bettertogether.cts;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertThrows;
+
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -304,13 +306,8 @@ public class MediaRouterTest {
 
         // Routes in different categories cannot be added to the same group.
         UserRouteInfo userRouteInAnotherCategory = mMediaRouter.createUserRoute(mTestCategory);
-        try {
-            // This will throw an IllegalArgumentException.
-            routeGroup.addRoute(userRouteInAnotherCategory);
-            assertWithMessage("Unreachable statement.").fail();
-        } catch (IllegalArgumentException exception) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> routeGroup.addRoute(userRouteInAnotherCategory));
 
         // Set an icon for the group.
         routeGroup.setIconDrawable(mTestIconDrawable);
@@ -356,7 +353,7 @@ public class MediaRouterTest {
 
         List<RouteInfo> routesInCategory = new ArrayList<RouteInfo>();
         routeCategory.getRoutes(routesInCategory);
-        assertThat(routesInCategory.size()).isEqualTo(1);
+        assertThat(routesInCategory).hasSize(1);
 
         RouteInfo route = routesInCategory.get(0);
         assertThat(route).isEqualTo(userRoute);

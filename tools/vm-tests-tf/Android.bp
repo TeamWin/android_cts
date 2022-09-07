@@ -172,6 +172,9 @@ java_test_host {
     static_libs: [
         "vm-tests-tf-lib"
     ],
+    libs: [
+        "compatibility-host-vm-targetprep",
+    ],
     test_config: "AndroidTest.xml",
     test_suites: [
         "cts",

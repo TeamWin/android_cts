@@ -16,7 +16,8 @@
 package android.media.bettertogether.cts;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assert.assertThrows;
 
 import android.Manifest;
 import android.app.Instrumentation;
@@ -101,38 +102,26 @@ public class MediaSessionManagerTest {
 
     @Test
     public void testGetActiveSessions() throws Exception {
-        try {
-            List<MediaController> controllers = mSessionManager.getActiveSessions(null);
-            assertWithMessage("Expected security exception"
-                    + " for unauthorized call to getActiveSessions").fail();
-        } catch (SecurityException e) {
-            // Expected
-        }
+        assertThrows("Expected security exception for unauthorized call to getActiveSessions",
+                SecurityException.class,
+                () -> mSessionManager.getActiveSessions(null));
         // TODO enable a notification listener, test again, disable, test again
     }
 
     @Test
     public void testGetMediaKeyEventSession_throwsSecurityException() {
         if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
-        try {
-            mSessionManager.getMediaKeyEventSession();
-            assertWithMessage("Expected security exception"
-                    + " for call to getMediaKeyEventSession").fail();
-        } catch (SecurityException ex) {
-            // Expected
-        }
+        assertThrows("Expected security exception for call to getMediaKeyEventSession",
+                SecurityException.class,
+                () -> mSessionManager.getMediaKeyEventSession());
     }
 
     @Test
     public void testGetMediaKeyEventSessionPackageName_throwsSecurityException() {
         if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
-        try {
-            mSessionManager.getMediaKeyEventSessionPackageName();
-            assertWithMessage("Expected security exception"
-                    + " for call to getMediaKeyEventSessionPackageName").fail();
-        } catch (SecurityException ex) {
-            // Expected
-        }
+        assertThrows("Expected security exception for call to getMediaKeyEventSessionPackageName",
+                SecurityException.class,
+                () -> mSessionManager.getMediaKeyEventSessionPackageName());
     }
 
     @Test
@@ -211,14 +200,11 @@ public class MediaSessionManagerTest {
     public void testOnMediaKeyEventSessionChangedListener_noPermission_throwsSecurityException() {
         if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
         MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
-        try {
-            mSessionManager.addOnMediaKeyEventSessionChangedListener(
-                    Executors.newSingleThreadExecutor(), keyEventSessionListener);
-            assertWithMessage("Expected security exception for call to"
-                    + " addOnMediaKeyEventSessionChangedListener").fail();
-        } catch (SecurityException ex) {
-            // Expected
-        }
+        assertThrows("Expected security exception for call to"
+                        + " addOnMediaKeyEventSessionChangedListener",
+                SecurityException.class,
+                () -> mSessionManager.addOnMediaKeyEventSessionChangedListener(
+                        Executors.newSingleThreadExecutor(), keyEventSessionListener));
     }
 
     @Test
@@ -270,12 +256,9 @@ public class MediaSessionManagerTest {
     @UiThreadTest
     public void testAddOnActiveSessionsListener() throws Exception {
         if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
-        try {
-            mSessionManager.addOnActiveSessionsChangedListener(null, null);
-            assertWithMessage("Expected NPE for call to addOnActiveSessionsChangedListener").fail();
-        } catch (NullPointerException e) {
-            // Expected
-        }
+        assertThrows("Expected NPE for call to addOnActiveSessionsChangedListener",
+                NullPointerException.class,
+                () -> mSessionManager.addOnActiveSessionsChangedListener(null, null));
 
         MediaSessionManager.OnActiveSessionsChangedListener listener =
                 new MediaSessionManager.OnActiveSessionsChangedListener() {
@@ -284,13 +267,10 @@ public class MediaSessionManagerTest {
 
                     }
         };
-        try {
-            mSessionManager.addOnActiveSessionsChangedListener(listener, null);
-            assertWithMessage("Expected security exception"
-                    + " for call to addOnActiveSessionsChangedListener").fail();
-        } catch (SecurityException e) {
-            // Expected
-        }
+
+        assertThrows("Expected security exception for call to addOnActiveSessionsChangedListener",
+                SecurityException.class,
+                () -> mSessionManager.addOnActiveSessionsChangedListener(listener, null));
     }
 
     private void assertKeyEventEquals(KeyEvent lhs, int keyCode, int action, int repeatCount) {
@@ -324,7 +304,7 @@ public class MediaSessionManagerTest {
         mSessionManager.setOnVolumeKeyLongPressListener(listener, handler);
         injectInputEvent(KeyEvent.KEYCODE_VOLUME_DOWN, true);
         assertThat(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
-        assertThat(listener.mKeyEvents.size()).isEqualTo(3);
+        assertThat(listener.mKeyEvents).hasSize(3);
         assertKeyEventEquals(listener.mKeyEvents.get(0),
                 KeyEvent.KEYCODE_VOLUME_DOWN, KeyEvent.ACTION_DOWN, 0);
         assertKeyEventEquals(listener.mKeyEvents.get(1),
@@ -337,13 +317,13 @@ public class MediaSessionManagerTest {
         mSessionManager.setOnVolumeKeyLongPressListener(listener, handler);
         injectInputEvent(KeyEvent.KEYCODE_VOLUME_DOWN, false);
         assertThat(listener.mCountDownLatch.await(WAIT_MS, TimeUnit.MILLISECONDS)).isFalse();
-        assertThat(listener.mKeyEvents.size()).isEqualTo(0);
+        assertThat(listener.mKeyEvents).isEmpty();
 
         // Ensure that the listener isn't called anymore.
         mSessionManager.setOnVolumeKeyLongPressListener(null, handler);
         injectInputEvent(KeyEvent.KEYCODE_VOLUME_DOWN, true);
         assertThat(listener.mCountDownLatch.await(WAIT_MS, TimeUnit.MILLISECONDS)).isFalse();
-        assertThat(listener.mKeyEvents.size()).isEqualTo(0);
+        assertThat(listener.mKeyEvents).isEmpty();
 
         removeHandler(handler);
     }
@@ -373,13 +353,13 @@ public class MediaSessionManagerTest {
             mSessionManager.setOnMediaKeyListener(listener, handler);
             injectInputEvent(KeyEvent.KEYCODE_HEADSETHOOK, false);
             assertThat(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
-            assertThat(listener.mKeyEvents.size()).isEqualTo(2);
+            assertThat(listener.mKeyEvents).hasSize(2);
             assertKeyEventEquals(listener.mKeyEvents.get(0),
                     KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_DOWN, 0);
             assertKeyEventEquals(listener.mKeyEvents.get(1),
                     KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_UP, 0);
             assertThat(callback.mCountDownLatch.await(WAIT_MS, TimeUnit.MILLISECONDS)).isFalse();
-            assertThat(callback.mKeyEvents.size()).isEqualTo(0);
+            assertThat(callback.mKeyEvents).isEmpty();
 
             // Ensure that the listener is called for media key event,
             // and another media session gets the key.
@@ -387,13 +367,13 @@ public class MediaSessionManagerTest {
             mSessionManager.setOnMediaKeyListener(listener, handler);
             injectInputEvent(KeyEvent.KEYCODE_HEADSETHOOK, false);
             assertThat(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
-            assertThat(listener.mKeyEvents.size()).isEqualTo(2);
+            assertThat(listener.mKeyEvents).hasSize(2);
             assertKeyEventEquals(listener.mKeyEvents.get(0),
                     KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_DOWN, 0);
             assertKeyEventEquals(listener.mKeyEvents.get(1),
                     KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_UP, 0);
             assertThat(callback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
-            assertThat(callback.mKeyEvents.size()).isEqualTo(2);
+            assertThat(callback.mKeyEvents).hasSize(2);
             assertKeyEventEquals(callback.mKeyEvents.get(0),
                     KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.ACTION_DOWN, 0);
             assertKeyEventEquals(callback.mKeyEvents.get(1),
@@ -405,7 +385,7 @@ public class MediaSessionManagerTest {
             mSessionManager.setOnMediaKeyListener(null, handler);
             injectInputEvent(KeyEvent.KEYCODE_HEADSETHOOK, false);
             assertThat(listener.mCountDownLatch.await(WAIT_MS, TimeUnit.MILLISECONDS)).isFalse();
-            assertThat(listener.mKeyEvents.size()).isEqualTo(0);
+            assertThat(listener.mKeyEvents).isEmpty();
         } finally {
             if (session != null) {
                 session.release();
@@ -589,7 +569,7 @@ public class MediaSessionManagerTest {
             assertThat(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isFalse();
             List<Session2Token> laterSession2Tokens = mSessionManager.getSession2Tokens();
 
-            assertThat(laterSession2Tokens.size()).isEqualTo(initialSession2Tokens.size());
+            assertThat(laterSession2Tokens).hasSize(initialSession2Tokens.size());
         } finally {
             if (session != null) {
                 session.release();

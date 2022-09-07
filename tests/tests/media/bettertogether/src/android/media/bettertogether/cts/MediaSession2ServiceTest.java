@@ -219,7 +219,7 @@ public class MediaSession2ServiceTest {
         assertThat(controller2.getConnectedToken()).isNotEqualTo(mToken);
 
         assertThat(controller1.getConnectedToken()).isNotEqualTo(controller2.getConnectedToken());
-        assertThat(tokens.size()).isEqualTo(2);
+        assertThat(tokens).hasSize(2);
         assertThat(controller1.getConnectedToken()).isEqualTo(tokens.get(0));
         assertThat(controller2.getConnectedToken()).isEqualTo(tokens.get(1));
     }
@@ -316,8 +316,8 @@ public class MediaSession2ServiceTest {
                 .build()) {
             service.addSession(session);
             List<MediaSession2> sessions = service.getSessions();
-            assertThat(sessions.contains(session)).isTrue();
-            assertThat(sessions.size()).isEqualTo(2);
+            assertThat(sessions).contains(session);
+            assertThat(sessions).hasSize(2);
 
             service.removeSession(session);
             sessions = service.getSessions();
@@ -336,7 +336,7 @@ public class MediaSession2ServiceTest {
             service.addSession(session);
             List<MediaSession2> sessions = service.getSessions();
             assertThat(sessions.contains(session)).isTrue();
-            assertThat(sessions.size()).isEqualTo(2);
+            assertThat(sessions).hasSize(2);
 
             session.close();
             sessions = service.getSessions();

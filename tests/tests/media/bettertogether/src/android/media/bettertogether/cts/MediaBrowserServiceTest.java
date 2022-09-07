@@ -26,7 +26,8 @@ import static android.media.browse.MediaBrowser.MediaItem.FLAG_PLAYABLE;
 import static android.media.cts.Utils.compareRemoteUserInfo;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assert.assertThrows;
 
 import android.app.Instrumentation;
 import android.content.ComponentName;
@@ -172,13 +173,9 @@ public class MediaBrowserServiceTest {
 
     @Test
     public void testNotifyChildrenChangedWithNullOptionsThrowsIAE() {
-        try {
-            mMediaBrowserService.notifyChildrenChanged(
-                    StubMediaBrowserService.MEDIA_ID_ROOT, /*options=*/ null);
-            assertWithMessage("This code is unreachable.").fail();
-        } catch (IllegalArgumentException e) {
-            // Expected
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> mMediaBrowserService.notifyChildrenChanged(
+                        StubMediaBrowserService.MEDIA_ID_ROOT, /*options=*/ null));
     }
 
     @Test
