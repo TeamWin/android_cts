@@ -16,6 +16,8 @@
 
 package android.media.bettertogether.cts;
 
+import static androidx.test.ext.truth.os.BundleSubject.assertThat;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
@@ -210,9 +212,8 @@ public class MediaController2Test {
             assertThat(latch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS)).isTrue();
 
             Bundle connectionHintsOut = controllerInfoList.get(0).getConnectionHints();
-            assertThat(connectionHintsOut.containsKey(testKey)).isTrue();
-            assertThat((Session2Token) connectionHintsOut.getParcelable(testKey))
-                    .isEqualTo(frameworkParcelable);
+            assertThat(connectionHintsOut).containsKey(testKey);
+            assertThat(connectionHintsOut).parcelable(testKey).isEqualTo(frameworkParcelable);
         }
     }
 

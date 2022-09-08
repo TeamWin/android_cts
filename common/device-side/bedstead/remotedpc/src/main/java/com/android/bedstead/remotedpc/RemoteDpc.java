@@ -41,7 +41,7 @@ import com.android.bedstead.testapp.TestAppProvider;
 public class RemoteDpc extends RemotePolicyManager {
 
     public static final ComponentName DPC_COMPONENT_NAME = new ComponentName(
-            "com.android.RemoteDPC",
+            "com.android.cts.RemoteDPC",
             "com.android.bedstead.testapp.BaseTestAppDeviceAdminReceiver"
     );
 

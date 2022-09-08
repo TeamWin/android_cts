@@ -49,6 +49,7 @@ import android.permission.PermissionManager;
 import android.permission.PermissionManager.SplitPermissionInfo;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
@@ -62,6 +63,7 @@ import java.util.List;
 import java.util.Set;
 
 @RunWith(AndroidJUnit4.class)
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 public class SplitPermissionsSystemTest {
 
     private static final int NO_TARGET = Build.VERSION_CODES.CUR_DEVELOPMENT + 1;

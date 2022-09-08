@@ -24,6 +24,8 @@ import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.RO
 import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ROUTE_ID4_TO_SELECT_AND_DESELECT;
 import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ROUTE_ID5_TO_TRANSFER_TO;
 
+import static androidx.test.ext.truth.os.BundleSubject.assertThat;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -420,8 +422,8 @@ public class MediaRoute2ProviderServiceTest {
                 assertThat(packageName).isEqualTo(mContext.getPackageName());
                 assertThat(routeId).isEqualTo(ROUTE_ID1);
                 assertThat(sessionHints).isNotNull();
-                assertThat(sessionHints.containsKey(TEST_KEY)).isTrue();
-                assertThat(sessionHints.getString(TEST_KEY)).isEqualTo(TEST_VALUE);
+                assertThat(sessionHints).containsKey(TEST_KEY);
+                assertThat(sessionHints).string(TEST_KEY).isEqualTo(TEST_VALUE);
 
                 RoutingSessionInfo info = new RoutingSessionInfo.Builder(
                         SESSION_ID_1, mContext.getPackageName())

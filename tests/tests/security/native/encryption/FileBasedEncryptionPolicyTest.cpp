@@ -29,6 +29,9 @@
 
 #include "utils.h"
 
+// This can be removed once this macro is available in <linux/fscrypt.h>
+#define FSCRYPT_MODE_AES_256_HCTR2 10
+
 // Non-upstream encryption modes that are used on some devices.
 #define FSCRYPT_MODE_AES_256_HEH 126
 #define FSCRYPT_MODE_PRIVATE 127
@@ -101,7 +104,7 @@ static bool cpuHasAESInstructions(void) {
 }
 
 // CDD 9.9.3/C-1-5: must use AES-256-XTS or Adiantum contents encryption.
-// CDD 9.9.3/C-1-6: must use AES-256-CTS or Adiantum filenames encryption.
+// CDD 9.9.3/C-1-6: must use AES-256-CTS, AES-256-HCTR2, or Adiantum filenames encryption.
 // CDD 9.9.3/C-1-12: mustn't use Adiantum if the CPU has AES instructions.
 static void validateEncryptionModes(int contents_mode, int filenames_mode,
                                     bool allow_legacy_modes) {
@@ -129,6 +132,7 @@ static void validateEncryptionModes(int contents_mode, int filenames_mode,
     allowed = false;
     switch (filenames_mode) {
         case FSCRYPT_MODE_AES_256_CTS:
+        case FSCRYPT_MODE_AES_256_HCTR2:
         case FSCRYPT_MODE_ADIANTUM:
             allowed = true;
             break;

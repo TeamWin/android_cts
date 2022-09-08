@@ -81,7 +81,7 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
 
     @Test
     @ApiTest(apis = {
-            "com.android.internal.car.CarServiceHelperServiceUpdatable.dump(PrintWriter,String[])"
+            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
     })
     @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
     @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
@@ -94,7 +94,7 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
 
     @Test
     @ApiTest(apis = {
-            "com.android.internal.car.CarServiceHelperServiceUpdatable.dump(PrintWriter,String[])"
+            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
     })
     @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
     @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
@@ -109,7 +109,7 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
 
     @Test
     @ApiTest(apis = {
-            "com.android.internal.car.CarServiceHelperServiceUpdatable.dump(PrintWriter,String[])"
+            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
     })
     @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
     @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
@@ -127,7 +127,7 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
 
     @Test
     @ApiTest(apis = {
-            "com.android.internal.car.CarServiceHelperServiceUpdatable.dump(PrintWriter,String[])"
+            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
     })
     @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
     @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
@@ -148,7 +148,7 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
 
     @Test
     @ApiTest(apis = {
-            "com.android.internal.car.CarServiceHelperServiceUpdatable.dump(PrintWriter,String[])"
+            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
     })
     @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
     @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
@@ -166,7 +166,7 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
 
     @Test
     @ApiTest(apis = {
-            "com.android.internal.car.CarServiceHelperServiceUpdatable.dump(PrintWriter,String[])"
+            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
     })
     @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
     @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
@@ -187,7 +187,7 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
 
     @Test
     @ApiTest(apis = {
-            "com.android.internal.car.CarServiceHelperServiceUpdatable.dump(PrintWriter,String[])"
+            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
     })
     @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
     @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,

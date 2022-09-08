@@ -351,7 +351,7 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
             // limit the test to devices launching with T
             assumeTrue("Skipping color range " + mRange + " and color standard " + mStandard +
                             " for devices upgrading to T",
-                    FIRST_SDK_IS_AT_LEAST_T);
+                    FIRST_SDK_IS_AT_LEAST_T && VNDK_IS_AT_LEAST_T);
 
             // TODO (b/219748700): Android software codecs work only with 601LR. Skip for now.
             assumeTrue("Skipping " + mCompName + " for color range " + mRange

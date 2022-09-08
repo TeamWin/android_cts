@@ -40,12 +40,14 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.assertEquals;
 
 import android.app.UiAutomation;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.SystemUserOnly;
 
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
@@ -63,6 +65,7 @@ import org.junit.runner.RunWith;
  */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Instant apps cannot read state of other packages.")
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 public class SplitPermissionTest {
     /** The package name of all apps used in the test */
     private static final String APP_PKG = "android.permission.cts.appthatrequestpermission";

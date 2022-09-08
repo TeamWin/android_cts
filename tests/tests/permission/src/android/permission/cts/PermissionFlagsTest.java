@@ -38,8 +38,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 
+import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
@@ -52,6 +54,7 @@ import org.junit.runner.RunWith;
  */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Cannot read permission flags of other app.")
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 public class PermissionFlagsTest {
     /** The package name of all apps used in the test */
     private static final String APP_PKG = "android.permission.cts.appthatrequestpermission";

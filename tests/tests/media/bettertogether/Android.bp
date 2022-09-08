@@ -16,6 +16,7 @@ android_test {
     name: "CtsMediaBetterTogetherTestCases",
     defaults: ["cts_defaults"],
     static_libs: [
+        "androidx.test.ext.truth",
         "ctstestrunner-axt",
         "cts-media-common",
         "truth-prebuilt",

@@ -25,6 +25,9 @@
     <option name="config-descriptor:metadata" key="parameter" value="secondary_user"/>
     <option name="config-descriptor:metadata" key="token" value="SIM_CARD" />
 
+    <!-- TODO(b/245579250): update to Sdk34 once sdk finalized -->
+    <object type="module_controller" class="com.android.tradefed.testtype.suite.module.Sdk33ModuleController" />
+
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsPermission2TestCases.apk" />

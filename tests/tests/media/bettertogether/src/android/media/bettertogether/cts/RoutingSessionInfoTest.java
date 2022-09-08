@@ -19,6 +19,8 @@ package android.media.bettertogether.cts;
 import static android.media.MediaRoute2Info.PLAYBACK_VOLUME_FIXED;
 import static android.media.MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE;
 
+import static androidx.test.ext.truth.os.BundleSubject.assertThat;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
@@ -211,8 +213,8 @@ public class RoutingSessionInfoTest {
 
         Bundle controlHintsOut = sessionInfo.getControlHints();
         assertThat(controlHintsOut).isNotNull();
-        assertThat(controlHintsOut.containsKey(TEST_KEY)).isTrue();
-        assertThat(controlHintsOut.getString(TEST_KEY)).isEqualTo(TEST_VALUE);
+        assertThat(controlHintsOut).containsKey(TEST_KEY);
+        assertThat(controlHintsOut).string(TEST_KEY).isEqualTo(TEST_VALUE);
     }
 
     @Test
@@ -560,8 +562,8 @@ public class RoutingSessionInfoTest {
         // Check controlHints
         Bundle controlHintsOut = sessionInfoFromParcel.getControlHints();
         assertThat(controlHintsOut).isNotNull();
-        assertThat(controlHintsOut.containsKey(TEST_KEY)).isTrue();
-        assertThat(controlHintsOut.getString(TEST_KEY)).isEqualTo(TEST_VALUE);
+        assertThat(controlHintsOut).containsKey(TEST_KEY);
+        assertThat(controlHintsOut).string(TEST_KEY).isEqualTo(TEST_VALUE);
         parcel.recycle();
 
         // In order to mark writeToParcel as tested, we let's just call it directly.

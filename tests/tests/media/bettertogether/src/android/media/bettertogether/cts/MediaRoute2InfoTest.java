@@ -16,6 +16,8 @@
 
 package android.media.bettertogether.cts;
 
+import static androidx.test.ext.truth.os.BundleSubject.assertThat;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
@@ -136,8 +138,8 @@ public class MediaRoute2InfoTest {
 
         Bundle extrasOut = routeInfo.getExtras();
         assertThat(extrasOut).isNotNull();
-        assertThat(extrasOut.containsKey(TEST_KEY)).isTrue();
-        assertThat(extrasOut.getString(TEST_KEY)).isEqualTo(TEST_VALUE);
+        assertThat(extrasOut).containsKey(TEST_KEY);
+        assertThat(extrasOut).string(TEST_KEY).isEqualTo(TEST_VALUE);
     }
 
     @Test
@@ -310,8 +312,8 @@ public class MediaRoute2InfoTest {
         // Check extras
         Bundle extrasOut = routeInfoFromParcel.getExtras();
         assertThat(extrasOut).isNotNull();
-        assertThat(extrasOut.containsKey(TEST_KEY)).isTrue();
-        assertThat(extrasOut.getString(TEST_KEY)).isEqualTo(TEST_VALUE);
+        assertThat(extrasOut).containsKey(TEST_KEY);
+        assertThat(extrasOut).string(TEST_KEY).isEqualTo(TEST_VALUE);
         parcel.recycle();
 
         // In order to mark writeToParcel as tested, we let's just call it directly.

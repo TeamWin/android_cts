@@ -138,8 +138,8 @@ public class MediaSessionTest {
     }
 
     @Test
-    // Needed for assertThat(sessionToken).isEqualTo(sessionToken).
-    @SuppressWarnings("TruthSelfEquals")
+    // Needed for assertThat(sessionToken.equals(mSession)).isFalse().
+    @SuppressWarnings("EqualsIncompatibleType")
     public void testSessionTokenEquals() {
         MediaSession anotherSession = null;
         try {
@@ -147,10 +147,11 @@ public class MediaSessionTest {
             MediaSession.Token sessionToken = mSession.getSessionToken();
             MediaSession.Token anotherSessionToken = anotherSession.getSessionToken();
 
-            assertThat(sessionToken).isEqualTo(sessionToken);
-            assertThat(sessionToken).isNotNull();
-            assertThat(sessionToken).isNotEqualTo(mSession);
-            assertThat(sessionToken).isNotEqualTo(anotherSessionToken);
+            // Explicitly checks equals as Guava's EqualsTester is not yet supported (b/236153976).
+            assertThat(sessionToken.equals(sessionToken)).isTrue();
+            assertThat(sessionToken.equals(null)).isFalse();
+            assertThat(sessionToken.equals(mSession)).isFalse();
+            assertThat(sessionToken.equals(anotherSessionToken)).isFalse();
         } finally {
             if (anotherSession != null) {
                 anotherSession.release();

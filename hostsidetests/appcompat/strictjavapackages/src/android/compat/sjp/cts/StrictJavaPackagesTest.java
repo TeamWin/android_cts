@@ -1058,7 +1058,9 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
      * and shared library jars.
      */
     @Test
-    public void testBootClasspathAndSystemServerClasspathAndSharedLibs_noAndroidxDependencies() {
+    public void testBootClasspathAndSystemServerClasspathAndSharedLibs_noAndroidxDependencies()
+            throws Exception {
+        assumeTrue(mDeviceSdkLevel.isDeviceAtLeastT());
         // WARNING: Do not add more exceptions here, no androidx should be in bootclasspath.
         // See go/androidx-api-guidelines#module-naming for more details.
         final ImmutableMap<String, ImmutableSet<String>>
@@ -1102,11 +1104,12 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 .reduce(Stream::concat).orElseGet(Stream::empty)
                 .parallel()
                 .filter(jarPath -> {
-                    return sJarsToFiles
-                            .get(jarPath)
-                            .stream()
-                            .anyMatch(file -> file.contains(".kotlin_builtins")
-                                    || file.contains(".kotlin_module"));
+                    // Exclude shared library apks.
+                    return jarPath.endsWith(".jar")
+                            && sJarsToFiles.get(jarPath)
+                                .stream()
+                                .anyMatch(file -> file.contains(".kotlin_builtins")
+                                        || file.contains(".kotlin_module"));
                 })
                 .collect(ImmutableList.toImmutableList());
         assertThat(kotlinFiles).isEmpty();

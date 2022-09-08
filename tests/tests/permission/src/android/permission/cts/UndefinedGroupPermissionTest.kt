@@ -22,11 +22,13 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Process
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiObject2
 import android.support.test.uiautomator.UiObjectNotFoundException
+import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.eventually
@@ -41,6 +43,7 @@ import java.util.regex.Pattern
  * Tests that the permissioncontroller behaves normally when an app defines a permission in the
  * android.permission-group.UNDEFINED group
  */
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 class UndefinedGroupPermissionTest {
     private var mInstrumentation: Instrumentation? = null
     private var mUiDevice: UiDevice? = null

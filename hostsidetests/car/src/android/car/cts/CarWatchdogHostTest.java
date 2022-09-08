@@ -117,6 +117,8 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
     private static final String APPLY_DISABLE_DISPLAY_POWER_POLICY_CMD =
             "cmd car_service apply-power-policy cts_car_watchdog_disable_display";
 
+    private static final String FAILED_CUSTOM_COLLECTION_MSG = "Cannot start a custom collection";
+
     private static final long FIFTY_MEGABYTES = 1024 * 1024 * 50;
     private static final long TWO_HUNDRED_MEGABYTES = 1024 * 1024 * 200;
 
@@ -128,6 +130,7 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
     private static final Pattern FOREGROUND_BYTES_PATTERN = Pattern.compile(
             "foregroundModeBytes = (\\d+)");
 
+    private static final long START_CUSTOM_COLLECTION_TIMEOUT_MS = 30_000;
     private static final long WATCHDOG_ACTION_TIMEOUT_MS = 15_000;
 
     private boolean mDidModifyDateTime;
@@ -153,7 +156,7 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
                 GET_IO_OVERUSE_FOREGROUNG_BYTES_CMD));
         executeCommand("%s %d", SET_IO_OVERUSE_FOREGROUNG_BYTES_CMD, TWO_HUNDRED_MEGABYTES);
         executeCommand("logcat -c");
-        executeCommand(START_CUSTOM_PERF_COLLECTION_CMD);
+        startCustomCollection();
         executeCommand(RESET_RESOURCE_OVERUSE_CMD);
     }
 
@@ -379,5 +382,12 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         LocalDateTime now = LocalDateTime.parse(executeCommand("date +%%FT%%T").trim());
         executeCommand("date %s", now.plusHours(1));
         CLog.d(TAG, "DateTime changed from %s to %s", now, now.plusHours(1));
+    }
+
+    private void startCustomCollection() throws Exception {
+        PollingCheck.check("Could not start the custom collection.",
+                START_CUSTOM_COLLECTION_TIMEOUT_MS,
+                () -> !executeCommand(START_CUSTOM_PERF_COLLECTION_CMD)
+                        .contains(FAILED_CUSTOM_COLLECTION_MSG));
     }
 }

@@ -160,11 +160,13 @@ public class CarTest extends AbstractExpectableTestCase {
         assertThat(Car.isApiAndPlatformVersionAtLeast(Car.API_VERSION_MAJOR_INT,
                 Build.VERSION.SDK_INT)).isTrue();
         assertThat(Car.isApiAndPlatformVersionAtLeast(Car.API_VERSION_MAJOR_INT,
-                Build.VERSION.SDK_INT + 1)).isFalse();
-        assertThat(Car.isApiAndPlatformVersionAtLeast(Car.API_VERSION_MAJOR_INT,
                 Car.API_VERSION_MINOR_INT, Build.VERSION.SDK_INT)).isTrue();
-        assertThat(Car.isApiAndPlatformVersionAtLeast(Car.API_VERSION_MAJOR_INT,
-                Car.API_VERSION_MINOR_INT, Build.VERSION.SDK_INT + 1)).isFalse();
+        if ("REL".equals(Build.VERSION.CODENAME)) { // SDK + 1 only works for released platform.
+            assertThat(Car.isApiAndPlatformVersionAtLeast(Car.API_VERSION_MAJOR_INT,
+                    Build.VERSION.SDK_INT + 1)).isFalse();
+            assertThat(Car.isApiAndPlatformVersionAtLeast(Car.API_VERSION_MAJOR_INT,
+                    Car.API_VERSION_MINOR_INT, Build.VERSION.SDK_INT + 1)).isFalse();
+        }
     }
 
     @ApiTest(apis =

@@ -42,9 +42,11 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.provider.DeviceConfig;
 import android.support.test.uiautomator.UiDevice;
 
+import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -54,6 +56,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 public class RevokeSelfPermissionTest {
     private static final String APP_PKG_NAME =
             "android.permission.cts.apptotestrevokeselfpermission";

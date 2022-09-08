@@ -665,7 +665,6 @@ public class ExifInterfaceTest {
     @Test
     public void testReadExifDataFromLgG4Iso800Dng() throws Throwable {
         readFromFilesWithExif(DNG_WITH_EXIF_WITH_XMP, R.array.dng_with_exif_with_xmp);
-        writeToFilesWithExif(DNG_WITH_EXIF_WITH_XMP, R.array.dng_with_exif_with_xmp);
     }
 
     @Test

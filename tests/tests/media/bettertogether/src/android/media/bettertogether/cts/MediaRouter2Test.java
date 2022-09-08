@@ -28,6 +28,8 @@ import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.RO
 import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ROUTE_ID5_TO_TRANSFER_TO;
 import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ROUTE_ID_SPECIAL_FEATURE;
 
+import static androidx.test.ext.truth.os.BundleSubject.assertThat;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
@@ -411,8 +413,8 @@ public class MediaRouter2Test {
                 // with the given controllerHints.
                 Bundle controlHints = newController.getControlHints();
                 assertThat(controlHints).isNotNull();
-                assertThat(controlHints.containsKey(TEST_KEY)).isTrue();
-                assertThat(controlHints.getString(TEST_KEY)).isEqualTo(TEST_VALUE);
+                assertThat(controlHints).containsKey(TEST_KEY);
+                assertThat(controlHints).string(TEST_KEY).isEqualTo(TEST_VALUE);
 
                 controllers.add(newController);
                 successLatch.countDown();

@@ -65,7 +65,7 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
     private static final String FEATURE_SECURE_LOCK_SCREEN =
             "feature:android.software.secure_lock_screen";
 
-    private static final long SHUTDOWN_TIME_MS = TimeUnit.SECONDS.toMicros(30);
+    private static final long SHUTDOWN_TIME_MS = TimeUnit.SECONDS.toMillis(30);
     private static final int USER_SYSTEM = 0;
 
     private static final int USER_SWITCH_TIMEOUT_SECONDS = 10;

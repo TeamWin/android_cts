@@ -30,6 +30,7 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.compatibility.common.util.AppOpsUtils.setOpMode;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -43,6 +44,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.net.NetworkCapabilities;
 import android.os.Looper;
 import android.os.PersistableBundle;
 import android.platform.test.annotations.AsbSecurityTest;
@@ -182,6 +184,12 @@ public class CarrierConfigManagerTest {
                     config.getBoolean(
                       CarrierConfigManager.KEY_ENABLE_CROSS_SIM_CALLING_ON_OPPORTUNISTIC_DATA_BOOL),
                       false);
+
+            assertArrayEquals("KEY_CAPABILITIES_EXEMPT_FROM_SINGLE_DC_CHECK_INT_ARRAY"
+                            + " doesn't match static default.",
+                    config.getIntArray(CarrierConfigManager
+                            .KEY_CAPABILITIES_EXEMPT_FROM_SINGLE_DC_CHECK_INT_ARRAY),
+                    new int[] {NetworkCapabilities.NET_CAPABILITY_IMS});
         }
 
         // These key should return default values if not customized.
