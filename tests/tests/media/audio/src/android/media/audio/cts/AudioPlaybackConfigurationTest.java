@@ -460,6 +460,10 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
             "android.media.AudioManager.AudioPlaybackCallback#onPlaybackConfigChanged"})
     public void testMuteFromAppOpsNotification() throws Exception {
         if (!isValidPlatform("testMuteFromAppOpsNotification")) return;
+        if (hasAudioSilentProperty()) {
+            Log.w(TAG, "Skipping testMuteFromAppOpsNotification");
+            return;
+        }
 
         verifyMuteUnmuteNotifications(
                 /*mute=*/() -> {
@@ -486,6 +490,10 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
             "android.media.AudioManager.AudioPlaybackCallback#onPlaybackConfigChanged"})
     public void testMuteFromStreamVolumeNotification() throws Exception {
         if (!isValidPlatform("testMuteFromStreamVolumeNotification")) return;
+        if (hasAudioSilentProperty()) {
+            Log.w(TAG, "Skipping testMuteFromStreamVolumeNotification");
+            return;
+        }
 
         AudioManager am = new AudioManager(getContext());
         assertNotNull("Could not create AudioManager", am);
@@ -501,6 +509,10 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
             "android.media.AudioManager.AudioPlaybackCallback#onPlaybackConfigChanged"})
     public void testMuteFromClientVolumeNotification() throws Exception {
         if (!isValidPlatform("testMuteFromClientVolumeNotification")) return;
+        if (hasAudioSilentProperty()) {
+            Log.w(TAG, "Skipping testMuteFromClientVolumeNotification");
+            return;
+        }
 
         verifyMuteUnmuteNotifications(/*mute=*/() -> mAt.setVolume(0.f),
                 /*unmute=*/() -> mAt.setVolume(1.f));
@@ -510,6 +522,11 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
             "android.media.AudioManager.AudioPlaybackCallback#onPlaybackConfigChanged"})
     public void testMuteFromVolumeShaperNotification() throws Exception {
         if (!isValidPlatform("testMuteFromVolumeShaperNotification")) return;
+        if (hasAudioSilentProperty()) {
+            Log.w(TAG, "Skipping testMuteFromVolumeShaperNotification");
+            return;
+        }
+
         verifyMuteUnmuteNotifications(/*mute=*/
                 () -> {
                     mMuteShaper = mAt.createVolumeShaper(SHAPER_MUTE);
@@ -727,5 +744,23 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
             return false;
         }
         return true;
+    }
+
+    private static boolean hasAudioSilentProperty() {
+        String silent = null;
+
+        try {
+            silent = (String) Class.forName("android.os.SystemProperties").getMethod("get",
+                    String.class).invoke(null, "ro.audio.silent");
+        } catch (Exception e) {
+            Log.e(TAG, "Could not invoke SystemProperties.get(ro.audio.silent)", e);
+        }
+
+        if (silent != null && silent.equals("1")) {
+            Log.w(TAG, "Device has ro.audio.silent set");
+            return true;
+        }
+
+        return false;
     }
 }

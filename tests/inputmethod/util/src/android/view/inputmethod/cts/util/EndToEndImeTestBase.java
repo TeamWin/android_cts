@@ -20,6 +20,8 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.Manifest;
+import android.app.ActivityTaskManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -29,12 +31,15 @@ import android.platform.test.annotations.AppModeInstant;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 public class EndToEndImeTestBase {
     @Rule
@@ -119,6 +124,17 @@ public class EndToEndImeTestBase {
                 .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         InstrumentationRegistry.getInstrumentation().startActivitySync(intent);
+    }
+
+    @Before
+    public void clearLaunchParams() {
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        final ActivityTaskManager atm = context.getSystemService(ActivityTaskManager.class);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            // Clear launch params for all test packages to make sure each test is run in a clean
+            // state.
+            atm.clearLaunchParamsForPackages(List.of(context.getPackageName()));
+        }, Manifest.permission.MANAGE_ACTIVITY_TASKS);
     }
 
     protected static boolean isPreventImeStartup() {

@@ -16,20 +16,13 @@
 
 package android.car.cts;
 
-import static com.android.compatibility.common.util.SystemUtil.eventually;
-
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.hamcrest.CoreMatchers.containsStringIgnoringCase;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeThat;
 
 import android.app.UiAutomation;
 import android.car.Car;
-import android.car.annotation.ApiRequirements;
 import android.car.test.ApiCheckerRule;
-import android.car.test.ApiCheckerRule.IgnoreInvalidApi;
 import android.car.test.ApiCheckerRule.SupportedVersionTest;
 import android.car.test.ApiCheckerRule.UnsupportedVersionTest;
 import android.car.test.ApiCheckerRule.UnsupportedVersionTest.Behavior;
@@ -77,127 +70,6 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     public void setUp() throws Exception {
         super.setUp();
         SystemUtil.runShellCommand("logcat -b all -c");
-    }
-
-    @Test
-    @ApiTest(apis = {
-            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
-    })
-    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
-    public void testCarServiceHelperServiceDump() throws Exception {
-        assertWithMessage("System server dumper")
-                .that(executeShellCommand("dumpsys system_server_dumper --list"))
-                .contains("CarServiceHelper");
-    }
-
-    @Test
-    @ApiTest(apis = {
-            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
-    })
-    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
-    public void testCarServiceHelperServiceDump_carServiceProxy() throws Exception {
-        assumeSystemServerDumpSupported();
-
-        assertWithMessage("CarServiceHelperService dump")
-                .that(executeShellCommand("dumpsys system_server_dumper --name CarServiceHelper"))
-                .contains("CarServiceProxy");
-    }
-
-    @Test
-    @ApiTest(apis = {
-            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
-    })
-    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
-    public void testCarServiceHelperServiceDump_safeMode() throws Exception {
-        assumeSystemServerDumpSupported();
-
-        // Should be parked already, but it doesn't hurt to make sure
-        executeShellCommand("cmd car_service emulate-driving-state park");
-
-        eventually(()-> assertWithMessage("CarServiceHelperService dump")
-                .that(dumpCarServiceHelper())
-                .contains("Safe to run device policy operations: true"));
-    }
-
-    @Test
-    @ApiTest(apis = {
-            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
-    })
-    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
-    public void testCarServiceHelperServiceDump_unsafeMode() throws Exception {
-        assumeSystemServerDumpSupported();
-
-        try {
-            executeShellCommand("cmd car_service emulate-driving-state drive");
-
-            eventually(() -> assertWithMessage("CarServiceHelperService dump")
-                    .that(dumpCarServiceHelper())
-                    .contains("Safe to run device policy operations: false"));
-        } finally {
-            executeShellCommand("cmd car_service emulate-driving-state park");
-        }
-    }
-
-    @Test
-    @ApiTest(apis = {
-            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
-    })
-    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
-    public void testCarServiceHelperServiceDump_safeOperation() throws Exception {
-        assumeSystemServerDumpSupported();
-
-        // Should be parked already, but it doesn't hurt to make sure
-        executeShellCommand("cmd car_service emulate-driving-state park");
-
-        eventually(()-> assertWithMessage("CarServiceHelperService dump")
-                .that(dumpCarServiceHelper("--is-operation-safe", "7"))
-                .contains("Operation REBOOT is SAFE. Reason: NONE"));
-    }
-
-    @Test
-    @ApiTest(apis = {
-            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
-    })
-    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
-    public void testCarServiceHelperServiceDump_unsafeOperation() throws Exception {
-        assumeSystemServerDumpSupported();
-
-        try {
-            executeShellCommand("cmd car_service emulate-driving-state drive");
-
-            eventually(()-> assertWithMessage("CarServiceHelperService dump")
-                    .that(dumpCarServiceHelper("--is-operation-safe", "7"))
-                    .contains("Operation REBOOT is UNSAFE. Reason: DRIVING_DISTRACTION"));
-        } finally {
-            executeShellCommand("cmd car_service emulate-driving-state park");
-        }
-    }
-
-    @Test
-    @ApiTest(apis = {
-            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
-    })
-    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
-    public void testCarServiceHelperServiceDump_serviceStacks() throws Exception {
-        assumeSystemServerDumpSupported();
-
-        assertWithMessage("CarServiceHelperService dump")
-                .that(dumpCarServiceHelper("--dump-service-stacks"))
-                .contains("dumpServiceStacks ANR file path=/data/anr/anr_");
     }
 
     @Test
@@ -325,15 +197,6 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
         }
     }
 
-    private String dumpCarServiceHelper(String...args) throws IOException {
-        StringBuilder cmd = new StringBuilder(
-                "dumpsys system_server_dumper --name CarServiceHelper");
-        for (String arg : args) {
-            cmd.append(' ').append(arg);
-        }
-        return executeShellCommand(cmd.toString());
-    }
-
     private void assertUserLifecycleEventLogged(int eventType, int userId) throws Exception {
         assertUserLifecycleEventLogged(eventType, UserHandle.USER_NULL, userId);
     }
@@ -367,12 +230,6 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
             fail("match '" + match + "' was not found, IO exception: " + e);
         }
 
-    }
-
-    protected static void assumeSystemServerDumpSupported() throws IOException {
-        assumeThat("System_server_dumper not implemented.",
-                executeShellCommand("service check system_server_dumper"),
-                containsStringIgnoringCase("system_server_dumper: found"));
     }
 
     // TODO(214100537): Improve listener by removing sleep.

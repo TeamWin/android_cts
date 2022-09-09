@@ -128,6 +128,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
                 mWmState.getDefaultDisplayLastTransition());
     }
 
+    @FlakyTest(bugId = 238776938)
     @Test
     public void testNewDismissKeyguardActivityDuringOccluded() {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();

@@ -397,6 +397,29 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     }
 
     @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
+    public void testInfoVinIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_IDENTIFICATION, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.INFO_VIN,
+                    CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                    VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                    CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                    String.class).setCarPropertyValueVerifier(
+                        (carPropertyConfig, carPropertyValue) -> assertWithMessage(
+                            "INFO_VIN must be 17 characters").that(
+                                (String) carPropertyValue.getValue()).hasLength(17))
+                    .build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
+            "android.car.hardware.property.CarPropertyManager#getProperty",
+            "android.car.hardware.property.CarPropertyManager#registerCallback",
+            "android.car.hardware.property.CarPropertyManager#unregisterCallback"})
     public void testInfoMakeIfSupported() {
         VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.INFO_MAKE,
                 CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,

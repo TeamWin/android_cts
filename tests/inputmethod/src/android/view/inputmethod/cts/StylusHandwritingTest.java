@@ -62,9 +62,9 @@ import androidx.annotation.NonNull;
 import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.GestureNavRule;
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
@@ -73,7 +73,6 @@ import com.android.cts.mockime.MockImeSession;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -103,11 +102,6 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     @ClassRule
     public static GestureNavRule sGestureNavRule = new GestureNavRule();
 
-    @Rule
-    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
-            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-            Manifest.permission.WRITE_SECURE_SETTINGS, Manifest.permission.INJECT_EVENTS);
-
     @Before
     public void setup() {
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -117,8 +111,10 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
         mHwInitialState = Settings.Global.getInt(mContext.getContentResolver(),
                 STYLUS_HANDWRITING_ENABLED, SETTING_VALUE_OFF);
         if (mHwInitialState != SETTING_VALUE_ON) {
-            Settings.Global.putInt(mContext.getContentResolver(),
-                    STYLUS_HANDWRITING_ENABLED, SETTING_VALUE_ON);
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                Settings.Global.putInt(mContext.getContentResolver(),
+                        STYLUS_HANDWRITING_ENABLED, SETTING_VALUE_ON);
+            }, Manifest.permission.WRITE_SECURE_SETTINGS);
             mShouldRestoreInitialHwState = true;
         }
     }
@@ -127,8 +123,10 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     public void tearDown() {
         if (mShouldRestoreInitialHwState) {
             mShouldRestoreInitialHwState = false;
-            Settings.Global.putInt(mContext.getContentResolver(),
-                    STYLUS_HANDWRITING_ENABLED, mHwInitialState);
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                Settings.Global.putInt(mContext.getContentResolver(),
+                        STYLUS_HANDWRITING_ENABLED, mHwInitialState);
+            }, Manifest.permission.WRITE_SECURE_SETTINGS);
         }
     }
 
@@ -141,8 +139,10 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             imeSession.openEventStream();
 
             // Disable pref
-            Settings.Global.putInt(mContext.getContentResolver(),
-                    STYLUS_HANDWRITING_ENABLED, SETTING_VALUE_OFF);
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                Settings.Global.putInt(mContext.getContentResolver(),
+                        STYLUS_HANDWRITING_ENABLED, SETTING_VALUE_OFF);
+            }, Manifest.permission.WRITE_SECURE_SETTINGS);
             mShouldRestoreInitialHwState = true;
 
             launchTestActivity(getTestMarker());
@@ -673,7 +673,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             expectEvent(
                     stream,
                     editorMatcher("onFinishStylusHandwriting", marker),
-                    TIMEOUT_1_S);
+                    TIMEOUT);
         }
     }
 
@@ -1409,7 +1409,10 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     }
 
     private void addVirtualStylusIdForTestSession() {
-        mContext.getSystemService(InputMethodManager.class).addVirtualStylusIdForTestSession();
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            mContext.getSystemService(InputMethodManager.class)
+                    .addVirtualStylusIdForTestSession();
+        }, Manifest.permission.INJECT_EVENTS);
     }
 
     private static final class CustomEditorView extends View {

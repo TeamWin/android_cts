@@ -57,6 +57,7 @@ import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.compatibility.common.util.BlockingCallback;
 
+import java.lang.reflect.InvocationTargetException;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
@@ -184,7 +185,7 @@ public final class DevicePolicy {
                             devicePolicyManager.setActiveAdmin(deviceOwnerComponent,
                                     /* refreshing= */ true, user.id());
                             setDeviceOwnerOnly(devicePolicyManager,
-                                    deviceOwnerComponent, "Nene", user.id());
+                                    deviceOwnerComponent, user.id());
                 }).terminalException((e) -> checkForTerminalDeviceOwnerFailures(
                         user, deviceOwnerComponent, /* allowAdditionalUsers= */ true))
                         .timeout(Duration.ofMinutes(5))
@@ -218,11 +219,27 @@ public final class DevicePolicy {
      * some circumstances.
      */
     private void setDeviceOwnerOnly(DevicePolicyManager devicePolicyManager,
-            ComponentName component, String name, int deviceOwnerUserId) {
-        if (Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S_V2)) {
-            devicePolicyManager.setDeviceOwnerOnly(component, name, deviceOwnerUserId);
+            ComponentName component, int deviceOwnerUserId) {
+        if (Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
+            devicePolicyManager.setDeviceOwnerOnly(component, deviceOwnerUserId);
+        } else if (Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S_V2)) {
+            try {
+                DevicePolicyManager.class.getMethod(
+                        "setDeviceOwnerOnly", ComponentName.class, String.class, int.class)
+                        .invoke(devicePolicyManager, component, null, deviceOwnerUserId);
+            } catch (IllegalAccessException | InvocationTargetException
+                    | NoSuchMethodException e) {
+                throw new NeneException("Error executing setDeviceOwnerOnly", e);
+            }
         } else {
-            devicePolicyManager.setDeviceOwner(component, name, deviceOwnerUserId);
+            try {
+                DevicePolicyManager.class.getMethod(
+                        "setDeviceOwner", ComponentName.class, String.class, int.class)
+                        .invoke(devicePolicyManager, component, null, deviceOwnerUserId);
+            } catch (IllegalAccessException | InvocationTargetException
+                    | NoSuchMethodException e) {
+                throw new NeneException("Error executing setDeviceOwner", e);
+            }
         }
     }
 

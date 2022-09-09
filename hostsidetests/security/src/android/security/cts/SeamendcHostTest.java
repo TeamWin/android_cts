@@ -98,9 +98,9 @@ public class SeamendcHostTest extends BaseHostJUnit4Test {
         mVendorPolicyCil = getDeviceFile("/vendor/etc/selinux/", "vendor_sepolicy.cil");
         mPlatPubVersionedCil = getDeviceFile("/vendor/etc/selinux/", "plat_pub_versioned.cil");
         mOdmPolicyCil = getDeviceFile("/odm/etc/selinux/", "odm_sepolicy.cil");
-        mApexSepolicyCil = getApexPolicyFromDevice();
+        mApexSepolicyCil = getApexPolicyFromDevice("apex_sepolicy.cil");
 
-        mApexSepolicyDecompiledCil = copyResToTempFile("/apex_sepolicy-decompiled.cil");
+        mApexSepolicyDecompiledCil = getApexPolicyFromDevice("apex_sepolicy.decompiled.cil");
     }
 
     /**
@@ -128,12 +128,12 @@ public class SeamendcHostTest extends BaseHostJUnit4Test {
         return policyFile;
     }
 
-    private File getApexPolicyFromDevice() throws Exception {
+    private File getApexPolicyFromDevice(String policyName) throws Exception {
         File apexZip = getDeviceFile("/system/etc/selinux/apex/", "SEPolicy.zip");
-        File policyFile = File.createTempFile("apex_sepolicy", ".cil");
+        File policyFile = File.createTempFile(policyName, null);
         policyFile.deleteOnExit();
         try (ZipFile zipFile = new ZipFile(apexZip);
-                InputStream zis = zipFile.getInputStream(zipFile.getEntry("apex_sepolicy.cil"))) {
+                InputStream zis = zipFile.getInputStream(zipFile.getEntry(policyName))) {
             Files.copy(zis, policyFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
         return policyFile;

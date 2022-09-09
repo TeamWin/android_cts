@@ -42,11 +42,13 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.Manifest;
 import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Process;
@@ -83,7 +85,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
-import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeCommand;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
@@ -647,8 +648,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @Test
     public void testMultiWindowFocusHandleOnDifferentUiThread() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        try (CloseOnce session = CloseOnce.of(SystemUtil.runWithShellPermissionIdentity(
-                () -> new ServiceSession(instrumentation.getContext())));
+        try (CloseOnce session = CloseOnce.of(new ServiceSession(instrumentation));
              MockImeSession imeSession = createTestImeSession()) {
             final ImeEventStream stream = imeSession.openEventStream();
             final AtomicBoolean popupTextHasWindowFocus = new AtomicBoolean(false);
@@ -768,8 +768,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     public void testOnCheckIsTextEditorRunOnUIThread() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         final CountDownLatch uiThreadSignal = new CountDownLatch(1);
-        try (CloseOnce session = CloseOnce.of(SystemUtil.runWithShellPermissionIdentity(
-                ()-> new ServiceSession(instrumentation.getContext())))) {
+        try (CloseOnce session = CloseOnce.of(new ServiceSession(instrumentation))) {
             final AtomicBoolean popupTextHasWindowFocus = new AtomicBoolean(false);
 
             // Create a popupTextView which from Service with different UI thread and set a
@@ -1002,9 +1001,17 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
     private static class ServiceSession implements ServiceConnection, AutoCloseable {
         private final Context mContext;
+        private final Instrumentation mInstrumentation;
 
-        ServiceSession(Context context) {
-            mContext = context;
+        ServiceSession(Instrumentation instrumentation) {
+            mContext = instrumentation.getContext();
+            mInstrumentation = instrumentation;
+            mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
+                    Manifest.permission.SYSTEM_ALERT_WINDOW);
+            if (mContext.checkSelfPermission(
+                    Manifest.permission.SYSTEM_ALERT_WINDOW) != PackageManager.PERMISSION_GRANTED) {
+                fail("Require SYSTEM_ALERT_WINDOW permission");
+            }
             Intent service = new Intent(mContext, WindowFocusHandleService.class);
             mContext.bindService(service, this, Context.BIND_AUTO_CREATE);
 
@@ -1020,6 +1027,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
         @Override
         public void close() throws Exception {
             mContext.unbindService(this);
+            mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
         }
 
         WindowFocusHandleService getService() {

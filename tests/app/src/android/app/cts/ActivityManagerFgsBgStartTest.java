@@ -2114,6 +2114,8 @@ public class ActivityManagerFgsBgStartTest {
         } finally {
             toggleNotificationListenerAccess(false);
             uidWatcher.finish();
+            //DEFAULT_MEDIA_SESSION_CALLBACK_FGS_WHILE_IN_USE_TEMP_ALLOW_DURATION_MS = 10000ms
+            SystemClock.sleep(10000);
         }
     }
 

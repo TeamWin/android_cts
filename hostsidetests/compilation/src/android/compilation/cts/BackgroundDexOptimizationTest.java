@@ -48,11 +48,11 @@ import java.util.concurrent.TimeoutException;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
     private static final long REBOOT_TIMEOUT_MS = 600_000;
-    private static final long JOB_START_TIMEOUT_MS = 10_000;
+    private static final long JOB_START_TIMEOUT_MS = 30_000;
     private static final long DEXOPT_TIMEOUT_MS = 1_200_000;
     // Cancel should be faster. It will be usually much shorter but we cannot make it too short
     // as CTS cannot enforce unspecified performance.
-    private static final long DEXOPT_CANCEL_TIMEOUT_MS = 10_000;
+    private static final long DEXOPT_CANCEL_TIMEOUT_MS = 30_000;
     private static final long POLLING_TIME_SLICE = 200;
 
     private static final String CMD_DUMP_PACKAGE_DEXOPT = "dumpsys -t 100 package dexopt";
@@ -69,7 +69,7 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
 
     private static final String CMD_DELETE_ODEX = "pm delete-dexopt " + APPLICATION_PACKAGE;
 
-    private static final boolean DBG_LOG_CMD = false;
+    private static final boolean DBG_LOG_CMD = true;
 
     // Uses internal consts defined in BackgroundDexOptService only for testing purpose.
     private static final int STATUS_OK = 0;
@@ -85,6 +85,18 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
         assertThat(mDevice.waitForBootComplete(REBOOT_TIMEOUT_MS)).isTrue();
         // Turn off the display to simulate the idle state in terms of power consumption.
         toggleScreenOn(false);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        // Restore the display state. CTS runs display on state by default. So we need to turn it
+        // on again.
+        toggleScreenOn(true);
+        // Cancel all active dexopt jobs.
+        executeShellCommand(CMD_CANCEL_IDLE);
+        executeShellCommand(CMD_CANCEL_POST_BOOT);
+        mDevice.uninstallPackage(APPLICATION_PACKAGE);
+        CLog.i("Last status:" + getLastStatusDump());
     }
 
     @Test
@@ -174,17 +186,6 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
 
         int status = getLastDexOptStatus();
         assertThat(status).isAnyOf(STATUS_OK, STATUS_DEX_OPT_FAILED);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        // Restore the display state. CTS runs display on state by default. So we need to turn it
-        // on again.
-        toggleScreenOn(true);
-        // Cancel all active dexopt jobs.
-        executeShellCommand(CMD_CANCEL_IDLE);
-        executeShellCommand(CMD_CANCEL_POST_BOOT);
-        mDevice.uninstallPackage(APPLICATION_PACKAGE);
     }
 
     /**
@@ -301,7 +302,23 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
         return new LastDeviceExecutionTime(startTime, duration, deviceCurrentTime);
     }
 
-    private static void pollingCheck(CharSequence message, long timeout,
+    private String getLastStatusDump() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n--LastStatus--\n");
+        try {
+            sb.append(getLastExecutionTime());
+            sb.append("\n");
+            sb.append("Last DexOpt Status:");
+            sb.append(getLastDexOptStatus());
+            sb.append("\n");
+        } catch (Exception e) {
+            sb.append("\nGetting status failed:" + e);
+        }
+
+        return sb.toString();
+    }
+
+    private void pollingCheck(CharSequence message, long timeout,
             Callable<Boolean> condition) throws Exception {
         long expirationTime = System.currentTimeMillis() + timeout;
         while (System.currentTimeMillis() < expirationTime) {
@@ -315,7 +332,7 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
             Thread.sleep(POLLING_TIME_SLICE);
         }
 
-        fail(message.toString());
+        fail(message.toString() + getLastStatusDump());
     }
 
     private void ensurePostBootOptimizationCompleted() throws Exception {
@@ -333,6 +350,12 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
             this.startTime = startTime;
             this.duration = duration;
             this.deviceCurrentTime = deviceCurrentTime;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("LastExecution{startTime=%d, duration=%d, deviceTime=%d}",
+                    startTime, duration, deviceCurrentTime);
         }
     }
 }
