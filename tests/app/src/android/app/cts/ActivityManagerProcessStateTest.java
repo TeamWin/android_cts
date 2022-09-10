@@ -17,8 +17,9 @@
 package android.app.cts;
 
 import static android.app.ActivityManager.PROCESS_CAPABILITY_ALL;
-import static android.app.ActivityManager.PROCESS_CAPABILITY_ALL_IMPLICIT;
+import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_CAMERA;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_LOCATION;
+import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_MICROPHONE;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_NETWORK;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_NONE;
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED;
@@ -1485,6 +1486,7 @@ public class ActivityManagerProcessStateTest {
 
             // Start the second heavy-weight app, should ask us what to do with the two apps
             startActivityAndWaitForShow(activity2Intent);
+            SystemClock.sleep(2000); // b/240942465 quick workaround, WM should continue debug.
 
             // First, let's try returning to the original app.
             maybeClick(device, new UiSelector().resourceId("android:id/switch_old"));
@@ -1502,6 +1504,7 @@ public class ActivityManagerProcessStateTest {
 
             // Again try starting second heavy-weight app to get prompt.
             startActivityAndWaitForShow(activity2Intent);
+            SystemClock.sleep(2000); // b/240942465 quick workaround, WM should continue debug.
 
             // Now we'll switch to the new app.
             maybeClick(device, new UiSelector().resourceId("android:id/switch_new"));
@@ -1528,6 +1531,7 @@ public class ActivityManagerProcessStateTest {
 
             // Try starting the first heavy weight app, but return to the existing second.
             startActivityAndWaitForShow(activity1Intent);
+            SystemClock.sleep(2000); // b/240942465 quick workaround, WM should continue debug.
             maybeClick(device, new UiSelector().resourceId("android:id/switch_old"));
             waitForAppFocus(CANT_SAVE_STATE_2_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();
@@ -1541,6 +1545,7 @@ public class ActivityManagerProcessStateTest {
 
             // Again start the first heavy weight app, this time actually switching to it
             startActivityAndWaitForShow(activity1Intent);
+            SystemClock.sleep(2000); // b/240942465 quick workaround, WM should continue debug.
             maybeClick(device, new UiSelector().resourceId("android:id/switch_new"));
             waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();
@@ -1828,8 +1833,7 @@ public class ActivityManagerProcessStateTest {
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
             mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_TOP,
-                    new Integer(PROCESS_CAPABILITY_FOREGROUND_LOCATION
-                            | PROCESS_CAPABILITY_ALL));
+                    new Integer(PROCESS_CAPABILITY_ALL));
 
             // Start a FGS
             CommandReceiver.sendCommand(mContext,
@@ -1848,11 +1852,14 @@ public class ActivityManagerProcessStateTest {
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_STOP_ACTIVITY,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
-
+            // LocalForegroundServiceLocation's forergroundServiceType
+            // has location|camemra|microphone.
             mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NETWORK | PROCESS_CAPABILITY_FOREGROUND_LOCATION
-                            | PROCESS_CAPABILITY_ALL_IMPLICIT));
+                    new Integer(PROCESS_CAPABILITY_FOREGROUND_LOCATION
+                            | PROCESS_CAPABILITY_FOREGROUND_CAMERA
+                            | PROCESS_CAPABILITY_FOREGROUND_MICROPHONE
+                            | PROCESS_CAPABILITY_NETWORK));
 
             // Bind App 0 -> App 1, verify doesn't include capability.
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_BIND_SERVICE,
@@ -1860,7 +1867,7 @@ public class ActivityManagerProcessStateTest {
             // Verify app1 does NOT have capability.
             mWatchers[1].waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_ALL_IMPLICIT | PROCESS_CAPABILITY_NETWORK));
+                    new Integer(PROCESS_CAPABILITY_NETWORK));
 
             // Bind App 0 -> App 2, include capability.
             bundle = new Bundle();
@@ -1870,17 +1877,22 @@ public class ActivityManagerProcessStateTest {
             // Verify app2 has FOREGROUND_LOCATION capability.
             mWatchers[2].waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_FOREGROUND_LOCATION | PROCESS_CAPABILITY_NETWORK
-                            | PROCESS_CAPABILITY_ALL_IMPLICIT));
+                    new Integer(PROCESS_CAPABILITY_FOREGROUND_LOCATION
+                            | PROCESS_CAPABILITY_FOREGROUND_CAMERA
+                            | PROCESS_CAPABILITY_FOREGROUND_MICROPHONE
+                            | PROCESS_CAPABILITY_NETWORK));
 
             // Back down to foreground service
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE_LOCATION,
                     mAppInfo[0].packageName, mAppInfo[0].packageName, 0, null);
             // Verify app0 does NOT have FOREGROUND_LOCATION capability.
+            // LocalForegroundService's forergroundServiceType has camemra|microphone.
             mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_ALL_IMPLICIT | PROCESS_CAPABILITY_NETWORK));
+                    new Integer(PROCESS_CAPABILITY_FOREGROUND_CAMERA
+                            | PROCESS_CAPABILITY_FOREGROUND_MICROPHONE
+                            | PROCESS_CAPABILITY_NETWORK));
 
             // Remove foreground service as well
             CommandReceiver.sendCommand(mContext,
@@ -2385,6 +2397,64 @@ public class ActivityManagerProcessStateTest {
             });
             uid1Watcher.finish();
             monitor.finish();
+        }
+    }
+
+    /**
+     * Test that process in foreground service state does not get an implicit capability except
+     * network.
+     * @throws Exception
+     */
+    @Test
+    public void testFgsDefaultCapabilityNone() throws Exception {
+        setupWatchers(2);
+
+        try {
+            // Put Package1 in TOP state.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_TOP,
+                    new Integer(PROCESS_CAPABILITY_ALL));
+
+            // Start a FGS from TOP state.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    mAppInfo[0].packageName, mAppInfo[0].packageName, 0, null);
+
+            // Stop the activity.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            // LocalForegroundService's forergroundServiceType has camemra|microphone.
+            mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_FG_SERVICE,
+                    new Integer(PROCESS_CAPABILITY_FOREGROUND_CAMERA
+                            | PROCESS_CAPABILITY_FOREGROUND_MICROPHONE
+                            | PROCESS_CAPABILITY_NETWORK));
+
+            // Bind App 0 -> App 1.
+            CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_BIND_SERVICE,
+                    mAppInfo[0].packageName, mAppInfo[1].packageName, 0, null);
+            // App1 is in foreground service state, app1 does NOT have implicit capability
+            // except network.
+            mWatchers[1].waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_FG_SERVICE,
+                    new Integer(PROCESS_CAPABILITY_NETWORK));
+
+            // Stop App 0's foreground service.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    mAppInfo[0].packageName, mAppInfo[0].packageName, 0, null);
+            mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_CACHED_EMPTY,
+                    new Integer(PROCESS_CAPABILITY_NONE));
+        } finally {
+            // Clean up: unbind services to avoid from interferences with other tests
+            CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
+                    mAppInfo[0].packageName, mAppInfo[1].packageName, 0, null);
+            shutdownWatchers();
         }
     }
 

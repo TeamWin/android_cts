@@ -605,7 +605,19 @@ public class UsageStatsTest {
         events = mUsageStatsManager.queryAndAggregateUsageStats(
                 startTime, endTime);
         stats = events.get(mTargetPackage);
-        assertEquals(startingCount + 2, stats.getAppLaunchCount());
+
+        // generally applicable to single screen devices
+        int expectedUsageStatsIncrement = 2;
+        // devices that handle Apps in a multi windowing mode are unlikely to behave as defined by
+        // the single screen expectations; For example, Launcher may always be visible;
+        // consequently, the expected lifecycle will not be triggered, thus resulting in improper
+        // UsageStats values as expected for a single screen environment
+        if (Activities.startedActivities.size() > 0 &&
+                Activities.startedActivities.valueAt(0).isInMultiWindowMode()) {
+            expectedUsageStatsIncrement = 1;
+        }
+
+        assertEquals(startingCount + expectedUsageStatsIncrement, stats.getAppLaunchCount());
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")

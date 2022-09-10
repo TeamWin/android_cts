@@ -60,7 +60,7 @@ public class MediaMetadataTest {
 
         assertThat(metadata.containsKey(MediaMetadata.METADATA_KEY_TITLE)).isTrue();
         CharSequence titleOut = metadata.getText(MediaMetadata.METADATA_KEY_TITLE);
-        assertThat(TextUtils.equals(testTitle, titleOut)).isTrue();
+        assertThat(titleOut).isEqualTo(testTitle);
     }
 
     @Test
@@ -72,7 +72,7 @@ public class MediaMetadataTest {
 
         assertThat(metadata.containsKey(MediaMetadata.METADATA_KEY_TITLE)).isTrue();
         String titleOut = metadata.getString(MediaMetadata.METADATA_KEY_TITLE);
-        assertThat(TextUtils.equals(testTitle, titleOut)).isTrue();
+        assertThat(titleOut).isEqualTo(testTitle);
     }
 
     @Test
@@ -248,10 +248,10 @@ public class MediaMetadataTest {
                 .build();
 
         MediaDescription mediaDescription = metadata.getDescription();
-        assertThat(TextUtils.equals(testMediaId, mediaDescription.getMediaId())).isTrue();
-        assertThat(TextUtils.equals(testTitle, mediaDescription.getTitle())).isTrue();
-        assertThat(TextUtils.equals(testSubtitle, mediaDescription.getSubtitle())).isTrue();
-        assertThat(TextUtils.equals(testDescription, mediaDescription.getDescription())).isTrue();
+        assertThat(mediaDescription.getMediaId()).isEqualTo(testMediaId);
+        assertThat(mediaDescription.getTitle()).isEqualTo(testTitle);
+        assertThat(mediaDescription.getSubtitle()).isEqualTo(testSubtitle);
+        assertThat(mediaDescription.getDescription()).isEqualTo(testDescription);
         assertThat(mediaDescription.getIconBitmap()).isNotNull();
         assertThat(
                 TextUtils.equals(testMediaUri, mediaDescription.getMediaUri().toString())).isTrue();

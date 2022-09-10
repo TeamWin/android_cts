@@ -19,7 +19,6 @@ import android.media.MediaDescription;
 import android.media.browse.MediaBrowser.MediaItem;
 import android.media.cts.NonMediaMainlineTest;
 import android.os.Parcel;
-import android.text.TextUtils;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -53,7 +52,7 @@ public class MediaItemTest {
         assertThat(mediaItem.isBrowsable()).isTrue();
         assertThat(mediaItem.isPlayable()).isFalse();
         assertThat(mediaItem.describeContents()).isEqualTo(CONTENT_DESCRIPTION);
-        assertThat(TextUtils.isEmpty(mediaItem.toString())).isFalse();
+        assertThat(mediaItem.toString()).isNotEmpty();
 
         // Test writeToParcel
         Parcel p = Parcel.obtain();
@@ -83,7 +82,7 @@ public class MediaItemTest {
         assertThat(mediaItem.isBrowsable()).isFalse();
         assertThat(mediaItem.isPlayable()).isTrue();
         assertThat(mediaItem.describeContents()).isEqualTo(CONTENT_DESCRIPTION);
-        assertThat(TextUtils.isEmpty(mediaItem.toString())).isFalse();
+        assertThat(mediaItem.toString()).isNotEmpty();
 
         // Test writeToParcel
         Parcel p = Parcel.obtain();

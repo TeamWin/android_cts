@@ -90,12 +90,6 @@ public class SurfaceViewTests extends ActivityTestBase {
         a.start();
         return a;
     }
-    private final Screenshotter mScreenshotter = testPositionInfo -> {
-        Bitmap source = getInstrumentation().getUiAutomation().takeScreenshot();
-        return Bitmap.createBitmap(source,
-                testPositionInfo.screenOffset.x, testPositionInfo.screenOffset.y,
-                TEST_WIDTH, TEST_HEIGHT);
-    };
 
     @FlakyTest(bugId = 244426304)
     @Test
@@ -118,9 +112,15 @@ public class SurfaceViewTests extends ActivityTestBase {
                 mAnimator.cancel();
             }
         };
+        Screenshotter screenshotter = testPositionInfo -> {
+            Bitmap source = getInstrumentation().getUiAutomation().takeScreenshot();
+            return Bitmap.createBitmap(source,
+                    testPositionInfo.screenOffset.x, testPositionInfo.screenOffset.y,
+                    TEST_WIDTH, TEST_HEIGHT);
+        };
         createTest()
                 .addLayout(R.layout.frame_layout, initializer, true)
-                .withScreenshotter(mScreenshotter)
+                .withScreenshotter(screenshotter)
                 .runWithAnimationVerifier(new ColorVerifier(Color.WHITE, 0 /* zero tolerance */));
     }
 
@@ -214,46 +214,5 @@ public class SurfaceViewTests extends ActivityTestBase {
                 .withScreenshotter(helper)
                 .runWithVerifier(new ColorVerifier(Color.GREEN, 0 /* zero tolerance */));
 
-    }
-
-    @Test
-    public void surfaceViewBlendZAbove() {
-        SurfaceViewHelper helper = new SurfaceViewHelper((canvas, width, height) -> {
-            Assert.assertNotNull(canvas);
-            Assert.assertTrue(canvas.isHardwareAccelerated());
-            canvas.drawColor(Color.BLACK);
-        }
-        ) {
-            @Override
-            public void onSurfaceViewCreated(SurfaceView surfaceView) {
-                surfaceView.setAlpha(0.25f);
-                surfaceView.setZOrderOnTop(true);
-            }
-        };
-        createTest()
-                .addLayout(R.layout.frame_layout, helper, true, helper.getFence())
-                .withScreenshotter(mScreenshotter)
-                .runWithVerifier(new ColorVerifier(
-                        Color.rgb(191, 191, 191), 1 /* blending tolerance */));
-    }
-
-    @Test
-    public void surfaceViewBlendZBelow() {
-        SurfaceViewHelper helper = new SurfaceViewHelper((canvas, width, height) -> {
-            Assert.assertNotNull(canvas);
-            Assert.assertTrue(canvas.isHardwareAccelerated());
-            canvas.drawColor(Color.BLACK);
-        }
-        ) {
-            @Override
-            public void onSurfaceViewCreated(SurfaceView surfaceView) {
-                surfaceView.setAlpha(0.25f);
-            }
-        };
-        createTest()
-                .addLayout(R.layout.frame_layout, helper, true, helper.getFence())
-                .withScreenshotter(mScreenshotter)
-                .runWithVerifier(new ColorVerifier(
-                        Color.rgb(191, 191, 191), 1 /* blending tolerance */));
     }
 }

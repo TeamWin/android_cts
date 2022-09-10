@@ -260,9 +260,7 @@ public class MediaSession2Test {
             assertThat(sessionCallback.awaitOnDisconnect(WAIT_TIME_MS)).isTrue();
 
             List<MediaSession2.ControllerInfo> controllers = session.getConnectedControllers();
-            for (MediaSession2.ControllerInfo controllerInfo : controllers) {
-                assertThat(controllerInfo).isNotEqualTo(sessionCallback.mController);
-            }
+            assertThat(controllers).doesNotContain(sessionCallback.mController);
         }
     }
 

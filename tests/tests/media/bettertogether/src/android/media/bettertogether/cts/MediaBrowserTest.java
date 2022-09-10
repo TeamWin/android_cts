@@ -32,11 +32,14 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
 
+import com.google.common.truth.Correspondence;
+
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -64,6 +67,17 @@ public class MediaBrowserTest {
             "android.media.bettertogether.cts.StubMediaBrowserService");
     private static final ComponentName TEST_INVALID_BROWSER_SERVICE = new ComponentName(
             "invalid.package", "invalid.ServiceClassName");
+
+    private static final Correspondence<MediaBrowser.MediaItem, String>
+            MEDIA_ITEM_HAS_ID =
+            Correspondence.from((MediaBrowser.MediaItem actual, String expected) -> {
+                if (actual == null) {
+                    return expected == null;
+                }
+
+                return actual.getMediaId().equals(expected);
+            }, "has an ID of");
+
     private final StubConnectionCallback mConnectionCallback = new StubConnectionCallback();
     private final StubSubscriptionCallback mSubscriptionCallback = new StubSubscriptionCallback();
     private final StubItemCallback mItemCallback = new StubItemCallback();
@@ -255,10 +269,11 @@ public class MediaBrowserTest {
                 .isEqualTo(StubMediaBrowserService.MEDIA_ID_ROOT);
         assertThat(mSubscriptionCallback.mLastChildMediaItems)
                 .hasSize(StubMediaBrowserService.MEDIA_ID_CHILDREN.length);
-        for (int i = 0; i < StubMediaBrowserService.MEDIA_ID_CHILDREN.length; ++i) {
-            assertThat(mSubscriptionCallback.mLastChildMediaItems.get(i).getMediaId())
-                    .isEqualTo(StubMediaBrowserService.MEDIA_ID_CHILDREN[i]);
-        }
+
+        assertThat(mSubscriptionCallback.mLastChildMediaItems)
+                .comparingElementsUsing(MEDIA_ITEM_HAS_ID)
+                .containsExactlyElementsIn(StubMediaBrowserService.MEDIA_ID_CHILDREN)
+                .inOrder();
 
         // Test unsubscribe.
         resetCallbacks();
@@ -333,11 +348,18 @@ public class MediaBrowserTest {
                         .hasSize((StubMediaBrowserService.MEDIA_ID_CHILDREN.length - 1)
                                 % pageSize + 1);
             }
+
+            final int lastChildMediaItemsCount = mSubscriptionCallback.mLastChildMediaItems.size();
+
+            final String[] expectedMediaIds = getMediaIdsCurrentPage(
+                    StubMediaBrowserService.MEDIA_ID_CHILDREN,
+                    page, pageSize, lastChildMediaItemsCount);
+
             // Check whether all the items in the current page are loaded.
-            for (int i = 0; i < mSubscriptionCallback.mLastChildMediaItems.size(); ++i) {
-                assertThat(mSubscriptionCallback.mLastChildMediaItems.get(i).getMediaId())
-                        .isEqualTo(StubMediaBrowserService.MEDIA_ID_CHILDREN[page * pageSize + i]);
-            }
+            assertThat(mSubscriptionCallback.mLastChildMediaItems)
+                    .comparingElementsUsing(MEDIA_ITEM_HAS_ID)
+                    .containsExactlyElementsIn(expectedMediaIds)
+                    .inOrder();
         }
 
         // Test unsubscribe with callback argument.
@@ -697,6 +719,12 @@ public class MediaBrowserTest {
         if (t != null) {
             throw t;
         }
+    }
+
+    private static String[] getMediaIdsCurrentPage(
+            String[] mediaIds, int pageIndex, int pageSize, int itemsCount) {
+        final int pageOffset = pageIndex * pageSize;
+        return Arrays.copyOfRange(mediaIds, pageOffset, pageOffset + itemsCount);
     }
 
     private static class StubConnectionCallback extends MediaBrowser.ConnectionCallback {

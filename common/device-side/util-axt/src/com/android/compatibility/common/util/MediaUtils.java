@@ -1533,6 +1533,32 @@ public class MediaUtils {
         return false;
     }
 
+    /**
+     *  Function to identify if the device is a cuttlefish instance
+     */
+    public static boolean onCuttlefish() throws IOException {
+        String systemBrand = PropertyUtil.getProperty("ro.product.system.brand");
+        String systemModel = PropertyUtil.getProperty("ro.product.system.model");
+        String systemProduct = PropertyUtil.getProperty("ro.product.system.name");
+
+        // not all devices may have system_ext partition, but if they do use that
+        String systemExtProduct = PropertyUtil.getProperty("ro.product.system_ext.name");
+        if (systemExtProduct != null) {
+            systemProduct = systemExtProduct;
+        }
+        String systemExtModel = PropertyUtil.getProperty("ro.product.system_ext.model");
+        if (systemExtModel != null) {
+            systemModel = systemExtModel;
+        }
+        // Return true for cuttlefish instances
+        if ((systemBrand.equals("Android") || systemBrand.equals("google"))
+                && (systemProduct.startsWith("cf_") || systemProduct.startsWith("aosp_cf_")
+                    || systemModel.startsWith("Cuttlefish "))) {
+            return true;
+        }
+        return false;
+    }
+
     /*
      *  -------------------------------------- END --------------------------------------
      */

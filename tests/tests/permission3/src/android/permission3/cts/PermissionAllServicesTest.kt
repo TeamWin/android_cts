@@ -170,7 +170,7 @@ class PermissionAllServicesTest : BasePermissionTest() {
         const val LOCATION_PROVIDER_APP_PACKAGE_NAME_2 =
             "android.permission3.cts.applocationproviderwithsummary"
         const val APP_LABEL = "LocationProviderWithSummaryApp"
-        const val ALL_SERVICES_LABEL = "All Services"
+        const val ALL_SERVICES_LABEL = "All services"
         const val SUMMARY = "Services summary."
     }
 }
