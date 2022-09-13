@@ -44,17 +44,17 @@ public abstract class BaseKillswitchTest extends AbstractApiTest {
     private final static Predicate<DexMember> FIELD_FILTER =
             dexMember -> (dexMember instanceof DexField);
 
-    @Test
+    @Test(timeout = 900000)
     public void testKillswitchMechanismMethodsThroughReflection() {
         doTestKillswitchMechanism(METHOD_FILTER, /* reflection= */ true, /* jni= */ false);
     }
 
-    @Test
+    @Test(timeout = 900000)
     public void testKillswitchMechanismMethodsThroughJni() {
         doTestKillswitchMechanism(METHOD_FILTER, /* reflection= */ false, /* jni= */ true);
     }
 
-    @Test
+    @Test(timeout = 900000)
     public void testKillswitchMechanismFieldsThroughReflection() {
         doTestKillswitchMechanism(FIELD_FILTER, /* reflection= */ true, /* jni= */ false);
     }

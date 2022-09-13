@@ -28,10 +28,6 @@
         <activity android:name="android.media.cts.MediaProjectionActivity"
             android:label="MediaProjectionActivity"
             android:screenOrientation="locked"/>
-        <activity android:name="android.media.cts.AudioManagerStub"
-            android:label="AudioManagerStub"/>
-        <activity android:name="android.media.cts.AudioManagerStubHelper"
-            android:label="AudioManagerStubHelper"/>
 
         <activity android:name="android.media.cts.MediaStubActivity"
             android:label="MediaStubActivity"

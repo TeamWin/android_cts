@@ -17,13 +17,30 @@
 package android.server.wm;
 
 import static android.server.wm.app.Components.UI_SCALING_TEST_ACTIVITY;
+import static android.server.wm.app.Components.UiScalingTestActivity.COMMAND_ADD_SUBVIEW;
+import static android.server.wm.app.Components.UiScalingTestActivity.COMMAND_CLEAR_DEFAULT_VIEW;
+import static android.server.wm.app.Components.UiScalingTestActivity.COMMAND_GET_RESOURCES_CONFIG;
+import static android.server.wm.app.Components.UiScalingTestActivity.COMMAND_GET_SUBVIEW_SIZE;
+import static android.server.wm.app.Components.UiScalingTestActivity.COMMAND_UPDATE_RESOURCES_CONFIG;
+import static android.server.wm.app.Components.UiScalingTestActivity.KEY_COMMAND_SUCCESS;
+import static android.server.wm.app.Components.UiScalingTestActivity.KEY_RESOURCES_CONFIG;
+import static android.server.wm.app.Components.UiScalingTestActivity.KEY_SUBVIEW_ID;
+import static android.server.wm.app.Components.UiScalingTestActivity.KEY_TEXT_SIZE;
+import static android.server.wm.app.Components.UiScalingTestActivity.KEY_VIEW_SIZE;
+import static android.server.wm.app.Components.UiScalingTestActivity.SUBVIEW_ID1;
+import static android.server.wm.app.Components.UiScalingTestActivity.SUBVIEW_ID2;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.ComponentName;
+import android.content.res.Configuration;
+import android.graphics.Rect;
+import android.os.Bundle;
+import android.os.LocaleList;
 
 import org.junit.After;
 import org.junit.Before;
@@ -82,6 +99,7 @@ public class CompatScaleTests extends ActivityManagerTestBase {
     private final float mInvCompatScale;
     private CommandSession.SizeInfo mAppSizesNormal;
     private CommandSession.SizeInfo mAppSizesDownscaled;
+    private CommandSession.ActivitySession mActivity;
     private WindowManagerState.WindowState mWindowStateNormal;
     private WindowManagerState.WindowState mWindowStateDownscaled;
 
@@ -107,6 +125,33 @@ public class CompatScaleTests extends ActivityManagerTestBase {
         launchActivity();
         mAppSizesDownscaled = getActivityReportedSizes();
         mWindowStateDownscaled = getPackageWindowState();
+    }
+
+    @Test
+    public void testUpdateResourcesConfiguration() {
+        mActivity.sendCommandAndWaitReply(COMMAND_CLEAR_DEFAULT_VIEW);
+        addSubview(mActivity, SUBVIEW_ID1);
+        Bundle subviewSize1 = getSubViewSize(mActivity, SUBVIEW_ID1);
+        assertNotEquals(subviewSize1.getParcelable(KEY_TEXT_SIZE, Rect.class), new Rect());
+        assertNotEquals(subviewSize1.getParcelable(KEY_VIEW_SIZE, Rect.class), new Rect());
+        assertTrue(subviewSize1.getBoolean(KEY_COMMAND_SUCCESS));
+        Configuration config = mActivity.sendCommandAndWaitReply(
+                COMMAND_GET_RESOURCES_CONFIG).getParcelable(KEY_RESOURCES_CONFIG,
+                Configuration.class);
+        config.setLocales(LocaleList.forLanguageTags("en-US,en-XC"));
+        Bundle data = new Bundle();
+        data.putParcelable(KEY_RESOURCES_CONFIG, config);
+        assertTrue("Failed to update resources configuration",
+                mActivity.sendCommandAndWaitReply(COMMAND_UPDATE_RESOURCES_CONFIG, data).getBoolean(
+                        KEY_COMMAND_SUCCESS));
+
+        addSubview(mActivity, SUBVIEW_ID2);
+        Bundle subviewSize2 = getSubViewSize(mActivity, SUBVIEW_ID2);
+        assertTrue(subviewSize2.getBoolean(KEY_COMMAND_SUCCESS));
+        assertEquals(subviewSize1.getParcelable(KEY_TEXT_SIZE, Rect.class),
+                subviewSize2.getParcelable(KEY_TEXT_SIZE, Rect.class));
+        assertEquals(subviewSize1.getParcelable(KEY_VIEW_SIZE, Rect.class),
+                subviewSize2.getParcelable(KEY_VIEW_SIZE, Rect.class));
     }
 
     /**
@@ -221,7 +266,8 @@ public class CompatScaleTests extends ActivityManagerTestBase {
     }
 
     private void launchActivity() {
-        launchActivityInNewTask(ACTIVITY_UNDER_TEST);
+        mActivity = createManagedActivityClientSession().startActivity(
+                getLaunchActivityBuilder().setTargetActivity(ACTIVITY_UNDER_TEST));
         mWmState.computeState(new WaitForValidActivityState(ACTIVITY_UNDER_TEST));
     }
 
@@ -234,6 +280,19 @@ public class CompatScaleTests extends ActivityManagerTestBase {
 
     private WindowManagerState.WindowState getPackageWindowState() {
         return getPackageWindowState(PACKAGE_UNDER_TEST);
+    }
+
+    private void addSubview(CommandSession.ActivitySession activity, String subviewId) {
+        Bundle data = new Bundle();
+        data.putString(KEY_SUBVIEW_ID, subviewId);
+        Bundle res = activity.sendCommandAndWaitReply(COMMAND_ADD_SUBVIEW, data);
+        assertTrue("Failed to add subview " + subviewId, res.getBoolean(KEY_COMMAND_SUCCESS));
+    }
+
+    private Bundle getSubViewSize(CommandSession.ActivitySession activity, String subviewId) {
+        Bundle data = new Bundle();
+        data.putString(KEY_SUBVIEW_ID, subviewId);
+        return activity.sendCommandAndWaitReply(COMMAND_GET_SUBVIEW_SIZE, data);
     }
 
     private static void enableDownscaling(String compatChangeName) {

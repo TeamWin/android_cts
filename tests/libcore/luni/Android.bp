@@ -36,7 +36,10 @@ android_test {
     dex_preopt: {
         enabled: false,
     },
-    dxflags: ["--multi-dex"],
+    dxflags: [
+        "--android-platform-build",
+        "--multi-dex",
+    ],
     optimize: {
         enabled: false,
     },

@@ -21,14 +21,13 @@ import subprocess
 import sys
 import tempfile
 import time
-import yaml
 
-import capture_request_utils
 import camera_properties_utils
+import capture_request_utils
 import image_processing_utils
 import its_session_utils
-
 import numpy as np
+import yaml
 
 YAML_FILE_DIR = os.environ['CAMERA_ITS_TOP']
 CONFIG_FILE = os.path.join(YAML_FILE_DIR, 'config.yml')
@@ -45,6 +44,7 @@ RESULT_KEY = 'result'
 METRICS_KEY = 'mpc_metrics'
 SUMMARY_KEY = 'summary'
 RESULT_VALUES = {RESULT_PASS, RESULT_FAIL, RESULT_NOT_EXECUTED}
+CTS_VERIFIER_PACKAGE_NAME = 'com.android.cts.verifier'
 ITS_TEST_ACTIVITY = 'com.android.cts.verifier/.camera.its.ItsTestActivity'
 ACTION_ITS_RESULT = 'com.android.cts.verifier.camera.its.ACTION_ITS_RESULT'
 EXTRA_VERSION = 'camera.its.extra.VERSION'
@@ -150,6 +150,17 @@ def run(cmd):
   """Replaces os.system call, while hiding stdout+stderr messages."""
   with open(os.devnull, 'wb') as devnull:
     subprocess.check_call(cmd.split(), stdout=devnull, stderr=subprocess.STDOUT)
+
+
+def check_cts_apk_installed(device_id):
+  """Verifies that CtsVerifer.apk is installed on a given device."""
+  verify_cts_cmd = f'adb -s {device_id} shell pm list packages | grep {CTS_VERIFIER_PACKAGE_NAME}'
+  raw_output = subprocess.check_output(verify_cts_cmd, shell=True)
+  output = str(raw_output.decode('utf-8')).strip()
+  if CTS_VERIFIER_PACKAGE_NAME not in output:
+    raise AssertionError(
+        f"{CTS_VERIFIER_PACKAGE_NAME} was not found in {device_id}'s list of packages!"
+    )
 
 
 def report_result(device_id, camera_id, results):
@@ -390,6 +401,9 @@ def main():
   # Enable external storage on DUT to send summary report to CtsVerifier.apk
   enable_external_storage(device_id)
 
+  # Verify that CTS Verifier is installed
+  check_cts_apk_installed(device_id)
+
   config_file_test_key = config_file_contents['TestBeds'][0]['Name'].lower()
   if TEST_KEY_TABLET in config_file_test_key:
     tablet_id = get_device_serial_number('tablet', config_file_contents)
@@ -589,7 +603,9 @@ def main():
             os.remove(MOBLY_TEST_SUMMARY_TXT_FILE)
         logging.info('%s %s/%s', return_string, s, test)
         test_name = test.split('/')[-1].split('.')[0]
-        results[s]['TEST_STATUS'].append({'test':test_name,'status':return_string.strip()})
+        results[s]['TEST_STATUS'].append({
+            'test': test_name,
+            'status': return_string.strip()})
         if test_mpc_req:
           results[s][METRICS_KEY].append(test_mpc_req)
         msg_short = '%s %s' % (return_string, test)

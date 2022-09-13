@@ -46,6 +46,7 @@ import static org.mockito.Mockito.when;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
+import android.app.UiAutomation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -7287,6 +7288,17 @@ public class TextViewTest {
     }
 
     @Test
+    public void testSendAccessibilityContentChangeTypeInvalid() throws Throwable {
+        initTextViewForTypingOnUiThread();
+        UiAutomation uiAutomation = mInstrumentation.getUiAutomation();
+        uiAutomation.executeAndWaitForEvent(
+                () -> mInstrumentation.runOnMainSync(() -> mTextView.setError("error")),
+                event -> isExpectedChangeType(event,
+                        AccessibilityEvent.CONTENT_CHANGE_TYPE_INVALID),
+                TIMEOUT);
+    }
+
+    @Test
     public void testClickableSpanOnClickDragOutside() throws Throwable {
         ClickableSpanTestDetails spanDetails = prepareAndRetrieveClickableSpanDetails();
         final int[] viewOnScreenXY = new int[2];
@@ -9027,6 +9039,10 @@ public class TextViewTest {
 
         textView.measure(wMeasureSpec, hMeasureSpec);
         assertEquals(measuredWidth, textView.getMeasuredWidth());
+    }
+
+    private static boolean isExpectedChangeType(AccessibilityEvent event, int changeType) {
+        return (event.getContentChangeTypes() & changeType) == changeType;
     }
 
     private void initializeTextForSmartSelection(CharSequence text) throws Throwable {

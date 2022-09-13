@@ -710,6 +710,27 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_KEEP_CLEAR_RECTS = "keep_clear_rects";
     }
 
+    /**
+     * Extra constants for {@link android.server.wm.app.UiScalingTestActivity}.
+     */
+    public static class UiScalingTestActivity {
+        public static final String SUBVIEW_ID1 = "compat_scale_subview1";
+        public static final String SUBVIEW_ID2 = "compat_scale_subview2";
+
+        public static final String KEY_COMMAND_SUCCESS = "success";
+        public static final String KEY_RESOURCES_CONFIG = "resources_config";
+        public static final String KEY_SUBVIEW_ID = "subview_id";
+        public static final String KEY_TEXT_SIZE = "text_size";
+        public static final String KEY_VIEW_SIZE = "view_size";
+
+        public static final String COMMAND_ADD_SUBVIEW = "add_subview";
+        public static final String COMMAND_CLEAR_DEFAULT_VIEW = "clear_default_view";
+        public static final String COMMAND_GET_SUBVIEW_SIZE = "get_subview_size";
+
+        public static final String COMMAND_GET_RESOURCES_CONFIG = "get_resources_config";
+        public static final String COMMAND_UPDATE_RESOURCES_CONFIG = "update_resources_config";
+    }
+
     private static ComponentName component(String className) {
         return component(Components.class, className);
     }

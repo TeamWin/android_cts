@@ -380,6 +380,49 @@ public final class UserManagerTest {
         }
     }
 
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#createProfile"})
+    public void testAddCloneProfile_shouldSendProfileAddedBroadcast() {
+        assumeTrue(mUserManager.supportsMultipleUsers());
+        BlockingBroadcastReceiver broadcastReceiver = sDeviceState
+                .registerBroadcastReceiver(Intent.ACTION_PROFILE_ADDED, /* checker= */null);
+        UserHandle userHandle = null;
+        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
+            try {
+                userHandle = mUserManager.createProfile("Clone profile",
+                        USER_TYPE_PROFILE_CLONE, new HashSet<>());
+                assumeNotNull(userHandle);
+                broadcastReceiver.awaitForBroadcastOrFail();
+            } catch (UserManager.UserOperationException e) {
+                assumeNoException("Couldn't create clone profile", e);
+            } finally {
+                removeUser(userHandle);
+            }
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#createProfile"})
+    @RequireFeature(FEATURE_MANAGED_USERS)
+    public void testCreateManagedProfile_shouldSendProfileAddedBroadcast() {
+        BlockingBroadcastReceiver broadcastReceiver = sDeviceState
+                .registerBroadcastReceiver(Intent.ACTION_PROFILE_ADDED, /* checker= */null);
+        UserHandle userHandle = null;
+        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
+            try {
+                userHandle = mUserManager.createProfile("Managed profile",
+                        USER_TYPE_PROFILE_MANAGED, new HashSet<>());
+                assumeNotNull(userHandle);
+                broadcastReceiver.awaitForBroadcastOrFail();
+            } catch (UserManager.UserOperationException e) {
+                assumeNoException("Couldn't create managed profile", e);
+            } finally {
+                removeUser(userHandle);
+            }
+        }
+    }
+
     @Test
     @ApiTest(apis = {"android.os.UserManager#createProfile"})
     public void testRemoveCloneProfile_shouldSendProfileRemovedBroadcast() {
@@ -396,7 +439,6 @@ public final class UserManagerTest {
                 );
                 assumeNotNull(userHandle);
                 removeUser(userHandle);
-                assumeNotNull(broadcastReceiver);
                 broadcastReceiver.awaitForBroadcastOrFail();
             } catch (UserManager.UserOperationException e) {
                 assumeNoException("Couldn't create clone profile", e);
@@ -420,7 +462,6 @@ public final class UserManagerTest {
                         );
                 assumeNotNull(userHandle);
                 removeUser(userHandle);
-                assumeNotNull(broadcastReceiver);
                 broadcastReceiver.awaitForBroadcastOrFail();
             } catch (UserManager.UserOperationException e) {
                 assumeNoException("Couldn't create managed profile", e);

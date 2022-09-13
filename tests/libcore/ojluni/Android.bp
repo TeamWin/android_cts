@@ -27,7 +27,10 @@ android_test {
         "libcore-expectations-knownfailures-jar",
     ],
     libs: ["testng"],
-    dxflags: ["--core-library"],
+    dxflags: [
+        "--core-library",
+        "--android-platform-build",
+    ],
     dex_preopt: {
         enabled: false,
     },
