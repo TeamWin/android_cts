@@ -70,7 +70,7 @@ import java.util.List;
 
 /**
  * Tests for user-related APIs that are only available on devices that
- * {@link UserManager#isUsersOnSecondaryDisplaysSupported() support background users running on
+ * {@link UserManager#isUsersOnSecondaryDisplaysEnabled() support background users running on
  * secondary displays} (such as cars with passenger displays).
  *
  */

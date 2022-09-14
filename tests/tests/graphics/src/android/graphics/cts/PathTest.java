@@ -641,7 +641,7 @@ public class PathTest {
         assertTrue(startPath.isInterpolatable(endPath));
 
         startPath.interpolate(endPath, .5f, interpolatedPath);
-        PathIterator iterator = interpolatedPath.iterator();
+        PathIterator iterator = interpolatedPath.getPathIterator();
         float[] points = new float[8];
         int verb = iterator.next(points, 0);
         assertEquals(PathIterator.VERB_MOVE, verb);

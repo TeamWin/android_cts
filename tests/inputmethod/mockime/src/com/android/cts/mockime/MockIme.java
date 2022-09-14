@@ -21,6 +21,8 @@ import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
 import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_DELETE;
 import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_INSERT;
+import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_JOIN_OR_SPLIT;
+import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_REMOVE_SPACE;
 import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_SELECT;
 
 import android.content.BroadcastReceiver;
@@ -73,6 +75,8 @@ import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethod;
 import android.view.inputmethod.InputMethodSubtype;
 import android.view.inputmethod.InsertGesture;
+import android.view.inputmethod.JoinOrSplitGesture;
+import android.view.inputmethod.RemoveSpaceGesture;
 import android.view.inputmethod.SelectGesture;
 import android.view.inputmethod.TextAttribute;
 import android.widget.FrameLayout;
@@ -389,6 +393,12 @@ public final class MockIme extends InputMethodService {
                                 break;
                             case GESTURE_TYPE_DELETE:
                                 clazz = DeleteGesture.class;
+                                break;
+                            case GESTURE_TYPE_REMOVE_SPACE:
+                                clazz = RemoveSpaceGesture.class;
+                                break;
+                            case GESTURE_TYPE_JOIN_OR_SPLIT:
+                                clazz = JoinOrSplitGesture.class;
                                 break;
                         }
                         HandwritingGesture gesture =

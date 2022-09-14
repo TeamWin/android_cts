@@ -470,8 +470,11 @@ public class ChoreographerTest {
 
         Choreographer.FrameData frameData = captor.getValue();
         long frameInterval = NOMINAL_VSYNC_PERIOD * 1000000;
-        assertTrue("Expected frame time updated to be later", frameData.getFrameTimeNanos()
+        assertTrue("Frame time should be later", frameData.getFrameTimeNanos()
                 > postTimeNanos + sleepTimeMs * 1000000 - frameInterval);
+        assertTrue("Deadline should be after frame time",
+                frameData.getPreferredFrameTimeline().getDeadlineNanos()
+                        > frameData.getFrameTimeNanos());
     }
 
     @Test(expected = IllegalArgumentException.class)

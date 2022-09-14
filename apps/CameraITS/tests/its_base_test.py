@@ -14,6 +14,7 @@
 
 
 import logging
+import os
 import time
 
 import its_session_utils
@@ -32,6 +33,12 @@ WAIT_TIME_SEC = 5
 SCROLLER_TIMEOUT_MS = 3000
 VALID_NUM_DEVICES = (1, 2)
 NOT_YET_MANDATED_ALL = 100
+DEFAULT_TABLET_BRIGHTNESS = 192
+LEGACY_TABLET_BRIGHTNESS = 96
+LEGACY_TABLET_NAME = 'dragon'
+TABLET_REQUIREMENTS_URL = 'https://source.android.com/docs/compatibility/cts/camera-its-box#tablet-requirements'
+BRIGHTNESS_ERROR = ('Tablet brightness not set as per '
+                    f'{TABLET_REQUIREMENTS_URL} in the config file')
 
 # Not yet mandated tests ['test', first_api_level not yet mandatory]
 # ie. ['test_test_patterns', 30] is MANDATED for first_api_level > 30
@@ -102,6 +109,17 @@ class ItsBaseTest(base_test.BaseTestClass):
       try:
         self.tablet = devices[1]
         self.tablet_screen_brightness = self.user_params['brightness']
+        tablet_name_unencoded = self.tablet.adb.shell(
+            ['getprop', 'ro.build.product']
+        )
+        tablet_name = str(tablet_name_unencoded.decode('utf-8')).strip()
+        logging.debug('tablet name: %s', tablet_name)
+        if tablet_name != LEGACY_TABLET_NAME:
+          if self.tablet_screen_brightness != DEFAULT_TABLET_BRIGHTNESS:
+            raise AssertionError(BRIGHTNESS_ERROR)
+        else:
+          if self.tablet_screen_brightness != LEGACY_TABLET_BRIGHTNESS:
+            raise AssertionError(BRIGHTNESS_ERROR)
       except KeyError:
         logging.debug('Not all tablet arguments set.')
     else:  # sensor_fusion or manual run
@@ -246,4 +264,13 @@ class ItsBaseTest(base_test.BaseTestClass):
         logging.debug('%s is not yet mandated.', self.current_test_info.name)
         asserts.fail('Not yet mandated test', extras='Not yet mandated test')
 
-
+  def teardown_class(self):
+    # edit root_output_path and summary_writer path
+    # to add test name to output directory
+    logging.debug('summary_writer._path: %s', self.summary_writer._path)
+    logging.debug('root_output_path: %s', self.root_output_path)
+    summary_head, summary_tail = os.path.split(self.summary_writer._path)
+    self.summary_writer._path = os.path.join(
+        f'{summary_head}_{self.__class__.__name__}', summary_tail)
+    os.rename(self.root_output_path,
+              f'{self.root_output_path}_{self.__class__.__name__}')

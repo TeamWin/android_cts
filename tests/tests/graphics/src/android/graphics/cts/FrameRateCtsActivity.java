@@ -1014,8 +1014,6 @@ public class FrameRateCtsActivity extends Activity {
 
                 // Clear the frame-rate
                 surface.clearFrameRate();
-                // Wait for potential mode switches
-                waitForStableFrameRate(surface);
                 verifyCompatibleAndStableFrameRate(initialRefreshRate,
                         FRAME_RATE_TOLERANCE_RELAXED, surface);
                 break;

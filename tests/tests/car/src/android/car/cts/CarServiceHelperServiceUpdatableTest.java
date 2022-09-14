@@ -17,12 +17,17 @@
 package android.car.cts;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
+import static org.hamcrest.CoreMatchers.containsStringIgnoringCase;
+import static org.junit.Assume.assumeThat;
 
 import android.app.UiAutomation;
 import android.car.Car;
+import android.car.annotation.ApiRequirements;
 import android.car.test.ApiCheckerRule;
+import android.car.test.ApiCheckerRule.IgnoreInvalidApi;
 import android.car.test.ApiCheckerRule.SupportedVersionTest;
 import android.car.test.ApiCheckerRule.UnsupportedVersionTest;
 import android.car.test.ApiCheckerRule.UnsupportedVersionTest.Behavior;
@@ -70,6 +75,49 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     public void setUp() throws Exception {
         super.setUp();
         SystemUtil.runShellCommand("logcat -b all -c");
+    }
+
+    @Test
+    @ApiTest(apis = {"com.android.internal.car.CarServiceHelperService#dump(PrintWriter,String[])"})
+    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
+    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
+            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
+    public void testCarServiceHelperServiceDump() throws Exception {
+        assumeSystemServerDumpSupported();
+
+        assertWithMessage("System server dumper")
+                .that(executeShellCommand("dumpsys system_server_dumper --list"))
+                .contains("CarServiceHelper");
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
+    })
+    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
+    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
+            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
+    public void testCarServiceHelperServiceDump_carServiceProxy() throws Exception {
+        assumeSystemServerDumpSupported();
+
+        assertWithMessage("CarServiceHelperService dump")
+                .that(executeShellCommand("dumpsys system_server_dumper --name CarServiceHelper"))
+                .contains("CarServiceProxy");
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
+    })
+    @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
+    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
+            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
+    public void testCarServiceHelperServiceDump_serviceStacks() throws Exception {
+        assumeSystemServerDumpSupported();
+
+        assertWithMessage("CarServiceHelperService dump")
+                .that(dumpCarServiceHelper("--dump-service-stacks"))
+                .contains("dumpServiceStacks ANR file path=/data/anr/anr_");
     }
 
     @Test
@@ -144,6 +192,12 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
             supportedVersionTest = "testSendUserLifecycleEventAndOnUserRemoved_supportedVersion")
     public void testSendUserLifecycleEventAndOnUserRemoved_unsupportedVersion() throws Exception {
         testSendUserLifecycleEventAndOnUserRemoved(/*onSupportedVersion=*/ false);
+    }
+
+    private static void assumeSystemServerDumpSupported() throws IOException {
+        assumeThat("System_server_dumper not implemented.",
+                executeShellCommand("service check system_server_dumper"),
+                containsStringIgnoringCase("system_server_dumper: found"));
     }
 
     private void testSendUserLifecycleEventAndOnUserRemoved(boolean onSupportedVersion)
@@ -230,6 +284,15 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
             fail("match '" + match + "' was not found, IO exception: " + e);
         }
 
+    }
+
+    private String dumpCarServiceHelper(String...args) throws IOException {
+        StringBuilder cmd = new StringBuilder(
+                "dumpsys system_server_dumper --name CarServiceHelper");
+        for (String arg : args) {
+            cmd.append(' ').append(arg);
+        }
+        return executeShellCommand(cmd.toString());
     }
 
     // TODO(214100537): Improve listener by removing sleep.

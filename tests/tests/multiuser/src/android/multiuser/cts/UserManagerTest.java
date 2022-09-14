@@ -204,6 +204,42 @@ public final class UserManagerTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.os.UserManager#isUserRunning"})
+    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
+    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
+    // TODO(b/239961027): should be @EnsureHasProfile instead of @EnsureHasWorkProfile
+    @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
+    @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call isUserRunning() on other context
+    public void testIsUserRunning_stoppedProfileOfCurrentUser() {
+        UserReference profile = sDeviceState.workProfile();
+        Log.d(TAG, "Stopping profile " + profile + " (called from " + sContext.getUser() + ")");
+        profile.stop();
+
+        Context context = getContextForUser(profile.userHandle().getIdentifier());
+        UserManager um = context.getSystemService(UserManager.class);
+
+        assertWithMessage("isUserRunning() for stopped profile (id=%s) of current user",
+                profile.id()).that(um.isUserRunning(profile.userHandle()))
+                .isFalse();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#isUserRunning"})
+    @RequireRunOnSecondaryUser(switchedToUser = FALSE)
+    @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call isUserRunning() on other context
+    public void testIsUserRunning_stoppedSecondaryUser() {
+        UserReference user = TestApis.users().instrumented();
+        Log.d(TAG, "Stopping  user " + user + " (called from " + sContext.getUser() + ")");
+        user.stop();
+
+        Context context = getContextForUser(user.userHandle().getIdentifier());
+        UserManager um = context.getSystemService(UserManager.class);
+
+        assertWithMessage("isUserRunning() for stopped secondary user (id=%s)",
+                user.id()).that(um.isUserRunning(user.userHandle())).isFalse();
+    }
+
+    @Test
     @ApiTest(apis = {"android.os.UserManager#isUserVisible"})
     @EnsureDoesNotHavePermission(INTERACT_ACROSS_USERS)
     public void testIsUserVisible_differentContext_noPermission() throws Exception {

@@ -45,6 +45,7 @@ class ReadWriteTest(its_base_test.ItsBaseTest):
       camera_properties_utils.skip_unless(
           camera_properties_utils.manual_sensor(props) and
           camera_properties_utils.per_frame_control(props))
+      vendor_api_level = its_session_utils.get_vendor_api_level(self.dut.serial)
 
       valid_formats = ['yuv', 'jpg']
       if camera_properties_utils.raw16(props):
@@ -95,8 +96,9 @@ class ReadWriteTest(its_base_test.ItsBaseTest):
           data[index_list[i]] = (fmt, exposure_read, sensitivity_read)
 
       # check read/write match across all shots
-      e_failed = []
-      s_failed = []
+      e_failed = []  # exposure time FAILs
+      s_failed = []  # sensitivity FAILs
+      r_failed = []  # sensitivity range FAILs
       for fmt_write in valid_formats:
         for e_write in exp_range:
           for s_write in sens_range:
@@ -111,6 +113,15 @@ class ReadWriteTest(its_base_test.ItsBaseTest):
               })
             if (s_write < s_read or s_read / float(s_write) <= RTOL_EXP_GAIN):
               s_failed.append({
+                  'format': fmt_read,
+                  'e_write': e_write,
+                  'e_read': e_read,
+                  's_write': s_write,
+                  's_read': s_read
+              })
+            if (vendor_api_level >= its_session_utils.ANDROID14_API_LEVEL and
+                s_read < sens_range[0]):
+              r_failed.append({
                   'format': fmt_read,
                   'e_write': e_write,
                   'e_read': e_read,
@@ -135,12 +146,22 @@ class ReadWriteTest(its_base_test.ItsBaseTest):
                           RTOL_EXP_GAIN)
             logging.debug('e_write: %d, e_read: %d, RTOL: %.2f',
                           fail['e_write'], fail['e_read'], RTOL_EXP_GAIN)
+        if r_failed:
+          logging.debug('FAILs for sensitivity(ISO) range')
+          for fail in r_failed:
+            logging.debug('format: %s, s_write: %d, s_read: %d, RTOL: %.2f, ',
+                          fail['format'], fail['s_write'], fail['s_read'],
+                          RTOL_EXP_GAIN)
+            logging.debug('e_write: %d, e_read: %d, RTOL: %.2f',
+                          fail['e_write'], fail['e_read'], RTOL_EXP_GAIN)
 
         # PASS/FAIL
         if e_failed:
           raise AssertionError(f'Exposure fails: {e_failed}')
         if s_failed:
           raise AssertionError(f'Sensitivity fails: {s_failed}')
+        if r_failed:
+          raise AssertionError(f'Sensitivity range FAILs: {r_failed}')
 
 
 if __name__ == '__main__':

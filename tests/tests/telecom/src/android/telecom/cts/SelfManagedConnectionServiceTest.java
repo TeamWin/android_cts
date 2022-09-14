@@ -511,6 +511,175 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
     }
 
     /**
+     * verify TelecomManager#acceptRingingCall does not change the state of a self-managed call from
+     * ringing to active. In short, TelecomManager#acceptRingingCall should not change the state
+     * of any self-manged connection.
+     *
+     * @throws Exception; should not throw exception
+     */
+    @ApiTest(apis = {"android.telecom.TelecomManager#acceptRingingCall"})
+    public void testAcceptRingingCallOnSingleSelfManagedCall() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        SelfManagedConnection selfManagedConnection = null;
+
+        try {
+            // verify handle can receive incoming self-manged call on the handle
+            assertIsIncomingCallPermitted(true, TestUtils.TEST_SELF_MANAGED_HANDLE_2);
+
+            // start new incoming self-managed call
+            TestUtils.addIncomingCall(getInstrumentation(), mTelecomManager,
+                    TestUtils.TEST_SELF_MANAGED_HANDLE_2, TEST_ADDRESS_2);
+            selfManagedConnection = TestUtils.waitForAndGetConnection(TEST_ADDRESS_2);
+
+            // verify the incoming self-managed call is ringing
+            TestUtils.waitOnAllHandlers(getInstrumentation());
+            assertEquals(Call.STATE_RINGING, selfManagedConnection.getState());
+
+            // try to accept it but the expectation is Telecom will not answer the ringing call
+            mTelecomManager.acceptRingingCall();
+
+            // assert there was no change in the ongoing call
+            TestUtils.waitOnAllHandlers(getInstrumentation());
+            assertEquals(Call.STATE_RINGING, selfManagedConnection.getState());
+        } finally {
+            if (selfManagedConnection != null) {
+                selfManagedConnection.disconnectAndDestroy();
+            }
+        }
+    }
+
+
+    /**
+     * verify TelecomManager#acceptRingingCall does not change the state of an active self-managed
+     * call (by holding it) in favor of a new ringing self-managed call that comes in.  In short,
+     * TelecomManager#acceptRingingCall should not change the state of any self-manged connection.
+     *
+     * @throws Exception; should not throw exception
+     */
+    @ApiTest(apis = {"android.telecom.TelecomManager#acceptRingingCall"})
+    public void testAcceptRingingCallOnMultipleSelfManagedCalls() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        SelfManagedConnection outgoing_SM_connection = null;
+        SelfManagedConnection incoming_SM_connection = null;
+
+        try {
+            // verify both handles can place calls
+            assertIsOutgoingCallPermitted(true, TestUtils.TEST_SELF_MANAGED_HANDLE_1);
+            assertIsIncomingCallPermitted(true, TestUtils.TEST_SELF_MANAGED_HANDLE_2);
+
+            // create an outgoing self-managed call
+            outgoing_SM_connection = placeSelfManagedCallAndGetConnection(
+                    TEST_SELF_MANAGED_HANDLE_1, TEST_ADDRESS_1);
+            assertEquals(outgoing_SM_connection.getState(), Call.STATE_ACTIVE);
+
+            // start new incoming call
+            TestUtils.addIncomingCall(getInstrumentation(), mTelecomManager,
+                    TestUtils.TEST_SELF_MANAGED_HANDLE_2, TEST_ADDRESS_2);
+            incoming_SM_connection = TestUtils.waitForAndGetConnection(TEST_ADDRESS_2);
+
+            // verify the incoming self-managed call is ringing
+            TestUtils.waitOnAllHandlers(getInstrumentation());
+            assertEquals(Call.STATE_RINGING, incoming_SM_connection.getState());
+
+            // try to accept it but the expectation is Telecom will not answer the ringing call
+            mTelecomManager.acceptRingingCall();
+
+            // assert there was no change in the 2 ongoing calls
+            TestUtils.waitOnAllHandlers(getInstrumentation());
+            assertEquals(Call.STATE_RINGING, incoming_SM_connection.getState());
+            assertEquals(Call.STATE_ACTIVE, outgoing_SM_connection.getState());
+        } finally {
+            if (outgoing_SM_connection != null) {
+                outgoing_SM_connection.disconnectAndDestroy();
+            }
+            if (incoming_SM_connection != null) {
+                incoming_SM_connection.disconnectAndDestroy();
+            }
+        }
+    }
+
+    /**
+     * Verify TelecomManager#endCall cannot end an active self-managed call.
+     *
+     * @throws Exception; should not throw exception
+     */
+    @ApiTest(apis = {"android.telecom.TelecomManager#endCall"})
+    public void testEndCallOnSelfManagedCallOnActiveCall() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        SelfManagedConnection selfManagedConnection = null;
+
+        try {
+            // start a self-managed call
+            assertIsOutgoingCallPermitted(true, TestUtils.TEST_SELF_MANAGED_HANDLE_1);
+            selfManagedConnection =
+                    placeSelfManagedCallAndGetConnection(TEST_SELF_MANAGED_HANDLE_1,
+                            TEST_ADDRESS_1);
+
+            // set the self-managed call active and verify
+            setActiveAndVerify(selfManagedConnection);
+
+            // try to end it but the expectation is Telecom cannot end the self-managed call
+            assertFalse(mTelecomManager.endCall());
+            TestUtils.waitOnAllHandlers(getInstrumentation());
+            assertEquals(Call.STATE_ACTIVE, selfManagedConnection.getState());
+
+        } finally {
+            if (selfManagedConnection != null) {
+                // disconnect call
+                selfManagedConnection.disconnectAndDestroy();
+            }
+        }
+    }
+
+    /**
+     * Verify TelecomManager#endCall cannot end a ringing self-managed call.
+     *
+     * @throws Exception; should not throw exception
+     */
+    @ApiTest(apis = {"android.telecom.TelecomManager#endCall"})
+    public void testEndCallOnSelfManagedCallOnRingingCall() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        SelfManagedConnection selfManagedConnection = null;
+
+        try {
+            // start a self-managed call
+            assertIsIncomingCallPermitted(true, TestUtils.TEST_SELF_MANAGED_HANDLE_1);
+            TestUtils.addIncomingCall(getInstrumentation(), mTelecomManager,
+                    TestUtils.TEST_SELF_MANAGED_HANDLE_1, TEST_ADDRESS_1);
+            selfManagedConnection = TestUtils.waitForAndGetConnection(TEST_ADDRESS_1);
+
+            // verify the self-managed call is ringing
+            TestUtils.waitOnAllHandlers(getInstrumentation());
+            assertEquals(selfManagedConnection.getState(), Call.STATE_RINGING);
+
+            // try to end it but the expectation is Telecom cannot end the self-managed call
+            assertFalse(mTelecomManager.endCall());
+
+            // verify the self-managed call is still ringing
+            TestUtils.waitOnAllHandlers(getInstrumentation());
+            assertEquals(Call.STATE_RINGING, selfManagedConnection.getState());
+
+        } finally {
+            if (selfManagedConnection != null) {
+                // disconnect call
+                selfManagedConnection.disconnectAndDestroy();
+            }
+        }
+    }
+
+    /**
      * Tests ability to change the audio route via the
      * {@link android.telecom.Connection#setAudioRoute(int)} API.
      */
@@ -663,8 +832,6 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         // GIVEN a self-managed call which state is ringing
         TestUtils.addIncomingCall(getInstrumentation(), mTelecomManager,
                 TestUtils.TEST_SELF_MANAGED_HANDLE_1, TEST_ADDRESS_1);
-        SelfManagedConnection connection = TestUtils.waitForAndGetConnection(TEST_ADDRESS_1);
-        connection.setRinging();
 
         assertIsIncomingCallPermitted(false, TestUtils.TEST_SELF_MANAGED_HANDLE_1);
         // WHEN create a new incoming call for the the same PhoneAccount

@@ -1102,86 +1102,6 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testSetNearbyNotificationStreamingPolicy_failIfNotDeviceOrProfileOwner()
-            throws Exception {
-        if (!mDeviceAdmin) {
-            String message =
-                    "Skipping"
-                        + " testSetNearbyNotificationStreamingPolicy_failIfNotDeviceOrProfileOwner";
-            Log.w(TAG, message);
-            return;
-        }
-        try {
-            tryClearProfileOwner();
-            assertThrows(
-                    SecurityException.class,
-                    () ->
-                            mDevicePolicyManager.setNearbyNotificationStreamingPolicy(
-                                    DevicePolicyManager.NEARBY_STREAMING_ENABLED));
-        } finally {
-            setProfileOwnerAndWaitForSuccess(
-                    DeviceAdminInfoTest.getProfileOwnerComponent().flattenToString());
-        }
-    }
-
-    public void testGetNearbyNotificationStreamingPolicy_failIfNotDeviceOrProfileOwner()
-            throws Exception {
-        if (!mDeviceAdmin) {
-            String message =
-                    "Skipping"
-                        + " testGetNearbyNotificationStreamingPolicy_failIfNotDeviceOrProfileOwner";
-            Log.w(TAG, message);
-            return;
-        }
-        try {
-            tryClearProfileOwner();
-            assertThrows(
-                    SecurityException.class,
-                    () -> mDevicePolicyManager.getNearbyNotificationStreamingPolicy());
-        } finally {
-            setProfileOwnerAndWaitForSuccess(
-                    DeviceAdminInfoTest.getProfileOwnerComponent().flattenToString());
-        }
-    }
-
-    public void testSetNearbyAppStreamingPolicy_failIfNotDeviceOrProfileOwner() throws Exception {
-        if (!mDeviceAdmin) {
-            String message =
-                    "Skipping testSetNearbyAppStreamingPolicy_failIfNotDeviceOrProfileOwner";
-            Log.w(TAG, message);
-            return;
-        }
-        try {
-            tryClearProfileOwner();
-            assertThrows(
-                    SecurityException.class,
-                    () ->
-                            mDevicePolicyManager.setNearbyAppStreamingPolicy(
-                                    DevicePolicyManager.NEARBY_STREAMING_ENABLED));
-        } finally {
-            setProfileOwnerAndWaitForSuccess(
-                    DeviceAdminInfoTest.getProfileOwnerComponent().flattenToString());
-        }
-    }
-
-    public void testGetNearbyAppStreamingPolicy_failIfNotDeviceOrProfileOwner() throws Exception {
-        if (!mDeviceAdmin) {
-            String message =
-                    "Skipping testGetNearbyAppStreamingPolicy_failIfNotDeviceOrProfileOwner";
-            Log.w(TAG, message);
-            return;
-        }
-        try {
-            tryClearProfileOwner();
-            assertThrows(
-                    SecurityException.class,
-                    () -> mDevicePolicyManager.getNearbyAppStreamingPolicy());
-        } finally {
-            setProfileOwnerAndWaitForSuccess(
-                    DeviceAdminInfoTest.getProfileOwnerComponent().flattenToString());
-        }
-    }
-
     private void setProfileOwnerAndWaitForSuccess(String componentName)
             throws InterruptedException, AdbException {
         ShellCommand.builder("dpm set-profile-owner")
@@ -1189,13 +1109,5 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             .addOperand(componentName)
             .validate(ShellCommandUtils::startsWithSuccess)
             .executeUntilValid();
-    }
-
-    private void tryClearProfileOwner() {
-        try {
-            mDevicePolicyManager.clearProfileOwner(DeviceAdminInfoTest.getProfileOwnerComponent());
-        } catch (SecurityException se) {
-            Log.w(TAG, "Test is not a profile owner and there is no need to clear.");
-        }
     }
 }

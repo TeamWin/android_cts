@@ -57,51 +57,52 @@ public class PathIteratorTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.graphics.Path#iterator"})
+    @ApiTest(apis = {"android.graphics.Path#getPathIterator"})
     public void testIteratorExists() {
-        PathIterator iterator = mPath.iterator();
+        PathIterator iterator = mPath.getPathIterator();
         assertNotNull(iterator);
     }
 
     @Test
-    @ApiTest(apis = {"android.graphics.Path#iterator", "android.graphics.PathIterator#next"})
+    @ApiTest(apis = {"android.graphics.Path#getPathIterator", "android.graphics.PathIterator#next"})
     public void testEmptyPath() {
-        PathIterator iterator = mPath.iterator();
+        PathIterator iterator = mPath.getPathIterator();
         assertEquals("Empty path should have no verbs",
                 PathIterator.VERB_DONE, iterator.next(mPoints, 0));
 
         // Now with next()
-        iterator = mPath.iterator();
+        iterator = mPath.getPathIterator();
         assertEquals("Empty path should have no verbs",
                 PathIterator.VERB_DONE, iterator.next().getVerb());
     }
 
     @Test
-    @ApiTest(apis = {"android.graphics.Path#iterator", "android.graphics.PathIterator#next",
+    @ApiTest(apis = {"android.graphics.Path#getPathIterator", "android.graphics.PathIterator#next",
             "android.graphics.PathIterator.Segment#getVerb"
     })
     public void testMove() {
         mPath.moveTo(100f, 200f);
         PathIterator iterator;
 
-        iterator = mPath.iterator();
+        iterator = mPath.getPathIterator();
         assertEquals(PathIterator.VERB_MOVE, iterator.next(mPoints, 0));
         assertEquals(PathIterator.VERB_DONE, iterator.next(mPoints, 0));
 
         // Now with next()
-        iterator = mPath.iterator();
+        iterator = mPath.getPathIterator();
         assertEquals(PathIterator.VERB_MOVE, iterator.next().getVerb());
         assertEquals(PathIterator.VERB_DONE, iterator.next().getVerb());
     }
 
     @Test
-    @ApiTest(apis = {"android.graphics.Path#iterator", "android.graphics.PathIterator#next",
+    @ApiTest(apis = {"android.graphics.Path#getPathIterator", "android.graphics.PathIterator#next",
             "android.graphics.PathIterator.Segment#getVerb"
     })
     public void testDoneDone() {
         mPath.lineTo(100f, 200f);
         int verbIndex = 0;
-        for (PathIterator.Segment segment : mPath) {
+        for (PathIterator it = mPath.getPathIterator(); it.hasNext(); ) {
+            PathIterator.Segment segment = it.next();
             int verb = segment.getVerb();
             switch (verbIndex) {
                 case 0:
@@ -119,7 +120,7 @@ public class PathIteratorTest {
         }
 
         // Now with next(float[], int)
-        PathIterator iterator = mPath.iterator();
+        PathIterator iterator = mPath.getPathIterator();
         assertEquals(PathIterator.VERB_MOVE, iterator.next(mPoints, 0));
         assertEquals(PathIterator.VERB_LINE, iterator.next(mPoints, 0));
         assertEquals(PathIterator.VERB_DONE, iterator.next(mPoints, 0));
@@ -127,13 +128,13 @@ public class PathIteratorTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.graphics.Path#iterator", "android.graphics.PathIterator#next",
+    @ApiTest(apis = {"android.graphics.Path#getPathIterator", "android.graphics.PathIterator#next",
             "android.graphics.PathIterator.Segment#getVerb"
     })
     public void testPeek() {
         mPath.lineTo(100f, 200f);
         mPath.quadTo(300f, 400f, 500f, 600f);
-        PathIterator iterator = mPath.iterator();
+        PathIterator iterator = mPath.getPathIterator();
         assertEquals(PathIterator.VERB_MOVE, iterator.peek());
         // Calling peek() again should not change the next operation
         assertEquals(PathIterator.VERB_MOVE, iterator.peek());
@@ -144,7 +145,7 @@ public class PathIteratorTest {
         assertEquals(PathIterator.VERB_DONE, iterator.peek());
 
         // Now with next()
-        iterator = mPath.iterator();
+        iterator = mPath.getPathIterator();
         assertEquals(PathIterator.VERB_MOVE, iterator.peek());
         // Calling peek() again should not change the next operation
         assertEquals(PathIterator.VERB_MOVE, iterator.peek());
@@ -156,13 +157,13 @@ public class PathIteratorTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.graphics.Path#iterator", "android.graphics.PathIterator#next",
+    @ApiTest(apis = {"android.graphics.Path#getPathIterator", "android.graphics.PathIterator#next",
             "android.graphics.PathIterator.Segment#getVerb",
             "android.graphics.PathIterator.Segment#getPoints"
     })
     public void testLine() {
         mPath.lineTo(100f, 200f);
-        PathIterator iterator = mPath.iterator();
+        PathIterator iterator = mPath.getPathIterator();
         assertEquals(PathIterator.VERB_MOVE, iterator.next(mPoints, 0));
         assertEquals(PathIterator.VERB_LINE, iterator.next(mPoints, 0));
         assertEquals(0f, mPoints[0], 0f);
@@ -172,7 +173,7 @@ public class PathIteratorTest {
         assertEquals(PathIterator.VERB_DONE, iterator.next(mPoints, 0));
 
         // Now with next()
-        iterator = mPath.iterator();
+        iterator = mPath.getPathIterator();
         PathIterator.Segment segment;
         segment = iterator.next();
         assertEquals(PathIterator.VERB_MOVE, segment.getVerb());
@@ -188,7 +189,7 @@ public class PathIteratorTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.graphics.Path#iterator", "android.graphics.PathIterator#next",
+    @ApiTest(apis = {"android.graphics.Path#getPathIterator", "android.graphics.PathIterator#next",
             "android.graphics.PathIterator.Segment#getVerb",
             "android.graphics.PathIterator.Segment#getPoints",
             "android.graphics.PathIterator.Segment#getConicWeight",
@@ -197,7 +198,8 @@ public class PathIteratorTest {
         mPath.lineTo(100f, 200f);
         mPath.conicTo(300f, 400f, 500f, 600f, 2f);
         int verbIndex = 0;
-        for (PathIterator.Segment segment : mPath) {
+        for (PathIterator it = mPath.getPathIterator(); it.hasNext(); ) {
+            PathIterator.Segment segment = it.next();
             int verb = segment.getVerb();
             float[] points = segment.getPoints();
             float weight = segment.getConicWeight();
@@ -232,14 +234,14 @@ public class PathIteratorTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.graphics.Path#iterator", "android.graphics.PathIterator#next",
+    @ApiTest(apis = {"android.graphics.Path#getPathIterator", "android.graphics.PathIterator#next",
             "android.graphics.PathIterator.Segment#getVerb",
             "android.graphics.PathIterator.Segment#getPoints",
     })
     public void testQuad() {
         mPath.quadTo(100f, 200f, 300f, 400f);
         PathIterator iterator;
-        iterator = mPath.iterator();
+        iterator = mPath.getPathIterator();
         assertEquals(PathIterator.VERB_MOVE, iterator.next(mPoints, 0));
         assertEquals(PathIterator.VERB_QUAD, iterator.next(mPoints, 0));
         assertEquals(0f, mPoints[0], 0f);
@@ -251,7 +253,7 @@ public class PathIteratorTest {
         assertEquals(PathIterator.VERB_DONE, iterator.next(mPoints, 0));
 
         // Now with next()
-        iterator = mPath.iterator();
+        iterator = mPath.getPathIterator();
         assertEquals(PathIterator.VERB_MOVE, iterator.next().getVerb());
         PathIterator.Segment segment = iterator.next();
         assertEquals(PathIterator.VERB_QUAD, segment.getVerb());
@@ -266,7 +268,7 @@ public class PathIteratorTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.graphics.Path#iterator", "android.graphics.PathIterator#next",
+    @ApiTest(apis = {"android.graphics.Path#getPathIterator", "android.graphics.PathIterator#next",
             "android.graphics.PathIterator.Segment#getVerb",
             "android.graphics.PathIterator.Segment#getPoints",
             "android.graphics.PathIterator.Segment#getConicWeight",
@@ -274,7 +276,7 @@ public class PathIteratorTest {
     public void testConic() {
         mPath.conicTo(100f, 200f, 300f, 400f, 2f);
         PathIterator iterator;
-        iterator = mPath.iterator();
+        iterator = mPath.getPathIterator();
         assertEquals(PathIterator.VERB_MOVE, iterator.next(mPoints, 0));
         assertEquals(PathIterator.VERB_CONIC, iterator.next(mPoints, 0));
         assertEquals(0f, mPoints[0], 0f);
@@ -287,7 +289,7 @@ public class PathIteratorTest {
         assertEquals(PathIterator.VERB_DONE, iterator.next(mPoints, 0));
 
         // Now with next()
-        iterator = mPath.iterator();
+        iterator = mPath.getPathIterator();
         assertEquals(PathIterator.VERB_MOVE, iterator.next().getVerb());
         PathIterator.Segment segment = iterator.next();
         assertEquals(PathIterator.VERB_CONIC, segment.getVerb());
@@ -303,14 +305,14 @@ public class PathIteratorTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.graphics.Path#iterator", "android.graphics.PathIterator#next",
+    @ApiTest(apis = {"android.graphics.Path#getPathIterator", "android.graphics.PathIterator#next",
             "android.graphics.PathIterator.Segment#getVerb",
             "android.graphics.PathIterator.Segment#getPoints",
     })
     public void testCubic() {
         mPath.cubicTo(100f, 200f, 300f, 400f, 500f, 600f);
         PathIterator iterator;
-        iterator = mPath.iterator();
+        iterator = mPath.getPathIterator();
         assertEquals(PathIterator.VERB_MOVE, iterator.next(mPoints, 0));
         assertEquals(PathIterator.VERB_CUBIC, iterator.next(mPoints, 0));
         assertEquals(0f, mPoints[0], 0f);
@@ -324,7 +326,7 @@ public class PathIteratorTest {
         assertEquals(PathIterator.VERB_DONE, iterator.next(mPoints, 0));
 
         // Now with next()
-        iterator = mPath.iterator();
+        iterator = mPath.getPathIterator();
         assertEquals(PathIterator.VERB_MOVE, iterator.next().getVerb());
         PathIterator.Segment segment = iterator.next();
         assertEquals(PathIterator.VERB_CUBIC, segment.getVerb());
@@ -341,21 +343,21 @@ public class PathIteratorTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.graphics.Path#iterator", "android.graphics.PathIterator#next",
+    @ApiTest(apis = {"android.graphics.Path#getPathIterator", "android.graphics.PathIterator#next",
             "android.graphics.PathIterator.Segment#getVerb",
     })
     public void testClose() {
         mPath.quadTo(100f, 200f, 300f, 400f);
         mPath.close();
         PathIterator iterator;
-        iterator = mPath.iterator();
+        iterator = mPath.getPathIterator();
         assertEquals(PathIterator.VERB_MOVE, iterator.next(mPoints, 0));
         assertEquals(PathIterator.VERB_QUAD, iterator.next(mPoints, 0));
         assertEquals(PathIterator.VERB_CLOSE, iterator.next(mPoints, 0));
         assertEquals(PathIterator.VERB_DONE, iterator.next(mPoints, 0));
 
         // Now with next()
-        iterator = mPath.iterator();
+        iterator = mPath.getPathIterator();
         assertEquals(PathIterator.VERB_MOVE, iterator.next().getVerb());
         assertEquals(PathIterator.VERB_QUAD, iterator.next().getVerb());
         assertEquals(PathIterator.VERB_CLOSE, iterator.next().getVerb());
@@ -363,32 +365,32 @@ public class PathIteratorTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.graphics.Path#iterator", "android.graphics.PathIterator#next"})
+    @ApiTest(apis = {"android.graphics.Path#getPathIterator", "android.graphics.PathIterator#next"})
     public void testPathModification() {
         mPath.lineTo(100f, 200f);
-        final PathIterator iterator = mPath.iterator();
+        final PathIterator iterator = mPath.getPathIterator();
         mPath.lineTo(300f, 400);
         assertThrows(ConcurrentModificationException.class, () -> iterator.next(mPoints, 0));
 
-        final PathIterator iterator1 = mPath.iterator();
+        final PathIterator iterator1 = mPath.getPathIterator();
         mPath.reset();
         assertThrows(ConcurrentModificationException.class, () -> iterator1.next(mPoints, 0));
 
         // Now with next()
-        final PathIterator iterator2 = mPath.iterator();
+        final PathIterator iterator2 = mPath.getPathIterator();
         mPath.lineTo(300f, 400);
         assertThrows(ConcurrentModificationException.class, iterator2::next);
 
-        final PathIterator iterator3 = mPath.iterator();
+        final PathIterator iterator3 = mPath.getPathIterator();
         mPath.reset();
         assertThrows(ConcurrentModificationException.class, iterator3::next);
     }
 
     @Test
-    @ApiTest(apis = {"android.graphics.Path#iterator", "android.graphics.PathIterator#next"})
+    @ApiTest(apis = {"android.graphics.Path#getPathIterator", "android.graphics.PathIterator#next"})
     public void testPointsArray() {
         mPath.lineTo(100f, 200f);
-        PathIterator iterator = mPath.iterator();
+        PathIterator iterator = mPath.getPathIterator();
         for (int i = 0; i < 8; ++i) {
             float[] smallArray = new float[i];
             assertThrows("Points array of size " + i + " too small",
@@ -403,12 +405,12 @@ public class PathIteratorTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.graphics.Path#iterator", "android.graphics.PathIterator#next"})
+    @ApiTest(apis = {"android.graphics.Path#getPathIterator", "android.graphics.PathIterator#next"})
     public void testPointsArrayOffset() {
         float[] pointsArray = new float[16];
         mPath.lineTo(100f, 200f);
         for (int offset = 0; offset < 8; ++offset) {
-            PathIterator iterator = mPath.iterator();
+            PathIterator iterator = mPath.getPathIterator();
             assertEquals(PathIterator.VERB_MOVE, iterator.next(pointsArray, offset));
             assertEquals(PathIterator.VERB_LINE, iterator.next(pointsArray, offset));
             assertEquals(0f, pointsArray[offset + 0], 0f);
@@ -420,7 +422,7 @@ public class PathIteratorTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.graphics.Path#iterator", "android.graphics.PathIterator#next",
+    @ApiTest(apis = {"android.graphics.Path#getPathIterator", "android.graphics.PathIterator#next",
             "android.graphics.PathIterator.Segment#getVerb",
             "android.graphics.PathIterator.Segment#getPoints",
             "android.graphics.PathIterator.Segment#getConicWeight",
@@ -432,7 +434,7 @@ public class PathIteratorTest {
         mPath.cubicTo(700f, 800f, 900f, 1000f, 1100f, 1200f);
         mPath.conicTo(1f, 2f, 3f, 4f, 2f);
         mPath.close();
-        PathIterator iterator = mPath.iterator();
+        PathIterator iterator = mPath.getPathIterator();
         Path pathCopy = new Path();
         boolean lineDone = false;
         var verb = iterator.next(mPoints, 0);
@@ -443,7 +445,7 @@ public class PathIteratorTest {
         assertPathsEqual(mPath, pathCopy);
 
         // Now with next()
-        iterator = mPath.iterator();
+        iterator = mPath.getPathIterator();
         pathCopy = new Path();
         lineDone = false;
         PathIterator.Segment segment = iterator.next();
@@ -488,8 +490,8 @@ public class PathIteratorTest {
     }
 
     private void assertPathsEqual(Path path1, Path path2) {
-        PathIterator iterator1 = path1.iterator();
-        PathIterator iterator2 = path2.iterator();
+        PathIterator iterator1 = path1.getPathIterator();
+        PathIterator iterator2 = path2.getPathIterator();
         float[] points1 = new float[8];
         float[] points2 = new float[8];
         int verb1 = iterator1.next(points1, 0);
@@ -521,8 +523,8 @@ public class PathIteratorTest {
         }
 
         // Now with next()
-        iterator1 = path1.iterator();
-        iterator2 = path2.iterator();
+        iterator1 = path1.getPathIterator();
+        iterator2 = path2.getPathIterator();
         PathIterator.Segment segment1 = iterator1.next();
         PathIterator.Segment segment2 = iterator2.next();
         while ((verb1 = segment1.getVerb()) != PathIterator.VERB_DONE

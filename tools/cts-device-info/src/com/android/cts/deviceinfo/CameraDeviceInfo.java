@@ -17,22 +17,20 @@ package com.android.cts.deviceinfo;
 
 import android.content.Context;
 import android.graphics.Rect;
-import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.params.BlackLevelPattern;
 import android.hardware.camera2.params.ColorSpaceTransform;
-import android.hardware.camera2.params.StreamConfigurationMap;
 import android.hardware.camera2.params.MultiResolutionStreamConfigurationMap;
 import android.hardware.camera2.params.MultiResolutionStreamInfo;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
-import android.os.Build;
 import android.util.Log;
+import android.util.Range;
 import android.util.Rational;
 import android.util.Size;
 import android.util.SizeF;
-import android.util.Range;
 
 import com.android.compatibility.common.deviceinfo.DeviceInfo;
 import com.android.compatibility.common.util.DeviceInfoStore;

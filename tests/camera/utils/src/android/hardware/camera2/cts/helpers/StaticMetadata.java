@@ -16,22 +16,24 @@
 
 package android.hardware.camera2.cts.helpers;
 
-import android.graphics.Rect;
+import static android.hardware.camera2.cts.helpers.AssertHelpers.assertArrayContainsAnyOf;
+
 import android.graphics.ImageFormat;
+import android.graphics.Rect;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraCharacteristics.Key;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.cts.CameraTestUtils;
+import android.hardware.camera2.params.Capability;
 import android.hardware.camera2.params.DynamicRangeProfiles;
 import android.hardware.camera2.params.StreamConfigurationMap;
-import android.hardware.camera2.params.Capability;
 import android.util.ArraySet;
-import android.util.Range;
-import android.util.Size;
 import android.util.Log;
+import android.util.Range;
 import android.util.Rational;
+import android.util.Size;
 
 import junit.framework.Assert;
 
@@ -43,9 +45,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static android.hardware.camera2.cts.helpers.AssertHelpers.*;
-import static android.hardware.camera2.CameraCharacteristics.*;
 
 /**
  * Helpers to get common static info out of the camera.
@@ -2321,14 +2320,19 @@ public class StaticMetadata {
      * @return {@code true} if minimum set of keys are supported
      */
     public boolean areMaximumResolutionKeysSupported() {
-        return mCharacteristics.get(
-                CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE_MAXIMUM_RESOLUTION) != null &&
-                mCharacteristics.get(
-                        SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE_MAXIMUM_RESOLUTION) != null &&
-                mCharacteristics.get(
-                        SENSOR_INFO_PIXEL_ARRAY_SIZE_MAXIMUM_RESOLUTION) != null &&
-                mCharacteristics.get(
-                        SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION) != null;
+        var sensorInfoActiveArraySizeMaxResolution =
+                CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE_MAXIMUM_RESOLUTION;
+        var sensorInfoPreCorrectionActivArraySizeMaxResolution =
+                CameraCharacteristics
+                .SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE_MAXIMUM_RESOLUTION;
+        var sensorInfoPixelArraySizeMaximumResolution =
+                CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE_MAXIMUM_RESOLUTION;
+        var scalerStreamConfigurationMapMaxResolution =
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION;
+        return mCharacteristics.get(sensorInfoActiveArraySizeMaxResolution) != null
+                && mCharacteristics.get(sensorInfoPreCorrectionActivArraySizeMaxResolution) != null
+                && mCharacteristics.get(sensorInfoPixelArraySizeMaximumResolution) != null
+                && mCharacteristics.get(scalerStreamConfigurationMapMaxResolution) != null;
     }
 
     /*

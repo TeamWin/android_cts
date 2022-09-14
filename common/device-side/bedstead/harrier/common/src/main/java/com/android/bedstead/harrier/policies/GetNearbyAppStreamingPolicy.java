@@ -19,15 +19,18 @@ package com.android.bedstead.harrier.policies;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
+import static com.android.bedstead.nene.permissions.CommonPermissions.READ_NEARBY_STREAMING_POLICY;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
 /**
- * Policy for controlling nearby app streaming.
+ * Policy for reading nearby app streaming.
  *
  * <p>Users of this policy are
- * {@link android.app.admin.DevicePolicyManager#setNearbyAppStreamingPolicy(int)}}.
+ * {@code DevicePolicyManager#getNearbyAppStreamingPolicy()}.
  */
-@EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER | APPLIES_TO_OWN_USER)
-public class NearbyAppStreamingPolicy {
+@EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER | APPLIES_TO_OWN_USER,
+        permissions = @EnterprisePolicy.Permission(
+                appliedWith = READ_NEARBY_STREAMING_POLICY, appliesTo = APPLIES_TO_OWN_USER))
+public class GetNearbyAppStreamingPolicy {
 }

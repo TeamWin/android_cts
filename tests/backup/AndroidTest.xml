@@ -39,8 +39,6 @@
         <option name="test-file-name" value="CtsFullBackupApp.apk" />
         <option name="test-file-name" value="CtsKeyValueBackupApp.apk" />
         <option name="test-file-name" value="CtsBackupTestCases.apk" />
-        <option name="test-file-name" value="CtsPermissionBackupApp.apk" />
-        <option name="test-file-name" value="CtsPermissionBackupApp22.apk" />
         <option name="test-file-name" value="CtsAppLocalesBackupApp1.apk" />
         <option name="test-file-name" value="CtsAppLocalesBackupApp2.apk" />
     </target_preparer>
@@ -51,7 +49,16 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <!-- Also copy the test apks to the device -->
         <option name="cleanup" value="true" />
-        <option name="push" value="CtsPermissionBackupApp.apk->/data/local/tmp/cts/backup/CtsPermissionBackupApp.apk" />
+        <option name="push" value="CtsPermissionBackupAppCert1.apk->/data/local/tmp/cts/backup/CtsPermissionBackupAppCert1.apk" />
+        <option name="push" value="CtsPermissionBackupAppCert1Dup.apk->/data/local/tmp/cts/backup/CtsPermissionBackupAppCert1Dup.apk" />
+        <option name="push" value="CtsPermissionBackupAppCert2.apk->/data/local/tmp/cts/backup/CtsPermissionBackupAppCert2.apk" />
+        <option name="push" value="CtsPermissionBackupAppCert3.apk->/data/local/tmp/cts/backup/CtsPermissionBackupAppCert3.apk" />
+        <option name="push" value="CtsPermissionBackupAppCert5.apk->/data/local/tmp/cts/backup/CtsPermissionBackupAppCert5.apk" />
+        <option name="push" value="CtsPermissionBackupAppCert12.apk->/data/local/tmp/cts/backup/CtsPermissionBackupAppCert12.apk" />
+        <option name="push" value="CtsPermissionBackupAppCert12Dup.apk->/data/local/tmp/cts/backup/CtsPermissionBackupAppCert12Dup.apk" />
+        <option name="push" value="CtsPermissionBackupAppCert123.apk->/data/local/tmp/cts/backup/CtsPermissionBackupAppCert123.apk" />
+        <option name="push" value="CtsPermissionBackupAppCert34.apk->/data/local/tmp/cts/backup/CtsPermissionBackupAppCert34.apk" />
+        <option name="push" value="CtsPermissionBackupAppCert5History124.apk->/data/local/tmp/cts/backup/CtsPermissionBackupAppCert5History124.apk" />
         <option name="push" value="CtsPermissionBackupApp22.apk->/data/local/tmp/cts/backup/CtsPermissionBackupApp22.apk" />
         <option name="push" value="CtsAppLocalesBackupApp1.apk->/data/local/tmp/cts/backup/CtsAppLocalesBackupApp1.apk" />
         <option name="push" value="CtsAppLocalesBackupApp2.apk->/data/local/tmp/cts/backup/CtsAppLocalesBackupApp2.apk" />

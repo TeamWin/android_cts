@@ -64,13 +64,12 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
-    name: "CtsPermissionBackupApp",
+    name: "CtsPermissionBackupAppCert1",
     defaults: [
         "cts_support_defaults",
         "mts-target-sdk-version-current",
     ],
     min_sdk_version: "30",
-    // Tag this module as a cts test artifact
     srcs: [
         "src/**/*.java",
     ],
@@ -83,6 +82,241 @@ android_test_helper_app {
         "general-tests",
         "mts-permission",
     ],
+    certificate: ":permission-test-cert-1",
+    platform_apis: true,
+    manifest: "permission/AndroidManifest.xml",
+}
+
+android_test_helper_app {
+    name: "CtsPermissionBackupAppCert1Dup",
+    defaults: [
+        "cts_support_defaults",
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
+    srcs: [
+        "src/**/*.java",
+    ],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+        "mts-permission",
+    ],
+    certificate: ":permission-test-cert-1",
+    platform_apis: true,
+    manifest: "permission/AndroidManifest.xml",
+}
+
+android_test_helper_app {
+    name: "CtsPermissionBackupAppCert2",
+    defaults: [
+        "cts_support_defaults",
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
+    srcs: [
+        "src/**/*.java",
+    ],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+        "mts-permission",
+    ],
+    certificate: ":permission-test-cert-2",
+    platform_apis: true,
+    manifest: "permission/AndroidManifest.xml",
+}
+
+android_test_helper_app {
+    name: "CtsPermissionBackupAppCert3",
+    defaults: [
+        "cts_support_defaults",
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
+    srcs: [
+        "src/**/*.java",
+    ],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+        "mts-permission",
+    ],
+    certificate: ":permission-test-cert-3",
+    platform_apis: true,
+    manifest: "permission/AndroidManifest.xml",
+}
+
+android_test_helper_app {
+    name: "CtsPermissionBackupAppCert5",
+    defaults: [
+        "cts_support_defaults",
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
+    srcs: [
+        "src/**/*.java",
+    ],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+        "mts-permission",
+    ],
+    certificate: ":permission-test-cert-5",
+    platform_apis: true,
+    manifest: "permission/AndroidManifest.xml",
+}
+
+android_test_helper_app {
+    name: "CtsPermissionBackupAppCert12",
+    defaults: [
+        "cts_support_defaults",
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
+    srcs: [
+        "src/**/*.java",
+    ],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+        "mts-permission",
+    ],
+    certificate: ":permission-test-cert-1",
+    additional_certificates: [
+        ":permission-test-cert-2",
+    ],
+    platform_apis: true,
+    manifest: "permission/AndroidManifest.xml",
+}
+
+android_test_helper_app {
+    name: "CtsPermissionBackupAppCert12Dup",
+    defaults: [
+        "cts_support_defaults",
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
+    srcs: [
+        "src/**/*.java",
+    ],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+        "mts-permission",
+    ],
+    certificate: ":permission-test-cert-1",
+    additional_certificates: [
+        ":permission-test-cert-2",
+    ],
+    platform_apis: true,
+    manifest: "permission/AndroidManifest.xml",
+}
+
+android_test_helper_app {
+    name: "CtsPermissionBackupAppCert34",
+    defaults: [
+        "cts_support_defaults",
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
+    srcs: [
+        "src/**/*.java",
+    ],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+        "mts-permission",
+    ],
+    certificate: ":permission-test-cert-3",
+    additional_certificates: [
+        ":permission-test-cert-4",
+    ],
+    platform_apis: true,
+    manifest: "permission/AndroidManifest.xml",
+}
+
+android_test_helper_app {
+    name: "CtsPermissionBackupAppCert123",
+    defaults: [
+        "cts_support_defaults",
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
+    srcs: [
+        "src/**/*.java",
+    ],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+        "mts-permission",
+    ],
+    certificate: ":permission-test-cert-1",
+    additional_certificates: [
+        ":permission-test-cert-2",
+        ":permission-test-cert-3",
+    ],
+    platform_apis: true,
+    manifest: "permission/AndroidManifest.xml",
+}
+
+android_test_helper_app {
+    name: "CtsPermissionBackupAppCert5History124",
+    defaults: [
+        "cts_support_defaults",
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
+    srcs: [
+        "src/**/*.java",
+    ],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+        "mts-permission",
+    ],
+    certificate: ":permission-test-cert-5",
+    additional_certificates: [
+        ":permission-test-cert-1",
+
+    ],
+    lineage: ":permission-test-cert-with-rotation-history",
     platform_apis: true,
     manifest: "permission/AndroidManifest.xml",
 }
@@ -106,6 +340,7 @@ android_test_helper_app {
         "mts-permission",
     ],
     platform_apis: true,
+    certificate: ":permission-test-cert-1",
     manifest: "permission22/AndroidManifest.xml",
 }
 
@@ -155,4 +390,36 @@ android_test_helper_app {
     ],
     platform_apis: true,
     manifest: "AppLocalesBackupApp2/AndroidManifest.xml",
+}
+
+android_app_certificate {
+    name: "permission-test-cert-1",
+    certificate: "test-cert-1",
+}
+
+android_app_certificate {
+    name: "permission-test-cert-2",
+    certificate: "test-cert-2",
+}
+
+android_app_certificate {
+    name: "permission-test-cert-3",
+    certificate: "test-cert-3",
+}
+
+android_app_certificate {
+    name: "permission-test-cert-4",
+    certificate: "test-cert-4",
+}
+
+android_app_certificate {
+    name: "permission-test-cert-5",
+    certificate: "test-cert-5",
+}
+
+filegroup {
+    name: "permission-test-cert-with-rotation-history",
+    srcs: [
+        "test-cert-with-1-2-4-in-rotation-history",
+    ],
 }

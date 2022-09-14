@@ -33,7 +33,6 @@ java_test_host {
     srcs: ["src/**/*.java"],
     test_suites: [
         "cts-interactive",
-        "cts",
         "general-tests",
     ],
     data: [":CtsVerifier"]

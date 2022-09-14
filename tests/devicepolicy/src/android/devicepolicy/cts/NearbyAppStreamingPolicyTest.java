@@ -33,11 +33,13 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
-import com.android.bedstead.harrier.policies.NearbyAppStreamingPolicy;
+import com.android.bedstead.harrier.policies.GetNearbyAppStreamingPolicy;
+import com.android.bedstead.harrier.policies.SetNearbyAppStreamingPolicy;
 import com.android.bedstead.nene.TestApis;
 
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
@@ -59,13 +61,24 @@ public class NearbyAppStreamingPolicyTest {
         mDevicePolicyManager = sDeviceState.dpc().devicePolicyManager();
     }
 
-    @PolicyAppliesTest(policy = NearbyAppStreamingPolicy.class)
+    @PolicyAppliesTest(policy = GetNearbyAppStreamingPolicy.class)
     public void getNearbyAppStreamingPolicy_defaultToSameManagedAccountOnly() {
         assertThat(mDevicePolicyManager.getNearbyAppStreamingPolicy())
                 .isEqualTo(DevicePolicyManager.NEARBY_STREAMING_SAME_MANAGED_ACCOUNT_ONLY);
     }
 
-    @PolicyAppliesTest(policy = NearbyAppStreamingPolicy.class)
+    @CannotSetPolicyTest(policy = GetNearbyAppStreamingPolicy.class)
+    @Ignore
+    // TODO(b/191637162): We cannot reach a state without READ_NEARBY_STREAMING_POLICY because it
+    //  is a normal permission that is requested by all testapps. When we support adopting shell
+    //  permissions in test apps we can re-enable this and remove all normal permissions from
+    //  testapps.
+    public void getNearbyAppStreamingPolicy_policyIsNotAllowedToBeSet_throwsException() {
+        assertThrows(SecurityException.class, () ->
+                mDevicePolicyManager.getNearbyAppStreamingPolicy());
+    }
+
+    @PolicyAppliesTest(policy = SetNearbyAppStreamingPolicy.class)
     public void setNearbyAppStreamingPolicy_policyApplied_works() {
         int originalPolicy = mDevicePolicyManager.getNearbyAppStreamingPolicy();
 
@@ -80,7 +93,7 @@ public class NearbyAppStreamingPolicyTest {
         }
     }
 
-    @CannotSetPolicyTest(policy = NearbyAppStreamingPolicy.class)
+    @CannotSetPolicyTest(policy = SetNearbyAppStreamingPolicy.class)
     public void setNearbyAppStreamingPolicy_policyIsNotAllowedToBeSet_throwsException() {
         assertThrows(SecurityException.class, () ->
                 mDevicePolicyManager.setNearbyAppStreamingPolicy(
@@ -88,7 +101,7 @@ public class NearbyAppStreamingPolicyTest {
     }
 
     @Postsubmit(reason = "new test")
-    @PolicyDoesNotApplyTest(policy = NearbyAppStreamingPolicy.class)
+    @PolicyDoesNotApplyTest(policy = SetNearbyAppStreamingPolicy.class)
     @EnsureHasPermission(READ_NEARBY_STREAMING_POLICY)
     public void setNearbyAppStreamingPolicy_setEnabled_doesNotApply() {
         int originalPolicy = mDevicePolicyManager.getNearbyAppStreamingPolicy();

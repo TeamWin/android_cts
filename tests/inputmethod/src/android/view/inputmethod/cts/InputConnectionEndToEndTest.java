@@ -19,6 +19,8 @@ package android.view.inputmethod.cts;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_DELETE;
 import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_INSERT;
+import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_JOIN_OR_SPLIT;
+import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_REMOVE_SPACE;
 import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_SELECT;
 
 import static com.android.cts.mocka11yime.MockA11yImeEventStreamUtils.editorMatcherForA11yIme;
@@ -66,6 +68,8 @@ import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InsertGesture;
+import android.view.inputmethod.JoinOrSplitGesture;
+import android.view.inputmethod.RemoveSpaceGesture;
 import android.view.inputmethod.SelectGesture;
 import android.view.inputmethod.SurroundingText;
 import android.view.inputmethod.TextAttribute;
@@ -1611,6 +1615,40 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
                 InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
     }
 
+    /**
+     * Test InputConnection#performHandwritingGesture(HandwritingGesture, Executor, IntConsumer)}}
+     * works as expected for {@link RemoveSpaceGesture}.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.inputmethod.RemoveSpaceGesture.Builder#setPoints",
+            "android.view.inputmethod.RemoveSpaceGesture.Builder#setFallbackText",
+            "android.view.inputmethod.InputConnection#performHandwritingGesture"})
+    public void testPerformHandwritingRemoveSpaceGesture() throws Exception {
+        testPerformHandwritingGesture(
+                new RemoveSpaceGesture.Builder()
+                        .setPoints(new PointF(1f, 2f), new PointF(3f, 4f))
+                        .setFallbackText("")
+                        .build(),
+                InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
+    }
+
+    /**
+     * Test InputConnection#performHandwritingGesture(HandwritingGesture, Executor, IntConsumer)}}
+     * works as expected for {@link JoinOrSplitGesture}.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.inputmethod.JoinOrSplitGesture.Builder#setJoinOrSplitPoint",
+            "android.view.inputmethod.JoinOrSplitGesture.Builder#setFallbackText",
+            "android.view.inputmethod.InputConnection#performHandwritingGesture"})
+    public void testPerformHandwritingJoinOrSplitGesture() throws Exception {
+        testPerformHandwritingGesture(
+                new JoinOrSplitGesture.Builder()
+                        .setJoinOrSplitPoint(new PointF(1f, 2f))
+                        .setFallbackText("")
+                        .build(),
+                InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
+    }
+
     private <T extends HandwritingGesture> void testPerformHandwritingGesture(
             T gesture, int returnResult) throws Exception {
         final int expectedResult = returnResult;
@@ -1626,6 +1664,12 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
                 break;
             case GESTURE_TYPE_DELETE:
                 classRef.set(DeleteGesture.class);
+                break;
+            case GESTURE_TYPE_REMOVE_SPACE:
+                classRef.set(RemoveSpaceGesture.class);
+                break;
+            case GESTURE_TYPE_JOIN_OR_SPLIT:
+                classRef.set(JoinOrSplitGesture.class);
                 break;
         }
 

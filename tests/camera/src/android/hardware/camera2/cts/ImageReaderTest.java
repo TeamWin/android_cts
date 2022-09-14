@@ -59,8 +59,8 @@ import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
 import android.media.ImageWriter;
-import android.os.SystemClock;
 import android.os.ConditionVariable;
+import android.os.SystemClock;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -495,6 +495,30 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             assertEquals(20, outputImage.getWidth());
             assertEquals(45, outputImage.getHeight());
             assertEquals(HardwareBuffer.RGBA_8888, outputImage.getFormat());
+        }
+    }
+
+    @Test
+    public void testImageReaderBuilderWithBLOB() throws Exception {
+        long usage = HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE | HardwareBuffer.USAGE_GPU_COLOR_OUTPUT;
+        try (
+            ImageReader reader = new ImageReader
+                .Builder(20, 45)
+                .setMaxImages(2)
+                .setDefaultHardwareBufferFormat(HardwareBuffer.BLOB)
+                .setDefaultDataSpace(DataSpace.DATASPACE_JFIF)
+                .setUsage(usage)
+                .build();
+            ImageWriter writer = new ImageWriter.Builder(reader.getSurface()).build();
+        ) {
+            assertEquals(2, reader.getMaxImages());
+            assertEquals(usage, reader.getUsage());
+            assertEquals(HardwareBuffer.BLOB, reader.getHardwareBufferFormat());
+            assertEquals(DataSpace.DATASPACE_JFIF, reader.getDataSpace());
+            // writer should have same dataspace/hardwarebuffer format as reader.
+            assertEquals(HardwareBuffer.BLOB, writer.getHardwareBufferFormat());
+            assertEquals(DataSpace.DATASPACE_JFIF, writer.getDataSpace());
+            assertEquals(ImageFormat.JPEG, writer.getFormat());
         }
     }
 
