@@ -331,7 +331,6 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
             }
             Thread.sleep(POLLING_TIME_SLICE);
         }
-
         fail(message.toString() + getLastStatusDump());
     }
 

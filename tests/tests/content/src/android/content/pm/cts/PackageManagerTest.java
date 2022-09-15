@@ -18,6 +18,7 @@ package android.content.pm.cts;
 
 import static android.Manifest.permission.GET_INTENT_SENDER_INTENT;
 import static android.Manifest.permission.INSTALL_TEST_ONLY_PACKAGE;
+import static android.content.Intent.FLAG_EXCLUDE_STOPPED_PACKAGES;
 import static android.content.pm.ApplicationInfo.FLAG_HAS_CODE;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
@@ -322,6 +323,43 @@ public class PackageManagerTest {
     }
 
     @Test
+    public void testStoppedPackagesQuery() throws NameNotFoundException {
+        installPackage(HELLO_WORLD_APK);
+
+        final Intent intent = new Intent(ACTIVITY_ACTION_NAME);
+        intent.addFlags(FLAG_EXCLUDE_STOPPED_PACKAGES);
+
+        // Stopped after install.
+        {
+            final List<ResolveInfo> matches = mPackageManager.queryIntentActivities(intent,
+                    PackageManager.ResolveInfoFlags.of(0));
+            assertFalse(containsActivityInfoName("com.example.helloworld.MainActivity", matches));
+        }
+
+        SystemUtil.runShellCommand("am start "
+                + "--user current "
+                + "-a android.intent.action.MAIN "
+                + "-c android.intent.category.LAUNCHER "
+                + HELLO_WORLD_PACKAGE_NAME + "/.MainActivity");
+
+        // Started.
+        {
+            final List<ResolveInfo> matches = mPackageManager.queryIntentActivities(intent,
+                    PackageManager.ResolveInfoFlags.of(0));
+            assertTrue(containsActivityInfoName("com.example.helloworld.MainActivity", matches));
+        }
+
+        assertEquals("", SystemUtil.runShellCommand("am force-stop " + HELLO_WORLD_PACKAGE_NAME));
+
+        // Force stopped.
+        {
+            final List<ResolveInfo> matches = mPackageManager.queryIntentActivities(intent,
+                    PackageManager.ResolveInfoFlags.of(0));
+            assertFalse(containsActivityInfoName("com.example.helloworld.MainActivity", matches));
+        }
+    }
+
+    @Test
     public void testEnforceIntentToMatchIntentFilter() {
         Intent intent = new Intent();
         List<ResolveInfo> results;
@@ -544,19 +582,19 @@ public class PackageManagerTest {
         }
     }
 
-    private void checkActivityInfoName(String expectedName, List<ResolveInfo> resolves) {
-        // Flag for checking if the name is contained in list array.
-        boolean isContained = false;
+    private boolean containsActivityInfoName(String expectedName, List<ResolveInfo> resolves) {
         Iterator<ResolveInfo> infoIterator = resolves.iterator();
         String current;
         while (infoIterator.hasNext()) {
             current = infoIterator.next().activityInfo.name;
             if (current.equals(expectedName)) {
-                isContained = true;
-                break;
+                return true;
             }
         }
-        assertTrue(isContained);
+        return false;
+    }
+    private void checkActivityInfoName(String expectedName, List<ResolveInfo> resolves) {
+        assertTrue(containsActivityInfoName(expectedName, resolves));
     }
 
     private void checkServiceInfoName(String expectedName, List<ResolveInfo> resolves) {

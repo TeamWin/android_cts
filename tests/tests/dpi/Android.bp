@@ -23,6 +23,7 @@ android_test {
     defaults: ["cts_defaults"],
     static_libs: [
         "ctstestrunner-axt",
+        "cts-wm-util",
         "junit",
         "compatibility-device-util-axt",
         "cts-wm-util",

@@ -19,11 +19,14 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-java_library {
+android_library {
     name: "cts-sensors-tests",
     defaults: ["cts_error_prone_rules_tests"],
 
-    static_libs: ["compatibility-device-util-axt"],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "cts-input-lib",
+    ],
 
     libs: [
         "platform-test-annotations",
@@ -32,7 +35,10 @@ java_library {
 
     sdk_version: "test_current",
 
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.kt",
+    ],
 }
 
 //

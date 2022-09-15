@@ -27,6 +27,7 @@ import android.content.pm.PackageManager;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraDevice.StateCallback;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.cts.Camera2ParameterizedTestCase;
 import android.hardware.camera2.cts.CameraTestUtils.HandlerExecutor;
@@ -165,15 +166,6 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
         assertTrue("System camera feature and camera id list don't match",
                 ids.length == 0 ||
                 mPackageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY));
-
-        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
-            // Camera placement on automotive device is different than usual front/back
-            // on mobile phones and use automotive.lens.facing instead. lens.facing is only used for 
-            // external camera.testCameraManagerAutomotiveCameras ensures that lens.facing is only
-            // used for EXTERNAL camera. Hence, skipping this test for automotive implementations
-            Log.i(TAG, "Skip rest of the test on automotive device implementations");
-            return;
-        }
 
         /**
          * Test: that if the device has front or rear facing cameras, then there
@@ -1039,23 +1031,15 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
          *   android.automotive.lens.facing values
          */
         Map<Pair<Integer, Integer>, ArrayList<String>> cameraGroup = new HashMap<>();
-        boolean externalCameraConnected = false;
         for (String cameraId : cameraIds) {
             CameraCharacteristics props = mCameraManager.getCameraCharacteristics(cameraId);
             assertNotNull(
                     String.format("Can't get camera characteristics from: ID %s", cameraId), props);
 
             Integer lensFacing = props.get(CameraCharacteristics.LENS_FACING);
-
-            if (lensFacing != null) {
-                // Automotive device implementations can use android.lens.facing
-                // only for external cameras
-                assertTrue("android.lens.facing should only be used for external cameras",
-                        lensFacing == CameraCharacteristics.LENS_FACING_EXTERNAL);
-                // Test that there is matching feature flag
-                assertTrue("System doesn't have external camera feature",
-                        mPackageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_EXTERNAL));
-                externalCameraConnected = true;
+            if (lensFacing != null && lensFacing == CameraCharacteristics.LENS_FACING_EXTERNAL) {
+                // Automotive device implementations may have external cameras but they are exempted
+                // from this test case.
                 continue;
             }
 
@@ -1085,13 +1069,6 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
                 }
             }
         }
-
-        // Test an external camera is connected if FEATURE_CAMERA_EXTERNAL is advertised
-        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_EXTERNAL)) {
-            assertTrue("External camera is not connected on device with FEATURE_CAMERA_EXTERNAL",
-                     externalCameraConnected);
-        }
-
 
         for (Map.Entry<Pair<Integer, Integer>, ArrayList<String>> entry : cameraGroup.entrySet()) {
             ArrayList<String> cameraIdsToVerify = entry.getValue();

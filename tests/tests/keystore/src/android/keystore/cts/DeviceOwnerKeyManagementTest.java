@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.keystore.deviceowner;
+
+package android.keystore.cts;
 
 import static android.app.admin.DevicePolicyManager.ID_TYPE_BASE_INFO;
 import static android.app.admin.DevicePolicyManager.ID_TYPE_IMEI;
@@ -23,21 +24,25 @@ import static android.app.admin.DevicePolicyManager.ID_TYPE_SERIAL;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.keystore.cts.Attestation;
-import android.keystore.cts.AuthorizationList;
 import android.os.Build;
 import android.security.AttestedKeyPair;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.StrongBoxUnavailableException;
-import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
+
+import com.android.bedstead.deviceadminapp.DeviceAdminApp;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.devicepolicy.DeviceOwner;
+import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.compatibility.common.util.ApiTest;
 
-import java.io.IOException;
+import org.junit.Test;
+
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
@@ -48,18 +53,20 @@ import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
-public class KeyManagementTest extends BaseDeviceAdminTest {
-
-    private static final String TEST_ALIAS = "KeyManagementTest-keypair";
+public class DeviceOwnerKeyManagementTest {
+    private static final Context sContext = TestApis.context().instrumentedContext();
+    private static final DevicePolicyManager sDevicePolicyManager =
+            sContext.getSystemService(DevicePolicyManager.class);
+    private static final ComponentName DEVICE_ADMIN_COMPONENT_NAME =
+            DeviceAdminApp.deviceAdminComponentName(sContext);
 
     private static class SupportedKeyAlgorithm {
         public final String keyAlgorithm;
         public final String signatureAlgorithm;
         public final String[] signaturePaddingSchemes;
 
-        public SupportedKeyAlgorithm(
+        SupportedKeyAlgorithm(
                 String keyAlgorithm, String signatureAlgorithm,
                 String[] signaturePaddingSchemes) {
             this.keyAlgorithm = keyAlgorithm;
@@ -68,31 +75,13 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         }
     }
 
-    private final SupportedKeyAlgorithm[] SUPPORTED_KEY_ALGORITHMS = new SupportedKeyAlgorithm[] {
-        new SupportedKeyAlgorithm(KeyProperties.KEY_ALGORITHM_RSA, "SHA256withRSA",
-                new String[] {KeyProperties.SIGNATURE_PADDING_RSA_PSS,
-                    KeyProperties.SIGNATURE_PADDING_RSA_PKCS1}),
-        new SupportedKeyAlgorithm(KeyProperties.KEY_ALGORITHM_EC, "SHA256withECDSA", null)
-    };
-
-    private KeyManagementActivity mActivity;
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-
-        final UiDevice device = UiDevice.getInstance(getInstrumentation());
-        mActivity = launchActivity(getInstrumentation().getTargetContext().getPackageName(),
-                KeyManagementActivity.class, null);
-        device.waitForIdle();
-    }
-
-    @Override
-    public void tearDown() throws Exception {
-        mActivity.finish();
-        mDevicePolicyManager.removeKeyPair(getWho(), TEST_ALIAS);
-        super.tearDown();
-    }
+    private static final SupportedKeyAlgorithm[] SUPPORTED_KEY_ALGORITHMS =
+        new SupportedKeyAlgorithm[] {
+            new SupportedKeyAlgorithm(KeyProperties.KEY_ALGORITHM_RSA, "SHA256withRSA",
+                    new String[] {KeyProperties.SIGNATURE_PADDING_RSA_PSS,
+                            KeyProperties.SIGNATURE_PADDING_RSA_PKCS1}),
+            new SupportedKeyAlgorithm(KeyProperties.KEY_ALGORITHM_EC, "SHA256withECDSA", null)
+        };
 
     byte[] signDataWithKey(String algoIdentifier, PrivateKey privateKey) throws Exception {
         byte[] data = new String("hello").getBytes();
@@ -117,7 +106,9 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
     }
 
     private void validateDeviceIdAttestationData(Certificate leaf,
-            String expectedSerial, String expectedImei, String expectedMeid)
+                                                 String expectedSerial,
+                                                 String expectedImei,
+                                                 String expectedMeid)
             throws CertificateParsingException {
         Attestation attestationRecord = Attestation.loadFromCertificate((X509Certificate) leaf);
         AuthorizationList teeAttestation = attestationRecord.getTeeEnforced();
@@ -160,7 +151,7 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
     }
 
     private boolean isDeviceIdAttestationSupported() {
-        return mDevicePolicyManager.isDeviceIdAttestationSupported();
+        return sDevicePolicyManager.isDeviceIdAttestationSupported();
     }
 
     private boolean isDeviceIdAttestationRequested(int deviceIdAttestationFlags) {
@@ -192,44 +183,44 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
             }
 
             KeyGenParameterSpec spec = specBuilder.build();
-            AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
-                    getWho(), keyAlgorithm, spec, deviceIdAttestationFlags);
+            AttestedKeyPair generated = sDevicePolicyManager.generateKeyPair(
+                    DEVICE_ADMIN_COMPONENT_NAME, keyAlgorithm, spec, deviceIdAttestationFlags);
             // If Device ID attestation was requested, check it succeeded if and only if device ID
             // attestation is supported.
             if (isDeviceIdAttestationRequested(deviceIdAttestationFlags)) {
                 if (generated == null) {
                     assertWithMessage(
-                            String.format(
-                                "The device failed ID attestation, despite declaring it support for"
-                                + "the feature. This is a hardware-related failure that should be "
-                                + "analyzed by the OEM. The failure was for algorithm %s with flags"
-                                + " %s.",
-                                keyAlgorithm, deviceIdAttestationFlags))
-                            .that(isDeviceIdAttestationSupported())
-                            .isFalse();
+                        String.format(
+                            "The device failed ID attestation, despite declaring it support for"
+                            + "the feature. This is a hardware-related failure that should be "
+                            + "analyzed by the OEM. The failure was for algorithm %s with flags"
+                            + " %s.",
+                            keyAlgorithm, deviceIdAttestationFlags))
+                        .that(isDeviceIdAttestationSupported())
+                        .isFalse();
                     return null;
                 } else {
                     assertWithMessage(
-                            String.format(
-                                "The device declares it does not support ID attestation yet it "
-                                + "produced a valid ID attestation record (for algorithm  %s, flags"
-                                + " %s). This is a device configuration issue that should be "
-                                + "analyzed by the OEM first",
-                                keyAlgorithm, deviceIdAttestationFlags))
-                            .that(isDeviceIdAttestationSupported())
-                            .isTrue();
+                        String.format(
+                            "The device declares it does not support ID attestation yet it "
+                            + "produced a valid ID attestation record (for algorithm  %s, flags"
+                            + " %s). This is a device configuration issue that should be "
+                            + "analyzed by the OEM first",
+                            keyAlgorithm, deviceIdAttestationFlags))
+                        .that(isDeviceIdAttestationSupported())
+                        .isTrue();
                 }
             } else {
                 assertWithMessage(
-                        String.format(
-                                "The device failed to generate a key with attestation that does not"
-                                + " include Device ID attestation. This is a hardware failure that "
-                                + "is usually caused by attestation keys not being provisioned on "
-                                + "the device, and the OEM needs to analyze the underlying cause."
-                                + " Algorithm used: %s",
-                                keyAlgorithm))
-                        .that(generated)
-                        .isNotNull();
+                    String.format(
+                        "The device failed to generate a key with attestation that does not"
+                        + " include Device ID attestation. This is a hardware failure that "
+                        + "is usually caused by attestation keys not being provisioned on "
+                        + "the device, and the OEM needs to analyze the underlying cause."
+                        + " Algorithm used: %s",
+                        keyAlgorithm))
+                    .that(generated)
+                    .isNotNull();
             }
             final KeyPair keyPair = generated.getKeyPair();
             verifySignatureOverData(signatureAlgorithm, keyPair);
@@ -244,11 +235,12 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
                             keyAlgorithm, deviceIdAttestationFlags, ex))
                     .that(
                             isDeviceIdAttestationRequested(deviceIdAttestationFlags)
-                            && !isDeviceIdAttestationSupported())
+                                    && !isDeviceIdAttestationSupported())
                     .isTrue();
             return null;
         } finally {
-            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), alias)).isTrue();
+            assertThat(sDevicePolicyManager.removeKeyPair(DEVICE_ADMIN_COMPONENT_NAME, alias))
+                    .isTrue();
         }
     }
 
@@ -257,105 +249,110 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         String imei = null;
         String meid = null;
         // All devices must support at least basic device information attestation as well as serial
-        // number attestation. Although attestation of unique device ids are only callable by device
-        // owner.
+        // number attestation. Although attestation of unique device ids are only callable by
+        // device owner.
         modesToTest.add(ID_TYPE_BASE_INFO);
         modesToTest.add(ID_TYPE_SERIAL);
         // Get IMEI and MEID of the device.
-        TelephonyManager telephonyService = mActivity.getSystemService(TelephonyManager.class);
-        assertWithMessage("Need to be able to read device identifiers")
-                .that(telephonyService)
-                .isNotNull();
-        imei = telephonyService.getImei(0);
-        meid = telephonyService.getMeid(0);
-        assertNotNull(imei);
-        //assertNotNull(meid);
-        // If the device has a valid IMEI it must support attestation for it.
-        if (imei != null) {
-            modesToTest.add(ID_TYPE_IMEI);
-        }
-        // Same for MEID
-        if (meid != null) {
-            modesToTest.add(ID_TYPE_MEID);
-        }
-        int numCombinations = 1 << modesToTest.size();
-        for (int i = 1; i < numCombinations; i++) {
-            // Set the bits in devIdOpt to be passed into generateKeyPair according to the
-            // current modes tested.
-            int devIdOpt = 0;
-            for (int j = 0; j < modesToTest.size(); j++) {
-                if ((i & (1 << j)) != 0) {
-                    devIdOpt = devIdOpt | modesToTest.get(j);
-                }
+        try (PermissionContext c = TestApis.permissions().withPermission(
+                "android.permission.READ_PHONE_STATE")) {
+            TelephonyManager telephonyService = sContext.getSystemService(TelephonyManager.class);
+            assertWithMessage("Need to be able to read device identifiers")
+                    .that(telephonyService)
+                    .isNotNull();
+            imei = telephonyService.getImei(0);
+            meid = telephonyService.getMeid(0);
+            assertThat(imei).isNotNull();
+            // If the device has a valid IMEI it must support attestation for it.
+            if (imei != null) {
+                modesToTest.add(ID_TYPE_IMEI);
             }
-            try {
-                // Now run the test with all supported key algorithms
-                for (SupportedKeyAlgorithm supportedKey: SUPPORTED_KEY_ALGORITHMS) {
-                    Certificate attestation = generateKeyAndCheckAttestation(
-                            supportedKey.keyAlgorithm, supportedKey.signatureAlgorithm,
-                            supportedKey.signaturePaddingSchemes, useStrongBox, devIdOpt);
-                    // generateKeyAndCheckAttestation should return null if device ID attestation
-                    // is not supported. Simply continue to test the next combination.
-                    if (attestation == null && !isDeviceIdAttestationSupported()) {
-                        continue;
+            // Same for MEID
+            if (meid != null) {
+                modesToTest.add(ID_TYPE_MEID);
+            }
+            int numCombinations = 1 << modesToTest.size();
+            for (int i = 1; i < numCombinations; i++) {
+                // Set the bits in devIdOpt to be passed into generateKeyPair according to the
+                // current modes tested.
+                int devIdOpt = 0;
+                for (int j = 0; j < modesToTest.size(); j++) {
+                    if ((i & (1 << j)) != 0) {
+                        devIdOpt = devIdOpt | modesToTest.get(j);
                     }
-                    assertWithMessage(
-                            String.format(
-                                    "Attestation should be valid for key %s with attestation modes"
-                                    + " %s",
-                                    supportedKey.keyAlgorithm, devIdOpt))
-                            .that(attestation)
-                            .isNotNull();
-                    // Set the expected values for serial, IMEI and MEID depending on whether
-                    // attestation for them was requested.
-                    String expectedSerial = null;
-                    if ((devIdOpt & ID_TYPE_SERIAL) != 0) {
-                        expectedSerial = Build.getSerial();
-                    }
-                    String expectedImei = null;
-                    if ((devIdOpt & ID_TYPE_IMEI) != 0) {
-                        expectedImei = imei;
-                    }
-                    String expectedMeid = null;
-                    if ((devIdOpt & ID_TYPE_MEID) != 0) {
-                        expectedMeid = meid;
-                    }
-                    validateDeviceIdAttestationData(attestation, expectedSerial,
-                            expectedImei, expectedMeid);
                 }
-            } catch (UnsupportedOperationException expected) {
-                // Make sure the test only fails if the device is not meant to support Device
-                // ID attestation.
-                assertThat(isDeviceIdAttestationSupported()).isFalse();
-            } catch (StrongBoxUnavailableException expected) {
-                // This exception must only be thrown if StrongBox attestation was requested.
-                assertThat(useStrongBox && !hasStrongBox()).isTrue();
+                try {
+                    // Now run the test with all supported key algorithms
+                    for (SupportedKeyAlgorithm supportedKey: SUPPORTED_KEY_ALGORITHMS) {
+                        Certificate attestation = generateKeyAndCheckAttestation(
+                                supportedKey.keyAlgorithm, supportedKey.signatureAlgorithm,
+                                supportedKey.signaturePaddingSchemes, useStrongBox, devIdOpt);
+                        // generateKeyAndCheckAttestation should return null if device ID
+                        // attestation is not supported. Simply continue to test the next
+                        // combination.
+                        if (attestation == null && !isDeviceIdAttestationSupported()) {
+                            continue;
+                        }
+                        assertWithMessage(
+                                String.format(
+                                        "Attestation should be valid for key %s with attestation"
+                                                + " modes  %s",
+                                        supportedKey.keyAlgorithm, devIdOpt))
+                                .that(attestation)
+                                .isNotNull();
+                        // Set the expected values for serial, IMEI and MEID depending on whether
+                        // attestation for them was requested.
+                        String expectedSerial = null;
+                        if ((devIdOpt & ID_TYPE_SERIAL) != 0) {
+                            expectedSerial = Build.getSerial();
+                        }
+                        String expectedImei = null;
+                        if ((devIdOpt & ID_TYPE_IMEI) != 0) {
+                            expectedImei = imei;
+                        }
+                        String expectedMeid = null;
+                        if ((devIdOpt & ID_TYPE_MEID) != 0) {
+                            expectedMeid = meid;
+                        }
+                        validateDeviceIdAttestationData(attestation, expectedSerial,
+                                expectedImei, expectedMeid);
+                    }
+                } catch (UnsupportedOperationException expected) {
+                    // Make sure the test only fails if the device is not meant to support Device
+                    // ID attestation.
+                    assertThat(isDeviceIdAttestationSupported()).isFalse();
+                } catch (StrongBoxUnavailableException expected) {
+                    // This exception must only be thrown if StrongBox attestation was requested.
+                    assertThat(useStrongBox && !hasStrongBox()).isTrue();
+                }
             }
         }
     }
 
-    @ApiTest(apis={"android.app.admin.DevicePolicyManager#generateKeyPair",
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#generateKeyPair",
             "android.app.admin.DevicePolicyManager#ID_TYPE_IMEI",
             "android.app.admin.DevicePolicyManager#ID_TYPE_MEID",
             "android.app.admin.DevicePolicyManager#ID_TYPE_SERIAL"})
+    @Test
     public void testAllVariationsOfDeviceIdAttestation() throws Exception {
-        assertAllVariantsOfDeviceIdAttestation(false /* useStrongBox */);
+        try (DeviceOwner o = TestApis.devicePolicy().setDeviceOwner(DEVICE_ADMIN_COMPONENT_NAME)) {
+            assertAllVariantsOfDeviceIdAttestation(false /* useStrongBox */);
+        }
     }
 
-    @ApiTest(apis={"android.app.admin.DevicePolicyManager#generateKeyPair",
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#generateKeyPair",
             "android.app.admin.DevicePolicyManager#ID_TYPE_IMEI",
             "android.app.admin.DevicePolicyManager#ID_TYPE_MEID",
             "android.app.admin.DevicePolicyManager#ID_TYPE_SERIAL"})
+    @Test
     public void testAllVariationsOfDeviceIdAttestationUsingStrongBox() throws Exception {
-        assertAllVariantsOfDeviceIdAttestation(true /* useStrongBox */);
-    }
-
-    private ComponentName getWho() {
-        return ADMIN_RECEIVER_COMPONENT;
+        try (DeviceOwner o = TestApis.devicePolicy().setDeviceOwner(DEVICE_ADMIN_COMPONENT_NAME)) {
+            assertAllVariantsOfDeviceIdAttestation(true  /* useStrongBox */);
+        }
     }
 
     boolean hasStrongBox() {
-        return mActivity.getPackageManager()
-            .hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE);
+        return sContext.getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE);
     }
 }

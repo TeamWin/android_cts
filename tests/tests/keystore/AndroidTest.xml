@@ -22,6 +22,7 @@
     <option name="config-descriptor:metadata" key="parameter" value="no_foldable_states" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
+        <option name="install-arg" value="-t" />
         <option name="test-file-name" value="CtsKeystoreTestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >

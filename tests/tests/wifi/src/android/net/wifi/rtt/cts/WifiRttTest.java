@@ -562,7 +562,7 @@ public class WifiRttTest extends TestBase {
      */
     @Test
     public void testAwareRttWithPeerHandle() throws InterruptedException {
-        if (WifiFeature.isAwareSupported(getContext())) {
+        if (!WifiFeature.isAwareSupported(getContext())) {
             return;
         }
         PeerHandle peerHandle = mock(PeerHandle.class);

@@ -184,7 +184,14 @@ class OverrideConfigTest {
                 uiDevice.setOrientationNatural()
             }
 
-            it.moveToState(Lifecycle.State.RESUMED)
+            if (handlesOrientationChange) {
+                // Can't call recreate if the Activity is expected to handle the change,
+                // just sleep and assume the Activity has handled the change in 3 seconds.
+                Thread.sleep(3000)
+                it.moveToState(Lifecycle.State.RESUMED)
+            } else {
+                it.recreate()
+            }
 
             // Verify that the values have changed to their landscape variants
             // and that the override still works

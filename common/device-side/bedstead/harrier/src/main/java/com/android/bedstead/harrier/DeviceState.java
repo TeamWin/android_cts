@@ -75,6 +75,7 @@ import com.android.bedstead.harrier.annotations.RequireMultipleUsersOnMultipleDi
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
 import com.android.bedstead.harrier.annotations.RequireNotLowRamDevice;
+import com.android.bedstead.harrier.annotations.RequireNotMultipleUsersOnMultipleDisplays;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
@@ -609,6 +610,14 @@ public final class DeviceState extends HarrierRule {
                         (RequireMultipleUsersOnMultipleDisplays) annotation;
                 requireMumd(requireMumdAnnotation.reason(),
                         requireMumdAnnotation.failureMode());
+                continue;
+            }
+
+            if (annotation instanceof RequireNotMultipleUsersOnMultipleDisplays) {
+                RequireNotMultipleUsersOnMultipleDisplays requireNotMumdAnnotation =
+                        (RequireNotMultipleUsersOnMultipleDisplays) annotation;
+                requireNotMumd(requireNotMumdAnnotation.reason(),
+                        requireNotMumdAnnotation.failureMode());
                 continue;
             }
 
@@ -2654,6 +2663,15 @@ public final class DeviceState extends HarrierRule {
                 .getSystemService(UserManager.class).isUsersOnSecondaryDisplaysEnabled()) {
             String message = "Device supports does not support multiple users on multiple display, "
                     + "but test requires it. Reason: " + reason;
+            failOrSkip(message, failureMode);
+        }
+    }
+
+    private void requireNotMumd(String reason, FailureMode failureMode) {
+        if (TestApis.context().instrumentedContext()
+                .getSystemService(UserManager.class).isUsersOnSecondaryDisplaysEnabled()) {
+            String message = "Device supports multiple users on multiple display, but test requires"
+                    + " that it doesn't. Reason: " + reason;
             failOrSkip(message, failureMode);
         }
     }

@@ -209,7 +209,7 @@ public final class UserManagerTest {
     @RequireRunOnPrimaryUser(switchedToUser = TRUE)
     // TODO(b/239961027): should be @EnsureHasProfile instead of @EnsureHasWorkProfile
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
-    @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call isUserRunning() on other context
+    @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call isUserRunning()
     public void testIsUserRunning_stoppedProfileOfCurrentUser() {
         UserReference profile = sDeviceState.workProfile();
         Log.d(TAG, "Stopping profile " + profile + " (called from " + sContext.getUser() + ")");
@@ -226,7 +226,7 @@ public final class UserManagerTest {
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserRunning"})
     @RequireRunOnSecondaryUser(switchedToUser = FALSE)
-    @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call isUserRunning() on other context
+    @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call isUserRunning()
     public void testIsUserRunning_stoppedSecondaryUser() {
         UserReference user = TestApis.users().instrumented();
         Log.d(TAG, "Stopping  user " + user + " (called from " + sContext.getUser() + ")");

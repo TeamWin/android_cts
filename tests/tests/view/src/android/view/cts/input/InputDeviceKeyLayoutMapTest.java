@@ -82,6 +82,7 @@ public class InputDeviceKeyLayoutMapTest {
                 "APP_SWITCH", "SYSRQ", "ASSIST", "VOICE_ASSIST",
                 "HOME", "POWER", "SLEEP", "SOFT_SLEEP", "WAKEUP",
                 "BRIGHTNESS_UP", "BRIGHTNESS_DOWN", "SEARCH",
+                "KEYBOARD_BACKLIGHT_UP", "KEYBOARD_BACKLIGHT_DOWN", "KEYBOARD_BACKLIGHT_TOGGLE",
                 // Keys that cause the test activity to lose focus
                  "CALCULATOR", "MUSIC", "CONTACTS", "CALENDAR", "ENVELOPE", "EXPLORER"
                 ));

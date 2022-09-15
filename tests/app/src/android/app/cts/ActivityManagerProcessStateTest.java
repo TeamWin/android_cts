@@ -274,6 +274,8 @@ public class ActivityManagerProcessStateTest {
                 }, (AccessibilityEvent event) -> event.getEventType()
                         == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
                 , WAIT_TIME);
+        // Wait for the transition animation to complete.
+        mInstrumentation.getUiAutomation().syncInputTransactions();
     }
 
     private void maybeClick(UiDevice device, UiSelector sel) {

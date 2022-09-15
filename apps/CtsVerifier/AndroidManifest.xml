@@ -6536,17 +6536,6 @@
             <meta-data android:name="CddTest" android:value="3.15/C-0-5" />
         </activity>
 
-        <activity android:name=".logcat.ReadLogsTestActivity"
-            android:exported="true"
-            android:label="@string/read_logs_text">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-            <meta-data android:name="test_category" android:value="@string/test_category_logcat" />
-            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.automotive" />
-        </activity>
-
         <activity android:name=".displaycutout.DisplayCutoutTestActivity"
             android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen"
             android:exported="true"

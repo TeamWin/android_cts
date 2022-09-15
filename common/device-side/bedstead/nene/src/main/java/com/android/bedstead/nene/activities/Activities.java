@@ -84,7 +84,7 @@ public final class Activities {
                     TestApis.context().instrumentedContext().getSystemService(
                             ActivityManager.class);
             return activityManager.getRunningTasks(100).stream()
-                    .filter(r -> r.getDisplayId() != Display.DEFAULT_DISPLAY)
+                    .filter(r -> r.getDisplayId() == Display.DEFAULT_DISPLAY)
                     .map(r -> new ComponentReference(r.topActivity))
                     .collect(Collectors.toList());
         }

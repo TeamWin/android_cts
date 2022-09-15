@@ -385,6 +385,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         separateTestJournal();
 
         launchActivity(SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        assumeNotIgnoringOrientation(SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY);
         assertEquals("Legacy translucent activity requested landscape orientation",
                 SCREEN_ORIENTATION_LANDSCAPE, mWmState.getLastOrientation());
 
@@ -552,6 +553,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         rotationSession.set(ROTATION_0);
 
         launchActivity(SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        assumeNotIgnoringOrientation(SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY);
         mWmState.assertResumedActivity(
                 "target SDK <= 26 translucent activity should be allowed to launch",
                 SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY);
@@ -571,6 +573,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         assumeFalse("Skipping test: device is fixed to user rotation",
                 mWmState.isFixedToUserRotation());
+        assumeNotIgnoringOrientation(LANDSCAPE_ORIENTATION_ACTIVITY);
         mWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
         mWmState.waitAndAssertLastOrientation("Fullscreen app requested landscape orientation",
                 SCREEN_ORIENTATION_LANDSCAPE);
@@ -785,6 +788,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
                 supportsLockedUserRotation(rotationSession, displayId));
 
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        assumeNotIgnoringOrientation(PORTRAIT_ORIENTATION_ACTIVITY);
         mWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
         final SizeInfo initialSize = activitySession.getConfigInfo().sizeInfo;
 
@@ -815,6 +819,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
 
         // Start landscape activity.
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        assumeNotIgnoringOrientation(LANDSCAPE_ORIENTATION_ACTIVITY);
         mWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
         final boolean isFixedToUserRotation = mWmState.isFixedToUserRotation();
         if (!isFixedToUserRotation) {
@@ -1093,5 +1098,10 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
 
     private SizeInfo getAppSizeInfo(ActivitySession activitySession) {
         return activitySession.getAppConfigInfo().sizeInfo;
+    }
+
+    private void assumeNotIgnoringOrientation(ComponentName activityName) {
+        assumeFalse("Skipping test: display area is ignoring orientation request",
+                getWmState().isTaskDisplayAreaIgnoringOrientationRequest(activityName));
     }
 }

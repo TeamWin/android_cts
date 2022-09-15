@@ -40,21 +40,21 @@ _MIN_CENTER_THRESHOLD_PERCENT = 0.02
 _MIN_AREA = 176 * 144  # assume QCIF to be min preview size
 
 
-def _collect_data(cam, video_size, stabilize):
+def _collect_data(cam, preview_size, stabilize):
   """Capture a preview video from the device.
 
   Captures camera preview frames from the passed device.
 
   Args:
     cam: camera object
-    video_size: str; video resolution. ex. '1920x1080'
+    preview_size: str; preview resolution. ex. '1920x1080'
     stabilize: boolean; whether the preview should be stabilized or not
 
   Returns:
     recording object as described by cam.do_preview_recording
   """
 
-  recording_obj = cam.do_preview_recording(video_size, _VIDEO_DURATION,
+  recording_obj = cam.do_preview_recording(preview_size, _VIDEO_DURATION,
                                            stabilize)
   logging.debug('Recorded output path: %s', recording_obj['recordedOutputPath'])
   logging.debug('Tested quality: %s', recording_obj['quality'])
@@ -171,19 +171,22 @@ class PreviewStabilizationFoVTest(its_base_test.ItsBaseTest):
           and facing != camera_properties_utils.LENS_FACING_FRONT):
         raise AssertionError('Unknown lens facing: {facing}.')
 
-      # List of video resolutions to test
+      # List of preview resolutions to test
       supported_preview_sizes = cam.get_supported_preview_sizes(self.camera_id)
+      for size in video_processing_utils.LOW_RESOLUTION_SIZES:
+        if size in supported_preview_sizes:
+          supported_preview_sizes.remove(size)
       logging.debug('Supported preview resolutions: %s',
                     supported_preview_sizes)
 
       test_failures = []
 
-      for video_size in supported_preview_sizes:
+      for preview_size in supported_preview_sizes:
 
         # recording with stabilization off
-        ustab_rec_obj = _collect_data(cam, video_size, False)
+        ustab_rec_obj = _collect_data(cam, preview_size, False)
         # recording with stabilization on
-        stab_rec_obj = _collect_data(cam, video_size, True)
+        stab_rec_obj = _collect_data(cam, preview_size, True)
 
         # Grab the unstabilized video from DUT
         self.dut.adb.pull([ustab_rec_obj['recordedOutputPath'], log_path])
@@ -289,7 +292,7 @@ class PreviewStabilizationFoVTest(its_base_test.ItsBaseTest):
                              f'{max_stab_radius}. ')
 
         if failure_string:
-          failure_string = f'{video_size} fails FoV test. ' + failure_string
+          failure_string = f'{preview_size} fails FoV test. ' + failure_string
           test_failures.append(failure_string)
 
       if test_failures:

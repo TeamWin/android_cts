@@ -116,10 +116,10 @@ public class DecoderTest extends MediaTestBase {
     private static final int CONFIG_MODE_NONE = 0;
     private static final int CONFIG_MODE_QUEUE = 1;
 
-    private static final int CODEC_ALL = 0; // All codecs must support
-    private static final int CODEC_ANY = 1; // At least one codec must support
-    private static final int CODEC_DEFAULT = 2; // Default codec must support
-    private static final int CODEC_OPTIONAL = 3; // Codec support is optional
+    public static final int CODEC_ALL = 0; // All codecs must support
+    public static final int CODEC_ANY = 1; // At least one codec must support
+    public static final int CODEC_DEFAULT = 2; // Default codec must support
+    public static final int CODEC_OPTIONAL = 3; // Codec support is optional
 
     short[] mMasterBuffer;
     static final String mInpPrefix = WorkDir.getMediaDirString();

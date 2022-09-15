@@ -16,6 +16,8 @@
 
 package android.scopedstorage.cts.host;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.device.NativeDevice;
@@ -28,6 +30,11 @@ import com.android.tradefed.util.CommandStatus;
 abstract class BaseHostTestCase extends BaseHostJUnit4Test {
     private int mCurrentUserId = NativeDevice.INVALID_USER_ID;
     private static final String ERROR_MESSAGE_TAG = "[ERROR]";
+    protected static ITestDevice sDevice = null;
+
+    protected static void setDevice(ITestDevice device) {
+        sDevice = device;
+    }
 
     protected String executeShellCommand(String cmd, Object... args) throws Exception {
         return getDevice().executeShellCommand(String.format(cmd, args));
@@ -42,14 +49,14 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
     }
 
     // TODO (b/174775905) remove after exposing the check from ITestDevice.
-    protected boolean isHeadlessSystemUserMode() throws DeviceNotAvailableException {
-        String result = getDevice()
+    protected static boolean isHeadlessSystemUserMode() throws DeviceNotAvailableException {
+        String result = sDevice
                 .executeShellCommand("getprop ro.fw.mu.headless_system_user").trim();
         return "true".equalsIgnoreCase(result);
     }
 
-    protected boolean isAtLeastS() throws DeviceNotAvailableException {
-        return getDevice().getApiLevel() >= 31 /* BUILD.VERSION_CODES.S */;
+    protected static boolean isAtLeastS() throws DeviceNotAvailableException {
+        return sDevice.getApiLevel() >= 31 /* BUILD.VERSION_CODES.S */;
     }
 
     protected static void eventually(ThrowingRunnable r, long timeoutMillis) {
@@ -79,7 +86,7 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
         return mCurrentUserId;
     }
 
-    protected boolean isSuccessful(CommandResult result) {
+    protected static boolean isSuccessful(CommandResult result) {
         if (!CommandStatus.SUCCESS.equals(result.getStatus())) {
             return false;
         }
@@ -89,6 +96,22 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
         }
         String stderr = result.getStderr();
         return (stderr == null || stderr.trim().isEmpty());
+    }
+
+    protected static boolean supportsMultipleUsers() throws DeviceNotAvailableException {
+        return sDevice.getMaxNumberOfUsersSupported() > 1;
+    }
+
+    protected static boolean usesSdcardFs() throws Exception {
+        CommandResult out = sDevice.executeShellV2Command("cat /proc/mounts");
+        assertThat(isSuccessful(out)).isTrue();
+        for (String line : out.getStdout().split("\n")) {
+            String[] split = line.split(" ");
+            if (split.length >= 3 && split[2].equals("sdcardfs")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void setCurrentUserId() throws Exception {

@@ -165,10 +165,13 @@ public final class MultipleUsersOnMultipleDisplaysTest {
     public void testGetVisibleUsers_startedProfileOfBackgroundUserOnSecondaryDisplay()
             throws Exception {
         runTestOnSecondaryDisplay(/* startProfile= */ true,
-                (user, profile, display, instance) -> assertWithMessage("getVisibleUsers()")
-                        .that(mUserManager.getVisibleUsers())
-                        .containsAtLeast(TestApis.users().current().userHandle(), user.userHandle(),
-                                profile.userHandle()));
+                (user, profile, display, instance) -> {
+                    List<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
+                    Log.d(TAG, "Visible users: " + visibleUsers);
+                    assertWithMessage("getVisibleUsers()").that(visibleUsers)
+                            .containsAtLeast(TestApis.users().current().userHandle(),
+                                    user.userHandle(), profile.userHandle());
+                });
     }
 
     @Test
@@ -179,9 +182,9 @@ public final class MultipleUsersOnMultipleDisplaysTest {
     @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call getVisibleUsers()
     public void testGetVisibleUsers_stoppedProfileOfBackgroundUserOnSecondaryDisplay()
             throws Exception {
-
         runTestOnSecondaryDisplay(/* startProfile= */ false, (user, profile, display, instance) -> {
             List<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
+            Log.d(TAG, "Visible users: " + visibleUsers);
 
             assertWithMessage("getVisibleUsers()").that(visibleUsers)
                     .containsAtLeast(TestApis.users().current().userHandle(), user.userHandle());
@@ -192,6 +195,17 @@ public final class MultipleUsersOnMultipleDisplaysTest {
 
     // TODO(b/240736142): tests below should belong to ActivityManagerTest or similar, but it
     // doesn't use bedstead yet
+
+    @Test
+    @ApiTest(apis = {"android.app.ActivityManager#startUserInBackgroundOnSecondaryDisplay"})
+    @RequireHeadlessSystemUserMode// non-HSUM cannot have profiles on secondary users
+    @RequireRunOnSecondaryUser
+    @RequireFeature(FEATURE_MANAGED_USERS) // TODO(b/239961027): remove if supports other profiles
+    public void testStartUserInBackgroundOnSecondaryDisplay_profileOnSameDisplay() {
+        runTestOnSecondaryDisplay(/* startProfile= */ true, (user, profile, display, instance) -> {
+            Log.d(TAG, "Saul Goodman!");
+        });
+    }
 
     @FlakyTest(bugId = 242364454)
     @Test
@@ -277,6 +291,9 @@ public final class MultipleUsersOnMultipleDisplaysTest {
         }
     }
 
+    // TODO(b/245963156): move to Display.java (and @hide) if we decide to support profiles on MUMD
+    private static final int PARENT_DISPLAY = -2;
+
     /**
      * Starts a new user (which has a profile) in background on a secondary display and run a test
      * on it.
@@ -301,7 +318,7 @@ public final class MultipleUsersOnMultipleDisplaysTest {
                 startBackgroundUserOnSecondaryDisplay(user, displayId);
                 try {
                     if (startProfile) {
-                        startBackgroundUserOnSecondaryDisplay(profile, displayId);
+                        startBackgroundUserOnSecondaryDisplay(profile, PARENT_DISPLAY);
                     } else {
                         // Make sure it's stopped, as it could have been automatically started with
                         // parent user

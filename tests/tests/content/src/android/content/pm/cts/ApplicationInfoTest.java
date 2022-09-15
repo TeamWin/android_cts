@@ -365,7 +365,7 @@ public class ApplicationInfoTest {
             String[] info = packages[i].split("\\.apk=");
             if (info.length != 2) continue; // Package info need include direction and name.
             if (info[0] != null
-                    && (info[0].startsWith(partition) || info[0].startsWith(system + partition))) {
+                    && (info[0].startsWith(partition + "/") || info[0].startsWith(system + partition + "/"))) {
                 return info[1]; // Package name.
             }
         }

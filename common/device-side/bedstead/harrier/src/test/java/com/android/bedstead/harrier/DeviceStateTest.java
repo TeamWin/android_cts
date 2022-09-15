@@ -87,6 +87,7 @@ import com.android.bedstead.harrier.annotations.RequireNotCnGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
 import com.android.bedstead.harrier.annotations.RequireNotLowRamDevice;
+import com.android.bedstead.harrier.annotations.RequireNotMultipleUsersOnMultipleDisplays;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
@@ -802,7 +803,14 @@ public class DeviceStateTest {
     @RequireMultipleUsersOnMultipleDisplays(reason = "Test")
     public void requireMultipleUsersOnMultipleDisplaysAnnotation_supported() {
         assertThat(TestApis.context().instrumentedContext().getSystemService(UserManager.class)
-                .isUsersOnSecondaryDisplaysEnabled()).isTrue();
+                .isUsersOnSecondaryDisplaysSupported()).isTrue();
+    }
+
+    @Test
+    @RequireNotMultipleUsersOnMultipleDisplays(reason = "Test")
+    public void requireNotMultipleUsersOnMultipleDisplaysAnnotation_notSupported() {
+        assertThat(TestApis.context().instrumentedContext().getSystemService(UserManager.class)
+                .isUsersOnSecondaryDisplaysSupported()).isFalse();
     }
 
     @Test
