@@ -16,6 +16,8 @@
 
 package android.car.cts.builtin.util;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS;
+
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
@@ -50,7 +52,7 @@ public final class AssistUtilsHelperTest {
     @Before
     public void setUp() throws Exception {
         mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
-                PERMISSION_ACCESS_VOICE_INTERACTION_SERVICE);
+                PERMISSION_ACCESS_VOICE_INTERACTION_SERVICE, INTERACT_ACROSS_USERS);
     }
 
     @After

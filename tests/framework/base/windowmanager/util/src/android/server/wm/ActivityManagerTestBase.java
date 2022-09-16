@@ -935,13 +935,17 @@ public abstract class ActivityManagerTestBase {
         return mWmState.getDisplay(mWmState.getDisplayByActivity(activity)).getWindowingMode();
     }
 
+    public static void closeSystemDialogs() {
+        executeShellCommand(AM_BROADCAST_CLOSE_SYSTEM_DIALOGS);
+    }
+
     /**
      * Launches the home activity directly. If there is no specific reason to simulate a home key
      * (which will trigger stop-app-switches), it is the recommended method to go home.
      */
     protected static void launchHomeActivityNoWait() {
         // dismiss all system dialogs before launch home.
-        executeShellCommand(AM_BROADCAST_CLOSE_SYSTEM_DIALOGS);
+        closeSystemDialogs();
         executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
     }
 

@@ -76,7 +76,7 @@ public class DreamCoordinator {
     }
 
     public void startDream() {
-        SystemUtil.runWithShellPermissionIdentity(mDreamManager::startDream);
+        SystemUtil.runWithShellPermissionIdentity(() -> mDreamManager.startDream());
     }
 
     public void stopDream() {

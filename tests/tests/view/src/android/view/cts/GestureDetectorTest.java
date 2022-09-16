@@ -29,6 +29,7 @@ import android.os.SystemClock;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
+import android.view.ViewConfiguration;
 
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.MediumTest;
@@ -55,6 +56,9 @@ public class GestureDetectorTest {
     private long mEventTime;
     private MotionEvent mButtonPressPrimaryMotionEvent;
     private MotionEvent mButtonPressSecondaryMotionEvent;
+    private MotionEvent mDownEvent;
+    private MotionEvent mMoveEvent;
+    private MotionEvent mUpEvent;
 
     @Rule
     public ActivityTestRule<GestureDetectorCtsActivity> mActivityRule =
@@ -75,6 +79,15 @@ public class GestureDetectorTest {
         mButtonPressSecondaryMotionEvent = MotionEvent.obtain(mDownTime, mEventTime,
                 MotionEvent.ACTION_BUTTON_PRESS, X_3F, Y_4F, 0);
         mButtonPressSecondaryMotionEvent.setActionButton(MotionEvent.BUTTON_SECONDARY);
+
+        mDownEvent = MotionEvent.obtain(mDownTime, mEventTime,
+                MotionEvent.ACTION_DOWN, X_3F, Y_4F, 0);
+        mMoveEvent = MotionEvent.obtain(mDownTime, mEventTime, MotionEvent.ACTION_MOVE,
+                ViewConfiguration.get(mActivity).getScaledTouchSlop(),
+                ViewConfiguration.get(mActivity).getScaledTouchSlop(), 0);
+        mUpEvent = MotionEvent.obtain(mDownTime, mEventTime, MotionEvent.ACTION_UP,
+                ViewConfiguration.get(mActivity).getScaledTouchSlop(),
+                ViewConfiguration.get(mActivity).getScaledTouchSlop(), 0);
     }
 
     @UiThreadTest
@@ -125,5 +138,15 @@ public class GestureDetectorTest {
     public void testOnGenericMotionEvent() {
         mGestureDetector.onGenericMotionEvent(mButtonPressPrimaryMotionEvent);
         verify(mListener, times(1)).onContextClick(mButtonPressPrimaryMotionEvent);
+    }
+
+    @Test
+    public void testCompleteEventStream() {
+        assertFalse(mGestureDetector.onTouchEvent(mMoveEvent));
+        assertFalse(mGestureDetector.onTouchEvent(mUpEvent));
+
+        mGestureDetector.setIsLongpressEnabled(false);
+        mGestureDetector.onTouchEvent(mDownEvent);
+        assertTrue(mGestureDetector.onTouchEvent(mMoveEvent));
     }
 }

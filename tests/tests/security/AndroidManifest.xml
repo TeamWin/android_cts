@@ -204,8 +204,33 @@
             </intent-filter>
         </activity>
 
+        <receiver android:name="android.security.cts.CVE_2022_20420.PocDeviceAdminReceiver"
+            android:exported="true"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data android:name="android.app.device_admin"
+                android:resource="@xml/device_admin_CVE_2022_20420" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+
         <activity android:name="android.security.cts.ActivityManagerTest$ActivityOptionsActivity" />
         <activity android:name="android.security.cts.ActivityManagerTest$BaseActivity" />
+
+        <provider android:name="android.security.cts.CVE_2022_20358.PocContentProvider"
+            android:authorities="android.security.cts.CVE_2022_20358.provider"
+            android:enabled="true"
+            android:exported="true" />
+
+        <service android:name="android.security.cts.CVE_2022_20358.PocSyncService"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+            <meta-data android:name="android.content.SyncAdapter"
+                android:resource="@xml/syncadapter" />
+        </service>
 
     </application>
 

@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotNull;
 import android.graphics.Rect;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
+import android.support.test.uiautomator.StaleObjectException;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.UiObjectNotFoundException;
@@ -28,6 +29,7 @@ import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 import android.util.TypedValue;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.core.app.ApplicationProvider;
@@ -36,6 +38,8 @@ import java.util.regex.Pattern;
 
 public class UiAutomatorUtils {
     private UiAutomatorUtils() {}
+
+    private static final String LOG_TAG = "UiAutomatorUtils";
 
     /** Default swipe deadzone percentage. See {@link UiScrollable}. */
     private static final double DEFAULT_SWIPE_DEADZONE_PCT = 0.1;
@@ -86,7 +90,15 @@ public class UiAutomatorUtils {
         final int minViewHeightPx = convertDpToPx(MIN_VIEW_HEIGHT_DP);
 
         while (view == null && start + timeoutMs > System.currentTimeMillis()) {
-            view = getUiDevice().wait(Until.findObject(selector), 1000);
+            try {
+                view = getUiDevice().wait(Until.findObject(selector), 1000);
+            } catch (StaleObjectException exception) {
+                // UiDevice.wait() may cause StaleObjectException if the {@link View} attached to
+                // UiObject2 is no longer in the view tree.
+                Log.v(LOG_TAG, "UiObject2 view is no longer in the view tree.", exception);
+                getUiDevice().waitForIdle();
+                continue;
+            }
 
             if (view == null || view.getVisibleBounds().height() < minViewHeightPx) {
                 final double deadZone = !(FeatureUtil.isWatch() || FeatureUtil.isTV())

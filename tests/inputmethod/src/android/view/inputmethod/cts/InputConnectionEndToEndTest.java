@@ -18,10 +18,12 @@ package android.view.inputmethod.cts;
 
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_DELETE;
+import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_DELETE_RANGE;
 import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_INSERT;
 import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_JOIN_OR_SPLIT;
 import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_REMOVE_SPACE;
 import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_SELECT;
+import static android.view.inputmethod.HandwritingGesture.GESTURE_TYPE_SELECT_RANGE;
 
 import static com.android.cts.mocka11yime.MockA11yImeEventStreamUtils.editorMatcherForA11yIme;
 import static com.android.cts.mocka11yime.MockA11yImeEventStreamUtils.expectA11yImeCommand;
@@ -60,6 +62,7 @@ import android.view.KeyEvent;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.CorrectionInfo;
 import android.view.inputmethod.DeleteGesture;
+import android.view.inputmethod.DeleteRangeGesture;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
@@ -71,6 +74,7 @@ import android.view.inputmethod.InsertGesture;
 import android.view.inputmethod.JoinOrSplitGesture;
 import android.view.inputmethod.RemoveSpaceGesture;
 import android.view.inputmethod.SelectGesture;
+import android.view.inputmethod.SelectRangeGesture;
 import android.view.inputmethod.SurroundingText;
 import android.view.inputmethod.TextAttribute;
 import android.view.inputmethod.TextSnapshot;
@@ -1562,6 +1566,26 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     /**
      * Test
      * {@link InputConnection#performHandwritingGesture(HandwritingGesture, Executor, IntConsumer)}
+     * works as expected for {@link SelectRangeGesture}.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.inputmethod.SelectRangeGesture.Builder#setGranularity",
+            "android.view.inputmethod.SelectRangeGesture.Builder#setSelectionArea",
+            "android.view.inputmethod.SelectRangeGesture.Builder#setGranularity",
+            "android.view.inputmethod.InputConnection#performHandwritingGesture"})
+    public void testPerformHandwritingSelectRangeGesture() throws Exception {
+        SelectRangeGesture.Builder builder = new SelectRangeGesture.Builder();
+        testPerformHandwritingGesture(
+                builder.setGranularity(HandwritingGesture.GRANULARITY_WORD)
+                        .setSelectionStartArea(new RectF(1, 2, 3, 4))
+                        .setSelectionEndArea(new RectF(5, 6, 7, 8))
+                        .setFallbackText("").build(),
+                InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
+    }
+
+    /**
+     * Test
+     * {@link InputConnection#performHandwritingGesture(HandwritingGesture, Executor, IntConsumer)}
      * works as expected for {@link SelectGesture} by returning
      * {@link InputConnection#HANDWRITING_GESTURE_RESULT_FAILED}.
      */
@@ -1615,6 +1639,27 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
                 InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
     }
 
+
+    /**
+     * Test
+     * InputConnection#performHandwritingGesture(HandwritingGesture, Executor, IntConsumer)}}
+     * works as expected for {@link DeleteRangeGesture}.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.inputmethod.DeleteRangeGesture.Builder#setGranularity",
+            "android.view.inputmethod.DeleteRangeGesture.Builder#setSelectionArea",
+            "android.view.inputmethod.DeleteRangeGesture.Builder#setFallbackText",
+            "android.view.inputmethod.InputConnection#performHandwritingGesture"})
+    public void testPerformHandwritingDeleteRangeGesture() throws Exception {
+        DeleteRangeGesture.Builder builder = new DeleteRangeGesture.Builder();
+        testPerformHandwritingGesture(
+                builder.setGranularity(HandwritingGesture.GRANULARITY_WORD)
+                        .setDeletionStartArea(new RectF(1, 2, 3, 4))
+                        .setDeletionEndArea(new RectF(5, 6, 7, 8))
+                        .setFallbackText("").build(),
+                InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
+    }
+
     /**
      * Test InputConnection#performHandwritingGesture(HandwritingGesture, Executor, IntConsumer)}}
      * works as expected for {@link RemoveSpaceGesture}.
@@ -1659,11 +1704,17 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             case GESTURE_TYPE_SELECT:
                 classRef.set(SelectGesture.class);
                 break;
+            case GESTURE_TYPE_SELECT_RANGE:
+                classRef.set(SelectRangeGesture.class);
+                break;
             case GESTURE_TYPE_INSERT:
                 classRef.set(InsertGesture.class);
                 break;
             case GESTURE_TYPE_DELETE:
                 classRef.set(DeleteGesture.class);
+                break;
+            case GESTURE_TYPE_DELETE_RANGE:
+                classRef.set(DeleteRangeGesture.class);
                 break;
             case GESTURE_TYPE_REMOVE_SPACE:
                 classRef.set(RemoveSpaceGesture.class);

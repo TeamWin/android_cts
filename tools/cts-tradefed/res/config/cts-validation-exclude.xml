@@ -493,4 +493,7 @@
     <option name="compatibility:exclude-filter" value="android.hardware.camera2.cts.StillCaptureTest.testFocalLengths[1]" />
     <option name="compatibility:exclude-filter" value="android.hardware.camera2.cts.ImageReaderTest.testRepeatingRaw[1]" />
 
+    <!-- b/204720226 -->
+    <option name="compatibility:exclude-filter" value="CtsPhotoPickerTest android.photopicker.cts.PhotoPickerCrossProfileTest#testPersonalApp_cannotAccessWorkProfile_default" />
+    <option name="compatibility:exclude-filter" value="CtsMediaHostTestCases android.media.session.cts.MediaSessionManagerHostTest#testGetActiveSessionsFull_managedProfiles" />
 </configuration>

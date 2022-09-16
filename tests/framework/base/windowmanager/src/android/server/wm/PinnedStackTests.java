@@ -1606,6 +1606,18 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
+    public void testAutoPipOnLaunchingTranslucentActivityInAnotherTask() {
+        // Launch the PIP activity and set its pip params to allow auto-pip.
+        launchActivity(PIP_ACTIVITY, extraString(EXTRA_ALLOW_AUTO_PIP, "true"));
+        assertPinnedStackDoesNotExist();
+
+        // Launch a translucent activity as a new Task and
+        // ensure that there is no pinned stack.
+        launchActivity(TRANSLUCENT_TEST_ACTIVITY);
+        assertPinnedStackDoesNotExist();
+    }
+
+    @Test
     public void testAutoPipOnLaunchingActivityWithNoUserAction() {
         // Launch the PIP activity and set its pip params to allow auto-pip.
         launchActivity(PIP_ACTIVITY, extraString(EXTRA_ALLOW_AUTO_PIP, "true"));

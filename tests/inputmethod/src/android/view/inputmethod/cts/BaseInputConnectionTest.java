@@ -39,6 +39,7 @@ import android.view.View;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.ExtractedTextRequest;
+import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.SurroundingText;
@@ -46,9 +47,9 @@ import android.view.inputmethod.TextSnapshot;
 import android.view.inputmethod.cts.util.InputConnectionTestUtils;
 
 import androidx.annotation.NonNull;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,6 +60,8 @@ public class BaseInputConnectionTest {
 
     private static final int CAPS_MODE_MASK = TextUtils.CAP_MODE_CHARACTERS
             | TextUtils.CAP_MODE_WORDS | TextUtils.CAP_MODE_SENTENCES;
+
+    private static final int MEMORY_EFFICIENT_TEXT_LENGTH = 2048;
 
     private static BaseInputConnection createBaseInputConnection() {
         final View view = new View(InstrumentationRegistry.getInstrumentation().getTargetContext());
@@ -673,5 +676,25 @@ public class BaseInputConnectionTest {
                 .isEqualTo(BaseInputConnection.getComposingSpanEnd(editable));
         assertThat(snapshot.getCursorCapsMode()).isEqualTo(
                 connection.getCursorCapsMode(CAPS_MODE_MASK));
+        final SurroundingText surroundingText = snapshot.getSurroundingText();
+        assertThat(surroundingText).isNotNull();
+        final SurroundingText expectedSurroundingText =
+                connection.getSurroundingText(
+                        MEMORY_EFFICIENT_TEXT_LENGTH / 2,
+                        MEMORY_EFFICIENT_TEXT_LENGTH / 2,
+                        InputConnection.GET_TEXT_WITH_STYLES);
+        assertThat(
+                        surroundingText
+                                .getText()
+                                .toString()
+                                .contentEquals(expectedSurroundingText.getText()))
+                .isTrue();
+        assertThat(surroundingText.getSelectionStart())
+                .isEqualTo(expectedSurroundingText.getSelectionStart());
+        assertThat(surroundingText.getSelectionStart())
+                .isEqualTo(expectedSurroundingText.getSelectionStart());
+        assertThat(surroundingText.getSelectionEnd())
+                .isEqualTo(expectedSurroundingText.getSelectionEnd());
+        assertThat(surroundingText.getOffset()).isEqualTo(expectedSurroundingText.getOffset());
     }
 }

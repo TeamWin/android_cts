@@ -178,6 +178,8 @@ public class LockTaskUiTestActivity extends PassFailButtons.TestListActivity {
                     R.string.device_owner_lock_task_ui_global_actions_test_info));
         }
 
+        // Disabled due to b/240590557. Will be re-enabled for Android 14+.
+        /*
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
                 && !getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEVISION)
                 && getPackageManager().hasSystemFeature(
@@ -188,6 +190,7 @@ public class LockTaskUiTestActivity extends PassFailButtons.TestListActivity {
                     R.string.device_owner_lock_task_ui_keyguard_test,
                     R.string.device_owner_lock_task_ui_keyguard_test_info));
         }
+        */
 
         final Intent stopLockTaskIntent = new Intent(this, LockTaskUiTestActivity.class);
         stopLockTaskIntent.setAction(ACTION_STOP_LOCK_TASK);

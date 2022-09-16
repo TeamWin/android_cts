@@ -45,10 +45,14 @@ import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -60,6 +64,10 @@ import java.util.regex.Pattern;
 
 @RunWith(AndroidJUnit4.class)
 public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
+
+    @Rule
+    @ClassRule
+    public static final DeviceState sDeviceState = new DeviceState();
 
     // type values from frameworks/base/core/java/android/app/WindowConfiguration
     enum ActivityType {
@@ -140,6 +148,7 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
     }
 
     @Test
+    @EnsureHasPermission(GRANTED_PERMISSION_INTERACT_ACROSS_USERS)
     public void testCheckComponentPermission() throws Exception {
         // not requested from Manifest
         assertComponentPermissionNotGranted(NOT_REQUESTED_PERMISSION_CAR_MILEAGE);

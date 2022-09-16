@@ -75,7 +75,7 @@ public class StartActivityAsUserTests {
             return;
         }
         runShellCommand("pm install-existing --user " + sSecondUserId + " android.server.wm.cts");
-        runShellCommand("am start-user " + sSecondUserId + " -w ");
+        runShellCommand("am start-user -w " + sSecondUserId);
     }
 
     @AfterClass
@@ -83,7 +83,7 @@ public class StartActivityAsUserTests {
         if (sSecondUserId == 0) {
             return;
         }
-        runShellCommand("am stop-user " + sSecondUserId + " -w -f");
+        runShellCommand("am stop-user -w -f " + sSecondUserId);
         runShellCommand("pm remove-user " + sSecondUserId);
         sSecondUserId = 0;
     }

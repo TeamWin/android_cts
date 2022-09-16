@@ -73,14 +73,12 @@ public class VirtualTouchscreenTest extends VirtualDeviceTestCase {
                 .build());
         // Convert the input axis size to its equivalent fraction of the total screen.
         final float computedSize = inputSize / (DISPLAY_WIDTH - 1f);
-        // TODO(b/216638606): Investigate why a ACTION_HOVER_ENTER event is produced
+
         verifyEvents(Arrays.asList(
                 createMotionEvent(MotionEvent.ACTION_DOWN, /* x= */ x, /* y= */ y,
                         /* pressure= */ 1f, /* size= */ computedSize, /* axisSize= */ inputSize),
                 createMotionEvent(MotionEvent.ACTION_UP, /* x= */ x, /* y= */ y,
-                        /* pressure= */ 1f, /* size= */ computedSize, /* axisSize= */ inputSize),
-                createMotionEvent(MotionEvent.ACTION_HOVER_ENTER, /* x= */ 0f, /* y= */ 0f,
-                        /* pressure= */ 0f, /* size= */ 0f, /* axisSize= */ 0f)));
+                        /* pressure= */ 1f, /* size= */ computedSize, /* axisSize= */ inputSize)));
     }
 
     private MotionEvent createMotionEvent(int action, float x, float y, float pressure, float size,
