@@ -35,6 +35,7 @@ import android.os.SystemClock;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.Until;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
@@ -53,6 +54,7 @@ import android.view.ViewConfiguration;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.Editor;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
 
@@ -76,7 +78,6 @@ import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -770,28 +771,30 @@ public class EditTextTest {
     public void testCursorNotBlinkingOnNewActivity_WithoutFocus() {
         Activity testActivity = mEmptyActivityRule.launchActivity(null);
         EditText et = testActivity.findViewById(R.id.edittext_simple1);
-        boolean isBlinking = shouldBlinkMock(et);
-        assertFalse(isBlinking);
+        Editor editor = et.getEditorForTesting();
+        boolean cursorBlinking = editor.isBlinking();
+        assertFalse(cursorBlinking);
     }
 
     @Test
     public void testCursorBlinkingOnNewActivity_WithFocus() {
         Activity testActivity = mEmptyActivityRule.launchActivity(null);
         EditText et = testActivity.findViewById(R.id.edittext_simple1);
+        Editor editor = et.getEditorForTesting();
 
         mInstrumentation.runOnMainSync(() -> {
             et.requestFocus();
         });
 
-        boolean isBlinking = shouldBlinkMock(et);
-        assertTrue(isBlinking);
+        boolean cursorBlinking = editor.isBlinking();
+        assertTrue(cursorBlinking);
     }
-
 
     @Test
     public void testSuspendAndResumeBlinkingCursor() {
         Activity testActivity = mEmptyActivityRule.launchActivity(null);
         final EditText et = testActivity.findViewById(R.id.edittext_simple1);
+        Editor editor = et.getEditorForTesting();
 
         mInstrumentation.runOnMainSync(() -> {
             et.requestFocus();
@@ -799,50 +802,31 @@ public class EditTextTest {
 
         UiDevice device =  UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
 
-        boolean isBlinking = shouldBlinkMock(et);
-        assertTrue(isBlinking);
+        boolean cursorBlinking = editor.isBlinking();
+        assertTrue(cursorBlinking);
 
-        //send activity to the background,
+        // Send activity to the background.
         device.pressHome();
+        device.waitForIdle();
 
-        final CountDownLatch visibilityLatch = new CountDownLatch(1);
-        //pause to allow visibility to get updated.
-        try {
-            visibilityLatch.await(2, TimeUnit.SECONDS);
-        } catch (Exception e) { }
+        cursorBlinking = editor.isBlinking();
+        assertFalse(cursorBlinking);
 
-
-        isBlinking = shouldBlinkMock(et);
-        assertFalse(isBlinking);
-
+        // Bring the activity back into the foreground
         Intent resumeActivity = new Intent(mInstrumentation.getContext(),
                 EditTextCursorCtsActivity.class);
         resumeActivity.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         mActivity.startActivity(resumeActivity);
 
-        //pause to allow visibility to get updated.
-        try {
-            visibilityLatch.await(2, TimeUnit.SECONDS);
-        } catch (Exception e) { }
+        // Check if the activity is in the foreground.
+        device.wait(Until.findObject(By.text("test for blinking cursor")), 2000);
 
         mInstrumentation.runOnMainSync(() -> {
             et.requestFocus();
         });
 
-        isBlinking = shouldBlinkMock(et);
-        assertTrue(isBlinking);
+        cursorBlinking = editor.isBlinking();
+        assertTrue(cursorBlinking);
     }
 
-    private boolean shouldBlinkMock(EditText editText) {
-        if (!editText.isCursorVisible() || !editText.isFocused()
-                 || editText.getWindowVisibility() != editText.VISIBLE) return false;
-
-        int start = editText.getSelectionStart();
-        if (start < 0) return false;
-
-        int end = editText.getSelectionEnd();
-        if (end < 0) return false;
-
-        return start == end;
-    }
 }

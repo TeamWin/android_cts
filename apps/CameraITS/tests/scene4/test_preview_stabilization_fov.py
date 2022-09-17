@@ -30,8 +30,10 @@ import video_processing_utils
 _PREVIEW_STABILIZATION_MODE_PREVIEW = 2
 _VIDEO_DURATION = 3  # seconds
 
-_MAX_STABILIZED_RADIUS_RATIO = 1.2  # radius of circle in stabilized preview
-                                    # should be at most 20% larger
+_MAX_STABILIZED_RADIUS_RATIO = 1.25  # An FOV reduction of 20% corresponds to an
+                                     # increase in lengths of 25%. So the
+                                     # stabilized circle's radius can be at most
+                                     # 1.25 times that of an unstabilized circle
 _ROUNDESS_DELTA_THRESHOLD = 0.05
 
 _MAX_CENTER_THRESHOLD_PERCENT = 0.075

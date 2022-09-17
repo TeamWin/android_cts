@@ -50,6 +50,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.LocusId;
+import android.content.res.Resources;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.permission.PermissionManager;
@@ -124,7 +125,9 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
     private boolean isBubblesFeatureSupported() {
         // These do not support bubbles.
         return (!mActivityManager.isLowRamDevice() || FeatureUtil.isWatch())
-                && !FeatureUtil.isAutomotive() && !FeatureUtil.isTV();
+                && !FeatureUtil.isAutomotive() && !FeatureUtil.isTV()
+                && mContext.getResources().getBoolean(Resources.getSystem().getIdentifier(
+                        "config_supportsBubble", "bool", "android"));
     }
 
     private void sleep() {

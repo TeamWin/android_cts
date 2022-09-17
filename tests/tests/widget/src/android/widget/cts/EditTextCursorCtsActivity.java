@@ -31,6 +31,6 @@ public class EditTextCursorCtsActivity extends Activity {
         setContentView(R.layout.edittext_layout);
 
         EditText et = findViewById(R.id.edittext_simple1);
-        et.setText("initial text");
+        et.setText("test for blinking cursor");
     }
 }

@@ -38,9 +38,6 @@ ITS_SUPPORTED_QUALITIES = (
 LOW_RESOLUTION_SIZES = (
     '176x144',
     '192x144',
-    '360x240',
-    '352x288',
-    '384x288',
 )
 
 

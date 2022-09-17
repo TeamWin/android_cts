@@ -303,21 +303,25 @@ public class UiModeManagerTest extends AndroidTestCase {
     public void testSetNightModeActivatedForCustomMode_modeAuto_activateAtBedtime_shouldNotActivateNightMode() {
         acquireModifyNightModePermission();
         mUiModeManager.setNightMode(MODE_NIGHT_AUTO);
+        int uiMode = getContext().getResources().getConfiguration().uiMode &
+                Configuration.UI_MODE_NIGHT_MASK;
 
         assertThat(mUiModeManager.setNightModeActivatedForCustomMode(
                 MODE_NIGHT_CUSTOM_TYPE_BEDTIME, true /* active */)).isFalse();
 
-        assertVisibleNightModeInConfiguration(Configuration.UI_MODE_NIGHT_NO);
+        assertVisibleNightModeInConfiguration(uiMode);
     }
 
     public void testSetNightModeActivatedForCustomMode_customTypeSchedule_activateAtBedtime_shouldNotActivateNightMode() {
         acquireModifyNightModePermission();
         mUiModeManager.setNightModeCustomType(MODE_NIGHT_CUSTOM_TYPE_SCHEDULE);
+        int uiMode = getContext().getResources().getConfiguration().uiMode &
+                Configuration.UI_MODE_NIGHT_MASK;
 
         assertThat(mUiModeManager.setNightModeActivatedForCustomMode(
                 MODE_NIGHT_CUSTOM_TYPE_BEDTIME, true /* active */)).isFalse();
 
-        assertVisibleNightModeInConfiguration(Configuration.UI_MODE_NIGHT_NO);
+        assertVisibleNightModeInConfiguration(uiMode);
     }
 
     public void testSetNightModeActivatedForCustomMode_modeNo_activateAtBedtime_thenCustomTypeBedtime_shouldActivateNightMode() {

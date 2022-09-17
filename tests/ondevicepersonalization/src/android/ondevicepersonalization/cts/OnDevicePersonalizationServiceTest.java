@@ -16,14 +16,6 @@
 
 package android.ondevicepersonalization.cts;
 
-import static org.junit.Assert.assertEquals;
-
-import android.content.Context;
-import android.ondevicepersonalization.OnDevicePersonalizationManager;
-
-import androidx.test.core.app.ApplicationProvider;
-
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -33,17 +25,6 @@ import org.junit.runners.JUnit4;
  */
 @RunWith(JUnit4.class)
 public class OnDevicePersonalizationServiceTest {
-    private Context mContext;
-    private OnDevicePersonalizationManager mService;
-
-    @Before
-    public void setup() throws Exception {
-        mContext = ApplicationProvider.getApplicationContext();
-        mService = mContext.getSystemService(OnDevicePersonalizationManager.class);
-    }
-
     @Test
-    public void testVersion() throws Exception {
-        assertEquals(mService.getVersion(), "1.0");
-    }
+    public void test() throws Exception {}
 }

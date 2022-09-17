@@ -44,8 +44,8 @@ import java.util.concurrent.TimeUnit;
 @RunWith(DeviceJUnit4ClassRunner.class)
 @AppModeFull
 public class ParallelUserBackupRestoreHostSideTest extends BaseMultiUserBackupHostSideTest {
-    private static final long TIMEOUT_BACKUP = TimeUnit.MINUTES.toMillis(5);
-    private static final long TIMEOUT_RESTORE = TimeUnit.MINUTES.toMillis(5);
+    private static final long TIMEOUT_BACKUP = TimeUnit.MINUTES.toMillis(10);
+    private static final long TIMEOUT_RESTORE = TimeUnit.MINUTES.toMillis(10);
     private static final long TIMEOUT_RESULT = TimeUnit.SECONDS.toMillis(30);
     private static final String BACKUP_SUCCESS_OUTPUT = "Backup finished with result: Success";
     private static final String RESTORE_SUCCESS_OUTPUT = "restoreFinished: 0";
