@@ -306,10 +306,26 @@
 
         <service android:name="android.content.cts.MockContextService"/>
         <activity android:name=".content.ContextCtsActivity"
-             android:label="ContextCtsActivity"
-             android:exported="true">
+                  android:label="ContextCtsActivity"
+                  android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
+            </intent-filter>
+        </activity>
+        <activity android:name="android.content.cts.ContextCtsExportedActivity"
+                  android:label="ContextCtsExportedActivity"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.cts.action.TEST_EXPORTED"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+        <activity android:name="android.content.cts.ContextCtsNonExportedActivity"
+                  android:label="ContextCtsNonExportedActivity"
+                  android:exported="false">
+            <intent-filter>
+                <action android:name="android.cts.action.TEST_NON_EXPORTED"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
 
@@ -347,6 +363,12 @@
                 <action android:name="android.content.cts.BroadcastReceiverTest.BROADCAST_MOCKTEST"/>
                 <action android:name="android.content.cts.BroadcastReceiverTest.BROADCAST_TESTABORT"/>
                 <action android:name="android.content.cts.ContextTest.BROADCAST_TESTORDER"/>
+            </intent-filter>
+        </receiver>
+        <receiver android:name="android.content.cts.BroadcastReceiverTest$TestNonExportedReceiver"
+                  android:exported="false">
+            <intent-filter android:priority="3">
+                <action android:name="android.content.cts.BroadcastReceiverTest.TEST_NOT_EXPORTED"/>
             </intent-filter>
         </receiver>
 
@@ -598,7 +620,6 @@
         <activity
             android:name="android.content.res.cts.config.activity.ApplyOverrideConfigHandleOrientationActivity"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"/>
-
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

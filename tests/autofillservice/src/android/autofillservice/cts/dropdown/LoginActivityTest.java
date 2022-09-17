@@ -1997,7 +1997,8 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
 
         // Configure the save UI.
         final IntentSender listener = PendingIntent.getBroadcast(mContext, 0,
-                new Intent(intentAction), PendingIntent.FLAG_IMMUTABLE).getIntentSender();
+                new Intent(intentAction).setPackage(mContext.getPackageName()),
+                PendingIntent.FLAG_IMMUTABLE).getIntentSender();
 
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)

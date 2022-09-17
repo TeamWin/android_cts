@@ -32,6 +32,12 @@
             android:canDisplayOnRemoteDevices="false"
             android:exported="true" />
 
+        <activity android:name=".ReporterActivityA"
+            android:exported="true" />
+
+        <activity android:name=".ReporterActivityB"
+            android:exported="true" />
+
         <service android:name=".StreamedAppService"
             android:exported="true" />
     </application>

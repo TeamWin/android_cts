@@ -357,12 +357,15 @@ public final class DeviceState extends HarrierRule {
                         annotation.annotationType()
                                 .getMethod(INSTALL_INSTRUMENTED_APP).invoke(annotation);
 
-                OptionalBoolean isQuietModeEnabled =
-                        annotation.annotationType().getMethod(IS_QUIET_MODE_ENABLED) == null
-                                ? OptionalBoolean.ANY
-                                : (OptionalBoolean)
-                                        annotation.annotationType().getMethod(
-                                                IS_QUIET_MODE_ENABLED).invoke(annotation);
+                OptionalBoolean isQuietModeEnabled = OptionalBoolean.ANY;
+
+                try {
+                    isQuietModeEnabled = (OptionalBoolean)
+                            annotation.annotationType().getMethod(
+                                    IS_QUIET_MODE_ENABLED).invoke(annotation);
+                } catch (NoSuchMethodException e) {
+                    // Expected, we default to ANY
+                }
 
                 boolean dpcIsPrimary = false;
                 boolean useParentInstance = false;

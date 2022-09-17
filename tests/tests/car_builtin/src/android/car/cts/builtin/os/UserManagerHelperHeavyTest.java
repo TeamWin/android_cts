@@ -39,6 +39,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -88,6 +89,8 @@ public final class UserManagerHelperHeavyTest extends AbstractCarBuiltinTestCase
     @EnsureHasPermission(CREATE_USERS) // needed to query user properties
     @ApiTest(apis = {
             "android.car.builtin.os.UserManagerHelper#isEphemeralUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isFullUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isGuestUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isEnabledUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isPreCreatedUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isInitializedUser(UserManager, UserHandle)"
@@ -95,13 +98,10 @@ public final class UserManagerHelperHeavyTest extends AbstractCarBuiltinTestCase
     public void testMultiplePropertiesForGuestUser() throws Exception {
         UserHandle guestUser = createGuestUser();
 
-        // Should be ephemeral
+        assertThat(UserManagerHelper.isGuestUser(mUserManager, guestUser)).isTrue();
         assertThat(UserManagerHelper.isEphemeralUser(mUserManager, guestUser)).isTrue();
-
-        // User should be enabled.
+        assertThat(UserManagerHelper.isFullUser(mUserManager, guestUser)).isTrue();
         assertThat(UserManagerHelper.isEnabledUser(mUserManager, guestUser)).isTrue();
-
-        // User should not be preCreated
         assertThat(UserManagerHelper.isPreCreatedUser(mUserManager, guestUser)).isFalse();
 
         // User should be initialized, but to confirm, we should wait for some time as
@@ -117,6 +117,8 @@ public final class UserManagerHelperHeavyTest extends AbstractCarBuiltinTestCase
     @EnsureHasPermission(CREATE_USERS) // needed to query user properties
     @ApiTest(apis = {
             "android.car.builtin.os.UserManagerHelper#isEphemeralUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isFullUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isGuestUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isEnabledUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isPreCreatedUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isInitializedUser(UserManager, UserHandle)"
@@ -124,13 +126,10 @@ public final class UserManagerHelperHeavyTest extends AbstractCarBuiltinTestCase
     public void testMultiplePropertiesForSecondaryFullUser() throws Exception {
         UserHandle fullUser = createSecondaryUser();
 
-        // Should not be ephemeral
         assertThat(UserManagerHelper.isEphemeralUser(mUserManager, fullUser)).isFalse();
-
-        // User should be enabled.
+        assertThat(UserManagerHelper.isGuestUser(mUserManager, fullUser)).isFalse();
+        assertThat(UserManagerHelper.isFullUser(mUserManager, fullUser)).isTrue();
         assertThat(UserManagerHelper.isEnabledUser(mUserManager, fullUser)).isTrue();
-
-        // User should not be preCreated
         assertThat(UserManagerHelper.isPreCreatedUser(mUserManager, fullUser)).isFalse();
 
         // User should be initialized, but to confirm, we should wait for some time as
@@ -146,20 +145,19 @@ public final class UserManagerHelperHeavyTest extends AbstractCarBuiltinTestCase
     @EnsureHasPermission(CREATE_USERS) // needed to query user properties
     @ApiTest(apis = {
             "android.car.builtin.os.UserManagerHelper#isEphemeralUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isFullUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isGuestUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isEnabledUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isPreCreatedUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isInitializedUser(UserManager, UserHandle)"
     })
-    public void testMultiplePropertiesForPreCreatedGuestUser() throws Exception {
+    public void testMultiplePropertiesForPreCreatedFullUser() throws Exception {
         UserHandle preCreateUser = preCreateUserTest(UserManager.USER_TYPE_FULL_SECONDARY);
 
-        // User should not be ephemeral
         assertThat(UserManagerHelper.isEphemeralUser(mUserManager, preCreateUser)).isFalse();
-
-        // User should be enabled.
+        assertThat(UserManagerHelper.isGuestUser(mUserManager, preCreateUser)).isFalse();
+        assertThat(UserManagerHelper.isFullUser(mUserManager, preCreateUser)).isTrue();
         assertThat(UserManagerHelper.isEnabledUser(mUserManager, preCreateUser)).isTrue();
-
-        // User should be preCreated
         assertThat(UserManagerHelper.isPreCreatedUser(mUserManager, preCreateUser)).isTrue();
 
         // User should be initialized, wait for it.
@@ -170,24 +168,26 @@ public final class UserManagerHelperHeavyTest extends AbstractCarBuiltinTestCase
         assertGetUserHandlesHasUser(preCreateUser);
     }
 
+    @Ignore("TODO(b/246876816): sometimes it crashes system server")
     @Test
     @EnsureHasPermission(CREATE_USERS) // needed to query user properties
     @ApiTest(apis = {
             "android.car.builtin.os.UserManagerHelper#isEphemeralUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isFullUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isGuestUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isEnabledUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isPreCreatedUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isInitializedUser(UserManager, UserHandle)"
     })
-    public void testMultiplePropertiesForPreCreatedFullUser() throws Exception {
+    public void testMultiplePropertiesForPreCreatedGuestUser() throws Exception {
         UserHandle preCreateUser = preCreateUserTest(UserManager.USER_TYPE_FULL_GUEST);
 
         // Should not be ephemeral, will be ephemeral after promoted
         assertThat(UserManagerHelper.isEphemeralUser(mUserManager, preCreateUser)).isFalse();
 
-        // User should be enabled.
+        assertThat(UserManagerHelper.isGuestUser(mUserManager, preCreateUser)).isTrue();
+        assertThat(UserManagerHelper.isFullUser(mUserManager, preCreateUser)).isTrue();
         assertThat(UserManagerHelper.isEnabledUser(mUserManager, preCreateUser)).isTrue();
-
-        // User should be preCreated
         assertThat(UserManagerHelper.isPreCreatedUser(mUserManager, preCreateUser)).isTrue();
 
         // User should be initialized, wait for it.

@@ -30,6 +30,7 @@ import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.SystemUtil;
 
 public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
@@ -43,6 +44,8 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
     private String mInitialDisplayTimeout;
     private String mPreviousLowPowerTriggerLevel;
 
+    private DeviceConfigStateHelper mAlarmManagerDeviceConfigStateHelper;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -50,13 +53,18 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         mBuilder = new JobInfo.Builder(FLEXIBLE_JOB_ID, kJobServiceComponent);
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
 
+        mAlarmManagerDeviceConfigStateHelper =
+                new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ALARM_MANAGER);
+        mAlarmManagerDeviceConfigStateHelper
+                .set("delay_nonwakeup_alarms_while_screen_off", "false");
+
         // Using jobs with no deadline, but having a short fallback deadline, lets us test jobs
         // whose lifecycle is smaller than the minimum allowed by JobStatus.
         mDeviceConfigStateHelper.set(
                 new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_JOB_SCHEDULER)
                         .setLong("fc_flexibility_deadline_proximity_limit_ms", 0L)
                         .setLong("fc_fallback_flexibility_deadline_ms", 100_000)
-                        .setLong("fc_min_alarm_time_flexibility_ms", 0L)
+                        .setLong("fc_min_time_between_flexibility_alarms_ms", 0L)
                         .setString("fc_percents_to_drop_num_flexible_constraints", "3,6,12,25")
                         .setBoolean("fc_enable_flexibility", true)
                         .build());
@@ -82,6 +90,7 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         mJobScheduler.cancel(FLEXIBLE_JOB_ID);
 
         mDeviceConfigStateHelper.restoreOriginalValues();
+        mAlarmManagerDeviceConfigStateHelper.restoreOriginalValues();
         mUiDevice.executeShellCommand(
                 "settings put system screen_off_timeout " + mInitialDisplayTimeout);
         Settings.Global.putString(getContext().getContentResolver(),
@@ -99,10 +108,10 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         mDeviceConfigStateHelper.set("fc_percents_to_drop_num_flexible_constraints", "1,2,3,25");
         Thread.sleep(1_000);
         scheduleJobToExecute();
-        assertJobNotReady();
 
         // Wait for all constraints to drop.
-        Thread.sleep(3_000);
+        assertFalse("Job fired before flexible constraints dropped",
+                kTestEnvironment.awaitExecution(3000));
         runJob();
 
         assertTrue("Job with flexible constraint did not fire when no constraints were required",
@@ -305,5 +314,4 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
                 + " " + kJobServiceComponent.getPackageName()
                 + " " + FLEXIBLE_JOB_ID);
     }
-
 }

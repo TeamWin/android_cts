@@ -31,6 +31,9 @@ import android.os.IBinder;
 import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Test {@link BroadcastReceiver}.
  * TODO:  integrate the existing tests.
@@ -46,6 +49,8 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
             "android.content.cts.BroadcastReceiverTest.BROADCAST_INTERNAL";
     private static final String ACTION_BROADCAST_MOCKTEST =
             "android.content.cts.BroadcastReceiverTest.BROADCAST_MOCKTEST";
+    private static final String ACTION_TEST_NOT_EXPORTED =
+            "android.content.cts.BroadcastReceiverTest.TEST_NOT_EXPORTED";
     private static final String ACTION_BROADCAST_TESTABORT =
             "android.content.cts.BroadcastReceiverTest.BROADCAST_TESTABORT";
     private static final String ACTION_BROADCAST_DISABLED =
@@ -57,6 +62,7 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
     private static final long SEND_BROADCAST_TIMEOUT = 15000;
     private static final long START_SERVICE_TIMEOUT  = 3000;
 
+    private static final CountDownLatch COUNT_DOWN_LATCH = new CountDownLatch(1);
     private static final ComponentName DISABLEABLE_RECEIVER =
             new ComponentName("android.content.cts",
                     "android.content.cts.MockReceiverDisableable");
@@ -164,6 +170,13 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
             }
 
             super.onReceive(context, intent);
+        }
+    }
+
+    public static class TestNonExportedReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            COUNT_DOWN_LATCH.countDown();
         }
     }
 
@@ -331,6 +344,16 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
                 resultExtras.getString(MockReceiverFirst.RESULT_EXTRAS_FIRST_KEY));
         assertEquals(MockReceiverAbort.RESULT_EXTRAS_ABORT_VALUE,
                 resultExtras.getString(MockReceiverAbort.RESULT_EXTRAS_ABORT_KEY));
+    }
+
+    public void testReceiverNotExported() throws Exception {
+        final Context context = getInstrumentation().getContext();
+        context.sendBroadcast(new Intent(ACTION_TEST_NOT_EXPORTED));
+        try {
+            assertFalse(COUNT_DOWN_LATCH.await(10, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+            fail("interrupted");
+        }
     }
 
     public void testDisabledBroadcastReceiver() throws Exception {

@@ -38,6 +38,7 @@ import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
@@ -63,6 +64,7 @@ import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.RequireNotMultipleUsersOnMultipleDisplays;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
@@ -375,6 +377,15 @@ public final class UserManagerTest {
                 .contains(TestApis.users().current().userHandle());
         assertWithMessage("getVisibleUsers()").that(visibleUsers)
                 .doesNotContain(profile.userHandle());
+    }
+
+    @Test
+    @RequireNotMultipleUsersOnMultipleDisplays(reason = "Because API is not supported")
+    @ApiTest(apis = {"android.app.ActivityManager#startUserInBackgroundOnSecondaryDisplay"})
+    public void testStartUserInBackgroundOnSecondaryDisplay() {
+        // ids doen't really matter, as it should throw right away
+        assertThrows(UnsupportedOperationException.class,
+                () -> tryToStartBackgroundUserOnSecondaryDisplay(42, 108));
     }
 
     @Test
@@ -838,5 +849,17 @@ public final class UserManagerTest {
             assumeNoException("User handle is null", e);
         }
         return (intent) -> false;
+    }
+
+    // TODO(b/240736142): should be provided by Test Bedstead
+    private boolean tryToStartBackgroundUserOnSecondaryDisplay(int userId, int displayId) {
+        Log.d(TAG, "tryToStartBackgroundUserOnSecondaryDisplay(): user=" + userId + ", display="
+                + displayId);
+        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
+            boolean started = sContext.getSystemService(ActivityManager.class)
+                    .startUserInBackgroundOnSecondaryDisplay(userId, displayId);
+            Log.d(TAG, "Started: " + started);
+            return started;
+        }
     }
 }

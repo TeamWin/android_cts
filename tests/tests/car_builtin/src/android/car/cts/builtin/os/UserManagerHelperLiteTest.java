@@ -30,6 +30,10 @@ import android.os.UserManager;
 
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireMultipleUsersOnMultipleDisplays;
+import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireNotMultipleUsersOnMultipleDisplays;
 import com.android.bedstead.nene.TestApis;
 import com.android.compatibility.common.util.ApiTest;
 
@@ -55,14 +59,18 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
     @EnsureHasPermission(CREATE_USERS) // needed to query user properties
     @ApiTest(apis = {
             "android.car.builtin.os.UserManagerHelper#isEphemeralUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isFullUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isGuestUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isEnabledUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isPreCreatedUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isInitializedUser(UserManager, UserHandle)"
     })
     public void testMultiplePropertiesForCurrentUser() {
-        // Current user should not be ephemeral because test runs as secondary user.
+        // Current user should not be ephemeral or guest because test runs as secondary user.
         UserHandle currentUser = TestApis.users().current().userHandle();
         assertThat(UserManagerHelper.isEphemeralUser(mUserManager, currentUser)).isFalse();
+        assertThat(UserManagerHelper.isFullUser(mUserManager, currentUser)).isTrue();
+        assertThat(UserManagerHelper.isGuestUser(mUserManager, currentUser)).isFalse();
 
         // Current user should be enabled.
         assertThat(UserManagerHelper.isEnabledUser(mUserManager, currentUser)).isTrue();
@@ -75,6 +83,52 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
 
         // Current should be part of getUserHandles
         assertGetUserHandlesHasUser(currentUser);
+    }
+
+    @Test
+    @EnsureHasPermission(CREATE_USERS) // needed to query user properties
+    @RequireNotHeadlessSystemUserMode
+    @ApiTest(apis = {
+            "android.car.builtin.os.UserManagerHelper#isEphemeralUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isFullUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isGuestUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isEnabledUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isPreCreatedUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isInitializedUser(UserManager, UserHandle)"
+    })
+    public void testMultiplePropertiesForFullSystemUser() {
+        UserHandle systemUser = UserHandle.SYSTEM;
+
+        assertThat(UserManagerHelper.isEphemeralUser(mUserManager, systemUser)).isFalse();
+        assertThat(UserManagerHelper.isFullUser(mUserManager, systemUser)).isTrue();
+        assertThat(UserManagerHelper.isGuestUser(mUserManager, systemUser)).isFalse();
+        assertThat(UserManagerHelper.isEnabledUser(mUserManager, systemUser)).isTrue();
+        assertThat(UserManagerHelper.isPreCreatedUser(mUserManager, systemUser)).isFalse();
+        assertThat(UserManagerHelper.isInitializedUser(mUserManager, systemUser)).isTrue();
+        assertGetUserHandlesHasUser(systemUser);
+    }
+
+    @Test
+    @EnsureHasPermission(CREATE_USERS) // needed to query user properties
+    @RequireHeadlessSystemUserMode
+    @ApiTest(apis = {
+            "android.car.builtin.os.UserManagerHelper#isEphemeralUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isFullUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isGuestUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isEnabledUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isPreCreatedUser(UserManager, UserHandle)",
+            "android.car.builtin.os.UserManagerHelper#isInitializedUser(UserManager, UserHandle)"
+    })
+    public void testMultiplePropertiesForHeadlessSystemUser() {
+        UserHandle systemUser = UserHandle.SYSTEM;
+
+        assertThat(UserManagerHelper.isEphemeralUser(mUserManager, systemUser)).isFalse();
+        assertThat(UserManagerHelper.isFullUser(mUserManager, systemUser)).isFalse();
+        assertThat(UserManagerHelper.isGuestUser(mUserManager, systemUser)).isFalse();
+        assertThat(UserManagerHelper.isEnabledUser(mUserManager, systemUser)).isTrue();
+        assertThat(UserManagerHelper.isPreCreatedUser(mUserManager, systemUser)).isFalse();
+        assertThat(UserManagerHelper.isInitializedUser(mUserManager, systemUser)).isTrue();
+        assertGetUserHandlesHasUser(systemUser);
     }
 
     @Test
@@ -121,6 +175,22 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
     public void testGetUserId() {
         assertThat(UserManagerHelper.getUserId(Binder.getCallingUid()))
                 .isEqualTo(Binder.getCallingUserHandle().getIdentifier());
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.builtin.os.UserManagerHelper#"
+            + "isUsersOnSecondaryDisplaysSupported(UserManager)"})
+    @RequireMultipleUsersOnMultipleDisplays(reason = "Because test is testing exactly that")
+    public void test_isUsersOnSecondaryDisplaysSupported() {
+        assertThat(UserManagerHelper.isUsersOnSecondaryDisplaysSupported(mUserManager)).isTrue();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.builtin.os.UserManagerHelper#"
+            + "isUsersOnSecondaryDisplaysSupported(UserManager)"})
+    @RequireNotMultipleUsersOnMultipleDisplays(reason = "Because test is testing exactly that")
+    public void test_isUsersOnSecondaryDisplaysSupported_not() {
+        assertThat(UserManagerHelper.isUsersOnSecondaryDisplaysSupported(mUserManager)).isFalse();
     }
 
     private void assertGetUserHandlesHasUser(UserHandle user) {

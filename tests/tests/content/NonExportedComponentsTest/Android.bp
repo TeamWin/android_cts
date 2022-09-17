@@ -1,4 +1,4 @@
-// Copyright (C) 2012 The Android Open Source Project
+// Copyright (C) 2017 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,27 +17,26 @@ package {
 }
 
 android_test {
-    name: "CtsDisplayTestCases",
+    name: "CtsLaunchNonExportedComponentsTestCases",
     defaults: ["cts_defaults"],
-    dex_preopt: {
-        enabled: false,
-    },
-    optimize: {
-        enabled: false,
-    },
-    srcs: ["src/**/*.java"],
     static_libs: [
-        "androidx.test.core",
         "androidx.test.rules",
+        "androidx.legacy_legacy-support-v4",
+        "mockito-target-minus-junit4",
         "compatibility-device-util-axt",
-        "CtsSurfaceValidatorLib",
+        "ctstestrunner-axt",
+        "ub-uiautomator",
     ],
-    libs: ["android.test.base"],
-    // Tag this module as a cts test artifact
+    libs: [
+        "android.test.runner",
+        "android.test.base",
+    ],
+    srcs: ["src/**/*.java"],
     test_suites: [
         "cts",
         "general-tests",
-        "sts",
     ],
-    sdk_version: "test_current",
+    sdk_version: "current",
+    // 25 is the latest SDK version where implicit intents can be used with static receivers
+    target_sdk_version: "25",
 }

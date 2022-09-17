@@ -196,6 +196,28 @@ public final class MultipleUsersOnMultipleDisplaysTest {
     // TODO(b/240736142): tests below should belong to ActivityManagerTest or similar, but it
     // doesn't use bedstead yet
 
+    @FlakyTest(bugId = 242364454)
+    @ApiTest(apis = {"android.app.ActivityManager#startUserInBackgroundOnSecondaryDisplay"})
+    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
+    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
+    @EnsureHasSecondaryUser(switchedToUser = FALSE)
+    @Test
+    public void testStartUserInBackgroundOnSecondaryDisplay() {
+        int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
+        int userId = TestApis.users()
+                .findUserOfType(TestApis.users().supportedType(UserType.SECONDARY_USER_TYPE_NAME))
+                .id();
+
+        boolean started = tryToStartBackgroundUserOnSecondaryDisplay(userId, displayId);
+        assertWithMessage("started user %s on id %s", userId, displayId).that(started)
+                .isTrue();
+
+        // Should fail when it's already started
+        boolean startedAgain = tryToStartBackgroundUserOnSecondaryDisplay(userId, displayId);
+        assertWithMessage("started user %s on id %s again", userId, displayId).that(startedAgain)
+                .isFalse();
+    }
+
     @Test
     @ApiTest(apis = {"android.app.ActivityManager#startUserInBackgroundOnSecondaryDisplay"})
     @RequireHeadlessSystemUserMode// non-HSUM cannot have profiles on secondary users
@@ -222,9 +244,7 @@ public final class MultipleUsersOnMultipleDisplaysTest {
 
         int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
         int userId = profile.id();
-        boolean started = tryTostartBackgroundUserOnSecondaryDisplay(userId, displayId);
-        Log.d(TAG, "Started: " + started);
-
+        boolean started = tryToStartBackgroundUserOnSecondaryDisplay(userId, displayId);
         assertWithMessage("started profile %s on display %s", userId, displayId).that(started)
                 .isFalse();
     }
@@ -249,9 +269,7 @@ public final class MultipleUsersOnMultipleDisplaysTest {
             int otherUserId = otherUser.id();
             Log.d(TAG, "otherUser: id=" + otherUserId);
 
-            boolean started = tryTostartBackgroundUserOnSecondaryDisplay(otherUserId, displayId);
-            Log.d(TAG, "Started: " + started);
-
+            boolean started = tryToStartBackgroundUserOnSecondaryDisplay(otherUserId, displayId);
             assertWithMessage("started user %s on display %s", otherUserId, displayId).that(started)
                     .isFalse();
         }
@@ -362,7 +380,7 @@ public final class MultipleUsersOnMultipleDisplaysTest {
 
     private void startBackgroundUserOnSecondaryDisplay(UserReference user, int displayId) {
         int userId = user.id();
-        boolean started = tryTostartBackgroundUserOnSecondaryDisplay(userId, displayId);
+        boolean started = tryToStartBackgroundUserOnSecondaryDisplay(userId, displayId);
         assertWithMessage("started user %s on display %s", userId, displayId).that(started)
                 .isTrue();
         Poll.forValue("User running unlocked", () -> user.isRunning() && user.isUnlocked())
@@ -372,12 +390,14 @@ public final class MultipleUsersOnMultipleDisplaysTest {
                 .await();
     }
 
-    private boolean tryTostartBackgroundUserOnSecondaryDisplay(int userId, int displayId) {
-        Log.d(TAG, "tryTostartBackgroundUserOnSecondaryDisplay(): user=" + userId + ", display="
+    private boolean tryToStartBackgroundUserOnSecondaryDisplay(int userId, int displayId) {
+        Log.d(TAG, "tryToStartBackgroundUserOnSecondaryDisplay(): user=" + userId + ", display="
                 + displayId);
         try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
-            return sContext.getSystemService(ActivityManager.class)
+            boolean started = sContext.getSystemService(ActivityManager.class)
                     .startUserInBackgroundOnSecondaryDisplay(userId, displayId);
+            Log.d(TAG, "Started: " + started);
+            return started;
         }
     }
 }
