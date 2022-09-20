@@ -996,6 +996,36 @@ public class NotificationTest extends AndroidTestCase {
         assertTrue(extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER));
     }
 
+    public void testCallStyle_setsCallTypeExtra() {
+        Person person = new Person.Builder().setName("Test name").build();
+        PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0,
+                new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        CallStyle cs = CallStyle.forIncomingCall(person, pendingIntent, pendingIntent);
+        Notification.Builder builder = new Notification.Builder(mContext, CHANNEL.getId())
+                .setStyle(cs);
+
+        Notification notification = builder.build();
+        Bundle extras = notification.extras;
+        assertEquals(CallStyle.CALL_TYPE_INCOMING, extras.getInt(Notification.EXTRA_CALL_TYPE));
+
+        cs = CallStyle.forOngoingCall(person, pendingIntent);
+        builder = new Notification.Builder(mContext, CHANNEL.getId())
+                .setStyle(cs);
+
+        notification = builder.build();
+        extras = notification.extras;
+        assertEquals(CallStyle.CALL_TYPE_ONGOING, extras.getInt(Notification.EXTRA_CALL_TYPE));
+
+        cs = CallStyle.forScreeningCall(person, pendingIntent, pendingIntent);
+        builder = new Notification.Builder(mContext, CHANNEL.getId())
+                .setStyle(cs);
+
+        notification = builder.build();
+        extras = notification.extras;
+        assertEquals(CallStyle.CALL_TYPE_SCREENING,
+                extras.getInt(Notification.EXTRA_CALL_TYPE));
+    }
+
     private static void assertMessageEquals(
             Notification.MessagingStyle.Message expected,
             Notification.MessagingStyle.Message actual) {

@@ -18,6 +18,7 @@
         package="android.jobscheduler.cts.jobtestapp">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
 
     <!-- This application schedules jobs independently of the test instrumentation to make
     it possible to test behaviour for different app states, whitelists and device idle modes -->
