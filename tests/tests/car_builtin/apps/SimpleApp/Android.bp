@@ -27,6 +27,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "general-tests",
+        "automotive-general-tests",
     ],
     static_libs: [
         "compatibility-device-util-axt",

@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Path;
 import android.graphics.Path.Direction;
@@ -54,6 +55,7 @@ public class AdaptiveIconMaskTest {
     private ColorDrawable mBlueDrawable;
     private ColorDrawable mRedDrawable;
     private AdaptiveIconDrawable mDrawable;
+    private static final float sMaskSize = AdaptiveIconDrawable.MASK_SIZE;
     private boolean mUseRoundIcon;
 
     @Before
@@ -61,7 +63,6 @@ public class AdaptiveIconMaskTest {
         mBlueDrawable = new ColorDrawable(Color.BLUE);
         mRedDrawable = new ColorDrawable(Color.RED);
         mDrawable = new AdaptiveIconDrawable( mBlueDrawable, mRedDrawable);
-        mDrawable.setBounds(0, 0, 100, 100);
 
         mMask = mDrawable.getIconMask();
 

@@ -56,6 +56,8 @@ public class AppCloningMediaProviderHostTest extends BaseHostTestCase{
     private static final String EXTERNAL_STORAGE_PATH = "/storage/emulated/%d/";
     private static final String CURRENT_USER_ID = "currentUserId";
     private static final String FILE_TO_BE_CREATED = "fileToBeCreated";
+    private static final String FILE_EXPECTED_TO_BE_PRESENT = "fileExpectedToBePresent";
+    private static final String FILE_NOT_EXPECTED_TO_BE_PRESENT = "fileNotExpectedToBePresent";
     /**
      * Provide different name to Files being created, on each execution of the test, so that
      * flakiness from previously existing files can be avoided.
@@ -119,19 +121,27 @@ public class AppCloningMediaProviderHostTest extends BaseHostTestCase{
                 currentUserId, ownerArgs);
 
         // We add the file in DCIM directory of Cloned User.
+        final String fileNameClonedUser = "tmpFileToPushClonedUser" + NONCE + ".png";
         Map<String, String> cloneArgs = new HashMap<>();
         cloneArgs.put(CURRENT_USER_ID, sCloneUserId);
-        cloneArgs.put(FILE_TO_BE_CREATED, fileName);
+        cloneArgs.put(FILE_TO_BE_CREATED, fileNameClonedUser);
         runDeviceTestAsUserInPkgA("testInsertFilesInDirectoryViaMediaProvider",
                 Integer.parseInt(sCloneUserId), cloneArgs);
 
-        // Querying as user 0 should enlist a single file (file created by user 0).
+        // Querying as user 0 should enlist the file(s) created by user 0 only.
+        Map<String, String> listFilesArgs = new HashMap<>();
+        listFilesArgs.put(CURRENT_USER_ID, String.valueOf(currentUserId));
+        listFilesArgs.put(FILE_EXPECTED_TO_BE_PRESENT, fileName);
+        listFilesArgs.put(FILE_NOT_EXPECTED_TO_BE_PRESENT, fileNameClonedUser);
         runDeviceTestAsUserInPkgA("testGetFilesInDirectoryViaMediaProviderRespectsUserId",
-                currentUserId, ownerArgs);
+                currentUserId, listFilesArgs);
 
-        // Querying as cloned user should enlist a single file (file created by cloned user).
+        // Querying as cloned user should enlist the file(s) created by cloned user only.
+        listFilesArgs.put(CURRENT_USER_ID, sCloneUserId);
+        listFilesArgs.put(FILE_EXPECTED_TO_BE_PRESENT, fileNameClonedUser);
+        listFilesArgs.put(FILE_NOT_EXPECTED_TO_BE_PRESENT, fileName);
         runDeviceTestAsUserInPkgA("testGetFilesInDirectoryViaMediaProviderRespectsUserId",
-                Integer.parseInt(sCloneUserId), cloneArgs);
+                Integer.parseInt(sCloneUserId), listFilesArgs);
     }
 
     protected void runDeviceTestAsUserInPkgA(@Nonnull String testMethod, int userId,

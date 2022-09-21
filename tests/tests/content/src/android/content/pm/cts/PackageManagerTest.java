@@ -336,7 +336,7 @@ public class PackageManagerTest {
             assertFalse(containsActivityInfoName("com.example.helloworld.MainActivity", matches));
         }
 
-        SystemUtil.runShellCommand("am start "
+        SystemUtil.runShellCommand("am start -W "
                 + "--user current "
                 + "-a android.intent.action.MAIN "
                 + "-c android.intent.category.LAUNCHER "

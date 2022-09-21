@@ -35,11 +35,7 @@ python_test_host {
         ":wifi_aware_snippet",
     ],
     version: {
-        py2: {
-            enabled: false,
-        },
         py3: {
-            enabled: true,
             embedded_launcher: true,
         },
     },

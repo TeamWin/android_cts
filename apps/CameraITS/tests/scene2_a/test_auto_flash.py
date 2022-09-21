@@ -53,11 +53,10 @@ _AE_PRECAPTURE_TRIGGER_IDLE = 0
 
 
 def turn_off_tablet(tablet_device):
-  output = tablet_device.adb.shell('dumpsys display | grep mScreenState')
-  output_list = str(output.decode('utf-8')).strip().split(' ')
-  for val in output_list:
-    if 'ON' in val:
-      tablet_device.adb.shell(['input', 'keyevent', 'KEYCODE_POWER'])
+  output = tablet_device.adb.shell('dumpsys display | grep mScreenState=')
+  output_val = str(output.decode('utf-8')).strip()
+  if 'ON' in output_val:
+    tablet_device.adb.shell(['input', 'keyevent', 'KEYCODE_POWER'])
 
 
 def take_captures_with_flash(cam, fmt):

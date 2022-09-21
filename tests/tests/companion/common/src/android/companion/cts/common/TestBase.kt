@@ -152,13 +152,16 @@ abstract class TestBase {
 
 const val TAG = "CtsCompanionDeviceManagerTestCases"
 
+/** See [com.android.server.companion.CompanionDeviceServiceConnector.UNBIND_POST_DELAY_MS]. */
+private val UNBIND_DELAY_DURATION = 5.seconds
+
 fun <T> assumeThat(message: String, obj: T, assumption: (T) -> Boolean) {
     if (!assumption(obj)) throw AssumptionViolatedException(message)
 }
 
 fun assertApplicationBinds(cdm: CompanionDeviceManager) {
     assertTrue {
-        waitFor(timeout = 3.seconds, interval = 100.milliseconds) {
+        waitFor(timeout = 1.seconds, interval = 100.milliseconds) {
             cdm.isCompanionApplicationBound
         }
     }
@@ -166,7 +169,7 @@ fun assertApplicationBinds(cdm: CompanionDeviceManager) {
 
 fun assertApplicationUnbinds(cdm: CompanionDeviceManager) {
     assertTrue {
-        waitFor(timeout = 1.seconds, interval = 100.milliseconds) {
+        waitFor(timeout = 1.seconds.plus(UNBIND_DELAY_DURATION), interval = 100.milliseconds) {
             !cdm.isCompanionApplicationBound
         }
     }
@@ -174,7 +177,7 @@ fun assertApplicationUnbinds(cdm: CompanionDeviceManager) {
 
 fun assertApplicationRemainsBound(cdm: CompanionDeviceManager) {
     assertFalse {
-        waitFor(timeout = 3.seconds, interval = 100.milliseconds) {
+        waitFor(timeout = 3.seconds.plus(UNBIND_DELAY_DURATION), interval = 100.milliseconds) {
             !cdm.isCompanionApplicationBound
         }
     }
@@ -211,7 +214,7 @@ fun assertValidCompanionDeviceServicesBind() =
  */
 fun assertValidCompanionDeviceServicesRemainBound() =
         assertFalse("Both valid CompanionDeviceServices should stay bound") {
-            waitFor(timeout = 3.seconds, interval = 100.milliseconds) {
+            waitFor(timeout = 3.seconds.plus(UNBIND_DELAY_DURATION), interval = 100.milliseconds) {
                 !PrimaryCompanionService.isBound || !SecondaryCompanionService.isBound
             }
         }
@@ -222,7 +225,7 @@ fun assertValidCompanionDeviceServicesRemainBound() =
  */
 fun assertValidCompanionDeviceServicesUnbind() =
         assertTrue("CompanionDeviceServices should not bind") {
-            waitFor(timeout = 1.seconds, interval = 100.milliseconds) {
+            waitFor(timeout = 1.seconds.plus(UNBIND_DELAY_DURATION), interval = 100.milliseconds) {
                 !PrimaryCompanionService.isBound && !SecondaryCompanionService.isBound
             }
         }

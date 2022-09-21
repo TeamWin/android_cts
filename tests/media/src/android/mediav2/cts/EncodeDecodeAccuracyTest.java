@@ -35,6 +35,7 @@ import android.view.Surface;
 import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -155,6 +156,11 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
 
     @Before
     public void setUp() throws IOException {
+        // Few cuttlefish specific color conversion issues were fixed after Android T.
+        if (MediaUtils.onCuttlefish()) {
+            assumeTrue("Color conversion related tests are not valid on cuttlefish releases "
+                    + "through android T", IS_AT_LEAST_U);
+        }
         if (mUseHighBitDepth) {
             assumeTrue("Codec doesn't support ABGR2101010",
                     hasSupportForColorFormat(mCompName, mMime, COLOR_Format32bitABGR2101010));

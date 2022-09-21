@@ -27,12 +27,13 @@ import android.content.IntentFilter
 import android.content.pm.PackageInstaller
 import android.net.Uri
 import android.os.Bundle
-import android.support.test.uiautomator.UiDevice
-import android.support.test.uiautomator.UiObject
-import android.support.test.uiautomator.UiSelector
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiObject2
+import androidx.test.uiautomator.Until
 import com.google.common.truth.Truth.assertThat
 import java.io.InputStream
 import java.util.concurrent.ArrayBlockingQueue
@@ -46,10 +47,15 @@ open class PackageSchemeTestBase {
     val TARGET_APP_APK: String = "CtsEmptyTestApp.apk"
     val RECEIVER_ACTION: String = "android.packageinstaller.emptytestapp.cts.action"
     val REQUEST_CODE = 1
+    val PKG_FOUND_DIALOG_TEXT = "Do you want to update this app?"
+    val PKG_NOT_FOUND_DIALOG_TEXT = "There was a problem parsing the package."
+    val DEFAULT_TIMEOUT: Long = 5000
 
     var mScenario: ActivityScenario<TestActivity>? = null
     val mInstrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
-    val mUiDevice = UiDevice.getInstance(mInstrumentation)
+    val mUiDevice: UiDevice = UiDevice.getInstance(mInstrumentation)
+    var mDialog: UiObject2? = null
+    var mButton: UiObject2? = null
     val mContext: Context = mInstrumentation.context
     val mInstaller: PackageInstaller = mContext.packageManager.packageInstaller
 
@@ -102,8 +108,6 @@ open class PackageSchemeTestBase {
     fun setup() {
         receiver.clear()
         mContext.registerReceiver(receiver, IntentFilter(RECEIVER_ACTION))
-        // The device screen needs to be turned on to perform UI interaction
-        mUiDevice.wakeUp()
     }
 
     @Before
@@ -136,27 +140,21 @@ open class PackageSchemeTestBase {
         intent.putExtra(Intent.EXTRA_INTENT, getAppInstallIntent())
         intent.putExtra("requestCode", REQUEST_CODE)
 
-        mScenario = ActivityScenario.launch(intent)
+        mScenario = ActivityScenario.launchActivityForResult(intent)
         mScenario!!.onActivity {
-            var dialog: UiObject
-            var button: UiObject
             if (packageHasVisibility && needTargetApp) {
-                dialog = mUiDevice.findObject(
-                    UiSelector().text(
-                        "Do you want to update this app?"
-                    )
-                )
-                button = mUiDevice.findObject(UiSelector().text("Cancel"))
+                mUiDevice.wait(Until.findObject(By.text(PKG_FOUND_DIALOG_TEXT)),
+                                                DEFAULT_TIMEOUT)
+                mDialog = mUiDevice.findObject(By.text(PKG_FOUND_DIALOG_TEXT))
+                mButton = mUiDevice.findObject(By.text("Cancel"))
             } else {
-                dialog = mUiDevice.findObject(
-                    UiSelector().text(
-                        "There was a problem parsing the package."
-                    )
-                )
-                button = mUiDevice.findObject(UiSelector().text("OK"))
+                mUiDevice.wait(Until.findObject(By.text(PKG_NOT_FOUND_DIALOG_TEXT)),
+                                                DEFAULT_TIMEOUT)
+                mDialog = mUiDevice.findObject(By.text(PKG_NOT_FOUND_DIALOG_TEXT))
+                mButton = mUiDevice.findObject(By.text("OK"))
             }
-            if (dialog.exists() && button.exists() && button.isEnabled) {
-                button.click()
+            if (mDialog != null && mButton != null && mButton!!.isEnabled) {
+                mButton!!.click()
             }
         }
 

@@ -390,6 +390,17 @@ class ItsSession(object):
     if data['tag'] != 'cameraClosed':
       raise error_util.CameraItsError('Invalid command response')
 
+  def zoom_ratio_within_range(self, zoom_ratio):
+    """Determine if a given zoom ratio is within device zoom range.
+
+    Args:
+      zoom_ratio: float; zoom ratio requested
+    Returns:
+      Boolean: True, if zoom_ratio inside device range. False otherwise.
+    """
+    zoom_range = self.props['android.control.zoomRatioRange']
+    return zoom_ratio >= zoom_range[0] and zoom_ratio <= zoom_range[1]
+
   def get_sensors(self):
     """Get all sensors on the device.
 
@@ -475,7 +486,8 @@ class ItsSession(object):
     return data['strValue'] == 'true'
 
   def do_basic_recording(self, profile_id, quality, duration,
-                         video_stabilization_mode=0, hlg10_enabled=False):
+                         video_stabilization_mode=0, hlg10_enabled=False,
+                         zoom_ratio=None):
     """Issue a recording request and read back the video recording object.
 
     The recording will be done with the format specified in quality. These
@@ -492,6 +504,7 @@ class ItsSession(object):
       0: 'OFF', 1: 'ON', 2: 'PREVIEW'
       hlg10_enabled: boolean: True Enable 10-bit HLG video recording, False
       record using the regular SDR profile
+      zoom_ratio: float; zoom ratio. None if default zoom
     Returns:
       video_recorded_object: The recorded object returned from ItsService which
       contains path at which the recording is saved on the device, quality of
@@ -515,6 +528,11 @@ class ItsSession(object):
            'recordingDuration': duration,
            'videoStabilizationMode': video_stabilization_mode,
            'hlg10Enabled': hlg10_enabled}
+    if zoom_ratio:
+      if self.zoom_ratio_within_range(zoom_ratio):
+        cmd['zoomRatio'] = zoom_ratio
+      else:
+        raise AssertionError(f'Zoom ratio {zoom_ratio} out of range')
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
     self.sock.settimeout(timeout)
@@ -525,7 +543,8 @@ class ItsSession(object):
     logging.debug('VideoRecordingObject: %s', data)
     return data['objValue']
 
-  def do_preview_recording(self, video_size, duration, stabilize):
+  def do_preview_recording(self, video_size, duration, stabilize,
+                           zoom_ratio=None):
     """Issue a preview request and read back the preview recording object.
 
     The resolution of the preview and its recording will be determined by
@@ -537,6 +556,7 @@ class ItsSession(object):
       video_size: str; Preview resolution at which to record. ex. "1920x1080"
       duration: int; The time in seconds for which the video will be recorded.
       stabilize: boolean; Whether the preview should be stabilized or not
+      zoom_ratio: float; zoom ratio. None if default zoom
     Returns:
       video_recorded_object: The recorded object returned from ItsService which
       contains path at which the recording is saved on the device, quality of
@@ -562,6 +582,11 @@ class ItsSession(object):
         'recordingDuration': duration,
         'stabilize': stabilize
     }
+    if zoom_ratio:
+      if self.zoom_ratio_within_range(zoom_ratio):
+        cmd['zoomRatio'] = zoom_ratio
+      else:
+        raise AssertionError(f'Zoom ratio {zoom_ratio} out of range')
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
     self.sock.settimeout(timeout)
@@ -1222,7 +1247,8 @@ class ItsSession(object):
             get_results=False,
             ev_comp=0,
             auto_flash=False,
-            mono_camera=False):
+            mono_camera=False,
+            zoom_ratio=None):
     """Perform a 3A operation on the device.
 
     Triggers some or all of AE, AWB, and AF, and returns once they have
@@ -1244,6 +1270,7 @@ class ItsSession(object):
       ev_comp: An EV compensation value to use when running AE.
       auto_flash: AE control boolean to enable auto flash.
       mono_camera: Boolean for monochrome camera.
+      zoom_ratio: Zoom ratio. None if default zoom
 
       Region format in args:
          Arguments are lists of weighted regions; each weighted region is a
@@ -1281,6 +1308,11 @@ class ItsSession(object):
       cmd['autoFlash'] = True
     if self._hidden_physical_id:
       cmd['physicalId'] = self._hidden_physical_id
+    if zoom_ratio:
+      if self.zoom_ratio_within_range(zoom_ratio):
+        cmd['zoomRatio'] = zoom_ratio
+      else:
+        raise AssertionError(f'Zoom ratio {zoom_ratio} out of range')
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
     # Wait for each specified 3A to converge.

@@ -42,6 +42,8 @@ import android.server.wm.UiDeviceUtils;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import com.google.common.collect.ObjectArrays;
 
 import org.junit.Test;
@@ -1151,6 +1153,40 @@ public class CipherTest {
             } catch (Throwable e) {
                 throw new RuntimeException("Failed for " + algorithm, e);
             }
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"javax.crypto.Cipher#init"})
+    public void testKatBasicWithDifferentProviders() throws Exception {
+        for (String algorithm : EXPECTED_ALGORITHMS) {
+            ImportedKey key = importDefaultKatKey(algorithm,
+                    KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT,
+                    false);
+            KatVector testVector = KAT_VECTORS.get(algorithm);
+            Cipher cipher = Cipher.getInstance(algorithm);
+            Key encryptionKey = key.getOriginalEncryptionKey();
+            // Highest-priority provider for algorithm will be selected for original key.
+            cipher.init(Cipher.ENCRYPT_MODE, encryptionKey);
+            // Preserve algorithm parameters used for encryption, same parameters need to use
+            // for decryption.
+            AlgorithmParameters algorithmParameters = cipher.getParameters();
+            byte[] cipherText =
+                    cipher.doFinal(testVector.plaintext);
+            Key decryptionKey = key.getKeystoreBackedDecryptionKey();
+            cipher = Cipher.getInstance(algorithm);
+            // AndroidKeyStore provider will be selected for Android keystore backed key.
+            cipher.init(Cipher.DECRYPT_MODE, decryptionKey, algorithmParameters);
+            byte[] plainText = cipher.doFinal(cipherText);
+            byte[] expectedPlaintext = testVector.plaintext;
+            if ("RSA/ECB/NoPadding".equalsIgnoreCase(algorithm)) {
+                // RSA decryption without padding left-pads resulting plaintext with NUL bytes
+                // to the length of RSA modulus.
+                int modulusLengthBytes = (TestUtils.getKeySizeBits(decryptionKey) + 7) / 8;
+                expectedPlaintext = TestUtils.leftPadWithZeroBytes(
+                        expectedPlaintext, modulusLengthBytes);
+            }
+            assertArrayEquals(plainText, expectedPlaintext);
         }
     }
 

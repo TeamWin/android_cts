@@ -299,6 +299,8 @@ public class Constants {
             PKG_BASE + "cts.action.REVOKE_URI_PERMISSION";
     public static final String ACTION_AWAIT_PACKAGE_RESTARTED =
             PKG_BASE + "cts.action.AWAIT_PACKAGE_RESTARTED";
+    public static final String ACTION_GET_CONTENT_PROVIDER_MIME_TYPE =
+            PKG_BASE + "cts.action.GET_CONTENT_PROVIDER_MIME_TYPE";
     public static final String ACTION_APP_ENUMERATION_PREFERRED_ACTIVITY =
             PKG_BASE + "cts.action.APP_ENUMERATION_PREFERRED_ACTIVITY";
     public static final String ACTION_GET_ENABLED_SPELL_CHECKER_INFOS =

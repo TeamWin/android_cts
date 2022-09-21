@@ -243,10 +243,8 @@ public class AdaptiveIconDrawableTest {
 
     @Test
     public void testSetAlpha() {
-        Bitmap b = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
-        Drawable bg = new BitmapDrawable(b);
-        Drawable fg = new BitmapDrawable(b);
-        AdaptiveIconDrawable iconDrawable = new AdaptiveIconDrawable(bg, fg);
+        AdaptiveIconDrawable iconDrawable = new AdaptiveIconDrawable(
+            new ColorDrawable(Color.RED), new ColorDrawable(Color.BLUE));
         iconDrawable.setBounds(0, 0, 100, 100);
 
         Bitmap bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
@@ -259,15 +257,11 @@ public class AdaptiveIconDrawableTest {
         bitmap.eraseColor(Color.TRANSPARENT);
         iconDrawable.draw(canvas);
         assertEquals(200, Color.alpha(bitmap.getPixel(50, 50)));
-        assertEquals(200, bg.getAlpha());
-        assertEquals(200, fg.getAlpha());
 
         iconDrawable.setAlpha(100);
         bitmap.eraseColor(Color.TRANSPARENT);
         iconDrawable.draw(canvas);
         assertEquals(100, Color.alpha(bitmap.getPixel(50, 50)));
-        assertEquals(100, bg.getAlpha());
-        assertEquals(100, fg.getAlpha());
     }
 
     @Test

@@ -61,7 +61,7 @@ public abstract class KeyListenerTestCase {
         mActivity = mActivityRule.getActivity();
         mTextView = mActivity.findViewById(R.id.keylistener_textview);
 
-        PollingCheck.waitFor(5000, mActivity::hasWindowFocus);
+        PollingCheck.waitFor(10000, mActivity::hasWindowFocus);
     }
 
     protected void enableAutoCapSettings() throws IOException {

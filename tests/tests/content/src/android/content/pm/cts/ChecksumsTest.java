@@ -137,8 +137,10 @@ public class ChecksumsTest {
     private static final String TEST_FIXED_APK_FSVERITY = "CtsApkVerityTestAppPrebuilt.apk";
     private static final String TEST_FIXED_APK_FSVERITY_FSVSIG =
             "CtsApkVerityTestAppPrebuilt.apk.fsv_sig";
-    private static final String TEST_FIXED_APK_FSVERITY_SHA256 =
+    private static final String TEST_FIXED_APK_FSVERITY_SHA256_ARM64 =
             "b64007327096541dc9c548ad5540fd41e11ab209e7bce5b12295aac49074848f";
+    private static final String TEST_FIXED_APK_FSVERITY_SHA256_X86_64 =
+            "b7625fe0f151053e80b6da95bca1dfa1a2ac46319d8d2b483d3a58427688940c";
 
     private static final String TEST_FIXED_APK_V2_SHA256 =
             "1eec9e86e322b8d7e48e255fc3f2df2dbc91036e63982ff9850597c6a37bbeb3";
@@ -154,6 +156,8 @@ public class ChecksumsTest {
             new Checksum(TYPE_PARTIAL_MERKLE_ROOT_1M_SHA256, hexStringToBytes("850597c6a37bbeb3")),
             new Checksum(TYPE_WHOLE_SHA256, hexStringToBytes(TEST_FIXED_APK_SHA256)),
             new Checksum(TYPE_WHOLE_MD5, hexStringToBytes(TEST_FIXED_APK_MD5))};
+
+    private static final String PRIMARY_ABI = Build.SUPPORTED_ABIS[0];
 
     /** Default is to not use fs-verity since it depends on kernel support. */
     private static final int FSVERITY_DISABLED = 0;
@@ -334,10 +338,21 @@ public class ChecksumsTest {
         assertNotNull(checksums);
         assertEquals(checksums.length, 2);
         assertEquals(checksums[0].getType(), TYPE_WHOLE_MERKLE_ROOT_4K_SHA256);
-        assertEquals(bytesToHexString(checksums[0].getValue()), TEST_FIXED_APK_FSVERITY_SHA256);
-        assertEquals(checksums[1].getType(), TYPE_PARTIAL_MERKLE_ROOT_1M_SHA256);
-        assertEquals(bytesToHexString(checksums[1].getValue()),
+        if ("x86_64".equals(PRIMARY_ABI) || "x86".equals(PRIMARY_ABI)) {
+            assertEquals(bytesToHexString(checksums[0].getValue()),
+                    TEST_FIXED_APK_FSVERITY_SHA256_X86_64);
+            assertEquals(bytesToHexString(checksums[1].getValue()),
+                "413ba1b77fda86eda27bedd8ddb08c549650a802a3e59780226627e9b04127ac");
+        } else if ("arm64-v8a".equals(PRIMARY_ABI) || "armeabi".equals(PRIMARY_ABI)
+                || "armeabi-v7a".equals(PRIMARY_ABI)) {
+            assertEquals(bytesToHexString(checksums[0].getValue()),
+                    TEST_FIXED_APK_FSVERITY_SHA256_ARM64);
+            assertEquals(bytesToHexString(checksums[1].getValue()),
                 "1edbfd7f5825f71840ada2b5b2c7e5ad54d459d3ef04f49b778c96baf319bbb9");
+        } else {
+            Assert.fail("Unsupported ABI: " + PRIMARY_ABI);
+        }
+        assertEquals(checksums[1].getType(), TYPE_PARTIAL_MERKLE_ROOT_1M_SHA256);
     }
 
     @LargeTest
@@ -358,7 +373,16 @@ public class ChecksumsTest {
         assertNotNull(checksums);
         assertEquals(checksums.length, 1);
         assertEquals(checksums[0].getType(), TYPE_WHOLE_MERKLE_ROOT_4K_SHA256);
-        assertEquals(bytesToHexString(checksums[0].getValue()), TEST_FIXED_APK_FSVERITY_SHA256);
+        if ("x86_64".equals(PRIMARY_ABI) || "x86".equals(PRIMARY_ABI)) {
+            assertEquals(bytesToHexString(checksums[0].getValue()),
+                    TEST_FIXED_APK_FSVERITY_SHA256_X86_64);
+        } else if ("arm64-v8a".equals(PRIMARY_ABI) || "armeabi".equals(PRIMARY_ABI)
+                || "armeabi-v7a".equals(PRIMARY_ABI)) {
+            assertEquals(bytesToHexString(checksums[0].getValue()),
+                    TEST_FIXED_APK_FSVERITY_SHA256_ARM64);
+        } else {
+            Assert.fail("Unsupported ABI: " + PRIMARY_ABI);
+        }
     }
 
     @Test

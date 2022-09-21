@@ -1016,6 +1016,9 @@ abstract class CodecTestBase {
                 }
                 if (needVideo) {
                     list.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
+                    if (IS_AT_LEAST_U) {
+                        list.add(MediaFormat.MIMETYPE_VIDEO_AV1);
+                    }
                 }
             }
             if (MediaUtils.isTv() && needVideo) {

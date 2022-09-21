@@ -44,6 +44,7 @@ def create_request_with_ev(ev):
   req = capture_request_utils.auto_capture_request()
   req['android.control.aeExposureCompensation'] = ev
   req['android.control.aeLock'] = True
+  req['android.control.awbLock'] = True
   # Use linear tonemap to avoid brightness being impacted by tone curves.
   req['android.tonemap.mode'] = 0
   req['android.tonemap.curve'] = {'red': LINEAR_TONEMAP_CURVE,
@@ -84,7 +85,9 @@ class EvCompensationAdvancedTest(its_base_test.ItsBaseTest):
           camera_properties_utils.ev_compensation(props) and
           camera_properties_utils.manual_sensor(props) and
           camera_properties_utils.manual_post_proc(props) and
-          camera_properties_utils.per_frame_control(props))
+          camera_properties_utils.per_frame_control(props) and
+          camera_properties_utils.ae_lock(props) and
+          camera_properties_utils.awb_lock(props))
 
       # Load chart for scene
       its_session_utils.load_scene(
@@ -97,7 +100,8 @@ class EvCompensationAdvancedTest(its_base_test.ItsBaseTest):
       # dark/bright scene could make AF convergence fail and this test
       # doesn't care the image sharpness.
       mono_camera = camera_properties_utils.mono_camera(props)
-      cam.do_3a(ev_comp=0, lock_ae=True, do_af=False, mono_camera=mono_camera)
+      cam.do_3a(ev_comp=0, lock_ae=True, lock_awb=True, do_af=False,
+                mono_camera=mono_camera)
 
       # Create requests and capture
       largest_yuv = capture_request_utils.get_largest_yuv_format(props)

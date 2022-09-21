@@ -54,7 +54,7 @@ public class AppCloningDeviceTest {
         final File file = new File(dir, getFileToBeCreatedName());
         assertThat(createFileAs(APP_B_NO_PERMS, file.getPath())).isTrue();
         assertThat(canOpenFileAs(APP_B_NO_PERMS, file, true)).isTrue();
-        assertThat(listAs(APP_B_NO_PERMS, dir.getPath())).containsExactly(file.getName());
+        assertThat(listAs(APP_B_NO_PERMS, dir.getPath())).contains(file.getName());
     }
 
     @Test
@@ -63,8 +63,10 @@ public class AppCloningDeviceTest {
                 Integer.parseInt(getCurrentUserId()));
         final File dir = new File(dirPath);
         assertThat(dir.exists()).isTrue();
-        final File expectedFile = new File(dir, getFileToBeCreatedName());
-        assertThat(listAs(APP_B_NO_PERMS, dir.getPath())).containsExactly(expectedFile.getName());
+        final File expectedFile = new File(dir, getFileToBeExpectedName());
+        assertThat(listAs(APP_B_NO_PERMS, dir.getPath())).contains(expectedFile.getName());
+        final File notExpectedFile = new File(dir, getFileNotToBeExpectedName());
+        assertThat(listAs(APP_B_NO_PERMS, dir.getPath())).doesNotContain(notExpectedFile.getName());
     }
 
     private String getTestArgumentValueForGivenKey(String testArgumentKey) {
@@ -79,5 +81,13 @@ public class AppCloningDeviceTest {
 
     private String getFileToBeCreatedName() {
         return getTestArgumentValueForGivenKey("fileToBeCreated");
+    }
+
+    private String getFileToBeExpectedName() {
+        return getTestArgumentValueForGivenKey("fileExpectedToBePresent");
+    }
+
+    private String getFileNotToBeExpectedName() {
+        return getTestArgumentValueForGivenKey("fileNotExpectedToBePresent");
     }
 }

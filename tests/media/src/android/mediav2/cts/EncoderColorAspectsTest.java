@@ -37,6 +37,7 @@ import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Assume;
 import org.junit.Test;
@@ -297,6 +298,11 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
         if (mSurfaceMode) {
             Assume.assumeTrue("Surface mode tests are limited to devices launching with Android T",
                     FIRST_SDK_IS_AT_LEAST_T && VNDK_IS_AT_LEAST_T);
+            // Few cuttlefish specific color conversion issues were fixed after Android T.
+            if (MediaUtils.onCuttlefish()) {
+                Assume.assumeTrue("Color conversion related tests are not valid on cuttlefish "
+                        + "releases through android T", IS_AT_LEAST_U);
+            }
         }
 
         if (mUseHighBitDepth) {

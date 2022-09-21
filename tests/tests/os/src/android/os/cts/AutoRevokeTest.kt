@@ -38,7 +38,6 @@ import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiObject2
 import android.support.test.uiautomator.UiObjectNotFoundException
 import android.view.accessibility.AccessibilityNodeInfo
-import android.widget.Switch
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnit4
@@ -168,8 +167,7 @@ class AutoRevokeTest {
         withUnusedThresholdMs(3L) {
             withDummyApp {
                 // Setup
-                startAppAndAcceptPermission()
-                killDummyApp()
+                setupApp()
                 Thread.sleep(5) // wait longer than the unused threshold
 
                 // Run
@@ -201,8 +199,7 @@ class AutoRevokeTest {
         withUnusedThresholdMs(3L) {
             withDummyAppNoUninstallAssertion {
                 // Setup
-                startAppAndAcceptPermission()
-                killDummyApp()
+                setupApp()
                 Thread.sleep(5) // wait longer than the unused threshold
 
                 // Run
@@ -255,10 +252,7 @@ class AutoRevokeTest {
         withUnusedThresholdMs(100_000L) {
             withDummyApp {
                 // Setup
-                startApp()
-                clickPermissionAllow()
-                assertPermission(PERMISSION_GRANTED)
-                killDummyApp()
+                setupApp()
                 Thread.sleep(5)
 
                 // Run
@@ -313,6 +307,7 @@ class AutoRevokeTest {
                 goBack()
                 goBack()
                 goBack()
+
                 // Run with threshold where events would be cleaned up
                 withUnusedThresholdMs(0) {
                     runPermissionEventCleanupJob(context)
@@ -334,17 +329,10 @@ class AutoRevokeTest {
         withUnusedThresholdMs(3L) {
             withDummyApp(preMinVersionApkPath, preMinVersionAppPackageName) {
                 withDummyApp {
-                    startApp(preMinVersionAppPackageName)
-                    clickPermissionAllow()
+                    grantPermission(preMinVersionAppPackageName)
                     assertPermission(PERMISSION_GRANTED, preMinVersionAppPackageName)
-
+                    startApp(preMinVersionAppPackageName)
                     killDummyApp(preMinVersionAppPackageName)
-
-                    startApp()
-                    clickPermissionAllow()
-                    assertPermission(PERMISSION_GRANTED)
-
-                    killDummyApp()
                     Thread.sleep(20)
 
                     // Run
@@ -352,7 +340,6 @@ class AutoRevokeTest {
                     Thread.sleep(500)
 
                     // Verify
-                    assertPermission(PERMISSION_DENIED)
                     assertPermission(PERMISSION_GRANTED, preMinVersionAppPackageName)
                 }
             }
@@ -366,13 +353,13 @@ class AutoRevokeTest {
         withUnusedThresholdMs(4L) {
             withDummyApp {
                 // Setup
+                grantPermission()
+                assertPermission(PERMISSION_GRANTED)
                 startApp()
-                clickPermissionAllow()
                 assertAllowlistState(false)
 
                 // Verify
-                waitFindObject(byTextIgnoreCase("Request allowlist")).click()
-                waitFindObject(byTextIgnoreCase("Permissions")).click()
+                goToPermissions()
                 val autoRevokeEnabledToggle = getAllowlistToggle()
                 assertTrue(autoRevokeEnabledToggle.isChecked())
 
@@ -403,12 +390,8 @@ class AutoRevokeTest {
         withUnusedThresholdMs(TimeUnit.DAYS.toMillis(30)) {
             withDummyApp {
                 // Setup
-                goToPermissions()
-                click("Calendar")
-                click("Allow")
-                goBack()
-                goBack()
-                goBack()
+                grantPermission()
+                assertPermission(PERMISSION_GRANTED)
 
                 // Run
                 runAppHibernationJob(context, LOG_TAG)
@@ -457,9 +440,7 @@ class AutoRevokeTest {
         withSafetyCenterEnabled {
             withUnusedThresholdMs(3L) {
                 withDummyApp {
-                    startAppAndAcceptPermission()
-
-                    killDummyApp()
+                    setupApp()
 
                     // Run
                     runAppHibernationJob(context, LOG_TAG)
@@ -497,9 +478,7 @@ class AutoRevokeTest {
         withSafetyCenterEnabled {
             withUnusedThresholdMs(3L) {
                 withDummyApp {
-                    startAppAndAcceptPermission()
-
-                    killDummyApp()
+                    setupApp()
 
                     // Run
                     runAppHibernationJob(context, LOG_TAG)
@@ -558,14 +537,18 @@ class AutoRevokeTest {
         uninstallApp(supportedAppPackageName)
     }
 
-    private fun startApp() {
-        startApp(supportedAppPackageName)
+    /**
+     * Grants the calendar permission and then uses the app
+     */
+    private fun setupApp() {
+        grantPermission()
+        assertPermission(PERMISSION_GRANTED)
+        startApp()
+        killDummyApp()
     }
 
-    private fun startAppAndAcceptPermission() {
-        startApp()
-        clickPermissionAllow()
-        assertPermission(PERMISSION_GRANTED)
+    private fun startApp() {
+        startApp(supportedAppPackageName)
     }
 
     private fun goBack() {
@@ -583,21 +566,6 @@ class AutoRevokeTest {
                 runShellCommandOrThrow("am force-stop " + pkg),
                 equalTo(""))
         awaitAppState(pkg, greaterThan(IMPORTANCE_TOP_SLEEPING))
-    }
-
-    private fun clickPermissionAllow() {
-        if (isAutomotiveDevice()) {
-            waitFindObject(By.text(Pattern.compile(
-                    Pattern.quote(mPermissionControllerResources.getString(
-                            mPermissionControllerResources.getIdentifier(
-                                    "grant_dialog_button_allow", "string",
-                                    "com.android.permissioncontroller"))),
-                    Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE))).click()
-        } else {
-            waitFindObject(By.res("com.android.permissioncontroller:id/permission_allow_button"))
-                    .click()
-        }
-        waitForIdle()
     }
 
     private fun clickUninstallIcon() {
@@ -631,6 +599,13 @@ class AutoRevokeTest {
         action: () -> Unit
     ) {
         withAppNoUninstallAssertion(apk, packageName, action)
+    }
+
+    private fun grantPermission(
+        packageName: String = supportedAppPackageName,
+        permission: String = READ_CALENDAR
+    ) {
+        instrumentation.uiAutomation.grantRuntimePermission(packageName, permission)
     }
 
     private fun assertPermission(
