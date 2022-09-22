@@ -46,7 +46,6 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.os.strictmode.UnbufferedIoViolation;
 import android.os.StrictMode;
 import android.os.StrictMode.ThreadPolicy.Builder;
 import android.os.StrictMode.ViolationInfo;
@@ -60,6 +59,7 @@ import android.os.strictmode.InstanceCountViolation;
 import android.os.strictmode.LeakedClosableViolation;
 import android.os.strictmode.NetworkViolation;
 import android.os.strictmode.NonSdkApiUsedViolation;
+import android.os.strictmode.UnbufferedIoViolation;
 import android.os.strictmode.UnsafeIntentLaunchViolation;
 import android.os.strictmode.UntaggedSocketViolation;
 import android.os.strictmode.Violation;
@@ -100,6 +100,7 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -108,7 +109,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.Random;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -118,6 +118,9 @@ public class StrictModeTest {
     private static final String TAG = "StrictModeTest";
     private static final String REMOTE_SERVICE_ACTION = "android.app.REMOTESERVICE";
     private static final String UNSAFE_INTENT_LAUNCH = "UnsafeIntentLaunch";
+
+    private static final int VIOLATION_TIMEOUT_IN_SECOND = 5;
+    private static final int NO_VIOLATION_TIMEOUT_IN_SECOND = 2;
 
     private StrictMode.ThreadPolicy mThreadPolicy;
     private StrictMode.VmPolicy mVmPolicy;
@@ -840,8 +843,15 @@ public class StrictModeTest {
     }
 
     @Presubmit
+    @ApiTest(apis = {
+            "android.content.Context#createWindowContext",
+            "android.content.Context#getSystemSrvice",
+            "android.view.ViewConfiguration#get",
+            "android.view.GestureDetector",
+            "android.app.WallpaperManager#getDesiredMinimumWidth",
+    })
     @Test
-    public void testIncorrectContextUse_WindowContext_NoViolation() throws Exception {
+    public void testIncorrectContextUse_WindowContext_NoViolation() {
         StrictMode.setVmPolicy(
                 new StrictMode.VmPolicy.Builder()
                         .detectIncorrectContextUse()
@@ -850,27 +860,33 @@ public class StrictModeTest {
 
         final Context windowContext = createWindowContext();
 
-        assertNoViolation(() -> windowContext.getSystemService(WINDOW_SERVICE));
-
-        assertNoViolation(() -> ViewConfiguration.get(windowContext));
-
         mInstrumentation.runOnMainSync(() -> {
             try {
-                assertNoViolation(() -> new GestureDetector(windowContext, mGestureListener));
+                assertNoViolation(() -> {
+                    windowContext.getSystemService(WINDOW_SERVICE);
+                    ViewConfiguration.get(windowContext);
+                    new GestureDetector(windowContext, mGestureListener);
+                    if (isWallpaperSupported()) {
+                        windowContext.getSystemService(WallpaperManager.class)
+                                .getDesiredMinimumWidth();
+                    }
+                });
             } catch (Exception e) {
                 fail("Failed because of " + e);
             }
         });
-
-        if (isWallpaperSupported()) {
-            assertNoViolation(() -> windowContext.getSystemService(WallpaperManager.class)
-                    .getDesiredMinimumWidth());
-        }
     }
 
     @Presubmit
+    @ApiTest(apis = {
+            "android.app.Activity",
+            "android.content.Context#getSystemSrvice",
+            "android.view.ViewConfiguration#get",
+            "android.view.GestureDetector",
+            "android.app.WallpaperManager#getDesiredMinimumWidth",
+    })
     @Test
-    public void testIncorrectContextUse_Activity_NoViolation() throws Exception {
+    public void testIncorrectContextUse_Activity_NoViolation() {
         StrictMode.setVmPolicy(
                 new StrictMode.VmPolicy.Builder()
                         .detectIncorrectContextUse()
@@ -881,79 +897,91 @@ public class StrictModeTest {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         final Activity activity = mInstrumentation.startActivitySync(intent);
 
-        assertNoViolation(() -> activity.getSystemService(WINDOW_SERVICE));
-
-        assertNoViolation(() -> ViewConfiguration.get(activity));
-
         mInstrumentation.runOnMainSync(() -> {
             try {
-                assertNoViolation(() -> new GestureDetector(activity, mGestureListener));
+                assertNoViolation(() -> {
+                    activity.getSystemService(WINDOW_SERVICE);
+                    ViewConfiguration.get(activity);
+                    new GestureDetector(activity, mGestureListener);
+                    if (isWallpaperSupported()) {
+                        activity.getSystemService(WallpaperManager.class)
+                                .getDesiredMinimumWidth();
+                    }
+                });
             } catch (Exception e) {
                 fail("Failed because of " + e);
             }
         });
-
-        if (isWallpaperSupported()) {
-            assertNoViolation(() -> activity.getSystemService(WallpaperManager.class)
-                    .getDesiredMinimumWidth());
-        }
     }
 
     @Presubmit
+    @ApiTest(apis = {
+            "android.content.Context#createWindowContext",
+            "android.content.Context#createConfigurationContext",
+            "android.content.Context#createAttributionContext",
+            "android.content.Context#getSystemSrvice",
+            "android.view.ViewConfiguration#get",
+            "android.view.GestureDetector",
+            "android.app.WallpaperManager#getDesiredMinimumWidth",
+    })
     @Test
-    public void testIncorrectContextUse_UiDerivedContext_NoViolation() throws Exception {
+    public void testIncorrectContextUse_UiDerivedContext_NoViolation() {
         StrictMode.setVmPolicy(
                 new StrictMode.VmPolicy.Builder()
                         .detectIncorrectContextUse()
                         .penaltyLog()
                         .build());
 
-        final Configuration config = new Configuration();
-        config.setToDefaults();
+        final Configuration configuration = new Configuration();
+        configuration.setToDefaults();
         final Context uiDerivedConfigContext =
-                createWindowContext().createConfigurationContext(config);
-
-        assertNoViolation(() -> uiDerivedConfigContext.getSystemService(WINDOW_SERVICE));
-
-        assertNoViolation(() -> ViewConfiguration.get(uiDerivedConfigContext));
+                createWindowContext().createConfigurationContext(configuration);
 
         mInstrumentation.runOnMainSync(() -> {
             try {
-                assertNoViolation(() ->
-                        new GestureDetector(uiDerivedConfigContext, mGestureListener));
+                assertNoViolation(() -> {
+                    uiDerivedConfigContext.getSystemService(WINDOW_SERVICE);
+                    ViewConfiguration.get(uiDerivedConfigContext);
+                    new GestureDetector(uiDerivedConfigContext, mGestureListener);
+                    if (isWallpaperSupported()) {
+                        uiDerivedConfigContext.getSystemService(WallpaperManager.class)
+                                .getDesiredMinimumWidth();
+                    }
+                });
             } catch (Exception e) {
                 fail("Failed because of " + e);
             }
         });
-
-        if (isWallpaperSupported()) {
-            assertNoViolation(() -> uiDerivedConfigContext.getSystemService(WallpaperManager.class)
-                    .getDesiredMinimumWidth());
-        }
 
         final Context uiDerivedAttrContext = createWindowContext()
                 .createAttributionContext(null /* attributeTag */);
 
-        assertNoViolation(() -> uiDerivedAttrContext.getSystemService(WINDOW_SERVICE));
-
-        assertNoViolation(() -> ViewConfiguration.get(uiDerivedAttrContext));
-
         mInstrumentation.runOnMainSync(() -> {
             try {
-                assertNoViolation(() ->
-                        new GestureDetector(uiDerivedAttrContext, mGestureListener));
+                assertNoViolation(() -> {
+                    uiDerivedAttrContext.getSystemService(WINDOW_SERVICE);
+                    ViewConfiguration.get(uiDerivedAttrContext);
+                    new GestureDetector(uiDerivedAttrContext, mGestureListener);
+                    if (isWallpaperSupported()) {
+                        uiDerivedAttrContext.getSystemService(WallpaperManager.class)
+                                .getDesiredMinimumWidth();
+                    }
+                });
             } catch (Exception e) {
                 fail("Failed because of " + e);
             }
         });
-
-        if (isWallpaperSupported()) {
-            assertNoViolation(() -> uiDerivedAttrContext.getSystemService(WallpaperManager.class)
-                    .getDesiredMinimumWidth());
-        }
     }
 
     @Presubmit
+    @ApiTest(apis = {
+            "android.content.Context#createWindowContext",
+            "android.content.Context#createDisplayContext",
+            "android.content.Context#getSystemSrvice",
+            "android.view.ViewConfiguration#get",
+            "android.view.GestureDetector",
+            "android.app.WallpaperManager#getDesiredMinimumWidth",
+    })
     @Test
     public void testIncorrectContextUse_UiDerivedDisplayContext_ThrowViolation() throws Exception {
         StrictMode.setVmPolicy(
@@ -990,6 +1018,13 @@ public class StrictModeTest {
     }
 
     @Presubmit
+    @ApiTest(apis = {
+            "android.content.Context#createConfigurationContext",
+            "android.content.Context#getSystemSrvice",
+            "android.view.ViewConfiguration#get",
+            "android.view.GestureDetector",
+            "android.app.WallpaperManager#getDesiredMinimumWidth",
+    })
     @Test
     public void testIncorrectContextUse_ConfigContext() throws Exception {
         StrictMode.setVmPolicy(
@@ -1008,11 +1043,12 @@ public class StrictModeTest {
         // Make the ViewConfiguration to be cached so that we won't call WindowManager
         ViewConfiguration.get(configContext);
 
-        assertNoViolation(() -> ViewConfiguration.get(configContext));
-
         mInstrumentation.runOnMainSync(() -> {
             try {
-                assertNoViolation(() -> new GestureDetector(configContext, mGestureListener));
+                assertNoViolation(() -> {
+                    ViewConfiguration.get(configContext);
+                    new GestureDetector(configContext, mGestureListener);
+                });
             } catch (Exception e) {
                 fail("Failed because of " + e);
             }
@@ -1026,6 +1062,14 @@ public class StrictModeTest {
     }
 
     @Presubmit
+    @ApiTest(apis = {
+            "android.content.Context#createConfigurationContext",
+            "android.content.Context#createDisplayContext",
+            "android.content.Context#getSystemSrvice",
+            "android.view.ViewConfiguration#get",
+            "android.view.GestureDetector",
+            "android.app.WallpaperManager#getDesiredMinimumWidth",
+    })
     @Test
     public void testIncorrectContextUse_ConfigDerivedDisplayContext() throws Exception {
         StrictMode.setVmPolicy(
@@ -1064,6 +1108,14 @@ public class StrictModeTest {
         }
     }
 
+    @Presubmit
+    @ApiTest(apis = {
+            "android.app.Service",
+            "android.content.Context#getSystemSrvice",
+            "android.view.ViewConfiguration#get",
+            "android.view.GestureDetector",
+            "android.app.WallpaperManager#getDesiredMinimumWidth",
+    })
     @Test
     public void testIncorrectContextUse_Service_ThrowViolation() throws Exception {
         StrictMode.setVmPolicy(
@@ -1104,6 +1156,15 @@ public class StrictModeTest {
         }
     }
 
+    @Presubmit
+    @ApiTest(apis = {
+            "android.window.WindowProviderService",
+            "android.content.Context#getSystemSrvice",
+            "android.view.ViewConfiguration#get",
+            "android.view.GestureDetector",
+            "android.app.WallpaperManager#getDesiredMinimumWidth",
+            "android.view.WindowManager#addView",
+    })
     @Test
     public void testIncorrectContextUse_WindowProviderService_NoViolation() throws Exception {
         StrictMode.setVmPolicy(
@@ -1117,14 +1178,12 @@ public class StrictModeTest {
         TestWindowService service = ((TestWindowService.TestToken) serviceRule.bindService(intent))
                 .getService();
         try {
-            assertNoViolation(() -> service.getSystemService(WindowManager.class));
-
             final View view = new View(service);
             final WindowManager.LayoutParams correctType =
                     new WindowManager.LayoutParams(TYPE_APPLICATION_OVERLAY);
             final WindowManager.LayoutParams wrongType =
                     new WindowManager.LayoutParams(TYPE_PHONE);
-            WindowManager wm = service.getSystemService(WindowManager.class);
+            final WindowManager[] wm = new WindowManager[1];
 
             mInstrumentation.runOnMainSync(() -> {
                 try {
@@ -1133,25 +1192,26 @@ public class StrictModeTest {
                     mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
                             INTERNAL_SYSTEM_WINDOW, SYSTEM_ALERT_WINDOW);
 
-                    assertNoViolation(() -> wm.addView(view, correctType));
-                    wm.removeViewImmediate(view);
+                    assertNoViolation(() -> {
+                        ViewConfiguration.get(service);
+                        new GestureDetector(service, mGestureListener);
+                        if (isWallpaperSupported()) {
+                            service.getSystemService(WallpaperManager.class)
+                                    .getDesiredMinimumWidth();
+                        }
+                        wm[0] = service.getSystemService(WindowManager.class);
+                        wm[0].addView(view, correctType);
+                    });
+                    wm[0].removeViewImmediate(view);
 
                     assertViolation("WindowContext's window type must match type in "
-                            + "WindowManager.LayoutParams", () -> wm.addView(view, wrongType));
-
-                    assertNoViolation(() -> new GestureDetector(service, mGestureListener));
+                            + "WindowManager.LayoutParams", () -> wm[0].addView(view, wrongType));
                 } catch (Exception e) {
                     fail("Failed because of " + e);
                 } finally {
                     mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
                 }
             });
-            assertNoViolation(() -> ViewConfiguration.get(service));
-
-            if (isWallpaperSupported()) {
-                assertNoViolation(() -> service.getSystemService(WallpaperManager.class)
-                        .getDesiredMinimumWidth());
-            }
         } finally {
             serviceRule.unbindService();
         }
@@ -1380,8 +1440,8 @@ public class StrictModeTest {
     private Context createWindowContext() {
         final Display display = getContext().getSystemService(DisplayManager.class)
                 .getDisplay(DEFAULT_DISPLAY);
-        return getContext().createDisplayContext(display)
-                .createWindowContext(TYPE_APPLICATION_OVERLAY, null /* options */);
+        return getContext().createWindowContext(display, TYPE_APPLICATION_OVERLAY,
+                null /* options */);
     }
 
     private static void runWithRemoteServiceBound(Context context, Consumer<ISecondary> consumer)
@@ -1414,22 +1474,28 @@ public class StrictModeTest {
     }
 
     private static void assertViolation(String expected, ThrowingRunnable r) throws Exception {
-        inspectViolation(r, info -> assertThat(info.getStackTrace()).contains(expected));
+        inspectViolation(r, info -> assertThat(info.getStackTrace()).contains(expected),
+                VIOLATION_TIMEOUT_IN_SECOND);
     }
 
     private static void assertNoViolation(ThrowingRunnable r) throws Exception {
-        inspectViolation(
-                r, info -> assertWithMessage("Unexpected violation").that(info).isNull());
+        inspectViolation(r, info -> assertWithMessage("Unexpected violation").that(info).isNull(),
+                NO_VIOLATION_TIMEOUT_IN_SECOND);
     }
 
-    private static void inspectViolation(
-            ThrowingRunnable violating, Consumer<ViolationInfo> consume) throws Exception {
+    private static void inspectViolation(ThrowingRunnable violating,
+            Consumer<ViolationInfo> consume) throws Exception {
+        inspectViolation(violating, consume, VIOLATION_TIMEOUT_IN_SECOND);
+    }
+
+    private static void inspectViolation(ThrowingRunnable violating,
+            Consumer<ViolationInfo> consume, int timeout) throws Exception {
         final LinkedBlockingQueue<ViolationInfo> violations = new LinkedBlockingQueue<>();
         StrictMode.setViolationLogger(violations::add);
 
         try {
             violating.run();
-            consume.accept(violations.poll(5, TimeUnit.SECONDS));
+            consume.accept(violations.poll(timeout, TimeUnit.SECONDS));
         } finally {
             StrictMode.setViolationLogger(null);
         }

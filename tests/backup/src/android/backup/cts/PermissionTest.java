@@ -63,19 +63,7 @@ public class PermissionTest extends BaseBackupCtsTest {
 
     /** The apk of the packages */
     private static final String APK_PATH = "/data/local/tmp/cts/backup/";
-    private static final String APP_APK_CERT_1 = APK_PATH + "CtsPermissionBackupAppCert1.apk";
-    private static final String APP_APK_CERT_1_DUP = APK_PATH
-            + "CtsPermissionBackupAppCert1Dup.apk";
-    private static final String APP_APK_CERT_2 = APK_PATH + "CtsPermissionBackupAppCert2.apk";
-    private static final String APP_APK_CERT_3 = APK_PATH + "CtsPermissionBackupAppCert3.apk";
-    private static final String APP_APK_CERT_5 = APK_PATH + "CtsPermissionBackupAppCert5.apk";
-    private static final String APP_APK_CERT_1_2 = APK_PATH + "CtsPermissionBackupAppCert12.apk";
-    private static final String APP_APK_CERT_1_2_DUP = APK_PATH
-            + "CtsPermissionBackupAppCert12Dup.apk";
-    private static final String APP_APK_CERT_1_2_3 = APK_PATH + "CtsPermissionBackupAppCert123.apk";
-    private static final String APP_APK_CERT_3_4 = APK_PATH + "CtsPermissionBackupAppCert34.apk";
-    private static final String APP_APK_CERT_5_HISTORY_1_2_4 = APK_PATH
-            + "CtsPermissionBackupAppCert5History124.apk";
+    private static final String APP_APK = APK_PATH + "CtsPermissionBackupApp.apk";
     private static final String APP22_APK = APK_PATH + "CtsPermissionBackupApp22.apk";
 
     /** The name of the package for backup */
@@ -97,19 +85,15 @@ public class PermissionTest extends BaseBackupCtsTest {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+
+        resetApp(APP);
+        resetApp(APP22);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.setUp();
-
-        uninstallIfInstalled(APP);
-        uninstallIfInstalled(APP22);
-    }
-
-    /** Test backup and restore of regular runtime permissions. */
-    public void testRestore_restoresRuntimePermissions() throws Exception {
-        install(APP_APK_CERT_1);
+    /**
+     * Test backup and restore of regular runtime permission.
+     */
+    public void testGrantDeniedRuntimePermission() throws Exception {
         if (!isBackupSupported()) {
             return;
         }
@@ -126,345 +110,9 @@ public class PermissionTest extends BaseBackupCtsTest {
     }
 
     /**
-     * Test backup and restore of regular runtime permissions, when the app being restored has the
-     * same certificate as the backed up app.
-     */
-    public void testRestore_sameCert_restoresRuntimePermissions() throws Exception {
-        install(APP_APK_CERT_1);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_1_DUP);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, READ_CONTACTS));
-        });
-    }
-
-    /**
-     * Test backup and restore of regular runtime permissions, when the app being restored has a
-     * different certificate as the backed up app.
-     */
-    public void testRestore_diffCert_doesNotGrantRuntimePermissions() throws Exception {
-        install(APP_APK_CERT_1);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_3);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, READ_CONTACTS));
-        });
-    }
-
-    /**
-     * Test backup and restore of regular runtime permissions, when the app being restored has the
-     * backed up app's certificate in its signing history.
-     */
-    public void testRestore_midHistoryToRotated_restoresRuntimePermissions() throws Exception {
-        install(APP_APK_CERT_2);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_5_HISTORY_1_2_4);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, READ_CONTACTS));
-        });
-    }
-
-    /**
-     * Test backup and restore of regular runtime permissions, when the app being restored has the
-     * backed up app's certificate as the original certificate in its signing history.
-     */
-    public void testRestore_origToRotated_restoresRuntimePermissions() throws Exception {
-        install(APP_APK_CERT_1);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_5_HISTORY_1_2_4);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, READ_CONTACTS));
-        });
-    }
-
-    /**
-     * Test backup and restore of regular runtime permissions, when the backed up app has the
-     * restored app's certificate in its signing history.
-     */
-    public void testRestore_rotatedToMidHistory_restoresRuntimePermissions() throws Exception {
-        install(APP_APK_CERT_5_HISTORY_1_2_4);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_2);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, READ_CONTACTS));
-        });
-    }
-
-    /**
-     * Test backup and restore of regular runtime permissions, when the backed up app has the
-     * restored app's certificate in its signing history as its original certificate.
-     */
-    public void testRestore_rotatedToOrig_restoresRuntimePermissions() throws Exception {
-        install(APP_APK_CERT_5_HISTORY_1_2_4);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_1);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, READ_CONTACTS));
-        });
-    }
-
-    /**
-     * Test backup and restore of regular runtime permissions, when the backed up app has the
-     * same certificate as the restored app, but the restored app additionally has signing
-     * certificate history.
-     */
-    public void testRestore_sameWithHistory_restoresRuntimePermissions() throws Exception {
-        install(APP_APK_CERT_5);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_5_HISTORY_1_2_4);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, READ_CONTACTS));
-        });
-    }
-
-    /**
-     * Test backup and restore of regular runtime permissions, when the backed up app has the
-     * same certificate as the restored app, but the backed up app additionally has signing
-     * certificate history.
-     */
-    public void testRestore_sameWithoutHistory_restoresRuntimePermissions() throws Exception {
-        install(APP_APK_CERT_5_HISTORY_1_2_4);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_5);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, READ_CONTACTS));
-        });
-    }
-
-    /**
-     * Test backup and restore of regular runtime permissions, when the app being restored has
-     * signing history, but the backed up app's certificate is not in this signing history.
-     */
-    public void testRestore_notInBackedUpHistory_doesNotRestoreRuntimePerms() throws Exception {
-        install(APP_APK_CERT_5_HISTORY_1_2_4);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_3);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, READ_CONTACTS));
-        });
-    }
-
-    /**
-     * Test backup and restore of regular runtime permissions, when the app being restored has
-     * signing history, but the backed up app's certificate is not in this signing history.
-     */
-    public void testRestore_notInRestoredHistory_doesNotRestoreRuntimePerms() throws Exception {
-        install(APP_APK_CERT_3);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_5_HISTORY_1_2_4);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, READ_CONTACTS));
-        });
-    }
-
-    /**
-     * Test backup and restore of regular runtime permissions, when the app being restored has
-     * multiple certificates, and the backed up app also has identical multiple certificates.
-     */
-    public void testRestore_sameMultCerts_restoresRuntimePermissions() throws Exception {
-        install(APP_APK_CERT_1_2);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_1_2_DUP);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, READ_CONTACTS));
-        });
-    }
-
-    /**
-     * Test backup and restore of regular runtime permissions, when the app being restored has
-     * multiple certificates, and the backed up app do not have identical multiple certificates.
-     */
-    public void testRestore_diffMultCerts_doesNotRestoreRuntimePermissions() throws Exception {
-        install(APP_APK_CERT_1_2);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_3_4);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, READ_CONTACTS));
-        });
-    }
-
-    /**
-     * Test backup and restore of regular runtime permissions, when the app being restored has
-     * multiple certificates, and the backed up app's certificate is present in th restored app's
-     * certificates.
-     */
-    public void testRestore_singleToMultiCert_restoresRuntimePerms() throws Exception {
-        install(APP_APK_CERT_1);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_1_2_3);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, READ_CONTACTS));
-        });
-    }
-
-    /**
-     * Test backup and restore of regular runtime permissions, when the backed up app and the app
-     * being restored have multiple certificates, and the backed up app's certificates are a subset
-     * of the restored app's certificates.
-     */
-    public void testRestore_multCertsToSuperset_doesNotRestoreRuntimePerms() throws Exception {
-        install(APP_APK_CERT_1_2);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_1_2_3);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, READ_CONTACTS));
-        });
-    }
-
-    /**
-     * Test backup and restore of regular runtime permissions, when the backed up app and the app
-     * being restored have multiple certificates, and the backed up app's certificates are a
-     * superset of the restored app's certificates.
-     */
-    public void testRestore_multCertsToSubset_doesNotRestoreRuntimePermissions() throws Exception {
-        install(APP_APK_CERT_1_2_3);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_1_2);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, READ_CONTACTS));
-        });
-    }
-
-    /**
      * Test backup and restore of pre-M regular runtime permission.
      */
-    public void testRestore_api22_restoresRuntimePermissions() throws Exception {
-        install(APP22_APK);
+    public void testGrantDeniedRuntimePermission22() throws Exception {
         if (!isBackupSupported()) {
             return;
         }
@@ -481,19 +129,17 @@ public class PermissionTest extends BaseBackupCtsTest {
     }
 
     /**
-     * Test backup and restore of tri-state permissions, when both foreground and background runtime
-     * permissions are not granted.
+     * Test backup and restore of foreground runtime permission.
      */
-    public void testRestore_fgBgDenied_restoresFgBgPermissions() throws Exception {
-        install(APP_APK_CERT_1);
+    public void testNoTriStateRuntimePermission() throws Exception {
         if (!isBackupSupported()) {
             return;
         }
-        // Make a token change to permission state, to enable to us to determine when restore is
-        // complete.
+        // Set a marker
         grantPermission(APP, WRITE_CONTACTS);
-        // PERMISSION_DENIED is the default state, so we mark the permissions as user set in order
-        // to ensure that permissions are backed up.
+
+        // revoked is the default state. Hence mark the permissions as user set, so the permissions
+        // are even backed up
         setFlag(APP, ACCESS_FINE_LOCATION, FLAG_PERMISSION_USER_SET);
         setFlag(APP, ACCESS_BACKGROUND_LOCATION, FLAG_PERMISSION_USER_SET);
 
@@ -502,7 +148,7 @@ public class PermissionTest extends BaseBackupCtsTest {
         mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         eventually(() -> {
-            // Wait until restore is complete.
+            // Wait until marker is set
             assertEquals(PERMISSION_GRANTED, checkPermission(APP, WRITE_CONTACTS));
 
             assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION));
@@ -512,76 +158,9 @@ public class PermissionTest extends BaseBackupCtsTest {
     }
 
     /**
-     * Test backup and restore of tri-state permissions, when both foreground and background runtime
-     * permissions are not granted and the backed up and restored app have compatible certificates.
+     * Test backup and restore of foreground runtime permission.
      */
-    public void testRestore_fgBgDenied_matchingCerts_restoresFgBgPermissions() throws Exception {
-        install(APP_APK_CERT_2);
-        if (!isBackupSupported()) {
-            return;
-        }
-        // Make a token change to permission state, to enable to us to determine when restore is
-        // complete.
-        grantPermission(APP, WRITE_CONTACTS);
-        // PERMISSION_DENIED is the default state, so we mark the permissions as user set in order
-        // to ensure that permissions are backed up.
-        setFlag(APP, ACCESS_FINE_LOCATION, FLAG_PERMISSION_USER_SET);
-        setFlag(APP, ACCESS_BACKGROUND_LOCATION, FLAG_PERMISSION_USER_SET);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_5_HISTORY_1_2_4);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            // Wait until restore is complete.
-            assertEquals(PERMISSION_GRANTED, checkPermission(APP, WRITE_CONTACTS));
-
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_BACKGROUND_LOCATION));
-            assertEquals(MODE_IGNORED, getAppOp(APP, ACCESS_FINE_LOCATION));
-        });
-    }
-
-    /**
-     * Test backup and restore of tri-state permissions, when both foreground and background
-     * runtime permissions are not granted and the backed up and restored app don't have compatible
-     * certificates.
-     */
-    public void testRestore_fgBgDenied_notMatchingCerts_doesNotRestorePerms() throws Exception {
-        install(APP_APK_CERT_1);
-        if (!isBackupSupported()) {
-            return;
-        }
-        // Make a token change to permission state, to enable to us to determine when restore is
-        // complete.
-        grantPermission(APP, WRITE_CONTACTS);
-        // PERMISSION_DENIED is the default state, so we mark the permissions as user set in order
-        // to ensure that permissions are backed up.
-        setFlag(APP, ACCESS_FINE_LOCATION, FLAG_PERMISSION_USER_SET);
-        setFlag(APP, ACCESS_BACKGROUND_LOCATION, FLAG_PERMISSION_USER_SET);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_2);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            // Wait until restore is complete.
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, WRITE_CONTACTS));
-
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_BACKGROUND_LOCATION));
-            assertEquals(MODE_IGNORED, getAppOp(APP, ACCESS_FINE_LOCATION));
-        });
-    }
-
-    /**
-     * Test backup and restore of pre-M foreground permissions, when foreground runtime permission
-     * is not granted.
-     */
-    public void testRestore_api22_fgDenied_restoresPermissions() throws Exception {
-        install(APP22_APK);
+    public void testNoTriStateRuntimePermission22() throws Exception {
         if (!isBackupSupported()) {
             return;
         }
@@ -595,17 +174,16 @@ public class PermissionTest extends BaseBackupCtsTest {
     }
 
     /**
-     * Test backup and restore of tri-state permissions, when foreground runtime permission is
-     * granted.
+     * Test backup and restore of foreground runtime permission.
      */
-    public void testRestore_fgGranted_restoresFgBgPermissions() throws Exception {
-        install(APP_APK_CERT_1);
+    public void testGrantForegroundRuntimePermission() throws Exception {
         if (!isBackupSupported()) {
             return;
         }
         grantPermission(APP, ACCESS_FINE_LOCATION);
-        // PERMISSION_DENIED is the default state, so we mark the permissions as user set in order
-        // to ensure that permissions are backed up.
+
+        // revoked is the default state. Hence mark the permission as user set, so the permissions
+        // are even backed up
         setFlag(APP, ACCESS_BACKGROUND_LOCATION, FLAG_PERMISSION_USER_SET);
 
         mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
@@ -616,58 +194,6 @@ public class PermissionTest extends BaseBackupCtsTest {
             assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION));
             assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_BACKGROUND_LOCATION));
             assertEquals(MODE_FOREGROUND, getAppOp(APP, ACCESS_FINE_LOCATION));
-        });
-    }
-
-    /**
-     * Test backup and restore of tri-state permissions, when foreground runtime permission is
-     * granted and the backed up and restored app have compatible certificates.
-     */
-    public void testRestore_fgGranted_matchingCerts_restoresFgBgPermissions() throws Exception {
-        install(APP_APK_CERT_2);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-        // PERMISSION_DENIED is the default state, so we mark the permissions as user set in order
-        // to ensure that permissions are backed up.
-        setFlag(APP, ACCESS_BACKGROUND_LOCATION, FLAG_PERMISSION_USER_SET);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_5_HISTORY_1_2_4);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_BACKGROUND_LOCATION));
-            assertEquals(MODE_FOREGROUND, getAppOp(APP, ACCESS_FINE_LOCATION));
-        });
-    }
-
-    /**
-     * Test backup and restore of tri-state permissions, when foreground runtime permission is
-     * granted and the backed up and restored app don't have compatible certificates.
-     */
-    public void testRestore_fgGranted_notMatchingCerts_doesNotRestoreFgBgPerms() throws Exception {
-        install(APP_APK_CERT_1);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-        // PERMISSION_DENIED is the default state, so we mark the permissions as user set in order
-        // to ensure that permissions are backed up.
-        setFlag(APP, ACCESS_BACKGROUND_LOCATION, FLAG_PERMISSION_USER_SET);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_2);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_BACKGROUND_LOCATION));
-            assertEquals(MODE_IGNORED, getAppOp(APP, ACCESS_FINE_LOCATION));
         });
     }
 
@@ -691,11 +217,9 @@ public class PermissionTest extends BaseBackupCtsTest {
 //    }
 
     /**
-     * Test backup and restore of tri-state permissions, when foreground and background runtime
-     * permissions are granted.
+     * Test backup and restore of foreground runtime permission.
      */
-    public void testRestore_fgBgGranted_restoresFgBgPermissions() throws Exception {
-        install(APP_APK_CERT_1);
+    public void testGrantForegroundAndBackgroundRuntimePermission() throws Exception {
         if (!isBackupSupported()) {
             return;
         }
@@ -714,65 +238,13 @@ public class PermissionTest extends BaseBackupCtsTest {
     }
 
     /**
-     * Test backup and restore of tri-state permissions, when foreground and background runtime
-     * permissions are granted and the backed up and restored app have compatible certificates.
+     * Test backup and restore of foreground runtime permission.
      */
-    public void testRestore_fgBgGranted_matchingCerts_restoresFgBgPermissions() throws Exception {
-        install(APP_APK_CERT_2);
+    public void testGrantForegroundAndBackgroundRuntimePermission22() throws Exception {
         if (!isBackupSupported()) {
             return;
         }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-        grantPermission(APP, ACCESS_BACKGROUND_LOCATION);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_5_HISTORY_1_2_4);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_BACKGROUND_LOCATION));
-            assertEquals(MODE_ALLOWED, getAppOp(APP, ACCESS_FINE_LOCATION));
-        });
-    }
-
-    /**
-     * Test backup and restore of tri-state permissions, when foreground and background runtime
-     * permissions are granted and the backed up and restored app don't have compatible
-     * certificates.
-     */
-    public void testRestore_fgBgGranted_notMatchingCerts_restoresFgBgPerms() throws Exception {
-        install(APP_APK_CERT_1);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-        grantPermission(APP, ACCESS_BACKGROUND_LOCATION);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_2);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> {
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION));
-            assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_BACKGROUND_LOCATION));
-            assertEquals(MODE_IGNORED, getAppOp(APP, ACCESS_FINE_LOCATION));
-        });
-    }
-
-    /**
-     * Test backup and restore of pre-M foreground permissions, when foreground runtime permission
-     * is granted.
-     */
-    public void testRestore_api22_fgGranted_restoresFgPermissions() throws Exception {
-        install(APP22_APK);
-        if (!isBackupSupported()) {
-            return;
-        }
-        // Make a token change to permission state, to enable to us to determine when restore is
-        // complete.
+        // Set a marker
         setAppOp(APP22, WRITE_CONTACTS, MODE_IGNORED);
 
         mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
@@ -780,16 +252,17 @@ public class PermissionTest extends BaseBackupCtsTest {
         mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         eventually(() -> {
-            // Wait until restore is complete.
+            // Wait for marker
             assertEquals(MODE_IGNORED, getAppOp(APP22, WRITE_CONTACTS));
 
             assertEquals(MODE_ALLOWED, getAppOp(APP22, ACCESS_FINE_LOCATION));
         });
     }
 
-    /** Test backup and restore of the permission review required flag. */
-    public void testRestore_restoresPermissionReviewRequiredFlag() throws Exception {
-        install(APP22_APK);
+    /**
+     * Restore if the permission was reviewed
+     */
+    public void testRestorePermReviewed() throws Exception {
         if (!isBackupSupported()) {
             return;
         }
@@ -803,9 +276,10 @@ public class PermissionTest extends BaseBackupCtsTest {
                 isFlagSet(APP22, WRITE_CONTACTS, FLAG_PERMISSION_REVIEW_REQUIRED)));
     }
 
-    /** Test backup and restore of the user set flag. */
-    public void testRestore_restoresUserSetFlag() throws Exception {
-        install(APP_APK_CERT_1);
+    /**
+     * Restore if the permission was user set
+     */
+    public void testRestoreUserSet() throws Exception {
         if (!isBackupSupported()) {
             return;
         }
@@ -818,9 +292,10 @@ public class PermissionTest extends BaseBackupCtsTest {
         eventually(() -> assertTrue(isFlagSet(APP, WRITE_CONTACTS, FLAG_PERMISSION_USER_SET)));
     }
 
-    /** Test backup and restore of the user fixed flag. */
-    public void testRestore_restoresUserFixedFlag() throws Exception {
-        install(APP_APK_CERT_1);
+    /**
+     * Restore if the permission was user fixed
+     */
+    public void testRestoreUserFixed() throws Exception {
         if (!isBackupSupported()) {
             return;
         }
@@ -833,9 +308,10 @@ public class PermissionTest extends BaseBackupCtsTest {
         eventually(() -> assertTrue(isFlagSet(APP, WRITE_CONTACTS, FLAG_PERMISSION_USER_FIXED)));
     }
 
-    /** Test backup and restore restores flag values but does not grant permissions. */
-    public void testRestore_whenFlagRestored_doesNotGrantPermission() throws Exception {
-        install(APP_APK_CERT_1);
+    /**
+     * Restoring of a flag should not grant the permission
+     */
+    public void testRestoreOfFlagDoesNotGrantPermission() throws Exception {
         if (!isBackupSupported()) {
             return;
         }
@@ -849,118 +325,43 @@ public class PermissionTest extends BaseBackupCtsTest {
     }
 
     /**
-     * Test backup and restore of flags when the backed up app and restored app have compatible
-     * certificates.
+     * Test backup and delayed restore of regular runtime permission.
      */
-    public void testRestore_matchingCerts_restoresFlags() throws Exception {
-        install(APP_APK_CERT_2);
-        if (!isBackupSupported()) {
-            return;
-        }
-        setFlag(APP, WRITE_CONTACTS, FLAG_PERMISSION_USER_SET);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_5_HISTORY_1_2_4);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> assertTrue(isFlagSet(APP, WRITE_CONTACTS, FLAG_PERMISSION_USER_SET)));
-    }
-
-    /**
-     * Test backup and restore of flags when the backed up app and restored app don't have
-     * compatible certificates.
-     */
-    public void testRestore_notMatchingCerts_doesNotRestoreFlag() throws Exception {
-        install(APP_APK_CERT_1);
-        if (!isBackupSupported()) {
-            return;
-        }
-        setFlag(APP, WRITE_CONTACTS, FLAG_PERMISSION_USER_SET);
-
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        install(APP_APK_CERT_2);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-
-        eventually(() -> assertFalse(isFlagSet(APP, WRITE_CONTACTS, FLAG_PERMISSION_USER_SET)));
-    }
-
-    /**
-     * Test backup and delayed restore of regular runtime permission, i.e. when an app is installed
-     * after restore has run.
-     */
-    public void testRestore_appInstalledLater_restoresCorrectly() throws Exception {
-        install(APP_APK_CERT_1);
-        install(APP22_APK);
+    public void testDelayedRestore() throws Exception {
         if (!isBackupSupported()) {
             return;
         }
         grantPermission(APP, ACCESS_FINE_LOCATION);
+
         setAppOp(APP22, READ_CONTACTS, MODE_IGNORED);
+
         mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-        uninstallIfInstalled(APP22);
 
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
+        uninstall(APP);
+        uninstall(APP22);
 
-        install(APP_APK_CERT_1);
+        try {
+            mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
-        eventually(() -> assertEquals(PERMISSION_GRANTED,
-                checkPermission(APP, ACCESS_FINE_LOCATION)));
+            install(APP_APK);
 
-        install(APP22_APK);
+            eventually(() -> assertEquals(PERMISSION_GRANTED,
+                    checkPermission(APP, ACCESS_FINE_LOCATION)));
 
-        eventually(() -> assertEquals(MODE_IGNORED, getAppOp(APP22, READ_CONTACTS)));
-    }
+            install(APP22_APK);
 
-    /**
-     * Test backup and delayed restore of regular runtime permission, i.e. when an app is installed
-     * after restore has run, and the backed up app and restored app have compatible certificates.
-     */
-    public void testRestore_appInstalledLater_matchingCerts_restoresCorrectly() throws Exception {
-        install(APP_APK_CERT_2);
-        if (!isBackupSupported()) {
-            return;
+            eventually(() -> assertEquals(MODE_IGNORED, getAppOp(APP22, READ_CONTACTS)));
+        } finally {
+            install(APP_APK);
+            install(APP22_APK);
         }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-        install(APP_APK_CERT_5_HISTORY_1_2_4);
-
-        eventually(() -> assertEquals(PERMISSION_GRANTED,
-                checkPermission(APP, ACCESS_FINE_LOCATION)));
-    }
-
-    /**
-     * Test backup and delayed restore of regular runtime permission, i.e. when an app is installed
-     * after restore has run, and the backed up app and restored app don't have compatible
-     * certificates.
-     */
-    public void testRestore_appInstalledLater_notMatchingCerts_doesNotRestore() throws Exception {
-        install(APP_APK_CERT_1);
-        if (!isBackupSupported()) {
-            return;
-        }
-        grantPermission(APP, ACCESS_FINE_LOCATION);
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
-        uninstallIfInstalled(APP);
-
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
-        install(APP_APK_CERT_5_HISTORY_1_2_4);
-
-        eventually(() -> assertEquals(PERMISSION_DENIED,
-                checkPermission(APP, ACCESS_FINE_LOCATION)));
     }
 
     private void install(String apk) {
-        String output = ShellUtils.runShellCommand("pm install -r " + apk);
-        assertEquals("Success", output);
+        ShellUtils.runShellCommand("pm install -r " + apk);
     }
 
-    private void uninstallIfInstalled(String packageName) {
+    private void uninstall(String packageName) {
         ShellUtils.runShellCommand("pm uninstall " + packageName);
     }
 

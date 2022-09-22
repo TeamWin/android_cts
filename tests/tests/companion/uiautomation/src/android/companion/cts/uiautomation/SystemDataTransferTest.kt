@@ -24,19 +24,18 @@ import android.companion.CompanionException
 import android.companion.cts.common.CompanionActivity
 import android.content.Intent
 import android.os.OutcomeReceiver
-import android.os.SystemClock
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.io.FilterInputStream
-import java.io.InputStream
-import java.io.OutputStream
+import java.io.PipedInputStream
+import java.io.PipedOutputStream
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -54,14 +53,7 @@ import org.junit.runner.RunWith
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 @RunWith(AndroidJUnit4::class)
 class SystemDataTransferTest : UiAutomationTestBase(null, null) {
-    /**
-     * Message codes defined in [com.android.server.companion.transport.CompanionTransportManager].
-     */
     companion object {
-        private const val MESSAGE_RESPONSE_SUCCESS = 0x33838567
-        private const val MESSAGE_RESPONSE_FAILURE = 0x33706573
-        private const val MESSAGE_REQUEST_PERMISSION_RESTORE = 0x63826983
-
         private const val SYSTEM_DATA_TRANSFER_RESPONSE_DELAY = 5_000L // Wait 5 seconds
         private const val SYSTEM_DATA_TRANSFER_TIMEOUT = 10_000L // 10 seconds
     }
@@ -141,12 +133,10 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         val association = associate()
 
         // Generate data packet with successful response
-        val bytes = generatePacket(MESSAGE_RESPONSE_SUCCESS, "SUCCESS")
-        val input = ByteArrayInputStream(bytes)
-        val output = ByteArrayOutputStream()
+        val response = generatePacket(MESSAGE_RESPONSE_SUCCESS, "SUCCESS")
 
         // This will fail due to lack of user consent
-        startSystemDataTransfer(association.id, input, output)
+        startSystemDataTransfer(association.id, response)
     }
 
     /**
@@ -159,11 +149,8 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         requestPermissionTransferUserConsent(association.id)
 
         // Generate data packet with successful response
-        val bytes = generatePacket(MESSAGE_RESPONSE_SUCCESS, "SUCCESS")
-        val input = ByteArrayInputStream(bytes)
-        val output = ByteArrayOutputStream()
-
-        startSystemDataTransfer(association.id, input, output)
+        val response = generatePacket(MESSAGE_RESPONSE_SUCCESS, "SUCCESS")
+        startSystemDataTransfer(association.id, response)
     }
 
     /**
@@ -176,12 +163,8 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         requestPermissionTransferUserConsent(association.id)
 
         // Generate data packet with failure as response
-        val bytes = generatePacket(MESSAGE_RESPONSE_FAILURE, "FAILURE")
-        val input = ByteArrayInputStream(bytes)
-        val output = ByteArrayOutputStream()
-
-        // Delay input so that CDM can first send permission restore data before receiving result
-        startSystemDataTransfer(association.id, input, output)
+        val response = generatePacket(MESSAGE_RESPONSE_FAILURE, "FAILURE")
+        startSystemDataTransfer(association.id, response)
     }
 
     /**
@@ -196,36 +179,23 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         // Generate data packet with permission restore request
         val bytes = generatePacket(MESSAGE_REQUEST_PERMISSION_RESTORE)
         val input = ByteArrayInputStream(bytes)
-        val output = ByteArrayOutputStream()
+
+        // Monitor output response from CDM
+        val messageSent = CountDownLatch(1)
+        val sentMessage = AtomicInteger()
+        val output = MonitoredOutputStream { message ->
+            sentMessage.set(message)
+            messageSent.countDown()
+        }
 
         // "Receive" permission restore request
         cdm.attachSystemDataTransport(association.id, input, output)
-        SystemClock.sleep(2000) // Wait to actually send data
 
-        // Assert CDM sends a response
-        assertTrue(isResponse(output.toByteArray()))
-    }
+        // Assert CDM sent a message
+        assertTrue(messageSent.await(SYSTEM_DATA_TRANSFER_TIMEOUT, TimeUnit.SECONDS))
 
-    private fun generatePacket(message: Int, data: String? = null): ByteArray {
-        val bytes = data?.toByteArray(StandardCharsets.UTF_8) ?: EmptyArray.BYTE
-
-        // Construct data packet with header + data
-        return ByteBuffer.allocate(bytes.size + 12)
-                .putInt(message) // message type
-                .putInt(1) // message sequence
-                .putInt(bytes.size) // data size
-                .put(bytes) // actual data
-                .array()
-    }
-
-    /**
-     * Message is a response if the first byte of the message is 0x33.
-     *
-     * See [com.android.server.companion.transport.CompanionTransportManager].
-     */
-    private fun isResponse(packet: ByteArray): Boolean {
-        val message = ByteBuffer.wrap(packet).int
-        return (message and 0xFF000000.toInt()) == 0x33000000
+        // Assert that sent message was in response format (can be success or failure)
+        assertTrue(isResponse(sentMessage.get()))
     }
 
     /**
@@ -255,30 +225,38 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
      */
     private fun startSystemDataTransfer(
             associationId: Int,
-            input: InputStream,
-            output: OutputStream
+            simulatedResponse: ByteArray
     ) {
-        // Delay input stream so that CDM has a chance to send permission restore data first.
-        val delayedInput = DelayedInputStream(input, SYSTEM_DATA_TRANSFER_RESPONSE_DELAY)
-        cdm.attachSystemDataTransport(associationId, delayedInput, output)
+        // Piped input stream to simulate any response for CDM to receive
+        val inputSource = PipedOutputStream()
+        val pipedInput = PipedInputStream(inputSource)
+
+        // Only receive simulated response after permission restore request is sent
+        val monitoredOutput = MonitoredOutputStream { message ->
+            if (message == MESSAGE_REQUEST_PERMISSION_RESTORE) {
+                inputSource.write(simulatedResponse)
+                inputSource.flush()
+            }
+        }
+        cdm.attachSystemDataTransport(associationId, pipedInput, monitoredOutput)
 
         // Synchronously start system data transfer
-        val latch = CountDownLatch(1)
+        val transferFinished = CountDownLatch(1)
         val err = AtomicReference<CompanionException>()
         val callback = object : OutcomeReceiver<Void?, CompanionException> {
             override fun onResult(result: Void?) {
-                latch.countDown()
+                transferFinished.countDown()
             }
 
             override fun onError(error: CompanionException) {
                 err.set(error)
-                latch.countDown()
+                transferFinished.countDown()
             }
         }
         cdm.startSystemDataTransfer(associationId, context.mainExecutor, callback)
 
         // Don't let it hang for too long!
-        if (!latch.await(SYSTEM_DATA_TRANSFER_TIMEOUT, TimeUnit.SECONDS)) {
+        if (!transferFinished.await(SYSTEM_DATA_TRANSFER_TIMEOUT, TimeUnit.SECONDS)) {
             throw TimeoutException("System data transfer timed out.")
         }
 
@@ -290,17 +268,55 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         // Detach data transport
         cdm.detachSystemDataTransport(associationId)
     }
+}
 
-    /**
-     * Input stream that waits for specified amount of time before reading.
-     */
-    private class DelayedInputStream(
-            input: InputStream,
-            private val delay: Long
-    ) : FilterInputStream(input) {
-        override fun read(b: ByteArray, off: Int, len: Int): Int {
-            SystemClock.sleep(delay)
-            return super.read(b, off, len)
+/**
+ * Message codes defined in [com.android.server.companion.transport.CompanionTransportManager].
+ */
+private const val MESSAGE_RESPONSE_SUCCESS = 0x33838567
+private const val MESSAGE_RESPONSE_FAILURE = 0x33706573
+private const val MESSAGE_REQUEST_PERMISSION_RESTORE = 0x63826983
+private const val HEADER_LENGTH = 12
+
+/** Generate byte array containing desired header and data */
+private fun generatePacket(message: Int, data: String? = null): ByteArray {
+    val bytes = data?.toByteArray(StandardCharsets.UTF_8) ?: EmptyArray.BYTE
+
+    // Construct data packet with header + data
+    return ByteBuffer.allocate(bytes.size + 12)
+            .putInt(message) // message type
+            .putInt(1) // message sequence
+            .putInt(bytes.size) // data size
+            .put(bytes) // actual data
+            .array()
+}
+
+/** Message is the first 4-bytes of the stream, so just wrap the whole packet in an Integer. */
+private fun messageOf(packet: ByteArray) = ByteBuffer.wrap(packet).int
+
+/**
+ * Message is a response if the first byte of the message is 0x33.
+ *
+ * See [com.android.server.companion.transport.CompanionTransportManager].
+ */
+private fun isResponse(message: Int): Boolean {
+    return (message and 0xFF000000.toInt()) == 0x33000000
+}
+
+/**
+ * Monitors the output from transport manager to detect when a full header (12-bytes) is sent and
+ * trigger callback with the message sent (4-bytes).
+ */
+private class MonitoredOutputStream(
+        private val onHeaderSent: (Int) -> Unit
+) : ByteArrayOutputStream() {
+    private var callbackInvoked = false
+
+    override fun flush() {
+        super.flush()
+        if (!callbackInvoked && size() >= HEADER_LENGTH) {
+            onHeaderSent.invoke(messageOf(toByteArray()))
+            callbackInvoked = true
         }
     }
 }

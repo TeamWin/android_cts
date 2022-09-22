@@ -17,6 +17,8 @@
 package android.telephony.mockmodem;
 
 import static android.telephony.mockmodem.MockSimService.EF_ICCID;
+import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_DEFAULT;
+import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_MAX;
 
 import android.content.Context;
 import android.hardware.radio.config.PhoneCapability;
@@ -37,13 +39,14 @@ import java.util.Random;
 
 public class MockModemConfigBase implements MockModemConfigInterface {
     // ***** Instance Variables
-    private static final int DEFAULT_SUB_ID = 0;
-    private String mTAG = "MockModemConfigBase";
-    private final Handler mHandler;
+    private static final int DEFAULT_SLOT_ID = 0;
+    private final String mTAG = "MockModemConfigBase";
+    private final Handler[] mHandler;
     private Context mContext;
     private int mSubId;
     private int mSimPhyicalId;
-    private final Object mConfigAccess = new Object();
+    private Object[] mConfigAccess;
+    private final Object mSimMappingAccess = new Object();
     private int mNumOfSim = MockModemConfigInterface.MAX_NUM_OF_SIM_SLOT;
     private int mNumOfPhone = MockModemConfigInterface.MAX_NUM_OF_LOGICAL_MODEM;
 
@@ -55,18 +58,21 @@ public class MockModemConfigBase implements MockModemConfigInterface {
 
     // ***** Modem config values
     private String mBasebandVersion = MockModemConfigInterface.DEFAULT_BASEBAND_VERSION;
-    private String mImei = MockModemConfigInterface.DEFAULT_IMEI;
-    private String mImeiSv = MockModemConfigInterface.DEFAULT_IMEISV;
-    private String mEsn = MockModemConfigInterface.DEFAULT_ESN;
-    private String mMeid = MockModemConfigInterface.DEFAULT_MEID;
+    private String[] mImei;
+    private String[] mImeiSv;
+    private String[] mEsn;
+    private String[] mMeid;
     private int mRadioState = MockModemConfigInterface.DEFAULT_RADIO_STATE;
     private byte mNumOfLiveModem = MockModemConfigInterface.DEFAULT_NUM_OF_LIVE_MODEM;
-    private SimSlotStatus[] mSimSlotStatus;
-    private CardStatus mCardStatus;
-    private int mFdnStatus;
-    private MockSimService[] mSimService;
     private PhoneCapability mPhoneCapability = new PhoneCapability();
-    private ArrayList<SimAppData> mSimAppList;
+
+    // ***** Sim config values
+    private SimSlotStatus[] mSimSlotStatus;
+    private CardStatus[] mCardStatus;
+    private int[] mLogicalSimIdMap;
+    private int[] mFdnStatus;
+    private MockSimService[] mSimService;
+    private ArrayList<SimAppData>[] mSimAppList;
 
     // ***** RegistrantLists
     // ***** IRadioConfig RegistrantLists
@@ -76,20 +82,19 @@ public class MockModemConfigBase implements MockModemConfigInterface {
 
     // ***** IRadioModem RegistrantLists
     private RegistrantList mBasebandVersionChangedRegistrants = new RegistrantList();
-    private RegistrantList mDeviceIdentityChangedRegistrants = new RegistrantList();
+    private RegistrantList[] mDeviceIdentityChangedRegistrants;
     private RegistrantList mRadioStateChangedRegistrants = new RegistrantList();
 
     // ***** IRadioSim RegistrantLists
-    private RegistrantList mCardStatusChangedRegistrants = new RegistrantList();
-    private RegistrantList mSimAppDataChangedRegistrants = new RegistrantList();
-    private RegistrantList mSimInfoChangedRegistrants = new RegistrantList();
+    private RegistrantList[] mCardStatusChangedRegistrants;
+    private RegistrantList[] mSimAppDataChangedRegistrants;
+    private RegistrantList[] mSimInfoChangedRegistrants;
 
     // ***** IRadioNetwork RegistrantLists
-    private RegistrantList mServiceStateChangedRegistrants = new RegistrantList();
+    private RegistrantList[] mServiceStateChangedRegistrants;
 
-    public MockModemConfigBase(Context context, int instanceId, int numOfSim, int numOfPhone) {
+    public MockModemConfigBase(Context context, int numOfSim, int numOfPhone) {
         mContext = context;
-        mSubId = instanceId;
         mNumOfSim =
                 (numOfSim > MockModemConfigInterface.MAX_NUM_OF_SIM_SLOT)
                         ? MockModemConfigInterface.MAX_NUM_OF_SIM_SLOT
@@ -98,13 +103,144 @@ public class MockModemConfigBase implements MockModemConfigInterface {
                 (numOfPhone > MockModemConfigInterface.MAX_NUM_OF_LOGICAL_MODEM)
                         ? MockModemConfigInterface.MAX_NUM_OF_LOGICAL_MODEM
                         : numOfPhone;
-        mTAG = mTAG + "[" + mSubId + "]";
-        mHandler = new MockModemConfigHandler();
+        mConfigAccess = new Object[mNumOfPhone];
+        mHandler = new MockModemConfigHandler[mNumOfPhone];
+
+        mDeviceIdentityChangedRegistrants = new RegistrantList[mNumOfPhone];
+        mCardStatusChangedRegistrants = new RegistrantList[mNumOfPhone];
+        mSimAppDataChangedRegistrants = new RegistrantList[mNumOfPhone];
+        mSimInfoChangedRegistrants = new RegistrantList[mNumOfPhone];
+        mServiceStateChangedRegistrants = new RegistrantList[mNumOfPhone];
+
+        mImei = new String[mNumOfPhone];
+        mImeiSv = new String[mNumOfPhone];
+        mEsn = new String[mNumOfPhone];
+        mMeid = new String[mNumOfPhone];
+
+        mCardStatus = new CardStatus[mNumOfSim];
         mSimSlotStatus = new SimSlotStatus[mNumOfSim];
-        mCardStatus = new CardStatus();
+        mLogicalSimIdMap = new int[mNumOfSim];
+        mFdnStatus = new int[mNumOfSim];
         mSimService = new MockSimService[mNumOfSim];
-        mSimPhyicalId = mSubId; // for default mapping
-        createSIMCards();
+        mSimAppList = (ArrayList<SimAppData>[]) new ArrayList[mNumOfSim];
+
+        for (int i = 0; i < mNumOfPhone; i++) {
+            if (mConfigAccess != null && mConfigAccess[i] == null) {
+                mConfigAccess[i] = new Object();
+            }
+            if (mHandler != null && mHandler[i] == null) {
+                mHandler[i] = new MockModemConfigHandler(i);
+            }
+
+            if (mDeviceIdentityChangedRegistrants != null
+                    && mDeviceIdentityChangedRegistrants[i] == null) {
+                mDeviceIdentityChangedRegistrants[i] = new RegistrantList();
+            }
+
+            if (mCardStatusChangedRegistrants != null && mCardStatusChangedRegistrants[i] == null) {
+                mCardStatusChangedRegistrants[i] = new RegistrantList();
+            }
+
+            if (mSimAppDataChangedRegistrants != null && mSimAppDataChangedRegistrants[i] == null) {
+                mSimAppDataChangedRegistrants[i] = new RegistrantList();
+            }
+
+            if (mSimInfoChangedRegistrants != null && mSimInfoChangedRegistrants[i] == null) {
+                mSimInfoChangedRegistrants[i] = new RegistrantList();
+            }
+
+            if (mServiceStateChangedRegistrants != null
+                    && mServiceStateChangedRegistrants[i] == null) {
+                mServiceStateChangedRegistrants[i] = new RegistrantList();
+            }
+
+            if (mImei != null && mImei[i] == null) {
+                String imei;
+                switch (i) {
+                    case 0:
+                        imei = new String(MockModemConfigInterface.DEFAULT_PHONE1_IMEI);
+                        break;
+                    case 1:
+                        imei = new String(MockModemConfigInterface.DEFAULT_PHONE2_IMEI);
+                        break;
+                    default:
+                        imei = new String(MockModemConfigInterface.DEFAULT_PHONE1_IMEI);
+                        break;
+                }
+                mImei[i] = imei;
+            }
+
+            if (mImeiSv != null && mImeiSv[i] == null) {
+                String imeisv;
+                switch (i) {
+                    case 0:
+                        imeisv = new String(MockModemConfigInterface.DEFAULT_PHONE1_IMEISV);
+                        break;
+                    case 1:
+                        imeisv = new String(MockModemConfigInterface.DEFAULT_PHONE2_IMEISV);
+                        break;
+                    default:
+                        imeisv = new String(MockModemConfigInterface.DEFAULT_PHONE1_IMEISV);
+                        break;
+                }
+                mImeiSv[i] = imeisv;
+            }
+
+            if (mEsn != null && mEsn[i] == null) {
+                String esn;
+                switch (i) {
+                    case 0:
+                        esn = new String(MockModemConfigInterface.DEFAULT_PHONE1_ESN);
+                        break;
+                    case 1:
+                        esn = new String(MockModemConfigInterface.DEFAULT_PHONE2_ESN);
+                        break;
+                    default:
+                        esn = new String(MockModemConfigInterface.DEFAULT_PHONE1_ESN);
+                        break;
+                }
+                mEsn[i] = esn;
+            }
+
+            if (mMeid != null && mMeid[i] == null) {
+                String meid;
+                switch (i) {
+                    case 0:
+                        meid = new String(MockModemConfigInterface.DEFAULT_PHONE1_MEID);
+                        break;
+                    case 1:
+                        meid = new String(MockModemConfigInterface.DEFAULT_PHONE2_MEID);
+                        break;
+                    default:
+                        meid = new String(MockModemConfigInterface.DEFAULT_PHONE1_MEID);
+                        break;
+                }
+                mMeid[i] = meid;
+            }
+
+            if (mCardStatus != null && mCardStatus[i] == null) {
+                mCardStatus[i] = new CardStatus();
+            }
+        }
+
+        for (int i = 0; i < mNumOfSim; i++) {
+            if (mSimSlotStatus != null && mSimSlotStatus[i] == null) {
+                mSimSlotStatus[i] = new SimSlotStatus();
+            }
+
+            if (mLogicalSimIdMap != null) {
+                mLogicalSimIdMap[i] = i;
+            }
+
+            if (mFdnStatus != null) {
+                mFdnStatus[i] = 0;
+            }
+
+            if (mSimService != null && mSimService[i] == null) {
+                mSimService[i] = new MockSimService(mContext, i);
+            }
+        }
+
         setDefaultConfigValue();
     }
 
@@ -136,10 +272,18 @@ public class MockModemConfigBase implements MockModemConfigInterface {
     }
 
     public class MockModemConfigHandler extends Handler {
+        private int mLogicalSlotId;
+
+        MockModemConfigHandler(int slotId) {
+            mLogicalSlotId = slotId;
+        }
+
         // ***** Handler implementation
         @Override
         public void handleMessage(Message msg) {
-            synchronized (mConfigAccess) {
+            int physicalSimSlot = getSimPhysicalSlotId(mLogicalSlotId);
+
+            synchronized (mConfigAccess[physicalSimSlot]) {
                 switch (msg.what) {
                     case EVENT_SET_RADIO_POWER:
                         int state = msg.arg1;
@@ -168,15 +312,15 @@ public class MockModemConfigBase implements MockModemConfigInterface {
                                                 "changeSimProfile",
                                                 MockSimService.MOCK_SIM_PROFILE_ID_DEFAULT);
                         Log.d(mTAG, "EVENT_CHANGE_SIM_PROFILE: sim profile(" + simprofileid + ")");
-                        if (loadSIMCard(simprofileid)) {
-                            if (mSubId == DEFAULT_SUB_ID) {
+                        if (loadSIMCard(physicalSimSlot, simprofileid)) {
+                            if (mLogicalSlotId == DEFAULT_SLOT_ID) {
                                 mSimSlotStatusChangedRegistrants.notifyRegistrants(
                                         new AsyncResult(null, mSimSlotStatus, null));
                             }
-                            mCardStatusChangedRegistrants.notifyRegistrants(
-                                    new AsyncResult(null, mCardStatus, null));
-                            mSimAppDataChangedRegistrants.notifyRegistrants(
-                                    new AsyncResult(null, mSimAppList, null));
+                            mCardStatusChangedRegistrants[mLogicalSlotId].notifyRegistrants(
+                                    new AsyncResult(null, mCardStatus[physicalSimSlot], null));
+                            mSimAppDataChangedRegistrants[mLogicalSlotId].notifyRegistrants(
+                                    new AsyncResult(null, mSimAppList[physicalSimSlot], null));
                         } else {
                             Log.e(mTAG, "Load Sim card failed.");
                         }
@@ -184,7 +328,7 @@ public class MockModemConfigBase implements MockModemConfigInterface {
                     case EVENT_SERVICE_STATE_CHANGE:
                         Log.d(mTAG, "EVENT_SERVICE_STATE_CHANGE");
                         // Notify object MockNetworkService
-                        mServiceStateChangedRegistrants.notifyRegistrants(
+                        mServiceStateChangedRegistrants[mLogicalSlotId].notifyRegistrants(
                                 new AsyncResult(null, msg.obj, null));
                         break;
                     case EVENT_SET_SIM_INFO:
@@ -200,31 +344,34 @@ public class MockModemConfigBase implements MockModemConfigInterface {
                             Log.d(mTAG, "simInfoData[" + i + "] = " + simInfoData[i]);
                         }
                         SimInfoChangedResult simInfoChangeResult =
-                                setSimInfo(simInfoType, simInfoData);
+                                setSimInfo(physicalSimSlot, simInfoType, simInfoData);
                         if (simInfoChangeResult != null) {
                             switch (simInfoChangeResult.mSimInfoType) {
                                 case SimInfoChangedResult.SIM_INFO_TYPE_MCC_MNC:
                                 case SimInfoChangedResult.SIM_INFO_TYPE_IMSI:
-                                    mSimInfoChangedRegistrants.notifyRegistrants(
+                                    mSimInfoChangedRegistrants[mLogicalSlotId].notifyRegistrants(
                                             new AsyncResult(null, simInfoChangeResult, null));
-                                    mSimAppDataChangedRegistrants.notifyRegistrants(
-                                            new AsyncResult(null, mSimAppList, null));
+                                    mSimAppDataChangedRegistrants[mLogicalSlotId].notifyRegistrants(
+                                            new AsyncResult(
+                                                    null, mSimAppList[physicalSimSlot], null));
                                     // Card status changed still needed for updating carrier config
                                     // in Telephony Framework
-                                    if (mSubId == DEFAULT_SUB_ID) {
+                                    if (mLogicalSlotId == DEFAULT_SLOT_ID) {
                                         mSimSlotStatusChangedRegistrants.notifyRegistrants(
                                                 new AsyncResult(null, mSimSlotStatus, null));
                                     }
-                                    mCardStatusChangedRegistrants.notifyRegistrants(
-                                            new AsyncResult(null, mCardStatus, null));
+                                    mCardStatusChangedRegistrants[mLogicalSlotId].notifyRegistrants(
+                                            new AsyncResult(
+                                                    null, mCardStatus[physicalSimSlot], null));
                                     break;
                                 case SimInfoChangedResult.SIM_INFO_TYPE_ATR:
-                                    if (mSubId == DEFAULT_SUB_ID) {
+                                    if (mLogicalSlotId == DEFAULT_SLOT_ID) {
                                         mSimSlotStatusChangedRegistrants.notifyRegistrants(
                                                 new AsyncResult(null, mSimSlotStatus, null));
                                     }
-                                    mCardStatusChangedRegistrants.notifyRegistrants(
-                                            new AsyncResult(null, mCardStatus, null));
+                                    mCardStatusChangedRegistrants[mLogicalSlotId].notifyRegistrants(
+                                            new AsyncResult(
+                                                    null, mCardStatus[physicalSimSlot], null));
                                     break;
                             }
                         }
@@ -234,24 +381,67 @@ public class MockModemConfigBase implements MockModemConfigInterface {
         }
     }
 
-    public Handler getMockModemConfigHandler() {
-        return mHandler;
+    public Handler getMockModemConfigHandler(int logicalSlotId) {
+        return mHandler[logicalSlotId];
+    }
+
+    private int getSimLogicalSlotId(int physicalSlotId) {
+        int logicalSimId = DEFAULT_SLOT_ID;
+
+        synchronized (mSimMappingAccess) {
+            logicalSimId = mLogicalSimIdMap[physicalSlotId];
+        }
+
+        return logicalSimId;
+    }
+
+    private int getSimPhysicalSlotId(int logicalSlotId) {
+        int physicalSlotId = DEFAULT_SLOT_ID;
+
+        synchronized (mSimMappingAccess) {
+            for (int i = 0; i < mNumOfSim; i++) {
+                if (mLogicalSimIdMap[i] == logicalSlotId) {
+                    physicalSlotId = i;
+                }
+            }
+        }
+
+        return physicalSlotId;
     }
 
     private void setDefaultConfigValue() {
-        synchronized (mConfigAccess) {
-            mBasebandVersion = MockModemConfigInterface.DEFAULT_BASEBAND_VERSION;
-            mImei = MockModemConfigInterface.DEFAULT_IMEI;
-            mImeiSv = MockModemConfigInterface.DEFAULT_IMEISV;
-            mEsn = MockModemConfigInterface.DEFAULT_ESN;
-            mMeid = MockModemConfigInterface.DEFAULT_MEID;
-            mRadioState = MockModemConfigInterface.DEFAULT_RADIO_STATE;
-            mNumOfLiveModem = MockModemConfigInterface.DEFAULT_NUM_OF_LIVE_MODEM;
-            setDefaultPhoneCapability(mPhoneCapability);
-            if (mSubId == DEFAULT_SUB_ID) {
-                updateSimSlotStatus();
+        for (int i = 0; i < mNumOfPhone; i++) {
+            synchronized (mConfigAccess[i]) {
+                switch (i) {
+                    case 0:
+                        mImei[i] = MockModemConfigInterface.DEFAULT_PHONE1_IMEI;
+                        mImeiSv[i] = MockModemConfigInterface.DEFAULT_PHONE1_IMEISV;
+                        mEsn[i] = MockModemConfigInterface.DEFAULT_PHONE1_ESN;
+                        mMeid[i] = MockModemConfigInterface.DEFAULT_PHONE1_MEID;
+                        break;
+                    case 1:
+                        mImei[i] = MockModemConfigInterface.DEFAULT_PHONE2_IMEI;
+                        mImeiSv[i] = MockModemConfigInterface.DEFAULT_PHONE2_IMEISV;
+                        mEsn[i] = MockModemConfigInterface.DEFAULT_PHONE2_ESN;
+                        mMeid[i] = MockModemConfigInterface.DEFAULT_PHONE2_MEID;
+                        break;
+                    default:
+                        mImei[i] = MockModemConfigInterface.DEFAULT_PHONE1_IMEI;
+                        mImeiSv[i] = MockModemConfigInterface.DEFAULT_PHONE1_IMEISV;
+                        mEsn[i] = MockModemConfigInterface.DEFAULT_PHONE1_ESN;
+                        mMeid[i] = MockModemConfigInterface.DEFAULT_PHONE1_MEID;
+                        break;
+                }
+
+                if (i == DEFAULT_SLOT_ID) {
+                    mBasebandVersion = MockModemConfigInterface.DEFAULT_BASEBAND_VERSION;
+                    mRadioState = MockModemConfigInterface.DEFAULT_RADIO_STATE;
+                    mNumOfLiveModem = MockModemConfigInterface.DEFAULT_NUM_OF_LIVE_MODEM;
+                    setDefaultPhoneCapability(mPhoneCapability);
+                    updateSimSlotStatus();
+                }
+                updateCardStatus(i);
             }
-            updateCardStatus();
         }
     }
 
@@ -267,20 +457,7 @@ public class MockModemConfigBase implements MockModemConfigInterface {
         phoneCapability.logicalModemIds[1] = MockModemConfigInterface.DEFAULT_LOGICAL_MODEM2_ID;
     }
 
-    private void createSIMCards() {
-        for (int i = 0; i < mNumOfSim; i++) {
-            if (mSimService[i] == null) {
-                mSimService[i] = new MockSimService(mContext, i);
-            }
-        }
-    }
-
     private void updateSimSlotStatus() {
-        if (mSubId != DEFAULT_SUB_ID) {
-            // Only sub 0 needs to response SimSlotStatus
-            return;
-        }
-
         if (mSimService == null) {
             Log.e(mTAG, "SIM service didn't be created yet.");
         }
@@ -298,7 +475,7 @@ public class MockModemConfigBase implements MockModemConfigInterface {
                             : CardStatus.STATE_ABSENT;
             mSimSlotStatus[i].atr = mSimService[i].getATR();
             mSimSlotStatus[i].eid = mSimService[i].getEID();
-            // Current only support one Sim port in MockSimService
+            // TODO: support multiple sim port
             SimPortInfo[] portInfoList0 = new SimPortInfo[portInfoListLen];
             portInfoList0[0] = new SimPortInfo();
             portInfoList0[0].portActive = mSimService[i].isSlotPortActive();
@@ -308,43 +485,44 @@ public class MockModemConfigBase implements MockModemConfigInterface {
         }
     }
 
-    private void updateCardStatus() {
-        if (mSimPhyicalId != -1 && mSimService != null && mSimService[mSimPhyicalId] != null) {
-            int numOfSimApp = mSimService[mSimPhyicalId].getNumOfSimApp();
-            mCardStatus = new CardStatus();
-            mCardStatus.cardState =
-                    mSimService[mSimPhyicalId].isCardPresent()
+    private void updateCardStatus(int slotId) {
+        if (slotId >= 0
+                && slotId < mSimService.length
+                && mSimService != null
+                && mSimService[slotId] != null) {
+            mCardStatus[slotId] = new CardStatus();
+            mCardStatus[slotId].cardState =
+                    mSimService[slotId].isCardPresent()
                             ? CardStatus.STATE_PRESENT
                             : CardStatus.STATE_ABSENT;
-            mCardStatus.universalPinState = mSimService[mSimPhyicalId].getUniversalPinState();
-            mCardStatus.gsmUmtsSubscriptionAppIndex = mSimService[mSimPhyicalId].getGsmAppIndex();
-            mCardStatus.cdmaSubscriptionAppIndex = mSimService[mSimPhyicalId].getCdmaAppIndex();
-            mCardStatus.imsSubscriptionAppIndex = mSimService[mSimPhyicalId].getImsAppIndex();
-            mCardStatus.applications = mSimService[mSimPhyicalId].getSimApp();
-            mCardStatus.atr = mSimService[mSimPhyicalId].getATR();
-            mCardStatus.iccid = mSimService[mSimPhyicalId].getICCID();
-            mCardStatus.eid = mSimService[mSimPhyicalId].getEID();
-            mCardStatus.slotMap = new SlotPortMapping();
-            mCardStatus.slotMap.physicalSlotId = mSimService[mSimPhyicalId].getPhysicalSlotId();
-            mCardStatus.slotMap.portId = mSimService[mSimPhyicalId].getSlotPortId();
-            mSimAppList = mSimService[mSimPhyicalId].getSimAppList();
+            mCardStatus[slotId].universalPinState = mSimService[slotId].getUniversalPinState();
+            mCardStatus[slotId].gsmUmtsSubscriptionAppIndex = mSimService[slotId].getGsmAppIndex();
+            mCardStatus[slotId].cdmaSubscriptionAppIndex = mSimService[slotId].getCdmaAppIndex();
+            mCardStatus[slotId].imsSubscriptionAppIndex = mSimService[slotId].getImsAppIndex();
+            mCardStatus[slotId].applications = mSimService[slotId].getSimApp();
+            mCardStatus[slotId].atr = mSimService[slotId].getATR();
+            mCardStatus[slotId].iccid = mSimService[slotId].getICCID();
+            mCardStatus[slotId].eid = mSimService[slotId].getEID();
+            mCardStatus[slotId].slotMap = new SlotPortMapping();
+            mCardStatus[slotId].slotMap.physicalSlotId = mSimService[slotId].getPhysicalSlotId();
+            mCardStatus[slotId].slotMap.portId = mSimService[slotId].getSlotPortId();
+            mSimAppList[slotId] = mSimService[slotId].getSimAppList();
         } else {
-            Log.e(
-                    mTAG,
-                    "Invalid Sim physical id("
-                            + mSimPhyicalId
-                            + ") or SIM card didn't be created.");
+            Log.e(mTAG, "Invalid Sim physical id(" + slotId + ") or SIM card didn't be created.");
         }
     }
 
-    private boolean loadSIMCard(int simProfileId) {
+    private boolean loadSIMCard(int slotId, int simProfileId) {
         boolean result = false;
-        if (mSimPhyicalId != -1 && mSimService != null && mSimService[mSimPhyicalId] != null) {
-            result = mSimService[mSimPhyicalId].loadSimCard(simProfileId);
-            if (mSubId == DEFAULT_SUB_ID) {
+        if (slotId >= 0
+                && slotId < mSimService.length
+                && mSimService != null
+                && mSimService[slotId] != null) {
+            result = mSimService[slotId].loadSimCard(simProfileId);
+            if (slotId == DEFAULT_SLOT_ID) {
                 updateSimSlotStatus();
             }
-            updateCardStatus();
+            updateCardStatus(slotId);
         }
         return result;
     }
@@ -373,7 +551,7 @@ public class MockModemConfigBase implements MockModemConfigInterface {
         return newIccid;
     }
 
-    private SimInfoChangedResult setSimInfo(int simInfoType, String[] simInfoData) {
+    private SimInfoChangedResult setSimInfo(int slotId, int simInfoType, String[] simInfoData) {
         SimInfoChangedResult result = null;
 
         if (simInfoData == null) {
@@ -384,26 +562,24 @@ public class MockModemConfigBase implements MockModemConfigInterface {
         switch (simInfoType) {
             case SimInfoChangedResult.SIM_INFO_TYPE_MCC_MNC:
                 if (simInfoData.length == 2 && simInfoData[0] != null && simInfoData[1] != null) {
-                    String msin = mSimService[mSimPhyicalId].getMsin();
+                    String msin = mSimService[slotId].getMsin();
 
                     // Adjust msin length to make sure IMSI length is valid.
                     if (simInfoData[1].length() == 3 && msin.length() == 10) {
                         msin = msin.substring(0, msin.length() - 1);
                         Log.d(mTAG, "Modify msin = " + msin);
                     }
-                    mSimService[mSimPhyicalId].setImsi(simInfoData[0], simInfoData[1], msin);
+                    mSimService[slotId].setImsi(simInfoData[0], simInfoData[1], msin);
 
                     // Auto-generate a new Iccid to change carrier config id in Android Framework
-                    mSimService[mSimPhyicalId].setICCID(
-                            generateRandomIccid(mSimService[mSimPhyicalId].getICCID()));
+                    mSimService[slotId].setICCID(
+                            generateRandomIccid(mSimService[slotId].getICCID()));
                     updateSimSlotStatus();
-                    updateCardStatus();
+                    updateCardStatus(slotId);
 
                     result =
                             new SimInfoChangedResult(
-                                    simInfoType,
-                                    EF_ICCID,
-                                    mSimService[mSimPhyicalId].getActiveSimAppId());
+                                    simInfoType, EF_ICCID, mSimService[slotId].getActiveSimAppId());
                 }
                 break;
             case SimInfoChangedResult.SIM_INFO_TYPE_IMSI:
@@ -411,27 +587,24 @@ public class MockModemConfigBase implements MockModemConfigInterface {
                         && simInfoData[0] != null
                         && simInfoData[1] != null
                         && simInfoData[2] != null) {
-                    mSimService[mSimPhyicalId].setImsi(
-                            simInfoData[0], simInfoData[1], simInfoData[2]);
+                    mSimService[slotId].setImsi(simInfoData[0], simInfoData[1], simInfoData[2]);
 
                     // Auto-generate a new Iccid to change carrier config id in Android Framework
-                    mSimService[mSimPhyicalId].setICCID(
-                            generateRandomIccid(mSimService[mSimPhyicalId].getICCID()));
+                    mSimService[slotId].setICCID(
+                            generateRandomIccid(mSimService[slotId].getICCID()));
                     updateSimSlotStatus();
-                    updateCardStatus();
+                    updateCardStatus(slotId);
 
                     result =
                             new SimInfoChangedResult(
-                                    simInfoType,
-                                    EF_ICCID,
-                                    mSimService[mSimPhyicalId].getActiveSimAppId());
+                                    simInfoType, EF_ICCID, mSimService[slotId].getActiveSimAppId());
                 }
                 break;
             case SimInfoChangedResult.SIM_INFO_TYPE_ATR:
                 if (simInfoData[0] != null) {
-                    mSimService[mSimPhyicalId].setATR(simInfoData[0]);
+                    mSimService[slotId].setATR(simInfoData[0]);
                     updateSimSlotStatus();
-                    updateCardStatus();
+                    updateCardStatus(slotId);
                     result = new SimInfoChangedResult(simInfoType, 0, "");
                 }
                 break;
@@ -443,160 +616,173 @@ public class MockModemConfigBase implements MockModemConfigInterface {
         return result;
     }
 
-    private void notifyDeviceIdentityChangedRegistrants() {
+    private void notifyDeviceIdentityChangedRegistrants(int logicalSlotId) {
         String[] deviceIdentity = new String[4];
-        synchronized (mConfigAccess) {
-            deviceIdentity[0] = mImei;
-            deviceIdentity[1] = mImeiSv;
-            deviceIdentity[2] = mEsn;
-            deviceIdentity[3] = mMeid;
+        int physicalSlotId = getSimLogicalSlotId(logicalSlotId);
+
+        synchronized (mConfigAccess[physicalSlotId]) {
+            deviceIdentity[0] = mImei[physicalSlotId];
+            deviceIdentity[1] = mImeiSv[physicalSlotId];
+            deviceIdentity[2] = mEsn[physicalSlotId];
+            deviceIdentity[3] = mMeid[physicalSlotId];
         }
         AsyncResult ar = new AsyncResult(null, deviceIdentity, null);
-        mDeviceIdentityChangedRegistrants.notifyRegistrants(ar);
+        mDeviceIdentityChangedRegistrants[logicalSlotId].notifyRegistrants(ar);
     }
 
     // ***** MockModemConfigInterface implementation
     @Override
     public void notifyAllRegistrantNotifications() {
         Log.d(mTAG, "notifyAllRegistrantNotifications");
-        synchronized (mConfigAccess) {
-            // IRadioConfig
-            mNumOfLiveModemChangedRegistrants.notifyRegistrants(
-                    new AsyncResult(null, mNumOfLiveModem, null));
-            mPhoneCapabilityChangedRegistrants.notifyRegistrants(
-                    new AsyncResult(null, mPhoneCapability, null));
-            mSimSlotStatusChangedRegistrants.notifyRegistrants(
-                    new AsyncResult(null, mSimSlotStatus, null));
 
-            // IRadioModem
-            mBasebandVersionChangedRegistrants.notifyRegistrants(
-                    new AsyncResult(null, mBasebandVersion, null));
-            notifyDeviceIdentityChangedRegistrants();
-            mRadioStateChangedRegistrants.notifyRegistrants(
-                    new AsyncResult(null, mRadioState, null));
+        // IRadioConfig
+        mNumOfLiveModemChangedRegistrants.notifyRegistrants(
+                new AsyncResult(null, mNumOfLiveModem, null));
+        mPhoneCapabilityChangedRegistrants.notifyRegistrants(
+                new AsyncResult(null, mPhoneCapability, null));
+        mSimSlotStatusChangedRegistrants.notifyRegistrants(
+                new AsyncResult(null, mSimSlotStatus, null));
 
-            // IRadioSim
-            mCardStatusChangedRegistrants.notifyRegistrants(
-                    new AsyncResult(null, mCardStatus, null));
-            mSimAppDataChangedRegistrants.notifyRegistrants(
-                    new AsyncResult(null, mSimAppList, null));
+        // IRadioModem
+        mBasebandVersionChangedRegistrants.notifyRegistrants(
+                new AsyncResult(null, mBasebandVersion, null));
+        mRadioStateChangedRegistrants.notifyRegistrants(new AsyncResult(null, mRadioState, null));
+
+        for (int i = 0; i < mNumOfPhone; i++) {
+            int physicalSlotId = getSimPhysicalSlotId(i);
+
+            synchronized (mConfigAccess[physicalSlotId]) {
+                // IRadioModem
+                notifyDeviceIdentityChangedRegistrants(i);
+
+                // IRadioSim
+                mCardStatusChangedRegistrants[i].notifyRegistrants(
+                        new AsyncResult(null, mCardStatus[physicalSlotId], null));
+                mSimAppDataChangedRegistrants[i].notifyRegistrants(
+                        new AsyncResult(null, mSimAppList[physicalSlotId], null));
+            }
         }
     }
 
     // ***** IRadioConfig notification implementation
     @Override
-    public void registerForNumOfLiveModemChanged(Handler h, int what, Object obj) {
+    public void registerForNumOfLiveModemChanged(
+            int logicalSlotId, Handler h, int what, Object obj) {
         mNumOfLiveModemChangedRegistrants.addUnique(h, what, obj);
     }
 
     @Override
-    public void unregisterForNumOfLiveModemChanged(Handler h) {
+    public void unregisterForNumOfLiveModemChanged(int logicalSlotId, Handler h) {
         mNumOfLiveModemChangedRegistrants.remove(h);
     }
 
     @Override
-    public void registerForPhoneCapabilityChanged(Handler h, int what, Object obj) {
+    public void registerForPhoneCapabilityChanged(
+            int logicalSlotId, Handler h, int what, Object obj) {
         mPhoneCapabilityChangedRegistrants.addUnique(h, what, obj);
     }
 
     @Override
-    public void unregisterForPhoneCapabilityChanged(Handler h) {
+    public void unregisterForPhoneCapabilityChanged(int logicalSlotId, Handler h) {
         mPhoneCapabilityChangedRegistrants.remove(h);
     }
 
     @Override
-    public void registerForSimSlotStatusChanged(Handler h, int what, Object obj) {
+    public void registerForSimSlotStatusChanged(
+            int logicalSlotId, Handler h, int what, Object obj) {
         mSimSlotStatusChangedRegistrants.addUnique(h, what, obj);
     }
 
     @Override
-    public void unregisterForSimSlotStatusChanged(Handler h) {
+    public void unregisterForSimSlotStatusChanged(int logicalSlotId, Handler h) {
         mSimSlotStatusChangedRegistrants.remove(h);
     }
 
     // ***** IRadioModem notification implementation
     @Override
-    public void registerForBasebandVersionChanged(Handler h, int what, Object obj) {
+    public void registerForBasebandVersionChanged(
+            int logicalSlotId, Handler h, int what, Object obj) {
         mBasebandVersionChangedRegistrants.addUnique(h, what, obj);
     }
 
     @Override
-    public void unregisterForBasebandVersionChanged(Handler h) {
+    public void unregisterForBasebandVersionChanged(int logicalSlotId, Handler h) {
         mBasebandVersionChangedRegistrants.remove(h);
     }
 
     @Override
-    public void registerForDeviceIdentityChanged(Handler h, int what, Object obj) {
-        mDeviceIdentityChangedRegistrants.addUnique(h, what, obj);
+    public void registerForDeviceIdentityChanged(
+            int logicalSlotId, Handler h, int what, Object obj) {
+        mDeviceIdentityChangedRegistrants[logicalSlotId].addUnique(h, what, obj);
     }
 
     @Override
-    public void unregisterForDeviceIdentityChanged(Handler h) {
-        mDeviceIdentityChangedRegistrants.remove(h);
+    public void unregisterForDeviceIdentityChanged(int logicalSlotId, Handler h) {
+        mDeviceIdentityChangedRegistrants[logicalSlotId].remove(h);
     }
 
     @Override
-    public void registerForRadioStateChanged(Handler h, int what, Object obj) {
+    public void registerForRadioStateChanged(int logicalSlotId, Handler h, int what, Object obj) {
         mRadioStateChangedRegistrants.addUnique(h, what, obj);
     }
 
     @Override
-    public void unregisterForRadioStateChanged(Handler h) {
+    public void unregisterForRadioStateChanged(int logicalSlotId, Handler h) {
         mRadioStateChangedRegistrants.remove(h);
     }
 
     // ***** IRadioSim notification implementation
     @Override
-    public void registerForCardStatusChanged(Handler h, int what, Object obj) {
-        mCardStatusChangedRegistrants.addUnique(h, what, obj);
+    public void registerForCardStatusChanged(int logicalSlotId, Handler h, int what, Object obj) {
+        mCardStatusChangedRegistrants[logicalSlotId].addUnique(h, what, obj);
     }
 
     @Override
-    public void unregisterForCardStatusChanged(Handler h) {
-        mCardStatusChangedRegistrants.remove(h);
+    public void unregisterForCardStatusChanged(int logicalSlotId, Handler h) {
+        mCardStatusChangedRegistrants[logicalSlotId].remove(h);
     }
 
     @Override
-    public void registerForSimAppDataChanged(Handler h, int what, Object obj) {
-        mSimAppDataChangedRegistrants.addUnique(h, what, obj);
+    public void registerForSimAppDataChanged(int logicalSlotId, Handler h, int what, Object obj) {
+        mSimAppDataChangedRegistrants[logicalSlotId].addUnique(h, what, obj);
     }
 
     @Override
-    public void unregisterForSimAppDataChanged(Handler h) {
-        mSimAppDataChangedRegistrants.remove(h);
+    public void unregisterForSimAppDataChanged(int logicalSlotId, Handler h) {
+        mSimAppDataChangedRegistrants[logicalSlotId].remove(h);
     }
 
     @Override
-    public void registerForSimInfoChanged(Handler h, int what, Object obj) {
-        mSimInfoChangedRegistrants.addUnique(h, what, obj);
+    public void registerForSimInfoChanged(int logicalSlotId, Handler h, int what, Object obj) {
+        mSimInfoChangedRegistrants[logicalSlotId].addUnique(h, what, obj);
     }
 
     @Override
-    public void unregisterForSimInfoChanged(Handler h) {
-        mSimInfoChangedRegistrants.remove(h);
+    public void unregisterForSimInfoChanged(int logicalSlotId, Handler h) {
+        mSimInfoChangedRegistrants[logicalSlotId].remove(h);
     }
 
     // ***** IRadioNetwork notification implementation
     @Override
-    public void registerForServiceStateChanged(Handler h, int what, Object obj) {
-        mServiceStateChangedRegistrants.addUnique(h, what, obj);
+    public void registerForServiceStateChanged(int logicalSlotId, Handler h, int what, Object obj) {
+        mServiceStateChangedRegistrants[logicalSlotId].addUnique(h, what, obj);
     }
 
     @Override
-    public void unregisterForServiceStateChanged(Handler h) {
-        mServiceStateChangedRegistrants.remove(h);
+    public void unregisterForServiceStateChanged(int logicalSlotId, Handler h) {
+        mServiceStateChangedRegistrants[logicalSlotId].remove(h);
     }
 
     // ***** IRadioConfig set APIs implementation
 
     // ***** IRadioModem set APIs implementation
     @Override
-    public void setRadioState(int state, String client) {
-        Log.d(mTAG, "setRadioState (" + state + ") from " + client);
+    public void setRadioState(int logicalSlotId, int state, String client) {
+        Log.d(mTAG, "setRadioState[" + logicalSlotId + "] (" + state + ") from " + client);
 
-        Message msg = mHandler.obtainMessage(EVENT_SET_RADIO_POWER);
+        Message msg = mHandler[logicalSlotId].obtainMessage(EVENT_SET_RADIO_POWER);
         msg.arg1 = state;
-        mHandler.sendMessage(msg);
+        mHandler[logicalSlotId].sendMessage(msg);
     }
 
     // ***** IRadioSim set APIs implementation
@@ -611,49 +797,71 @@ public class MockModemConfigBase implements MockModemConfigInterface {
 
     // ***** Helper APIs implementation
     @Override
-    public boolean isSimCardPresent(String client) {
-        Log.d(mTAG, "isSimCardPresent from: " + client);
+    public boolean isSimCardPresent(int logicalSlotId, String client) {
+        Log.d(mTAG, "isSimCardPresent[" + logicalSlotId + "] from: " + client);
+
+        int physicalSlotId = getSimPhysicalSlotId(logicalSlotId);
         boolean isPresent;
-        synchronized (mConfigAccess) {
-            isPresent = (mCardStatus.cardState == CardStatus.STATE_PRESENT) ? true : false;
+        synchronized (mConfigAccess[physicalSlotId]) {
+            isPresent =
+                    (mCardStatus[physicalSlotId].cardState == CardStatus.STATE_PRESENT)
+                            ? true
+                            : false;
         }
         return isPresent;
     }
 
     @Override
-    public void changeSimProfile(int simprofileid, String client) {
-        Log.d(mTAG, "changeSimProfile: profile id(" + simprofileid + ") from: " + client);
+    public boolean changeSimProfile(int logicalSlotId, int simprofileid, String client) {
+        boolean result = true;
+        Log.d(
+                mTAG,
+                "changeSimProfile["
+                        + logicalSlotId
+                        + "]: profile id("
+                        + simprofileid
+                        + ") from: "
+                        + client);
 
-        Message msg = mHandler.obtainMessage(EVENT_CHANGE_SIM_PROFILE);
-        msg.getData().putInt("changeSimProfile", simprofileid);
-        mHandler.sendMessage(msg);
+        if (simprofileid >= MOCK_SIM_PROFILE_ID_DEFAULT && simprofileid < MOCK_SIM_PROFILE_ID_MAX) {
+            Message msg = mHandler[logicalSlotId].obtainMessage(EVENT_CHANGE_SIM_PROFILE);
+            msg.getData().putInt("changeSimProfile", simprofileid);
+            mHandler[logicalSlotId].sendMessage(msg);
+        } else {
+            result = false;
+        }
+
+        return result;
     }
 
     @Override
-    public void setSimInfo(int type, String[] data, String client) {
-        Log.d(mTAG, "setSimInfo: type(" + type + ") from: " + client);
-        Message msg = mHandler.obtainMessage(EVENT_SET_SIM_INFO);
+    public void setSimInfo(int logicalSlotId, int type, String[] data, String client) {
+        Log.d(mTAG, "setSimInfo[" + logicalSlotId + "]: type(" + type + ") from: " + client);
+
+        Message msg = mHandler[logicalSlotId].obtainMessage(EVENT_SET_SIM_INFO);
         Bundle bundle = msg.getData();
         bundle.putInt("setSimInfo:type", type);
         bundle.putStringArray("setSimInfo:data", data);
-        mHandler.sendMessage(msg);
+        mHandler[logicalSlotId].sendMessage(msg);
     }
 
     @Override
-    public String getSimInfo(int type, String client) {
-        Log.d(mTAG, "getSimInfo: type(" + type + ") from: " + client);
-        String result = "";
+    public String getSimInfo(int logicalSlotId, int type, String client) {
+        Log.d(mTAG, "getSimInfo[" + logicalSlotId + "]: type(" + type + ") from: " + client);
 
-        synchronized (mConfigAccess) {
+        String result = "";
+        int physicalSlotId = getSimPhysicalSlotId(logicalSlotId);
+
+        synchronized (mConfigAccess[physicalSlotId]) {
             switch (type) {
                 case SimInfoChangedResult.SIM_INFO_TYPE_MCC_MNC:
-                    result = mSimService[mSimPhyicalId].getMccMnc();
+                    result = mSimService[physicalSlotId].getMccMnc();
                     break;
                 case SimInfoChangedResult.SIM_INFO_TYPE_IMSI:
-                    result = mSimService[mSimPhyicalId].getImsi();
+                    result = mSimService[physicalSlotId].getImsi();
                     break;
                 case SimInfoChangedResult.SIM_INFO_TYPE_ATR:
-                    result = mCardStatus.atr;
+                    result = mCardStatus[physicalSlotId].atr;
                     break;
                 default:
                     Log.e(mTAG, "Not support this type of SIM info.");

@@ -25,10 +25,12 @@ import android.companion.AssociationRequest
 import android.companion.CompanionDeviceManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.net.MacAddress
 import android.os.Process
 import android.os.SystemClock.sleep
 import android.os.SystemClock.uptimeMillis
+import android.os.UserHandle
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
@@ -69,6 +71,11 @@ abstract class TestBase {
         context.getSystemService(CompanionDeviceManager::class.java)!!
     }
 
+    private val locationManager = context.getSystemService(LocationManager::class.java)!!
+    // CDM discovery requires location is enabled, enable the location if it was disabled.
+    private var locationWasEnabled: Boolean = false
+    private var userHandle: UserHandle = Process.myUserHandle()
+
     @Before
     fun base_setUp() {
         assumeTrue(hasCompanionDeviceSetupFeature)
@@ -81,6 +88,8 @@ abstract class TestBase {
 
         // Make sure CompanionDeviceServices are not bound.
         assertValidCompanionDeviceServicesUnbind()
+        // Enable location if it was disabled.
+        enableLocation()
 
         setUp()
     }
@@ -93,6 +102,8 @@ abstract class TestBase {
 
         // Remove all existing associations (for the user).
         withShellPermissionIdentity { cdm.disassociateAll() }
+        // Disable the location if it was disabled.
+        disableLocation()
     }
 
     @CallSuper
@@ -148,6 +159,23 @@ abstract class TestBase {
             systemPropertyTag,
             duration.inWholeMilliseconds.toString()
         )
+
+    private fun enableLocation() {
+        locationWasEnabled = locationManager.isLocationEnabledForUser(userHandle)
+        if (!locationWasEnabled) {
+            withShellPermissionIdentity {
+                locationManager.setLocationEnabledForUser(true, userHandle)
+            }
+        }
+    }
+
+    private fun disableLocation() {
+        if (!locationWasEnabled) {
+            withShellPermissionIdentity {
+                locationManager.setLocationEnabledForUser(false, userHandle)
+            }
+        }
+    }
 }
 
 const val TAG = "CtsCompanionDeviceManagerTestCases"

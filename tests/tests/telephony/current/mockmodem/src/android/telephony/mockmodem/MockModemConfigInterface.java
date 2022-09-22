@@ -29,10 +29,16 @@ public interface MockModemConfigInterface {
 
     // Default config value
     String DEFAULT_BASEBAND_VERSION = "mock-modem-service-1.0";
-    String DEFAULT_IMEI = "123456789012345";
-    String DEFAULT_IMEISV = "01";
-    String DEFAULT_ESN = "123456789";
-    String DEFAULT_MEID = "123456789012345";
+    // PHONE1
+    String DEFAULT_PHONE1_IMEI = "123456789012345";
+    String DEFAULT_PHONE1_IMEISV = "01";
+    String DEFAULT_PHONE1_ESN = "123456789";
+    String DEFAULT_PHONE1_MEID = "123456789012345";
+    // PHONE2
+    String DEFAULT_PHONE2_IMEI = "987654321543210";
+    String DEFAULT_PHONE2_IMEISV = "02";
+    String DEFAULT_PHONE2_ESN = "987654321";
+    String DEFAULT_PHONE2_MEID = "987654321543210";
     int DEFAULT_RADIO_STATE = RADIO_STATE_UNAVAILABLE;
     int DEFAULT_NUM_OF_LIVE_MODEM = 1; // Should <= MAX_NUM_OF_MODEM
     int DEFAULT_MAX_ACTIVE_DATA = 2;
@@ -42,104 +48,110 @@ public interface MockModemConfigInterface {
     int DEFAULT_LOGICAL_MODEM2_ID = 1;
 
     // ***** Methods
-    Handler getMockModemConfigHandler();
+    Handler getMockModemConfigHandler(int logicalSlotId);
 
     /** Broadcast all notifications */
     void notifyAllRegistrantNotifications();
 
     // ***** IRadioConfig
     /** Register/unregister notification handler for number of modem changed */
-    void registerForNumOfLiveModemChanged(Handler h, int what, Object obj);
+    void registerForNumOfLiveModemChanged(int logicalSlotId, Handler h, int what, Object obj);
 
-    void unregisterForNumOfLiveModemChanged(Handler h);
-
-    /** Register/unregister notification handler for sim slot status changed */
-    void registerForPhoneCapabilityChanged(Handler h, int what, Object obj);
-
-    void unregisterForPhoneCapabilityChanged(Handler h);
+    void unregisterForNumOfLiveModemChanged(int logicalSlotId, Handler h);
 
     /** Register/unregister notification handler for sim slot status changed */
-    void registerForSimSlotStatusChanged(Handler h, int what, Object obj);
+    void registerForPhoneCapabilityChanged(int logicalSlotId, Handler h, int what, Object obj);
 
-    void unregisterForSimSlotStatusChanged(Handler h);
+    void unregisterForPhoneCapabilityChanged(int logicalSlotId, Handler h);
+
+    /** Register/unregister notification handler for sim slot status changed */
+    void registerForSimSlotStatusChanged(int logicalSlotId, Handler h, int what, Object obj);
+
+    void unregisterForSimSlotStatusChanged(int logicalSlotId, Handler h);
 
     // ***** IRadioModem
     /** Register/unregister notification handler for baseband version changed */
-    void registerForBasebandVersionChanged(Handler h, int what, Object obj);
+    void registerForBasebandVersionChanged(int logicalSlotId, Handler h, int what, Object obj);
 
-    void unregisterForBasebandVersionChanged(Handler h);
+    void unregisterForBasebandVersionChanged(int logicalSlotId, Handler h);
 
     /** Register/unregister notification handler for device identity changed */
-    void registerForDeviceIdentityChanged(Handler h, int what, Object obj);
+    void registerForDeviceIdentityChanged(int logicalSlotId, Handler h, int what, Object obj);
 
-    void unregisterForDeviceIdentityChanged(Handler h);
+    void unregisterForDeviceIdentityChanged(int logicalSlotId, Handler h);
 
     /** Register/unregister notification handler for radio state changed */
-    void registerForRadioStateChanged(Handler h, int what, Object obj);
+    void registerForRadioStateChanged(int logicalSlotId, Handler h, int what, Object obj);
 
-    void unregisterForRadioStateChanged(Handler h);
+    void unregisterForRadioStateChanged(int logicalSlotId, Handler h);
 
     // ***** IRadioSim
     /** Register/unregister notification handler for card status changed */
-    void registerForCardStatusChanged(Handler h, int what, Object obj);
+    void registerForCardStatusChanged(int logicalSlotId, Handler h, int what, Object obj);
 
-    void unregisterForCardStatusChanged(Handler h);
+    void unregisterForCardStatusChanged(int logicalSlotId, Handler h);
 
     /** Register/unregister notification handler for sim app data changed */
-    void registerForSimAppDataChanged(Handler h, int what, Object obj);
+    void registerForSimAppDataChanged(int logicalSlotId, Handler h, int what, Object obj);
 
-    void unregisterForSimAppDataChanged(Handler h);
+    void unregisterForSimAppDataChanged(int logicalSlotId, Handler h);
 
     /** Register/unregister notification handler for sim info changed */
-    void registerForSimInfoChanged(Handler h, int what, Object obj);
+    void registerForSimInfoChanged(int logicalSlotId, Handler h, int what, Object obj);
 
-    void unregisterForSimInfoChanged(Handler h);
+    void unregisterForSimInfoChanged(int logicalSlotId, Handler h);
 
     // ***** IRadioNetwork
     /** Register/unregister notification handler for service status changed */
-    void registerForServiceStateChanged(Handler h, int what, Object obj);
+    void registerForServiceStateChanged(int logicalSlotId, Handler h, int what, Object obj);
 
-    void unregisterForServiceStateChanged(Handler h);
+    void unregisterForServiceStateChanged(int logicalSlotId, Handler h);
 
     /**
      * Sets the latest radio power state of modem
      *
+     * @param logicalSlotId the Id of logical sim slot.
      * @param state 0 means "unavailable", 1 means "off", 2 means "on".
      * @param client for tracking calling client
      */
-    void setRadioState(int state, String client);
+    void setRadioState(int logicalSlotId, int state, String client);
 
     /**
      * Query whether any SIM cards are present or not.
      *
+     * @param logicalSlotId the Id of logical sim slot.
      * @param client for tracking calling client
      * @return boolean true if any sim card inserted, otherwise false.
      */
-    boolean isSimCardPresent(String client);
+    boolean isSimCardPresent(int logicalSlotId, String client);
 
     /**
      * Change SIM profile
      *
+     * @param logicalSlotId the Id of logical sim slot.
      * @param simProfileId The target profile to be switched.
      * @param client for tracking calling client
+     * @return boolean true if the operation succeed.
      */
-    void changeSimProfile(int simProfileId, String client);
+    boolean changeSimProfile(int logicalSlotId, int simProfileId, String client);
 
     /**
      * Modify SIM info of the SIM such as MCC/MNC, IMSI, etc.
      *
+     * @param logicalSlotId the Id of logical sim slot.
      * @param type the type of SIM info to modify.
      * @param data to modify for the type of SIM info.
      * @param client for tracking calling client
      */
-    void setSimInfo(int type, String[] data, String client);
+    void setSimInfo(int logicalSlotId, int type, String[] data, String client);
 
     /**
      * Get SIM info of the SIM slot, e.g. MCC/MNC, IMSI.
      *
+     * @param logicalSlotId the Id of logical sim slot.
      * @param type the type of SIM info.
      * @param client for tracking calling client
      * @return String the SIM info of the queried type.
      */
-    String getSimInfo(int type, String client);
+    String getSimInfo(int logicalSlotId, int type, String client);
 }

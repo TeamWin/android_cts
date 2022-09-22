@@ -1148,17 +1148,15 @@ public class TelephonyManagerTest {
 
     private static void assertImei(String id) {
         assertFalse("Imei should not be empty or null", TextUtils.isEmpty(id));
-        // IMEI may include the check digit
-        String imeiPattern = "[0-9]{14,15}";
-        String invalidPattern = "[0]{14,15}";
+        // IMEI must have 15 digits.
+        String imeiPattern = "[0-9]{15}";
+        String invalidPattern = "[0]{15}";
         assertTrue("IMEI " + id + " does not match pattern " + imeiPattern,
                 Pattern.matches(imeiPattern, id));
         assertFalse("IMEI " + id + " must not be a zero sequence" + invalidPattern,
                 Pattern.matches(invalidPattern, id));
-        if (id.length() == 15) {
-            // if the ID is 15 digits, the 15th must be a check digit.
-            assertImeiCheckDigit(id);
-        }
+        // 15th digit must be a check digit.
+        assertImeiCheckDigit(id);
     }
 
     private static void assertImeiCheckDigit(String deviceId) {

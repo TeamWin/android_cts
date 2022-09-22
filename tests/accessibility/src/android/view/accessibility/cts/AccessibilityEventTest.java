@@ -30,6 +30,7 @@ import android.content.Context;
 import android.os.Message;
 import android.os.Parcel;
 import android.os.SystemClock;
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.text.SpannableString;
 import android.text.TextUtils;
@@ -146,6 +147,7 @@ public class AccessibilityEventTest {
     }
 
     @Test
+    @FlakyTest
     public void testScrollEventsDeliveredInCorrectInterval() throws Exception {
         sUiAutomation.executeAndWaitForEvent(
                 () -> {
@@ -364,6 +366,7 @@ public class AccessibilityEventTest {
     }
 
     @Test
+    @FlakyTest
     public void setTextError_receiveEvent() throws Throwable {
         sUiAutomation.executeAndWaitForEvent(
                 () -> sInstrumentation.runOnMainSync(() -> mTextView.setError("error")),
@@ -473,6 +476,7 @@ public class AccessibilityEventTest {
     /** Tests if {@link AccessibilityEvent} can be acquired through obtain(). */
     @SmallTest
     @Test
+    @FlakyTest
     public void testRecycle() {
         // evaluate that recycle() can be called on an event acquired by obtain()
         AccessibilityEvent.obtain().recycle();

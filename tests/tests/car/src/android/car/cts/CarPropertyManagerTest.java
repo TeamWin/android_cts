@@ -44,6 +44,7 @@ import android.car.hardware.property.EvRegenerativeBrakingState;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardStatus;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardType;
 import android.content.pm.PackageManager;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.support.v4.content.ContextCompat;
@@ -2938,13 +2939,16 @@ public class CarPropertyManagerTest extends CarApiTestBase {
 
         int currentEventNormal = speedListenerNormal.receivedEvent(vehicleSpeed);
         int currentEventUI = speedListenerUI.receivedEvent(vehicleSpeed);
-        speedListenerNormal.assertOnChangeEventNotCalled();
+        // Because we copy the callback outside the lock, so even after unregisterCallback, one
+        // callback that is already copied out still might be called.
+        // As a result, we verify that the callback is not called more than once.
+        speedListenerNormal.assertOnChangeEventNotCalledWithinMs(WAIT_CALLBACK);
 
         assertThat(speedListenerNormal.receivedEvent(vehicleSpeed)).isEqualTo(currentEventNormal);
         assertThat(speedListenerUI.receivedEvent(vehicleSpeed)).isNotEqualTo(currentEventUI);
 
         mCarPropertyManager.unregisterCallback(speedListenerUI);
-        speedListenerUI.assertOnChangeEventNotCalled();
+        speedListenerUI.assertOnChangeEventNotCalledWithinMs(WAIT_CALLBACK);
 
         currentEventUI = speedListenerUI.receivedEvent(vehicleSpeed);
         assertThat(speedListenerUI.receivedEvent(vehicleSpeed)).isEqualTo(currentEventUI);
@@ -3033,7 +3037,9 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         private final SparseArray<Integer> mErrorCounter = new SparseArray<>();
         @GuardedBy("mLock")
         private final SparseArray<Integer> mErrorWithErrorCodeCounter = new SparseArray<>();
+        @GuardedBy("mLock")
         private int mCounter = FAST_OR_FASTEST_EVENT_COUNTER;
+        @GuardedBy("mLock")
         private CountDownLatch mCountDownLatch = new CountDownLatch(mCounter);
         private final long mTimeoutMillis;
 
@@ -3074,8 +3080,8 @@ public class CarPropertyManagerTest extends CarApiTestBase {
             synchronized (mLock) {
                 int val = mEventCounter.get(value.getPropertyId(), 0) + 1;
                 mEventCounter.put(value.getPropertyId(), val);
+                mCountDownLatch.countDown();
             }
-            mCountDownLatch.countDown();
         }
 
         @Override
@@ -3095,26 +3101,53 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         }
 
         public void resetCountDownLatch(int counter) {
-            mCountDownLatch = new CountDownLatch(counter);
-            mCounter = counter;
+            synchronized (mLock) {
+                mCountDownLatch = new CountDownLatch(counter);
+                mCounter = counter;
+            }
         }
 
         public void assertOnChangeEventCalled() throws InterruptedException {
-            if (!mCountDownLatch.await(mTimeoutMillis, TimeUnit.MILLISECONDS)) {
+            CountDownLatch countDownLatch;
+            int counter;
+            synchronized (mLock) {
+                countDownLatch = mCountDownLatch;
+                counter = mCounter;
+            }
+            if (!countDownLatch.await(mTimeoutMillis, TimeUnit.MILLISECONDS)) {
                 throw new IllegalStateException(
-                        "Callback is not called " + mCounter + "times in " + mTimeoutMillis
-                                + " ms. It was only called " + (mCounter
-                                - mCountDownLatch.getCount()) + " times.");
+                        "Callback is not called " + counter + "times in " + mTimeoutMillis
+                                + " ms. It was only called " + (counter
+                                - countDownLatch.getCount()) + " times.");
             }
         }
 
-        public void assertOnChangeEventNotCalled() throws InterruptedException {
-            // Once get an event, fail the test.
-            mCountDownLatch = new CountDownLatch(1);
-            if (mCountDownLatch.await(mTimeoutMillis, TimeUnit.MILLISECONDS)) {
-                throw new IllegalStateException("Callback is called in " + mTimeoutMillis + " ms.");
+        public void assertOnChangeEventNotCalledWithinMs(long durationInMs)
+                throws InterruptedException {
+            CountDownLatch countDownLatch;
+            synchronized (mLock) {
+                mCountDownLatch = new CountDownLatch(1);
+                countDownLatch = mCountDownLatch;
+            }
+            long timeoutMillis = 2 * durationInMs;
+            long startTimeMillis = SystemClock.uptimeMillis();
+            while (true) {
+                if (countDownLatch.await(durationInMs, TimeUnit.SECONDS)) {
+                    if (SystemClock.uptimeMillis() - startTimeMillis > timeoutMillis) {
+                        // If we are still receiving events when timeout happens, the test failed.
+                        throw new IllegalStateException("We are still receiving callback within "
+                                + durationInMs + " seconds after " + timeoutMillis + " ms.");
+                    }
+                    // Receive a event within the time period. This means there are still events
+                    // being generated. Wait for another period and hope the events stop.
+                    synchronized (mLock) {
+                        mCountDownLatch = new CountDownLatch(1);
+                        countDownLatch = mCountDownLatch;
+                    }
+                } else {
+                    break;
+                }
             }
         }
-
     }
 }

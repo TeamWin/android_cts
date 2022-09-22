@@ -20,7 +20,8 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
-import android.app.admin.DevicePolicyManager;
+import android.app.admin.RemoteDevicePolicyManager;
+import android.content.ComponentName;
 import android.provider.Settings;
 import android.stats.devicepolicy.EventId;
 
@@ -477,6 +478,19 @@ public final class TimeTest {
         }
     }
 
+    // TODO(234609037): Once these APIs are accessible via permissions, this should be moved to Nene
+    private void setAutoTimeZoneEnabled(RemoteDevicePolicyManager dpm,
+            ComponentName componentName, boolean enabled) {
+        sDeviceState.dpc().devicePolicyManager().setAutoTimeZoneEnabled(
+                componentName, enabled);
+
+        Poll.forValue("autoTimeZoneEnabled",
+                () -> dpm.getAutoTimeZoneEnabled(componentName))
+                .toBeEqualTo(enabled)
+                .errorOnFail()
+                .await();
+    }
+
     @Postsubmit(reason = "New test")
     @PolicyDoesNotApplyTest(policy = Time.class)
     @ApiTest(apis = "android.app.manager.DevicePolicyManager#setTimeZone")
@@ -484,7 +498,7 @@ public final class TimeTest {
         boolean originalAutoTimeZoneEnabledValue = sDeviceState.dpc().devicePolicyManager()
                 .getAutoTimeZoneEnabled(sDeviceState.dpc().componentName());
         try {
-            sDeviceState.dpc().devicePolicyManager().setAutoTimeEnabled(
+            setAutoTimeZoneEnabled(sDeviceState.dpc().devicePolicyManager(),
                     sDeviceState.dpc().componentName(), false);
 
             boolean returnValue = sDeviceState.dpc().devicePolicyManager()
@@ -493,7 +507,7 @@ public final class TimeTest {
             assertThat(returnValue).isTrue();
             assertThat(TimeZone.getDefault().getDisplayName()).isNotEqualTo(TIMEZONE);
         } finally {
-            sDeviceState.dpc().devicePolicyManager().setAutoTimeZoneEnabled(
+            setAutoTimeZoneEnabled(sDeviceState.dpc().devicePolicyManager(),
                     sDeviceState.dpc().componentName(), originalAutoTimeZoneEnabledValue);
         }
     }
@@ -505,7 +519,7 @@ public final class TimeTest {
         boolean originalAutoTimeZoneEnabledValue = sDeviceState.dpc().devicePolicyManager()
                 .getAutoTimeZoneEnabled(sDeviceState.dpc().componentName());
         try {
-            sDeviceState.dpc().devicePolicyManager().setAutoTimeEnabled(
+            setAutoTimeZoneEnabled(sDeviceState.dpc().devicePolicyManager(),
                     sDeviceState.dpc().componentName(), true);
 
             boolean returnValue = sDeviceState.dpc().devicePolicyManager()
@@ -514,7 +528,7 @@ public final class TimeTest {
             assertThat(returnValue).isFalse();
             assertThat(TimeZone.getDefault().getDisplayName()).isNotEqualTo(TIMEZONE);
         } finally {
-            sDeviceState.dpc().devicePolicyManager().setAutoTimeZoneEnabled(
+            setAutoTimeZoneEnabled(sDeviceState.dpc().devicePolicyManager(),
                     sDeviceState.dpc().componentName(), originalAutoTimeZoneEnabledValue);
         }
     }

@@ -35,6 +35,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Presentation;
+import android.app.UiAutomation;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
@@ -137,6 +138,7 @@ public class DisplayTest {
     private TestPresentation mPresentation;
 
     private Activity mScreenOnActivity;
+    private UiAutomation mUiAutomation;
 
     private static class DisplayModeState {
         public final int mHeight;
@@ -210,6 +212,10 @@ public class DisplayTest {
 
     @Before
     public void setUp() throws Exception {
+        mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        mUiAutomation.executeShellCommand(
+                "settings put global overlay_display_devices 181x161/214|182x162/214");
+
         mScreenOnActivity = launchScreenOnActivity();
         mContext = getInstrumentation().getTargetContext();
         assertTrue("Physical display is expected.", DisplayUtil.isDisplayConnected(mContext));
@@ -229,6 +235,7 @@ public class DisplayTest {
         if (mScreenOnActivity != null) {
             mScreenOnActivity.finish();
         }
+        mUiAutomation.executeShellCommand("settings delete global overlay_display_devices");
     }
 
     private void enableAppOps() {

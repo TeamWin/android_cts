@@ -343,6 +343,26 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
         }
     }
 
+    @Test
+    @ApiTest(apis = {"android.car.CarOccupantZoneManager#getDisplayIdForDriver"})
+    public void testClusterDisplayIsPrivate() {
+        assumeDriverZone();
+
+        mUiAutomation.adoptShellPermissionIdentity(Car.PERMISSION_MANAGE_OCCUPANT_ZONE);
+
+        int clusterDisplayId = mCarOccupantZoneManager.getDisplayIdForDriver(
+                CarOccupantZoneManager.DISPLAY_TYPE_INSTRUMENT_CLUSTER);
+        assumeTrue("No cluster display", clusterDisplayId != Display.INVALID_DISPLAY);
+
+        DisplayManager dm = mContext.getSystemService(DisplayManager.class);
+        Display clusterDisplay = dm.getDisplay(clusterDisplayId);
+        // Fetching the private display expects null.
+        if (clusterDisplay != null) {
+            assertWithMessage("Cluster display#%s is private", clusterDisplayId)
+                    .that((clusterDisplay.getFlags() & Display.FLAG_PRIVATE) != 0).isTrue();
+        }
+    }
+
     void assumeDriverZone() {
         assumeTrue("No driver zone", mCarOccupantZoneManager.hasDriverZone());
     }

@@ -39,10 +39,11 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     private final MockModemService mService;
     private IRadioNetworkResponse mRadioNetworkResponse;
     private IRadioNetworkIndication mRadioNetworkIndication;
-    private static MockModemConfigInterface[] sMockModemConfigInterfaces;
+    private MockModemConfigInterface mMockModemConfigInterface;
     private Object mCacheUpdateMutex;
     private final Handler mHandler;
     private int mSubId;
+    private String mTag;
 
     // ***** Events
     static final int EVENT_RADIO_STATE_CHANGED = 1;
@@ -60,11 +61,12 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     private MockNetworkService mServiceState;
 
     public IRadioNetworkImpl(
-            MockModemService service, MockModemConfigInterface[] interfaces, int instanceId) {
-        Log.d(TAG, "Instantiated");
+            MockModemService service, MockModemConfigInterface configInterface, int instanceId) {
+        mTag = TAG + "-" + instanceId;
+        Log.d(mTag, "Instantiated");
 
         this.mService = service;
-        sMockModemConfigInterfaces = interfaces;
+        mMockModemConfigInterface = configInterface;
         mCacheUpdateMutex = new Object();
         mHandler = new IRadioNetworkHandler();
         mSubId = instanceId;
@@ -78,10 +80,10 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
                         | MockNetworkService.NR;
         mServiceState.updateHighestRegisteredRat(mNetworkTypeBitmap);
 
-        sMockModemConfigInterfaces[mSubId].registerForRadioStateChanged(
-                mHandler, EVENT_RADIO_STATE_CHANGED, null);
-        sMockModemConfigInterfaces[mSubId].registerForCardStatusChanged(
-                mHandler, EVENT_SIM_STATUS_CHANGED, null);
+        mMockModemConfigInterface.registerForRadioStateChanged(
+                mSubId, mHandler, EVENT_RADIO_STATE_CHANGED, null);
+        mMockModemConfigInterface.registerForCardStatusChanged(
+                mSubId, mHandler, EVENT_SIM_STATUS_CHANGED, null);
     }
 
     /** Handler class to handle callbacks */
@@ -92,7 +94,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
             synchronized (mCacheUpdateMutex) {
                 switch (msg.what) {
                     case EVENT_SIM_STATUS_CHANGED:
-                        Log.d(TAG, "Received EVENT_SIM_STATUS_CHANGED");
+                        Log.d(mTag, "Received EVENT_SIM_STATUS_CHANGED");
                         boolean oldSimReady = mSimReady;
                         ar = (AsyncResult) msg.obj;
                         if (ar != null && ar.exception == null) {
@@ -101,27 +103,27 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
                                 updateNetworkStatus();
                             }
                         } else {
-                            Log.e(TAG, msg.what + " failure. Exception: " + ar.exception);
+                            Log.e(mTag, msg.what + " failure. Exception: " + ar.exception);
                         }
                         break;
 
                     case EVENT_RADIO_STATE_CHANGED:
-                        Log.d(TAG, "Received EVENT_RADIO_STATE_CHANGED");
+                        Log.d(mTag, "Received EVENT_RADIO_STATE_CHANGED");
                         int oldRadioState = mRadioState;
                         ar = (AsyncResult) msg.obj;
                         if (ar != null && ar.exception == null) {
                             mRadioState = (int) ar.result;
-                            Log.i(TAG, "Radio state: " + mRadioState);
+                            Log.i(mTag, "Radio state: " + mRadioState);
                             if (oldRadioState != mRadioState) {
                                 updateNetworkStatus();
                             }
                         } else {
-                            Log.e(TAG, msg.what + " failure. Exception: " + ar.exception);
+                            Log.e(mTag, msg.what + " failure. Exception: " + ar.exception);
                         }
                         break;
 
                     case EVENT_PREFERRED_MODE_CHANGED:
-                        Log.d(TAG, "Received EVENT_PREFERRED_MODE_CHANGED");
+                        Log.d(mTag, "Received EVENT_PREFERRED_MODE_CHANGED");
                         mServiceState.updateNetworkStatus(
                                 MockNetworkService.NETWORK_UPDATE_PREFERRED_MODE_CHANGE);
                         updateNetworkStatus();
@@ -134,9 +136,9 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     // Implementation of IRadioNetwork utility functions
 
     private void notifyServiceStateChange() {
-        Log.d(TAG, "notifyServiceStateChange");
+        Log.d(mTag, "notifyServiceStateChange");
 
-        Handler handler = sMockModemConfigInterfaces[mSubId].getMockModemConfigHandler();
+        Handler handler = mMockModemConfigInterface.getMockModemConfigHandler(mSubId);
         Message msg =
                 handler.obtainMessage(
                         MockModemConfigBase.EVENT_SERVICE_STATE_CHANGE, mServiceState);
@@ -184,7 +186,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         for (int i = 0; i < numApplications; i++) {
             android.hardware.radio.sim.AppStatus rilAppStatus = cardStatus.applications[i];
             if (rilAppStatus.appState == android.hardware.radio.sim.AppStatus.APP_STATE_READY) {
-                Log.i(TAG, "SIM is ready");
+                Log.i(mTag, "SIM is ready");
                 simPlmn = "46692"; // TODO: Get SIM PLMN, maybe decode from IMSI
                 mServiceState.updateSimPlmn(simPlmn);
                 return true;
@@ -196,7 +198,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     }
 
     public boolean changeNetworkService(int carrierId, boolean registration) {
-        Log.d(TAG, "changeNetworkService: carrier id(" + carrierId + "): " + registration);
+        Log.d(mTag, "changeNetworkService: carrier id(" + carrierId + "): " + registration);
 
         synchronized (mCacheUpdateMutex) {
             // TODO: compare carrierId and sim to decide home or roming
@@ -210,33 +212,33 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     // Implementation of IRadioNetwork functions
     @Override
     public void getAllowedNetworkTypesBitmap(int serial) {
-        Log.d(TAG, "getAllowedNetworkTypesBitmap");
+        Log.d(mTag, "getAllowedNetworkTypesBitmap");
         int networkTypeBitmap = mNetworkTypeBitmap;
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioNetworkResponse.getAllowedNetworkTypesBitmapResponse(rsp, networkTypeBitmap);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to getAllowedNetworkTypesBitmap from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getAllowedNetworkTypesBitmap from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void getAvailableBandModes(int serial) {
-        Log.d(TAG, "getAvailableBandModes");
+        Log.d(mTag, "getAvailableBandModes");
 
         int[] bandModes = new int[0];
         RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioNetworkResponse.getAvailableBandModesResponse(rsp, bandModes);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to getAvailableBandModes from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getAvailableBandModes from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void getAvailableNetworks(int serial) {
-        Log.d(TAG, "getAvailableNetworks");
+        Log.d(mTag, "getAvailableNetworks");
 
         android.hardware.radio.network.OperatorInfo[] networkInfos =
                 new android.hardware.radio.network.OperatorInfo[0];
@@ -244,13 +246,13 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getAvailableNetworksResponse(rsp, networkInfos);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to getAvailableNetworks from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getAvailableNetworks from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void getBarringInfo(int serial) {
-        Log.d(TAG, "getBarringInfo");
+        Log.d(mTag, "getBarringInfo");
 
         android.hardware.radio.network.CellIdentity cellIdentity =
                 new android.hardware.radio.network.CellIdentity();
@@ -260,25 +262,25 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getBarringInfoResponse(rsp, cellIdentity, barringInfos);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to getBarringInfo from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getBarringInfo from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void getCdmaRoamingPreference(int serial) {
-        Log.d(TAG, "getCdmaRoamingPreference");
+        Log.d(mTag, "getCdmaRoamingPreference");
         int type = 0;
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.getCdmaRoamingPreferenceResponse(rsp, type);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to getCdmaRoamingPreference from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getCdmaRoamingPreference from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void getCellInfoList(int serial) {
-        Log.d(TAG, "getCellInfoList");
+        Log.d(mTag, "getCellInfoList");
         android.hardware.radio.network.CellInfo[] cells;
 
         synchronized (mCacheUpdateMutex) {
@@ -289,13 +291,13 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getCellInfoListResponse(rsp, cells);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to getCellInfoList from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getCellInfoList from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void getDataRegistrationState(int serial) {
-        Log.d(TAG, "getDataRegistrationState");
+        Log.d(mTag, "getDataRegistrationState");
 
         android.hardware.radio.network.RegStateResult dataRegResponse =
                 new android.hardware.radio.network.RegStateResult();
@@ -323,38 +325,38 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getDataRegistrationStateResponse(rsp, dataRegResponse);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to getRadioCapability from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getRadioCapability from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void getImsRegistrationState(int serial) {
-        Log.d(TAG, "getImsRegistrationState");
+        Log.d(mTag, "getImsRegistrationState");
         boolean isRegistered = false;
         int ratFamily = 0;
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.getImsRegistrationStateResponse(rsp, isRegistered, ratFamily);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to getImsRegistrationState from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getImsRegistrationState from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void getNetworkSelectionMode(int serial) {
-        Log.d(TAG, "getNetworkSelectionMode");
+        Log.d(mTag, "getNetworkSelectionMode");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioNetworkResponse.getNetworkSelectionModeResponse(rsp, mNetworkSelectionMode);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to getNetworkSelectionMode from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getNetworkSelectionMode from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void getOperator(int serial) {
-        Log.d(TAG, "getOperator");
+        Log.d(mTag, "getOperator");
 
         String longName = "";
         String shortName = "";
@@ -373,13 +375,13 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getOperatorResponse(rsp, longName, shortName, numeric);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to getOperator from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getOperator from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void getSignalStrength(int serial) {
-        Log.d(TAG, "getSignalStrength");
+        Log.d(mTag, "getSignalStrength");
 
         android.hardware.radio.network.SignalStrength signalStrength =
                 new android.hardware.radio.network.SignalStrength();
@@ -395,13 +397,13 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getSignalStrengthResponse(rsp, signalStrength);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to getSignalStrength from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getSignalStrength from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void getSystemSelectionChannels(int serial) {
-        Log.d(TAG, "getSystemSelectionChannels");
+        Log.d(mTag, "getSystemSelectionChannels");
 
         android.hardware.radio.network.RadioAccessSpecifier[] specifiers =
                 new android.hardware.radio.network.RadioAccessSpecifier[0];
@@ -409,13 +411,13 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getSystemSelectionChannelsResponse(rsp, specifiers);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to getSystemSelectionChannels from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getSystemSelectionChannels from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void getVoiceRadioTechnology(int serial) {
-        Log.d(TAG, "getVoiceRadioTechnology");
+        Log.d(mTag, "getVoiceRadioTechnology");
         int rat;
 
         synchronized (mCacheUpdateMutex) {
@@ -426,13 +428,13 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getVoiceRadioTechnologyResponse(rsp, rat);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to getVoiceRadioTechnology from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getVoiceRadioTechnology from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void getVoiceRegistrationState(int serial) {
-        Log.d(TAG, "getVoiceRegistrationState");
+        Log.d(mTag, "getVoiceRegistrationState");
 
         android.hardware.radio.network.RegStateResult voiceRegResponse =
                 new android.hardware.radio.network.RegStateResult();
@@ -460,30 +462,30 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getVoiceRegistrationStateResponse(rsp, voiceRegResponse);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to getVoiceRegistrationState from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getVoiceRegistrationState from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void isNrDualConnectivityEnabled(int serial) {
-        Log.d(TAG, "isNrDualConnectivityEnabled");
+        Log.d(mTag, "isNrDualConnectivityEnabled");
         boolean isEnabled = false;
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.isNrDualConnectivityEnabledResponse(rsp, isEnabled);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to isNrDualConnectivityEnabled from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to isNrDualConnectivityEnabled from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void responseAcknowledgement() {
-        Log.d(TAG, "responseAcknowledgement");
+        Log.d(mTag, "responseAcknowledgement");
     }
 
     @Override
     public void setAllowedNetworkTypesBitmap(int serial, int networkTypeBitmap) {
-        Log.d(TAG, "setAllowedNetworkTypesBitmap");
+        Log.d(mTag, "setAllowedNetworkTypesBitmap");
         boolean isModeChange = false;
 
         if (mNetworkTypeBitmap != networkTypeBitmap) {
@@ -500,68 +502,68 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.setAllowedNetworkTypesBitmapResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to setAllowedNetworkTypesBitmap from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setAllowedNetworkTypesBitmap from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void setBandMode(int serial, int mode) {
-        Log.d(TAG, "setBandMode");
+        Log.d(mTag, "setBandMode");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.setBandModeResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to setBandMode from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setBandMode from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void setBarringPassword(
             int serial, String facility, String oldPassword, String newPassword) {
-        Log.d(TAG, "setBarringPassword");
+        Log.d(mTag, "setBarringPassword");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.setBarringPasswordResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to setBarringPassword from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setBarringPassword from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void setCdmaRoamingPreference(int serial, int type) {
-        Log.d(TAG, "setCdmaRoamingPreference");
+        Log.d(mTag, "setCdmaRoamingPreference");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.setCdmaRoamingPreferenceResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to setCdmaRoamingPreference from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setCdmaRoamingPreference from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void setCellInfoListRate(int serial, int rate) {
-        Log.d(TAG, "setCellInfoListRate");
+        Log.d(mTag, "setCellInfoListRate");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.setCellInfoListRateResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to setCellInfoListRate from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setCellInfoListRate from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void setIndicationFilter(int serial, int indicationFilter) {
-        Log.d(TAG, "setIndicationFilter");
+        Log.d(mTag, "setIndicationFilter");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.setIndicationFilterResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to setIndicationFilter from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setIndicationFilter from AIDL. Exception" + ex);
         }
     }
 
@@ -574,61 +576,61 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
             int[] thresholdsDownlinkKbps,
             int[] thresholdsUplinkKbps,
             int accessNetwork) {
-        Log.d(TAG, "setLinkCapacityReportingCriteria");
+        Log.d(mTag, "setLinkCapacityReportingCriteria");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.setLinkCapacityReportingCriteriaResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to setLinkCapacityReportingCriteria from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setLinkCapacityReportingCriteria from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void setLocationUpdates(int serial, boolean enable) {
-        Log.d(TAG, "setLocationUpdates");
+        Log.d(mTag, "setLocationUpdates");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.setLocationUpdatesResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to setLocationUpdates from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setLocationUpdates from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void setNetworkSelectionModeAutomatic(int serial) {
-        Log.d(TAG, "setNetworkSelectionModeAutomatic");
+        Log.d(mTag, "setNetworkSelectionModeAutomatic");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.setNetworkSelectionModeAutomaticResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to setNetworkSelectionModeAutomatic from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setNetworkSelectionModeAutomatic from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void setNetworkSelectionModeManual(int serial, String operatorNumeric, int ran) {
-        Log.d(TAG, "setNetworkSelectionModeManual");
+        Log.d(mTag, "setNetworkSelectionModeManual");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.setNetworkSelectionModeManualResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to setNetworkSelectionModeManual from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setNetworkSelectionModeManual from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void setNrDualConnectivityState(int serial, byte nrDualConnectivityState) {
-        Log.d(TAG, "setNrDualConnectivityState");
+        Log.d(mTag, "setNrDualConnectivityState");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.setNrDualConnectivityStateResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to setNrDualConnectivityState from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setNrDualConnectivityState from AIDL. Exception" + ex);
         }
     }
 
@@ -636,7 +638,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     public void setResponseFunctions(
             IRadioNetworkResponse radioNetworkResponse,
             IRadioNetworkIndication radioNetworkIndication) {
-        Log.d(TAG, "setResponseFunctions");
+        Log.d(mTag, "setResponseFunctions");
         mRadioNetworkResponse = radioNetworkResponse;
         mRadioNetworkIndication = radioNetworkIndication;
         mService.countDownLatch(MockModemService.LATCH_RADIO_INTERFACES_READY);
@@ -645,100 +647,100 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     @Override
     public void setSignalStrengthReportingCriteria(
             int serial, SignalThresholdInfo[] signalThresholdInfos) {
-        Log.d(TAG, "setSignalStrengthReportingCriteria");
+        Log.d(mTag, "setSignalStrengthReportingCriteria");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.setSignalStrengthReportingCriteriaResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to setSignalStrengthReportingCriteria from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setSignalStrengthReportingCriteria from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void setSuppServiceNotifications(int serial, boolean enable) {
-        Log.d(TAG, "setSuppServiceNotifications");
+        Log.d(mTag, "setSuppServiceNotifications");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.setSuppServiceNotificationsResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to setSuppServiceNotifications from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setSuppServiceNotifications from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void setSystemSelectionChannels(
             int serial, boolean specifyChannels, RadioAccessSpecifier[] specifiers) {
-        Log.d(TAG, "setSystemSelectionChannels");
+        Log.d(mTag, "setSystemSelectionChannels");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.setSystemSelectionChannelsResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to setSystemSelectionChannels from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setSystemSelectionChannels from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void startNetworkScan(int serial, NetworkScanRequest request) {
-        Log.d(TAG, "startNetworkScan");
+        Log.d(mTag, "startNetworkScan");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.startNetworkScanResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to startNetworkScan from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to startNetworkScan from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void stopNetworkScan(int serial) {
-        Log.d(TAG, "stopNetworkScan");
+        Log.d(mTag, "stopNetworkScan");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.stopNetworkScanResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to stopNetworkScan from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to stopNetworkScan from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void supplyNetworkDepersonalization(int serial, String netPin) {
-        Log.d(TAG, "supplyNetworkDepersonalization");
+        Log.d(mTag, "supplyNetworkDepersonalization");
         int remainingRetries = 0;
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.supplyNetworkDepersonalizationResponse(rsp, remainingRetries);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to supplyNetworkDepersonalization from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to supplyNetworkDepersonalization from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void setUsageSetting(int serial, int usageSetting) {
-        Log.d(TAG, "setUsageSetting");
+        Log.d(mTag, "setUsageSetting");
         int remainingRetries = 0;
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.setUsageSettingResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to setUsageSetting from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setUsageSetting from AIDL. Exception" + ex);
         }
     }
 
     @Override
     public void getUsageSetting(int serial) {
-        Log.d(TAG, "getUsageSetting");
+        Log.d(mTag, "getUsageSetting");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
         try {
             mRadioNetworkResponse.getUsageSettingResponse(rsp, -1 /* Invalid value */);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to getUsageSetting from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getUsageSetting from AIDL. Exception" + ex);
         }
     }
 
@@ -753,7 +755,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     }
 
     public void unsolNetworkStateChanged() {
-        Log.d(TAG, "unsolNetworkStateChanged");
+        Log.d(mTag, "unsolNetworkStateChanged");
 
         // Notify other module
         notifyServiceStateChange();
@@ -762,15 +764,15 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
             try {
                 mRadioNetworkIndication.networkStateChanged(RadioIndicationType.UNSOLICITED);
             } catch (RemoteException ex) {
-                Log.e(TAG, "Failed to invoke networkStateChanged from AIDL. Exception" + ex);
+                Log.e(mTag, "Failed to invoke networkStateChanged from AIDL. Exception" + ex);
             }
         } else {
-            Log.e(TAG, "null mRadioNetworkIndication");
+            Log.e(mTag, "null mRadioNetworkIndication");
         }
     }
 
     public void unsolCurrentSignalStrength() {
-        Log.d(TAG, "unsolCurrentSignalStrength");
+        Log.d(mTag, "unsolCurrentSignalStrength");
         if (mRadioState != MockModemConfigInterface.RADIO_STATE_ON) {
             return;
         }
@@ -788,16 +790,16 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
                         RadioIndicationType.UNSOLICITED, signalStrength);
             } catch (RemoteException ex) {
                 Log.e(
-                        TAG,
+                        mTag,
                         "Failed to invoke currentSignalStrength change from AIDL. Exception" + ex);
             }
         } else {
-            Log.e(TAG, "null mRadioNetworkIndication");
+            Log.e(mTag, "null mRadioNetworkIndication");
         }
     }
 
     public void unsolCellInfoList() {
-        Log.d(TAG, "unsolCellInfoList");
+        Log.d(mTag, "unsolCellInfoList");
 
         if (mRadioState != MockModemConfigInterface.RADIO_STATE_ON) {
             return;
@@ -812,10 +814,10 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
             try {
                 mRadioNetworkIndication.cellInfoList(RadioIndicationType.UNSOLICITED, cells);
             } catch (RemoteException ex) {
-                Log.e(TAG, "Failed to invoke cellInfoList change from AIDL. Exception" + ex);
+                Log.e(mTag, "Failed to invoke cellInfoList change from AIDL. Exception" + ex);
             }
         } else {
-            Log.e(TAG, "null mRadioNetworkIndication");
+            Log.e(mTag, "null mRadioNetworkIndication");
         }
     }
 }
