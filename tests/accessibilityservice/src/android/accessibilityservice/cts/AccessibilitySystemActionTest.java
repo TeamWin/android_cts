@@ -34,6 +34,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.drawable.Icon;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 
@@ -56,6 +57,7 @@ import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
+@Presubmit
 public class AccessibilitySystemActionTest {
     // intent actions to trigger system action callbacks
     private final static String INTENT_ACTION_SYSTEM_ACTION_CALLBACK_OVERRIDE_BACK = "android.accessibility.cts.end2endtests.action.system_action_callback_override_back";

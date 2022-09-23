@@ -25,6 +25,7 @@ import android.accessibilityservice.AccessibilityButtonController;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.view.Display;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -45,6 +46,7 @@ import org.junit.runner.RunWith;
  */
 @RunWith(AndroidJUnit4.class)
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
+@Presubmit
 public class AccessibilityButtonTest {
 
     private InstrumentedAccessibilityServiceTestRule<StubAccessibilityButtonService> mServiceRule =

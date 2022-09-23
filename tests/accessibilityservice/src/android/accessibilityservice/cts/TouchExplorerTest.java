@@ -65,6 +65,7 @@ import android.content.pm.PackageManager;
 import android.graphics.PointF;
 import android.graphics.Region;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
@@ -99,6 +100,7 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
+@Presubmit
 public class TouchExplorerTest {
     // Constants
     private static final float GESTURE_LENGTH_MMS = 15.0f;

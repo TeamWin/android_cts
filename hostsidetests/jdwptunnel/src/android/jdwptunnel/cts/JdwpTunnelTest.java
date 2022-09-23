@@ -27,6 +27,7 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.AbiUtils;
+
 import com.sun.jdi.Bootstrap;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.VirtualMachine;
@@ -38,14 +39,18 @@ import com.sun.jdi.request.BreakpointRequest;
 import com.sun.jdi.request.ClassPrepareRequest;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
-import java.io.*;
-import java.net.Socket;
-import java.time.Instant;
-import java.util.Map;
+
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.time.Instant;
+import java.util.Map;
+
 
 /**
  * Host-side tests for setting up a JDWP connection to an app.
@@ -242,12 +247,15 @@ public class JdwpTunnelTest extends BaseHostJUnit4Test {
         } catch (java.io.IOException e) {
             thrownException = e;
         }
-        String debuggableDevice = mDevice.getProperty("ro.debuggable");
-        if (debuggableDevice.equals("1")) {
+        // Jdwp is only enabled on eng builds or when persist.debug.dalvik.vm.jdwp.enabled is set.
+        // Check that we are able to attach a debugger in these cases.
+        String buildType = mDevice.getProperty("ro.build.type");
+        String enableJdwp = mDevice.getProperty("persist.debug.dalvik.vm.jdwp.enabled");
+        if (buildType.equals("eng") || (enableJdwp != null && enableJdwp.equals("1"))) {
             assertNull(thrownException);
             return;
         }
-        // We are on a user (production) build device.
+        // We are on a device that doesn't enable jdwp.
         assertNotNull(thrownException);
         if (thrownException != null) {
             // Verify the exception is thrown from the "getDebuggerConnection" method in this test

@@ -18,6 +18,7 @@ package android.mediav2.cts;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -150,25 +151,20 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
     private static final int COLOR_BAR_OFFSET_X = 8;
     private static final int COLOR_BAR_OFFSET_Y = 64;
 
-    private int[][] mColorBars;
-
-    private final String mCompName;
-    private final String mFileName;
-    private int mWidth;
-    private int mHeight;
     private final int mRange;
     private final int mStandard;
     private final int mTransferCurve;
     private final boolean mUseYuvSampling;
 
+    private int[][] mColorBars;
+    private int mWidth;
+    private int mHeight;
     private OutputSurface mEGLWindowOutSurface;
     private int mBadFrames = 0;
 
     public DecodeGlAccuracyTest(String decoder, String mediaType, String fileName, int range,
-            int standard, int transfer, boolean useYuvSampling) {
-        super(null, mediaType, null);
-        mCompName = decoder;
-        mFileName = fileName;
+            int standard, int transfer, boolean useYuvSampling, String allTestParams) {
+        super(decoder, mediaType, fileName, allTestParams);
         mRange = range;
         mStandard = standard;
         mTransferCurve = transfer;
@@ -354,12 +350,12 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
                     FIRST_SDK_IS_AT_LEAST_T && VNDK_IS_AT_LEAST_T);
 
             // TODO (b/219748700): Android software codecs work only with 601LR. Skip for now.
-            assumeTrue("Skipping " + mCompName + " for color range " + mRange
+            assumeTrue("Skipping " + mCodecName + " for color range " + mRange
                             + " and color standard " + mStandard,
-                    isVendorCodec(mCompName));
+                    isVendorCodec(mCodecName));
         }
 
-        MediaFormat format = setUpSource(mFileName);
+        MediaFormat format = setUpSource(mTestFile);
 
         // Set color parameters
         format.setInteger(MediaFormat.KEY_COLOR_RANGE, mRange);
@@ -375,7 +371,8 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
 
         // If device supports HDR editing, then GL_EXT_YUV_target extension support is mandatory
         if (mUseYuvSampling) {
-            String message = "Device doesn't support EXT_YUV_target GL extension";
+            String message = "Device doesn't support EXT_YUV_target GL extension \n" + mTestConfig
+                    + mTestEnv;
             if (IS_AT_LEAST_T && IS_HDR_EDITING_SUPPORTED) {
                 assertTrue(message, mEGLWindowOutSurface.getEXTYuvTargetSupported());
             } else {
@@ -385,7 +382,7 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
 
         mSurface = mEGLWindowOutSurface.getSurface();
 
-        mCodec = MediaCodec.createByCodecName(mCompName);
+        mCodec = MediaCodec.createByCodecName(mCodecName);
         configureCodec(format, true, true, false);
         mOutputBuff = new OutputManager();
         mCodec.start();
@@ -397,8 +394,8 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
         mCodec.release();
         mEGLWindowOutSurface.release();
 
-        assertTrue("color difference exceeds allowed tolerance in " + mBadFrames + " out of " +
-                mOutputCount + " frames", 0 == mBadFrames);
+        assertEquals("color difference exceeds allowed tolerance in " + mBadFrames + " out of "
+                + mOutputCount + " frames \n" + mTestConfig + mTestEnv, 0, mBadFrames);
     }
 }
 

@@ -24,10 +24,12 @@ import static android.view.cts.util.ASurfaceControlTestUtils.createSurfaceTransa
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_acquire;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_create;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_createFromWindow;
+import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_fromSurfaceControl;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_release;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_apply;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_create;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_delete;
+import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_fromTransaction;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_releaseBuffer;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setDamageRegion;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setDesiredPresentTime;
@@ -66,6 +68,7 @@ import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.view.Surface;
+import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.PixelChecker;
@@ -85,6 +88,7 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
+import java.lang.ref.Reference;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -318,6 +322,58 @@ public class ASurfaceControlTest {
                         return pixelCount > 9000 && pixelCount < 11000;
                     }
                 });
+    }
+
+    @Test
+    public void testSurfaceControl_fromSurfaceControl() {
+        SurfaceControl.Builder builder = new SurfaceControl.Builder();
+        builder.setName("testSurfaceControl_fromSurfaceControl");
+        SurfaceControl control = builder.build();
+        final long childSurfaceControl = nSurfaceControl_fromSurfaceControl(control);
+        assertTrue(childSurfaceControl != 0);
+        nSurfaceControl_acquire(childSurfaceControl);
+        Reference.reachabilityFence(control);
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long parentSurfaceControl = createFromWindow(holder.getSurface());
+                        setVisibility(childSurfaceControl, true);
+                        setSolidBuffer(childSurfaceControl, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                        reparent(childSurfaceControl, parentSurfaceControl);
+                    }
+                },
+                new PixelChecker(PixelColor.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+        nSurfaceControl_release(childSurfaceControl);
+    }
+
+    @Test
+    public void testSurfaceTransaction_fromTransaction() {
+        SurfaceControl.Transaction jTransaction = new SurfaceControl.Transaction();
+        final long transaction = nSurfaceTransaction_fromTransaction(jTransaction);
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
+                        setSolidBuffer(surfaceControl, transaction, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                        nSurfaceTransaction_apply(transaction);
+                    }
+                },
+                new PixelChecker(PixelColor.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+        Reference.reachabilityFence(jTransaction);
     }
 
     @Test

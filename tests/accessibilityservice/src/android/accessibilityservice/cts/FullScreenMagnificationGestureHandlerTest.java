@@ -51,6 +51,7 @@ import android.app.Instrumentation;
 import android.content.pm.PackageManager;
 import android.graphics.PointF;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.view.ViewConfiguration;
 import android.widget.TextView;
@@ -75,6 +76,7 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
+@Presubmit
 public class FullScreenMagnificationGestureHandlerTest {
 
     private static final double MIN_SCALE = 1.2;

@@ -16,6 +16,8 @@
 
 package android.mediav2.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -36,7 +38,9 @@ import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -93,6 +97,10 @@ public class CodecEncoderSurfaceTest {
     private int mDecOutputCount;
     private int mEncOutputCount;
 
+    private String mTestArgs;
+    private String mTestConfig;
+    private String mTestEnv;
+
     private boolean mSaveToMem;
     private OutputManager mOutputBuff;
 
@@ -107,12 +115,13 @@ public class CodecEncoderSurfaceTest {
     }
 
     public CodecEncoderSurfaceTest(String encoder, String mime, String testFile, int bitrate,
-            int frameRate) {
+            int frameRate, String allTestParams) {
         mCompName = encoder;
         mMime = mime;
         mTestFile = testFile;
         mBitrate = bitrate;
         mFrameRate = frameRate;
+        mTestArgs = allTestParams;
         mMaxBFrames = 0;
         mLatency = mMaxBFrames;
         mReviseLatency = false;
@@ -120,10 +129,16 @@ public class CodecEncoderSurfaceTest {
         mAsyncHandleEncoder = new CodecAsyncHandler();
     }
 
+    @Rule
+    public TestName mTestName = new TestName();
+
     @Before
     public void setUp() throws IOException {
+        mTestConfig = "###################        Test Details         #####################\n";
+        mTestConfig += "Test Name :- " + mTestName.getMethodName() + "\n";
+        mTestConfig += "Test Parameters :- " + mTestArgs + "\n";
         if (mCompName.startsWith(CodecTestBase.INVALID_CODEC)) {
-            fail("no valid component available for current test ");
+            fail("no valid component available for current test. \n" + mTestConfig);
         }
         mDecoderFormat = setUpSource(mTestFile);
         ArrayList<MediaFormat> decoderFormatList = new ArrayList<>();
@@ -183,6 +198,7 @@ public class CodecEncoderSurfaceTest {
     }
 
     private MediaFormat setUpSource(String srcFile) throws IOException {
+        Preconditions.assertTestFileExists(mInpPrefix + srcFile);
         mExtractor = new MediaExtractor();
         mExtractor.setDataSource(mInpPrefix + srcFile);
         for (int trackID = 0; trackID < mExtractor.getTrackCount(); trackID++) {
@@ -205,7 +221,7 @@ public class CodecEncoderSurfaceTest {
             }
         }
         mExtractor.release();
-        fail("No video track found in file: " + srcFile);
+        fail("No video track found in file: " + srcFile + ". \n" + mTestConfig + mTestEnv);
         return null;
     }
 
@@ -235,6 +251,15 @@ public class CodecEncoderSurfaceTest {
         assertTrue("Surface is not valid", mSurface.isValid());
         mAsyncHandleDecoder.setCallBack(mDecoder, isAsync);
         mDecoder.configure(decFormat, mSurface, null, 0);
+        mTestEnv = "###################      Test Environment       #####################\n";
+        mTestEnv += String.format("Encoder under test :- %s \n", mCompName);
+        mTestEnv += String.format("Format under test :- %s \n", encFormat);
+        mTestEnv += String.format("Encoder is fed with output of :- %s \n", mDecoderName);
+        mTestEnv += String.format("Format of Decoder Input :- %s", decFormat);
+        mTestEnv += String.format("Encoder and Decoder are operating in :- %s mode \n",
+                (isAsync ? "asynchronous" : "synchronous"));
+        mTestEnv += String.format("Components received input eos :- %s \n",
+                (signalEOSWithLastFrame ? "with full buffer" : "with empty buffer"));
         if (ENABLE_LOGS) {
             Log.v(LOG_TAG, "codec configured");
         }
@@ -557,36 +582,41 @@ public class CodecEncoderSurfaceTest {
                 /* TODO(b/147348711) */
                 if (false) mEncoder.stop();
                 else mEncoder.reset();
-                String log = String.format(
-                        "format: %s \n codec: %s, file: %s, mode: %s:: ",
-                        mEncoderFormat, mCompName, mTestFile, (isAsync ? "async" : "sync"));
-                assertTrue(log + " unexpected error", !hasSeenError());
-                assertTrue(log + "no input sent", 0 != mDecInputCount);
-                assertTrue(log + "no decoder output received", 0 != mDecOutputCount);
-                assertTrue(log + "no encoder output received", 0 != mEncOutputCount);
-                assertTrue(log + "decoder input count != output count, act/exp: " +
-                        mDecOutputCount +
-                        " / " + mDecInputCount, mDecInputCount == mDecOutputCount);
+
+                assertFalse("Decoder has encountered error in async mode. \n"
+                                + mTestConfig + mTestEnv + mAsyncHandleDecoder.getErrMsg(),
+                        mAsyncHandleDecoder.hasSeenError());
+                assertFalse("Encoder has encountered error in async mode. \n"
+                                + mTestConfig + mTestEnv + mAsyncHandleEncoder.getErrMsg(),
+                        mAsyncHandleEncoder.hasSeenError());
+                assertTrue("Decoder has not received any input \n" + mTestConfig + mTestEnv,
+                        0 != mDecInputCount);
+                assertTrue("Decoder has not sent any output \n" + mTestConfig + mTestEnv,
+                        0 != mDecOutputCount);
+                assertTrue("Encoder has not sent any output \n" + mTestConfig + mTestEnv,
+                        0 != mEncOutputCount);
+                assertEquals("Decoder output count is not equal to decoder input count \n"
+                        + mTestConfig + mTestEnv, mDecInputCount, mDecOutputCount);
+
                 /* TODO(b/153127506)
                  *  Currently disabling all encoder output checks. Added checks only for encoder
                  *  timeStamp is in increasing order or not.
                  *  Once issue is fixed remove increasing timestamp check and enable encoder checks.
                  */
-                /*assertTrue(log + "encoder output count != decoder output count, act/exp: " +
-                                mEncOutputCount + " / " + mDecOutputCount,
-                        mEncOutputCount == mDecOutputCount);
-                if (loopCounter != 0) {
-                    assertTrue(log + "encoder output is flaky", ref.equals(test));
-                } else {
-                    assertTrue(log + " input pts list and output pts list are not identical",
-                            ref.isOutPtsListIdenticalToInpPtsList((false)));
+                /*assertEquals("Encoder output count is not equal to Decoder input count \n"
+                        + mTestConfig + mTestEnv, mDecInputCount, mEncOutputCount);
+                if (loopCounter != 0 && !ref.equals(test)) {
+                    fail("Encoder output is not consistent across runs \n" + mTestConfig + mTestEnv
+                            + test.getErrMsg());
+                }
+                if (loopCounter == 0 &&
+                        !ref.isOutPtsListIdenticalToInpPtsList((mMaxBFrames != 0))) {
+                    fail("Input pts list and Output pts list are not identical \n" + mTestConfig
+                            + mTestEnv + ref.getErrMsg());
                 }*/
-                if (loopCounter != 0) {
-                    assertTrue("test output pts is not strictly increasing",
-                            test.isPtsStrictlyIncreasing(Long.MIN_VALUE));
-                } else {
-                    assertTrue("ref output pts is not strictly increasing",
-                            ref.isPtsStrictlyIncreasing(Long.MIN_VALUE));
+                if (mMaxBFrames == 0 && !mOutputBuff.isPtsStrictlyIncreasing(Long.MIN_VALUE)) {
+                    fail("Output timestamps are not strictly increasing \n" + mTestConfig + mTestEnv
+                            + mOutputBuff.getErrMsg());
                 }
                 loopCounter++;
                 mSurface.release();

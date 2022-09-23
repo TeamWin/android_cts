@@ -20,7 +20,7 @@ import static org.junit.Assume.assumeNoException;
 
 import android.platform.test.annotations.AsbSecurityTest;
 
-import com.android.sts.common.tradefed.testtype.StsExtraBusinessLogicHostTestBase;
+import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
@@ -28,7 +28,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2021_39795 extends StsExtraBusinessLogicHostTestBase {
+public class CVE_2021_39795 extends NonRootSecurityTestCase {
     private static final String TEST_PKG = "android.security.cts.CVE_2021_39795";
     private static final String DIR_PATH = "/storage/emulated/0/Android/data/CVE-2021-39795-dir";
 

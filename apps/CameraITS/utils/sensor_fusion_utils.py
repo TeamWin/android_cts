@@ -653,7 +653,7 @@ def plot_gyro_events(gyro_events, plot_name, log_path):
   pylab.close(plot_name)
 
   z_max = max(abs(z))
-  logging.info('%.3f', z_max)
+  logging.debug('z_max: %.3f', z_max)
   if z_max > _GYRO_ROTATION_PER_SEC_MAX:
     raise AssertionError(
         f'Phone moved too rapidly! Please confirm controller firmware. '

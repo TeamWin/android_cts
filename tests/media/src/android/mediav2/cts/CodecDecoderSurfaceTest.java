@@ -20,6 +20,7 @@ import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_ALL;
 import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_OPTIONAL;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
@@ -67,8 +68,8 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     private final SupportClass mSupportRequirements;
 
     public CodecDecoderSurfaceTest(String decoder, String mime, String testFile,
-            String reconfigFile, SupportClass supportRequirements) {
-        super(decoder, mime, testFile);
+            String reconfigFile, SupportClass supportRequirements, String allTestParams) {
+        super(decoder, mime, testFile, allTestParams);
         mReconfigFile = reconfigFile;
         mSupportRequirements = supportRequirements;
     }
@@ -217,26 +218,17 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleDecodeToSurface() throws IOException, InterruptedException {
         boolean[] boolStates = {true, false};
-        OutputManager ref;
-        OutputManager test = new OutputManager();
         final long pts = 0;
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
         {
             decodeAndSavePts(mTestFile, mCodecName, pts, mode, Integer.MAX_VALUE);
-            ref = mOutputBuff;
-            // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
-            // produce multiple progressive frames?) For now, do not verify timestamps.
-            if (!mIsInterlaced) {
-                assertTrue("input pts list and output pts list are not identical",
-                        ref.isOutPtsListIdenticalToInpPtsList(false));
-            }
+            OutputManager ref = mOutputBuff;
+            OutputManager test = new OutputManager();
             MediaFormat format = setUpSource(mTestFile);
             mCodec = MediaCodec.createByCodecName(mCodecName);
+            mOutputBuff = test;
             mActivity.setScreenParams(getWidth(format), getHeight(format), true);
             for (boolean isAsync : boolStates) {
-                String log = String.format("codec: %s, file: %s, mode: %s:: ", mCodecName,
-                        mTestFile, (isAsync ? "async" : "sync"));
-                mOutputBuff = test;
                 mOutputBuff.reset();
                 mExtractor.seekTo(pts, mode);
                 configureCodec(format, isAsync, true, false);
@@ -245,15 +237,9 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                 queueEOS();
                 waitForAllOutputs();
                 mCodec.stop();
-                assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
-                assertTrue(log + "no input sent", 0 != mInputCount);
-                assertTrue(log + "output received", 0 != mOutputCount);
-                // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
-                // produce multiple progressive frames?) For now, do not verify timestamps.
-                if (mIsInterlaced) {
-                    assertTrue(log + "decoder output is flaky", ref.equalsInterlaced(test));
-                } else {
-                    assertTrue(log + "decoder output is flaky", ref.equals(test));
+                if (!(mIsInterlaced ? ref.equalsInterlaced(test) : ref.equals(test))) {
+                    fail("Decoder output in surface mode does not match with output in bytebuffer "
+                            + "mode \n" + mTestConfig + mTestEnv + test.getErrMsg());
                 }
             }
             mCodec.release();
@@ -300,19 +286,11 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         {
             decodeAndSavePts(mTestFile, mCodecName, pts, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
-            // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
-            // produce multiple progressive frames?) For now, do not verify timestamps.
-            if (!mIsInterlaced) {
-                assertTrue("input pts list and output pts list are not identical",
-                        ref.isOutPtsListIdenticalToInpPtsList(false));
-            }
             mOutputBuff = test;
             setUpSource(mTestFile);
             mCodec = MediaCodec.createByCodecName(mCodecName);
             mActivity.setScreenParams(getWidth(format), getHeight(format), false);
             for (boolean isAsync : boolStates) {
-                String log = String.format("decoder: %s, input file: %s, mode: %s:: ", mCodecName,
-                        mTestFile, (isAsync ? "async" : "sync"));
                 mExtractor.seekTo(0, mode);
                 configureCodec(format, isAsync, true, false);
                 mCodec.start();
@@ -330,8 +308,10 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                 mExtractor.seekTo(0, mode);
                 test.reset();
                 doWork(23);
-                assertTrue(log + " pts is not strictly increasing",
-                        test.isPtsStrictlyIncreasing(mPrevOutputPts));
+                if (!test.isPtsStrictlyIncreasing(mPrevOutputPts)) {
+                    fail("Output timestamps are not strictly increasing \n" + mTestConfig + mTestEnv
+                            + test.getErrMsg());
+                }
 
                 /* test flush in running state */
                 flushCodec();
@@ -341,15 +321,9 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
-                assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
-                assertTrue(log + "no input sent", 0 != mInputCount);
-                assertTrue(log + "output received", 0 != mOutputCount);
-                // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
-                // produce multiple progressive frames?) For now, do not verify timestamps.
-                if (mIsInterlaced) {
-                    assertTrue(log + "decoder output is flaky", ref.equalsInterlaced(test));
-                } else {
-                    assertTrue(log + "decoder output is flaky", ref.equals(test));
+                if (!(mIsInterlaced ? ref.equalsInterlaced(test) : ref.equals(test))) {
+                    fail("Decoder output in surface mode does not match with output in bytebuffer "
+                            + "mode \n" + mTestConfig + mTestEnv + test.getErrMsg());
                 }
 
                 /* test flush in eos state */
@@ -361,15 +335,9 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                 queueEOS();
                 waitForAllOutputs();
                 mCodec.stop();
-                assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
-                assertTrue(log + "no input sent", 0 != mInputCount);
-                assertTrue(log + "output received", 0 != mOutputCount);
-                // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
-                // produce multiple progressive frames?) For now, do not verify timestamps.
-                if (mIsInterlaced) {
-                    assertTrue(log + "decoder output is flaky", ref.equalsInterlaced(test));
-                } else {
-                    assertTrue(log + "decoder output is flaky", ref.equals(test));
+                if (!(mIsInterlaced ? ref.equalsInterlaced(test) : ref.equals(test))) {
+                    fail("Decoder output in surface mode does not match with output in bytebuffer "
+                            + "mode \n" + mTestConfig + mTestEnv + test.getErrMsg());
                 }
             }
             mCodec.release();
@@ -418,25 +386,13 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         {
             decodeAndSavePts(mTestFile, mCodecName, pts, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
-            if (!mIsInterlaced) {
-                assertTrue("input pts list and reference pts list are not identical",
-                        ref.isOutPtsListIdenticalToInpPtsList(false));
-            }
             decodeAndSavePts(mReconfigFile, mCodecName, pts, mode, Integer.MAX_VALUE);
             OutputManager configRef = mOutputBuff;
-            // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
-            // produce multiple progressive frames?) For now, do not verify timestamps.
-            if (!mIsInterlaced) {
-                assertTrue("input pts list and reconfig ref output pts list are not identical",
-                        configRef.isOutPtsListIdenticalToInpPtsList(false));
-            }
             mOutputBuff = test;
             mCodec = MediaCodec.createByCodecName(mCodecName);
             mActivity.setScreenParams(getWidth(format), getHeight(format), false);
             for (boolean isAsync : boolStates) {
                 setUpSource(mTestFile);
-                String log = String.format("decoder: %s, input file: %s, mode: %s:: ", mCodecName,
-                        mTestFile, (isAsync ? "async" : "sync"));
                 mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                 configureCodec(format, isAsync, true, false);
 
@@ -458,16 +414,11 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                 queueEOS();
                 waitForAllOutputs();
                 mCodec.stop();
-                assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
-                assertTrue(log + "no input sent", 0 != mInputCount);
-                assertTrue(log + "output received", 0 != mOutputCount);
-                // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
-                // produce multiple progressive frames?) For now, do not verify timestamps.
-                if (mIsInterlaced) {
-                    assertTrue(log + "decoder output is flaky", ref.equalsInterlaced(test));
-                } else {
-                    assertTrue(log + "decoder output is flaky", ref.equals(test));
+                if (!(mIsInterlaced ? ref.equalsInterlaced(test) : ref.equals(test))) {
+                    fail("Decoder output in surface mode does not match with output in bytebuffer "
+                            + "mode \n" + mTestConfig + mTestEnv + test.getErrMsg());
                 }
+
                 /* test reconfigure codec at eos state */
                 reConfigureCodec(format, !isAsync, false, false);
                 mCodec.start();
@@ -477,22 +428,14 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                 queueEOS();
                 waitForAllOutputs();
                 mCodec.stop();
-                assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
-                assertTrue(log + "no input sent", 0 != mInputCount);
-                assertTrue(log + "output received", 0 != mOutputCount);
-                // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
-                // produce multiple progressive frames?) For now, do not verify timestamps.
-                if (mIsInterlaced) {
-                    assertTrue(log + "decoder output is flaky", ref.equalsInterlaced(test));
-                } else {
-                    assertTrue(log + "decoder output is flaky", ref.equals(test));
+                if (!(mIsInterlaced ? ref.equalsInterlaced(test) : ref.equals(test))) {
+                    fail("Decoder output in surface mode does not match with output in bytebuffer "
+                            + "mode \n" + mTestConfig + mTestEnv + test.getErrMsg());
                 }
                 mExtractor.release();
 
                 /* test reconfigure codec for new file */
                 setUpSource(mReconfigFile);
-                log = String.format("decoder: %s, input file: %s, mode: %s:: ", mCodecName,
-                        mReconfigFile, (isAsync ? "async" : "sync"));
                 mActivity.setScreenParams(getWidth(newFormat), getHeight(newFormat), true);
                 reConfigureCodec(newFormat, isAsync, false, false);
                 mCodec.start();
@@ -502,15 +445,9 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                 queueEOS();
                 waitForAllOutputs();
                 mCodec.stop();
-                assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
-                assertTrue(log + "no input sent", 0 != mInputCount);
-                assertTrue(log + "output received", 0 != mOutputCount);
-                // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
-                // produce multiple progressive frames?) For now, do not verify timestamps.
-                if (mIsInterlaced) {
-                    assertTrue(log + "decoder output is flaky", configRef.equalsInterlaced(test));
-                } else {
-                    assertTrue(log + "decoder output is flaky", configRef.equals(test));
+                if (!(mIsInterlaced ? configRef.equalsInterlaced(test) : configRef.equals(test))) {
+                    fail("Decoder output in surface mode does not match with output in bytebuffer "
+                            + "mode \n" + mTestConfig + mTestEnv + test.getErrMsg());
                 }
                 mExtractor.release();
             }

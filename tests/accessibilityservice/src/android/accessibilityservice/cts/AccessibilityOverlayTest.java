@@ -26,6 +26,8 @@ import android.accessibilityservice.cts.utils.AsyncUtils;
 import android.accessibilityservice.cts.utils.DisplayUtils;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.platform.test.annotations.FlakyTest;
+import android.platform.test.annotations.Presubmit;
 import android.text.TextUtils;
 import android.util.SparseArray;
 import android.view.Display;
@@ -52,6 +54,7 @@ import java.util.List;
 // Test that an AccessibilityService can display an accessibility overlay
 @RunWith(AndroidJUnit4.class)
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
+@Presubmit
 public class AccessibilityOverlayTest {
 
     private static UiAutomation sUiAutomation;
@@ -99,6 +102,7 @@ public class AccessibilityOverlayTest {
     }
 
     @Test
+    @FlakyTest
     public void testA11yServiceShowsOverlayOnVirtualDisplay_shouldAppear() throws Exception {
         try (final DisplayUtils.VirtualDisplaySession displaySession =
                      new DisplayUtils.VirtualDisplaySession()) {

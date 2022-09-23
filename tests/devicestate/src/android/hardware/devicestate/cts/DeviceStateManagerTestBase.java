@@ -67,12 +67,14 @@ public abstract class DeviceStateManagerTestBase extends ActivityManagerTestBase
      * {@link java.lang.InterruptedException} will be thrown.
      */
     protected final void runWithRequestActive(@NonNull DeviceStateRequest request,
+            boolean isBaseStateRequest,
             @NonNull Runnable runnable) throws Throwable {
         final UncaughtExceptionHandler exceptionHandler = new UncaughtExceptionHandler();
         final RequestAwareThread thread = new RequestAwareThread(request, runnable);
         thread.setUncaughtExceptionHandler(exceptionHandler);
-        try (DeviceStateRequestSession session
-                     = new DeviceStateRequestSession(mDeviceStateManager, request, thread)) {
+        try (DeviceStateRequestSession session =
+                     new DeviceStateRequestSession(mDeviceStateManager, request,
+                isBaseStateRequest, thread)) {
             // Set the exception handler to get the exception and rethrow.
             thread.start();
             // Wait for the request aware thread to finish executing the runnable. If the request

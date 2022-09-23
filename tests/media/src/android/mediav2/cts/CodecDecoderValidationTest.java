@@ -21,7 +21,7 @@ import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_ANY;
 import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_DEFAULT;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.media.AudioFormat;
 import android.media.MediaCodec;
@@ -93,8 +93,8 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
 
     public CodecDecoderValidationTest(String decoder, String mime, String[] srcFiles,
             String refFile, float rmsError, long refCRC, int sampleRate, int channelCount,
-            int width, int height, SupportClass supportRequirements) {
-        super(decoder, mime, null);
+            int width, int height, SupportClass supportRequirements, String allTestParams) {
+        super(decoder, mime, null, allTestParams);
         mSrcFiles = srcFiles;
         mRefFile = refFile;
         mRmsError = rmsError;
@@ -662,33 +662,28 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                 mCodec.stop();
                 mCodec.release();
                 mExtractor.release();
-                String log = String.format("codec: %s, test file: %s:: ", mCodecName, file);
-                assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
-                assertTrue(log + "no input sent", 0 != mInputCount);
-                assertTrue(log + "output received", 0 != mOutputCount);
                 if (ref == null) ref = mOutputBuff;
-                if (mIsAudio) {
-                    assertTrue("reference output pts is not strictly increasing",
-                            mOutputBuff.isPtsStrictlyIncreasing(mPrevOutputPts));
-                } else if (!mIsInterlaced) {
-                    assertTrue("input pts list and output pts list are not identical",
-                            mOutputBuff.isOutPtsListIdenticalToInpPtsList(false));
+                if (!(mIsInterlaced ? ref.equalsInterlaced(mOutputBuff) :
+                        ref.equals(mOutputBuff))) {
+                    fail("Decoder output received for file " + mSrcFiles[0]
+                            + " is not identical to the output received for file " + file + "\n"
+                            + mTestConfig + mTestEnv + mOutputBuff.getErrMsg());
                 }
-                if (mIsInterlaced) {
-                    assertTrue(log + "decoder outputs are not identical",
-                            ref.equalsInterlaced(mOutputBuff));
-                } else {
-                    assertEquals(log + "decoder outputs are not identical", ref, mOutputBuff);
-                }
-                assertEquals("sample rate mismatch", mSampleRate,
+                assertEquals("Output sample rate is different from configured sample rate \n"
+                                + mTestConfig + mTestEnv, mSampleRate,
                         mOutFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE, -1));
-                assertEquals("channel count mismatch", mChannelCount,
+                assertEquals("Output channel count is different from configured channel count \n"
+                                + mTestConfig + mTestEnv, mChannelCount,
                         mOutFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT, -1));
-                assertEquals("width mismatch", mWidth, getWidth(mOutFormat));
-                assertEquals("height mismatch", mHeight, getHeight(mOutFormat));
+                assertEquals("Output width is different from configured width \n" + mTestConfig
+                        + mTestEnv, mWidth, getWidth(mOutFormat));
+                assertEquals("Output height is different from configured height \n" + mTestConfig
+                        + mTestEnv, mHeight, getHeight(mOutFormat));
             }
-            Assume.assumeFalse("skip checksum due to tonemapping", mSkipChecksumVerification);
-            CodecDecoderTest.verify(ref, mRefFile, mRmsError, audioEncoding, mRefCRC);
+            Assume.assumeFalse("skip checksum verification due to tone mapping",
+                    mSkipChecksumVerification);
+            CodecDecoderTest.verify(ref, mRefFile, mRmsError, audioEncoding, mRefCRC,
+                    mTestConfig + mTestEnv);
         }
     }
 }

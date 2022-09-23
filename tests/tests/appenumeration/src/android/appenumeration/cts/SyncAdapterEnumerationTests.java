@@ -38,6 +38,8 @@ import static android.appenumeration.cts.Constants.SERVICE_CLASS_SYNC_ADAPTER;
 import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER;
 import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER_AUTHORITY;
 import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER_SHARED_USER;
+import static android.appenumeration.cts.Utils.allowTestApiAccess;
+import static android.appenumeration.cts.Utils.resetTestApiAccess;
 import static android.content.Intent.EXTRA_COMPONENT_NAME;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -114,17 +116,42 @@ public class SyncAdapterEnumerationTests extends AppEnumerationTestsBase {
 
     @Test
     public void queriesPackage_getSyncAdapterPackages_canSeeSyncAdapterTarget() throws Exception {
-        assertVisible(QUERIES_PACKAGE, TARGET_SYNCADAPTER,
-                this::getSyncAdapterPackagesForAuthorityAsUser);
+        try {
+            allowTestApiAccess(QUERIES_PACKAGE);
+
+            assertVisible(QUERIES_PACKAGE, TARGET_SYNCADAPTER,
+                    this::getSyncAdapterPackagesForAuthorityAsUser);
+        } finally {
+            resetTestApiAccess(QUERIES_PACKAGE);
+        }
     }
 
     @Test
     public void queriesNothing_getSyncAdapterPackages_cannotSeeSyncAdapterTarget()
             throws Exception {
-        assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER,
-                this::getSyncAdapterPackagesForAuthorityAsUser);
-        assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER_SHARED_USER,
-                this::getSyncAdapterPackagesForAuthorityAsUser);
+        try {
+            allowTestApiAccess(QUERIES_NOTHING);
+
+            assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER,
+                    this::getSyncAdapterPackagesForAuthorityAsUser);
+            assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER_SHARED_USER,
+                    this::getSyncAdapterPackagesForAuthorityAsUser);
+        } finally {
+            resetTestApiAccess(QUERIES_NOTHING);
+        }
+    }
+
+    @Test
+    public void queriesNothingSharedUser_getSyncAdapterPackages_canSeeSyncAdapterSharedUserTarget()
+            throws Exception {
+        try {
+            allowTestApiAccess(QUERIES_NOTHING_SHARED_USER);
+
+            assertVisible(QUERIES_NOTHING_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER,
+                    this::getSyncAdapterPackagesForAuthorityAsUser);
+        } finally {
+            resetTestApiAccess(QUERIES_NOTHING_SHARED_USER);
+        }
     }
 
     @Test
@@ -163,13 +190,6 @@ public class SyncAdapterEnumerationTests extends AppEnumerationTestsBase {
             throws Exception {
         assertThat(getSyncAdapterControlPanel(QUERIES_NOTHING, ACCOUNT_SYNCADAPTER,
                 TARGET_SYNCADAPTER), nullValue());
-    }
-
-    @Test
-    public void queriesNothingSharedUser_getSyncAdapterPackages_canSeeSyncAdapterSharedUserTarget()
-            throws Exception {
-        assertVisible(QUERIES_NOTHING_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER,
-                this::getSyncAdapterPackagesForAuthorityAsUser);
     }
 
     @Test

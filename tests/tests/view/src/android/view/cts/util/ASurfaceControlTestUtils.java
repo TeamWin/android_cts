@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 import android.graphics.Rect;
 import android.hardware.HardwareBuffer;
 import android.view.Surface;
+import android.view.SurfaceControl;
 
 public class ASurfaceControlTestUtils {
     static {
@@ -121,11 +122,15 @@ public class ASurfaceControlTestUtils {
 
     public static native long nSurfaceTransaction_create();
     public static native void nSurfaceTransaction_delete(long surfaceTransaction);
+    public static native long nSurfaceTransaction_fromTransaction(
+            SurfaceControl.Transaction transaction);
     public static native void nSurfaceTransaction_apply(long surfaceTransaction);
     public static native long nSurfaceControl_createFromWindow(Surface surface);
     public static native long nSurfaceControl_create(long surfaceControl);
     public static native void nSurfaceControl_acquire(long surfaceControl);
     public static native void nSurfaceControl_release(long surfaceControl);
+    public static native long nSurfaceControl_fromSurfaceControl(
+            SurfaceControl surfaceControl);
     public static native long nSurfaceTransaction_setSolidBuffer(
             long surfaceControl, long surfaceTransaction, int width, int height, int color);
     public static native void nSurfaceTransaction_setBuffer(long surfaceControl,

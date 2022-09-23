@@ -31,8 +31,10 @@ import static org.junit.Assume.assumeTrue;
 import android.app.UiAutomation;
 import android.car.Car;
 import android.car.media.CarAudioManager;
+import android.car.test.ApiCheckerRule.Builder;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.util.Log;
 import android.view.KeyEvent;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -52,7 +54,9 @@ import java.util.regex.Pattern;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Instant Apps cannot get car related permissions")
-public final class CarAudioManagerTest extends CarApiTestBase {
+public final class CarAudioManagerTest extends AbstractCarTestCase {
+
+    private static final String TAG = CarAudioManagerTest.class.getSimpleName();
 
     private static long WAIT_TIMEOUT_SECS = 5;
 
@@ -64,10 +68,15 @@ public final class CarAudioManagerTest extends CarApiTestBase {
     private int mZoneId = -1;
     private int mVolumeGroupId = -1;
 
+    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
     @Override
+    protected void configApiCheckerRule(Builder builder) {
+        Log.w(TAG, "Disabling API requirements check");
+        builder.disableAnnotationsCheck();
+    }
+
     @Before
     public void setUp() throws Exception {
-        super.setUp();
         mCarAudioManager = (CarAudioManager) getCar().getCarManager(Car.AUDIO_SERVICE);
     }
 

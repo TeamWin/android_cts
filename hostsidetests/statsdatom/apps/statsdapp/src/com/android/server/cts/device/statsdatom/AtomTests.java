@@ -80,6 +80,10 @@ import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
+
+import libcore.javax.net.ssl.TestSSLContext;
+import libcore.javax.net.ssl.TestSSLSocketPair;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -97,9 +101,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import javax.net.ssl.SSLSocket;
-
-import libcore.javax.net.ssl.TestSSLContext;
-import libcore.javax.net.ssl.TestSSLSocketPair;
 
 public class AtomTests {
     private static final String TAG = AtomTests.class.getSimpleName();
@@ -751,6 +752,23 @@ public class AtomTests {
         CountDownLatch latch = StatsdJobService.resetCountDownLatch();
         js.schedule(job);
         waitForReceiver(context, 5_000, latch, null);
+    }
+
+    @Test
+    public void testScheduledJob_CancelledJob() throws Exception {
+        final ComponentName name = new ComponentName(MY_PACKAGE_NAME,
+                StatsdJobService.class.getName());
+
+        Context context = InstrumentationRegistry.getContext();
+        JobScheduler js = context.getSystemService(JobScheduler.class);
+        assertWithMessage("JobScheduler service not available").that(js).isNotNull();
+
+        JobInfo.Builder builder = new JobInfo.Builder(1, name);
+        builder.setMinimumLatency(60_000L);
+        JobInfo job = builder.build();
+
+        js.schedule(job);
+        js.cancel(1);
     }
 
     @Test

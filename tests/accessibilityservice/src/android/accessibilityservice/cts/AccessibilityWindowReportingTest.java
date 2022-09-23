@@ -60,6 +60,7 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.view.InputDevice;
@@ -145,6 +146,7 @@ public class AccessibilityWindowReportingTest {
     }
 
     @Test
+    @Presubmit
     public void testUpdatedWindowTitle_generatesEventAndIsReturnedByGetTitle() {
         final String updatedTitle = "Updated Title";
         try {
@@ -162,6 +164,7 @@ public class AccessibilityWindowReportingTest {
     }
 
     @Test
+    @Presubmit
     public void testWindowAddedMovedAndRemoved_generatesEventsForAllThree() throws Exception {
         final WindowManager.LayoutParams paramsForTop = layoutParmsForWindowOnTop();
         final WindowManager.LayoutParams paramsForBottom = layoutParmsForWindowOnBottom();
@@ -184,6 +187,7 @@ public class AccessibilityWindowReportingTest {
     }
 
     @Test
+    @Presubmit
     public void putWindowInPictureInPicture_generatesEventAndReportsProperty() throws Exception {
         if (!sInstrumentation.getContext().getPackageManager()
                 .hasSystemFeature(FEATURE_PICTURE_IN_PICTURE)) {
@@ -218,6 +222,7 @@ public class AccessibilityWindowReportingTest {
     }
 
     @Test
+    @Presubmit
     public void moveFocusToAnotherWindow_generatesEventsAndMovesActiveAndFocus() throws Exception {
         final View topWindowView = showTopWindowAndWaitForItToShowUp();
         final AccessibilityWindowInfo topWindow =
@@ -259,6 +264,7 @@ public class AccessibilityWindowReportingTest {
     }
 
     @Test
+    @Presubmit
     public void moveFocusToAnotherDisplay_movesActiveAndFocusWindow() throws Exception {
         assumeTrue(supportsMultiDisplay(sInstrumentation.getContext()));
 
@@ -347,6 +353,7 @@ public class AccessibilityWindowReportingTest {
     }
 
     @Test
+    @Presubmit
     public void testChangeAccessibilityFocusWindow_getEvent() throws Exception {
         final AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
         info.flags |= AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;

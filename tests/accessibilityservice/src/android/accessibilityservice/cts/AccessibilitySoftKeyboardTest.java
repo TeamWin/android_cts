@@ -40,6 +40,7 @@ import android.inputmethodservice.cts.common.test.ShellCommandUtils;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 
 import androidx.test.InstrumentationRegistry;
@@ -60,6 +61,7 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
+@Presubmit
 public class AccessibilitySoftKeyboardTest {
     private Instrumentation mInstrumentation;
     private int mLastCallbackValue;

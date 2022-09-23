@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.assertThrows;
 
 import android.car.Car;
+import android.car.test.ApiCheckerRule.Builder;
 import android.car.watchdog.CarWatchdogManager;
 import android.car.watchdog.IoOveruseStats;
 import android.car.watchdog.PerStateBytes;
@@ -47,7 +48,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.concurrent.atomic.AtomicReference;
 @AppModeFull(reason = "Instant Apps cannot get car related permissions")
-public class CarWatchdogManagerTest extends CarApiTestBase {
+public final class CarWatchdogManagerTest extends AbstractCarTestCase {
     private static final String TAG = CarWatchdogManagerTest.class.getSimpleName();
     private static final String CAR_WATCHDOG_SERVICE_NAME
             = "android.automotive.watchdog.ICarWatchdog/default";
@@ -59,10 +60,15 @@ public class CarWatchdogManagerTest extends CarApiTestBase {
     private CarWatchdogManager mCarWatchdogManager;
     private File mFile;
 
+    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
     @Override
+    protected void configApiCheckerRule(Builder builder) {
+        Log.w(TAG, "Disabling API requirements check");
+        builder.disableAnnotationsCheck();
+    }
+
     @Before
     public void setUp() throws Exception {
-        super.setUp();
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mFile = mContext.getFilesDir();
         mCarWatchdogManager = (CarWatchdogManager) getCar().getCarManager(Car.CAR_WATCHDOG_SERVICE);

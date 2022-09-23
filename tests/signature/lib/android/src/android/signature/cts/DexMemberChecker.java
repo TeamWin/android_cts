@@ -227,7 +227,7 @@ public class DexMemberChecker {
                 // resolved, but only returns public methods.
                 for (Method method : klass.getMethods()) {
                     if (method.getName().equals(dexMethod.getName())
-                            && method.getClass() == klass
+                            && method.getDeclaringClass() == klass
                             && method.getReturnType().getTypeName().equals(methodReturnType)
                             && typesMatch(method.getParameterTypes(), methodParams)) {
                         return true;

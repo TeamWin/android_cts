@@ -48,6 +48,7 @@ import android.graphics.Point;
 import android.graphics.drawable.ColorDrawable;
 import android.hardware.HardwareBuffer;
 import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
@@ -75,6 +76,7 @@ import org.mockito.MockitoAnnotations;
  */
 @RunWith(AndroidJUnit4.class)
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
+@Presubmit
 public class AccessibilityTakeScreenshotTest {
     /**
      * The timeout for waiting screenshot had been taken done.

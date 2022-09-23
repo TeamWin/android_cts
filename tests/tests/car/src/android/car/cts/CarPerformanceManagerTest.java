@@ -24,7 +24,6 @@ import android.app.UiAutomation;
 import android.car.Car;
 import android.car.os.CarPerformanceManager;
 import android.car.os.ThreadPolicyWithPriority;
-import android.car.test.ApiCheckerRule;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.filters.SmallTest;
@@ -34,21 +33,15 @@ import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 @SmallTest
 @AppModeFull(reason = "Instant Apps cannot get car related permissions")
-public class CarPerformanceManagerTest extends CarApiTestBase {
+public final class CarPerformanceManagerTest extends AbstractCarTestCase {
 
     private UiAutomation mUiAutomation;
     private CarPerformanceManager mCarPerformanceManager;
     private ThreadPolicyWithPriority mOriginalPolicyWithPriority;
-
-    // TODO(b/242350638): move to super class (although it would need to call
-    // disableAnnotationsCheck()
-    @Rule
-    public final ApiCheckerRule mApiCheckerRule = new ApiCheckerRule.Builder().build();
 
     private void setThreadPriorityGotThreadPriorityVerify(ThreadPolicyWithPriority p)
             throws Exception {
@@ -62,7 +55,6 @@ public class CarPerformanceManagerTest extends CarApiTestBase {
 
     @Before
     public void setUp() throws Exception {
-        super.setUp();
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mUiAutomation.adoptShellPermissionIdentity(Car.PERMISSION_MANAGE_THREAD_PRIORITY);
 

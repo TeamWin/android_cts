@@ -16,6 +16,7 @@
 
 package android.mediav2.cts;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -72,8 +73,8 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     }
 
     public CodecEncoderTest(String encoder, String mime, int[] bitrates, int[] encoderInfo1,
-            int[] encoderInfo2) {
-        super(encoder, mime, bitrates, encoderInfo1, encoderInfo2);
+            int[] encoderInfo2, String allTestParams) {
+        super(encoder, mime, bitrates, encoderInfo1, encoderInfo2, allTestParams);
         mSyncFramesPos = new ArrayList<>();
     }
 
@@ -177,9 +178,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         OutputManager test = new OutputManager();
         {
             mCodec = MediaCodec.createByCodecName(mCodecName);
-            assertTrue("codec name act/got: " + mCodec.getName() + '/' + mCodecName,
-                    mCodec.getName().equals(mCodecName));
-            assertTrue("error! codec canonical name is null",
+            assertEquals("codec name act/got: " + mCodec.getName() + '/' + mCodecName,
+                    mCodec.getName(), mCodecName);
+            assertTrue("error! codec canonical name is null or empty",
                     mCodec.getCanonicalName() != null && !mCodec.getCanonicalName().isEmpty());
             /* TODO(b/149027258) */
             if (true) mSaveToMem = false;
@@ -195,10 +196,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 }
                 for (boolean eosType : boolStates) {
                     for (boolean isAsync : boolStates) {
-                        String log = String.format(
-                                "format: %s \n codec: %s, file: %s, mode: %s, eos type: %s:: ",
-                                format, mCodecName, mInputFile, (isAsync ? "async" : "sync"),
-                                (eosType ? "eos with last frame" : "eos separate"));
                         mOutputBuff = loopCounter == 0 ? ref : test;
                         mOutputBuff.reset();
                         mInfoList.clear();
@@ -212,25 +209,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                         /* TODO(b/147348711) */
                         if (false) mCodec.stop();
                         else mCodec.reset();
-                        assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
-                        assertTrue(log + "no input sent", 0 != mInputCount);
-                        assertTrue(log + "output received", 0 != mOutputCount);
-                        if (!mIsAudio) {
-                            assertTrue(
-                                    log + "input count != output count, act/exp: " + mOutputCount +
-                                            " / " + mInputCount, mInputCount == mOutputCount);
-                        }
-                        if (loopCounter != 0) {
-                            assertTrue(log + "encoder output is flaky", ref.equals(test));
-                        } else {
-                            if (mIsAudio) {
-                                assertTrue(log + " pts is not strictly increasing",
-                                        ref.isPtsStrictlyIncreasing(mPrevOutputPts));
-                            } else {
-                                assertTrue(
-                                        log + " input pts list and output pts list are not identical",
-                                        ref.isOutPtsListIdenticalToInpPtsList((mMaxBFrames != 0)));
-                            }
+                        if (loopCounter != 0 && !ref.equals(test)) {
+                            fail("Encoder output is not consistent across runs \n" + mTestConfig
+                                    + mTestEnv + test.getErrMsg());
                         }
                         loopCounter++;
                     }
@@ -253,9 +234,10 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     public void testSimpleEncodeNative() throws IOException {
         int colorFormat = -1;
         {
-            if (!mIsAudio) {
+            if (mIsVideo) {
                 colorFormat = findByteBufferColorFormat(mCodecName, mMime);
-                assertTrue("no valid color formats received", colorFormat != -1);
+                assertTrue("no valid color formats received \n" + mTestConfig + mTestEnv,
+                        colorFormat != -1);
             }
             assertTrue(nativeTestSimpleEncode(mCodecName, mInpPrefix + mInputFile, mMime, mBitrates,
                     mEncParamList1, mEncParamList2, colorFormat));
@@ -295,8 +277,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
             }
             mCodec = MediaCodec.createByCodecName(mCodecName);
             for (boolean isAsync : boolStates) {
-                String log = String.format("encoder: %s, input file: %s, mode: %s:: ", mCodecName,
-                        mInputFile, (isAsync ? "async" : "sync"));
                 configureCodec(inpFormat, isAsync, true, true);
                 mCodec.start();
 
@@ -306,8 +286,11 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 mInfoList.clear();
                 if (mIsCodecInAsyncMode) mCodec.start();
                 doWork(23);
-                assertTrue(log + " pts is not strictly increasing",
-                        mOutputBuff.isPtsStrictlyIncreasing(mPrevOutputPts));
+                if ((mIsAudio || (mIsVideo && mMaxBFrames == 0))
+                        && !mOutputBuff.isPtsStrictlyIncreasing(mPrevOutputPts)) {
+                    fail("Output timestamps are not strictly increasing \n" + mTestConfig + mTestEnv
+                            + mOutputBuff.getErrMsg());
+                }
                 boolean checkMetrics = (mOutputCount != 0);
 
                 /* test flush in running state */
@@ -319,19 +302,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
-                assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
-                assertTrue(log + "no input sent", 0 != mInputCount);
-                assertTrue(log + "output received", 0 != mOutputCount);
-                if (!mIsAudio) {
-                    assertTrue(log + "input count != output count, act/exp: " + mOutputCount +
-                            " / " + mInputCount, mInputCount == mOutputCount);
-                    assertTrue(
-                            log + " input pts list and output pts list are not identical",
-                            mOutputBuff.isOutPtsListIdenticalToInpPtsList((mMaxBFrames != 0)));
-                } else {
-                    assertTrue(log + " pts is not strictly increasing",
-                            mOutputBuff.isPtsStrictlyIncreasing(mPrevOutputPts));
-                }
 
                 /* test flush in eos state */
                 flushCodec();
@@ -344,19 +314,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 /* TODO(b/147348711) */
                 if (false) mCodec.stop();
                 else mCodec.reset();
-                assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
-                assertTrue(log + "no input sent", 0 != mInputCount);
-                assertTrue(log + "output received", 0 != mOutputCount);
-                if (!mIsAudio) {
-                    assertTrue(log + "input count != output count, act/exp: " + mOutputCount +
-                            " / " + mInputCount, mInputCount == mOutputCount);
-                    assertTrue(
-                            log + " input pts list and output pts list are not identical",
-                            mOutputBuff.isOutPtsListIdenticalToInpPtsList((mMaxBFrames != 0)));
-                } else {
-                    assertTrue(log + " pts is not strictly increasing",
-                            mOutputBuff.isPtsStrictlyIncreasing(mPrevOutputPts));
-                }
             }
             mCodec.release();
         }
@@ -375,7 +332,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     public void testFlushNative() throws IOException {
         int colorFormat = -1;
         {
-            if (!mIsAudio) {
+            if (mIsVideo) {
                 colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }
@@ -417,29 +374,13 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 MediaFormat format = mFormats.get(1);
                 encodeToMemory(mInputFile, mCodecName, Integer.MAX_VALUE, format, saveToMem);
                 configRef = mOutputBuff;
-                if (mIsAudio) {
-                    assertTrue("config reference output pts is not strictly increasing",
-                            configRef.isPtsStrictlyIncreasing(mPrevOutputPts));
-                } else {
-                    assertTrue("input pts list and reconfig ref output pts list are not identical",
-                            configRef.isOutPtsListIdenticalToInpPtsList((mMaxBFrames != 0)));
-                }
             }
             MediaFormat format = mFormats.get(0);
             encodeToMemory(mInputFile, mCodecName, Integer.MAX_VALUE, format, saveToMem);
             OutputManager ref = mOutputBuff;
-            if (mIsAudio) {
-                assertTrue("reference output pts is not strictly increasing",
-                        ref.isPtsStrictlyIncreasing(mPrevOutputPts));
-            } else {
-                assertTrue("input pts list and ref output pts list are not identical",
-                        ref.isOutPtsListIdenticalToInpPtsList((mMaxBFrames != 0)));
-            }
             mOutputBuff = test;
             mCodec = MediaCodec.createByCodecName(mCodecName);
             for (boolean isAsync : boolStates) {
-                String log = String.format("encoder: %s, input file: %s, mode: %s:: ", mCodecName,
-                        mInputFile, (isAsync ? "async" : "sync"));
                 configureCodec(format, isAsync, true, true);
 
                 /* test reconfigure in stopped state */
@@ -464,14 +405,10 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 /* TODO(b/147348711) */
                 if (false) mCodec.stop();
                 else mCodec.reset();
-                assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
-                assertTrue(log + "no input sent", 0 != mInputCount);
-                assertTrue(log + "output received", 0 != mOutputCount);
-                if (!mIsAudio) {
-                    assertTrue(log + "input count != output count, act/exp: " + mOutputCount +
-                            " / " + mInputCount, mInputCount == mOutputCount);
+                if (!ref.equals(test)) {
+                    fail("Encoder output is not consistent across runs \n" + mTestConfig
+                            + mTestEnv + test.getErrMsg());
                 }
-                assertTrue(log + "encoder output is flaky", ref.equals(test));
 
                 /* test reconfigure codec at eos state */
                 reConfigureCodec(format, !isAsync, false, true);
@@ -483,14 +420,10 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 /* TODO(b/147348711) */
                 if (false) mCodec.stop();
                 else mCodec.reset();
-                assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
-                assertTrue(log + "no input sent", 0 != mInputCount);
-                assertTrue(log + "output received", 0 != mOutputCount);
-                if (!mIsAudio) {
-                    assertTrue(log + "input count != output count, act/exp: " + mOutputCount +
-                            " / " + mInputCount, mInputCount == mOutputCount);
+                if (!ref.equals(test)) {
+                    fail("Encoder output is not consistent across runs \n" + mTestConfig
+                            + mTestEnv + test.getErrMsg());
                 }
-                assertTrue(log + "encoder output is flaky", ref.equals(test));
 
                 /* test reconfigure codec for new format */
                 if (mFormats.size() > 1) {
@@ -503,14 +436,10 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                     /* TODO(b/147348711) */
                     if (false) mCodec.stop();
                     else mCodec.reset();
-                    assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
-                    assertTrue(log + "no input sent", 0 != mInputCount);
-                    assertTrue(log + "output received", 0 != mOutputCount);
-                    if (!mIsAudio) {
-                        assertTrue(log + "input count != output count, act/exp: " + mOutputCount +
-                                " / " + mInputCount, mInputCount == mOutputCount);
+                    if (!configRef.equals(test)) {
+                        fail("Encoder output is not consistent across runs \n" + mTestConfig
+                                + mTestEnv + test.getErrMsg());
                     }
-                    assertTrue(log + "encoder output is flaky", configRef.equals(test));
                 }
                 mSaveToMem = false;
             }
@@ -531,7 +460,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     public void testReconfigureNative() throws IOException {
         int colorFormat = -1;
         {
-            if (!mIsAudio) {
+            if (mIsVideo) {
                 colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }
@@ -558,8 +487,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
             else mSaveToMem = true;
             int loopCounter = 0;
             for (boolean isAsync : boolStates) {
-                String log = String.format("encoder: %s, input file: %s, mode: %s:: ", mCodecName,
-                        mInputFile, (isAsync ? "async" : "sync"));
                 configureCodec(mFormats.get(0), isAsync, false, true);
                 mOutputBuff = loopCounter == 0 ? ref : test;
                 mOutputBuff.reset();
@@ -570,18 +497,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 /* TODO(b/147348711) */
                 if (false) mCodec.stop();
                 else mCodec.reset();
-                assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
-                if (loopCounter != 0) {
-                    assertTrue(log + "encoder output is flaky", ref.equals(test));
-                } else {
-                    if (mIsAudio) {
-                        assertTrue(log + " pts is not strictly increasing",
-                                ref.isPtsStrictlyIncreasing(mPrevOutputPts));
-                    } else {
-                        assertTrue(
-                                log + " input pts list and output pts list are not identical",
-                                ref.isOutPtsListIdenticalToInpPtsList((mMaxBFrames != 0)));
-                    }
+                if (loopCounter != 0 && !ref.equals(test)) {
+                    fail("Encoder output is not consistent across runs \n" + mTestConfig
+                            + mTestEnv + test.getErrMsg());
                 }
                 loopCounter++;
             }
@@ -601,7 +519,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     public void testOnlyEosNative() throws IOException {
         int colorFormat = -1;
         {
-            if (!mIsAudio) {
+            if (mIsVideo) {
                 colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }
@@ -620,7 +538,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSetForceSyncFrame() throws IOException, InterruptedException {
-        Assume.assumeTrue(!mIsAudio);
+        Assume.assumeTrue("Test is applicable only for video encoders", mIsVideo);
         // Maximum allowed key frame interval variation from the target value.
         final int MAX_KEYFRAME_INTERVAL_VARIATION = 3;
         setUpParams(1);
@@ -638,16 +556,16 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         {
             mCodec = MediaCodec.createByCodecName(mCodecName);
             for (boolean isAsync : boolStates) {
-                String log = String.format(
-                        "format: %s \n codec: %s, file: %s, mode: %s:: ", format, mCodecName,
-                        mInputFile, (isAsync ? "async" : "sync"));
                 mOutputBuff.reset();
                 mInfoList.clear();
                 configureCodec(format, isAsync, false, true);
                 mCodec.start();
                 for (int i = 0; i < NUM_KEY_FRAME_REQUESTS; i++) {
                     doWork(KEY_FRAME_POS);
-                    assertTrue(!mSawInputEOS);
+                    if (mSawInputEOS) {
+                        fail(String.format("Unable to encode %d frames as the input resource "
+                                + "contains only %d frames \n", KEY_FRAME_POS, mInputCount));
+                    }
                     forceSyncFrame();
                     mNumBytesSubmitted = 0;
                 }
@@ -656,15 +574,10 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 /* TODO(b/147348711) */
                 if (false) mCodec.stop();
                 else mCodec.reset();
-                assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
-                assertTrue(log + "no input sent", 0 != mInputCount);
-                assertTrue(log + "output received", 0 != mOutputCount);
-                assertTrue(log + "input count != output count, act/exp: " + mOutputCount + " / " +
-                        mInputCount, mInputCount == mOutputCount);
-                assertTrue(log + " input pts list and output pts list are not identical",
-                        mOutputBuff.isOutPtsListIdenticalToInpPtsList((mMaxBFrames != 0)));
-                assertTrue(log + "sync frames exp/act: " + NUM_KEY_FRAME_REQUESTS + " / " +
-                        mNumSyncFramesReceived, mNumSyncFramesReceived >= NUM_KEY_FRAME_REQUESTS);
+                String msg = String.format("Received only %d key frames for %d key frame "
+                        + "requests \n", mNumSyncFramesReceived, NUM_KEY_FRAME_REQUESTS);
+                assertTrue(msg + mTestConfig + mTestEnv,
+                        mNumSyncFramesReceived >= NUM_KEY_FRAME_REQUESTS);
                 for (int i = 0, expPos = 0, index = 0; i < NUM_KEY_FRAME_REQUESTS; i++) {
                     int j = index;
                     for (; j < mSyncFramesPos.size(); j++) {
@@ -698,10 +611,10 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSetForceSyncFrameNative() throws IOException {
-        Assume.assumeTrue(!mIsAudio);
+        Assume.assumeTrue("Test is applicable only for encoders", mIsVideo);
         int colorFormat = -1;
         {
-            if (!mIsAudio) {
+            if (mIsVideo) {
                 colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }
@@ -747,9 +660,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                         MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR);
             }
             for (boolean isAsync : boolStates) {
-                String log = String.format(
-                        "format: %s \n codec: %s, file: %s, mode: %s:: ", format, mCodecName,
-                        mInputFile, (isAsync ? "async" : "sync"));
                 mOutputBuff.reset();
                 mInfoList.clear();
                 configureCodec(format, isAsync, false, true);
@@ -758,7 +668,10 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 int bitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
                 for (int i = 0; i < BR_CHANGE_REQUESTS; i++) {
                     doWork(ADAPTIVE_BR_DUR_FRM);
-                    assertTrue(!mSawInputEOS);
+                    if (mSawInputEOS) {
+                        fail(String.format("Unable to encode %d frames as the input resource "
+                                + "contains only %d frames \n", BR_CHANGE_REQUESTS, mInputCount));
+                    }
                     expOutSize += ADAPTIVE_BR_INTERVAL * bitrate;
                     if ((i & 1) == 1) bitrate *= 2;
                     else bitrate /= 2;
@@ -770,21 +683,12 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 /* TODO(b/147348711) */
                 if (false) mCodec.stop();
                 else mCodec.reset();
-                assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
-                assertTrue(log + "no input sent", 0 != mInputCount);
-                assertTrue(log + "output received", 0 != mOutputCount);
-                assertTrue(log + "input count != output count, act/exp: " + mOutputCount + " / " +
-                        mInputCount, mInputCount == mOutputCount);
-                assertTrue(log + " input pts list and output pts list are not identical",
-                        mOutputBuff.isOutPtsListIdenticalToInpPtsList((mMaxBFrames != 0)));
                 /* TODO: validate output br with sliding window constraints Sec 5.2 cdd */
                 int outSize = mOutputBuff.getOutStreamSize() * 8;
                 float brDev = Math.abs(expOutSize - outSize) * 100.0f / expOutSize;
-                if (ENABLE_LOGS) {
-                    Log.d(LOG_TAG, log + "relative br error is " + brDev + '%');
-                }
                 if (brDev > 50) {
-                    fail(log + "relative br error is too large " + brDev + '%');
+                    fail("Relative Bitrate error is too large " + brDev + "\n" + mTestConfig
+                            + mTestEnv);
                 }
             }
             mCodec.release();
@@ -805,7 +709,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
             mAdaptiveBitrateMimeList.contains(mMime));
         int colorFormat = -1;
         {
-            if (!mIsAudio) {
+            if (mIsVideo) {
                 colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }

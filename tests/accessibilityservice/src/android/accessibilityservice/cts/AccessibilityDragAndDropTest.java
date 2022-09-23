@@ -29,6 +29,7 @@ import android.accessibilityservice.cts.activities.AccessibilityDragAndDropActiv
 import android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.platform.test.annotations.Presubmit;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -48,6 +49,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
+@Presubmit
 public class AccessibilityDragAndDropTest {
     private static Instrumentation sInstrumentation;
     private static UiAutomation sUiAutomation;

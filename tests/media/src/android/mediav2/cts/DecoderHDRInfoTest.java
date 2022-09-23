@@ -56,14 +56,14 @@ public class DecoderHDRInfoTest extends HDRDecoderTestBase {
     private Map<Integer, String> mHDRDynamicInfoContainer;
 
     public DecoderHDRInfoTest(String codecName, String mediaType, String testFile,
-                              String hdrStaticInfoStream, String hdrStaticInfoContainer,
-                              Map<Integer, String> HDRDynamicInfoStream,
-                              Map<Integer, String> HDRDynamicInfoContainer) {
-        super(codecName, mediaType, testFile);
+            String hdrStaticInfoStream, String hdrStaticInfoContainer,
+            Map<Integer, String> hdrDynamicInfoStream, Map<Integer, String> hdrDynamicInfoContainer,
+            String allTestParams) {
+        super(codecName, mediaType, testFile, allTestParams);
         mHDRStaticInfoStream = hdrStaticInfoStream;
         mHDRStaticInfoContainer = hdrStaticInfoContainer;
-        mHDRDynamicInfoStream = HDRDynamicInfoStream;
-        mHDRDynamicInfoContainer = HDRDynamicInfoContainer;
+        mHDRDynamicInfoStream = hdrDynamicInfoStream;
+        mHDRDynamicInfoContainer = hdrDynamicInfoContainer;
     }
 
     @Parameterized.Parameters(name = "{index}({0}_{1})")

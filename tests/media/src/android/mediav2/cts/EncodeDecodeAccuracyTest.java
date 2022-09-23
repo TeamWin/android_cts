@@ -19,6 +19,8 @@ package android.mediav2.cts;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_Format32bitABGR2101010;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -130,8 +132,8 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
 
     public EncodeDecodeAccuracyTest(String encoder, String mime, int width, int height,
             int frameRate, int bitrate, int range, int standard, int transfer,
-            boolean useHighBitDepth) {
-        super(null, mime, null);
+            boolean useHighBitDepth, String allTestParams) {
+        super(null, mime, null, allTestParams);
         mCompName = encoder;
         mMime = mime;
         mWidth = width;
@@ -263,7 +265,7 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
             mLatency = mEncoder.getInputFormat().getInteger(MediaFormat.KEY_LATENCY);
         }
         mInpSurface = mEncoder.createInputSurface();
-        assertTrue("Surface is not valid", mInpSurface.isValid());
+        assertTrue("Surface is not valid \n" + mTestConfig + mTestEnv, mInpSurface.isValid());
         mEGLWindowInpSurface = new EGLWindowSurface(mInpSurface, mUseHighBitDepth);
         if (ENABLE_LOGS) {
             Log.v(LOG_TAG, "codec configured");
@@ -483,8 +485,8 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
         formats.add(format);
         ArrayList<String> listOfDecoders =
                 CodecDecoderTestBase.selectCodecs(mMime, formats, null, false);
-        assertTrue("no suitable codecs found for : " + format.toString(),
-                !listOfDecoders.isEmpty());
+        assertFalse("no suitable codecs found for : " + format + "\n" + mTestConfig + mTestEnv,
+                listOfDecoders.isEmpty());
         for (String decoder : listOfDecoders) {
             if (mUseHighBitDepth &&
                     !hasSupportForColorFormat(decoder, mMime, COLOR_FormatYUVP010) &&
@@ -566,13 +568,8 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
             mEncoder.reset();
             mEncoder.release();
             decodeElementaryStream(outputFormat);
-            assertTrue("output pts list is not Strictly increasing",
-                    mOutputBuffEnc.isPtsStrictlyIncreasing(-1));
-            assertTrue("input pts list and output pts list are not identical",
-                    mOutputBuff.isOutPtsListIdenticalToInpPtsList(false));
-            assertTrue("mOutputCnt != mInputCnt", mOutputCount == FRAMES_TO_ENCODE);
-            assertTrue("color difference exceeds allowed tolerance in " + mBadFrames + " out of " +
-                    FRAMES_TO_ENCODE + " frames", 0 == mBadFrames);
+            assertEquals("color difference exceeds allowed tolerance in " + mBadFrames + " out of "
+                    + FRAMES_TO_ENCODE + " frames \n" + mTestConfig + mTestEnv, 0, mBadFrames);
             if (mMuxOutput) new File(tmpPath).delete();
         }
     }

@@ -59,8 +59,8 @@ public class DecoderColorAspectsTest extends CodecDecoderTestBase {
     private ArrayList<String> mCheckESList;
 
     public DecoderColorAspectsTest(String decoderName, String mime, String testFile, int range,
-            int standard, int transferCurve, boolean canIgnoreColorBox) {
-        super(decoderName, mime, testFile);
+            int standard, int transferCurve, boolean canIgnoreColorBox, String allTestParams) {
+        super(decoderName, mime, testFile, allTestParams);
         mColorRange = range;
         mColorStandard = standard;
         mColorTransferCurve = transferCurve;

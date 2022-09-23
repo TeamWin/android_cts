@@ -34,7 +34,7 @@ import org.junit.Test;
 public class DeprecatedTargetSdkTest extends ActivityManagerTestBase {
 
     /** @see com.android.server.wm.DeprecatedTargetSdkVersionDialog */
-    private static final String DEPRECATED_TARGET_SDK_VERSION_DIALOG =
+    public static final String DEPRECATED_TARGET_SDK_VERSION_DIALOG =
             "DeprecatedTargetSdkVersionDialog";
 
     @After

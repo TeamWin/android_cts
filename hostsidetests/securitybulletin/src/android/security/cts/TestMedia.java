@@ -148,28 +148,6 @@ public class TestMedia extends NonRootSecurityTestCase {
     }
 
     /**
-     * b/132082342
-     * Vulnerability Behaviour: SIGSEGV in self
-     */
-    @Test
-    @AsbSecurityTest(cveBugId = 132082342)
-    public void testPocCVE_2019_2133() throws Exception {
-        AdbUtils.assumeHasNfc(getDevice());
-        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2133", null, getDevice());
-    }
-
-    /**
-     * b/132083376
-     * Vulnerability Behaviour: SIGSEGV in self
-     */
-    @Test
-    @AsbSecurityTest(cveBugId = 132083376)
-    public void testPocCVE_2019_2134() throws Exception {
-        AdbUtils.assumeHasNfc(getDevice());
-        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2134", null, getDevice());
-    }
-
-    /**
      * b/31470908
      * Vulnerability Behaviour: SIGSEGV in self
      */

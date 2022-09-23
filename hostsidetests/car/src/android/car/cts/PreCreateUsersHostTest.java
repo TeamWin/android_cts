@@ -108,6 +108,7 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
 
         if (afterReboot) {
             restartSystem();
+            waitForCarServiceReady();
 
             // Checks again
             assertAppInstalledForUser(APP_PKG, initialUserId);

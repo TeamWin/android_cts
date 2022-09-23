@@ -324,16 +324,20 @@ public class WindowManagerStateHelper extends WindowManagerState {
                         "keyguard window to dismiss"));
     }
 
+    boolean waitForWindowSurfaceShown(String windowName, boolean shown) {
+        final String message = windowName + "'s isWindowSurfaceShown to return " + shown;
+        return Condition.waitFor(new Condition<>(message, () -> {
+            computeState();
+            return isWindowSurfaceShown(windowName) == shown;
+        }).setRetryIntervalMs(200).setRetryLimit(20));
+    }
+
     void waitForWindowSurfaceDisappeared(String windowName) {
-        waitForWithAmState(state -> {
-            return !state.isWindowSurfaceShown(windowName);
-        }, windowName + "'s surface is disappeared");
+        waitForWindowSurfaceShown(windowName, false);
     }
 
     public void waitAndAssertWindowSurfaceShown(String windowName, boolean shown) {
-        assertTrue(
-                waitForWithAmState(state -> state.isWindowSurfaceShown(windowName) == shown,
-                        windowName + "'s  isWindowSurfaceShown to return " + shown));
+        assertTrue(waitForWindowSurfaceShown(windowName, shown));
     }
 
     /** A variant of waitForWithAmState with different parameter order for better Kotlin interop. */

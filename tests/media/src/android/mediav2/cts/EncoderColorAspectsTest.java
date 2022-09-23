@@ -94,8 +94,9 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
 
     public EncoderColorAspectsTest(String encoderName, String mime, int width, int height,
             int range, int standard, int transferCurve, boolean useHighBitDepth,
-            boolean surfaceMode) {
-        super(encoderName, mime, new int[]{64000}, new int[]{width}, new int[]{height});
+            boolean surfaceMode, String allTestParams) {
+        super(encoderName, mime, new int[]{64000}, new int[]{width}, new int[]{height},
+                allTestParams);
         mRange = range;
         mStandard = standard;
         mTransferCurve = transferCurve;
@@ -342,7 +343,6 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                 mCodec.release();
                 return;
             }
-            String log = String.format("format: %s \n codec: %s:: ", mConfigFormat, mCodecName);
             File tmpFile;
             int muxerFormat;
             if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP8) ||
@@ -360,7 +360,8 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
 
             if (mSurfaceMode) {
                 mInpSurface = mCodec.createInputSurface();
-                assertTrue("Surface is not valid", mInpSurface.isValid());
+                assertTrue("Surface is not valid \n" + mTestConfig + mTestEnv,
+                        mInpSurface.isValid());
                 mEGLWindowInpSurface = new EGLWindowSurface(mInpSurface, mUseHighBitDepth);
                 if (mCodec.getInputFormat().containsKey(MediaFormat.KEY_LATENCY)) {
                     mReviseLatency = true;
@@ -389,9 +390,6 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                 mInpSurface = null;
             }
 
-            assertTrue(log + "unexpected error", !mAsyncHandle.hasSeenError());
-            assertTrue(log + "no input sent", 0 != mInputCount);
-            assertTrue(log + "output received", 0 != mOutputCount);
             // verify if the out fmt contains color aspects as expected
             MediaFormat fmt = mCodec.getOutputFormat();
             validateColorAspects(fmt, mRange, mStandard, mTransferCurve);
@@ -401,10 +399,10 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
             // verify if the muxed file contains color aspects as expected
             MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
             String decoder = codecList.findDecoderForFormat(mConfigFormat);
-            assertNotNull("Device advertises support for encoding " + mConfigFormat.toString() +
-                    " but not decoding it", decoder);
+            assertNotNull("Device advertises support for encoding " + mConfigFormat
+                    + " but not decoding it. \n" + mTestConfig + mTestEnv, decoder);
             CodecDecoderTestBase cdtb = new CodecDecoderTestBase(decoder, mMime,
-                    tmpFile.getAbsolutePath());
+                    tmpFile.getAbsolutePath(), mAllTestParams);
             String parent = tmpFile.getParent();
             if (parent != null) parent += File.separator;
             else parent = "";

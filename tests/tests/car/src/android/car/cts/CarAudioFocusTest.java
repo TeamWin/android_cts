@@ -29,6 +29,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.car.Car;
 import android.car.media.CarAudioManager;
+import android.car.test.ApiCheckerRule.Builder;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
@@ -51,7 +52,7 @@ import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Instant Apps cannot get car related permissions")
-public final class CarAudioFocusTest extends CarApiTestBase {
+public final class CarAudioFocusTest extends AbstractCarTestCase {
 
     private static final String TAG = "CarAudioFocusTest.class.getSimpleName()";
     private static final long TEST_TIMING_TOLERANCE_MS = 100;
@@ -106,11 +107,15 @@ public final class CarAudioFocusTest extends CarApiTestBase {
     private AudioManager mAudioManager;
     private CarAudioManager mCarAudioManager;
 
+    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
     @Override
+    protected void configApiCheckerRule(Builder builder) {
+        Log.w(TAG, "Disabling API requirements check");
+        builder.disableAnnotationsCheck();
+    }
+
     @Before
     public void setUp() throws Exception {
-        super.setUp();
-
         mAudioManager = mContext.getSystemService(AudioManager.class);
         mCarAudioManager = (CarAudioManager) getCar().getCarManager(Car.AUDIO_SERVICE);
         assertWithMessage("CarAudioManager instance").that(mCarAudioManager).isNotNull();

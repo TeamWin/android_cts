@@ -19,14 +19,13 @@ package android.car.cts;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assert.fail;
 import static org.hamcrest.CoreMatchers.containsStringIgnoringCase;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
 import android.app.UiAutomation;
 import android.car.Car;
 import android.car.annotation.ApiRequirements;
-import android.car.test.ApiCheckerRule;
 import android.car.test.ApiCheckerRule.IgnoreInvalidApi;
 import android.car.test.ApiCheckerRule.SupportedVersionTest;
 import android.car.test.ApiCheckerRule.UnsupportedVersionTest;
@@ -49,7 +48,6 @@ import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -60,20 +58,14 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
+public final class CarServiceHelperServiceUpdatableTest extends AbstractCarTestCase {
 
     private static final String TAG = CarServiceHelperServiceUpdatableTest.class.getSimpleName();
     private static final int TIMEOUT_MS = 60_000;
     private static final int WAIT_TIME_MS = 1_000;
 
-    // TODO(b/242350638): move to super class (although it would need to call
-    // disableAnnotationsCheck()
-    @Rule
-    public final ApiCheckerRule mApiCheckerRule = new ApiCheckerRule.Builder().build();
-
     @Before
-    public void setUp() throws Exception {
-        super.setUp();
+    public void clearLogcat() throws Exception {
         SystemUtil.runShellCommand("logcat -b all -c");
     }
 

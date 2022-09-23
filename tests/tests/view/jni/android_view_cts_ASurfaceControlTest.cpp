@@ -25,6 +25,7 @@
 #include <android/looper.h>
 #include <android/native_window_jni.h>
 #include <android/surface_control.h>
+#include <android/surface_control_jni.h>
 #include <android/sync.h>
 #include <android/trace.h>
 #include <errno.h>
@@ -178,6 +179,10 @@ void SurfaceTransaction_delete(JNIEnv* /*env*/, jclass, jlong surfaceTransaction
             reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction));
 }
 
+jlong SurfaceTransaction_fromTransaction(JNIEnv* env, jclass, jobject transactionObj) {
+    return reinterpret_cast<jlong>(ASurfaceTransaction_fromTransaction(env, transactionObj));
+}
+
 void SurfaceTransaction_apply(JNIEnv* /*env*/, jclass, jlong surfaceTransaction) {
     ASurfaceTransaction_apply(
             reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction));
@@ -218,6 +223,10 @@ jlong SurfaceControl_create(JNIEnv* /*env*/, jclass, jlong parentSurfaceControlI
 
 void SurfaceControl_acquire(JNIEnv* /*env*/, jclass, jlong surfaceControl) {
     ASurfaceControl_acquire(reinterpret_cast<ASurfaceControl*>(surfaceControl));
+}
+
+jlong SurfaceControl_fromSurfaceControl(JNIEnv* env, jclass, jobject surfaceControlObj) {
+    return reinterpret_cast<jlong>(ASurfaceControl_fromSurfaceControl(env, surfaceControlObj));
 }
 
 void SurfaceControl_release(JNIEnv* /*env*/, jclass, jlong surfaceControl) {
@@ -644,12 +653,16 @@ jobject SurfaceControlTest_getFrameTimelines(JNIEnv* env, jclass) {
 static const JNINativeMethod JNI_METHODS[] = {
         {"nSurfaceTransaction_create", "()J", (void*)SurfaceTransaction_create},
         {"nSurfaceTransaction_delete", "(J)V", (void*)SurfaceTransaction_delete},
+        {"nSurfaceTransaction_fromTransaction", "(Landroid/view/SurfaceControl$Transaction;)J",
+         (void*)SurfaceTransaction_fromTransaction},
         {"nSurfaceTransaction_apply", "(J)V", (void*)SurfaceTransaction_apply},
         {"nSurfaceControl_createFromWindow", "(Landroid/view/Surface;)J",
          (void*)SurfaceControl_createFromWindow},
         {"nSurfaceControl_create", "(J)J", (void*)SurfaceControl_create},
         {"nSurfaceControl_acquire", "(J)V", (void*)SurfaceControl_acquire},
         {"nSurfaceControl_release", "(J)V", (void*)SurfaceControl_release},
+        {"nSurfaceControl_fromSurfaceControl", "(Landroid/view/SurfaceControl;)J",
+         (void*)SurfaceControl_fromSurfaceControl},
         {"nSurfaceTransaction_setSolidBuffer", "(JJIII)J",
          (void*)SurfaceTransaction_setSolidBuffer},
         {"nSurfaceTransaction_setBuffer", "(JJJ)V", (void*)SurfaceTransaction_setBuffer},

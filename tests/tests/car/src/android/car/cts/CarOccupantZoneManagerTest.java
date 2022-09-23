@@ -31,6 +31,7 @@ import android.car.Car;
 import android.car.CarOccupantZoneManager;
 import android.car.CarOccupantZoneManager.OccupantZoneConfigChangeListener;
 import android.car.CarOccupantZoneManager.OccupantZoneInfo;
+import android.car.test.ApiCheckerRule.Builder;
 import android.hardware.display.DisplayManager;
 import android.os.Process;
 import android.os.UserHandle;
@@ -56,7 +57,7 @@ import java.util.List;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Test relies on other server to connect to.")
-public class CarOccupantZoneManagerTest extends CarApiTestBase {
+public final class CarOccupantZoneManagerTest extends AbstractCarTestCase {
 
     private static String TAG = CarOccupantZoneManagerTest.class.getSimpleName();
 
@@ -68,10 +69,15 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
 
     private UiAutomation mUiAutomation;
 
+    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
     @Override
+    protected void configApiCheckerRule(Builder builder) {
+        Log.w(TAG, "Disabling API requirements check");
+        builder.disableAnnotationsCheck();
+    }
+
     @Before
     public void setUp() throws Exception {
-        super.setUp();
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mCarOccupantZoneManager =
                 (CarOccupantZoneManager) getCar().getCarManager(Car.CAR_OCCUPANT_ZONE_SERVICE);
@@ -97,7 +103,7 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.CarOccupantZoneManager#getDisplayType"})
+    @ApiTest(apis = {"android.car.CarOccupantZoneManager#getDisplayType(Display)"})
     public void testGetDisplayType_mainDisplay() {
         DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
         Display defaultDisplay = displayManager.getDisplay(DEFAULT_DISPLAY);
@@ -107,7 +113,7 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.CarOccupantZoneManager#getUserForOccupant"})
+    @ApiTest(apis = {"android.car.CarOccupantZoneManager#getUserForOccupant(OccupantZoneInfo)"})
     public void testDriverUserIdMustBeCurrentUser() {
         assumeDriverZone();
 
@@ -120,7 +126,7 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
 
     @Test
     @ApiTest(apis = {"android.car.CarOccupantZoneManager#hasDriverZone",
-            "android.car.CarOccupantZoneManager#hasPassengerZone"})
+            "android.car.CarOccupantZoneManager#hasPassengerZones"})
     public void testHasDriverOrPassengerZone() {
         boolean hasDriverZone = false;
         boolean hasPassengerZone = false;
@@ -182,7 +188,7 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.CarOccupantZoneManager#getMyOccupantZoneInfo"})
+    @ApiTest(apis = {"android.car.CarOccupantZoneManager#getMyOccupantZone"})
     public void testMyZone() {
         OccupantZoneInfo info = mCarOccupantZoneManager.getMyOccupantZone();
         assumeTrue("Test user has no zone", info != null);
@@ -209,7 +215,9 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.CarOccupantZoneManager#getAllDisplaysForOccupant"})
+    @ApiTest(apis = {
+            "android.car.CarOccupantZoneManager#getAllDisplaysForOccupant(OccupantZoneInfo)"
+    })
     public void testDriverHasMainDisplay() {
         assumeDriverZone();
 
@@ -219,7 +227,9 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.CarOccupantZoneManager#getDisplayForOccupant"})
+    @ApiTest(apis = {
+            "android.car.CarOccupantZoneManager#getDisplayForOccupant(OccupantZoneInfo, int)"
+    })
     public void testDriverDisplayIdIsDefaultDisplay() {
         assumeDriverZone();
 
@@ -227,8 +237,8 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
     }
 
     @Test
-    @ApiTest(apis = {
-            "android.car.CarOccupantZoneManager#registerOccupantZoneConfigChangeListener"})
+    @ApiTest(apis = {"android.car.CarOccupantZoneManager"
+            + "#registerOccupantZoneConfigChangeListener(OccupantZoneConfigChangeListener)"})
     public void testCanRegisterOccupantZoneConfigChangeListener() {
         OccupantZoneConfigChangeListener occupantZoneConfigChangeListener
                 = createOccupantZoneConfigChangeListener();
@@ -240,7 +250,8 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.CarOccupantZoneManager#assignVisibleUserToOccupantZone"})
+    @ApiTest(apis = {"android.car.CarOccupantZoneManager"
+            + "#assignVisibleUserToOccupantZone(OccupantZoneInfo, UserHandle, int)"})
     public void testReassigningAlreadyAssignedZone() {
         mUiAutomation.adoptShellPermissionIdentity(Car.PERMISSION_MANAGE_OCCUPANT_ZONE);
 
@@ -281,7 +292,8 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
     // public void testAssignAndSwitch()
 
     @Test
-    @ApiTest(apis = {"android.car.CarOccupantZoneManager#assignVisibleUserToOccupantZone"})
+    @ApiTest(apis = {"android.car.CarOccupantZoneManager"
+            + "#assignVisibleUserToOccupantZone(OccupantZoneInfo, UserHandle, int)"})
     public void testZoneAssignmentWithoutPermission() {
         assertThrows(SecurityException.class, () ->
                 mCarOccupantZoneManager.assignVisibleUserToOccupantZone(mAllZones.get(0),
@@ -289,7 +301,8 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.CarOccupantZoneManager#assignVisibleUserToOccupantZone"})
+    @ApiTest(apis = {"android.car.CarOccupantZoneManager"
+            + "#assignVisibleUserToOccupantZone(OccupantZoneInfo, UserHandle, int)"})
     public void testAssignInvalidUser() {
         mUiAutomation.adoptShellPermissionIdentity(Car.PERMISSION_MANAGE_OCCUPANT_ZONE);
 
@@ -304,7 +317,7 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.CarOccupantZoneManager#unassignOccupantZone"})
+    @ApiTest(apis = {"android.car.CarOccupantZoneManager#unassignOccupantZone(OccupantZoneInfo)"})
     public void testUnassignDriverZone() {
         assumeDriverZone();
 
@@ -319,7 +332,7 @@ public class CarOccupantZoneManagerTest extends CarApiTestBase {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.CarOccupantZoneManager#unassignOccupantZone"})
+    @ApiTest(apis = {"android.car.CarOccupantZoneManager#unassignOccupantZone(OccupantZoneInfo)"})
     public void testUnassignPassengerZones() {
         assumeTrue("No passenger zone", mCarOccupantZoneManager.hasPassengerZones());
 

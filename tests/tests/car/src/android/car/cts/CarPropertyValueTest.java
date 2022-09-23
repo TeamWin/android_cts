@@ -23,9 +23,11 @@ import android.car.VehicleAreaType;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
 import android.car.hardware.property.CarPropertyManager;
+import android.car.test.ApiCheckerRule.Builder;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
+import android.util.Log;
 import android.util.SparseArray;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -44,14 +46,23 @@ import java.util.List;
 @RequiresDevice
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Instant apps cannot get car related permissions.")
-public class CarPropertyValueTest extends CarApiTestBase {
+public final class CarPropertyValueTest extends AbstractCarTestCase {
+
+    private static final String TAG = CarPropertyValueTest.class.getSimpleName();
+
     private CarPropertyManager mCarPropertyManager;
-    private List<CarPropertyValue> mCarPropertyValues = new ArrayList<>();
-    private SparseArray<CarPropertyConfig> mPropIdToConfig = new SparseArray<>();
+    private final List<CarPropertyValue> mCarPropertyValues = new ArrayList<>();
+    private final SparseArray<CarPropertyConfig> mPropIdToConfig = new SparseArray<>();
+
+    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
+    @Override
+    protected void configApiCheckerRule(Builder builder) {
+        Log.w(TAG, "Disabling API requirements check");
+        builder.disableAnnotationsCheck();
+    }
 
     @Before
     public void setUp() throws Exception {
-        super.setUp();
         mCarPropertyManager = (CarPropertyManager) getCar().getCarManager(Car.PROPERTY_SERVICE);
         getCarPropertyValues();
     }

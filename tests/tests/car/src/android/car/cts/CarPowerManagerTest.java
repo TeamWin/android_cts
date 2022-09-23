@@ -23,8 +23,10 @@ import android.car.hardware.power.CarPowerManager;
 import android.car.hardware.power.CarPowerPolicy;
 import android.car.hardware.power.CarPowerPolicyFilter;
 import android.car.hardware.power.PowerComponent;
+import android.car.test.ApiCheckerRule.Builder;
 import android.platform.test.annotations.AppModeFull;
 import android.test.suitebuilder.annotation.SmallTest;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -40,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 
 @SmallTest
 @AppModeFull(reason = "Instant Apps cannot get car related permissions")
-public final class CarPowerManagerTest extends CarApiTestBase {
+public final class CarPowerManagerTest extends AbstractCarTestCase {
     private static String TAG = CarPowerManagerTest.class.getSimpleName();
     private static final int LISTENER_WAIT_TIME_MS = 1000;
     private static final int NO_WAIT = 0;
@@ -49,10 +51,15 @@ public final class CarPowerManagerTest extends CarApiTestBase {
     private String mInitialPowerPolicyId;
     private final Executor mExecutor = mContext.getMainExecutor();
 
+    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
     @Override
+    protected void configApiCheckerRule(Builder builder) {
+        Log.w(TAG, "Disabling API requirements check");
+        builder.disableAnnotationsCheck();
+    }
+
     @Before
     public void setUp() throws Exception {
-        super.setUp();
         mCarPowerManager = (CarPowerManager) getCar().getCarManager(Car.POWER_SERVICE);
         mInitialPowerPolicyId = mCarPowerManager.getCurrentPowerPolicy().getPolicyId();
     }

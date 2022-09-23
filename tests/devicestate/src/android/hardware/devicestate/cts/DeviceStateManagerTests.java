@@ -36,6 +36,8 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.hardware.devicestate.DeviceStateManager;
 import android.hardware.devicestate.DeviceStateRequest;
+import android.server.wm.jetpack.utils.ExtensionUtil;
+import android.server.wm.jetpack.utils.Version;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -57,6 +59,9 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
     public static final int TIMEOUT = 2000;
 
     private static final int INVALID_DEVICE_STATE = -1;
+
+    /** Vendor extension version. Some API behaviors are only available in newer version. */
+    private static final Version WM_EXTENSION_VERSION = ExtensionUtil.getExtensionVersion();
 
     /**
      * Tests that {@link DeviceStateManager#getSupportedStates()} returns at least one state and
@@ -92,11 +97,28 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
             final DeviceStateRequest request
                     = DeviceStateRequest.newBuilder(supportedStates[i]).build();
 
-            runWithRequestActive(request, () -> {
+            runWithRequestActive(request, false, () -> {
                 verify(callback, atLeastOnce()).onStateChanged(intAgumentCaptor.capture());
                 assertEquals(intAgumentCaptor.getValue().intValue(), request.getState());
             });
         }
+    }
+
+    @Test
+    public void testRequestBaseState() throws Throwable {
+        assumeExtensionVersionAtLeast2();
+        final ArgumentCaptor<Integer> intAgumentCaptor = ArgumentCaptor.forClass(Integer.class);
+        final DeviceStateManager.DeviceStateCallback callback =
+                mock(DeviceStateManager.DeviceStateCallback.class);
+        final DeviceStateManager manager = getDeviceStateManager();
+
+        manager.registerCallback(Runnable::run, callback);
+
+        DeviceStateRequest request = DeviceStateRequest.newBuilder(0).build();
+        runWithRequestActive(request, true, () -> {
+            verify(callback, atLeastOnce()).onStateChanged(intAgumentCaptor.capture());
+            assertEquals(intAgumentCaptor.getValue().intValue(), request.getState());
+        });
     }
 
     /**
@@ -462,9 +484,7 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
         final DeviceStateManager manager = getDeviceStateManager();
         final int[] states = manager.getSupportedStates();
         final DeviceStateRequest request = DeviceStateRequest.newBuilder(states[0]).build();
-        runWithRequestActive(request, () -> {
-            manager.cancelStateRequest();
-        });
+        runWithRequestActive(request, false, manager::cancelStateRequest);
     }
 
     /**
@@ -496,6 +516,12 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
             final int state = supportedStates[i];
             assertValidState(state);
         }
+    }
+
+    /** For API changes that are introduced together with WM Extensions version 2. */
+    private static void assumeExtensionVersionAtLeast2() {
+        // TODO(b/232476698) Remove in the next Android release.
+        assumeTrue(WM_EXTENSION_VERSION.getMajor() >= 2);
     }
 
     private class StateTrackingCallback implements  DeviceStateManager.DeviceStateCallback {

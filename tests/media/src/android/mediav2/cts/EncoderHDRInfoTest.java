@@ -55,11 +55,11 @@ public class EncoderHDRInfoTest extends HDREncoderTestBase {
     private Map<Integer, String> mHDRDynamicInfo;
 
     public EncoderHDRInfoTest(String encoderName, String mediaType, int bitrate,
-                              int width, int height, String HDRStaticInfo,
-                              Map<Integer, String> HDRDynamicInfo) {
-        super(encoderName, mediaType, bitrate, width, height);
-        mHDRStaticInfo = HDRStaticInfo;
-        mHDRDynamicInfo = HDRDynamicInfo;
+            int width, int height, String hdrStaticInfo, Map<Integer, String> hdrDynamicInfo,
+            String allTestParams) {
+        super(encoderName, mediaType, bitrate, width, height, allTestParams);
+        mHDRStaticInfo = hdrStaticInfo;
+        mHDRDynamicInfo = hdrDynamicInfo;
     }
 
     @Parameterized.Parameters(name = "{index}({0}_{1})")

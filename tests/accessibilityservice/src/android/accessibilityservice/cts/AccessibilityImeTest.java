@@ -38,6 +38,7 @@ import android.app.UiAutomation;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.LargeTest;
+import android.platform.test.annotations.Presubmit;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.inputmethod.EditorInfo;
@@ -70,6 +71,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
+@Presubmit
 public class AccessibilityImeTest {
     private static final String LOG_TAG = "AccessibilityImeTest";
     private static Instrumentation sInstrumentation;

@@ -67,6 +67,7 @@ import android.app.UiAutomation;
 import android.graphics.Rect;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.text.TextUtils;
 import android.util.Log;
@@ -116,6 +117,7 @@ import java.util.function.Function;
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
+@Presubmit
 public class AccessibilityWindowQueryTest {
     private static final String LOG_TAG = "AccessibilityWindowQueryTest";
     private static String CONTENT_VIEW_RES_NAME =

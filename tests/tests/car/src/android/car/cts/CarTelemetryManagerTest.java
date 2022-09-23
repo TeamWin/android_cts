@@ -27,9 +27,11 @@ import android.car.Car;
 import android.car.VehiclePropertyIds;
 import android.car.telemetry.CarTelemetryManager;
 import android.car.telemetry.TelemetryProto;
+import android.car.test.ApiCheckerRule.Builder;
 import android.os.PersistableBundle;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.ArrayMap;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -46,7 +48,9 @@ import java.util.concurrent.Semaphore;
 
 @RequiresDevice
 @RunWith(AndroidJUnit4.class)
-public class CarTelemetryManagerTest extends CarApiTestBase {
+public final class CarTelemetryManagerTest extends AbstractCarTestCase {
+
+    private static final String TAG = CarTelemetryManagerTest.class.getSimpleName();
 
     /** Test MetricsConfig that does nothing. */
     private static final TelemetryProto.MetricsConfig TEST_CONFIG =
@@ -101,9 +105,15 @@ public class CarTelemetryManagerTest extends CarApiTestBase {
     private CarTelemetryManager mCarTelemetryManager;
     private UiAutomation mUiAutomation;
 
+    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
+    @Override
+    protected void configApiCheckerRule(Builder builder) {
+        Log.w(TAG, "Disabling API requirements check");
+        builder.disableAnnotationsCheck();
+    }
+
     @Before
     public void setUp() throws Exception {
-        super.setUp();
         assumeTrue("CarTelemetryService is not enabled, skipping test",
                 getCar().isFeatureEnabled(Car.CAR_TELEMETRY_SERVICE));
 

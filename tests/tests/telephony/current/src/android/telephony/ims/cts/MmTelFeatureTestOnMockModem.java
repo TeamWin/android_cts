@@ -178,15 +178,6 @@ public class MmTelFeatureTestOnMockModem {
     public static void afterAllTests() throws Exception {
         if (VDBG) Log.d(LOG_TAG, "afterAllTests");
 
-        // Rebind all interfaces which is binding to MockModemService to default.
-        if (sMockModemManager != null) {
-            //assertNotNull(sMockModemManager);
-            assertTrue(sMockModemManager.disconnectMockModemService());
-            sMockModemManager = null;
-
-            TimeUnit.SECONDS.sleep(WAIT_SIM_STATE_TIMEOUT_SEC);
-        }
-
         // Restore all ImsService configurations that existed before the test.
         if (sServiceConnector != null) {
             sServiceConnector.disconnectServices();
@@ -200,6 +191,15 @@ public class MmTelFeatureTestOnMockModem {
         if (sReceiver != null) {
             InstrumentationRegistry.getInstrumentation().getContext().unregisterReceiver(sReceiver);
             sReceiver = null;
+        }
+
+        // Rebind all interfaces which is binding to MockModemService to default.
+        if (sMockModemManager != null) {
+            //assertNotNull(sMockModemManager);
+            assertTrue(sMockModemManager.disconnectMockModemService());
+            sMockModemManager = null;
+
+            TimeUnit.SECONDS.sleep(WAIT_SIM_STATE_TIMEOUT_SEC);
         }
     }
 

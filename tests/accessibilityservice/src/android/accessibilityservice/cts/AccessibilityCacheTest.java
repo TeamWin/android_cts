@@ -34,6 +34,8 @@ import android.accessibilityservice.cts.activities.AccessibilityCacheActivity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.FlakyTest;
+import android.platform.test.annotations.Presubmit;
 import android.text.TextUtils;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
@@ -57,6 +59,7 @@ import java.util.List;
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
+@Presubmit
 public class AccessibilityCacheTest {
     private static Instrumentation sInstrumentation;
     private static UiAutomation sUiAutomation;
@@ -237,6 +240,7 @@ public class AccessibilityCacheTest {
      * exception.
      */
     @Test
+    @FlakyTest
     public void testRequest_withMultiplePrefetchingStrategies_throwsException() {
         // Tree is FrameLayout with TextView and LinearLayout children.
         // The LinearLayout has a TextView child.

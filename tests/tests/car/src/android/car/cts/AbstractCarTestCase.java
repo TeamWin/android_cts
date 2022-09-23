@@ -22,16 +22,21 @@ import android.app.UiAutomation;
 import android.car.Car;
 import android.car.FuelType;
 import android.car.PortLocationType;
+import android.car.test.AbstractExpectableTestCase;
+import android.car.test.ApiCheckerRule;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
+import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -41,20 +46,35 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-public abstract class CarApiTestBase {
+/**
+ * Base class for tests that don't need to connect to a {@link android.car.Car} object.
+ *
+ * <p>For tests that don't need a {@link android.car.Car} object, use
+ * {@link AbstractCarLessTestCase} instead.
+ */
+abstract class AbstractCarTestCase extends AbstractExpectableTestCase {
+
+    private static final String TAG = AbstractCarTestCase.class.getSimpleName();
 
     protected static final long DEFAULT_WAIT_TIMEOUT_MS = 1000;
 
     // Enums in FuelType
-    final static List<Integer> EXPECTED_FUEL_TYPES =
+    protected static final List<Integer> EXPECTED_FUEL_TYPES =
             Arrays.asList(FuelType.UNKNOWN, FuelType.UNLEADED, FuelType.LEADED, FuelType.DIESEL_1,
                     FuelType.DIESEL_2, FuelType.BIODIESEL, FuelType.E85, FuelType.LPG, FuelType.CNG,
                     FuelType.LNG, FuelType.ELECTRIC, FuelType.HYDROGEN, FuelType.OTHER);
     // Enums in PortLocationType
-    final static List<Integer> EXPECTED_PORT_LOCATIONS =
+    protected static final List<Integer> EXPECTED_PORT_LOCATIONS =
             Arrays.asList(PortLocationType.UNKNOWN, PortLocationType.FRONT_LEFT,
                     PortLocationType.FRONT_RIGHT, PortLocationType.REAR_RIGHT,
                     PortLocationType.REAR_LEFT, PortLocationType.FRONT, PortLocationType.REAR);
+
+    // TODO(b/242350638): temporary hack to allow subclasses to disable checks - should be removed
+    // when not needed anymore
+    private final ApiCheckerRule.Builder mApiCheckerRuleBuilder = new ApiCheckerRule.Builder();
+
+    @Rule
+    public final ApiCheckerRule mApiCheckerRule;
 
     protected final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
@@ -63,17 +83,32 @@ public abstract class CarApiTestBase {
 
     private Car mCar;
 
+    // TODO(b/242350638): temporary hack to allow subclasses to disable checks - should be removed
+    // when not needed anymore
+    protected AbstractCarTestCase() {
+        configApiCheckerRule(mApiCheckerRuleBuilder);
+        mApiCheckerRule = mApiCheckerRuleBuilder.build();
+    }
+
+    // TODO(b/242350638): temporary hack to allow subclasses to disable checks - should be removed
+    // when not needed anymore
+    protected void configApiCheckerRule(ApiCheckerRule.Builder builder) {
+        Log.v(TAG, "Good News, Everyone! Class " + getClass()
+                + " doesn't override configApiCheckerRule()");
+    }
+
     protected void assertMainThread() {
         assertWithMessage("Looper.getMainLooper().isCurrentThread()")
                 .that(Looper.getMainLooper().isCurrentThread()).isTrue();
     }
 
-    protected void setUp() throws Exception {
+    @Before
+    public final void createCar() throws Exception {
         mCar = Car.createCar(mContext);
     }
 
     @After
-    public void disconnectCar() throws Exception {
+    public final void disconnectCar() throws Exception {
         if (mCar != null) {
             mCar.disconnect();
         }

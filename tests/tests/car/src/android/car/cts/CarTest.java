@@ -23,12 +23,9 @@ import android.car.Car;
 import android.car.CarInfoManager;
 import android.car.CarVersion;
 import android.car.PlatformVersion;
-import android.car.test.AbstractExpectableTestCase;
-import android.car.test.ApiCheckerRule;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ServiceConnection;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.SystemProperties;
@@ -42,11 +39,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
-import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
-import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -57,13 +51,7 @@ import java.util.concurrent.TimeUnit;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Test relies on other server to connect to.")
-public class CarTest extends AbstractExpectableTestCase {
-    @ClassRule
-    public static final RequiredFeatureRule sRequiredFeatureRule = new RequiredFeatureRule(
-            PackageManager.FEATURE_AUTOMOTIVE);
-
-    @Rule
-    public final ApiCheckerRule mApiCheckerRule = new ApiCheckerRule.Builder().build();
+public class CarTest extends AbstractCarTestCase {
 
     private static final long DEFAULT_WAIT_TIMEOUT_MS = 2000;
 

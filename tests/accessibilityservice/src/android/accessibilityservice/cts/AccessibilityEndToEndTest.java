@@ -75,6 +75,7 @@ import android.graphics.Region;
 import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.text.TextUtils;
 import android.util.Log;
@@ -124,6 +125,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @RunWith(AndroidJUnit4.class)
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
+@Presubmit
 public class AccessibilityEndToEndTest {
 
     private static final String LOG_TAG = "AccessibilityEndToEndTest";
@@ -178,7 +180,6 @@ public class AccessibilityEndToEndTest {
     }
 
     @MediumTest
-    @Presubmit
     @Test
     @ApiTest(apis = {"android.view.View#setSelected",
             "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
@@ -224,7 +225,6 @@ public class AccessibilityEndToEndTest {
     }
 
     @MediumTest
-    @Presubmit
     @Test
     @ApiTest(apis = {"android.view.View#performClick",
             "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
@@ -265,7 +265,6 @@ public class AccessibilityEndToEndTest {
     }
 
     @MediumTest
-    @Presubmit
     @Test
     @ApiTest(apis = {"android.view.View#performLongClick",
             "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
@@ -306,7 +305,6 @@ public class AccessibilityEndToEndTest {
     }
 
     @MediumTest
-    @Presubmit
     @Test
     @ApiTest(apis = {"android.view.View#requestFocus",
             "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
@@ -333,7 +331,6 @@ public class AccessibilityEndToEndTest {
     }
 
     @MediumTest
-    @Presubmit
     @Test
     @ApiTest(apis = {"android.text.Editable#replace",
             "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
@@ -406,7 +403,6 @@ public class AccessibilityEndToEndTest {
     }
 
     @MediumTest
-    @Presubmit
     @Test
     @ApiTest(apis = {"android.view.ViewManager#addView",
             "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
@@ -447,7 +443,6 @@ public class AccessibilityEndToEndTest {
     }
 
     @MediumTest
-    @Presubmit
     @Test
     @ApiTest(apis = {"android.app.Activity#finish",
             "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
@@ -470,7 +465,6 @@ public class AccessibilityEndToEndTest {
     @MediumTest
     @AppModeFull
     @SuppressWarnings("deprecation")
-    @Presubmit
     @Test
     @ApiTest(apis = {"android.app.NotificationManager#notify",
             "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
@@ -625,7 +619,6 @@ public class AccessibilityEndToEndTest {
 
     @AppModeFull
     @MediumTest
-    @Presubmit
     @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo#getPackageName"})
     public void testPackageNameCannotBeFakedAppWidget() throws Exception {
@@ -705,7 +698,6 @@ public class AccessibilityEndToEndTest {
     }
 
     @MediumTest
-    @Presubmit
     @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo#isHeading"})
     public void testViewHeadingReportedToAccessibility() throws Exception {
@@ -733,7 +725,6 @@ public class AccessibilityEndToEndTest {
     }
 
     @MediumTest
-    @Presubmit
     @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo#getTooltipText"})
     public void testTooltipTextReportedToAccessibility() {
@@ -987,6 +978,7 @@ public class AccessibilityEndToEndTest {
     @Test
     @ApiTest(apis = {"android.view.View#onHoverEvent",
             "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
+    @FlakyTest
     public void testTouchDelegateCoverParentWithEbt_HoverChildAndBack_FocusTargetAgain()
             throws Throwable {
         mActivity.waitForEnterAnimationComplete();

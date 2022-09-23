@@ -23,11 +23,13 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
+import android.car.test.ApiCheckerRule.Builder;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.accessibility.AccessibilityManager;
 
 import androidx.annotation.NonNull;
@@ -42,7 +44,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
-public final class CarRotaryImeTest {
+public final class CarRotaryImeTest extends AbstractCarTestCase {
+
+    private static final String TAG = CarRotaryImeTest.class.getSimpleName();
+
     private static final ComponentName ROTARY_SERVICE_COMPONENT_NAME =
             ComponentName.unflattenFromString("com.android.car.rotary/.RotaryService");
 
@@ -53,6 +58,13 @@ public final class CarRotaryImeTest {
     private final ContentResolver mContentResolver = mContext.getContentResolver();
     private final AccessibilityManager mAccessibilityManager =
             mContext.getSystemService(AccessibilityManager.class);
+
+    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
+    @Override
+    protected void configApiCheckerRule(Builder builder) {
+        Log.w(TAG, "Disabling API requirements check");
+        builder.disableAnnotationsCheck();
+    }
 
     /**
      * Tests that, if a rotary input method is specified via the {@code rotary_input_method} string

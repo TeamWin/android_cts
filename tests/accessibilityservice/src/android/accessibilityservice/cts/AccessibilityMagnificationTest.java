@@ -50,6 +50,8 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.FlakyTest;
+import android.platform.test.annotations.Presubmit;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.ViewGroup;
@@ -84,6 +86,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
+@Presubmit
 public class AccessibilityMagnificationTest {
 
     /** Maximum timeout when waiting for a magnification callback. */
@@ -236,6 +239,7 @@ public class AccessibilityMagnificationTest {
     }
 
     @Test
+    @FlakyTest
     public void testSetConfigWithDefaultModeAndCenter_expectedConfig() throws Exception {
         final MagnificationController controller = mService.getMagnificationController();
         final WindowManager windowManager = mInstrumentation.getContext().getSystemService(

@@ -46,6 +46,12 @@
         <option name="run-command" value="appops set android.packageinstaller.install.cts REQUEST_INSTALL_PACKAGES allow" />
     </target_preparer>
 
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.SettingsPreparer">
+        <option name="device-setting" value="hide_error_dialogs"/>
+        <option name="setting-type" value="global"/>
+        <option name="set-value" value="1"/>
+    </target_preparer>
+
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.packageinstaller.install.cts" />
         <option name="runtime-hint" value="1m" />

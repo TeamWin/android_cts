@@ -23,29 +23,28 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
-import android.os.Environment;
+import android.os.Build;
 import android.os.IBinder;
+import android.os.MemoryFile;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.RemoteException;
-import android.os.MemoryFile;
 import android.os.SystemClock;
-import android.os.Build;
-import android.util.Log;
 import android.test.AndroidTestCase;
+import android.util.Log;
 
 import com.android.compatibility.common.util.CpuFeatures;
+
 import com.google.common.util.concurrent.AbstractFuture;
 
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Date;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.Date;
 
 public class SeccompTest extends AndroidTestCase {
     final static String TAG = "SeccompTest";
@@ -321,7 +320,7 @@ public class SeccompTest extends AndroidTestCase {
                         }
                     }
                 });
-                thread.run();
+                thread.start();
                 try {
                     thread.join();
                 } catch (InterruptedException e) {

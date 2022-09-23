@@ -17,7 +17,6 @@
 package android.view.cts;
 
 import static android.server.wm.ActivityManagerTestBase.isTablet;
-import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -3909,17 +3908,8 @@ public class ViewTest {
         View view = new View(mActivity);
         // mAttachInfo is null
         view.getWindowVisibleDisplayFrame(outRect);
-
-        // When mAttachInfo is null, getWindowVisibleDisplayFrame() returns the entire display
-        // frame. But mActivity could be running in multi window mode or in a TaskDisplayArea which
-        // is not full-screen.
-        // In order to get the full display frame instead of the TaskDisplayArea frame, the code
-        // here gets the maximumWindowMetrics from a window of TYPE_APPLICATION_OVERLAY.
-        final WindowManager windowManager = mActivity
-                .createWindowContext(TYPE_APPLICATION_OVERLAY, /* options= */ null)
-                .getSystemService(WindowManager.class);
+        final WindowManager windowManager = mActivity.getWindowManager();
         final WindowMetrics metrics = windowManager.getMaximumWindowMetrics();
-
         final Insets insets =
                 metrics.getWindowInsets().getInsets(
                         WindowInsets.Type.navigationBars() | WindowInsets.Type.displayCutout());

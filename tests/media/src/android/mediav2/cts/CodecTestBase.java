@@ -23,6 +23,7 @@ import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_HdrEditing;
 import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -60,6 +61,8 @@ import com.android.compatibility.common.util.MediaUtils;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -92,12 +95,14 @@ class CodecAsyncHandler extends MediaCodec.Callback {
     private MediaFormat mOutFormat;
     private boolean mSignalledOutFormatChanged;
     private volatile boolean mSignalledError;
+    private String mErrorMsg;
 
     CodecAsyncHandler() {
         mCbInputQueue = new LinkedList<>();
         mCbOutputQueue = new LinkedList<>();
         mSignalledError = false;
         mSignalledOutFormatChanged = false;
+        mErrorMsg = "";
     }
 
     void clearQueues() {
@@ -111,6 +116,7 @@ class CodecAsyncHandler extends MediaCodec.Callback {
         clearQueues();
         mOutFormat = null;
         mSignalledOutFormatChanged = false;
+        mErrorMsg = "";
         mSignalledError = false;
     }
 
@@ -136,6 +142,8 @@ class CodecAsyncHandler extends MediaCodec.Callback {
     @Override
     public void onError(@NonNull MediaCodec codec, MediaCodec.CodecException e) {
         mLock.lock();
+        mErrorMsg = "###################  Async Error Details  #####################\n";
+        mErrorMsg += e.getMessage() + "\n";
         mSignalledError = true;
         mCondition.signalAll();
         mLock.unlock();
@@ -146,7 +154,7 @@ class CodecAsyncHandler extends MediaCodec.Callback {
     public void onOutputFormatChanged(@NonNull MediaCodec codec, @NonNull MediaFormat format) {
         mOutFormat = format;
         mSignalledOutFormatChanged = true;
-        Log.i(LOG_TAG, "Output format changed: " + format.toString());
+        Log.i(LOG_TAG, "Output format changed: " + format);
     }
 
     void setCallBack(MediaCodec codec, boolean isCodecInAsyncMode) {
@@ -219,6 +227,10 @@ class CodecAsyncHandler extends MediaCodec.Callback {
         return mSignalledError;
     }
 
+    String getErrMsg() {
+        return mErrorMsg;
+    }
+
     boolean hasOutputFormatChanged() {
         return mSignalledOutFormatChanged;
     }
@@ -236,6 +248,7 @@ class OutputManager {
     private CRC32 mCrc32UsingBuffer;
     private ArrayList<Long> inpPtsList;
     private ArrayList<Long> outPtsList;
+    private String mErrorLogs;
 
     OutputManager() {
         memory = new byte[1024];
@@ -244,6 +257,7 @@ class OutputManager {
         mCrc32UsingBuffer = new CRC32();
         inpPtsList = new ArrayList<>();
         outPtsList = new ArrayList<>();
+        mErrorLogs = "###################       Error Details         #####################\n";
     }
 
     void saveInPTS(long pts) {
@@ -263,10 +277,58 @@ class OutputManager {
             if (lastPts < outPtsList.get(i)) {
                 lastPts = outPtsList.get(i);
             } else {
-                Log.e(LOG_TAG, "Timestamp ordering check failed: last timestamp: " + lastPts +
-                        " current timestamp:" + outPtsList.get(i));
+                StringBuilder msg = new StringBuilder(1024);
+                msg.append("Frame indices around which timestamp values decreased :- \n");
+                for (int j = Math.max(0, i - 3); j < Math.min(outPtsList.size(), i + 3); j++) {
+                    if (j == 0) {
+                        msg.append(String.format("pts of frame idx -1 is %d \n", lastPts));
+                    }
+                    msg.append(String.format("pts of frame idx %d is %d \n", j, outPtsList.get(j)));
+                }
+                mErrorLogs += "Timestamp values are not strictly increasing. \n";
+                mErrorLogs += msg.toString();
                 res = false;
                 break;
+            }
+        }
+        return res;
+    }
+
+    boolean arePtsListsIdentical(ArrayList<Long> refList, ArrayList<Long> testList,
+            StringBuilder msg) {
+        boolean res = true;
+        if (refList.size() != testList.size()) {
+            msg.append("Reference and test timestamps list sizes are not identical \n");
+            msg.append(String.format("reference pts list size is %d \n", refList.size()));
+            msg.append(String.format("test pts list size is %d \n", testList.size()));
+            res = false;
+        }
+        if (!res || !refList.equals(testList)) {
+            res = false;
+            ArrayList<Long> refCopyList = new ArrayList<>(refList);
+            ArrayList<Long> testCopyList = new ArrayList<>(testList);
+            refCopyList.removeAll(testList);
+            testCopyList.removeAll(refList);
+            if (refCopyList.size() != 0) {
+                msg.append("Some of the frame/access-units present in ref list are not present "
+                        + "in test list. Possibly due to frame drops. \n");
+                msg.append("List of timestamps that are dropped by the component :- \n");
+                msg.append("pts :- [[ ");
+                for (int i = 0; i < refCopyList.size(); i++) {
+                    msg.append(String.format("{ %d us }, ", refCopyList.get(i)));
+                }
+                msg.append(" ]]\n");
+            }
+            if (testCopyList.size() != 0) {
+                msg.append("Test list contains frame/access-units that are not present in"
+                        + " ref list, Possible due to duplicate transmissions. \n");
+                msg.append("List of timestamps that are additionally present in test list"
+                        + " are :- \n");
+                msg.append("pts :- [[ ");
+                for (int i = 0; i < testCopyList.size(); i++) {
+                    msg.append(String.format("{ %d us }, ", testCopyList.get(i)));
+                }
+                msg.append(" ]]\n");
             }
         }
         return res;
@@ -278,25 +340,9 @@ class OutputManager {
         if (requireSorting) {
             Collections.sort(outPtsList);
         }
-        if (outPtsList.size() != inpPtsList.size()) {
-            Log.e(LOG_TAG, "input and output presentation timestamp list sizes are not identical" +
-                    "exp/rec" + inpPtsList.size() + '/' + outPtsList.size());
-            return false;
-        } else {
-            int count = 0;
-            for (int i = 0; i < outPtsList.size(); i++) {
-                if (!outPtsList.get(i).equals(inpPtsList.get(i))) {
-                    count ++;
-                    Log.e(LOG_TAG, "input output pts mismatch, exp/rec " + outPtsList.get(i) + '/' +
-                            inpPtsList.get(i));
-                    if (count == 20) {
-                        Log.e(LOG_TAG, "stopping after 20 mismatches, ...");
-                        break;
-                    }
-                }
-            }
-            res = (count == 0);
-        }
+        StringBuilder msg = new StringBuilder();
+        res = arePtsListsIdentical(inpPtsList, outPtsList, msg);
+        mErrorLogs += msg.toString();
         return res;
     }
 
@@ -461,6 +507,7 @@ class OutputManager {
         mCrc32UsingBuffer.reset();
         inpPtsList.clear();
         outPtsList.clear();
+        mErrorLogs = "###################       Error Details         #####################\n";
     }
 
     float getRmsError(Object refObject, int audioFormat) {
@@ -543,12 +590,12 @@ class OutputManager {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         OutputManager that = (OutputManager) o;
-        boolean isEqual = this.equalsInterlaced(o);
-        if (!outPtsList.equals(that.outPtsList)) {
-            isEqual = false;
-            Log.e(LOG_TAG, "ref and test presentation timestamp mismatch");
-        }
-        return isEqual;
+
+        if (!this.equalsInterlaced(o)) return false;
+        StringBuilder msg = new StringBuilder();
+        boolean res = arePtsListsIdentical(outPtsList, that.outPtsList, msg);
+        that.mErrorLogs += msg.toString();
+        return res;
     }
 
     // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
@@ -560,32 +607,51 @@ class OutputManager {
         boolean isEqual = true;
         if (mCrc32UsingImage.getValue() != that.mCrc32UsingImage.getValue()) {
             isEqual = false;
-            Log.e(LOG_TAG, "ref and test crc32 checksums calculated using image mismatch " +
-                          mCrc32UsingImage.getValue() + '/' + that.mCrc32UsingImage.getValue());
+            that.mErrorLogs += "CRC32 checksums computed for image buffers received from "
+                    + "getOutputImage() do not match between ref and test runs. \n";
+            that.mErrorLogs += String.format("Ref CRC32 checksum value is %d \n",
+                    mCrc32UsingImage.getValue());
+            that.mErrorLogs += String.format("Test CRC32 checksum value is %d \n",
+                    that.mCrc32UsingImage.getValue());
         }
         if (mCrc32UsingBuffer.getValue() != that.mCrc32UsingBuffer.getValue()) {
             isEqual = false;
-            Log.e(LOG_TAG, "ref and test crc32 checksums calculated using buffer mismatch " +
-                          mCrc32UsingBuffer.getValue() + '/' + that.mCrc32UsingBuffer.getValue());
+            that.mErrorLogs += "CRC32 checksums computed for byte buffers received from "
+                    + "getOutputBuffer() do not match between ref and test runs. \n";
+            that.mErrorLogs += String.format("Ref CRC32 checksum value is %d \n",
+                    mCrc32UsingBuffer.getValue());
+            that.mErrorLogs += String.format("Test CRC32 checksum value is %d \n",
+                    that.mCrc32UsingBuffer.getValue());
             if (memIndex == that.memIndex) {
                 int count = 0;
+                StringBuilder msg = new StringBuilder();
                 for (int i = 0; i < memIndex; i++) {
                     if (memory[i] != that.memory[i]) {
                         count++;
-                        if (count < 20) {
-                            Log.d(LOG_TAG, "sample at " + i + " exp/got:: " + memory[i] + '/' +
-                                    that.memory[i]);
+                        msg.append(String.format("At offset %d, ref buffer val is %x and test "
+                                + "buffer val is %x \n", i, memory[i], that.memory[i]));
+                        if (count == 20) {
+                            msg.append("stopping after 20 mismatches, ...\n");
+                            break;
                         }
                     }
                 }
                 if (count != 0) {
-                    Log.e(LOG_TAG, "ref and test o/p samples mismatch " + count);
+                    that.mErrorLogs += "Ref and Test outputs are not identical \n";
+                    that.mErrorLogs += msg.toString();
                 }
             } else {
-                Log.e(LOG_TAG, "ref and test o/p sizes mismatch " + memIndex + '/' + that.memIndex);
+                that.mErrorLogs += "CRC32 byte buffer checksums are different because ref and test "
+                        + "output sizes are not identical \n";
+                that.mErrorLogs += String.format("Ref output buffer size %d \n", memIndex);
+                that.mErrorLogs += String.format("Test output buffer size %d \n", that.memIndex);
             }
         }
         return isEqual;
+    }
+
+    String getErrMsg() {
+        return mErrorLogs;
     }
 }
 
@@ -601,12 +667,6 @@ abstract class CodecTestBase {
             SystemProperties.getInt("ro.vndk.version", 0) >= Build.VERSION_CODES.TIRAMISU;
     public static final boolean IS_HDR_EDITING_SUPPORTED = isHDREditingSupported();
     private static final String LOG_TAG = CodecTestBase.class.getSimpleName();
-    enum SupportClass {
-        CODEC_ALL, // All codecs must support
-        CODEC_ANY, // At least one codec must support
-        CODEC_DEFAULT, // Default codec must support
-        CODEC_OPTIONAL // Codec support is optional
-    }
 
     static final ArrayList<String> HDR_INFO_IN_BITSTREAM_CODECS = new ArrayList<>();
     static final String HDR_STATIC_INFO =
@@ -685,6 +745,28 @@ abstract class CodecTestBase {
     static String codecPrefix;
     static String mediaTypePrefix;
 
+    enum SupportClass {
+        CODEC_ALL, // All codecs must support
+        CODEC_ANY, // At least one codec must support
+        CODEC_DEFAULT, // Default codec must support
+        CODEC_OPTIONAL; // Codec support is optional
+
+        public static String toString(SupportClass supportRequirements) {
+            switch (supportRequirements) {
+                case CODEC_ALL:
+                    return "CODEC_ALL";
+                case CODEC_ANY:
+                    return "CODEC_ANY";
+                case CODEC_DEFAULT:
+                    return "CODEC_DEFAULT";
+                case CODEC_OPTIONAL:
+                    return "CODEC_OPTIONAL";
+                default:
+                    return "Unknown support class";
+            }
+        }
+    }
+
     CodecAsyncHandler mAsyncHandle;
     boolean mIsCodecInAsyncMode;
     boolean mSawInputEOS;
@@ -696,6 +778,11 @@ abstract class CodecTestBase {
     boolean mSignalledOutFormatChanged;
     MediaFormat mOutFormat;
     boolean mIsAudio;
+    boolean mIsVideo;
+
+    String mAllTestParams;  // logging
+    String mTestConfig;
+    String mTestEnv;
 
     boolean mSaveToMem;
     OutputManager mOutputBuff;
@@ -809,6 +896,19 @@ abstract class CodecTestBase {
                 "0e 80 00 24 08 00 00 28  00 00 50 00 28 c8 00 c9" +
                 "90 02 aa 58 05 ca d0 0c  0a f8 16 83 18 9c 18 00" +
                 "40 78 13 64 d5 7c 2e 2c  c3 59 de 79 6e c3 c2 03");
+    }
+
+    @Rule
+    public final TestName mTestName = new TestName();
+
+    @Before
+    public void setUpCodecTestBase() {
+        mTestConfig = "###################        Test Details         #####################\n";
+        mTestConfig += "Test Name :- " + mTestName.getMethodName() + "\n";
+        mTestConfig += "Test Parameters :- " + mAllTestParams + "\n";
+        if (mCodecName != null && mCodecName.startsWith(INVALID_CODEC)) {
+            fail("no valid component available for current test \n" + mTestConfig);
+        }
     }
 
     static int[] combine(int[] first, int[] second) {
@@ -981,6 +1081,43 @@ abstract class CodecTestBase {
         return false;
     }
 
+    static String paramToString(Object[] param) {
+        StringBuilder paramStr = new StringBuilder("[  ");
+        for (int j = 0; j < param.length - 1; j++) {
+            Object o = param[j];
+            if (o == null) {
+                paramStr.append("null, ");
+            } else if (o instanceof String[]) {
+                int length = Math.min(((String[]) o).length, 3);
+                paramStr.append("{");
+                for (int i = 0; i < length; i++) {
+                    paramStr.append(((String[]) o)[i]).append(", ");
+                }
+                paramStr.delete(paramStr.length() - 2, paramStr.length())
+                        .append(length == ((String[]) o).length ? "}, " : ", ... }, ");
+            } else if (o instanceof int[]) {
+                paramStr.append("{");
+                for (int i = 0; i < ((int[]) o).length; i++) {
+                    paramStr.append(((int[]) o)[i]).append(", ");
+                }
+                paramStr.delete(paramStr.length() - 2, paramStr.length()).append("}, ");
+            } else if (o instanceof Map) {
+                int length = 0;
+                paramStr.append("{ ");
+                Map map = (Map) o;
+                for (Object key : map.keySet()) {
+                    paramStr.append(key).append(" = ").append(map.get(key)).append(", ");
+                    length++;
+                    if (length > 1) break;
+                }
+                paramStr.delete(paramStr.length() - 2, paramStr.length())
+                        .append(length == map.size() ? "}, " : ", ... }, ");
+            } else paramStr.append(o).append(", ");
+        }
+        paramStr.delete(paramStr.length() - 2, paramStr.length()).append("  ]");
+        return paramStr.toString();
+    }
+
     static ArrayList<String> compileRequiredMimeList(boolean isEncoder, boolean needAudio,
             boolean needVideo) {
         Set<String> list = new HashSet<>();
@@ -1138,10 +1275,11 @@ abstract class CodecTestBase {
             for (Object[] arg : exhaustiveArgsList) {
                 if (mime.equals(arg[0])) {
                     for (String codec : listOfCodecs) {
-                        Object[] arg_ = new Object[argLength + 1];
-                        arg_[0] = codec;
-                        System.arraycopy(arg, 0, arg_, 1, argLength);
-                        argsList.add(arg_);
+                        Object[] argUpdate = new Object[argLength + 2];
+                        argUpdate[0] = codec;
+                        System.arraycopy(arg, 0, argUpdate, 1, argLength);
+                        argUpdate[argLength + 1] = paramToString(argUpdate);
+                        argsList.add(argUpdate);
                     }
                     miss = false;
                 }
@@ -1152,11 +1290,12 @@ abstract class CodecTestBase {
                     continue;
                 }
                 for (String codec : listOfCodecs) {
-                    Object[] arg_ = new Object[argLength + 1];
-                    arg_[0] = codec;
-                    arg_[1] = mime;
-                    System.arraycopy(exhaustiveArgsList.get(0), 1, arg_, 2, argLength - 1);
-                    argsList.add(arg_);
+                    Object[] argUpdate = new Object[argLength + 2];
+                    argUpdate[0] = codec;
+                    argUpdate[1] = mime;
+                    System.arraycopy(exhaustiveArgsList.get(0), 1, argUpdate, 2, argLength - 1);
+                    argUpdate[argLength + 1] = paramToString(argUpdate);
+                    argsList.add(argUpdate);
                 }
             }
         }
@@ -1180,6 +1319,13 @@ abstract class CodecTestBase {
             mCodec.configure(format, mSurface, isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0,
                     null);
         }
+        mTestEnv = "###################      Test Environment       #####################\n";
+        mTestEnv += String.format("Component under test :- %s \n", mCodecName);
+        mTestEnv += "Format under test :- " + format + "\n";
+        mTestEnv += String.format("Component operating in :- %s mode \n",
+                (isAsync ? "asynchronous" : "synchronous"));
+        mTestEnv += String.format("Component received input eos :- %s \n",
+                (signalEOSWithLastFrame ? "with full buffer" : "with empty buffer"));
         if (ENABLE_LOGS) {
             Log.v(LOG_TAG, "codec configured");
         }
@@ -1320,6 +1466,25 @@ abstract class CodecTestBase {
                 }
             }
         }
+        validateTestState();
+    }
+
+    void validateTestState() {
+        assertFalse("Encountered error in async mode. \n" + mTestConfig + mTestEnv
+                + mAsyncHandle.getErrMsg(), mAsyncHandle.hasSeenError());
+        if (mInputCount > 0) {
+            assertTrue(String.format("fed %d input frames, received no output frames \n",
+                    mInputCount) + mTestConfig + mTestEnv, mOutputCount > 0);
+        }
+        /*if (mInputCount == 0 && mInputCount != mOutputCount) {
+            String msg = String.format("The number of output frames received is not same as number "
+                            + "of input frames queued. Output count is %d, Input count is %d \n",
+                    mOutputCount, mInputCount);
+            // check the pts lists to see what frames are dropped, the below call is needed to
+            // get useful error messages
+            boolean unused = mOutputBuff.isOutPtsListIdenticalToInpPtsList(true);
+            fail(msg + mTestConfig + mTestEnv + mOutputBuff.getErrMsg());
+        }*/
     }
 
     static ArrayList<String> selectCodecs(String mime, ArrayList<MediaFormat> formats,
@@ -1417,25 +1582,29 @@ abstract class CodecTestBase {
 
     PersistableBundle validateMetrics(String codec) {
         PersistableBundle metrics = mCodec.getMetrics();
-        assertTrue("metrics is null", metrics != null);
-        assertTrue(metrics.getString(MediaCodec.MetricsConstants.CODEC).equals(codec));
-        if (mIsAudio) {
-            assertTrue(metrics.getString(MediaCodec.MetricsConstants.MODE)
-                    .equals(MediaCodec.MetricsConstants.MODE_AUDIO));
-        } else {
-            assertTrue(metrics.getString(MediaCodec.MetricsConstants.MODE)
-                    .equals(MediaCodec.MetricsConstants.MODE_VIDEO));
-        }
+        assertNotNull("error! MediaCodec.getMetrics() returns null \n" + mTestConfig + mTestEnv,
+                metrics);
+        assertEquals("error! metrics#MetricsConstants.CODEC is not as expected \n" + mTestConfig
+                + mTestEnv, metrics.getString(MediaCodec.MetricsConstants.CODEC), codec);
+        assertEquals("error! metrics#MetricsConstants.MODE is not as expected \n" + mTestConfig
+                        + mTestEnv, mIsAudio ? MediaCodec.MetricsConstants.MODE_AUDIO :
+                        MediaCodec.MetricsConstants.MODE_VIDEO,
+                metrics.getString(MediaCodec.MetricsConstants.MODE));
         return metrics;
     }
 
     PersistableBundle validateMetrics(String codec, MediaFormat format) {
         PersistableBundle metrics = validateMetrics(codec);
-        if (!mIsAudio) {
-            assertTrue(metrics.getInt(MediaCodec.MetricsConstants.WIDTH) == getWidth(format));
-            assertTrue(metrics.getInt(MediaCodec.MetricsConstants.HEIGHT) == getHeight(format));
+        if (mIsVideo) {
+            assertEquals("error! metrics#MetricsConstants.WIDTH is not as expected\n" + mTestConfig
+                            + mTestEnv, metrics.getInt(MediaCodec.MetricsConstants.WIDTH),
+                    getWidth(format));
+            assertEquals("error! metrics#MetricsConstants.HEIGHT is not as expected\n" + mTestConfig
+                            + mTestEnv, metrics.getInt(MediaCodec.MetricsConstants.HEIGHT),
+                    getHeight(format));
         }
-        assertTrue(metrics.getInt(MediaCodec.MetricsConstants.SECURE) == 0);
+        assertEquals("error! metrics#MetricsConstants.SECURE is not as expected\n" + mTestConfig
+                + mTestEnv, 0, metrics.getInt(MediaCodec.MetricsConstants.SECURE));
         return metrics;
     }
 
@@ -1444,57 +1613,56 @@ abstract class CodecTestBase {
         int colorStandard = fmt.getInteger(MediaFormat.KEY_COLOR_STANDARD, UNSPECIFIED);
         int colorTransfer = fmt.getInteger(MediaFormat.KEY_COLOR_TRANSFER, UNSPECIFIED);
         if (range > UNSPECIFIED) {
-            assertEquals("color range mismatch ", range, colorRange);
+            assertEquals("error! color range mismatch \n" + mTestConfig + mTestEnv, range,
+                    colorRange);
         }
         if (standard > UNSPECIFIED) {
-            assertEquals("color standard mismatch ", standard, colorStandard);
+            assertEquals("error! color standard mismatch \n" + mTestConfig + mTestEnv, standard,
+                    colorStandard);
         }
         if (transfer > UNSPECIFIED) {
-            assertEquals("color transfer mismatch ", transfer, colorTransfer);
+            assertEquals("error! color transfer mismatch \n" + mTestConfig + mTestEnv, transfer,
+                    colorTransfer);
         }
     }
 
     void validateHDRInfo(MediaFormat fmt, String hdrInfoKey, ByteBuffer hdrInfoRef) {
         ByteBuffer hdrInfo = fmt.getByteBuffer(hdrInfoKey, null);
-        assertNotNull("No " + hdrInfoKey + " present in format : " + fmt, hdrInfo);
+        assertNotNull("error! no " + hdrInfoKey + " present in format : " + fmt + "\n "
+                + mTestConfig + mTestEnv, hdrInfo);
         if (!hdrInfoRef.equals(hdrInfo)) {
-            StringBuilder refString = new StringBuilder("");
-            StringBuilder testString = new StringBuilder("");
+            StringBuilder msg = new StringBuilder(
+                    "###################       Error Details         #####################\n");
             byte[] ref = new byte[hdrInfoRef.capacity()];
             hdrInfoRef.get(ref);
             hdrInfoRef.rewind();
             byte[] test = new byte[hdrInfo.capacity()];
             hdrInfo.get(test);
             hdrInfo.rewind();
-            for (int i = 0; i < ref.length; i++) {
-                refString.append(String.format("%2x ", ref[i]));
+            msg.append("ref info :- \n");
+            for (byte b : ref) {
+                msg.append(String.format("%2x ", b));
             }
-            for (int i = 0; i < test.length; i++) {
-                testString.append(String.format("%2x ", test[i]));
+            msg.append("\ntest info :- \n");
+            for (byte b : test) {
+                msg.append(String.format("%2x ", b));
             }
-            fail(hdrInfoKey + " mismatch in codec " + mCodecName + "\nref info : " + refString +
-                    "\n test info : " + testString);
+            fail("error! mismatch seen between ref and test info of " + hdrInfoKey + "\n"
+                    + mTestConfig + mTestEnv + msg);
         }
     }
 
     public void setUpSurface(CodecTestActivity activity) throws InterruptedException {
         activity.waitTillSurfaceIsCreated();
         mSurface = activity.getSurface();
-        assertTrue("Surface created is null.", mSurface != null);
-        assertTrue("Surface created is invalid.", mSurface.isValid());
+        assertNotNull("Surface created is null \n" + mTestConfig + mTestEnv, mSurface);
+        assertTrue("Surface created is invalid \n" + mTestConfig + mTestEnv, mSurface.isValid());
     }
 
     public void tearDownSurface() {
         if (mSurface != null) {
             mSurface.release();
             mSurface = null;
-        }
-    }
-
-    @Before
-    public void isCodecNameValid() {
-        if (mCodecName != null && mCodecName.startsWith(INVALID_CODEC)) {
-            fail("no valid component available for current test ");
         }
     }
 
@@ -1523,13 +1691,21 @@ class CodecDecoderTestBase extends CodecTestBase {
     MediaExtractor mExtractor;
     CodecTestActivity mActivity;
 
-    CodecDecoderTestBase(String codecName, String mime, String testFile) {
+    CodecDecoderTestBase(String codecName, String mime, String testFile, String allTestParams) {
         mCodecName = codecName;
         mMime = mime;
         mTestFile = testFile;
         mAsyncHandle = new CodecAsyncHandler();
         mCsdBuffers = new ArrayList<>();
         mIsAudio = mMime.startsWith("audio/");
+        mIsVideo = mMime.startsWith("video/");
+        mAllTestParams = allTestParams;
+    }
+
+    @Before
+    public void setUpCodecDecoderTestBase() {
+        assertTrue("Testing a mime that is neither audio nor video is not supported \n"
+                + mTestConfig, mIsAudio || mIsVideo);
     }
 
     MediaFormat setUpSource(String srcFile) throws IOException {
@@ -1539,7 +1715,6 @@ class CodecDecoderTestBase extends CodecTestBase {
     MediaFormat setUpSource(String prefix, String srcFile) throws IOException {
         Preconditions.assertTestFileExists(prefix + srcFile);
         mExtractor = new MediaExtractor();
-        Preconditions.assertTestFileExists(prefix + srcFile);
         mExtractor.setDataSource(prefix + srcFile);
         for (int trackID = 0; trackID < mExtractor.getTrackCount(); trackID++) {
             MediaFormat format = mExtractor.getTrackFormat(trackID);
@@ -1572,7 +1747,8 @@ class CodecDecoderTestBase extends CodecTestBase {
                 return format;
             }
         }
-        fail("No track with mime: " + mMime + " found in file: " + srcFile);
+        fail("No track with mime: " + mMime + " found in file: " + srcFile + "\n" + mTestConfig
+                + mTestEnv);
         return null;
     }
 
@@ -1765,6 +1941,22 @@ class CodecDecoderTestBase extends CodecTestBase {
         }
     }
 
+    void validateTestState() {
+        super.validateTestState();
+        if (!mOutputBuff.isPtsStrictlyIncreasing(mPrevOutputPts)) {
+            fail("Output timestamps are not strictly increasing \n" + mTestConfig + mTestEnv
+                    + mOutputBuff.getErrMsg());
+        }
+        if (mIsVideo) {
+            // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
+            // produce multiple progressive frames?) For now, do not verify timestamps.
+            if (!mIsInterlaced && !mOutputBuff.isOutPtsListIdenticalToInpPtsList(false)) {
+                fail("Input pts list and Output pts list are not identical ]\n" + mTestConfig
+                        + mTestEnv + mOutputBuff.getErrMsg());
+            }
+        }
+    }
+
     void decodeToMemory(String file, String decoder, long pts, int mode, int frameLimit)
             throws IOException, InterruptedException {
         mSaveToMem = true;
@@ -1786,8 +1978,10 @@ class CodecDecoderTestBase extends CodecTestBase {
     @Override
     PersistableBundle validateMetrics(String decoder, MediaFormat format) {
         PersistableBundle metrics = super.validateMetrics(decoder, format);
-        assertTrue(metrics.getString(MediaCodec.MetricsConstants.MIME_TYPE).equals(mMime));
-        assertTrue(metrics.getInt(MediaCodec.MetricsConstants.ENCODER) == 0);
+        assertEquals("error! metrics#MetricsConstants.MIME_TYPE is not as expected \n" + mTestConfig
+                + mTestEnv, metrics.getString(MediaCodec.MetricsConstants.MIME_TYPE), mMime);
+        assertEquals("error! metrics#MetricsConstants.ENCODER is not as expected \n" + mTestConfig
+                + mTestEnv, 0, metrics.getInt(MediaCodec.MetricsConstants.ENCODER));
         return metrics;
     }
 
@@ -1850,12 +2044,13 @@ class CodecEncoderTestBase extends CodecTestBase {
     int mBytesPerSample;
 
     CodecEncoderTestBase(String encoder, String mime, int[] bitrates, int[] encoderInfo1,
-            int[] encoderInfo2) {
+            int[] encoderInfo2, String allTestParams) {
         mMime = mime;
         mCodecName = encoder;
         mBitrates = bitrates;
         mEncParamList1 = encoderInfo1;
         mEncParamList2 = encoderInfo2;
+        mAllTestParams = allTestParams;
         mFormats = new ArrayList<>();
         mInfoList = new ArrayList<>();
         mWidth = INP_FRM_WIDTH;
@@ -1868,8 +2063,15 @@ class CodecEncoderTestBase extends CodecTestBase {
         mSampleRate = 8000;
         mAsyncHandle = new CodecAsyncHandler();
         mIsAudio = mMime.startsWith("audio/");
+        mIsVideo = mMime.startsWith("video/");
         mBytesPerSample = mIsAudio ? 2 : 1;
         mInputFile = mIsAudio ? INPUT_AUDIO_FILE : INPUT_VIDEO_FILE;
+    }
+
+    @Before
+    public void setUpCodecEncoderTestBase() {
+        assertTrue("Testing a mime that is neither audio nor video is not supported \n"
+                + mTestConfig, mIsAudio || mIsVideo);
     }
 
     /**
@@ -1915,6 +2117,7 @@ class CodecEncoderTestBase extends CodecTestBase {
 
     void setUpSource(String srcFile) throws IOException {
         String inpPath = mInpPrefix + srcFile;
+        Preconditions.assertTestFileExists(inpPath);
         try (FileInputStream fInp = new FileInputStream(inpPath)) {
             int size = (int) new File(inpPath).length();
             mInputData = new byte[size];
@@ -1924,10 +2127,11 @@ class CodecEncoderTestBase extends CodecTestBase {
 
     void fillImage(Image image) {
         int format = image.getFormat();
-        assertTrue("unexpected image format",
+        assertTrue("unexpected image format \n" + mTestConfig + mTestEnv,
                 format == ImageFormat.YUV_420_888 || format == ImageFormat.YCBCR_P010);
         int bytesPerSample = (ImageFormat.getBitsPerPixel(format) * 2) / (8 * 3);  // YUV420
-        assertEquals("Invalid bytes per sample", bytesPerSample, mBytesPerSample);
+        assertEquals("Invalid bytes per sample \n" + mTestConfig + mTestEnv, bytesPerSample,
+                mBytesPerSample);
 
         int imageWidth = image.getWidth();
         int imageHeight = image.getHeight();
@@ -2039,7 +2243,7 @@ class CodecEncoderTestBase extends CodecTestBase {
                 size = mBytesPerSample * mWidth * mHeight * 3 / 2;
                 int frmSize = mBytesPerSample * INP_FRM_WIDTH * INP_FRM_HEIGHT * 3 / 2;
                 if (mNumBytesSubmitted + frmSize > mInputData.length) {
-                    fail("received partial frame to encode");
+                    fail("received partial frame to encode \n" + mTestConfig + mTestEnv);
                 } else {
                     Image img = mCodec.getInputImage(bufferIndex);
                     if (img != null) {
@@ -2097,8 +2301,10 @@ class CodecEncoderTestBase extends CodecTestBase {
     @Override
     PersistableBundle validateMetrics(String codec, MediaFormat format) {
         PersistableBundle metrics = super.validateMetrics(codec, format);
-        assertTrue(metrics.getString(MediaCodec.MetricsConstants.MIME_TYPE).equals(mMime));
-        assertTrue(metrics.getInt(MediaCodec.MetricsConstants.ENCODER) == 1);
+        assertEquals("error! metrics#MetricsConstants.MIME_TYPE is not as expected \n" + mTestConfig
+                + mTestEnv, metrics.getString(MediaCodec.MetricsConstants.MIME_TYPE), mMime);
+        assertEquals("error! metrics#MetricsConstants.ENCODER is not as expected \n" + mTestConfig
+                + mTestEnv, 1, metrics.getInt(MediaCodec.MetricsConstants.ENCODER));
         return metrics;
     }
 
@@ -2123,8 +2329,8 @@ class CodecEncoderTestBase extends CodecTestBase {
                     }
                 }
             } else {
-                assertTrue("Wrong number of height, width parameters",
-                        mEncParamList1.length == mEncParamList2.length);
+                assertEquals("Wrong number of height, width parameters \n" + mTestConfig + mTestEnv,
+                        mEncParamList1.length, mEncParamList2.length);
                 for (int i = 0; i < mEncParamList1.length; i++) {
                     MediaFormat format = new MediaFormat();
                     format.setString(MediaFormat.KEY_MIME, mMime);
@@ -2172,7 +2378,7 @@ class CodecEncoderTestBase extends CodecTestBase {
             ByteBuffer elementaryStream, ArrayList<MediaCodec.BufferInfo> infos)
             throws IOException, InterruptedException {
         String mime = format.getString(MediaFormat.KEY_MIME);
-        CodecDecoderTestBase cdtb = new CodecDecoderTestBase(decoder, mime, null);
+        CodecDecoderTestBase cdtb = new CodecDecoderTestBase(decoder, mime, null, mAllTestParams);
         cdtb.mOutputBuff = new OutputManager();
         cdtb.mSaveToMem = true;
         cdtb.mCodec = MediaCodec.createByCodecName(decoder);
@@ -2184,6 +2390,21 @@ class CodecEncoderTestBase extends CodecTestBase {
         cdtb.mCodec.stop();
         cdtb.mCodec.release();
         return cdtb.mOutputBuff.getBuffer();
+    }
+
+    void validateTestState() {
+        super.validateTestState();
+        if ((mIsAudio || (mIsVideo && mMaxBFrames == 0))
+                && !mOutputBuff.isPtsStrictlyIncreasing(mPrevOutputPts)) {
+            fail("Output timestamps are not strictly increasing \n" + mTestConfig + mTestEnv
+                    + mOutputBuff.getErrMsg());
+        }
+        if (mIsVideo) {
+            if (!mOutputBuff.isOutPtsListIdenticalToInpPtsList((mMaxBFrames != 0))) {
+                fail("Input pts list and Output pts list are not identical \n" + mTestConfig
+                        + mTestEnv + mOutputBuff.getErrMsg());
+            }
+        }
     }
 }
 
@@ -2198,8 +2419,8 @@ class HDRDecoderTestBase extends CodecDecoderTestBase {
     private Map<Integer, String> mHdrDynamicInfoContainer;
     private String mHdrDynamicInfoCurrent;
 
-    public HDRDecoderTestBase(String decoder, String mime, String testFile) {
-        super(decoder, mime, testFile);
+    HDRDecoderTestBase(String decoder, String mime, String testFile, String allTestParams) {
+        super(decoder, mime, testFile, allTestParams);
     }
 
     void enqueueInput(int bufferIndex) {
@@ -2238,8 +2459,8 @@ class HDRDecoderTestBase extends CodecDecoderTestBase {
         mHdrDynamicInfoRef = hdrDynamicInfoStream == null ? hdrDynamicInfoContainer :
                 hdrDynamicInfoStream;
 
-        assertTrue("reference hdr10/hdr10+ info is not supplied for validation",
-                mHdrDynamicInfoRef != null || mHdrStaticInfoRef != null);
+        assertTrue("reference hdr10/hdr10+ info is not supplied for validation \n" + mTestConfig
+                + mTestEnv, mHdrDynamicInfoRef != null || mHdrStaticInfoRef != null);
 
         if (mHdrDynamicInfoStream != null || mHdrDynamicInfoContainer != null) {
             Assume.assumeNotNull("Test is only applicable to codecs that have HDR10+ profiles",
@@ -2258,12 +2479,12 @@ class HDRDecoderTestBase extends CodecDecoderTestBase {
         // For decoders, if you intend to supply hdr10+ info using external means like json, make
         // sure that info that is being supplied is in sync with SEI info
         if (mHdrDynamicInfoStream != null && mHdrDynamicInfoContainer != null) {
-            assertEquals("Container hdr10+ info size and elementary stream SEI hdr10+ " +
-                            "info size are unequal", mHdrDynamicInfoStream.size(),
+            assertEquals("Container hdr10+ info size and elementary stream SEI hdr10+ info"
+                    + " size are unequal \n" + mTestConfig + mTestEnv, mHdrDynamicInfoStream.size(),
                     mHdrDynamicInfoContainer.size());
             for (Map.Entry<Integer, String> element : mHdrDynamicInfoStream.entrySet()) {
-                assertTrue("Container hdr10+ info and elementary stream SEI hdr10+ " +
-                                "info frame positions are not in sync",
+                assertTrue("Container hdr10+ info and elementary stream SEI hdr10+ info "
+                        + "frame positions are not in sync \n" + mTestConfig + mTestEnv,
                         mHdrDynamicInfoContainer.containsKey(element.getKey()));
             }
         }
@@ -2304,8 +2525,9 @@ class HDREncoderTestBase extends CodecEncoderTestBase {
     private int mTrackID = -1;
 
     public HDREncoderTestBase(String encoderName, String mediaType, int bitrate, int width,
-                              int height) {
-        super(encoderName, mediaType, new int[]{bitrate}, new int[]{width}, new int[]{height});
+            int height, String allTestParams) {
+        super(encoderName, mediaType, new int[]{bitrate}, new int[]{width}, new int[]{height},
+                allTestParams);
     }
 
     void enqueueInput(int bufferIndex) {
@@ -2366,9 +2588,9 @@ class HDREncoderTestBase extends CodecEncoderTestBase {
             frameLimit = lastHdr10PlusFrame + 10;
         }
         int maxNumFrames = mInputData.length / (INP_FRM_WIDTH * INP_FRM_HEIGHT * mBytesPerSample);
-        assertTrue("HDR info tests require input file with at least " + frameLimit +
-                        " frames. " + INPUT_VIDEO_FILE_HBD + " has " + maxNumFrames + " frames.",
-                frameLimit <= maxNumFrames);
+        assertTrue("HDR info tests require input file with at least " + frameLimit + " frames. "
+                + INPUT_VIDEO_FILE_HBD + " has " + maxNumFrames + " frames. \n" + mTestConfig
+                + mTestEnv, frameLimit <= maxNumFrames);
 
         mOutputBuff = new OutputManager();
         mCodec = MediaCodec.createByCodecName(mCodecName);
@@ -2395,10 +2617,6 @@ class HDREncoderTestBase extends CodecEncoderTestBase {
             mMuxer.release();
             mMuxer = null;
         }
-        String log = String.format("format: %s \n codec: %s:: ", format, mCodecName);
-        assertTrue(log + "unexpected error", !mAsyncHandle.hasSeenError());
-        assertTrue(log + "no input sent", 0 != mInputCount);
-        assertTrue(log + "output received", 0 != mOutputCount);
 
         MediaFormat fmt = mCodec.getOutputFormat();
 
@@ -2412,11 +2630,11 @@ class HDREncoderTestBase extends CodecEncoderTestBase {
         // verify if the muxed file contains HDR Dynamic info as expected
         MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         String decoder = codecList.findDecoderForFormat(format);
-        assertNotNull("Device advertises support for encoding " + format + " but not decoding it",
-                decoder);
+        assertNotNull("Device advertises support for encoding " + format + " but not decoding it \n"
+                + mTestConfig + mTestEnv, decoder);
 
-        HDRDecoderTestBase decoderTest = new HDRDecoderTestBase(decoder, mMime,
-                tmpFile.getAbsolutePath());
+        HDRDecoderTestBase decoderTest =
+                new HDRDecoderTestBase(decoder, mMime, tmpFile.getAbsolutePath(), mAllTestParams);
         decoderTest.validateHDRInfo(hdrStaticInfo, hdrStaticInfo, mHdrDynamicInfo, mHdrDynamicInfo);
         if (HDR_INFO_IN_BITSTREAM_CODECS.contains(mMime)) {
             decoderTest.validateHDRInfo(hdrStaticInfo, null, mHdrDynamicInfo, null);

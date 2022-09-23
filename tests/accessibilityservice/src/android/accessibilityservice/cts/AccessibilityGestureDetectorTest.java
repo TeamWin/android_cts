@@ -47,6 +47,7 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.ViewConfiguration;
@@ -71,6 +72,7 @@ import org.mockito.MockitoAnnotations;
 /** Verify that motion events are recognized as accessibility gestures. */
 @RunWith(AndroidJUnit4.class)
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
+@Presubmit
 public class AccessibilityGestureDetectorTest {
 
     // Constants

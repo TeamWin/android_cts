@@ -24,8 +24,8 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.car.Car;
+import android.car.test.ApiCheckerRule.Builder;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.os.Process;
 import android.os.UserHandle;
 import android.system.Os;
@@ -34,11 +34,8 @@ import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.RequiredFeatureRule;
-
 import org.junit.After;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.File;
@@ -50,10 +47,7 @@ import java.nio.file.Files;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class CarWatchdogDaemonTest {
-    @ClassRule
-    public static final RequiredFeatureRule sRequiredFeatureRule = new RequiredFeatureRule(
-            PackageManager.FEATURE_AUTOMOTIVE);
+public final class CarWatchdogDaemonTest extends AbstractCarTestCase {
 
     private static final String TAG = CarWatchdogDaemonTest.class.getSimpleName();
 
@@ -69,6 +63,13 @@ public final class CarWatchdogDaemonTest {
             VALUE_PERCENT_REGEX_PAIR);
 
     private File testDir;
+
+    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
+    @Override
+    protected void configApiCheckerRule(Builder builder) {
+        Log.w(TAG, "Disabling API requirements check");
+        builder.disableAnnotationsCheck();
+    }
 
     @Before
     public void setUp() throws IOException {

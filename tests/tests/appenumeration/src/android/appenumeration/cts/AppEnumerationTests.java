@@ -122,11 +122,13 @@ import static android.appenumeration.cts.Constants.TEST_NONEXISTENT_PACKAGE_NAME
 import static android.appenumeration.cts.Constants.TEST_SHARED_LIB_NAME;
 import static android.appenumeration.cts.Utils.Result;
 import static android.appenumeration.cts.Utils.ThrowingBiFunction;
+import static android.appenumeration.cts.Utils.allowTestApiAccess;
 import static android.appenumeration.cts.Utils.clearAppDataForUser;
 import static android.appenumeration.cts.Utils.ensurePackageIsInstalled;
 import static android.appenumeration.cts.Utils.ensurePackageIsNotInstalled;
 import static android.appenumeration.cts.Utils.forceStopPackage;
 import static android.appenumeration.cts.Utils.installPackage;
+import static android.appenumeration.cts.Utils.resetTestApiAccess;
 import static android.appenumeration.cts.Utils.suspendPackages;
 import static android.appenumeration.cts.Utils.uninstallPackage;
 import static android.content.Intent.EXTRA_PACKAGES;
@@ -588,19 +590,33 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
     @Test
     public void queriesNothing_getNamesForUids_consistentVisibility()
             throws Exception {
-        final int targetSharedUid = sPm.getPackageUid(TARGET_SHARED_USER, PackageInfoFlags.of(0));
-        final int targetUid = sPm.getPackageUid(TARGET_FILTERS, PackageInfoFlags.of(0));
-        Assert.assertNull(getNamesForUids(QUERIES_NOTHING, targetSharedUid)[0]);
-        Assert.assertNull(getNamesForUids(QUERIES_NOTHING, targetUid)[0]);
+        try {
+            allowTestApiAccess(QUERIES_NOTHING);
+
+            final int targetSharedUid =
+                    sPm.getPackageUid(TARGET_SHARED_USER, PackageInfoFlags.of(0));
+            final int targetUid = sPm.getPackageUid(TARGET_FILTERS, PackageInfoFlags.of(0));
+            Assert.assertNull(getNamesForUids(QUERIES_NOTHING, targetSharedUid)[0]);
+            Assert.assertNull(getNamesForUids(QUERIES_NOTHING, targetUid)[0]);
+        } finally {
+            resetTestApiAccess(QUERIES_NOTHING);
+        }
     }
 
     @Test
     public void queriesNothingHasPermission_getNamesForUids_consistentVisibility()
             throws Exception {
-        final int targetSharedUid = sPm.getPackageUid(TARGET_SHARED_USER, PackageInfoFlags.of(0));
-        final int targetUid = sPm.getPackageUid(TARGET_FILTERS, PackageInfoFlags.of(0));
-        Assert.assertNotNull(getNamesForUids(QUERIES_NOTHING_PERM, targetSharedUid)[0]);
-        Assert.assertNotNull(getNamesForUids(QUERIES_NOTHING_PERM, targetUid)[0]);
+        try {
+            allowTestApiAccess(QUERIES_NOTHING_PERM);
+
+            final int targetSharedUid =
+                    sPm.getPackageUid(TARGET_SHARED_USER, PackageInfoFlags.of(0));
+            final int targetUid = sPm.getPackageUid(TARGET_FILTERS, PackageInfoFlags.of(0));
+            Assert.assertNotNull(getNamesForUids(QUERIES_NOTHING_PERM, targetSharedUid)[0]);
+            Assert.assertNotNull(getNamesForUids(QUERIES_NOTHING_PERM, targetUid)[0]);
+        } finally {
+            resetTestApiAccess(QUERIES_NOTHING_PERM);
+        }
     }
 
     @Test
@@ -724,14 +740,26 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
 
     @Test
     public void queriesNothing_cannotSeeA11yService() throws Exception {
-        assertNotVisible(QUERIES_NOTHING, TARGET_FILTERS,
-                this::getInstalledAccessibilityServices);
+        try {
+            allowTestApiAccess(QUERIES_NOTHING);
+
+            assertNotVisible(QUERIES_NOTHING, TARGET_FILTERS,
+                    this::getInstalledAccessibilityServices);
+        } finally {
+            resetTestApiAccess(QUERIES_NOTHING);
+        }
     }
 
     @Test
     public void queriesNothingHasPermission_canSeeA11yService() throws Exception {
-        assertVisible(QUERIES_NOTHING_PERM, TARGET_FILTERS,
-                this::getInstalledAccessibilityServices);
+        try {
+            allowTestApiAccess(QUERIES_NOTHING_PERM);
+
+            assertVisible(QUERIES_NOTHING_PERM, TARGET_FILTERS,
+                    this::getInstalledAccessibilityServices);
+        } finally {
+            resetTestApiAccess(QUERIES_NOTHING_PERM);
+        }
     }
 
     @Test
