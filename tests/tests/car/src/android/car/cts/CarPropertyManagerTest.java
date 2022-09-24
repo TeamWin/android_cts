@@ -1764,6 +1764,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig"})
+    @IgnoreInvalidApi(reason = "TODO(b/242350638) - invalid syntax (missing argument classes")
     public void testSeatMemorySelectIfSupported() {
         adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
             VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_MEMORY_SELECT,
@@ -1806,6 +1807,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig"})
+    @IgnoreInvalidApi(reason = "TODO(b/242350638) - invalid syntax (missing argument classes")
     public void testSeatMemorySetIfSupported() {
         adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
             VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_MEMORY_SET,

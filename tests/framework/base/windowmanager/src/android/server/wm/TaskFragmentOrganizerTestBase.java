@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.window.TaskFragmentTransaction.TYPE_ACTIVITY_REPARENTED_TO_TASK;
 import static android.window.TaskFragmentTransaction.TYPE_TASK_FRAGMENT_APPEARED;
@@ -29,8 +30,10 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -40,6 +43,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.server.wm.WindowContextTests.TestActivity;
 import android.server.wm.WindowManagerState.WindowContainer;
+import android.server.wm.jetpack.utils.ExtensionUtil;
 import android.util.ArrayMap;
 import android.util.Log;
 import android.window.TaskFragmentCreationParams;
@@ -50,6 +54,7 @@ import android.window.WindowContainerTransaction;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Before;
@@ -208,6 +213,23 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
     TaskFragmentCreationParams generateTaskFragCreationParams(@NonNull Rect bounds) {
         return mTaskFragmentOrganizer.generateTaskFragParams(mOwnerToken, bounds,
                 WINDOWING_MODE_UNDEFINED);
+    }
+
+    static Activity startNewActivity() {
+        return startNewActivity(TestActivity.class);
+    }
+
+    static Activity startNewActivity(Class<?> className) {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        final Intent intent = new Intent(instrumentation.getTargetContext(), className)
+                .addFlags(FLAG_ACTIVITY_NEW_TASK);
+        return instrumentation.startActivitySync(intent);
+    }
+
+    /** For API changes that are introduced together with WM Extensions version 2. */
+    static void assumeExtensionVersionAtLeast2() {
+        // TODO(b/232476698) Remove in the next Android release.
+        assumeTrue(ExtensionUtil.getExtensionVersion().getMajor() >= 2);
     }
 
     public static class BasicTaskFragmentOrganizer extends TaskFragmentOrganizer {

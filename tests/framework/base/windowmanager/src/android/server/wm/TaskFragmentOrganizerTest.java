@@ -19,11 +19,13 @@ package android.server.wm;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
@@ -42,6 +44,8 @@ import android.window.TaskFragmentInfo;
 import android.window.TaskFragmentOrganizer;
 import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
+
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Test;
 
@@ -195,6 +199,28 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
         final int currTaskFragCount = mWmState.getRootTask(mOwnerTaskId).getTaskFragments().size();
         assertWithMessage("TaskFragment with token " + taskFragToken + " must be"
                 + " removed.").that(originalTaskFragCount - currTaskFragCount).isEqualTo(1);
+    }
+
+    /**
+     * Verifies the behavior of {@link WindowContainerTransaction#finishActivity(IBinder)} to finish
+     * an Activity.
+     */
+    @Test
+    @ApiTest(apis = {
+            "android.window.TaskFragmentOrganizer#applyTransaction",
+            "android.window.WindowContainerTransaction#finishActivity"})
+    public void testFinishActivity() {
+        // TODO(b/232476698) The TestApi is new. Remove the assume in the next release.
+        assumeExtensionVersionAtLeast2();
+
+        final Activity activity = startNewActivity();
+        final WindowContainerTransaction wct = new WindowContainerTransaction()
+                .finishActivity(getActivityToken(activity));
+        mTaskFragmentOrganizer.applyTransaction(wct);
+
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+
+        assertTrue(activity.isDestroyed());
     }
 
     /**

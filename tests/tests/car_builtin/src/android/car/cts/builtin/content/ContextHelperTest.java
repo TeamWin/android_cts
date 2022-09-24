@@ -39,6 +39,7 @@ import android.view.Display;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -79,6 +80,7 @@ public final class ContextHelperTest extends ActivityManagerTestBase {
     }
 
     @Test
+    @Ignore("b/248609709")
     public void testStartActivityAsUser() throws Exception {
         // setup
         Intent startIntent = new Intent(mContext, SingleUseActivity.class);

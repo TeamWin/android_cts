@@ -39,6 +39,7 @@ import android.util.Log;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -142,6 +143,7 @@ public final class PackageManagerHelperTest {
     }
 
     @Test
+    @Ignore("b/248609709")
     public void testGetPackageUidAsUser() throws Exception {
         int userId = UserHandle.SYSTEM.getIdentifier();
         int expectedUid = UserHandle.SYSTEM.getUid(Process.SYSTEM_UID);

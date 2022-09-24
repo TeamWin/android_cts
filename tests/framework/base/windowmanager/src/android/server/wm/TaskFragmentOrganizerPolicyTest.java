@@ -20,7 +20,9 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.TaskFragmentOrganizerTestBase.assertEmptyTaskFragment;
+import static android.server.wm.TaskFragmentOrganizerTestBase.assumeExtensionVersionAtLeast2;
 import static android.server.wm.TaskFragmentOrganizerTestBase.getActivityToken;
+import static android.server.wm.TaskFragmentOrganizerTestBase.startNewActivity;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app30.Components.SDK_30_TEST_ACTIVITY;
@@ -32,10 +34,8 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
-import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.Rect;
@@ -45,8 +45,6 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.TaskFragmentOrganizerTestBase.BasicTaskFragmentOrganizer;
 import android.server.wm.WindowContextTests.TestActivity;
 import android.server.wm.WindowManagerState.Task;
-import android.server.wm.jetpack.utils.ExtensionUtil;
-import android.server.wm.jetpack.utils.Version;
 import android.window.TaskAppearedInfo;
 import android.window.TaskFragmentCreationParams;
 import android.window.TaskFragmentInfo;
@@ -55,7 +53,6 @@ import android.window.TaskOrganizer;
 import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -77,9 +74,6 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 @Presubmit
 public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
-
-    /** Vendor extension version. Some API behaviors are only available in newer version. */
-    private static final Version WM_EXTENSION_VERSION = ExtensionUtil.getExtensionVersion();
 
     private TaskOrganizer mTaskOrganizer;
     private BasicTaskFragmentOrganizer mTaskFragmentOrganizer;
@@ -851,18 +845,6 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
             });
         }
     }
-
-    private static Activity startNewActivity() {
-        return startNewActivity(TestActivity.class);
-    }
-
-    private static Activity startNewActivity(Class<?> className) {
-        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        final Intent intent = new Intent(instrumentation.getTargetContext(), className)
-                .addFlags(FLAG_ACTIVITY_NEW_TASK);
-        return instrumentation.startActivitySync(intent);
-    }
-
     /**
      * Creates and registers a {@link TaskFragmentOrganizer} that will be unregistered in
      * {@link #tearDown()}.
@@ -905,11 +887,5 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
         organizer.waitForTaskFragmentCreated();
         organizer.resetLatch();
         return organizer.getTaskFragmentInfo(params.getFragmentToken());
-    }
-
-    /** For API changes that are introduced together with WM Extensions version 2. */
-    private static void assumeExtensionVersionAtLeast2() {
-        // TODO(b/232476698) Remove in the next Android release.
-        assumeTrue(WM_EXTENSION_VERSION.getMajor() >= 2);
     }
 }

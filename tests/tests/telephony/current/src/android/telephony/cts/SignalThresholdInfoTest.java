@@ -60,6 +60,9 @@ public class SignalThresholdInfoTest {
             {AccessNetworkConstants.AccessNetworkType.NGRAN,
                     SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_SSRSRP,
                     -100},
+            {AccessNetworkConstants.AccessNetworkType.UTRAN,
+                    SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_ECNO,
+                    -16},
     };
 
     // Map of SignalMeasurementType to invalid thresholds edge values.
@@ -88,7 +91,10 @@ public class SignalThresholdInfoTest {
                     SignalThresholdInfo.SIGNAL_SSRSRQ_MAX_VALUE + 1),
             SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_SSSINR,
             List.of(SignalThresholdInfo.SIGNAL_SSSINR_MIN_VALUE - 1,
-                    SignalThresholdInfo.SIGNAL_SSSINR_MAX_VALUE + 1)
+                    SignalThresholdInfo.SIGNAL_SSSINR_MAX_VALUE + 1),
+            SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_ECNO,
+            List.of(SignalThresholdInfo.SIGNAL_ECNO_MIN_VALUE - 1,
+                    SignalThresholdInfo.SIGNAL_ECNO_MAX_VALUE + 1)
     );
 
     // Map of RAN to allowed SignalMeasurementType set.
@@ -99,7 +105,8 @@ public class SignalThresholdInfoTest {
             AccessNetworkConstants.AccessNetworkType.CDMA2000,
             Set.of(SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSSI),
             AccessNetworkConstants.AccessNetworkType.UTRAN,
-            Set.of(SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSCP),
+            Set.of(SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSCP,
+                    SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_ECNO),
             AccessNetworkConstants.AccessNetworkType.EUTRAN,
             Set.of(SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSRP,
                     SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSRQ,
@@ -157,7 +164,7 @@ public class SignalThresholdInfoTest {
         for (int ran : VALID_RAN_TO_MEASUREMENT_TYPE_MAP.keySet()) {
             Set validTypes = VALID_RAN_TO_MEASUREMENT_TYPE_MAP.get(ran);
             for (int type = SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSSI;
-                    type <= SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_SSSINR; type++) {
+                    type <= SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_ECNO; type++) {
                 if (!validTypes.contains(type)) {
                     buildWithInvalidParameterThrowException(ran, type, new int[]{-1});
                 }
@@ -256,6 +263,7 @@ public class SignalThresholdInfoTest {
             case SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSSI:
                 return AccessNetworkConstants.AccessNetworkType.GERAN;
             case SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSCP:
+            case SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_ECNO:
                 return AccessNetworkConstants.AccessNetworkType.UTRAN;
             case SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSRP:
             case SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSRQ:
