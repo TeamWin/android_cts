@@ -186,8 +186,8 @@ class OverrideConfigTest {
 
             if (handlesOrientationChange) {
                 // Can't call recreate if the Activity is expected to handle the change,
-                // just sleep and assume the Activity has handled the change in 3 seconds.
-                Thread.sleep(3000)
+                // just sleep and assume the Activity has handled the change in 5 seconds.
+                Thread.sleep(5000)
                 it.moveToState(Lifecycle.State.RESUMED)
             } else {
                 it.recreate()

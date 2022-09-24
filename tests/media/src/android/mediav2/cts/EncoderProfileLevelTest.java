@@ -56,12 +56,13 @@ import java.util.List;
  * during encoder configuration. Upon successful configuration, frames are queued for encoding
  * (byte buffer mode) and the encoded output (bitstream) is expected to contain the same profile
  * and level information that was used during configure.
+ * <p>
  * NOTE: The test configures profile, level information basing on standard guidelines, not
  * arbitrarily so encoders ARE expected to place these values in the bitstream as-is.
- *
+ * <p>
  * The test additionally checks if the output format returned by component contains same profile
  * and level information.
- *
+ * <p>
  * As per cdd, if a device contains an encoder capable of encoding a profile/level combination
  * then it should contain a decoder capable of decoding the same profile/level combination. This
  * is verified.
@@ -72,8 +73,8 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
     private static final HashMap<String, Pair<int[], Integer>> mProfileLevelCdd = new HashMap<>();
 
     private final boolean mUseHighBitDepth;
+    private final MediaFormat mConfigFormat;
 
-    private MediaFormat mConfigFormat;
     private MediaMuxer mMuxer;
 
     public EncoderProfileLevelTest(String encoder, String mime, int bitrate, int encoderInfo1,
@@ -305,7 +306,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                 new LevelLimitAVC(AVCLevel61, 8355840, 139264, 480000000),
                 new LevelLimitAVC(AVCLevel62, 16711680, 139264, 800000000),
         };
-        long mbs = ((width + 15) / 16) * ((height + 15) / 16);
+        int mbs = ((width + 15) / 16) * ((height + 15) / 16);
         float mbsPerSec = mbs * frameRate;
         for (LevelLimitAVC levelLimitsAVC : limitsAVC) {
             if (mbs <= levelLimitsAVC.mbs && mbsPerSec <= levelLimitsAVC.mbsPerSec
@@ -354,7 +355,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                 new LevelLimitHEVC(HEVCMainTierLevel62, 120, 35651584, 240000000),
                 new LevelLimitHEVC(HEVCHighTierLevel62, 120, 35651584, 800000000),
         };
-        long samples = width * height;
+        int samples = width * height;
         for (LevelLimitHEVC levelLimitsHEVC : limitsHEVC) {
             if (samples <= levelLimitsHEVC.samples && frameRate <= levelLimitsHEVC.frameRate
                     && bitrate <= levelLimitsHEVC.bitrate) {
@@ -686,11 +687,11 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
      * correctly
      */
     @CddTest(requirements = {"2.2.2/5.1/H-0-3", "2.2.2/5.1/H-0-4", "2.2.2/5.1/H-0-5", "5/C-0-3",
-                             "5.2.1/C-1-1", "5.2.2/C-2-1", "5.2.3/C-2-1", "5.2.4/C-1-2",
-                             "5.2.5/C-1-1"})
+            "5.2.1/C-1-1", "5.2.2/C-2-1", "5.2.3/C-2-1", "5.2.4/C-1-2",
+            "5.2.5/C-1-1"})
     @ApiTest(apis = {"android.media.MediaFormat#KEY_PROFILE",
-                     "android.media.MediaFormat#KEY_AAC_PROFILE",
-                     "android.media.MediaFormat#KEY_LEVEL"})
+            "android.media.MediaFormat#KEY_AAC_PROFILE",
+            "android.media.MediaFormat#KEY_LEVEL"})
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testValidateProfileLevel() throws IOException, InterruptedException {
         int[] profiles;

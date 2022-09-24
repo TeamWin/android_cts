@@ -29,7 +29,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
@@ -124,7 +123,7 @@ class CodecAsyncHandler extends MediaCodec.Callback {
     public void onInputBufferAvailable(@NonNull MediaCodec codec, int bufferIndex) {
         assertTrue(bufferIndex >= 0);
         mLock.lock();
-        mCbInputQueue.add(new Pair<>(bufferIndex, (MediaCodec.BufferInfo) null));
+        mCbInputQueue.add(new Pair<>(bufferIndex, null));
         mCondition.signalAll();
         mLock.unlock();
     }
@@ -143,7 +142,7 @@ class CodecAsyncHandler extends MediaCodec.Callback {
     public void onError(@NonNull MediaCodec codec, MediaCodec.CodecException e) {
         mLock.lock();
         mErrorMsg = "###################  Async Error Details  #####################\n";
-        mErrorMsg += e.getMessage() + "\n";
+        mErrorMsg += e.toString() + "\n";
         mSignalledError = true;
         mCondition.signalAll();
         mLock.unlock();
@@ -204,12 +203,10 @@ class CodecAsyncHandler extends MediaCodec.Callback {
             } else {
                 if (!mCbOutputQueue.isEmpty()) {
                     element = mCbOutputQueue.remove(0);
-                    break;
-                }
-                if (!mCbInputQueue.isEmpty()) {
+                } else {
                     element = mCbInputQueue.remove(0);
-                    break;
                 }
+                break;
             }
         }
         mLock.unlock();
@@ -261,7 +258,7 @@ class OutputManager {
     }
 
     void saveInPTS(long pts) {
-        // Add only Unique timeStamp, discarding any duplicate frame / non-display frame
+        // Add only unique timeStamp, discarding any duplicate frame / non-display frame
         if (!inpPtsList.contains(pts)) {
             inpPtsList.add(pts);
         }
@@ -533,7 +530,7 @@ class OutputManager {
                 if (refData.length != (memIndex / bytesPerSample)) return Float.MAX_VALUE;
                 intData = new int[refData.length];
                 for (int i = 0, j = 0; i < memIndex; i += 3, j++) {
-                    intData[j] =  memory[j] | (memory[j + 1] << 8) | (memory[j + 2] << 16);
+                    intData[j] = memory[j] | (memory[j + 1] << 8) | (memory[j + 2] << 16);
                 }
             } else if (audioFormat == AudioFormat.ENCODING_PCM_32BIT) {
                 if (refData.length != memIndex / bytesPerSample) return Float.MAX_VALUE;
@@ -660,7 +657,9 @@ abstract class CodecTestBase {
     public static final boolean IS_AT_LEAST_R = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
     public static final boolean IS_AT_LEAST_T =
             ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU);
-    public static final boolean IS_AT_LEAST_U = ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU);
+    //TODO(b/248315681) Remove codenameEquals() check once devices return correct version for U
+    public static final boolean IS_AT_LEAST_U = ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)
+            || ApiLevelUtil.codenameEquals("UpsideDownCake");
     public static final boolean FIRST_SDK_IS_AT_LEAST_T =
             ApiLevelUtil.isFirstApiAtLeast(Build.VERSION_CODES.TIRAMISU);
     public static final boolean VNDK_IS_AT_LEAST_T =
@@ -707,7 +706,7 @@ abstract class CodecTestBase {
             H263ProfileBackwardCompatible, H263ProfileISWV2, H263ProfileISWV3,
             H263ProfileHighCompression, H263ProfileInternet, H263ProfileInterlace,
             H263ProfileHighLatency};
-    static final int[] VP8_PROFILES = new int[] {VP8ProfileMain};
+    static final int[] VP8_PROFILES = new int[]{VP8ProfileMain};
     static final int[] AVC_SDR_PROFILES = new int[]{AVCProfileBaseline, AVCProfileMain,
             AVCProfileExtended, AVCProfileHigh, AVCProfileConstrainedBaseline,
             AVCProfileConstrainedHigh};
@@ -740,7 +739,6 @@ abstract class CodecTestBase {
             AACObjectLD, AACObjectELD, AACObjectXHE};
     static final String mInpPrefix = WorkDir.getMediaDirString();
     static final Context mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-    static final PackageManager pm = mContext.getPackageManager();
     static String mimeSelKeys;
     static String codecPrefix;
     static String mediaTypePrefix;
@@ -879,7 +877,6 @@ abstract class CodecTestBase {
                 "90 02 aa 58 05 ca d0 0c  0a f8 16 83 18 9c 18 00" +
                 "40 78 13 64 d5 7c 2e 2c  c3 59 de 79 6e c3 c2 00");
 
-
         HDR_DYNAMIC_INCORRECT_INFO.put(0, "b5 00 3c 00 01 04 00 40  00 0c 80 4e 20 27 10 00" +
                 "0a 00 00 24 08 00 00 28  00 00 50 00 28 c8 00 c9" +
                 "90 02 aa 58 05 ca d0 0c  0a f8 16 83 18 9c 18 00" +
@@ -930,24 +927,26 @@ abstract class CodecTestBase {
         return CodecTestBase.selectCodecs(mime, null, null, true).size() != 0;
     }
 
-    public static void checkFormatSupport(String codecName, String mime, boolean isEncoder,
+    static void checkFormatSupport(String codecName, String mime, boolean isEncoder,
             ArrayList<MediaFormat> formats, String[] features, SupportClass supportRequirements)
             throws IOException {
         if (!areFormatsSupported(codecName, mime, formats)) {
             switch (supportRequirements) {
                 case CODEC_ALL:
-                    fail("format(s) not supported by codec: " + codecName
-                                    + " for mime : " + mime + " formats: " + formats);
+                    fail("format(s) not supported by codec: " + codecName + " for mime : " + mime
+                            + " formats: " + formats);
                     break;
                 case CODEC_ANY:
-                    if (selectCodecs(mime, formats, features, isEncoder).isEmpty())
+                    if (selectCodecs(mime, formats, features, isEncoder).isEmpty()) {
                         fail("format(s) not supported by any component for mime : " + mime
-                                        + " formats: " + formats);
+                                + " formats: " + formats);
+                    }
                     break;
                 case CODEC_DEFAULT:
-                    if (isDefaultCodec(codecName, mime, isEncoder))
-                        fail("format(s) not supported by default codec : " + codecName +
-                                "for mime : " + mime + " formats: " + formats);
+                    if (isDefaultCodec(codecName, mime, isEncoder)) {
+                        fail("format(s) not supported by default codec : " + codecName
+                                + "for mime : " + mime + " formats: " + formats);
+                    }
                     break;
                 case CODEC_OPTIONAL:
                 default:
@@ -996,8 +995,7 @@ abstract class CodecTestBase {
         return false;
     }
 
-    static boolean doesCodecSupportHDRProfile(String codecName, String mediaType)
-            throws IOException {
+    static boolean doesCodecSupportHDRProfile(String codecName, String mediaType) {
         int[] hdrProfiles = mProfileHdrMap.get(mediaType);
         if (hdrProfiles == null) {
             return false;
@@ -1059,7 +1057,7 @@ abstract class CodecTestBase {
 
     static boolean isDefaultCodec(String codecName, String mime, boolean isEncoder)
             throws IOException {
-        Map<String,String> mDefaultCodecs = isEncoder ? mDefaultEncoders:  mDefaultDecoders;
+        Map<String, String> mDefaultCodecs = isEncoder ? mDefaultEncoders : mDefaultDecoders;
         if (mDefaultCodecs.containsKey(mime)) {
             return mDefaultCodecs.get(mime).equalsIgnoreCase(codecName);
         }
@@ -1230,7 +1228,7 @@ abstract class CodecTestBase {
                 // Add required cdd mimes here so that respective codec tests fail.
                 mimes.add(MediaFormat.MIMETYPE_VIDEO_AVC);
                 mimes.add(MediaFormat.MIMETYPE_VIDEO_VP8);
-                Log.e(LOG_TAG,"device must support at least one of VP8 or AVC video encoders");
+                Log.e(LOG_TAG, "device must support at least one of VP8 or AVC video encoders");
             }
             for (String mime : cddRequiredMimeList) {
                 if (!mimes.contains(mime)) {
@@ -1860,7 +1858,7 @@ class CodecDecoderTestBase extends CodecTestBase {
                 // tests both getOutputImage and getOutputBuffer. Can do time division
                 // multiplexing but lets allow it for now
                 Image img = mCodec.getOutputImage(bufferIndex);
-                assertTrue(img != null);
+                assertNotNull("CPU-read via ImageReader API is not available", img);
                 mOutputBuff.checksum(img);
                 int imgFormat = img.getFormat();
                 int bytesPerSample = (ImageFormat.getBitsPerPixel(imgFormat) * 2) / (8 * 3);
@@ -2107,7 +2105,7 @@ class CodecEncoderTestBase extends CodecTestBase {
         super.flushCodec();
         if (mIsAudio) {
             mInputOffsetPts = (mNumBytesSubmitted + 1024) * 1000000L /
-                    (mBytesPerSample * mChannels * mSampleRate);
+                    ((long) mBytesPerSample * mChannels * mSampleRate);
         } else {
             mInputOffsetPts = (mInputCount + 5) * 1000000L / mFrameRate;
         }
@@ -2229,9 +2227,10 @@ class CodecEncoderTestBase extends CodecTestBase {
             int flags = 0;
             long pts = mInputOffsetPts;
             if (mIsAudio) {
-                pts += mNumBytesSubmitted * 1000000L / (mBytesPerSample * mChannels * mSampleRate);
+                pts += mNumBytesSubmitted * 1000000L / ((long) mBytesPerSample * mChannels
+                        * mSampleRate);
                 size = Math.min(inputBuffer.capacity(), mInputData.length - mNumBytesSubmitted);
-                assertTrue(size % (mBytesPerSample * mChannels) == 0);
+                assertEquals(0, size % ((long) mBytesPerSample * mChannels));
                 inputBuffer.put(mInputData, mNumBytesSubmitted, size);
                 if (mNumBytesSubmitted + size >= mInputData.length && mSignalEOSWithLastFrame) {
                     flags |= MediaCodec.BUFFER_FLAG_END_OF_STREAM;
@@ -2445,9 +2444,8 @@ class HDRDecoderTestBase extends CodecDecoderTestBase {
     }
 
     void validateHDRInfo(String hdrStaticInfoStream, String hdrStaticInfoContainer,
-                         Map<Integer, String> hdrDynamicInfoStream,
-                         Map<Integer, String> hdrDynamicInfoContainer) throws IOException,
-            InterruptedException {
+            Map<Integer, String> hdrDynamicInfoStream, Map<Integer, String> hdrDynamicInfoContainer)
+            throws IOException, InterruptedException {
         mHdrStaticInfoStream = hdrStaticInfoStream != null ?
                 ByteBuffer.wrap(loadByteArrayFromString(hdrStaticInfoStream)) : null;
         mHdrStaticInfoContainer = hdrStaticInfoContainer != null ?

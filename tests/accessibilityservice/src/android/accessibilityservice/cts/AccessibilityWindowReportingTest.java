@@ -438,6 +438,7 @@ public class AccessibilityWindowReportingTest {
 
             Intent intent = new Intent();
             intent.setAction(NotTouchableWindowTestActivity.ADD_WINDOW);
+            intent.setPackage(sInstrumentation.getContext().getPackageName());
 
             try {
                 // Waits for the not-touchable activity is covered by the untrusted window.
@@ -457,6 +458,7 @@ public class AccessibilityWindowReportingTest {
         } finally {
             Intent intent = new Intent();
             intent.setAction(NotTouchableWindowTestActivity.FINISH_ACTIVITY);
+            intent.setPackage(sInstrumentation.getContext().getPackageName());
             sendIntentAndWaitForEvent(intent,
                     filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_REMOVED));
         }
@@ -471,6 +473,7 @@ public class AccessibilityWindowReportingTest {
 
             Intent intent = new Intent();
             intent.setAction(NotTouchableWindowTestActivity.ADD_TRUSTED_WINDOW);
+            intent.setPackage(sInstrumentation.getContext().getPackageName());
 
             try {
                 SystemUtil.runWithShellPermissionIdentity(sUiAutomation, () -> {
@@ -494,6 +497,7 @@ public class AccessibilityWindowReportingTest {
         } finally {
             Intent intent = new Intent();
             intent.setAction(NotTouchableWindowTestActivity.FINISH_ACTIVITY);
+            intent.setPackage(sInstrumentation.getContext().getPackageName());
             sendIntentAndWaitForEvent(intent,
                     filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_REMOVED));
         }

@@ -84,7 +84,9 @@ public class EncodeDecodeTest {
     private static final boolean VERBOSE = false;           // lots of logging
     private static final boolean DEBUG_SAVE_FILE = false;   // save copy of encoded movie
     private static final String DEBUG_FILE_NAME_BASE = "/sdcard/test.";
-    private static final boolean IS_AFTER_T = ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU);
+    //TODO(b/248315681) Remove codenameEquals() check once devices return correct version for U
+    private static final boolean IS_AFTER_T = ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)
+            || ApiLevelUtil.codenameEquals("UpsideDownCake");
 
     // parameters for the encoder
     private static final int FRAME_RATE = 15;               // 15fps

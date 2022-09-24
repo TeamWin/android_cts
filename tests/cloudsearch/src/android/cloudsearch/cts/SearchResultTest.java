@@ -1,3 +1,4 @@
+<<<<<<< TARGET BRANCH (9cb01d [automerger skipped] Update STS tests to NonRootSecurityTest)
 /*
  * Copyright (C) 2022 The Android Open Source Project
  *
@@ -114,3 +115,5 @@ public class SearchResultTest {
         parcel.recycle();
     }
 }
+=======
+>>>>>>> SOURCE BRANCH (e5fa0d Merge "Remove cloudsearch api cts" into tm-qpr-dev am: e45a5)

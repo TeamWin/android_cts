@@ -1158,15 +1158,17 @@ public class ScopedStorageTest {
                 Thread.sleep(500);
                 i++;
             }
-
-            assertThat(getFileOwnerPackageFromDatabase(fileToRemain)).isNull();
-            assertThat(getFileRowIdFromDatabase(fileToRemain)).isNotEqualTo(-1);
-
-            assertThat(getFileOwnerPackageFromDatabase(fileToBeDeleted)).isNull();
             assertThat(getFileRowIdFromDatabase(fileToBeDeleted)).isEqualTo(-1);
-
-            assertThat(getFileOwnerPackageFromDatabase(nestedFileToBeDeleted)).isNull();
             assertThat(getFileRowIdFromDatabase(nestedFileToBeDeleted)).isEqualTo(-1);
+
+            // Poll for package name to be cleared for existing files
+            i = 0;
+            while (i < 10 && getFileOwnerPackageFromDatabase(fileToRemain) != null) {
+                Thread.sleep(500);
+                i++;
+            }
+            assertThat(getFileRowIdFromDatabase(fileToRemain)).isNotEqualTo(-1);
+            assertThat(getFileOwnerPackageFromDatabase(fileToRemain)).isNull();
         } finally {
             deleteFilesAs(APP_B_NO_PERMS, fileToRemain);
             deleteFilesAs(APP_B_NO_PERMS, fileToBeDeleted);

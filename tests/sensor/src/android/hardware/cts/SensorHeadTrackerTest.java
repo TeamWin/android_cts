@@ -27,6 +27,7 @@ import android.hardware.SensorManager;
 import android.hardware.cts.accessories.VirtualHeadTracker;
 import android.hardware.cts.helpers.SensorTestStateNotSupportedException;
 import android.hardware.sensor.cts.R;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -39,18 +40,8 @@ import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@AppModeFull(reason = "Test requires special permission not available to instant apps")
 public class SensorHeadTrackerTest extends SensorTestCase {
-
-    /**
-     * Checks if head tracker feature is supported.
-     *
-     * <p>To execute these test cases, the following command can be used:
-     *
-     * <pre>
-     * adb shell am instrument -e class android.hardware.cts.SensorHeadTrackerTest \
-     *     -w android.hardware.cts/android.test.AndroidJUnitRunner
-     * </pre>
-     */
     private static final String TAG = "SensorHeadTrackerTest";
 
     private SensorManager mSensorManager;

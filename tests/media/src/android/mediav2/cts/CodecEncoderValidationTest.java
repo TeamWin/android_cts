@@ -50,14 +50,17 @@ import java.util.Map;
  * The test verifies encoders present in media codec list in bytebuffer mode. The test feeds raw
  * input data (audio/video) to the component and receives compressed bitstream from the component.
  * This is written to an output file using muxer.
- *
- * 1. For lossless audio codecs, this file is decoded and the decoded output is expected to be
- * bit-exact with encoder input.
- * 2. For lossy audio codecs, the output sample count (after stripping priming and padding
- * samples) should be input sample count else encoder-decoder-encoder loops results in audio time
- * shift. // TODO: This attribute is not strictly enforced in this test.
- * 3. For video codecs, the output file is decoded and PSNR is computed between encoder input and
- * decoded output and it has to be at least min tolerance value.
+ * <p>
+ * At the end of encoding process, the test enforces following checks :-
+ * <ul>
+ *     <li>For lossless audio codecs, this file is decoded and the decoded output is expected to
+ *     be bit-exact with encoder input.</li>
+ *     <li>For lossy audio codecs, the output sample count (after stripping priming and padding
+ *     samples) should be input sample count else encoder-decoder-encoder loops results in audio
+ *     time shift. This attribute is not strictly enforced in this test.</li>
+ *     <li>For video codecs, the output file is decoded and PSNR is computed between encoder
+ *     input and decoded output and it has to be at least min tolerance value.</li>
+ * </ul>
  */
 @RunWith(Parameterized.class)
 public class CodecEncoderValidationTest extends CodecEncoderTestBase {
@@ -241,11 +244,11 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
     }
 
     /**
-     * @see CodecEncoderValidationTest
+     * Check description of class {@link CodecEncoderValidationTest}
      */
     @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
-                     "MediaCodecInfo.CodecCapabilities#COLOR_FormatYUVP010",
-                     "android.media.AudioFormat#ENCODING_PCM_16BIT"})
+            "MediaCodecInfo.CodecCapabilities#COLOR_FormatYUVP010",
+            "android.media.AudioFormat#ENCODING_PCM_16BIT"})
     @CddTest(requirements = "5.1.1")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)

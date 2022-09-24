@@ -135,7 +135,7 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
         assertFillEventForDatasetShown(events.get(0), "clientStateKey",
                 "clientStateValue", presentationType);
         assertFillEventForDatasetAuthenticationSelected(events.get(1), "name",
-                "clientStateKey", "clientStateValue");
+                "clientStateKey", "clientStateValue", presentationType);
     }
 
     @Test
@@ -180,7 +180,7 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
         assertFillEventForDatasetShown(events.get(0), "clientStateKey",
                 "clientStateValue", presentationType);
         assertFillEventForAuthenticationSelected(events.get(1), NULL_DATASET_ID,
-                "clientStateKey", "clientStateValue");
+                "clientStateKey", "clientStateValue", presentationType);
         assertFillEventForDatasetShown(events.get(2), "clientStateKey",
                 "clientStateValue", presentationType);
         assertFillEventForDatasetSelected(events.get(3), "name",

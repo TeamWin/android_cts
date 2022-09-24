@@ -357,7 +357,7 @@ public final class CarOccupantZoneManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.CarOccupantZoneManager#getDisplayIdForDriver"})
+    @ApiTest(apis = {"android.car.CarOccupantZoneManager#getDisplayIdForDriver(int)"})
     public void testClusterDisplayIsPrivate() {
         assumeDriverZone();
 

@@ -50,14 +50,17 @@ import java.util.List;
 
 /**
  * Test mediacodec api, video decoders and their interactions in surface mode.
- *
+ * <p>
  * When video decoders are configured in surface mode, the getOutputImage() returns null. So
  * there is no way to validate the decoded output frame analytically. The tests in this class
  * however ensures that,
- * 1. The number of decoded frames are equal to the number of input frames.
- * 2. The output timestamp list is same as the input timestamp list.
- * 3. The timestamp information obtained is consistent with results seen in bytebuffer mode
- *
+ * <ul>
+ *     <li> The number of decoded frames are equal to the number of input frames.</li>
+ *     <li> The output timestamp list is same as the input timestamp list.</li>
+ *     <li> The timestamp information obtained is consistent with results seen in byte buffer
+ *     mode.</li>
+ * </ul>
+ * <p>
  * The test verifies all the above needs by running mediacodec in both sync and async mode.
  */
 @RunWith(Parameterized.class)
@@ -249,21 +252,26 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
 
     /**
      * Checks component and framework behaviour to flush API when the codec is operating in
-     * surface mode. While the component is decoding the test clip to surface, mediacodec flush()
-     * is called.
-     *
-     * The flush API is called at various points.
-     * 1. In running state but before queueing any input (might have to resubmit csd as they may
-     * not have been processed)
-     * 2. In running state, after queueing 1 frame
-     * 3. In running state, after queueing n frames
-     * 4. In eos state
-     *
-     * In all these cases, the test expects the timestamps received to be strictly increasing. In
-     * cases 3, 4 the test expects the output timestamp list to be identical to the reference list.
-     * The reference list is obtained from the same decoder running in byte buffer mode.
-     *
-     * // TODO(b/147576107): The test runs mediacodec in sync mode. The test fails in async mode
+     * surface mode.
+     * <p>
+     * While the component is decoding the test clip to surface, mediacodec flush() is called.
+     * The flush API is called at various points :-
+     * <ul>
+     *     <li>In running state but before queueing any input (might have to resubmit csd as they
+     *     may not have been processed).</li>
+     *     <li>In running state, after queueing 1 frame.</li>
+     *     <li>In running state, after queueing n frames.</li>
+     *     <li>In eos state.</li>
+     * </ul>
+     * <p>
+     * In all situations (pre-flush or post-flush), the test expects the output timestamps to be
+     * strictly increasing. The flush call makes the output received non-deterministic even for a
+     * given input. Hence, besides timestamp checks, no additional validation is done for outputs
+     * received before flush. Post flush, the decode begins from a sync frame. So the test
+     * expects consistent output and this needs to be identical to the reference. The reference
+     * is obtained from the same decoder running in byte buffer mode.
+     * <p>
+     * The test runs mediacodec in synchronous and asynchronous mode.
      */
     @Ignore("TODO(b/147576107)")
     @ApiTest(apis = {"android.media.MediaCodec#flush"})
@@ -348,23 +356,33 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     /**
      * Checks component and framework behaviour for resolution change in surface mode. The
      * resolution change is not seamless (AdaptivePlayback) but done via reconfigure.
-     *
-     * The reconfiguring of media codec component happens at various points.
-     * 1. After initial configuration (stopped state)
-     * 2. In running state, before queueing any input
-     * 3. In running state, after queuing n frames
-     * 4. In eos state
-     *    a. reconfigure with same clip
-     *    b. reconfigure with different clip (different resolution)
-     *
-     * In all these cases, the test expects the timestamps received to be strictly increasing. In
-     * cases 3, 4 the test expects the output timestamp list to be identical to the reference
-     * list. The reference list is obtained from the same decoder running in byte buffer mode.
-     *
+     * <p>
+     * The reconfiguring of media codec component happens at various points :-
+     * <ul>
+     *     <li>After initial configuration (stopped state).</li>
+     *     <li>In running state, before queueing any input.</li>
+     *     <li>In running state, after queuing n frames.</li>
+     *     <li>In eos state.</li>
+     * </ul>
+     * In eos state,
+     * <ul>
+     *     <li>reconfigure with same clip.</li>
+     *     <li>reconfigure with different clip (different resolution).</li>
+     * </ul>
+     * <p>
+     * In all situations (pre-reconfigure or post-reconfigure), the test expects the output
+     * timestamps to be strictly increasing. The reconfigure call makes the output received
+     * non-deterministic even for a given input. Hence, besides timestamp checks, no additional
+     * validation is done for outputs received before reconfigure. Post reconfigure, the decode
+     * begins from a sync frame. So the test expects consistent output and this needs to be
+     * identical to the reference. The reference is obtained from the same decoder running in
+     * byte buffer mode.
+     * <p>
      * The test runs mediacodec in synchronous and asynchronous mode.
-     *
+     * <p>
      * During reconfiguration, the mode of operation is toggled. That is, if first configure
-     * operates the codec in sync mode, then next configure operates the codec in async mode, ...
+     * operates the codec in sync mode, then next configure operates the codec in async mode and
+     * so on.
      */
     @ApiTest(apis = "android.media.MediaCodec#configure")
     @LargeTest

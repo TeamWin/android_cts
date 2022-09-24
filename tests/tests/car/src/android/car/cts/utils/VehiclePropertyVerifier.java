@@ -91,6 +91,7 @@ public class VehiclePropertyVerifier<T> {
     private final Optional<ConfigArrayVerifier> mConfigArrayVerifier;
     private final Optional<CarPropertyValueVerifier> mCarPropertyValueVerifier;
     private final Optional<AreaIdsVerifier> mAreaIdsVerifier;
+    private final Optional<CarPropertyConfigVerifier> mCarPropertyConfigVerifier;
     private final ImmutableSet<Integer> mPossibleConfigArrayValues;
     private final ImmutableSet<T> mPossibleCarPropertyValues;
     private final boolean mRequirePropertyValueToBeInConfigArray;
@@ -105,6 +106,7 @@ public class VehiclePropertyVerifier<T> {
             Optional<ConfigArrayVerifier> configArrayVerifier,
             Optional<CarPropertyValueVerifier> carPropertyValueVerifier,
             Optional<AreaIdsVerifier> areaIdsVerifier,
+            Optional<CarPropertyConfigVerifier> carPropertyConfigVerifier,
             ImmutableSet<Integer> possibleConfigArrayValues,
             ImmutableSet<T> possibleCarPropertyValues,
             boolean requirePropertyValueToBeInConfigArray,
@@ -123,6 +125,7 @@ public class VehiclePropertyVerifier<T> {
         mConfigArrayVerifier = configArrayVerifier;
         mCarPropertyValueVerifier = carPropertyValueVerifier;
         mAreaIdsVerifier = areaIdsVerifier;
+        mCarPropertyConfigVerifier = carPropertyConfigVerifier;
         mPossibleConfigArrayValues = possibleConfigArrayValues;
         mPossibleCarPropertyValues = possibleCarPropertyValues;
         mRequirePropertyValueToBeInConfigArray = requirePropertyValueToBeInConfigArray;
@@ -226,7 +229,7 @@ public class VehiclePropertyVerifier<T> {
 
     private void verifyCarPropertyValueSetter(CarPropertyConfig<?> carPropertyConfig,
             CarPropertyManager carPropertyManager) {
-        if (carPropertyConfig.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ) {
+        if (carPropertyConfig.getAccess() != CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
             return;
         }
         if (Boolean.class.equals(carPropertyConfig.getPropertyType())) {
@@ -327,6 +330,9 @@ public class VehiclePropertyVerifier<T> {
 
     private void verifyCarPropertyValueCallback(CarPropertyConfig<?> carPropertyConfig,
             CarPropertyManager carPropertyManager) {
+        if (carPropertyConfig.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE) {
+            return;
+        }
         int updatesPerAreaId = 1;
         long timeoutMillis = 1500;
         if (mChangeMode == CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS) {
@@ -393,9 +399,8 @@ public class VehiclePropertyVerifier<T> {
                 carPropertyConfig.getAreaIds())).that(ImmutableSet.copyOf(Arrays.stream(
                 carPropertyConfig.getAreaIds()).boxed().collect(Collectors.toList())).size()
                 == carPropertyConfig.getAreaIds().length).isTrue();
-        if (mAreaIdsVerifier.isPresent()) {
-            mAreaIdsVerifier.get().verify(carPropertyConfig.getAreaIds());
-        } else if (mAreaType == VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL) {
+
+        if (mAreaType == VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL) {
             assertWithMessage(
                     mPropertyName + "'s AreaIds must contain a single 0 since it is "
                             + areaTypeToString(mAreaType))
@@ -409,9 +414,13 @@ public class VehiclePropertyVerifier<T> {
         } else if (mAreaType == VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR) {
             verifyValidAreaIdsForAreaType(carPropertyConfig, ALL_POSSIBLE_MIRROR_AREA_IDS);
             verifyNoAreaOverlapInAreaIds(carPropertyConfig, MIRROR_AREAS);
-        } else if (mAreaType == VehicleAreaType.VEHICLE_AREA_TYPE_SEAT) {
+        } else if (mAreaType == VehicleAreaType.VEHICLE_AREA_TYPE_SEAT
+                && mPropertyId != VehiclePropertyIds.INFO_DRIVER_SEAT) {
             verifyValidAreaIdsForAreaType(carPropertyConfig, ALL_POSSIBLE_SEAT_AREA_IDS);
             verifyNoAreaOverlapInAreaIds(carPropertyConfig, SEAT_AREAS);
+        }
+        if (mAreaIdsVerifier.isPresent()) {
+            mAreaIdsVerifier.get().verify(carPropertyConfig.getAreaIds());
         }
 
         if (mChangeMode == CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_CONTINUOUS) {
@@ -419,6 +428,9 @@ public class VehiclePropertyVerifier<T> {
         } else {
             verifyNonContinuousCarPropertyConfig(carPropertyConfig);
         }
+
+        mCarPropertyConfigVerifier.ifPresent(carPropertyConfigVerifier ->
+                carPropertyConfigVerifier.verify(carPropertyConfig));
 
         if (!mPossibleConfigArrayValues.isEmpty()) {
             assertWithMessage(
@@ -525,6 +537,9 @@ public class VehiclePropertyVerifier<T> {
 
     private void verifyCarPropertyValueGetter(CarPropertyConfig<?> carPropertyConfig,
             CarPropertyManager carPropertyManager) {
+        if (carPropertyConfig.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE) {
+            return;
+        }
         for (int areaId : carPropertyConfig.getAreaIds()) {
             CarPropertyValue<?> carPropertyValue =
                     carPropertyManager.getProperty(
@@ -684,6 +699,10 @@ public class VehiclePropertyVerifier<T> {
         void verify(int[] areaIds);
     }
 
+    public interface CarPropertyConfigVerifier {
+        void verify(CarPropertyConfig<?> carPropertyConfig);
+    }
+
     public static class Builder<T> {
         private final int mPropertyId;
         private final int mAccess;
@@ -694,6 +713,7 @@ public class VehiclePropertyVerifier<T> {
         private Optional<ConfigArrayVerifier> mConfigArrayVerifier = Optional.empty();
         private Optional<CarPropertyValueVerifier> mCarPropertyValueVerifier = Optional.empty();
         private Optional<AreaIdsVerifier> mAreaIdsVerifier = Optional.empty();
+        private Optional<CarPropertyConfigVerifier> mCarPropertyConfigVerifier = Optional.empty();
         private ImmutableSet<Integer> mPossibleConfigArrayValues = ImmutableSet.of();
         private ImmutableSet<T> mPossibleCarPropertyValues = ImmutableSet.of();
         private boolean mRequirePropertyValueToBeInConfigArray = false;
@@ -730,6 +750,12 @@ public class VehiclePropertyVerifier<T> {
 
         public Builder<T> setAreaIdsVerifier(AreaIdsVerifier areaIdsVerifier) {
             mAreaIdsVerifier = Optional.of(areaIdsVerifier);
+            return this;
+        }
+
+        public Builder<T> setCarPropertyConfigVerifier(
+                CarPropertyConfigVerifier carPropertyConfigVerifier) {
+            mCarPropertyConfigVerifier = Optional.of(carPropertyConfigVerifier);
             return this;
         }
 
@@ -778,11 +804,11 @@ public class VehiclePropertyVerifier<T> {
         public VehiclePropertyVerifier<T> build() {
             return new VehiclePropertyVerifier<>(mPropertyId, mAccess, mAreaType, mChangeMode,
                     mPropertyType, mRequiredProperty, mConfigArrayVerifier,
-                    mCarPropertyValueVerifier, mAreaIdsVerifier, mPossibleConfigArrayValues,
-                    mPossibleCarPropertyValues, mRequirePropertyValueToBeInConfigArray,
-                    mVerifySetterWithConfigArrayValues, mRequireMinMaxValues,
-                    mRequireMinValuesToBeZero, mRequireZeroToBeContainedInMinMaxRanges,
-                    mPossiblyDependentOnHvacPowerOn);
+                    mCarPropertyValueVerifier, mAreaIdsVerifier, mCarPropertyConfigVerifier,
+                    mPossibleConfigArrayValues, mPossibleCarPropertyValues,
+                    mRequirePropertyValueToBeInConfigArray, mVerifySetterWithConfigArrayValues,
+                    mRequireMinMaxValues, mRequireMinValuesToBeZero,
+                    mRequireZeroToBeContainedInMinMaxRanges, mPossiblyDependentOnHvacPowerOn);
         }
     }
 

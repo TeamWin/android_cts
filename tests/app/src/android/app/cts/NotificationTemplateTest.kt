@@ -27,6 +27,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.Icon
 import android.net.Uri
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -35,7 +36,6 @@ import androidx.test.filters.SmallTest
 import com.android.compatibility.common.util.CddTest
 import com.google.common.truth.Truth.assertThat
 import kotlin.test.assertFailsWith
-import org.junit.Assume
 
 class NotificationTemplateTest : NotificationTemplateTestBase() {
 
@@ -142,8 +142,11 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigPicture_cappedTo16By9() {
-        Assume.assumeFalse("BigPictureStyle is not supported in automotive",
-                isPlatformAutomotive())
+        if (isPlatformAutomotive()) {
+            Log.i(TAG, "Skipping: testWideIcon_inBigPicture_cappedTo16By9" +
+                    " - BigPictureStyle is not supported in automotive.")
+            return
+        }
         val picture = createBitmap(40, 30)
         val icon = createBitmap(200, 100)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -161,8 +164,11 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigPicture_canShowExact4By3() {
-        Assume.assumeFalse("BigPictureStyle is not supported in automotive",
-                isPlatformAutomotive())
+        if (isPlatformAutomotive()) {
+            Log.i(TAG, "Skipping: testWideIcon_inBigPicture_canShowExact4By3" +
+                    " - BigPictureStyle is not supported in automotive.")
+            return
+        }
         val picture = createBitmap(40, 30)
         val icon = createBitmap(400, 300)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -180,8 +186,11 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testWideIcon_inBigPicture_neverNarrowerThanSquare() {
-        Assume.assumeFalse("BigPictureStyle is not supported in automotive",
-                isPlatformAutomotive())
+        if (isPlatformAutomotive()) {
+            Log.i(TAG, "Skipping: testWideIcon_inBigPicture_neverNarrowerThanSquare" +
+                    " - BigPictureStyle is not supported in automotive.")
+            return
+        }
         val picture = createBitmap(40, 30)
         val icon = createBitmap(200, 300)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -243,8 +252,11 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testBigPictureStyle_populatesExtrasCompatibly() {
-        Assume.assumeFalse("BigPictureStyle is not supported in automotive",
-                isPlatformAutomotive())
+        if (isPlatformAutomotive()) {
+            Log.i(TAG, "Skipping: testBigPictureStyle_populatesExtrasCompatibly" +
+                    " - BigPictureStyle is not supported in automotive.")
+            return
+        }
         val bitmap = createBitmap(40, 30)
         val uri = Uri.parse("content://android.app.stubs.assets/picture_400_by_300.png")
         val iconWithUri = Icon.createWithContentUri(uri)
@@ -278,8 +290,11 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testBigPictureStyle_bigPictureUriIcon() {
-        Assume.assumeFalse("BigPictureStyle is not supported in automotive",
-                isPlatformAutomotive())
+        if (isPlatformAutomotive()) {
+            Log.i(TAG, "Skipping: testBigPictureStyle_bigPictureUriIcon" +
+                    " - BigPictureStyle is not supported in automotive.")
+            return
+        }
         val pictureUri = Uri.parse("content://android.app.stubs.assets/picture_400_by_300.png")
         val pictureIcon = Icon.createWithContentUri(pictureUri)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -296,8 +311,11 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
 
     @CddTest(requirement = "3.8.3.1/C-2-1")
     fun testPromoteBigPicture_withBigPictureUriIcon() {
-        Assume.assumeFalse("BigPictureStyle is not supported in automotive",
-                isPlatformAutomotive())
+        if (isPlatformAutomotive()) {
+            Log.i(TAG, "Skipping: testPromoteBigPicture_withBigPictureUriIcon" +
+                    " - BigPictureStyle is not supported in automotive.")
+            return
+        }
         val pictureUri = Uri.parse("content://android.app.stubs.assets/picture_800_by_600.png")
         val pictureIcon = Icon.createWithContentUri(pictureUri)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -318,8 +336,11 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testPromoteBigPicture_withoutLargeIcon() {
-        Assume.assumeFalse("BigPictureStyle is not supported in automotive",
-                isPlatformAutomotive())
+        if (isPlatformAutomotive()) {
+            Log.i(TAG, "Skipping: testPromoteBigPicture_withoutLargeIcon" +
+                    " - BigPictureStyle is not supported in automotive.")
+            return
+        }
         val picture = createBitmap(40, 30)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
@@ -342,8 +363,11 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testPromoteBigPicture_withLargeIcon() {
-        Assume.assumeFalse("BigPictureStyle is not supported in automotive",
-                isPlatformAutomotive())
+        if (isPlatformAutomotive()) {
+            Log.i(TAG, "Skipping: testPromoteBigPicture_withLargeIcon" +
+                    " - BigPictureStyle is not supported in automotive.")
+            return
+        }
         val picture = createBitmap(40, 30)
         val icon = createBitmap(80, 65)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -381,8 +405,11 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
 
     @CddTest(requirement = "3.8.3.1/C-2-1")
     fun testPromoteBigPicture_withBigLargeIcon() {
-        Assume.assumeFalse("BigPictureStyle is not supported in automotive",
-                isPlatformAutomotive())
+        if (isPlatformAutomotive()) {
+            Log.i(TAG, "Skipping: testPromoteBigPicture_withBigLargeIcon" +
+                    " - BigPictureStyle is not supported in automotive.")
+            return
+        }
         val picture = createBitmap(40, 30)
         val bigIcon = createBitmap(800, 600)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -415,8 +442,11 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
 
     @CddTest(requirement = "3.8.3.1/C-2-1")
     fun testBigPicture_withBigLargeIcon_withContentUri() {
-        Assume.assumeFalse("BigPictureStyle is not supported in automotive",
-                isPlatformAutomotive())
+        if (isPlatformAutomotive()) {
+            Log.i(TAG, "Skipping: testBigPicture_withBigLargeIcon_withContentUri" +
+                    " - BigPictureStyle is not supported in automotive.")
+            return
+        }
         val iconUri = Uri.parse("content://android.app.stubs.assets/picture_800_by_600.png")
         val icon = Icon.createWithContentUri(iconUri)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -736,9 +766,12 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     fun testCallStyle_ignoresCustomColors_whenNotColorized() {
-        Assume.assumeTrue("Test will not run when config disabled",
-                mContext.resources.getBoolean(getAndroidRBool(
-                        "config_callNotificationActionColorsRequireColorized")))
+        if (!mContext.resources.getBoolean(getAndroidRBool(
+                        "config_callNotificationActionColorsRequireColorized"))) {
+            Log.i(TAG, "Skipping: testCallStyle_ignoresCustomColors_whenNotColorized" +
+                    " - Test will not run when config disabled.")
+            return
+        }
         val person = Person.Builder().setName("Person").build()
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)

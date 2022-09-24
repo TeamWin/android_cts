@@ -47,7 +47,7 @@ import java.util.List;
 
 /**
  * Test video decoders support for Adaptive Playback.
- *
+ * <p>
  * Adaptive playback support for video decoders is only activated if the codec is configured to
  * decode onto a Surface. The getOutputImage() will return null if the codec was configured with
  * an output surface. Hence any form of checksum validation for the decoded output is ruled out.

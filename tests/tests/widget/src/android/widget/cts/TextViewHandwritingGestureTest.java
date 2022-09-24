@@ -29,6 +29,8 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.HandwritingGesture;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InsertGesture;
+import android.view.inputmethod.JoinOrSplitGesture;
+import android.view.inputmethod.RemoveSpaceGesture;
 import android.view.inputmethod.SelectGesture;
 import android.widget.EditText;
 
@@ -51,10 +53,10 @@ public class TextViewHandwritingGestureTest {
     private static final int WIDTH = 200;
     private static final int HEIGHT = 1000;
     private static final String DEFAULT_TEXT = ""
-            // Line 0 (characters 0 to 10)
+            // Line 0 (offset 0 to 10)
             + "XXX X XXX\n"
-            // Line 1 (characters 11 to 15)
-            + "XXXXX";
+            // Line 1 (offset 10 to 22)
+            + "XX X   XX  X";
     // All characters used in DEFAULT_TEXT have width 10em ('X' and ' ') in the test font used.
     // Font size is set to 1f, so that 10em is 10px.
     private static final float CHAR_WIDTH_PX = 10;
@@ -108,7 +110,11 @@ public class TextViewHandwritingGestureTest {
         List<Class<? extends HandwritingGesture>> gestures =
                 editorInfo.getSupportedHandwritingGestures();
         assertThat(gestures).containsAtLeast(
-                SelectGesture.class, DeleteGesture.class, InsertGesture.class);
+                SelectGesture.class,
+                DeleteGesture.class,
+                InsertGesture.class,
+                RemoveSpaceGesture.class,
+                JoinOrSplitGesture.class);
     }
 
     @Test
@@ -125,7 +131,7 @@ public class TextViewHandwritingGestureTest {
                 mEditText.getLayout().getLineBottom(0));
         performSelectGesture(area, HandwritingGesture.GRANULARITY_CHARACTER);
 
-        assertSelectGesturePerformed(1, 3);
+        assertGestureSelectedRange(1, 3);
     }
 
     @Test
@@ -144,7 +150,7 @@ public class TextViewHandwritingGestureTest {
                 mEditText.getLayout().getLineBottom(0));
         performSelectGesture(area, HandwritingGesture.GRANULARITY_WORD);
 
-        assertSelectGesturePerformed(4, 9);
+        assertGestureSelectedRange(4, 9);
     }
 
     @Test
@@ -204,7 +210,7 @@ public class TextViewHandwritingGestureTest {
                 mEditText.getLayout().getLineBottom(0));
         performDeleteGesture(area, HandwritingGesture.GRANULARITY_CHARACTER);
 
-        assertDeleteGesturePerformed(1, 3);
+        assertGestureDeletedRange(1, 3);
     }
 
     @Test
@@ -223,7 +229,7 @@ public class TextViewHandwritingGestureTest {
                 mEditText.getLayout().getLineBottom(0));
         performDeleteGesture(area, HandwritingGesture.GRANULARITY_WORD);
 
-        assertDeleteGesturePerformed(4, 9);
+        assertGestureDeletedRange(4, 9);
     }
 
     @Test
@@ -276,7 +282,7 @@ public class TextViewHandwritingGestureTest {
         performInsertGesture(
                 new PointF(3 * CHAR_WIDTH_PX + 2f, mEditText.getLayout().getLineTop(0) + 1f));
 
-        assertInsertGesturePerformed(3);
+        assertGestureInsertedText(3, INSERT_TEXT);
     }
 
     @Test
@@ -286,7 +292,7 @@ public class TextViewHandwritingGestureTest {
         performInsertGesture(
                 new PointF(3 * CHAR_WIDTH_PX - 4f, mEditText.getLayout().getLineTop(1) + 1f));
 
-        assertInsertGesturePerformed(13);
+        assertGestureInsertedText(13, INSERT_TEXT);
     }
 
     @Test
@@ -354,6 +360,281 @@ public class TextViewHandwritingGestureTest {
         assertGestureFailure(/* initialCursorPosition= */ 6);
     }
 
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performRemoveSpaceGesture_singleWhitespace() {
+        // Line 0 "XXX X XXX" has whitespace from offset 3 to 4.
+        // Start point is close to offset 2 on line 0.
+        // End point is close to offset 4 on line 0.
+        performRemoveSpaceGesture(
+                new PointF(2 * CHAR_WIDTH_PX - 2f, mEditText.getLayout().getLineTop(0) + 1f),
+                new PointF(4 * CHAR_WIDTH_PX + 2f, mEditText.getLayout().getLineTop(0) + 1f));
+
+        assertGestureDeletedRange(3, 4);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performRemoveSpaceGesture_multipleWhitespace() {
+        // Line 1 "XX X   XX  X" starts from offset 10 and has whitespace from offset 12 to 13,
+        // from offset 14 to 17, and from offset 19 to 21.
+        // Start point is close to offset 12 on line 1.
+        // End point is close to offset 20 on line 1.
+        performRemoveSpaceGesture(
+                new PointF(2 * CHAR_WIDTH_PX - 2f, mEditText.getLayout().getLineTop(1) + 1f),
+                new PointF(10 * CHAR_WIDTH_PX - 2f, mEditText.getLayout().getLineTop(1) + 1f));
+
+        // The line joining the points covers offsets 12 to 20, so it should remove the first two
+        // whitespace groups, and only remove one character from the third whitespace group.
+        int whitespaceGroup1Start = 12;
+        int whitespaceGroup1End = 13;
+        int whitespaceGroup2Start = 14;
+        int whitespaceGroup2End = 17;
+        int whitespaceGroup3Start = 19;
+        int whitespaceGroup3End = 20;
+        assertThat(mResult).isEqualTo(InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
+        assertThat(mEditText.getText().toString()).isEqualTo(
+                DEFAULT_TEXT.substring(0, whitespaceGroup1Start)
+                        + DEFAULT_TEXT.substring(whitespaceGroup1End, whitespaceGroup2Start)
+                        + DEFAULT_TEXT.substring(whitespaceGroup2End, whitespaceGroup3Start)
+                        + DEFAULT_TEXT.substring(whitespaceGroup3End));
+        // The cursor is at the last delete position.
+        int cursorPosition = whitespaceGroup3Start
+                - (whitespaceGroup1End - whitespaceGroup1Start)
+                - (whitespaceGroup2End - whitespaceGroup2Start);
+        assertThat(mEditText.getSelectionStart()).isEqualTo(cursorPosition);
+        assertThat(mEditText.getSelectionEnd()).isEqualTo(cursorPosition);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performRemoveSpaceGesture_touchesTwoLines_appliesToFirstLine() {
+        // Line 0 "XXX X XXX" has whitespace from offset 3 to 4.
+        // Line 1 "XX X   XX  X" starts from offset 10 and has whitespace from offset 12 to 13.
+        // Start point is close to offset 12 on line 1.
+        // End point is close to offset 4 on line 0.
+        performRemoveSpaceGesture(
+                new PointF(2 * CHAR_WIDTH_PX - 2f, mEditText.getLayout().getLineTop(1) + 1f),
+                new PointF(4 * CHAR_WIDTH_PX + 2f, mEditText.getLayout().getLineTop(0) + 1f));
+
+        // The start point is on line 1 and the end point is on line 0.
+        // The gesture only applies to the first line touched (line 0), so the whitespace on line 1
+        // is not deleted.
+        assertGestureDeletedRange(3, 4);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performRemoveSpaceGesture_noWhitespaceTouched_shouldFallback() {
+        mEditText.setSelection(7);
+
+        // Line 0 "XXX X XXX" has no whitespace before offset 3.
+        // Start point is close to offset 0 on line 0.
+        // End point is close to offset 3 on line 0.
+        performRemoveSpaceGesture(
+                new PointF(2f, mEditText.getLayout().getLineTop(0) + 1f),
+                new PointF(3 * CHAR_WIDTH_PX - 2f, mEditText.getLayout().getLineTop(0) + 1f));
+
+        // There is no whitespace from offset 0 to 3.
+        assertFallbackTextInserted(/* initialCursorPosition= */ 7);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performRemoveSpaceGesture_aboveFirstLine_shouldFallback() {
+        mEditText.setSelection(3);
+
+        // Both points are above line 0.
+        performRemoveSpaceGesture(
+                new PointF(2 * CHAR_WIDTH_PX - 2f, mEditText.getLayout().getLineTop(0) - 1f),
+                new PointF(4 * CHAR_WIDTH_PX + 2f, mEditText.getLayout().getLineTop(0) - 2f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 3);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performRemoveSpaceGesture_betweenLines_shouldFallback() {
+        mEditText.setSelection(4);
+
+        // Due to the additional line spacing, both points are in the space between the two lines.
+        performRemoveSpaceGesture(
+                new PointF(2 * CHAR_WIDTH_PX - 2f, mEditText.getLayout().getLineTop(1) - 1f),
+                new PointF(4 * CHAR_WIDTH_PX + 2f, mEditText.getLayout().getLineTop(1) - 2f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 4);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performRemoveSpaceGesture_belowLastLine_shouldFallback() {
+        mEditText.setSelection(11);
+
+        // Both points are below line 1.
+        performRemoveSpaceGesture(
+                new PointF(2 * CHAR_WIDTH_PX - 2f, mEditText.getLayout().getLineBottom(1) + 1f),
+                new PointF(4 * CHAR_WIDTH_PX + 2f, mEditText.getLayout().getLineBottom(1) + 2f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 11);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performRemoveSpaceGesture_leftOfLine_shouldFallback() {
+        mEditText.setSelection(7);
+
+        // Both points are to the left of line 0.
+        performRemoveSpaceGesture(
+                new PointF(-2f, mEditText.getLayout().getLineTop(0) + 1f),
+                new PointF(-1f, mEditText.getLayout().getLineTop(0) + 2f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 7);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performRemoveSpaceGesture_rightOfLine_shouldFallback() {
+        mEditText.setSelection(6);
+
+        // The first line has 9 characters, so it ends at horizontal position 9 * CHAR_WIDTH_PX.
+        // Both points are to the right of line 0.
+        performRemoveSpaceGesture(
+                new PointF(9 * CHAR_WIDTH_PX + 5f, mEditText.getLayout().getLineTop(0) + 1f),
+                new PointF(9 * CHAR_WIDTH_PX + 7f, mEditText.getLayout().getLineTop(0) + 2f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 6);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performRemoveSpaceGesture_noFallback_shouldFail() {
+        mEditText.setSelection(6);
+
+        // Both points are above line 0.
+        performRemoveSpaceGesture(
+                new PointF(2 * CHAR_WIDTH_PX - 2f, mEditText.getLayout().getLineTop(0) - 1f),
+                new PointF(4 * CHAR_WIDTH_PX + 2f, mEditText.getLayout().getLineTop(0) - 2f),
+                /* setFallbackText= */ false);
+
+        assertGestureFailure(/* initialCursorPosition= */ 6);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performJoinOrSplitGesture_whitespaceStartBoundary_shouldJoin() {
+        // Line 1 "XX X   XX  X" starts from offset 10 and has whitespace from offset 14 to 17.
+        performJoinOrSplitGesture(
+                new PointF(4 * CHAR_WIDTH_PX - 2f, mEditText.getLayout().getLineTop(1) + 1f));
+
+        // The point is closest to offset 14, which is on the boundary of the whitespace from offset
+        // 14 to 17.
+        assertGestureDeletedRange(14, 17);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performJoinOrSplitGesture_whitespaceEndBoundary_shouldJoin() {
+        // Line 1 "XX X   XX  X" starts from offset 10 and has whitespace from offset 14 to 17.
+        performJoinOrSplitGesture(
+                new PointF(7 * CHAR_WIDTH_PX + 2f, mEditText.getLayout().getLineTop(1) + 1f));
+
+        // The point is closest to offset 17, which is on the boundary of the whitespace from offset
+        // 14 to 17.
+        assertGestureDeletedRange(14, 17);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performJoinOrSplitGesture_whitespaceMiddle_shouldJoin() {
+        // Line 1 "XX X   XX  X" starts from offset 10 and has whitespace from offset 14 to 17.
+        performJoinOrSplitGesture(
+                new PointF(5 * CHAR_WIDTH_PX, mEditText.getLayout().getLineTop(1) + 1f));
+
+        // The point is closest to offset 15, which is within the whitespace from offset 14 to 17.
+        assertGestureDeletedRange(14, 17);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performJoinOrSplitGesture_noWhitespace_shouldInsertSpace() {
+        // Line 1 "XX X   XX  X" starts from offset 10 and has a word from offset 17 to 19.
+        performJoinOrSplitGesture(
+                new PointF(8 * CHAR_WIDTH_PX, mEditText.getLayout().getLineTop(1) + 1f));
+
+        // The point is closest to offset 18, which does not touch whitespace.
+        assertGestureInsertedText(18, " ");
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performJoinOrSplitGesture_aboveFirstLine_shouldFallback() {
+        mEditText.setSelection(3);
+
+        // The point is above line 0.
+        performJoinOrSplitGesture(new PointF(32f, mEditText.getLayout().getLineTop(0) - 1f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 3);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performJoinOrSplitGesture_betweenLines_shouldFallback() {
+        mEditText.setSelection(4);
+
+        // Due to the additional line spacing, this point is in the space between the two lines.
+        performJoinOrSplitGesture(new PointF(32f, mEditText.getLayout().getLineTop(1) - 1f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 4);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performJoinOrSplitGesture_belowLastLine_shouldFallback() {
+        mEditText.setSelection(11);
+
+        // The point is below line 1.
+        performJoinOrSplitGesture(new PointF(32f, mEditText.getLayout().getLineBottom(1) + 1f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 11);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performJoinOrSplitGesture_leftOfLine_shouldFallback() {
+        mEditText.setSelection(7);
+
+        // The point is to the left of line 0.
+        performJoinOrSplitGesture(new PointF(-1f, mEditText.getLayout().getLineTop(0) + 1f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 7);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performJoinOrSplitGesture_rightOfLine_shouldFallback() {
+        mEditText.setSelection(6);
+
+        // The first line has 9 characters, so it ends at horizontal position 9 * CHAR_WIDTH_PX.
+        // The point is to the right of line 0.
+        performJoinOrSplitGesture(
+                new PointF(9 * CHAR_WIDTH_PX + 5f, mEditText.getLayout().getLineTop(0) + 1f));
+
+        assertFallbackTextInserted(/* initialCursorPosition= */ 6);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performJoinOrSplitGesture_noFallback_shouldFail() {
+        mEditText.setSelection(6);
+
+        // The point is above line 0.
+        performJoinOrSplitGesture(
+                new PointF(-1f, mEditText.getLayout().getLineTop(0) - 1f),
+                /* setFallbackText= */ false);
+
+        assertGestureFailure(/* initialCursorPosition= */ 6);
+    }
+
     private void performSelectGesture(RectF area, int granularity) {
         performSelectGesture(area, granularity, /* setFallbackText= */ true);
     }
@@ -367,14 +648,6 @@ public class TextViewHandwritingGestureTest {
                 .build();
         InputConnection inputConnection = mEditText.onCreateInputConnection(new EditorInfo());
         inputConnection.performHandwritingGesture(gesture, Runnable::run, mResultConsumer);
-    }
-
-    private void assertSelectGesturePerformed(int start, int end) {
-        assertThat(mResult).isEqualTo(InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
-        // Check that the text has not changed.
-        assertThat(mEditText.getText().toString()).isEqualTo(DEFAULT_TEXT);
-        assertThat(mEditText.getSelectionStart()).isEqualTo(start);
-        assertThat(mEditText.getSelectionEnd()).isEqualTo(end);
     }
 
     private void performDeleteGesture(RectF area, int granularity) {
@@ -392,14 +665,6 @@ public class TextViewHandwritingGestureTest {
         inputConnection.performHandwritingGesture(gesture, Runnable::run, mResultConsumer);
     }
 
-    private void assertDeleteGesturePerformed(int start, int end) {
-        assertThat(mResult).isEqualTo(InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
-        assertThat(mEditText.getText().toString())
-                .isEqualTo(DEFAULT_TEXT.substring(0, start) + DEFAULT_TEXT.substring(end));
-        assertThat(mEditText.getSelectionStart()).isEqualTo(start);
-        assertThat(mEditText.getSelectionEnd()).isEqualTo(start);
-    }
-
     private void performInsertGesture(PointF point) {
         performInsertGesture(point, /* setFallbackText= */ true);
     }
@@ -415,12 +680,58 @@ public class TextViewHandwritingGestureTest {
         inputConnection.performHandwritingGesture(gesture, Runnable::run, mResultConsumer);
     }
 
-    private void assertInsertGesturePerformed(int offset) {
+    private void performRemoveSpaceGesture(PointF startPoint, PointF endPoint) {
+        performRemoveSpaceGesture(startPoint, endPoint, /* setFallbackText= */ true);
+    }
+
+    private void performRemoveSpaceGesture(
+            PointF startPoint, PointF endPoint, boolean setFallbackText) {
+        startPoint.offset(mLocationOnScreen[0], mLocationOnScreen[1]);
+        endPoint.offset(mLocationOnScreen[0], mLocationOnScreen[1]);
+        HandwritingGesture gesture = new RemoveSpaceGesture.Builder()
+                .setPoints(startPoint, endPoint)
+                .setFallbackText(setFallbackText ? FALLBACK_TEXT : null)
+                .build();
+        InputConnection inputConnection = mEditText.onCreateInputConnection(new EditorInfo());
+        inputConnection.performHandwritingGesture(gesture, Runnable::run, mResultConsumer);
+    }
+
+    private void performJoinOrSplitGesture(PointF point) {
+        performJoinOrSplitGesture(point, /* setFallbackText= */ true);
+    }
+
+    private void performJoinOrSplitGesture(PointF point, boolean setFallbackText) {
+        point.offset(mLocationOnScreen[0], mLocationOnScreen[1]);
+        HandwritingGesture gesture = new JoinOrSplitGesture.Builder()
+                .setJoinOrSplitPoint(point)
+                .setFallbackText(setFallbackText ? FALLBACK_TEXT : null)
+                .build();
+        InputConnection inputConnection = mEditText.onCreateInputConnection(new EditorInfo());
+        inputConnection.performHandwritingGesture(gesture, Runnable::run, mResultConsumer);
+    }
+
+    private void assertGestureSelectedRange(int start, int end) {
+        assertThat(mResult).isEqualTo(InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
+        // Check that the text has not changed.
+        assertThat(mEditText.getText().toString()).isEqualTo(DEFAULT_TEXT);
+        assertThat(mEditText.getSelectionStart()).isEqualTo(start);
+        assertThat(mEditText.getSelectionEnd()).isEqualTo(end);
+    }
+
+    private void assertGestureDeletedRange(int start, int end) {
+        assertThat(mResult).isEqualTo(InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
+        assertThat(mEditText.getText().toString())
+                .isEqualTo(DEFAULT_TEXT.substring(0, start) + DEFAULT_TEXT.substring(end));
+        assertThat(mEditText.getSelectionStart()).isEqualTo(start);
+        assertThat(mEditText.getSelectionEnd()).isEqualTo(start);
+    }
+
+    private void assertGestureInsertedText(int offset, String insertText) {
         assertThat(mResult).isEqualTo(InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
         assertThat(mEditText.getText().toString()).isEqualTo(
-                DEFAULT_TEXT.substring(0, offset) + INSERT_TEXT + DEFAULT_TEXT.substring(offset));
-        assertThat(mEditText.getSelectionStart()).isEqualTo(offset + INSERT_TEXT.length());
-        assertThat(mEditText.getSelectionEnd()).isEqualTo(offset + INSERT_TEXT.length());
+                DEFAULT_TEXT.substring(0, offset) + insertText + DEFAULT_TEXT.substring(offset));
+        assertThat(mEditText.getSelectionStart()).isEqualTo(offset + insertText.length());
+        assertThat(mEditText.getSelectionEnd()).isEqualTo(offset + insertText.length());
     }
 
     private void assertFallbackTextInserted(int initialCursorPosition) {

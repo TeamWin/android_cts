@@ -46,23 +46,32 @@ import java.util.List;
 
 /**
  * The tests accepts multiple test vectors packaged in different way. For instance, Avc elementary
- * stream can be packed in mp4, avi, mkv, ts, 3gp, webm, ... These clips when decoded, are
- * expected to yield same output. Similarly for Vpx, av1, no-show frame can be packaged in-to
- * separate NALs or can be combined with a display frame in to one NAL. Both these scenarios
- * are expected to give same output. The test decodes all the test vectors it is given and
- * compares their outputs against each other. In short, the tests validate extractors, codecs
- * together.
- *
- * Additionally, as the test runs mediacodec in byte buffer mode.
- * 1. For normative codecs we expect the decoded output to be identical to reference decoded
- * output. The reference decoded output is sent to the test as crc32 checksum.
- * 2. For non normative codecs, the decoded output is checked for consistency.
- * 3. For lossless audio codecs, we check if the rms error of the decoded output is 0.
- * 4. For lossy audio codecs, we check if the rms error is within 5% of reference rms error.
- * 5. For video components the test expects the output timestamp list to be identical to input
- * timestamp list.
- * 6. For audio components, the test expect the output timestamps to be strictly increasing.
- * 7. The test also checks correctness of essential keys of output format of mediacodec.
+ * stream can be packed in mp4, avi, mkv, ts, 3gp, webm and so on. These clips when decoded, are
+ * expected to yield same output. Similarly for Vpx, av1, no-show frame can be packaged in to
+ * separate access units or can be combined with a display frame in to one access unit. Both these
+ * scenarios are expected to give same output.
+ * <p>
+ * The test extracts and decodes the stream from all of its listed containers and verifies that
+ * they produce the same output. In short, the tests validate extractors, codecs together.
+ * <p>
+ * Additionally, as the test runs mediacodec in byte buffer mode,
+ * <ul>
+ *     <li>For normative video media types, the test expects the decoded output to be identical to
+ *     reference decoded output. The reference decoded output is represented by its CRC32
+ *     checksum and is sent to the test as a parameter along with the test clip.</li>
+ *     <li>For non normative media types, the decoded output is checked for consistency.</li>
+ *     <li>For lossless audio media types, the test verifies if the rms error between input and
+ *     output is 0.</li>
+ *     <li>For lossy audio media types, the test verifies if the rms error is within 5% of
+ *     reference rms error. The reference value is computed using reference decoder and is sent
+ *     to the test as a parameter along with the test clip.</li>
+ *     <li>For all video components, the test expects the output timestamp list to be identical to
+ *     input timestamp list.</li>
+ *     <li>For all audio components, the test expects the output timestamps to be strictly
+ *     increasing.</li>
+ *     <li>The test also checks correctness of essential keys of output format returned by
+ *     mediacodec.</li>
+ * </ul>
  */
 @RunWith(Parameterized.class)
 public class CodecDecoderValidationTest extends CodecDecoderTestBase {
@@ -124,7 +133,8 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                         null, -1.0f, 1201859039L, -1, -1, 520, 390, CODEC_ALL},
 
                 // mpeg2 test vectors with interlaced fields signalled in alternate ways
-                {MEDIA_TYPE_MPEG2, new String[]{"bbb_512x288_30fps_1mbps_mpeg2_interlaced_nob_1field.ts",
+                {MEDIA_TYPE_MPEG2, new String[]{
+                        "bbb_512x288_30fps_1mbps_mpeg2_interlaced_nob_1field.ts",
                         "bbb_512x288_30fps_1mbps_mpeg2_interlaced_nob_2fields.mp4"},
                         null, -1.0f, -1L, -1, -1, 512, 288, CODEC_ALL},
 
@@ -381,6 +391,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                 {MEDIA_TYPE_RAW, new String[]{"audio/bellezza_2ch_48kHz_s24le.wav"},
                         "audio/bellezza_2ch_48kHz_s24le.raw", 0.0f, -1L, 48000, 2, -1, -1,
                         CODEC_ALL},
+
                 // aac-lc
                 {MEDIA_TYPE_AAC, new String[]{"audio/bbb_1ch_8kHz_aac_lc.m4a"},
                         "audio/bbb_1ch_8kHz_s16le_3s.raw", 26.910906f, -1L, 8000, 1, -1, -1,
@@ -621,11 +632,11 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
     }
 
     /**
-     * Extract, Decode and Validate
+     * Extract, Decode and Validate. Check description of class {@link CodecDecoderValidationTest}
      */
     @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
-                     "MediaCodecInfo.CodecCapabilities#COLOR_FormatYUVP010",
-                     "android.media.AudioFormat#ENCODING_PCM_16BIT"})
+            "MediaCodecInfo.CodecCapabilities#COLOR_FormatYUVP010",
+            "android.media.AudioFormat#ENCODING_PCM_16BIT"})
     @CddTest(requirements = "5.1.3")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)

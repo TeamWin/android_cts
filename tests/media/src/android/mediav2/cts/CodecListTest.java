@@ -20,9 +20,9 @@ import static org.junit.Assert.assertTrue;
 
 import android.media.MediaFormat;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
@@ -64,7 +64,7 @@ public class CodecListTest {
                 String log = String.format("no %s found for mime %s as required by cdd ",
                         isEncoder ? "encoder" : "decoder", mime);
                 assertTrue(log, isEncoder ? CodecTestBase.hasEncoder(mime) :
-                                        CodecTestBase.hasDecoder(mime));
+                        CodecTestBase.hasDecoder(mime));
             }
         }
         if (MediaUtils.hasCamera()) {

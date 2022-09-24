@@ -48,7 +48,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -61,12 +60,12 @@ import javax.microedition.khronos.opengles.GL10;
  * {@link DecoderColorAspectsTest#testColorAspects()} checks if the encoder and decoder
  * components are signalling the configured color aspects correctly.
  * This test verifies if the device decoder/display is using this color aspects correctly
- *
+ * <p>
  * Test pipeline:
- *  [[ Input RGB frames -> encoder -> muxer -> decoder -> display -> Output RGB frames ]]
- *
- * Assuming no quantization losses, the input rgb pixel values and output rgb pixel values are
- * expected to be within tolerance limits.
+ * <pre> [[ Input RGB frames -> encoder -> muxer -> decoder -> display -> Output RGB frames ]]
+ * </pre>
+ * Assuming no quantization losses, the test verifies if the input rgb pixel values and output
+ * rgb pixel values are within tolerance limits.
  */
 @RunWith(Parameterized.class)
 public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
@@ -77,8 +76,8 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
     // skipping samples, we may not see large color loss. Hence allowable tolerance is kept to 5.
     // until QP stabilizes, the tolerance is set at 7. For devices upgrading to T, thresholds are
     // relaxed to 8 and 10.
-    private final int TRANSIENT_STATE_COLOR_DELTA = FIRST_SDK_IS_AT_LEAST_T ? 7: 10;
-    private final int STEADY_STATE_COLOR_DELTA = FIRST_SDK_IS_AT_LEAST_T ? 5: 8;
+    private static final int TRANSIENT_STATE_COLOR_DELTA = FIRST_SDK_IS_AT_LEAST_T ? 7 : 10;
+    private static final int STEADY_STATE_COLOR_DELTA = FIRST_SDK_IS_AT_LEAST_T ? 5 : 8;
     private final int[][] mColorBars = new int[][]{
             {66, 133, 244},
             {219, 68, 55},
@@ -176,7 +175,7 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
         final boolean isEncoder = true;
         final boolean needAudio = false;
         final boolean needVideo = true;
-        final List<Object[]> baseArgsList = Arrays.asList(new Object[][]{
+        final Object[][] baseArgsList = new Object[][]{
                 // "video/*", width, height, framerate, bitrate, range, standard, transfer,
                 // useHighBitDepth
                 {720, 480, 30, 3000000, MediaFormat.COLOR_RANGE_LIMITED,
@@ -186,8 +185,8 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
                         MediaFormat.COLOR_STANDARD_BT601_PAL, MediaFormat.COLOR_TRANSFER_SDR_VIDEO,
                         false},
                 {720, 480, 30, 3000000, MediaFormat.COLOR_RANGE_FULL,
-                    MediaFormat.COLOR_STANDARD_BT2020,
-                    MediaFormat.COLOR_TRANSFER_ST2084, true},
+                        MediaFormat.COLOR_STANDARD_BT2020,
+                        MediaFormat.COLOR_TRANSFER_ST2084, true},
 
                 // TODO (b/235954984) Some devices do not support following in h/w encoders
                 // Add more combinations as required once the encoders support these
@@ -224,7 +223,7 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
                 {1280, 720, 30, 3000000, MediaFormat.COLOR_RANGE_FULL,
                         MediaFormat.COLOR_STANDARD_BT601_PAL, MediaFormat.COLOR_TRANSFER_SDR_VIDEO},
                  */
-        });
+        };
         // Note: although vp8 and vp9 donot contain fields to signal color aspects properly, this
         // information can be muxed in to containers of mkv and mp4. So even those clips
         // should pass these tests
@@ -399,7 +398,7 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
     }
 
     private long computePresentationTime(int frameIndex) {
-        return frameIndex * 1000000 / mFrameRate;
+        return frameIndex * 1000000L / mFrameRate;
     }
 
     private void generateSurfaceFrame() {
@@ -507,11 +506,11 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
     }
 
     /**
-     * @see EncodeDecodeAccuracyTest
+     * Check description of class {@link EncodeDecodeAccuracyTest}
      */
     @ApiTest(apis = {"android.media.MediaFormat#KEY_COLOR_RANGE",
-                     "android.media.MediaFormat#KEY_COLOR_STANDARD",
-                     "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
+            "android.media.MediaFormat#KEY_COLOR_STANDARD",
+            "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testEncodeDecodeAccuracyRGB() throws IOException, InterruptedException {

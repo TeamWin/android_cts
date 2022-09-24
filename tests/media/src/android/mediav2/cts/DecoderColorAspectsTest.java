@@ -43,7 +43,7 @@ import java.util.List;
  * (mp4, mkv, ...) and some video standards also allow signalling this information in elementary
  * stream. Avc, Hevc, Av1, ... allow signalling this information in elementary stream, vpx relies
  * on webm/mkv or some other container for signalling.
- *
+ * <p>
  * The test checks if the muxer and/or decoder propagates this information from file to application
  * correctly on their own. Whether this information is used by the device during display is
  * beyond the scope of this test.
@@ -266,11 +266,11 @@ public class DecoderColorAspectsTest extends CodecDecoderTestBase {
     }
 
     /**
-     * @see DecoderColorAspectsTest
+     * Check description of class {@link DecoderColorAspectsTest}
      */
     @ApiTest(apis = {"android.media.MediaFormat#KEY_COLOR_RANGE",
-                     "android.media.MediaFormat#KEY_COLOR_STANDARD",
-                     "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
+            "android.media.MediaFormat#KEY_COLOR_STANDARD",
+            "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testColorAspects() throws IOException, InterruptedException {

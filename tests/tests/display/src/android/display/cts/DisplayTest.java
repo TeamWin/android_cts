@@ -51,7 +51,6 @@ import android.hardware.display.DisplayManager.DisplayListener;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemProperties;
@@ -62,7 +61,6 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.Display.HdrCapabilities;
-import android.view.SurfaceControl;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -445,16 +443,14 @@ public class DisplayTest {
                 mDisplayManager.areUserDisabledHdrTypesAllowed();
         mOriginalHdrSettings.userDisabledHdrTypes =
                 mDisplayManager.getUserDisabledHdrTypes();
-        final IBinder displayToken = SurfaceControl.getInternalDisplayToken();
-        SurfaceControl.overrideHdrTypes(displayToken, new int[]{
+        mDisplayManager.overrideHdrTypes(DEFAULT_DISPLAY, new int[]{
                 HdrCapabilities.HDR_TYPE_DOLBY_VISION, HdrCapabilities.HDR_TYPE_HDR10,
                 HdrCapabilities.HDR_TYPE_HLG, HdrCapabilities.HDR_TYPE_HDR10_PLUS});
         mDisplayManager.setAreUserDisabledHdrTypesAllowed(true);
     }
 
     private void restoreOriginalHdrSettings() {
-        final IBinder displayToken = SurfaceControl.getInternalDisplayToken();
-        SurfaceControl.overrideHdrTypes(displayToken, new int[]{});
+        mDisplayManager.overrideHdrTypes(DEFAULT_DISPLAY, new int[]{});
         if (mDisplayManager != null) {
             mDisplayManager.setUserDisabledHdrTypes(
                     mOriginalHdrSettings.userDisabledHdrTypes);

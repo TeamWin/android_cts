@@ -62,23 +62,30 @@ import java.util.stream.IntStream;
 
 /**
  * Test mediacodec api, decoders and their interactions in byte buffer mode
- *
+ * <p>
  * The test decodes a compressed frame and stores the result in ByteBuffer. This allows
  * validating the decoded output. Hence wherever possible we check if the decoded output is
  * compliant.
- * 1. For Avc, Hevc, Vpx, Av1 we expect the decoded output to be identical to reference decoded
- * output. The reference decoded output is sent to the test as crc32 checksum.
- * 2. For mpeg2, mpeg4 and h263, the decoded output is checked for consistency. No crc32
- * verification is done because idct for these standards are non-normative.
- * 3. For Flac, Raw, we check if the rms error of the decoded output is 0.
- * 4. For lossy audio codecs we check if the rms error is within 5% of reference rms error. The
- * reference value is computed from reference decoder
- * 5. For video components the test expects the output timestamp list to be identical to input
- * timestamp list.
- * 6. For audio components, the test expect the output timestamps to be strictly increasing.
- * 7. The test also checks if the format change is reported by the component if the clip is
- * different from default format.
- *
+ * <ul>
+ *     <li>For Avc, Hevc, Vpx and Av1, the test expects the decoded output to be identical to
+ *     reference decoded output. The reference decoded output is represented by its CRC32
+ *     checksum and is sent to the test as a parameter along with the test clip.</li>
+ *     <li>For others codecs (mpeg2, mpeg4, h263, ...) the decoded output is checked for
+ *     consistency (doesn't change across runs). No crc32 verification is done because idct for
+ *     these standards are non-normative.</li>
+ *     <li>For lossless audio media types, the test verifies if the rms error between input and
+ *     output is 0.</li>
+ *     <li>For lossy audio media types, the test verifies if the rms error is within 5% of
+ *     reference rms error. The reference value is computed using reference decoder and is sent
+ *     to the test as a parameter along with the test clip.</li>
+ *     <li>For all video components, the test expects the output timestamp list to be identical to
+ *     input timestamp list.</li>
+ *     <li>For all audio components, the test expects the output timestamps to be strictly
+ *     increasing.</li>
+ *     <li>The test also verifies if the component reports a format change if the test clip does
+ *     not use the default format.</li>
+ * </ul>
+ * <p>
  * The test runs mediacodec in synchronous and asynchronous mode.
  */
 @RunWith(Parameterized.class)
@@ -255,9 +262,6 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, true);
     }
 
-    private native boolean nativeTestSimpleDecode(String decoder, Surface surface, String mime,
-            String testFile, String refFile, int colorFormat, float rmsError, long checksum);
-
     static void verify(OutputManager outBuff, String refFile, float rmsError, int audioFormat,
             long refCRC, String msg) throws IOException {
         if (rmsError >= 0) {
@@ -285,7 +289,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                         int byte1 = (bb.get() & 0xff);
                         int byte2 = (bb.get() & 0xff);
                         int byte3 = (bb.get() & 0xff);
-                        refArray[j] =  byte1 | (byte2 << 8) | (byte3 << 16);
+                        refArray[j] = byte1 | (byte2 << 8) | (byte3 << 16);
                     }
                     break;
                 case AudioFormat.ENCODING_PCM_32BIT:
@@ -333,8 +337,11 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         checkFormatSupport(mCodecName, mMime, false, formatList, null, mSupportRequirements);
     }
 
+    private native boolean nativeTestSimpleDecode(String decoder, Surface surface, String mime,
+            String testFile, String refFile, int colorFormat, float rmsError, long checksum);
+
     /**
-     * Checks if the component under test can decode the test file correctly. The decoding
+     * Verifies if the component under test can decode the test file correctly. The decoding
      * happens in synchronous, asynchronous mode, eos flag signalled with last compressed frame and
      * eos flag signalled separately after sending all compressed frames. It expects consistent
      * output in all these runs. That is, the ByteBuffer info and output timestamp list has to be
@@ -343,12 +350,12 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
      * the rms error has to be with in tolerance limit. For video the output timestamp list has
      * to be same as input timestamp list (no frame drops) and for completely normative codecs,
      * the output checksum has to be identical to reference checksum. For non-normative codecs,
-     * the output has to be consistent. The test also checks if the component / framework
+     * the output has to be consistent. The test also verifies if the component / framework
      * behavior is consistent between SDK and NDK.
      */
     @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
-                     "MediaCodecInfo.CodecCapabilities#COLOR_FormatYUVP010",
-                     "android.media.AudioFormat#ENCODING_PCM_16BIT"})
+            "MediaCodecInfo.CodecCapabilities#COLOR_FormatYUVP010",
+            "android.media.AudioFormat#ENCODING_PCM_16BIT"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleDecode() throws IOException, InterruptedException {
@@ -411,20 +418,25 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     }
 
     /**
-     * Checks component and framework behaviour to flush API when the codec is operating in
-     * byte buffer mode. While the component is decoding the test clip, mediacodec flush() is
-     * called.
-     *
-     * The flush API is called at various points.
-     * 1. In running state but before queueing any input (might have to resubmit csd as they may
-     * not have been processed)
-     * 2. In running state, after queueing 1 frame
-     * 3. In running state, after queueing n frames
-     * 4. In eos state
-     *
-     * In all these cases, the test expects the timestamps received to be strictly increasing. In
-     * cases 3, 4 the test expects the output to be identical to the reference output.
-     *
+     * Verifies component and framework behaviour to flush API when the codec is operating in
+     * byte buffer mode.
+     * <p>
+     * While the component is decoding the test clip, mediacodec flush() is called. The flush API
+     * is called at various points :-
+     * <ul>
+     *     <li>In running state but before queueing any input (might have to resubmit csd as they
+     *     may not have been processed).</li>
+     *     <li>In running state, after queueing 1 frame.</li>
+     *     <li>In running state, after queueing n frames.</li>
+     *     <li>In eos state.</li>
+     * </ul>
+     * <p>
+     * In all situations (pre-flush or post-flush), the test expects the output timestamps to be
+     * strictly increasing. The flush call makes the output received non-deterministic even for a
+     * given input. Hence, besides timestamp checks, no additional validation is done for outputs
+     * received before flush. Post flush, the decode begins from a sync frame. So the test
+     * expects consistent output and this needs to be identical to the reference.
+     * <p>
      * The test runs mediacodec in synchronous and asynchronous mode.
      */
     @Ignore("TODO(b/147576107)")
@@ -543,24 +555,34 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     }
 
     /**
-     * Checks component and framework behaviour for resolution change in bytebuffer mode. The
+     * Verifies component and framework behaviour for resolution change in bytebuffer mode. The
      * resolution change is not seamless (AdaptivePlayback) but done via reconfigure.
-     *
-     * The reconfiguring of media codec component happens at various points.
-     * 1. After initial configuration (stopped state)
-     * 2. In running state, before queueing any input
-     * 3. In running state, after decoding n frames (running state - frames queued 'n')
-     * 4. In eos state
-     *    a. reconfigure with same clip
-     *    b. reconfigure with different clip (different resolution)
-     *
-     * In all these cases, the test expects the timestamps received to be strictly increasing. In
-     * cases 3, 4 the test expects the output to be identical to the reference output.
-     *
+     * <p>
+     * The reconfiguring of media codec component happens at various points :-
+     * <ul>
+     *     <li>After initial configuration (stopped state).</li>
+     *     <li>In running state, before queueing any input.</li>
+     *     <li>In running state, after queuing n frames.</li>
+     *     <li>In eos state.</li>
+     * </ul>
+     * In eos state,
+     * <ul>
+     *     <li>reconfigure with same clip.</li>
+     *     <li>reconfigure with different clip (different resolution).</li>
+     * </ul>
+     * <p>
+     * In all situations (pre-reconfigure or post-reconfigure), the test expects the output
+     * timestamps to be strictly increasing. The reconfigure call makes the output received
+     * non-deterministic even for a given input. Hence, besides timestamp checks, no additional
+     * validation is done for outputs received before reconfigure. Post reconfigure, the decode
+     * begins from a sync frame. So the test expects consistent output and this needs to be
+     * identical to the reference.
+     * <p>
      * The test runs mediacodec in synchronous and asynchronous mode.
-     *
+     * <p>
      * During reconfiguration, the mode of operation is toggled. That is, if first configure
-     * operates the codec in sync mode, then next configure operates the codec in async mode, ...
+     * operates the codec in sync mode, then next configure operates the codec in async mode and
+     * so on.
      */
     @ApiTest(apis = "android.media.MediaCodec#configure")
     @LargeTest
@@ -684,7 +706,9 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     }
 
     /**
-     * Test decoder for EOS only input
+     * Test decoder for EOS only input. As BUFFER_FLAG_END_OF_STREAM is queued with an input buffer
+     * of size 0, during dequeue the test expects to receive BUFFER_FLAG_END_OF_STREAM with an
+     * output buffer of size 0. No input is given, so no output shall be received.
      */
     @ApiTest(apis = "android.media.MediaCodec#BUFFER_FLAG_END_OF_STREAM")
     @SmallTest
@@ -830,11 +854,11 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
 
     /**
      * Test decoder for partial frame inputs. The test expects decoder to give same output for a
-     * regular sequence and when any frames of that sequences are delivered in pieces using the
+     * regular sequence and when any frames of that sequence are delivered in parts using the
      * PARTIAL_FRAME flag.
      */
     @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#FEATURE_PartialFrame",
-                     "android.media.MediaCodec#BUFFER_FLAG_PARTIAL_FRAME"})
+            "android.media.MediaCodec#BUFFER_FLAG_PARTIAL_FRAME"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testDecodePartialFrame() throws IOException, InterruptedException {
@@ -879,10 +903,11 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     }
 
     /**
-     * Test if decoder outputs 8-bit output for 8-bit as well as 10-bit content by default.
-     * The test runs for 1 frame and only in async mode. We remove the key "KEY_COLOR_FORMAT"
-     * from the input format to the decoder and validate that we get the default 8-bit output
-     * color format.
+     * Test if decoder outputs 8-bit data for 8-bit as well as 10-bit content by default. The
+     * test removes the key "KEY_COLOR_FORMAT" from the input format to the decoder and verifies if
+     * the component decodes to an 8 bit color format by default.
+     * <p>
+     * The test is applicable for video components only.
      */
     @CddTest(requirements = {"5.1.7/C-4-2"})
     @SmallTest

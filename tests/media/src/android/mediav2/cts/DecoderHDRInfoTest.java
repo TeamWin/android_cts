@@ -39,7 +39,7 @@ import java.util.Map;
  * contains the HDR content and mastering device properties that are used by the display device
  * to map the content according to its own color gamut and peak brightness. This information can
  * be part of container and/or elementary stream.
- *
+ * <p>
  * The test checks if the muxer and/or decoder propagates this information from file to application
  * correctly. Whether this information is used by the device during display is beyond the scope
  * of this test.
@@ -50,10 +50,10 @@ import java.util.Map;
 public class DecoderHDRInfoTest extends HDRDecoderTestBase {
     private static final String LOG_TAG = DecoderHDRInfoTest.class.getSimpleName();
 
-    private String mHDRStaticInfoStream;
-    private String mHDRStaticInfoContainer;
-    private Map<Integer, String> mHDRDynamicInfoStream;
-    private Map<Integer, String> mHDRDynamicInfoContainer;
+    private final String mHDRStaticInfoStream;
+    private final String mHDRStaticInfoContainer;
+    private final Map<Integer, String> mHDRDynamicInfoStream;
+    private final Map<Integer, String> mHDRDynamicInfoContainer;
 
     public DecoderHDRInfoTest(String codecName, String mediaType, String testFile,
             String hdrStaticInfoStream, String hdrStaticInfoContainer,
@@ -112,7 +112,7 @@ public class DecoderHDRInfoTest extends HDRDecoderTestBase {
     }
 
     /**
-     * @see DecoderHDRInfoTest
+     * Check description of class {@link DecoderHDRInfoTest}
      */
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)

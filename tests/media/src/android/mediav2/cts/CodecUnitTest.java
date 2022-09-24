@@ -127,8 +127,7 @@ public class CodecUnitTest {
                     fail("codec configure succeeds with missing mandatory keys :: " + key);
                 } catch (Exception e) {
                     if (!(e instanceof IllegalArgumentException)) {
-                        fail("codec configure rec/exp :: " + e.toString() +
-                                " / IllegalArgumentException");
+                        fail("codec configure rec/exp :: " + e + " / IllegalArgumentException");
                     }
                 }
             }
@@ -156,8 +155,7 @@ public class CodecUnitTest {
                 fail("codec configure succeeds with bad configure flag");
             } catch (Exception e) {
                 if (!(e instanceof IllegalArgumentException)) {
-                    fail("codec configure rec/exp :: " + e.toString() +
-                            " / IllegalArgumentException");
+                    fail("codec configure rec/exp :: " + e + " / IllegalArgumentException");
                 }
             } finally {
                 mCodec.release();
@@ -205,25 +203,25 @@ public class CodecUnitTest {
             try {
                 mCodec.getName();
             } catch (IllegalStateException e) {
-                fail("get name resulted in" + e.getMessage());
+                fail(msg + ", get name resulted in" + e.getMessage());
             }
 
             try {
                 mCodec.getCanonicalName();
             } catch (IllegalStateException e) {
-                fail("get canonical name resulted in" + e.getMessage());
+                fail(msg + ", get canonical name resulted in" + e.getMessage());
             }
 
             try {
                 mCodec.getCodecInfo();
             } catch (IllegalStateException e) {
-                fail("get codec info resulted in" + e.getMessage());
+                fail(msg + ", get codec info resulted in" + e.getMessage());
             }
 
             try {
                 mCodec.getMetrics();
             } catch (IllegalStateException e) {
-                fail("get metrics resulted in" + e.getMessage());
+                fail(msg + ", get metrics resulted in" + e.getMessage());
             }
         }
 
@@ -1085,7 +1083,7 @@ public class CodecUnitTest {
                     ByteBuffer buffer = mCodec.getInputBuffer(-1);
                     assertNull("getInputBuffer succeeds for bad buffer index " + -1, buffer);
                 } catch (Exception e) {
-                    fail("getInputBuffer rec/exp :: " + e.toString() + " / null");
+                    fail("getInputBuffer rec/exp :: " + e + " / null");
                 }
                 int bufferIndex = mIsCodecInAsyncMode ? mAsyncHandle.getInput().first :
                         mCodec.dequeueInputBuffer(-1);
@@ -1228,7 +1226,7 @@ public class CodecUnitTest {
                     ByteBuffer buffer = mCodec.getOutputBuffer(-1);
                     assertNull("getOutputBuffer succeeds for bad buffer index " + -1, buffer);
                 } catch (Exception e) {
-                    fail("getOutputBuffer rec/exp :: " + e.toString() + " / null");
+                    fail("getOutputBuffer rec/exp :: " + e + " / null");
                 }
                 queueEOS();
                 int bufferIndex = 0;
@@ -1253,7 +1251,7 @@ public class CodecUnitTest {
                     assertNull("getOutputBuffer succeeds for buffer index not owned by client",
                             buffer);
                 } catch (Exception e) {
-                    fail("getOutputBuffer rec/exp :: " + e.toString() + " / null");
+                    fail("getOutputBuffer rec/exp :: " + e + " / null");
                 }
                 mCodec.stop();
                 mCodec.reset();
@@ -1337,7 +1335,7 @@ public class CodecUnitTest {
                     MediaFormat outputFormat = mCodec.getOutputFormat(-1);
                     assertNull("getOutputFormat succeeds for bad buffer index " + -1, outputFormat);
                 } catch (Exception e) {
-                    fail("getOutputFormat rec/exp :: " + e.toString() + " / null");
+                    fail("getOutputFormat rec/exp :: " + e + " / null");
                 }
                 int bufferIndex = 0;
                 while (!mSawOutputEOS) {
@@ -1361,7 +1359,7 @@ public class CodecUnitTest {
                     assertNull("getOutputFormat succeeds for index not owned by client",
                             outputFormat);
                 } catch (Exception e) {
-                    fail("getOutputFormat rec/exp :: " + e.toString() + " / null");
+                    fail("getOutputFormat rec/exp :: " + e + " / null");
                 }
                 mCodec.stop();
             }
@@ -1674,7 +1672,7 @@ public class CodecUnitTest {
                     Image img = mCodec.getInputImage(-1);
                     assertNull("getInputImage succeeds for bad buffer index " + -1, img);
                 } catch (Exception e) {
-                    fail("getInputImage rec/exp :: " + e.toString() + " / null");
+                    fail("getInputImage rec/exp :: " + e + " / null");
                 }
                 int bufferIndex = mIsCodecInAsyncMode ? mAsyncHandle.getInput().first :
                         mCodec.dequeueInputBuffer(-1);
@@ -1706,7 +1704,7 @@ public class CodecUnitTest {
                     Image img = mCodec.getInputImage(-1);
                     assertNull("getInputImage succeeds for bad buffer index " + -1, img);
                 } catch (Exception e) {
-                    fail("getInputImage rec/exp :: " + e.toString() + " / null");
+                    fail("getInputImage rec/exp :: " + e + " / null");
                 }
                 int bufferIndex = mIsCodecInAsyncMode ? mAsyncHandle.getInput().first :
                         mCodec.dequeueInputBuffer(-1);
@@ -1780,7 +1778,7 @@ public class CodecUnitTest {
                     Image img = mCodec.getOutputImage(-1);
                     assertNull("getOutputImage succeeds for bad buffer index " + -1, img);
                 } catch (Exception e) {
-                    fail("getOutputImage rec/exp :: " + e.toString() + " / null");
+                    fail("getOutputImage rec/exp :: " + e + " / null");
                 }
                 queueEOS();
                 int bufferIndex = 0;
@@ -1800,7 +1798,7 @@ public class CodecUnitTest {
                     Image img = mCodec.getOutputImage(bufferIndex);
                     assertNull("getOutputImage succeeds for buffer index not owned by client", img);
                 } catch (Exception e) {
-                    fail("getOutputBuffer rec/exp :: " + e.toString() + " / null");
+                    fail("getOutputBuffer rec/exp :: " + e + " / null");
                 }
                 mCodec.stop();
                 mCodec.reset();

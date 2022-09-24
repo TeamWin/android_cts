@@ -57,11 +57,11 @@ import java.util.List;
  * (mp4, mkv, ...) and some video standards also allow signalling this information in elementary
  * stream. Avc, Hevc, Av1, ... allow signalling this information in elementary stream, vpx relies
  * on webm/mkv or some other container for signalling.
- *
+ * <p>
  * If the encoder is configured with color aspects, then it is expected to place this information
  * in the elementary stream as-is if possible. The same goes for container as well. The test
  * validates this.
- *
+ * <p>
  * Hybrid log gamma transfer characteristics are applicable for high bit depth profiles. Standard
  * gamma curve characteristics are applicable for standard dynamic ranges. The test doesn't
  * exhaustively try all combinations of primaries, standard, transfer on all encoding profiles.
@@ -203,11 +203,11 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
             prepareArgsList(exhaustiveArgsList, stringArgsList, mediaTypesHighBitDepth, ranges,
                     standardsHighBitDepth, transfersHighBitDepth, true);
         }
-        return CodecTestBase
-                .prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
+        return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
     }
+
     private long computePresentationTime(int frameIndex) {
-        return frameIndex * 1000000 / mFrameRate;
+        return frameIndex * 1000000L / mFrameRate;
     }
 
     private void generateSurfaceFrame() {
@@ -290,8 +290,8 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
      * metadata.
      */
     @ApiTest(apis = {"android.media.MediaFormat#KEY_COLOR_RANGE",
-                     "android.media.MediaFormat#KEY_COLOR_STANDARD",
-                     "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
+            "android.media.MediaFormat#KEY_COLOR_STANDARD",
+            "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testColorAspects() throws IOException, InterruptedException {

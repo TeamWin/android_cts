@@ -333,11 +333,11 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
      * a pbuffer. The output RGB values are read and compared against the expected values.
      */
     @ApiTest(apis = {"android.media.MediaCodec#dequeueOutputBuffer",
-                     "android.media.MediaCodec#releaseOutputBuffer",
-                     "android.media.MediaCodec.Callback#onOutputBufferAvailable",
-                     "android.media.MediaFormat#KEY_COLOR_RANGE",
-                     "android.media.MediaFormat#KEY_COLOR_STANDARD",
-                     "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
+            "android.media.MediaCodec#releaseOutputBuffer",
+            "android.media.MediaCodec.Callback#onOutputBufferAvailable",
+            "android.media.MediaFormat#KEY_COLOR_RANGE",
+            "android.media.MediaFormat#KEY_COLOR_STANDARD",
+            "android.media.MediaFormat#KEY_COLOR_TRANSFER"})
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testDecodeGlAccuracyRGB() throws IOException, InterruptedException {

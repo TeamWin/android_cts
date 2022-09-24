@@ -86,14 +86,17 @@ public class LocationDisabledAppOpsTest {
                 List<String> bypassedCheckOps = new ArrayList<>();
                 for (PackageInfo pi : pkgs) {
                     ApplicationInfo ai = pi.applicationInfo;
-                    if (ai.uid != Process.SYSTEM_UID) {
+                    int appId = UserHandle.getAppId(ai.uid);
+                    if (appId != Process.SYSTEM_UID) {
                         final int[] mode = {MODE_ALLOWED};
+                        final boolean[] isProvider = {false};
                         runWithShellPermissionIdentity(() -> {
                             mode[0] = mAom.noteOpNoThrow(
                                     OPSTR_FINE_LOCATION, ai.uid, ai.packageName);
+                            isProvider[0] = mLm.isProviderPackage(null, pi.packageName, null);
                         });
                         if (mode[0] == MODE_ALLOWED && !ignoreList.containsAll(pi.packageName)
-                                && !mLm.isProviderPackage(null, pi.packageName, null)) {
+                                && !isProvider[0]) {
                             bypassedNoteOps.add(pi.packageName);
                         }
 
@@ -104,10 +107,9 @@ public class LocationDisabledAppOpsTest {
                                     .checkOpNoThrow(OPSTR_FINE_LOCATION, ai.uid, ai.packageName);
                         });
                         if (mode[0] == MODE_ALLOWED && !ignoreList.includes(pi.packageName)
-                                && !mLm.isProviderPackage(null, pi.packageName, null)) {
+                                && !isProvider[0]) {
                             bypassedCheckOps.add(pi.packageName);
                         }
-
                     }
                 }
 

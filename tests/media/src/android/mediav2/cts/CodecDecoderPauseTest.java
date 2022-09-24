@@ -45,8 +45,9 @@ import java.util.List;
 @RunWith(Parameterized.class)
 public class CodecDecoderPauseTest extends CodecDecoderTestBase {
     private static final String LOG_TAG = CodecDecoderPauseTest.class.getSimpleName();
-    private final long PAUSE_TIME_MS = 10000;
-    private final int NUM_FRAMES = 8;
+    private static final long PAUSE_TIME_MS = 10000;
+    private static final int NUM_FRAMES = 8;
+
     private final SupportClass mSupportRequirements;
 
     public CodecDecoderPauseTest(String decoder, String mime, String srcFile,
@@ -81,10 +82,10 @@ public class CodecDecoderPauseTest extends CodecDecoderTestBase {
      * output during normal run and the output during paused run are expected to be same.
      */
     @ApiTest(apis = {"android.media.MediaCodec.Callback#onInputBufferAvailable",
-                     "android.media.MediaCodec#queueInputBuffer",
-                     "android.media.MediaCodec.Callback#onOutputBufferAvailable",
-                     "android.media.MediaCodec#dequeueOutputBuffer",
-                     "android.media.MediaCodec#releaseOutputBuffer"})
+            "android.media.MediaCodec#queueInputBuffer",
+            "android.media.MediaCodec.Callback#onOutputBufferAvailable",
+            "android.media.MediaCodec#dequeueOutputBuffer",
+            "android.media.MediaCodec#releaseOutputBuffer"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testPause() throws IOException, InterruptedException {

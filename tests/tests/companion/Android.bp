@@ -150,7 +150,7 @@ android_test {
     platform_apis: true,
     static_libs: [
         "androidx.test.ext.junit",
-        "androidx.test.uiautomator",
+        "androidx.test.uiautomator_uiautomator",
         "compatibility-device-util-axt",
         "cts-companion-common",
         "ctstestrunner-axt",

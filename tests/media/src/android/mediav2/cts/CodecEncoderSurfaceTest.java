@@ -54,15 +54,22 @@ import java.util.List;
 
 /**
  * Test mediacodec api, video encoders and their interactions in surface mode.
- *
+ * <p>
  * The test decodes an input clip to surface. This decoded output is fed as input to encoder.
  * Assuming no frame drops, the test expects,
- * 1. The number of encoded frames to be identical to number of frames present in input clip.
- * 2. As encoders are expected to give consistent output for a given input and configuration
- * parameters, the test checks for consistency across runs.
- * 3. The encoder output timestamps list should be identical to decoder input timestamp list.
- * 4. The output of encoder is further verified for PSNR to check for obvious visual artifacts.
- *
+ * <ul>
+ *     <li>The number of encoded frames to be identical to number of frames present in input clip
+ *     .</li>
+ *     <li>As encoders are expected to give consistent output for a given input and configuration
+ *     parameters, the test checks for consistency across runs. For now, this attribute is not
+ *     strictly enforced in this test.</li>
+ *     <li>The encoder output timestamps list should be identical to decoder input timestamp list
+ *     .</li>
+ * </ul>
+ * <p>
+ * The output of encoder is further verified by computing PSNR to check for obvious visual
+ * artifacts.
+ * <p>
  * The test runs mediacodec in synchronous and asynchronous mode.
  */
 @RunWith(Parameterized.class)
@@ -179,14 +186,14 @@ public class CodecEncoderSurfaceTest {
         // above
         if (CodecTestBase.IS_AT_LEAST_T) {
             exhaustiveArgsList.addAll(Arrays.asList(new Object[][]{
-                {MediaFormat.MIMETYPE_VIDEO_AVC, "cosmat_520x390_24fps_crf22_avc_10bit.mkv",
-                        512000, 30},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, "cosmat_520x390_24fps_crf22_hevc_10bit.mkv",
-                        512000, 30},
-                {MediaFormat.MIMETYPE_VIDEO_VP9, "cosmat_520x390_24fps_crf22_vp9_10bit.mkv",
-                        512000, 30},
-                {MediaFormat.MIMETYPE_VIDEO_AV1, "cosmat_520x390_24fps_768kbps_av1_10bit.mkv",
-                        512000, 30},
+                    {MediaFormat.MIMETYPE_VIDEO_AVC, "cosmat_520x390_24fps_crf22_avc_10bit.mkv",
+                            512000, 30},
+                    {MediaFormat.MIMETYPE_VIDEO_HEVC, "cosmat_520x390_24fps_crf22_hevc_10bit.mkv",
+                            512000, 30},
+                    {MediaFormat.MIMETYPE_VIDEO_VP9, "cosmat_520x390_24fps_crf22_vp9_10bit.mkv",
+                            512000, 30},
+                    {MediaFormat.MIMETYPE_VIDEO_AV1, "cosmat_520x390_24fps_768kbps_av1_10bit.mkv",
+                            512000, 30},
             }));
         }
         return CodecTestBase.prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo,
@@ -369,7 +376,7 @@ public class CodecEncoderSurfaceTest {
                                         CodecTestBase.Q_DEQ_TIMEOUT_US * CodecTestBase.RETRY_LIMIT +
                                         " us");
                         Thread.sleep(CodecTestBase.Q_DEQ_TIMEOUT_US / 1000);
-                        retry ++;
+                        retry++;
                     }
                 }
                 Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandleEncoder.getOutput();

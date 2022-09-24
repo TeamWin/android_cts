@@ -1763,6 +1763,90 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig"})
+    public void testSeatMemorySelectIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_MEMORY_SELECT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues().requireMinValuesToBeZero()
+                    .setCarPropertyConfigVerifier(carPropertyConfig -> {
+                        int[] areaIds = carPropertyConfig.getAreaIds();
+                        CarPropertyConfig<?> seatMemorySetCarPropertyConfig =
+                                mCarPropertyManager.getCarPropertyConfig(
+                                        VehiclePropertyIds.SEAT_MEMORY_SET);
+
+                        assertWithMessage("SEAT_MEMORY_SET must be implemented if "
+                                + "SEAT_MEMORY_SELECT is implemented").that(
+                                        seatMemorySetCarPropertyConfig).isNotNull();
+
+                        assertWithMessage("SEAT_MEMORY_SELECT area IDs must match the area IDs of "
+                                + "SEAT_MEMORY_SET").that(Arrays.stream(areaIds).boxed().collect(
+                                        Collectors.toList()))
+                                .containsExactlyElementsIn(Arrays.stream(
+                                        seatMemorySetCarPropertyConfig.getAreaIds()).boxed()
+                                        .collect(Collectors.toList()));
+
+                        for (int areaId : areaIds) {
+                            Integer seatMemorySetAreaIdMaxValue =
+                                    (Integer) seatMemorySetCarPropertyConfig.getMaxValue(areaId);
+                            assertWithMessage("SEAT_MEMORY_SET - area ID: " + areaId
+                                    + " must have max value defined")
+                                    .that(seatMemorySetAreaIdMaxValue).isNotNull();
+                            assertWithMessage("SEAT_MEMORY_SELECT - area ID: " + areaId
+                                    + "'s max value must be equal to SEAT_MEMORY_SET's max value"
+                                    + " under the same area ID")
+                                    .that(seatMemorySetAreaIdMaxValue)
+                                    .isEqualTo(carPropertyConfig.getMaxValue(areaId));
+                        }
+                    }).build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig"})
+    public void testSeatMemorySetIfSupported() {
+        adoptSystemLevelPermission(Car.PERMISSION_CONTROL_CAR_SEATS, () -> {
+            VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.SEAT_MEMORY_SET,
+                            CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                            CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                            Integer.class).requireMinMaxValues().requireMinValuesToBeZero()
+                    .setCarPropertyConfigVerifier(carPropertyConfig -> {
+                        int[] areaIds = carPropertyConfig.getAreaIds();
+                        CarPropertyConfig<?> seatMemorySelectCarPropertyConfig =
+                                mCarPropertyManager.getCarPropertyConfig(
+                                        VehiclePropertyIds.SEAT_MEMORY_SELECT);
+
+                        assertWithMessage("SEAT_MEMORY_SELECT must be implemented if "
+                                + "SEAT_MEMORY_SET is implemented").that(
+                                seatMemorySelectCarPropertyConfig).isNotNull();
+
+                        assertWithMessage("SEAT_MEMORY_SET area IDs must match the area IDs of "
+                                + "SEAT_MEMORY_SELECT").that(Arrays.stream(areaIds).boxed().collect(
+                                        Collectors.toList()))
+                                .containsExactlyElementsIn(Arrays.stream(
+                                        seatMemorySelectCarPropertyConfig.getAreaIds()).boxed()
+                                        .collect(Collectors.toList()));
+
+                        for (int areaId : areaIds) {
+                            Integer seatMemorySelectAreaIdMaxValue =
+                                    (Integer) seatMemorySelectCarPropertyConfig.getMaxValue(areaId);
+                            assertWithMessage("SEAT_MEMORY_SELECT - area ID: " + areaId
+                                    + " must have max value defined")
+                                    .that(seatMemorySelectAreaIdMaxValue).isNotNull();
+                            assertWithMessage("SEAT_MEMORY_SET - area ID: " + areaId
+                                    + "'s max value must be equal to SEAT_MEMORY_SELECT's max value"
+                                    + " under the same area ID")
+                                    .that(seatMemorySelectAreaIdMaxValue)
+                                    .isEqualTo(carPropertyConfig.getMaxValue(areaId));
+                        }
+                    }).build().verify(mCarPropertyManager);
+        });
+    }
+
+    @Test
     @ApiTest(apis = {"android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
             "android.car.hardware.property.CarPropertyManager#getProperty",
             "android.car.hardware.property.CarPropertyManager#setProperty",
@@ -3208,7 +3292,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             long timeoutMillis = 2 * durationInMs;
             long startTimeMillis = SystemClock.uptimeMillis();
             while (true) {
-                if (countDownLatch.await(durationInMs, TimeUnit.SECONDS)) {
+                if (countDownLatch.await(durationInMs, TimeUnit.MILLISECONDS)) {
                     if (SystemClock.uptimeMillis() - startTimeMillis > timeoutMillis) {
                         // If we are still receiving events when timeout happens, the test failed.
                         throw new IllegalStateException("We are still receiving callback within "

@@ -45,31 +45,40 @@ import java.util.List;
 
 /**
  * Test mediacodec api, encoders and their interactions in bytebuffer mode.
- *
+ * <p>
  * The test feeds raw input data (audio/video) to the component and receives compressed bitstream
  * from the component.
- * 1. For audio components, the test expects the output timestamps to be strictly increasing.
- * 2. For video components the test expects the output count to be identical to input count and
- * the output timestamp list to be identical to input timestamp list.
- * 3. As encoders are expected to give consistent output for a given input and configuration
- * parameters, the test checks for consistency across runs.
- * The test however does not validate the integrity of the encoder output. That is done by
+ * <p>
+ * At the end of encoding process, the test enforces following checks :-
+ * <ul>
+ *     <li> For audio components, the test expects the output timestamps to be strictly
+ *     increasing.</li>
+ *     <li>For video components the test expects the output frame count to be identical to input
+ *     frame count and the output timestamp list to be identical to input timestamp list.</li>
+ *     <li>As encoders are expected to give consistent output for a given input and configuration
+ *     parameters, the test checks for consistency across runs. For now, this attribute is not
+ *     strictly enforced in this test.</li>
+ * </ul>
+ * <p>
+ * The test does not validate the integrity of the encoder output. That is done by
  * CodecEncoderValidationTest. This test checks only the framework <-> plugin <-> encoder
  * interactions.
+ * <p>
  * The test runs mediacodec in synchronous and asynchronous mode.
  */
 @RunWith(Parameterized.class)
 public class CodecEncoderTest extends CodecEncoderTestBase {
     private static final String LOG_TAG = CodecEncoderTest.class.getSimpleName();
+    private static ArrayList<String> sAdaptiveBitrateMimeList = new ArrayList<>();
+
     private int mNumSyncFramesReceived;
     private ArrayList<Integer> mSyncFramesPos;
-    private static ArrayList<String> mAdaptiveBitrateMimeList = new ArrayList<>();
 
     static {
-        mAdaptiveBitrateMimeList.add(MediaFormat.MIMETYPE_VIDEO_AVC);
-        mAdaptiveBitrateMimeList.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
-        mAdaptiveBitrateMimeList.add(MediaFormat.MIMETYPE_VIDEO_VP8);
-        mAdaptiveBitrateMimeList.add(MediaFormat.MIMETYPE_VIDEO_VP9);
+        sAdaptiveBitrateMimeList.add(MediaFormat.MIMETYPE_VIDEO_AVC);
+        sAdaptiveBitrateMimeList.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
+        sAdaptiveBitrateMimeList.add(MediaFormat.MIMETYPE_VIDEO_VP8);
+        sAdaptiveBitrateMimeList.add(MediaFormat.MIMETYPE_VIDEO_VP9);
     }
 
     public CodecEncoderTest(String encoder, String mime, int[] bitrates, int[] encoderInfo1,
@@ -167,7 +176,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
      * output in a byte buffer, no analysis is done that checks the integrity of the bitstream.
      */
     @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
-                     "android.media.AudioFormat#ENCODING_PCM_16BIT"})
+            "android.media.AudioFormat#ENCODING_PCM_16BIT"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleEncode() throws IOException, InterruptedException {
@@ -182,9 +191,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                     mCodec.getName(), mCodecName);
             assertTrue("error! codec canonical name is null or empty",
                     mCodec.getCanonicalName() != null && !mCodec.getCanonicalName().isEmpty());
-            /* TODO(b/149027258) */
-            if (true) mSaveToMem = false;
-            else mSaveToMem = true;
+            mSaveToMem = false; /* TODO(b/149027258) */
             for (MediaFormat format : mFormats) {
                 int loopCounter = 0;
                 if (mIsAudio) {
@@ -228,7 +235,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
      * Test is similar to {@link #testSimpleEncode()} but uses ndk api
      */
     @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
-                     "android.media.AudioFormat#ENCODING_PCM_16BIT"})
+            "android.media.AudioFormat#ENCODING_PCM_16BIT"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleEncodeNative() throws IOException {
@@ -246,16 +253,24 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
 
     /**
      * Checks component and framework behaviour to flush API when the codec is operating in
-     * byte buffer mode. While the component is encoding the test clip, mediacodec flush() api is
-     * called.
-     * The flush API is called at various points.
-     * 1. In running state, before queueing any input
-     * 2. In running state, after queueing n frames
-     * 3. In eos state
-     * For all audio components and video components with B frames configured to zero, the test
-     * expects output timestamps received to be strictly increasing. In cases 2 and 3, for video
-     * components, the output timestamp list should be identical to input timestamp list. The
-     * test runs mediacodec in synchronous and asynchronous mode.
+     * byte buffer mode.
+     * <p>
+     * While the component is encoding the test clip, mediacodec flush() api is called. The flush
+     * API is called at various points.
+     * <ul>
+     *     <li>In running state, before queueing any input.</li>
+     *     <li>In running state, after queueing n frames.</li>
+     *     <li>In eos state.</li>
+     * </ul>
+     * Upon calling a flush, the encoder plugin will drop all the frames that is holding in its
+     * pipeline. Once the fresh set of frames are supplied for encoding, it is component's choice
+     * to start with a sync frame or continue with previous GOP. Even if the component starts
+     * with a sync frame, the internal state of component like rate-control, qp, intra/inter
+     * statistics, ... will be reset as well is not guaranteed. In short, the response of an
+     * encoder to flush api is not normative. Due to these restrictions, the test only expects
+     * the output timestamps received to be strictly increasing.
+     * <p>
+     * The test runs mediacodec in synchronous and asynchronous mode.
      */
     @Ignore("TODO(b/147576107, b/148652492, b/148651699)")
     @ApiTest(apis = {"android.media.MediaCodec#flush"})
@@ -344,19 +359,30 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     /**
      * Checks component and framework behaviour on parameter (resolution, samplerate/channel
      * count, ...) change. The reconfiguring of media codec component happens at various points.
-     * 1. After initial configuration (stopped state)
-     * 2. In running state, before queueing any input
-     * 3. In running state, after encoding n frames (running state - frames queued 'n')
-     * 4. In eos state
-     *    a. reconfigure with same clip
-     *    b. reconfigure with different clip (different resolution)
-     * For all audio components and video components with B frames configured to zero, the test
-     * expects output timestamps received to be strictly increasing. For video components the
-     * test expects output timestamp list to be identical to input timestamp list. Further, test
-     * also checks if the output is consistent across runs. During reconfiguration, the mode of
-     * operation is also changed. That is first configure operates the codec in sync mode, then
-     * next configure operates the codec in async mode, ... The test also operates in synchronous
-     * and asynchronous mode.
+     * <ul>
+     *     <li>After initial configuration (stopped state).</li>
+     *     <li>In running state, before queueing any input.</li>
+     *     <li>In running state, after queueing n frames.</li>
+     *     <li>In eos state.</li>
+     * </ul>
+     * In eos state,
+     * <ul>
+     *     <li>reconfigure with same clip.</li>
+     *     <li>reconfigure with different clip (different resolution).</li>
+     * </ul>
+     * <p>
+     * In all situations (pre-reconfigure or post-reconfigure), the test expects the output
+     * timestamps to be strictly increasing. The reconfigure call makes the output received
+     * non-deterministic even for a given input. Hence, besides timestamp checks, no additional
+     * validation is done for outputs received before reconfigure. Post reconfigure, the encode
+     * begins from a sync frame. So the test expects consistent output and this needs to be
+     * identical to the reference.
+     * <p>
+     * The test runs mediacodec in synchronous and asynchronous mode.
+     * <p>
+     * During reconfiguration, the mode of operation is toggled. That is, if first configure
+     * operates the codec in sync mode, then next configure operates the codec in async mode and
+     * so on.
      */
     @Ignore("TODO(b/148523403)")
     @ApiTest(apis = {"android.media.MediaCodec#configure"})
@@ -470,7 +496,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     }
 
     /**
-     * Tests encoder plugin for only EOS frame
+     * Test encoder for EOS only input. As BUFFER_FLAG_END_OF_STREAM is queued with an input buffer
+     * of size 0, during dequeue the test expects to receive BUFFER_FLAG_END_OF_STREAM with an
+     * output buffer of size 0. No input is given, so no output shall be received.
      */
     @ApiTest(apis = "android.media.MediaCodec#BUFFER_FLAG_END_OF_STREAM")
     @SmallTest
@@ -482,9 +510,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         OutputManager test = new OutputManager();
         {
             mCodec = MediaCodec.createByCodecName(mCodecName);
-            /* TODO(b/149027258) */
-            if (true) mSaveToMem = false;
-            else mSaveToMem = true;
+            mSaveToMem = false; /* TODO(b/149027258) */
             int loopCounter = 0;
             for (boolean isAsync : boolStates) {
                 configureCodec(mFormats.get(0), isAsync, false, true);
@@ -635,7 +661,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testAdaptiveBitRate() throws IOException, InterruptedException {
         Assume.assumeTrue("Skipping AdaptiveBitrate test for " + mMime,
-            mAdaptiveBitrateMimeList.contains(mMime));
+                sAdaptiveBitrateMimeList.contains(mMime));
         setUpParams(1);
         boolean[] boolStates = {true, false};
         setUpSource(mInputFile);
@@ -706,7 +732,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testAdaptiveBitRateNative() throws IOException {
         Assume.assumeTrue("Skipping Native AdaptiveBitrate test for " + mMime,
-            mAdaptiveBitrateMimeList.contains(mMime));
+                sAdaptiveBitrateMimeList.contains(mMime));
         int colorFormat = -1;
         {
             if (mIsVideo) {

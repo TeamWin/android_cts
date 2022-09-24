@@ -51,16 +51,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.IntStream;
 
 /**
- * Check if information advertised by components are in accordance with cdd guidelines and device
- * peripherals. The scope of this test is to only check if the information advertised is ok.
- * Their functionality however is not verified here.
+ * Check if information advertised by components are in accordance with its peripherals. The
+ * scope of this test is to only check if the information advertised is ok. Their functionality
+ * however is not verified here.
  */
 @SmallTest
 @RunWith(Parameterized.class)
@@ -107,7 +106,7 @@ public class CodecInfoTest {
 
     /**
      * For all the available decoders on the device, the test checks if their decoding
-     * capabilities are in sync with the device's display capabilities. That is, if a video
+     * capabilities are in sync with the device's display capabilities. Precisely, if a video
      * decoder advertises support for a HDR profile then the device should be capable of
      * displaying the same with out any tone mapping. Else, the decoder should not advertise such
      * support.
@@ -154,7 +153,7 @@ public class CodecInfoTest {
      */
     @CddTest(requirements = {"5.1.7/C-1-2", "5.1.7/C-4-1", "5.12/C-6-5", "5.12/C-7-3"})
     @Test
-    public void testColorFormatSupport() throws IOException {
+    public void testColorFormatSupport() {
         Assume.assumeTrue("Test is applicable for video codecs", mMediaType.startsWith("video/"));
         MediaCodecInfo.CodecCapabilities caps = mCodecInfo.getCapabilitiesForType(mMediaType);
         assertFalse(mCodecInfo.getName() + " does not support COLOR_FormatYUV420Flexible",
@@ -179,8 +178,8 @@ public class CodecInfoTest {
 
         // COLOR_FormatSurface support is an existing requirement, but we did not
         // test for it before T.  We can not retroactively apply the higher standard to
-        // devices that are already certified, so only test on VNDK T or later devices.
-        if (VNDK_IS_AT_LEAST_T) {
+        // devices that are already certified, so only test on devices luanching with T or later.
+        if (FIRST_SDK_IS_AT_LEAST_T && VNDK_IS_AT_LEAST_T) {
             assertFalse(mCodecInfo.getName() + " does not support COLOR_FormatSurface",
                     IntStream.of(caps.colorFormats)
                             .noneMatch(x -> x == COLOR_FormatSurface));
@@ -190,7 +189,7 @@ public class CodecInfoTest {
         // supports HDR display, it must advertise P010 support
         int[] HdrProfileArray = mProfileHdrMap.get(mMediaType);
         if (FIRST_SDK_IS_AT_LEAST_T && VNDK_IS_AT_LEAST_T
-                        && HdrProfileArray != null && DISPLAY_HDR_TYPES.length > 0) {
+                && HdrProfileArray != null && DISPLAY_HDR_TYPES.length > 0) {
             for (CodecProfileLevel pl : caps.profileLevels) {
                 if (IntStream.of(HdrProfileArray).anyMatch(x -> x == pl.profile)) {
                     assertFalse(mCodecInfo.getName() + " supports HDR profile " + pl.profile + "," +

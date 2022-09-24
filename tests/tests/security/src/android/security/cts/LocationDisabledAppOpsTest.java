@@ -86,7 +86,8 @@ public class LocationDisabledAppOpsTest extends StsExtraBusinessLogicTestCase {
                 List<String> bypassedCheckOps = new ArrayList<>();
                 for (PackageInfo pi : pkgs) {
                     ApplicationInfo ai = pi.applicationInfo;
-                    if (ai.uid != Process.SYSTEM_UID) {
+                    int appId = UserHandle.getAppId(ai.uid);
+                    if (appId != Process.SYSTEM_UID) {
                         final int[] mode = {MODE_ALLOWED};
                         runWithShellPermissionIdentity(() -> {
                             mode[0] = mAom.noteOpNoThrow(
