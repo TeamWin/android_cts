@@ -213,7 +213,7 @@ public class AudioCapabilitiesTestActivity extends TvAppVerifierActivity
             case 6:
                 return CHANNEL_OUT_5POINT1;
             case 7:
-                return CHANNEL_OUT_5POINT1 | CHANNEL_OUT_BACK_CENTER;
+                return CHANNEL_OUT_6POINT1;
             case 8:
                 return CHANNEL_OUT_7POINT1_SURROUND;
             default:

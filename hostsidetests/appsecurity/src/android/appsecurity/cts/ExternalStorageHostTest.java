@@ -26,18 +26,11 @@ import android.platform.test.annotations.Presubmit;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
-import com.android.role.RoleProto;
-import com.android.role.RoleServiceDumpProto;
-import com.android.role.RoleUserStateProto;
-import com.android.tradefed.device.CollectingByteOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.AbiUtils;
-
-import com.google.protobuf.MessageLite;
-import com.google.protobuf.Parser;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -1032,27 +1025,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
                 "testMediaEscalation_RequestDelete_notShowConfirmDialog", user);
     }
 
-    private <T extends MessageLite> T getDump(Parser<T> parser, String command) throws Exception {
-        final CollectingByteOutputReceiver receiver = new CollectingByteOutputReceiver();
-        getDevice().executeShellCommand(command, receiver);
-        return parser.parseFrom(receiver.getOutput());
-    }
-
-    private List<RoleUserStateProto> getAllUsersRoleStates() throws Exception {
-        final RoleServiceDumpProto dumpProto =
-                getDump(RoleServiceDumpProto.parser(), "dumpsys role --proto");
-        final List<RoleUserStateProto> res = new ArrayList<>();
-        for (RoleUserStateProto userState : dumpProto.getUserStatesList()) {
-            for (int i : mUsers) {
-                if (i == userState.getUserId()) {
-                    res.add(userState);
-                    break;
-                }
-            }
-        }
-        return res;
-    }
-
     /**
      * Bypasses the calling test case if ANY of the given features is available in the device.
      */
@@ -1069,25 +1041,11 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         bypassTestForFeatures(FEATURE_AUTOMOTIVE, FEATURE_EMBEDDED, FEATURE_LEANBACK_ONLY,
                 FEATURE_WATCH);
 
-        final List<RoleUserStateProto> usersRoleStates = getAllUsersRoleStates();
-
-        assertEquals("Unexpected number of users returned by dumpsys role",
-                mUsers.length, usersRoleStates.size());
-
-        for (RoleUserStateProto userState : usersRoleStates) {
-            final List<RoleProto> roles = userState.getRolesList();
-            boolean systemGalleryRoleFound = false;
-
-            // Iterate through the roles until we find the System Gallery role
-            for (RoleProto roleProto : roles) {
-                if ("android.app.role.SYSTEM_GALLERY".equals(roleProto.getName())) {
-                    assertEquals(1, roleProto.getHoldersList().size());
-                    systemGalleryRoleFound = true;
-                    break;
-                }
-            }
-            assertTrue("SYSTEM_GALLERY not defined for user " + userState.getUserId(),
-                    systemGalleryRoleFound);
+        for (int user : mUsers) {
+            final String[] roleHolders = getDevice().executeShellCommand(
+                    "cmd role get-role-holders --user " + user
+                            + " android.app.role.SYSTEM_GALLERY").trim().split(";");
+            assertEquals("Expected 1 SYSTEM_GALLERY for user " + user, 1, roleHolders.length);
         }
     }
 

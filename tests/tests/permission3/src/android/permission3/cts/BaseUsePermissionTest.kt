@@ -26,6 +26,7 @@ import android.os.Build
 import android.provider.Settings
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
+import android.support.test.uiautomator.UiObjectNotFoundException
 import android.support.test.uiautomator.UiScrollable
 import android.support.test.uiautomator.UiSelector
 import android.text.Spanned
@@ -685,7 +686,13 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         }
         waitForIdle()
         if (scrollable.exists()) {
-            scrollable.flingToEnd(10)
+            try {
+                scrollable.flingToEnd(10)
+            } catch (e: UiObjectNotFoundException) {
+                // flingToEnd() sometimes still fails despite waitForIdle() and the exists() check
+                // (b/246984354).
+                e.printStackTrace()
+            }
         }
     }
 

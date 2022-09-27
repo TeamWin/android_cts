@@ -55,6 +55,8 @@ import org.junit.runner.RunWith;
 @AppModeFull(reason = "No real use case for instant mode hotword detection service")
 public final class HotwordDetectionServiceProximityTest
         extends AbstractVoiceInteractionBasicTestCase {
+    /** TODO(b/247920386): Replace with the system constant. */
+    private static final boolean ENABLE_PROXIMITY_RESULT = false;
 
     @Rule
     public final DeviceConfigStateChangerRule mEnableAttentionManagerServiceRule =
@@ -233,7 +235,7 @@ public final class HotwordDetectionServiceProximityTest
         HotwordDetectedResult hotwordDetectedResult =
                 ((EventPayloadParcelable) result).mHotwordDetectedResult;
         assertThat(hotwordDetectedResult).isNotNull();
-        if (expected == null) {
+        if (expected == null || !ENABLE_PROXIMITY_RESULT) {
             assertThat(
                     hotwordDetectedResult.getExtras().containsKey(EXTRA_PROXIMITY_METERS))
                     .isFalse();

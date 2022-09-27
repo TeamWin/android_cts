@@ -261,8 +261,15 @@ open class PackageInstallerTestBase {
      * @param resId The resource ID of the button to click
      */
     fun clickInstallerUIButton(resId: String) {
-        uiDevice.wait(Until.findObject(By.res(SYSTEM_PACKAGE_NAME, resId)), TIMEOUT)
-                .click()
+        val startTime = System.currentTimeMillis()
+        while (startTime + TIMEOUT > System.currentTimeMillis()) {
+            try {
+                uiDevice.wait(Until.findObject(By.res(SYSTEM_PACKAGE_NAME, resId)), 1000).click()
+                return
+            } catch (ignore: Throwable) {
+            }
+        }
+        Assert.fail("Failed to click the button: $resId")
     }
 
     /**

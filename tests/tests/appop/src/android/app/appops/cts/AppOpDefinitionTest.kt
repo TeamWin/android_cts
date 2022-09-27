@@ -19,10 +19,12 @@ package android.app.appops.cts
 import android.app.AppOpsManager
 import android.content.pm.PermissionInfo.PROTECTION_DANGEROUS
 import android.content.pm.PermissionInfo.PROTECTION_FLAG_APPOP
+import android.platform.test.annotations.AppModeFull
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.fail
 import org.junit.Test
 
+@AppModeFull(reason = "Need to get system permission info")
 class AppOpDefinitionTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 

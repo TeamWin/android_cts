@@ -1760,7 +1760,7 @@ public class AudioTrackTest {
                 AudioFormat.CHANNEL_OUT_QUAD,    // 4.0
                 AudioFormat.CHANNEL_OUT_QUAD | AudioFormat.CHANNEL_OUT_FRONT_CENTER,   // 5.0
                 AudioFormat.CHANNEL_OUT_5POINT1, // 5.1
-                AudioFormat.CHANNEL_OUT_5POINT1 | AudioFormat.CHANNEL_OUT_BACK_CENTER, // 6.1
+                AudioFormat.CHANNEL_OUT_6POINT1, // 6.1
                 AudioFormat.CHANNEL_OUT_7POINT1_SURROUND, // 7.1
         };
         final int TEST_MODE = AudioTrack.MODE_STREAM;
