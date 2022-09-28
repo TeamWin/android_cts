@@ -168,7 +168,7 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
             return
         }
         val picture = createBitmap(40, 30)
-        val bigIcon = createBitmap(800, 600)
+        val bigIcon = createBitmap(rightIconSize(), rightIconSize() * 3 / 4)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")

@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier;
 
-import static com.android.bedstead.harrier.UserType.PRIMARY_USER;
+import static com.android.bedstead.harrier.UserType.INITIAL_USER;
 import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_PROFILES;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
@@ -31,11 +31,12 @@ import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnumTestParameter;
 import com.android.bedstead.harrier.annotations.IntTestParameter;
 import com.android.bedstead.harrier.annotations.PermissionTest;
+import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.StringTestParameter;
 import com.android.bedstead.harrier.annotations.UserPair;
 import com.android.bedstead.harrier.annotations.UserTest;
-import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
-import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerPrimaryUser;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwnerUsingParentInstance;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwnerWithNoDeviceOwner;
 import com.android.bedstead.harrier.exceptions.RestartTestException;
 import com.android.bedstead.nene.TestApis;
 
@@ -94,15 +95,15 @@ public class BedsteadJUnit4Test {
     }
 
     @Test
-    @IncludeRunOnDeviceOwnerUser
-    @IncludeRunOnProfileOwnerPrimaryUser
+    @IncludeRunOnParentOfProfileOwnerUsingParentInstance
+    @IncludeRunOnParentOfProfileOwnerWithNoDeviceOwner
     public void bedsteadParameterized() {
         sBedsteadParameterizedCalls += 1;
     }
 
     @Test
-    @IncludeRunOnDeviceOwnerUser
-    @IncludeRunOnProfileOwnerPrimaryUser
+    @IncludeRunOnParentOfProfileOwnerUsingParentInstance
+    @IncludeRunOnParentOfProfileOwnerWithNoDeviceOwner
     public void bedsteadPlusSimpleParameterized(@StringTestParameter({"A", "B"}) String argument) {
         sBedsteadPlusSimpleParameterizedCalls += 1;
     }
@@ -147,25 +148,25 @@ public class BedsteadJUnit4Test {
         }
     }
 
-    @UserTest({UserType.PRIMARY_USER, UserType.WORK_PROFILE})
+    @UserTest({UserType.INITIAL_USER, UserType.WORK_PROFILE})
     @Test
     public void userTestAnnotation_isRunningOnCorrectUsers() {
-        if (!TestApis.users().instrumented().equals(sDeviceState.primaryUser())) {
+        if (!TestApis.users().instrumented().equals(sDeviceState.initialUser())) {
             assertThat(TestApis.users().instrumented()).isEqualTo(sDeviceState.workProfile());
         }
     }
 
     @CrossUserTest({
-            @UserPair(from = PRIMARY_USER, to = WORK_PROFILE),
-            @UserPair(from = WORK_PROFILE, to = PRIMARY_USER),
+            @UserPair(from = INITIAL_USER, to = WORK_PROFILE),
+            @UserPair(from = WORK_PROFILE, to = INITIAL_USER),
     })
     @Test
     public void crossUserTestAnnotation_isRunningWithCorrectUserPairs() {
-        if (TestApis.users().instrumented().equals(sDeviceState.primaryUser())) {
+        if (TestApis.users().instrumented().equals(sDeviceState.initialUser())) {
             assertThat(sDeviceState.otherUser()).isEqualTo(sDeviceState.workProfile());
         } else {
             assertThat(TestApis.users().instrumented()).isEqualTo(sDeviceState.workProfile());
-            assertThat(sDeviceState.otherUser()).isEqualTo(sDeviceState.primaryUser());
+            assertThat(sDeviceState.otherUser()).isEqualTo(sDeviceState.initialUser());
         }
     }
 
@@ -201,5 +202,11 @@ public class BedsteadJUnit4Test {
         } finally {
             sTestRuns = 0;
         }
+    }
+
+    @RequireRunOnInitialUser
+    @Test
+    public void requireRunOnInitialUser_runsOnInitialUser() {
+        assertThat(TestApis.users().instrumented()).isEqualTo(TestApis.users().initial());
     }
 }

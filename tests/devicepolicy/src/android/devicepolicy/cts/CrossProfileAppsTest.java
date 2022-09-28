@@ -18,15 +18,15 @@ package android.devicepolicy.cts;
 
 import static android.provider.Settings.ACTION_MANAGE_CROSS_PROFILE_ACCESS;
 
-import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
-import static com.android.bedstead.harrier.UserType.PRIMARY_USER;
-import static com.android.bedstead.harrier.UserType.SECONDARY_USER;
+import static com.android.bedstead.harrier.UserType.ADDITIONAL_USER;
+import static com.android.bedstead.harrier.UserType.INITIAL_USER;
 import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_PROFILES;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS_FULL;
 import static com.android.bedstead.nene.permissions.CommonPermissions.START_CROSS_PROFILE_ACTIVITIES;
+import static com.android.bedstead.nene.types.OptionalBoolean.TRUE;
 import static com.android.eventlib.truth.EventLogsSubject.assertThat;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -55,7 +55,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.PermissionTest;
 import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.UserPair;
 import com.android.bedstead.harrier.annotations.UserTest;
@@ -126,10 +126,10 @@ public final class CrossProfileAppsTest {
     }
 
     @CrossUserTest({
-            @UserPair(from = PRIMARY_USER, to = PRIMARY_USER),
-            @UserPair(from = PRIMARY_USER, to = SECONDARY_USER),
-            @UserPair(from = WORK_PROFILE, to = SECONDARY_USER),
-            @UserPair(from = SECONDARY_USER, to = WORK_PROFILE)
+            @UserPair(from = INITIAL_USER, to = INITIAL_USER),
+            @UserPair(from = INITIAL_USER, to = ADDITIONAL_USER),
+            @UserPair(from = WORK_PROFILE, to = ADDITIONAL_USER),
+            @UserPair(from = ADDITIONAL_USER, to = WORK_PROFILE)
     })
     @Postsubmit(reason = "new test")
     public void getTargetUserProfiles_doesNotContainOtherUser() {
@@ -141,8 +141,8 @@ public final class CrossProfileAppsTest {
     }
 
     @CrossUserTest({
-            @UserPair(from = WORK_PROFILE, to = PRIMARY_USER),
-            @UserPair(from = PRIMARY_USER, to = WORK_PROFILE)
+            @UserPair(from = WORK_PROFILE, to = INITIAL_USER),
+            @UserPair(from = INITIAL_USER, to = WORK_PROFILE)
     })    @Postsubmit(reason = "new test")
     public void getTargetUserProfiles_containsOtherUser() {
         TestApis.packages().instrumented().installExisting(sDeviceState.otherUser());
@@ -153,8 +153,8 @@ public final class CrossProfileAppsTest {
     }
 
     @CrossUserTest({
-            @UserPair(from = WORK_PROFILE, to = PRIMARY_USER),
-            @UserPair(from = PRIMARY_USER, to = WORK_PROFILE)
+            @UserPair(from = WORK_PROFILE, to = INITIAL_USER),
+            @UserPair(from = INITIAL_USER, to = WORK_PROFILE)
     })
     @Postsubmit(reason = "new test")
     public void getTargetUserProfiles_appNotInstalledInOtherUser_doesNotContainOtherUser() {
@@ -166,7 +166,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Postsubmit(reason = "new test")
-    @UserTest({PRIMARY_USER, WORK_PROFILE})
+    @UserTest({INITIAL_USER, WORK_PROFILE})
     public void getTargetUserProfiles_logged() {
         try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {
             sCrossProfileApps.getTargetUserProfiles();
@@ -180,8 +180,8 @@ public final class CrossProfileAppsTest {
     }
 
     @CrossUserTest({
-            @UserPair(from = WORK_PROFILE, to = PRIMARY_USER),
-            @UserPair(from = PRIMARY_USER, to = WORK_PROFILE)
+            @UserPair(from = WORK_PROFILE, to = INITIAL_USER),
+            @UserPair(from = INITIAL_USER, to = WORK_PROFILE)
     })
     @Postsubmit(reason = "new test")
     public void startMainActivity_launches() {
@@ -196,8 +196,8 @@ public final class CrossProfileAppsTest {
     }
 
     @CrossUserTest({
-            @UserPair(from = WORK_PROFILE, to = PRIMARY_USER),
-            @UserPair(from = PRIMARY_USER, to = WORK_PROFILE)
+            @UserPair(from = WORK_PROFILE, to = INITIAL_USER),
+            @UserPair(from = INITIAL_USER, to = WORK_PROFILE)
     })
     @Postsubmit(reason = "new test")
     public void startMainActivity_logged() {
@@ -214,7 +214,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @Postsubmit(reason = "new test")
     public void startMainActivity_activityNotExported_throwsSecurityException() {
@@ -225,7 +225,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @Postsubmit(reason = "new test")
     public void startMainActivity_activityNotMain_throwsSecurityException() {
@@ -236,7 +236,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @Postsubmit(reason = "new test")
     public void startMainActivity_activityIncorrectPackage_throwsSecurityException() {
@@ -261,7 +261,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile
     @Postsubmit(reason = "new test")
     public void startActivity_byIntent_noComponent_throwsException() throws Exception {
@@ -275,7 +275,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile
     @Postsubmit(reason = "new test")
     public void startActivity_byIntent_differentPackage_throwsException() throws Exception {
@@ -293,7 +293,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile
     @Postsubmit(reason = "new test")
     public void startActivity_byComponent_differentPackage_throwsException() throws Exception {
@@ -310,7 +310,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile
     @EnsureDoesNotHavePermission({
             INTERACT_ACROSS_PROFILES, INTERACT_ACROSS_USERS,
@@ -327,7 +327,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile
     @EnsureDoesNotHavePermission({
             INTERACT_ACROSS_PROFILES, INTERACT_ACROSS_USERS,
@@ -340,7 +340,7 @@ public final class CrossProfileAppsTest {
                                 NOT_MAIN_ACTIVITY, sDeviceState.workProfile().userHandle())));
     }
 
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @PermissionTest({
             INTERACT_ACROSS_PROFILES, INTERACT_ACROSS_USERS,
@@ -362,7 +362,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @EnsureHasPermission(START_CROSS_PROFILE_ACTIVITIES)
     @Postsubmit(reason = "new test")
@@ -377,7 +377,7 @@ public final class CrossProfileAppsTest {
         });
     }
 
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @PermissionTest({
             INTERACT_ACROSS_PROFILES, INTERACT_ACROSS_USERS,
@@ -397,7 +397,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @EnsureHasPermission(INTERACT_ACROSS_PROFILES)
     @Postsubmit(reason = "new test")
@@ -419,7 +419,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @EnsureHasPermission(INTERACT_ACROSS_PROFILES)
     @Postsubmit(reason = "new test")
@@ -440,7 +440,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @EnsureHasPermission(INTERACT_ACROSS_PROFILES)
     @Postsubmit(reason = "new test")
@@ -453,7 +453,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @EnsureHasPermission(INTERACT_ACROSS_PROFILES)
     @Postsubmit(reason = "new test")
@@ -475,7 +475,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @EnsureHasPermission(START_CROSS_PROFILE_ACTIVITIES)
     @Postsubmit(reason = "new test")
@@ -497,7 +497,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @EnsureHasPermission(START_CROSS_PROFILE_ACTIVITIES)
     @Postsubmit(reason = "new test")
@@ -519,7 +519,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @EnsureHasPermission(START_CROSS_PROFILE_ACTIVITIES)
     @Postsubmit(reason = "new test")
@@ -541,7 +541,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @EnsureHasPermission(START_CROSS_PROFILE_ACTIVITIES)
     @Postsubmit(reason = "new test")
@@ -563,7 +563,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @EnsureHasPermission(INTERACT_ACROSS_PROFILES)
     @Postsubmit(reason = "new test")
@@ -595,7 +595,7 @@ public final class CrossProfileAppsTest {
         try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {
             ActivityContext.runWithContext(activity ->
                     sCrossProfileApps.startActivity(
-                            intent, sDeviceState.primaryUser().userHandle(), activity));
+                            intent, sDeviceState.initialUser().userHandle(), activity));
 
             assertThat(metrics.query()
                     .whereType().isEqualTo(EventId.START_ACTIVITY_BY_INTENT_VALUE)
@@ -607,13 +607,13 @@ public final class CrossProfileAppsTest {
 
     @Test
     @CrossUserTest({
-            @UserPair(from = PRIMARY_USER, to = PRIMARY_USER),
-            @UserPair(from = PRIMARY_USER, to = SECONDARY_USER),
-            @UserPair(from = WORK_PROFILE, to = SECONDARY_USER),
-            @UserPair(from = SECONDARY_USER, to = WORK_PROFILE)
+            @UserPair(from = INITIAL_USER, to = INITIAL_USER),
+            @UserPair(from = INITIAL_USER, to = ADDITIONAL_USER),
+            @UserPair(from = WORK_PROFILE, to = ADDITIONAL_USER),
+            @UserPair(from = ADDITIONAL_USER, to = WORK_PROFILE)
     })
     public void
-            startMainActivity_callingFromPrimaryUser_targetIsInvalid_throwsSecurityException() {
+            startMainActivity_targetIsInvalid_throwsSecurityException() {
         TestApis.packages().instrumented().installExisting(sDeviceState.otherUser());
 
         assertThrows(SecurityException.class,
@@ -623,10 +623,10 @@ public final class CrossProfileAppsTest {
 
     @Test
     @CrossUserTest({
-            @UserPair(from = PRIMARY_USER, to = PRIMARY_USER),
-            @UserPair(from = PRIMARY_USER, to = SECONDARY_USER),
-            @UserPair(from = WORK_PROFILE, to = SECONDARY_USER),
-            @UserPair(from = SECONDARY_USER, to = WORK_PROFILE)
+            @UserPair(from = INITIAL_USER, to = INITIAL_USER),
+            @UserPair(from = INITIAL_USER, to = ADDITIONAL_USER),
+            @UserPair(from = WORK_PROFILE, to = ADDITIONAL_USER),
+            @UserPair(from = ADDITIONAL_USER, to = WORK_PROFILE)
     })
     public void getProfileSwitchingLabel_targetIsInvalid_throwsSecurityException() {
         TestApis.packages().instrumented().installExisting(sDeviceState.otherUser());
@@ -639,8 +639,8 @@ public final class CrossProfileAppsTest {
 
     @Test
     @CrossUserTest({
-            @UserPair(from = WORK_PROFILE, to = PRIMARY_USER),
-            @UserPair(from = PRIMARY_USER, to = WORK_PROFILE)
+            @UserPair(from = WORK_PROFILE, to = INITIAL_USER),
+            @UserPair(from = INITIAL_USER, to = WORK_PROFILE)
     })
     public void getProfileSwitchingLabel_targetIsValid_notNull() {
         TestApis.packages().instrumented().installExisting(sDeviceState.otherUser());
@@ -651,10 +651,10 @@ public final class CrossProfileAppsTest {
 
     @Test
     @CrossUserTest({
-            @UserPair(from = PRIMARY_USER, to = PRIMARY_USER),
-            @UserPair(from = PRIMARY_USER, to = SECONDARY_USER),
-            @UserPair(from = WORK_PROFILE, to = SECONDARY_USER),
-            @UserPair(from = SECONDARY_USER, to = WORK_PROFILE)
+            @UserPair(from = INITIAL_USER, to = INITIAL_USER),
+            @UserPair(from = INITIAL_USER, to = ADDITIONAL_USER),
+            @UserPair(from = WORK_PROFILE, to = ADDITIONAL_USER),
+            @UserPair(from = ADDITIONAL_USER, to = WORK_PROFILE)
     })
     public void getProfileSwitchingLabelIconDrawable_targetIsInvalid_throwsSecurityException() {
         TestApis.packages().instrumented().installExisting(sDeviceState.otherUser());
@@ -667,8 +667,8 @@ public final class CrossProfileAppsTest {
 
     @Test
     @CrossUserTest({
-            @UserPair(from = WORK_PROFILE, to = PRIMARY_USER),
-            @UserPair(from = PRIMARY_USER, to = WORK_PROFILE)
+            @UserPair(from = WORK_PROFILE, to = INITIAL_USER),
+            @UserPair(from = INITIAL_USER, to = WORK_PROFILE)
     })
     public void getProfileSwitchingIconDrawable_targetIsValid_notNull() {
         TestApis.packages().instrumented().installExisting(sDeviceState.otherUser());
@@ -679,8 +679,8 @@ public final class CrossProfileAppsTest {
 
     @Test
     @CrossUserTest({
-            @UserPair(from = PRIMARY_USER, to = WORK_PROFILE),
-            @UserPair(from = WORK_PROFILE, to = PRIMARY_USER)
+            @UserPair(from = INITIAL_USER, to = WORK_PROFILE),
+            @UserPair(from = WORK_PROFILE, to = INITIAL_USER)
     })
     public void canRequestInteractAcrossProfiles_hasValidTarget_returnsTrue()
             throws Exception {
@@ -698,11 +698,11 @@ public final class CrossProfileAppsTest {
 
     @Test
     @EnsureHasNoWorkProfile
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     public void canRequestInteractAcrossProfiles_noOtherProfiles_returnsFalse()
             throws Exception {
         try (TestAppInstance personalApp = sCrossProfileTestApp.install(
-                sDeviceState.primaryUser())) {
+                sDeviceState.initialUser())) {
 
             assertThat(personalApp.crossProfileApps().canRequestInteractAcrossProfiles()).isFalse();
         }
@@ -710,13 +710,13 @@ public final class CrossProfileAppsTest {
 
     @Test
     @EnsureHasWorkProfile
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     public void canRequestInteractAcrossProfiles_packageNotInAllowList_returnsTrue()
             throws Exception {
         RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
                 .devicePolicyManager();
         try (TestAppInstance personalApp = sCrossProfileTestApp.install(
-                sDeviceState.primaryUser());
+                sDeviceState.initialUser());
              TestAppInstance workApp = sCrossProfileTestApp.install(
                 sDeviceState.workProfile())) {
             profileOwner.setCrossProfilePackages(
@@ -729,7 +729,7 @@ public final class CrossProfileAppsTest {
 
     @Test
     @EnsureHasWorkProfile
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     public void canRequestInteractAcrossProfiles_packageNotInstalledInPersonalProfile_returnsTrue()
             throws Exception {
         RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
@@ -746,13 +746,13 @@ public final class CrossProfileAppsTest {
 
     @Test
     @EnsureHasWorkProfile
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     public void canRequestInteractAcrossProfiles_packageNotInstalledInWorkProfile_returnsTrue()
             throws Exception {
         RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
                 .devicePolicyManager();
         try (TestAppInstance personalApp = sCrossProfileTestApp.install(
-                sDeviceState.primaryUser())) {
+                sDeviceState.initialUser())) {
             profileOwner.setCrossProfilePackages(
                     sDeviceState.profileOwner(WORK_PROFILE).componentName(),
                     Set.of(sCrossProfileTestApp.packageName()));
@@ -763,13 +763,13 @@ public final class CrossProfileAppsTest {
 
     @Test
     @EnsureHasWorkProfile
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     public void canRequestInteractAcrossProfiles_permissionNotRequested_returnsFalse()
             throws Exception {
         RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
                 .devicePolicyManager();
         try (TestAppInstance personalApp = sNonCrossProfileTestApp.install(
-                sDeviceState.primaryUser());
+                sDeviceState.initialUser());
              TestAppInstance workApp = sNonCrossProfileTestApp.install(
                 sDeviceState.workProfile())) {
             profileOwner.setCrossProfilePackages(
@@ -783,7 +783,7 @@ public final class CrossProfileAppsTest {
     // TODO(b/199148889): add require INTERACT_ACROSS_PROFILE permission for the dpc.
     @Test
     @EnsureHasWorkProfile
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     public void canRequestInteractAcrossProfiles_profileOwner_returnsFalse()
             throws Exception {
         RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
@@ -799,7 +799,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile
     public void canInteractAcrossProfiles_appOpIsSetOnAllProfiles_returnsTrue() {
         try (TestAppInstance primaryApp = sCrossProfileTestApp.install();
@@ -816,7 +816,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile
     public void canInteractAcrossProfiles_appOpDisabledOnCaller_returnsFalse() {
         try (TestAppInstance primaryApp = sCrossProfileTestApp.install();
@@ -832,7 +832,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile
     public void canInteractAcrossProfiles_appOpDisabledOnOtherProfile_returnsFalse() {
         try (TestAppInstance primaryApp = sCrossProfileTestApp.install();
@@ -848,7 +848,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     public void canInteractAcrossProfiles_noOtherProfile_returnsFalse() {
         try (TestAppInstance primaryApp = sCrossProfileTestApp.install()) {
             sCrossProfileTestApp.pkg().appOps().set(
@@ -861,7 +861,7 @@ public final class CrossProfileAppsTest {
 
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @PermissionTest({
             INTERACT_ACROSS_PROFILES, INTERACT_ACROSS_USERS, INTERACT_ACROSS_USERS_FULL})
@@ -875,7 +875,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasNoWorkProfile
     public void createRequestInteractAcrossProfilesIntent_canNotRequest_throwsException() {
         try (TestAppInstance primaryApp = sCrossProfileTestApp.install()) {
@@ -886,7 +886,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile
     public void createRequestInteractAcrossProfilesIntent_canRequest_returnsIntent() {
         try (TestAppInstance primaryApp = sCrossProfileTestApp.install();

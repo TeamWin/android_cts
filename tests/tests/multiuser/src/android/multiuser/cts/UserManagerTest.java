@@ -27,8 +27,8 @@ import static android.os.UserManager.USER_TYPE_FULL_SECONDARY;
 import static android.os.UserManager.USER_TYPE_PROFILE_CLONE;
 import static android.os.UserManager.USER_TYPE_PROFILE_MANAGED;
 
-import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
-import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
+import static com.android.bedstead.nene.types.OptionalBoolean.FALSE;
+import static com.android.bedstead.nene.types.OptionalBoolean.TRUE;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;

@@ -25,10 +25,7 @@ import static android.app.admin.DevicePolicyManager.DELEGATION_CERT_INSTALL;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
-import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
-import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
 import static com.android.bedstead.harrier.UserType.ANY;
-import static com.android.bedstead.harrier.UserType.PRIMARY_USER;
 import static com.android.bedstead.harrier.UserType.SECONDARY_USER;
 import static com.android.bedstead.harrier.annotations.RequireAospBuild.GMS_CORE_PACKAGE;
 import static com.android.bedstead.harrier.annotations.RequireCnGmsBuild.CHINA_GOOGLE_SERVICES_FEATURE;
@@ -36,6 +33,8 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeleg
 import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.AdminType.PRIMARY;
 import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
 import static com.android.bedstead.nene.permissions.CommonPermissions.READ_CONTACTS;
+import static com.android.bedstead.nene.types.OptionalBoolean.FALSE;
+import static com.android.bedstead.nene.types.OptionalBoolean.TRUE;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SYSTEM_USER_TYPE_NAME;
@@ -46,7 +45,6 @@ import static org.testng.Assert.assertThrows;
 
 import android.app.ActivityManager;
 import android.app.admin.DevicePolicyManager;
-import android.content.PermissionChecker;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.UserManager;
@@ -54,11 +52,14 @@ import android.provider.Settings;
 
 import com.android.bedstead.harrier.annotations.EnsureBluetoothDisabled;
 import com.android.bedstead.harrier.annotations.EnsureBluetoothEnabled;
+import com.android.bedstead.harrier.annotations.EnsureCanAddUser;
 import com.android.bedstead.harrier.annotations.EnsureDemoMode;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveAppOp;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureGlobalSettingSet;
+import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasAppOp;
+import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
@@ -91,8 +92,10 @@ import com.android.bedstead.harrier.annotations.RequireNotMultipleUsersOnMultipl
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
@@ -120,6 +123,7 @@ import com.android.bedstead.nene.devicepolicy.DeviceOwnerType;
 import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
+import com.android.bedstead.nene.types.OptionalBoolean;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Tags;
 import com.android.bedstead.remotedpc.RemoteDelegate;
@@ -289,12 +293,14 @@ public class DeviceStateTest {
     }
 
     @Test
+    @RequireRunOnSystemUser
     @EnsureHasNoSecondaryUser
     public void secondaryUser_noSecondaryUser_throwsException() {
         assertThrows(IllegalStateException.class, sDeviceState::secondaryUser);
     }
 
     @Test
+    @RequireRunOnSystemUser
     @EnsureHasNoSecondaryUser
     public void secondaryUser_createdSecondaryUser_throwsException() {
         try (UserReference secondaryUser = TestApis.users().createUser()
@@ -307,15 +313,18 @@ public class DeviceStateTest {
     @Test
     @EnsureHasSecondaryUser
     public void ensureHasSecondaryUserAnnotation_secondaryUserExists() {
-        assertThat(TestApis.users().findUserOfType(
-                TestApis.users().supportedType(SECONDARY_USER_TYPE_NAME))
-        ).isNotNull();
+        assertThat(
+                        TestApis.users()
+                                .findUsersOfType(
+                                        TestApis.users().supportedType(SECONDARY_USER_TYPE_NAME)))
+                .isNotEmpty();
     }
 
     // TODO(scottjonathan): test the installTestApp argument
     // TODO(scottjonathan): Test the forUser argument
 
     @Test
+    @RequireRunOnSystemUser
     @EnsureHasNoSecondaryUser
     public void ensureHasNoSecondaryUserAnnotation_secondaryUserDoesNotExist() {
         assertThat(TestApis.users().findUserOfType(
@@ -535,10 +544,8 @@ public class DeviceStateTest {
     public void includeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerAnnotation_isRunningOnSecondaryUserInDifferentProfileGroupToProfileOwner() {
         assertThat(TestApis.users().instrumented().type().name())
                 .isEqualTo(SECONDARY_USER_TYPE_NAME);
-        assertThat(sDeviceState.workProfile(PRIMARY_USER))
-                .isNotEqualTo(TestApis.users().instrumented());
-        assertThat(TestApis.devicePolicy().getProfileOwner(sDeviceState.workProfile(PRIMARY_USER)))
-                .isNotNull();
+        assertThat(sDeviceState.workProfile()).isNotEqualTo(TestApis.users().instrumented());
+        assertThat(TestApis.devicePolicy().getProfileOwner(sDeviceState.workProfile())).isNotNull();
 
         // TODO(scottjonathan): Assert profile groups are different
     }
@@ -662,15 +669,15 @@ public class DeviceStateTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     public void requireRunOnUser_isCurrentUser() {
-        assertThat(TestApis.users().current()).isEqualTo(sDeviceState.primaryUser());
+        assertThat(TestApis.users().current()).isEqualTo(sDeviceState.initialUser());
     }
 
     @Test
-    @RequireRunOnPrimaryUser(switchedToUser = FALSE)
+    @RequireRunOnInitialUser(switchedToUser = FALSE)
     public void requireRunOnUser_specifyNotSwitchedToUser_isNotCurrentUser() {
-        assertThat(TestApis.users().current()).isNotEqualTo(sDeviceState.primaryUser());
+        assertThat(TestApis.users().current()).isNotEqualTo(sDeviceState.initialUser());
     }
 
     @Test
@@ -687,15 +694,27 @@ public class DeviceStateTest {
     }
 
     @Test
-    @EnsureHasSecondaryUser(switchedToUser = FALSE) // We don't test the default as it's ANY
+    @EnsureHasAdditionalUser(switchedToUser = FALSE) // We don't test the default as it's ANY
     public void ensureHasUser_specifyIsNotSwitchedToUser_isNotCurrentUser() {
-        assertThat(TestApis.users().current()).isNotEqualTo(sDeviceState.secondaryUser());
+        assertThat(TestApis.users().current()).isNotEqualTo(sDeviceState.additionalUser());
     }
 
     @Test
-    @EnsureHasSecondaryUser(switchedToUser = TRUE)
+    @EnsureHasAdditionalUser(switchedToUser = TRUE)
     public void ensureHasUser_specifySwitchedToUser_isCurrentUser() {
-        assertThat(TestApis.users().current()).isEqualTo(sDeviceState.secondaryUser());
+        assertThat(TestApis.users().current()).isEqualTo(sDeviceState.additionalUser());
+    }
+
+    @Test
+    @EnsureHasAdditionalUser
+    public void ensureHasAdditionalUser_hasAdditionalUser() {
+        assertThat(sDeviceState.additionalUser()).isNotNull();
+    }
+
+    @Test
+    @EnsureHasNoAdditionalUser
+    public void ensureHasNoAdditionalUser_doesNotHaveAdditionalUser() {
+        assertThrows(IllegalStateException.class, sDeviceState::additionalUser);
     }
 
     @Test
@@ -774,13 +793,13 @@ public class DeviceStateTest {
     }
 
     @Test
-    @RequireNotHeadlessSystemUserMode
+    @RequireNotHeadlessSystemUserMode(reason = "Test")
     public void requireNotHeadlessSystemUserModeAnnotation_notHeadlessSystemUserMode() {
         assertThat(TestApis.users().isHeadlessSystemUserMode()).isFalse();
     }
 
     @Test
-    @RequireHeadlessSystemUserMode
+    @RequireHeadlessSystemUserMode(reason = "Test")
     public void requireHeadlessSystemUserModeAnnotation_isHeadlessSystemUserMode() {
         assertThat(TestApis.users().isHeadlessSystemUserMode()).isTrue();
     }
@@ -1025,8 +1044,8 @@ public class DeviceStateTest {
     @EnsureTestAppHasPermission(READ_CONTACTS)
     @Test
     public void ensureTestAppHasPermissionAnnotation_testAppHasPermission() {
-        assertThat(sDeviceState.testApp().context().checkSelfPermission(
-                READ_CONTACTS)).isEqualTo(PermissionChecker.PERMISSION_GRANTED);
+        assertThat(sDeviceState.testApp().context().checkSelfPermission(READ_CONTACTS))
+                .isEqualTo(PERMISSION_GRANTED);
     }
 
     @EnsureTestAppInstalled(packageName = TEST_APP_PACKAGE_NAME)
@@ -1109,4 +1128,26 @@ public class DeviceStateTest {
     public void requireNotInstantAppAnnotation_isNotInstantApp() {
         assertThat(TestApis.packages().instrumented().isInstantApp()).isFalse();
     }
+
+    @EnsureCanAddUser(number = 2)
+    @Test
+    public void ensureCanAddUser_canAddUsers() {
+        try (UserReference user = TestApis.users().createUser().create();
+             UserReference secondUser = TestApis.users().createUser().create()) {
+        }
+    }
+
+    @RequireRunOnSystemUser(switchedToUser = OptionalBoolean.ANY)
+    @Test
+    public void requireRunOnAnnotation_switchedToAny_switches() {
+        assertThat(TestApis.users().instrumented()).isEqualTo(TestApis.users().current());
+    }
+
+    @EnsureHasAdditionalUser(switchedToUser = TRUE)
+    @RequireRunOnSystemUser(switchedToUser = OptionalBoolean.ANY)
+    @Test
+    public void requireRunOnAnnotation_switchedToAny_AnotherAnnotationSwitches_doesNotSwitch() {
+        assertThat(TestApis.users().instrumented()).isNotEqualTo(TestApis.users().current());
+    }
+
 }

@@ -1407,6 +1407,47 @@ public class MockImeSession implements AutoCloseable {
     }
 
     /**
+     * Lets {@link MockIme} to call {@link InputConnection#replaceText(int, int, CharSequence, int,
+     * TextAttribute)} with the given parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().replaceText(int, int, CharSequence, int,
+     * TextAttribute)}.
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from {@link
+     * ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the value
+     * returned from the API.
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.
+     *
+     * @param start the character index where the replacement should start
+     * @param end the character index where the replacement should end
+     * @param newCursorPosition the new cursor position around the text. If > 0, this is relative to
+     *     the end of the text - 1; if <= 0, this is relative to the start of the text. So a value
+     *     of 1 will always advance you to the position after the full text being inserted. Note
+     *     that this means you can't position the cursor within the text.
+     * @param text the text to replace. This may include styles.
+     * @param textAttribute The extra information about the text. This value may be null.
+     * @return {@link ImeCommand} object that can be passed to {@link
+     *     ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to wait until
+     *     this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callReplaceText(
+            int start,
+            int end,
+            @NonNull CharSequence text,
+            int newCursorPosition,
+            @Nullable TextAttribute textAttribute) {
+        final Bundle params = new Bundle();
+        params.putInt("start", start);
+        params.putInt("end", end);
+        params.putCharSequence("text", text);
+        params.putInt("newCursorPosition", newCursorPosition);
+        params.putParcelable("textAttribute", textAttribute);
+        return callCommandInternal("replaceText", params);
+    }
+
+    /**
      * Lets {@link MockIme} to call {@link
      * android.inputmethodservice.InputMethodService#switchInputMethod(String, InputMethodSubtype)}
      * with the given parameters.

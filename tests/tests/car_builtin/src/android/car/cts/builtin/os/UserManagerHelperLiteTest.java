@@ -87,7 +87,7 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
 
     @Test
     @EnsureHasPermission(CREATE_USERS) // needed to query user properties
-    @RequireNotHeadlessSystemUserMode
+    @RequireNotHeadlessSystemUserMode(reason="Requires full system user")
     @ApiTest(apis = {
             "android.car.builtin.os.UserManagerHelper#isEphemeralUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isFullUser(UserManager, UserHandle)",
@@ -110,7 +110,7 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
 
     @Test
     @EnsureHasPermission(CREATE_USERS) // needed to query user properties
-    @RequireHeadlessSystemUserMode
+    @RequireHeadlessSystemUserMode(reason = "Testing headless system user")
     @ApiTest(apis = {
             "android.car.builtin.os.UserManagerHelper#isEphemeralUser(UserManager, UserHandle)",
             "android.car.builtin.os.UserManagerHelper#isFullUser(UserManager, UserHandle)",

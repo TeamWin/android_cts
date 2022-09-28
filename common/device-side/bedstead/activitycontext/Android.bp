@@ -24,6 +24,7 @@ android_test {
         "general-tests",
     ],
     static_libs: [
+        "Harrier",
         "ActivityContext",
         "androidx.test.ext.junit",
         "ctstestrunner-axt",

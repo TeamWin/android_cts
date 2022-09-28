@@ -36,14 +36,14 @@ _GRAD_DELTA_ATOL = 15  # gradiant for tablets as screen aborbs energy
 _MEAN_DELTA_ATOL = 15  # mean used for reflective charts
 
 _FORMAT_NAMES = ('jpeg', 'yuv')
-_SIZES = ((4032, 3024), (4032, 2268))
+_IMG_SIZES = ((640, 480), (640, 360))
+_VGA_SIZE = (640, 480)
 
 _PATCH_H = 0.25  # center 25%
 _PATCH_W = 0.25
 _PATCH_X = 0.5 - _PATCH_W/2
 _PATCH_Y = 0.5 - _PATCH_H/2
 _TEST_NAME = os.path.splitext(os.path.basename(__file__))[0]
-VGA_W, VGA_H = 640, 480
 _CAPTURE_INTENT_STILL_CAPTURE = 2
 _AE_MODE_ON_AUTO_FLASH = 2
 _CAPTURE_INTENT_PREVIEW = 1
@@ -129,7 +129,21 @@ class AutoFlashTest(its_base_test.ItsBaseTest):
         turn_off_tablet(self.tablet)
 
       for fmt_name in _FORMAT_NAMES:
-        for width, height in _SIZES:
+        for size in _IMG_SIZES:
+          width, height = size
+          if not (fmt_name == 'yuv' and size == _VGA_SIZE):
+            output_sizes = capture_request_utils.get_available_output_sizes(
+                fmt_name, props, match_ar_size=size)
+            if not output_sizes:
+              if size != _VGA_SIZE:
+                logging.debug('No output sizes for format %s, size %sx%s',
+                              fmt_name, width, height)
+                continue
+              else:
+                raise AssertionError(f'No output sizes for format {fmt_name}, '
+                                     f'size {width}x{height}')
+            # pick smallest size out of available output sizes
+            width, height = output_sizes[-1]
           out_surfaces = {'format': fmt_name, 'width': width, 'height': height}
           logging.debug('Testing %s format, size: %dx%d',
                         fmt_name, width, height)

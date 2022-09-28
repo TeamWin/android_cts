@@ -22,8 +22,8 @@ import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.multiuser.cts.PermissionHelper.adoptShellPermissionIdentity;
 
-import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
-import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
+import static com.android.bedstead.nene.types.OptionalBoolean.FALSE;
+import static com.android.bedstead.nene.types.OptionalBoolean.TRUE;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -52,6 +52,7 @@ import com.android.bedstead.harrier.annotations.RequireMultipleUsersOnMultipleDi
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.users.UserType;
 import com.android.bedstead.nene.utils.Poll;
@@ -110,27 +111,14 @@ public final class MultipleUsersOnMultipleDisplaysTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserVisible"})
-    @RequireHeadlessSystemUserMode// non-HSUM cannot have profiles on secondary users
-    @RequireRunOnSecondaryUser
-    @RequireFeature(FEATURE_MANAGED_USERS) // TODO(b/239961027): remove if supports other profiles
-    public void testIsUserVisible_startedProfileOfBackgroundUserOnSecondaryDisplay()
-            throws Exception {
-        runTestOnSecondaryDisplay(/* startProfile= */ true, (user, profile, displayId, instance) ->
-                assertWithMessage("isUserVisible() for started profile (id=%s) of bg user (id=%s) "
-                    + "on display %s", profile.id(), user.id(), displayId)
-                            .that(instance.userManager().isUserVisible()).isTrue());
-    }
-
-    @Test
-    @ApiTest(apis = {"android.os.UserManager#isUserVisible"})
-    @RequireHeadlessSystemUserMode// non-HSUM cannot have profiles on secondary users
+    @RequireHeadlessSystemUserMode(reason = "non-HSUM cannot have profiles on secondary users")
     @RequireRunOnSecondaryUser
     @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call isUserVisible() on other context
     @RequireFeature(FEATURE_MANAGED_USERS) // TODO(b/239961027): remove if supports other profiles
     public void testIsUserVisible_stoppedProfileOfBackgroundUserOnSecondaryDisplay()
             throws Exception {
 
-        runTestOnSecondaryDisplay(/* startProfile= */ false, (user, profile, displayId, instance) ->
+        runTestOnSecondaryDisplay((user, profile, displayId, instance) ->
                 assertWithMessage("isUserVisible() for stoppedprofile (id=%s) of bg user (id=%s) "
                 + "on display %s", profile.id(), user.id(), displayId)
                             .that(instance.userManager().isUserVisible()).isFalse()
@@ -158,31 +146,13 @@ public final class MultipleUsersOnMultipleDisplaysTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#getVisibleUsers"})
-    @RequireHeadlessSystemUserMode// non-HSUM cannot have profiles on secondary users
-    @RequireRunOnSecondaryUser
-    @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call getVisibleUsers()
-    @RequireFeature(FEATURE_MANAGED_USERS) // TODO(b/239961027): remove if supports other profiles
-    public void testGetVisibleUsers_startedProfileOfBackgroundUserOnSecondaryDisplay()
-            throws Exception {
-        runTestOnSecondaryDisplay(/* startProfile= */ true,
-                (user, profile, display, instance) -> {
-                    List<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
-                    Log.d(TAG, "Visible users: " + visibleUsers);
-                    assertWithMessage("getVisibleUsers()").that(visibleUsers)
-                            .containsAtLeast(TestApis.users().current().userHandle(),
-                                    user.userHandle(), profile.userHandle());
-                });
-    }
-
-    @Test
-    @ApiTest(apis = {"android.os.UserManager#getVisibleUsers"})
-    @RequireHeadlessSystemUserMode// non-HSUM cannot have profiles on secondary users
+    @RequireHeadlessSystemUserMode(reason = "non-HSUM cannot have profiles on secondary users")
     @RequireRunOnSecondaryUser
     @RequireFeature(FEATURE_MANAGED_USERS) // TODO(b/239961027): remove if supports other profiles
     @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call getVisibleUsers()
     public void testGetVisibleUsers_stoppedProfileOfBackgroundUserOnSecondaryDisplay()
             throws Exception {
-        runTestOnSecondaryDisplay(/* startProfile= */ false, (user, profile, display, instance) -> {
+        runTestOnSecondaryDisplay((user, profile, display, instance) -> {
             List<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
             Log.d(TAG, "Visible users: " + visibleUsers);
 
@@ -220,13 +190,72 @@ public final class MultipleUsersOnMultipleDisplaysTest {
 
     @Test
     @ApiTest(apis = {"android.app.ActivityManager#startUserInBackgroundOnSecondaryDisplay"})
-    @RequireHeadlessSystemUserMode// non-HSUM cannot have profiles on secondary users
+    @RequireHeadlessSystemUserMode(reason = "non-HSUM cannot have profiles on secondary users")
     @RequireRunOnSecondaryUser
     @RequireFeature(FEATURE_MANAGED_USERS) // TODO(b/239961027): remove if supports other profiles
     public void testStartUserInBackgroundOnSecondaryDisplay_profileOnSameDisplay() {
-        runTestOnSecondaryDisplay(/* startProfile= */ true, (user, profile, display, instance) -> {
-            Log.d(TAG, "Saul Goodman!");
-        });
+        Log.d(TAG, "Creating bg user and profile");
+        try (UserReference parent = TestApis.users().createUser().name("parent_user").create()) {
+            Log.d(TAG, "parent: id=" + parent.id());
+            try (UserReference profile = TestApis.users().createUser()
+                    .name("profile_of_" + parent.id())
+                    // TODO(b/239961027): type should be just PROFILE_TYPE_NAME
+                    .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                    .parent(parent)
+                    .create()) {
+                Log.d(TAG, "profile: id=" + profile.id());
+
+                int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
+                startBackgroundUserOnSecondaryDisplay(parent, displayId);
+                try {
+                    // Make sure profile is stopped, just in case it was automatically started with
+                    // parent user
+                    Log.d(TAG, "Stopping profile " + profile.id()); profile.stop();
+                    boolean started = tryToStartBackgroundUserOnSecondaryDisplay(profile.id(),
+                            displayId);
+                    // MUMD doesn't support profiles on secondary users
+                    assertWithMessage("profile user (id=%s) started on display %s", profile.id(),
+                            displayId).that(started).isFalse();
+                } finally {
+                    parent.stop();
+                } // startBackgroundUserOnSecondaryDisplay(user)
+            } // new profile
+        } // new user
+    }
+
+    @FlakyTest(bugId = 242364454)
+    @Test
+    @ApiTest(apis = {"android.app.ActivityManager#startUserInBackgroundOnSecondaryDisplay"})
+    @RequireHeadlessSystemUserMode(reason =  "non-HSUM cannot have profiles on secondary users")
+    @RequireRunOnSecondaryUser
+    @RequireFeature(FEATURE_MANAGED_USERS) // TODO(b/239961027): remove if supports other profiles
+    public void testStartUserInBackgroundOnSecondaryDisplay_profileOnDefaultDisplay() {
+        Log.d(TAG, "Creating bg user and profile");
+        try (UserReference parent = TestApis.users().createUser().name("parent_user").create()) {
+            Log.d(TAG, "parent: id=" + parent.id());
+            try (UserReference profile = TestApis.users().createUser()
+                    .name("profile_of_" + parent.id())
+                    // TODO(b/239961027): type should be just PROFILE_TYPE_NAME
+                    .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                    .parent(parent)
+                    .create()) {
+                Log.d(TAG, "profile: id=" + profile.id());
+
+                int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
+                startBackgroundUserOnSecondaryDisplay(parent, displayId);
+                try {
+                    // Make sure profile is stopped, just in case it was automatically started with
+                    // parent user
+                    Log.d(TAG, "Stopping profile " + profile.id()); profile.stop();
+
+                    // NOTE: startUserInBackgroundOnSecondaryDisplay() doesn't accept
+                    // DEFAULT_DISPLAY, so we need to try to start the profile directly instead
+                    assertThrows(NeneException.class, () ->profile.start());
+                } finally {
+                    parent.stop();
+                } // startBackgroundUserOnSecondaryDisplay(user)
+            } // new profile
+        } // new user
     }
 
     @FlakyTest(bugId = 242364454)
@@ -236,16 +265,16 @@ public final class MultipleUsersOnMultipleDisplaysTest {
     @RequireRunOnPrimaryUser(switchedToUser = TRUE)
     @EnsureHasSecondaryUser(switchedToUser = FALSE)
     @EnsureHasWorkProfile
-    public void testStartUserInBackgroundOnSecondaryDisplay_profileOnDifferentDisplay() {
+    public void testStartUserInBackgroundOnSecondaryDisplay_parentOnDefaultDisplayProfileOnSecondaryDisplay() {
         // Stop the profile as it was initially running in the same display as parent
         UserReference profile = sDeviceState.workProfile();
         Log.d(TAG, "Stopping profile " + profile + " (called from " + sContext.getUser() + ")");
         profile.stop();
 
         int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
-        int userId = profile.id();
-        boolean started = tryToStartBackgroundUserOnSecondaryDisplay(userId, displayId);
-        assertWithMessage("started profile %s on display %s", userId, displayId).that(started)
+        boolean started = tryToStartBackgroundUserOnSecondaryDisplay(profile.id(), displayId);
+
+        assertWithMessage("started profile %s on display %s", profile.id(), displayId).that(started)
                 .isFalse();
     }
 
@@ -287,7 +316,6 @@ public final class MultipleUsersOnMultipleDisplaysTest {
 
         assertThrows(IllegalArgumentException.class,
                 () -> startBackgroundUserOnSecondaryDisplay(user, Display.DEFAULT_DISPLAY));
-
     }
 
     /**
@@ -309,17 +337,13 @@ public final class MultipleUsersOnMultipleDisplaysTest {
         }
     }
 
-    // TODO(b/245963156): move to Display.java (and @hide) if we decide to support profiles on MUMD
-    private static final int PARENT_DISPLAY = -2;
-
     /**
      * Starts a new user (which has a profile) in background on a secondary display and run a test
      * on it.
      *
      * @param test to be run
-     * @param startProfile whether the user profile should be started as well
      */
-    private void runTestOnSecondaryDisplay(boolean startProfile,
+    private void runTestOnSecondaryDisplay(
             BackgroundUserAndProfileOnSecondaryDisplayTester tester) {
         Log.d(TAG, "Creating bg user and profile");
         try (UserReference user = TestApis.users().createUser().name("parent_user").create()) {
@@ -335,26 +359,16 @@ public final class MultipleUsersOnMultipleDisplaysTest {
                 int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
                 startBackgroundUserOnSecondaryDisplay(user, displayId);
                 try {
-                    if (startProfile) {
-                        startBackgroundUserOnSecondaryDisplay(profile, PARENT_DISPLAY);
-                    } else {
-                        // Make sure it's stopped, as it could have been automatically started with
-                        // parent user
-                        Log.d(TAG, "Stopping profile " + profile.id()); profile.stop();
-                    }
-                    try {
-                        TestApp testApp = sDeviceState.testApps().any();
-                        try (TestAppInstance instance = testApp.install(profile)) {
-                            tester.run(user, profile, displayId, instance);
-                        } // test instance
-                    } finally {
-                        if (startProfile) {
-                            profile.stop();
-                        }
-                    } // startBackgroundUserOnSecondaryDisplay
+                    // Make sure profile is stopped, as it could have been automatically started
+                    // with parent user
+                    Log.d(TAG, "Stopping profile " + profile.id()); profile.stop();
+                    TestApp testApp = sDeviceState.testApps().any();
+                    try (TestAppInstance instance = testApp.install(profile)) {
+                        tester.run(user, profile, displayId, instance);
+                    } // test instance
                 } finally {
                     user.stop();
-                } // startBackgroundUserOnSecondaryDisplay
+                } // startBackgroundUserOnSecondaryDisplay(user)
             } // new profile
         } // new user
     }
@@ -396,7 +410,7 @@ public final class MultipleUsersOnMultipleDisplaysTest {
         try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
             boolean started = sContext.getSystemService(ActivityManager.class)
                     .startUserInBackgroundOnSecondaryDisplay(userId, displayId);
-            Log.d(TAG, "Started: " + started);
+            Log.d(TAG, "Returning started=" + started);
             return started;
         }
     }

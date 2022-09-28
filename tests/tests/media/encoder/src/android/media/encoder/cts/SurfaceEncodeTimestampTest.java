@@ -37,15 +37,18 @@ import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
-import android.test.AndroidTestCase;
 import android.util.Log;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
 
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
@@ -57,7 +60,8 @@ import java.util.function.Supplier;
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 @SmallTest
 @RequiresDevice
-public class SurfaceEncodeTimestampTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class SurfaceEncodeTimestampTest {
     private static final String TAG = SurfaceEncodeTimestampTest.class.getSimpleName();
     private static final boolean DEBUG = false;
 
@@ -90,7 +94,7 @@ public class SurfaceEncodeTimestampTest extends AndroidTestCase {
         }
     }
 
-    @Override
+    @Before
     public void setUp() throws Exception {
         if (mHandlerThread == null) {
             mHandlerThread = new HandlerThread(
@@ -100,7 +104,7 @@ public class SurfaceEncodeTimestampTest extends AndroidTestCase {
         }
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
         mHandler = null;
         if (mHandlerThread != null) {
@@ -117,6 +121,7 @@ public class SurfaceEncodeTimestampTest extends AndroidTestCase {
      * to be modified, we can't really verify that the "capping" actually took place.
      * However, we can at least verify that the pts is preserved.
      */
+    @Test
     public void testMaxPtsGap() throws Throwable {
         long[] inputPts = {1000000, 2000000, 3000000, 4000000};
         long[] expectedOutputPts = {1000000, 2000000, 3000000, 4000000};
@@ -128,6 +133,7 @@ public class SurfaceEncodeTimestampTest extends AndroidTestCase {
     /*
      * Test that by default backward-going frames get dropped.
      */
+    @Test
     public void testBackwardFrameDroppedWithoutFixedPtsGap() throws Throwable {
         long[] inputPts = {33333, 66667, 66000, 100000};
         long[] expectedOutputPts = {33333, 66667, 100000};
@@ -140,6 +146,7 @@ public class SurfaceEncodeTimestampTest extends AndroidTestCase {
      * Test that when fixed pts gap is used, backward-going frames are accepted
      * and the pts is preserved.
      */
+    @Test
     public void testBackwardFramePreservedWithFixedPtsGap() throws Throwable {
         long[] inputPts = {33333, 66667, 66000, 100000};
         long[] expectedOutputPts = {33333, 66667, 66000, 100000};
@@ -154,6 +161,7 @@ public class SurfaceEncodeTimestampTest extends AndroidTestCase {
      * Input frames are timestamped at 60fps, the key is supposed to drop
      * one every other frame to maintain 30fps output.
      */
+    @Test
     public void testMaxFps() throws Throwable {
         long[] inputPts = {16667, 33333, 50000, 66667, 83333};
         long[] expectedOutputPts = {16667, 50000, 83333};
@@ -170,6 +178,7 @@ public class SurfaceEncodeTimestampTest extends AndroidTestCase {
      * compress) the output timestamp so that the output fps becomes that specified
      * by  KEY_FRAME_RATE.
      */
+    @Test
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.R)
     public void testCaptureFps() throws Throwable {
         // test slow motion
@@ -204,6 +213,7 @@ public class SurfaceEncodeTimestampTest extends AndroidTestCase {
      * Test that the frame is repeated at least once if no new frame arrives after
      * the specified amount of time.
      */
+    @Test
     public void testRepeatPreviousFrameAfter() throws Throwable {
         long[] inputPts = {16667, 33333, -100000, 133333};
         long[] expectedOutputPts = {16667, 33333, 103333};
@@ -218,6 +228,7 @@ public class SurfaceEncodeTimestampTest extends AndroidTestCase {
      * Start the encoder with KEY_CREATE_INPUT_SURFACE_SUSPENDED set, then resume
      * by PARAMETER_KEY_SUSPEND. Verify only frames after resume are captured.
      */
+    @Test
     public void testCreateInputSurfaceSuspendedResume() throws Throwable {
         // Using PARAMETER_KEY_SUSPEND (instead of PARAMETER_KEY_SUSPEND +
         // PARAMETER_KEY_SUSPEND_TIME) to resume doesn't enforce a time
@@ -245,6 +256,7 @@ public class SurfaceEncodeTimestampTest extends AndroidTestCase {
      * at specific time using PARAMETER_KEY_SUSPEND + PARAMETER_KEY_SUSPEND_TIME.
      * Verify only frames after the specified time are captured.
      */
+    @Test
      public void testCreateInputSurfaceSuspendedResumeWithTime() throws Throwable {
          // Unlike using PARAMETER_KEY_SUSPEND alone to resume, using PARAMETER_KEY_SUSPEND
          // + PARAMETER_KEY_SUSPEND_TIME to resume can be scheduled any time before the
@@ -267,6 +279,7 @@ public class SurfaceEncodeTimestampTest extends AndroidTestCase {
       * Suspend/resume during capture, and verify that frames during the suspension
       * period are dropped.
       */
+    @Test
     public void testSuspendedResume() throws Throwable {
         // Using PARAMETER_KEY_SUSPEND (instead of PARAMETER_KEY_SUSPEND +
         // PARAMETER_KEY_SUSPEND_TIME) to suspend/resume doesn't enforce a time
@@ -294,6 +307,7 @@ public class SurfaceEncodeTimestampTest extends AndroidTestCase {
      * Suspend/resume with specified time during capture, and verify that frames during
      * the suspension period are dropped.
      */
+    @Test
     public void testSuspendedResumeWithTime() throws Throwable {
         // Unlike using PARAMETER_KEY_SUSPEND alone to suspend/resume, requests using
         // PARAMETER_KEY_SUSPEND + PARAMETER_KEY_SUSPEND_TIME can be scheduled any time
@@ -320,6 +334,7 @@ public class SurfaceEncodeTimestampTest extends AndroidTestCase {
      * Apply PARAMETER_KEY_OFFSET_TIME during capture, and verify that the pts
      * of frames after the request are adjusted by the offset correctly.
      */
+    @Test
     public void testOffsetTime() throws Throwable {
         long[] inputPts = {33333, 66667, -100000, 100000, 133333};
         long[] expectedOutputPts = {33333, 66667, 83333, 116666};

@@ -17,11 +17,10 @@
 package com.android.bedstead.harrier.annotations.parameterized;
 
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.EARLY;
-import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.LATE;
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
-import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
@@ -30,14 +29,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Parameterize a test so that it runs on the same user as the device owner.
- */
+/** Parameterize a test so that it runs on the same user as the device owner. */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
-// Explicitly primary user which excludes headless users as this isn't a valid mode on headless
-@RequireRunOnPrimaryUser
+@RequireRunOnSystemUser
 @EnsureHasNoWorkProfile
 @EnsureHasDeviceOwner(isPrimary = true)
 public @interface IncludeRunOnDeviceOwnerUser {

@@ -20,7 +20,7 @@ import static android.Manifest.permission.CREATE_USERS;
 import static android.os.Build.VERSION_CODES.Q;
 import static android.os.Build.VERSION_CODES.S;
 
-import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
+import static com.android.bedstead.nene.types.OptionalBoolean.FALSE;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -37,7 +37,9 @@ import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
+import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
@@ -54,7 +56,6 @@ public class UserReferenceTest {
     private static final int NON_EXISTING_USER_ID = 10000;
     private static final int USER_ID = NON_EXISTING_USER_ID;
     public static final UserHandle USER_HANDLE = new UserHandle(USER_ID);
-    private static final String TEST_ACTIVITY_NAME = "com.android.bedstead.nene.test.Activity";
     private static final Context sContext = TestApis.context().instrumentedContext();
     private static final UserManager sUserManager = sContext.getSystemService(UserManager.class);
     private static final String PASSWORD = "1234";
@@ -65,7 +66,7 @@ public class UserReferenceTest {
 
     @Test
     public void of_returnsUserReferenceWithValidId() {
-        assertThat(UserReference.of(USER_HANDLE)).isEqualTo(USER_ID);
+        assertThat(UserReference.of(USER_HANDLE).id()).isEqualTo(USER_ID);
     }
 
     @Test
@@ -176,7 +177,7 @@ public class UserReferenceTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile
     public void stop_isWorkProfileOfCurrentUser_stops() {
         sDeviceState.workProfile().stop();
@@ -240,7 +241,6 @@ public class UserReferenceTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
     @EnsureHasSecondaryUser
     public void isPrimary_isNotPrimary_returnsFalse() {
         UserReference user = sDeviceState.secondaryUser();
@@ -313,7 +313,7 @@ public class UserReferenceTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     public void parent_noParent_returnsNull() {
         UserReference user = TestApis.users().instrumented();
 
@@ -321,7 +321,6 @@ public class UserReferenceTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
     public void parent_userDoesNotExist_throwsException() {
         UserReference user = TestApis.users().find(NON_EXISTING_USER_ID);
 
@@ -341,6 +340,7 @@ public class UserReferenceTest {
 
     @Test
     @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
     public void setPassword_hasPassword() {
         try {
             TestApis.users().instrumented().setPassword(PASSWORD);
@@ -353,6 +353,7 @@ public class UserReferenceTest {
 
     @Test
     @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
     public void clearPassword_doesNotHavePassword() {
         TestApis.users().instrumented().setPassword(PASSWORD);
         TestApis.users().instrumented().clearPassword(PASSWORD);
@@ -370,6 +371,7 @@ public class UserReferenceTest {
 
     @Test
     @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
     public void clearPassword_incorrectOldPassword_throwsException() {
         try {
             TestApis.users().instrumented().setPassword(PASSWORD);
@@ -383,6 +385,7 @@ public class UserReferenceTest {
 
     @Test
     @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
     public void setPassword_alreadyHasPassword_throwsException() {
         try {
             TestApis.users().instrumented().setPassword(PASSWORD);

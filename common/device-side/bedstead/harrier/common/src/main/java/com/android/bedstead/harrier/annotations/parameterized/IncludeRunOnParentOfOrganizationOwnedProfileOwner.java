@@ -20,7 +20,7 @@ import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.E
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
-import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
 import java.lang.annotation.ElementType;
@@ -28,13 +28,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Parameterize a test so that it runs on the parent of an organization-owned profile owner.
- */
+/** Parameterize a test so that it runs on the parent of an organization-owned profile owner. */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation(shadows = IncludeRunOnParentOfProfileOwnerWithNoDeviceOwner.class)
-@RequireRunOnPrimaryUser
+@RequireRunOnInitialUser
 @EnsureHasWorkProfile(isOrganizationOwned = true, dpcIsPrimary = true)
 public @interface IncludeRunOnParentOfOrganizationOwnedProfileOwner {
     /**

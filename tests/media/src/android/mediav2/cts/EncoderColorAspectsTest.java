@@ -187,6 +187,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                 MediaFormat.MIMETYPE_VIDEO_AV1};
         int[] standardsHighBitDepth = {-1,
                 UNSPECIFIED,
+                MediaFormat.COLOR_STANDARD_BT709,
                 MediaFormat.COLOR_STANDARD_BT2020};
         int[] transfersHighBitDepth = {-1,
                 UNSPECIFIED,

@@ -60,9 +60,6 @@ android_test {
     srcs: [
         "src/test/java/**/*.java",
     ],
-    exclude_srcs: [
-        "src/test/java/**/benchmarking/*.java"
-    ],
     test_suites: [
         "general-tests",
     ],
@@ -85,8 +82,8 @@ android_test {
 android_test {
     name: "NeneBenchmarks",
     srcs: [
-        "src/test/java/**/benchmarking/*.java",
-        "src/test/java/**/benchmarking/*.proto",
+        "src/benchmarks/java/**/benchmarking/*.java",
+        "src/benchmarks/java/**/benchmarking/*.proto",
     ],
     test_suites: [
         "general-tests",
@@ -103,7 +100,8 @@ android_test {
         "compatibility-device-util-axt",
         "collector-device-lib",
     ],
-    manifest: "src/test/AndroidManifest.xml",
+    manifest: "src/benchmarks/AndroidManifest.xml",
+    test_config: "src/benchmarks/AndroidTest.xml",
     min_sdk_version: "29"
 }
 

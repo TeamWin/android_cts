@@ -155,22 +155,21 @@ abstract class BaseBlobStoreHostTest extends BaseHostJUnit4Test {
                 + "--user %d android.app.role.ASSISTANT %s", userId, pkgName);
         runCommand(cmd);
         // Wait for the role holder to be changed.
-        final String regex = "user_id=" + userId + ".+?roles=\\[(.+?)\\]";
-        final Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE | Pattern.DOTALL);
-        final String roleHolder = "name=android.app.role.ASSISTANT" + "holders=" + pkgName;
-        int checkRoleHolderRetries = 10;
-        while (checkRoleHolderRetries > 0) {
-            final String roleServiceDump = getDevice().executeShellCommand("dumpsys role");
-            final Matcher matcher = pattern.matcher(roleServiceDump);
-            if (!matcher.find()) {
-                Thread.sleep(10000);
-                checkRoleHolderRetries--;
-                continue;
-            }
-            if (matcher.group(1).replaceAll("\\s+", "").contains(roleHolder)) {
+        int checkRoleHolderRetries = 20;
+        while (checkRoleHolderRetries-- > 0) {
+            if (Arrays.stream(getAssistRoleHolders(userId)).anyMatch(pkgName::equals)) {
                 break;
             }
+            // Wait and try again.
+            Thread.sleep(5000);
         }
+    }
+
+    private String[] getAssistRoleHolders(int userId) throws Exception {
+        final String cmd = String.format("cmd role get-role-holders "
+                + "--user %d android.app.role.ASSISTANT", userId);
+        final String output = runCommand(cmd).trim();
+        return output.split(";");
     }
 
     protected void removeAssistRoleHolder(String pkgName, int userId) throws Exception {

@@ -64,7 +64,7 @@ import java.util.concurrent.TimeoutException;
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityEventTest {
     private static final long IDLE_TIMEOUT_MS = 500;
-    private static final long DEFAULT_TIMEOUT_MS = 1000;
+    private static final long DEFAULT_TIMEOUT_MS = 2000;
 
     // From ViewConfiguration.SEND_RECURRING_ACCESSIBILITY_EVENTS_INTERVAL_MILLIS
     private static final long SEND_RECURRING_ACCESSIBILITY_EVENTS_INTERVAL_MILLIS = 100;

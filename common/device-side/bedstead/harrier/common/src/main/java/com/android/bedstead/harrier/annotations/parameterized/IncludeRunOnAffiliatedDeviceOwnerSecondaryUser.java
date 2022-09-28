@@ -17,10 +17,9 @@
 package com.android.bedstead.harrier.annotations.parameterized;
 
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.EARLY;
-import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.LATE;
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
-import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
@@ -31,13 +30,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Parameterize a test so that it runs on a affiliated secondary user on a device with a
- * Device Owner.
+ * Parameterize a test so that it runs on a affiliated secondary user on a device with a Device
+ * Owner.
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation(shadows = IncludeRunOnUnaffiliatedDeviceOwnerSecondaryUser.class)
-@RequireRunOnSecondaryUser
+@RequireRunOnAdditionalUser // We want to ensure the user is not the DO user
 @EnsureHasDeviceOwner(isPrimary = true, affiliationIds = "affiliated")
 @EnsureHasProfileOwner(affiliationIds = "affiliated")
 public @interface IncludeRunOnAffiliatedDeviceOwnerSecondaryUser {

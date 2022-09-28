@@ -16,9 +16,8 @@
 
 package com.android.bedstead.harrier.annotations.parameterized;
 
-import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.EARLY;
-import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.LATE;
+import static com.android.bedstead.nene.types.OptionalBoolean.FALSE;
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;

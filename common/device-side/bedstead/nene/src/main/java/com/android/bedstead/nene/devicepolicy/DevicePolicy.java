@@ -64,7 +64,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
 /**
  * Test APIs related to device policy.
  */
@@ -181,13 +180,21 @@ public final class DevicePolicy {
                 // TODO(b/187925230): If it fails, we check for terminal failure states - and if not
                 //  we retry because if the DO/PO was recently removed, it can take some time
                 //  to be allowed to set it again
-                Retry.logic(() -> {
-                            devicePolicyManager.setActiveAdmin(deviceOwnerComponent,
-                                    /* refreshing= */ true, user.id());
-                            setDeviceOwnerOnly(devicePolicyManager,
-                                    deviceOwnerComponent, user.id());
-                }).terminalException((e) -> checkForTerminalDeviceOwnerFailures(
-                        user, deviceOwnerComponent, /* allowAdditionalUsers= */ true))
+                Retry.logic(
+                        () -> {
+                            devicePolicyManager.setActiveAdmin(
+                                    deviceOwnerComponent,
+                                    /* refreshing= */ true,
+                                    user.id());
+                            setDeviceOwnerOnly(
+                                    devicePolicyManager, deviceOwnerComponent, user.id());
+                        })
+                        .terminalException(
+                                (e) -> checkForTerminalDeviceOwnerFailures(
+                                        user,
+                                        deviceOwnerComponent,
+                                        /* allowAdditionalUsers= */ true,
+                                        e))
                         .timeout(Duration.ofMinutes(5))
                         .run();
             } catch (Throwable e) {
@@ -270,8 +277,13 @@ public final class DevicePolicy {
 
         try {
             Retry.logic(command::execute)
-                .terminalException((e) -> checkForTerminalDeviceOwnerFailures(
-                            user, deviceOwnerComponent, /* allowAdditionalUsers= */ false))
+                    .terminalException(
+                            (e) ->
+                                    checkForTerminalDeviceOwnerFailures(
+                                            user,
+                                            deviceOwnerComponent,
+                                            /* allowAdditionalUsers= */ false,
+                                            e))
                     .timeout(Duration.ofMinutes(5))
                     .run();
         } catch (Throwable e) {
@@ -284,36 +296,55 @@ public final class DevicePolicy {
     }
 
     private boolean checkForTerminalDeviceOwnerFailures(
-            UserReference user, ComponentName deviceOwnerComponent, boolean allowAdditionalUsers) {
+            UserReference user,
+            ComponentName deviceOwnerComponent,
+            boolean allowAdditionalUsers,
+            Throwable e) {
         DeviceOwner deviceOwner = getDeviceOwner();
         if (deviceOwner != null) {
             // TODO(scottjonathan): Should we actually fail here if the component name is the
             //  same?
 
             throw new NeneException(
-                    "Could not set device owner for user " + user
-                            + " as a device owner is already set: " + deviceOwner);
+                    "Could not set device owner for user "
+                            + user
+                            + " as a device owner is already set: "
+                            + deviceOwner,
+                    e);
         }
 
         Package pkg = TestApis.packages().find(
                 deviceOwnerComponent.getPackageName());
         if (!TestApis.packages().installedForUser(user).contains(pkg)) {
             throw new NeneException(
-                    "Could not set device owner for user " + user
-                            + " as the package " + pkg + " is not installed");
+                    "Could not set device owner for user "
+                            + user
+                            + " as the package "
+                            + pkg
+                            + " is not installed",
+                    e);
         }
 
         if (!componentCanBeSetAsDeviceAdmin(deviceOwnerComponent, user)) {
-            throw new NeneException("Could not set device owner for user "
-                    + user + " as component " + deviceOwnerComponent + " is not valid");
+            throw new NeneException(
+                    "Could not set device owner for user "
+                            + user
+                            + " as component "
+                            + deviceOwnerComponent
+                            + " is not valid",
+                    e);
         }
 
         if (!allowAdditionalUsers) {
             Collection<UserReference> users = TestApis.users().all();
 
             if (users.size() > 1) {
-                throw new NeneException("Could not set device owner for user "
-                        + user + " as there are already additional users on the device: " + users);
+                throw new NeneException(
+                        "Could not set device owner for user "
+                                + user
+                                + " as there are already additional users on the device: "
+                                + users,
+                        e);
             }
 
         }

@@ -68,7 +68,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RunWith(AndroidJUnit4.class)
 public class AlwaysOnHotwordDetectorChangesTest {
     private static final String TAG = AlwaysOnHotwordDetectorChangesTest.class.getSimpleName();
-    private static final Duration TEST_SERVICE_TIMEOUT = Duration.ofSeconds(3);
+    private static final Duration TEST_SERVICE_TIMEOUT = Duration.ofSeconds(5);
     private static final long HOTWORD_DETECTOR_THROW_CHECKED_EXCEPTION = 226355112L;
 
     @Rule

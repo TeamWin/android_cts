@@ -16,7 +16,14 @@
 
 package android.media.codec.cts;
 
-import static org.testng.Assert.assertThrows;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.res.AssetFileDescriptor;
 import android.hardware.HardwareBuffer;
@@ -52,16 +59,19 @@ import android.os.PersistableBundle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
-import android.test.AndroidTestCase;
 import android.util.Log;
 import android.util.Range;
 import android.view.Surface;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.IOException;
@@ -85,7 +95,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @SmallTest
 @RequiresDevice
 @AppModeFull(reason = "Instant apps cannot access the SD card")
-public class MediaCodecTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaCodecTest {
     private static final String TAG = "MediaCodecTest";
     private static final boolean VERBOSE = false;           // lots of logging
 
@@ -130,6 +141,7 @@ public class MediaCodecTest extends AndroidTestCase {
      * A selective test to ensure proper exceptions are thrown from MediaCodec
      * methods when called in incorrect operational states.
      */
+    @Test
     public void testException() throws Exception {
         boolean tested = false;
         // audio decoder (MP3 should be present on all Android devices)
@@ -530,6 +542,7 @@ public class MediaCodecTest extends AndroidTestCase {
      * <br> calling createInputSurface() after start() throws exception
      * <br> calling createInputSurface() with a non-Surface color format is not required to throw exception
      */
+    @Test
     public void testCreateInputSurfaceErrors() {
         if (!supportsCodec(MIME_TYPE, true)) {
             Log.i(TAG, "No encoder found for mimeType= " + MIME_TYPE);
@@ -580,6 +593,7 @@ public class MediaCodecTest extends AndroidTestCase {
      * <br> signaling EOS twice throws exception
      * <br> submitting a frame after EOS throws exception [TODO]
      */
+    @Test
     public void testSignalSurfaceEOS() {
         if (!supportsCodec(MIME_TYPE, true)) {
             Log.i(TAG, "No encoder found for mimeType= " + MIME_TYPE);
@@ -637,6 +651,7 @@ public class MediaCodecTest extends AndroidTestCase {
      * Tests:
      * <br> stopping with buffers in flight doesn't crash or hang
      */
+    @Test
     public void testAbruptStop() {
         if (!supportsCodec(MIME_TYPE, true)) {
             Log.i(TAG, "No encoder found for mimeType= " + MIME_TYPE);
@@ -692,6 +707,7 @@ public class MediaCodecTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testReleaseAfterFlush() throws IOException, InterruptedException {
         String mimes[] = new String[] { MIME_TYPE, MIME_TYPE_AUDIO};
         for (String mime : mimes) {
@@ -754,10 +770,12 @@ public class MediaCodecTest extends AndroidTestCase {
         callbackThread.join();
     }
 
+    @Test
     public void testAsyncFlushAndReset() throws Exception, InterruptedException {
         testAsyncReset(false /* testStop */);
     }
 
+    @Test
     public void testAsyncStopAndReset() throws Exception, InterruptedException {
         testAsyncReset(true /* testStop */);
     }
@@ -1087,6 +1105,7 @@ public class MediaCodecTest extends AndroidTestCase {
      * Tests:
      * <br> dequeueInputBuffer() fails when encoder configured with an input Surface
      */
+    @Test
     public void testDequeueSurface() {
         if (!supportsCodec(MIME_TYPE, true)) {
             Log.i(TAG, "No encoder found for mimeType= " + MIME_TYPE);
@@ -1145,6 +1164,7 @@ public class MediaCodecTest extends AndroidTestCase {
      * <br> configure() encoder with Surface, re-configure() without Surface works
      * <br> sending EOS with signalEndOfInputStream on non-Surface encoder fails
      */
+    @Test
     public void testReconfigureWithoutSurface() {
         if (!supportsCodec(MIME_TYPE, true)) {
             Log.i(TAG, "No encoder found for mimeType= " + MIME_TYPE);
@@ -1213,6 +1233,7 @@ public class MediaCodecTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testDecodeAfterFlush() throws InterruptedException {
         testDecodeAfterFlush(true /* audio */);
         testDecodeAfterFlush(false /* audio */);
@@ -1393,6 +1414,7 @@ public class MediaCodecTest extends AndroidTestCase {
      * Tests whether decoding a short group-of-pictures succeeds. The test queues a few video frames
      * then signals end-of-stream. The test fails if the decoder doesn't output the queued frames.
      */
+    @Test
     public void testDecodeShortInput() throws InterruptedException {
         // Input buffers from this input video are queued up to and including the video frame with
         // timestamp LAST_BUFFER_TIMESTAMP_US.
@@ -1503,6 +1525,7 @@ public class MediaCodecTest extends AndroidTestCase {
     /**
      * Tests creating two decoders for {@link #MIME_TYPE_AUDIO} at the same time.
      */
+    @Test
     public void testCreateTwoAudioDecoders() {
         final MediaFormat format = MediaFormat.createAudioFormat(
                 MIME_TYPE_AUDIO, AUDIO_SAMPLE_RATE, AUDIO_CHANNEL_COUNT);
@@ -1549,6 +1572,7 @@ public class MediaCodecTest extends AndroidTestCase {
     /**
      * Tests creating an encoder and decoder for {@link #MIME_TYPE_AUDIO} at the same time.
      */
+    @Test
     public void testCreateAudioDecoderAndEncoder() {
         if (!supportsCodec(MIME_TYPE_AUDIO, true)) {
             Log.i(TAG, "No encoder found for mimeType= " + MIME_TYPE_AUDIO);
@@ -1606,6 +1630,7 @@ public class MediaCodecTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testConcurrentAudioVideoEncodings() throws InterruptedException {
         if (!supportsCodec(MIME_TYPE_AUDIO, true)) {
             Log.i(TAG, "No encoder found for mimeType= " + MIME_TYPE_AUDIO);
@@ -1653,6 +1678,7 @@ public class MediaCodecTest extends AndroidTestCase {
         public int mBitRate;
     }
 
+    @Test
     public void testCryptoInfoPattern() {
         CryptoInfo info = new CryptoInfo();
         Pattern pattern = new Pattern(1 /*blocksToEncrypt*/, 2 /*blocksToSkip*/);
@@ -1952,6 +1978,7 @@ public class MediaCodecTest extends AndroidTestCase {
     /**
      * Tests MediaCodec.CryptoException
      */
+    @Test
     public void testCryptoException() {
         int errorCode = CryptoException.ERROR_KEY_EXPIRED;
         String errorMessage = "key_expired";
@@ -1970,6 +1997,7 @@ public class MediaCodecTest extends AndroidTestCase {
      * As of Q, any codec of type "audio/raw" must support PCM encoding float.
      */
     @MediumTest
+    @Test
     public void testPCMEncoding() throws Exception {
         final MediaCodecList mcl = new MediaCodecList(MediaCodecList.ALL_CODECS);
         for (MediaCodecInfo codecInfo : mcl.getCodecInfos()) {
@@ -2094,6 +2122,7 @@ public class MediaCodecTest extends AndroidTestCase {
     }
 
     @SmallTest
+    @Test
     public void testFlacIdentity() throws Exception {
         final int PCM_FRAMES = 1152 * 4; // FIXME: requires 4 flac frames to work with OMX codecs.
         final int SAMPLES = PCM_FRAMES * AUDIO_CHANNEL_COUNT;
@@ -2145,6 +2174,7 @@ public class MediaCodecTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAsyncRelease() throws Exception {
         OutputSurface outputSurface = new OutputSurface(1, 1);
         MediaExtractor mediaExtractor = getMediaExtractorForMimeType(INPUT_RESOURCE, "video/");
@@ -2231,6 +2261,7 @@ public class MediaCodecTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testSetAudioPresentation() throws Exception {
         MediaFormat format = MediaFormat.createAudioFormat(
                 MediaFormat.MIMETYPE_AUDIO_MPEG, 44100 /* sampleRate */, 2 /* channelCount */);
@@ -2245,6 +2276,7 @@ public class MediaCodecTest extends AndroidTestCase {
                 (new AudioPresentation.Builder(42 /* presentationId */)).build());
     }
 
+    @Test
     public void testPrependHeadersToSyncFrames() throws IOException {
         MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         for (MediaCodecInfo info : mcl.getCodecInfos()) {
@@ -2318,6 +2350,7 @@ public class MediaCodecTest extends AndroidTestCase {
      * codec is flushed after the first buffer is queued, so this test walks
      * through the scenario.
      */
+    @Test
     public void testFlushAfterFirstBuffer() throws Exception {
         if (MediaUtils.check(mIsAtLeastR, "test needs Android 11")) {
             for (int i = 0; i < 100; ++i) {
@@ -2414,6 +2447,7 @@ public class MediaCodecTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testVendorParameters() {
         if (!MediaUtils.check(mIsAtLeastS, "test needs Android 12")) {
             return;

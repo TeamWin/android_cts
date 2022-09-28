@@ -30,7 +30,8 @@ public final class DynamicParameterizedAnnotation implements Annotation {
 
     DynamicParameterizedAnnotation(String name, Annotation[] annotations) {
         mName = name;
-        mAnnotations = annotations;
+        mAnnotations = Arrays.stream(annotations).filter(Objects::nonNull)
+                .toArray(Annotation[]::new);
     }
 
     /** Get the parameterization name. */
@@ -63,5 +64,11 @@ public final class DynamicParameterizedAnnotation implements Annotation {
         int result = Objects.hash(mName);
         result = 31 * result + Arrays.hashCode(mAnnotations);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "DynamicParameterizedAnnotation[" + mName + "]("
+                + Arrays.toString(mAnnotations) + ")";
     }
 }

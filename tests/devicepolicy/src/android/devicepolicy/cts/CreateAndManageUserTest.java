@@ -32,17 +32,18 @@ import android.os.UserManager;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureCanAddUser;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.policies.CreateAndManageUser;
 import com.android.bedstead.nene.TestApis;
 
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
+@EnsureCanAddUser
 public final class CreateAndManageUserTest {
 
     private static final String TAG = "CreateAndManageUserTest";
@@ -50,11 +51,6 @@ public final class CreateAndManageUserTest {
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
-
-    @Before
-    public void setUp() {
-        sDeviceState.requireCanSupportAdditionalUser();
-    }
 
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = CreateAndManageUser.class)

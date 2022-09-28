@@ -126,6 +126,8 @@ public abstract class RequiredMeasurement<T> {
             log.addValue(this.id(), (int)this.measuredValue, ResultType.NEUTRAL, ResultUnit.NONE);
         } else if (this.measuredValue instanceof Long) {
             log.addValue(this.id(), (long)this.measuredValue, ResultType.NEUTRAL, ResultUnit.NONE);
+        } else if (this.measuredValue instanceof Float) {
+            log.addValue(this.id(), (float)this.measuredValue, ResultType.NEUTRAL, ResultUnit.NONE);
         } else if (this.measuredValue instanceof Double) {
             log.addValue(this.id(), (double)this.measuredValue, ResultType.NEUTRAL,
                 ResultUnit.NONE);

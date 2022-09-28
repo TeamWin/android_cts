@@ -1959,7 +1959,9 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 if (!hasAutomotiveFeature()) {
                     assertEquals(testBand, softApConfig.getBand());
                 }
-                assertTrue(lohsSoftApCallback.getCurrentSoftApInfo().getFrequency() > 0);
+                if (lohsSoftApCallback.getOnSoftapInfoChangedCalledCount() > 1) {
+                    assertTrue(lohsSoftApCallback.getCurrentSoftApInfo().getFrequency() > 0);
+                }
                 stopLocalOnlyHotspot(callback, wifiEnabled);
             }
         } finally {

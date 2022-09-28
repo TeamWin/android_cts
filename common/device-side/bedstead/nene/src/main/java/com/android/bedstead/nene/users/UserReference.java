@@ -57,10 +57,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * A representation of a User on device which may or may not exist.
- */
-public class UserReference implements AutoCloseable {
+/** A representation of a User on device which may or may not exist. */
+public final class UserReference implements AutoCloseable {
 
     private static final Set<AdbUser.UserState> RUNNING_STATES = new HashSet<>(
             Arrays.asList(AdbUser.UserState.RUNNING_LOCKED,
@@ -99,6 +97,10 @@ public class UserReference implements AutoCloseable {
 
     public final int id() {
         return mId;
+    }
+
+    public boolean isSystem() {
+        return id() == 0;
     }
 
     /**

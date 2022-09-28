@@ -1628,8 +1628,6 @@ public class WindowManagerState {
     public static class TaskFragment extends ActivityContainer {
         public int mDisplayId;
         Task mParentTask;
-        ArrayList<Task> mTasks = new ArrayList<>();
-        ArrayList<TaskFragment> mTaskFragments = new ArrayList<>();
         ArrayList<Activity> mActivities = new ArrayList<>();
         int mTaskFragmentType;
 
@@ -1641,18 +1639,7 @@ public class WindowManagerState {
             mMinWidth = proto.minWidth;
             mMinHeight = proto.minHeight;
 
-            collectChildrenOfType(Task.class, this, mTasks);
-            collectChildrenOfType(TaskFragment.class, this, mTaskFragments);
             collectChildrenOfType(Activity.class, this, mActivities);
-        }
-
-        public List<Task> getTasks() {
-            return mTasks;
-        }
-
-        /** Returns non-Task TaskFragment children. */
-        public List<TaskFragment> getTaskFragments() {
-            return mTaskFragments;
         }
 
         public List<Activity> getActivities() {
@@ -1665,30 +1652,11 @@ public class WindowManagerState {
                     return activity;
                 }
             }
-            for (TaskFragment taskFragment : mTaskFragments) {
-                final Activity activity = taskFragment.getActivity(predicate);
-                if (activity != null) {
-                    return activity;
-                }
-            }
-            for (Task task : mTasks) {
-                final Activity activity = task.getActivity(predicate);
-                if (activity != null) {
-                    return activity;
-                }
-            }
             return null;
         }
 
         public int getActivityCount() {
-            int count = mActivities.size();
-            for (TaskFragment taskFragment : mTaskFragments) {
-                count += taskFragment.getActivityCount();
-            }
-            for (Task task : mTasks) {
-                count += task.getActivityCount();
-            }
-            return count;
+            return mActivities.size();
         }
 
         @Override

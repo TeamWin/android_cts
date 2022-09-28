@@ -31,6 +31,7 @@ import com.android.bedstead.harrier.annotations.AfterClass;
 import com.android.bedstead.harrier.annotations.BeforeClass;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
@@ -40,7 +41,6 @@ import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.users.UserType;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.bedstead.testapp.TestApp;
-import com.android.eventlib.premade.EventLibDeviceAdminReceiver;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -60,8 +60,9 @@ public class DevicePolicyTest {
     private static final ComponentName NON_EXISTING_DPC_COMPONENT_NAME =
             new ComponentName("com.a.package", "com.a.package.Receiver");
     private static final ComponentName DPC_COMPONENT_NAME =
-            new ComponentName(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME,
-                    EventLibDeviceAdminReceiver.class.getName());
+            new ComponentName(
+                    DEVICE_ADMIN_TESTAPP_PACKAGE_NAME,
+                    "com.android.bedstead.testapp.DeviceAdminTestApp.DeviceAdminReceiver");
     private static final ComponentName NOT_DPC_COMPONENT_NAME =
             new ComponentName(DEVICE_ADMIN_TESTAPP_PACKAGE_NAME,
                     "incorrect.class.name");
@@ -225,6 +226,7 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @RequireRunOnSystemUser
     @EnsureHasNoDeviceOwner
     @EnsureHasNoProfileOwner
     public void setDeviceOwner_deviceOwnerIsSet() {
@@ -238,6 +240,7 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @RequireRunOnSystemUser
     @EnsureHasDeviceOwner
     public void setDeviceOwner_deviceOwnerIsAlreadySet_throwsException() {
         assertThrows(NeneException.class,
@@ -336,9 +339,15 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @RequireRunOnSystemUser
     @EnsureHasNoDeviceOwner
     @EnsureHasNoProfileOwner
     public void deviceOwner_autoclose_removesDeviceOwner() {
+        assertThat(
+                        TestApis.packages()
+                                .find("com.android.bedstead.testapp.DeviceAdminTestApp")
+                                .isInstalled())
+                .isTrue();
         try (DeviceOwner deviceOwner = TestApis.devicePolicy().setDeviceOwner(DPC_COMPONENT_NAME)) {
             // We intentionally don't do anything here, just rely on the auto-close behaviour
         }
@@ -347,6 +356,7 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @RequireRunOnSystemUser
     @EnsureHasNoDeviceOwner
     @EnsureHasNoProfileOwner
     public void setDeviceOwner_recentlyUnsetProfileOwner_sets() {
@@ -358,6 +368,7 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @RequireRunOnSystemUser
     @EnsureHasNoDeviceOwner
     @EnsureHasNoProfileOwner
     public void setDeviceOwner_recentlyUnsetDeviceOwner_sets() {
@@ -382,6 +393,7 @@ public class DevicePolicyTest {
     }
 
     @Test
+    @RequireRunOnSystemUser
     @EnsureHasNoDeviceOwner
     @EnsureHasNoProfileOwner
     public void setProfileOwner_recentlyUnsetDeviceOwner_sets() {

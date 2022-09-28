@@ -18,8 +18,11 @@ package android.mediav2.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -51,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * Test mediacodec api, video encoders and their interactions in surface mode.
@@ -84,6 +88,7 @@ public class CodecEncoderSurfaceTest {
     private final int mBitrate;
     private final int mFrameRate;
     private final int mMaxBFrames;
+    private final boolean mTestToneMap;
     private int mLatency;
     private boolean mReviseLatency;
     private MediaFormat mEncoderFormat;
@@ -122,12 +127,13 @@ public class CodecEncoderSurfaceTest {
     }
 
     public CodecEncoderSurfaceTest(String encoder, String mime, String testFile, int bitrate,
-            int frameRate, String allTestParams) {
+            int frameRate, boolean testToneMap, String allTestParams) {
         mCompName = encoder;
         mMime = mime;
         mTestFile = testFile;
         mBitrate = bitrate;
         mFrameRate = frameRate;
+        mTestToneMap = testToneMap;
         mTestArgs = allTestParams;
         mMaxBFrames = 0;
         mLatency = mMaxBFrames;
@@ -148,6 +154,10 @@ public class CodecEncoderSurfaceTest {
             fail("no valid component available for current test. \n" + mTestConfig);
         }
         mDecoderFormat = setUpSource(mTestFile);
+        if (mTestToneMap) {
+            mDecoderFormat.setInteger(MediaFormat.KEY_COLOR_TRANSFER_REQUEST,
+                    MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
+        }
         ArrayList<MediaFormat> decoderFormatList = new ArrayList<>();
         decoderFormatList.add(mDecoderFormat);
         String decoderMediaType = mDecoderFormat.getString(MediaFormat.KEY_MIME);
@@ -167,33 +177,48 @@ public class CodecEncoderSurfaceTest {
         mEncoderFormat = setUpEncoderFormat(mDecoderFormat);
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{5})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = false;
         final boolean needVideo = true;
         final List<Object[]> exhaustiveArgsList = new ArrayList<>(Arrays.asList(new Object[][]{
-                // Video - CodecMime, test file, bit rate, frame rate
-                {MediaFormat.MIMETYPE_VIDEO_H263, "bbb_176x144_128kbps_15fps_h263.3gp", 128000, 15},
-                {MediaFormat.MIMETYPE_VIDEO_MPEG4, "bbb_128x96_64kbps_12fps_mpeg4.mp4", 64000, 12},
-                {MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_cif_768kbps_30fps_avc.mp4", 512000, 30},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, "bbb_cif_768kbps_30fps_avc.mp4", 512000, 30},
-                {MediaFormat.MIMETYPE_VIDEO_VP8, "bbb_cif_768kbps_30fps_avc.mp4", 512000, 30},
-                {MediaFormat.MIMETYPE_VIDEO_VP9, "bbb_cif_768kbps_30fps_avc.mp4", 512000, 30},
-                {MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_cif_768kbps_30fps_avc.mp4", 512000, 30},
+                // Video - CodecMime, test file, bit rate, frame rate, testToneMapping
+                {MediaFormat.MIMETYPE_VIDEO_H263, "bbb_176x144_128kbps_15fps_h263.3gp", 128000, 15,
+                        false},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, "bbb_128x96_64kbps_12fps_mpeg4.mp4", 64000, 12,
+                        false},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_cif_768kbps_30fps_avc.mp4", 512000, 30,
+                        false},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, "bbb_cif_768kbps_30fps_avc.mp4", 512000, 30,
+                        false},
+                {MediaFormat.MIMETYPE_VIDEO_VP8, "bbb_cif_768kbps_30fps_avc.mp4", 512000, 30,
+                        false},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, "bbb_cif_768kbps_30fps_avc.mp4", 512000, 30,
+                        false},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_cif_768kbps_30fps_avc.mp4", 512000, 30,
+                        false},
         }));
         // P010 support was added in Android T, hence limit the following tests to Android T and
         // above
         if (CodecTestBase.IS_AT_LEAST_T) {
             exhaustiveArgsList.addAll(Arrays.asList(new Object[][]{
                     {MediaFormat.MIMETYPE_VIDEO_AVC, "cosmat_520x390_24fps_crf22_avc_10bit.mkv",
-                            512000, 30},
+                            512000, 30, false},
+                    {MediaFormat.MIMETYPE_VIDEO_AVC, "cosmat_520x390_24fps_crf22_avc_10bit.mkv",
+                            512000, 30, true},
                     {MediaFormat.MIMETYPE_VIDEO_HEVC, "cosmat_520x390_24fps_crf22_hevc_10bit.mkv",
-                            512000, 30},
+                            512000, 30, false},
+                    {MediaFormat.MIMETYPE_VIDEO_HEVC, "cosmat_520x390_24fps_crf22_hevc_10bit.mkv",
+                            512000, 30, true},
                     {MediaFormat.MIMETYPE_VIDEO_VP9, "cosmat_520x390_24fps_crf22_vp9_10bit.mkv",
-                            512000, 30},
+                            512000, 30, false},
+                    {MediaFormat.MIMETYPE_VIDEO_VP9, "cosmat_520x390_24fps_crf22_vp9_10bit.mkv",
+                            512000, 30, true},
                     {MediaFormat.MIMETYPE_VIDEO_AV1, "cosmat_520x390_24fps_768kbps_av1_10bit.mkv",
-                            512000, 30},
+                            512000, 30, false},
+                    {MediaFormat.MIMETYPE_VIDEO_AV1, "cosmat_520x390_24fps_768kbps_av1_10bit.mkv",
+                            512000, 30, true},
             }));
         }
         return CodecTestBase.prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo,
@@ -529,6 +554,20 @@ public class CodecEncoderSurfaceTest {
         return encoderFormat;
     }
 
+    private void validateToneMappedFormat(MediaFormat format, String descriptor) {
+        assertEquals("unexpected color transfer in " + descriptor + " after tone mapping",
+                MediaFormat.COLOR_TRANSFER_SDR_VIDEO,
+                format.getInteger(MediaFormat.KEY_COLOR_TRANSFER, 0));
+        assertNotEquals("unexpected color standard in " + descriptor + " after tone mapping",
+                MediaFormat.COLOR_STANDARD_BT2020,
+                format.getInteger(MediaFormat.KEY_COLOR_STANDARD, 0));
+
+        int profile = format.getInteger(MediaFormat.KEY_PROFILE, -1);
+        int[] profileArray = CodecTestBase.mProfileHdrMap.get(mMime);
+        assertFalse(descriptor + " must not contain HDR profile after tone mapping",
+                IntStream.of(profileArray).anyMatch(x -> x == profile));
+    }
+
     /**
      * Checks if the component under test can encode from surface properly. The test runs
      * mediacodec in both synchronous and asynchronous mode. The test feeds the encoder input
@@ -543,6 +582,7 @@ public class CodecEncoderSurfaceTest {
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleEncodeFromSurface() throws IOException, InterruptedException {
         mDecoder = MediaCodec.createByCodecName(mDecoderName);
+        String tmpPath = null;
         boolean muxOutput = true;
         {
             mEncoder = MediaCodec.createByCodecName(mCompName);
@@ -557,7 +597,6 @@ public class CodecEncoderSurfaceTest {
                 mOutputBuff = loopCounter == 0 ? ref : test;
                 mOutputBuff.reset();
                 if (muxOutput && loopCounter == 0) {
-                    String tmpPath;
                     int muxerFormat;
                     if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP8) ||
                             mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP9)) {
@@ -570,11 +609,19 @@ public class CodecEncoderSurfaceTest {
                     mMuxer = new MediaMuxer(tmpPath, muxerFormat);
                 }
                 configureCodec(mDecoderFormat, mEncoderFormat, isAsync, false);
+                if (mTestToneMap) {
+                    int transferRequest = mDecoder.getInputFormat().getInteger(
+                            MediaFormat.KEY_COLOR_TRANSFER_REQUEST, 0);
+                    assumeTrue(mDecoderName + " does not support HDR to SDR tone mapping",
+                            0 != transferRequest);
+                }
                 mEncoder.start();
                 mDecoder.start();
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllEncoderOutputs();
+                MediaFormat encoderOutputFormat = mEncoder.getOutputFormat();
+                MediaFormat decoderOutputFormat = mDecoder.getOutputFormat();
                 if (muxOutput) {
                     if (mTrackID != -1) {
                         mMuxer.stop();
@@ -625,6 +672,18 @@ public class CodecEncoderSurfaceTest {
                     fail("Output timestamps are not strictly increasing \n" + mTestConfig + mTestEnv
                             + mOutputBuff.getErrMsg());
                 }
+                if (mTestToneMap) {
+                    validateToneMappedFormat(decoderOutputFormat, "decoder output format");
+                    validateToneMappedFormat(encoderOutputFormat, "encoder output format");
+
+                    if (tmpPath != null) {
+                        MediaExtractor extractor = new MediaExtractor();
+                        extractor.setDataSource(tmpPath);
+                        MediaFormat extractorFormat = extractor.getTrackFormat(0);
+                        extractor.release();
+                        validateToneMappedFormat(extractorFormat, "extractor format");
+                    }
+                }
                 loopCounter++;
                 mSurface.release();
                 mSurface = null;
@@ -633,6 +692,7 @@ public class CodecEncoderSurfaceTest {
         }
         mDecoder.release();
         mExtractor.release();
+        if (muxOutput) new File(tmpPath).delete();
     }
 
     private native boolean nativeTestSimpleEncode(String encoder, String decoder, String mime,
@@ -645,6 +705,7 @@ public class CodecEncoderSurfaceTest {
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleEncodeFromSurfaceNative() throws IOException {
+        assumeFalse("tone mapping tests are skipped in native mode", mTestToneMap);
         {
             String tmpPath;
             if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP8) ||

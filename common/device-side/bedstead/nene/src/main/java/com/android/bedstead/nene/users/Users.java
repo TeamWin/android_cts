@@ -19,6 +19,9 @@ package com.android.bedstead.nene.users;
 import static android.Manifest.permission.CREATE_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.app.ActivityManager.STOP_USER_ON_SWITCH_DEFAULT;
+import static android.app.ActivityManager.STOP_USER_ON_SWITCH_FALSE;
+import static android.app.ActivityManager.STOP_USER_ON_SWITCH_TRUE;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.S;
 import static android.os.Build.VERSION_CODES.S_V2;
@@ -46,6 +49,7 @@ import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.permissions.Permissions;
+import com.android.bedstead.nene.types.OptionalBoolean;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.Versions;
@@ -105,8 +109,6 @@ public final class Users {
      * <p>This will be the {@link #system()} user on most systems.</p>
      */
     public UserReference initial() {
-        boolean skipUserZero = false;
-
         if (!isHeadlessSystemUserMode()) {
             return system();
         }
@@ -121,7 +123,6 @@ public final class Users {
                 } else {
                     Log.d(LOG_TAG, "Initial user " + user + " does not exist."
                             + "Finding first non-system full user");
-                    skipUserZero = true;
                 }
             } catch (AdbException e) {
                 throw new NeneException("Error finding initial user on Auto", e);
@@ -135,7 +136,7 @@ public final class Users {
             if (user.parent() != null) {
                 continue;
             }
-            if (skipUserZero && user.id() == 0) {
+            if (user.id() == 0) {
                 continue;
             }
 
@@ -469,14 +470,20 @@ public final class Users {
      *
      * <p>This affects if background users will be swapped when switched away from on some devices.
      */
-    public void setStopBgUsersOnSwitch(int value) {
+    public void setStopBgUsersOnSwitch(OptionalBoolean value) {
+        int intValue =
+                (value == OptionalBoolean.TRUE)
+                        ? STOP_USER_ON_SWITCH_TRUE
+                        : (value == OptionalBoolean.FALSE)
+                                ? STOP_USER_ON_SWITCH_FALSE
+                                : STOP_USER_ON_SWITCH_DEFAULT;
         if (!Versions.meetsMinimumSdkVersionRequirement(S_V2)) {
             return;
         }
         Context context = TestApis.context().instrumentedContext();
         try (PermissionContext p = TestApis.permissions()
                 .withPermission(INTERACT_ACROSS_USERS)) {
-            context.getSystemService(ActivityManager.class).setStopUserOnSwitch(value);
+            context.getSystemService(ActivityManager.class).setStopUserOnSwitch(intValue);
         }
     }
 

@@ -22,6 +22,7 @@ import android.content.ComponentName;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.nene.TestApis;
@@ -88,8 +89,8 @@ public class DeviceOwnerTest {
         assertThat(mDeviceOwner.getType()).isEqualTo(DeviceOwnerType.FINANCED);
     }
 
-
     @Test
+    @RequireRunOnSystemUser
     @EnsureHasNoDpc
     public void remove_nonTestOnlyDpc_removesDeviceOwner() {
         try (TestAppInstance dpc = sNonTestOnlyDpc.install()) {
@@ -103,6 +104,7 @@ public class DeviceOwnerTest {
     }
 
     @Test
+    @RequireRunOnSystemUser
     @EnsureHasNoDpc
     public void setAndRemoveDeviceOwnerRepeatedly_doesNotThrowError() {
         try (TestAppInstance dpc = sNonTestOnlyDpc.install()) {

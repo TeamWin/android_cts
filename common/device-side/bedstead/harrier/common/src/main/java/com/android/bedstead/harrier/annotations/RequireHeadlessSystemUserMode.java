@@ -32,6 +32,10 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RequireHeadlessSystemUserMode {
+
+    /** The reason this test requires headless system user mode. */
+    String reason();
+
     /**
      * Weight sets the order that annotations will be resolved.
      *

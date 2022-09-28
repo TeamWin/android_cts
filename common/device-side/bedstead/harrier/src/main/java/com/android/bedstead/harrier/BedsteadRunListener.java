@@ -21,6 +21,8 @@ import static com.android.bedstead.harrier.BedsteadResult.FAILED_RESULT;
 import static com.android.bedstead.harrier.BedsteadResult.IGNORED_RESULT;
 import static com.android.bedstead.harrier.BedsteadResult.PASSED_RESULT;
 
+import android.util.Log;
+
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
@@ -38,6 +40,8 @@ public final class BedsteadRunListener extends RunListener {
     private boolean mIsFinished = false;
     private long mStartTimeNanos = 0;
     private Map<String, Integer> mTestNameToIndex = new HashMap<>();
+
+    private static final String LOG_TAG = "BedsteadRunListener";
 
     @Override
     public void testRunStarted(Description description) throws Exception {
@@ -67,6 +71,7 @@ public final class BedsteadRunListener extends RunListener {
 
     @Override
     public void testStarted(Description description) throws Exception {
+        Log.d(LOG_TAG, "Test started: " + description);
         mTestNameToIndex.put(getTestName(description), mIndex);
         BedsteadRunResultsProvider.sResults.put(mIndex,
                 new BedsteadResult(mIndex, getTestName(description)));
@@ -77,6 +82,7 @@ public final class BedsteadRunListener extends RunListener {
 
     @Override
     public void testFinished(Description description) throws Exception {
+        Log.d(LOG_TAG, "Test finished: " + description);
         if (!mIsFinished) {
             BedsteadResult result = BedsteadRunResultsProvider.sResults.get(
                     mTestNameToIndex.get(getTestName(description)));
@@ -88,6 +94,7 @@ public final class BedsteadRunListener extends RunListener {
 
     @Override
     public void testFailure(Failure failure) throws Exception {
+        Log.d(LOG_TAG, "Test failed: " + failure);
         mIsFinished = true;
         BedsteadResult result = BedsteadRunResultsProvider.sResults.get(
                 mTestNameToIndex.get(getTestName(failure.getDescription())));
@@ -100,6 +107,7 @@ public final class BedsteadRunListener extends RunListener {
 
     @Override
     public void testAssumptionFailure(Failure failure) {
+        Log.d(LOG_TAG, "Test assumption failed: " + failure);
         mIsFinished = true;
         BedsteadResult result = BedsteadRunResultsProvider.sResults.get(
                 mTestNameToIndex.get(getTestName(failure.getDescription())));
@@ -111,6 +119,9 @@ public final class BedsteadRunListener extends RunListener {
 
     @Override
     public void testIgnored(Description description) throws Exception {
+        Log.d(LOG_TAG, "Test ignored: " + description);
+        testStarted(description);
+
         BedsteadResult result = BedsteadRunResultsProvider.sResults.get(
                 mTestNameToIndex.get(getTestName(description)));
         result.mResult = IGNORED_RESULT;

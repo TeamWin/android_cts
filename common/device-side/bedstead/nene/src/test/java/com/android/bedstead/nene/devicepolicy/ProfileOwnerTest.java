@@ -24,10 +24,9 @@ import android.content.ComponentName;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
-import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
@@ -113,8 +112,7 @@ public class ProfileOwnerTest {
 
     @Test
     @EnsureHasNoDpc
-    @EnsureHasNoWorkProfile
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     public void setAndRemoveProfileOwnerRepeatedly_doesNotThrowError() {
         try (UserReference profile = TestApis.users().createUser().createAndStart()) {
             try (TestAppInstance dpc = sNonTestOnlyDpc.install()) {

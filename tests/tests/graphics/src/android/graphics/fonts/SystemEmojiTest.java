@@ -59,7 +59,6 @@ public class SystemEmojiTest {
         assertThat(glyphs.getFont(0)).isNotNull();
         File file = glyphs.getFont(0).getFile();
         assertThat(file).isNotNull();
-        assertThat(file.getParent()).isEqualTo("/system/fonts");
 
         return file.getName();
     }

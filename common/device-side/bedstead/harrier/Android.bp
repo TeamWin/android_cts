@@ -90,5 +90,6 @@ android_test {
         "testng" // for assertThrows
     ],
     manifest: "src/test/AndroidManifest.xml",
-    min_sdk_version: "29"
+    min_sdk_version: "29",
+    sdk_version: "test_current"
 }

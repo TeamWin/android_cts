@@ -63,6 +63,9 @@ public class BaseInputConnectionTest {
 
     private static final int MEMORY_EFFICIENT_TEXT_LENGTH = 2048;
 
+    // Retrieve a large range to text to verify the content.
+    private static final int TEXT_LENGTH_TO_RETRIEVAL = 1024;
+
     private static BaseInputConnection createBaseInputConnection() {
         final View view = new View(InstrumentationRegistry.getInstrumentation().getTargetContext());
         return new BaseInputConnection(view, true);
@@ -249,15 +252,6 @@ public class BaseInputConnectionTest {
         }
 
         final boolean result = ic.deleteSurroundingText(deleteBefore, deleteAfter);
-
-        final CharSequence expectedString = clearSelection ? expectedState
-                : InputConnectionTestUtils.formatString(expectedState);
-        final int expectedSelectionStart = Selection.getSelectionStart(expectedString);
-        final int expectedSelectionEnd = Selection.getSelectionEnd(expectedString);
-
-        // It is sufficient to check the surrounding text up to source.length() characters, because
-        // InputConnection.deleteSurroundingText() is not supposed to increase the text length.
-        final int retrievalLength = source.length();
         if (!result) {
             assertEquals(expectedState, ic.getEditable().toString());
             return;
@@ -265,25 +259,13 @@ public class BaseInputConnectionTest {
             fail("deleteSurroundingText should return false for invalid selection");
         }
 
-        if (expectedSelectionStart == 0) {
-            assertTrue(TextUtils.isEmpty(ic.getTextBeforeCursor(retrievalLength, 0)));
-        } else {
-            assertEquals(expectedString.subSequence(0, expectedSelectionStart).toString(),
-                    ic.getTextBeforeCursor(retrievalLength, 0).toString());
-        }
-        if (expectedSelectionStart == expectedSelectionEnd) {
-            assertTrue(TextUtils.isEmpty(ic.getSelectedText(0)));  // null is allowed.
-        } else {
-            assertEquals(expectedString.subSequence(expectedSelectionStart,
-                    expectedSelectionEnd).toString(), ic.getSelectedText(0).toString());
-        }
-        if (expectedSelectionEnd == expectedString.length()) {
-            assertTrue(TextUtils.isEmpty(ic.getTextAfterCursor(retrievalLength, 0)));
-        } else {
-            assertEquals(expectedString.subSequence(expectedSelectionEnd,
-                    expectedString.length()).toString(),
-                    ic.getTextAfterCursor(retrievalLength, 0).toString());
-        }
+        final CharSequence expectedString =
+                clearSelection
+                        ? expectedState
+                        : InputConnectionTestUtils.formatString(expectedState);
+        final int expectedSelectionStart = Selection.getSelectionStart(expectedString);
+        final int expectedSelectionEnd = Selection.getSelectionEnd(expectedString);
+        verifyTextAndSelection(ic, expectedString, expectedSelectionStart, expectedSelectionEnd);
     }
 
     /**
@@ -341,30 +323,7 @@ public class BaseInputConnectionTest {
         final CharSequence expectedString = InputConnectionTestUtils.formatString(expectedState);
         final int expectedSelectionStart = Selection.getSelectionStart(expectedString);
         final int expectedSelectionEnd = Selection.getSelectionEnd(expectedString);
-
-        // It is sufficient to check the surrounding text up to source.length() characters, because
-        // InputConnection.deleteSurroundingTextInCodePoints() is not supposed to increase the text
-        // length.
-        final int retrievalLength = source.length();
-        if (expectedSelectionStart == 0) {
-            assertTrue(TextUtils.isEmpty(ic.getTextBeforeCursor(retrievalLength, 0)));
-        } else {
-            assertEquals(expectedString.subSequence(0, expectedSelectionStart).toString(),
-                    ic.getTextBeforeCursor(retrievalLength, 0).toString());
-        }
-        if (expectedSelectionStart == expectedSelectionEnd) {
-            assertTrue(TextUtils.isEmpty(ic.getSelectedText(0)));  // null is allowed.
-        } else {
-            assertEquals(expectedString.subSequence(expectedSelectionStart,
-                    expectedSelectionEnd).toString(), ic.getSelectedText(0).toString());
-        }
-        if (expectedSelectionEnd == expectedString.length()) {
-            assertTrue(TextUtils.isEmpty(ic.getTextAfterCursor(retrievalLength, 0)));
-        } else {
-            assertEquals(expectedString.subSequence(expectedSelectionEnd,
-                    expectedString.length()).toString(),
-                    ic.getTextAfterCursor(retrievalLength, 0).toString());
-        }
+        verifyTextAndSelection(ic, expectedString, expectedSelectionStart, expectedSelectionEnd);
     }
 
     /**
@@ -674,8 +633,8 @@ public class BaseInputConnectionTest {
                 .isEqualTo(BaseInputConnection.getComposingSpanStart(editable));
         assertThat(snapshot.getCompositionEnd())
                 .isEqualTo(BaseInputConnection.getComposingSpanEnd(editable));
-        assertThat(snapshot.getCursorCapsMode()).isEqualTo(
-                connection.getCursorCapsMode(CAPS_MODE_MASK));
+        assertThat(snapshot.getCursorCapsMode())
+                .isEqualTo(connection.getCursorCapsMode(CAPS_MODE_MASK));
         final SurroundingText surroundingText = snapshot.getSurroundingText();
         assertThat(surroundingText).isNotNull();
         final SurroundingText expectedSurroundingText =
@@ -696,5 +655,71 @@ public class BaseInputConnectionTest {
         assertThat(surroundingText.getSelectionEnd())
                 .isEqualTo(expectedSurroundingText.getSelectionEnd());
         assertThat(surroundingText.getOffset()).isEqualTo(expectedSurroundingText.getOffset());
+        assertThat(snapshot.getCursorCapsMode())
+                .isEqualTo(connection.getCursorCapsMode(CAPS_MODE_MASK));
+    }
+
+    @Test
+    public void testReplaceText() {
+        verifyReplaceText("012[3456]789", 3, 7, "text", 1, "012text[]789");
+        verifyReplaceText("012[]3456789", 0, 3, "text", 1, "text[]3456789");
+        verifyReplaceText("012[]3456789", 3, 0, "text", 1, "text[]3456789");
+        verifyReplaceText("012[]3456789", 0, 10, "text", 1, "text[]");
+        verifyReplaceText("0123456789[]", 0, 3, "text", -1, "[]text3456789");
+        verifyReplaceText("0123456789[]", 10, 10, "text", 1, "0123456789text[]");
+        verifyReplaceText("0123456789[]", 100, 100, "text", 1, "0123456789text[]");
+        verifyReplaceText("[]0123456789", 0, 0, "text", 1, "text[]0123456789");
+        verifyReplaceText("[]0123456789", 0, 5, "text", 1, "text[]56789");
+        verifyReplaceText("[]0123456789", 0, 10, "text", -1, "[]text");
+        verifyReplaceText("[0123456789]", 0, 10, "text", 1, "text[]");
+        verifyReplaceText("[0123456789]", 0, 8, "text", 1, "text[]89");
+    }
+
+    private static void verifyReplaceText(
+            final String initialState,
+            final int start,
+            final int end,
+            final String text,
+            final int newCursorPosition,
+            final String expectedState) {
+        final CharSequence source = InputConnectionTestUtils.formatString(initialState);
+        final BaseInputConnection ic = createConnectionWithSelection(source);
+        assertTrue(ic.replaceText(start, end, text, newCursorPosition, null));
+        final CharSequence expectedString = InputConnectionTestUtils.formatString(expectedState);
+        final int expectedSelectionStart = Selection.getSelectionStart(expectedString);
+        final int expectedSelectionEnd = Selection.getSelectionEnd(expectedString);
+        verifyTextAndSelection(ic, expectedString, expectedSelectionStart, expectedSelectionEnd);
+    }
+
+    private static void verifyTextAndSelection(
+            BaseInputConnection ic,
+            final CharSequence expectedString,
+            final int expectedSelectionStart,
+            final int expectedSelectionEnd) {
+        if (expectedSelectionStart == 0) {
+            assertTrue(TextUtils.isEmpty(ic.getTextBeforeCursor(TEXT_LENGTH_TO_RETRIEVAL, 0)));
+        } else {
+            assertEquals(
+                    expectedString.subSequence(0, expectedSelectionStart).toString(),
+                    ic.getTextBeforeCursor(TEXT_LENGTH_TO_RETRIEVAL, 0).toString());
+        }
+        if (expectedSelectionStart == expectedSelectionEnd) {
+            assertTrue(TextUtils.isEmpty(ic.getSelectedText(0))); // null is allowed.
+        } else {
+            assertEquals(
+                    expectedString
+                            .subSequence(expectedSelectionStart, expectedSelectionEnd)
+                            .toString(),
+                    ic.getSelectedText(0).toString());
+        }
+        if (expectedSelectionEnd == expectedString.length()) {
+            assertTrue(TextUtils.isEmpty(ic.getTextAfterCursor(TEXT_LENGTH_TO_RETRIEVAL, 0)));
+        } else {
+            assertEquals(
+                    expectedString
+                            .subSequence(expectedSelectionEnd, expectedString.length())
+                            .toString(),
+                    ic.getTextAfterCursor(TEXT_LENGTH_TO_RETRIEVAL, 0).toString());
+        }
     }
 }

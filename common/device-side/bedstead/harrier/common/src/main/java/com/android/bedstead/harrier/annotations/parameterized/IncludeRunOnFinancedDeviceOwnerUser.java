@@ -20,7 +20,7 @@ import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.L
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
-import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 import com.android.bedstead.nene.devicepolicy.DeviceOwnerType;
@@ -30,13 +30,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Parameterize a test so that it runs on the same user as the financed device owner.
- */
+/** Parameterize a test so that it runs on the same user as the financed device owner. */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
-@RequireRunOnPrimaryUser
+@RequireRunOnSystemUser
 @EnsureHasNoWorkProfile
 @EnsureHasDeviceOwner(isPrimary = true, type = DeviceOwnerType.FINANCED)
 public @interface IncludeRunOnFinancedDeviceOwnerUser {

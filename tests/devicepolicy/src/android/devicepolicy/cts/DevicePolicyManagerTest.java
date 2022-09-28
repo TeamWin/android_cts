@@ -1243,7 +1243,7 @@ public final class DevicePolicyManagerTest {
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
-    @RequireNotHeadlessSystemUserMode
+    @RequireNotHeadlessSystemUserMode(reason = "TODO(b/242189747): Remove or give reason")
     public void checkProvisioningPreCondition_actionDO_returnsOk() {
         boolean setupComplete = TestApis.users().current().getSetupComplete();
         TestApis.users().current().setSetupComplete(false);
@@ -1265,7 +1265,7 @@ public final class DevicePolicyManagerTest {
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
-    @RequireNotHeadlessSystemUserMode
+    @RequireNotHeadlessSystemUserMode(reason = "TODO(b/242189747): Remove or give reason")
     public void checkProvisioningPreCondition_actionDO_setupComplete_returnsUserSetupCompleted() {
         boolean setupComplete = TestApis.users().current().getSetupComplete();
         TestApis.users().current().setSetupComplete(true);
@@ -1288,7 +1288,7 @@ public final class DevicePolicyManagerTest {
     @RequireRunOnPrimaryUser
     @EnsureHasDeviceOwner
     @EnsureHasNoWorkProfile
-    @RequireNotHeadlessSystemUserMode
+    @RequireNotHeadlessSystemUserMode(reason = "TODO(b/242189747): Remove give reason")
     public void checkProvisioningPreCondition_actionDO_onManagedDevice_returnsHasDeviceOwner() {
         boolean setupComplete = TestApis.users().current().getSetupComplete();
         TestApis.users().current().setSetupComplete(false);
@@ -1309,7 +1309,7 @@ public final class DevicePolicyManagerTest {
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @RequireRunOnWorkProfile
-    @RequireNotHeadlessSystemUserMode
+    @RequireNotHeadlessSystemUserMode(reason = "TODO(b/242189747): Remove or give reason")
     public void checkProvisioningPreCondition_actionDO_onManagedProfile_returnsHasProfileOwner() {
         boolean setupComplete = TestApis.users().current().getSetupComplete();
         TestApis.users().current().setSetupComplete(false);
@@ -1331,7 +1331,7 @@ public final class DevicePolicyManagerTest {
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @RequireRunOnSecondaryUser
     @EnsureHasProfileOwner
-    @RequireNotHeadlessSystemUserMode
+    @RequireNotHeadlessSystemUserMode(reason = "TODO(b/242189747): Remove or give reason")
     public void checkProvisioningPreCondition_actionDO_onManagedUser_returnsHasProfileOwner() {
         boolean setupComplete = TestApis.users().current().getSetupComplete();
         TestApis.users().current().setSetupComplete(false);
@@ -1353,7 +1353,7 @@ public final class DevicePolicyManagerTest {
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @RequireRunOnSecondaryUser
     @EnsureHasNoProfileOwner
-    @RequireNotHeadlessSystemUserMode
+    @RequireNotHeadlessSystemUserMode(reason = "TODO(b/242189747): Remove or give reason")
     @RequireFeature(FEATURE_DEVICE_ADMIN)
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#checkProvisioningPrecondition")
     public void checkProvisioningPreCondition_actionDO_onNonSystemUser_returnsNotSystemUser() {

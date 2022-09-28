@@ -87,9 +87,9 @@ import android.widget.LinearLayout;
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.cts.inputmethod.LegacyImeClientTestUtils;
@@ -4948,4 +4948,149 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
         });
     }
 
+    /**
+     * Test {@link InputConnection#replaceText(int, int, CharSequence, int, TextAttribute)} works as
+     * expected.
+     */
+    @Test
+    public void testReplaceText() throws Exception {
+        final Annotation expectedSpan = new Annotation("expectedKey", "expectedValue");
+        final int expectedStart = 0;
+        final int expectedEnd = 5;
+        final CharSequence expectedText = createTestCharSequence("expectedText", expectedSpan);
+        final int expectedNewCursorPosition = 123;
+        final ArrayList<String> expectedSuggestions = new ArrayList<>();
+        expectedSuggestions.add("test");
+        final TextAttribute expectedTextAttribute =
+                new TextAttribute.Builder()
+                        .setTextConversionSuggestions(expectedSuggestions)
+                        .build();
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean replaceText(
+                    int start,
+                    int end,
+                    CharSequence text,
+                    int newCursorPosition,
+                    TextAttribute textAttribute) {
+                methodCallVerifier.onMethodCalled(
+                        args -> {
+                            args.putInt("start", start);
+                            args.putInt("end", end);
+                            args.putCharSequence("text", text);
+                            args.putInt("newCursorPosition", newCursorPosition);
+                            args.putParcelable("textAttribute", textAttribute);
+                        });
+
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(
+                Wrapper::new,
+                (MockImeSession session, ImeEventStream stream) -> {
+                    final ImeCommand command =
+                            session.callReplaceText(
+                                    expectedStart,
+                                    expectedEnd,
+                                    expectedText,
+                                    expectedNewCursorPosition,
+                                    expectedTextAttribute);
+                    assertTrue(
+                            "replaceText() always returns true unless RemoteException is thrown",
+                            expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+                    methodCallVerifier.expectCalledOnce(
+                            args -> {
+                                assertEquals(expectedStart, args.getInt("start"));
+                                assertEquals(expectedEnd, args.getInt("end"));
+                                assertEqualsForTestCharSequence(
+                                        expectedText, args.getCharSequence("text"));
+                                assertEquals(
+                                        expectedNewCursorPosition,
+                                        args.getInt("newCursorPosition"));
+                                final TextAttribute textAttribute =
+                                        args.getParcelable("textAttribute");
+                                assertThat(textAttribute).isNotNull();
+                                assertThat(textAttribute.getTextConversionSuggestions())
+                                        .containsExactlyElementsIn(expectedSuggestions);
+                            },
+                            TIMEOUT);
+                });
+    }
+
+    /**
+     * Test {@link InputConnection#replaceText(int, int, CharSequence, int, TextAttribute)} fails
+     * fast once {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testReplaceTextAfterUnbindInput() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean replaceText(
+                    int start,
+                    int end,
+                    CharSequence text,
+                    int newCursorPosition,
+                    TextAttribute textAttribute) {
+                methodCallVerifier.onMethodCalled(
+                        args -> {
+                            args.putInt("start", start);
+                            args.putInt("end", end);
+                            args.putCharSequence("text", text);
+                            args.putInt("newCursorPosition", newCursorPosition);
+                            args.putParcelable("textAttribute", textAttribute);
+                        });
+
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(
+                Wrapper::new,
+                (MockImeSession session, ImeEventStream stream) -> {
+                    // Memorize the current InputConnection.
+                    expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+                    // Let unbindInput happen.
+                    triggerUnbindInput();
+                    expectEvent(
+                            stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+                    // Now IC#getTextAfterCursor() for the memorized IC should fail fast.
+                    final ImeEvent result =
+                            expectCommand(
+                                    stream,
+                                    session.callReplaceText(0, 5, "text", 1, null),
+                                    TIMEOUT);
+                    // CAVEAT: this behavior is a bit questionable and may change in a future
+                    // version.
+                    assertTrue(
+                            "Currently IC#replaceText() still returns true even after"
+                                    + " unbindInput().",
+                            result.getReturnBooleanValue());
+                    expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+                    // Make sure that the app does not receive the call (for a while).
+                    methodCallVerifier.expectNotCalled(
+                            "Once unbindInput() happened, IC#replaceText() fails fast.",
+                            EXPECTED_NOT_CALLED_TIMEOUT);
+                });
+    }
 }

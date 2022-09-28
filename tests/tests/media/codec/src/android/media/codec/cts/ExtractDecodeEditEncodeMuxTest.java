@@ -16,6 +16,10 @@
 
 package android.media.codec.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.annotation.TargetApi;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaCodec;
@@ -27,16 +31,23 @@ import android.media.MediaMuxer;
 import android.media.MediaPlayer;
 import android.media.cts.InputSurface;
 import android.media.cts.MediaStubActivity;
+import android.media.cts.MediaTestBase;
 import android.media.cts.OutputSurface;
 import android.media.cts.Preconditions;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
-import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 import android.view.Surface;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
 import com.android.compatibility.common.util.CddTest;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -60,8 +71,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @TargetApi(18)
 @AppModeFull(reason = "Instant apps cannot access the SD card")
-public class ExtractDecodeEditEncodeMuxTest
-        extends ActivityInstrumentationTestCase2<MediaStubActivity> {
+@RunWith(AndroidJUnit4.class)
+public class ExtractDecodeEditEncodeMuxTest extends MediaTestBase {
 
     private static final String TAG = ExtractDecodeEditEncodeMuxTest.class.getSimpleName();
     private static final boolean VERBOSE = false; // lots of logging
@@ -122,11 +133,20 @@ public class ExtractDecodeEditEncodeMuxTest
 
     private String mOutputVideoMimeType;
 
-    public ExtractDecodeEditEncodeMuxTest() {
-        super(MediaStubActivity.class);
+    @Override
+    @Before
+    public void setUp() throws Throwable {
+        super.setUp();
+    }
+
+    @Override
+    @After
+    public void tearDown() {
+        super.tearDown();
     }
 
     @CddTest(requirements = {"5.2", "5.3"})
+    @Test
     public void testExtractDecodeEditEncodeMuxQCIF() throws Throwable {
         if(!setSize(176, 144)) return;
         setSource("video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz.mp4");
@@ -136,6 +156,7 @@ public class ExtractDecodeEditEncodeMuxTest
     }
 
     @CddTest(requirements = {"5.2", "5.3"})
+    @Test
     public void testExtractDecodeEditEncodeMuxQVGA() throws Throwable {
         if(!setSize(320, 240)) return;
         setSource("video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz.mp4");
@@ -145,6 +166,7 @@ public class ExtractDecodeEditEncodeMuxTest
     }
 
     @CddTest(requirements = {"5.2", "5.3"})
+    @Test
     public void testExtractDecodeEditEncodeMux720p() throws Throwable {
         if(!setSize(1280, 720)) return;
         setSource("video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz.mp4");
@@ -154,6 +176,7 @@ public class ExtractDecodeEditEncodeMuxTest
     }
 
     @CddTest(requirements = {"5.2", "5.3"})
+    @Test
     public void testExtractDecodeEditEncodeMux2160pHevc() throws Throwable {
         if(!setSize(3840, 2160)) return;
         setSource("video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz.mp4");
@@ -163,6 +186,7 @@ public class ExtractDecodeEditEncodeMuxTest
     }
 
     @CddTest(requirements = {"5.1.1", "5.1.2"})
+    @Test
     public void testExtractDecodeEditEncodeMuxAudio() throws Throwable {
         if(!setSize(1280, 720)) return;
         setSource("video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz.mp4");
@@ -172,6 +196,7 @@ public class ExtractDecodeEditEncodeMuxTest
     }
 
     @CddTest(requirements = {"5.1.1", "5.1.2", "5.2", "5.3"})
+    @Test
     public void testExtractDecodeEditEncodeMuxAudioVideo() throws Throwable {
         if(!setSize(1280, 720)) return;
         setSource("video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz.mp4");

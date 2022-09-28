@@ -452,6 +452,17 @@ public final class MockIme extends InputMethodService {
                         return getMemorizedOrCurrentInputConnection().setImeConsumesInput(
                                 imeConsumesInput);
                     }
+                    case "replaceText": {
+                        final int start = command.getExtras().getInt("start");
+                        final int end = command.getExtras().getInt("end");
+                        final CharSequence text = command.getExtras().getCharSequence("text");
+                        final int newCursorPosition =
+                                command.getExtras().getInt("newCursorPosition");
+                        final TextAttribute textAttribute =
+                                command.getExtras().getParcelable("textAttribute");
+                        return getMemorizedOrCurrentInputConnection()
+                                .replaceText(start, end, text, newCursorPosition, textAttribute);
+                    }
                     case "switchInputMethod(String,InputMethodSubtype)": {
                         final String id = command.getExtras().getString("id");
                         final InputMethodSubtype subtype = command.getExtras().getParcelable(
