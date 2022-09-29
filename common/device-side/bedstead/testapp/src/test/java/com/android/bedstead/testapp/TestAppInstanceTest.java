@@ -483,4 +483,14 @@ public class TestAppInstanceTest {
             assertThat(sTestApp.pkg().appOps().get(OPSTR_START_FOREGROUND)).isNotEqualTo(ALLOWED);
         }
     }
+
+    @Test
+    public void callThrowsException_doesNotBlockUsage() {
+        try (TestAppInstance testApp = sTestApp.install()) {
+            for (int i = 0; i < 1000; i++) {
+                assertThrows(NullPointerException.class,
+                        () -> testApp.devicePolicyManager().hasGrantedPolicy(null, 0));
+            }
+        }
+    }
 }

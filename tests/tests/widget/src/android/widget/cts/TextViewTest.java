@@ -5574,6 +5574,38 @@ public class TextViewTest {
 
     @UiThreadTest
     @Test
+    public void isAutoHandwritingEnabled_default_returnsTrue() {
+        mTextView = new TextView(mActivity);
+        mTextView.setText(null, BufferType.EDITABLE);
+        mTextView.setInputType(InputType.TYPE_CLASS_TEXT);
+
+        assertTrue(mTextView.isAutoHandwritingEnabled());
+    }
+
+    @UiThreadTest
+    @Test
+    public void isAutoHandwritingEnabled_password_returnsFalse() {
+        mTextView = new TextView(mActivity);
+        mTextView.setText(null, BufferType.EDITABLE);
+        mTextView.setInputType(InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+
+        assertFalse(mTextView.isAutoHandwritingEnabled());
+    }
+
+    @UiThreadTest
+    @Test
+    public void isAutoHandwritingEnabled_visiblePassword_returnsFalse() {
+        mTextView = new TextView(mActivity);
+        mTextView.setText(null, BufferType.EDITABLE);
+        mTextView.setInputType(InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+
+        assertFalse(mTextView.isAutoHandwritingEnabled());
+    }
+
+    @UiThreadTest
+    @Test
     public void testVerifyDrawable() {
         mTextView = new MockTextView(mActivity);
 
@@ -7288,13 +7320,15 @@ public class TextViewTest {
     }
 
     @Test
-    public void testSendAccessibilityContentChangeTypeInvalid() throws Throwable {
+    public void testSendAccessibilityContentChangeTypeErrorAndInvalid() throws Throwable {
         initTextViewForTypingOnUiThread();
         UiAutomation uiAutomation = mInstrumentation.getUiAutomation();
         uiAutomation.executeAndWaitForEvent(
-                () -> mInstrumentation.runOnMainSync(() -> mTextView.setError("error")),
+                () -> mInstrumentation.runOnMainSync(
+                        () -> mTextView.setError("error", null)),
                 event -> isExpectedChangeType(event,
-                        AccessibilityEvent.CONTENT_CHANGE_TYPE_INVALID),
+                        AccessibilityEvent.CONTENT_CHANGE_TYPE_ERROR
+                                | AccessibilityEvent.CONTENT_CHANGE_TYPE_CONTENT_INVALID),
                 TIMEOUT);
     }
 

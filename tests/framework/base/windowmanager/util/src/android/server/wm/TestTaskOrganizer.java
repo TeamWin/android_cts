@@ -159,11 +159,15 @@ public class TestTaskOrganizer extends TaskOrganizer {
         notifyAll();
     }
 
-    private void registerOrganizerIfNeeded() {
-        if (mRegistered) return;
+    public void registerOrganizerIfNeeded() {
+        synchronized (this) {
+            if (mRegistered) return;
 
-        registerOrganizer();
-        mRegistered = true;
+            NestedShellPermission.run(() -> {
+                registerOrganizer();
+            });
+            mRegistered = true;
+        }
     }
 
     public void unregisterOrganizerIfNeeded() {

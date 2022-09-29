@@ -33,6 +33,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.UserType;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.UserTest;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
@@ -86,6 +87,7 @@ public final class DeviceOwnerTest {
     @Test
     @Postsubmit(reason = "new test")
     @EnsureHasDeviceOwner
+    @RequireRunOnSystemUser
     public void setDeviceOwner_setsDeviceOwner() {
         assertThat(sDevicePolicyManager.isAdminActive(sDeviceState.dpc().componentName()))
                 .isTrue();
@@ -99,6 +101,7 @@ public final class DeviceOwnerTest {
     @Test
     @Postsubmit(reason = "new test")
     @EnsureHasNoDpc
+    @RequireRunOnSystemUser
     public void setDeviceOwnerViaAdb_deviceHasAccount_fails()
             throws InterruptedException {
         try (TestAppInstance accountAuthenticatorApp =
@@ -125,7 +128,7 @@ public final class DeviceOwnerTest {
         }
     }
 
-    @UserTest({UserType.PRIMARY_USER, UserType.SECONDARY_USER})
+    @UserTest({UserType.SYSTEM_USER, UserType.SECONDARY_USER})
     @EnsureHasDeviceOwner
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Postsubmit(reason = "new test")
@@ -134,7 +137,7 @@ public final class DeviceOwnerTest {
                 .isEqualTo(sDeviceState.dpc().testApp().label());
     }
 
-    @UserTest({UserType.PRIMARY_USER, UserType.SECONDARY_USER})
+    @UserTest({UserType.SYSTEM_USER, UserType.SECONDARY_USER})
     @EnsureHasDeviceOwner
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Postsubmit(reason = "new test")

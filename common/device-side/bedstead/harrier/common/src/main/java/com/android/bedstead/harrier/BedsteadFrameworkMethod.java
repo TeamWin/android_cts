@@ -16,6 +16,7 @@
 
 package com.android.bedstead.harrier;
 
+import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.meta.RequireRunOnProfileAnnotation;
 import com.android.bedstead.harrier.annotations.meta.RequireRunOnUserAnnotation;
@@ -82,7 +83,8 @@ public final class BedsteadFrameworkMethod extends FrameworkMethod {
         for (Annotation annotation : annotations) {
             if (annotation instanceof RequireRunOnUserAnnotation
                     || annotation instanceof RequireRunOnProfileAnnotation
-                    || annotation instanceof RequireRunOnInitialUser) {
+                    || annotation instanceof RequireRunOnInitialUser
+                    || annotation instanceof RequireRunOnAdditionalUser) {
                 hasRequireRunOnAnnotation = true;
                 break;
             }

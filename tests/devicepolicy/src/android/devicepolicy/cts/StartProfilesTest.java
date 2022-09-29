@@ -42,7 +42,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeature;
-import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.SlowApiTest;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
@@ -72,7 +72,7 @@ public final class StartProfilesTest {
 
     @Test
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     public void startProfile_returnsTrue() {
@@ -83,7 +83,7 @@ public final class StartProfilesTest {
 
     @Test
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     @SlowApiTest("Start profile broadcasts can take a long time")
@@ -101,7 +101,7 @@ public final class StartProfilesTest {
 
     @Test
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile
     @Postsubmit(reason = "b/181207615 flaky")
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
@@ -111,7 +111,7 @@ public final class StartProfilesTest {
 
     @Test
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile
     @Postsubmit(reason = "b/181207615 flaky")
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
@@ -128,7 +128,7 @@ public final class StartProfilesTest {
 
     @Test
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile
     @Postsubmit(reason = "b/181207615 flaky")
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
@@ -153,7 +153,7 @@ public final class StartProfilesTest {
 
     @Test
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile
     @Postsubmit(reason = "b/181207615 flaky")
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
@@ -169,7 +169,7 @@ public final class StartProfilesTest {
 
     @Test
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile
     @EnsureDoesNotHavePermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     @Postsubmit(reason = "b/181207615 flaky")
@@ -180,7 +180,7 @@ public final class StartProfilesTest {
 
     @Test
     @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile
     @EnsureDoesNotHavePermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     @Postsubmit(reason = "b/181207615 flaky")
@@ -190,7 +190,7 @@ public final class StartProfilesTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasSecondaryUser
     @Postsubmit(reason = "b/181207615 flaky")
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
@@ -200,7 +200,7 @@ public final class StartProfilesTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasSecondaryUser
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     @Postsubmit(reason = "b/181207615 flaky")
@@ -210,7 +210,7 @@ public final class StartProfilesTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasTvProfile
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     @Postsubmit(reason = "b/181207615 flaky")
@@ -228,7 +228,7 @@ public final class StartProfilesTest {
     }
 
     @Test
-    @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     @EnsureHasTvProfile
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     @Postsubmit(reason = "b/181207615 flaky")

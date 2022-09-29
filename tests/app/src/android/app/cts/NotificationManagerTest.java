@@ -19,6 +19,7 @@ package android.app.cts;
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL;
 import static android.Manifest.permission.REVOKE_RUNTIME_PERMISSIONS;
+import static android.app.Activity.RESULT_OK;
 import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
 import static android.app.NotificationManager.IMPORTANCE_HIGH;
 import static android.app.NotificationManager.IMPORTANCE_LOW;
@@ -2122,46 +2123,53 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testNotificationDelegate_grantAndPost() throws Exception {
+        final Intent intent = new Intent(mContext, GetResultActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        GetResultActivity activity = (GetResultActivity) mInstrumentation.startActivitySync(intent);
+        mInstrumentation.waitForIdleSync();
+        activity.clearResult();
+
         // grant this test permission to post
         final Intent activityIntent = new Intent();
         activityIntent.setPackage(TEST_APP);
         activityIntent.setAction(Intent.ACTION_MAIN);
         activityIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        // wait for the activity to launch and finish
-        mContext.startActivity(activityIntent);
-        Thread.sleep(mActivityManager.isLowRamDevice() ? 1500 : 1000);
+        activity.startActivityForResult(activityIntent, REQUEST_CODE);
+        assertEquals(RESULT_OK, activity.getResult().resultCode);
 
         // send notification
         Notification n = new Notification.Builder(mContext, "channel")
-                .setSmallIcon(android.R.id.icon)
+                .setSmallIcon(android.R.drawable.ic_media_play)
                 .build();
         mNotificationManager.notifyAsPackage(TEST_APP, "tag", 0, n);
 
         assertNotNull(findPostedNotification(0, false));
         final Intent revokeIntent = new Intent();
         revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
-        revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(revokeIntent);
-        Thread.sleep(1000);
+        activity.startActivityForResult(revokeIntent, REQUEST_CODE);
+        assertEquals(RESULT_OK, activity.getResult().resultCode);
     }
 
     public void testNotificationDelegate_grantAndPostAndCancel() throws Exception {
+        final Intent intent = new Intent(mContext, GetResultActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        GetResultActivity activity = (GetResultActivity) mInstrumentation.startActivitySync(intent);
+        mInstrumentation.waitForIdleSync();
+        activity.clearResult();
+
         // grant this test permission to post
         final Intent activityIntent = new Intent();
         activityIntent.setPackage(TEST_APP);
         activityIntent.setAction(Intent.ACTION_MAIN);
         activityIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        // wait for the activity to launch and finish
-        mContext.startActivity(activityIntent);
-        Thread.sleep(1000);
+        activity.startActivityForResult(activityIntent, REQUEST_CODE);
+        assertEquals(RESULT_OK, activity.getResult().resultCode);
 
         // send notification
         Notification n = new Notification.Builder(mContext, "channel")
-                .setSmallIcon(android.R.id.icon)
+                .setSmallIcon(android.R.drawable.ic_media_play)
                 .build();
         mNotificationManager.notifyAsPackage(TEST_APP, "toBeCanceled", 10000, n);
         assertNotNull(findPostedNotification(10000, false));
@@ -2169,13 +2177,18 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertNotificationCancelled(10000, false);
         final Intent revokeIntent = new Intent();
         revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
-        revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(revokeIntent);
-        Thread.sleep(1000);
+        activity.startActivityForResult(revokeIntent, REQUEST_CODE);
+        assertEquals(RESULT_OK, activity.getResult().resultCode);
     }
 
     public void testNotificationDelegate_cannotCancelNotificationsPostedByDelegator()
             throws Exception {
+        final Intent intent = new Intent(mContext, GetResultActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        GetResultActivity activity = (GetResultActivity) mInstrumentation.startActivitySync(intent);
+        mInstrumentation.waitForIdleSync();
+        activity.clearResult();
+
         toggleListenerAccess(true);
         Thread.sleep(500); // wait for listener to be allowed
 
@@ -2185,11 +2198,9 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         // grant this test permission to post
         final Intent activityIntent = new Intent();
         activityIntent.setClassName(TEST_APP, DELEGATE_POST_CLASS);
-        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        mContext.startActivity(activityIntent);
-
-        Thread.sleep(1000);
+        activity.startActivityForResult(activityIntent, REQUEST_CODE);
+        assertEquals(RESULT_OK, activity.getResult().resultCode);
 
         assertNotNull(findPostedNotification(9, true));
 
@@ -2205,22 +2216,25 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
         final Intent revokeIntent = new Intent();
         revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
-        revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(revokeIntent);
-        Thread.sleep(1000);
+        activity.startActivityForResult(revokeIntent, REQUEST_CODE);
+        assertEquals(RESULT_OK, activity.getResult().resultCode);
     }
 
     public void testNotificationDelegate_grantAndReadChannels() throws Exception {
+        final Intent intent = new Intent(mContext, GetResultActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        GetResultActivity activity = (GetResultActivity) mInstrumentation.startActivitySync(intent);
+        mInstrumentation.waitForIdleSync();
+        activity.clearResult();
+
         // grant this test permission to post
         final Intent activityIntent = new Intent();
         activityIntent.setPackage(TEST_APP);
         activityIntent.setAction(Intent.ACTION_MAIN);
         activityIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        // wait for the activity to launch and finish
-        mContext.startActivity(activityIntent);
-        Thread.sleep(500);
+        activity.startActivityForResult(activityIntent, REQUEST_CODE);
+        assertEquals(RESULT_OK, activity.getResult().resultCode);
 
         List<NotificationChannel> channels =
                 mContext.createPackageContextAsUser(TEST_APP, /* flags= */ 0, mContext.getUser())
@@ -2231,22 +2245,25 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
         final Intent revokeIntent = new Intent();
         revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
-        revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(revokeIntent);
-        Thread.sleep(500);
+        activity.startActivityForResult(revokeIntent, REQUEST_CODE);
+        assertEquals(RESULT_OK, activity.getResult().resultCode);
     }
 
     public void testNotificationDelegate_grantAndReadChannel() throws Exception {
+        final Intent intent = new Intent(mContext, GetResultActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        GetResultActivity activity = (GetResultActivity) mInstrumentation.startActivitySync(intent);
+        mInstrumentation.waitForIdleSync();
+        activity.clearResult();
+
         // grant this test permission to post
         final Intent activityIntent = new Intent();
         activityIntent.setPackage(TEST_APP);
         activityIntent.setAction(Intent.ACTION_MAIN);
         activityIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        // wait for the activity to launch and finish
-        mContext.startActivity(activityIntent);
-        Thread.sleep(2000);
+        activity.startActivityForResult(activityIntent, REQUEST_CODE);
+        assertEquals(RESULT_OK, activity.getResult().resultCode);
 
         NotificationChannel channel =
                 mContext.createPackageContextAsUser(TEST_APP, /* flags= */ 0, mContext.getUser())
@@ -2257,34 +2274,37 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
         final Intent revokeIntent = new Intent();
         revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
-        revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(revokeIntent);
-        Thread.sleep(500);
+        activity.startActivityForResult(revokeIntent, REQUEST_CODE);
+        assertEquals(RESULT_OK, activity.getResult().resultCode);
     }
 
     public void testNotificationDelegate_grantAndRevoke() throws Exception {
+        final Intent intent = new Intent(mContext, GetResultActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        GetResultActivity activity = (GetResultActivity) mInstrumentation.startActivitySync(intent);
+        mInstrumentation.waitForIdleSync();
+        activity.clearResult();
+
         // grant this test permission to post
         final Intent activityIntent = new Intent();
         activityIntent.setPackage(TEST_APP);
         activityIntent.setAction(Intent.ACTION_MAIN);
         activityIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        mContext.startActivity(activityIntent);
-        Thread.sleep(500);
+        activity.startActivityForResult(activityIntent, REQUEST_CODE);
+        assertEquals(RESULT_OK, activity.getResult().resultCode);
 
         assertTrue(mNotificationManager.canNotifyAsPackage(TEST_APP));
 
         final Intent revokeIntent = new Intent();
         revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
-        revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(revokeIntent);
-        Thread.sleep(500);
+        activity.startActivityForResult(revokeIntent, REQUEST_CODE);
+        assertEquals(RESULT_OK, activity.getResult().resultCode);
 
         try {
             // send notification
             Notification n = new Notification.Builder(mContext, "channel")
-                    .setSmallIcon(android.R.id.icon)
+                    .setSmallIcon(android.R.drawable.ic_media_play)
                     .build();
             mNotificationManager.notifyAsPackage(TEST_APP, "tag", 0, n);
             fail("Should not be able to post as a delegate when permission revoked");
@@ -2298,7 +2318,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
         Notification notification =
                 new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                        .setSmallIcon(android.R.id.icon)
+                        .setSmallIcon(android.R.drawable.ic_media_play)
                         .setWhen(System.currentTimeMillis())
                         .setFullScreenIntent(getPendingIntent(), true)
                         .setContentText("This notification has a resource icon")
@@ -2329,6 +2349,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
 
         toggleListenerAccess(true);
+        Thread.sleep(500);
         // no exception this time
         mNotificationManager.shouldHideSilentStatusBarIcons();
     }

@@ -38,8 +38,7 @@ public class CloseOnOutsideTestActivity extends Activity {
         super.onCreate(savedInstanceState);
     }
 
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
+    public void setupWindowSize() {
         View contentView = getWindow().getDecorView().findViewById(android.R.id.content);
         int width = contentView.getWidth();
         int height = contentView.getHeight();

@@ -33,7 +33,6 @@ public class UserLifecycleJourneyStatsTests extends UserStatsTests<UserLifecycle
         super(USER_LIFECYCLE_JOURNEY_REPORTED);
     }
 
-    @Override
     protected UserLifecycleJourneyReported getAtom(EventMetricData data) {
         return data.getAtom().getUserLifecycleJourneyReported();
     }
@@ -55,7 +54,7 @@ public class UserLifecycleJourneyStatsTests extends UserStatsTests<UserLifecycle
     // Failing due to issue b/246283671
 //    public void testSwitchToGuestUser() throws Exception {
 //        String userName = "TestUser_" + System.currentTimeMillis();
-//        int userId = switchUSer(userName, true);
+//        int userId = switchUser(userName, true);
 //        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 //        assertExpectedEvents(data, 0, userId, "USER_SWITCH_UI_FULL_GUEST");
 //    }
@@ -77,7 +76,7 @@ public class UserLifecycleJourneyStatsTests extends UserStatsTests<UserLifecycle
     // Failing due to issue b/246283671
 //    public void testSwitchToFullUser() throws Exception {
 //        String userName = "FullUser_" + System.currentTimeMillis();
-//        int userId = switchUSer(userName, false);
+//        int userId = switchUser(userName, false);
 //        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 //        assertExpectedEvents(data, 0, userId, "USER_SWITCH_UI_FULL_SECONDARY");
 //    }

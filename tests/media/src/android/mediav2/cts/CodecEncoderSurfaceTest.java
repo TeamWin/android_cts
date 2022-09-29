@@ -16,6 +16,8 @@
 
 package android.mediav2.cts;
 
+import static android.mediav2.cts.CodecTestBase.hasSupportForColorFormat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -173,6 +175,12 @@ public class CodecEncoderSurfaceTest {
         mDecoderName = codecList.findDecoderForFormat(mDecoderFormat);
         Assume.assumeNotNull(mDecoderFormat.toString() + " not supported by any decoder.",
                 mDecoderName);
+        // findDecoderForFormat() ignores color-format and decoder returned may not be
+        // supporting the color format set in mDecoderFormat. Following check will
+        // skip the test if decoder doesn't support the color format that is set.
+        int decoderColorFormat = mDecoderFormat.getInteger(MediaFormat.KEY_COLOR_FORMAT);
+        Assume.assumeTrue(mDecoderName + " doesn't support P010 output.",
+                hasSupportForColorFormat(mDecoderName, decoderMediaType, decoderColorFormat));
 
         mEncoderFormat = setUpEncoderFormat(mDecoderFormat);
     }

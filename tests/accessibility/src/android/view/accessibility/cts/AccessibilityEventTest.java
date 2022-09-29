@@ -371,7 +371,8 @@ public class AccessibilityEventTest {
         sUiAutomation.executeAndWaitForEvent(
                 () -> sInstrumentation.runOnMainSync(() -> mTextView.setError("error")),
                 event -> isExpectedChangeType(event,
-                        AccessibilityEvent.CONTENT_CHANGE_TYPE_INVALID)
+                        AccessibilityEvent.CONTENT_CHANGE_TYPE_ERROR
+                                | AccessibilityEvent.CONTENT_CHANGE_TYPE_CONTENT_INVALID)
                         && event.getSource().getError() != null,
                 DEFAULT_TIMEOUT_MS);
     }

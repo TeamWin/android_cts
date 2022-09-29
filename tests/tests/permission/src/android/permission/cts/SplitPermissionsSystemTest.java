@@ -143,16 +143,14 @@ public class SplitPermissionsSystemTest {
                     assertSplit(split, NO_TARGET, READ_PHONE_STATE);
                     break;
                 case BLUETOOTH_CONNECT:
-                    // STOPSHIP(b/184180558): replace with "S" once SDK is finalized
-                    assertSplit(split, Build.VERSION_CODES.R + 1, BLUETOOTH, BLUETOOTH_ADMIN);
+                    assertSplit(split, Build.VERSION_CODES.S, BLUETOOTH, BLUETOOTH_ADMIN);
                     break;
                 case BLUETOOTH_SCAN:
-                    // STOPSHIP(b/184180558): replace with "S" once SDK is finalized
-                    assertSplit(split, Build.VERSION_CODES.R + 1, BLUETOOTH, BLUETOOTH_ADMIN);
+                    assertSplit(split, Build.VERSION_CODES.S, BLUETOOTH, BLUETOOTH_ADMIN);
                     break;
                 case BODY_SENSORS:
-                    // STOPSHIP(b/212583342): replace with "T" once SDK is finalized
-                    assertSplit(split, Build.VERSION_CODES.S_V2 + 1, BODY_SENSORS_BACKGROUND);
+                    assertSplit(split, Build.VERSION_CODES.TIRAMISU, BODY_SENSORS_BACKGROUND);
+                    break;
             }
         }
 

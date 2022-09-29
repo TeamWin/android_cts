@@ -107,9 +107,9 @@ public final class Processor extends AbstractProcessor {
             ClassName.get(
                     "com.android.bedstead.testapp",
                     "TargetedRemoteActivityWrapper");
-    private static final ClassName CROSS_PROFILE_CONNECTOR_CLASSNAME =
-            ClassName.get("com.google.android.enterprise.connectedapps",
-                    "CrossProfileConnector");
+    private static final ClassName TEST_APP_CONNECTOR_CLASSNAME =
+            ClassName.get("com.android.bedstead.testapp",
+                    "TestAppConnector");
     private static final ClassName PROFILE_RUNTIME_EXCEPTION_CLASSNAME =
             ClassName.get(
                     "com.google.android.enterprise.connectedapps.exceptions",
@@ -252,13 +252,13 @@ public final class Processor extends AbstractProcessor {
                         .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
                         .build());
         classBuilder.addField(
-                FieldSpec.builder(CROSS_PROFILE_CONNECTOR_CLASSNAME, "mConnector")
+                FieldSpec.builder(TEST_APP_CONNECTOR_CLASSNAME, "mConnector")
                         .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
                         .build());
 
         classBuilder.addMethod(MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(CROSS_PROFILE_CONNECTOR_CLASSNAME, "connector")
+                .addParameter(TEST_APP_CONNECTOR_CLASSNAME, "connector")
                 .addStatement("mConnector = connector")
                 .addStatement(
                         "mProfileClass = $T.create(connector)",
@@ -401,7 +401,7 @@ public final class Processor extends AbstractProcessor {
                         .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
                         .build());
         classBuilder.addField(
-                FieldSpec.builder(CROSS_PROFILE_CONNECTOR_CLASSNAME, "mConnector")
+                FieldSpec.builder(TEST_APP_CONNECTOR_CLASSNAME, "mConnector")
                         .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
                         .build());
         classBuilder.addField(
@@ -411,7 +411,7 @@ public final class Processor extends AbstractProcessor {
 
         classBuilder.addMethod(MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(CROSS_PROFILE_CONNECTOR_CLASSNAME, "connector")
+                .addParameter(TEST_APP_CONNECTOR_CLASSNAME, "connector")
                 .addParameter(COMPONENT_NAME_CLASSNAME, "profileOwnerComponentName")
                 .addStatement("mConnector = connector")
                 .addStatement("mProfileOwnerComponentName = profileOwnerComponentName")
@@ -557,12 +557,12 @@ public final class Processor extends AbstractProcessor {
                         .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
                         .build());
         classBuilder.addField(
-                FieldSpec.builder(CROSS_PROFILE_CONNECTOR_CLASSNAME, "mConnector")
+                FieldSpec.builder(TEST_APP_CONNECTOR_CLASSNAME, "mConnector")
                         .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
                         .build());
 
         classBuilder.addMethod(MethodSpec.constructorBuilder()
-                .addParameter(CROSS_PROFILE_CONNECTOR_CLASSNAME, "connector")
+                .addParameter(TEST_APP_CONNECTOR_CLASSNAME, "connector")
                 .addStatement("mConnector = connector")
                 .addStatement(
                         "mProfileTargetedRemoteActivity = $T.create(connector)",
@@ -808,6 +808,7 @@ public final class Processor extends AbstractProcessor {
                         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                         .addAnnotation(AnnotationSpec.builder(CrossProfileConfiguration.class)
                                 .addMember("providers", "Provider.class")
+                                .addMember("connector", "$T.class", TEST_APP_CONNECTOR_CLASSNAME)
                                 .build());
 
         writeClassToFile(PACKAGE_NAME, classBuilder.build());

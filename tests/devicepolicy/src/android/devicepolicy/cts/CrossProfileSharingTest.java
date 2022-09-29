@@ -140,7 +140,7 @@ public final class CrossProfileSharingTest {
 
     @Test
     @Postsubmit(reason = "new test")
-    @EnsureHasWorkProfile(forUser = PRIMARY_USER)
+    @EnsureHasWorkProfile
     public void sharingFromPersonalToWork_disallowShareIntoProfile_restrictionApplied() {
         ResolveInfo personalToWorkForwarder = getPersonalToWorkForwarder();
 
@@ -159,7 +159,7 @@ public final class CrossProfileSharingTest {
 
     @Test
     @Postsubmit(reason = "new test")
-    @EnsureHasWorkProfile(forUser = PRIMARY_USER)
+    @EnsureHasWorkProfile
     public void sharingFromPersonalToWork_disallowShareIntoProfile_restrictionRemoved() {
         ResolveInfo personalToWorkForwarder = getPersonalToWorkForwarder();
 

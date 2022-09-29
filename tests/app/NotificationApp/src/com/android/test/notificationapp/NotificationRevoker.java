@@ -25,14 +25,15 @@ public class NotificationRevoker extends Activity {
     private static final String TAG = "Revoker";
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public void onResume() {
+        super.onResume();
         setContentView(R.layout.activity);
 
         NotificationManager nm = getSystemService(NotificationManager.class);
         nm.setNotificationDelegate(null);
         Log.d(TAG, "Removed delegate: " + nm.getNotificationDelegate());
         nm.cancelAll();
+        setResult(RESULT_OK);
         finish();
     }
 }

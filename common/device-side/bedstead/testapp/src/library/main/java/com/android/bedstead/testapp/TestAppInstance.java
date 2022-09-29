@@ -57,7 +57,6 @@ import com.android.bedstead.nene.packages.ProcessReference;
 import com.android.bedstead.nene.users.UserReference;
 
 import com.google.android.enterprise.connectedapps.ConnectionListener;
-import com.google.android.enterprise.connectedapps.CrossProfileConnector;
 import com.google.android.enterprise.connectedapps.ProfileConnectionHolder;
 import com.google.android.enterprise.connectedapps.exceptions.UnavailableProfileException;
 
@@ -77,7 +76,7 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
 
     private final TestApp mTestApp;
     private final UserReference mUser;
-    private final CrossProfileConnector mConnector;
+    private final TestAppConnector mConnector;
     private final Map<IntentFilter, Long> mRegisteredBroadcastReceivers = new HashMap<>();
     private final ProfileTestAppController mTestAppController;
     private final TestAppActivities mTestAppActivities;
@@ -96,16 +95,15 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
         }
         mTestApp = testApp;
         mUser = user;
-        mConnector = CrossProfileConnector.builder(TestApis.context().instrumentedContext())
-                .setBinder(new TestAppBinder(this))
-                .build();
+        mConnector = TestAppConnector.create(TestApis.context().instrumentedContext(),
+                new TestAppBinder(this));
         mConnector.addConnectionListener(this);
         mTestAppController =
                 ProfileTestAppController.create(mConnector);
         mTestAppActivities = TestAppActivities.create(this);
     }
 
-    CrossProfileConnector connector() {
+    TestAppConnector connector() {
         return mConnector;
     }
 

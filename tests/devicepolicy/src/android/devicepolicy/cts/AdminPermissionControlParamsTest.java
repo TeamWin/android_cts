@@ -29,7 +29,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
-public final class AdminPermissionControlParamsTests {
+public final class AdminPermissionControlParamsTest {
     private static final String PKG = "somePackage";
     private static final String PERMISSION = "somePackage";
     private static final int GRANT_STATE = DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED;

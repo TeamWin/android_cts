@@ -24,16 +24,15 @@ import android.content.Intent;
 import android.content.pm.LauncherApps;
 import android.os.Process;
 
-import androidx.test.core.app.ApplicationProvider;
-
 import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.nene.TestApis;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
-public final class LauncherAppsTests {
-    private final Context sContext = ApplicationProvider.getApplicationContext();
+public final class LauncherAppsTest {
+    private final Context sContext = TestApis.context().instrumentedContext();
     private final LauncherApps sLauncherApps = sContext.getSystemService(LauncherApps.class);
 
     @Test

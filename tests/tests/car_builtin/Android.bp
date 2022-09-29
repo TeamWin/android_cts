@@ -23,6 +23,7 @@ android_test {
         "cts",
         "general-tests",
         "automotive-tests",
+        "automotive-general-tests",
     ],
 
     srcs: [

@@ -753,6 +753,8 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
         assumeTrue("Skipping test: no split multi-window support",
                 supportsSplitScreenMultiWindow());
 
+        mTaskOrganizer.registerOrganizerIfNeeded();
+
         // Launch activity with FLAG_ACTIVITY_NEW_TASK and FLAG_ACTIVITY_LAUNCH_ADJACENT.
         launchAndAssertActivityWindowingMode(
                 FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_LAUNCH_ADJACENT,

@@ -24,7 +24,6 @@ import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
 
-import com.android.os.StatsLog.EventMetricData;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
@@ -87,7 +86,7 @@ public abstract class UserStatsTests<T> extends DeviceTestCase implements IBuild
         return userId;
     }
 
-    protected int switchUSer(String userName, boolean isGuest) throws Exception {
+    protected int switchUser(String userName, boolean isGuest) throws Exception {
         int userId = getDevice().createUser(userName, isGuest, false /* ephemeral */);
         mUsersToRemove.add(userId);
         uploadConfigForPushedAtom();
@@ -114,8 +113,6 @@ public abstract class UserStatsTests<T> extends DeviceTestCase implements IBuild
             timeElapsed = System.currentTimeMillis() - startTime;
         }
     }
-
-    protected abstract T getAtom(EventMetricData data);
 
     protected void uploadConfigForPushedAtom() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(),

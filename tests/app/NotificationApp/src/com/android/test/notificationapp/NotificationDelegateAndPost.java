@@ -31,8 +31,8 @@ public class NotificationDelegateAndPost extends Activity {
     private static final String CHANNEL = "channel";
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public void onResume() {
+        super.onResume();
         setContentView(R.layout.activity);
 
         NotificationManager nm = getSystemService(NotificationManager.class);
@@ -44,12 +44,12 @@ public class NotificationDelegateAndPost extends Activity {
         Log.d(TAG, "Posting notification with id 9");
 
         Notification n = new Notification.Builder(this, CHANNEL)
-                .setSmallIcon(android.R.drawable.sym_def_app_icon)
+                .setSmallIcon(android.R.drawable.ic_media_play)
                 .setContentTitle("posted by delegator")
                 .build();
 
         nm.notify(9, n);
-
+        setResult(RESULT_OK);
         finish();
     }
 }
