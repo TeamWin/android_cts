@@ -71,11 +71,19 @@ public class GnssStatusTest extends GnssTestCase  {
     TestLocationListener locationListener = new TestLocationListener(LOCATION_TO_COLLECT_COUNT);
     mTestLocationManager.requestLocationUpdates(locationListener);
 
-    boolean success = testGnssStatusCallback.awaitStart();
+    boolean isAutomotiveDevice = TestMeasurementUtil.isAutomotiveDevice(getContext());
+    boolean success = true;
+    if(!isAutomotiveDevice){
+      success = testGnssStatusCallback.awaitStart();
+    }
     success = success ? testGnssStatusCallback.awaitStatus() : false;
-    success = success ? testGnssStatusCallback.awaitTtff() : false;
+    if(!isAutomotiveDevice){
+      success = success ? testGnssStatusCallback.awaitTtff() : false;
+    }
     mTestLocationManager.removeLocationUpdates(locationListener);
-    success = success ? testGnssStatusCallback.awaitStop() : false;
+    if(!isAutomotiveDevice){
+      success = success ? testGnssStatusCallback.awaitStop() : false;
+    }
     mTestLocationManager.unregisterGnssStatusCallback(testGnssStatusCallback);
 
     SoftAssert softAssert = new SoftAssert(TAG);
