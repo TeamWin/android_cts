@@ -28,13 +28,17 @@ import android.hardware.radio.data.SetupDataCallResult;
 import android.hardware.radio.data.SliceInfo;
 import android.hardware.radio.data.TrafficDescriptor;
 import android.os.SystemProperties;
+import android.telephony.cts.util.TelephonyUtils;
 import android.util.Log;
 import android.util.Xml;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -65,6 +69,7 @@ public class MockDataService {
     private static final String MOCK_DNS_ADDRESS_TAG = "DnsAddress";
     private static final String MOCK_GATEWAY_ADDRESS_TAG = "GatewayAddress";
     private static final String MOCK_MTU_V4_TAG = "MtuV4";
+    private static String sQueryNetworkAgentCommand = "dumpsys connectivity";
 
     // Setup data call result parameteres
     int mDataCallFailCause;
@@ -98,10 +103,25 @@ public class MockDataService {
     String mCuttlefishGatewayAddress;
     int mCuttlefishMtuV4;
     private final Object mDataCallListLock = new Object();
+    LinkAddress[] mImsLinkAddress;
+    LinkAddress[] mDefaultLinkAddress;
 
     public MockDataService(Context context) {
         mContext = context;
         initializeParameter();
+
+        try {
+            setDataCallListFromNetworkAgent();
+        } catch (Exception e) {
+            Log.e(TAG, "Exception error: " + e);
+        }
+    }
+
+    private void setDataCallListFromNetworkAgent() throws Exception {
+        String result =
+                TelephonyUtils.executeShellCommand(
+                        InstrumentationRegistry.getInstrumentation(), sQueryNetworkAgentCommand);
+        setBridgeTheDataConnection(result);
     }
 
     /* Default value definition */
@@ -117,6 +137,7 @@ public class MockDataService {
         this.mImsPcscf = new String[] {"192.168.66.100", "192.168.66.101"};
         this.mImsMtuV4 = 1280;
         this.mImsMtuV6 = 0;
+        this.mImsLinkAddress = new LinkAddress[1];
 
         this.mInternetType = PdpProtocolType.IP;
         this.mInternetIfname = "mock_network1";
@@ -125,6 +146,7 @@ public class MockDataService {
         this.mInternetGateways = new String[] {"0.0.0.0"};
         this.mInternetMtuV4 = 1280;
         this.mInternetMtuV6 = 0;
+        this.mDefaultLinkAddress = new LinkAddress[1];
 
         this.mAddressProperties = LinkAddress.ADDRESS_PROPERTY_NONE;
         this.mLaDeprecationTime = 0x7FFFFFFF;
@@ -145,7 +167,7 @@ public class MockDataService {
             mDataProfileInfo.clear();
             for (DataProfileInfo dp : dataProfilesInfo) {
                 mDataProfileInfo.add(dp);
-                Log.d(TAG, "setInitialAttachProfile: profileId=" + dp.profileId + ", " + dp.apn);
+                Log.d(TAG, "setDataProfileInfo: profileId=" + dp.profileId + ", " + dp.apn);
             }
             return result;
         }
@@ -163,7 +185,7 @@ public class MockDataService {
         return RadioError.INVALID_ARGUMENTS;
     }
 
-    SetupDataCallResult setupDataCall(int apnType) {
+    SetupDataCallResult setupDataCall(int apnType, int cid) {
         Log.d(TAG, "getNetwork: apnType= " + apnType);
 
         checkExistDataCall(apnType);
@@ -173,26 +195,35 @@ public class MockDataService {
         dc.suggestedRetryTime = this.mSuggestedRetryTime;
 
         dc.active = SetupDataCallResult.DATA_CONNECTION_STATUS_ACTIVE;
-        LinkAddress[] las = new LinkAddress[1];
-        LinkAddress la = new LinkAddress();
+        LinkAddress[] arrayLinkAddress = new LinkAddress[1];
+        LinkAddress linkAddress = new LinkAddress();
 
         switch (apnType) {
             case APN_TYPE_IMS:
-                dc.cid = 0;
+                dc.cid = cid;
                 dc.type = this.mImsType;
                 dc.ifname = this.mImsIfname;
-                la.address = this.mImsAddress;
-
+                linkAddress.address = this.mImsAddress;
+                linkAddress.addressProperties = this.mAddressProperties;
+                linkAddress.deprecationTime = this.mLaDeprecationTime;
+                linkAddress.expirationTime = this.mLaExpirationTime;
+                arrayLinkAddress[0] = linkAddress;
+                dc.addresses = this.mImsLinkAddress;
                 dc.gateways = this.mImsGateways;
                 dc.pcscf = this.mImsPcscf;
                 dc.mtuV4 = this.mImsMtuV4;
                 dc.mtuV6 = this.mImsMtuV6;
                 break;
             case APN_TYPE_DEFAULT:
-                dc.cid = 1;
+                dc.cid = cid;
                 dc.type = this.mInternetType;
                 dc.ifname = this.mInternetIfname;
-                la.address = this.mInternetAddress;
+                linkAddress.address = this.mInternetAddress;
+                linkAddress.addressProperties = this.mAddressProperties;
+                linkAddress.deprecationTime = this.mLaDeprecationTime;
+                linkAddress.expirationTime = this.mLaExpirationTime;
+                arrayLinkAddress[0] = linkAddress;
+                dc.addresses = this.mDefaultLinkAddress;
                 dc.dnses = this.mInternetDnses;
                 dc.gateways = this.mInternetGateways;
                 dc.mtuV4 = this.mInternetMtuV4;
@@ -203,23 +234,23 @@ public class MockDataService {
                 // constructor.
                 if (isCuttlefishInstance()) {
                     dc.ifname = getCuttlefishInterfaceName();
-                    las = new LinkAddress[1];
-                    la = new LinkAddress();
-                    la.address = getCuttlefishIpAddress();
+                    arrayLinkAddress = new LinkAddress[1];
+                    linkAddress = new LinkAddress();
+                    linkAddress.address = getCuttlefishIpAddress();
                     dc.dnses = new String[] {getCuttlefishDnsAddress()};
                     dc.gateways = new String[] {getCuttlefishGatewayAddress()};
                     dc.mtuV4 = getCuttlefishMtuV4();
+                    linkAddress.addressProperties = this.mAddressProperties;
+                    linkAddress.deprecationTime = this.mLaDeprecationTime;
+                    linkAddress.expirationTime = this.mLaExpirationTime;
+                    arrayLinkAddress[0] = linkAddress;
+                    dc.addresses = arrayLinkAddress;
                 }
                 break;
             default:
                 Log.d(TAG, "Unexpected APN type: " + apnType);
                 return new SetupDataCallResult();
         }
-        la.addressProperties = this.mAddressProperties;
-        la.deprecationTime = this.mLaDeprecationTime;
-        la.expirationTime = this.mLaExpirationTime;
-        las[0] = la;
-        dc.addresses = las;
         dc.defaultQos = this.mDefaultQos;
         dc.qosSessions = this.mQosSessions;
         dc.handoverFailureMode = this.mHandoverFailureMode;
@@ -367,6 +398,114 @@ public class MockDataService {
             Log.e(TAG, "Exception error: " + ex);
         }
         return value;
+    }
+
+    private String getInterfaceName(String string) {
+        String interfaceName = "";
+        try {
+            interfaceName = string.split("InterfaceName: ")[1].split(" LinkAddresses")[0];
+            Log.d(TAG, "getInterfaceName: " + interfaceName);
+        } catch (Exception e) {
+            Log.e(TAG, "Exception error: " + e);
+        }
+        return interfaceName;
+    }
+
+    private LinkAddress[] getIpAddress(String string) {
+        String[] ipaddress = new String[] {};
+        LinkAddress[] arrayLinkAddress = new LinkAddress[0];
+        try {
+            ipaddress =
+                    string.split("LinkAddresses: \\[ ")[1].split(" ] DnsAddresses")[0].split(",");
+            arrayLinkAddress = new LinkAddress[ipaddress.length];
+            for (int idx = 0; idx < ipaddress.length; idx++) {
+                if (ipaddress[idx].equals("LinkAddresses: [ ]")) {
+                    throw new Exception("Not valid ip address");
+                }
+                LinkAddress linkAddress = new LinkAddress();
+                linkAddress.address = ipaddress[idx];
+                linkAddress.addressProperties = this.mAddressProperties;
+                linkAddress.deprecationTime = this.mLaDeprecationTime;
+                linkAddress.expirationTime = this.mLaExpirationTime;
+                arrayLinkAddress[idx] = linkAddress;
+                Log.d(TAG, "getIpAddress:" + linkAddress.address);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Exception error: " + e);
+        }
+        return arrayLinkAddress;
+    }
+
+    private String[] getDnses(String string) {
+        String[] dnses = new String[] {};
+        try {
+            dnses =
+                    string.split("DnsAddresses: \\[ ")[1]
+                            .split(" ] Domains:")[0]
+                            .replace("/", "")
+                            .split(",");
+            Log.d(TAG, "getDnses: " + Arrays.toString(dnses));
+        } catch (Exception e) {
+            Log.e(TAG, "Exception error: " + e);
+        }
+        return dnses;
+    }
+
+    private String[] getGateways() {
+        return new String[] {"0.0.0.0"};
+    }
+
+    private int getMtu(String string) {
+        String mtu = "";
+        try {
+            mtu = string.split(" MTU: ")[1].split(" TcpBufferSizes:")[0];
+            Log.d(TAG, "getMtu: " + mtu);
+        } catch (Exception e) {
+            Log.e(TAG, "Exception error: " + e);
+        }
+        return Integer.valueOf(mtu);
+    }
+
+    private String[] getPcscf(String string) {
+        String[] pcscf = new String[] {};
+        try {
+            pcscf =
+                    string.split(" PcscfAddresses: \\[ ")[1]
+                            .split(" ] Domains:")[0]
+                            .replace("/", "")
+                            .split(",");
+            Log.e(TAG, "getPcscf: " + Arrays.toString(pcscf));
+        } catch (Exception e) {
+            Log.e(TAG, "Exception error: " + e);
+        }
+        return pcscf;
+    }
+
+    public synchronized void setBridgeTheDataConnection(String string) {
+        try {
+            String[] lines = string.split("NetworkAgentInfo");
+            for (String str : lines) {
+                if (str.contains(" extra: internet")) {
+                    Log.d(TAG, "[internet]:" + str);
+                    this.mInternetIfname = getInterfaceName(str);
+                    this.mDefaultLinkAddress = getIpAddress(str);
+                    this.mInternetDnses = getDnses(str);
+                    this.mInternetGateways = getGateways();
+                    this.mInternetMtuV4 = getMtu(str);
+                    this.mInternetMtuV6 = getMtu(str);
+                } else if (str.contains(" extra: ims")) {
+                    Log.d(TAG, "[ims]:" + str);
+                    this.mImsIfname = getInterfaceName(str);
+                    this.mImsLinkAddress = getIpAddress(str);
+                    this.mImsGateways = getGateways();
+                    this.mImsPcscf = getPcscf(str);
+                    this.mImsMtuV4 = getMtu(str);
+                    this.mImsMtuV6 = getMtu(str);
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Exception error: [No NetworkAgentInfo]" + e);
+        }
     }
 
     public synchronized void setDataCallFailCause(int failcause) {

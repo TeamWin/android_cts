@@ -43,6 +43,7 @@ import java.security.KeyStore;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.nio.charset.StandardCharsets;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -317,24 +318,13 @@ public class Utils {
     }
 
     /**
-     * Retrieves AIDL HAL declared instances.
-     * {@link ServiceManager#getDeclaredInstances()}
+     * Retrieves AIDL HAL through `adb shell dumpsys fingerprint`
      *
-     * @param descriptor The descriptor of AIDL HAL.
-     * @return List of declared AIDL HAL instances on the device, otherwise null.
+     * @return true if there is AIDL HAL, false otherwise
      */
-    @Nullable
-    public static String[] getDeclaredInstancesFromServiceManager(String descriptor) {
-        String[] instances;
-        try {
-            instances = (String[]) Class.forName("android.os.ServiceManager").getDeclaredMethod(
-                    "getDeclaredInstances", String.class).invoke(null, descriptor);
-        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException
-                | InvocationTargetException e) {
-            e.printStackTrace();
-            Log.d(TAG, "Can not get declared AIDL instance " + descriptor);
-            return null;
-        }
-        return instances;
+    public static boolean hasAidlProvider() {
+        final byte[] dump = executeShellCommand("dumpsys fingerprint");
+        String fingerprintDump = new String(dump, StandardCharsets.UTF_8);
+        return fingerprintDump.contains("provider: FingerprintProvider");
     }
 }

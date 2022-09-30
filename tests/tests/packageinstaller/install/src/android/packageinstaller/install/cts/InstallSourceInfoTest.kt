@@ -22,12 +22,13 @@ import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager.MATCH_DEFAULT_ONLY
 import android.net.Uri
 import android.platform.test.annotations.AppModeFull
+import android.support.test.uiautomator.UiDevice
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
+import java.util.concurrent.TimeUnit
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.concurrent.TimeUnit
 
 private const val INSTALL_BUTTON_ID = "button1"
 
@@ -37,6 +38,7 @@ class InstallSourceInfoTest : PackageInstallerTestBase() {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val pm = context.packageManager
     private val ourPackageName = context.packageName
+    private val uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
     @Test
     fun installViaIntent() {
@@ -54,6 +56,19 @@ class InstallSourceInfoTest : PackageInstallerTestBase() {
         assertThat(info.getInstallingPackageName()).isEqualTo(packageInstallerPackageName)
         assertThat(info.getInitiatingPackageName()).isEqualTo(packageInstallerPackageName)
         assertThat(info.getOriginatingPackageName()).isNull()
+    }
+
+    @Test
+    fun installViaAdb() {
+        assumeNotWatch()
+
+        uiDevice.executeShellCommand("pm install $TEST_APK_EXTERNAL_LOCATION/$TEST_APK_NAME")
+
+        val info = pm.getInstallSourceInfo(TEST_APK_PACKAGE_NAME)
+        assertThat(info.installingPackageName).isNull()
+        assertThat(info.initiatingPackageName).isNull()
+        assertThat(info.originatingPackageName).isNull()
+        assertThat(info.packageSource).isEqualTo(PackageInstaller.PACKAGE_SOURCE_OTHER)
     }
 
     @Test

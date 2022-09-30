@@ -711,5 +711,8 @@
                   android:resizeableActivity="false"
                   android:screenOrientation="portrait"
                   android:exported="true"/>
+        <activity android:name=".WallpaperTargetActivity"
+                  android:configChanges="@integer/config_changes_assets_paths"
+                  android:exported="true"/>
     </application>
 </manifest>

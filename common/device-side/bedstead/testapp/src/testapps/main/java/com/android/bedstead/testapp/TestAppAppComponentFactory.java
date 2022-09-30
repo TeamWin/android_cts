@@ -19,6 +19,7 @@ package com.android.bedstead.testapp;
 import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.AppComponentFactory;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.app.admin.DevicePolicyManager;
 import android.bluetooth.BluetoothAdapter;
@@ -57,7 +58,8 @@ import com.android.eventlib.premade.EventLibService;
                 @FrameworkClass(frameworkClass = ContentResolver.class, constructor = "context.getContentResolver()"),
                 @FrameworkClass(frameworkClass = BluetoothManager.class, constructor = "context.getSystemService(android.bluetooth.BluetoothManager.class)"),
                 @FrameworkClass(frameworkClass = BluetoothAdapter.class, constructor = "context.getSystemService(android.bluetooth.BluetoothManager.class).getAdapter()"),
-                @FrameworkClass(frameworkClass = KeyChain.class, constructor = "null") // KeyChain can not be instantiated - all calls are static
+                @FrameworkClass(frameworkClass = KeyChain.class, constructor = "null"), // KeyChain can not be instantiated - all calls are static
+                @FrameworkClass(frameworkClass = NotificationManager.class, constructor = "context.getSystemService(android.app.NotificationManager.class)")
         }
 )
 public final class TestAppAppComponentFactory extends AppComponentFactory {

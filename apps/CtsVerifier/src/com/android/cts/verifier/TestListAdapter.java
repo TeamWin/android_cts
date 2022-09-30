@@ -481,6 +481,9 @@ public abstract class TestListAdapter extends BaseAdapter {
 
     @Override
     public int getItemViewType(int position) {
+        if (getItem(position) == null) {
+            return CATEGORY_HEADER_VIEW_TYPE;
+        }
         return getItem(position).isTest() ? TEST_VIEW_TYPE : CATEGORY_HEADER_VIEW_TYPE;
     }
 
@@ -650,6 +653,11 @@ public abstract class TestListAdapter extends BaseAdapter {
         }
 
         TestListItem item = getItem(position);
+
+        if (item == null) {
+            return textView;
+        }
+
         textView.setText(item.title);
         textView.setPadding(PADDING, 0, PADDING, 0);
         textView.setCompoundDrawablePadding(PADDING);

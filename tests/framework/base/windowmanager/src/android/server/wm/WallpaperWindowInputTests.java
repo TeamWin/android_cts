@@ -16,35 +16,28 @@
 
 package android.server.wm;
 
+import static android.server.wm.CliIntentExtra.extraBool;
 import static android.server.wm.app.Components.TestInteractiveLiveWallpaperKeys.COMPONENT;
 import static android.server.wm.app.Components.TestInteractiveLiveWallpaperKeys.LAST_RECEIVED_MOTION_EVENT;
-import static android.view.WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER;
-
-import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+import static android.server.wm.app.Components.WALLPAPER_TARGET_ACTIVITY;
+import static android.server.wm.app.Components.WallpaperTargetActivity.EXTRA_ENABLE_WALLPAPER_TOUCH;
+import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 
-import android.app.Activity;
-import android.app.Instrumentation;
-import android.app.WallpaperManager;
+import android.graphics.Rect;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.app.Components;
 import android.view.InputDevice;
 import android.view.MotionEvent;
-import android.view.View;
-import android.view.WindowManager;
-
-import androidx.test.core.app.ActivityScenario;
 
 import com.android.compatibility.common.util.PollingCheck;
-import com.android.compatibility.common.util.SystemUtil;
 
 import junit.framework.AssertionFailedError;
 
-import org.junit.Before;
 import org.junit.Test;
 
 
@@ -55,35 +48,21 @@ import org.junit.Test;
  * atest CtsWindowManagerDeviceTestCases:WallpaperWindowInputTests
  */
 @Presubmit
-public class WallpaperWindowInputTests {
+public class WallpaperWindowInputTests extends ActivityManagerTestBase {
     private static final String TAG = "WallpaperWindowInputTests";
 
-    private Instrumentation mInstrumentation;
-    private Activity mActivity;
     private MotionEvent mLastMotionEvent;
-
-    @Before
-    public void setUp() {
-        mInstrumentation = getInstrumentation();
-        ActivityScenario.launch(Activity.class).onActivity((activity) -> mActivity = activity);
-        mInstrumentation.waitForIdleSync();
-
-        SystemUtil.runWithShellPermissionIdentity(() ->
-                WallpaperManager.getInstance(mActivity).setWallpaperComponent(
-                        Components.TEST_INTERACTIVE_LIVE_WALLPAPER_SERVICE));
-    }
 
     @Test
     public void testShowWallpaper_withTouchEnabled() {
-        // Set up wallpaper in window.
-        mActivity.runOnUiThread(() -> {
-            WindowManager.LayoutParams p = mActivity.getWindow().getAttributes();
-            p.flags |= FLAG_SHOW_WALLPAPER;
-            mActivity.getWindow().setAttributes(p);
-        });
-        mInstrumentation.waitForIdleSync();
+        final ChangeWallpaperSession wallpaperSession = createManagedChangeWallpaperSession();
+        wallpaperSession.setWallpaperComponent(Components.TEST_INTERACTIVE_LIVE_WALLPAPER_SERVICE);
+
+        launchActivity(WALLPAPER_TARGET_ACTIVITY, extraBool(EXTRA_ENABLE_WALLPAPER_TOUCH, true));
+        mWmState.waitAndAssertWindowShown(TYPE_WALLPAPER, true);
         TestJournalProvider.TestJournalContainer.start();
-        MotionEvent motionEvent = getDownEventForViewCenter(mActivity.getWindow().getDecorView());
+        final WindowManagerState.Task task = mWmState.getTaskByActivity(WALLPAPER_TARGET_ACTIVITY);
+        MotionEvent motionEvent = getDownEventForTaskCenter(task);
         mInstrumentation.getUiAutomation().injectInputEvent(motionEvent, true, true);
 
         PollingCheck.waitFor(2000 /* timeout */, this::updateLastMotionEventFromTestJournal,
@@ -95,17 +74,15 @@ public class WallpaperWindowInputTests {
 
     @Test
     public void testShowWallpaper_withWallpaperTouchDisabled() {
-        // Set up wallpaper in window.
-        mActivity.runOnUiThread(() -> {
-            WindowManager.LayoutParams p = mActivity.getWindow().getAttributes();
-            p.flags |= FLAG_SHOW_WALLPAPER;
-            p.setWallpaperTouchEventsEnabled(false /* enable */);
-            mActivity.getWindow().setAttributes(p);
-        });
-        mInstrumentation.waitForIdleSync();
+        final ChangeWallpaperSession wallpaperSession = createManagedChangeWallpaperSession();
+        wallpaperSession.setWallpaperComponent(Components.TEST_INTERACTIVE_LIVE_WALLPAPER_SERVICE);
+
+        launchActivity(WALLPAPER_TARGET_ACTIVITY, extraBool(EXTRA_ENABLE_WALLPAPER_TOUCH, false));
+        mWmState.waitAndAssertWindowShown(TYPE_WALLPAPER, true);
 
         TestJournalProvider.TestJournalContainer.start();
-        MotionEvent motionEvent = getDownEventForViewCenter(mActivity.getWindow().getDecorView());
+        final WindowManagerState.Task task = mWmState.getTaskByActivity(WALLPAPER_TARGET_ACTIVITY);
+        MotionEvent motionEvent = getDownEventForTaskCenter(task);
         mInstrumentation.getUiAutomation().injectInputEvent(motionEvent, true, true);
 
         final String failMsg = "Waiting for wallpaper to receive the touch events";
@@ -127,12 +104,11 @@ public class WallpaperWindowInputTests {
         return mLastMotionEvent != null;
     }
 
-    private static MotionEvent getDownEventForViewCenter(View view) {
+    private static MotionEvent getDownEventForTaskCenter(WindowManagerState.Task task) {
         // Get anchor coordinates on the screen
-        final int[] viewOnScreenXY = new int[2];
-        view.getLocationOnScreen(viewOnScreenXY);
-        int xOnScreen = viewOnScreenXY[0] + view.getWidth() / 2;
-        int yOnScreen = viewOnScreenXY[1] + view.getHeight() / 2;
+        final Rect bounds = task.getBounds();
+        int xOnScreen = bounds.width() / 2;
+        int yOnScreen = bounds.height() / 2;
         final long downTime = SystemClock.uptimeMillis();
 
         MotionEvent eventDown = MotionEvent.obtain(

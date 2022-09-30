@@ -84,6 +84,7 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.NewUserRequest;
 import android.os.Parcel;
+import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.RemoteException;
 import android.os.SystemClock;
@@ -114,7 +115,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -2028,6 +2032,23 @@ public class ActivityManagerTest {
                 PermissionUtils.revokePermission(
                         STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
             }
+        }
+    }
+
+    @Test
+    public void testObserveForegroundProcess() throws Exception {
+        final ParcelFileDescriptor[] pfds = InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().executeShellCommandRw("am observe-foreground-process");
+        final ParcelFileDescriptor stdOut = pfds[0];
+        try (InputStream in = new ParcelFileDescriptor.AutoCloseInputStream(stdOut)) {
+            final BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+            final Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.setClassName(SIMPLE_PACKAGE_NAME, SIMPLE_PACKAGE_NAME + SIMPLE_ACTIVITY);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mTargetContext.startActivity(intent);
+            final String result = reader.readLine();
+            final int topPid = getRunningAppProcessInfo(SIMPLE_PACKAGE_NAME).pid;
+            assertEquals(result, "New foreground process: " + topPid);
         }
     }
 

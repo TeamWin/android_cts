@@ -30,6 +30,8 @@ import com.android.interactive.annotations.AutomationFor;
 public class NavigateToDeviceAdminAppsSectionStepAutomation implements Automation<Nothing> {
     @Override
     public Nothing automate() throws Throwable {
+        TestApis.ui().device(); // Initialise UiAutomation
+
         // Move to "Advanced Settings"
         UiScrollable settingsItem = new UiScrollable(new UiSelector()
                 .className("androidx.recyclerview.widget.RecyclerView"));

@@ -424,7 +424,8 @@ def procrustes_rotation(x, y):
   return np.dot(vt.T, u.T)
 
 
-def get_cam_rotations(frames, facing, h, file_name_stem, start_frame):
+def get_cam_rotations(frames, facing, h, file_name_stem,
+                      start_frame, stabilized_video=False):
   """Get the rotations of the camera between each pair of frames.
 
   Takes N frames and returns N-1 angular displacements corresponding to the
@@ -433,7 +434,7 @@ def get_cam_rotations(frames, facing, h, file_name_stem, start_frame):
   rolling shutter effect.
   Requires FEATURE_PTS_MIN to have enough data points for accurate measurements.
   Uses FEATURE_PARAMS for cv2 to identify features in checkerboard images.
-  Ensures camera rotates enough.
+  Ensures camera rotates enough if not calling with stabilized video.
 
   Args:
     frames: List of N images (as RGB numpy arrays).
@@ -441,6 +442,7 @@ def get_cam_rotations(frames, facing, h, file_name_stem, start_frame):
     h: Pixel height of each frame.
     file_name_stem: file name stem including location for data.
     start_frame: int; index to start at
+    stabilized_video: Boolean; if called with stabilized video
 
   Returns:
     numpy array of N-1 camera rotation measurements (rad).
@@ -517,9 +519,12 @@ def get_cam_rotations(frames, facing, h, file_name_stem, start_frame):
   rot_per_frame_max = max(abs(rotations))
   logging.debug('Max rotation in frame: %.2f degrees',
                 rot_per_frame_max*_RADS_TO_DEGS)
-  if rot_per_frame_max < _ROTATION_PER_FRAME_MIN:
+  if rot_per_frame_max < _ROTATION_PER_FRAME_MIN and not stabilized_video:
+    logging.debug('Checking camera rotations on video.')
     raise AssertionError(f'Device not moved enough: {rot_per_frame_max:.3f} '
                          f'movement. THRESH: {_ROTATION_PER_FRAME_MIN} rads.')
+  else:
+    logging.debug('Skipped camera rotation check due to stabilized video.')
   return rotations
 
 

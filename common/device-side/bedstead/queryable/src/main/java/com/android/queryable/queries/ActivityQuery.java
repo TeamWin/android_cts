@@ -25,8 +25,9 @@ import com.android.queryable.info.ActivityInfo;
 /** Query for an {@link Activity}. */
 public interface ActivityQuery<E extends Queryable> extends Query<ActivityInfo>  {
 
-    static ActivityQuery<ActivityQuery<?>> activity() {
-        return new ActivityQueryHelper<>();
+    /** Create a {@link ActivityQueryHelper}*/
+    static ActivityQueryHelper.ActivityQueryHelperRecursive activity() {
+        return new ActivityQueryHelper.ActivityQueryHelperRecursive();
     }
 
     ClassQuery<E> activityClass();

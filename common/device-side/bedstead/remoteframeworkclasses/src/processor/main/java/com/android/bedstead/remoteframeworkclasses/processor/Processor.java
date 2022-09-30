@@ -89,7 +89,8 @@ public final class Processor extends AbstractProcessor {
             "android.content.ContentResolver",
             "android.security.KeyChain",
             "android.bluetooth.BluetoothManager",
-            "android.bluetooth.BluetoothAdapter"
+            "android.bluetooth.BluetoothAdapter",
+            "android.app.NotificationManager"
     };
 
     private static final String PARENT_PROFILE_INSTANCE =

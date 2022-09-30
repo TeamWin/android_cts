@@ -83,6 +83,10 @@ java_genrule_host {
         "sepolicy_tests",
         "treble_sepolicy_tests",
     ],
+    tool_files: [
+        ":apex_sepolicy-33.cil",
+        ":apex_sepolicy-33.decompiled.cil",
+    ],
     out: ["CtsSecurityHostTestCases_StaticLibs.jar"],
     cmd: "$(location soong_zip) -jar -o $(location CtsSecurityHostTestCases_StaticLibs.jar) -j " +
         "-f $(location checkseapp) " +
@@ -93,5 +97,7 @@ java_genrule_host {
         "-f $(location secilc) " +
         "-f $(location sepolicy-analyze) " +
         "-f $(location sepolicy_tests) " +
-        "-f $(location treble_sepolicy_tests)",
+        "-f $(location treble_sepolicy_tests) " +
+        "-f $(location :apex_sepolicy-33.cil) " +
+        "-f $(location :apex_sepolicy-33.decompiled.cil)",
 }

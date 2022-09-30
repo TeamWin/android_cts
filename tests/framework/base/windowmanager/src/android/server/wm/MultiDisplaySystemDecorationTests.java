@@ -19,9 +19,6 @@ package android.server.wm;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.server.wm.BarTestUtils.assumeHasBars;
 import static android.server.wm.MockImeHelper.createManagedMockImeSession;
-import static android.server.wm.UiDeviceUtils.pressSleepButton;
-import static android.server.wm.UiDeviceUtils.pressUnlockButton;
-import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.HOME_ACTIVITY;
 import static android.server.wm.app.Components.SECONDARY_HOME_ACTIVITY;
@@ -52,7 +49,6 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
-import android.app.WallpaperManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -60,8 +56,6 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -163,50 +157,6 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         assertFalse("Wallpaper must not be displayed on the untrusted display",
                 isWallpaperOnDisplay(mWmState, untrustedDisplay.mId));
-    }
-
-    private ChangeWallpaperSession createManagedChangeWallpaperSession() {
-        return mObjectTracker.manage(new ChangeWallpaperSession());
-    }
-
-    private class ChangeWallpaperSession implements AutoCloseable {
-        private final WallpaperManager mWallpaperManager;
-        private Bitmap mTestBitmap;
-
-        public ChangeWallpaperSession() {
-            mWallpaperManager = WallpaperManager.getInstance(mContext);
-        }
-
-        public Bitmap getTestBitmap() {
-            if (mTestBitmap == null) {
-                mTestBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
-                final Canvas canvas = new Canvas(mTestBitmap);
-                canvas.drawColor(Color.BLUE);
-            }
-            return mTestBitmap;
-        }
-
-        public void setImageWallpaper(Bitmap bitmap) {
-            SystemUtil.runWithShellPermissionIdentity(() ->
-                    mWallpaperManager.setBitmap(bitmap));
-        }
-
-        public void setWallpaperComponent(ComponentName componentName) {
-            SystemUtil.runWithShellPermissionIdentity(() ->
-                    mWallpaperManager.setWallpaperComponent(componentName));
-        }
-
-        @Override
-        public void close() {
-            SystemUtil.runWithShellPermissionIdentity(() -> mWallpaperManager.clearWallpaper());
-            if (mTestBitmap != null) {
-                mTestBitmap.recycle();
-            }
-            // Turning screen off/on to flush deferred color events due to wallpaper changed.
-            pressSleepButton();
-            pressWakeupButton();
-            pressUnlockButton();
-        }
     }
 
     private boolean isWallpaperOnDisplay(WindowManagerState windowManagerState, int displayId) {

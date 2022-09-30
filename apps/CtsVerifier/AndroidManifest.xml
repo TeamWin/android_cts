@@ -5214,17 +5214,6 @@
                        android:value="single_display_mode" />
         </activity>
 
-        <activity android:name=".managedprovisioning.WorkStatusTestActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.android.cts.verifier.managedprovisioning.WORK_STATUS_ICON" />
-                <action android:name="com.android.cts.verifier.managedprovisioning.WORK_STATUS_TOAST" />
-                <category android:name="android.intent.category.DEFAULT"></category>
-            </intent-filter>
-            <meta-data android:name="display_mode"
-                       android:value="single_display_mode" />
-        </activity>
-
         <activity android:name=".managedprovisioning.TurnOffWorkActivity"
                   android:label="@string/provisioning_byod_turn_off_work">
             <meta-data android:name="display_mode"

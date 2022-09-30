@@ -408,6 +408,14 @@ public class TestAppInstanceTest {
     }
 
     @Test
+    public void notificationManager_returnsUsableInstance() {
+        try (TestAppInstance testAppInstance = sTestApp.install();
+             PermissionContext p = testAppInstance.permissions().withPermission(BLUETOOTH_CONNECT)) {
+            testAppInstance.notificationManager().areNotificationsEnabled();
+        }
+    }
+
+    @Test
     public void bluetoothManager_getAdapter_returnsUsableInstance() {
         try (TestAppInstance testAppInstance = sTestApp.install()) {
             // No exception

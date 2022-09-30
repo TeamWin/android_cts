@@ -186,7 +186,7 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
         file_name_stem = f'{os.path.join(log_path, _NAME)}_{video_quality}'
         cam_rots = sensor_fusion_utils.get_cam_rotations(
             frames[_START_FRAME:len(frames)], facing, img_h,
-            file_name_stem, _START_FRAME)
+            file_name_stem, _START_FRAME, stabilized_video=True)
         sensor_fusion_utils.plot_camera_rotations(
             cam_rots, _START_FRAME, video_quality, file_name_stem)
         max_camera_angles.append(sensor_fusion_utils.calc_max_rotation_angle(

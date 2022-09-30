@@ -27,6 +27,7 @@ import android.hardware.soundtrigger.SoundTrigger.KeyphraseRecognitionExtra;
 import android.media.AudioFormat;
 import android.os.ConditionVariable;
 import android.os.ServiceSpecificException;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
@@ -56,6 +57,7 @@ import java.time.Duration;
 import java.util.Locale;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "No real use case for instant mode hotword detector")
 public class VoiceInteractionMultiDetectorTest {
     private static final String TAG = VoiceInteractionMultiDetectorTest.class.getSimpleName();
     private static final Duration TEST_SERVICE_TIMEOUT = Duration.ofSeconds(3);

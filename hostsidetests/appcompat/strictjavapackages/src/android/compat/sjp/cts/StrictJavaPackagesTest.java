@@ -236,6 +236,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Landroid/app/sdksandbox/ILoadSdkCallback;",
                     "Landroid/app/sdksandbox/IRequestSurfacePackageCallback;",
                     "Landroid/app/sdksandbox/ISdkSandboxManager;",
+                    "Landroid/app/sdksandbox/ISdkSandboxLifecycleCallback;",
                     "Landroid/app/sdksandbox/ISdkSandboxProcessDeathCallback;",
                     "Landroid/app/sdksandbox/ISendDataCallback;",
                     "Landroid/app/sdksandbox/ISharedPreferencesSyncCallback;",

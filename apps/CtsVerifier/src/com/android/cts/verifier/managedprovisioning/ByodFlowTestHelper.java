@@ -63,7 +63,6 @@ public class ByodFlowTestHelper {
     private void setComponentsEnabledState(final int enabledState) {
         final String[] components = {
                 ByodHelperActivity.class.getName(),
-                WorkStatusTestActivity.class.getName(),
                 PermissionLockdownTestActivity.ACTIVITY_ALIAS,
                 AuthenticationBoundKeyTestActivity.class.getName(),
                 VpnTestActivity.class.getName(),

@@ -26,7 +26,14 @@ import com.android.queryable.info.ActivityInfo;
 import java.util.Objects;
 
 /** Implementation of {@link ActivityQuery}. */
-public final class ActivityQueryHelper<E extends Queryable> implements ActivityQuery<E> {
+public class ActivityQueryHelper<E extends Queryable> implements ActivityQuery<E> {
+
+    public static class ActivityQueryHelperRecursive
+            extends ActivityQueryHelper<ActivityQueryHelper.ActivityQueryHelperRecursive> {
+        ActivityQueryHelperRecursive() {
+            super();
+        }
+    }
 
     private final transient E mQuery;
     private final ClassQueryHelper<E> mActivityClassQueryHelper;

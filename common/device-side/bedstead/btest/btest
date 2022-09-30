@@ -283,6 +283,7 @@ def get_args():
     parser.add_argument("-t", "--test", action='store_true', help="Builds test targets. (default)")
     parser.add_argument("-d", "--debug", action="store_true", help="Include debug output.")
     parser.add_argument("-s", "--states", help="Specify states which should be included. Options are (c)urrent (s)ystem secondar(y), (w)ork profile. Defaults to all states.")
+    parser.add_argument("-n", "--interactive", action='store', nargs='?', default="disabled", help="Run interactive tests. This will exclude non-interactive tests and will enable manual testing")
     args = parser.parse_args()
     if not args.build and not args.install and not args.test:
         args.build = True
@@ -298,6 +299,25 @@ def get_args():
             print("State " + state + " is invalid, must be one of " + str(valid_states))
             sys.exit(1)
     args.states = [STATE_CODES[a] for a in args.states]
+
+    if not args.interactive:
+        args.interactive = ""
+
+    if args.interactive == "disabled":
+        args.interactive = False
+    else:
+        args.build_interactive = False
+        args.install_interactive = False
+        valid_instructions = ["b", "i"]
+        for instruction in args.interactive:
+            if instruction == "b":
+                args.build_interactive = True
+            elif instruction =="i":
+                args.install_interactive = True
+            else:
+                print("Instruction " + instruction + " is invalid, must be one of " + str(valid_instructions))
+                sys.exit(1)
+
 
     load_module_and_class_method(args)
 
@@ -318,20 +338,32 @@ def load_module_and_class_method(args):
             sys.exit(1)
 
 def build_module(args):
-    print("Building module " + args.module)
     build_top = os.environ["ANDROID_BUILD_TOP"]
     # Unfortunately I haven't figured out a way to just import the envsetup so we need to run it each time
     command = ". " + build_top + "/build/envsetup.sh && m " + args.module
 
     for target in supported_modules[args.module].get(ADDITIONAL_TARGETS, []):
         command += " && m " + target
+
+    if args.interactive and args.build_interactive:
+        command += " && m InteractiveAutomation"
+
     debug(args, "[Build] Executing '" + command + "'")
     subprocess.run(command, text=True, shell=True, executable="/bin/bash")
 
+
+
+
+
 def install(args):
     out = os.environ["OUT"]
-    command = ["adb install --user all -t -g " + out + "/testcases/" + args.module + "/*/" + args.module + ".apk"]
-    execute_shell_command("Install", args, command, shell=True, executable="/bin/bash")
+    if args.install:
+        command = ["adb install --user all -t -g " + out + "/testcases/" + args.module + "/*/" + args.module + ".apk"]
+        execute_shell_command("Install", args, command, shell=True, executable="/bin/bash")
+
+    if args.interactive and args.install_interactive:
+        command = ["adb push " + out + "/system/app/InteractiveAutomation/InteractiveAutomation.apk /sdcard"]
+        execute_shell_command("Install", args, command, shell=True, executable="/bin/bash")
 
     for additional_app in supported_modules[args.module].get(ADDITIONAL_APPS, []):
         command = ["adb install --user all -t -g " + out + "/testcases/" + additional_app[TARGET_NAME] + "/*/" + additional_app[TARGET_NAME] + ".apk"]
@@ -354,11 +386,16 @@ class Test:
         self.next_test = next_test
         self.btest_run = btest_run
         self.test_results = {}
-        self.include_annotations = include_annotations
-        self.exclude_annotations = exclude_annotations
+        self.include_annotations = include_annotations.copy()
+        self.exclude_annotations = exclude_annotations.copy()
         self.has_no_tests = False # Marked at the end of the test if there were no new tests
         self.has_loaded_total_test_count = False # Used to ensure we don't double count test counts
         self.has_later_states = has_later_states # True if we don't know the full number of tests because we'll be running more states later
+
+        if self.args.interactive:
+            self.include_annotations.append("com.android.interactive.annotations.Interactive")
+        else:
+            self.exclude_annotations.append("com.android.interactive.annotations.Interactive")
 
     def run(self):
         command = "adb shell am instrument --user " + str(self.state.get_user())
@@ -371,6 +408,9 @@ class Test:
 
         if self.exclude_annotations:
             command += " -e notAnnotation " + ",".join(self.exclude_annotations)
+
+        if self.args.interactive:
+            command += " -e ENABLE_MANUAL true"
 
         if self.args.class_method:
             if self.args.class_method.endswith("*"):
@@ -622,11 +662,9 @@ def get_current_user(args):
 def main():
     args = get_args()
 
-    if args.build:
-        build_module(args)
+    build_module(args)
 
-    if args.install:
-        install(args)
+    install(args)
 
     if args.test:
         test = None

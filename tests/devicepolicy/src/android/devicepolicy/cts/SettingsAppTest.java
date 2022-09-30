@@ -22,6 +22,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.compatibility.common.util.CddTest;
 import com.android.interactive.Step;
 import com.android.interactive.annotations.Interactive;
@@ -77,12 +78,16 @@ public final class SettingsAppTest {
     }
 
     @Test
+    @EnsureHasNoDeviceOwner
     @EnsureHasWorkProfile
     @Interactive
     // TODO(b/221134166): Annotate correct Cdd requirement
     // Available Device Admin not in the managed profile
     @EnsureTestAppInstalled(packageName = "com.android.bedstead.testapp.DeviceAdminTestApp")
     public void deviceAdminSettings_correctlyListsManagedProfileAndNonManagedProfileAdmins() {
+        // Remove RemoteDPC from the primary user so only one entry is listed
+        sDeviceState.dpc().testApp().pkg().uninstall(sDeviceState.primaryUser());
+
         // Launch Security settings in work settings app
         Step.execute(NavigateToWorkSecuritySettingsStep.class);
 

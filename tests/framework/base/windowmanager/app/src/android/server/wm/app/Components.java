@@ -224,6 +224,9 @@ public class Components extends ComponentsBase {
     public static final ComponentName CLICKABLE_TOAST_ACTIVITY =
             component("ClickableToastActivity");
 
+    public static final ComponentName WALLPAPER_TARGET_ACTIVITY =
+            component("WallpaperTargetActivity");
+
     public static class LaunchBroadcastReceiver {
         public static final String LAUNCH_BROADCAST_ACTION =
                 "android.server.wm.app.LAUNCH_BROADCAST_ACTION";
@@ -731,6 +734,9 @@ public class Components extends ComponentsBase {
         public static final String COMMAND_UPDATE_RESOURCES_CONFIG = "update_resources_config";
     }
 
+    public static class WallpaperTargetActivity {
+        public static final String EXTRA_ENABLE_WALLPAPER_TOUCH = "enable_wallpaper_touch";
+    }
     private static ComponentName component(String className) {
         return component(Components.class, className);
     }

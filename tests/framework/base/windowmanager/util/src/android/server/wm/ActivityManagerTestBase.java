@@ -130,6 +130,7 @@ import android.app.ActivityOptions;
 import android.app.ActivityTaskManager;
 import android.app.Instrumentation;
 import android.app.KeyguardManager;
+import android.app.WallpaperManager;
 import android.app.WindowConfiguration;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -140,6 +141,8 @@ import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.database.ContentObserver;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.hardware.display.AmbientDisplayConfiguration;
 import android.hardware.display.DisplayManager;
@@ -1936,6 +1939,49 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
+    protected ChangeWallpaperSession createManagedChangeWallpaperSession() {
+        return mObjectTracker.manage(new ChangeWallpaperSession());
+    }
+
+    protected class ChangeWallpaperSession implements AutoCloseable {
+        private final WallpaperManager mWallpaperManager;
+        private Bitmap mTestBitmap;
+
+        public ChangeWallpaperSession() {
+            mWallpaperManager = WallpaperManager.getInstance(mContext);
+        }
+
+        public Bitmap getTestBitmap() {
+            if (mTestBitmap == null) {
+                mTestBitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+                final Canvas canvas = new Canvas(mTestBitmap);
+                canvas.drawColor(Color.BLUE);
+            }
+            return mTestBitmap;
+        }
+
+        public void setImageWallpaper(Bitmap bitmap) {
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    mWallpaperManager.setBitmap(bitmap));
+        }
+
+        public void setWallpaperComponent(ComponentName componentName) {
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    mWallpaperManager.setWallpaperComponent(componentName));
+        }
+
+        @Override
+        public void close() {
+            SystemUtil.runWithShellPermissionIdentity(() -> mWallpaperManager.clearWallpaper());
+            if (mTestBitmap != null) {
+                mTestBitmap.recycle();
+            }
+            // Turning screen off/on to flush deferred color events due to wallpaper changed.
+            pressSleepButton();
+            pressWakeupButton();
+            pressUnlockButton();
+        }
+    }
     /**
      * Returns whether the test device respects settings of locked user rotation mode.
      *

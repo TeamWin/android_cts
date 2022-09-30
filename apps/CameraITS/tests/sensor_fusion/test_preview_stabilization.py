@@ -192,6 +192,7 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
             img_h,
             file_name_stem,
             _START_FRAME,
+            stabilized_video=True
         )
         sensor_fusion_utils.plot_camera_rotations(cam_rots, _START_FRAME,
                                                   video_size, file_name_stem)

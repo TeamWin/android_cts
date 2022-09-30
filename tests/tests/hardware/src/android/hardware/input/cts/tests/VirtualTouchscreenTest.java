@@ -81,6 +81,40 @@ public class VirtualTouchscreenTest extends VirtualDeviceTestCase {
                         /* pressure= */ 1f, /* size= */ computedSize, /* axisSize= */ inputSize)));
     }
 
+    @Test
+    public void sendHoverEvents() {
+        final float x0 = 50f, y0 = 50f;
+        final float x1 = 60f, y1 = 60f;
+
+        sendHoverEvent(VirtualTouchEvent.ACTION_DOWN, x0, y0);
+        sendHoverEvent(VirtualTouchEvent.ACTION_MOVE, x0, y1);
+        sendHoverEvent(VirtualTouchEvent.ACTION_MOVE, x1, y1);
+        sendHoverEvent(VirtualTouchEvent.ACTION_UP, x1, y1);
+
+        verifyEvents(Arrays.asList(
+                createMotionEvent(MotionEvent.ACTION_HOVER_ENTER, x0, y0),
+                createMotionEvent(MotionEvent.ACTION_HOVER_MOVE, x0, y0),
+                createMotionEvent(MotionEvent.ACTION_HOVER_MOVE, x0, y1),
+                createMotionEvent(MotionEvent.ACTION_HOVER_MOVE, x1, y1),
+                createMotionEvent(MotionEvent.ACTION_HOVER_EXIT, x1, y1)));
+    }
+
+    private void sendHoverEvent(int action, float x, float y) {
+        mVirtualTouchscreen.sendTouchEvent(new VirtualTouchEvent.Builder()
+                .setAction(action)
+                .setPointerId(1)
+                .setX(x)
+                .setY(y)
+                .setPressure(0f)
+                .setToolType(VirtualTouchEvent.TOOL_TYPE_FINGER)
+                .build());
+    }
+
+    private MotionEvent createMotionEvent(int action, float x, float y) {
+        return createMotionEvent(action, x, y, /* pressure= */ 0f, /* size= */ 0f,
+                /* axisSize= */ 0f);
+    }
+
     private MotionEvent createMotionEvent(int action, float x, float y, float pressure, float size,
             float axisSize) {
         final MotionEvent.PointerProperties pointerProperties = new MotionEvent.PointerProperties();

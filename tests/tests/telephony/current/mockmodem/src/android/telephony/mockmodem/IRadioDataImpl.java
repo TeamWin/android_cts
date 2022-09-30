@@ -242,9 +242,13 @@ public class IRadioDataImpl extends IRadioData.Stub {
                 rsp = mService.makeSolRsp(serial, RadioError.OP_NOT_ALLOWED_BEFORE_REG_TO_NW);
             } else {
                 if (dataProfileInfo.apn.equals("ims")) {
-                    dc = mMockDataService.setupDataCall(mMockDataService.APN_TYPE_IMS);
+                    dc =
+                            mMockDataService.setupDataCall(
+                                    mMockDataService.APN_TYPE_IMS, dataProfileInfo.profileId);
                 } else if (dataProfileInfo.apn.equals("internet")) {
-                    dc = mMockDataService.setupDataCall(mMockDataService.APN_TYPE_DEFAULT);
+                    dc =
+                            mMockDataService.setupDataCall(
+                                    mMockDataService.APN_TYPE_DEFAULT, dataProfileInfo.profileId);
                 } else {
                     rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
                 }

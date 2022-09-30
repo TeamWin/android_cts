@@ -28,10 +28,10 @@ import android.graphics.Color;
 import android.graphics.Insets;
 import android.graphics.Rect;
 import android.hardware.HardwareBuffer;
+import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.Image;
 import android.media.ImageReader;
-import android.media.projection.MediaProjectionGlobal;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -58,7 +58,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-public class MediaProjectionGlobalTest {
+public class DisplayManagerTest {
     private static final String TAG = "MediaProjectionGlobalTest";
     @Rule
     public TestName mTestName = new TestName();
@@ -70,7 +70,6 @@ public class MediaProjectionGlobalTest {
             new ActivityScenarioRule<>(TestActivity.class);
 
     private TestActivity mActivity;
-    private MediaProjectionGlobal mMediaProjectionGlobal;
     private Instrumentation mInstrumentation;
 
     private int mNumRetries;
@@ -82,7 +81,6 @@ public class MediaProjectionGlobalTest {
     @Before
     public void setUp() {
         mActivityRule.getScenario().onActivity(activity -> mActivity = activity);
-        mMediaProjectionGlobal = MediaProjectionGlobal.getInstance();
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mNumRetries = 0;
     }
@@ -97,7 +95,7 @@ public class MediaProjectionGlobalTest {
     }
 
     @Test
-    public void testCreateVirtualDisplay() throws InterruptedException {
+    public void testCreateVirtualDisplayFromShell() throws InterruptedException {
         mInstrumentation.getUiAutomation().adoptShellPermissionIdentity();
         mActivity.waitForReady();
         mInstrumentation.waitForIdleSync();
@@ -146,7 +144,7 @@ public class MediaProjectionGlobalTest {
             mNumRetries++;
         }), new Handler(mWorkerThread.getLooper()));
 
-        mVirtualDisplay = mMediaProjectionGlobal.createVirtualDisplay("Test",
+        mVirtualDisplay = DisplayManager.createVirtualDisplay("Test",
                 displayBounds.width(), displayBounds.height(), DEFAULT_DISPLAY,
                 imageReader.getSurface());
 
@@ -160,8 +158,8 @@ public class MediaProjectionGlobalTest {
     public void createVirtualDisplayNoPermission() {
         Exception exception = null;
         try {
-            mVirtualDisplay = mMediaProjectionGlobal.createVirtualDisplay("Test",
-                    100, 100, DEFAULT_DISPLAY, null);
+            mVirtualDisplay = DisplayManager.createVirtualDisplay("Test", 100, 100,
+                    DEFAULT_DISPLAY, null);
         } catch (RuntimeException e) {
             exception = e;
         }

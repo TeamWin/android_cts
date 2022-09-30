@@ -33,13 +33,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
-import java.util.zip.ZipFile;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class SeamendcHostTest extends BaseHostJUnit4Test {
@@ -98,9 +95,9 @@ public class SeamendcHostTest extends BaseHostJUnit4Test {
         mVendorPolicyCil = getDeviceFile("/vendor/etc/selinux/", "vendor_sepolicy.cil");
         mPlatPubVersionedCil = getDeviceFile("/vendor/etc/selinux/", "plat_pub_versioned.cil");
         mOdmPolicyCil = getDeviceFile("/odm/etc/selinux/", "odm_sepolicy.cil");
-        mApexSepolicyCil = getApexPolicyFromDevice("apex_sepolicy.cil");
+        mApexSepolicyCil = copyResToTempFile("/apex_sepolicy.cil");
 
-        mApexSepolicyDecompiledCil = getApexPolicyFromDevice("apex_sepolicy.decompiled.cil");
+        mApexSepolicyDecompiledCil = copyResToTempFile("/apex_sepolicy.decompiled.cil");
     }
 
     /**
@@ -114,7 +111,6 @@ public class SeamendcHostTest extends BaseHostJUnit4Test {
         assertTrue(mPlatCompatCil.getName() + " is missing", mPlatCompatCil != null);
         assertTrue(mVendorPolicyCil.getName() + " is missing", mVendorPolicyCil != null);
         assertTrue(mPlatPubVersionedCil.getName() + " is missing", mPlatPubVersionedCil != null);
-        assertTrue(mApexSepolicyCil.getName() + " is missing", mApexSepolicyCil != null);
     }
 
     private File getPlatPolicyFromDevice() throws Exception {
@@ -124,17 +120,6 @@ public class SeamendcHostTest extends BaseHostJUnit4Test {
         }
         if (policyFile == null) {
             policyFile = getDeviceFile("/system/etc/selinux/", "plat_sepolicy.cil");
-        }
-        return policyFile;
-    }
-
-    private File getApexPolicyFromDevice(String policyName) throws Exception {
-        File apexZip = getDeviceFile("/system/etc/selinux/apex/", "SEPolicy.zip");
-        File policyFile = File.createTempFile(policyName, null);
-        policyFile.deleteOnExit();
-        try (ZipFile zipFile = new ZipFile(apexZip);
-                InputStream zis = zipFile.getInputStream(zipFile.getEntry(policyName))) {
-            Files.copy(zis, policyFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
         return policyFile;
     }
@@ -350,11 +335,5 @@ public class SeamendcHostTest extends BaseHostJUnit4Test {
         assertTargetEqual(secilcOutWithoutApex, seamendcOutWithApex, "shell");
         assertSourceEqual(secilcOutWithApex, seamendcOutWithApex, "shell");
         assertTargetEqual(secilcOutWithApex, seamendcOutWithApex, "shell");
-
-        // system/sepolicy/com.android.sepolicy/33/sdk_sandbox.te
-        assertSourceNotEqual(secilcOutWithoutApex, seamendcOutWithApex, "sdk_sandbox");
-        assertTargetEqual(secilcOutWithoutApex, seamendcOutWithApex, "sdk_sandbox");
-        assertSourceEqual(secilcOutWithApex, seamendcOutWithApex, "sdk_sandbox");
-        assertTargetEqual(secilcOutWithApex, seamendcOutWithApex, "sdk_sandbox");
     }
 }

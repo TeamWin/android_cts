@@ -197,8 +197,6 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         filter.addAction(ByodHelperActivity.ACTION_SET_USER_RESTRICTION);
         filter.addAction(ByodHelperActivity.ACTION_CLEAR_USER_RESTRICTION);
         filter.addAction(CrossProfileTestActivity.ACTION_CROSS_PROFILE_TO_WORK);
-        filter.addAction(WorkStatusTestActivity.ACTION_WORK_STATUS_TOAST);
-        filter.addAction(WorkStatusTestActivity.ACTION_WORK_STATUS_ICON);
         filter.addAction(
                 PermissionLockdownTestActivity.ACTION_MANAGED_PROFILE_CHECK_PERMISSION_LOCKDOWN);
         filter.addAction(AuthenticationBoundKeyTestActivity.ACTION_AUTH_BOUND_KEY_TEST);

@@ -1026,7 +1026,8 @@ public final class DeviceState extends HarrierRule {
                     if (!Tags.hasTag(Tags.INSTANT_APP)) {
                         TestApis.device().setKeyguardEnabled(true);
                     }
-                    TestApis.device().keepScreenOn(false);
+                    // TODO(b/249710985): Reset to the default for the device or the previous value
+                    // TestApis.device().keepScreenOn(false);
                     TestApis.users().setStopBgUsersOnSwitch(OptionalBoolean.ANY);
                 }
             }

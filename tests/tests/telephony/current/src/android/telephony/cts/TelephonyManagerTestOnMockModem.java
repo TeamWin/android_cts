@@ -58,6 +58,7 @@ public class TelephonyManagerTestOnMockModem {
     private static final String ALLOW_MOCK_MODEM_PROPERTY = "persist.radio.allow_mock_modem";
     private static final String BOOT_ALLOW_MOCK_MODEM_PROPERTY = "ro.boot.radio.allow_mock_modem";
     private static final boolean DEBUG = !"user".equals(Build.TYPE);
+    private static final String RESOURCE_PACKAGE_NAME = "android";
     private static boolean sIsMultiSimDevice;
 
     @BeforeClass
@@ -115,6 +116,24 @@ public class TelephonyManagerTestOnMockModem {
         return tm != null && tm.getPhoneCount() > 1;
     }
 
+    private static boolean isSimHotSwapCapable() {
+        boolean isSimHotSwapCapable = false;
+        int resourceId =
+                getContext()
+                        .getResources()
+                        .getIdentifier("config_hotswapCapable", "bool", RESOURCE_PACKAGE_NAME);
+
+        if (resourceId > 0) {
+            isSimHotSwapCapable = getContext().getResources().getBoolean(resourceId);
+        } else {
+            Log.d(TAG, "Fail to get the resource Id, using default.");
+        }
+
+        Log.d(TAG, "isSimHotSwapCapable = " + (isSimHotSwapCapable ? "true" : "false"));
+
+        return isSimHotSwapCapable;
+    }
+
     private static void enforceMockModemDeveloperSetting() throws Exception {
         boolean isAllowed = SystemProperties.getBoolean(ALLOW_MOCK_MODEM_PROPERTY, false);
         boolean isAllowedForBoot =
@@ -167,6 +186,8 @@ public class TelephonyManagerTestOnMockModem {
     @Test
     public void testSimStateChange() throws Throwable {
         Log.d(TAG, "TelephonyManagerTestOnMockModem#testSimStateChange");
+
+        assumeTrue(isSimHotSwapCapable());
 
         int slotId = 0;
         int simCardState = sTelephonyManager.getSimCardState();
@@ -292,6 +313,8 @@ public class TelephonyManagerTestOnMockModem {
     @Test
     public void testServiceStateChange() throws Throwable {
         Log.d(TAG, "TelephonyManagerTestOnMockModem#testServiceStateChange");
+
+        assumeTrue(isSimHotSwapCapable());
 
         int slotId = 0;
         int subId;

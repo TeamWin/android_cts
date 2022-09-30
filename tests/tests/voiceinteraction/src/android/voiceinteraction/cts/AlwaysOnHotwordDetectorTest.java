@@ -19,14 +19,20 @@ package android.voiceinteraction.cts;
 import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
 import static android.voiceinteraction.cts.testcore.VoiceInteractionDetectionHelper.testHotwordDetection;
 
+import android.platform.test.annotations.AppModeFull;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.voiceinteraction.common.Utils;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "No real use case for instant mode hotword detector")
 public class AlwaysOnHotwordDetectorTest extends AbstractVoiceInteractionBasicTestCase {
     static final String TAG = "HotwordDetectionServiceBasicTest";
 

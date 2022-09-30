@@ -3301,14 +3301,6 @@ You should be prompted to select credentials; choose the ones you just installed
         (Which would read \"This is a notification\"). You should be seeing a work badge.\n
         After you log back in, please navigate back to CtsVerifier and mark the test as \"Pass\" or \"Fail\".
     </string>
-    <string name="provisioning_byod_work_notification">Work notification is badged</string>
-    <string name="provisioning_byod_work_notification_instruction">
-        Please press the Go button to trigger a notification.\n
-        \n
-        If a permission is requested, grant it and press the Go button again.\n
-        \n
-        Verify that the notification is badged (see sample badge below). Then mark this test accordingly.
-    </string>
     <string name="provisioning_byod_notification_title">This is a notification</string>
     <string name="provisioning_byod_notification_public_title">Contents hidden by policy</string>
 
@@ -3346,19 +3338,6 @@ You should be prompted to select credentials; choose the ones you just installed
         Then please press Back (or navigate back to this app using Recents) and mark the test as \"Pass\" or \"Fail\".
     </string>
 
-    <string name="provisioning_byod_work_status_icon">Work status icon is displayed</string>
-    <string name="provisioning_byod_work_status_icon_instruction">
-        Verify that the current status bar does not have a work status icon (see sample icon below).
-        \n\n
-        Please press the Go button to launch a work activity.
-        \n\n
-        Verify that the status bar now has a work status icon. Then mark this test accordingly.
-    </string>
-    <string name="provisioning_byod_work_status_icon_activity">
-        Verify that the current status bar has a work status notification.
-        \n\n
-        Please press finish to return to the tests and then mark this test accordingly.
-    </string>
     <string name="provisioning_byod_work_status_toast">Work status toast is displayed</string>
     <string name="provisioning_byod_work_status_toast_instruction">
         Please press the Go button to launch a work activity.
