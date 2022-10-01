@@ -15,8 +15,6 @@
  */
 package android.media.cts;
 
-import android.media.cts.R;
-
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;

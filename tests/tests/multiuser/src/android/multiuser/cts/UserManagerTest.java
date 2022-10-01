@@ -34,14 +34,17 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityManager;
 import android.app.Instrumentation;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.UserInfo;
 import android.content.pm.UserProperties;
@@ -55,6 +58,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.SystemUserOnly;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
 import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -87,6 +91,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import javax.annotation.concurrent.GuardedBy;
+
 @RunWith(BedsteadJUnit4.class)
 public final class UserManagerTest {
 
@@ -103,11 +109,24 @@ public final class UserManagerTest {
 
     private final String mAccountName = "test_account_name";
     private final String mAccountType = "test_account_type";
+    private static final int REMOVE_CHECK_INTERVAL_MILLIS = 500; // 0.5 seconds
+    private static final int REMOVE_TIMEOUT_MILLIS = 60 * 1000; // 60 seconds
+    private final Object mUserRemoveLock = new Object();
 
     @Before
     public void setUp() {
         mUserManager = sContext.getSystemService(UserManager.class);
         assertWithMessage("UserManager service").that(mUserManager).isNotNull();
+
+        IntentFilter filter = new IntentFilter(Intent.ACTION_USER_REMOVED);
+        sContext.registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                synchronized (mUserRemoveLock) {
+                    mUserRemoveLock.notifyAll();
+                }
+            }
+        }, filter);
     }
 
     private void removeUser(UserHandle userHandle) {
@@ -116,7 +135,9 @@ public final class UserManagerTest {
         }
 
         try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
-            assertThat(mUserManager.removeUser(userHandle)).isTrue();
+            synchronized (mUserRemoveLock) {
+                assertThat(mUserManager.removeUser(userHandle)).isTrue();
+            }
         }
     }
 
@@ -430,6 +451,7 @@ public final class UserManagerTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#createProfile"})
+    @AppModeFull
     public void testAddCloneProfile_shouldSendProfileAddedBroadcast() {
         assumeTrue(mUserManager.supportsMultipleUsers());
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState
@@ -451,6 +473,7 @@ public final class UserManagerTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#createProfile"})
+    @AppModeFull
     @RequireFeature(FEATURE_MANAGED_USERS)
     public void testCreateManagedProfile_shouldSendProfileAddedBroadcast() {
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState
@@ -472,6 +495,7 @@ public final class UserManagerTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#createProfile"})
+    @AppModeFull
     public void testRemoveCloneProfile_shouldSendProfileRemovedBroadcast() {
         assumeTrue(mUserManager.supportsMultipleUsers());
         BlockingBroadcastReceiver broadcastReceiver = null;
@@ -495,6 +519,7 @@ public final class UserManagerTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#createProfile"})
+    @AppModeFull
     @RequireFeature(FEATURE_MANAGED_USERS)
     public void testRemoveManagedProfile_shouldSendProfileRemovedBroadcast() {
         BlockingBroadcastReceiver broadcastReceiver = null;
@@ -548,6 +573,72 @@ public final class UserManagerTest {
             assertThat(umOfProfile.isUserOfType(UserManager.USER_TYPE_PROFILE_MANAGED)).isTrue();
         } finally {
             removeUser(userHandle);
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#removeUser"})
+    public void testRemoveParentUser_withProfiles() {
+        assumeTrue(UserManager.isHeadlessSystemUserMode());
+        UserHandle parentUser = null;
+        UserHandle cloneProfileUser = null;
+        UserHandle workProfileUser = null;
+
+        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
+            parentUser = mUserManager.createUser(newUserRequest()).getUser();
+
+            //TODO b/248277731 check if the profile creation flow can be replaced
+            // with the bedstead annotations for headless users
+            cloneProfileUser = mUserManager.createProfileForUser(
+                    "Clone Profile user", UserManager.USER_TYPE_PROFILE_CLONE, 0,
+                    parentUser.getIdentifier(), null).getUserHandle();
+
+            workProfileUser = mUserManager.createProfileForUser(
+                    "Work Profile user", UserManager.USER_TYPE_PROFILE_MANAGED, 0,
+                    parentUser.getIdentifier(), null).getUserHandle();
+
+            removeUser(parentUser);
+            synchronized (mUserRemoveLock) {
+                waitForUserRemovalLocked(parentUser.getIdentifier());
+            }
+
+            assertThat(hasUser(parentUser.getIdentifier())).isFalse();
+            assertThat(hasUser(cloneProfileUser.getIdentifier())).isFalse();
+            assertThat(hasUser(workProfileUser.getIdentifier())).isFalse();
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#removeUser"})
+    public void testRemoveUserOnlyProfile_ShouldNotRemoveAnyOtherUserInSameProfileGroupId() {
+        assumeTrue(UserManager.isHeadlessSystemUserMode());
+        UserHandle parentUser = null;
+        UserHandle cloneProfileUser = null;
+        UserHandle workProfileUser = null;
+
+        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
+            parentUser = mUserManager.createUser(newUserRequest()).getUser();
+
+            //TODO b/248277731 check if the profile creation flow can be replaced
+            // with the bedstead annotations for headless users
+            cloneProfileUser = mUserManager.createProfileForUser(
+                    "Clone Profile user", UserManager.USER_TYPE_PROFILE_CLONE, 0,
+                    parentUser.getIdentifier(), null).getUserHandle();
+
+            workProfileUser = mUserManager.createProfileForUser(
+                    "Work Profile user", UserManager.USER_TYPE_PROFILE_MANAGED, 0,
+                    parentUser.getIdentifier(), null).getUserHandle();
+
+            removeUser(cloneProfileUser);
+            synchronized (mUserRemoveLock) {
+                waitForUserRemovalLocked(cloneProfileUser.getIdentifier());
+            }
+
+            assertThat(hasUser(cloneProfileUser.getIdentifier())).isFalse();
+            assertThat(hasUser(parentUser.getIdentifier())).isTrue();
+            assertThat(hasUser(workProfileUser.getIdentifier())).isTrue();
+        } finally {
+            removeUser(parentUser);
         }
     }
 
@@ -861,5 +952,34 @@ public final class UserManagerTest {
             Log.d(TAG, "Started: " + started);
             return started;
         }
+    }
+
+    @GuardedBy("mUserRemoveLock")
+    private void waitForUserRemovalLocked(int userId) {
+        long startTime = System.currentTimeMillis();
+        while (getUser(userId) != null) {
+            try {
+                mUserRemoveLock.wait(REMOVE_CHECK_INTERVAL_MILLIS);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+            if (System.currentTimeMillis() - startTime > REMOVE_TIMEOUT_MILLIS) {
+                fail("Timeout waiting for removeUser. userId = " + userId);
+            }
+        }
+    }
+
+    @Nullable
+    private UserInfo getUser(int id) {
+        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
+            return  mUserManager.getUsers(false, false, false)
+                    .stream().filter(user -> user.id == id).findFirst()
+                    .orElse(null);
+        }
+    }
+
+    private boolean hasUser(int id) {
+        return getUser(id) != null;
     }
 }

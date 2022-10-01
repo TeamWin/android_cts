@@ -19,6 +19,8 @@ package {
 android_test {
     name: "CtsDevicePolicyTestCases",
     defaults: ["cts_defaults"],
+    min_sdk_version: "29",
+    target_sdk_version: "29",
     static_libs: [
         "compatibility-device-util-axt",
         "ctstestrunner-axt",

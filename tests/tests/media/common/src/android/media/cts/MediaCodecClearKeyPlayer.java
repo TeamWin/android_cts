@@ -17,12 +17,10 @@ package android.media.cts;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.content.res.AssetFileDescriptor;
 import android.media.AudioManager;
 import android.media.DrmInitData;
 import android.media.MediaCas;
 import android.media.MediaCasException;
-import android.media.MediaCasException.UnsupportedCasException;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -33,12 +31,11 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.net.Uri;
 import android.util.Log;
+import android.view.Surface;
 
 import androidx.test.InstrumentationRegistry;
 
-import android.view.Surface;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;

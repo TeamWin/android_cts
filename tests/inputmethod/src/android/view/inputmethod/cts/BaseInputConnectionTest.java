@@ -35,7 +35,6 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
-import android.view.View;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.ExtractedTextRequest;
@@ -66,15 +65,10 @@ public class BaseInputConnectionTest {
     // Retrieve a large range to text to verify the content.
     private static final int TEXT_LENGTH_TO_RETRIEVAL = 1024;
 
-    private static BaseInputConnection createBaseInputConnection() {
-        final View view = new View(InstrumentationRegistry.getInstrumentation().getTargetContext());
-        return new BaseInputConnection(view, true);
-    }
-
     @Test
     public void testDefaultMethods() {
         // These methods are default to return fixed result.
-        final BaseInputConnection connection = createBaseInputConnection();
+        final BaseInputConnection connection = InputConnectionTestUtils.createBaseInputConnection();
 
         assertFalse(connection.beginBatchEdit());
         assertFalse(connection.endBatchEdit());
@@ -126,7 +120,7 @@ public class BaseInputConnectionTest {
      */
     @Test
     public void testOpTextMethods() {
-        final BaseInputConnection connection = createBaseInputConnection();
+        final BaseInputConnection connection = InputConnectionTestUtils.createBaseInputConnection();
 
         // return is an default Editable instance with empty source
         final Editable text = connection.getEditable();
@@ -171,7 +165,7 @@ public class BaseInputConnectionTest {
      */
     @Test
     public void testFinishComposingText() {
-        final BaseInputConnection connection = createBaseInputConnection();
+        final BaseInputConnection connection = InputConnectionTestUtils.createBaseInputConnection();
         CharSequence str = "TestFinish";
         Editable inputText = Editable.Factory.getInstance().newEditable(str);
         connection.commitText(inputText, inputText.length());
@@ -192,7 +186,7 @@ public class BaseInputConnectionTest {
     public void testReportFullscreenMode() {
         final InputMethodManager imm = InstrumentationRegistry.getInstrumentation()
                 .getTargetContext().getSystemService(InputMethodManager.class);
-        final BaseInputConnection connection = createBaseInputConnection();
+        final BaseInputConnection connection = InputConnectionTestUtils.createBaseInputConnection();
         connection.reportFullscreenMode(false);
         assertFalse(imm.isFullscreenMode());
         connection.reportFullscreenMode(true);
@@ -201,51 +195,25 @@ public class BaseInputConnectionTest {
         assertFalse(imm.isFullscreenMode());
     }
 
-    /**
-     * An utility method to create an instance of {@link BaseInputConnection} from {@link Editable}.
-     *
-     * @param editable the initial text.
-     * @return {@link BaseInputConnection} instantiated in the full editor mode with
-     *         {@code editable}.
-     */
-    private static BaseInputConnection createConnection(@NonNull Editable editable) {
-        final View view = new View(InstrumentationRegistry.getInstrumentation().getTargetContext());
-        return new BaseInputConnection(view, true) {
-            @Override
-            public Editable getEditable() {
-                return editable;
-            }
-        };
-    }
-
-    /**
-     * An utility method to create an instance of {@link BaseInputConnection} in the full editor
-     * mode with an initial text and selection range.
-     *
-     * @param source the initial text.
-     * @return {@link BaseInputConnection} instantiated in the full editor mode with {@code source}
-     *         and selection range from {@code selectionStart} to {@code selectionEnd}
-     */
-    private static BaseInputConnection createConnectionWithSelection(CharSequence source) {
-        final int selectionStart = Selection.getSelectionStart(source);
-        final int selectionEnd = Selection.getSelectionEnd(source);
-        final Editable editable = Editable.Factory.getInstance().newEditable(source);
-        Selection.setSelection(editable, selectionStart, selectionEnd);
-        return createConnection(editable);
-    }
-
-    private static void verifyDeleteSurroundingTextMain(final String initialState,
-            final int deleteBefore, final int deleteAfter, final String expectedState) {
+    private void verifyDeleteSurroundingTextMain(
+            final String initialState,
+            final int deleteBefore,
+            final int deleteAfter,
+            final String expectedState) {
         verifyDeleteSurroundingTextMain(initialState, deleteBefore, deleteAfter, expectedState,
                 false /* clearSelection */);
     }
 
-    private static void verifyDeleteSurroundingTextMain(final String initialState,
-            final int deleteBefore, final int deleteAfter, final String expectedState,
+    private void verifyDeleteSurroundingTextMain(
+            final String initialState,
+            final int deleteBefore,
+            final int deleteAfter,
+            final String expectedState,
             final boolean clearSelection) {
         final CharSequence source = clearSelection ? initialState
                 : InputConnectionTestUtils.formatString(initialState);
-        final BaseInputConnection ic = createConnectionWithSelection(source);
+        final BaseInputConnection ic =
+                InputConnectionTestUtils.createBaseInputConnectionWithSelection(source);
 
         if (clearSelection) {
             Selection.removeSelection(ic.getEditable());
@@ -314,10 +282,14 @@ public class BaseInputConnectionTest {
         verifyDeleteSurroundingTextMain("012[]>>56789", 0, 3, "012[]6789");
     }
 
-    private static void verifyDeleteSurroundingTextInCodePointsMain(String initialState,
-            int deleteBeforeInCodePoints, int deleteAfterInCodePoints, String expectedState) {
+    private void verifyDeleteSurroundingTextInCodePointsMain(
+            String initialState,
+            int deleteBeforeInCodePoints,
+            int deleteAfterInCodePoints,
+            String expectedState) {
         final CharSequence source = InputConnectionTestUtils.formatString(initialState);
-        final BaseInputConnection ic = createConnectionWithSelection(source);
+        final BaseInputConnection ic =
+                InputConnectionTestUtils.createBaseInputConnectionWithSelection(source);
         ic.deleteSurroundingTextInCodePoints(deleteBeforeInCodePoints, deleteAfterInCodePoints);
 
         final CharSequence expectedString = InputConnectionTestUtils.formatString(expectedState);
@@ -423,7 +395,7 @@ public class BaseInputConnectionTest {
 
     @Test
     public void testCloseConnection() {
-        final BaseInputConnection connection = createBaseInputConnection();
+        final BaseInputConnection connection = InputConnectionTestUtils.createBaseInputConnection();
 
         final CharSequence source = "0123456789";
         connection.commitText(source, source.length());
@@ -440,7 +412,7 @@ public class BaseInputConnectionTest {
 
     @Test
     public void testGetHandler() {
-        final BaseInputConnection connection = createBaseInputConnection();
+        final BaseInputConnection connection = InputConnectionTestUtils.createBaseInputConnection();
 
         // BaseInputConnection must not implement getHandler().
         assertNull(connection.getHandler());
@@ -448,19 +420,20 @@ public class BaseInputConnectionTest {
 
     @Test
     public void testCommitContent() {
-        final BaseInputConnection connection = createBaseInputConnection();
+        final BaseInputConnection connection = InputConnectionTestUtils.createBaseInputConnection();
 
-        final InputContentInfo inputContentInfo = new InputContentInfo(
-                Uri.parse("content://com.example/path"),
-                new ClipDescription("sample content", new String[]{"image/png"}),
-                Uri.parse("https://example.com"));
+        final InputContentInfo inputContentInfo =
+                new InputContentInfo(
+                        Uri.parse("content://com.example/path"),
+                        new ClipDescription("sample content", new String[] {"image/png"}),
+                        Uri.parse("https://example.com"));
         // The default implementation should do nothing and just return false.
         assertFalse(connection.commitContent(inputContentInfo, 0 /* flags */, null /* opts */));
     }
 
     @Test
     public void testGetSelectedText_wrongSelection() {
-        final BaseInputConnection connection = createBaseInputConnection();
+        final BaseInputConnection connection = InputConnectionTestUtils.createBaseInputConnection();
         Editable editable = connection.getEditable();
         editable.append("hello");
         editable.setSpan(Selection.SELECTION_START, 4, 4, Spanned.SPAN_POINT_POINT);
@@ -474,7 +447,8 @@ public class BaseInputConnectionTest {
     public void testGetSurroundingText_hasTextBeforeSelection() {
         // 123456789|
         final CharSequence source = InputConnectionTestUtils.formatString("123456789[]");
-        final BaseInputConnection connection = createConnectionWithSelection(source);
+        final BaseInputConnection connection =
+                InputConnectionTestUtils.createBaseInputConnectionWithSelection(source);
 
         // 9|
         SurroundingText surroundingText1 = connection.getSurroundingText(1, 1, 0);
@@ -503,7 +477,8 @@ public class BaseInputConnectionTest {
     public void testGetSurroundingText_hasTextAfterSelection() {
         // |123456789
         final CharSequence source = InputConnectionTestUtils.formatString("[]123456789");
-        final BaseInputConnection connection = createConnectionWithSelection(source);
+        final BaseInputConnection connection =
+                InputConnectionTestUtils.createBaseInputConnectionWithSelection(source);
 
         // |1
         SurroundingText surroundingText1 = connection.getSurroundingText(1, 1,
@@ -532,7 +507,8 @@ public class BaseInputConnectionTest {
     public void testGetSurroundingText_hasSelection() {
         // 123|45|6789
         final CharSequence source = InputConnectionTestUtils.formatString("123[45]6789");
-        final BaseInputConnection connection = createConnectionWithSelection(source);
+        final BaseInputConnection connection =
+                InputConnectionTestUtils.createBaseInputConnectionWithSelection(source);
 
         // 3|45|6
         SurroundingText surroundingText1 = connection.getSurroundingText(1, 1, 0);
@@ -565,8 +541,8 @@ public class BaseInputConnectionTest {
         assertEquals(0, surroundingText4.getOffset());
 
         // |45|
-        SurroundingText surroundingText5 = connection.getSurroundingText(0, 0,
-                BaseInputConnection.GET_TEXT_WITH_STYLES);
+        SurroundingText surroundingText5 =
+                connection.getSurroundingText(0, 0, BaseInputConnection.GET_TEXT_WITH_STYLES);
         assertEquals("45", surroundingText5.getText().toString());
         assertEquals(0, surroundingText5.getSelectionStart());
         assertEquals(2, surroundingText5.getSelectionEnd());
@@ -576,7 +552,8 @@ public class BaseInputConnectionTest {
     @Test
     public void testInvalidGetTextBeforeOrAfterCursorRequest() {
         final CharSequence source = InputConnectionTestUtils.formatString("hello[]");
-        final BaseInputConnection connection = createConnectionWithSelection(source);
+        final BaseInputConnection connection =
+                InputConnectionTestUtils.createBaseInputConnectionWithSelection(source);
 
         // getTextBeforeCursor
         assertEquals("", connection.getTextBeforeCursor(0, 0).toString());
@@ -599,8 +576,9 @@ public class BaseInputConnectionTest {
 
     @Test
     public void testTakeSnapshot() {
-        final BaseInputConnection connection = createConnectionWithSelection(
-                InputConnectionTestUtils.formatString("0123[456]789"));
+        final BaseInputConnection connection =
+                InputConnectionTestUtils.createBaseInputConnectionWithSelection(
+                        InputConnectionTestUtils.formatString("0123[456]789"));
 
         verifyTextSnapshot(connection);
 
@@ -616,8 +594,9 @@ public class BaseInputConnectionTest {
 
     @Test
     public void testTakeSnapshotForNoSelection() {
-        final BaseInputConnection connection = createConnection(
-                Editable.Factory.getInstance().newEditable("test"));
+        final BaseInputConnection connection =
+                InputConnectionTestUtils.createBaseInputConnection(
+                        Editable.Factory.getInstance().newEditable("test"));
         // null should be returned for text with no selection.
         assertThat(connection.takeSnapshot()).isNull();
     }
@@ -683,7 +662,8 @@ public class BaseInputConnectionTest {
             final int newCursorPosition,
             final String expectedState) {
         final CharSequence source = InputConnectionTestUtils.formatString(initialState);
-        final BaseInputConnection ic = createConnectionWithSelection(source);
+        final BaseInputConnection ic =
+                InputConnectionTestUtils.createBaseInputConnectionWithSelection(source);
         assertTrue(ic.replaceText(start, end, text, newCursorPosition, null));
         final CharSequence expectedString = InputConnectionTestUtils.formatString(expectedState);
         final int expectedSelectionStart = Selection.getSelectionStart(expectedString);

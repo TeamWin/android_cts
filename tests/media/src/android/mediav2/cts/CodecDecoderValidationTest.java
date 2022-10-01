@@ -345,8 +345,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                         "audio/highres_2ch_192kHz_s16le_5s.raw", 0.0f, -1L, 192000, 2, -1, -1,
                         CODEC_ALL},
                 {MEDIA_TYPE_FLAC, new String[]{"audio/sd_2ch_48kHz_lvl4_flac.mka"},
-                        "audio/sd_2ch_48kHz_f32le.raw", 3.446394f, -1L, 48000, 2, -1, -1,
-                        CODEC_ALL},
+                        "audio/sd_2ch_48kHz_s16le.raw", 1.0f, -1L, 48000, 2, -1, -1, CODEC_ALL},
 
                 // raw
                 {MEDIA_TYPE_RAW, new String[]{"audio/bbb_1ch_8kHz.wav"},
@@ -384,12 +383,12 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                         "audio/highres_2ch_96kHz_s16le_5s.raw", 0.0f, -1L, 96000, 2, -1, -1,
                         CODEC_ALL},
                 {MEDIA_TYPE_RAW, new String[]{"audio/sd_2ch_48kHz.wav"},
-                        "audio/sd_2ch_48kHz_f32le.raw", 0.0f, -1L, 48000, 2, -1, -1, CODEC_ALL},
+                        "audio/sd_2ch_48kHz_s16le.raw", 1.0f, -1L, 48000, 2, -1, -1, CODEC_ALL},
                 {MEDIA_TYPE_RAW, new String[]{"audio/bellezza_2ch_48kHz_s32le.wav"},
-                        "audio/bellezza_2ch_48kHz_s32le.raw", 0.0f, -1L, 48000, 2, -1, -1,
+                        "audio/bellezza_2ch_48kHz_s16le.raw", 1.0f, -1L, 48000, 2, -1, -1,
                         CODEC_ALL},
                 {MEDIA_TYPE_RAW, new String[]{"audio/bellezza_2ch_48kHz_s24le.wav"},
-                        "audio/bellezza_2ch_48kHz_s24le.raw", 0.0f, -1L, 48000, 2, -1, -1,
+                        "audio/bellezza_2ch_48kHz_s16le.raw", 1.0f, -1L, 48000, 2, -1, -1,
                         CODEC_ALL},
 
                 // aac-lc
@@ -650,15 +649,10 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
         {
             OutputManager ref = null;
             mSaveToMem = true;
-            int audioEncoding = AudioFormat.ENCODING_INVALID;
             for (String file : mSrcFiles) {
                 mOutputBuff = new OutputManager();
                 mCodec = MediaCodec.createByCodecName(mCodecName);
                 MediaFormat format = setUpSource(file);
-                if (mIsAudio) {
-                    audioEncoding = format.getInteger(MediaFormat.KEY_PCM_ENCODING,
-                            AudioFormat.ENCODING_PCM_16BIT);
-                }
                 configureCodec(format, false, true, false);
                 mCodec.start();
                 mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
@@ -666,10 +660,6 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                 queueEOS();
                 waitForAllOutputs();
                 mOutFormat = mCodec.getOutputFormat();
-                if (mIsAudio) {
-                    assertEquals(mOutFormat.getInteger(MediaFormat.KEY_PCM_ENCODING,
-                            AudioFormat.ENCODING_PCM_16BIT), audioEncoding);
-                }
                 mCodec.stop();
                 mCodec.release();
                 mExtractor.release();
@@ -693,8 +683,8 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
             }
             Assume.assumeFalse("skip checksum verification due to tone mapping",
                     mSkipChecksumVerification);
-            CodecDecoderTest.verify(ref, mRefFile, mRmsError, audioEncoding, mRefCRC,
-                    mTestConfig + mTestEnv);
+            CodecDecoderTest.verify(ref, mRefFile, mRmsError, AudioFormat.ENCODING_PCM_16BIT,
+                    mRefCRC, mTestConfig + mTestEnv);
         }
     }
 }

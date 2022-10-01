@@ -131,7 +131,8 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
         adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_PAGE,
                 R.string.enterprise_privacy_page,
                 R.string.enterprise_privacy_page_info,
-                new ButtonInfo(R.string.go_button_text, new Intent(Settings.ACTION_SETTINGS))));
+                new ButtonInfo(R.string.go_button_text,
+                               new Intent(Settings.ACTION_SECURITY_SETTINGS))));
         adapter.add(buildCommandTest(ENTERPRISE_PRIVACY_NETWORK_LOGGING,
                 R.string.enterprise_privacy_network_logging,
                 R.string.enterprise_privacy_network_logging_info,

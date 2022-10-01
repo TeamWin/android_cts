@@ -745,6 +745,55 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     }
 
     @Override
+    public void setEmergencyMode(int serial, int emcModeType) {
+        Log.d(TAG, "setEmergencyMode");
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioNetworkResponse.setEmergencyModeResponse(rsp, null);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to setEmergencyMode from AIDL. Exception" + ex);
+        }
+    }
+
+    @Override
+    public void triggerEmergencyNetworkScan(int serial,
+            android.hardware.radio.network.EmergencyNetworkScanTrigger request) {
+        Log.d(TAG, "triggerEmergencyNetworkScan");
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioNetworkResponse.triggerEmergencyNetworkScanResponse(rsp);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to triggerEmergencyNetworkScan from AIDL. Exception" + ex);
+        }
+    }
+
+    @Override
+    public void cancelEmergencyNetworkScan(int serial) {
+        Log.d(TAG, "cancelEmergencyNetworkScan");
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioNetworkResponse.cancelEmergencyNetworkScanResponse(rsp);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to cancelEmergencyNetworkScan from AIDL. Exception" + ex);
+        }
+    }
+
+    @Override
+    public void exitEmergencyMode(int serial) {
+        Log.d(TAG, "exitEmergencyMode");
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioNetworkResponse.exitEmergencyModeResponse(rsp);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to exitEmergencyMode from AIDL. Exception" + ex);
+        }
+    }
+
+    @Override
     public String getInterfaceHash() {
         return IRadioNetwork.HASH;
     }
@@ -818,6 +867,29 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
             }
         } else {
             Log.e(mTag, "null mRadioNetworkIndication");
+        }
+    }
+
+    public void unsolEmergencyNetworkScanResult() {
+        Log.d(TAG, "unsolEmergencyNetworkScanResult");
+
+        if (mRadioState != MockModemConfigInterface.RADIO_STATE_ON) {
+            return;
+        }
+
+        if (mRadioNetworkIndication != null) {
+            android.hardware.radio.network.EmergencyRegResult result = null;
+
+            try {
+                mRadioNetworkIndication.emergencyNetworkScanResult(
+                        RadioIndicationType.UNSOLICITED, result);
+            } catch (RemoteException ex) {
+                Log.e(TAG,
+                        "Failed to invoke emergencyNetworkScanResult change from AIDL. Exception"
+                        + ex);
+            }
+        } else {
+            Log.e(TAG, "null mRadioNetworkIndication");
         }
     }
 }

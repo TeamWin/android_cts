@@ -59,7 +59,12 @@ public class UserReferenceTest {
     private static final Context sContext = TestApis.context().instrumentedContext();
     private static final UserManager sUserManager = sContext.getSystemService(UserManager.class);
     private static final String PASSWORD = "1234";
+    private static final String PIN = "1234";
+    private static final String PATTERN = "1234";
     private static final String DIFFERENT_PASSWORD = "2345";
+    private static final String DIFFERENT_PIN = "2345";
+    private static final String DIFFERENT_PATTERN = "2345";
+
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
@@ -354,7 +359,33 @@ public class UserReferenceTest {
     @Test
     @EnsurePasswordNotSet
     @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
-    public void clearPassword_doesNotHavePassword() {
+    public void setPin_hasPin() {
+        try {
+            TestApis.users().instrumented().setPin(PIN);
+
+            assertThat(TestApis.users().instrumented().hasPin()).isTrue();
+        } finally {
+            TestApis.users().instrumented().clearPin(PIN);
+        }
+    }
+
+    @Test
+    @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    public void setPattern_hasPattern() {
+        try {
+            TestApis.users().instrumented().setPattern(PATTERN);
+
+            assertThat(TestApis.users().instrumented().hasPattern()).isTrue();
+        } finally {
+            TestApis.users().instrumented().clearPattern(PATTERN);
+        }
+    }
+
+    @Test
+    @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    public void clearPassword_hasPassword_returnsFalse() {
         TestApis.users().instrumented().setPassword(PASSWORD);
         TestApis.users().instrumented().clearPassword(PASSWORD);
 
@@ -363,10 +394,46 @@ public class UserReferenceTest {
 
     @Test
     @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    public void clearPin_hasPin_returnsFalse() {
+        TestApis.users().instrumented().setPin(PIN);
+        TestApis.users().instrumented().clearPin(PIN);
+
+        assertThat(TestApis.users().instrumented().hasPin()).isFalse();
+    }
+
+    @Test
+    @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    public void clearPattern_hasPattern_returnsFalse() {
+        TestApis.users().instrumented().setPattern(PATTERN);
+        TestApis.users().instrumented().clearPattern(PATTERN);
+
+        assertThat(TestApis.users().instrumented().hasPattern()).isFalse();
+    }
+
+    @Test
+    @EnsurePasswordNotSet
     public void clearPassword_doesNotHavePassword_doesNothing() {
         TestApis.users().instrumented().clearPassword(PASSWORD);
 
         assertThat(TestApis.users().instrumented().hasPassword()).isFalse();
+    }
+
+    @Test
+    @EnsurePasswordNotSet
+    public void clearPin_doesNotHavePin_doesNothing() {
+        TestApis.users().instrumented().clearPin(PIN);
+
+        assertThat(TestApis.users().instrumented().hasPin()).isFalse();
+    }
+
+    @Test
+    @EnsurePasswordNotSet
+    public void clearPattern_doesNotHavePattern_doesNothing() {
+        TestApis.users().instrumented().clearPattern(PATTERN);
+
+        assertThat(TestApis.users().instrumented().hasPattern()).isFalse();
     }
 
     @Test
@@ -386,6 +453,34 @@ public class UserReferenceTest {
     @Test
     @EnsurePasswordNotSet
     @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    public void clearPin_incorrectOldPin_throwsException() {
+        try {
+            TestApis.users().instrumented().setPin(PIN);
+
+            assertThrows(NeneException.class,
+                    () -> TestApis.users().instrumented().clearPin(DIFFERENT_PIN));
+        } finally {
+            TestApis.users().instrumented().clearPin(PIN);
+        }
+    }
+
+    @Test
+    @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    public void clearPattern_incorrectOldPattern_throwsException() {
+        try {
+            TestApis.users().instrumented().setPattern(PATTERN);
+
+            assertThrows(NeneException.class,
+                    () -> TestApis.users().instrumented().clearPattern(DIFFERENT_PATTERN));
+        } finally {
+            TestApis.users().instrumented().clearPattern(PATTERN);
+        }
+    }
+
+    @Test
+    @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
     public void setPassword_alreadyHasPassword_throwsException() {
         try {
             TestApis.users().instrumented().setPassword(PASSWORD);
@@ -394,6 +489,181 @@ public class UserReferenceTest {
                     () -> TestApis.users().instrumented().setPassword(DIFFERENT_PASSWORD));
         } finally {
             TestApis.users().instrumented().clearPassword(PASSWORD);
+        }
+    }
+
+    @Test
+    @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    public void setPin_alreadyHasPin_throwsException() {
+        try {
+            TestApis.users().instrumented().setPin(PIN);
+
+            assertThrows(NeneException.class,
+                    () -> TestApis.users().instrumented().setPin(DIFFERENT_PIN));
+        } finally {
+            TestApis.users().instrumented().clearPin(PIN);
+        }
+    }
+
+    @Test
+    @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    public void setPattern_alreadyHasPattern_throwsException() {
+        try {
+            TestApis.users().instrumented().setPattern(PATTERN);
+
+            assertThrows(NeneException.class,
+                    () -> TestApis.users().instrumented().setPattern(DIFFERENT_PATTERN));
+        } finally {
+            TestApis.users().instrumented().clearPattern(PATTERN);
+        }
+    }
+
+    @Test
+    @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    public void setPassword_clearAsPinAndPattern_throwsException() {
+        try {
+            TestApis.users().instrumented().setPassword(PASSWORD);
+
+            assertThrows(NeneException.class,
+                    () -> TestApis.users().instrumented().clearPin(PASSWORD));
+
+            assertThrows(NeneException.class,
+                    () -> TestApis.users().instrumented().clearPattern(PASSWORD));
+        } finally {
+            TestApis.users().instrumented().clearPassword(PASSWORD);
+        }
+    }
+
+    @Test
+    @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    public void setPin_clearAsPasswordAndPattern_throwsException() {
+        try {
+            TestApis.users().instrumented().setPin(PIN);
+
+            assertThrows(NeneException.class,
+                    () -> TestApis.users().instrumented().clearPassword(PIN));
+
+            assertThrows(NeneException.class,
+                    () -> TestApis.users().instrumented().clearPattern(PIN));
+        } finally {
+            TestApis.users().instrumented().clearPin(PIN);
+        }
+    }
+
+    @Test
+    @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    public void setPattern_clearAsPasswordAndPin_throwsException() {
+        try {
+            TestApis.users().instrumented().setPattern(PATTERN);
+
+            assertThrows(NeneException.class,
+                    () -> TestApis.users().instrumented().clearPassword(PATTERN));
+
+            assertThrows(NeneException.class,
+                    () -> TestApis.users().instrumented().clearPin(PATTERN));
+        } finally {
+            TestApis.users().instrumented().clearPattern(PATTERN);
+        }
+    }
+
+    @Test
+    @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    public void setPassword_checkAsPinAndPattern_returnsFalse() {
+        try {
+            TestApis.users().instrumented().setPassword(PASSWORD);
+
+            assertThat(TestApis.users().instrumented().hasPin()).isFalse();
+
+            assertThat(TestApis.users().instrumented().hasPattern()).isFalse();
+        } finally {
+            TestApis.users().instrumented().clearPassword(PASSWORD);
+        }
+    }
+
+    @Test
+    @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    public void setPin_checkAsPasswordAndPattern_returnsFalse() {
+        try {
+            TestApis.users().instrumented().setPin(PIN);
+
+            assertThat(TestApis.users().instrumented().hasPassword()).isFalse();
+
+            assertThat(TestApis.users().instrumented().hasPattern()).isFalse();
+        } finally {
+            TestApis.users().instrumented().clearPin(PIN);
+        }
+    }
+
+    @Test
+    @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    public void setPattern_checkAsPasswordAndPin_returnsFalse() {
+        try {
+            TestApis.users().instrumented().setPattern(PATTERN);
+
+            assertThat(TestApis.users().instrumented().hasPassword()).isFalse();
+
+            assertThat(TestApis.users().instrumented().hasPin()).isFalse();
+        } finally {
+            TestApis.users().instrumented().clearPattern(PATTERN);
+        }
+    }
+
+    @Test
+    @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    public void setPassword_getAsPinAndPattern_throwsException() {
+        try {
+            TestApis.users().instrumented().setPassword(PASSWORD);
+
+            assertThrows(NeneException.class,
+                    () -> TestApis.users().instrumented().pin());
+
+            assertThrows(NeneException.class,
+                    () -> TestApis.users().instrumented().pattern());
+        } finally {
+            TestApis.users().instrumented().clearPassword(PASSWORD);
+        }
+    }
+
+    @Test
+    @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    public void setPin_getAsPasswordAndPattern_throwsException() {
+        try {
+            TestApis.users().instrumented().setPin(PIN);
+
+            assertThrows(NeneException.class,
+                    () -> TestApis.users().instrumented().password());
+
+            assertThrows(NeneException.class,
+                    () -> TestApis.users().instrumented().pattern());
+        } finally {
+            TestApis.users().instrumented().clearPin(PIN);
+        }
+    }
+
+    @Test
+    @EnsurePasswordNotSet
+    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    public void setPattern_getAsPasswordAndPin_throwsException() {
+        try {
+            TestApis.users().instrumented().setPattern(PATTERN);
+
+            assertThrows(NeneException.class,
+                    () -> TestApis.users().instrumented().password());
+
+            assertThrows(NeneException.class,
+                    () -> TestApis.users().instrumented().pin());
+        } finally {
+            TestApis.users().instrumented().clearPattern(PATTERN);
         }
     }
 }

@@ -1448,6 +1448,30 @@ public class MockImeSession implements AutoCloseable {
     }
 
     /**
+     * Lets {@link MockIme} to call
+     * {@link InputMethodManager#setExplicitlyEnabledInputMethodSubtypes(String, int[])} with the
+     * given parameters.
+     *
+     * <p>This triggers {@code setExplicitlyEnabledInputMethodSubtypes(imeId, subtypeHashCodes)}.
+     * </p>
+     *
+     * @param imeId the IME ID.
+     * @param subtypeHashCodes An array of {@link InputMethodSubtype#hashCode()}. An empty array and
+     *                   {@code null} can reset the enabled subtypes.
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callSetExplicitlyEnabledInputMethodSubtypes(String imeId,
+            @Nullable int[] subtypeHashCodes) {
+        final Bundle params = new Bundle();
+        params.putString("imeId", imeId);
+        params.putIntArray("subtypeHashCodes", subtypeHashCodes);
+        return callCommandInternal("setExplicitlyEnabledInputMethodSubtypes", params);
+    }
+
+    /**
      * Lets {@link MockIme} to call {@link
      * android.inputmethodservice.InputMethodService#switchInputMethod(String, InputMethodSubtype)}
      * with the given parameters.

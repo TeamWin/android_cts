@@ -134,10 +134,12 @@ class EdgeEnhancementTest(its_base_test.ItsBaseTest):
       fmt = 'yuv'
       size = capture_request_utils.get_available_output_sizes(fmt, props)[0]
       out_surface = {'width': size[0], 'height': size[1], 'format': fmt}
+      logging.debug('%s: %dx%d', fmt, size[0], size[1])
 
       # Get proper sensitivity, exposure time, and focus distance.
       mono_camera = camera_properties_utils.mono_camera(props)
       s, e, _, _, fd = cam.do_3a(get_results=True, mono_camera=mono_camera)
+      logging.debug('iso: %d, exp: %d, fd: %.3f', s, e, fd)
 
       # Get the sharpness for each edge mode for regular requests
       sharpness_regular = []

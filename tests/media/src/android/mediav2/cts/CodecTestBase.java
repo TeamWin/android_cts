@@ -1718,17 +1718,7 @@ class CodecDecoderTestBase extends CodecTestBase {
             MediaFormat format = mExtractor.getTrackFormat(trackID);
             if (mMime.equalsIgnoreCase(format.getString(MediaFormat.KEY_MIME))) {
                 mExtractor.selectTrack(trackID);
-                if (mIsAudio) {
-                    // as per cdd, pcm/wave must support PCM_{8, 16, 24, 32, float} and flac must
-                    // support PCM_{16, float}. For raw media type let extractor manage the
-                    // encoding type directly. For flac, basing on bits-per-sample select the type
-                    if (mMime.equals(MediaFormat.MIMETYPE_AUDIO_FLAC)) {
-                        if (format.getInteger("bits-per-sample", 16) > 16) {
-                            format.setInteger(MediaFormat.KEY_PCM_ENCODING,
-                                    AudioFormat.ENCODING_PCM_FLOAT);
-                        }
-                    }
-                } else {
+                if (mIsVideo) {
                     ArrayList<MediaFormat> formatList = new ArrayList<>();
                     formatList.add(format);
                     boolean selectHBD = doesAnyFormatHaveHDRProfile(mMime, formatList) ||

@@ -17,25 +17,19 @@
 package android.media.cts;
 
 import android.media.MediaCodec;
-import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.CodecException;
-import android.media.MediaCodecInfo;
 import android.media.MediaCrypto;
-import android.media.MediaDrm;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.net.Uri;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.Presubmit;
-import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
 import android.view.Surface;
 
-import com.android.compatibility.common.util.MediaUtils;
-
 import androidx.test.filters.SdkSuppress;
+
+import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -43,8 +37,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;;
-import java.util.UUID;;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;

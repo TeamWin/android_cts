@@ -17,9 +17,11 @@
 package android.matchflags.cts;
 
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -57,6 +59,10 @@ public class MatchFlagTests {
 
     @Test
     public void startNoBrowserIntentWithNoMatchingApps() throws Exception {
+        assumeFalse("Skipping test for watch",
+                InstrumentationRegistry.getInstrumentation().getTargetContext()
+                        .getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH));
+
         Intent onlyBrowserIntent = new Intent(Intent.ACTION_VIEW)
                 .addCategory(Intent.CATEGORY_BROWSABLE)
                 .setData(Uri.parse(ONLY_BROWSER_URI));

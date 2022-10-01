@@ -408,6 +408,15 @@ java_test_host {
         "mts-mediaprovider",
     ],
     test_config: "PublicVolumeTest.xml",
+    per_testcase_directory: true,
+    data: [
+        ":CtsScopedStorageTestAppA",
+        ":CtsScopedStorageTestAppA31",
+        ":CtsScopedStorageTestAppB",
+        ":CtsScopedStorageTestAppDLegacy",
+        ":ScopedStorageTest",
+        ":LegacyStorageTest",
+    ],
 }
 
 android_test {

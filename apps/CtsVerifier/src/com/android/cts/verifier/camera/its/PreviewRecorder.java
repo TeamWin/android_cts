@@ -52,6 +52,9 @@ import java.util.List;
 class PreviewRecorder implements AutoCloseable {
     private static final String TAG = PreviewRecorder.class.getSimpleName();
 
+    // Default bitrate to use for recordings when querying CamcorderProfile fails.
+    private static final int DEFAULT_RECORDING_BITRATE = 25_000_000; // 25 Mbps
+
     // Simple Vertex Shader that rotates the texture before passing it to Fragment shader.
     private static final String VERTEX_SHADER = String.join(
             "\n",
@@ -435,8 +438,9 @@ class PreviewRecorder implements AutoCloseable {
 
         // Ideally, we should always find a Camcorder/Encoder Profile corresponding
         // to the preview size.
-        Logt.e(TAG, "Could not find bitrate for any resolution >= " + mPreviewSize);
-        throw new ItsException("Could not find bitrate for any resolution >= " + mPreviewSize);
+        Logt.w(TAG, "Could not find bitrate for any resolution >= " + mPreviewSize
+                + " for cameraId " + cameraId + ". Using default bitrate");
+        return DEFAULT_RECORDING_BITRATE;
     }
 
     /**

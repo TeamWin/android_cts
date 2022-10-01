@@ -1476,19 +1476,19 @@ public class TelephonyManagerTest {
         for (NetworkRegistrationInfo nri : ss.getNetworkRegistrationInfoList()) {
             final int networkType = nri.getAccessNetworkTechnology();
             final CellIdentity cid = nri.getCellIdentity();
+            if (nri.getTransportType() == AccessNetworkConstants.TRANSPORT_TYPE_WLAN) {
+                assertTrue("NetworkType for WLAN transport must be IWLAN if registered or"
+                        + " UNKNOWN if unregistered",
+                    networkType == TelephonyManager.NETWORK_TYPE_UNKNOWN
+                            || networkType == TelephonyManager.NETWORK_TYPE_IWLAN);
+                assertNull("There is no valid cell type for WLAN", cid);
+                continue;
+            }
             if (!nri.isRegistered() && !nri.isEmergencyEnabled()) {
                 assertEquals(
                         "Network type cannot be known unless it is providing some service",
                         TelephonyManager.NETWORK_TYPE_UNKNOWN, networkType);
                 assertNull(cid);
-                continue;
-            }
-            if (nri.getTransportType() == AccessNetworkConstants.TRANSPORT_TYPE_WLAN) {
-                assertTrue("NetworkType for WLAN transport must be IWLAN if registered or"
-                                + " UNKNOWN if unregistered",
-                        networkType == TelephonyManager.NETWORK_TYPE_UNKNOWN
-                                || networkType == TelephonyManager.NETWORK_TYPE_IWLAN);
-                assertNull("There is no valid cell type for WLAN", cid);
                 continue;
             }
 

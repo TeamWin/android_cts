@@ -88,7 +88,11 @@ public final class StartProfilesTest {
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     @SlowApiTest("Start profile broadcasts can take a long time")
     public void startProfile_broadcastIsReceived_profileIsStarted() {
-        sDeviceState.workProfile().stop();
+        try (BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
+                Intent.ACTION_PROFILE_INACCESSIBLE, userIsEqual(sDeviceState.workProfile()))) {
+            sDeviceState.workProfile().stop();
+        }
+
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
                 Intent.ACTION_PROFILE_ACCESSIBLE,
                 userIsEqual(sDeviceState.workProfile()));
@@ -215,8 +219,10 @@ public final class StartProfilesTest {
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
     @Postsubmit(reason = "b/181207615 flaky")
     public void startProfile_tvProfile_profileIsStarted() {
-        sDeviceState.tvProfile().stop();
-
+        try (BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
+                Intent.ACTION_PROFILE_INACCESSIBLE, userIsEqual(sDeviceState.tvProfile()))) {
+            sDeviceState.tvProfile().stop();
+        }
 
         try (BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
                 Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(sDeviceState.tvProfile()))) {

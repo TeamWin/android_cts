@@ -37,13 +37,14 @@ def is_common_aspect_ratio(size):
   return False
 
 
-def auto_capture_request(linear_tonemap=False, props=None):
+def auto_capture_request(linear_tonemap=False, props=None, do_af=True):
   """Returns a capture request with everything set to auto.
 
   Args:
    linear_tonemap: [Optional] boolean whether linear tonemap should be used.
    props: [Optional] object from its_session_utils.get_camera_properties().
           Must present when linear_tonemap is True.
+   do_af: [Optional] boolean whether af mode should be active.
 
   Returns:
     Auto capture request, ready to be passed to the
@@ -53,12 +54,15 @@ def auto_capture_request(linear_tonemap=False, props=None):
       'android.control.mode': 1,
       'android.control.aeMode': 1,
       'android.control.awbMode': 1,
-      'android.control.afMode': 1,
+      'android.control.afMode': 1 if do_af else 0,
       'android.colorCorrection.mode': 1,
+      'android.shading.mode': 1,
       'android.tonemap.mode': 1,
       'android.lens.opticalStabilizationMode': 0,
       'android.control.videoStabilizationMode': 0
   }
+  if not do_af:
+    req['android.lens.focusDistance'] = 0.0
   if linear_tonemap:
     if props is None:
       raise AssertionError('props is None with linear_tonemap.')

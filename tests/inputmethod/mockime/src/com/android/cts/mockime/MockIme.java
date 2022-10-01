@@ -76,6 +76,7 @@ import android.view.inputmethod.InputBinding;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethod;
+import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.InputMethodSubtype;
 import android.view.inputmethod.InsertGesture;
 import android.view.inputmethod.JoinOrSplitGesture;
@@ -462,6 +463,14 @@ public final class MockIme extends InputMethodService {
                                 command.getExtras().getParcelable("textAttribute");
                         return getMemorizedOrCurrentInputConnection()
                                 .replaceText(start, end, text, newCursorPosition, textAttribute);
+                    }
+                    case "setExplicitlyEnabledInputMethodSubtypes": {
+                        final String imeId = command.getExtras().getString("imeId");
+                        final int[] subtypeHashCodes =
+                                command.getExtras().getIntArray("subtypeHashCodes");
+                        getSystemService(InputMethodManager.class)
+                                .setExplicitlyEnabledInputMethodSubtypes(imeId, subtypeHashCodes);
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     }
                     case "switchInputMethod(String,InputMethodSubtype)": {
                         final String id = command.getExtras().getString("id");

@@ -23,8 +23,13 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
+
 import android.app.Instrumentation;
+import android.content.ComponentName;
 import android.os.SystemClock;
+import android.text.TextUtils;
+import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.InputMethodSubtype;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
@@ -64,6 +69,25 @@ public class InputMethodSubtypeTest extends EndToEndImeTestBase {
                     .setSubtypeId(0x12345678)
                     .setOverridesImplicitlyEnabledSubtype(true)
                     .build();
+
+    private static final InputMethodSubtype TEST_SUBTYPE1 =
+            new InputMethodSubtype.InputMethodSubtypeBuilder()
+                    .setSubtypeId(0x23456789)
+                    .build();
+
+    private static final InputMethodSubtype TEST_SUBTYPE2 =
+            new InputMethodSubtype.InputMethodSubtypeBuilder()
+                    .setSubtypeId(0x3456789a)
+                    .build();
+
+    private static final InputMethodSubtype TEST_SUBTYPE3 =
+            new InputMethodSubtype.InputMethodSubtypeBuilder()
+                    .setSubtypeId(0x456789ab)
+                    .build();
+
+    private static final String NONEXISTENCE_PACKAGE = "com.android.cts.ime.nonexistentpackage";
+
+    private static final String NONEXISTENCE_RELATIVE_NAME = ".NonexistentIme";
 
     private static final String TEST_MARKER_PREFIX =
             "android.view.inputmethod.cts.InputMethodSubtypeTest";
@@ -181,4 +205,128 @@ public class InputMethodSubtypeTest extends EndToEndImeTestBase {
                     .isEqualTo(IMPLICITLY_ENABLED_TEST_SUBTYPE2);
         }
     }
-}
+
+    /**
+     * Verifies that
+     * {@link InputMethodManager#setExplicitlyEnabledInputMethodSubtypes(String, int[])} works.
+     */
+    @Test
+    public void testSetExplicitlyEnabledInputMethodSubtypes() throws Exception {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        try (MockImeSession imeSession = MockImeSession.create(instrumentation.getContext(),
+                instrumentation.getUiAutomation(),
+                new ImeSettings.Builder().setAdditionalSubtypes(TEST_SUBTYPE1, TEST_SUBTYPE2,
+                        IMPLICITLY_ENABLED_TEST_SUBTYPE))) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            launchTestActivity(marker);
+
+            expectEvent(stream, event -> "onCreate".equals(event.getEventName()), TIMEOUT);
+
+            final InputMethodInfo mockImeInfo = mImm.getEnabledInputMethodList().stream()
+                    .filter(imi -> TextUtils.equals(imi.getId(), imeSession.getImeId()))
+                    .findFirst()
+                    .get();
+
+            // By default, implicitlyEnabled subtypes are enabled.
+            assertThat(mImm.getEnabledInputMethodSubtypeList(mockImeInfo, false)).isEmpty();
+            assertThat(mImm.getEnabledInputMethodSubtypeList(mockImeInfo, true))
+                    .containsExactly(IMPLICITLY_ENABLED_TEST_SUBTYPE);
+
+            // IMM#setEnabledInputMethodSubtypes() should be able to update the enabled subtypes.
+            expectCommand(stream, imeSession.callSetExplicitlyEnabledInputMethodSubtypes(
+                    imeSession.getImeId(), new int[]{TEST_SUBTYPE1.hashCode()}), TIMEOUT);
+            assertThat(mImm.getEnabledInputMethodSubtypeList(mockImeInfo, false))
+                    .containsExactly(TEST_SUBTYPE1);
+            assertThat(mImm.getEnabledInputMethodSubtypeList(mockImeInfo, true))
+                    .containsExactly(TEST_SUBTYPE1);
+
+            // an empty array will reset the enabled subtypes.
+            expectCommand(stream, imeSession.callSetExplicitlyEnabledInputMethodSubtypes(
+                            imeSession.getImeId(),
+                            new int[]{}), TIMEOUT);
+            assertThat(mImm.getEnabledInputMethodSubtypeList(mockImeInfo, false)).isEmpty();
+            assertThat(mImm.getEnabledInputMethodSubtypeList(mockImeInfo, true))
+                    .containsExactly(IMPLICITLY_ENABLED_TEST_SUBTYPE);
+
+            // duplicate entries should be just ignored.
+            expectCommand(stream, imeSession.callSetExplicitlyEnabledInputMethodSubtypes(
+                    imeSession.getImeId(),
+                    new int[]{TEST_SUBTYPE1.hashCode(), TEST_SUBTYPE1.hashCode()}), TIMEOUT);
+            assertThat(mImm.getEnabledInputMethodSubtypeList(mockImeInfo, false))
+                    .containsExactly(TEST_SUBTYPE1);
+            assertThat(mImm.getEnabledInputMethodSubtypeList(mockImeInfo, true))
+                    .containsExactly(TEST_SUBTYPE1);
+
+            // nonexistent entries should be just ignored.
+            expectCommand(stream, imeSession.callSetExplicitlyEnabledInputMethodSubtypes(
+                    imeSession.getImeId(),
+                    new int[]{TEST_SUBTYPE2.hashCode(), TEST_SUBTYPE3.hashCode()}), TIMEOUT);
+            assertThat(mImm.getEnabledInputMethodSubtypeList(mockImeInfo, false))
+                    .containsExactly(TEST_SUBTYPE2);
+            assertThat(mImm.getEnabledInputMethodSubtypeList(mockImeInfo, true))
+                    .containsExactly(TEST_SUBTYPE2);
+        }
+    }
+
+    /**
+     * Verifies that
+     * {@link InputMethodManager#setExplicitlyEnabledInputMethodSubtypes(String, int[])} must throw
+     * {@link SecurityException} if {@code null} is specified for {@code imeId}.
+     */
+    @Test
+    public void testSetExplicitlyEnabledInputMethodSubtypesForNullImeId() {
+        assertThrows(SecurityException.class,
+                () -> mImm.setExplicitlyEnabledInputMethodSubtypes(null, null));
+    }
+
+    /**
+     * Verifies that
+     * {@link InputMethodManager#setExplicitlyEnabledInputMethodSubtypes(String, int[])} must throw
+     * {@link SecurityException} if the caller is not allowed to do so.
+     *
+     * <p>Note that to avoid side-channel attacks about app package visibility, it must always
+     * throw the same {@link SecurityException} no matter whether the specified IME ID exists or
+     * not.</p>
+     */
+    @Test
+    public void testSetExplicitlyEnabledInputMethodSubtypesForNotOwningIme() {
+        final String notOwningImeId =
+                ComponentName.createRelative(NONEXISTENCE_PACKAGE, NONEXISTENCE_RELATIVE_NAME)
+                                .flattenToShortString();
+        assertThrows(SecurityException.class,
+                () -> mImm.setExplicitlyEnabledInputMethodSubtypes(notOwningImeId, null));
+    }
+
+    /**
+     * Verifies that
+     * {@link InputMethodManager#setExplicitlyEnabledInputMethodSubtypes(String, int[])} does not
+     * throw any {@link Exception} if the specified IME ID means that the IME belongs to the calling
+     * package but the IME itself does not exist.
+     */
+    @Test
+    public void testSetEnabledInputMethodSubtypesForNotExistingImeInTheSamePackage() {
+        final String myPackageName =
+                InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageName();
+        final String nonexistenceImeId =
+                ComponentName.createRelative(myPackageName, NONEXISTENCE_RELATIVE_NAME)
+                        .flattenToShortString();
+        mImm.setExplicitlyEnabledInputMethodSubtypes(nonexistenceImeId, new int[]{});
+    }
+
+    /**
+     * Verifies that
+     * {@link InputMethodManager#setExplicitlyEnabledInputMethodSubtypes(String, int[])} must throw
+     * {@link NullPointerException} if {@code null} is specified for {@code subtypeHashCodes}.
+     */
+    @Test
+    public void testSetExplicitlyEnabledInputMethodSubtypesForNullSubtypeHashCodes() {
+        final String myPackageName =
+                InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageName();
+        final String nonexistenceImeId =
+                ComponentName.createRelative(myPackageName, NONEXISTENCE_RELATIVE_NAME)
+                        .flattenToShortString();
+        assertThrows(NullPointerException.class,
+                () -> mImm.setExplicitlyEnabledInputMethodSubtypes(nonexistenceImeId, null));
+    }}

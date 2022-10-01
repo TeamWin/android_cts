@@ -16,9 +16,9 @@
 
 package android.media.cts;
 
-import java.io.File;
-
 import junit.framework.Assert;
+
+import java.io.File;
 
 /**
  * Static methods used to validate preconditions in the media CTS suite

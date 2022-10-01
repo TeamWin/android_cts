@@ -17,11 +17,17 @@
 package android.mediapc.cts.common;
 
 import static android.util.DisplayMetrics.DENSITY_400;
+
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
+import android.media.MediaCodecInfo.VideoCapabilities.PerformancePoint;
+import android.media.MediaFormat;
 import android.os.Build;
 import android.os.SystemProperties;
 import android.util.DisplayMetrics;
@@ -32,6 +38,8 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Test utilities.
@@ -56,6 +64,7 @@ public class Utils {
     // Android T Media performance requires 8 GB min RAM, so setting lower as above
     public static final long MIN_MEMORY_PERF_CLASS_T_MB = 7 * 1024;
 
+    public static final boolean MEETS_AVC_CODEC_MINIMUM_REQUIREMENTS;
     static {
         // with a default-media-performance-class that can be configured through a command line
         // argument.
@@ -91,6 +100,7 @@ public class Utils {
             DISPLAY_SHORT_PIXELS = 0;
             TOTAL_MEMORY_MB = 0;
         }
+        MEETS_AVC_CODEC_MINIMUM_REQUIREMENTS = meetsAvcCodecMinimumRequirements();
     }
 
     /**
@@ -126,6 +136,57 @@ public class Utils {
                 && !pm.hasSystemFeature(pm.FEATURE_AUTOMOTIVE);
     }
 
+    private static boolean avcCodecMeetsRequirements(boolean isEncoder) {
+        // Latency tests need the following instances of codecs at 30 fps
+        // 1920x1080 encoder in MediaRecorder for load conditions
+        // 1920x1080 decoder and 1920x1080 encoder for load conditions
+        // 1920x1080 encoder for initialization test
+        // Since there is no way to know if encoder and decoder are supported concurrently at their
+        // maximum load, we will test the above combined requirements are met for both encoder and
+        // decoder (so a minimum of 4 instances required for both encoder and decoder)
+        int minInstancesRequired = 4;
+        int width = 1920;
+        int height = 1080;
+        double fps = 30 /* encoder for media recorder */
+                + 30 /* 1080p decoder for transcoder */
+                + 30 /* 1080p encoder for transcoder */
+                + 30 /* 1080p encoder for latency test */;
+
+        String avcMediaType = MediaFormat.MIMETYPE_VIDEO_AVC;
+        PerformancePoint pp1080p = new PerformancePoint(width, height, (int) fps);
+        MediaCodec codec;
+        try {
+            codec = isEncoder ? MediaCodec.createEncoderByType(avcMediaType) :
+                    MediaCodec.createDecoderByType(avcMediaType);
+        } catch (IOException e) {
+            Log.d(TAG, "Unable to create codec " + e);
+            return false;
+        }
+        MediaCodecInfo info = codec.getCodecInfo();
+        MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType(avcMediaType);
+        List<PerformancePoint> pps =
+                caps.getVideoCapabilities().getSupportedPerformancePoints();
+        assertTrue(info.getName() + " doesn't advertise performance points", pps.size() > 0);
+        boolean supportsRequiredRate = false;
+        for (PerformancePoint pp : pps) {
+            if (pp.covers(pp1080p)) {
+                supportsRequiredRate = true;
+            }
+        }
+
+        boolean supportsRequiredSize = caps.getVideoCapabilities().isSizeSupported(width, height);
+        boolean supportsRequiredInstances = caps.getMaxSupportedInstances() >= minInstancesRequired;
+        codec.release();
+        Log.d(TAG, info.getName() + " supports required FPS : " + supportsRequiredRate
+                + ", supports required size : " + supportsRequiredSize
+                + ", supports required instances : " + supportsRequiredInstances);
+        return supportsRequiredRate && supportsRequiredSize && supportsRequiredInstances;
+    }
+
+    private static boolean meetsAvcCodecMinimumRequirements() {
+        return avcCodecMeetsRequirements(/* isEncoder */ true)
+                && avcCodecMeetsRequirements(/* isEncoder */ false);
+    }
 
     public static int getPerfClass() {
         return sPc;
@@ -143,11 +204,12 @@ public class Utils {
 
         // If device doesn't advertise performance class, check if this can be ruled out as a
         // candidate for performance class tests.
-        if (!isHandheld() ||
-                TOTAL_MEMORY_MB < MIN_MEMORY_PERF_CLASS_CANDIDATE_MB ||
-                DISPLAY_DPI < MIN_DISPLAY_CANDIDATE_DPI ||
-                DISPLAY_LONG_PIXELS < MIN_DISPLAY_LONG_CANDIDATE_PIXELS ||
-                DISPLAY_SHORT_PIXELS < MIN_DISPLAY_SHORT_CANDIDATE_PIXELS) {
+        if (!isHandheld()
+                || TOTAL_MEMORY_MB < MIN_MEMORY_PERF_CLASS_CANDIDATE_MB
+                || DISPLAY_DPI < MIN_DISPLAY_CANDIDATE_DPI
+                || DISPLAY_LONG_PIXELS < MIN_DISPLAY_LONG_CANDIDATE_PIXELS
+                || DISPLAY_SHORT_PIXELS < MIN_DISPLAY_SHORT_CANDIDATE_PIXELS
+                || !MEETS_AVC_CODEC_MINIMUM_REQUIREMENTS) {
             return false;
         }
         return true;

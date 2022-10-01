@@ -50,7 +50,7 @@ import java.util.TimeZone;
 @RunWith(BedsteadJUnit4.class)
 public final class TimeTest {
 
-    private static final long MILLIS_SINCE_EPOCH = 2000;
+    private static final long MILLIS_SINCE_EPOCH = 1660000000000l;
 
     private static final String TIMEZONE = "Singapore";
 
@@ -372,10 +372,11 @@ public final class TimeTest {
                     .setTime(sDeviceState.dpc().componentName(), MILLIS_SINCE_EPOCH);
 
             assertThat(returnValue).isTrue();
-            // TODO: This doesn't update within the 30 second timeout
-//            Poll.forValue("currentTimeMillis", System::currentTimeMillis)
-//                    .toBeEqualTo(MILLIS_SINCE_EPOCH).errorOnFail().await();
 
+            long currentTime = System.currentTimeMillis();
+            long differenceSeconds = (currentTime - MILLIS_SINCE_EPOCH) / 1000;
+
+            assertThat(differenceSeconds).isLessThan(120); // Within 2 minutes
         } finally {
             sDeviceState.dpc().devicePolicyManager().setAutoTimeEnabled(
                     sDeviceState.dpc().componentName(), originalAutoTimeEnabledValue);

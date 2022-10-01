@@ -101,6 +101,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.CtsMouseUtil;
+import com.android.compatibility.common.util.TestUtils;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -1172,6 +1173,8 @@ public class AccessibilityEndToEndTest {
 
             // Finding a11y focus should return null after UIAutomation !isAccessibilityTool.
             setAccessibilityTool(false);
+            // Re-enable touch exploration after setAccessibilityTool(), which resets sUiAutomation.
+            enableTouchExploration(true);
             assertThat(sUiAutomation.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY)).isNull();
         } finally {
             enableTouchExploration(false);
@@ -1448,10 +1451,38 @@ public class AccessibilityEndToEndTest {
         manager.removeTouchExplorationStateChangeListener(serviceListener);
     }
 
+    /**
+     * Reconnect {@link #sUiAutomation} with {@link AccessibilityServiceInfo#isAccessibilityTool()}
+     * set to the provided value, unless already set.
+     *
+     * This method requires disconnecting and reconnecting a new UiAutomation instance because
+     * {@link AccessibilityServiceInfo#isAccessibilityTool()} is not a dynamically configurable
+     * property.
+     */
     private static void setAccessibilityTool(boolean isAccessibilityTool) {
-        AccessibilityServiceInfo serviceInfo = sUiAutomation.getServiceInfo();
-        serviceInfo.setAccessibilityTool(isAccessibilityTool);
-        sUiAutomation.setServiceInfo(serviceInfo);
+        if (sUiAutomation.getServiceInfo().isAccessibilityTool() != isAccessibilityTool) {
+            // Get a new UiAutomation instance, which destroys the old instance and connects to
+            // a new instance.
+            final int flags = isAccessibilityTool ? 0 : UiAutomation.FLAG_NOT_ACCESSIBILITY_TOOL;
+            sUiAutomation = sInstrumentation.getUiAutomation(flags);
+
+            // Destroying the old UiAutomation instance triggers the activity's ViewRootImpl's
+            // AccessibilityStateChangeListener to unregister its
+            // AccessibilityInteractionConnection, since AM#isEnabled() is now false, which makes
+            // the activity's ViewRootImpl unavailable to a11y.
+            //
+            // Connecting a new UiAutomation instance will trigger ViewRootImpl to become available
+            // to a11y again, but this happens asynchronously, so we wait until
+            // getRootInActiveWindow() returns a non-null instance which implies that the activity
+            // is once again available to a11y.
+            try {
+                TestUtils.waitUntil("getRootInActiveWindow() still null",
+                        (int) DEFAULT_TIMEOUT_MS / 1000,
+                        () -> sUiAutomation.getRootInActiveWindow() != null);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private static MotionEvent matchHover(int action, int x, int y) {
