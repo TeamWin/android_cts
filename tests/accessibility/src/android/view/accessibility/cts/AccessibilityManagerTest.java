@@ -45,6 +45,8 @@ import android.view.accessibility.AccessibilityManager.TouchExplorationStateChan
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
+
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SettingsStateChangerRule;
 import com.android.compatibility.common.util.SystemUtil;
@@ -64,7 +66,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Class for testing {@link AccessibilityManager}.
  */
 @RunWith(AndroidJUnit4.class)
-public class AccessibilityManagerTest {
+public class AccessibilityManagerTest extends StsExtraBusinessLogicTestCase {
 
     private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
