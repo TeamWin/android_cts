@@ -33,6 +33,7 @@ import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.NonMediaMainlineTest;
 
 import org.junit.After;
 import org.junit.Ignore;

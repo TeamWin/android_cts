@@ -95,7 +95,7 @@ public class LauncherAppsEnumerationTests extends AppEnumerationTestsBase {
     public void callback_added_notVisibleNotReceives() throws Exception {
         ensurePackageIsNotInstalled(TARGET_STUB);
         final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING,
-                CALLBACK_EVENT_PACKAGE_ADDED);
+                CALLBACK_EVENT_PACKAGE_ADDED, new String[]{TARGET_STUB});
 
         installPackage(TARGET_STUB_APK);
         final Bundle response = result.await();
@@ -108,7 +108,7 @@ public class LauncherAppsEnumerationTests extends AppEnumerationTestsBase {
     public void callback_added_visibleReceives() throws Exception {
         ensurePackageIsNotInstalled(TARGET_STUB);
         final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING_PERM,
-                CALLBACK_EVENT_PACKAGE_ADDED);
+                CALLBACK_EVENT_PACKAGE_ADDED, new String[]{TARGET_STUB});
 
         installPackage(TARGET_STUB_APK);
         final Bundle response = result.await();
@@ -122,7 +122,7 @@ public class LauncherAppsEnumerationTests extends AppEnumerationTestsBase {
     public void callback_removed_notVisibleNotReceives() throws Exception {
         ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
         final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING,
-                CALLBACK_EVENT_PACKAGE_REMOVED);
+                CALLBACK_EVENT_PACKAGE_REMOVED, new String[]{TARGET_STUB});
 
         uninstallPackage(TARGET_STUB);
         final Bundle response = result.await();
@@ -135,7 +135,7 @@ public class LauncherAppsEnumerationTests extends AppEnumerationTestsBase {
     public void callback_removed_visibleReceives() throws Exception {
         ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
         final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING_PERM,
-                CALLBACK_EVENT_PACKAGE_REMOVED);
+                CALLBACK_EVENT_PACKAGE_REMOVED, new String[]{TARGET_STUB});
 
         uninstallPackage(TARGET_STUB);
         final Bundle response = result.await();
@@ -148,7 +148,7 @@ public class LauncherAppsEnumerationTests extends AppEnumerationTestsBase {
     @Test
     public void callback_changed_notVisibleNotReceives() throws Exception {
         final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING,
-                CALLBACK_EVENT_PACKAGE_CHANGED);
+                CALLBACK_EVENT_PACKAGE_CHANGED, new String[]{TARGET_FILTERS});
 
         installPackage(TARGET_FILTERS_APK);
         final Bundle response = result.await();
@@ -160,7 +160,7 @@ public class LauncherAppsEnumerationTests extends AppEnumerationTestsBase {
     @Test
     public void callback_changed_visibleReceives() throws Exception {
         final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING_PERM,
-                CALLBACK_EVENT_PACKAGE_CHANGED);
+                CALLBACK_EVENT_PACKAGE_CHANGED, new String[]{TARGET_FILTERS});
 
         installPackage(TARGET_FILTERS_APK);
         final Bundle response = result.await();
@@ -173,7 +173,7 @@ public class LauncherAppsEnumerationTests extends AppEnumerationTestsBase {
     @Test
     public void callback_suspended_notVisibleNotReceives() throws Exception {
         final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING,
-                CALLBACK_EVENT_PACKAGES_SUSPENDED);
+                CALLBACK_EVENT_PACKAGES_SUSPENDED, new String[]{TARGET_FILTERS});
 
         try {
             suspendPackages(true /* suspend */, Arrays.asList(TARGET_NO_API, TARGET_FILTERS));
@@ -189,7 +189,7 @@ public class LauncherAppsEnumerationTests extends AppEnumerationTestsBase {
     @Test
     public void callback_suspended_visibleReceives() throws Exception {
         final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_ACTIVITY_ACTION,
-                CALLBACK_EVENT_PACKAGES_SUSPENDED);
+                CALLBACK_EVENT_PACKAGES_SUSPENDED, new String[]{TARGET_FILTERS});
 
         try {
             suspendPackages(true /* suspend */, Arrays.asList(TARGET_NO_API, TARGET_FILTERS));
@@ -206,7 +206,7 @@ public class LauncherAppsEnumerationTests extends AppEnumerationTestsBase {
     @Test
     public void callback_unsuspended_notVisibleNotReceives() throws Exception {
         final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING,
-                CALLBACK_EVENT_PACKAGES_UNSUSPENDED);
+                CALLBACK_EVENT_PACKAGES_UNSUSPENDED, new String[]{TARGET_FILTERS});
 
         suspendPackages(false /* suspend */, Arrays.asList(TARGET_NO_API, TARGET_FILTERS));
         final Bundle response = result.await();
@@ -220,7 +220,7 @@ public class LauncherAppsEnumerationTests extends AppEnumerationTestsBase {
         suspendPackages(true /* suspend */, Arrays.asList(TARGET_NO_API, TARGET_FILTERS));
 
         final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_ACTIVITY_ACTION,
-                CALLBACK_EVENT_PACKAGES_UNSUSPENDED);
+                CALLBACK_EVENT_PACKAGES_UNSUSPENDED, new String[]{TARGET_FILTERS});
 
         suspendPackages(false /* suspend */, Arrays.asList(TARGET_NO_API, TARGET_FILTERS));
         final Bundle response = result.await();
@@ -509,9 +509,10 @@ public class LauncherAppsEnumerationTests extends AppEnumerationTestsBase {
     }
 
     private Result sendCommandAndWaitForLauncherAppsCallback(String sourcePackageName,
-            int expectedEventCode) throws Exception {
+            int expectedEventCode, String[] expectedPackages) throws Exception {
         final Bundle extra = new Bundle();
         extra.putInt(EXTRA_FLAGS, expectedEventCode);
+        extra.putStringArray(EXTRA_PACKAGES, expectedPackages);
         final Result result = sendCommand(sourcePackageName, null /* targetPackageName */,
                 INVALID_UID /* targetUid */, extra, ACTION_AWAIT_LAUNCHER_APPS_CALLBACK,
                 true /* waitForReady */);

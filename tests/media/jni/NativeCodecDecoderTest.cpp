@@ -436,6 +436,7 @@ bool CodecDecoderTest::testFlush(const char* decoder, const char* testFile, int 
     mOutputBuff = test;
     const bool boolStates[]{true, false};
     for (auto isAsync : boolStates) {
+        if (isAsync) continue;  // TODO(b/147576107)
         if (!isPass) break;
         char log[1000];
         snprintf(log, sizeof(log), "codec: %s, file: %s, async mode: %s:: \n", decoder, testFile,
@@ -494,7 +495,9 @@ bool CodecDecoderTest::testFlush(const char* decoder, const char* testFile, int 
         CHECK_ERR(hasSeenError(), log, "has seen error", isPass);
         CHECK_ERR((0 == mInputCount), log, "queued 0 inputs", isPass);
         CHECK_ERR((0 == mOutputCount), log, "received 0 outputs", isPass);
-        CHECK_ERR((!ref->equals(test)), log, "output is flaky", isPass);
+        if (isMediaTypeOutputUnAffectedBySeek(mMime)) {
+            CHECK_ERR((!ref->equals(test)), log, "output is flaky", isPass);
+        }
         if (!isPass) continue;
 
         /* test flush in eos state */
@@ -513,7 +516,9 @@ bool CodecDecoderTest::testFlush(const char* decoder, const char* testFile, int 
         CHECK_ERR(hasSeenError(), log, "has seen error", isPass);
         CHECK_ERR((0 == mInputCount), log, "queued 0 inputs", isPass);
         CHECK_ERR((0 == mOutputCount), log, "received 0 outputs", isPass);
-        CHECK_ERR((!ref->equals(test)), log, "output is flaky", isPass);
+        if (isMediaTypeOutputUnAffectedBySeek(mMime)) {
+            CHECK_ERR((!ref->equals(test)), log, "output is flaky", isPass);
+        }
         if (validateFormat) {
             if (mIsCodecInAsyncMode ? !mAsyncHandle.hasOutputFormatChanged()
                                     : !mSignalledOutFormatChanged) {

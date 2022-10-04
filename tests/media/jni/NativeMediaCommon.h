@@ -34,6 +34,7 @@ extern const char* AMEDIA_MIMETYPE_AUDIO_AAC;
 extern const char* AMEDIA_MIMETYPE_AUDIO_FLAC;
 extern const char* AMEDIA_MIMETYPE_AUDIO_VORBIS;
 extern const char* AMEDIA_MIMETYPE_AUDIO_OPUS;
+extern const char* AMEDIA_MIMETYPE_AUDIO_RAW;
 
 extern const float kRmsErrorTolerance;
 
@@ -70,6 +71,7 @@ static const int kBitrateModeConstant = 2;
 // common utility functions
 bool isCSDIdentical(AMediaFormat* refFormat, AMediaFormat* testFormat);
 bool isFormatSimilar(AMediaFormat* refFormat, AMediaFormat* testFormat);
+bool isMediaTypeOutputUnAffectedBySeek(const char* mediaType);
 
 template <class T>
 void flattenField(uint8_t* buffer, int* pos, T value);

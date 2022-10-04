@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.mediav2.cts;
+package com.android.compatibility.common.util;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

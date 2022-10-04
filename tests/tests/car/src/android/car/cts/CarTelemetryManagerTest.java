@@ -27,16 +27,16 @@ import android.car.Car;
 import android.car.VehiclePropertyIds;
 import android.car.telemetry.CarTelemetryManager;
 import android.car.telemetry.TelemetryProto;
-import android.car.test.ApiCheckerRule.Builder;
 import android.os.PersistableBundle;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.ArrayMap;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -105,13 +105,6 @@ public final class CarTelemetryManagerTest extends AbstractCarTestCase {
     private CarTelemetryManager mCarTelemetryManager;
     private UiAutomation mUiAutomation;
 
-    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
-    @Override
-    protected void configApiCheckerRule(Builder builder) {
-        Log.w(TAG, "Disabling API requirements check");
-        builder.disableAnnotationsCheck();
-    }
-
     @Before
     public void setUp() throws Exception {
         assumeTrue("CarTelemetryService is not enabled, skipping test",
@@ -139,6 +132,13 @@ public final class CarTelemetryManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.car.telemetry.CarTelemetryManager#"
+                    + "addMetricsConfig(String, byte[], Executor, AddMetricsConfigCallback)",
+            "android.car.telemetry.CarTelemetryManager#removeMetricsConfig(String)",
+            "android.car.telemetry.CarTelemetryManager#STATUS_ADD_METRICS_CONFIG_SUCCEEDED",
+            "android.car.telemetry.CarTelemetryManager#STATUS_ADD_METRICS_CONFIG_ALREADY_EXISTS",
+    })
     public void testAddRemoveMetricsConfig() throws Exception {
         // Test: add new MetricsConfig. Expect: SUCCESS
         AddMetricsConfigCallbackImpl callback = new AddMetricsConfigCallbackImpl();
@@ -165,6 +165,16 @@ public final class CarTelemetryManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.car.telemetry.CarTelemetryManager#"
+                    + "addMetricsConfig(String, byte[], Executor, AddMetricsConfigCallback)",
+            "android.car.telemetry.CarTelemetryManager#"
+                    + "setReportReadyListener(Executor, ReportReadyListener)",
+            "android.car.telemetry.CarTelemetryManager#"
+                    + "getFinishedReport(String, Executor, MetricsReportCallback)",
+            "android.car.telemetry.CarTelemetryManager#STATUS_ADD_METRICS_CONFIG_SUCCEEDED",
+            "android.car.telemetry.CarTelemetryManager#STATUS_GET_METRICS_CONFIG_FINISHED",
+    })
     public void testEndToEndScriptExecution_getFinishedReport() throws Exception {
         // set listener to receive report ready notification
         Semaphore reportReadySemaphore = new Semaphore(0);
@@ -198,6 +208,17 @@ public final class CarTelemetryManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.car.telemetry.CarTelemetryManager#"
+                    + "addMetricsConfig(String, byte[], Executor, AddMetricsConfigCallback)",
+            "android.car.telemetry.CarTelemetryManager#"
+                    + "setReportReadyListener(Executor, ReportReadyListener)",
+            "android.car.telemetry.CarTelemetryManager#"
+                    + "getAllFinishedReports(Executor, MetricsReportCallback)",
+            "android.car.telemetry.CarTelemetryManager#STATUS_ADD_METRICS_CONFIG_SUCCEEDED",
+            "android.car.telemetry.CarTelemetryManager#STATUS_GET_METRICS_CONFIG_FINISHED",
+            "android.car.telemetry.CarTelemetryManager#STATUS_GET_METRICS_CONFIG_RUNTIME_ERROR",
+    })
     public void testEndToEndScriptExecution_getAllFinishedReports() throws Exception {
         // set listener to receive report ready notification
         Semaphore reportReadySemaphore = new Semaphore(0);
@@ -238,6 +259,11 @@ public final class CarTelemetryManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.car.telemetry.CarTelemetryManager#"
+                    + "setReportReadyListener(Executor, ReportReadyListener)",
+            "android.car.telemetry.CarTelemetryManager#clearReportReadyListener",
+    })
     public void testSetClearReportReadyListener() {
         CarTelemetryManager.ReportReadyListener listener = metricsConfigName -> { };
 

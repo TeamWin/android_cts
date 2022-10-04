@@ -27,6 +27,8 @@ import android.media.MediaMuxer;
 
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.NonMediaMainlineTest;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;

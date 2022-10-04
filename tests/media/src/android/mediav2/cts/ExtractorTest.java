@@ -40,6 +40,8 @@ import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.Preconditions;
+
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.junit.After;

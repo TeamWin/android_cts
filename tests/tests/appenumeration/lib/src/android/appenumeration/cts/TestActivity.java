@@ -317,7 +317,10 @@ public class TestActivity extends Activity {
             } else if (Constants.ACTION_AWAIT_LAUNCHER_APPS_CALLBACK.equals(action)) {
                 final int expectedEventCode = intent.getBundleExtra(EXTRA_DATA)
                         .getInt(EXTRA_FLAGS, CALLBACK_EVENT_INVALID);
-                awaitLauncherAppsCallback(remoteCallback, expectedEventCode, EXTENDED_TIMEOUT_MS);
+                final String[] expectedPackages = intent.getBundleExtra(EXTRA_DATA)
+                        .getStringArray(EXTRA_PACKAGES);
+                awaitLauncherAppsCallback(remoteCallback, expectedEventCode, expectedPackages,
+                        EXTENDED_TIMEOUT_MS);
             } else if (Constants.ACTION_GET_SHAREDLIBRARY_DEPENDENT_PACKAGES.equals(action)) {
                 final String sharedLibName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
                 sendGetSharedLibraryDependentPackages(remoteCallback, sharedLibName);
@@ -509,8 +512,14 @@ public class TestActivity extends Activity {
         mainHandler.postDelayed(() -> sendResult.run(), token, timeoutMs);
     }
 
+    private boolean matchPackageNames(String[] expectedPackages, String[] actualPackages) {
+        Arrays.sort(expectedPackages);
+        Arrays.sort(actualPackages);
+        return Arrays.equals(expectedPackages, actualPackages);
+    }
+
     private void awaitLauncherAppsCallback(RemoteCallback remoteCallback, int expectedEventCode,
-            long timeoutMs) {
+            String[] expectedPackages, long timeoutMs) {
         final Object token = new Object();
         final Bundle result = new Bundle();
         final LauncherApps launcherApps = getSystemService(LauncherApps.class);
@@ -518,6 +527,9 @@ public class TestActivity extends Activity {
 
             private void onPackageStateUpdated(String[] packageNames, int resultCode) {
                 if (resultCode != expectedEventCode) {
+                    return;
+                }
+                if (!matchPackageNames(expectedPackages, packageNames)) {
                     return;
                 }
 

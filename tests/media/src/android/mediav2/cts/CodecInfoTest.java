@@ -45,6 +45,7 @@ import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.NonMediaMainlineTest;
 
 import org.junit.Assume;
 import org.junit.Test;

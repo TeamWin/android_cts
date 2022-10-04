@@ -22,6 +22,7 @@
 #include <utility>
 
 #include "NativeMediaCommon.h"
+
 /* TODO(b/153592281)
  * Note: constants used by the native media tests but not available in media ndk api
  */
@@ -39,6 +40,7 @@ const char* AMEDIA_MIMETYPE_AUDIO_AAC = "audio/mp4a-latm";
 const char* AMEDIA_MIMETYPE_AUDIO_FLAC = "audio/flac";
 const char* AMEDIA_MIMETYPE_AUDIO_VORBIS = "audio/vorbis";
 const char* AMEDIA_MIMETYPE_AUDIO_OPUS = "audio/opus";
+const char* AMEDIA_MIMETYPE_AUDIO_RAW = "audio/raw";
 
 /* TODO(b/153592281) */
 const char* TBD_AMEDIACODEC_PARAMETER_KEY_REQUEST_SYNC_FRAME = "request-sync";
@@ -144,4 +146,11 @@ bool isFormatSimilar(AMediaFormat* refFormat, AMediaFormat* testFormat) {
         if (refHeight != testHeight) return false;
     }
     return true;
+}
+
+bool isMediaTypeOutputUnAffectedBySeek(const char* mediaType) {
+    if (strcmp(mediaType, AMEDIA_MIMETYPE_AUDIO_FLAC) == 0) return true;
+    if (strcmp(mediaType, AMEDIA_MIMETYPE_AUDIO_RAW) == 0) return true;
+    if (strncmp(mediaType, "video/", strlen("video/")) == 0) return true;
+    return false;
 }

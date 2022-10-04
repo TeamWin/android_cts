@@ -29,6 +29,7 @@ import android.util.Log;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.Preconditions;
 
 import org.junit.Ignore;
 import org.junit.Rule;

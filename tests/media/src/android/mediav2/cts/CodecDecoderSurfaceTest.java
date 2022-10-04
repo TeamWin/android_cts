@@ -36,7 +36,6 @@ import com.android.compatibility.common.util.ApiTest;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -273,7 +272,6 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
      * <p>
      * The test runs mediacodec in synchronous and asynchronous mode.
      */
-    @Ignore("TODO(b/147576107)")
     @ApiTest(apis = {"android.media.MediaCodec#flush"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
@@ -299,6 +297,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
             mCodec = MediaCodec.createByCodecName(mCodecName);
             mActivity.setScreenParams(getWidth(format), getHeight(format), false);
             for (boolean isAsync : boolStates) {
+                if (isAsync) continue;  // TODO(b/147576107)
                 mExtractor.seekTo(0, mode);
                 configureCodec(format, isAsync, true, false);
                 mCodec.start();

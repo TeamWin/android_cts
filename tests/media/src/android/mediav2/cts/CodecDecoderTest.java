@@ -40,10 +40,10 @@ import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.Preconditions;
 
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -439,7 +439,6 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
      * <p>
      * The test runs mediacodec in synchronous and asynchronous mode.
      */
-    @Ignore("TODO(b/147576107)")
     @ApiTest(apis = {"android.media.MediaCodec#flush"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
@@ -464,6 +463,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
             setUpSource(mTestFile);
             mCodec = MediaCodec.createByCodecName(mCodecName);
             for (boolean isAsync : boolStates) {
+                if (isAsync) continue;  // TODO(b/147576107)
                 mExtractor.seekTo(0, mode);
                 configureCodec(format, isAsync, true, false);
                 MediaFormat defFormat = mCodec.getOutputFormat();
@@ -506,7 +506,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
-                if (!ref.equals(test)) {
+                if (isMediaTypeOutputUnAffectedBySeek(mMime) && (!ref.equals(test))) {
                     fail("Decoder output is not consistent across runs \n" + mTestConfig + mTestEnv
                             + test.getErrMsg());
                 }
@@ -520,7 +520,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 queueEOS();
                 waitForAllOutputs();
                 mCodec.stop();
-                if (!ref.equals(test)) {
+                if (isMediaTypeOutputUnAffectedBySeek(mMime) && (!ref.equals(test))) {
                     fail("Decoder output is not consistent across runs \n" + mTestConfig + mTestEnv
                             + test.getErrMsg());
                 }
@@ -540,7 +540,6 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     /**
      * Test is similar to {@link #testFlush()} but uses ndk api
      */
-    @Ignore("TODO(b/147576107)")
     @ApiTest(apis = {"android.media.MediaCodec#flush"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)

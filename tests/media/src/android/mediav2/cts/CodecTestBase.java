@@ -56,6 +56,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.Preconditions;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -914,9 +915,20 @@ abstract class CodecTestBase {
         return result;
     }
 
-    static boolean isCodecLossless(String mime) {
-        return mime.equals(MediaFormat.MIMETYPE_AUDIO_FLAC) ||
-                mime.equals(MediaFormat.MIMETYPE_AUDIO_RAW);
+    static boolean isMediaTypeLossless(String mediaType) {
+        if (mediaType.equals(MediaFormat.MIMETYPE_AUDIO_FLAC)) return true;
+        if (mediaType.equals(MediaFormat.MIMETYPE_AUDIO_RAW)) return true;
+        return false;
+    }
+
+    // some media types decode a pre-roll amount before playback. This would mean that decoding
+    // after seeking may not return the exact same values as would be obtained by decoding the
+    // stream straight through
+    static boolean isMediaTypeOutputUnAffectedBySeek(String mediaType) {
+        if (mediaType.equals(MediaFormat.MIMETYPE_AUDIO_FLAC)) return true;
+        if (mediaType.equals(MediaFormat.MIMETYPE_AUDIO_RAW)) return true;
+        if (mediaType.startsWith("video/")) return true;
+        return false;
     }
 
     static boolean hasDecoder(String mime) {

@@ -33,6 +33,8 @@ import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.NonMediaMainlineTest;
+
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;

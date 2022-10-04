@@ -217,7 +217,7 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
                 cdtb.mCodec.stop();
                 cdtb.mCodec.release();
                 ByteBuffer out = cdtb.mOutputBuff.getBuffer();
-                if (isCodecLossless(mMime)) {
+                if (isMediaTypeLossless(mMime)) {
                     if (mUseHBD && mMime.equals(MediaFormat.MIMETYPE_AUDIO_FLAC)) {
                         CodecDecoderTest.verify(cdtb.mOutputBuff, inputFile, 3.446394f,
                                 AudioFormat.ENCODING_PCM_FLOAT, -1L, mTestConfig + mTestEnv);
