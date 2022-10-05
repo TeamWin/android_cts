@@ -24,7 +24,9 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import android.annotation.Nullable;
 import android.companion.virtual.VirtualDeviceManager;
@@ -61,10 +63,12 @@ public class VirtualDeviceManagerBasicTest {
             CREATE_VIRTUAL_DEVICE);
 
     @Rule
-    public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
+    public FakeAssociationRule mFakeAssociationRule =
+            new FakeAssociationRule(/* numAssociations= */2);
 
     private VirtualDeviceManager mVirtualDeviceManager;
-    @Nullable private VirtualDevice mVirtualDevice;
+    @Nullable
+    private VirtualDevice mVirtualDevice;
 
     @Before
     public void setUp() throws Exception {
@@ -87,6 +91,21 @@ public class VirtualDeviceManagerBasicTest {
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         assertThat(mVirtualDevice).isNotNull();
+        assertTrue(mVirtualDevice.getDeviceId() > VirtualDeviceManager.DEFAULT_DEVICE_ID);
+    }
+
+    @Test
+    public void createVirtualDevice_deviceIdIsUniqueAndIncremented() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo(0).getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+        VirtualDevice anotherVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo(1).getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+        assertThat(anotherVirtualDevice).isNotNull();
+        assertEquals(mVirtualDevice.getDeviceId() + 1, anotherVirtualDevice.getDeviceId());
     }
 
     @Test

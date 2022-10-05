@@ -3350,7 +3350,7 @@ public class TelephonyManagerTest {
     public void testDisAllowedNetworkTypes() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
 
-        long allowedNetworkTypes = -1 & (~TelephonyManager.NETWORK_TYPE_BITMASK_NR);
+        long allowedNetworkTypes = ~TelephonyManager.NETWORK_TYPE_BITMASK_NR;
         long networkTypeBitmask = TelephonyManager.NETWORK_TYPE_BITMASK_NR
                 | TelephonyManager.NETWORK_TYPE_BITMASK_LTE
                 | TelephonyManager.NETWORK_TYPE_BITMASK_LTE_CA;
@@ -3358,15 +3358,19 @@ public class TelephonyManagerTest {
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                     mTelephonyManager,
-                    (tm) -> tm.setAllowedNetworkTypes(allowedNetworkTypes));
+                    (tm) -> tm.setAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER,
+                            allowedNetworkTypes));
 
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                     mTelephonyManager,
-                    (tm) -> tm.setPreferredNetworkTypeBitmask(networkTypeBitmask));
+                    (tm) -> tm.setAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
+                            networkTypeBitmask));
 
             long modemNetworkTypeBitmask = ShellIdentityUtils.invokeMethodWithShellPermissions(
                     mTelephonyManager, (tm) -> {
-                        return tm.getPreferredNetworkTypeBitmask();
+                        return tm.getAllowedNetworkTypesBitmask();
                     }
             );
             long radioAccessFamily = ShellIdentityUtils.invokeMethodWithShellPermissions(

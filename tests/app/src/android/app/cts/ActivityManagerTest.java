@@ -515,8 +515,14 @@ public class ActivityManagerTest {
     public void testGetMemoryInfo() {
         ActivityManager.MemoryInfo outInfo = new ActivityManager.MemoryInfo();
         mActivityManager.getMemoryInfo(outInfo);
-        assertTrue(outInfo.lowMemory == (outInfo.availMem <= outInfo.threshold));
-        assertTrue(outInfo.totalMem <= outInfo.advertisedMem);
+        assertTrue(
+                String.format("lowmemory (%s) == (%d <= %d)",
+                outInfo.lowMemory, outInfo.availMem, outInfo.threshold),
+                outInfo.lowMemory == (outInfo.availMem <= outInfo.threshold));
+        assertTrue(
+                String.format("totalMem (%d) <= advertisedMem (%d)",
+                outInfo.totalMem, outInfo.advertisedMem),
+                outInfo.totalMem <= outInfo.advertisedMem);
     }
 
     @Test

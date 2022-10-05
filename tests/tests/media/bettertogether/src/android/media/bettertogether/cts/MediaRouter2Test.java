@@ -53,14 +53,19 @@ import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.LargeTest;
 import android.text.TextUtils;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.UserType;
+import com.android.bedstead.harrier.annotations.UserTest;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -74,12 +79,16 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 @AppModeFull(reason = "The system should be able to bind to StubMediaRoute2ProviderService")
 @LargeTest
 @NonMediaMainlineTest
 public class MediaRouter2Test {
     private static final String TAG = "MR2Test";
+
+    // Required by Bedstead.
+    @ClassRule @Rule public static final DeviceState sDeviceState = new DeviceState();
+
     Context mContext;
     private MediaRouter2 mRouter2;
     private Executor mExecutor;
@@ -157,8 +166,11 @@ public class MediaRouter2Test {
     }
 
     /**
-     * Tests if we get proper routes for application that has special route type.
+     * Tests if we get proper routes for an application that requests a special route type.
+     *
+     * <p>Runs on both the primary user and a work profile, as per {@link UserTest}.
      */
+    @UserTest({UserType.PRIMARY_USER, UserType.WORK_PROFILE})
     @Test
     public void testGetRoutes() throws Exception {
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(FEATURES_SPECIAL);

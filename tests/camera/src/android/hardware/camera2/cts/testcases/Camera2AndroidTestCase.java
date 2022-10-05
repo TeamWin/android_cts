@@ -16,38 +16,43 @@
 
 package android.hardware.camera2.cts.testcases;
 
-import static android.hardware.camera2.cts.CameraTestUtils.*;
-import static com.android.ex.camera2.blocking.BlockingStateCallback.*;
+import static android.hardware.camera2.cts.CameraTestUtils.CAMERA_CLOSE_TIMEOUT_MS;
+import static android.hardware.camera2.cts.CameraTestUtils.CAMERA_IDLE_TIMEOUT_MS;
+import static android.hardware.camera2.cts.CameraTestUtils.PREVIEW_SIZE_BOUND;
+import static android.hardware.camera2.cts.CameraTestUtils.assertNotNull;
+import static android.hardware.camera2.cts.CameraTestUtils.checkSessionConfigurationSupported;
+import static android.hardware.camera2.cts.CameraTestUtils.fail;
+import static android.hardware.camera2.cts.CameraTestUtils.getPreviewSizeBound;
+import static android.hardware.camera2.cts.CameraTestUtils.getSupportedPreviewSizes;
+import static android.hardware.camera2.cts.CameraTestUtils.getSupportedStillSizes;
+import static android.hardware.camera2.cts.CameraTestUtils.getSupportedVideoSizes;
+
+import static com.android.ex.camera2.blocking.BlockingStateCallback.STATE_CLOSED;
 
 import android.content.Context;
-import android.graphics.ImageFormat;
 import android.graphics.Rect;
-import android.hardware.cts.helpers.CameraParameterizedTestCase;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCaptureSession.CaptureCallback;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
-import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.params.InputConfiguration;
-import android.hardware.camera2.params.OutputConfiguration;
-import android.hardware.camera2.params.SessionConfiguration;
-import android.util.Size;
 import android.hardware.camera2.cts.Camera2ParameterizedTestCase;
 import android.hardware.camera2.cts.CameraTestUtils;
 import android.hardware.camera2.cts.helpers.CameraErrorCollector;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.helpers.StaticMetadata.CheckLevel;
+import android.hardware.camera2.params.InputConfiguration;
+import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.SessionConfiguration;
 import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.test.AndroidTestCase;
 import android.util.Log;
+import android.util.Size;
 import android.view.Surface;
 import android.view.WindowManager;
-import androidx.test.InstrumentationRegistry;
 
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
@@ -58,9 +63,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-
-import org.junit.Ignore;
-import org.junit.Test;
 
 // TODO: Can we de-duplicate this with Camera2AndroidBasicTestCase keeping in mind CtsVerifier ?
 public class Camera2AndroidTestCase extends Camera2ParameterizedTestCase {
@@ -115,9 +117,10 @@ public class Camera2AndroidTestCase extends Camera2ParameterizedTestCase {
         mCameraListener = new BlockingStateCallback();
         mCollector = new CameraErrorCollector();
 
-        File filesDir = mContext.getPackageManager().isInstantApp()
-                ? mContext.getFilesDir()
-                : mContext.getExternalFilesDir(null);
+        File filesDir = mContext.getExternalFilesDir(null);
+        if (filesDir == null || mContext.getPackageManager().isInstantApp()) {
+            filesDir = mContext.getFilesDir();
+        }
 
         mDebugFileNameBase = filesDir.getPath();
 

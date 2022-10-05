@@ -20,6 +20,7 @@ android_test {
         "ctstestrunner-axt",
         "cts-media-common",
         "truth-prebuilt",
+        "Harrier",
     ],
     resource_dirs: ["res"],
     aaptflags: [

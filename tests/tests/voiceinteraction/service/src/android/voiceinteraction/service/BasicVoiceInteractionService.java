@@ -128,19 +128,19 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                                     SoundTrigger.RECOGNITION_MODE_VOICE_TRIGGER, 100)));
                 }
             } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_DSP_ONREJECT_TEST) {
-                runWithShellPermissionIdentity(() -> {
-                    if (mAlwaysOnHotwordDetector != null) {
-                        mAlwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(/* status */
-                                0,
-                                /* soundModelHandle */ 100, /* captureAvailable */ true,
-                                /* captureSession */ 101, /* captureDelayMs */ 1000,
-                                /* capturePreambleMs */ 1001, /* triggerInData */ true,
-                                createFakeAudioFormat(), null,
-                                ImmutableList.of(new KeyphraseRecognitionExtra(
-                                        MainHotwordDetectionService.DEFAULT_PHRASE_ID,
-                                        SoundTrigger.RECOGNITION_MODE_VOICE_TRIGGER, 100)));
-                    }
-                });
+                // need to retain the identity until the callback is triggered
+                uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
+                if (mAlwaysOnHotwordDetector != null) {
+                    mAlwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(/* status */
+                            0,
+                            /* soundModelHandle */ 100, /* captureAvailable */ true,
+                            /* captureSession */ 101, /* captureDelayMs */ 1000,
+                            /* capturePreambleMs */ 1001, /* triggerInData */ true,
+                            createFakeAudioFormat(), null,
+                            ImmutableList.of(new KeyphraseRecognitionExtra(
+                                    MainHotwordDetectionService.DEFAULT_PHRASE_ID,
+                                    SoundTrigger.RECOGNITION_MODE_VOICE_TRIGGER, 100)));
+                }
             } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_EXTERNAL_SOURCE_ONDETECT_TEST) {
                 uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
                 if (mAlwaysOnHotwordDetector != null) {

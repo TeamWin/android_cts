@@ -23,7 +23,6 @@ import camera_properties_utils
 import capture_request_utils
 import image_processing_utils
 import its_session_utils
-import target_exposure_utils
 
 MAX_IMG_SIZE = (1920, 1080)
 NAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -67,10 +66,6 @@ class YuvPlusJpegTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       log_path = self.log_path
 
-      # check SKIP conditions
-      camera_properties_utils.skip_unless(
-          camera_properties_utils.compute_target_exposure(props))
-
       # Load chart for scene
       its_session_utils.load_scene(
           cam, props, self.scene, self.tablet, self.chart_distance)
@@ -89,11 +84,11 @@ class YuvPlusJpegTest(its_base_test.ItsBaseTest):
       fmt_yuv = {'format': 'yuv', 'width': w, 'height': h}
       fmt_jpg = {'format': 'jpeg'}
 
-      # Use a manual request with a linear tonemap so that the YUV and JPEG
+      # Use an auto_capture_request with linear tonemap so that the YUV and JPEG
       # should look the same (once converted by the image_processing_utils).
-      e, s = target_exposure_utils.get_target_exposure_combos(
-          log_path, cam)['midExposureTime']
-      req = capture_request_utils.manual_capture_request(s, e, 0.0, True, props)
+      # Do not use AF to match manual capture request.
+      req = capture_request_utils.auto_capture_request(
+          linear_tonemap=True, props=props, do_af=False)
 
       cap_yuv, cap_jpg = cam.do_capture(req, [fmt_yuv, fmt_jpg])
       rgb_means_yuv = compute_means_and_save(cap_yuv, 'yuv', log_path)

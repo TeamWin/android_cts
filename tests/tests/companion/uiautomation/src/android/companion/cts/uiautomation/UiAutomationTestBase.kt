@@ -318,7 +318,7 @@ open class UiAutomationTestBase(
         assertContains(roleHolders, targetPackageName, "Not a holder of $roleName")
     }
 
-    private fun getRequiredPermissions(selfManaged: Boolean): List<String> =
+    protected fun getRequiredPermissions(selfManaged: Boolean): List<String> =
             mutableListOf<String>().also {
                 if (selfManaged) it += Manifest.permission.REQUEST_COMPANION_SELF_MANAGED
                 if (profilePermission != null) it += profilePermission
