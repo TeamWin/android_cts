@@ -72,5 +72,3 @@ do
     python "tools/$M.py" 2>&1 | grep -q "OK" || \
         echo ">> Unit test for $M failed" >&2
 done
-
-alias gpylint='gpylint --rcfile=$CAMERA_ITS_TOP"/build/scripts/gpylint_rcfile"'

@@ -1007,19 +1007,19 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             // Launch a test activity with focusing editText to show keyboard
             new TestActivity.Starter().withWindowingMode(
                     WINDOWING_MODE_FULLSCREEN).startSync(activity -> {
-                final LinearLayout layout = new LinearLayout(activity);
-                final EditText editText = new EditText(activity);
-                editTextRef.set(editText);
-                editText.setHint("focused editText");
-                editText.setPrivateImeOptions(markerForActivity1);
-                editText.requestFocus();
-                layout.addView(editText);
-                activity.getWindow().getDecorView().getWindowInsetsController().show(ime());
-                if (mode == TestSoftInputMode.ALWAYS_HIDDEN_WITH_BACKWARD_NAV) {
-                    activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-                }
-                return layout;
-            });
+                        final LinearLayout layout = new LinearLayout(activity);
+                        final EditText editText = new EditText(activity);
+                        editTextRef.set(editText);
+                        editText.setHint("focused editText");
+                        editText.setPrivateImeOptions(markerForActivity1);
+                        editText.requestFocus();
+                        layout.addView(editText);
+                        activity.getWindow().getDecorView().getWindowInsetsController().show(ime());
+                        if (mode == TestSoftInputMode.ALWAYS_HIDDEN_WITH_BACKWARD_NAV) {
+                            activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+                        }
+                        return layout;
+                    });
 
             expectEvent(stream, editorMatcher("onStartInput", markerForActivity1), TIMEOUT);
             expectEvent(stream, editorMatcher("onStartInputView", markerForActivity1), TIMEOUT);
@@ -1030,9 +1030,9 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             // Launch another app task activity to hide keyboard
             new TestActivity.Starter().asNewTask().withWindowingMode(
                     WINDOWING_MODE_FULLSCREEN).startSync(activity -> {
-                activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-                return new LinearLayout(activity);
-            });
+                        activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+                        return new LinearLayout(activity);
+                    });
             expectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
             expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
             expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
@@ -1044,15 +1044,15 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                 final String markerForActivity2 = getTestMarker();
                 new TestActivity.Starter().asSameTaskAndClearTop().withWindowingMode(
                         WINDOWING_MODE_FULLSCREEN).startSync(activity -> {
-                    final LinearLayout layout = new LinearLayout(activity);
-                    final EditText editText = new EditText(activity);
-                    editText.setHint("focused editText");
-                    editText.setPrivateImeOptions(markerForActivity2);
-                    editText.requestFocus();
-                    layout.addView(editText);
-                    activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_HIDDEN);
-                    return layout;
-                });
+                            final LinearLayout layout = new LinearLayout(activity);
+                            final EditText editText = new EditText(activity);
+                            editText.setHint("focused editText");
+                            editText.setPrivateImeOptions(markerForActivity2);
+                            editText.requestFocus();
+                            layout.addView(editText);
+                            activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_HIDDEN);
+                            return layout;
+                        });
                 expectEvent(stream, editorMatcher("onStartInput", markerForActivity2), TIMEOUT);
             } else {
                 // Press back key to back to the first test activity
@@ -1089,19 +1089,20 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             final TestActivity testActivity =
                     new TestActivity.Starter().withWindowingMode(
                             WINDOWING_MODE_FULLSCREEN).startSync(activity -> {
-                        final LinearLayout layout = new LinearLayout(activity);
-                        layout.setOrientation(LinearLayout.VERTICAL);
-                        layout.setGravity(Gravity.BOTTOM);
-                        final EditText editText = new EditText(activity);
-                        editTextRef.set(editText);
-                        editText.setHint("focused editText");
-                        editText.setPrivateImeOptions(marker);
-                        editText.requestFocus();
-                        layout.addView(editText);
-                        activity.getWindow().getDecorView().setFitsSystemWindows(true);
-                        activity.getWindow().getDecorView().getWindowInsetsController().show(ime());
-                        return layout;
-                    });
+                                final LinearLayout layout = new LinearLayout(activity);
+                                layout.setOrientation(LinearLayout.VERTICAL);
+                                layout.setGravity(Gravity.BOTTOM);
+                                final EditText editText = new EditText(activity);
+                                editTextRef.set(editText);
+                                editText.setHint("focused editText");
+                                editText.setPrivateImeOptions(marker);
+                                editText.requestFocus();
+                                layout.addView(editText);
+                                final View decorView = activity.getWindow().getDecorView();
+                                decorView.setFitsSystemWindows(true);
+                                decorView.getWindowInsetsController().show(ime());
+                                return layout;
+                            });
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
             expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
             expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);

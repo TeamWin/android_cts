@@ -54,12 +54,14 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.BySelector;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.ShellUtils;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.Timeout;
 
 import org.junit.AfterClass;
 import org.junit.Assume;
@@ -75,6 +77,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TextViewIntegrationTest {
     private static final String LOG_TAG = "TextViewIntegrationTest";
     private static final String TOOLBAR_ITEM_LABEL = "TB@#%!";
+
+    private static final Timeout UI_TIMEOUT = new Timeout("UI_TIMEOUT", 2_000, 2F, 10_000);
 
     private SimpleTextClassifier mSimpleTextClassifier;
 
@@ -222,7 +226,7 @@ public class TextViewIntegrationTest {
         assertThat(toolbarContainer.getContentDescription()).isNull();
     }
 
-    private void smartSelectionInternal(String testName) {
+    private void smartSelectionInternal(String testName) throws Exception {
         ActivityScenario<TextViewActivity> scenario = rule.getScenario();
         AtomicInteger clickIndex = new AtomicInteger();
         //                   0123456789
@@ -269,9 +273,15 @@ public class TextViewIntegrationTest {
         return linkifiedText;
     }
 
-    private static void assertFloatingToolbarIsDisplayed() {
+    private static void assertFloatingToolbarIsDisplayed() throws Exception {
         // Simply check that the toolbar item is visible.
-        assertThat(sDevice.hasObject(By.text(TOOLBAR_ITEM_LABEL))).isTrue();
+        UiObject2 toolbarObject = waitForObject(By.text(TOOLBAR_ITEM_LABEL));
+        assertThat(toolbarObject).isNotNull();
+    }
+
+    private static UiObject2 waitForObject(BySelector selector) throws Exception {
+        return UI_TIMEOUT.run("waitForObject(" + selector + ")",
+                () -> sDevice.findObject(selector));
     }
 
     /**

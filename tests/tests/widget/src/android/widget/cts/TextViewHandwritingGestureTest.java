@@ -55,8 +55,8 @@ public class TextViewHandwritingGestureTest {
     private static final String DEFAULT_TEXT = ""
             // Line 0 (offset 0 to 10)
             + "XXX X XXX\n"
-            // Line 1 (offset 10 to 23)
-            + "XX X   XX  X.";
+            // Line 1 (offset 10 to 27)
+            + "XX X   XX  X. .X ";
     // All characters used in DEFAULT_TEXT ('X', ' ', '.') have width 10em in the test font used.
     // Font size is set to 1f, so that 10em is 10px.
     private static final float CHAR_WIDTH_PX = 10;
@@ -282,7 +282,7 @@ public class TextViewHandwritingGestureTest {
     @Test
     @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
     public void performDeleteGesture_word_beforePunctuation() {
-        // Line 1 "XX X   XX  X." starts from offset 10
+        // Line 1 "XX X   XX  X. .X " starts from offset 10
         // Word 6 spans from offset 21 to 22 (offset 11 to 12 relative to line 1)
         float word6HorizontalCenter = (11 + 12) / 2f * CHAR_WIDTH_PX;
         // Horizontal range [word6HorizontalCenter - 1f, word6HorizontalCenter + 1f] covers the
@@ -297,8 +297,30 @@ public class TextViewHandwritingGestureTest {
         // Word 6 (offset 21 to 22) is deleted.
         // Since there is punctuation ('.') at offset 22, the space before word 6 (offset 19 to 21)
         // is also deleted to avoid a space before the punctuation.
-        // Deleted range: "XX X   XX  [X]." -> "XX X   XX[  X]."
+        // Deleted range: "XX X   XX  [X]. .X " -> "XX X   XX[  X]. .X "
         assertGestureDeletedRange(19, 22);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
+    public void performDeleteGesture_word_afterPunctuation() {
+        // Line 1 "XX X   XX  X. .X " starts from offset 10
+        // Word 9 spans from offset 25 to 26 (offset 15 to 16 relative to line 1)
+        float word9HorizontalCenter = (15 + 16) / 2f * CHAR_WIDTH_PX;
+        // Horizontal range [word9HorizontalCenter - 1f, word9HorizontalCenter + 1f] covers the
+        // center of word 9.
+        RectF area = new RectF(
+                word9HorizontalCenter - 1f,
+                mEditText.getLayout().getLineTop(1),
+                word9HorizontalCenter + 1f,
+                mEditText.getLayout().getLineBottom(1));
+        performDeleteGesture(area, HandwritingGesture.GRANULARITY_WORD);
+
+        // Word 9 (offset 25 to 26) is deleted.
+        // Since there is punctuation ('.') at offset 24, the space after word 9 (offset 26 to 27)
+        // is also deleted to avoid a space after the punctuation.
+        // Deleted range: "XX X   XX  X. .[X] " -> "XX X   XX  X. .[X ]"
+        assertGestureDeletedRange(25, 27);
     }
 
     @Test
@@ -445,7 +467,7 @@ public class TextViewHandwritingGestureTest {
     @Test
     @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
     public void performRemoveSpaceGesture_multipleWhitespace() {
-        // Line 1 "XX X   XX  X." starts from offset 10 and has whitespace from offset 12 to 13,
+        // Line 1 "XX X   XX  X. .X " starts from offset 10 and has whitespace from offset 12 to 13,
         // from offset 14 to 17, and from offset 19 to 21.
         // Start point is close to offset 12 on line 1.
         // End point is close to offset 20 on line 1.
@@ -479,7 +501,7 @@ public class TextViewHandwritingGestureTest {
     @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
     public void performRemoveSpaceGesture_touchesTwoLines_appliesToFirstLine() {
         // Line 0 "XXX X XXX" has whitespace from offset 3 to 4.
-        // Line 1 "XX X   XX  X." starts from offset 10 and has whitespace from offset 12 to 13.
+        // Line 1 "XX X   XX  X. .X " starts from offset 10 and has whitespace from offset 12 to 13.
         // Start point is close to offset 12 on line 1.
         // End point is close to offset 4 on line 0.
         performRemoveSpaceGesture(
@@ -591,7 +613,7 @@ public class TextViewHandwritingGestureTest {
     @Test
     @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
     public void performJoinOrSplitGesture_whitespaceStartBoundary_shouldJoin() {
-        // Line 1 "XX X   XX  X." starts from offset 10 and has whitespace from offset 14 to 17.
+        // Line 1 "XX X   XX  X. .X " starts from offset 10 and has whitespace from offset 14 to 17.
         performJoinOrSplitGesture(
                 new PointF(4 * CHAR_WIDTH_PX - 2f, mEditText.getLayout().getLineTop(1) + 1f));
 
@@ -603,7 +625,7 @@ public class TextViewHandwritingGestureTest {
     @Test
     @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
     public void performJoinOrSplitGesture_whitespaceEndBoundary_shouldJoin() {
-        // Line 1 "XX X   XX  X." starts from offset 10 and has whitespace from offset 14 to 17.
+        // Line 1 "XX X   XX  X. .X " starts from offset 10 and has whitespace from offset 14 to 17.
         performJoinOrSplitGesture(
                 new PointF(7 * CHAR_WIDTH_PX + 2f, mEditText.getLayout().getLineTop(1) + 1f));
 
@@ -615,7 +637,7 @@ public class TextViewHandwritingGestureTest {
     @Test
     @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
     public void performJoinOrSplitGesture_whitespaceMiddle_shouldJoin() {
-        // Line 1 "XX X   XX  X." starts from offset 10 and has whitespace from offset 14 to 17.
+        // Line 1 "XX X   XX  X. .X " starts from offset 10 and has whitespace from offset 14 to 17.
         performJoinOrSplitGesture(
                 new PointF(5 * CHAR_WIDTH_PX, mEditText.getLayout().getLineTop(1) + 1f));
 
@@ -626,7 +648,7 @@ public class TextViewHandwritingGestureTest {
     @Test
     @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
     public void performJoinOrSplitGesture_noWhitespace_shouldInsertSpace() {
-        // Line 1 "XX X   XX  X." starts from offset 10 and has a word from offset 17 to 19.
+        // Line 1 "XX X   XX  X. .X " starts from offset 10 and has a word from offset 17 to 19.
         performJoinOrSplitGesture(
                 new PointF(8 * CHAR_WIDTH_PX, mEditText.getLayout().getLineTop(1) + 1f));
 

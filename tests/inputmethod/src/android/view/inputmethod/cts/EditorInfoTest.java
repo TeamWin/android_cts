@@ -61,7 +61,7 @@ public class EditorInfoTest {
     private static final int REQUEST_LONGEST_AVAILABLE_TEXT = OVER_SIZED_TEXT_LENGTH; //
 
     @Test
-    @ApiTest(apis={"android.view.inputmethod.EditorInfo#setSupportedHandwritingGestures",
+    @ApiTest(apis = {"android.view.inputmethod.EditorInfo#setSupportedHandwritingGestures",
             "android.view.inputmethod.EditorInfo#setInitialToolType",
             "android.view.inputmethod.EditorInfo#getSupportedHandwritingGestures",
             "android.view.inputmethod.EditorInfo#getInitialToolType"})
@@ -130,7 +130,7 @@ public class EditorInfoTest {
         assertFalse(sb.toString().contains(testInitialText));
     }
 
-    @ApiTest(apis={"android.view.inputmethod.EditorInfo#setSupportedHandwritingGestures",
+    @ApiTest(apis = {"android.view.inputmethod.EditorInfo#setSupportedHandwritingGestures",
             "android.view.inputmethod.EditorInfo#getSupportedHandwritingGestures"})
     @Test
     public void testSupportedHandwritingGestures() {

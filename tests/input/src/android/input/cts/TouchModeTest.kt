@@ -20,6 +20,7 @@ import android.app.Activity
 import android.app.Instrumentation
 import android.os.SystemClock
 import android.support.test.uiautomator.UiDevice
+import android.view.View
 import android.view.ViewTreeObserver
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -27,6 +28,8 @@ import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.PollingCheck
 import com.android.compatibility.common.util.WindowUtil
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -34,8 +37,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 private const val TOUCH_MODE_PROPAGATION_TIMEOUT_MILLIS: Long = 5000 // 5 sec
 
@@ -110,5 +111,17 @@ class TouchModeTest {
 
         SystemClock.sleep(TOUCH_MODE_PROPAGATION_TIMEOUT_MILLIS)
         assertFalse(isInTouchMode())
+    }
+
+    @Test
+    fun testDetachedViewReturnsDefaultTouchMode() {
+        val context = instrumentation.targetContext
+        val defaultInTouchMode = context.resources.getBoolean(context.resources
+                .getIdentifier("config_defaultInTouchMode", "bool", "android"))
+
+        val detachedView = View(activity)
+
+        // Detached view (view with mAttachInfo null) will just return the default touch mode value
+        assertEquals(defaultInTouchMode, detachedView.isInTouchMode())
     }
 }

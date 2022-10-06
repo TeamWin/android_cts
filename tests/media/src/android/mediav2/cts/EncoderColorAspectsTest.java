@@ -270,10 +270,11 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                 }
                 mEGLWindowInpSurface.makeCurrent();
                 generateSurfaceFrame();
-                mEGLWindowInpSurface
-                        .setPresentationTime(computePresentationTime(mInputCount) * 1000);
+                long pts = computePresentationTime(mInputCount);
+                mEGLWindowInpSurface.setPresentationTime(pts * 1000);
                 if (ENABLE_LOGS) Log.d(LOG_TAG, "inputSurface swapBuffers");
                 mEGLWindowInpSurface.swapBuffers();
+                mOutputBuff.saveInPTS(pts);
                 mInputCount++;
             }
         }

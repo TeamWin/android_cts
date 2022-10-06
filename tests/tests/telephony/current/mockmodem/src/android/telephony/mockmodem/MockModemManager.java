@@ -326,4 +326,13 @@ public class MockModemManager {
     public Set<Integer> getCdmaBroadcastConfig() {
         return mMockModemService.getIRadioMessaging().getCdmaBroadcastConfigSet();
     }
+
+    /**
+     * receive new broadcast sms message
+     *
+     * @param data data of broadcast messages to be received
+     */
+    public void newBroadcastSms(byte[] data) {
+        mMockModemService.getIRadioMessaging().newBroadcastSms(data);
+    }
 }

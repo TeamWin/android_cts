@@ -28,4 +28,6 @@ android_test_helper_app {
         "general-tests",
         "sts",
     ],
+    // Generate a locale split.
+    package_splits: ["pl"],
 }

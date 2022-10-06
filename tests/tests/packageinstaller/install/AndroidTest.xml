@@ -35,6 +35,7 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="cleanup" value="true" />
         <option name="push" value="CtsEmptyTestApp.apk->/data/local/tmp/cts/packageinstaller/CtsEmptyTestApp.apk" />
+        <option name="push" value="CtsEmptyTestApp_pl.apk->/data/local/tmp/cts/packageinstaller/CtsEmptyTestApp_pl.apk" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">

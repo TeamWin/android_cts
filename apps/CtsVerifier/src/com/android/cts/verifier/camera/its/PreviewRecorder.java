@@ -202,9 +202,8 @@ class PreviewRecorder implements AutoCloseable {
             // Synchronized on mRecorderLock to ensure that all surface are valid while encoding
             // frames. All surfaces should be valid for as long as mIsRecording is true.
             synchronized (mRecorderLock) {
-                // Only update the texture if the recorder is currently recording.
-                if (!mIsRecording) {
-                    return;
+                if (surfaceTexture.isReleased()) {
+                    return; // surface texture already cleaned up, do nothing.
                 }
 
                 // Bind EGL context to the current thread (just in case the
@@ -213,6 +212,10 @@ class PreviewRecorder implements AutoCloseable {
                         mEGLRecorderSurface, mEGLContext);
                 surfaceTexture.updateTexImage(); // update texture to the latest frame
 
+                // Only update the frame if the recorder is currently recording.
+                if (!mIsRecording) {
+                    return;
+                }
                 try {
                     copyFrameToRecorder();
                 } catch (ItsException e) {
@@ -504,9 +507,6 @@ class PreviewRecorder implements AutoCloseable {
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, /* first= */0, /* count= */4);
         assertNoGLError("glDrawArrays");
 
-        // Add timestamp to be used by MediaRecorder
-        EGLExt.eglPresentationTimeANDROID(mEGLDisplay, mEGLRecorderSurface,
-                mCameraTexture.getTimestamp());
         EGL14.eglSwapBuffers(mEGLDisplay, mEGLRecorderSurface); // flush surface
     }
 

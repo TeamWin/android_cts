@@ -184,7 +184,7 @@ public final class ImeEventStreamTestUtils {
             }
             final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
             final boolean restarting = event.getArguments().getBoolean("restarting");
-            return (TextUtils.equals(marker, editorInfo.privateImeOptions) && !restarting );
+            return (TextUtils.equals(marker, editorInfo.privateImeOptions) && !restarting);
         };
     }
 

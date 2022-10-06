@@ -21,25 +21,19 @@ import android.content.pm.ApplicationInfo.CATEGORY_UNDEFINED
 import android.content.pm.PackageInstaller.STATUS_FAILURE_ABORTED
 import android.content.pm.PackageInstaller.STATUS_SUCCESS
 import android.platform.test.annotations.AppModeFull
-import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.AppOpsUtils
+import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.concurrent.TimeUnit
-
-private const val INSTALL_BUTTON_ID = "button1"
-private const val CANCEL_BUTTON_ID = "button2"
 
 @AppModeFull(reason = "Instant apps cannot create installer sessions")
 @RunWith(AndroidJUnit4::class)
 class SessionTest : PackageInstallerTestBase() {
-    private val context = InstrumentationRegistry.getTargetContext()
-    private val pm = context.packageManager
 
     @get:Rule
     val excludeWatch = ExcludeWatch("Installing APKs not supported on watch", pm)
@@ -53,7 +47,9 @@ class SessionTest : PackageInstallerTestBase() {
         clickInstallerUIButton(INSTALL_BUTTON_ID)
 
         // Install should have succeeded
-        assertEquals(STATUS_SUCCESS, getInstallSessionResult())
+        val result = getInstallSessionResult()
+        assertEquals(STATUS_SUCCESS, result.status)
+        assertEquals(false, result.preapproval)
         assertInstalled()
 
         // Even when the install succeeds the install confirm dialog returns 'canceled'
@@ -69,12 +65,14 @@ class SessionTest : PackageInstallerTestBase() {
     fun confirmMultiPackageInstallation() {
         val installation = startInstallationViaMultiPackageSession(
                 installFlags = 0,
-                PackageInstallerTestBase.TEST_APK_NAME
+                TEST_APK_NAME
         )
         clickInstallerUIButton(INSTALL_BUTTON_ID)
 
         // Install should have succeeded
-        assertEquals(STATUS_SUCCESS, getInstallSessionResult())
+        val result = getInstallSessionResult()
+        assertEquals(STATUS_SUCCESS, result.status)
+        assertEquals(false, result.preapproval)
         assertInstalled()
 
         // Even when the install succeeds the install confirm dialog returns 'canceled'
@@ -112,7 +110,9 @@ class SessionTest : PackageInstallerTestBase() {
         clickInstallerUIButton(CANCEL_BUTTON_ID)
 
         // Install should have been aborted
-        assertEquals(STATUS_FAILURE_ABORTED, getInstallSessionResult())
+        val result = getInstallSessionResult()
+        assertEquals(STATUS_FAILURE_ABORTED, result.status)
+        assertEquals(false, result.preapproval)
         assertEquals(RESULT_CANCELED, installation.get(TIMEOUT, TimeUnit.MILLISECONDS))
         assertNotInstalled()
     }

@@ -22,23 +22,16 @@ import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager.MATCH_DEFAULT_ONLY
 import android.net.Uri
 import android.platform.test.annotations.AppModeFull
-import android.support.test.uiautomator.UiDevice
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.TimeUnit
 import org.junit.Test
 import org.junit.runner.RunWith
 
-private const val INSTALL_BUTTON_ID = "button1"
-
 @RunWith(AndroidJUnit4::class)
 @AppModeFull(reason = "Instant apps cannot install packages")
 class InstallSourceInfoTest : PackageInstallerTestBase() {
-    private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val pm = context.packageManager
     private val ourPackageName = context.packageName
-    private val uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
     @Test
     fun installViaIntent() {
@@ -53,16 +46,16 @@ class InstallSourceInfoTest : PackageInstallerTestBase() {
         assertThat(installation.get(TIMEOUT, TimeUnit.MILLISECONDS)).isEqualTo(Activity.RESULT_OK)
 
         val info = pm.getInstallSourceInfo(TEST_APK_PACKAGE_NAME)
-        assertThat(info.getInstallingPackageName()).isEqualTo(packageInstallerPackageName)
-        assertThat(info.getInitiatingPackageName()).isEqualTo(packageInstallerPackageName)
-        assertThat(info.getOriginatingPackageName()).isNull()
+        assertThat(info.installingPackageName).isEqualTo(packageInstallerPackageName)
+        assertThat(info.initiatingPackageName).isEqualTo(packageInstallerPackageName)
+        assertThat(info.originatingPackageName).isNull()
     }
 
     @Test
     fun installViaAdb() {
         assumeNotWatch()
 
-        uiDevice.executeShellCommand("pm install $TEST_APK_EXTERNAL_LOCATION/$TEST_APK_NAME")
+        uiDevice.executeShellCommand("pm install $TEST_APK_LOCATION/$TEST_APK_NAME")
 
         val info = pm.getInstallSourceInfo(TEST_APK_PACKAGE_NAME)
         assertThat(info.installingPackageName).isNull()
@@ -72,17 +65,17 @@ class InstallSourceInfoTest : PackageInstallerTestBase() {
     }
 
     @Test
-    fun InstallViaSessionByStore() {
+    fun installViaSessionByStore() {
         installViaSession(PackageInstaller.PACKAGE_SOURCE_STORE)
     }
 
     @Test
-    fun InstallViaSessionByLocalFile() {
+    fun installViaSessionByLocalFile() {
         installViaSession(PackageInstaller.PACKAGE_SOURCE_LOCAL_FILE)
     }
 
     @Test
-    fun InstallViaSession() {
+    fun installViaSession() {
         installViaSession(null)
     }
 
@@ -93,16 +86,18 @@ class InstallSourceInfoTest : PackageInstallerTestBase() {
         clickInstallerUIButton(INSTALL_BUTTON_ID)
 
         // Install should have succeeded
-        assertThat(getInstallSessionResult()).isEqualTo(PackageInstaller.STATUS_SUCCESS)
+        val result = getInstallSessionResult()
+        assertThat(result.status).isEqualTo(PackageInstaller.STATUS_SUCCESS)
+        assertThat(result.preapproval).isFalse()
 
         val info = pm.getInstallSourceInfo(TEST_APK_PACKAGE_NAME)
-        assertThat(info.getInstallingPackageName()).isEqualTo(ourPackageName)
-        assertThat(info.getInitiatingPackageName()).isEqualTo(ourPackageName)
-        assertThat(info.getOriginatingPackageName()).isNull()
+        assertThat(info.installingPackageName).isEqualTo(ourPackageName)
+        assertThat(info.initiatingPackageName).isEqualTo(ourPackageName)
+        assertThat(info.originatingPackageName).isNull()
         if (packageSource != null) {
-            assertThat(info.getPackageSource()).isEqualTo(packageSource)
+            assertThat(info.packageSource).isEqualTo(packageSource)
         } else {
-            assertThat(info.getPackageSource()).isEqualTo(
+            assertThat(info.packageSource).isEqualTo(
                     PackageInstaller.PACKAGE_SOURCE_UNSPECIFIED)
         }
     }

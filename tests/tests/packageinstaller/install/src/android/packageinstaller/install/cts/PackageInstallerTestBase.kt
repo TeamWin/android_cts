@@ -28,75 +28,91 @@ import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentFilter
 import android.content.pm.PackageInstaller
 import android.content.pm.PackageInstaller.EXTRA_STATUS
+import android.content.pm.PackageInstaller.EXTRA_STATUS_MESSAGE
 import android.content.pm.PackageInstaller.STATUS_FAILURE_INVALID
 import android.content.pm.PackageInstaller.STATUS_PENDING_USER_ACTION
+import android.content.pm.PackageInstaller.Session
 import android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL
 import android.content.pm.PackageManager
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.Until
+import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.test.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import com.android.compatibility.common.util.FutureResultActivity
-import org.junit.After
-import org.junit.Assert
-import org.junit.Assume.assumeFalse
-import org.junit.Assume.assumeTrue
-import org.junit.Before
-import org.junit.Rule
 import java.io.File
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
-
-const val TEST_APK_PACKAGE_NAME = "android.packageinstaller.emptytestapp.cts"
-const val TEST_APK_EXTERNAL_LOCATION = "/data/local/tmp/cts/packageinstaller"
-const val INSTALL_ACTION_CB = "PackageInstallerTestBase.install_cb"
-
-const val CONTENT_AUTHORITY = "android.packageinstaller.install.cts.fileprovider"
-
-const val PACKAGE_INSTALLER_PACKAGE_NAME = "com.android.packageinstaller"
-const val SYSTEM_PACKAGE_NAME = "android"
-
-const val TIMEOUT = 60000L
-const val APP_OP_STR = "REQUEST_INSTALL_PACKAGES"
-
-const val INSTALL_INSTANT_APP = 0x00000800
+import org.junit.After
+import org.junit.Assert
+import org.junit.Assume.assumeFalse
+import org.junit.Before
+import org.junit.Rule
 
 open class PackageInstallerTestBase {
+
     companion object {
+        const val TAG = "PackageInstallerTest"
+
+        const val INSTALL_BUTTON_ID = "button1"
+        const val CANCEL_BUTTON_ID = "button2"
+
         const val TEST_APK_NAME = "CtsEmptyTestApp.apk"
+        const val TEST_APK_NAME_PL = "CtsEmptyTestApp_pl.apk"
+        const val TEST_APK_PACKAGE_NAME = "android.packageinstaller.emptytestapp.cts"
+        const val TEST_APK_LOCATION = "/data/local/tmp/cts/packageinstaller"
+
+        const val INSTALL_ACTION_CB = "PackageInstallerTestBase.install_cb"
+
+        const val CONTENT_AUTHORITY = "android.packageinstaller.install.cts.fileprovider"
+
+        const val PACKAGE_INSTALLER_PACKAGE_NAME = "com.android.packageinstaller"
+        const val SYSTEM_PACKAGE_NAME = "android"
+        const val APP_OP_STR = "REQUEST_INSTALL_PACKAGES"
+
+        const val TIMEOUT = 60000L
+        const val INSTALL_INSTANT_APP = 0x00000800
     }
 
     @get:Rule
     val installDialogStarter = ActivityTestRule(FutureResultActivity::class.java)
 
-    private val context = InstrumentationRegistry.getTargetContext()
-    private val pm = context.packageManager
-    private val uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+    protected val context: Context = InstrumentationRegistry.getTargetContext()
+    protected val pm: PackageManager = context.packageManager
+    protected val pi = pm.packageInstaller
+    protected val uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
     private val apkFile = File(context.filesDir, TEST_APK_NAME)
+    private val apkFile_pl = File(context.filesDir, TEST_APK_NAME_PL)
+
+    data class SessionResult(val status: Int?, val preapproval: Boolean?)
 
     /** If a status was received the value of the status, otherwise null */
-    private var installSessionResult = LinkedBlockingQueue<Int>()
+    private var installSessionResult = LinkedBlockingQueue<SessionResult>()
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val status = intent.getIntExtra(EXTRA_STATUS, STATUS_FAILURE_INVALID)
+            val msg = intent.getStringExtra(EXTRA_STATUS_MESSAGE)
+            Log.d(TAG, "status: $status, msg: $msg")
 
             if (status == STATUS_PENDING_USER_ACTION) {
-                val activityIntent = intent.getParcelableExtra<Intent>(EXTRA_INTENT)
+                val activityIntent = intent.getParcelableExtra(EXTRA_INTENT, Intent::class.java)
                 activityIntent!!.addFlags(FLAG_ACTIVITY_CLEAR_TASK or FLAG_ACTIVITY_NEW_TASK)
                 installDialogStarter.activity.startActivityForResult(activityIntent)
             }
 
-            installSessionResult.offer(status)
+            // TODO(b/242677131): using EXTRA_PRE_APPROVAL from intent instead of hardcoding here.
+            installSessionResult.offer(SessionResult(status, false /* preapproval */))
         }
     }
 
     @Before
     fun copyTestApk() {
-        File(TEST_APK_EXTERNAL_LOCATION, TEST_APK_NAME).copyTo(target = apkFile, overwrite = true)
+        File(TEST_APK_LOCATION, TEST_APK_NAME).copyTo(target = apkFile, overwrite = true)
+        File(TEST_APK_LOCATION, TEST_APK_NAME_PL).copyTo(target = apkFile_pl, overwrite = true)
     }
 
     @Before
@@ -129,8 +145,9 @@ open class PackageInstallerTestBase {
     /**
      * Wait for session's install result and return it
      */
-    protected fun getInstallSessionResult(timeout: Long = TIMEOUT): Int? {
+    protected fun getInstallSessionResult(timeout: Long = TIMEOUT): SessionResult {
         return installSessionResult.poll(timeout, TimeUnit.MILLISECONDS)
+                ?: SessionResult(null /* status */, null /* preapproval */)
     }
 
     /**
@@ -153,9 +170,7 @@ open class PackageInstallerTestBase {
         installFlags: Int,
         isMultiPackage: Boolean,
         packageSource: Int?
-    ): Pair<Int, PackageInstaller.Session> {
-        val pi = pm.packageInstaller
-
+    ): Pair<Int, Session> {
         // Create session
         val sessionParam = PackageInstaller.SessionParams(MODE_FULL_INSTALL)
         // Handle additional install flags
@@ -175,7 +190,7 @@ open class PackageInstallerTestBase {
         return Pair(sessionId, session)
     }
 
-    private fun writeSession(session: PackageInstaller.Session, apkName: String) {
+    private fun writeSession(session: Session, apkName: String) {
         val apkFile = File(context.filesDir, apkName)
         // Write data to session
         apkFile.inputStream().use { fileOnDisk ->
@@ -185,7 +200,7 @@ open class PackageInstallerTestBase {
         }
     }
 
-    private fun commitSession(session: PackageInstaller.Session): CompletableFuture<Int> {
+    private fun commitSession(session: Session): CompletableFuture<Int> {
         // Commit session
         val dialog = FutureResultActivity.doAndAwaitStart {
             val pendingIntent = PendingIntent.getBroadcast(
@@ -195,7 +210,9 @@ open class PackageInstallerTestBase {
         }
 
         // The system should have asked us to launch the installer
-        Assert.assertEquals(STATUS_PENDING_USER_ACTION, getInstallSessionResult())
+        val result = getInstallSessionResult()
+        Assert.assertEquals(STATUS_PENDING_USER_ACTION, result.status)
+        Assert.assertEquals(false, result.preapproval)
 
         return dialog
     }
@@ -295,10 +312,6 @@ open class PackageInstallerTestBase {
     @After
     fun uninstallTestPackage() {
         uiDevice.executeShellCommand("pm uninstall $TEST_APK_PACKAGE_NAME")
-    }
-
-    fun assumeWatch() {
-        assumeTrue("Test only valid for watch", hasFeatureWatch())
     }
 
     fun assumeNotWatch() {

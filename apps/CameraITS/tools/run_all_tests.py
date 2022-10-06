@@ -155,7 +155,9 @@ def run(cmd):
 def check_cts_apk_installed(device_id):
   """Verifies that CtsVerifer.apk is installed on a given device."""
   verify_cts_cmd = f'adb -s {device_id} shell pm list packages | grep {CTS_VERIFIER_PACKAGE_NAME}'
-  raw_output = subprocess.check_output(verify_cts_cmd, shell=True)
+  raw_output = subprocess.check_output(
+      verify_cts_cmd, stderr=subprocess.STDOUT, shell=True
+  )
   output = str(raw_output.decode('utf-8')).strip()
   if CTS_VERIFIER_PACKAGE_NAME not in output:
     raise AssertionError(

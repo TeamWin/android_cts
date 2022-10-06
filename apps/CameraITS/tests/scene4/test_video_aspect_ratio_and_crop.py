@@ -35,24 +35,23 @@ _MAX_8BIT_IMGS = 255
 _MAX_10BIT_IMGS = 1023
 
 
-def _print_failed_test_results(failed_ar, failed_fov, failed_crop,
-                               quality):
+def _print_failed_test_results(failed_ar, failed_fov, failed_crop, quality):
   """Print failed test results."""
   if failed_ar:
-    logging.error('Aspect ratio test summary for %s', quality)
+    logging.error('Aspect ratio test summary for quality: %s', quality)
     logging.error('Images failed in the aspect ratio test:')
     logging.error('Aspect ratio value: width / height')
     for fa in failed_ar:
       logging.error('%s', fa)
 
   if failed_fov:
-    logging.error('FoV test summary for %s', quality)
+    logging.error('FoV test summary for quality: %s', quality)
     logging.error('Images failed in the FoV test:')
     for fov in failed_fov:
       logging.error('%s', str(fov))
 
   if failed_crop:
-    logging.error('Crop test summary for %s', quality)
+    logging.error('Crop test summary for quality: %s', quality)
     logging.error('Images failed in the crop test:')
     logging.error('Circle center (H x V) relative to the image center.')
     for fc in failed_crop:

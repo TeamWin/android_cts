@@ -1304,8 +1304,11 @@ public class ViewTest {
     }
 
     @Test
+    @UiThreadTest
     public void testAddFocusables() {
         View view = new View(mActivity);
+        mActivity.setContentView(view);
+
         ArrayList<View> viewList = new ArrayList<>();
 
         // view is not focusable
@@ -1325,8 +1328,11 @@ public class ViewTest {
     }
 
     @Test
+    @UiThreadTest
     public void testGetFocusables() {
         View view = new View(mActivity);
+        mActivity.setContentView(view);
+
         ArrayList<View> viewList;
 
         // view is not focusable
@@ -1346,8 +1352,11 @@ public class ViewTest {
     }
 
     @Test
+    @UiThreadTest
     public void testAddFocusablesWithoutTouchMode() {
         View view = new View(mActivity);
+        mActivity.setContentView(view);
+
         assertFalse("test sanity", view.isInTouchMode());
         focusableInTouchModeTest(view, false);
     }
@@ -2471,14 +2480,19 @@ public class ViewTest {
     }
 
     @Test
+    @UiThreadTest
     public void testIsInTouchMode() {
-        View view = new View(mActivity);
-        // mAttachInfo is null
-        assertFalse(view.isInTouchMode());
+        View detachedView = new View(mActivity);
+
+        // mAttachInfo is null, therefore it should return the touch mode default value
+        Resources resources = mActivity.getResources();
+        boolean defaultInTouchMode = resources.getBoolean(resources.getIdentifier(
+                "config_defaultInTouchMode", "bool", "android"));
+        assertEquals(defaultInTouchMode, detachedView.isInTouchMode());
 
         // mAttachInfo is not null
-        view = mActivity.findViewById(R.id.fit_windows);
-        assertFalse(view.isInTouchMode());
+        View attachedView = mActivity.findViewById(R.id.fit_windows);
+        assertFalse(attachedView.isInTouchMode());
     }
 
     @Test
@@ -3450,8 +3464,11 @@ public class ViewTest {
     }
 
     @Test
+    @UiThreadTest
     public void testRequestFocusFromTouch() {
         View view = new View(mActivity);
+        mActivity.setContentView(view);
+
         view.setFocusable(true);
         assertFalse(view.isFocused());
 

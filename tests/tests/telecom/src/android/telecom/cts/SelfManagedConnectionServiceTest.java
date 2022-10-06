@@ -16,8 +16,18 @@
 
 package android.telecom.cts;
 
+import static android.media.AudioManager.MODE_IN_CALL;
+import static android.media.AudioManager.MODE_IN_COMMUNICATION;
+import static android.telecom.cts.TestUtils.SELF_MANAGED_ACCOUNT_LABEL;
+import static android.telecom.cts.TestUtils.TEST_SELF_MANAGED_HANDLE_1;
+import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
+import static android.telecom.cts.TestUtils.waitOnAllHandlers;
+
+import static org.junit.Assert.assertNotEquals;
+
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -32,20 +42,12 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Predicate;
-
-import static android.media.AudioManager.MODE_IN_CALL;
-import static android.media.AudioManager.MODE_IN_COMMUNICATION;
-import static android.telecom.cts.TestUtils.TEST_SELF_MANAGED_HANDLE_1;
-import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
-import static android.telecom.cts.TestUtils.waitOnAllHandlers;
-
-import static org.junit.Assert.assertNotEquals;
-
-import com.android.compatibility.common.util.ApiTest;
 
 /**
  * CTS tests for the self-managed {@link android.telecom.ConnectionService} APIs.
@@ -125,6 +127,33 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
                 TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_2);
         verifyAccountRegistration(TestUtils.TEST_SELF_MANAGED_HANDLE_3,
                 TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_3);
+    }
+
+    public void testSelfManagedConnectionServiceRegistrationUnmodifiable() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        verifyAccountRegistration(TestUtils.TEST_SELF_MANAGED_HANDLE_1,
+                TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_1);
+        PhoneAccount newPhoneAccount = PhoneAccount.builder(
+                        TEST_SELF_MANAGED_HANDLE_1, SELF_MANAGED_ACCOUNT_LABEL)
+                .setAddress(Uri.parse("sip:test@test.com"))
+                .setSubscriptionAddress(Uri.parse("sip:test@test.com"))
+                .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER
+                        | PhoneAccount.CAPABILITY_SUPPORTS_VIDEO_CALLING
+                        | PhoneAccount.CAPABILITY_VIDEO_CALLING)
+                .setHighlightColor(Color.BLUE)
+                .setShortDescription(SELF_MANAGED_ACCOUNT_LABEL)
+                .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
+                .addSupportedUriScheme(PhoneAccount.SCHEME_SIP)
+                .build();
+        try {
+            mTelecomManager.registerPhoneAccount(newPhoneAccount);
+            fail("Self-managed phone account can be replaced to a call provider phone account!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
     }
 
     private void verifyAccountRegistration(PhoneAccountHandle handle, PhoneAccount phoneAccount) {

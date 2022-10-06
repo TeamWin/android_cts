@@ -218,7 +218,7 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
               f'{tested_video_qualities[i]} video not stabilized enough! '
               f'Max video angle: {max_camera_angle:.3f}, '
               f'Max gyro angle: {max_gyro_angles[i]:.3f}, '
-              f'ratio: {max_camera_angle}/{max_gyro_angles[-1]:.3f}, '
+              f'ratio: {max_camera_angle/max_gyro_angles[i]:.3f} '
               f'THRESH: {_VIDEO_STABILIZATION_FACTOR}.')
       if test_failures:
         raise AssertionError(test_failures)

@@ -20,24 +20,16 @@ import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.net.Uri
 import android.platform.test.annotations.AppModeFull
-
-import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
-
+import java.util.concurrent.TimeUnit
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 
-import java.util.concurrent.TimeUnit
-
-private const val INSTALL_BUTTON_ID = "button1"
-private const val CANCEL_BUTTON_ID = "button2"
-
 @RunWith(AndroidJUnit4::class)
 @AppModeFull(reason = "Instant apps cannot install packages")
 class IntentTest : PackageInstallerTestBase() {
-    private val context = InstrumentationRegistry.getTargetContext()
 
     @After
     fun disableSecureFrp() {
