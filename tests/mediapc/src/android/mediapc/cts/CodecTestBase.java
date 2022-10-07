@@ -827,7 +827,14 @@ class Decode extends CodecDecoderTestBase implements Callable<Double> {
         mCodec = MediaCodec.createByCodecName(mDecoderName);
         mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
         configureCodec(format, mIsAsync, false, false, mServerURL);
-        mCodec.start();
+        // TODO(b/251003943) Remove once Surface from SurfaceView is used for secure decoders
+        try {
+            mCodec.start();
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Stopping the test because codec.start() failed.", e);
+            mCodec.release();
+            return (Double) 0.0;
+        }
         long start = System.currentTimeMillis();
         doWork(Integer.MAX_VALUE);
         queueEOS();

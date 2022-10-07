@@ -108,6 +108,20 @@ public class MediaMuxerTest {
     }
 
     @Test
+    public void testAVIFOutputInHEIF() throws Exception {
+        final String source = "avif_sample.avif";
+        String outputFilePath = File.createTempFile("testAVIFOutputInHEIF", ".avif")
+                .getAbsolutePath();
+        cloneAndVerify(
+            source,
+            outputFilePath,
+            1 /* expectedTrackCount */,
+            0 /* degrees */,
+            MediaMuxer.OutputFormat.MUXER_OUTPUT_HEIF,
+            false /* signalEos */);
+    }
+
+    @Test
     public void testAV1OutputInMP4() throws Exception {
         final String source =
                 "video_1280x720_mp4_av1_2000kbps_30fps_aac_stereo_128kbps_44100hz.mp4";

@@ -32,7 +32,7 @@ android_test {
         "platform-test-annotations",
         "truth-prebuilt",
         "CtsMockInputMethodLib",
-        "androidx.test.uiautomator",
+        "androidx.test.uiautomator_uiautomator",
         "androidx.test.espresso.core",
     ],
 

@@ -93,11 +93,15 @@ public abstract class AbstractTestListActivity extends ListActivity {
 
     protected void handleLaunchTestResult(int resultCode, Intent data) {
         // The mStartTime can be the initial 0 if this Activity has been recreated.
-        if (mStartTime == 0 && data.hasExtra(TestResult.TEST_START_TIME)) {
+        if (mStartTime == 0 && data != null && data.hasExtra(TestResult.TEST_START_TIME)) {
             mStartTime = data.getLongExtra(TestResult.TEST_START_TIME, 0);
         }
 
         if (resultCode == RESULT_OK) {
+            if (data == null) {
+                // Better fail now than throwing a NPE later...
+                throw new IllegalStateException("Received RESULT_OK without an Intent");
+            }
             // If subtest didn't set end time, set current time
             if (mEndTime == 0) {
                 mEndTime = System.currentTimeMillis();

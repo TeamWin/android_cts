@@ -54,6 +54,8 @@ public class MockDataService {
     // setup data call
     public static final int APN_TYPE_IMS = 0;
     public static final int APN_TYPE_DEFAULT = 1;
+    public static final int CID_IMS = 0;
+    public static final int CID_DEFAULT = 1;
     SetupDataCallResult mSetupDataCallResultIms = new SetupDataCallResult();
     SetupDataCallResult mSetupDataCallResultDefault = new SetupDataCallResult();
 
@@ -185,7 +187,7 @@ public class MockDataService {
         return RadioError.INVALID_ARGUMENTS;
     }
 
-    SetupDataCallResult setupDataCall(int apnType, int cid) {
+    SetupDataCallResult setupDataCall(int apnType) {
         Log.d(TAG, "getNetwork: apnType= " + apnType);
 
         checkExistDataCall(apnType);
@@ -200,7 +202,7 @@ public class MockDataService {
 
         switch (apnType) {
             case APN_TYPE_IMS:
-                dc.cid = cid;
+                dc.cid = CID_IMS;
                 dc.type = this.mImsType;
                 dc.ifname = this.mImsIfname;
                 linkAddress.address = this.mImsAddress;
@@ -215,7 +217,7 @@ public class MockDataService {
                 dc.mtuV6 = this.mImsMtuV6;
                 break;
             case APN_TYPE_DEFAULT:
-                dc.cid = cid;
+                dc.cid = CID_DEFAULT;
                 dc.type = this.mInternetType;
                 dc.ifname = this.mInternetIfname;
                 linkAddress.address = this.mInternetAddress;

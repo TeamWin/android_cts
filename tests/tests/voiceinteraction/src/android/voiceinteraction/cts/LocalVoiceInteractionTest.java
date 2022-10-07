@@ -21,8 +21,10 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.fail;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.util.Log;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.rule.ActivityTestRule;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -31,9 +33,6 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.rule.ActivityTestRule;
 
 @RunWith(AndroidJUnit4.class)
 public class LocalVoiceInteractionTest extends AbstractVoiceInteractionTestCase {
@@ -80,6 +79,7 @@ public class LocalVoiceInteractionTest extends AbstractVoiceInteractionTestCase 
     }
 
     @Test
+    // TODO(b/248994327): Should move the test to individual apk. Currently, it always passes.
     public void testGrantVisibilityOnStartLocalInteraction() throws Exception {
         assertWithMessage("Doesn't support LocalVoiceInteraction")
                 .that(mTestActivity.isLocalVoiceInteractionSupported())

@@ -16,18 +16,16 @@
 
 package android.mediastress.cts;
 
-import com.android.compatibility.common.util.DynamicConfigDeviceSide;
-import com.android.compatibility.common.util.MediaUtils;
-
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Intent;
 import android.media.MediaFormat;
-import android.media.MediaRecorder.AudioEncoder;
-import android.media.MediaRecorder.VideoEncoder;
-import android.os.Environment;
-import android.test.suitebuilder.annotation.LargeTest;
+import android.test.InstrumentationTestCase;
 import android.util.Log;
+
+import com.android.compatibility.common.util.DynamicConfigDeviceSide;
+import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.Preconditions;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -35,8 +33,6 @@ import java.io.FileWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
-
-import android.test.InstrumentationTestCase;
 
 /**
  * Helper for implementing video playback stress test

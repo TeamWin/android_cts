@@ -16,8 +16,7 @@
 
 package android.hardware.multiprocess.camera.cts;
 
-import static android.content.Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT;
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static org.mockito.Mockito.*;
 
@@ -25,6 +24,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityTaskManager;
 import android.app.UiAutomation;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
@@ -36,11 +36,13 @@ import android.hardware.camera2.cts.CameraTestUtils.HandlerExecutor;
 import android.hardware.cts.CameraCtsActivity;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.server.wm.NestedShellPermission;
+import android.server.wm.TestTaskOrganizer;
+import android.server.wm.WindowManagerStateHelper;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.MotionEvent;
-import android.view.WindowMetrics;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -75,6 +77,8 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
     private final Object mLock = new Object();
     private boolean mCompleted = false;
     private int mProcessPid = -1;
+    private WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
+    private TestTaskOrganizer mTaskOrganizer;
 
     /** Load jni on initialization */
     static {
@@ -145,6 +149,9 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
         mActivityManager = mContext.getSystemService(ActivityManager.class);
         mErrorServiceConnection = new ErrorLoggingService.ErrorServiceConnection(mContext);
         mErrorServiceConnection.start();
+        NestedShellPermission.run(() -> {
+            mTaskOrganizer = new TestTaskOrganizer();
+        });
     }
 
     @Override
@@ -167,6 +174,7 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
         }
         mContext = null;
         mActivityManager = null;
+        mTaskOrganizer.unregisterOrganizerIfNeeded();
         super.tearDown();
     }
 
@@ -393,20 +401,14 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
                 TestConstants.EVENT_CAMERA_CONNECT);
         assertNotNull("Camera device not setup in remote process!", allEvents);
 
-        WindowMetrics metrics = getActivity().getWindowManager().getCurrentWindowMetrics();
-        Rect firstBounds = metrics.getBounds();
-
-        Rect secondBounds = new Rect();
+        Rect firstBounds = mTaskOrganizer.getPrimaryTaskBounds();
+        Rect secondBounds = mTaskOrganizer.getSecondaryTaskBounds();
         boolean activityResumed = false;
         boolean cameraConnected = false;
+
         for (ErrorLoggingService.LogEvent e : allEvents) {
             int eventTag = e.getEvent();
             if (eventTag == TestConstants.EVENT_ACTIVITY_RESUMED) {
-                String[] components = e.getLogText().split(":");
-                secondBounds.left = Integer.parseInt(components[0]);
-                secondBounds.top = Integer.parseInt(components[1]);
-                secondBounds.right = Integer.parseInt(components[2]);
-                secondBounds.bottom = Integer.parseInt(components[3]);
                 activityResumed = true;
             } else if (eventTag == TestConstants.EVENT_CAMERA_CONNECT) {
                 cameraConnected = true;
@@ -699,12 +701,28 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
                 -1, getPid(cameraActivityName, list));
 
         // Start activity in a new top foreground process
-        Intent activityIntent = new Intent(a, klass);
         if (splitScreen) {
-            activityIntent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_LAUNCH_ADJACENT);
+            mTaskOrganizer.putTaskInSplitPrimary(a.getTaskId());
+            ComponentName primaryActivityComponent = new ComponentName(
+                    a.getPackageName(), a.getClass().getName());
+            mWmState.waitForValidState(primaryActivityComponent);
+
+            // startActivity(intent) doesn't work with TestTaskOrganizer's split screen,
+            // have to go through shell command.
+            runShellCommand("am start %s/%s", a.getPackageName(), klass.getName());
+            ComponentName secondActivityComponent = new ComponentName(
+                    a.getPackageName(), klass.getName());
+            mWmState.waitForValidState(secondActivityComponent);
+            int taskId = mWmState.getTaskByActivity(secondActivityComponent)
+                    .getTaskId();
+            // The taskAffinity of the secondary activity must be differ with the taskAffinity
+            // of the primary activity, otherwise it will replace the primary activity instead.
+            mTaskOrganizer.putTaskInSplitSecondary(taskId);
+        } else {
+            Intent activityIntent = new Intent(a, klass);
+            a.startActivity(activityIntent);
+            Thread.sleep(WAIT_TIME);
         }
-        a.startActivity(activityIntent);
-        Thread.sleep(WAIT_TIME);
 
         // Fail if activity isn't running
         list = mActivityManager.getRunningAppProcesses();

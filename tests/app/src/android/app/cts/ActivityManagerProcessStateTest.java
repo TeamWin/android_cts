@@ -1488,7 +1488,6 @@ public class ActivityManagerProcessStateTest {
 
             // Start the second heavy-weight app, should ask us what to do with the two apps
             startActivityAndWaitForShow(activity2Intent);
-            SystemClock.sleep(2000); // b/240942465 quick workaround, WM should continue debug.
 
             // First, let's try returning to the original app.
             maybeClick(device, new UiSelector().resourceId("android:id/switch_old"));
@@ -1506,7 +1505,6 @@ public class ActivityManagerProcessStateTest {
 
             // Again try starting second heavy-weight app to get prompt.
             startActivityAndWaitForShow(activity2Intent);
-            SystemClock.sleep(2000); // b/240942465 quick workaround, WM should continue debug.
 
             // Now we'll switch to the new app.
             maybeClick(device, new UiSelector().resourceId("android:id/switch_new"));
@@ -1533,7 +1531,6 @@ public class ActivityManagerProcessStateTest {
 
             // Try starting the first heavy weight app, but return to the existing second.
             startActivityAndWaitForShow(activity1Intent);
-            SystemClock.sleep(2000); // b/240942465 quick workaround, WM should continue debug.
             maybeClick(device, new UiSelector().resourceId("android:id/switch_old"));
             waitForAppFocus(CANT_SAVE_STATE_2_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();
@@ -1547,7 +1544,6 @@ public class ActivityManagerProcessStateTest {
 
             // Again start the first heavy weight app, this time actually switching to it
             startActivityAndWaitForShow(activity1Intent);
-            SystemClock.sleep(2000); // b/240942465 quick workaround, WM should continue debug.
             maybeClick(device, new UiSelector().resourceId("android:id/switch_new"));
             waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();

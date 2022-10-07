@@ -1345,7 +1345,7 @@ public class TelephonyManagerTest {
         List<RadioAccessSpecifier> cbrs = Collections.singletonList(new RadioAccessSpecifier(
                 AccessNetworkConstants.AccessNetworkType.EUTRAN,
                 new int[]{AccessNetworkConstants.EutranBand.BAND_48},
-                null));
+                new int[]{}));
         try {
             uiAutomation.adoptShellPermissionIdentity();
             // This is a oneway binder call, meaning we may return before the permission check

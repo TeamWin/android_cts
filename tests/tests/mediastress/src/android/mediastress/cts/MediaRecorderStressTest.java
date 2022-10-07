@@ -28,6 +28,8 @@ import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
+import com.android.compatibility.common.util.NonMediaMainlineTest;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
