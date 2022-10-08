@@ -51,6 +51,8 @@ import androidx.window.extensions.WindowExtensions;
 import androidx.window.extensions.embedding.ActivityEmbeddingComponent;
 import androidx.window.extensions.embedding.SplitPairRule;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -94,6 +96,8 @@ public class ActivityEmbeddingPolicyTests extends ActivityManagerTestBase {
      * Verifies that all input is dropped for activities that are embedded and being animated with
      * untrusted embedding.
      */
+    @ApiTest(apis = {"com.android.server.wm.ActivityRecord#setDropInputForAnimation",
+            "androidx.window.extensions.embedding.ActivityEmbeddingComponent#setEmbeddingRules"})
     @Test
     public void testInputDuringAnimationIsNotAllowed_untrustedEmbedding() {
         // TODO(b/207070762): remove the test when cleanup legacy app transition
@@ -102,7 +106,8 @@ public class ActivityEmbeddingPolicyTests extends ActivityManagerTestBase {
         assumeFalse(ENABLE_SHELL_TRANSITIONS);
 
         Activity primaryActivity = startActivityNewTask(mContext, mInstrumentation,
-                TestConfigChangeHandlingActivity.class, null /* activityId */);
+                TestConfigChangeHandlingActivity.class, null /* activityId */,
+                true /* isFullScreen */);
 
         SplitPairRule splitPairRule = createWildcardSplitPairRule(true /* shouldClearTop */);
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));

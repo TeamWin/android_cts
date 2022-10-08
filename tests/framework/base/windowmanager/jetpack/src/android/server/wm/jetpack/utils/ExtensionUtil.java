@@ -23,11 +23,13 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Rect;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.UiContext;
 import androidx.window.extensions.WindowExtensions;
 import androidx.window.extensions.WindowExtensionsProvider;
 import androidx.window.extensions.area.WindowAreaComponent;
@@ -50,7 +52,9 @@ public class ExtensionUtil {
 
     private static final String EXTENSION_TAG = "Extension";
 
-    public static final Version MINIMUM_STABLE_EXTENSION_VERSION = new Version(1, 0, 0, "");
+    public static final Version EXTENSION_VERSION_1 = new Version(1, 0, 0, "");
+
+    public static final Version EXTENSION_VERSION_2 = new Version(1, 1, 0, "");
 
     @NonNull
     public static Version getExtensionVersion() {
@@ -68,10 +72,15 @@ public class ExtensionUtil {
         return Version.UNKNOWN;
     }
 
+    public static boolean isExtensionVersionAtLeast(Version targetVersion) {
+        final Version version = getExtensionVersion();
+        return version.compareTo(targetVersion) >= 0;
+    }
+
     public static boolean isExtensionVersionValid() {
         final Version version = getExtensionVersion();
         // Check that the extension version on the device is at least the minimum valid version.
-        return version.compareTo(MINIMUM_STABLE_EXTENSION_VERSION) >= 0;
+        return version.compareTo(EXTENSION_VERSION_1) >= 0;
     }
 
     @Nullable
@@ -91,7 +100,7 @@ public class ExtensionUtil {
         assumeTrue("Device does not support extensions", extensionNotNull);
         // If extensions are on the device, make sure that the version is valid.
         assertTrue("Extension version is invalid, must be at least "
-                + MINIMUM_STABLE_EXTENSION_VERSION.toString(), isExtensionVersionValid());
+                + EXTENSION_VERSION_1.toString(), isExtensionVersionValid());
     }
 
     @Nullable
@@ -103,6 +112,12 @@ public class ExtensionUtil {
         return extension.getWindowLayoutComponent();
     }
 
+    /**
+     * Publishes a WindowLayoutInfo update to a test consumer. In EXTENSION_VERSION_1, only type
+     * Activity can be the listener to WindowLayoutInfo changes. This method should be called at
+     * most once for each given Activity because addWindowLayoutInfoListener implementation
+     * assumes a 1-1 mapping between the activity and consumer.
+     */
     @Nullable
     public static WindowLayoutInfo getExtensionWindowLayoutInfo(Activity activity)
             throws ExecutionException, InterruptedException, TimeoutException {
@@ -113,6 +128,26 @@ public class ExtensionUtil {
         TestValueCountConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
                 new TestValueCountConsumer<>();
         windowLayoutComponent.addWindowLayoutInfoListener(activity, windowLayoutInfoConsumer);
+        return windowLayoutInfoConsumer.waitAndGet();
+    }
+
+    /**
+     * Publishes a WindowLayoutInfo update to a test consumer. In EXTENSION_VERSION_2 both type
+     * WindowContext and Activity can be listeners. This method should be called at most once for
+     * each given Context because addWindowLayoutInfoListener implementation assumes a 1-1
+     * mapping between the context and consumer.
+     */
+    @Nullable
+    public static WindowLayoutInfo getExtensionWindowLayoutInfo(@UiContext Context context)
+            throws ExecutionException, InterruptedException, TimeoutException {
+        assertTrue(isExtensionVersionAtLeast(EXTENSION_VERSION_2));
+        WindowLayoutComponent windowLayoutComponent = getExtensionWindowLayoutComponent();
+        if (windowLayoutComponent == null) {
+            return null;
+        }
+        TestValueCountConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
+                new TestValueCountConsumer<>();
+        windowLayoutComponent.addWindowLayoutInfoListener(context, windowLayoutInfoConsumer);
         return windowLayoutInfoConsumer.waitAndGet();
     }
 

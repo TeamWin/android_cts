@@ -24,15 +24,16 @@ import static org.junit.Assume.assumeTrue;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Rect;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.VideoCapabilities.PerformancePoint;
 import android.media.MediaFormat;
 import android.os.Build;
 import android.os.SystemProperties;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.WindowManager;
+import android.view.WindowMetrics;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -81,14 +82,16 @@ public class Utils {
         Log.d(TAG, "performance class is " + sPc);
 
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        DisplayMetrics metrics = new DisplayMetrics();
         // When used from ItsService, context will be null
         if (context != null) {
             WindowManager windowManager = context.getSystemService(WindowManager.class);
-            windowManager.getDefaultDisplay().getMetrics(metrics);
-            DISPLAY_DPI = metrics.densityDpi;
-            DISPLAY_LONG_PIXELS = Math.max(metrics.widthPixels, metrics.heightPixels);
-            DISPLAY_SHORT_PIXELS = Math.min(metrics.widthPixels, metrics.heightPixels);
+            WindowMetrics metrics = windowManager.getMaximumWindowMetrics();
+            Rect displayBounds = metrics.getBounds();
+            int widthPixels = displayBounds.width();
+            int heightPixels = displayBounds.height();
+            DISPLAY_DPI = context.getResources().getConfiguration().densityDpi;
+            DISPLAY_LONG_PIXELS = Math.max(widthPixels, heightPixels);
+            DISPLAY_SHORT_PIXELS = Math.min(widthPixels, heightPixels);
 
             ActivityManager activityManager = context.getSystemService(ActivityManager.class);
             ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();

@@ -34,7 +34,6 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.hardware.BatteryState;
 import android.hardware.input.InputManager;
-import android.hardware.input.cts.GlobalKeyMapping;
 import android.hardware.lights.Light;
 import android.hardware.lights.LightState;
 import android.hardware.lights.LightsManager;
@@ -45,6 +44,7 @@ import android.os.Vibrator.OnVibratorStateChangedListener;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
+import android.view.WindowManager;
 
 import com.android.cts.input.HidBatteryTestData;
 import com.android.cts.input.HidDevice;
@@ -75,7 +75,7 @@ public abstract class InputHidTestCase extends InputTestCase {
     private static final long CALLBACK_TIMEOUT_MILLIS = 5000;
 
     private final int mRegisterResourceId;
-    private final GlobalKeyMapping mGlobalKeyMapping;
+    private final WindowManager mWindowManager;
     private final boolean mIsLeanback;
     private final boolean mVolumeKeysHandledInWindowManager;
 
@@ -94,7 +94,7 @@ public abstract class InputHidTestCase extends InputTestCase {
     InputHidTestCase(int registerResourceId) {
         mRegisterResourceId = registerResourceId;
         Context context = mInstrumentation.getTargetContext();
-        mGlobalKeyMapping = new GlobalKeyMapping(context);
+        mWindowManager = context.getSystemService(WindowManager.class);
         mIsLeanback = context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
         mVolumeKeysHandledInWindowManager = context.getResources().getBoolean(
                 Resources.getSystem().getIdentifier("config_handleVolumeKeysInWindowManager",
@@ -145,7 +145,7 @@ public abstract class InputHidTestCase extends InputTestCase {
 
     private boolean isForwardedToApps(KeyEvent e) {
         int keyCode = e.getKeyCode();
-        if (mGlobalKeyMapping.isGlobalKey(keyCode)) {
+        if (mWindowManager.isGlobalKey(keyCode)) {
             return false;
         }
         if (isVolumeKey(keyCode) && (mIsLeanback || mVolumeKeysHandledInWindowManager)) {

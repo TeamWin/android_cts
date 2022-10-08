@@ -58,6 +58,11 @@ public class TestValueCountConsumer<T> implements Consumer<T> {
         return value;
     }
 
+    // Doesn't change the count.
+    public void clearQueue() {
+        mLinkedBlockingQueue.clear();
+    }
+
     @Nullable
     public T getLastReportedValue() {
         return mLastReportedValue;

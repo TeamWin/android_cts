@@ -21,6 +21,7 @@ genrule {
     name: "CtsApkVerityTestDebugFiles",
     srcs: [
         ":CtsApkVerityTestApp",
+        ":CtsApkVerityTestAppApkIdSig",
         ":CtsApkVerityTestAppFsvSig",
         ":CtsApkVerityTestAppDm",
         ":CtsApkVerityTestAppDmFsvSig",
@@ -44,6 +45,17 @@ genrule {
          "   fi " +
          " done",
     out: ["CtsApkVerityTestApp.apk"],
+}
+
+genrule {
+    name: "CtsApkVerityTestAppApkIdSig",
+    srcs: [":CtsApkVerityTestApp"],
+    cmd: "for file in $(in); do " +
+         "   if [[ $$file == *.apk.idsig ]]; then " +
+         "     cp $$file $(out); " +
+         "   fi " +
+         " done",
+    out: ["CtsApkVerityTestApp.apk.idsig"],
 }
 
 filegroup {

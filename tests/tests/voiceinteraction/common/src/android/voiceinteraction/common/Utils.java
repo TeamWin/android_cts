@@ -117,6 +117,8 @@ public class Utils {
     public static final int ACTIVITY_NEW = 0;
     /** Indicate to finish an activity for testing. */
     public static final int ACTIVITY_FINISH = 1;
+    /** Indicate to crash an activity for testing. */
+    public static final int ACTIVITY_CRASH = 2;
 
     /** Indicate what kind of parameters for calling registerVisibleActivityCallback. */
     public static final int VISIBLE_ACTIVITY_CALLBACK_REGISTER_NORMAL = 0;
@@ -209,11 +211,13 @@ public class Utils {
     public static final String VOICE_INTERACTION_KEY_CALLBACK = "callback";
     public static final String VOICE_INTERACTION_KEY_CONTROL = "control";
     public static final String VOICE_INTERACTION_KEY_COMMAND = "command";
+    public static final String VOICE_INTERACTION_KEY_TASKID = "taskId";
     public static final String VOICE_INTERACTION_DIRECT_ACTIONS_KEY_ACTION = "action";
     public static final String VOICE_INTERACTION_KEY_ARGUMENTS = "arguments";
     public static final String VOICE_INTERACTION_KEY_CLASS = "class";
     public static final String VOICE_INTERACTION_SESSION_CMD_FINISH = "hide";
     public static final String VOICE_INTERACTION_ACTIVITY_CMD_FINISH = "finish";
+    public static final String VOICE_INTERACTION_ACTIVITY_CMD_CRASH = "crash";
 
     // For v2 reliable visible activity lookup feature
     public static final String VISIBLE_ACTIVITY_CALLBACK_ONVISIBLE_INTENT =

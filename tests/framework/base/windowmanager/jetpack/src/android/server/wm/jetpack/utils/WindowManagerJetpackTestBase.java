@@ -16,10 +16,13 @@
 
 package android.server.wm.jetpack.utils;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+import static android.content.pm.PackageManager.FEATURE_SCREEN_LANDSCAPE;
+import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
 import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
 
@@ -30,6 +33,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
@@ -86,24 +90,51 @@ public class WindowManagerJetpackTestBase {
         sVisibleActivities.clear();
     }
 
+    protected boolean hasDeviceFeature(final String requiredFeature) {
+        return mContext.getPackageManager().hasSystemFeature(requiredFeature);
+    }
+
+    /**
+     * Rotation support is indicated by explicitly having both landscape and portrait
+     * features or not listing either at all.
+     */
+    protected void assumeSupportsRotation() {
+        final boolean supportsLandscape = hasDeviceFeature(FEATURE_SCREEN_LANDSCAPE);
+        final boolean supportsPortrait = hasDeviceFeature(FEATURE_SCREEN_PORTRAIT);
+        assumeTrue((supportsLandscape && supportsPortrait)
+                || (!supportsLandscape && !supportsPortrait));
+    }
+
+
     public Activity startActivityNewTask(@NonNull Class activityClass) {
         return startActivityNewTask(activityClass, null /* activityId */);
     }
 
     public Activity startActivityNewTask(@NonNull Class activityClass,
             @Nullable String activityId) {
-        return startActivityNewTask(mContext, mInstrumentation, activityClass, activityId);
+        return startActivityNewTask(mContext, mInstrumentation, activityClass, activityId,
+                false /* isFullScreen */);
+    }
+
+    public Activity startFullScreenActivityNewTask(@NonNull Class activityClass,
+            @Nullable String activityId) {
+        return startActivityNewTask(mContext, mInstrumentation, activityClass, activityId,
+                true/* isFullScreen */);
     }
 
     public static Activity startActivityNewTask(@NonNull Context context,
             @NonNull Instrumentation instrumentation, @NonNull Class activityClass,
-            @Nullable String activityId) {
+            @Nullable String activityId, boolean isFullScreen) {
         final Intent intent = new Intent(context, activityClass);
         intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
         if (activityId != null) {
             intent.putExtra(ACTIVITY_ID_LABEL, activityId);
         }
-        return instrumentation.startActivitySync(intent);
+        final ActivityOptions options = ActivityOptions.makeBasic();
+        if (isFullScreen) {
+            options.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
+        }
+        return instrumentation.startActivitySync(intent, options.toBundle());
     }
 
     /**
@@ -235,6 +266,10 @@ public class WindowManagerJetpackTestBase {
      * display rotates for orientation, then the maximum portrait bounds will be a rotated version
      * of the maximum landscape bounds.
      */
+    // TODO(b/186631239): ActivityManagerTestBase#ignoresOrientationRequests could disable
+    // activity rotation, as a result the display area would remain in the old orientation while
+    // the activity orientation changes. We should check the existence of this request before
+    // running tests that compare orientation values.
     public static boolean doesDisplayRotateForOrientation(@NonNull Rect portraitMaximumBounds,
             @NonNull Rect landscapeMaximumBounds) {
         return !portraitMaximumBounds.equals(landscapeMaximumBounds);

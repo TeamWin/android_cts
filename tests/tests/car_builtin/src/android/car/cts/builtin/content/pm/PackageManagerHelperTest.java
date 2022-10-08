@@ -16,6 +16,7 @@
 
 package android.car.cts.builtin.content.pm;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.car.builtin.content.pm.PackageManagerHelper.PROPERTY_CAR_SERVICE_PACKAGE_NAME;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -23,6 +24,8 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.car.builtin.content.pm.PackageManagerHelper;
 import android.car.cts.builtin.R;
+import android.car.test.PermissionsCheckerRule;
+import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
@@ -39,7 +42,7 @@ import android.util.Log;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -58,6 +61,9 @@ public final class PackageManagerHelperTest {
         "android.car.cts.builtin.os.SharedMemoryTestService",
         "android.car.cts.builtin.os.ServiceManagerTestService"
     };
+
+    @Rule
+    public final PermissionsCheckerRule mPermissionsCheckerRule = new PermissionsCheckerRule();
 
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
     private final PackageManager mPackageManager = mContext.getPackageManager();
@@ -143,7 +149,7 @@ public final class PackageManagerHelperTest {
     }
 
     @Test
-    @Ignore("b/248609709")
+    @EnsureHasPermission(INTERACT_ACROSS_USERS)
     public void testGetPackageUidAsUser() throws Exception {
         int userId = UserHandle.SYSTEM.getIdentifier();
         int expectedUid = UserHandle.SYSTEM.getUid(Process.SYSTEM_UID);

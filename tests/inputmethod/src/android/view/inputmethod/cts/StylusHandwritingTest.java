@@ -222,10 +222,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     editorMatcher("onStartStylusHandwriting", marker),
                     NOT_EXPECT_TIMEOUT);
 
-            // Verify Stylus Handwriting window is not shown
-            assertFalse(expectCommand(
-                    stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
-                    .getReturnBooleanValue());
+            verifyStylusHandwritingWindowIsNotShown(stream, imeSession);
         }
     }
 
@@ -310,6 +307,15 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             MockImeSession imeSession) throws InterruptedException, TimeoutException {
         CommonTestUtils.waitUntil("Stylus handwriting window should be shown", TIMEOUT,
                 () -> expectCommand(
+                        stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
+                .getReturnBooleanValue());
+    }
+
+    private void verifyStylusHandwritingWindowIsNotShown(ImeEventStream stream,
+            MockImeSession imeSession) throws InterruptedException, TimeoutException {
+        CommonTestUtils.waitUntil("Stylus handwriting window should not be shown",
+                NOT_EXPECT_TIMEOUT,
+                () -> !expectCommand(
                         stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
                 .getReturnBooleanValue());
     }
@@ -443,10 +449,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     editorMatcher("onStartStylusHandwriting", marker),
                     TIMEOUT);
 
-            // Verify Stylus Handwriting window is shown
-            assertTrue(expectCommand(
-                    stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
-                            .getReturnBooleanValue());
+            verifyStylusHandwritingWindowIsShown(stream, imeSession);
 
             TestUtils.injectStylusUpEvent(editText, endX, endY);
         }
@@ -499,11 +502,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                         editorMatcher("onStartStylusHandwriting", marker),
                         TIMEOUT);
 
-
-                // Verify Stylus Handwriting window is shown
-                assertTrue(expectCommand(
-                        stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
-                        .getReturnBooleanValue());
+                verifyStylusHandwritingWindowIsShown(stream, imeSession);
 
                 TestUtils.injectStylusUpEvent(editText, endX, endY);
 
@@ -559,10 +558,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     editorMatcher("onStartStylusHandwriting", marker),
                     TIMEOUT);
 
-            // Verify Stylus Handwriting window is shown
-            assertTrue(expectCommand(
-                    stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
-                    .getReturnBooleanValue());
+            verifyStylusHandwritingWindowIsShown(stream, imeSession);
 
             TestUtils.injectStylusUpEvent(editText, endX, endY);
         }
@@ -713,10 +709,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     editorMatcher("onStartStylusHandwriting", marker),
                     NOT_EXPECT_TIMEOUT);
 
-            // Verify Stylus Handwriting window is not shown
-            assertFalse(expectCommand(
-                    stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
-                    .getReturnBooleanValue());
+            verifyStylusHandwritingWindowIsNotShown(stream, imeSession);
         }
     }
 
@@ -757,10 +750,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     editorMatcher("onStartStylusHandwriting", marker),
                     NOT_EXPECT_TIMEOUT);
 
-            // Verify Stylus Handwriting window is not shown
-            assertFalse(expectCommand(
-                    stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
-                    .getReturnBooleanValue());
+            verifyStylusHandwritingWindowIsNotShown(stream, imeSession);
         }
     }
 
@@ -815,10 +805,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     editorMatcher("onStartStylusHandwriting", unfocusedMarker),
                     TIMEOUT);
 
-            // Verify Stylus Handwriting window is shown
-            assertTrue(expectCommand(
-                    stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
-                    .getReturnBooleanValue());
+            verifyStylusHandwritingWindowIsShown(stream, imeSession);
 
             TestUtils.injectStylusUpEvent(unfocusedEditText, endX, endY);
         }
@@ -877,10 +864,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     editorMatcher("onStartStylusHandwriting", unfocusedMarker),
                     NOT_EXPECT_TIMEOUT);
 
-            // Verify Stylus Handwriting window is not shown
-            assertFalse(expectCommand(
-                    stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
-                    .getReturnBooleanValue());
+            verifyStylusHandwritingWindowIsNotShown(stream, imeSession);
         }
     }
 
@@ -1049,10 +1033,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     editorMatcher("onStartStylusHandwriting", focusedMarker),
                     TIMEOUT);
 
-            // Verify stylus handwriting window is shown.
-            assertTrue(expectCommand(
-                    stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
-                    .getReturnBooleanValue());
+            verifyStylusHandwritingWindowIsShown(stream, imeSession);
 
             // Verify that stylus move events are swallowed by the handwriting initiator once
             // handwriting has been initiated and not dispatched to the view tree.
@@ -1183,13 +1164,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     editorMatcher("onStartStylusHandwriting", marker),
                     TIMEOUT);
 
-            // Verify stylus handwriting window is created and shown.
-            assertTrue(expectCommand(
-                    stream, imeSession.callHasStylusHandwritingWindow(), TIMEOUT_1_S)
-                    .getReturnBooleanValue());
-            assertTrue(expectCommand(
-                    stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT_1_S)
-                    .getReturnBooleanValue());
+            verifyStylusHandwritingWindowIsShown(stream, imeSession);
 
             // Finish handwriting to remove test stylus id.
             imeSession.callFinishStylusHandwriting();
@@ -1254,10 +1229,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     editorMatcher("onStartStylusHandwriting", unfocusedMarker),
                     TIMEOUT);
 
-            // Verify stylus handwriting window is shown.
-            assertTrue(expectCommand(
-                    stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
-                    .getReturnBooleanValue());
+            verifyStylusHandwritingWindowIsShown(stream, imeSession);
 
             // Verify that stylus move events are swallowed by the handwriting initiator once
             // handwriting has been initiated and not dispatched to the view tree.

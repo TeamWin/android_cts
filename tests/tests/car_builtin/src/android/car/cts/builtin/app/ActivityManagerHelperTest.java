@@ -30,6 +30,8 @@ import android.app.Instrumentation;
 import android.app.TaskInfo;
 import android.car.builtin.app.ActivityManagerHelper;
 import android.car.cts.builtin.activity.ActivityManagerTestActivityBase;
+import android.car.test.PermissionsCheckerRule;
+import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -45,13 +47,10 @@ import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,8 +65,7 @@ import java.util.regex.Pattern;
 public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
 
     @Rule
-    @ClassRule
-    public static final DeviceState sDeviceState = new DeviceState();
+    public final PermissionsCheckerRule mPermissionsCheckerRule = new PermissionsCheckerRule();
 
     // type values from frameworks/base/core/java/android/app/WindowConfiguration
     enum ActivityType {

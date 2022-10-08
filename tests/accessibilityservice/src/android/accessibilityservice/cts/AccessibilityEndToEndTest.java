@@ -23,6 +23,7 @@ import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUti
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventTypeWithResource;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWindowByTitle;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.getActivityTitle;
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.homeScreenOrBust;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 import static android.accessibilityservice.cts.utils.RunOnMainUtils.getOnMain;
@@ -1390,6 +1391,39 @@ public class AccessibilityEndToEndTest {
         } catch (IllegalStateException e) {
             // expected due to undefined connection ID
         }
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.view.accessibility.AccessibilityNodeInfo#setQueryFromAppProcessEnabled"})
+    public void testDirectAccessibilityConnection_AccessibilityManagerEnabled() {
+        // Note: this test checks AM#hasAnyDirectConnection() as a proxy for #isEnabled because
+        // #isEnabled is also modified by the UiAutomation used in this test.
+
+        View layoutView = mActivity.findViewById(R.id.buttonLayout);
+        AccessibilityNodeInfo layoutNode = layoutView.createAccessibilityNodeInfo();
+        final AccessibilityManager accessibilityManager =
+                (AccessibilityManager) sInstrumentation.getContext().getSystemService(
+                        Service.ACCESSIBILITY_SERVICE);
+
+        // Ensure no DirectConnection to start.
+        assertThat(accessibilityManager.hasAnyDirectConnection()).isFalse();
+
+        // Enable app-process querying, which adds a connection for this node.
+        layoutNode.setQueryFromAppProcessEnabled(layoutView.getRootView(), true);
+        assertThat(accessibilityManager.hasAnyDirectConnection()).isTrue();
+
+        // Disable app-process querying for this node.
+        layoutNode.setQueryFromAppProcessEnabled(layoutView.getRootView(), false);
+        // The connection should still exist until ViewRootImpl detaches from the window, in case
+        // other nodes in this view hierarchy use the connection.
+        assertThat(accessibilityManager.hasAnyDirectConnection()).isTrue();
+
+        // Detach the ViewRootImpl from the window.
+        homeScreenOrBust(sInstrumentation.getContext(), sUiAutomation);
+        mActivityRule.finishActivity();
+        // The connection should now be removed.
+        assertThat(accessibilityManager.hasAnyDirectConnection()).isFalse();
     }
 
     private static void assertPackageName(AccessibilityNodeInfo node, String packageName) {
