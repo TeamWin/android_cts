@@ -29,8 +29,6 @@ import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.MediaCodecBlockModelHelper;
-import android.media.cts.NonMediaMainlineTest;
-import android.media.cts.Preconditions;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
@@ -44,6 +42,8 @@ import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.NonMediaMainlineTest;
+import com.android.compatibility.common.util.Preconditions;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

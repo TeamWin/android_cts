@@ -18,7 +18,6 @@ package android.media.codec.cts;
 
 import android.content.Context;
 import android.media.MediaFormat;
-import android.media.cts.NonMediaMainlineTest;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
@@ -27,6 +26,8 @@ import android.util.Size;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.NonMediaMainlineTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

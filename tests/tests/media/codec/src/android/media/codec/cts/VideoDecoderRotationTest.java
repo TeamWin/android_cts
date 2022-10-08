@@ -19,13 +19,14 @@ package android.media.codec.cts;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.TestArgs;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.NonMediaMainlineTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

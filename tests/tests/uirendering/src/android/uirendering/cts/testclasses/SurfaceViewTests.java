@@ -59,6 +59,7 @@ public class SurfaceViewTests extends ActivityTestBase {
 
     private static class CanvasCallback implements SurfaceHolder.Callback {
         final CanvasClient mCanvasClient;
+        private CountDownLatch mFirstDrawLatch;
 
         public CanvasCallback(CanvasClient canvasClient) {
             mCanvasClient = canvasClient;
@@ -73,10 +74,18 @@ public class SurfaceViewTests extends ActivityTestBase {
             Canvas canvas = holder.lockCanvas();
             mCanvasClient.draw(canvas, width, height);
             holder.unlockCanvasAndPost(canvas);
+
+            if (mFirstDrawLatch != null) {
+                mFirstDrawLatch.countDown();
+            }
         }
 
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
+        }
+
+        public void setFence(CountDownLatch fence) {
+            mFirstDrawLatch = fence;
         }
     }
 
@@ -214,6 +223,41 @@ public class SurfaceViewTests extends ActivityTestBase {
                 .withScreenshotter(helper)
                 .runWithVerifier(new ColorVerifier(Color.GREEN, 0 /* zero tolerance */));
 
+    }
+
+    @Test
+    public void surfaceViewMediaLayer() {
+        // Add a shared latch which will fire after both callbacks are complete.
+        CountDownLatch latch = new CountDownLatch(1);
+        sGreenCanvasCallback.setFence(latch);
+        sRedCanvasCallback.setFence(latch);
+
+        ViewInitializer initializer = new ViewInitializer() {
+            @Override
+            public void initializeView(View view) {
+                FrameLayout root = (FrameLayout) view.findViewById(R.id.frame_layout);
+                SurfaceView surfaceViewA = new SurfaceView(view.getContext());
+                surfaceViewA.setZOrderMediaOverlay(true);
+                surfaceViewA.getHolder().addCallback(sRedCanvasCallback);
+
+                root.addView(surfaceViewA, new FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT));
+
+                SurfaceView surfaceViewB = new SurfaceView(view.getContext());
+                surfaceViewB.getHolder().addCallback(sGreenCanvasCallback);
+
+                root.addView(surfaceViewB, new FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT));
+            }
+        };
+
+        createTest()
+                .addLayout(R.layout.frame_layout, initializer, true, latch)
+                .withScreenshotter(mScreenshotter)
+                // The red layer is the media overlay, so it must be on top.
+                .runWithVerifier(new ColorVerifier(Color.RED, 0 /* zero tolerance */));
     }
 
     @Test
