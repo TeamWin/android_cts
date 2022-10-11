@@ -1598,7 +1598,8 @@ def do_capture_with_latency(cam, req, sync_latency, fmt=None):
   return caps[-1]
 
 
-def load_scene(cam, props, scene, tablet, chart_distance, lighting_check=True):
+def load_scene(cam, props, scene, tablet, chart_distance, lighting_check=True,
+               log_path=None):
   """Load the scene for the camera based on the FOV.
 
   Args:
@@ -1608,6 +1609,7 @@ def load_scene(cam, props, scene, tablet, chart_distance, lighting_check=True):
     tablet: tablet to load scene on
     chart_distance: distance to tablet
     lighting_check: Boolean for lighting check enabled
+    log_path: [Optional] path to store artifacts
   """
   if not tablet:
     logging.info('Manual run: no tablet to load scene on.')
@@ -1637,21 +1639,25 @@ def load_scene(cam, props, scene, tablet, chart_distance, lighting_check=True):
     cap = cam.do_capture(
         capture_request_utils.auto_capture_request(), cam.CAP_YUV)
     y_plane, _, _ = image_processing_utils.convert_capture_to_planes(cap)
-    validate_lighting(y_plane, scene)
+    validate_lighting(y_plane, scene, log_path=log_path)
 
 
-def validate_lighting(y_plane, scene, state='ON'):
+def validate_lighting(y_plane, scene, state='ON', log_path=None):
   """Validates the lighting level in scene corners based on empirical values.
 
   Args:
     y_plane: Y plane of YUV image
     scene: scene name
     state: string 'ON' or 'OFF'
+    log_path: [Optional] path to store artifacts
 
   Returns:
     boolean True if lighting validated, else raise AssertionError
   """
   logging.debug('Validating lighting levels.')
+  file_name = f'validate_lighting_{scene}.jpg'
+  if log_path:
+    file_name = os.path.join(log_path, f'validate_lighting_{scene}.jpg')
 
   # Test patches from each corner.
   for location, coordinates in _VALIDATE_LIGHTING_REGIONS.items():
@@ -1665,16 +1671,14 @@ def validate_lighting(y_plane, scene, state='ON'):
         logging.debug('Lights ON in test rig.')
         return True
       else:
-        image_processing_utils.write_image(
-            y_plane, f'validate_lighting_{scene}.jpg')
+        image_processing_utils.write_image(y_plane, file_name)
         raise AssertionError('Lights OFF in test rig. Turn ON and retry.')
     elif state == 'OFF':
       if y_mean < _VALIDATE_LIGHTING_THRESH:
         logging.debug('Lights OFF in test rig.')
         return True
       else:
-        image_processing_utils.write_image(
-            y_plane, f'validate_lighting_{scene}.jpg')
+        image_processing_utils.write_image(y_plane, file_name)
         raise AssertionError('Lights ON in test rig. Turn OFF and retry.')
     else:
       raise AssertionError('Invalid lighting state string. '

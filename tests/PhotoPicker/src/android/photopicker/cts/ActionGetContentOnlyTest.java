@@ -42,9 +42,7 @@ import androidx.test.uiautomator.UiScrollable;
 import androidx.test.uiautomator.UiSelector;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -73,24 +71,17 @@ public class ActionGetContentOnlyTest extends PhotoPickerBaseTest {
         if (mActivity != null) {
             mActivity.finish();
         }
-    }
 
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
-        sDocumentsUiPackageName = getDocumentsUiPackageName();
-        sGetContentTakeOverActivityAliasState = GetContentActivityAliasUtils.enableAndGetOldState();
+        GetContentActivityAliasUtils.restoreState(sGetContentTakeOverActivityAliasState);
     }
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
 
+        sDocumentsUiPackageName = getDocumentsUiPackageName();
+        sGetContentTakeOverActivityAliasState = GetContentActivityAliasUtils.enableAndGetOldState();
         clearPackageData(sDocumentsUiPackageName);
-    }
-
-    @AfterClass
-    public static void tearDownAfterClass() throws Exception {
-        GetContentActivityAliasUtils.restoreState(sGetContentTakeOverActivityAliasState);
     }
 
     @Test

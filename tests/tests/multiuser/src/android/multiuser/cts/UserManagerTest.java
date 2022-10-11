@@ -20,13 +20,13 @@ import static android.Manifest.permission.CREATE_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.QUERY_USERS;
 import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
-import static android.multiuser.cts.PermissionHelper.adoptShellPermissionIdentity;
 import static android.multiuser.cts.TestingUtils.getBooleanProperty;
 import static android.os.UserManager.USER_OPERATION_SUCCESS;
 import static android.os.UserManager.USER_TYPE_FULL_SECONDARY;
 import static android.os.UserManager.USER_TYPE_PROFILE_CLONE;
 import static android.os.UserManager.USER_TYPE_PROFILE_MANAGED;
 
+import static com.android.bedstead.harrier.UserType.ADDITIONAL_USER;
 import static com.android.bedstead.nene.types.OptionalBoolean.FALSE;
 import static com.android.bedstead.nene.types.OptionalBoolean.TRUE;
 
@@ -65,14 +65,18 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
+import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
+import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireNotMultipleUsersOnMultipleDisplays;
-import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
@@ -129,15 +133,14 @@ public final class UserManagerTest {
         }, filter);
     }
 
+    @EnsureHasPermission(CREATE_USERS)
     private void removeUser(UserHandle userHandle) {
         if (userHandle == null) {
             return;
         }
 
-        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
-            synchronized (mUserRemoveLock) {
-                assertThat(mUserManager.removeUser(userHandle)).isTrue();
-            }
+        synchronized (mUserRemoveLock) {
+            assertThat(mUserManager.removeUser(userHandle)).isTrue();
         }
     }
 
@@ -182,8 +185,7 @@ public final class UserManagerTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserForeground"})
-    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
-    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
+    @RequireRunOnInitialUser(switchedToUser = TRUE)
     public void testIsUserForeground_differentContext_noPermission() throws Exception {
         Context context = getContextForOtherUser();
         UserManager um = context.getSystemService(UserManager.class);
@@ -195,7 +197,7 @@ public final class UserManagerTest {
     @ApiTest(apis = {"android.os.UserManager#isUserForeground"})
     @EnsureHasPermission(INTERACT_ACROSS_USERS)
     public void testIsUserForeground_differentContext_withPermission() throws Exception {
-        Context userContext = sContext.createContextAsUser(UserHandle.of(-42), /* flags= */ 0);
+        Context userContext = getContextForOtherUser();
         UserManager um = userContext.getSystemService(UserManager.class);
 
         assertWithMessage("isUserForeground() for unknown user").that(um.isUserForeground())
@@ -204,7 +206,7 @@ public final class UserManagerTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserForeground"})
-    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
+    @RequireRunOnInitialUser
     public void testIsUserForeground_currentUser() throws Exception {
         assertWithMessage("isUserForeground() for current user")
                 .that(mUserManager.isUserForeground()).isTrue();
@@ -228,8 +230,7 @@ public final class UserManagerTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserRunning"})
-    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
-    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
+    @RequireRunOnInitialUser(switchedToUser = TRUE)
     // TODO(b/239961027): should be @EnsureHasProfile instead of @EnsureHasWorkProfile
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call isUserRunning()
@@ -284,8 +285,7 @@ public final class UserManagerTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserVisible"})
-    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
-    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
+    @RequireRunOnInitialUser(switchedToUser = TRUE)
     public void testIsUserVisible_currentUser() throws Exception {
         assertWithMessage("isUserVisible() for current user (id=%s)", sContext.getUser())
                 .that(mUserManager.isUserVisible()).isTrue();
@@ -311,9 +311,8 @@ public final class UserManagerTest {
     @FlakyTest(bugId = 242364454)
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserVisible"})
-    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
     // Cannot use @RunOnProfile as it will stop the profile
-    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
+    @RequireRunOnInitialUser(switchedToUser = TRUE)
     // TODO(b/239961027): should be @EnsureHasProfile instead of @EnsureHasWorkProfile
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call isUserVisible() on other context
@@ -341,8 +340,7 @@ public final class UserManagerTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#getVisibleUsers"})
-    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
-    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
+    @RequireRunOnInitialUser(switchedToUser = TRUE)
     @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call getVisibleUsers()
     public void testGetVisibleUsers_currentUser() throws Exception {
         List<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
@@ -378,9 +376,8 @@ public final class UserManagerTest {
     @FlakyTest(bugId = 242364454)
     @Test
     @ApiTest(apis = {"android.os.UserManager#getVisibleUsers"})
-    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
     // Cannot use @RunOnProfile as it will stop the profile
-    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
+    @RequireRunOnInitialUser(switchedToUser = TRUE)
     // TODO(b/239961027): should be @EnsureHasProfile instead of @EnsureHasWorkProfile
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call getVisibleUsers()
@@ -410,13 +407,15 @@ public final class UserManagerTest {
     }
 
     @Test
+    @EnsureHasNoWorkProfile
     @ApiTest(apis = {"android.os.UserManager#createProfile"})
+    @EnsureHasPermission(CREATE_USERS)
     public void testCloneProfile() throws Exception {
         assumeTrue(mUserManager.supportsMultipleUsers());
         UserHandle userHandle = null;
 
         // Need CREATE_USERS permission to create user in test
-        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
+        try {
             try {
                 userHandle = mUserManager.createProfile(
                     "Clone profile", USER_TYPE_PROFILE_CLONE, new HashSet<>());
@@ -450,14 +449,15 @@ public final class UserManagerTest {
 
 
     @Test
+    @EnsureHasNoWorkProfile
     @ApiTest(apis = {"android.os.UserManager#createProfile"})
     @AppModeFull
+    @EnsureHasPermission(CREATE_USERS)
     public void testAddCloneProfile_shouldSendProfileAddedBroadcast() {
         assumeTrue(mUserManager.supportsMultipleUsers());
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState
                 .registerBroadcastReceiver(Intent.ACTION_PROFILE_ADDED, /* checker= */null);
         UserHandle userHandle = null;
-        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
             try {
                 userHandle = mUserManager.createProfile("Clone profile",
                         USER_TYPE_PROFILE_CLONE, new HashSet<>());
@@ -468,18 +468,18 @@ public final class UserManagerTest {
             } finally {
                 removeUser(userHandle);
             }
-        }
     }
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#createProfile"})
     @AppModeFull
+    @EnsureHasNoWorkProfile
     @RequireFeature(FEATURE_MANAGED_USERS)
+    @EnsureHasPermission(CREATE_USERS)
     public void testCreateManagedProfile_shouldSendProfileAddedBroadcast() {
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState
                 .registerBroadcastReceiver(Intent.ACTION_PROFILE_ADDED, /* checker= */null);
         UserHandle userHandle = null;
-        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
             try {
                 userHandle = mUserManager.createProfile("Managed profile",
                         USER_TYPE_PROFILE_MANAGED, new HashSet<>());
@@ -490,17 +490,17 @@ public final class UserManagerTest {
             } finally {
                 removeUser(userHandle);
             }
-        }
     }
 
     @Test
+    @EnsureHasNoWorkProfile
     @ApiTest(apis = {"android.os.UserManager#createProfile"})
     @AppModeFull
+    @EnsureHasPermission(CREATE_USERS)
     public void testRemoveCloneProfile_shouldSendProfileRemovedBroadcast() {
         assumeTrue(mUserManager.supportsMultipleUsers());
         BlockingBroadcastReceiver broadcastReceiver = null;
         UserHandle userHandle = null;
-        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
             try {
                 userHandle = mUserManager.createProfile("Clone profile",
                         USER_TYPE_PROFILE_CLONE, new HashSet<>());
@@ -514,17 +514,17 @@ public final class UserManagerTest {
             } catch (UserManager.UserOperationException e) {
                 assumeNoException("Couldn't create clone profile", e);
             }
-        }
     }
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#createProfile"})
     @AppModeFull
+    @EnsureHasNoWorkProfile
     @RequireFeature(FEATURE_MANAGED_USERS)
+    @EnsureHasPermission(CREATE_USERS)
     public void testRemoveManagedProfile_shouldSendProfileRemovedBroadcast() {
         BlockingBroadcastReceiver broadcastReceiver = null;
         UserHandle userHandle = null;
-        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
             try {
                 userHandle = mUserManager.createProfile("Managed profile",
                         USER_TYPE_PROFILE_MANAGED, new HashSet<>());
@@ -538,11 +538,11 @@ public final class UserManagerTest {
             } catch (UserManager.UserOperationException e) {
                 assumeNoException("Couldn't create managed profile", e);
             }
-        }
     }
 
     @Test
     @RequireFeature(FEATURE_MANAGED_USERS)
+    @EnsureHasNoWorkProfile
     @EnsureHasPermission({CREATE_USERS, QUERY_USERS})
     @ApiTest(apis = {
             "android.os.UserManager#createProfile",
@@ -577,66 +577,46 @@ public final class UserManagerTest {
     }
 
     @Test
+    @RequireHeadlessSystemUserMode(reason = "Secondary user profile is only available on headless")
     @ApiTest(apis = {"android.os.UserManager#removeUser"})
+    @EnsureHasAdditionalUser
+    @RequireRunOnInitialUser
+    @EnsureHasWorkProfile(forUser = ADDITIONAL_USER)
+    @EnsureHasPermission(CREATE_USERS)
     public void testRemoveParentUser_withProfiles() {
-        assumeTrue(UserManager.isHeadlessSystemUserMode());
-        UserHandle parentUser = null;
-        UserHandle cloneProfileUser = null;
-        UserHandle workProfileUser = null;
+        UserReference workProfile = sDeviceState.workProfile(/* forUser= */ ADDITIONAL_USER);
+        UserReference parentUser = workProfile.parent();
+        parentUser.remove();
 
-        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
-            parentUser = mUserManager.createUser(newUserRequest()).getUser();
+        // Removing parent user will also remove its profile
+        assertThat(parentUser.exists()).isFalse();
+        assertThat(workProfile.exists()).isFalse();
 
-            //TODO b/248277731 check if the profile creation flow can be replaced
-            // with the bedstead annotations for headless users
-            cloneProfileUser = mUserManager.createProfileForUser(
-                    "Clone Profile user", UserManager.USER_TYPE_PROFILE_CLONE, 0,
-                    parentUser.getIdentifier(), null).getUserHandle();
-
-            workProfileUser = mUserManager.createProfileForUser(
-                    "Work Profile user", UserManager.USER_TYPE_PROFILE_MANAGED, 0,
-                    parentUser.getIdentifier(), null).getUserHandle();
-
-            removeUser(parentUser);
-            synchronized (mUserRemoveLock) {
-                waitForUserRemovalLocked(parentUser.getIdentifier());
-            }
-
-            assertThat(hasUser(parentUser.getIdentifier())).isFalse();
-            assertThat(hasUser(cloneProfileUser.getIdentifier())).isFalse();
-            assertThat(hasUser(workProfileUser.getIdentifier())).isFalse();
-        }
     }
 
     @Test
+    @RequireHeadlessSystemUserMode(reason = "Secondary user profile is only available on headless")
     @ApiTest(apis = {"android.os.UserManager#removeUser"})
+    @EnsureHasAdditionalUser
+    @RequireRunOnInitialUser
+    @EnsureHasWorkProfile(forUser = ADDITIONAL_USER)
+    @EnsureHasPermission(CREATE_USERS)
     public void testRemoveUserOnlyProfile_ShouldNotRemoveAnyOtherUserInSameProfileGroupId() {
-        assumeTrue(UserManager.isHeadlessSystemUserMode());
         UserHandle parentUser = null;
-        UserHandle cloneProfileUser = null;
-        UserHandle workProfileUser = null;
 
-        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
-            parentUser = mUserManager.createUser(newUserRequest()).getUser();
+        try {
+            UserReference workProfile = sDeviceState.workProfile(/* forUser= */ ADDITIONAL_USER);
+            parentUser = workProfile.parent().userHandle();
+            UserHandle workProfileUser = workProfile.userHandle();
 
-            //TODO b/248277731 check if the profile creation flow can be replaced
-            // with the bedstead annotations for headless users
-            cloneProfileUser = mUserManager.createProfileForUser(
-                    "Clone Profile user", UserManager.USER_TYPE_PROFILE_CLONE, 0,
-                    parentUser.getIdentifier(), null).getUserHandle();
-
-            workProfileUser = mUserManager.createProfileForUser(
-                    "Work Profile user", UserManager.USER_TYPE_PROFILE_MANAGED, 0,
-                    parentUser.getIdentifier(), null).getUserHandle();
-
-            removeUser(cloneProfileUser);
+            removeUser(workProfile.userHandle());
             synchronized (mUserRemoveLock) {
-                waitForUserRemovalLocked(cloneProfileUser.getIdentifier());
+                waitForUserRemovalLocked(workProfileUser.getIdentifier());
             }
 
-            assertThat(hasUser(cloneProfileUser.getIdentifier())).isFalse();
+            //Removing a profile will only remove the profile and not the parent user
+            assertThat(hasUser(workProfileUser.getIdentifier())).isFalse();
             assertThat(hasUser(parentUser.getIdentifier())).isTrue();
-            assertThat(hasUser(workProfileUser.getIdentifier())).isTrue();
         } finally {
             removeUser(parentUser);
         }
@@ -668,14 +648,16 @@ public final class UserManagerTest {
     }
 
     @Test
+    @EnsureHasNoWorkProfile
     @SystemUserOnly(reason = "Restricted users are only supported on system user.")
     @ApiTest(apis = {
             "android.os.UserManager#isRestrictedProfile",
             "android.os.UserManager#getRestrictedProfileParent",
             "android.os.UserManager#createRestrictedProfile"})
+    @EnsureHasPermission(CREATE_USERS)
     public void testRestrictedUser() throws Exception {
         UserHandle user = null;
-        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
+        try {
             // Check that the SYSTEM user is not restricted.
             assertThat(mUserManager.isRestrictedProfile()).isFalse();
             assertThat(mUserManager.isRestrictedProfile(UserHandle.SYSTEM)).isFalse();
@@ -714,12 +696,13 @@ public final class UserManagerTest {
     }
 
     @Test
+    @EnsureHasPermission(CREATE_USERS)
     public void testSomeUserHasAccount() {
         // TODO: (b/233197356): Replace with bedstead annotation.
         assumeTrue(mUserManager.supportsMultipleUsers());
         UserHandle user = null;
 
-        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
+        try {
             assertThat(mUserManager.someUserHasAccount(mAccountName, mAccountType)).isFalse();
             user = mUserManager.createUser(newUserRequest()).getUser();
             assertThat(mUserManager.someUserHasAccount(mAccountName, mAccountType)).isTrue();
@@ -729,15 +712,14 @@ public final class UserManagerTest {
     }
 
     @Test
+    @EnsureHasPermission(CREATE_USERS)
     public void testSomeUserHasAccount_shouldIgnoreToBeRemovedUsers() {
         // TODO: (b/233197356): Replace with bedstead annotation.
         assumeTrue(mUserManager.supportsMultipleUsers());
-        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
             final NewUserResponse response = mUserManager.createUser(newUserRequest());
             assertThat(response.getOperationResult()).isEqualTo(USER_OPERATION_SUCCESS);
             mUserManager.removeUser(response.getUser());
             assertThat(mUserManager.someUserHasAccount(mAccountName, mAccountType)).isFalse();
-        }
     }
 
     @Test
@@ -748,13 +730,14 @@ public final class UserManagerTest {
             "android.os.UserManager#isUserNameSet",
             "android.os.UserManager#getUserType",
             "android.os.UserManager#isUserOfType"})
+    @EnsureHasPermission(CREATE_USERS)
     public void testCreateUser_withNewUserRequest_shouldCreateUserWithCorrectProperties()
             throws PackageManager.NameNotFoundException {
         // TODO: (b/233197356): Replace with bedstead annotation.
         assumeTrue(mUserManager.supportsMultipleUsers());
         UserHandle user = null;
 
-        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
+        try {
             final NewUserRequest request = newUserRequest();
             final NewUserResponse response = mUserManager.createUser(request);
             user = response.getUser();
@@ -781,13 +764,14 @@ public final class UserManagerTest {
     }
 
     @Test
+    @EnsureHasPermission(CREATE_USERS)
     public void testCreateUser_withNewUserRequest_shouldNotAllowDuplicateUserAccounts() {
         // TODO: (b/233197356): Replace with bedstead annotation.
         assumeTrue(mUserManager.supportsMultipleUsers());
         UserHandle user1 = null;
         UserHandle user2 = null;
 
-        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
+        try {
             final NewUserResponse response1 = mUserManager.createUser(newUserRequest());
             user1 = response1.getUser();
 
@@ -946,9 +930,11 @@ public final class UserManagerTest {
     private boolean tryToStartBackgroundUserOnSecondaryDisplay(int userId, int displayId) {
         Log.d(TAG, "tryToStartBackgroundUserOnSecondaryDisplay(): user=" + userId + ", display="
                 + displayId);
-        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
+
+        try (PermissionContext p = TestApis.permissions().withPermission(CREATE_USERS)) {
             boolean started = sContext.getSystemService(ActivityManager.class)
                     .startUserInBackgroundOnSecondaryDisplay(userId, displayId);
+
             Log.d(TAG, "Started: " + started);
             return started;
         }
@@ -972,7 +958,7 @@ public final class UserManagerTest {
 
     @Nullable
     private UserInfo getUser(int id) {
-        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
+        try (PermissionContext p = TestApis.permissions().withPermission(CREATE_USERS)) {
             return  mUserManager.getUsers(false, false, false)
                     .stream().filter(user -> user.id == id).findFirst()
                     .orElse(null);

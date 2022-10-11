@@ -398,9 +398,11 @@ public final class DeviceState extends HarrierRule {
                         forUser, ensureHasProfileAnnotation.hasProfileOwner(),
                         dpcIsPrimary, useParentInstance, switchedToParentUser, isQuietModeEnabled);
 
-                ((ProfileOwner) profileOwner(
-                        workProfile()).devicePolicyController()).setIsOrganizationOwned(
-                        isOrganizationOwned(annotation));
+                if (ensureHasProfileAnnotation.hasProfileOwner()) {
+                    ((ProfileOwner) profileOwner(
+                            workProfile(forUser)).devicePolicyController()).setIsOrganizationOwned(
+                            isOrganizationOwned(annotation));
+                }
 
                 continue;
             }

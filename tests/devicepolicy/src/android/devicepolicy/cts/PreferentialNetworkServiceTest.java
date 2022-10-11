@@ -174,6 +174,20 @@ public final class PreferentialNetworkServiceTest {
         }
     }
 
+    @CannotSetPolicyTest(policy = PreferentialNetworkService.class)
+    public void setPreferentialNetworkServiceEnabled_enableService_throwsSecurityException() {
+        assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager()
+                        .setPreferentialNetworkServiceEnabled(true));
+    }
+
+    @CannotSetPolicyTest(policy = PreferentialNetworkService.class)
+    public void isPreferentialNetworkServiceEnabled_default_throwsSecurityException() {
+        assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager()
+                        .isPreferentialNetworkServiceEnabled());
+    }
+
     @CanSetPolicyTest(policy = PreferentialNetworkService.class)
     public void isPreferentialNetworkServiceEnabled_default_isTrue() {
         assertThat(sDeviceState.dpc().devicePolicyManager().isPreferentialNetworkServiceEnabled())

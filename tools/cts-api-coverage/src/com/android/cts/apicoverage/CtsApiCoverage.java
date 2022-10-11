@@ -102,6 +102,8 @@ public class CtsApiCoverage {
         System.out.println("  -t TITLE               report title");
         System.out.println("  -a API                 the Android API Level");
         System.out.println("  -b BITS                64 or 32 bits, default 64");
+        System.out.println("  -j PARALLELISM         number of tasks to run in parallel, defaults"
+                        + " to number of cpus");
         System.out.println();
         System.exit(1);
     }
@@ -118,6 +120,7 @@ public class CtsApiCoverage {
         int apiLevel = Integer.MAX_VALUE;
         String testCasesFolder = "";
         String bits = "64";
+        int parallelism = Runtime.getRuntime().availableProcessors();
 
         List<File> notFoundTestApks = new ArrayList<File>();
         int numTestApkArgs = 0;
@@ -150,6 +153,8 @@ public class CtsApiCoverage {
                     apiLevel = Integer.parseInt(getExpectedArg(args, ++i));
                 } else if ("-b".equals(args[i])) {
                     bits = getExpectedArg(args, ++i);
+                } else if ("-j".equals(args[i])) {
+                    parallelism = Integer.parseInt(getExpectedArg(args, ++i));
                 } else {
                     printUsage();
                 }
@@ -210,8 +215,7 @@ public class CtsApiCoverage {
         // Add superclass information into api coverage.
         apiCoverage.resolveSuperClasses();
 
-        ExecutorService service =
-            Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        ExecutorService service = Executors.newFixedThreadPool(parallelism);
         List<Future> tasks = new ArrayList<>();
         for (File testApk : testApks) {
             tasks.add(addApiCoverage(service, apiCoverage, testApk, dexDeps));

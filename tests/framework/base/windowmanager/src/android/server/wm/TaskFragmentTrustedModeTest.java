@@ -26,7 +26,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -128,8 +127,6 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
      */
     @Test
     public void testUntrustedModeTaskFragmentVisibility_reparentActivityInTaskFragment() {
-        // TODO(b/207070762): Remove after migration is done.
-        assumeFalse(ENABLE_SHELL_TRANSITIONS);
         final Activity translucentActivity = startActivity(TranslucentActivity.class);
 
         // Create a task fragment with activity in untrusted mode.

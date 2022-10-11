@@ -17,7 +17,7 @@
 package com.android.bedstead.harrier.annotations;
 
 import static com.android.bedstead.harrier.UserType.INITIAL_USER;
-import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.EARLY;
+import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.REQUIRE_RUN_ON_PRECEDENCE;
 import static com.android.bedstead.nene.types.OptionalBoolean.ANY;
 import static com.android.bedstead.nene.types.OptionalBoolean.FALSE;
 
@@ -47,6 +47,10 @@ import java.lang.annotation.Target;
 @RequireFeature("android.software.managed_users")
 @EnsureHasNoDeviceOwner // TODO: This should only apply on Android R+
 public @interface EnsureHasWorkProfile {
+
+    // Must be before RequireRunOn to ensure users exist
+    int ENSURE_HAS_WORK_PROFILE_WEIGHT = REQUIRE_RUN_ON_PRECEDENCE - 1;
+
     /** Which user type the work profile should be attached to. */
     UserType forUser() default INITIAL_USER;
 
@@ -91,5 +95,5 @@ public @interface EnsureHasWorkProfile {
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default EARLY - 1; // Must be before RequireRunOn to ensure users exist
+    int weight() default ENSURE_HAS_WORK_PROFILE_WEIGHT;
 }

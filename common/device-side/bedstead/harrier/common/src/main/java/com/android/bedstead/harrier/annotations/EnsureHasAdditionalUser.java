@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier.annotations;
 
-import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.EARLY;
+import static com.android.bedstead.harrier.annotations.EnsureHasWorkProfile.ENSURE_HAS_WORK_PROFILE_WEIGHT;
 import static com.android.bedstead.nene.types.OptionalBoolean.ANY;
 
 import com.android.bedstead.nene.types.OptionalBoolean;
@@ -60,5 +60,7 @@ public @interface EnsureHasAdditionalUser {
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default EARLY - 1; // Must be before RequireRunOn to ensure users exist
+    // Lower weights than EnsureWorkProfile annotation to make sure parent exists during profile
+    // creation
+    int weight() default ENSURE_HAS_WORK_PROFILE_WEIGHT - 1;
 }

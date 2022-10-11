@@ -46,8 +46,6 @@ import android.media.cts.MediaCodecWrapper;
 import android.media.cts.MediaHeavyPresubmitTest;
 import android.media.cts.MediaTestBase;
 import android.media.cts.NdkMediaCodec;
-import android.media.cts.NonMediaMainlineTest;
-import android.media.cts.Preconditions;
 import android.media.cts.SdkMediaCodec;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
@@ -63,6 +61,8 @@ import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.NonMediaMainlineTest;
+import com.android.compatibility.common.util.Preconditions;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 

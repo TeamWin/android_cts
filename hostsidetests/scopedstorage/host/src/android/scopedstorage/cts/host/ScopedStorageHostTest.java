@@ -28,6 +28,7 @@ import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -324,6 +325,7 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
     }
 
     @Test
+    @Ignore("b/247099819")
     public void testClearPackageData() throws Exception {
         grantPermissions("android.permission.READ_EXTERNAL_STORAGE");
         try {

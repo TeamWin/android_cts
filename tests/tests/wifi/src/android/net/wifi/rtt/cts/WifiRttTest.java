@@ -35,6 +35,7 @@ import android.net.wifi.rtt.RangingRequest;
 import android.net.wifi.rtt.RangingResult;
 import android.net.wifi.rtt.ResponderConfig;
 import android.net.wifi.rtt.ResponderLocation;
+import android.net.wifi.rtt.WifiRttManager;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -749,13 +750,14 @@ public class WifiRttTest extends TestBase {
                 ResultType.NEUTRAL, ResultUnit.NONE);
         reportLog.submit();
 
-        /** TODO(b/237011062): enable the performance verification new API to check capabilities
-         // Analyze results
-        assertTrue("Wi-Fi RTT failure rate exceeds threshold: FAIL=" + numFailures
-                        + ", ITERATIONS="
-                        + NUM_OF_RTT_ITERATIONS + ", AP=" + testAp,
-                numFailures <= NUM_OF_RTT_ITERATIONS * MAX_NON11MC_FAILURE_RATE_PERCENT / 100);
-         */
+        if (mCharacteristics != null && mCharacteristics.getBoolean(WifiRttManager
+                .CHARACTERISTICS_KEY_BOOLEAN_ONE_SIDED_RTT)) {
+            // Analyze results
+            assertTrue("Wi-Fi RTT failure rate exceeds threshold: FAIL=" + numFailures
+                            + ", ITERATIONS="
+                            + NUM_OF_RTT_ITERATIONS + ", AP=" + testAp,
+                    numFailures <= NUM_OF_RTT_ITERATIONS * MAX_NON11MC_FAILURE_RATE_PERCENT / 100);
+        }
 
         if (numFailures != NUM_OF_RTT_ITERATIONS) {
             // Calculate an initial average using all measurements to determine distance outliers

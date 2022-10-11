@@ -120,26 +120,6 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         assertTrue(mDevicePolicyManager.isAdminActive(mComponent));
     }
 
-    public void testSetGetPreferentialNetworkServiceEnabled() throws Exception {
-        if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testSetGetPreferentialNetworkServiceEnabled");
-            return;
-        }
-        try {
-            mDevicePolicyManager.clearProfileOwner(DeviceAdminInfoTest.getProfileOwnerComponent());
-            assertThrows(SecurityException.class,
-                    () -> mDevicePolicyManager.setPreferentialNetworkServiceEnabled(true));
-            assertThrows(SecurityException.class,
-                    () -> mDevicePolicyManager.isPreferentialNetworkServiceEnabled());
-        }  catch (SecurityException se) {
-            Log.w(TAG, "Test is not a profile owner and there is no need to clear.");
-        } finally {
-            setProfileOwnerAndWaitForSuccess(
-                    DeviceAdminInfoTest.getProfileOwnerComponent().flattenToString());
-        }
-
-    }
-
     public void testKeyguardDisabledFeatures() {
         if (!mDeviceAdmin) {
             Log.w(TAG, "Skipping testKeyguardDisabledFeatures");
@@ -585,19 +565,6 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testSetScreenCaptureDisabled_failIfNotProfileOwner() {
-        if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testSetScreenCaptureDisabled_failIfNotProfileOwner");
-            return;
-        }
-        try {
-            mDevicePolicyManager.setScreenCaptureDisabled(mComponent, true);
-            fail("did not throw expected SecurityException");
-        } catch (SecurityException e) {
-            assertProfileOwnerMessage(e.getMessage());
-        }
-    }
-
     public void testAddPersistentPreferredActivity_failIfNotProfileOwner() {
         if (!mDeviceAdmin) {
             Log.w(TAG, "Skipping testAddPersistentPreferredActivity_failIfNotProfileOwner");
@@ -677,19 +644,6 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         try {
             mDevicePolicyManager.setRestrictionsProvider(mComponent,
                     new ComponentName("android.admin.cts", "dummy"));
-            fail("did not throw expected SecurityException");
-        } catch (SecurityException e) {
-            assertProfileOwnerMessage(e.getMessage());
-        }
-    }
-
-    public void testSetPermittedAccessibilityServices_failIfNotProfileOwner() {
-        if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testSetPermittedAccessibilityServices_failIfNotProfileOwner");
-            return;
-        }
-        try {
-            mDevicePolicyManager.setPermittedAccessibilityServices(mComponent, null);
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertProfileOwnerMessage(e.getMessage());

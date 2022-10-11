@@ -234,6 +234,23 @@ public class BluetoothAdapterTest extends AndroidTestCase {
 
     }
 
+    public void test_getProfileConnectionState() {
+        if (!mHasBluetooth) {
+            // Skip the test if bluetooth is not present.
+            return;
+        }
+
+        assertEquals(mAdapter.getProfileConnectionState(BluetoothProfile.A2DP),
+                BluetoothAdapter.STATE_DISCONNECTED);
+        assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
+        mUiAutomation.dropShellPermissionIdentity();
+        assertThrows(SecurityException.class,
+                () -> mAdapter.getProfileConnectionState(BluetoothProfile.A2DP));
+        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
+        assertEquals(mAdapter.getProfileConnectionState(BluetoothProfile.A2DP),
+                BluetoothAdapter.STATE_DISCONNECTED);
+    }
+
     public void test_getRemoteDevice() {
         if (!mHasBluetooth) {
             // Skip the test if bluetooth is not present.

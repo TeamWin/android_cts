@@ -20,12 +20,15 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.QUERY_ADMI
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.testng.Assert.assertThrows;
+
 import android.app.admin.DevicePolicyManager;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.PermittedAccessibilityServices;
 import com.android.bedstead.nene.TestApis;
@@ -37,6 +40,7 @@ import com.google.common.collect.ImmutableList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
@@ -141,5 +145,17 @@ public class AccessibilityServicesTest {
         assertThat(sDevicePolicyManager.getPermittedAccessibilityServices(
                 TestApis.users().instrumented().id()))
                 .containsAtLeastElementsIn(SYSTEM_ACCESSIBILITY_SERVICE_PACKAGES);
+    }
+
+    //TODO: re-enable this test when the permission check is added to
+    // set/getPermittedAccessibilityServices.
+    @Ignore
+    @CannotSetPolicyTest(policy = PermittedAccessibilityServices.class,
+            includeNonDeviceAdminStates = false)
+    @Postsubmit(reason = "new test")
+    public void setPermittedAccessibilityServices_nullPackageName_throwsSecurityException() {
+        assertThrows(SecurityException.class, () ->
+                sDeviceState.dpc().devicePolicyManager().setPermittedAccessibilityServices(
+                        sDeviceState.dpc().componentName(), null));
     }
 }

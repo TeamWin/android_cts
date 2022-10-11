@@ -38,7 +38,6 @@ import android.media.MediaCodecInfo.VideoCapabilities;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.CodecUtils;
-import android.media.cts.Preconditions;
 import android.media.cts.TestArgs;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -52,6 +51,7 @@ import android.view.Surface;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.Preconditions;
 
 import org.junit.After;
 import org.junit.Before;

@@ -197,7 +197,8 @@ class NumFacesTest(its_base_test.ItsBaseTest):
 
       # Load chart for scene
       its_session_utils.load_scene(
-          cam, props, self.scene, self.tablet, self.chart_distance)
+          cam, props, self.scene, self.tablet, self.chart_distance,
+          log_path=self.log_path)
 
       # Check skip conditions
       camera_properties_utils.skip_unless(

@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.Manifest;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.net.wifi.WifiManager;
 import android.os.Vibrator;
 
@@ -60,6 +61,12 @@ public class Checkers {
         assertThat(
                     numberOfSystemAppsWithPermission(
                         Manifest.permission.BRIGHTNESS_SLIDER_USAGE, pm)).isGreaterThan(0);
+    }
+
+    @Test
+    public void checkConfigShowUserSwitcher() {
+        assertThat(Resources.getSystem().getBoolean(com.android.internal
+                .R.bool.config_showUserSwitcherByDefault)).isTrue();
     }
 
     /**

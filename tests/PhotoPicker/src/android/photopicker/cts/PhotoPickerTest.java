@@ -52,8 +52,7 @@ import androidx.test.uiautomator.UiObjectNotFoundException;
 import androidx.test.uiautomator.UiSelector;
 
 import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -83,15 +82,12 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
 
     private static int sGetContentTakeOverActivityAliasState;
 
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+
         sGetContentTakeOverActivityAliasState = GetContentActivityAliasUtils.enableAndGetOldState();
         clearPackageData(getDocumentsUiPackageName());
-    }
-
-    @AfterClass
-    public static void tearDownAfterClass() throws Exception {
-        GetContentActivityAliasUtils.restoreState(sGetContentTakeOverActivityAliasState);
     }
 
     @After
@@ -104,6 +100,8 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         if (mActivity != null) {
             mActivity.finish();
         }
+
+        GetContentActivityAliasUtils.restoreState(sGetContentTakeOverActivityAliasState);
     }
 
     @Test

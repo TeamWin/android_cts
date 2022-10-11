@@ -30,7 +30,6 @@ import android.media.MediaFormat;
 import android.media.cts.MediaHeavyPresubmitTest;
 import android.media.cts.MediaTestBase;
 import android.media.cts.OutputSurface;
-import android.media.cts.Preconditions;
 import android.media.cts.TestArgs;
 import android.opengl.GLES20;
 import android.os.Build;
@@ -39,6 +38,7 @@ import android.util.Log;
 import android.view.Surface;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.Preconditions;
 
 import org.junit.After;
 import org.junit.Before;

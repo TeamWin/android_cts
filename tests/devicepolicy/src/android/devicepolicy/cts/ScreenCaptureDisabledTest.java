@@ -20,6 +20,8 @@ import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubje
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.testng.Assert.assertThrows;
+
 import android.app.UiAutomation;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManager;
@@ -36,6 +38,7 @@ import com.android.bedstead.harrier.annotations.EnsureUnlocked;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.SlowApiTest;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.ScreenCaptureDisabled;
@@ -96,6 +99,13 @@ public final class ScreenCaptureDisabledTest {
         mDevicePolicyManager.setScreenCaptureDisabled(mAdmin, false);
 
         assertThat(mDevicePolicyManager.getScreenCaptureDisabled(mAdmin)).isFalse();
+    }
+
+    @CannotSetPolicyTest(policy = ScreenCaptureDisabled.class, includeNonDeviceAdminStates = false)
+    @Postsubmit(reason = "new test")
+    public void setScreenCaptureDisabled_true_throwsSecurityException() {
+        assertThrows(SecurityException.class,
+                () -> mDevicePolicyManager.setScreenCaptureDisabled(mAdmin, false));
     }
 
     @PolicyAppliesTest(policy = ScreenCaptureDisabled.class)

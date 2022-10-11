@@ -27,7 +27,6 @@ import android.media.AudioFormat;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.media.cts.Preconditions;
 import android.media.decoder.cts.DecoderTest.AudioParameter;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
@@ -39,6 +38,7 @@ import androidx.test.InstrumentationRegistry;
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.Preconditions;
 
 import org.junit.Before;
 import org.junit.Test;
