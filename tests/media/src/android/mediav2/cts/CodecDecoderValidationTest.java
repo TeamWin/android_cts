@@ -105,7 +105,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
             int width, int height, SupportClass supportRequirements, String allTestParams) {
         super(decoder, mime, null, allTestParams);
         mSrcFiles = srcFiles;
-        mRefFile = refFile;
+        mRefFile = mInpPrefix + refFile;
         mRmsError = rmsError;
         mRefCRC = refCRC;
         mSampleRate = sampleRate;
@@ -642,7 +642,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
     public void testDecodeAndValidate() throws IOException, InterruptedException {
         ArrayList<MediaFormat> formats = new ArrayList<>();
         for (String file : mSrcFiles) {
-            formats.add(setUpSource(file));
+            formats.add(setUpSource(mInpPrefix + file));
             mExtractor.release();
         }
         checkFormatSupport(mCodecName, mMime, false, formats, null, mSupportRequirements);
@@ -652,7 +652,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
             for (String file : mSrcFiles) {
                 mOutputBuff = new OutputManager();
                 mCodec = MediaCodec.createByCodecName(mCodecName);
-                MediaFormat format = setUpSource(file);
+                MediaFormat format = setUpSource(mInpPrefix + file);
                 configureCodec(format, false, true, false);
                 mCodec.start();
                 mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);

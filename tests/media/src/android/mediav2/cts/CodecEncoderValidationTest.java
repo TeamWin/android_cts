@@ -81,6 +81,10 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
         super(encoder, mediaType, new int[]{bitrate}, new int[]{encoderInfo1},
                 new int[]{encoderInfo2}, allTestParams);
         mUseHBD = useHBD;
+        if (mUseHBD) {
+            mActiveRawRes = mIsAudio ? INPUT_AUDIO_FILE_HBD : INPUT_VIDEO_FILE_HBD;
+            mBytesPerSample = mActiveRawRes.mBytesPerSample;
+        }
     }
 
     private static List<Object[]> flattenParams(List<Object[]> params) {
@@ -176,13 +180,6 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
             mCodec = MediaCodec.createByCodecName(mCodecName);
             mSaveToMem = true;
             for (MediaFormat inpFormat : mFormats) {
-                if (mIsAudio) {
-                    mSampleRate = inpFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
-                    mChannels = inpFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
-                } else {
-                    mWidth = inpFormat.getInteger(MediaFormat.KEY_WIDTH);
-                    mHeight = inpFormat.getInteger(MediaFormat.KEY_HEIGHT);
-                }
                 mOutputBuff.reset();
                 mInfoList.clear();
                 configureCodec(inpFormat, false, true, true);
@@ -254,22 +251,17 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testEncodeAndValidate() throws IOException, InterruptedException {
         setUpParams(Integer.MAX_VALUE);
-        String inputFile = mInputFile;
         if (mUseHBD) {
             if (mIsAudio) {
                 for (MediaFormat format : mFormats) {
                     format.setInteger(MediaFormat.KEY_PCM_ENCODING, AudioFormat.ENCODING_PCM_FLOAT);
                 }
-                mBytesPerSample = 4;
-                inputFile = INPUT_AUDIO_FILE_HBD;
             } else {
                 for (MediaFormat format : mFormats) {
                     format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUVP010);
                 }
-                mBytesPerSample = 2;
-                inputFile = INPUT_VIDEO_FILE_HBD;
             }
         }
-        encodeAndValidate(inputFile);
+        encodeAndValidate(mActiveRawRes.mFileName);
     }
 }

@@ -239,7 +239,7 @@ public class AdaptivePlaybackTest extends CodecDecoderTestBase {
                         MediaCodecInfo.CodecCapabilities.FEATURE_AdaptivePlayback));
         ArrayList<MediaFormat> formats = new ArrayList<>();
         for (String file : mSrcFiles) {
-            formats.add(setUpSource(file));
+            formats.add(setUpSource(mInpPrefix + file));
             mExtractor.release();
         }
         checkFormatSupport(mCodecName, mMime, false, formats,
@@ -256,7 +256,8 @@ public class AdaptivePlaybackTest extends CodecDecoderTestBase {
         ArrayList<MediaCodec.BufferInfo> list = new ArrayList<>();
         ByteBuffer buffer = ByteBuffer.allocate(totalSize);
         for (String file : mSrcFiles) {
-            formats.add(createInputList(setUpSource(file), buffer, list, buffOffset, ptsOffset));
+            formats.add(createInputList(setUpSource(mInpPrefix + file), buffer, list, buffOffset,
+                    ptsOffset));
             mExtractor.release();
             ptsOffset = mMaxPts + 1000000L;
             buffOffset = (list.get(list.size() - 1).offset) + (list.get(list.size() - 1).size);

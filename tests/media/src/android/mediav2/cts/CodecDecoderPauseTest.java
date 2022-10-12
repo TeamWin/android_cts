@@ -52,7 +52,7 @@ public class CodecDecoderPauseTest extends CodecDecoderTestBase {
 
     public CodecDecoderPauseTest(String decoder, String mime, String srcFile,
             SupportClass supportRequirements, String allTestParams) {
-        super(decoder, mime, srcFile, allTestParams);
+        super(decoder, mime, mInpPrefix + srcFile, allTestParams);
         mSupportRequirements = supportRequirements;
     }
 

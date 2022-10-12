@@ -133,7 +133,7 @@ public class CodecEncoderSurfaceTest {
             int frameRate, boolean testToneMap, String allTestParams) {
         mCompName = encoder;
         mMime = mime;
-        mTestFile = testFile;
+        mTestFile = mInpPrefix + testFile;
         mBitrate = bitrate;
         mFrameRate = frameRate;
         mTestToneMap = testToneMap;
@@ -239,9 +239,9 @@ public class CodecEncoderSurfaceTest {
     }
 
     private MediaFormat setUpSource(String srcFile) throws IOException {
-        Preconditions.assertTestFileExists(mInpPrefix + srcFile);
+        Preconditions.assertTestFileExists(srcFile);
         mExtractor = new MediaExtractor();
-        mExtractor.setDataSource(mInpPrefix + srcFile);
+        mExtractor.setDataSource(srcFile);
         for (int trackID = 0; trackID < mExtractor.getTrackCount(); trackID++) {
             MediaFormat format = mExtractor.getTrackFormat(trackID);
             String mime = format.getString(MediaFormat.KEY_MIME);
@@ -724,8 +724,8 @@ public class CodecEncoderSurfaceTest {
                 tmpPath = File.createTempFile("tmp", ".mp4").getAbsolutePath();
             }
             int colorFormat = mDecoderFormat.getInteger(MediaFormat.KEY_COLOR_FORMAT, -1);
-            assertTrue(nativeTestSimpleEncode(mCompName, mDecoderName, mMime,
-                    mInpPrefix + mTestFile, tmpPath, mBitrate, mFrameRate, colorFormat));
+            assertTrue(nativeTestSimpleEncode(mCompName, mDecoderName, mMime, mTestFile,
+                    tmpPath, mBitrate, mFrameRate, colorFormat));
         }
     }
 }

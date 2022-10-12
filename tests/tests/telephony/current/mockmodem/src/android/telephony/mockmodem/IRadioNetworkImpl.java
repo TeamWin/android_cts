@@ -219,7 +219,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getAllowedNetworkTypesBitmapResponse(rsp, networkTypeBitmap);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to getAllowedNetworkTypesBitmap from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getAllowedNetworkTypesBitmap from AIDL. Exception " + ex);
         }
     }
 
@@ -232,7 +232,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getAvailableBandModesResponse(rsp, bandModes);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to getAvailableBandModes from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getAvailableBandModes from AIDL. Exception " + ex);
         }
     }
 
@@ -246,7 +246,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getAvailableNetworksResponse(rsp, networkInfos);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to getAvailableNetworks from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getAvailableNetworks from AIDL. Exception " + ex);
         }
     }
 
@@ -262,7 +262,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getBarringInfoResponse(rsp, cellIdentity, barringInfos);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to getBarringInfo from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getBarringInfo from AIDL. Exception " + ex);
         }
     }
 
@@ -274,7 +274,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getCdmaRoamingPreferenceResponse(rsp, type);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to getCdmaRoamingPreference from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getCdmaRoamingPreference from AIDL. Exception " + ex);
         }
     }
 
@@ -291,7 +291,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getCellInfoListResponse(rsp, cells);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to getCellInfoList from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getCellInfoList from AIDL. Exception " + ex);
         }
     }
 
@@ -325,7 +325,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getDataRegistrationStateResponse(rsp, dataRegResponse);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to getRadioCapability from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getRadioCapability from AIDL. Exception " + ex);
         }
     }
 
@@ -338,7 +338,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getImsRegistrationStateResponse(rsp, isRegistered, ratFamily);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to getImsRegistrationState from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getImsRegistrationState from AIDL. Exception " + ex);
         }
     }
 
@@ -350,7 +350,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getNetworkSelectionModeResponse(rsp, mNetworkSelectionMode);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to getNetworkSelectionMode from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getNetworkSelectionMode from AIDL. Exception " + ex);
         }
     }
 
@@ -375,7 +375,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getOperatorResponse(rsp, longName, shortName, numeric);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to getOperator from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getOperator from AIDL. Exception " + ex);
         }
     }
 
@@ -397,7 +397,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getSignalStrengthResponse(rsp, signalStrength);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to getSignalStrength from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getSignalStrength from AIDL. Exception " + ex);
         }
     }
 
@@ -411,7 +411,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getSystemSelectionChannelsResponse(rsp, specifiers);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to getSystemSelectionChannels from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getSystemSelectionChannels from AIDL. Exception " + ex);
         }
     }
 
@@ -428,7 +428,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getVoiceRadioTechnologyResponse(rsp, rat);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to getVoiceRadioTechnology from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getVoiceRadioTechnology from AIDL. Exception " + ex);
         }
     }
 
@@ -462,7 +462,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getVoiceRegistrationStateResponse(rsp, voiceRegResponse);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to getVoiceRegistrationState from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getVoiceRegistrationState from AIDL. Exception " + ex);
         }
     }
 
@@ -474,7 +474,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.isNrDualConnectivityEnabledResponse(rsp, isEnabled);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to isNrDualConnectivityEnabled from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to isNrDualConnectivityEnabled from AIDL. Exception " + ex);
         }
     }
 
@@ -502,7 +502,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.setAllowedNetworkTypesBitmapResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to setAllowedNetworkTypesBitmap from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setAllowedNetworkTypesBitmap from AIDL. Exception " + ex);
         }
     }
 
@@ -514,7 +514,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.setBandModeResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to setBandMode from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setBandMode from AIDL. Exception " + ex);
         }
     }
 
@@ -527,7 +527,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.setBarringPasswordResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to setBarringPassword from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setBarringPassword from AIDL. Exception " + ex);
         }
     }
 
@@ -539,7 +539,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.setCdmaRoamingPreferenceResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to setCdmaRoamingPreference from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setCdmaRoamingPreference from AIDL. Exception " + ex);
         }
     }
 
@@ -551,7 +551,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.setCellInfoListRateResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to setCellInfoListRate from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setCellInfoListRate from AIDL. Exception " + ex);
         }
     }
 
@@ -563,7 +563,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.setIndicationFilterResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to setIndicationFilter from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setIndicationFilter from AIDL. Exception " + ex);
         }
     }
 
@@ -582,7 +582,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.setLinkCapacityReportingCriteriaResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to setLinkCapacityReportingCriteria from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setLinkCapacityReportingCriteria from AIDL. Exception " + ex);
         }
     }
 
@@ -594,7 +594,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.setLocationUpdatesResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to setLocationUpdates from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setLocationUpdates from AIDL. Exception " + ex);
         }
     }
 
@@ -606,7 +606,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.setNetworkSelectionModeAutomaticResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to setNetworkSelectionModeAutomatic from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setNetworkSelectionModeAutomatic from AIDL. Exception " + ex);
         }
     }
 
@@ -618,7 +618,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.setNetworkSelectionModeManualResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to setNetworkSelectionModeManual from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setNetworkSelectionModeManual from AIDL. Exception " + ex);
         }
     }
 
@@ -630,7 +630,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.setNrDualConnectivityStateResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to setNrDualConnectivityState from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setNrDualConnectivityState from AIDL. Exception " + ex);
         }
     }
 
@@ -653,7 +653,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.setSignalStrengthReportingCriteriaResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to setSignalStrengthReportingCriteria from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setSignalStrengthReportingCriteria from AIDL. Exception " + ex);
         }
     }
 
@@ -665,7 +665,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.setSuppServiceNotificationsResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to setSuppServiceNotifications from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setSuppServiceNotifications from AIDL. Exception " + ex);
         }
     }
 
@@ -678,7 +678,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.setSystemSelectionChannelsResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to setSystemSelectionChannels from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setSystemSelectionChannels from AIDL. Exception " + ex);
         }
     }
 
@@ -690,7 +690,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.startNetworkScanResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to startNetworkScan from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to startNetworkScan from AIDL. Exception " + ex);
         }
     }
 
@@ -702,7 +702,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.stopNetworkScanResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to stopNetworkScan from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to stopNetworkScan from AIDL. Exception " + ex);
         }
     }
 
@@ -715,7 +715,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.supplyNetworkDepersonalizationResponse(rsp, remainingRetries);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to supplyNetworkDepersonalization from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to supplyNetworkDepersonalization from AIDL. Exception " + ex);
         }
     }
 
@@ -728,7 +728,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.setUsageSettingResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to setUsageSetting from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to setUsageSetting from AIDL. Exception " + ex);
         }
     }
 
@@ -740,7 +740,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.getUsageSettingResponse(rsp, -1 /* Invalid value */);
         } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to getUsageSetting from AIDL. Exception" + ex);
+            Log.e(mTag, "Failed to getUsageSetting from AIDL. Exception " + ex);
         }
     }
 
@@ -752,7 +752,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.setEmergencyModeResponse(rsp, null);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to setEmergencyMode from AIDL. Exception" + ex);
+            Log.e(TAG, "Failed to setEmergencyMode from AIDL. Exception " + ex);
         }
     }
 
@@ -765,7 +765,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.triggerEmergencyNetworkScanResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to triggerEmergencyNetworkScan from AIDL. Exception" + ex);
+            Log.e(TAG, "Failed to triggerEmergencyNetworkScan from AIDL. Exception " + ex);
         }
     }
 
@@ -777,7 +777,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.cancelEmergencyNetworkScanResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to cancelEmergencyNetworkScan from AIDL. Exception" + ex);
+            Log.e(TAG, "Failed to cancelEmergencyNetworkScan from AIDL. Exception " + ex);
         }
     }
 
@@ -789,7 +789,19 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         try {
             mRadioNetworkResponse.exitEmergencyModeResponse(rsp);
         } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to exitEmergencyMode from AIDL. Exception" + ex);
+            Log.e(TAG, "Failed to exitEmergencyMode from AIDL. Exception " + ex);
+        }
+    }
+
+    @Override
+    public void getRegistrationState(int serial, int ratFamily, int domain) {
+        Log.d(TAG, "getRegistrationState");
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioNetworkResponse.getRegistrationStateResponse(rsp, null);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to getRegistrationState from AIDL. Exception " + ex);
         }
     }
 
@@ -813,7 +825,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
             try {
                 mRadioNetworkIndication.networkStateChanged(RadioIndicationType.UNSOLICITED);
             } catch (RemoteException ex) {
-                Log.e(mTag, "Failed to invoke networkStateChanged from AIDL. Exception" + ex);
+                Log.e(mTag, "Failed to invoke networkStateChanged from AIDL. Exception " + ex);
             }
         } else {
             Log.e(mTag, "null mRadioNetworkIndication");
@@ -840,7 +852,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
             } catch (RemoteException ex) {
                 Log.e(
                         mTag,
-                        "Failed to invoke currentSignalStrength change from AIDL. Exception" + ex);
+                        "Failed to invoke currentSignalStrength change from AIDL. Exception " + ex);
             }
         } else {
             Log.e(mTag, "null mRadioNetworkIndication");
@@ -863,7 +875,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
             try {
                 mRadioNetworkIndication.cellInfoList(RadioIndicationType.UNSOLICITED, cells);
             } catch (RemoteException ex) {
-                Log.e(mTag, "Failed to invoke cellInfoList change from AIDL. Exception" + ex);
+                Log.e(mTag, "Failed to invoke cellInfoList change from AIDL. Exception " + ex);
             }
         } else {
             Log.e(mTag, "null mRadioNetworkIndication");
@@ -885,7 +897,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
                         RadioIndicationType.UNSOLICITED, result);
             } catch (RemoteException ex) {
                 Log.e(TAG,
-                        "Failed to invoke emergencyNetworkScanResult change from AIDL. Exception"
+                        "Failed to invoke emergencyNetworkScanResult change from AIDL. Exception "
                         + ex);
             }
         } else {

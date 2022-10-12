@@ -97,8 +97,7 @@ def _calculate_center_offset_threshold(image_size):
 
   img_area = image_size[0] * image_size[1]
 
-  normalized_area = ((img_area - _MIN_AREA) /
-                         (_MAX_AREA - _MIN_AREA))
+  normalized_area = (img_area - _MIN_AREA) / (_MAX_AREA - _MIN_AREA)
 
   if normalized_area > 1 or normalized_area < 0:
     raise AssertionError(f'normalized area > 1 or < 0! '

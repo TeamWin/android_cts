@@ -55,6 +55,8 @@ class CodecEncoderTest final : CodecTestBase {
     void deleteSource();
     void setUpParams(int limit);
     void deleteParams();
+    bool configureCodec(AMediaFormat* format, bool isAsync, bool signalEOSWithLastFrame,
+                        bool isEncoder) override;
     bool flushCodec() override;
     void resetContext(bool isAsync, bool signalEOSWithLastFrame) override;
     bool enqueueInput(size_t bufferIndex) override;
@@ -200,6 +202,13 @@ void CodecEncoderTest::setUpParams(int limit) {
 void CodecEncoderTest::deleteParams() {
     for (auto format : mFormats) AMediaFormat_delete(format);
     mFormats.clear();
+}
+
+bool CodecEncoderTest::configureCodec(AMediaFormat* format, bool isAsync,
+                                      bool signalEOSWithLastFrame, bool isEncoder) {
+    bool res = CodecTestBase::configureCodec(format, isAsync, signalEOSWithLastFrame, isEncoder);
+    initFormat(format);
+    return res;
 }
 
 void CodecEncoderTest::resetContext(bool isAsync, bool signalEOSWithLastFrame) {
@@ -366,7 +375,6 @@ bool CodecEncoderTest::encodeToMemory(const char* file, const char* encoder, int
     setUpSource(file);
     if (!mInputData) return false;
     if (!configureCodec(format, false, true, true)) return false;
-    initFormat(format);
     CHECK_STATUS(AMediaCodec_start(mCodec), "AMediaCodec_start failed");
     if (!doWork(frameLimit)) return false;
     if (!queueEOS()) return false;
@@ -403,7 +411,6 @@ bool CodecEncoderTest::testSimpleEncode(const char* encoder, const char* srcPath
     const bool boolStates[]{true, false};
     for (int i = 0; i < mFormats.size() && isPass; i++) {
         AMediaFormat* format = mFormats[i];
-        initFormat(format);
         int loopCounter = 0;
         for (auto eosType : boolStates) {
             if (!isPass) break;
@@ -472,7 +479,6 @@ bool CodecEncoderTest::testFlush(const char* encoder, const char* srcPath) {
     setUpParams(1);
     mOutputBuff = &mTestBuff;
     AMediaFormat* format = mFormats[0];
-    initFormat(format);
     const bool boolStates[]{true, false};
     for (auto isAsync : boolStates) {
         if (!isPass) break;
@@ -720,8 +726,6 @@ bool CodecEncoderTest::testSetForceSyncFrame(const char* encoder, const char* sr
     setUpParams(1);
     AMediaFormat* format = mFormats[0];
     AMediaFormat_setFloat(format, AMEDIAFORMAT_KEY_I_FRAME_INTERVAL, 500.f);
-    AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_WIDTH, &mWidth);
-    AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_HEIGHT, &mHeight);
     // Maximum allowed key frame interval variation from the target value.
     int kMaxKeyFrameIntervalVariation = 3;
     int kKeyFrameInterval = 2;  // force key frame every 2 seconds.
@@ -796,11 +800,11 @@ bool CodecEncoderTest::testAdaptiveBitRate(const char* encoder, const char* srcP
     if (!mInputData) return false;
     setUpParams(1);
     AMediaFormat* format = mFormats[0];
-    AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_WIDTH, &mWidth);
-    AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_HEIGHT, &mHeight);
     int kAdaptiveBitrateInterval = 3;  // change bitrate every 3 seconds.
     int kAdaptiveBitrateDurationFrame = mDefFrameRate * kAdaptiveBitrateInterval;
     int kBitrateChangeRequests = 7;
+    // TODO(b/251265293) Reduce the allowed deviation after improving the test conditions
+    float kMaxBitrateDeviation = 60.0; // allowed bitrate deviation in %
     AMediaFormat* params = AMediaFormat_new();
     mFormats.push_back(params);
     // Setting in CBR Mode
@@ -854,7 +858,7 @@ bool CodecEncoderTest::testAdaptiveBitRate(const char* encoder, const char* srcP
         int outSize = mOutputBuff->getOutStreamSize() * 8;
         float brDev = abs(expOutSize - outSize) * 100.0f / expOutSize;
         ALOGD("%s relative bitrate error is %f %%", log, brDev);
-        if (brDev > 50) {
+        if (brDev > kMaxBitrateDeviation) {
             ALOGE("%s relative bitrate error is is too large %f %%", log, brDev);
             return false;
         }

@@ -23,7 +23,6 @@ import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUti
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventTypeWithResource;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWindowByTitle;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.getActivityTitle;
-import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.homeScreenOrBust;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 import static android.accessibilityservice.cts.utils.RunOnMainUtils.getOnMain;
@@ -1419,11 +1418,21 @@ public class AccessibilityEndToEndTest {
         // other nodes in this view hierarchy use the connection.
         assertThat(accessibilityManager.hasAnyDirectConnection()).isTrue();
 
-        // Detach the ViewRootImpl from the window.
-        homeScreenOrBust(sInstrumentation.getContext(), sUiAutomation);
-        mActivityRule.finishActivity();
-        // The connection should now be removed.
-        assertThat(accessibilityManager.hasAnyDirectConnection()).isFalse();
+        // Detach the ViewRootImpl from the window by finishing the activity, then wait for the
+        // change notification that comes from ViewRootImpl itself, after which the connection
+        // should now be gone.
+        final Object waitLock = new Object();
+        final AtomicBoolean hasAnyDirectConnection = new AtomicBoolean(true);
+        accessibilityManager.addAccessibilityStateChangeListener(
+                enabled -> {
+                    synchronized (waitLock) {
+                        hasAnyDirectConnection.set(accessibilityManager.hasAnyDirectConnection());
+                        waitLock.notifyAll();
+                    }
+                });
+        mActivity.runOnUiThread(() -> mActivity.finish());
+        TestUtils.waitOn(waitLock, () -> !hasAnyDirectConnection.get(), DEFAULT_TIMEOUT_MS,
+                "AccessibilityManager#hasAnyDirectConnection() still true");
     }
 
     private static void assertPackageName(AccessibilityNodeInfo node, String packageName) {

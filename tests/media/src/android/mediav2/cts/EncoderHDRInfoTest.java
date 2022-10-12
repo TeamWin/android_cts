@@ -59,6 +59,8 @@ public class EncoderHDRInfoTest extends HDREncoderTestBase {
         super(encoderName, mediaType, bitrate, width, height, allTestParams);
         mHDRStaticInfo = hdrStaticInfo;
         mHDRDynamicInfo = hdrDynamicInfo;
+        mActiveRawRes = INPUT_VIDEO_FILE_HBD;
+        mBytesPerSample = mActiveRawRes.mBytesPerSample;
     }
 
     @Parameterized.Parameters(name = "{index}({0}_{1})")

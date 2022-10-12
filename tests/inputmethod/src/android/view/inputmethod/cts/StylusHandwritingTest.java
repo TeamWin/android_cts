@@ -1182,6 +1182,163 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     }
 
     /**
+     * Verify that once stylus hasn't been used for more than idle-timeout, there is no handwriting
+     * window.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.inputmethod.InputMethodManager#startStylusHandwriting",
+            "android.inputmethodservice.InputMethodService#onStartStylusHandwriting",
+            "android.inputmethodservice.InputMethodService#onFinishStylusHandwriting"})
+    public void testNoHandwritingWindow_afterIdleTimeout() throws Exception {
+        // skip this test if device doesn't have stylus.
+        assumeTrue("Skipping test on devices that don't stylus connected.",
+                hasSupportedStylus());
+
+        final InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+
+            // Verify there is no handwriting window before stylus is added.
+            assertFalse(expectCommand(
+                    stream, imeSession.callHasStylusHandwritingWindow(), TIMEOUT_1_S)
+                    .getReturnBooleanValue());
+
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    imm.setStylusWindowIdleTimeoutForTest(TIMEOUT));
+
+            final int touchSlop = getTouchSlop();
+            final int startX = editText.getWidth() / 2;
+            final int startY = editText.getHeight() / 2;
+            final int endX = startX + 2 * touchSlop;
+            final int endY = startY;
+            final int number = 5;
+            TestUtils.injectStylusDownEvent(editText, startX, startY);
+            TestUtils.injectStylusMoveEvents(editText, startX, startY, endX, endY, number);
+            TestUtils.injectStylusUpEvent(editText, endX, endY);
+
+            // Handwriting should start
+            expectEvent(
+                    stream,
+                    editorMatcher("onStartStylusHandwriting", marker),
+                    TIMEOUT);
+
+            verifyStylusHandwritingWindowIsShown(stream, imeSession);
+
+            // Finish handwriting to remove test stylus id.
+            imeSession.callFinishStylusHandwriting();
+            expectEvent(
+                    stream,
+                    editorMatcher("onFinishStylusHandwriting", marker),
+                    TIMEOUT_1_S);
+
+            // Verify handwriting window is removed after stylus handwriting idle-timeout.
+            TestUtils.waitOnMainUntil(() -> {
+                try {
+                    // wait until callHasStylusHandwritingWindow returns false
+                    return !expectCommand(stream, imeSession.callHasStylusHandwritingWindow(),
+                                    TIMEOUT).getReturnBooleanValue();
+                } catch (TimeoutException e) {
+                    e.printStackTrace();
+                }
+                // handwriting window is still around.
+                return true;
+            }, TIMEOUT);
+
+            // reset idle-timeout
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    imm.setStylusWindowIdleTimeoutForTest(0));
+        }
+    }
+
+    /**
+     * Verify that Ink window is around before timeout
+     */
+    @Test
+    @ApiTest(apis = {"android.view.inputmethod.InputMethodManager#startStylusHandwriting",
+            "android.inputmethodservice.InputMethodService#onStartStylusHandwriting",
+            "android.inputmethodservice.InputMethodService#onFinishStylusHandwriting"})
+    public void testHandwritingWindow_beforeTimeout() throws Exception {
+        // skip this test if device doesn't have stylus.
+        assumeTrue("Skipping test on devices that don't stylus connected.",
+                hasSupportedStylus());
+
+        final InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+
+            // Verify there is no handwriting window before stylus is added.
+            assertFalse(expectCommand(
+                    stream, imeSession.callHasStylusHandwritingWindow(), TIMEOUT_1_S)
+                    .getReturnBooleanValue());
+
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    imm.setStylusWindowIdleTimeoutForTest(TIMEOUT));
+
+            final int touchSlop = getTouchSlop();
+            final int startX = editText.getWidth() / 2;
+            final int startY = editText.getHeight() / 2;
+            final int endX = startX + 2 * touchSlop;
+            final int endY = startY;
+            final int number = 5;
+            TestUtils.injectStylusDownEvent(editText, startX, startY);
+            TestUtils.injectStylusMoveEvents(editText, startX, startY, endX, endY, number);
+            TestUtils.injectStylusUpEvent(editText, endX, endY);
+
+            // Handwriting should start
+            expectEvent(
+                    stream,
+                    editorMatcher("onStartStylusHandwriting", marker),
+                    TIMEOUT);
+
+            verifyStylusHandwritingWindowIsShown(stream, imeSession);
+
+            // Finish handwriting to remove test stylus id.
+            imeSession.callFinishStylusHandwriting();
+            expectEvent(
+                    stream,
+                    editorMatcher("onFinishStylusHandwriting", marker),
+                    TIMEOUT_1_S);
+
+            // Just any stylus events to delay idle-timeout
+            TestUtils.injectStylusDownEvent(editText, 0, 0);
+            TestUtils.injectStylusUpEvent(editText, 0, 0);
+
+            // Verify handwriting window is still around as stylus was used recently.
+            assertTrue(expectCommand(
+                    stream, imeSession.callHasStylusHandwritingWindow(), TIMEOUT_1_S)
+                    .getReturnBooleanValue());
+
+            // Reset idle-timeout
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    imm.setStylusWindowIdleTimeoutForTest(0));
+        }
+    }
+
+    /**
      * Inject stylus events on top of an unfocused custom editor and verify handwriting is started
      * and stylus handwriting window is displayed.
      */

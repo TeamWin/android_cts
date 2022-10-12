@@ -59,6 +59,7 @@ abstract class TestBase {
     protected val context: Context = instrumentation.context
     protected val userId = context.userId
     protected val targetPackageName = instrumentation.targetContext.packageName
+    protected val targetUserId = instrumentation.targetContext.userId
 
     protected val targetApp = AppHelper(instrumentation, userId, targetPackageName)
 

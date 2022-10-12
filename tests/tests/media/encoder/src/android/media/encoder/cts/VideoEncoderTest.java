@@ -40,7 +40,6 @@ import android.media.cts.InputSurface;
 import android.media.cts.MediaHeavyPresubmitTest;
 import android.media.cts.MediaTestBase;
 import android.media.cts.OutputSurface;
-import android.media.cts.Preconditions;
 import android.media.cts.TestArgs;
 import android.media.cts.TestUtils;
 import android.net.Uri;
@@ -52,6 +51,7 @@ import android.util.Size;
 import android.view.Surface;
 
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.Preconditions;
 
 import org.junit.After;
 import org.junit.Assume;

@@ -59,7 +59,7 @@ public class DecoderHDRInfoTest extends HDRDecoderTestBase {
             String hdrStaticInfoStream, String hdrStaticInfoContainer,
             Map<Integer, String> hdrDynamicInfoStream, Map<Integer, String> hdrDynamicInfoContainer,
             String allTestParams) {
-        super(codecName, mediaType, testFile, allTestParams);
+        super(codecName, mediaType, mInpPrefix + testFile, allTestParams);
         mHDRStaticInfoStream = hdrStaticInfoStream;
         mHDRStaticInfoContainer = hdrStaticInfoContainer;
         mHDRDynamicInfoStream = hdrDynamicInfoStream;

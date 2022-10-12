@@ -182,7 +182,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     public void testSimpleEncode() throws IOException, InterruptedException {
         setUpParams(1);
         boolean[] boolStates = {true, false};
-        setUpSource(mInputFile);
+        setUpSource(mActiveRawRes.mFileName);
         OutputManager ref = new OutputManager();
         OutputManager test = new OutputManager();
         {
@@ -194,13 +194,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
             mSaveToMem = false; /* TODO(b/149027258) */
             for (MediaFormat format : mFormats) {
                 int loopCounter = 0;
-                if (mIsAudio) {
-                    mSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
-                    mChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
-                } else {
-                    mWidth = format.getInteger(MediaFormat.KEY_WIDTH);
-                    mHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
-                }
                 for (boolean eosType : boolStates) {
                     for (boolean isAsync : boolStates) {
                         mOutputBuff = loopCounter == 0 ? ref : test;
@@ -246,7 +239,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 assertTrue("no valid color formats received \n" + mTestConfig + mTestEnv,
                         colorFormat != -1);
             }
-            assertTrue(nativeTestSimpleEncode(mCodecName, mInpPrefix + mInputFile, mMime, mBitrates,
+            assertTrue(nativeTestSimpleEncode(mCodecName, mActiveRawRes.mFileName, mMime, mBitrates,
                     mEncParamList1, mEncParamList2, colorFormat));
         }
     }
@@ -278,18 +271,11 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testFlush() throws IOException, InterruptedException {
         setUpParams(1);
-        setUpSource(mInputFile);
+        setUpSource(mActiveRawRes.mFileName);
         boolean[] boolStates = {true, false};
         mOutputBuff = new OutputManager();
         {
             MediaFormat inpFormat = mFormats.get(0);
-            if (mIsAudio) {
-                mSampleRate = inpFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
-                mChannels = inpFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
-            } else {
-                mWidth = inpFormat.getInteger(MediaFormat.KEY_WIDTH);
-                mHeight = inpFormat.getInteger(MediaFormat.KEY_HEIGHT);
-            }
             mCodec = MediaCodec.createByCodecName(mCodecName);
             for (boolean isAsync : boolStates) {
                 configureCodec(inpFormat, isAsync, true, true);
@@ -351,7 +337,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }
-            assertTrue(nativeTestFlush(mCodecName, mInpPrefix + mInputFile, mMime, mBitrates,
+            assertTrue(nativeTestFlush(mCodecName, mActiveRawRes.mFileName, mMime, mBitrates,
                     mEncParamList1, mEncParamList2, colorFormat));
         }
     }
@@ -390,7 +376,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testReconfigure() throws IOException, InterruptedException {
         setUpParams(2);
-        setUpSource(mInputFile);
+        setUpSource(mActiveRawRes.mFileName);
         boolean[] boolStates = {true, false};
         OutputManager test = new OutputManager();
         {
@@ -398,11 +384,13 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
             OutputManager configRef = null;
             if (mFormats.size() > 1) {
                 MediaFormat format = mFormats.get(1);
-                encodeToMemory(mInputFile, mCodecName, Integer.MAX_VALUE, format, saveToMem);
+                encodeToMemory(mActiveRawRes.mFileName, mCodecName, Integer.MAX_VALUE,
+                        format, saveToMem);
                 configRef = mOutputBuff;
             }
             MediaFormat format = mFormats.get(0);
-            encodeToMemory(mInputFile, mCodecName, Integer.MAX_VALUE, format, saveToMem);
+            encodeToMemory(mActiveRawRes.mFileName, mCodecName, Integer.MAX_VALUE,
+                    format, saveToMem);
             OutputManager ref = mOutputBuff;
             mOutputBuff = test;
             mCodec = MediaCodec.createByCodecName(mCodecName);
@@ -490,7 +478,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }
-            assertTrue(nativeTestReconfigure(mCodecName, mInpPrefix + mInputFile, mMime, mBitrates,
+            assertTrue(nativeTestReconfigure(mCodecName, mActiveRawRes.mFileName, mMime, mBitrates,
                     mEncParamList1, mEncParamList2, colorFormat));
         }
     }
@@ -569,12 +557,10 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         final int MAX_KEYFRAME_INTERVAL_VARIATION = 3;
         setUpParams(1);
         boolean[] boolStates = {true, false};
-        setUpSource(mInputFile);
+        setUpSource(mActiveRawRes.mFileName);
         MediaFormat format = mFormats.get(0);
         format.removeKey(MediaFormat.KEY_I_FRAME_INTERVAL);
         format.setFloat(MediaFormat.KEY_I_FRAME_INTERVAL, 500.f);
-        mWidth = format.getInteger(MediaFormat.KEY_WIDTH);
-        mHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
         final int KEY_FRAME_INTERVAL = 2; // force key frame every 2 seconds.
         final int KEY_FRAME_POS = mFrameRate * KEY_FRAME_INTERVAL;
         final int NUM_KEY_FRAME_REQUESTS = 7;
@@ -644,7 +630,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }
-            assertTrue(nativeTestSetForceSyncFrame(mCodecName, mInpPrefix + mInputFile, mMime,
+            assertTrue(nativeTestSetForceSyncFrame(mCodecName, mActiveRawRes.mFileName, mMime,
                     mBitrates, mEncParamList1, mEncParamList2, colorFormat));
         }
     }
@@ -664,13 +650,13 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 sAdaptiveBitrateMimeList.contains(mMime));
         setUpParams(1);
         boolean[] boolStates = {true, false};
-        setUpSource(mInputFile);
+        setUpSource(mActiveRawRes.mFileName);
         MediaFormat format = mFormats.get(0);
-        mWidth = format.getInteger(MediaFormat.KEY_WIDTH);
-        mHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
         final int ADAPTIVE_BR_INTERVAL = 3; // change br every 3 seconds.
         final int ADAPTIVE_BR_DUR_FRM = mFrameRate * ADAPTIVE_BR_INTERVAL;
         final int BR_CHANGE_REQUESTS = 7;
+        // TODO(b/251265293) Reduce the allowed deviation after improving the test conditions
+        final float MAX_BITRATE_DEVIATION = 60.0f; // allowed bitrate deviation in %
         mOutputBuff = new OutputManager();
         mSaveToMem = true;
         {
@@ -696,7 +682,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                     doWork(ADAPTIVE_BR_DUR_FRM);
                     if (mSawInputEOS) {
                         fail(String.format("Unable to encode %d frames as the input resource "
-                                + "contains only %d frames \n", BR_CHANGE_REQUESTS, mInputCount));
+                                + "contains only %d frames \n", ADAPTIVE_BR_DUR_FRM, mInputCount));
                     }
                     expOutSize += ADAPTIVE_BR_INTERVAL * bitrate;
                     if ((i & 1) == 1) bitrate *= 2;
@@ -712,7 +698,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 /* TODO: validate output br with sliding window constraints Sec 5.2 cdd */
                 int outSize = mOutputBuff.getOutStreamSize() * 8;
                 float brDev = Math.abs(expOutSize - outSize) * 100.0f / expOutSize;
-                if (brDev > 50) {
+                if (brDev > MAX_BITRATE_DEVIATION) {
                     fail("Relative Bitrate error is too large " + brDev + "\n" + mTestConfig
                             + mTestEnv);
                 }
@@ -739,7 +725,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }
-            assertTrue(nativeTestAdaptiveBitRate(mCodecName, mInpPrefix + mInputFile, mMime,
+            assertTrue(nativeTestAdaptiveBitRate(mCodecName, mActiveRawRes.mFileName, mMime,
                     mBitrates, mEncParamList1, mEncParamList2, colorFormat));
         }
     }

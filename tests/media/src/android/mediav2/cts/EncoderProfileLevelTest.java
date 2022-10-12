@@ -81,6 +81,10 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
             int encoderInfo2, int frameRate, boolean useHighBitDepth, String allTestParams) {
         super(encoder, mime, new int[]{bitrate}, new int[]{encoderInfo1}, new int[]{encoderInfo2},
                 allTestParams);
+        if (mIsVideo && useHighBitDepth) {
+            mActiveRawRes = INPUT_VIDEO_FILE_HBD;
+            mBytesPerSample = mActiveRawRes.mBytesPerSample;
+        }
         mUseHighBitDepth = useHighBitDepth;
         if (mIsAudio) {
             mSampleRate = encoderInfo1;
@@ -695,7 +699,6 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testValidateProfileLevel() throws IOException, InterruptedException {
         int[] profiles;
-        String inputTestFile = mInputFile;
         MediaFormat format = mConfigFormat;
         String outputFilePrefix = "tmp";
         if (mIsAudio) {
@@ -704,8 +707,6 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
             if (mUseHighBitDepth) {
                 Assume.assumeTrue(hasSupportForColorFormat(mCodecName, mMime, COLOR_FormatYUVP010));
                 format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUVP010);
-                mBytesPerSample = 2;
-                inputTestFile = INPUT_VIDEO_FILE_HBD;
                 outputFilePrefix += "_10bit";
                 profiles = mProfileHlgMap.get(mMime);
             } else {
@@ -723,7 +724,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
             levelCdd = cddProfileLevel.second;
         }
         mOutputBuff = new OutputManager();
-        setUpSource(inputTestFile);
+        setUpSource(mActiveRawRes.mFileName);
         mSaveToMem = true;
 
         String tempMuxedFile = File.createTempFile(outputFilePrefix, ".bin").getAbsolutePath();

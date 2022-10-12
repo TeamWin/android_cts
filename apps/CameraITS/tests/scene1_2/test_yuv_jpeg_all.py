@@ -18,6 +18,8 @@ import logging
 import os.path
 import matplotlib
 from matplotlib import pylab
+import matplotlib.lines as mlines
+from matplotlib.ticker import MaxNLocator
 from mobly import test_runner
 
 import its_base_test
@@ -33,10 +35,14 @@ PATCH_W = 0.1
 PATCH_X = 0.5 - PATCH_W/2
 PATCH_Y = 0.5 - PATCH_H/2
 THRESHOLD_MAX_RMS_DIFF = 0.03
+PLOT_ALPHA = 0.5
+PLOT_MARKER_SIZE = 8
+PLOT_LEGEND_CIRCLE_SIZE = 10
+PLOT_LEGEND_TRIANGLE_SIZE = 6
 
 
 def do_capture_and_extract_rgb_means(
-    req, cam, props, size, img_type, log_path, debug):
+    req, cam, props, size, img_type, index, log_path, debug):
   """Do capture and extra rgb_means of center patch.
 
   Args:
@@ -45,6 +51,7 @@ def do_capture_and_extract_rgb_means(
     props: camera properties dict
     size: [width, height]
     img_type: string of 'yuv' or 'jpeg'
+    index: index to track capture number of img_type
     log_path: location for saving image
     debug: boolean to flag saving captured images
 
@@ -52,7 +59,7 @@ def do_capture_and_extract_rgb_means(
     center patch RGB means
   """
   out_surface = {'width': size[0], 'height': size[1], 'format': img_type}
-  if debug:
+  if debug and camera_properties_utils.raw(props):
     out_surfaces = [{'format': 'raw'}, out_surface]
     cap_raw, cap = cam.do_capture(req, out_surfaces)
     img_raw = image_processing_utils.convert_capture_to_rgb_image(
@@ -61,9 +68,10 @@ def do_capture_and_extract_rgb_means(
         os.path.join(log_path, NAME), img_type, size[0], size[1]), True)
   else:
     cap = cam.do_capture(req, out_surface)
-  logging.debug('e_cap: %d, s_cap: %d',
+  logging.debug('e_cap: %d, s_cap: %d, f_distance: %s',
                 cap['metadata']['android.sensor.exposureTime'],
-                cap['metadata']['android.sensor.sensitivity'])
+                cap['metadata']['android.sensor.sensitivity'],
+                cap['metadata']['android.lens.focusDistance'])
   if img_type == 'jpg':
     if cap['format'] != 'jpeg':
       raise AssertionError(f"{cap['format']} != jpeg")
@@ -91,8 +99,8 @@ def do_capture_and_extract_rgb_means(
   patch = image_processing_utils.get_image_patch(
       img, PATCH_X, PATCH_Y, PATCH_W, PATCH_H)
   rgb = image_processing_utils.compute_image_means(patch)
-  logging.debug('Captured %s %dx%d rgb = %s',
-                img_type, cap['width'], cap['height'], str(rgb))
+  logging.debug('Captured %s %dx%d rgb = %s, format number = %d',
+                img_type, cap['width'], cap['height'], str(rgb), index)
   return rgb
 
 
@@ -107,9 +115,7 @@ class YuvJpegAllTest(its_base_test.ItsBaseTest):
         hidden_physical_id=self.hidden_physical_id) as cam:
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
-      camera_properties_utils.skip_unless(
-          camera_properties_utils.compute_target_exposure(props) and
-          camera_properties_utils.per_frame_control(props))
+
       log_path = self.log_path
       debug = self.debug_mode
 
@@ -117,37 +123,73 @@ class YuvJpegAllTest(its_base_test.ItsBaseTest):
       its_session_utils.load_scene(
           cam, props, self.scene, self.tablet, self.chart_distance)
 
-      # Use a manual request with a linear tonemap so that the YUV and JPEG
-      # should look the same (once converted by the image_processing_utils).
-      e, s = target_exposure_utils.get_target_exposure_combos(
-          log_path, cam)['midExposureTime']
-      logging.debug('e_req: %d, s_req: %d', e, s)
-      req = capture_request_utils.manual_capture_request(s, e, 0.0, True, props)
+      # If device supports target exposure computation, use manual capture.
+      # Otherwise, do 3A, then use an auto request.
+      # Both requests use a linear tonemap and focus distance of 0.0
+      # so that the YUV and JPEG should look the same
+      # (once converted by the image_processing_utils).
+      if camera_properties_utils.compute_target_exposure(props):
+        logging.debug('Using manual capture request')
+        e, s = target_exposure_utils.get_target_exposure_combos(
+            log_path, cam)['midExposureTime']
+        logging.debug('e_req: %d, s_req: %d', e, s)
+        req = capture_request_utils.manual_capture_request(
+            s, e, 0.0, True, props)
+      else:
+        logging.debug('Using auto capture request')
+        cam.do_3a(do_af=False)
+        req = capture_request_utils.auto_capture_request(
+            linear_tonemap=True, props=props, do_af=False)
 
-      rgbs = []
-      for size in capture_request_utils.get_available_output_sizes(
-          'yuv', props):
-        rgbs.append(do_capture_and_extract_rgb_means(
-            req, cam, props, size, 'yuv', log_path, debug))
+      yuv_rgbs = []
+      for i, size in enumerate(
+          capture_request_utils.get_available_output_sizes('yuv', props)):
+        yuv_rgbs.append(do_capture_and_extract_rgb_means(
+            req, cam, props, size, 'yuv', i, log_path, debug))
 
-      for size in capture_request_utils.get_available_output_sizes(
-          'jpg', props):
-        rgbs.append(do_capture_and_extract_rgb_means(
-            req, cam, props, size, 'jpg', log_path, debug))
+      jpg_rgbs = []
+      for i, size in enumerate(
+          capture_request_utils.get_available_output_sizes('jpg', props)):
+        jpg_rgbs.append(do_capture_and_extract_rgb_means(
+            req, cam, props, size, 'jpg', i, log_path, debug))
 
       # Plot means vs format
       pylab.figure(NAME)
       pylab.title(NAME)
-      pylab.plot(range(len(rgbs)), [r[0] for r in rgbs], '-ro')
-      pylab.plot(range(len(rgbs)), [g[1] for g in rgbs], '-go')
-      pylab.plot(range(len(rgbs)), [b[2] for b in rgbs], '-bo')
+      yuv_index = range(len(yuv_rgbs))
+      jpg_index = range(len(jpg_rgbs))
+      pylab.plot(yuv_index, [rgb[0] for rgb in yuv_rgbs],
+                 '-ro', alpha=PLOT_ALPHA, markersize=PLOT_MARKER_SIZE)
+      pylab.plot(yuv_index, [rgb[1] for rgb in yuv_rgbs],
+                 '-go', alpha=PLOT_ALPHA, markersize=PLOT_MARKER_SIZE)
+      pylab.plot(yuv_index, [rgb[2] for rgb in yuv_rgbs],
+                 '-bo', alpha=PLOT_ALPHA, markersize=PLOT_MARKER_SIZE)
+      pylab.plot(jpg_index, [rgb[0] for rgb in jpg_rgbs],
+                 '-r^', alpha=PLOT_ALPHA, markersize=PLOT_MARKER_SIZE)
+      pylab.plot(jpg_index, [rgb[1] for rgb in jpg_rgbs],
+                 '-g^', alpha=PLOT_ALPHA, markersize=PLOT_MARKER_SIZE)
+      pylab.plot(jpg_index, [rgb[2] for rgb in jpg_rgbs],
+                 '-b^', alpha=PLOT_ALPHA, markersize=PLOT_MARKER_SIZE)
       pylab.ylim([0, 1])
+      ax = pylab.gca()
+      # force matplotlib to use integers for x-axis labels
+      ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+      yuv_marker = mlines.Line2D([], [], linestyle='None',
+                                 color='black', marker='.',
+                                 markersize=PLOT_LEGEND_CIRCLE_SIZE,
+                                 label='YUV')
+      jpg_marker = mlines.Line2D([], [], linestyle='None',
+                                 color='black', marker='^',
+                                 markersize=PLOT_LEGEND_TRIANGLE_SIZE,
+                                 label='JPEG')
+      ax.legend(handles=[yuv_marker, jpg_marker])
       pylab.xlabel('format number')
       pylab.ylabel('RGB avg [0, 1]')
       matplotlib.pyplot.savefig(
           '%s_plot_means.png' % os.path.join(log_path, NAME))
 
-      # Assert all captured images are similar in RBG space
+      # Assert all captures are similar in RGB space using rgbs[0] as ref.
+      rgbs = yuv_rgbs + jpg_rgbs
       max_diff = 0
       for rgb_i in rgbs[1:]:
         rms_diff = image_processing_utils.compute_image_rms_difference_1d(

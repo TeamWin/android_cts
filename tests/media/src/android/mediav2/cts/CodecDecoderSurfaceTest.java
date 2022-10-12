@@ -71,8 +71,8 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
 
     public CodecDecoderSurfaceTest(String decoder, String mime, String testFile,
             String reconfigFile, SupportClass supportRequirements, String allTestParams) {
-        super(decoder, mime, testFile, allTestParams);
-        mReconfigFile = reconfigFile;
+        super(decoder, mime, mInpPrefix + testFile, allTestParams);
+        mReconfigFile = mInpPrefix + reconfigFile;
         mSupportRequirements = supportRequirements;
     }
 
@@ -485,9 +485,8 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         MediaFormat format = setUpSource(mTestFile);
         mExtractor.release();
         mActivity.setScreenParams(getWidth(format), getHeight(format), false);
-        assertTrue(nativeTestSimpleDecode(mCodecName, mSurface, mMime, mInpPrefix + mTestFile,
-                mInpPrefix + mReconfigFile, format.getInteger(MediaFormat.KEY_COLOR_FORMAT), -1.0f,
-                0L));
+        assertTrue(nativeTestSimpleDecode(mCodecName, mSurface, mMime, mTestFile, mReconfigFile,
+                format.getInteger(MediaFormat.KEY_COLOR_FORMAT), -1.0f, 0L));
     }
 
     private native boolean nativeTestFlush(String decoder, Surface surface, String mime,
@@ -503,7 +502,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         MediaFormat format = setUpSource(mTestFile);
         mExtractor.release();
         mActivity.setScreenParams(getWidth(format), getHeight(format), true);
-        assertTrue(nativeTestFlush(mCodecName, mSurface, mMime, mInpPrefix + mTestFile,
+        assertTrue(nativeTestFlush(mCodecName, mSurface, mMime, mTestFile,
                 format.getInteger(MediaFormat.KEY_COLOR_FORMAT)));
     }
 }

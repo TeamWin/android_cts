@@ -65,7 +65,7 @@ public class DecoderColorAspectsTest extends CodecDecoderTestBase {
     public DecoderColorAspectsTest(String decoderName, String mime, String testFile, int range,
             int standard, int transferCurve, boolean canIgnoreColorBox,
             SupportClass supportRequirements, String allTestParams) {
-        super(decoderName, mime, testFile, allTestParams);
+        super(decoderName, mime, mInpPrefix + testFile, allTestParams);
         mColorRange = range;
         mColorStandard = standard;
         mColorTransferCurve = transferCurve;
@@ -280,7 +280,7 @@ public class DecoderColorAspectsTest extends CodecDecoderTestBase {
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testColorAspects() throws IOException, InterruptedException {
-        MediaFormat format = setUpSource(mInpPrefix, mTestFile);
+        MediaFormat format = setUpSource(mTestFile);
         mExtractor.release();
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
@@ -291,13 +291,11 @@ public class DecoderColorAspectsTest extends CodecDecoderTestBase {
 
         mActivity.setScreenParams(getWidth(format), getHeight(format), true);
         {
-            validateColorAspects(mCodecName, mInpPrefix, mTestFile, mColorRange, mColorStandard,
-                    mColorTransferCurve, false);
+            validateColorAspects(mColorRange, mColorStandard, mColorTransferCurve, false);
             // If color metadata can also be signalled via elementary stream, then verify if the
             // elementary stream contains color aspects as expected
             if (mCanIgnoreColorBox && mCheckESList.contains(mMime)) {
-                validateColorAspects(mCodecName, mInpPrefix, mTestFile, mColorRange,
-                        mColorStandard, mColorTransferCurve, true);
+                validateColorAspects(mColorRange, mColorStandard, mColorTransferCurve, true);
             }
         }
     }

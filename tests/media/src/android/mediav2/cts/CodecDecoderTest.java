@@ -102,9 +102,9 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     public CodecDecoderTest(String decoder, String mime, String testFile, String refFile,
             String reconfigFile, float rmsError, long refCRC, SupportClass supportRequirements,
             String allTestParams) {
-        super(decoder, mime, testFile, allTestParams);
-        mRefFile = refFile;
-        mReconfigFile = reconfigFile;
+        super(decoder, mime, mInpPrefix + testFile, allTestParams);
+        mRefFile = mInpPrefix + refFile;
+        mReconfigFile = mInpPrefix + reconfigFile;
         mRmsError = rmsError;
         mRefCRC = refCRC;
         mSupportRequirements = supportRequirements;
@@ -266,7 +266,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
             long refCRC, String msg) throws IOException {
         if (rmsError >= 0) {
             int bytesPerSample = AudioFormat.getBytesPerSample(audioFormat);
-            ByteBuffer bb = readAudioReferenceFile(mInpPrefix + refFile);
+            ByteBuffer bb = readAudioReferenceFile(refFile);
             bb.position(0);
             int bufferSize = bb.limit();
             assertEquals("error, reference audio buffer contains partial samples\n" + msg, 0,
@@ -405,8 +405,8 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
             mCodec.release();
             mExtractor.release();
             int colorFormat = mIsAudio ? 0 : format.getInteger(MediaFormat.KEY_COLOR_FORMAT);
-            assertTrue(nativeTestSimpleDecode(mCodecName, null, mMime, mInpPrefix + mTestFile,
-                    mInpPrefix + mRefFile, colorFormat, mRmsError, ref.getCheckSumBuffer()));
+            assertTrue(nativeTestSimpleDecode(mCodecName, null, mMime, mTestFile, mRefFile,
+                    colorFormat, mRmsError, ref.getCheckSumBuffer()));
             if (mSaveToMem) {
                 int audioEncoding = mIsAudio ? format.getInteger(MediaFormat.KEY_PCM_ENCODING,
                         AudioFormat.ENCODING_PCM_16BIT) : AudioFormat.ENCODING_INVALID;
@@ -550,7 +550,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
             mExtractor.release();
             colorFormat = format.getInteger(MediaFormat.KEY_COLOR_FORMAT);
         }
-        assertTrue(nativeTestFlush(mCodecName, null, mMime, mInpPrefix + mTestFile, colorFormat));
+        assertTrue(nativeTestFlush(mCodecName, null, mMime, mTestFile, colorFormat));
     }
 
     /**
@@ -756,7 +756,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
             mExtractor.release();
             colorFormat = format.getInteger(MediaFormat.KEY_COLOR_FORMAT);
         }
-        assertTrue(nativeTestOnlyEos(mCodecName, mMime, mInpPrefix + mTestFile, colorFormat));
+        assertTrue(nativeTestOnlyEos(mCodecName, mMime, mTestFile, colorFormat));
     }
 
     /**
@@ -847,8 +847,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         }
         mExtractor.release();
         int colorFormat = mIsAudio ? 0 : format.getInteger(MediaFormat.KEY_COLOR_FORMAT);
-        assertTrue(nativeTestSimpleDecodeQueueCSD(mCodecName, mMime, mInpPrefix + mTestFile,
-                colorFormat));
+        assertTrue(nativeTestSimpleDecodeQueueCSD(mCodecName, mMime, mTestFile, colorFormat));
     }
 
     /**

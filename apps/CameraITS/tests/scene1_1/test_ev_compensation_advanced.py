@@ -41,6 +41,7 @@ THRESH_CONVERGE_FOR_EV = 8  # AE must converge within this num auto reqs for EV
 
 
 def create_request_with_ev(ev):
+  """Create request with the ev compensation step."""
   req = capture_request_utils.auto_capture_request()
   req['android.control.aeExposureCompensation'] = ev
   req['android.control.aeLock'] = True

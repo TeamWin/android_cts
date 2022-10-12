@@ -164,7 +164,7 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
 
     public DecodeGlAccuracyTest(String decoder, String mediaType, String fileName, int range,
             int standard, int transfer, boolean useYuvSampling, String allTestParams) {
-        super(decoder, mediaType, fileName, allTestParams);
+        super(decoder, mediaType, mInpPrefix + fileName, allTestParams);
         mRange = range;
         mStandard = standard;
         mTransferCurve = transfer;

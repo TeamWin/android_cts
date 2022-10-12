@@ -77,6 +77,20 @@ public class ExtensionUtil {
         return version.compareTo(targetVersion) >= 0;
     }
 
+    /**
+     * If called on a device with the vendor api level less than the bound then the test will be
+     * ignored.
+     * @param vendorApiLevel minimum {@link WindowExtensions#getVendorApiLevel()} for a test to
+     *                       succeed
+     */
+    public static void assumeVendorApiLevelAtLeast(int vendorApiLevel) {
+        final Version version = getExtensionVersion();
+        assumeTrue(
+                "Needs vendorApiLevel " + vendorApiLevel + " but has " + version.getMajor(),
+                version.getMajor() >= vendorApiLevel
+        );
+    }
+
     public static boolean isExtensionVersionValid() {
         final Version version = getExtensionVersion();
         // Check that the extension version on the device is at least the minimum valid version.

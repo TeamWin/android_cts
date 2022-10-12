@@ -27,6 +27,7 @@ import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.start
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -161,6 +162,21 @@ public class ActivityEmbeddingUtil {
 
         // Return second activity for easy access in calling method
         return secondaryActivity;
+    }
+
+    public static void startActivityAndVerifyNoCallback(@NonNull Activity activityLaunchingFrom,
+            @NonNull Class secondActivityClass, @NonNull String secondaryActivityId,
+            @NonNull TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer) throws Exception {
+        // We expect the actual count to be 0. Set to 1 to trigger the timeout and verify no calls.
+        splitInfoConsumer.setCount(1);
+
+        // Start second activity
+        startActivityFromActivity(activityLaunchingFrom, secondActivityClass, secondaryActivityId);
+
+        // A split info callback should occur after the new activity is launched because the split
+        // states have changed.
+        List<SplitInfo> activeSplitStates = splitInfoConsumer.waitAndGet();
+        assertNull("Received SplitInfo value but did not expect none.", activeSplitStates);
     }
 
     public static Activity startActivityAndVerifySplit(@NonNull Activity primaryActivity,

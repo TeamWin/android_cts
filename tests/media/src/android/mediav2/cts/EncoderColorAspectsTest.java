@@ -97,6 +97,10 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
             boolean surfaceMode, String allTestParams) {
         super(encoderName, mime, new int[]{64000}, new int[]{width}, new int[]{height},
                 allTestParams);
+        if (useHighBitDepth) {
+            mActiveRawRes = INPUT_VIDEO_FILE_HBD;
+            mBytesPerSample = mActiveRawRes.mBytesPerSample;
+        }
         mRange = range;
         mStandard = standard;
         mTransferCurve = transferCurve;
@@ -325,14 +329,11 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
         if (mSurfaceMode) {
             mConfigFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatSurface);
         } else {
-            String inputTestFile = mInputFile;
             if (mUseHighBitDepth) {
                 Assume.assumeTrue(hasSupportForColorFormat(mCodecName, mMime, COLOR_FormatYUVP010));
                 mConfigFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUVP010);
-                mBytesPerSample = 2;
-                inputTestFile = INPUT_VIDEO_FILE_HBD;
             }
-            setUpSource(inputTestFile);
+            setUpSource(mActiveRawRes.mFileName);
         }
 
         mOutputBuff = new OutputManager();
@@ -405,17 +406,12 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                     + " but not decoding it. \n" + mTestConfig + mTestEnv, decoder);
             CodecDecoderTestBase cdtb = new CodecDecoderTestBase(decoder, mMime,
                     tmpFile.getAbsolutePath(), mAllTestParams);
-            String parent = tmpFile.getParent();
-            if (parent != null) parent += File.separator;
-            else parent = "";
-            cdtb.validateColorAspects(decoder, parent, tmpFile.getName(), mRange, mStandard,
-                    mTransferCurve, false);
+            cdtb.validateColorAspects(mRange, mStandard, mTransferCurve, false);
 
             // if color metadata can also be signalled via elementary stream then verify if the
             // elementary stream contains color aspects as expected
             if (mCheckESList.contains(mMime)) {
-                cdtb.validateColorAspects(decoder, parent, tmpFile.getName(), mRange, mStandard,
-                        mTransferCurve, true);
+                cdtb.validateColorAspects(mRange, mStandard, mTransferCurve, true);
             }
             tmpFile.delete();
         }

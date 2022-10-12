@@ -125,6 +125,19 @@ public class InputMethodManagerTest {
                 mImManager::addVirtualStylusIdForTestSession);
     }
 
+    /**
+     * Verifies that the test API {@link InputMethodManager#setStylusWindowIdleTimeoutForTest(long)}
+     * is properly protected with some permission.
+     */
+    @Test
+    public void testSetStylusWindowIdleTimeoutForTestProtection() {
+        assumeTrue(mContext.getPackageManager().hasSystemFeature(FEATURE_INPUT_METHODS));
+
+        assertThrows("InputMethodManager#setStylusWindowIdleTimeoutForTest(long) must not"
+                        + " be accessible to normal apps.", SecurityException.class,
+                () -> mImManager.setStylusWindowIdleTimeoutForTest(0));
+    }
+
     @Test
     public void testIsActive() throws Throwable {
         final AtomicReference<EditText> focusedEditTextRef = new AtomicReference<>();

@@ -25,7 +25,6 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
-import android.media.cts.Preconditions;
 import android.media.cts.TestArgs;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
@@ -34,6 +33,7 @@ import android.util.Log;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.Preconditions;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
