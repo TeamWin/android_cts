@@ -34,7 +34,6 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.util.Pair;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -100,8 +99,8 @@ public class SizeCompatRestartButtonStatsTests extends DeviceTestCase implements
     }
 
     public void testSizeCompatRestartButtonAppearedButNotClicked() throws Exception {
-        if (!isDeviceStateAvailable(DEVICE_STATE_OPENED)
-                || !isDeviceStateAvailable(DEVICE_STATE_CLOSED)) {
+        if (!isFoldableStateAvailable(DEVICE_STATE_OPENED)
+                || !isFoldableStateAvailable(DEVICE_STATE_CLOSED)) {
             CLog.i("Device doesn't support OPENED or CLOSED device states.");
             return;
         }
@@ -137,11 +136,9 @@ public class SizeCompatRestartButtonStatsTests extends DeviceTestCase implements
         assertThat(atom.getEvent()).isEqualTo(Event.APPEARED);
     }
 
-    private boolean isDeviceStateAvailable(int state) throws Exception {
-        return Arrays.stream(
-                getDevice().executeShellCommand(CMD_GET_AVAILABLE_DEVICE_STATES).split(","))
-                .map(Integer::valueOf)
-                .anyMatch(availableState -> availableState == state);
+    private boolean isFoldableStateAvailable(int state) throws Exception {
+        return getDevice().getFoldableStates().stream().anyMatch(
+                foldableState -> foldableState.getIdentifier() == state);
     }
 
     /**

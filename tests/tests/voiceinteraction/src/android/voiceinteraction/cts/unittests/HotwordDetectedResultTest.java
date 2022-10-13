@@ -14,16 +14,25 @@
  * limitations under the License.
  */
 
-package android.voiceinteraction.cts;
+package android.voiceinteraction.cts.unittests;
+
+import static android.voiceinteraction.common.AudioStreamHelper.FAKE_AUDIO_FORMAT;
+import static android.voiceinteraction.common.AudioStreamHelper.FAKE_HOTWORD_AUDIO_DATA;
+import static android.voiceinteraction.common.AudioStreamHelper.assertAudioStream;
+import static android.voiceinteraction.common.AudioStreamHelper.closeAudioStreamPipe;
+import static android.voiceinteraction.common.AudioStreamHelper.createFakeAudioStreamPipe;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaSyncEvent;
 import android.os.Parcel;
+import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
+import android.service.voice.HotwordAudioStream;
 import android.service.voice.HotwordDetectedResult;
 import android.voiceinteraction.common.Utils;
 
@@ -31,6 +40,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
 public class HotwordDetectedResultTest {
@@ -151,46 +163,76 @@ public class HotwordDetectedResultTest {
 
     @Test
     public void testHotwordDetectedResultBuilder() throws Exception {
-        final HotwordDetectedResult hotwordDetectedResult =
-                buildHotwordDetectedResult(
-                        HotwordDetectedResult.CONFIDENCE_LEVEL_LOW,
-                        MediaSyncEvent.createEvent(MediaSyncEvent.SYNC_EVENT_PRESENTATION_COMPLETE),
-                        /* hotwordOffsetMillis= */ 100,
-                        /* hotwordDurationMillis= */ 1000,
-                        /* audioChannel= */ 1,
-                        /* hotwordDetectionPersonalized= */ true,
-                        /* score= */ 100,
-                        /* personalizedScore= */ 100,
-                        /* hotwordPhraseId= */ 1,
-                        new PersistableBundle());
+        final ParcelFileDescriptor[] fakeAudioStreamPipe = createFakeAudioStreamPipe(
+                FAKE_HOTWORD_AUDIO_DATA);
+        try {
+            List<HotwordAudioStream> audioStreams = new ArrayList<>();
+            HotwordAudioStream audioStream = new HotwordAudioStream.Builder(FAKE_AUDIO_FORMAT,
+                    fakeAudioStreamPipe[0]).build();
+            audioStreams.add(audioStream);
+            final HotwordDetectedResult hotwordDetectedResult =
+                    buildHotwordDetectedResult(
+                            HotwordDetectedResult.CONFIDENCE_LEVEL_LOW,
+                            MediaSyncEvent.createEvent(
+                                    MediaSyncEvent.SYNC_EVENT_PRESENTATION_COMPLETE),
+                            /* hotwordOffsetMillis= */ 100,
+                            /* hotwordDurationMillis= */ 1000,
+                            /* audioChannel= */ 1,
+                            /* hotwordDetectionPersonalized= */ true,
+                            /* score= */ 100,
+                            /* personalizedScore= */ 100,
+                            /* hotwordPhraseId= */ 1,
+                            audioStreams,
+                            new PersistableBundle());
 
-        assertHotwordDetectedResult(hotwordDetectedResult);
+            assertHotwordDetectedResult(hotwordDetectedResult);
+            HotwordAudioStream result = hotwordDetectedResult.getAudioStreams().get(0);
+            assertHotwordAudioStream(result, FAKE_AUDIO_FORMAT, FAKE_HOTWORD_AUDIO_DATA);
+
+        } finally {
+            closeAudioStreamPipe(fakeAudioStreamPipe);
+        }
     }
 
     @Test
     public void testHotwordDetectedResultParcelizeDeparcelize() throws Exception {
-        final HotwordDetectedResult hotwordDetectedResult =
-                buildHotwordDetectedResult(
-                        HotwordDetectedResult.CONFIDENCE_LEVEL_LOW,
-                        MediaSyncEvent.createEvent(MediaSyncEvent.SYNC_EVENT_PRESENTATION_COMPLETE),
-                        /* hotwordOffsetMillis= */ 100,
-                        /* hotwordDurationMillis= */ 1000,
-                        /* audioChannel= */ 1,
-                        /* hotwordDetectionPersonalized= */ true,
-                        /* score= */ 100,
-                        /* personalizedScore= */ 100,
-                        /* hotwordPhraseId= */ 1,
-                        new PersistableBundle());
+        final ParcelFileDescriptor[] fakeAudioStreamPipe = createFakeAudioStreamPipe(
+                FAKE_HOTWORD_AUDIO_DATA);
+        try {
+            List<HotwordAudioStream> audioStreams = new ArrayList<>();
+            HotwordAudioStream audioStream = new HotwordAudioStream.Builder(FAKE_AUDIO_FORMAT,
+                    fakeAudioStreamPipe[0]).build();
+            audioStreams.add(audioStream);
+            final HotwordDetectedResult hotwordDetectedResult =
+                    buildHotwordDetectedResult(
+                            HotwordDetectedResult.CONFIDENCE_LEVEL_LOW,
+                            MediaSyncEvent.createEvent(
+                                    MediaSyncEvent.SYNC_EVENT_PRESENTATION_COMPLETE),
+                            /* hotwordOffsetMillis= */ 100,
+                            /* hotwordDurationMillis= */ 1000,
+                            /* audioChannel= */ 1,
+                            /* hotwordDetectionPersonalized= */ true,
+                            /* score= */ 100,
+                            /* personalizedScore= */ 100,
+                            /* hotwordPhraseId= */ 1,
+                            audioStreams,
+                            new PersistableBundle());
 
-        final Parcel p = Parcel.obtain();
-        hotwordDetectedResult.writeToParcel(p, 0);
-        p.setDataPosition(0);
+            final Parcel p = Parcel.obtain();
+            hotwordDetectedResult.writeToParcel(p, 0);
+            p.setDataPosition(0);
 
-        final HotwordDetectedResult targetHotwordDetectedResult =
-                HotwordDetectedResult.CREATOR.createFromParcel(p);
-        p.recycle();
-
-        assertHotwordDetectedResult(targetHotwordDetectedResult);
+            final HotwordDetectedResult targetHotwordDetectedResult =
+                    HotwordDetectedResult.CREATOR.createFromParcel(p);
+            p.recycle();
+            assertHotwordDetectedResult(targetHotwordDetectedResult);
+            assertThat(targetHotwordDetectedResult.getAudioStreams().size()).isEqualTo(
+                    audioStreams.size());
+            HotwordAudioStream result = targetHotwordDetectedResult.getAudioStreams().get(0);
+            assertHotwordAudioStream(result, FAKE_AUDIO_FORMAT, FAKE_HOTWORD_AUDIO_DATA);
+        } finally {
+            closeAudioStreamPipe(fakeAudioStreamPipe);
+        }
     }
 
     private HotwordDetectedResult buildHotwordDetectedResult(
@@ -203,6 +245,7 @@ public class HotwordDetectedResultTest {
             int score,
             int personalizedScore,
             int hotwordPhraseId,
+            List<HotwordAudioStream> audioStreams,
             PersistableBundle extras) {
         return new HotwordDetectedResult.Builder()
                 .setConfidenceLevel(confidenceLevel)
@@ -214,6 +257,7 @@ public class HotwordDetectedResultTest {
                 .setScore(score)
                 .setPersonalizedScore(personalizedScore)
                 .setHotwordPhraseId(hotwordPhraseId)
+                .setAudioStreams(audioStreams)
                 .setExtras(extras)
                 .build();
     }
@@ -229,6 +273,16 @@ public class HotwordDetectedResultTest {
         assertThat(hotwordDetectedResult.getScore()).isEqualTo(100);
         assertThat(hotwordDetectedResult.getPersonalizedScore()).isEqualTo(100);
         assertThat(hotwordDetectedResult.getHotwordPhraseId()).isEqualTo(1);
+        assertThat(hotwordDetectedResult.getAudioStreams()).isNotNull();
         assertThat(hotwordDetectedResult.getExtras()).isNotNull();
+    }
+
+    private static void assertHotwordAudioStream(HotwordAudioStream hotwordAudioStream,
+            AudioFormat expectedAudioFormat, byte[] expectedAudioData) throws Exception {
+        assertThat(hotwordAudioStream.getAudioFormat()).isEqualTo(expectedAudioFormat);
+        assertAudioStream(hotwordAudioStream.getAudioStream(), expectedAudioData);
+        assertThat(hotwordAudioStream.getMetadata()).isNotNull();
+        assertThat(hotwordAudioStream.getMetadata().size()).isEqualTo(0);
+        assertThat(hotwordAudioStream.getTimestamp()).isNull();
     }
 }

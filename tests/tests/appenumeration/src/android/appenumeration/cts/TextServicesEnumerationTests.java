@@ -39,18 +39,17 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 public class TextServicesEnumerationTests extends AppEnumerationTestsBase {
-    private static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(5);
 
     @BeforeClass
     public static void prepareSpellChecker() throws Exception {
         installPackage(CTS_MOCK_SPELL_CHECKER_APK);
 
         PollingCheck.check("Failed to wait for " + MOCK_SPELL_CHECKER_PKG
-                + " getting ready", TIMEOUT_MS, () -> hasSpellChecker(MOCK_SPELL_CHECKER_PKG));
+                + " getting ready", DEFAULT_TIMEOUT_MS,
+                () -> hasSpellChecker(MOCK_SPELL_CHECKER_PKG));
     }
 
     @AfterClass

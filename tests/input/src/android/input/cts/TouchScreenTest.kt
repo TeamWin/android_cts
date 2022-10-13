@@ -21,6 +21,7 @@ import android.app.ActivityOptions
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+import android.content.pm.PackageManager
 import android.graphics.PixelFormat
 import android.graphics.PointF
 import android.hardware.display.DisplayManager
@@ -35,6 +36,7 @@ import java.util.concurrent.TimeUnit
 import org.junit.After
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -48,6 +50,7 @@ class TouchScreenTest {
 
     @Before
     fun setUp() {
+        assumeTrue(supportsMultiDisplay())
         createDisplayAndTouchScreen()
         val displayId = virtualDisplay.display.displayId
         val bundle = ActivityOptions.makeBasic().setLaunchDisplayId(displayId).toBundle()
@@ -63,6 +66,11 @@ class TouchScreenTest {
     @After
     fun tearDown() {
         releaseDisplay()
+    }
+
+    private fun supportsMultiDisplay(): Boolean {
+        return instrumentation.targetContext.packageManager
+                .hasSystemFeature(PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS)
     }
 
     private fun createDisplayAndTouchScreen() {

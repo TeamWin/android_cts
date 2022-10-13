@@ -139,6 +139,32 @@ android_test {
     target_sdk_version: "current",
 }
 
+android_library {
+    name: "cts-companion-uicommon",
+    srcs: [
+        "uicommon/src/**/*.kt",
+    ],
+    manifest: "uicommon/AndroidManifest.xml",
+
+    platform_apis: true,
+    static_libs: [
+        "androidx.test.ext.junit",
+        "androidx.test.uiautomator_uiautomator",
+        "compatibility-device-util-axt",
+        "cts-companion-common",
+        "ctstestrunner-axt",
+        "junit",
+        "kotlin-test",
+    ],
+    libs: [
+        "android.test.base",
+        "android.test.runner",
+    ],
+
+    min_sdk_version: "33",
+    target_sdk_version: "current",
+}
+
 android_test {
     name: "CtsCompanionDeviceManagerUiAutomationTestCases",
     srcs: [
@@ -153,6 +179,7 @@ android_test {
         "androidx.test.uiautomator_uiautomator",
         "compatibility-device-util-axt",
         "cts-companion-common",
+        "cts-companion-uicommon",
         "ctstestrunner-axt",
         "junit",
         "kotlin-test",

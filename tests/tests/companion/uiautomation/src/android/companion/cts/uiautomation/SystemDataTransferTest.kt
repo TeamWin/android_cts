@@ -22,6 +22,7 @@ import android.companion.AssociationInfo
 import android.companion.CompanionDeviceManager
 import android.companion.CompanionException
 import android.companion.cts.common.CompanionActivity
+import android.companion.cts.uicommon.UiAutomationTestBase
 import android.content.Intent
 import android.os.OutcomeReceiver
 import android.platform.test.annotations.AppModeFull
@@ -218,6 +219,18 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         assertNotNull(association)
 
         return association
+    }
+
+    /**
+     * Execute UI flow to request user consent for permission transfer for a given association
+     * and grant permission.
+     */
+    private fun requestPermissionTransferUserConsent(associationId: Int) {
+        val pendingUserConsent = cdm.buildPermissionTransferUserConsentIntent(associationId)
+        CompanionActivity.startIntentSender(pendingUserConsent!!)
+        confirmationUi.waitUntilSystemDataTransferConfirmationVisible()
+        confirmationUi.clickPositiveButton()
+        CompanionActivity.waitForActivityResult()
     }
 
     /**

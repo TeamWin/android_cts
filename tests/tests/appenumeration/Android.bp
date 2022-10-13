@@ -86,6 +86,7 @@ android_test {
         ":CtsAppEnumerationQueriesPackage",
         ":CtsAppEnumerationForceQueryable",
         ":CtsMockSpellChecker",
+        ":CtsInputMethod1",
     ],
     per_testcase_directory: true,
 }

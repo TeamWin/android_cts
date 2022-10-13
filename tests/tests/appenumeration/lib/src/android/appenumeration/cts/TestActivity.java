@@ -46,6 +46,7 @@ import static android.appenumeration.cts.Constants.EXTRA_DATA;
 import static android.appenumeration.cts.Constants.EXTRA_ERROR;
 import static android.appenumeration.cts.Constants.EXTRA_FLAGS;
 import static android.appenumeration.cts.Constants.EXTRA_ID;
+import static android.appenumeration.cts.Constants.EXTRA_INPUT_METHOD_INFO;
 import static android.appenumeration.cts.Constants.EXTRA_PENDING_INTENT;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_CALLBACK;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_READY_CALLBACK;
@@ -99,6 +100,9 @@ import android.os.RemoteCallback;
 import android.os.UserHandle;
 import android.util.SparseArray;
 import android.view.accessibility.AccessibilityManager;
+import android.view.inputmethod.InputMethodInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.view.inputmethod.InputMethodSubtype;
 import android.view.textservice.SpellCheckerInfo;
 import android.view.textservice.TextServicesManager;
 
@@ -414,6 +418,14 @@ public class TestActivity extends Activity {
                 sendGetContentProviderMimeType(remoteCallback, authority);
             } else if (Constants.ACTION_GET_ENABLED_SPELL_CHECKER_INFOS.equals(action)) {
                 sendGetEnabledSpellCheckerInfos(remoteCallback);
+            } else if (Constants.ACTION_GET_INPUT_METHOD_LIST.equals(action)) {
+                sendGetInputMethodList(remoteCallback);
+            } else if (Constants.ACTION_GET_ENABLED_INPUT_METHOD_LIST.equals(action)) {
+                sendGetEnabledInputMethodList(remoteCallback);
+            } else if (Constants.ACTION_GET_ENABLED_INPUT_METHOD_SUBTYPE_LIST.equals(action)) {
+                final InputMethodInfo info = intent.getBundleExtra(EXTRA_DATA)
+                        .getParcelable(EXTRA_INPUT_METHOD_INFO, InputMethodInfo.class);
+                sendGetEnabledInputMethodSubtypeList(remoteCallback, info);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -1079,6 +1091,37 @@ public class TestActivity extends Activity {
         final TextServicesManager tsm = getSystemService(TextServicesManager.class);
         final ArrayList<SpellCheckerInfo> infos =
                 new ArrayList<>(tsm.getEnabledSpellCheckerInfos());
+        final Bundle result = new Bundle();
+        result.putParcelableArrayList(EXTRA_RETURN_RESULT, infos);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendGetInputMethodList(RemoteCallback remoteCallback) {
+        final InputMethodManager inputMethodManager = getSystemService(InputMethodManager.class);
+        final ArrayList<InputMethodInfo> infos =
+                new ArrayList<>(inputMethodManager.getInputMethodList());
+        final Bundle result = new Bundle();
+        result.putParcelableArrayList(EXTRA_RETURN_RESULT, infos);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendGetEnabledInputMethodList(RemoteCallback remoteCallback) {
+        final InputMethodManager inputMethodManager = getSystemService(InputMethodManager.class);
+        final ArrayList<InputMethodInfo> infos =
+                new ArrayList<>(inputMethodManager.getEnabledInputMethodList());
+        final Bundle result = new Bundle();
+        result.putParcelableArrayList(EXTRA_RETURN_RESULT, infos);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendGetEnabledInputMethodSubtypeList(RemoteCallback remoteCallback,
+            InputMethodInfo targetImi) {
+        final InputMethodManager inputMethodManager = getSystemService(InputMethodManager.class);
+        final ArrayList<InputMethodSubtype> infos = new ArrayList<>(
+                inputMethodManager.getEnabledInputMethodSubtypeList(targetImi, true));
         final Bundle result = new Bundle();
         result.putParcelableArrayList(EXTRA_RETURN_RESULT, infos);
         remoteCallback.sendResult(result);

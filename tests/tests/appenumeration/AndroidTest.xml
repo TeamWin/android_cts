@@ -100,6 +100,7 @@
         <option name="push" value="CtsAppEnumerationQueriesNothingReceivesPermissionProtectedUri.apk->/data/local/tmp/cts/appenumeration/CtsAppEnumerationQueriesNothingReceivesPermissionProtectedUri.apk" />
         <option name="push" value="CtsAppEnumerationQueriesNothingReceivesUri.apk->/data/local/tmp/cts/appenumeration/CtsAppEnumerationQueriesNothingReceivesUri.apk" />
         <option name="push" value="CtsMockSpellChecker.apk->/data/local/tmp/cts/appenumeration/CtsMockSpellChecker.apk" />
+        <option name="push" value="CtsInputMethod1.apk->/data/local/tmp/cts/appenumeration/CtsInputMethod1.apk" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >

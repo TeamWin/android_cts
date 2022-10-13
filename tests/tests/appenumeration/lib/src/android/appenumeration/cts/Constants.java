@@ -20,6 +20,7 @@ public class Constants {
     public static final String PKG_BASE = "android.appenumeration.";
     public static final String TEST_PKG = "android.appenumeration.cts";
     public static final String MOCK_SPELL_CHECKER_PKG = "com.android.cts.mockspellchecker";
+    public static final String MOCK_IME_PKG = "android.inputmethodservice.cts.ime1";
 
     /** The shared library for getting dependent packages */
     public static final String TEST_SHARED_LIB_NAME = "android.test.runner";
@@ -163,6 +164,7 @@ public class Constants {
     public static final String QUERIES_NOTHING_SEES_INSTALLER_APK =
             BASE_PATH + "CtsAppEnumerationQueriesNothingSeesInstaller.apk";
     public static final String CTS_MOCK_SPELL_CHECKER_APK = BASE_PATH + "CtsMockSpellChecker.apk";
+    public static final String CTS_MOCK_IME_APK = BASE_PATH + "CtsInputMethod1.apk";
 
     public static final String[] ALL_QUERIES_TARGETING_R_PACKAGES = {
             QUERIES_NOTHING,
@@ -305,6 +307,12 @@ public class Constants {
             PKG_BASE + "cts.action.APP_ENUMERATION_PREFERRED_ACTIVITY";
     public static final String ACTION_GET_ENABLED_SPELL_CHECKER_INFOS =
             PKG_BASE + "cts.action.GET_ENABLED_SPELL_CHECKER_INFOS";
+    public static final String ACTION_GET_INPUT_METHOD_LIST =
+            PKG_BASE + "cts.action.GET_INPUT_METHOD_LIST";
+    public static final String ACTION_GET_ENABLED_INPUT_METHOD_LIST =
+            PKG_BASE + "cts.action.GET_ENABLED_INPUT_METHOD_LIST";
+    public static final String ACTION_GET_ENABLED_INPUT_METHOD_SUBTYPE_LIST =
+            PKG_BASE + "cts.action.GET_ENABLED_INPUT_METHOD_SUBTYPE_LIST";
 
     public static final String ACCOUNT_NAME = "CtsAppEnumerationTests";
     public static final String ACCOUNT_TYPE = "android.appenumeration.account.type";
@@ -321,6 +329,7 @@ public class Constants {
     public static final String EXTRA_ACCOUNT = "account";
     public static final String EXTRA_ID = "id";
     public static final String EXTRA_PENDING_INTENT = "pendingIntent";
+    public static final String EXTRA_INPUT_METHOD_INFO = "inputmethodinfo";
 
     public static final int CALLBACK_EVENT_INVALID = -1;
     public static final int CALLBACK_EVENT_PACKAGE_ADDED = 0;

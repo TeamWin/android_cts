@@ -109,7 +109,7 @@ public class MediaMuxerTest {
 
     @Test
     public void testAVIFOutputInHEIF() throws Exception {
-        final String source = "avif_sample.avif";
+        final String source = "sample_avif.avif";
         String outputFilePath = File.createTempFile("testAVIFOutputInHEIF", ".avif")
                 .getAbsolutePath();
         cloneAndVerify(

@@ -478,6 +478,30 @@ public class TranslationManagerTest {
     }
 
     @Test
+    public void testGetTranslationCapabilitiesWithBadService() throws Exception {
+        enableFakeTranslationService();
+
+        final TranslationManager manager = sContext.getSystemService(TranslationManager.class);
+        final CountDownLatch latch = new CountDownLatch(1);
+        final AtomicReference<Set<TranslationCapability>> resultRef =
+                new AtomicReference<>();
+
+        final Thread th = new Thread(() -> {
+            final Set<TranslationCapability> capabilities =
+                    manager.getOnDeviceTranslationCapabilities(DATA_FORMAT_TEXT, DATA_FORMAT_TEXT);
+            resultRef.set(capabilities);
+            latch.countDown();
+        });
+        th.start();
+        // Should return immediately, should not wait until 1 sec timeout
+        final boolean success = latch.await(1, TimeUnit.SECONDS);
+        assertWithMessage("getOnDeviceTranslationCapabilities timeout").that(success).isTrue();
+
+        final ArraySet<TranslationCapability> capabilities = new ArraySet<>(resultRef.get());
+        assertThat(capabilities.size()).isEqualTo(0);
+    }
+
+    @Test
     public void testGetTranslationSettingsActivityIntent() throws Exception {
         enableCtsTranslationService();
 
@@ -538,5 +562,10 @@ public class TranslationManagerTest {
     protected void enableCtsTranslationService() {
         mServiceWatcher = CtsTranslationService.setServiceWatcher();
         Helper.setTemporaryTranslationService(CtsTranslationService.SERVICE_NAME);
+    }
+
+    protected void enableFakeTranslationService() {
+        mServiceWatcher = CtsTranslationService.setServiceWatcher();
+        Helper.setTemporaryTranslationService("android.translation.cts/.fakeService");
     }
 }

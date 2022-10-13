@@ -72,6 +72,8 @@ public class AppEnumerationTestsBase {
     static Context sContext;
     static PackageManager sPm;
 
+    static final long DEFAULT_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(15);
+
     @Rule
     public TestName name = new TestName();
 
@@ -131,7 +133,7 @@ public class AppEnumerationTestsBase {
             sContext.startActivity(intent);
         }
         return () -> {
-            if (!latch.block(TimeUnit.SECONDS.toMillis(10))) {
+            if (!latch.block(DEFAULT_TIMEOUT_MS)) {
                 throw new TimeoutException(
                         "Latch timed out while awaiting a response from " + sourcePackageName);
             }
@@ -149,7 +151,7 @@ public class AppEnumerationTestsBase {
                 sResponseHandler);
         intent.putExtra(EXTRA_REMOTE_READY_CALLBACK, readyCallback);
         sContext.startActivity(intent);
-        if (!latchForReady.block(TimeUnit.SECONDS.toMillis(10))) {
+        if (!latchForReady.block(DEFAULT_TIMEOUT_MS)) {
             throw new TimeoutException(
                     "Latch timed out while awaiting a response from command " + intent.getAction());
         }

@@ -33,6 +33,7 @@
          instead). -->
     <option name="compatibility:test-arg" value="com.android.tradefed.testtype.AndroidJUnitTest:exclude-annotation:com.android.compatibility.common.util.CtsDownstreamingTest" />
     <option name="compatibility:test-arg" value="com.android.compatibility.common.tradefed.testtype.JarHostTest:exclude-annotation:com.android.compatibility.common.util.CtsDownstreamingTest" />
+    <option name="compatibility:test-arg" value="com.android.tradefed.testtype.HostTest:exclude-annotation:com.android.compatibility.common.util.CtsDownstreamingTest" />
 
     <!-- Exclude @SecurityTest tests from CTS. These are tested in STS. b/180417031-->
     <option name="compatibility:test-arg" value="com.android.tradefed.testtype.AndroidJUnitTest:exclude-annotation:android.platform.test.annotations.AsbSecurityTest" />

@@ -378,6 +378,17 @@ public class AccessibilityEventTest {
     }
 
     @Test
+    public void setViewEnable_receiveEvent() throws Throwable {
+        sUiAutomation.executeAndWaitForEvent(
+                () -> sInstrumentation.runOnMainSync(() -> {
+                    mChildView.setEnabled(!mChildView.isEnabled());
+                }),
+                event -> isExpectedChangeType(event,
+                        AccessibilityEvent.CONTENT_CHANGE_TYPE_ENABLED),
+                DEFAULT_TIMEOUT_MS);
+    }
+
+    @Test
     public void setText_unChanged_doNotReceiveEvent() throws Throwable {
         sUiAutomation.executeAndWaitForEvent(
                 () -> sInstrumentation.runOnMainSync(() -> mTextView.setText("a")),

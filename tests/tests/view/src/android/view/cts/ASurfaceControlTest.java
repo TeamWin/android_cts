@@ -331,8 +331,6 @@ public class ASurfaceControlTest {
         SurfaceControl control = builder.build();
         final long childSurfaceControl = nSurfaceControl_fromSurfaceControl(control);
         assertTrue(childSurfaceControl != 0);
-        nSurfaceControl_acquire(childSurfaceControl);
-        Reference.reachabilityFence(control);
         verifyTest(
                 new BasicSurfaceHolderCallback() {
                     @Override

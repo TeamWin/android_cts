@@ -1088,6 +1088,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
             + "bootclasspath. Please use alternatives provided by the platform instead. "
             + "See go/androidx-api-guidelines#module-naming.")
                 .that(sJarsToClasses.entries().stream()
+                        .filter(e -> e.getKey().endsWith(".jar"))
                         .filter(e -> e.getValue().startsWith("Landroidx/"))
                         .filter(e -> !isLegacyAndroidxDependency(
                             LegacyExemptAndroidxSharedLibsNamesToClasses, e.getKey(), e.getValue()))

@@ -478,8 +478,8 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
     private void deviceRebootAndApply(String clientName) throws Exception {
         verifyLskfCaptured(clientName);
 
-        String res = getDevice().executeShellCommand("cmd recovery reboot-and-apply " + clientName
-                + " cts-test");
+        String res = executeShellCommandWithLogging(
+                "cmd recovery reboot-and-apply " + clientName + " cts-test");
         if (res != null && res.contains("Reboot and apply status: failure")) {
             fail("could not call reboot-and-apply");
         }
@@ -515,10 +515,7 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
     }
 
     private void stopUserAsync(int userId) throws Exception {
-        String stopUserCommand = "am stop-user -f " + userId;
-        CLog.d("starting command \"" + stopUserCommand);
-        CLog.d("Output for command " + stopUserCommand + ": "
-                + getDevice().executeShellCommand(stopUserCommand));
+        executeShellCommandWithLogging("am stop-user -f " + userId);
     }
 
     private void removeUser(int userId) throws Exception  {
@@ -577,5 +574,13 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         public InstallMultiple() {
             super(getDevice(), getBuild(), getAbi());
         }
+    }
+
+    private String executeShellCommandWithLogging(String command)
+            throws DeviceNotAvailableException {
+        CLog.d("Starting command: " + command);
+        String result = getDevice().executeShellCommand(command);
+        CLog.d("Output for command \"" + command + "\": " + result);
+        return result;
     }
 }

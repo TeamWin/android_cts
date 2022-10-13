@@ -16,16 +16,15 @@
 
 package android.permission.cts
 
-import android.service.notification.StatusBarNotification
-import org.junit.Assert
 import android.permission.cts.TestUtils.ensure
 import android.permission.cts.TestUtils.eventually
+import android.service.notification.StatusBarNotification
+import org.junit.Assert
 
 object NotificationListenerUtils {
 
     private const val NOTIFICATION_CANCELLATION_TIMEOUT_MILLIS = 5000L
     private const val NOTIFICATION_WAIT_MILLIS = 2000L
-    private val notificationService = NotificationListener.getInstance()
 
     @JvmStatic
     fun assertEmptyNotification(packageName: String, notificationId: Int) {
@@ -47,6 +46,7 @@ object NotificationListenerUtils {
 
     @JvmStatic
     fun cancelNotification(packageName: String, notificationId: Int) {
+        val notificationService = NotificationListener.getInstance()
         val notification = getNotification(packageName, notificationId)
         if (notification != null) {
             notificationService.cancelNotification(notification.key)
@@ -58,6 +58,7 @@ object NotificationListenerUtils {
 
     @JvmStatic
     fun cancelNotifications(packageName: String) {
+        val notificationService = NotificationListener.getInstance()
         val notifications = getNotifications(packageName)
         if (notifications.isNotEmpty()) {
             notifications.forEach { notification ->
@@ -79,11 +80,40 @@ object NotificationListenerUtils {
     @JvmStatic
     fun getNotifications(packageName: String): List<StatusBarNotification> {
         val notifications: MutableList<StatusBarNotification> = ArrayList()
+        val notificationService = NotificationListener.getInstance()
         for (notification in notificationService.activeNotifications) {
             if (notification.packageName == packageName) {
                 notifications.add(notification)
             }
         }
         return notifications
+    }
+
+    /**
+     * Get a notification listener notification that is currently visible.
+     *
+     * @param cancelNotification if `true` the notification is canceled inside this method
+     * @return The notification or `null` if there is none
+     */
+    @JvmStatic
+    @Throws(Throwable::class)
+    fun getNotificationForPackageAndId(
+            pkg: String,
+            id: Int,
+            cancelNotification: Boolean
+    ): StatusBarNotification? {
+        val notifications: List<StatusBarNotification> = getNotifications(pkg)
+        if (notifications.isEmpty()) {
+            return null
+        }
+        for (notification in notifications) {
+            if (notification.id == id) {
+                if (cancelNotification) {
+                    cancelNotification(pkg, id)
+                }
+                return notification
+            }
+        }
+        return null
     }
 }

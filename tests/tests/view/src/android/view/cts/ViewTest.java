@@ -146,6 +146,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ViewTest {
     /** timeout delta when wait in case the system is sluggish */
     private static final long TIMEOUT_DELTA = 10000;
+    private static final long DEFAULT_TIMEOUT_MILLIS = 1000;
 
     private static final String LOG_TAG = "ViewTest";
 
@@ -1737,6 +1738,23 @@ public class ViewTest {
 
         view.setEnabled(false);
         assertFalse(view.isEnabled());
+    }
+
+
+    @Test
+    public void testSetEnabled_receiveEvent() throws Throwable {
+        final View mockView = mActivity.findViewById(R.id.mock_view);
+        mInstrumentation.getUiAutomation().executeAndWaitForEvent(
+                () -> mInstrumentation.runOnMainSync(() -> {
+                    mockView.setEnabled(!mockView.isEnabled());
+                }),
+                event -> isExpectedChangeType(event,
+                        AccessibilityEvent.CONTENT_CHANGE_TYPE_ENABLED),
+                DEFAULT_TIMEOUT_MILLIS);
+    }
+
+    private static boolean isExpectedChangeType(AccessibilityEvent event, int changeType) {
+        return (event.getContentChangeTypes() & changeType) == changeType;
     }
 
     @Test
