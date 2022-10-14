@@ -22,7 +22,6 @@ import android.companion.AssociationInfo
 import android.companion.CompanionDeviceManager
 import android.companion.CompanionException
 import android.companion.cts.common.CompanionActivity
-import android.companion.cts.uicommon.UiAutomationTestBase
 import android.content.Intent
 import android.os.OutcomeReceiver
 import android.platform.test.annotations.AppModeFull

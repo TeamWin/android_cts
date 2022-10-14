@@ -456,10 +456,10 @@ public class TextViewHandwritingGestureTest {
     public void performRemoveSpaceGesture_singleWhitespace() {
         // Line 0 "XXX X XXX" has whitespace from offset 3 to 4.
         // Start point is close to offset 2 on line 0.
-        // End point is close to offset 4 on line 0.
+        // End point is close to offset 3 on line 0, on the whitespace character.
         performRemoveSpaceGesture(
                 new PointF(2 * CHAR_WIDTH_PX - 2f, mEditText.getLayout().getLineTop(0) + 1f),
-                new PointF(4 * CHAR_WIDTH_PX + 2f, mEditText.getLayout().getLineTop(0) + 1f));
+                new PointF(3 * CHAR_WIDTH_PX + 2f, mEditText.getLayout().getLineTop(0) + 1f));
 
         assertGestureDeletedRange(3, 4);
     }

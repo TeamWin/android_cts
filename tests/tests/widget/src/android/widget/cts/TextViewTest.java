@@ -873,8 +873,7 @@ public class TextViewTest {
         mTextView.requestFocus();
         assertTrue(mTextView.isFocused());
 
-        assertEquals(-1, mTextView.getSelectionStart());
-        assertEquals(-1, mTextView.getSelectionEnd());
+        assertEquals(mTextView.getSelectionStart(), mTextView.getSelectionEnd());
 
         mTextView.setText(content, BufferType.SPANNABLE);
         mTextView.setSelectAllOnFocus(true);
@@ -895,8 +894,7 @@ public class TextViewTest {
         mTextView.requestFocus();
         assertTrue(mTextView.isFocused());
 
-        assertEquals(0, mTextView.getSelectionStart());
-        assertEquals(0, mTextView.getSelectionEnd());
+        assertEquals(mTextView.getSelectionStart(), mTextView.getSelectionEnd());
 
         mTextView.setText(blank, BufferType.SPANNABLE);
         mTextView.setSelectAllOnFocus(true);
@@ -917,8 +915,7 @@ public class TextViewTest {
         mTextView.requestFocus();
         assertTrue(mTextView.isFocused());
 
-        assertEquals(0, mTextView.getSelectionStart());
-        assertEquals(0, mTextView.getSelectionEnd());
+        assertEquals(mTextView.getSelectionStart(), mTextView.getSelectionEnd());
     }
 
     @UiThreadTest

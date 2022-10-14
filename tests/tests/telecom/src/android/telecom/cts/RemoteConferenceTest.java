@@ -16,7 +16,8 @@
 
 package android.telecom.cts;
 
-import static android.telecom.cts.TestUtils.*;
+import static android.telecom.cts.TestUtils.InvokeCounter;
+import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -29,7 +30,6 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.RemoteConference;
 import android.telecom.RemoteConnection;
 import android.telecom.TelecomManager;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +58,13 @@ public class RemoteConferenceTest extends BaseRemoteTelecomTest {
     Call mCall1, mCall2;
     MockConference mConference, mRemoteConference;
     RemoteConference mRemoteConferenceObject;
+
+    @Override
+    public void tearDown() throws Exception {
+        mRemoteConference.destroy();
+        mConference.destroy();
+        super.tearDown();
+    }
 
     public void testRemoteConferenceCreate() {
         if (!mShouldTestTelecom) {

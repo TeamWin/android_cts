@@ -64,6 +64,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
@@ -1159,7 +1160,23 @@ public class CipherTest {
     @Test
     @ApiTest(apis = {"javax.crypto.Cipher#init"})
     public void testKatBasicWithDifferentProviders() throws Exception {
+        List<String> keymasterNonSupportedAlgos = Arrays.asList(new String[]{
+                "RSA/ECB/OAEPWithSHA-224AndMGF1Padding",
+                "RSA/ECB/OAEPWithSHA-256AndMGF1Padding",
+                "RSA/ECB/OAEPWithSHA-384AndMGF1Padding",
+                "RSA/ECB/OAEPWithSHA-512AndMGF1Padding"
+        });
+        int kmVersion = TestUtils.getFeatureVersionKeystore(getContext());
         for (String algorithm : EXPECTED_ALGORITHMS) {
+            if (kmVersion < Attestation.KM_VERSION_KEYMINT_1
+                    && keymasterNonSupportedAlgos.contains(algorithm)) {
+                // Skipping algorithms which are not supported in older KeyMaster.
+                // This functionality has to support through software emulation.
+                android.util.Log.d("CipherTest",
+                        " Skipping " + algorithm + " because it is not supported in KM version "
+                                + kmVersion);
+                continue;
+            }
             ImportedKey key = importDefaultKatKey(algorithm,
                     KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT,
                     false);

@@ -66,12 +66,11 @@ import android.os.SystemClock;
 import android.os.UserHandle;
 import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.WindowManagerState;
+import android.server.wm.WindowManagerStateHelper;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiSelector;
 import android.util.Log;
-import android.view.accessibility.AccessibilityEvent;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -240,9 +239,9 @@ public class ActivityManagerProcessStateTest {
     }
 
     private void waitForAppFocus(String waitForApp, long waitTime) {
+        final WindowManagerStateHelper wms = new WindowManagerStateHelper();
         long waitUntil = SystemClock.elapsedRealtime() + waitTime;
         while (true) {
-            WindowManagerState wms = new WindowManagerState();
             wms.computeState();
             String appName = wms.getFocusedApp();
             if (appName != null) {
@@ -263,17 +262,11 @@ public class ActivityManagerProcessStateTest {
         }
     }
 
-    private void startActivityAndWaitForShow(final Intent intent) throws Exception {
-        mInstrumentation.getUiAutomation().executeAndWaitForEvent(
-                () -> {
-                    try {
-                        mTargetContext.startActivity(intent);
-                    } catch (Exception e) {
-                        fail("Cannot start activity: " + intent);
-                    }
-                }, (AccessibilityEvent event) -> event.getEventType()
-                        == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
-                , WAIT_TIME);
+    private void startAndWaitForHeavyWeightSwitcherActivity(final Intent intent)  {
+        mTargetContext.startActivity(intent);
+        // Assume there was another CANT_SAVE_STATE app, so it will redirect to the switch activity.
+        new WindowManagerStateHelper().waitAndAssertWindowSurfaceShown(
+                "android/com.android.internal.app.HeavyWeightSwitcherActivity", true);
         // Wait for the transition animation to complete.
         mInstrumentation.getUiAutomation().syncInputTransactions();
     }
@@ -1446,7 +1439,6 @@ public class ActivityManagerProcessStateTest {
         homeIntent.addCategory(Intent.CATEGORY_HOME);
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        ActivityManager am = mContext.getSystemService(ActivityManager.class);
         UiDevice device = UiDevice.getInstance(mInstrumentation);
 
         PermissionUtils.grantPermission(
@@ -1487,7 +1479,7 @@ public class ActivityManagerProcessStateTest {
             uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // Start the second heavy-weight app, should ask us what to do with the two apps
-            startActivityAndWaitForShow(activity2Intent);
+            startAndWaitForHeavyWeightSwitcherActivity(activity2Intent);
 
             // First, let's try returning to the original app.
             maybeClick(device, new UiSelector().resourceId("android:id/switch_old"));
@@ -1504,7 +1496,7 @@ public class ActivityManagerProcessStateTest {
             uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // Again try starting second heavy-weight app to get prompt.
-            startActivityAndWaitForShow(activity2Intent);
+            startAndWaitForHeavyWeightSwitcherActivity(activity2Intent);
 
             // Now we'll switch to the new app.
             maybeClick(device, new UiSelector().resourceId("android:id/switch_new"));
@@ -1530,7 +1522,7 @@ public class ActivityManagerProcessStateTest {
             uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // Try starting the first heavy weight app, but return to the existing second.
-            startActivityAndWaitForShow(activity1Intent);
+            startAndWaitForHeavyWeightSwitcherActivity(activity1Intent);
             maybeClick(device, new UiSelector().resourceId("android:id/switch_old"));
             waitForAppFocus(CANT_SAVE_STATE_2_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();
@@ -1543,7 +1535,7 @@ public class ActivityManagerProcessStateTest {
             uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // Again start the first heavy weight app, this time actually switching to it
-            startActivityAndWaitForShow(activity1Intent);
+            startAndWaitForHeavyWeightSwitcherActivity(activity1Intent);
             maybeClick(device, new UiSelector().resourceId("android:id/switch_new"));
             waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();

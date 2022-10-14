@@ -726,16 +726,10 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
         return mAudioCodecStates.entrySet().iterator().next().getValue().getFramesWritten();
     }
 
-    public void stopWritingToAudioTrack(boolean stopWriting) {
-        for (CodecState state : mAudioCodecStates.values()) {
-            state.stopWritingToAudioTrack(stopWriting);
-        }
-    }
-
     /** Configure underrun simulation on audio codecs. */
-    public void simulateAudioUnderrun(boolean enabled) {
+    public void stopDrainingAudioOutputBuffers(boolean enabled) {
         for (CodecState state: mAudioCodecStates.values()) {
-            state.simulateUnderrun(enabled);
+            state.stopDrainingOutputBuffers(enabled);
         }
     }
 

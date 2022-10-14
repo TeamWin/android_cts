@@ -4124,6 +4124,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
         setWifiEnabled(false);
         PollingCheck.check(
+                "Wifi not disabled!",
+                20000,
+                () -> !mWifiManager.isWifiEnabled());
+        PollingCheck.check(
                 "Wifi not disconnected!",
                 20000,
                 () -> mWifiManager.getConnectionInfo().getNetworkId() == -1);

@@ -19,7 +19,6 @@ package android.companion.cts.uiautomation
 import android.companion.AssociationRequest.DEVICE_PROFILE_APP_STREAMING
 import android.companion.AssociationRequest.DEVICE_PROFILE_AUTOMOTIVE_PROJECTION
 import android.companion.AssociationRequest.DEVICE_PROFILE_COMPUTER
-import android.companion.cts.uicommon.UiAutomationTestBase
 import android.platform.test.annotations.AppModeFull
 import org.junit.Assume.assumeFalse
 import org.junit.Test

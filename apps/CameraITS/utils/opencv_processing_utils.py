@@ -229,24 +229,29 @@ class Chart(object):
     scale_start = self._scale_start * s_factor
     scale_stop = self._scale_stop * s_factor
     scale_step = self._scale_step * s_factor
+    offset = scale_step / 2
     self.scale = s_factor
     logging.debug('scale start: %.3f, stop: %.3f, step: %.3f',
                   scale_start, scale_stop, scale_step)
+    logging.debug('Used offset of %.3f to include stop value.', offset)
     max_match = []
     # check for normalized image
     if numpy.amax(scene) <= 1.0:
       scene = (scene * 255.0).astype(numpy.uint8)
     scene_gray = gray_scale_img(scene)
     logging.debug('Finding chart in scene...')
-    for scale in numpy.arange(scale_start, scale_stop, scale_step):
+    for scale in numpy.arange(scale_start, scale_stop + offset, scale_step):
       scene_scaled = scale_img(scene_gray, scale)
       if (scene_scaled.shape[0] < chart.shape[0] or
           scene_scaled.shape[1] < chart.shape[1]):
+        logging.debug(
+            'Skipped scale %.3f. scene_scaled shape: %s, chart shape: %s',
+            scale, scene_scaled.shape, chart.shape)
         continue
       result = cv2.matchTemplate(scene_scaled, chart, cv2.TM_CCOEFF)
       _, opt_val, _, top_left_scaled = cv2.minMaxLoc(result)
       logging.debug(' scale factor: %.3f, opt val: %.f', scale, opt_val)
-      max_match.append((opt_val, top_left_scaled))
+      max_match.append((opt_val, scale, top_left_scaled))
 
     # determine if optimization results are valid
     opt_values = [x[0] for x in max_match]
@@ -262,10 +267,10 @@ class Chart(object):
         estring = ('Warning: Chart is at extreme range of locator.')
         logging.warning(estring)
       # find max and draw bbox
-      match_index = max_match.index(max(max_match, key=lambda x: x[0]))
-      self.scale = scale_start + scale_step * match_index
+      matched_scale_and_loc = max(max_match, key=lambda x: x[0])
+      self.scale = matched_scale_and_loc[1]
       logging.debug('Optimum scale factor: %.3f', self.scale)
-      top_left_scaled = max_match[match_index][1]
+      top_left_scaled = matched_scale_and_loc[2]
       h, w = chart.shape
       bottom_right_scaled = (top_left_scaled[0] + w, top_left_scaled[1] + h)
       top_left = ((top_left_scaled[0] // self.scale),

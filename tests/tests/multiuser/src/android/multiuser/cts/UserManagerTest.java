@@ -59,7 +59,6 @@ import android.platform.test.annotations.SystemUserOnly;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
-import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -185,7 +184,7 @@ public final class UserManagerTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserForeground"})
-    @RequireRunOnInitialUser(switchedToUser = TRUE)
+    @RequireRunOnInitialUser
     public void testIsUserForeground_differentContext_noPermission() throws Exception {
         Context context = getContextForOtherUser();
         UserManager um = context.getSystemService(UserManager.class);
@@ -230,8 +229,7 @@ public final class UserManagerTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserRunning"})
-    @RequireRunOnInitialUser(switchedToUser = TRUE)
-    // TODO(b/239961027): should be @EnsureHasProfile instead of @EnsureHasWorkProfile
+    @RequireRunOnInitialUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call isUserRunning()
     public void testIsUserRunning_stoppedProfileOfCurrentUser() {
@@ -285,7 +283,7 @@ public final class UserManagerTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserVisible"})
-    @RequireRunOnInitialUser(switchedToUser = TRUE)
+    @RequireRunOnInitialUser
     public void testIsUserVisible_currentUser() throws Exception {
         assertWithMessage("isUserVisible() for current user (id=%s)", sContext.getUser())
                 .that(mUserManager.isUserVisible()).isTrue();
@@ -308,11 +306,10 @@ public final class UserManagerTest {
                 sContext.getUser()).that(mUserManager.isUserVisible()).isTrue();
     }
 
-    @FlakyTest(bugId = 242364454)
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserVisible"})
     // Cannot use @RunOnProfile as it will stop the profile
-    @RequireRunOnInitialUser(switchedToUser = TRUE)
+    @RequireRunOnInitialUser
     // TODO(b/239961027): should be @EnsureHasProfile instead of @EnsureHasWorkProfile
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call isUserVisible() on other context
@@ -340,7 +337,7 @@ public final class UserManagerTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#getVisibleUsers"})
-    @RequireRunOnInitialUser(switchedToUser = TRUE)
+    @RequireRunOnInitialUser
     @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call getVisibleUsers()
     public void testGetVisibleUsers_currentUser() throws Exception {
         List<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
@@ -373,11 +370,10 @@ public final class UserManagerTest {
                 .containsAtLeast(myUser.userHandle(), myUser.parent().userHandle());
     }
 
-    @FlakyTest(bugId = 242364454)
     @Test
     @ApiTest(apis = {"android.os.UserManager#getVisibleUsers"})
     // Cannot use @RunOnProfile as it will stop the profile
-    @RequireRunOnInitialUser(switchedToUser = TRUE)
+    @RequireRunOnInitialUser
     // TODO(b/239961027): should be @EnsureHasProfile instead of @EnsureHasWorkProfile
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call getVisibleUsers()
@@ -591,7 +587,6 @@ public final class UserManagerTest {
         // Removing parent user will also remove its profile
         assertThat(parentUser.exists()).isFalse();
         assertThat(workProfile.exists()).isFalse();
-
     }
 
     @Test
@@ -794,7 +789,7 @@ public final class UserManagerTest {
 
     @Test
     @AppModeFull
-    @EnsureHasWorkProfile
+    @EnsureHasWorkProfile // TODO(b/239961027): should also check for other profiles
     @EnsureHasPermission(INTERACT_ACROSS_USERS)
     public void getProfileParent_returnsParent() {
         final UserReference parent = TestApis.users().instrumented();

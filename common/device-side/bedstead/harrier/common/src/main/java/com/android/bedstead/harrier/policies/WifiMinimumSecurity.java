@@ -19,6 +19,7 @@ package com.android.bedstead.harrier.policies;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_GLOBALLY;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CANNOT_BE_APPLIED_BY_ROLE_HOLDER;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
@@ -29,6 +30,6 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  * and {@code DevicePolicyManager#getMinimumRequiredWifiSecurityLevel()}.
  */
 @EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER | APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE
-        | APPLIES_GLOBALLY)
+        | APPLIES_GLOBALLY | CANNOT_BE_APPLIED_BY_ROLE_HOLDER)
 public class WifiMinimumSecurity {
 }

@@ -482,6 +482,10 @@
         android:protectionLevel="signature|privileged"
         android:label="@string/car_permission_label_manage_thread_priority"
         android:description="@string/car_permission_desc_manage_thread_priority"/>
+    <permission android:name="android.car.permission.BIND_OEM_CAR_SERVICE"
+        android:protectionLevel="signature|privileged"
+        android:label="@string/car_permission_label_bind_oem_car_service"
+        android:description="@string/car_permission_desc_bind_oem_car_service"/>
     <permission android:name="android.car.permission.MANAGE_OCCUPANT_ZONE"
         android:protectionLevel="signature|privileged"
         android:label="@string/car_permission_label_manage_occupant_zone"

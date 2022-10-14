@@ -62,4 +62,11 @@
                      android:targetProcesses="com.android.cts.launcherapps.simpleapp:other,com.android.cts.launcherapps.simpleapp">
     </instrumentation>
 
+    <instrumentation android:name=".ChainedInstrumentationFirst"
+            android:targetPackage="com.android.test.cantsavestate1" >
+    </instrumentation>
+
+    <instrumentation android:name=".ChainedInstrumentationSecond"
+            android:targetPackage="com.android.test.cantsavestate2" >
+    </instrumentation>
 </manifest>

@@ -17,9 +17,10 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
-import static android.app.WindowConfiguration.isFloating;
+import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.wm.WindowManagerState.STATE_PAUSED;
 import static android.server.wm.WindowMetricsTestHelper.assertBoundsMatchDisplay;
 import static android.server.wm.WindowMetricsTestHelper.getBoundsExcludingNavigationBarAndCutout;
@@ -275,7 +276,14 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
                 .getWindowingMode();
         WindowMetricsTestHelper.assertMetricsMatchesLayout(currentMetrics.get(), maxMetrics.get(),
                 listener.getLayoutBounds(), listener.getLayoutInsets(),
-                windowingMode == WINDOWING_MODE_FREEFORM, isFloating(windowingMode));
+                inMultiWindowMode(windowingMode));
+    }
+
+    // Copied from WindowConfiguration#inMultiWindowMode(int windowingMode)
+    // TODO(b/250741386): make it a @TestApi in U
+    private static boolean inMultiWindowMode(int windowingMode) {
+        return windowingMode != WINDOWING_MODE_FULLSCREEN
+                && windowingMode != WINDOWING_MODE_UNDEFINED;
     }
 
     /**

@@ -6,7 +6,6 @@ import android.companion.AssociationRequest.DEVICE_PROFILE_WATCH
 import android.companion.CompanionDeviceManager
 import android.companion.cts.common.CompanionActivity
 import android.companion.cts.common.RecordingCallback.OnAssociationCreated
-import android.companion.cts.uicommon.UiAutomationTestBase
 import android.content.Intent
 import android.platform.test.annotations.AppModeFull
 import kotlin.test.assertContentEquals

@@ -17,13 +17,11 @@
 package android.multiuser.cts;
 
 
-import static android.Manifest.permission.CREATE_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.multiuser.cts.PermissionHelper.adoptShellPermissionIdentity;
 
 import static com.android.bedstead.nene.types.OptionalBoolean.FALSE;
-import static com.android.bedstead.nene.types.OptionalBoolean.TRUE;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -39,17 +37,17 @@ import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.view.Display;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
-import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireMultipleUsersOnMultipleDisplays;
+import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.nene.TestApis;
@@ -101,9 +99,7 @@ public final class MultipleUsersOnMultipleDisplaysTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserVisible"})
-    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
-    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
-    @EnsureHasSecondaryUser(switchedToUser = FALSE)
+    @RequireRunOnInitialUser
     public void testIsUserVisible_backgroundUserOnSecondaryDisplay() throws Exception {
         runTestOnSecondaryDisplay((user, displayId, instance) ->
                 assertWithMessage("isUserVisible() for background user (id=%s) on display %s",
@@ -129,20 +125,13 @@ public final class MultipleUsersOnMultipleDisplaysTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#getVisibleUsers"})
-    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
-    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
-    @EnsureHasSecondaryUser(switchedToUser = FALSE)
+    @RequireRunOnInitialUser
     @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call getVisibleUsers()
     public void testGetVisibleUsers_backgroundUserOnSecondaryDisplay() throws Exception {
-        // TODO(b/239982558): this test fails when the whole test class is ran and the feature is
-        // enabled because it cannot start the user in the background (most likely beucase there's
-        // another user started that was not stopped). For now, it's not worth to fix it, as that
-        // restriction might go away (if the startBgUser() method automatically stops the previous
-        // user)
         runTestOnSecondaryDisplay((user, displayId, instance) ->
                 assertWithMessage("getVisibleUsers()")
                         .that(mUserManager.getVisibleUsers())
-                        .containsExactly(TestApis.users().current().userHandle(),
+                        .containsAtLeast(TestApis.users().current().userHandle(),
                                 user.userHandle()));
     }
 
@@ -168,26 +157,16 @@ public final class MultipleUsersOnMultipleDisplaysTest {
     // TODO(b/240736142): tests below should belong to ActivityManagerTest or similar, but it
     // doesn't use bedstead yet
 
-    @FlakyTest(bugId = 242364454)
     @ApiTest(apis = {"android.app.ActivityManager#startUserInBackgroundOnSecondaryDisplay"})
-    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
-    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
-    @EnsureHasSecondaryUser(switchedToUser = FALSE)
+    @RequireRunOnInitialUser
     @Test
     public void testStartUserInBackgroundOnSecondaryDisplay() {
-        int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
-        int userId = TestApis.users()
-                .findUserOfType(TestApis.users().supportedType(UserType.SECONDARY_USER_TYPE_NAME))
-                .id();
-
-        boolean started = tryToStartBackgroundUserOnSecondaryDisplay(userId, displayId);
-        assertWithMessage("started user %s on id %s", userId, displayId).that(started)
-                .isTrue();
-
-        // Should fail when it's already started
-        boolean startedAgain = tryToStartBackgroundUserOnSecondaryDisplay(userId, displayId);
-        assertWithMessage("started user %s on id %s again", userId, displayId).that(startedAgain)
-                .isFalse();
+        runTestOnSecondaryDisplay((user, displayId, instance) -> {
+            // Should fail when it's already started
+            boolean startedAgain = tryToStartBackgroundUserOnSecondaryDisplay(user.id(), displayId);
+            assertWithMessage("started user %s on id %s again", user.id(), displayId)
+                    .that(startedAgain).isFalse();
+        });
     }
 
     @Test
@@ -225,7 +204,6 @@ public final class MultipleUsersOnMultipleDisplaysTest {
         } // new user
     }
 
-    @FlakyTest(bugId = 242364454)
     @Test
     @ApiTest(apis = {"android.app.ActivityManager#startUserInBackgroundOnSecondaryDisplay"})
     @RequireHeadlessSystemUserMode(reason =  "non-HSUM cannot have profiles on secondary users")
@@ -260,14 +238,42 @@ public final class MultipleUsersOnMultipleDisplaysTest {
         } // new user
     }
 
-    @FlakyTest(bugId = 242364454)
+    // TODO(b/251565294): must create users explicitly (instead of using @EnsureHasSecondaryUser
+    // and @EnsureHasWorkProfile) because otherwise the test would fail on automotive (even
+    // though it's annotated with @RequireNotHeadlessSystemUserMode)
+    private static final boolean BUG_251565294_FIXED = false;
+
     @Test
     @ApiTest(apis = {"android.app.ActivityManager#startUserInBackgroundOnSecondaryDisplay"})
-    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
-    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
-    @EnsureHasSecondaryUser(switchedToUser = FALSE)
-    @EnsureHasWorkProfile
+    @RequireNotHeadlessSystemUserMode(reason = "will create profile on system user")
+    @RequireRunOnPrimaryUser
     public void testStartUserInBackgroundOnSecondaryDisplay_parentOnDefaultDisplayProfileOnSecondaryDisplay() {
+        if (!BUG_251565294_FIXED) {
+            UserReference systemUser = TestApis.users().system();
+            Log.d(TAG, "Creating profile");
+            try (UserReference profile = TestApis.users().createUser()
+                    .name("profile_of_" + systemUser.id())
+                    // TODO(b/239961027): type should be just PROFILE_TYPE_NAME
+                    .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                    .parent(systemUser)
+                    .create()) {
+                Log.d(TAG, "Created profile: id=" + profile.id());
+
+                // Stop the profile as it was initially running in the same display as parent
+                Log.d(TAG, "Stopping profile " + profile + " (called from " + sContext.getUser()
+                        + ")");
+                profile.stop();
+
+                int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
+                boolean started = tryToStartBackgroundUserOnSecondaryDisplay(profile.id(),
+                        displayId);
+
+                assertWithMessage("started profile %s on display %s", profile.id(), displayId)
+                        .that(started).isFalse();
+            } // new profile
+            return;
+        }
+
         // Stop the profile as it was initially running in the same display as parent
         UserReference profile = sDeviceState.workProfile();
         Log.d(TAG, "Stopping profile " + profile + " (called from " + sContext.getUser() + ")");
@@ -276,40 +282,67 @@ public final class MultipleUsersOnMultipleDisplaysTest {
         int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
         boolean started = tryToStartBackgroundUserOnSecondaryDisplay(profile.id(), displayId);
 
-        assertWithMessage("started profile %s on display %s", profile.id(), displayId).that(started)
-                .isFalse();
+        assertWithMessage("started profile %s on display %s", profile.id(), displayId)
+                .that(started).isFalse();
+
+        return;
     }
 
-    @FlakyTest(bugId = 242364454)
+    @Test
     @ApiTest(apis = {"android.app.ActivityManager#startUserInBackgroundOnSecondaryDisplay"})
-    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
-    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
-    @EnsureHasSecondaryUser(switchedToUser = FALSE)
-    @EnsureHasWorkProfile
+    @RequireHeadlessSystemUserMode(reason = "will create profile on secondary user")
+    @RequireFeature(FEATURE_MANAGED_USERS) // TODO(b/239961027): remove if supports other profiles
+    public void testStartUserInBackgroundOnSecondaryDisplay_parentOnDefaultDisplayProfileOnSecondaryDisplay_HSUM() {
+        // NOTE: Cannot use runTestOnSecondaryDisplay() because it's mixing displays (so it calls
+        // user.start() instead of startBackgroundUserOnSecondaryDisplay())
+        Log.d(TAG, "Creating bg user and profile");
+        try (UserReference user = TestApis.users().createUser().name("parent_user").create()) {
+            Log.d(TAG, "Starting brand new user: id=" + user.id());
+            user.start();
+            try (UserReference profile = TestApis.users().createUser()
+                    .name("profile_of_" + user.id())
+                    // TODO(b/239961027): type should be just PROFILE_TYPE_NAME
+                    .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                    .parent(user)
+                    .create()) {
+                Log.d(TAG, "profile: id=" + profile.id());
+
+                // Stop the profile, just in case it was automatically started
+                Log.d(TAG, "Stopping profile " + profile + " (called from " + sContext.getUser()
+                        + ")");
+                profile.stop();
+
+                int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
+                boolean started = tryToStartBackgroundUserOnSecondaryDisplay(profile.id(),
+                        displayId);
+
+                assertWithMessage("started profile %s on display %s", profile.id(), displayId)
+                        .that(started).isFalse();
+            } // new profile
+        } // new user
+    }
+
+    @ApiTest(apis = {"android.app.ActivityManager#startUserInBackgroundOnSecondaryDisplay"})
+    @RequireRunOnInitialUser
     @Test
     public void testStartUserInBackgroundOnSecondaryDisplay_displayInUse() {
-        int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
+        runTestOnSecondaryDisplay((user, displayId, instance) -> {
+            try (UserReference otherUser = TestApis.users().createUser().name("other_user")
+                    .create()) {
+                int otherUserId = otherUser.id();
+                Log.d(TAG, "otherUser: id=" + otherUserId);
 
-        // Start first user on secondary display
-        UserReference user = TestApis.users()
-                .findUserOfType(TestApis.users().supportedType(UserType.SECONDARY_USER_TYPE_NAME));
-        startBackgroundUserOnSecondaryDisplay(user, displayId);
-
-        // Then try second user on same display
-        try (UserReference otherUser = TestApis.users().createUser().name("other_user").create()) {
-            int otherUserId = otherUser.id();
-            Log.d(TAG, "otherUser: id=" + otherUserId);
-
-            boolean started = tryToStartBackgroundUserOnSecondaryDisplay(otherUserId, displayId);
-            assertWithMessage("started user %s on display %s", otherUserId, displayId).that(started)
-                    .isFalse();
-        }
+                boolean started = tryToStartBackgroundUserOnSecondaryDisplay(otherUserId,
+                        displayId);
+                assertWithMessage("started user %s on display %s", otherUserId, displayId)
+                        .that(started)
+                        .isFalse();
+            }
+        });
     }
 
-    @FlakyTest(bugId = 242364454)
     @ApiTest(apis = {"android.app.ActivityManager#startUserInBackgroundOnSecondaryDisplay"})
-    // TODO(b/240281790): should be @RequireRunOnDefaultUser instead of @RequireRunOnPrimaryUser
-    @RequireRunOnPrimaryUser(switchedToUser = TRUE)
+    @RequireRunOnInitialUser
     @EnsureHasSecondaryUser(switchedToUser = FALSE)
     @Test
     public void testStartUserInBackgroundOnSecondaryDisplay_mainDisplay() {
@@ -321,27 +354,29 @@ public final class MultipleUsersOnMultipleDisplaysTest {
     }
 
     /**
-     * Starts a new user in background in on secondary display and run a test on it.
+     * Creates and starts a new user in background in on secondary display and run a test on it.
      *
      * @param test to be run
      */
     private void runTestOnSecondaryDisplay(BackgroundUserOnSecondaryDisplayTester test) {
-        UserReference user = sDeviceState.secondaryUser();
-        int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
-        startBackgroundUserOnSecondaryDisplay(user, displayId);
-        try {
-            TestApp testApp = sDeviceState.testApps().any();
-            try (TestAppInstance instance = testApp.install(user)) {
-                test.run(user, displayId, instance);
-            }
-        } finally {
-            user.stop();
-        }
+        Log.d(TAG, "Creating bg user");
+        try (UserReference user = TestApis.users().createUser().name("childless_user").create()) {
+            int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
+            startBackgroundUserOnSecondaryDisplay(user, displayId);
+            try {
+                TestApp testApp = sDeviceState.testApps().any();
+                try (TestAppInstance instance = testApp.install(user)) {
+                    test.run(user, displayId, instance);
+                }
+            } finally {
+                user.stop();
+            } // startBackgroundUserOnSecondaryDisplay(user)
+        } // new user
     }
 
     /**
-     * Starts a new user (which has a profile) in background on a secondary display and run a test
-     * on it.
+     * Creats and starts a new user (with a profile) in background on a secondary display and run a
+     *  test on it.
      *
      * @param test to be run
      */
@@ -425,7 +460,8 @@ public final class MultipleUsersOnMultipleDisplaysTest {
     private boolean tryToStartBackgroundUserOnSecondaryDisplay(int userId, int displayId) {
         Log.d(TAG, "tryToStartBackgroundUserOnSecondaryDisplay(): user=" + userId + ", display="
                 + displayId);
-        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
+        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation,
+                INTERACT_ACROSS_USERS)) {
             boolean started = sContext.getSystemService(ActivityManager.class)
                     .startUserInBackgroundOnSecondaryDisplay(userId, displayId);
             Log.d(TAG, "Returning started=" + started);

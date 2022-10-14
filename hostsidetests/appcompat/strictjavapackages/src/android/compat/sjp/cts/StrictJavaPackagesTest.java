@@ -1072,7 +1072,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 LegacyExemptAndroidxSharedLibsNamesToClasses =
                 new ImmutableMap.Builder<String, ImmutableSet<String>>()
                 .put("androidx.camera.extensions.impl",
-                    ImmutableSet.of("Landroidx/camera/extensions/impl/"))
+                    ImmutableSet.of("Landroidx/camera/extensions/impl/",
+                    "Landroidx/camera/extensions/impl/advanced/", "Landroidx/annotation"))
                 .put("androidx.window.extensions",
                     ImmutableSet.of("Landroidx/window/common/", "Landroidx/window/extensions/",
                         "Landroidx/window/util/"))

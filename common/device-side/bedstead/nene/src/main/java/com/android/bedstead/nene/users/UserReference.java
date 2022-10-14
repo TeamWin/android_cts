@@ -447,7 +447,7 @@ public final class UserReference implements AutoCloseable {
      * {@link #setPassword}
      */
     public boolean hasPassword() {
-        return hasLockCredential() && mLockType.equals(TYPE_PASSWORD);
+        return hasLockCredential() && TYPE_PASSWORD.equals(mLockType);
     }
 
     /**
@@ -457,7 +457,7 @@ public final class UserReference implements AutoCloseable {
      * {@link #setPin}
      */
     public boolean hasPin() {
-        return hasLockCredential() && mLockType.equals(TYPE_PIN);
+        return hasLockCredential() && TYPE_PIN.equals(mLockType);
     }
 
     /**
@@ -467,7 +467,7 @@ public final class UserReference implements AutoCloseable {
      * {@link #setPattern}
      */
     public boolean hasPattern() {
-        return hasLockCredential() && mLockType.equals(TYPE_PATTERN);
+        return hasLockCredential() && TYPE_PATTERN.equals(mLockType);
     }
 
     /**
@@ -619,7 +619,7 @@ public final class UserReference implements AutoCloseable {
      * (regardless off the calling method) this will return {@code null}
      */
     private @Nullable String lockCredential(String lockType) {
-        if (hasLockCredential() && !mLockType.equals(lockType)) {
+        if (hasLockCredential() && !lockType.equals(mLockType)) {
             String lockTypeSentenceCase = Character.toUpperCase(lockType.charAt(0))
                     + lockType.substring(1);
             throw new NeneException(lockType + " not set, as set" + lockTypeSentenceCase + "() has "

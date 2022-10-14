@@ -27,13 +27,16 @@ import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentFilter
 import android.content.pm.PackageInstaller
+import android.content.pm.PackageInstaller.EXTRA_PRE_APPROVAL
 import android.content.pm.PackageInstaller.EXTRA_STATUS
 import android.content.pm.PackageInstaller.EXTRA_STATUS_MESSAGE
+import android.content.pm.PackageInstaller.PreapprovalDetails
 import android.content.pm.PackageInstaller.STATUS_FAILURE_INVALID
 import android.content.pm.PackageInstaller.STATUS_PENDING_USER_ACTION
 import android.content.pm.PackageInstaller.Session
 import android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL
 import android.content.pm.PackageManager
+import android.icu.util.ULocale
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.Until
@@ -62,6 +65,9 @@ open class PackageInstallerTestBase {
 
         const val TEST_APK_NAME = "CtsEmptyTestApp.apk"
         const val TEST_APK_NAME_PL = "CtsEmptyTestApp_pl.apk"
+        const val TEST_APP_LABEL = "Empty Test App"
+        const val TEST_APP_LABEL_PL = "Empty Test App Polish"
+        const val TEST_FAKE_APP_LABEL = "Fake Test App"
         const val TEST_APK_PACKAGE_NAME = "android.packageinstaller.emptytestapp.cts"
         const val TEST_APK_LOCATION = "/data/local/tmp/cts/packageinstaller"
 
@@ -95,6 +101,7 @@ open class PackageInstallerTestBase {
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val status = intent.getIntExtra(EXTRA_STATUS, STATUS_FAILURE_INVALID)
+            val preapproval = intent.getBooleanExtra(EXTRA_PRE_APPROVAL, false /* defaultValue */)
             val msg = intent.getStringExtra(EXTRA_STATUS_MESSAGE)
             Log.d(TAG, "status: $status, msg: $msg")
 
@@ -104,8 +111,7 @@ open class PackageInstallerTestBase {
                 installDialogStarter.activity.startActivityForResult(activityIntent)
             }
 
-            // TODO(b/242677131): using EXTRA_PRE_APPROVAL from intent instead of hardcoding here.
-            installSessionResult.offer(SessionResult(status, false /* preapproval */))
+            installSessionResult.offer(SessionResult(status, preapproval))
         }
     }
 
@@ -166,7 +172,7 @@ open class PackageInstallerTestBase {
         return startInstallationViaSession(0 /* installFlags */, TEST_APK_NAME, packageSource)
     }
 
-    private fun createSession(
+    protected fun createSession(
         installFlags: Int,
         isMultiPackage: Boolean,
         packageSource: Int?
@@ -190,7 +196,7 @@ open class PackageInstallerTestBase {
         return Pair(sessionId, session)
     }
 
-    private fun writeSession(session: Session, apkName: String) {
+    protected fun writeSession(session: Session, apkName: String) {
         val apkFile = File(context.filesDir, apkName)
         // Write data to session
         apkFile.inputStream().use { fileOnDisk ->
@@ -215,6 +221,31 @@ open class PackageInstallerTestBase {
         Assert.assertEquals(false, result.preapproval)
 
         return dialog
+    }
+
+    protected fun startRequestUserPreapproval(
+        session: Session,
+        details: PreapprovalDetails,
+        expectedPrompt: Boolean = true
+    ) {
+        // In some abnormal cases, passing expectedPrompt as false to return immediately without
+        // waiting for timeout (60 secs).
+        if (!expectedPrompt) { requestSession(session, details); return }
+
+        FutureResultActivity.doAndAwaitStart {
+            requestSession(session, details)
+        }
+
+        // The system should have asked us to launch the installer
+        val result = getInstallSessionResult()
+        Assert.assertEquals(STATUS_PENDING_USER_ACTION, result.status)
+        Assert.assertEquals(true, result.preapproval)
+    }
+
+    private fun requestSession(session: Session, details: PreapprovalDetails) {
+        val pendingIntent = PendingIntent.getBroadcast(context, 0 /* requestCode */,
+                Intent(INSTALL_ACTION_CB), FLAG_UPDATE_CURRENT or FLAG_MUTABLE)
+        session.requestUserPreapproval(details, pendingIntent.intentSender)
     }
 
     protected fun startInstallationViaSession(
@@ -257,6 +288,12 @@ open class PackageInstallerTestBase {
         intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
 
         return installDialogStarter.activity.startActivityForResult(intent)
+    }
+
+    protected fun startInstallationViaPreapprovalSession(session: Session) {
+        val pendingIntent = PendingIntent.getBroadcast(context, 0 /* requestCode */,
+                Intent(INSTALL_ACTION_CB), FLAG_UPDATE_CURRENT or FLAG_MUTABLE)
+        session.commit(pendingIntent.intentSender)
     }
 
     fun assertInstalled() {
@@ -314,11 +351,40 @@ open class PackageInstallerTestBase {
         uiDevice.executeShellCommand("pm uninstall $TEST_APK_PACKAGE_NAME")
     }
 
+    fun installTestPackage() {
+        uiDevice.executeShellCommand("pm install " +
+                File(TEST_APK_LOCATION, TEST_APK_NAME).canonicalPath)
+    }
+
     fun assumeNotWatch() {
         assumeFalse("Installing APKs not supported on watch", hasFeatureWatch())
     }
 
     private fun hasFeatureWatch(): Boolean {
         return pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
+    }
+
+    protected fun preparePreapprovalDetails(): PreapprovalDetails {
+        return preparePreapprovalDetails(TEST_APP_LABEL, ULocale.US, TEST_APK_PACKAGE_NAME)
+    }
+
+    protected fun preparePreapprovalDetailsInPl(): PreapprovalDetails {
+        return preparePreapprovalDetails(TEST_APP_LABEL_PL, ULocale("pl"), TEST_APK_PACKAGE_NAME)
+    }
+
+    protected fun prepareWrongPreapprovalDetails(): PreapprovalDetails {
+        return preparePreapprovalDetails(TEST_FAKE_APP_LABEL, ULocale.US, TEST_APK_PACKAGE_NAME)
+    }
+
+    private fun preparePreapprovalDetails(
+        appLabel: String,
+        locale: ULocale,
+        appPackageName: String
+    ): PreapprovalDetails {
+        return PreapprovalDetails.Builder()
+                .setLabel(appLabel)
+                .setLocale(locale)
+                .setPackageName(appPackageName)
+                .build()
     }
 }

@@ -19,7 +19,6 @@ package android.companion.cts.uiautomation
 import android.companion.CompanionDeviceManager.REASON_CANCELED
 import android.companion.cts.common.CompanionActivity
 import android.companion.cts.common.RecordingCallback.OnFailure
-import android.companion.cts.uicommon.UiAutomationTestBase
 import android.os.SystemClock
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4

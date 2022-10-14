@@ -114,6 +114,7 @@ public class LoginActivityTest
 
         final LoginActivity activity = launchActivity();
         watcher.waitFor(RESUMED);
+        final int taskId = activity.getTaskId();
 
         activity.finish();
         watcher.waitFor(DESTROYED);
@@ -125,8 +126,8 @@ public class LoginActivityTest
 
         final ComponentName name = activity.getComponentName();
         service.assertThat()
-                .activityResumed(name)
-                .activityPaused(name);
+                .activityResumed(name, taskId)
+                .activityPaused(name, taskId);
     }
 
     @Test

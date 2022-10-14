@@ -160,6 +160,17 @@ public class InstrumentationTest {
     }
 
     @Test
+    public void testChainedInstrumentation() throws Exception {
+        final String testPkg1 = "com.android.test.cantsavestate1";
+        final String testPkg2 = "com.android.test.cantsavestate2";
+        String cmd = "am instrument -w android.app.cts/.ChainedInstrumentationFirst";
+        String result = SystemUtil.runShellCommand(mInstrumentation, cmd);
+        assertEquals("INSTRUMENTATION_RESULT: " + testPkg1 + "=true"
+                + "\nINSTRUMENTATION_RESULT: " + testPkg2 + "=true"
+                + "\nINSTRUMENTATION_CODE: -1\n", result);
+    }
+
+    @Test
     public void testMonitor() throws Exception {
         if (mActivity != null)
             mActivity.finish();

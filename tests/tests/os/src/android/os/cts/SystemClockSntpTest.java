@@ -16,12 +16,12 @@
 
 package android.os.cts;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
+import android.app.time.cts.shell.DeviceShellCommandExecutor;
+import android.app.time.cts.shell.device.InstrumentationShellCommandExecutor;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Range;
@@ -29,7 +29,7 @@ import android.util.Range;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.ThrowingRunnable;
+import com.android.compatibility.common.util.ThrowingSupplier;
 
 import org.junit.After;
 import org.junit.Before;
@@ -59,7 +59,7 @@ public class SystemClockSntpTest {
     private static long MOCKED_NTP_TIMESTAMP = 1444943313581L;
     private static long TEST_NTP_TIMEOUT_MILLIS = 300L;
 
-    private SntpTestServer mServer;
+    private DeviceShellCommandExecutor mShellCommandExecutor;
     private Instant mSetupInstant;
     private long mSetupElapsedRealtimeMillis;
 
@@ -67,10 +67,12 @@ public class SystemClockSntpTest {
     public void setUp() {
         mSetupInstant = Instant.now();
         mSetupElapsedRealtimeMillis = SystemClock.elapsedRealtime();
+        mShellCommandExecutor = new InstrumentationShellCommandExecutor(
+                InstrumentationRegistry.getInstrumentation().getUiAutomation());
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
         // Restore NTP server configuration.
         executeShellCommand("cmd network_time_update_service reset_server_config_for_tests");
         // Clear any stored fake NTP time that may have been introduced by tests.
@@ -105,10 +107,10 @@ public class SystemClockSntpTest {
     public void testCurrentNetworkTimeClock() throws Exception {
         // Start a local SNTP test server. But does not setup a fake response.
         // So the server will not reply to any request.
-        runWithShellPermissionIdentity(() -> mServer = new SntpTestServer());
+        SntpTestServer server = runWithShellPermissionIdentity(SntpTestServer::new);
 
         // Write test server address into temporary config.
-        URI uri = new URI("ntp", null, mServer.getAddress().getHostAddress(), mServer.getPort(),
+        URI uri = new URI("ntp", null, server.getAddress().getHostAddress(), server.getPort(),
                 null, null, null);
         executeShellCommand(
                 "cmd network_time_update_service set_server_config_for_tests --server " + uri
@@ -128,7 +130,7 @@ public class SystemClockSntpTest {
         assertThrows(DateTimeException.class, () -> SystemClock.currentNetworkTimeClock().millis());
 
         // Setup fake responses (Refer to SntpClientTest). And trigger NTP refresh.
-        mServer.setServerReply(HexEncoding.decode(MOCKED_NTP_RESPONSE));
+        server.setServerReply(HexEncoding.decode(MOCKED_NTP_RESPONSE));
 
         // After force_refresh, network_time_update_service should have associated
         // MOCKED_NTP_TIMESTAMP with an elapsedRealtime() value between
@@ -152,7 +154,7 @@ public class SystemClockSntpTest {
                 afterRefreshElapsedMillis);
 
         // Remove fake server response and trigger NTP refresh to simulate a failed refresh.
-        mServer.setServerReply(null);
+        server.setServerReply(null);
         executeShellCommandAndAssertOutput(
                 "cmd network_time_update_service force_refresh", "false");
 
@@ -161,24 +163,24 @@ public class SystemClockSntpTest {
                 afterRefreshElapsedMillis);
     }
 
-    private static void executeShellCommand(String command) {
+    private void executeShellCommand(String command) throws Exception {
         executeShellCommandAndAssertOutput(command, null);
     }
 
-    private static void executeShellCommandAndAssertOutput(
-            String command, String expectedOutput) {
-        final String trimmedResult = runShellCommand(command).trim();
+    private void executeShellCommandAndAssertOutput(
+            String command, String expectedOutput) throws Exception {
+        final String trimmedResult = mShellCommandExecutor.executeToTrimmedString(command);
         if (expectedOutput != null) {
             assertEquals(expectedOutput, trimmedResult);
         }
     }
 
-    private static void runWithShellPermissionIdentity(ThrowingRunnable command)
+    private static <T> T runWithShellPermissionIdentity(ThrowingSupplier<T> command)
             throws Exception {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity();
         try {
-            command.run();
+            return command.get();
         } finally {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();

@@ -41,6 +41,7 @@ android_test {
         "modules-utils-build_system",
         "platformprotosnano",
         "safety-center-internal-data",
+        "device-time-shell-utils",
     ],
     jni_uses_platform_apis: true,
     jni_libs: [

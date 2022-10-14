@@ -53,9 +53,20 @@ public class GnssCapabilitiesTest {
         builder.setHasMeasurementCorrectionsLosSats(true);
         builder.setHasMeasurementCorrectionsReflectingPlane(true);
         builder.setHasMeasurementCorrelationVectors(true);
+        builder.setHasMsa(true);
+        builder.setHasMsb(true);
         builder.setHasNavigationMessages(true);
+        builder.setHasOnDemandTime(true);
+        builder.setHasPowerTotal(true);
+        builder.setHasPowerSinglebandAcquisition(true);
+        builder.setHasPowerMultibandAcquisition(true);
+        builder.setHasPowerSinglebandTracking(true);
+        builder.setHasPowerMultibandTracking(true);
+        builder.setHasPowerOtherModes(true);
         builder.setHasSatelliteBlocklist(true);
         builder.setHasSatellitePvt(true);
+        builder.setHasScheduling(true);
+        builder.setHasSingleShot(true);
         return builder.build();
     }
 
@@ -70,8 +81,19 @@ public class GnssCapabilitiesTest {
         assertEquals(true, gnssCapabilities.hasMeasurementCorrectionsLosSats());
         assertEquals(true, gnssCapabilities.hasMeasurementCorrectionsReflectingPlane());
         assertEquals(true, gnssCapabilities.hasMeasurementCorrelationVectors());
+        assertEquals(true, gnssCapabilities.hasMsa());
+        assertEquals(true, gnssCapabilities.hasMsb());
         assertEquals(true, gnssCapabilities.hasNavigationMessages());
+        assertEquals(true, gnssCapabilities.hasOnDemandTime());
+        assertEquals(true, gnssCapabilities.hasPowerTotal());
+        assertEquals(true, gnssCapabilities.hasPowerSinglebandAcquisition());
+        assertEquals(true, gnssCapabilities.hasPowerMultibandAcquisition());
+        assertEquals(true, gnssCapabilities.hasPowerSinglebandTracking());
+        assertEquals(true, gnssCapabilities.hasPowerMultibandTracking());
+        assertEquals(true, gnssCapabilities.hasPowerOtherModes());
         assertEquals(true, gnssCapabilities.hasSatelliteBlocklist());
         assertEquals(true, gnssCapabilities.hasSatellitePvt());
+        assertEquals(true, gnssCapabilities.hasScheduling());
+        assertEquals(true, gnssCapabilities.hasSingleShot());
     }
 }

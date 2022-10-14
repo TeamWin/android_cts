@@ -165,6 +165,9 @@ public @interface EnterprisePolicy {
     /** A policy that can be applied by a financed device owner. */
     int APPLIED_BY_FINANCED_DEVICE_OWNER = 1 << 20;
 
+    /** A policy that has not yet been migrated to allow for DPM Role holder access. */
+    int CANNOT_BE_APPLIED_BY_ROLE_HOLDER = 1 << 21;
+
     /** Flags indicating DPC states which can set the policy. */
     int[] dpc() default {};
 

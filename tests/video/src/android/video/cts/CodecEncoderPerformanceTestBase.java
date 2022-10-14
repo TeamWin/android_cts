@@ -24,26 +24,38 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
+import android.util.Log;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 class CodecEncoderPerformanceTestBase extends CodecPerformanceTestBase {
     private static final String LOG_TAG = CodecEncoderPerformanceTest.class.getSimpleName();
     private static final Map<String, Float> transcodeAVCToTargetBitrateMap = new HashMap<>();
+    private static final boolean ENABLE_LOGS = false;
 
     final String mEncoderMime;
     final String mEncoderName;
     final int mBitrate;
     double mAchievedFps;
+    boolean mIsAsync;
+    int mMaxBFrames;
 
     private boolean mSawEncInputEOS = false;
     private boolean mSawEncOutputEOS = false;
     private int mEncOutputNum = 0;
     private MediaCodec mEncoder;
     private MediaFormat mEncoderFormat;
+    private boolean mIsCodecInAsyncMode;
+
+    private final Lock mLock = new ReentrantLock();
+    private final Condition mCondition = mLock.newCondition();
 
     // Suggested bitrate scaling factors for transcoding avc to target format.
     static {
@@ -59,11 +71,14 @@ class CodecEncoderPerformanceTestBase extends CodecPerformanceTestBase {
     }
 
     public CodecEncoderPerformanceTestBase(String decoderName, String testFile, String encoderMime,
-            String encoderName, int bitrate, int keyPriority, float scalingFactor) {
+            String encoderName, int bitrate, int keyPriority, float scalingFactor,
+            boolean isAsync, int maxBFrames) {
         super(decoderName, testFile, keyPriority, scalingFactor);
         mEncoderMime = encoderMime;
         mEncoderName = encoderName;
         mBitrate = bitrate;
+        mIsAsync = isAsync;
+        mMaxBFrames = maxBFrames;
     }
 
     static ArrayList<String> getMimesOfAvailableHardwareVideoEncoders() {
@@ -140,36 +155,51 @@ class CodecEncoderPerformanceTestBase extends CodecPerformanceTestBase {
         }
         mEncoderFormat.setInteger(MediaFormat.KEY_COMPLEXITY,
                 getEncoderMinComplexity(mEncoderName, mEncoderMime));
+        mEncoderFormat.setInteger(MediaFormat.KEY_MAX_B_FRAMES, mMaxBFrames);
     }
 
-    private void doWork() {
-        while (!mSawEncOutputEOS) {
-            if (!mSawDecInputEOS) {
-                int inputBufIndex = mDecoder.dequeueInputBuffer(Q_DEQ_TIMEOUT_US);
-                if (inputBufIndex >= 0) {
-                    enqueueDecoderInput(inputBufIndex);
+    private void doWork() throws InterruptedException {
+        if (mIsCodecInAsyncMode) {
+            while (!mSawEncOutputEOS) {
+                mLock.lock();
+                while (!mSawDecOutputEOS) {
+                    mCondition.await();
+                }
+                mLock.unlock();
+                if (!mSawEncInputEOS) {
+                    mEncoder.signalEndOfInputStream();
+                    mSawEncInputEOS = true;
                 }
             }
-            if (!mSawDecOutputEOS) {
-                MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-                int outputBufIndex = mDecoder.dequeueOutputBuffer(info, Q_DEQ_TIMEOUT_US);
-                if (outputBufIndex >= 0) {
-                    dequeueDecoderOutput(outputBufIndex, info, true);
+        } else {
+            while (!mSawEncOutputEOS) {
+                if (!mSawDecInputEOS) {
+                    int inputBufIndex = mDecoder.dequeueInputBuffer(Q_DEQ_TIMEOUT_US);
+                    if (inputBufIndex >= 0) {
+                        enqueueDecoderInput(inputBufIndex);
+                    }
                 }
-            }
-            if (mSawDecOutputEOS && !mSawEncInputEOS) {
-                mEncoder.signalEndOfInputStream();
-                mSawEncInputEOS = true;
-            }
-            MediaCodec.BufferInfo outInfo = new MediaCodec.BufferInfo();
-            int outputBufferId = mEncoder.dequeueOutputBuffer(outInfo, Q_DEQ_TIMEOUT_US);
-            if (outputBufferId >= 0) {
-                dequeueEncoderOutput(outputBufferId, outInfo);
+                if (!mSawDecOutputEOS) {
+                    MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+                    int outputBufIndex = mDecoder.dequeueOutputBuffer(info, Q_DEQ_TIMEOUT_US);
+                    if (outputBufIndex >= 0) {
+                        dequeueDecoderOutput(outputBufIndex, info, true);
+                    }
+                }
+                if (mSawDecOutputEOS && !mSawEncInputEOS) {
+                    mEncoder.signalEndOfInputStream();
+                    mSawEncInputEOS = true;
+                }
+                MediaCodec.BufferInfo outInfo = new MediaCodec.BufferInfo();
+                int outputBufferId = mEncoder.dequeueOutputBuffer(outInfo, Q_DEQ_TIMEOUT_US);
+                if (outputBufferId > 0) {
+                    dequeueEncoderOutput(outputBufferId, outInfo);
+                }
             }
         }
     }
 
-    public void encode() throws IOException {
+    public void encode() throws IOException, InterruptedException {
         MediaFormat format = setUpDecoderInput();
         assertNotNull("Video track not present in " + mTestFile, format);
 
@@ -183,11 +213,7 @@ class CodecEncoderPerformanceTestBase extends CodecPerformanceTestBase {
         setUpFormats(format);
         mDecoder = MediaCodec.createByCodecName(mDecoderName);
         mEncoder = MediaCodec.createByCodecName(mEncoderName);
-        mEncoder.configure(mEncoderFormat, null, MediaCodec.CONFIGURE_FLAG_ENCODE, null);
-        mSurface = mEncoder.createInputSurface();
-        assertTrue("Surface created is null.", mSurface != null);
-        assertTrue("Surface is not valid", mSurface.isValid());
-        mDecoder.configure(mDecoderFormat, mSurface, null, 0);
+        configureCodec(mIsAsync);
         mDecoder.start();
         mEncoder.start();
         long start = System.currentTimeMillis();
@@ -202,6 +228,106 @@ class CodecEncoderPerformanceTestBase extends CodecPerformanceTestBase {
         mDecoder = null;
         assertTrue("Encoder output count is zero", mEncOutputNum > 0);
         mAchievedFps = mEncOutputNum / ((finish - start) / 1000.0);
+    }
+
+    void configureCodec(boolean isAsync) {
+        resetContext(isAsync);
+
+        if (isAsync) {
+            mEncoder.setCallback(new MediaCodec.Callback() {
+                @Override
+                public void onInputBufferAvailable(MediaCodec codec, int index) {
+                }
+
+                @Override
+                public void onOutputBufferAvailable(MediaCodec codec, int index,
+                        MediaCodec.BufferInfo info) {
+                    if (info.size > 0 && (info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
+                        mEncOutputNum++;
+                    }
+                    codec.releaseOutputBuffer(index, false);
+                    if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                        mSawEncOutputEOS = true;
+                    }
+                }
+
+                @Override
+                public void onError(MediaCodec codec, MediaCodec.CodecException e) {
+                }
+
+                @Override
+                public void onOutputFormatChanged(MediaCodec codec, MediaFormat format) {
+                }
+            });
+        }
+        mEncoder.configure(mEncoderFormat, null, MediaCodec.CONFIGURE_FLAG_ENCODE, null);
+
+        mSurface = mEncoder.createInputSurface();
+        assertTrue("Surface created is null.", mSurface != null);
+        assertTrue("Surface is not valid", mSurface.isValid());
+
+        if (isAsync) {
+            mDecoder.setCallback(new MediaCodec.Callback() {
+                @Override
+                public void onInputBufferAvailable(MediaCodec codec, int index) {
+                    if (index >= 0) {
+                        if (mSampleIndex <= MIN_FRAME_COUNT) {
+                            MediaCodec.BufferInfo info = mBufferInfos.get(mSampleIndex++);
+                            if (info.size > 0
+                                    && (info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
+                                ByteBuffer dstBuf = mDecoder.getInputBuffer(index);
+                                dstBuf.put(mBuff.array(), info.offset, info.size);
+                                mDecInputNum++;
+                            }
+                            codec.queueInputBuffer(index, 0, info.size, info.presentationTimeUs,
+                                    info.flags);
+                            if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                                mSawDecInputEOS = true;
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void onOutputBufferAvailable(MediaCodec codec, int index,
+                        MediaCodec.BufferInfo info) {
+                    if (index >= 0) {
+                        if (info.size > 0) {
+                            mDecOutputNum++;
+                        }
+                        codec.releaseOutputBuffer(index, true);
+                        if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                            mSawDecOutputEOS = true;
+                        }
+                        if (mSawDecOutputEOS) {
+                            mLock.lock();
+                            mCondition.signal();
+                            mLock.unlock();
+                        }
+                    }
+                }
+
+                @Override
+                public void onError(MediaCodec codec, MediaCodec.CodecException e) {
+                }
+
+                @Override
+                public void onOutputFormatChanged(MediaCodec codec, MediaFormat format) {
+                }
+            });
+        }
+        mDecoder.configure(mDecoderFormat, mSurface, null, 0);
+
+        if (ENABLE_LOGS) {
+            Log.v(LOG_TAG, "codec configured");
+        }
+    }
+
+    void resetContext(boolean isAsync) {
+        mIsCodecInAsyncMode = isAsync;
+        mDecInputNum = 0;
+        mDecOutputNum = 0;
+        mEncOutputNum = 0;
     }
 
     @Override

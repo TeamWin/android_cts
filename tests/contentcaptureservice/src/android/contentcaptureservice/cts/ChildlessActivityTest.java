@@ -185,6 +185,8 @@ public class ChildlessActivityTest
         // Launch 1st activity
         final ChildlessActivity activity1 = launchActivity();
         watcher1.waitFor(RESUMED);
+        // The task id will be -1 if the Activity is finished
+        final int taskId1 = activity1.getTaskId();
 
         // Launch and finish 2nd activity
         final ActivityLauncher<LoginActivity> anotherActivityLauncher = new ActivityLauncher<>(
@@ -193,6 +195,7 @@ public class ChildlessActivityTest
         final LoginActivity activity2 = anotherActivityLauncher.launchActivity();
 
         watcher2.waitFor(RESUMED);
+        final int taskId2 = activity2.getTaskId();
         activity2.finish();
         watcher2.waitFor(DESTROYED);
 
@@ -204,12 +207,12 @@ public class ChildlessActivityTest
         final ComponentName name1 = activity1.getComponentName();
         final ComponentName name2 = activity2.getComponentName();
         service.assertThat()
-            .activityResumed(name1)
-            .activityPaused(name1)
-            .activityResumed(name2)
-            .activityPaused(name2)
-            .activityResumed(name1)
-            .activityPaused(name1);
+            .activityResumed(name1, taskId1)
+            .activityPaused(name1, taskId1)
+            .activityResumed(name2, taskId2)
+            .activityPaused(name2, taskId2)
+            .activityResumed(name1, taskId1)
+            .activityPaused(name1, taskId1);
 
         // Assert the sessions
         final List<ContentCaptureSessionId> sessionIds = service.getAllSessionIds();

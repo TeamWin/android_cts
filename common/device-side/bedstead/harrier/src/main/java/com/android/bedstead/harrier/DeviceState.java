@@ -17,6 +17,7 @@
 package com.android.bedstead.harrier;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.os.Build.VERSION.SDK_INT;
 
 import static com.android.bedstead.harrier.Defaults.DEFAULT_PASSWORD;
@@ -335,9 +336,9 @@ public final class DeviceState extends HarrierRule {
 
     private void applyAnnotations(List<Annotation> annotations, boolean isTest)
             throws Throwable {
-        Log.i(LOG_TAG, "Applying annotations: " + annotations);
+        Log.d(LOG_TAG, "Applying annotations: " + annotations);
         for (Annotation annotation : annotations) {
-            Log.i(LOG_TAG, "Applying annotation " + annotation);
+            Log.v(LOG_TAG, "Applying annotation " + annotation);
 
             Class<? extends Annotation> annotationType = annotation.annotationType();
 
@@ -1566,6 +1567,11 @@ public final class DeviceState extends HarrierRule {
                 TestApis.users().findProfileOfType(resolvedUserType, forUserReference);
         if (profile == null) {
             if (profileType.equals(MANAGED_PROFILE_TYPE_NAME)) {
+                // TODO(b/239961027): either remove this check (once tests on UserManagerTest /
+                // MultipleUsersOnMultipleDisplaysTest uses non-work profiles) or add a unit test
+                // for it on DeviceStateTest
+                requireFeature(FEATURE_MANAGED_USERS, FailureMode.SKIP);
+
                 // DO + work profile isn't a valid state
                 ensureHasNoDeviceOwner();
             }

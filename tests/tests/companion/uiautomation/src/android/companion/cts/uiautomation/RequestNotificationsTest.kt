@@ -17,7 +17,6 @@
 package android.companion.cts.uiautomation
 
 import android.companion.cts.common.MAC_ADDRESS_A
-import android.companion.cts.uicommon.UiAutomationTestBase
 import android.content.ComponentName
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
