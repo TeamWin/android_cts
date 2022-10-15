@@ -429,7 +429,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.server.wm.WindowInputTests$TestActivity" />
+        <activity android:name="android.server.wm.WindowInputTests$TestActivity"
+            android:theme="@style/no_starting_window" />
 
         <activity android:name="android.server.wm.ActivityRecordInputSinkTestsActivity"
             android:theme="@android:style/Theme.Material.NoActionBar"

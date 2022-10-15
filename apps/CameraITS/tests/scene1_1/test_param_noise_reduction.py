@@ -46,7 +46,7 @@ class ParamNoiseReductionTest(its_base_test.ItsBaseTest):
 
   Capture images with the camera dimly lit.
 
-  Capture images with low gain and noise redcution off, and use the
+  Capture images with low gain and noise reduction off, and use the
   variance of these captures as the baseline.
 
   Use high analog gain on remaining tests to ensure captured images are noisy.
@@ -62,6 +62,7 @@ class ParamNoiseReductionTest(its_base_test.ItsBaseTest):
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
       log_path = self.log_path
+      name_with_log_path = os.path.join(log_path, NAME)
 
       # check SKIP conditions
       camera_properties_utils.skip_unless(
@@ -85,7 +86,7 @@ class ParamNoiseReductionTest(its_base_test.ItsBaseTest):
       cap = cam.do_capture(req)
       rgb_image = image_processing_utils.convert_capture_to_rgb_image(cap)
       image_processing_utils.write_image(
-          rgb_image, '%s_low_gain.jpg' % os.path.join(log_path, NAME))
+          rgb_image, f'{name_with_log_path}_low_gain.jpg')
       rgb_patch = image_processing_utils.get_image_patch(
           rgb_image, PATCH_X, PATCH_Y, PATCH_W, PATCH_H)
       ref_snr = image_processing_utils.compute_image_snrs(rgb_patch)
@@ -112,8 +113,7 @@ class ParamNoiseReductionTest(its_base_test.ItsBaseTest):
             nr_modes_reported.append(
                 cap['metadata']['android.noiseReduction.mode'])
             image_processing_utils.write_image(
-                rgb_image, '%s_high_gain_nr=%d.jpg' % (
-                    os.path.join(log_path, NAME), mode))
+                rgb_image, f'{name_with_log_path}_high_gain_nr={mode}.jpg')
           rgb_patch = image_processing_utils.get_image_patch(
               rgb_image, PATCH_X, PATCH_Y, PATCH_W, PATCH_H)
           rgb_snrs = image_processing_utils.compute_image_snrs(rgb_patch)
@@ -141,7 +141,7 @@ class ParamNoiseReductionTest(its_base_test.ItsBaseTest):
     pylab.xlabel('Noise Reduction Mode')
     pylab.ylabel('SNR (dB)')
     pylab.xticks(NR_MODES_LIST)
-    matplotlib.pyplot.savefig('%s_plot_SNRs.png' % os.path.join(log_path, NAME))
+    matplotlib.pyplot.savefig(f'{name_with_log_path}_plot_SNRs.png')
 
     if nr_modes_reported != NR_MODES_LIST:
       raise AssertionError(f'{nr_modes_reported} != {NR_MODES_LIST}')

@@ -43,10 +43,8 @@ import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
-import com.android.compatibility.common.util.ProtoUtils
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
-import com.android.server.job.nano.JobSchedulerServiceDumpProto
 import org.junit.After
 import org.junit.Assert
 import org.junit.Assume
@@ -100,7 +98,7 @@ class AccessibilityPrivacySourceTest {
         resetPermissionController()
         // Bypass battery saving restrictions
         runShellCommand("cmd tare set-vip " +
-                "${Process.myUserHandle().identifier} $permissionControllerPackage true")
+            "${Process.myUserHandle().identifier} $permissionControllerPackage true")
         cancelNotifications(permissionControllerPackage)
     }
 
@@ -109,7 +107,7 @@ class AccessibilityPrivacySourceTest {
         cancelNotifications(permissionControllerPackage)
         // Reset battery saving restrictions
         runShellCommand("cmd tare set-vip " +
-                "${Process.myUserHandle().identifier} $permissionControllerPackage default")
+            "${Process.myUserHandle().identifier} $permissionControllerPackage default")
         runWithShellPermissionIdentity { safetyCenterManager?.clearAllSafetySourceDataForTests() }
     }
 
@@ -165,18 +163,22 @@ class AccessibilityPrivacySourceTest {
     @Test
     fun testAccessibilityListenerSendsIssueToSafetyCenter() {
         setDeviceConfigPrivacyProperty(ACCESSIBILITY_LISTENER_ENABLED, true.toString())
-        val automation = getAutomation()
-        mAccessibilityServiceRule.enableService()
-        TestUtils.eventually(
-            {
-                assertSafetyCenterIssueExist(
-                    SC_ACCESSIBILITY_SOURCE_ID,
-                    safetyCenterIssueId,
-                    SC_ACCESSIBILITY_ISSUE_TYPE_ID,
-                    automation)
-            },
-            TIMEOUT_MILLIS)
-        automation.destroy()
+        try {
+            val automation = getAutomation()
+            mAccessibilityServiceRule.enableService()
+            TestUtils.eventually(
+                {
+                    assertSafetyCenterIssueExist(
+                        SC_ACCESSIBILITY_SOURCE_ID,
+                        safetyCenterIssueId,
+                        SC_ACCESSIBILITY_ISSUE_TYPE_ID,
+                        automation)
+                },
+                TIMEOUT_MILLIS)
+            automation.destroy()
+        } finally {
+            setDeviceConfigPrivacyProperty(ACCESSIBILITY_LISTENER_ENABLED, false.toString())
+        }
     }
 
     @Test
@@ -252,25 +254,18 @@ class AccessibilityPrivacySourceTest {
     @Throws(Throwable::class)
     private fun resetPermissionController() {
         PermissionUtils.clearAppState(permissionControllerPackage)
-        val currentUserId = Process.myUserHandle().identifier
-
-        // Wait until jobs are cleared
-        TestUtils.eventually(
-            {
-                val dump = getJobSchedulerDump()
-                for (job in dump!!.registeredJobs) {
-                    if (job.dump.sourceUserId == currentUserId &&
-                        job.dump.sourcePackageName == permissionControllerPackage) {
-                        Assert.assertFalse(
-                            job.dump.jobInfo.service.className.contains("AccessibilityJobService"))
-                    }
-                }
-            },
-            TIMEOUT_MILLIS)
+        TestUtils.awaitJobUntilRequestedState(
+            permissionControllerPackage,
+            ACCESSIBILITY_JOB_ID,
+            TIMEOUT_MILLIS,
+            getAutomation(),
+            "unknown"
+        )
 
         runShellCommand(
             "cmd jobscheduler reset-execution-quota -u " +
                 "${Process.myUserHandle().identifier} $permissionControllerPackage")
+        runShellCommand("cmd jobscheduler reset-schedule-quota")
 
         // Setup up permission controller again (simulate a reboot)
         val permissionControllerSetupIntent =
@@ -294,28 +289,13 @@ class AccessibilityPrivacySourceTest {
                 })
         }
 
-        // Wait until jobs are set up
-        TestUtils.eventually(
-            {
-                val dump = getJobSchedulerDump()
-                for (job in dump!!.registeredJobs) {
-                    if (job.dump.sourceUserId == currentUserId &&
-                        job.dump.sourcePackageName == permissionControllerPackage &&
-                        job.dump.jobInfo.service.className.contains("AccessibilityJobService")) {
-                        return@eventually
-                    }
-                }
-                Assert.fail("accessibility job not found")
-            },
-            TIMEOUT_MILLIS)
-    }
-
-    @Throws(Exception::class)
-    private fun getJobSchedulerDump(): JobSchedulerServiceDumpProto? {
-        return ProtoUtils.getProto(
+        TestUtils.awaitJobUntilRequestedState(
+            permissionControllerPackage,
+            ACCESSIBILITY_JOB_ID,
+            TIMEOUT_MILLIS,
             getAutomation(),
-            JobSchedulerServiceDumpProto::class.java,
-            ProtoUtils.DUMPSYS_JOB_SCHEDULER)
+            "waiting"
+        )
     }
 
     companion object {

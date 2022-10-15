@@ -2906,11 +2906,11 @@ public class RcsUceAdapterTest {
         try {
             // Verify that the caller can received the capabilities callback.
             verifyCapabilities(numbers, getCapabilities(capabilityQueue, numbers.size()),
-                    SOURCE_TYPE_CACHED, REQUEST_RESULT_NOT_FOUND, contactExpectedMedia);
+                    SOURCE_TYPE_NETWORK, REQUEST_RESULT_NOT_FOUND, contactExpectedMedia);
             // Verify the complete callback will be called.
             waitForResult(completeQueue);
             // Verify that the ImsService didn't received the request because the capabilities
-            // should be retrieved from the cache.
+            // should be created from throttling list.
             assertEquals(0, subscribeRequestCount.get());
         } catch (Exception e) {
             fail("testContactsInThrottlingState with command error failed: " + e);
@@ -2952,7 +2952,7 @@ public class RcsUceAdapterTest {
         // Verify that the callback "onError" is called with the expected error code.
         try {
             // Verify that the caller can received the capabilities callback.
-            verifyCapabilityReceived(sTestNumberUri, capabilityQueue, SOURCE_TYPE_CACHED,
+            verifyCapabilityReceived(sTestNumberUri, capabilityQueue, SOURCE_TYPE_NETWORK,
                     REQUEST_RESULT_NOT_FOUND, contactExpectedMedia.get(sTestNumberUri).first,
                     contactExpectedMedia.get(sTestNumberUri).second);
             // Verify the complete callback will be called.
@@ -3119,8 +3119,10 @@ public class RcsUceAdapterTest {
             verifyCapabilities(Collections.singletonList(sTestNumberUri), resultCapList,
                     SOURCE_TYPE_CACHED, REQUEST_RESULT_FOUND, contactExpectedMedia);
 
+            // The capability information is created as a NON RCS with a SOURCE_TYPE_NETWORK
+            // from the throttling list
             verifyCapabilities(Collections.singletonList(sTestContact2Uri), resultCapList,
-                    SOURCE_TYPE_CACHED, REQUEST_RESULT_NOT_FOUND, contactExpectedMedia);
+                    SOURCE_TYPE_NETWORK, REQUEST_RESULT_NOT_FOUND, contactExpectedMedia);
 
             verifyCapabilities(Collections.singletonList(sTestContact3Uri), resultCapList,
                     SOURCE_TYPE_NETWORK, REQUEST_RESULT_FOUND, contactExpectedMedia);

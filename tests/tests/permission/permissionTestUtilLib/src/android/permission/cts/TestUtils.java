@@ -16,14 +16,14 @@
 
 package android.permission.cts;
 
+import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+
 import android.app.UiAutomation;
 import android.os.Process;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
-
-import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Assert;
 
@@ -151,21 +151,30 @@ public class TestUtils {
             UiAutomation automation) {
         String runJobCmd = "cmd jobscheduler run -u " + Process.myUserHandle().getIdentifier()
                 + " -f " + packageName + " " + jobId;
+        try {
+            runShellCommand(automation, runJobCmd);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+        // waiting state is expected after completion for the periodic jobs.
+        awaitJobUntilRequestedState(packageName, jobId, timeout, automation, "waiting");
+    }
+
+    public static void awaitJobUntilRequestedState(
+            String packageName,
+            int jobId,
+            long timeout,
+            UiAutomation automation,
+            String requestedState) {
         String statusCmd = "cmd jobscheduler get-job-state -u "
                 + Process.myUserHandle().getIdentifier() + " " + packageName + " " + jobId;
-
-        SystemUtil.runWithShellPermissionIdentity(automation, () -> {
-            SystemUtil.runShellCommand(automation, runJobCmd);
-            Thread.sleep(500);
-            try {
-                eventually(() -> Assert.assertEquals(
-                        "The job is probably still running",
-                        "waiting",
-                        SystemUtil.runShellCommand(automation, statusCmd).trim()),
-                        timeout);
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
-            }
-        });
+        try {
+            eventually(() -> Assert.assertTrue(
+                    "The job doesn't have requested state " + requestedState + " yet",
+                    runShellCommand(automation, statusCmd).trim().startsWith(requestedState)),
+                    timeout);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
     }
 }

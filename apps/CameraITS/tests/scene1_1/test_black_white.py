@@ -44,7 +44,7 @@ PATCH_Y = 0.45
 VGA_WIDTH, VGA_HEIGHT = 640, 480
 
 
-def do_img_capture(cam, s, e, fmt, latency, cap_name, log_path):
+def do_img_capture(cam, s, e, fmt, latency, cap_name, name_with_log_path):
   """Do the image captures with the defined parameters.
 
   Args:
@@ -54,7 +54,7 @@ def do_img_capture(cam, s, e, fmt, latency, cap_name, log_path):
     fmt: format of request
     latency: number of frames for sync latency of request
     cap_name: string to define the capture
-    log_path: path for plot directory
+    name_with_log_path: NAME with path for plot directory
 
   Returns:
     means values of center patch from capture
@@ -64,7 +64,7 @@ def do_img_capture(cam, s, e, fmt, latency, cap_name, log_path):
   cap = its_session_utils.do_capture_with_latency(cam, req, latency, fmt)
   img = image_processing_utils.convert_capture_to_rgb_image(cap)
   image_processing_utils.write_image(
-      img, '%s_%s.jpg' % (os.path.join(log_path, NAME), cap_name))
+      img, f'{name_with_log_path}_{cap_name}.jpg')
   patch = image_processing_utils.get_image_patch(
       img, PATCH_X, PATCH_Y, PATCH_W, PATCH_H)
   means = image_processing_utils.compute_image_means(patch)
@@ -94,6 +94,7 @@ class BlackWhiteTest(its_base_test.ItsBaseTest):
         hidden_physical_id=self.hidden_physical_id) as cam:
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
+      name_with_log_path = os.path.join(self.log_path, NAME)
 
       # Check SKIP conditions
       camera_properties_utils.skip_unless(
@@ -108,12 +109,12 @@ class BlackWhiteTest(its_base_test.ItsBaseTest):
       fmt = {'format': 'yuv', 'width': VGA_WIDTH, 'height': VGA_HEIGHT}
       expt_range = props['android.sensor.info.exposureTimeRange']
       sens_range = props['android.sensor.info.sensitivityRange']
-      log_path = self.log_path
 
       # Take shot with very low ISO and exp time: expect it to be black
       s = sens_range[0]
       e = expt_range[0]
-      black_means = do_img_capture(cam, s, e, fmt, latency, 'black', log_path)
+      black_means = do_img_capture(
+          cam, s, e, fmt, latency, 'black', name_with_log_path)
       r_means.append(black_means[0])
       g_means.append(black_means[1])
       b_means.append(black_means[2])
@@ -121,7 +122,8 @@ class BlackWhiteTest(its_base_test.ItsBaseTest):
       # Take shot with very high ISO and exp time: expect it to be white.
       s = sens_range[1]
       e = expt_range[1]
-      white_means = do_img_capture(cam, s, e, fmt, latency, 'white', log_path)
+      white_means = do_img_capture(
+          cam, s, e, fmt, latency, 'white', name_with_log_path)
       r_means.append(white_means[0])
       g_means.append(white_means[1])
       b_means.append(white_means[2])
@@ -134,8 +136,7 @@ class BlackWhiteTest(its_base_test.ItsBaseTest):
       pylab.xlabel('Capture Number')
       pylab.ylabel('Output Values [0:255]')
       pylab.ylim([0, 255])
-      matplotlib.pyplot.savefig('%s_plot_means.png' % (
-          os.path.join(log_path, NAME)))
+      matplotlib.pyplot.savefig(f'{name_with_log_path}_plot_means.png')
 
       # Assert blacks below CH_THRESH_BLACK
       for ch, mean in enumerate(black_means):
