@@ -2054,6 +2054,7 @@ class CodecEncoderTestBase extends CodecTestBase {
 
     RawResource mActiveRawRes;
     byte[] mInputData;
+    int mInputBufferReadOffset;
     int mNumBytesSubmitted;
     long mInputOffsetPts;
 
@@ -2066,6 +2067,8 @@ class CodecEncoderTestBase extends CodecTestBase {
     int mMaxBFrames;
     int mChannels;
     int mSampleRate;
+    int mLoopBackFrameLimit;
+    boolean mIsLoopBack;
 
     CodecEncoderTestBase(String encoder, String mime, int[] bitrates, int[] encoderInfo1,
             int[] encoderInfo2, String allTestParams) {
@@ -2135,6 +2138,7 @@ class CodecEncoderTestBase extends CodecTestBase {
     @Override
     void resetContext(boolean isAsync, boolean signalEOSWithLastFrame) {
         super.resetContext(isAsync, signalEOSWithLastFrame);
+        mInputBufferReadOffset = 0;
         mNumBytesSubmitted = 0;
         mInputOffsetPts = 0;
     }
@@ -2172,7 +2176,7 @@ class CodecEncoderTestBase extends CodecTestBase {
         int imageWidth = image.getWidth();
         int imageHeight = image.getHeight();
         Image.Plane[] planes = image.getPlanes();
-        int offset = mNumBytesSubmitted;
+        int offset = mInputBufferReadOffset;
         for (int i = 0; i < planes.length; ++i) {
             ByteBuffer buf = planes[i].getBuffer();
             int width = imageWidth;
@@ -2227,7 +2231,7 @@ class CodecEncoderTestBase extends CodecTestBase {
     }
 
     void fillByteBuffer(ByteBuffer inputBuffer) {
-        int offset = 0, frmOffset = mNumBytesSubmitted;
+        int offset = 0, frmOffset = mInputBufferReadOffset;
         for (int plane = 0; plane < 3; plane++) {
             int width = mWidth;
             int height = mHeight;
@@ -2257,8 +2261,11 @@ class CodecEncoderTestBase extends CodecTestBase {
     }
 
     void enqueueInput(int bufferIndex) {
+        if (mIsLoopBack && mInputBufferReadOffset >= mInputData.length) {
+            mInputBufferReadOffset = 0;
+        }
         ByteBuffer inputBuffer = mCodec.getInputBuffer(bufferIndex);
-        if (mNumBytesSubmitted >= mInputData.length) {
+        if (mInputBufferReadOffset >= mInputData.length) {
             enqueueEOS(bufferIndex);
         } else {
             int size;
@@ -2267,20 +2274,23 @@ class CodecEncoderTestBase extends CodecTestBase {
             if (mIsAudio) {
                 pts += mNumBytesSubmitted * 1000000L / ((long) mBytesPerSample * mChannels
                         * mSampleRate);
-                size = Math.min(inputBuffer.capacity(), mInputData.length - mNumBytesSubmitted);
+                size = Math.min(inputBuffer.capacity(), mInputData.length - mInputBufferReadOffset);
                 assertEquals(0, size % ((long) mBytesPerSample * mChannels));
-                inputBuffer.put(mInputData, mNumBytesSubmitted, size);
-                if (mNumBytesSubmitted + size >= mInputData.length && mSignalEOSWithLastFrame) {
-                    flags |= MediaCodec.BUFFER_FLAG_END_OF_STREAM;
-                    mSawInputEOS = true;
+                inputBuffer.put(mInputData, mInputBufferReadOffset, size);
+                if (mSignalEOSWithLastFrame) {
+                    if (mIsLoopBack ? (mInputCount + 1 >= mLoopBackFrameLimit) :
+                            (mInputBufferReadOffset + size >= mInputData.length)) {
+                        flags |= MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                        mSawInputEOS = true;
+                    }
                 }
-                mNumBytesSubmitted += size;
+                mInputBufferReadOffset += size;
             } else {
                 pts += mInputCount * 1000000L / mFrameRate;
                 size = mBytesPerSample * mWidth * mHeight * 3 / 2;
                 int frmSize = mActiveRawRes.mBytesPerSample * mActiveRawRes.mWidth
                                 * mActiveRawRes.mHeight * 3 / 2;
-                if (mNumBytesSubmitted + frmSize > mInputData.length) {
+                if (mInputBufferReadOffset + frmSize > mInputData.length) {
                     fail("received partial frame to encode \n" + mTestConfig + mTestEnv);
                 } else {
                     Image img = mCodec.getInputImage(bufferIndex);
@@ -2294,12 +2304,16 @@ class CodecEncoderTestBase extends CodecTestBase {
                         }
                     }
                 }
-                if (mNumBytesSubmitted + frmSize >= mInputData.length && mSignalEOSWithLastFrame) {
-                    flags |= MediaCodec.BUFFER_FLAG_END_OF_STREAM;
-                    mSawInputEOS = true;
+                if (mSignalEOSWithLastFrame) {
+                    if (mIsLoopBack ? (mInputCount + 1 >= mLoopBackFrameLimit) :
+                            (mInputBufferReadOffset + frmSize >= mInputData.length)) {
+                        flags |= MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                        mSawInputEOS = true;
+                    }
                 }
-                mNumBytesSubmitted += frmSize;
+                mInputBufferReadOffset += frmSize;
             }
+            mNumBytesSubmitted += size;
             if (ENABLE_LOGS) {
                 Log.v(LOG_TAG, "input: id: " + bufferIndex + " size: " + size + " pts: " + pts +
                         " flags: " + flags);
@@ -2334,6 +2348,12 @@ class CodecEncoderTestBase extends CodecTestBase {
             }
         }
         mCodec.releaseOutputBuffer(bufferIndex, false);
+    }
+
+    @Override
+    void doWork(int frameLimit) throws IOException, InterruptedException {
+        mLoopBackFrameLimit = frameLimit;
+        super.doWork(frameLimit);
     }
 
     @Override

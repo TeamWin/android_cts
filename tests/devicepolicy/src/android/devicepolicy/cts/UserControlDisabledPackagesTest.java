@@ -70,8 +70,6 @@ public final class UserControlDisabledPackagesTest {
 
     private static final ActivityManager sActivityManager =
             TestApis.context().instrumentedContext().getSystemService(ActivityManager.class);
-    private static final PackageManager sPackageManager =
-            TestApis.context().instrumentedContext().getPackageManager();
 
     private static final String PACKAGE_NAME = "com.android.foo.bar.baz";
 
@@ -182,11 +180,12 @@ public final class UserControlDisabledPackagesTest {
                     DPC_COMPONENT_NAME, Arrays.asList(testAppPackageName));
 
             instance.activities().any().start();
+            int processIdBeforeStopping = instance.process().pid();
 
             sActivityManager.forceStopPackage(testAppPackageName);
 
             try {
-                assertPackageNotStopped(testAppPackageName);
+                assertPackageNotStopped(sTestApp.pkg(), processIdBeforeStopping);
             } finally {
                 stopPackage(sTestApp.pkg());
             }
@@ -212,11 +211,12 @@ public final class UserControlDisabledPackagesTest {
                     DPC_COMPONENT_NAME, Arrays.asList(testAppPackageName));
 
             instance.activities().any().start();
+            int processIdBeforeStopping = instance.process().pid();
 
             sActivityManager.forceStopPackage(testAppPackageName);
 
             try {
-                assertPackageStopped(testAppPackageName);
+                assertPackageStopped(sTestApp.pkg(), processIdBeforeStopping);
             } finally {
                 stopPackage(sTestApp.pkg());
             }
@@ -234,30 +234,22 @@ public final class UserControlDisabledPackagesTest {
         pkg.forceStop();
     }
 
-    private void assertPackageStopped(String packageName)
+    private void assertPackageStopped(Package pkg, int processIdBeforeStopping)
             throws Exception {
-        Poll.forValue("Package " + packageName + " stopped", () -> isPackageStopped(packageName))
-                .toBeEqualTo(true)
+        Poll.forValue("Package " + pkg + " stopped",
+                        () -> isProcessRunning(pkg, processIdBeforeStopping))
+                .toBeEqualTo(false)
                 .errorOnFail()
                 .await();
-
-        assertWithMessage("Package %s not stopped", packageName)
-                .that(isPackageStopped(packageName)).isTrue();
     }
 
-    private void assertPackageNotStopped(String packageName)
+    private void assertPackageNotStopped(Package pkg, int processIdBeforeStopping)
             throws Exception {
-        assertWithMessage("Package %s stopped", packageName)
-                .that(isPackageStopped(packageName)).isFalse();
+        assertWithMessage("Package %s stopped", pkg)
+                .that(isProcessRunning(pkg, processIdBeforeStopping)).isTrue();
     }
 
-    private boolean isPackageStopped(String packageName) throws Exception {
-        PackageInfo packageInfo =
-                sPackageManager.getPackageInfo(packageName, PackageManager.GET_META_DATA);
-        boolean stopped = (packageInfo.applicationInfo.flags & FLAG_STOPPED)
-                == FLAG_STOPPED;
-        Log.i(TAG, "Application flags for " + packageName + " = "
-                + Integer.toHexString(packageInfo.applicationInfo.flags) + ". Stopped: " + stopped);
-        return stopped;
+    private boolean isProcessRunning(Package pkg, int processIdBeforeStopping) throws Exception {
+        return pkg.runningProcesses().stream().anyMatch(p -> p.pid() == processIdBeforeStopping);
     }
 }

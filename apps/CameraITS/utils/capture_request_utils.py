@@ -18,8 +18,11 @@ import logging
 import math
 import unittest
 
-COMMON_IMG_ARS = (1.333, 1.778)
+COMMON_IMG_ARS = (4/3, 16/9)
 COMMON_IMG_ARS_ATOL = 0.01
+MAX_YUV_SIZE = (1920, 1080)
+MIN_YUV_SIZE = (640, 360)
+VGA_W, VGA_H = 640, 360
 
 
 def is_common_aspect_ratio(size):
@@ -390,6 +393,30 @@ def get_smallest_yuv_format(props, match_ar=None):
   size = get_available_output_sizes('yuv', props, match_ar_size=match_ar)[-1]
   fmt = {'format': 'yuv', 'width': size[0], 'height': size[1]}
 
+  return fmt
+
+
+def get_near_vga_yuv_format(props, match_ar=None):
+  """Return a capture request and format spec for the smallest yuv size.
+
+  Args:
+    props: object returned from camera_properties_utils.get_camera_properties().
+    match_ar: (Optional) a (w, h) tuple. Aspect ratio to match during search.
+
+  Returns:
+    fmt: an output format specification for the smallest possible yuv format
+           for this device.
+  """
+  size = get_available_output_sizes('yuv', props, match_ar_size=match_ar)[-1]
+  fmt = {'format': 'yuv', 'width': size[0], 'height': size[1]}
+  fmt_area = fmt['width'] * fmt['height']
+
+  if ((fmt['width'] / fmt['height']) not in COMMON_IMG_ARS or
+      fmt_area < MIN_YUV_SIZE[1] * MIN_YUV_SIZE[0] or
+      fmt_area > MAX_YUV_SIZE[1] * MAX_YUV_SIZE[0]):
+    fmt['width'], fmt['height'] = VGA_W, VGA_H
+
+  logging.debug('YUV format selected: %s', fmt)
   return fmt
 
 

@@ -579,7 +579,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                                 + "contains only %d frames \n", KEY_FRAME_POS, mInputCount));
                     }
                     forceSyncFrame();
-                    mNumBytesSubmitted = 0;
+                    mInputBufferReadOffset = 0;
                 }
                 queueEOS();
                 waitForAllOutputs();
@@ -688,7 +688,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                     if ((i & 1) == 1) bitrate *= 2;
                     else bitrate /= 2;
                     updateBitrate(bitrate);
-                    mNumBytesSubmitted = 0;
+                    mInputBufferReadOffset = 0;
                 }
                 queueEOS();
                 waitForAllOutputs();

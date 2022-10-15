@@ -158,7 +158,7 @@ class CodecTestBase {
     virtual bool enqueueInput(size_t bufferIndex) = 0;
     virtual bool dequeueOutput(size_t bufferIndex, AMediaCodecBufferInfo* bufferInfo) = 0;
     bool enqueueEOS(size_t bufferIndex);
-    bool doWork(int frameLimit);
+    virtual bool doWork(int frameLimit);
     bool queueEOS();
     bool waitForAllOutputs();
     int getWidth(AMediaFormat* format);

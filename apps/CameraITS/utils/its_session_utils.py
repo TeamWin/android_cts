@@ -37,6 +37,7 @@ import opencv_processing_utils
 
 ANDROID13_API_LEVEL = 33
 ANDROID14_API_LEVEL = 34
+CHART_DISTANCE_NO_SCALING = 0
 LOAD_SCENE_DELAY_SEC = 3
 SUB_CAMERA_SEPARATOR = '.'
 _VALIDATE_LIGHTING_PATCH_H = 0.05
@@ -49,7 +50,6 @@ _VALIDATE_LIGHTING_REGIONS = {
                      1-_VALIDATE_LIGHTING_PATCH_H),
 }
 _VALIDATE_LIGHTING_THRESH = 0.05  # Determined empirically from scene[1:6] tests
-
 
 class ItsSession(object):
   """Controls a device over adb to run ITS scripts.

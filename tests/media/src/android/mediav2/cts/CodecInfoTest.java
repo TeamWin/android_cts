@@ -121,6 +121,7 @@ public class CodecInfoTest {
     public void testHDRDisplayCapabilities() {
         Assume.assumeTrue("Test needs Android 13", IS_AT_LEAST_T);
         Assume.assumeTrue("Test needs VNDK Android 13", VNDK_IS_AT_LEAST_T);
+        Assume.assumeTrue("Test needs First SDK Android 13", FIRST_SDK_IS_AT_LEAST_T);
         Assume.assumeTrue("Test is applicable for video codecs", mMediaType.startsWith("video/"));
         // TODO (b/228237404) Remove the following once there is a reliable way to query HDR
         // display capabilities at native level, till then limit the test to vendor codecs

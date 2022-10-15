@@ -1105,6 +1105,8 @@ public class UiBot {
         // does not expose that.
         for (AccessibilityWindowInfo window : mAutoman.getWindows()) {
             final CharSequence title = window.getTitle();
+            Log.d(TAG, "assertAccessibilityTitle(): found title =" + title + ", expected title="
+                    + expectedTitle);
             if (title != null && title.toString().equals(expectedTitle)) {
                 return;
             }

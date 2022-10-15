@@ -103,9 +103,9 @@ class YuvPlusRawTest(its_base_test.ItsBaseTest):
           not camera_properties_utils.mono_camera(props))
 
       # Load chart for scene
-      # TODO(jpliu): change to capture_request_utils.CHART_DISTANCE_NO_SCALING
       its_session_utils.load_scene(
-          cam, props, self.scene, self.tablet, self.chart_distance)
+          cam, props, self.scene, self.tablet,
+          its_session_utils.CHART_DISTANCE_NO_SCALING)
 
       # determine compatible RAW formats
       raw_formats = []

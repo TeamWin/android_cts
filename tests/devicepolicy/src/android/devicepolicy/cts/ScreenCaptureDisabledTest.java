@@ -139,7 +139,7 @@ public final class ScreenCaptureDisabledTest {
     public void setScreenCaptureDisabled_true_screenCaptureNoRedactionOrNull() {
         mDevicePolicyManager.setScreenCaptureDisabled(mAdmin, true);
 
-        assertThat(takeScreenshotExpectingNoRedactionOrNull()).isTrue();
+        assertThat(takeScreenshotExpectingNoRedactionOrNull()).isFalse();
     }
 
     @PolicyAppliesTest(policy = ScreenCaptureDisabled.class)
@@ -159,7 +159,7 @@ public final class ScreenCaptureDisabledTest {
     public void setScreenCaptureDisabled_false_screenCaptureNoRedactionOrNull() {
         mDevicePolicyManager.setScreenCaptureDisabled(mAdmin, false);
 
-        assertThat(takeScreenshotExpectingNoRedactionOrNull()).isTrue();
+        assertThat(takeScreenshotExpectingNoRedactionOrNull()).isFalse();
     }
 
     @CanSetPolicyTest(policy = ScreenCaptureDisabled.class)

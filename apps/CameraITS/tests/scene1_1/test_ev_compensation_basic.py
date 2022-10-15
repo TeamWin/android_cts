@@ -75,7 +75,8 @@ class EvCompensationBasicTest(its_base_test.ItsBaseTest):
 
       # Load chart for scene
       its_session_utils.load_scene(
-          cam, props, self.scene, self.tablet, self.chart_distance)
+          cam, props, self.scene, self.tablet,
+          its_session_utils.CHART_DISTANCE_NO_SCALING)
 
       # Create ev compensation changes
       ev_per_step = capture_request_utils.rational_to_float(
