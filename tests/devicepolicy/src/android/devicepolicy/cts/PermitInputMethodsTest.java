@@ -68,8 +68,12 @@ public final class PermitInputMethodsTest {
                     .map(Package::packageName)
                     .collect(Collectors.toSet());
 
-    private static final String INPUT_METHOD_PACKAGE_NAME = "pkg";
-
+    private static final List<String> NON_SYSTEM_INPUT_METHOD_PACKAGES =
+            TestApis.inputMethods().installedInputMethods().stream()
+                    .map(InputMethod::pkg)
+                    .filter(p -> !p.hasSystemFlag())
+                    .map(Package::packageName)
+                    .collect(Collectors.toList());
 
     @After
     public void teardown() {
@@ -113,7 +117,7 @@ public final class PermitInputMethodsTest {
         assumeFalse("A system input method is required",
                 SYSTEM_INPUT_METHODS_PACKAGES.isEmpty());
 
-        List<String> enabledNonSystemImes = List.of(INPUT_METHOD_PACKAGE_NAME);
+        List<String> enabledNonSystemImes = NON_SYSTEM_INPUT_METHOD_PACKAGES;
 
         assertThat(sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
                 sDeviceState.dpc().componentName(), /* packageNames= */ enabledNonSystemImes)
@@ -133,7 +137,7 @@ public final class PermitInputMethodsTest {
         assumeFalse("A system input method is required",
                 SYSTEM_INPUT_METHODS_PACKAGES.isEmpty());
 
-        List<String> enabledNonSystemImes = List.of(INPUT_METHOD_PACKAGE_NAME);
+        List<String> enabledNonSystemImes = NON_SYSTEM_INPUT_METHOD_PACKAGES;
         Set<String> permittedPlusSystem = new HashSet<>();
         permittedPlusSystem.addAll(SYSTEM_INPUT_METHODS_PACKAGES);
         permittedPlusSystem.addAll(enabledNonSystemImes);

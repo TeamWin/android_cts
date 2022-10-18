@@ -23,7 +23,6 @@ import camera_properties_utils
 import capture_request_utils
 import image_processing_utils
 import its_session_utils
-import target_exposure_utils
 
 NAME = os.path.splitext(os.path.basename(__file__))[0]
 PATCH_H = 0.1  # center 10%
@@ -66,9 +65,6 @@ class JpegTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       log_path = self.log_path
 
-      # Check SKIP conditions
-      camera_properties_utils.skip_unless(
-          camera_properties_utils.compute_target_exposure(props))
       sync_latency = camera_properties_utils.sync_latency(props)
 
       # Load chart for scene
@@ -76,9 +72,9 @@ class JpegTest(its_base_test.ItsBaseTest):
           cam, props, self.scene, self.tablet, self.chart_distance)
 
       # Initialize common request parameters
-      e, s = target_exposure_utils.get_target_exposure_combos(
-          log_path, cam)['midExposureTime']
-      req = capture_request_utils.manual_capture_request(s, e, 0.0, True, props)
+      cam.do_3a(do_af=False)
+      req = capture_request_utils.auto_capture_request(
+          linear_tonemap=True, props=props, do_af=False)
 
       # YUV
       size = capture_request_utils.get_available_output_sizes('yuv', props)[0]

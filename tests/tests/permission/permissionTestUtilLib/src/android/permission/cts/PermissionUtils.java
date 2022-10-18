@@ -18,6 +18,9 @@ package android.permission.cts;
 
 import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
+import static android.Manifest.permission.ADJUST_RUNTIME_PERMISSIONS_POLICY;
+import static android.Manifest.permission.GRANT_RUNTIME_PERMISSIONS;
+import static android.Manifest.permission.MANAGE_APP_OPS_MODES;
 import static android.Manifest.permission.PACKAGE_USAGE_STATS;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_FOREGROUND;
@@ -57,9 +60,6 @@ import java.util.List;
  * Common utils for permission tests
  */
 public class PermissionUtils {
-    private static String GRANT_RUNTIME_PERMISSIONS = "android.permission.GRANT_RUNTIME_PERMISSIONS";
-    private static String MANAGE_APP_OPS_MODES = "android.permission.MANAGE_APP_OPS_MODES";
-
     private static final int TESTED_FLAGS = FLAG_PERMISSION_USER_SET | FLAG_PERMISSION_USER_FIXED
             | FLAG_PERMISSION_REVOKE_ON_UPGRADE | FLAG_PERMISSION_REVIEW_REQUIRED
             | FLAG_PERMISSION_REVOKE_WHEN_REQUESTED;
@@ -285,7 +285,7 @@ public class PermissionUtils {
         runWithShellPermissionIdentity(
                 () -> sContext.getPackageManager().updatePermissionFlags(permission, packageName,
                         mask, flags, UserHandle.getUserHandleForUid(Process.myUid())),
-                GRANT_RUNTIME_PERMISSIONS);
+                GRANT_RUNTIME_PERMISSIONS, ADJUST_RUNTIME_PERMISSIONS_POLICY);
     }
 
     /**

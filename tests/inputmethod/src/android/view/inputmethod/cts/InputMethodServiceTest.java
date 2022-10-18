@@ -18,10 +18,13 @@ package android.view.inputmethod.cts;
 
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+import static android.inputmethodservice.InputMethodService.DISALLOW_INPUT_METHOD_INTERFACE_OVERRIDE;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.DISPLAY_IME_POLICY_LOCAL;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+import static android.view.inputmethod.cts.util.ConstantsUtils.ACTION_ON_CREATE;
+import static android.view.inputmethod.cts.util.ConstantsUtils.EXTRA_LINKAGE_ERROR_RESULT;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeInvisible;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeVisible;
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
@@ -44,7 +47,10 @@ import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.inputmethodservice.InputMethodService;
@@ -93,6 +99,7 @@ import org.junit.runner.RunWith;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -105,14 +112,18 @@ import java.util.function.Predicate;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class InputMethodServiceTest extends EndToEndImeTestBase {
+    private static final String TAG = "InputMethodServiceTest";
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(20);
     private static final long EXPECTED_TIMEOUT = TimeUnit.SECONDS.toMillis(2);
     private static final long ACTIVITY_LAUNCH_INTERVAL = 500;  // msec
 
-
     private static final String ERASE_FONT_SCALE_CMD = "settings delete system font_scale";
     // 1.2 is an arbitrary value.
     private static final String PUT_FONT_SCALE_CMD = "settings put system font_scale 1.2";
+
+    private static final String DISAPPROVE_IME_PACKAGE = "com.android.cts.disapproveime";
+    private static final String DISAPPROVE_IME_ID =
+            "com.android.cts.disapproveime/.DisapproveInputMethodService";
 
     @Rule
     public final UnlockScreenRule mUnlockScreenRule = new UnlockScreenRule();
@@ -854,6 +865,47 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
         } finally {
             // restore all previous IMEs
             SystemUtil.runShellCommand("ime reset");
+        }
+    }
+
+    @Test
+    public void testImeOverrideSessionInterface_throwLinkageError() {
+        SystemUtil.runCommandAndPrintOnLogcat(TAG, "am compat enable "
+                + DISALLOW_INPUT_METHOD_INTERFACE_OVERRIDE + " " + DISAPPROVE_IME_PACKAGE);
+
+        final Context context = mInstrumentation.getContext();
+        final CountDownLatch serviceCreateLatch = new CountDownLatch(1);
+        final BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent != null && intent.getAction().equals(ACTION_ON_CREATE)) {
+                    if (!intent.getBooleanExtra(EXTRA_LINKAGE_ERROR_RESULT, false)) {
+                        fail("Should throw a LinkageError");
+                    }
+                    serviceCreateLatch.countDown();
+                }
+            }
+        };
+        context.registerReceiver(receiver, new IntentFilter(ACTION_ON_CREATE),
+                Context.RECEIVER_EXPORTED);
+
+        SystemUtil.runCommandAndPrintOnLogcat(TAG, "ime reset");
+        SystemUtil.runCommandAndPrintOnLogcat(TAG, "ime enable " + DISAPPROVE_IME_ID);
+        SystemUtil.runCommandAndPrintOnLogcat(TAG, "ime set " + DISAPPROVE_IME_ID);
+        createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+
+        boolean result = false;
+        try {
+            result = serviceCreateLatch.await(EXPECTED_TIMEOUT, TimeUnit.MILLISECONDS);
+            if (!result) {
+                fail("Timeout before receiving the result.");
+            }
+        } catch (InterruptedException ignored) {
+        } finally {
+            context.unregisterReceiver(receiver);
+            SystemUtil.runCommandAndPrintOnLogcat(TAG, "ime reset");
+            SystemUtil.runCommandAndPrintOnLogcat(TAG, "am compat reset "
+                    + DISALLOW_INPUT_METHOD_INTERFACE_OVERRIDE + " " + DISAPPROVE_IME_PACKAGE);
         }
     }
 

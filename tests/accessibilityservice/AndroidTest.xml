@@ -24,6 +24,12 @@
         <option name="run-command" value="cmd accessibility set-bind-instant-service-allowed true" />
         <option name="teardown-command" value="cmd accessibility set-bind-instant-service-allowed false" />
     </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer"/>
+    <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
+        <option name="cleanup" value="true" />
+        <option name="push-file" key="CtsAccessibilityMultipleServicesApp.apk"
+            value="/data/local/tmp/cts/content/CtsAccessibilityMultipleServicesApp.apk" />
+    </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsAccessibilityServiceTestCases.apk" />

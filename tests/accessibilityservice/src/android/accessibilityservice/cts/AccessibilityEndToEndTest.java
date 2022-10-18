@@ -17,7 +17,9 @@
 package android.accessibilityservice.cts;
 
 import static android.Manifest.permission.POST_NOTIFICATIONS;
+import static android.accessibility.cts.common.InstrumentedAccessibilityService.TIMEOUT_SERVICE_ENABLE;
 import static android.accessibility.cts.common.InstrumentedAccessibilityService.enableService;
+import static android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_ALL_MASK;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventType;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventTypeWithAction;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventTypeWithResource;
@@ -75,8 +77,10 @@ import android.graphics.Region;
 import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.InputDevice;
@@ -101,7 +105,9 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.CtsMouseUtil;
+import com.android.compatibility.common.util.ShellUtils;
 import com.android.compatibility.common.util.TestUtils;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -127,7 +133,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RunWith(AndroidJUnit4.class)
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
 @Presubmit
-public class AccessibilityEndToEndTest {
+public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
 
     private static final String LOG_TAG = "AccessibilityEndToEndTest";
 
@@ -1433,6 +1439,69 @@ public class AccessibilityEndToEndTest {
         mActivity.runOnUiThread(() -> mActivity.finish());
         TestUtils.waitOn(waitLock, () -> !hasAnyDirectConnection.get(), DEFAULT_TIMEOUT_MS,
                 "AccessibilityManager#hasAnyDirectConnection() still true");
+    }
+
+    @AsbSecurityTest(cveBugId = {243378132})
+    @Test
+    public void testUninstallPackage_DisablesMultipleServices() throws Exception {
+        final String apkPath =
+                "/data/local/tmp/cts/content/CtsAccessibilityMultipleServicesApp.apk";
+        final String packageName = "foo.bar.multipleservices";
+        final ComponentName service1 = ComponentName.createRelative(packageName, ".StubService1");
+        final ComponentName service2 = ComponentName.createRelative(packageName, ".StubService2");
+        // Match AccessibilityManagerService#COMPONENT_NAME_SEPARATOR
+        final String componentNameSeparator = ":";
+
+        final String originalEnabledServicesSetting = getEnabledServicesSetting();
+
+        try {
+            // Install the apk in this test method, instead of as part of the target preparer, to
+            // allow repeated --iterations of the test.
+            assertThat(ShellUtils.runShellCommand("pm install " + apkPath)).startsWith("Success");
+
+            // Enable the two services and wait until AccessibilityManager reports them as enabled.
+            final String servicesToEnable = getEnabledServicesSetting() + componentNameSeparator
+                    + service1.flattenToShortString() + componentNameSeparator
+                    + service2.flattenToShortString();
+            ShellCommandBuilder.create(sInstrumentation)
+                    .putSecureSetting(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+                            servicesToEnable)
+                    .putSecureSetting(Settings.Secure.ACCESSIBILITY_ENABLED, "1")
+                    .run();
+            TestUtils.waitUntil("Failed to enable 2 services from package " + packageName,
+                    (int) TIMEOUT_SERVICE_ENABLE / 1000,
+                    () -> getEnabledServices().stream().filter(
+                            info -> info.getId().startsWith(packageName)).count() == 2);
+
+            // Uninstall the package that contains the services.
+            assertThat(ShellUtils.runShellCommand("pm uninstall " + packageName)).startsWith(
+                    "Success");
+
+            // Ensure the uninstall removed the services from the secure setting.
+            TestUtils.waitUntil(
+                    "Failed to disable services after uninstalling package " + packageName,
+                    (int) TIMEOUT_SERVICE_ENABLE / 1000,
+                    () -> !getEnabledServicesSetting().contains(packageName));
+        } finally {
+            ShellCommandBuilder.create(sInstrumentation)
+                    .putSecureSetting(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+                            originalEnabledServicesSetting)
+                    .run();
+            ShellUtils.runShellCommand("pm uninstall " + packageName);
+        }
+    }
+
+    private List<AccessibilityServiceInfo> getEnabledServices() {
+        return ((AccessibilityManager) sInstrumentation.getContext().getSystemService(
+                Context.ACCESSIBILITY_SERVICE)).getEnabledAccessibilityServiceList(
+                FEEDBACK_ALL_MASK);
+    }
+
+    private String getEnabledServicesSetting() {
+        final String result = Settings.Secure.getString(
+                sInstrumentation.getContext().getContentResolver(),
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        return result != null ? result : "";
     }
 
     private static void assertPackageName(AccessibilityNodeInfo node, String packageName) {

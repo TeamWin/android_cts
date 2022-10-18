@@ -30,7 +30,8 @@ public class ExpandableListActivityTest extends ActivityTestsBase {
                 ExpandableListTestActivity.class));
     }
 
-    public void testSelect() {
+    // TODO(b/250633364): Re-enable this test once fixed
+    public void ignoreTestSelect() {
         runLaunchpad(LaunchpadActivity.EXPANDLIST_SELECT);
     }
 

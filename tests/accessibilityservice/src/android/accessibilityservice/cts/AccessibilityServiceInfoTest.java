@@ -149,6 +149,7 @@ public class AccessibilityServiceInfoTest {
         };
         sentInfo.setInteractiveUiTimeoutMillis(2000);
         sentInfo.setNonInteractiveUiTimeoutMillis(4000);
+        sentInfo.setAccessibilityTool(true);
     }
 
     /**
@@ -175,5 +176,7 @@ public class AccessibilityServiceInfoTest {
         assertEquals("nonInteractiveUiTimeout not marshalled properly",
                 sentInfo.getNonInteractiveUiTimeoutMillis(),
                 receivedInfo.getNonInteractiveUiTimeoutMillis());
+        assertEquals("isAccessibilityTool not marshalled properly",
+                sentInfo.isAccessibilityTool(), receivedInfo.isAccessibilityTool());
     }
 }

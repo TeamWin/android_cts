@@ -441,36 +441,6 @@ public final class UserReference implements AutoCloseable {
     }
 
     /**
-     * True if the user has a password set.
-     *
-     * <p>Note that this will only return {@code true} if the password was set via
-     * {@link #setPassword}
-     */
-    public boolean hasPassword() {
-        return hasLockCredential() && TYPE_PASSWORD.equals(mLockType);
-    }
-
-    /**
-     * True if the user has a pin set.
-     *
-     * <p>Note that this will only return {@code true} if the pin was set via
-     * {@link #setPin}
-     */
-    public boolean hasPin() {
-        return hasLockCredential() && TYPE_PIN.equals(mLockType);
-    }
-
-    /**
-     * True if the user has a pattern set.
-     *
-     * <p>Note that this will only return {@code true} if the pattern was set via
-     * {@link #setPattern}
-     */
-    public boolean hasPattern() {
-        return hasLockCredential() && TYPE_PATTERN.equals(mLockType);
-    }
-
-    /**
      * Set a specific type of lock credential for the user.
      */
     private void setLockCredential(String lockType, String lockCredential) {
@@ -560,7 +530,7 @@ public final class UserReference implements AutoCloseable {
      * Clear the lock credential for the user.
      */
     private void clearLockCredential(String lockCredential, String lockType) {
-        if (!lockType.equals(mLockType) && hasLockCredential()) {
+        if (!lockType.equals(mLockType) && mLockType != null) {
             String lockTypeSentenceCase = Character.toUpperCase(lockType.charAt(0))
                     + lockType.substring(1);
             throw new NeneException(
@@ -590,21 +560,21 @@ public final class UserReference implements AutoCloseable {
     }
 
     /**
-     * returns password if password has been set
+     * returns password if password has been set using nene
      */
     public @Nullable String password() {
         return lockCredential(TYPE_PASSWORD);
     }
 
     /**
-     * returns pin if pin has been set
+     * returns pin if pin has been set using nene
      */
     public @Nullable String pin() {
         return lockCredential(TYPE_PIN);
     }
 
     /**
-     * returns pattern if pattern has been set
+     * returns pattern if pattern has been set using nene
      */
     public @Nullable String pattern() {
         return lockCredential(TYPE_PATTERN);
@@ -619,7 +589,7 @@ public final class UserReference implements AutoCloseable {
      * (regardless off the calling method) this will return {@code null}
      */
     private @Nullable String lockCredential(String lockType) {
-        if (hasLockCredential() && !lockType.equals(mLockType)) {
+        if (mLockType != null && !lockType.equals(mLockType)) {
             String lockTypeSentenceCase = Character.toUpperCase(lockType.charAt(0))
                     + lockType.substring(1);
             throw new NeneException(lockType + " not set, as set" + lockTypeSentenceCase + "() has "

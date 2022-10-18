@@ -50,9 +50,14 @@ public abstract class AbstractWebViewActivity extends AbstractAutoFillActivity {
 
     public void dispatchKeyPress(int keyCode) {
         runOnUiThread(() -> {
-            KeyEvent keyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, keyCode);
+            final long downTime = SystemClock.uptimeMillis();
+            KeyEvent keyEvent = new KeyEvent(/* downTime= */ downTime,
+                /* eventTime= */ SystemClock.uptimeMillis(), KeyEvent.ACTION_DOWN,
+                keyCode, /* repeat= */ 0);
             mWebView.dispatchKeyEvent(keyEvent);
-            keyEvent = new KeyEvent(KeyEvent.ACTION_UP, keyCode);
+            keyEvent = new KeyEvent(/* downTime= */ downTime,
+                /* eventTime= */ SystemClock.uptimeMillis(), KeyEvent.ACTION_UP,
+                keyCode, /* repeat= */ 0);
             mWebView.dispatchKeyEvent(keyEvent);
         });
         // wait webview to process the key event.

@@ -86,11 +86,12 @@ public class UserLifecycleEventStatsTests extends UserStatsTests<UserLifecycleEv
         assertThat(expectedData.size()).isEqualTo(data.size());
         for (EventMetricData eventMetricData : data) {
             UserLifecycleEventOccurred atom = getAtom(eventMetricData);
-            String expectedName = atom.getEvent() + "_" + atom.getState();
+            String eventAndState = atom.getEvent() + "_" + atom.getState();
             long id = atom.getUserId();
-            assertThat(expectedData).contains(expectedName);
-            expectedData.remove(expectedName);
-            assertThat(id).isEqualTo(userId);
+            assertThat(expectedData).contains(eventAndState);
+            expectedData.remove(eventAndState);
+            int expectedUserId = eventAndState.equals("CREATE_USER_BEGIN") ? -1 : userId;
+            assertThat(id).isEqualTo(expectedUserId);
         }
         assertThat(expectedData).isEmpty();
     }

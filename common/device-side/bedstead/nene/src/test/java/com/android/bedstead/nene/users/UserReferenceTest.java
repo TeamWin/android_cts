@@ -346,11 +346,11 @@ public class UserReferenceTest {
     @Test
     @EnsurePasswordNotSet
     @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
-    public void setPassword_hasPassword() {
+    public void setPassword_hasLockCredential() {
         try {
             TestApis.users().instrumented().setPassword(PASSWORD);
 
-            assertThat(TestApis.users().instrumented().hasPassword()).isTrue();
+            assertThat(TestApis.users().instrumented().hasLockCredential()).isTrue();
         } finally {
             TestApis.users().instrumented().clearPassword(PASSWORD);
         }
@@ -359,11 +359,11 @@ public class UserReferenceTest {
     @Test
     @EnsurePasswordNotSet
     @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
-    public void setPin_hasPin() {
+    public void setPin_hasLockCredential() {
         try {
             TestApis.users().instrumented().setPin(PIN);
 
-            assertThat(TestApis.users().instrumented().hasPin()).isTrue();
+            assertThat(TestApis.users().instrumented().hasLockCredential()).isTrue();
         } finally {
             TestApis.users().instrumented().clearPin(PIN);
         }
@@ -372,11 +372,11 @@ public class UserReferenceTest {
     @Test
     @EnsurePasswordNotSet
     @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
-    public void setPattern_hasPattern() {
+    public void setPattern_hasLockCredential() {
         try {
             TestApis.users().instrumented().setPattern(PATTERN);
 
-            assertThat(TestApis.users().instrumented().hasPattern()).isTrue();
+            assertThat(TestApis.users().instrumented().hasLockCredential()).isTrue();
         } finally {
             TestApis.users().instrumented().clearPattern(PATTERN);
         }
@@ -385,31 +385,31 @@ public class UserReferenceTest {
     @Test
     @EnsurePasswordNotSet
     @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
-    public void clearPassword_hasPassword_returnsFalse() {
+    public void clearPassword_hasLockCredential_returnsFalse() {
         TestApis.users().instrumented().setPassword(PASSWORD);
         TestApis.users().instrumented().clearPassword(PASSWORD);
 
-        assertThat(TestApis.users().instrumented().hasPassword()).isFalse();
+        assertThat(TestApis.users().instrumented().hasLockCredential()).isFalse();
     }
 
     @Test
     @EnsurePasswordNotSet
     @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
-    public void clearPin_hasPin_returnsFalse() {
+    public void clearPin_hasLockCredential_returnsFalse() {
         TestApis.users().instrumented().setPin(PIN);
         TestApis.users().instrumented().clearPin(PIN);
 
-        assertThat(TestApis.users().instrumented().hasPin()).isFalse();
+        assertThat(TestApis.users().instrumented().hasLockCredential()).isFalse();
     }
 
     @Test
     @EnsurePasswordNotSet
     @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
-    public void clearPattern_hasPattern_returnsFalse() {
+    public void clearPattern_hasLockCredential_returnsFalse() {
         TestApis.users().instrumented().setPattern(PATTERN);
         TestApis.users().instrumented().clearPattern(PATTERN);
 
-        assertThat(TestApis.users().instrumented().hasPattern()).isFalse();
+        assertThat(TestApis.users().instrumented().hasLockCredential()).isFalse();
     }
 
     @Test
@@ -417,7 +417,7 @@ public class UserReferenceTest {
     public void clearPassword_doesNotHavePassword_doesNothing() {
         TestApis.users().instrumented().clearPassword(PASSWORD);
 
-        assertThat(TestApis.users().instrumented().hasPassword()).isFalse();
+        assertThat(TestApis.users().instrumented().hasLockCredential()).isFalse();
     }
 
     @Test
@@ -425,7 +425,7 @@ public class UserReferenceTest {
     public void clearPin_doesNotHavePin_doesNothing() {
         TestApis.users().instrumented().clearPin(PIN);
 
-        assertThat(TestApis.users().instrumented().hasPin()).isFalse();
+        assertThat(TestApis.users().instrumented().hasLockCredential()).isFalse();
     }
 
     @Test
@@ -433,7 +433,7 @@ public class UserReferenceTest {
     public void clearPattern_doesNotHavePattern_doesNothing() {
         TestApis.users().instrumented().clearPattern(PATTERN);
 
-        assertThat(TestApis.users().instrumented().hasPattern()).isFalse();
+        assertThat(TestApis.users().instrumented().hasLockCredential()).isFalse();
     }
 
     @Test
@@ -566,51 +566,6 @@ public class UserReferenceTest {
 
             assertThrows(NeneException.class,
                     () -> TestApis.users().instrumented().clearPin(PATTERN));
-        } finally {
-            TestApis.users().instrumented().clearPattern(PATTERN);
-        }
-    }
-
-    @Test
-    @EnsurePasswordNotSet
-    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
-    public void setPassword_checkAsPinAndPattern_returnsFalse() {
-        try {
-            TestApis.users().instrumented().setPassword(PASSWORD);
-
-            assertThat(TestApis.users().instrumented().hasPin()).isFalse();
-
-            assertThat(TestApis.users().instrumented().hasPattern()).isFalse();
-        } finally {
-            TestApis.users().instrumented().clearPassword(PASSWORD);
-        }
-    }
-
-    @Test
-    @EnsurePasswordNotSet
-    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
-    public void setPin_checkAsPasswordAndPattern_returnsFalse() {
-        try {
-            TestApis.users().instrumented().setPin(PIN);
-
-            assertThat(TestApis.users().instrumented().hasPassword()).isFalse();
-
-            assertThat(TestApis.users().instrumented().hasPattern()).isFalse();
-        } finally {
-            TestApis.users().instrumented().clearPin(PIN);
-        }
-    }
-
-    @Test
-    @EnsurePasswordNotSet
-    @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
-    public void setPattern_checkAsPasswordAndPin_returnsFalse() {
-        try {
-            TestApis.users().instrumented().setPattern(PATTERN);
-
-            assertThat(TestApis.users().instrumented().hasPassword()).isFalse();
-
-            assertThat(TestApis.users().instrumented().hasPin()).isFalse();
         } finally {
             TestApis.users().instrumented().clearPattern(PATTERN);
         }

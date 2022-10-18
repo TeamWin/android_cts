@@ -68,7 +68,7 @@ public class BuildTest extends TestCase {
         }
         // The permitted ABIs are listed in https://developer.android.com/ndk/guides/abis.
         Set<String> just32 = new HashSet<>(Arrays.asList("armeabi", "armeabi-v7a", "x86"));
-        Set<String> just64 = new HashSet<>(Arrays.asList("x86_64", "arm64-v8a"));
+        Set<String> just64 = new HashSet<>(Arrays.asList("x86_64", "arm64-v8a", "riscv64"));
         Set<String> all = new HashSet<>();
         all.addAll(just32);
         all.addAll(just64);

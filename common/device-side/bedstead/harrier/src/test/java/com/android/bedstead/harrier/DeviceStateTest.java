@@ -894,7 +894,7 @@ public class DeviceStateTest {
     @Test
     @EnsurePasswordNotSet
     public void requirePasswordNotSetAnnotation_passwordNotSet() {
-        assertThat(TestApis.users().instrumented().hasPassword()).isFalse();
+        assertThat(TestApis.users().instrumented().hasLockCredential()).isFalse();
     }
 
     @Test

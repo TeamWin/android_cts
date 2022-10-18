@@ -57,6 +57,7 @@ android_test {
         ":CtsMockA11yInputMethod",
         ":CtsMockInputMethod",
         ":CtsSpellCheckingIme",
+        ":CtsDisapproveIme",
         ":CtsInputMethodStandaloneTestApp",
     ],
     per_testcase_directory: true,
