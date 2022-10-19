@@ -21,7 +21,7 @@ import camera_properties_utils
 import its_session_utils
 
 # This must match MPC12_CAMERA_LAUNCH_THRESHOLD in ItsTestActivity.java
-CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD = 600  # ms
+_CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD = 600  # ms
 
 
 class CameraLaunchSPerfClassTest(its_base_test.ItsBaseTest):
@@ -57,9 +57,9 @@ class CameraLaunchSPerfClassTest(its_base_test.ItsBaseTest):
 
     # Assert launch time if device claims performance class
     if (cam.is_performance_class() and
-        launch_ms >= CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD):
+        launch_ms >= _CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD):
       raise AssertionError(f'camera_launch_time_ms: {launch_ms}, THRESH: '
-                           f'{CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD}')
+                           f'{_CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD}')
 
     # Log launch time, so that the corresponding MPC level can be written to
     # report log. Text must match MPC12_CAMERA_LAUNCH_PATTERN in

@@ -37,6 +37,8 @@ import java.util.Set;
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class VirtualDeviceParamsTest {
 
+    private static final String VIRTUAL_DEVICE_NAME = "VirtualDeviceName";
+
     @Test
     public void setAllowedAndBlockedCrossTaskNavigations_shouldThrowException() {
         VirtualDeviceParams.Builder paramsBuilder = new VirtualDeviceParams.Builder();
@@ -157,6 +159,15 @@ public class VirtualDeviceParamsTest {
                 .build();
 
         assertThat(params.getUsersWithMatchingAccounts()).containsExactly(UserHandle.SYSTEM);
+    }
+
+    @Test
+    public void getName_shouldReturnConfiguredValue() {
+        VirtualDeviceParams params = new VirtualDeviceParams.Builder()
+                .setName(VIRTUAL_DEVICE_NAME)
+                .build();
+
+        assertThat(params.getName()).isEqualTo(VIRTUAL_DEVICE_NAME);
     }
 }
 

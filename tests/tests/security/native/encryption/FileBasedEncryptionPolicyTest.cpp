@@ -237,6 +237,8 @@ static void validateAdoptableStorageSettings(int first_api_level) {
 // fileencryption= option for the userdata partition and that the ro.crypto
 // system properties have been set to the correct values.  See
 // https://source.android.com/security/encryption/file-based.html
+//
+// @CddTest = 9.9.2/C-0-3|9.9.3/C-1-5,C-1-6,C-1-12,C-1-13,C-1-14,C-1-15
 TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
     int first_api_level = getFirstApiLevel();
     int vendor_api_level = getVendorApiLevel();

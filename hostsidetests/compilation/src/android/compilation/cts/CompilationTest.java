@@ -48,21 +48,24 @@ public class CompilationTest extends BaseHostJUnit4Test {
         options.addInstrumentationArg("compiler-filter", "speed")
                 .addInstrumentationArg("compilation-reason", "cmdline")
                 .addInstrumentationArg("is-verified", "true")
-                .addInstrumentationArg("is-optimized", "true");
+                .addInstrumentationArg("is-optimized", "true")
+                .addInstrumentationArg("is-fully-compiled", "true");
         assertThat(runDeviceTests(options)).isTrue();
 
         assertCommandSucceeds("pm compile -m verify -f " + APPLICATION_PACKAGE);
         options.addInstrumentationArg("compiler-filter", "verify")
                 .addInstrumentationArg("compilation-reason", "cmdline")
                 .addInstrumentationArg("is-verified", "true")
-                .addInstrumentationArg("is-optimized", "false");
+                .addInstrumentationArg("is-optimized", "false")
+                .addInstrumentationArg("is-fully-compiled", "false");
         assertThat(runDeviceTests(options)).isTrue();
 
         assertCommandSucceeds("pm delete-dexopt " + APPLICATION_PACKAGE);
         options.addInstrumentationArg("compiler-filter", "run-from-apk")
                 .addInstrumentationArg("compilation-reason", "unknown")
                 .addInstrumentationArg("is-verified", "false")
-                .addInstrumentationArg("is-optimized", "false");
+                .addInstrumentationArg("is-optimized", "false")
+                .addInstrumentationArg("is-fully-compiled", "false");
         assertThat(runDeviceTests(options)).isTrue();
     }
 

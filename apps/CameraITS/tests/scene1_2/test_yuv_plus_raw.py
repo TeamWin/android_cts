@@ -24,13 +24,13 @@ import capture_request_utils
 import image_processing_utils
 import its_session_utils
 
-MAX_IMG_SIZE = (1920, 1080)
-NAME = os.path.splitext(os.path.basename(__file__))[0]
-PATCH_H = 0.1  # center 10%
-PATCH_W = 0.1
-PATCH_X = 0.5 - PATCH_W/2
-PATCH_Y = 0.5 - PATCH_H/2
-THRESHOLD_MAX_RMS_DIFF = 0.035
+_MAX_IMG_SIZE = (1920, 1080)
+_NAME = os.path.splitext(os.path.basename(__file__))[0]
+_PATCH_H = 0.1  # center 10%
+_PATCH_W = 0.1
+_PATCH_X = 0.5 - _PATCH_W/2
+_PATCH_Y = 0.5 - _PATCH_H/2
+_THRESHOLD_MAX_RMS_DIFF = 0.035
 
 
 def convert_and_compare_captures(cap_raw, cap_yuv, props,
@@ -57,7 +57,7 @@ def convert_and_compare_captures(cap_raw, cap_yuv, props,
   image_processing_utils.write_image(img, '%s_shading=%d_yuv.jpg' % (
       log_path_with_name, shading_mode), True)
   patch = image_processing_utils.get_image_patch(
-      img, PATCH_X, PATCH_Y, PATCH_W, PATCH_H)
+      img, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
   rgb_means_yuv = image_processing_utils.compute_image_means(patch)
 
   # RAW shots are 1/2 x 1/2 smaller after conversion to RGB, but patch
@@ -67,15 +67,15 @@ def convert_and_compare_captures(cap_raw, cap_yuv, props,
   image_processing_utils.write_image(img, '%s_shading=%d_%s.jpg' % (
       log_path_with_name, shading_mode, raw_fmt), True)
   patch = image_processing_utils.get_image_patch(
-      img, PATCH_X, PATCH_Y, PATCH_W, PATCH_H)
+      img, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
   rgb_means_raw = image_processing_utils.compute_image_means(patch)
 
   rms_diff = image_processing_utils.compute_image_rms_difference_1d(
       rgb_means_yuv, rgb_means_raw)
   msg = f'{raw_fmt} diff: {rms_diff:.4f}'
   logging.debug('%s', msg)
-  if rms_diff >= THRESHOLD_MAX_RMS_DIFF:
-    return f'{msg}, spec: {THRESHOLD_MAX_RMS_DIFF}'
+  if rms_diff >= _THRESHOLD_MAX_RMS_DIFF:
+    return f'{msg}, spec: {_THRESHOLD_MAX_RMS_DIFF}'
   else:
     return 'PASS'
 
@@ -88,14 +88,14 @@ class YuvPlusRawTest(its_base_test.ItsBaseTest):
 
   def test_yuv_plus_raw(self):
     failure_messages = []
-    logging.debug('Starting %s', NAME)
+    logging.debug('Starting %s', _NAME)
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
         hidden_physical_id=self.hidden_physical_id) as cam:
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
-      log_path = os.path.join(self.log_path, NAME)
+      log_path = os.path.join(self.log_path, _NAME)
 
       # check SKIP conditions
       camera_properties_utils.skip_unless(
@@ -129,10 +129,10 @@ class YuvPlusRawTest(its_base_test.ItsBaseTest):
             raw_fmt, props)[0]
         if capture_request_utils.is_common_aspect_ratio(max_raw_size):
           w, h = capture_request_utils.get_available_output_sizes(
-              'yuv', props, MAX_IMG_SIZE, max_raw_size)[0]
+              'yuv', props, _MAX_IMG_SIZE, max_raw_size)[0]
         else:
           w, h = capture_request_utils.get_available_output_sizes(
-              'yuv', props, max_size=MAX_IMG_SIZE)[0]
+              'yuv', props, max_size=_MAX_IMG_SIZE)[0]
         out_surfaces = [{'format': raw_fmt},
                         {'format': 'yuv', 'width': w, 'height': h}]
         cap_raw, cap_yuv = cam.do_capture(req, out_surfaces)

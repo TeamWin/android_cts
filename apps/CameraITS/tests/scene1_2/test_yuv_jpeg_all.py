@@ -29,16 +29,16 @@ import image_processing_utils
 import its_session_utils
 import target_exposure_utils
 
-NAME = os.path.splitext(os.path.basename(__file__))[0]
-PATCH_H = 0.1  # center 10%
-PATCH_W = 0.1
-PATCH_X = 0.5 - PATCH_W/2
-PATCH_Y = 0.5 - PATCH_H/2
-THRESHOLD_MAX_RMS_DIFF = 0.03
-PLOT_ALPHA = 0.5
-PLOT_MARKER_SIZE = 8
-PLOT_LEGEND_CIRCLE_SIZE = 10
-PLOT_LEGEND_TRIANGLE_SIZE = 6
+_NAME = os.path.splitext(os.path.basename(__file__))[0]
+_PATCH_H = 0.1  # center 10%
+_PATCH_W = 0.1
+_PATCH_X = 0.5 - _PATCH_W/2
+_PATCH_Y = 0.5 - _PATCH_H/2
+_THRESHOLD_MAX_RMS_DIFF = 0.03
+_PLOT_ALPHA = 0.5
+_PLOT_MARKER_SIZE = 8
+_PLOT_LEGEND_CIRCLE_SIZE = 10
+_PLOT_LEGEND_TRIANGLE_SIZE = 6
 
 
 def do_capture_and_extract_rgb_means(
@@ -65,7 +65,7 @@ def do_capture_and_extract_rgb_means(
     img_raw = image_processing_utils.convert_capture_to_rgb_image(
         cap_raw, props=props)
     image_processing_utils.write_image(img_raw, '%s_raw_%s_w%d_h%d.png' % (
-        os.path.join(log_path, NAME), img_type, size[0], size[1]), True)
+        os.path.join(log_path, _NAME), img_type, size[0], size[1]), True)
   else:
     cap = cam.do_capture(req, out_surface)
   logging.debug('e_cap: %d, s_cap: %d, f_distance: %s',
@@ -87,7 +87,7 @@ def do_capture_and_extract_rgb_means(
 
   if debug:
     image_processing_utils.write_image(img, '%s_%s_w%d_h%d.png'%(
-        os.path.join(log_path, NAME), img_type, size[0], size[1]))
+        os.path.join(log_path, _NAME), img_type, size[0], size[1]))
 
   if img_type == 'jpg':
     if img.shape[0] != size[1]:
@@ -97,7 +97,7 @@ def do_capture_and_extract_rgb_means(
     if img.shape[2] != 3:
       raise AssertionError(f'{img.shape[2]} != 3')
   patch = image_processing_utils.get_image_patch(
-      img, PATCH_X, PATCH_Y, PATCH_W, PATCH_H)
+      img, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
   rgb = image_processing_utils.compute_image_means(patch)
   logging.debug('Captured %s %dx%d rgb = %s, format number = %d',
                 img_type, cap['width'], cap['height'], str(rgb), index)
@@ -108,7 +108,7 @@ class YuvJpegAllTest(its_base_test.ItsBaseTest):
   """Test reported sizes & fmts for YUV & JPEG caps return similar images."""
 
   def test_yuv_jpeg_all(self):
-    logging.debug('Starting %s', NAME)
+    logging.debug('Starting %s', _NAME)
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
@@ -154,39 +154,39 @@ class YuvJpegAllTest(its_base_test.ItsBaseTest):
             req, cam, props, size, 'jpg', i, log_path, debug))
 
       # Plot means vs format
-      pylab.figure(NAME)
-      pylab.title(NAME)
+      pylab.figure(_NAME)
+      pylab.title(_NAME)
       yuv_index = range(len(yuv_rgbs))
       jpg_index = range(len(jpg_rgbs))
       pylab.plot(yuv_index, [rgb[0] for rgb in yuv_rgbs],
-                 '-ro', alpha=PLOT_ALPHA, markersize=PLOT_MARKER_SIZE)
+                 '-ro', alpha=_PLOT_ALPHA, markersize=_PLOT_MARKER_SIZE)
       pylab.plot(yuv_index, [rgb[1] for rgb in yuv_rgbs],
-                 '-go', alpha=PLOT_ALPHA, markersize=PLOT_MARKER_SIZE)
+                 '-go', alpha=_PLOT_ALPHA, markersize=_PLOT_MARKER_SIZE)
       pylab.plot(yuv_index, [rgb[2] for rgb in yuv_rgbs],
-                 '-bo', alpha=PLOT_ALPHA, markersize=PLOT_MARKER_SIZE)
+                 '-bo', alpha=_PLOT_ALPHA, markersize=_PLOT_MARKER_SIZE)
       pylab.plot(jpg_index, [rgb[0] for rgb in jpg_rgbs],
-                 '-r^', alpha=PLOT_ALPHA, markersize=PLOT_MARKER_SIZE)
+                 '-r^', alpha=_PLOT_ALPHA, markersize=_PLOT_MARKER_SIZE)
       pylab.plot(jpg_index, [rgb[1] for rgb in jpg_rgbs],
-                 '-g^', alpha=PLOT_ALPHA, markersize=PLOT_MARKER_SIZE)
+                 '-g^', alpha=_PLOT_ALPHA, markersize=_PLOT_MARKER_SIZE)
       pylab.plot(jpg_index, [rgb[2] for rgb in jpg_rgbs],
-                 '-b^', alpha=PLOT_ALPHA, markersize=PLOT_MARKER_SIZE)
+                 '-b^', alpha=_PLOT_ALPHA, markersize=_PLOT_MARKER_SIZE)
       pylab.ylim([0, 1])
       ax = pylab.gca()
       # force matplotlib to use integers for x-axis labels
       ax.xaxis.set_major_locator(MaxNLocator(integer=True))
       yuv_marker = mlines.Line2D([], [], linestyle='None',
                                  color='black', marker='.',
-                                 markersize=PLOT_LEGEND_CIRCLE_SIZE,
+                                 markersize=_PLOT_LEGEND_CIRCLE_SIZE,
                                  label='YUV')
       jpg_marker = mlines.Line2D([], [], linestyle='None',
                                  color='black', marker='^',
-                                 markersize=PLOT_LEGEND_TRIANGLE_SIZE,
+                                 markersize=_PLOT_LEGEND_TRIANGLE_SIZE,
                                  label='JPEG')
       ax.legend(handles=[yuv_marker, jpg_marker])
       pylab.xlabel('format number')
       pylab.ylabel('RGB avg [0, 1]')
       matplotlib.pyplot.savefig(
-          '%s_plot_means.png' % os.path.join(log_path, NAME))
+          '%s_plot_means.png' % os.path.join(log_path, _NAME))
 
       # Assert all captures are similar in RGB space using rgbs[0] as ref.
       rgbs = yuv_rgbs + jpg_rgbs
@@ -197,8 +197,8 @@ class YuvJpegAllTest(its_base_test.ItsBaseTest):
         max_diff = max(max_diff, rms_diff)
       msg = 'Max RMS difference: %.4f' % max_diff
       logging.debug('%s', msg)
-      if max_diff >= THRESHOLD_MAX_RMS_DIFF:
-        raise AssertionError(f'{msg} spec: {THRESHOLD_MAX_RMS_DIFF}')
+      if max_diff >= _THRESHOLD_MAX_RMS_DIFF:
+        raise AssertionError(f'{msg} spec: {_THRESHOLD_MAX_RMS_DIFF}')
 
 if __name__ == '__main__':
   test_runner.main()

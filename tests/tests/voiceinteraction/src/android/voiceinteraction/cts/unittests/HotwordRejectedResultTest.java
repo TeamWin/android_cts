@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.voiceinteraction.cts;
+package android.voiceinteraction.cts.unittests;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -26,6 +26,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+/**
+ * Tests for {@link HotwordRejectedResult} APIs.
+ */
 @RunWith(AndroidJUnit4.class)
 public class HotwordRejectedResultTest {
 

@@ -483,11 +483,23 @@ public class MockDataService {
         return pcscf;
     }
 
+    private String getCapabilities(String string) {
+        String capabilities = "";
+        try {
+            capabilities = string.trim().split("Capabilities:")[1].split("LinkUpBandwidth")[0];
+        } catch (Exception e) {
+            Log.e(TAG, "getCapabilities(): Exception error: " + e);
+        }
+        return capabilities;
+    }
+
     public synchronized void setBridgeTheDataConnection(String string) {
         try {
-            String[] lines = string.split("NetworkAgentInfo");
+            String[] lines = string.split("NetworkAgentInfo\\{network\\{");
             for (String str : lines) {
-                if (str.contains(" extra: internet")) {
+                String capabilities = getCapabilities(str);
+                Log.e(TAG, "capabilities: " + capabilities);
+                if (capabilities.contains("INTERNET")) {
                     Log.d(TAG, "[internet]:" + str);
                     this.mInternetIfname = getInterfaceName(str);
                     this.mDefaultLinkAddress = getIpAddress(str);
@@ -495,7 +507,7 @@ public class MockDataService {
                     this.mInternetGateways = getGateways();
                     this.mInternetMtuV4 = getMtu(str);
                     this.mInternetMtuV6 = getMtu(str);
-                } else if (str.contains(" extra: ims")) {
+                } else if (capabilities.contains("IMS")) {
                     Log.d(TAG, "[ims]:" + str);
                     this.mImsIfname = getInterfaceName(str);
                     this.mImsLinkAddress = getIpAddress(str);

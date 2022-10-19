@@ -28,24 +28,24 @@ import error_util
 import image_processing_utils
 import its_session_utils
 
-FD_MODE_OFF, FD_MODE_SIMPLE, FD_MODE_FULL = 0, 1, 2
-HAARCASCADE_FILE = os.path.join(
+_FD_MODE_OFF, _FD_MODE_SIMPLE, _FD_MODE_FULL = 0, 1, 2
+_HAARCASCADE_FILE = os.path.join(
     os.path.dirname(os.path.abspath(cv2.__file__)), 'opencv', 'haarcascades',
     'haarcascade_frontalface_default.xml')
-NAME = os.path.splitext(os.path.basename(__file__))[0]
-NUM_TEST_FRAMES = 20
-NUM_FACES = 3
-W, H = 640, 480
+_NAME = os.path.splitext(os.path.basename(__file__))[0]
+_NUM_TEST_FRAMES = 20
+_NUM_FACES = 3
+_W, _H = 640, 480
 
 
 def load_opencv_haarcascade_file():
   """Return Haar Cascade file for face detection."""
-  logging.info('Haar Cascade file location: %s', HAARCASCADE_FILE)
-  if os.path.isfile(HAARCASCADE_FILE):
-    return HAARCASCADE_FILE
+  logging.info('Haar Cascade file location: %s', _HAARCASCADE_FILE)
+  if os.path.isfile(_HAARCASCADE_FILE):
+    return _HAARCASCADE_FILE
   else:
     raise error_util.CameraItsError('haarcascade_frontalface_default.xml file '
-                                    f'must be in {HAARCASCADE_FILE}')
+                                    f'must be in {_HAARCASCADE_FILE}')
 
 
 def match_face_locations(faces_cropped, faces_opencv, mode):
@@ -126,14 +126,14 @@ def check_face_landmarks(face, fd_mode, index):
     index: int to designate face number
   """
   logging.debug('Checking landmarks in face %d: %s', index, str(face))
-  if fd_mode == FD_MODE_SIMPLE:
+  if fd_mode == _FD_MODE_SIMPLE:
     if 'leftEye' in face or 'rightEye' in face:
       raise AssertionError('Eyes not supported in FD_MODE_SIMPLE.')
     if 'mouth' in face:
       raise AssertionError('Mouth not supported in FD_MODE_SIMPLE.')
     if face['id'] != -1:
       raise AssertionError('face_id should be -1 in FD_MODE_SIMPLE.')
-  elif fd_mode == FD_MODE_FULL:
+  elif fd_mode == _FD_MODE_FULL:
     l, r = face['bounds']['left'], face['bounds']['right']
     t, b = face['bounds']['top'], face['bounds']['bottom']
     l_eye_x, l_eye_y = face['leftEye']['x'], face['leftEye']['y']
@@ -208,19 +208,19 @@ class NumFacesTest(its_base_test.ItsBaseTest):
       a = props['android.sensor.info.activeArraySize']
       aw, ah = a['right'] - a['left'], a['bottom'] - a['top']
       logging.debug('active array size: %s', str(a))
-      file_name_stem = os.path.join(self.log_path, NAME)
+      file_name_stem = os.path.join(self.log_path, _NAME)
 
       cam.do_3a(mono_camera=mono_camera)
 
       for fd_mode in fd_modes:
         logging.debug('face detection mode: %d', fd_mode)
-        if not FD_MODE_OFF <= fd_mode <= FD_MODE_FULL:
+        if not _FD_MODE_OFF <= fd_mode <= _FD_MODE_FULL:
           raise AssertionError(f'FD mode {fd_mode} not in MODES! '
-                               f'OFF: {FD_MODE_OFF}, FULL: {FD_MODE_FULL}')
+                               f'OFF: {_FD_MODE_OFF}, FULL: {_FD_MODE_FULL}')
         req = capture_request_utils.auto_capture_request()
         req['android.statistics.faceDetectMode'] = fd_mode
-        fmt = {'format': 'yuv', 'width': W, 'height': H}
-        caps = cam.do_capture([req]*NUM_TEST_FRAMES, fmt)
+        fmt = {'format': 'yuv', 'width': _W, 'height': _H}
+        caps = cam.do_capture([req]*_NUM_TEST_FRAMES, fmt)
         for i, cap in enumerate(caps):
           fd_mode_cap = cap['metadata']['android.statistics.faceDetectMode']
           if fd_mode_cap != fd_mode:
@@ -228,18 +228,18 @@ class NumFacesTest(its_base_test.ItsBaseTest):
 
           faces = cap['metadata']['android.statistics.faces']
           # 0 faces should be returned for OFF mode
-          if fd_mode == FD_MODE_OFF:
+          if fd_mode == _FD_MODE_OFF:
             if faces:
               raise AssertionError(f'Error: faces detected in OFF: {faces}')
             continue
           # Face detection could take several frames to warm up,
           # but should detect the correct number of faces in last frame
-          if i == NUM_TEST_FRAMES - 1:
+          if i == _NUM_TEST_FRAMES - 1:
             img = image_processing_utils.convert_capture_to_rgb_image(
                 cap, props=props)
             fnd_faces = len(faces)
             logging.debug('Found %d face(s), expected %d.',
-                          fnd_faces, NUM_FACES)
+                          fnd_faces, _NUM_FACES)
 
             # draw boxes around faces in green
             crop_region = cap['metadata']['android.scaler.cropRegion']
@@ -257,9 +257,9 @@ class NumFacesTest(its_base_test.ItsBaseTest):
             # save image with rectangles
             img_name = f'{file_name_stem}_fd_mode_{fd_mode}.jpg'
             image_processing_utils.write_image(img, img_name)
-            if fnd_faces != NUM_FACES:
+            if fnd_faces != _NUM_FACES:
               raise AssertionError('Wrong num of faces found! '
-                                   f'Found: {fnd_faces}, expected: {NUM_FACES}')
+                                   f'Found: {fnd_faces}, expected: {_NUM_FACES}')
             # Reasonable scores for faces
             face_scores = [face['score'] for face in faces]
             for score in face_scores:

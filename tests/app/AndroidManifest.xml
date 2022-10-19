@@ -34,6 +34,10 @@
     <application android:usesCleartextTraffic="true">
         <uses-library android:name="android.test.runner" />
         <uses-library android:name="org.apache.http.legacy" android:required="false" />
+
+        <service android:name=".InstrumentationHelperService"
+                android:exported="true"
+                android:process=":helper" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

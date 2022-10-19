@@ -25,11 +25,11 @@ import its_session_utils
 import lighting_control_utils
 from mobly import test_runner
 
-AE_MODES = {0: 'OFF', 1: 'ON', 2: 'ON_AUTO_FLASH', 3: 'ON_ALWAYS_FLASH',
+_AE_MODES = {0: 'OFF', 1: 'ON', 2: 'ON_AUTO_FLASH', 3: 'ON_ALWAYS_FLASH',
             4: 'ON_AUTO_FLASH_REDEYE', 5: 'ON_EXTERNAL_FLASH'}
-AE_STATES = {0: 'INACTIVE', 1: 'SEARCHING', 2: 'CONVERGED', 3: 'LOCKED',
+_AE_STATES = {0: 'INACTIVE', 1: 'SEARCHING', 2: 'CONVERGED', 3: 'LOCKED',
              4: 'FLASH_REQUIRED', 5: 'PRECAPTURE'}
-FLASH_STATES = {0: 'FLASH_STATE_UNAVAILABLE', 1: 'FLASH_STATE_CHARGING',
+_FLASH_STATES = {0: 'FLASH_STATE_UNAVAILABLE', 1: 'FLASH_STATE_CHARGING',
                 2: 'FLASH_STATE_READY', 3: 'FLASH_STATE_FIRED',
                 4: 'FLASH_STATE_PARTIAL'}
 _GRAD_DELTA_ATOL = 15  # gradiant for tablets as screen aborbs energy
@@ -97,9 +97,9 @@ class AutoFlashTest(its_base_test.ItsBaseTest):
   """Test that flash is fired when lighting conditions are dark."""
 
   def test_auto_flash(self):
-    logging.debug('AE_MODES: %s', str(AE_MODES))
-    logging.debug('AE_STATES: %s', str(AE_STATES))
-    logging.debug('FLASH_STATES: %s', str(FLASH_STATES))
+    logging.debug('AE_MODES: %s', str(_AE_MODES))
+    logging.debug('AE_STATES: %s', str(_AE_STATES))
+    logging.debug('FLASH_STATES: %s', str(_FLASH_STATES))
     failure_messages = []
 
     with its_session_utils.ItsSession(
@@ -164,9 +164,9 @@ class AutoFlashTest(its_base_test.ItsBaseTest):
           iso = int(metadata['android.sensor.sensitivity'])
           logging.debug('No auto_flash ISO: %d, exp: %d ns', iso, exp)
           logging.debug('AE_MODE (cap): %s',
-                        AE_MODES[metadata['android.control.aeMode']])
+                        _AE_MODES[metadata['android.control.aeMode']])
           logging.debug('AE_STATE (cap): %s',
-                        AE_STATES[metadata['android.control.aeState']])
+                        _AE_STATES[metadata['android.control.aeState']])
           no_flash_exp_x_iso = exp * iso
           y, _, _ = image_processing_utils.convert_capture_to_planes(
               cap, props)
@@ -200,10 +200,10 @@ class AutoFlashTest(its_base_test.ItsBaseTest):
           iso = int(metadata['android.sensor.sensitivity'])
           logging.debug('cap ISO: %d, exp: %d ns', iso, exp)
           logging.debug('AE_MODE (cap): %s',
-                        AE_MODES[metadata['android.control.aeMode']])
-          ae_state = AE_STATES[metadata['android.control.aeState']]
+                        _AE_MODES[metadata['android.control.aeMode']])
+          ae_state = _AE_STATES[metadata['android.control.aeState']]
           logging.debug('AE_STATE (cap): %s', ae_state)
-          flash_state = FLASH_STATES[metadata['android.flash.state']]
+          flash_state = _FLASH_STATES[metadata['android.flash.state']]
           logging.debug('FLASH_STATE: %s', flash_state)
           if flash_state == 'FLASH_STATE_FIRED':
             logging.debug('Flash fired')
@@ -241,7 +241,7 @@ class AutoFlashTest(its_base_test.ItsBaseTest):
           req = capture_request_utils.auto_capture_request()
           req['android.control.captureIntent'] = _CAPTURE_INTENT_STILL_CAPTURE
           cap = cam.do_capture(req, out_surfaces)
-          flash_state_after = FLASH_STATES[cap['metadata']
+          flash_state_after = _FLASH_STATES[cap['metadata']
                                            ['android.flash.state']]
           logging.debug('FLASH_STATE after flash fired: %s', flash_state_after)
           if flash_state_after != 'FLASH_STATE_READY':

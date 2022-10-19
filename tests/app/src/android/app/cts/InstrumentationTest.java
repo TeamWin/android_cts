@@ -23,7 +23,6 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 import android.app.Activity;
@@ -149,13 +148,18 @@ public class InstrumentationTest {
         String result = SystemUtil.runShellCommand(mInstrumentation, cmd);
         assertEquals("INSTRUMENTATION_RESULT: " + SIMPLE_PACKAGE_NAME + "=true"
                 + "\nINSTRUMENTATION_CODE: -1\n", result);
-        // Start the instrumentation by ourselves, it should fail.
+        // Start the instrumentation by ourselves, it should succeed (chained instrumentation).
+        mContext.startInstrumentation(
+                ComponentName.unflattenFromString(defaultInstrumentationName), null, null);
+        // Start the instrumentation from another process, this time it should fail.
+        SystemUtil.runShellCommand(mInstrumentation,
+                "cmd deviceidle tempwhitelist android.app.cts");
         try {
-            mContext.startInstrumentation(
-                    ComponentName.unflattenFromString(defaultInstrumentationName), null, null);
-            fail("Expecting SecurityException as the instrumented is not started from shell.");
-        } catch (SecurityException e) {
-            // Expected.
+            assertFalse(InstrumentationHelperService.startInstrumentation(
+                    mContext, defaultInstrumentationName));
+        } finally {
+            SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle tempwhitelist -r android.app.cts");
         }
     }
 

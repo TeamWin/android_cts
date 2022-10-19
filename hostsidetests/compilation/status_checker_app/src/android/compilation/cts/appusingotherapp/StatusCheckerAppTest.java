@@ -47,5 +47,7 @@ public class StatusCheckerAppTest {
         assertThat(info.getReason()).isEqualTo(bundle.getString("compilation-reason"));
         assertThat(info.isVerified()).isEqualTo(bundle.getString("is-verified").equals("true"));
         assertThat(info.isOptimized()).isEqualTo(bundle.getString("is-optimized").equals("true"));
+        assertThat(info.isFullyCompiled())
+                .isEqualTo(bundle.getString("is-fully-compiled").equals("true"));
     }
 }

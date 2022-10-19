@@ -19,7 +19,6 @@ package android.server.biometrics;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import android.content.ComponentName;
-import android.content.Context;
 import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricPrompt;
 import android.hardware.biometrics.SensorProperties;
@@ -38,12 +37,11 @@ import com.android.server.biometrics.nano.BiometricServiceStateProto;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
-import java.nio.charset.StandardCharsets;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -53,6 +51,9 @@ public class Utils {
 
     private static final String TAG = "BiometricTestUtils";
     private static final String KEYSTORE_PROVIDER = "AndroidKeyStore";
+    private static final String AIDL_HAL_PATTERN = ", provider: FingerprintProvider";
+
+    private static String sFingerprintDumpSys;
 
     /** adb command for dumping the biometric proto */
     public static final String DUMPSYS_BIOMETRIC = "dumpsys biometric --proto";
@@ -295,26 +296,17 @@ public class Utils {
     }
 
     /**
-     * Retrieves Fps HIDL biometric sensor configuration defined in config_biometric_sensors.
+     * Retrieves AIDL HAL belonging sensor id
      *
-     * @param context The system context.
-     * @return List of biometric sensors on the device, in decreasing strength, otherwise null.
+     * @return sensorId if there is AIDL HAL, -1 otherwise
      */
-    @Nullable
-    public static SensorConfig[] getFpsHidlSensorConfig(Context context) {
-        final int sensorConfigId = context.getResources().getSystem().getIdentifier(
-                "config_biometric_sensors", "array", "android");
-        final String[] configStrings = context.getResources().getSystem().getStringArray(
-                sensorConfigId);
-        final SensorConfig[] hidlConfigs = new SensorConfig[configStrings.length];
-        int fpsSensors = 0;
-        for (int i = 0; i < configStrings.length; ++i) {
-            final SensorConfig config = new SensorConfig(configStrings[i]);
-            if (config.modality == 2 /* TYPE_FINGERPRINT */) {
-                hidlConfigs[fpsSensors++] = config;
-            }
+    public static int getAidlSensorId() {
+        if (!hasAidlProvider()) {
+            return -1;
         }
-        return hidlConfigs;
+        return Integer.parseInt(sFingerprintDumpSys.substring(
+                sFingerprintDumpSys.indexOf(AIDL_HAL_PATTERN) - 1,
+                sFingerprintDumpSys.indexOf(AIDL_HAL_PATTERN)));
     }
 
     /**
@@ -323,8 +315,10 @@ public class Utils {
      * @return true if there is AIDL HAL, false otherwise
      */
     public static boolean hasAidlProvider() {
-        final byte[] dump = executeShellCommand("dumpsys fingerprint");
-        String fingerprintDump = new String(dump, StandardCharsets.UTF_8);
-        return fingerprintDump.contains("provider: FingerprintProvider");
+        if (sFingerprintDumpSys == null) {
+            final byte[] dump = executeShellCommand("dumpsys fingerprint");
+            sFingerprintDumpSys = new String(dump, StandardCharsets.UTF_8);
+        }
+        return sFingerprintDumpSys.contains(AIDL_HAL_PATTERN);
     }
 }

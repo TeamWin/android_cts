@@ -108,6 +108,20 @@ public class MediaMuxerTest {
     }
 
     @Test
+    public void testHEICOutputInHEIF() throws Exception {
+        final String source = "sample_heif.heic";
+        String outputFilePath = File.createTempFile("testHEICOutputInHEIF", ".heic")
+            .getAbsolutePath();
+        cloneAndVerify(
+            source,
+            outputFilePath,
+            4 /* expectedTrackCount */,
+            0 /* degrees */,
+            MediaMuxer.OutputFormat.MUXER_OUTPUT_HEIF,
+            false /* signalEos */);
+    }
+
+    @Test
     public void testAVIFOutputInHEIF() throws Exception {
         final String source = "sample_avif.avif";
         String outputFilePath = File.createTempFile("testAVIFOutputInHEIF", ".avif")

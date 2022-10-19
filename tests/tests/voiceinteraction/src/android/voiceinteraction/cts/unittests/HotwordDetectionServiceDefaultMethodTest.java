@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.voiceinteraction.cts;
+package android.voiceinteraction.cts.unittests;
 
 import static org.mockito.Mockito.mock;
 import static org.testng.Assert.assertThrows;
@@ -22,12 +22,17 @@ import static org.testng.Assert.assertThrows;
 import android.media.AudioFormat;
 import android.os.ParcelFileDescriptor;
 import android.service.voice.AlwaysOnHotwordDetector;
+import android.service.voice.HotwordDetectionService;
+import android.voiceinteraction.cts.NoOpHotwordDetectionService;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+/**
+ * Tests for {@link HotwordDetectionService} should have default implementation.
+ */
 @RunWith(AndroidJUnit4.class)
 public class HotwordDetectionServiceDefaultMethodTest {
 

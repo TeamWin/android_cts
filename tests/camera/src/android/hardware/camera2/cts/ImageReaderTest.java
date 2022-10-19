@@ -499,7 +499,33 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     }
 
     @Test
-    public void testImageReaderBuilderWithBLOB() throws Exception {
+    public void testImageReaderBuilderWithBLOBAndHEIF() throws Exception {
+        long usage = HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE | HardwareBuffer.USAGE_GPU_COLOR_OUTPUT;
+        try (
+            ImageReader reader = new ImageReader
+                .Builder(20, 45)
+                .setMaxImages(2)
+                .setDefaultHardwareBufferFormat(HardwareBuffer.BLOB)
+                .setDefaultDataSpace(DataSpace.DATASPACE_HEIF)
+                .setUsage(usage)
+                .build();
+            ImageWriter writer = new ImageWriter.Builder(reader.getSurface()).build();
+        ) {
+            assertEquals(2, reader.getMaxImages());
+            assertEquals(usage, reader.getUsage());
+            assertEquals(HardwareBuffer.BLOB, reader.getHardwareBufferFormat());
+            assertEquals(DataSpace.DATASPACE_HEIF, reader.getDataSpace());
+            // writer should have same dataspace/hardwarebuffer format as reader.
+            assertEquals(HardwareBuffer.BLOB, writer.getHardwareBufferFormat());
+            assertEquals(DataSpace.DATASPACE_HEIF, writer.getDataSpace());
+            // HEIC is the combination of HardwareBuffer.BLOB and Dataspace.DATASPACE_HEIF
+            assertEquals(ImageFormat.HEIC, writer.getFormat());
+        }
+    }
+
+
+    @Test
+    public void testImageReaderBuilderWithBLOBAndJFIF() throws Exception {
         long usage = HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE | HardwareBuffer.USAGE_GPU_COLOR_OUTPUT;
         try (
             ImageReader reader = new ImageReader
@@ -518,6 +544,7 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             // writer should have same dataspace/hardwarebuffer format as reader.
             assertEquals(HardwareBuffer.BLOB, writer.getHardwareBufferFormat());
             assertEquals(DataSpace.DATASPACE_JFIF, writer.getDataSpace());
+            // JPEG is the combination of HardwareBuffer.BLOB and Dataspace.DATASPACE_JFIF
             assertEquals(ImageFormat.JPEG, writer.getFormat());
         }
     }
@@ -561,6 +588,10 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             assertEquals(HardwareBuffer.USAGE_CPU_READ_OFTEN, reader.getUsage());
             // ImageFormat.YUV_420_888 hal dataspace is DATASPACE_JFIF
             assertEquals(DataSpace.DATASPACE_JFIF, reader.getDataSpace());
+
+            // writer should retrieve all info from reader's surface
+            assertEquals(DataSpace.DATASPACE_JFIF, writer.getDataSpace());
+            assertEquals(HardwareBuffer.YCBCR_420_888, writer.getHardwareBufferFormat());
 
             assertEquals(20, outputImage.getWidth());
             assertEquals(45, outputImage.getHeight());

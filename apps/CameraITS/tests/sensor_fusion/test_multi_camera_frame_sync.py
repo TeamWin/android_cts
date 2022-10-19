@@ -155,6 +155,16 @@ class MultiCameraFrameSyncTest(its_base_test.ItsBaseTest):
     # Determine return parameters
     ids = camera_properties_utils.logical_multi_camera_physical_ids(props)
 
+    # Define capture output surfaces & SKIP if not supported
+    width = opencv_processing_utils.VGA_WIDTH
+    height = opencv_processing_utils.VGA_HEIGHT
+    out_surfaces = [{'format': 'yuv', 'width': width, 'height': height,
+                     'physicalCamera': ids[0]},
+                    {'format': 'yuv', 'width': width, 'height': height,
+                     'physicalCamera': ids[1]}]
+    camera_properties_utils.skip_unless(
+        cam.is_stream_combination_supported(out_surfaces))
+
     # Define capture request
     sens, exp, _, _, _ = cam.do_3a(get_results=True, do_af=False)
     req = capture_request_utils.manual_capture_request(sens, exp)
@@ -164,17 +174,6 @@ class MultiCameraFrameSyncTest(its_base_test.ItsBaseTest):
       req['android.lens.focusDistance'] = fd_min
     else:
       req['android.lens.focusDistance'] = fd_chart
-
-    # Capture YUVs
-    width = opencv_processing_utils.VGA_WIDTH
-    height = opencv_processing_utils.VGA_HEIGHT
-    out_surfaces = [{'format': 'yuv', 'width': width, 'height': height,
-                     'physicalCamera': ids[0]},
-                    {'format': 'yuv', 'width': width, 'height': height,
-                     'physicalCamera': ids[1]}]
-
-    out_surfaces_supported = cam.is_stream_combination_supported(out_surfaces)
-    camera_properties_utils.skip_unless(out_surfaces_supported)
 
     # Start camera rotation & sleep shortly to let rotations start
     p = multiprocessing.Process(

@@ -199,7 +199,9 @@ public class SeccompDeviceTest {
             return "x86_64";
         } else if (CpuFeatures.isX86Cpu()) {
             return "x86";
-        } else {
+        } else if (CpuFeatures.isRiscv64Cpu()) {
+            return "riscv64";
+        }else {
             Assert.fail("Unsupported architecture");
             return null;
         }

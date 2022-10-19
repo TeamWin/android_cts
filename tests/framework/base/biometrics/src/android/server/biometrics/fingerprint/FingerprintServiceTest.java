@@ -30,7 +30,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
@@ -44,7 +43,6 @@ import android.server.biometrics.BiometricServiceState;
 import android.server.biometrics.SensorStates;
 import android.server.biometrics.TestSessionList;
 import android.server.biometrics.Utils;
-import android.server.biometrics.Utils.SensorConfig;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.TestJournalProvider.TestJournal;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
@@ -255,7 +253,8 @@ public class FingerprintServiceTest extends ActivityManagerTestBase
             // and do not dispatch an acquired event via BiometricPrompt
             final boolean verifyPartial = !hasUdfps();
             if (verifyPartial) {
-                if (Utils.hasAidlProvider()) {
+                if (Utils.hasAidlProvider() && testSessions.first().equals(
+                        testSessions.find(Utils.getAidlSensorId()))) {
                     testSessions.first().notifyAcquired(userId, 2 /* AcquiredInfo.PARTIAL */);
                 } else {
                     testSessions.first().notifyAcquired(userId,
@@ -346,7 +345,7 @@ public class FingerprintServiceTest extends ActivityManagerTestBase
         for (SensorProperties prop : mSensorProperties) {
             BiometricTestSession session =
                     mFingerprintManager.createTestSession(prop.getSensorId());
-            testSessions.add(session);
+            testSessions.put(prop.getSensorId(), session);
 
             session.startEnroll(userId);
             mInstrumentation.waitForIdleSync();

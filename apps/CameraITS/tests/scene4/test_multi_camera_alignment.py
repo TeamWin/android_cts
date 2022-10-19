@@ -29,21 +29,21 @@ import image_processing_utils
 import its_session_utils
 import opencv_processing_utils
 
-ALIGN_TOL_MM = 4.0  # mm
-ALIGN_TOL = 0.01  # multiplied by sensor diagonal to convert to pixels
-CIRCLE_COLOR = 0  # [0: black, 255: white]
-CIRCLE_MIN_AREA = 0.0075  # multiplied by image size
-CIRCLE_RTOL = 0.1  # 10%
-CM_TO_M = 1E-2
-FMT_CODE_RAW = 0x20
-FMT_CODE_YUV = 0x23
-LENS_FACING_BACK = 1  # 0: FRONT, 1: BACK, 2: EXTERNAL
-M_TO_MM = 1E3
-MM_TO_UM = 1E3
-NAME = os.path.splitext(os.path.basename(__file__))[0]
-REFERENCE_GYRO = 1
-REFERENCE_UNDEFINED = 2
-TRANS_MATRIX_REF = np.array([0, 0, 0])  # translation matrix for ref cam is 000
+_ALIGN_TOL_MM = 4.0  # mm
+_ALIGN_TOL = 0.01  # multiplied by sensor diagonal to convert to pixels
+_CIRCLE_COLOR = 0  # [0: black, 255: white]
+_CIRCLE_MIN_AREA = 0.0075  # multiplied by image size
+_CIRCLE_RTOL = 0.1  # 10%
+_CM_TO_M = 1E-2
+_FMT_CODE_RAW = 0x20
+_FMT_CODE_YUV = 0x23
+_LENS_FACING_BACK = 1  # 0: FRONT, 1: BACK, 2: EXTERNAL
+_M_TO_MM = 1E3
+_MM_TO_UM = 1E3
+_NAME = os.path.splitext(os.path.basename(__file__))[0]
+_REFERENCE_GYRO = 1
+_REFERENCE_UNDEFINED = 2
+_TRANS_MATRIX_REF = np.array([0, 0, 0])  # translation matrix for ref cam is 000
 
 
 def convert_cap_and_prep_img(cap, props, fmt, img_name, debug):
@@ -83,8 +83,8 @@ def calc_pixel_size(props):
   pixel_size_w = sensor_size['width'] / ar['width']
   pixel_size_h = sensor_size['height'] / ar['height']
   logging.debug('pixel size(um): %.2f x %.2f',
-                pixel_size_w * MM_TO_UM, pixel_size_h * MM_TO_UM)
-  return (pixel_size_w + pixel_size_h) / 2 * MM_TO_UM
+                pixel_size_w * _MM_TO_UM, pixel_size_h * _MM_TO_UM)
+  return (pixel_size_w + pixel_size_h) / 2 * _MM_TO_UM
 
 
 def select_ids_to_test(ids, props, chart_distance):
@@ -223,7 +223,7 @@ def take_images(cam, caps, props, fmt, cap_camera_ids, out_surfaces, log_path,
       img = image_processing_utils.convert_capture_to_rgb_image(
           caps[(fmt, cap_camera_ids[i])], props=props[cap_camera_ids[i]])
       image_processing_utils.write_image(img, '%s_%s_%s.jpg' % (
-          os.path.join(log_path, NAME), fmt, cap_camera_ids[i]))
+          os.path.join(log_path, _NAME), fmt, cap_camera_ids[i]))
 
   return caps
 
@@ -325,7 +325,7 @@ def define_reference_camera(pose_reference, cam_reference):
     i_2nd: physical id of secondary camera
   """
 
-  if pose_reference == REFERENCE_GYRO:
+  if pose_reference == _REFERENCE_GYRO:
     logging.debug('pose_reference is GYRO')
     keys = list(cam_reference.keys())
     i_ref = keys[0]  # pick first camera as ref
@@ -376,7 +376,7 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
         hidden_physical_id=self.hidden_physical_id) as cam:
       props = cam.get_camera_properties()
       log_path = self.log_path
-      chart_distance = self.chart_distance * CM_TO_M
+      chart_distance = self.chart_distance * _CM_TO_M
 
       # check SKIP conditions
       camera_properties_utils.skip_unless(
@@ -393,7 +393,7 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
       pose_reference = props['android.lens.poseReference']
 
       # Convert chart_distance for lens facing back
-      if props['android.lens.facing'] == LENS_FACING_BACK:
+      if props['android.lens.facing'] == _LENS_FACING_BACK:
         # API spec defines +z is pointing out from screen
         logging.debug('lens facing BACK')
         chart_distance *= -1
@@ -406,7 +406,7 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
       for i in ids:
         physical_props[i] = cam.get_camera_properties_by_id(i)
         if physical_props[i][
-            'android.lens.poseReference'] == REFERENCE_UNDEFINED:
+            'android.lens.poseReference'] == _REFERENCE_UNDEFINED:
           continue
         # find YUV+RGB capable physical cameras
         if (camera_properties_utils.backward_compatible(physical_props[i]) and
@@ -435,10 +435,10 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
       for i, fmt in enumerate(fmts):
         physical_sizes = {}
         capture_cam_ids = physical_ids
-        fmt_code = FMT_CODE_YUV
+        fmt_code = _FMT_CODE_YUV
         if fmt == 'raw':
           capture_cam_ids = physical_raw_ids
-          fmt_code = FMT_CODE_RAW
+          fmt_code = _FMT_CODE_RAW
         for physical_id in capture_cam_ids:
           configs = physical_props[physical_id][
               'android.scaler.streamConfigurationMap'][
@@ -470,7 +470,7 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
       logging.debug('Format: %s', str(fmt))
       for i in capture_cam_ids:
         # convert cap and prep image
-        img_name = '%s_%s_%s.jpg' % (os.path.join(log_path, NAME), fmt, i)
+        img_name = '%s_%s_%s.jpg' % (os.path.join(log_path, _NAME), fmt, i)
         img = convert_cap_and_prep_img(
             caps[(fmt, i)], physical_props[i], fmt, img_name, debug)
         size[i] = (caps[fmt, i]['width'], caps[fmt, i]['height'])
@@ -498,7 +498,7 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
           logging.debug('t: %s', str(t[i]))
           logging.debug('r: %s', str(r[i]))
 
-        if (t[i] == TRANS_MATRIX_REF).all():
+        if (t[i] == _TRANS_MATRIX_REF).all():
           cam_reference[i] = True
         else:
           cam_reference[i] = False
@@ -512,15 +512,15 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
           if not np.any(cv2_distort):
             raise AssertionError(f'Camera {i} has no distortion matrix!')
           image_processing_utils.write_image(img/255, '%s_%s_%s.jpg' % (
-              os.path.join(log_path, NAME), fmt, i))
+              os.path.join(log_path, _NAME), fmt, i))
           img = cv2.undistort(img, k[i], cv2_distort)
           image_processing_utils.write_image(img/255, '%s_%s_correct_%s.jpg' % (
-              os.path.join(log_path, NAME), fmt, i))
+              os.path.join(log_path, _NAME), fmt, i))
 
         # Find the circles in grayscale image
         circle[i] = opencv_processing_utils.find_circle(
-            img, '%s_%s_gray_%s.jpg' % (os.path.join(log_path, NAME), fmt, i),
-            CIRCLE_MIN_AREA, CIRCLE_COLOR)
+            img, '%s_%s_gray_%s.jpg' % (os.path.join(log_path, _NAME), fmt, i),
+            _CIRCLE_MIN_AREA, _CIRCLE_COLOR)
         logging.debug('Circle radius %s:  %.2f', format(i), circle[i]['r'])
 
         # Undo zoom to image (if applicable).
@@ -563,19 +563,19 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
 
       # Check center locations
       err_mm = np.linalg.norm(np.array([x_w[i_ref], y_w[i_ref]]) -
-                              np.array([x_w[i_2nd], y_w[i_2nd]])) * M_TO_MM
+                              np.array([x_w[i_2nd], y_w[i_2nd]])) * _M_TO_MM
       logging.debug('Center location err (mm): %.2f', err_mm)
-      if err_mm > ALIGN_TOL_MM:
+      if err_mm > _ALIGN_TOL_MM:
         raise AssertionError(
             f'Centers {i_ref} <-> {i_2nd} too different! '
-            f'val={err_mm:.2f}, ATOL={ALIGN_TOL_MM} mm')
+            f'val={err_mm:.2f}, ATOL={_ALIGN_TOL_MM} mm')
 
       # Check projections back into pixel space
       for i in [i_ref, i_2nd]:
         err = np.linalg.norm(np.array([circle[i]['x'], circle[i]['y']]) -
                              np.array([x_p[i], y_p[i]]).reshape(1, -1))
         logging.debug('Camera %s projection error (pixels): %.1f', i, err)
-        tol = ALIGN_TOL * sensor_diag[i]
+        tol = _ALIGN_TOL * sensor_diag[i]
         if err >= tol:
           raise AssertionError(f'Camera {i} project location too different! '
                                f'diff={err:.2f}, ATOL={tol:.2f} pixels')
@@ -590,9 +590,9 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
                       pixel_sizes[i_ref], pixel_sizes[i_2nd])
         if not math.isclose(circle[i_ref]['r']*pixel_sizes[i_ref]/fl[i_ref],
                             circle[i_2nd]['r']*pixel_sizes[i_2nd]/fl[i_2nd],
-                            rel_tol=CIRCLE_RTOL):
+                            rel_tol=_CIRCLE_RTOL):
           raise AssertionError(
-              f'Circle size scales improperly! RTOL: {CIRCLE_RTOL} '
+              f'Circle size scales improperly! RTOL: {_CIRCLE_RTOL} '
               'Metric: radius*pixel_size/focal_length should be equal.')
 
 if __name__ == '__main__':

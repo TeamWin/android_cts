@@ -25,10 +25,10 @@ import capture_request_utils
 import its_session_utils
 
 
-NAME = os.path.basename(__file__).split('.')[0]
+_NAME = os.path.basename(__file__).split('.')[0]
 # Spec to be within 3% but not over for exposure in capture vs exposure request.
-RTOL_EXP_GAIN = 0.97
-TEST_EXP_RANGE = [6E6, 1E9]  # ns [6ms, 1s]
+_RTOL_EXP_GAIN = 0.97
+_TEST_EXP_RANGE = [6E6, 1E9]  # ns [6ms, 1s]
 
 
 class ReadWriteTest(its_base_test.ItsBaseTest):
@@ -60,12 +60,12 @@ class ReadWriteTest(its_base_test.ItsBaseTest):
       if sensor_exp_range[0] == 0:
         raise AssertionError('Min expsoure == 0')
       exp_range = []
-      if sensor_exp_range[0] < TEST_EXP_RANGE[0]:
-        exp_range.append(TEST_EXP_RANGE[0])
+      if sensor_exp_range[0] < _TEST_EXP_RANGE[0]:
+        exp_range.append(_TEST_EXP_RANGE[0])
       else:
         exp_range.append(sensor_exp_range[0])
-      if sensor_exp_range[1] > TEST_EXP_RANGE[1]:
-        exp_range.append(TEST_EXP_RANGE[1])
+      if sensor_exp_range[1] > _TEST_EXP_RANGE[1]:
+        exp_range.append(_TEST_EXP_RANGE[1])
       else:
         exp_range.append(sensor_exp_range[1])
 
@@ -103,7 +103,7 @@ class ReadWriteTest(its_base_test.ItsBaseTest):
         for e_write in exp_range:
           for s_write in sens_range:
             fmt_read, e_read, s_read = data[(fmt_write, e_write, s_write)]
-            if (e_write < e_read or e_read / float(e_write) <= RTOL_EXP_GAIN):
+            if (e_write < e_read or e_read / float(e_write) <= _RTOL_EXP_GAIN):
               e_failed.append({
                   'format': fmt_read,
                   'e_write': e_write,
@@ -111,7 +111,7 @@ class ReadWriteTest(its_base_test.ItsBaseTest):
                   's_write': s_write,
                   's_read': s_read
               })
-            if (s_write < s_read or s_read / float(s_write) <= RTOL_EXP_GAIN):
+            if (s_write < s_read or s_read / float(s_write) <= _RTOL_EXP_GAIN):
               s_failed.append({
                   'format': fmt_read,
                   'e_write': e_write,
@@ -135,25 +135,25 @@ class ReadWriteTest(its_base_test.ItsBaseTest):
           for fail in e_failed:
             logging.debug('format: %s, e_write: %d, e_read: %d, RTOL: %.2f, ',
                           fail['format'], fail['e_write'], fail['e_read'],
-                          RTOL_EXP_GAIN)
+                          _RTOL_EXP_GAIN)
             logging.debug('s_write: %d, s_read: %d, RTOL: %.2f',
-                          fail['s_write'], fail['s_read'], RTOL_EXP_GAIN)
+                          fail['s_write'], fail['s_read'], _RTOL_EXP_GAIN)
         if s_failed:
           logging.debug('FAILs for sensitivity(ISO)')
           for fail in s_failed:
             logging.debug('format: %s, s_write: %d, s_read: %d, RTOL: %.2f, ',
                           fail['format'], fail['s_write'], fail['s_read'],
-                          RTOL_EXP_GAIN)
+                          _RTOL_EXP_GAIN)
             logging.debug('e_write: %d, e_read: %d, RTOL: %.2f',
-                          fail['e_write'], fail['e_read'], RTOL_EXP_GAIN)
+                          fail['e_write'], fail['e_read'], _RTOL_EXP_GAIN)
         if r_failed:
           logging.debug('FAILs for sensitivity(ISO) range')
           for fail in r_failed:
             logging.debug('format: %s, s_write: %d, s_read: %d, RTOL: %.2f, ',
                           fail['format'], fail['s_write'], fail['s_read'],
-                          RTOL_EXP_GAIN)
+                          _RTOL_EXP_GAIN)
             logging.debug('e_write: %d, e_read: %d, RTOL: %.2f',
-                          fail['e_write'], fail['e_read'], RTOL_EXP_GAIN)
+                          fail['e_write'], fail['e_read'], _RTOL_EXP_GAIN)
 
         # PASS/FAIL
         if e_failed:
