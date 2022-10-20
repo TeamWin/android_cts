@@ -195,12 +195,9 @@ def take_images(cam, caps, props, fmt, cap_camera_ids, out_surfaces, log_path,
 
   logging.debug('out_surfaces: %s', str(out_surfaces))
   if len(out_surfaces) == 3:  # do simultaneous capture
-    # Do 3A and get the values
-    s, e, _, _, fd = cam.do_3a(get_results=True, lock_ae=True, lock_awb=True)
-    if fmt == 'raw':
-      e *= 2  # brighten RAW images
-
-    req = capture_request_utils.manual_capture_request(s, e, fd)
+    # Do 3A without getting the values
+    cam.do_3a(lock_ae=True, lock_awb=True)
+    req = capture_request_utils.auto_capture_request(props=props, do_af=True)
     _, caps[(fmt,
              cap_camera_ids[0])], caps[(fmt,
                                         cap_camera_ids[1])] = cam.do_capture(
@@ -208,13 +205,9 @@ def take_images(cam, caps, props, fmt, cap_camera_ids, out_surfaces, log_path,
 
   else:  # step through cameras individually
     for i, out_surface in enumerate(out_surfaces):
-      # Do 3A and get the values
-      s, e, _, _, fd = cam.do_3a(get_results=True,
-                                 lock_ae=True, lock_awb=True)
-      if fmt == 'raw':
-        e *= 2  # brighten RAW images
-
-      req = capture_request_utils.manual_capture_request(s, e, fd)
+      # Do 3A without getting the values
+      cam.do_3a(lock_ae=True, lock_awb=True)
+      req = capture_request_utils.auto_capture_request(props=props, do_af=True)
       caps[(fmt, cap_camera_ids[i])] = cam.do_capture(req, out_surface)
 
   # save images if debug

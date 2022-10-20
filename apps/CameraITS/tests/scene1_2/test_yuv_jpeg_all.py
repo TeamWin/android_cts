@@ -42,7 +42,7 @@ _PLOT_LEGEND_TRIANGLE_SIZE = 6
 
 
 def do_capture_and_extract_rgb_means(
-    req, cam, props, size, img_type, index, log_path, debug):
+    req, cam, props, size, img_type, index, name_with_log_path, debug):
   """Do capture and extra rgb_means of center patch.
 
   Args:
@@ -52,7 +52,7 @@ def do_capture_and_extract_rgb_means(
     size: [width, height]
     img_type: string of 'yuv' or 'jpeg'
     index: index to track capture number of img_type
-    log_path: location for saving image
+    name_with_log_path: file name and location for saving image
     debug: boolean to flag saving captured images
 
   Returns:
@@ -64,8 +64,9 @@ def do_capture_and_extract_rgb_means(
     cap_raw, cap = cam.do_capture(req, out_surfaces)
     img_raw = image_processing_utils.convert_capture_to_rgb_image(
         cap_raw, props=props)
-    image_processing_utils.write_image(img_raw, '%s_raw_%s_w%d_h%d.png' % (
-        os.path.join(log_path, _NAME), img_type, size[0], size[1]), True)
+    image_processing_utils.write_image(
+        img_raw, f'{name_with_log_path}_raw_{img_type}_w{size[0]}_h{size[1]}',
+        True)
   else:
     cap = cam.do_capture(req, out_surface)
   logging.debug('e_cap: %d, s_cap: %d, f_distance: %s',
@@ -86,8 +87,8 @@ def do_capture_and_extract_rgb_means(
     raise AssertionError(f"{cap['height']} != {size[1]}")
 
   if debug:
-    image_processing_utils.write_image(img, '%s_%s_w%d_h%d.png'%(
-        os.path.join(log_path, _NAME), img_type, size[0], size[1]))
+    image_processing_utils.write_image(
+        img, f'{name_with_log_path}_{img_type}_w{size[0]}_h{size[1]}.png')
 
   if img_type == 'jpg':
     if img.shape[0] != size[1]:
@@ -118,6 +119,7 @@ class YuvJpegAllTest(its_base_test.ItsBaseTest):
 
       log_path = self.log_path
       debug = self.debug_mode
+      name_with_log_path = os.path.join(log_path, _NAME)
 
       # Load chart for scene
       its_session_utils.load_scene(
@@ -145,13 +147,13 @@ class YuvJpegAllTest(its_base_test.ItsBaseTest):
       for i, size in enumerate(
           capture_request_utils.get_available_output_sizes('yuv', props)):
         yuv_rgbs.append(do_capture_and_extract_rgb_means(
-            req, cam, props, size, 'yuv', i, log_path, debug))
+            req, cam, props, size, 'yuv', i, name_with_log_path, debug))
 
       jpg_rgbs = []
       for i, size in enumerate(
           capture_request_utils.get_available_output_sizes('jpg', props)):
         jpg_rgbs.append(do_capture_and_extract_rgb_means(
-            req, cam, props, size, 'jpg', i, log_path, debug))
+            req, cam, props, size, 'jpg', i, name_with_log_path, debug))
 
       # Plot means vs format
       pylab.figure(_NAME)
@@ -185,8 +187,7 @@ class YuvJpegAllTest(its_base_test.ItsBaseTest):
       ax.legend(handles=[yuv_marker, jpg_marker])
       pylab.xlabel('format number')
       pylab.ylabel('RGB avg [0, 1]')
-      matplotlib.pyplot.savefig(
-          '%s_plot_means.png' % os.path.join(log_path, _NAME))
+      matplotlib.pyplot.savefig(f'{name_with_log_path}_plot_means.png')
 
       # Assert all captures are similar in RGB space using rgbs[0] as ref.
       rgbs = yuv_rgbs + jpg_rgbs

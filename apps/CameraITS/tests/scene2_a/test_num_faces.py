@@ -28,6 +28,8 @@ import error_util
 import image_processing_utils
 import its_session_utils
 
+_CV2_GREEN = (0, 1, 0)
+_CV2_RED = (1, 0, 0)
 _FD_MODE_OFF, _FD_MODE_SIMPLE, _FD_MODE_FULL = 0, 1, 2
 _HAARCASCADE_FILE = os.path.join(
     os.path.dirname(os.path.abspath(cv2.__file__)), 'opencv', 'haarcascades',
@@ -245,21 +247,21 @@ class NumFacesTest(its_base_test.ItsBaseTest):
             crop_region = cap['metadata']['android.scaler.cropRegion']
             faces_cropped = correct_faces_for_crop(faces, img, crop_region)
             for (l, r, t, b) in faces_cropped:
-              cv2.rectangle(img, (l, t), (r, b), (0, 1, 0), 2)
+              cv2.rectangle(img, (l, t), (r, b), _CV2_GREEN, 2)
 
             # Draw opencv boxes and center points in red
             faces_opencv = find_opencv_faces(img)
             for (x, y, w, h) in faces_opencv:
-              cv2.rectangle(img, (x, y), (x+w, y+h), (1, 0, 0), 2)
+              cv2.rectangle(img, (x, y), (x+w, y+h), _CV2_RED, 2)
               if debug_mode:
-                cv2.circle(img, (x+w//2, y+h//2), 2, (1, 0, 0), 2)
+                cv2.circle(img, (x+w//2, y+h//2), 2, _CV2_RED, 2)
 
             # save image with rectangles
             img_name = f'{file_name_stem}_fd_mode_{fd_mode}.jpg'
             image_processing_utils.write_image(img, img_name)
             if fnd_faces != _NUM_FACES:
-              raise AssertionError('Wrong num of faces found! '
-                                   f'Found: {fnd_faces}, expected: {_NUM_FACES}')
+              raise AssertionError('Wrong num of faces found! Found: '
+                                   f'{fnd_faces}, expected: {_NUM_FACES}')
             # Reasonable scores for faces
             face_scores = [face['score'] for face in faces]
             for score in face_scores:

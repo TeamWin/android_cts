@@ -64,9 +64,9 @@ public class HotwordAudioStreamTest {
                     HotwordAudioStream.CREATOR.createFromParcel(p);
             p.recycle();
             assertThat(targetHotwordAudioStream.getAudioFormat()).isNotNull();
-            assertThat(targetHotwordAudioStream.getAudioStream()).isNotNull();
+            assertThat(targetHotwordAudioStream.getAudioStreamParcelFileDescriptor()).isNotNull();
             assertThat(targetHotwordAudioStream.getAudioFormat()).isEqualTo(FAKE_AUDIO_FORMAT);
-            assertAudioStream(targetHotwordAudioStream.getAudioStream(),
+            assertAudioStream(targetHotwordAudioStream.getAudioStreamParcelFileDescriptor(),
                     FAKE_HOTWORD_AUDIO_DATA);
             assertThat(targetHotwordAudioStream.getTimestamp().framePosition).isEqualTo(
                     timestamp.framePosition);

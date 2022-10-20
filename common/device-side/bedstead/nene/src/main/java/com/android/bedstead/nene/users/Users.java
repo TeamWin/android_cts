@@ -213,7 +213,13 @@ public final class Users {
         }
 
         return all().stream()
-                .filter(u -> u.type().equals(userType))
+                .filter(u -> {
+                    try {
+                        return u.type().equals(userType);
+                    } catch (NeneException e) {
+                        return false;
+                    }
+                })
                 .collect(Collectors.toSet());
     }
 

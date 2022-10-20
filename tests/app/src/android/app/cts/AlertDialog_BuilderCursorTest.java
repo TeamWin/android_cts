@@ -28,8 +28,6 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
-import android.app.Instrumentation;
-import android.app.stubs.DialogStubActivity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -38,20 +36,12 @@ import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.view.ViewGroup;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.filters.MediumTest;
 
-import com.android.compatibility.common.util.PollingCheck;
-import com.android.compatibility.common.util.WindowUtil;
-
 import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -60,16 +50,9 @@ import java.io.File;
 
 @MediumTest
 @RunWith(JUnit4.class)
-public class AlertDialog_BuilderCursorTest {
-    private static final long TOUCH_MODE_PROPAGATION_TIMEOUT_MILLIS = 5_000L;
-
-    @Rule
-    public ActivityScenarioRule<DialogStubActivity> mActivityRule =
-            new ActivityScenarioRule<>(DialogStubActivity.class);
+public final class AlertDialog_BuilderCursorTest extends AlertDialog_BuilderTestBase {
 
     private Builder mBuilder;
-    private DialogStubActivity mDialogActivity;
-    private Instrumentation mInstrumentation;
     private AlertDialog mDialog;
     private ListView mListView;
 
@@ -116,12 +99,10 @@ public class AlertDialog_BuilderCursorTest {
         }
     }
 
-    @Before
+    @Override
     public void setUp() throws Exception {
+        super.setUp();
         mBuilder = null;
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        mActivityRule.getScenario().onActivity(activity -> mDialogActivity = activity);
-        WindowUtil.waitForFocus(mDialogActivity);
         mInstrumentation.setInTouchMode(false);
 
         mListView = null;
@@ -186,41 +167,22 @@ public class AlertDialog_BuilderCursorTest {
                 null, null, null, null, null);
         assertNotNull(mCursor);
 
-        mActivityRule.getScenario().onActivity(a -> {
-            mBuilder = new Builder(mDialogActivity);
+        mActivityRule.getScenario().onActivity(activity -> {
+            mBuilder = new Builder(activity);
             mBuilder.setCursor(mCursor, mOnClickListener, TEXT_COLUMN_NAME);
             mDialog = mBuilder.show();
             mListView = mDialog.getListView();
         });
 
         if (mListView.isInTouchMode()) {
-            reAttachAdapterWithTouchModeFalse();
+            reAttachListViewAdapter(mListView);
         }
-        mActivityRule.getScenario().onActivity(a -> mListView.performItemClick(null, 0, 0));
+        mActivityRule.getScenario().onActivity(unused -> mListView.performItemClick(null, 0, 0));
         mInstrumentation.waitForIdleSync();
         final SQLiteCursor selected = (SQLiteCursor) mListView.getSelectedItem();
         assertEquals(mCursor.getString(1), selected.getString(1));
         verify(mOnClickListener, times(1)).onClick(mDialog, 0);
         verifyNoMoreInteractions(mOnClickListener);
-    }
-
-    // mListView is a detached view by default. If the default inTouchMode is set to true, then
-    // mListView#lookForSelectablePosition (invoked in mListView#setAdapter) won't be able to
-    // position its cursor (#lookForSelectablePosition requires mListView to not be in touch mode).
-    // Therefore we need to attach mListView to the test activity and set the adapter again.
-    // This time mListView won't be in touch mode and mListView#lookForSelectablePosition would be
-    // able to properly place its cursor.
-    private void reAttachAdapterWithTouchModeFalse() {
-        final ListAdapter[] adapter = new ListAdapter[1];
-        mActivityRule.getScenario().onActivity(a -> {
-            adapter[0] = mListView.getAdapter();
-            ((ViewGroup) mListView.getParent()).removeView(mListView);
-            a.addContentView(mListView, new ViewGroup.LayoutParams(1, 1));
-        });
-        mInstrumentation.setInTouchMode(false);
-        PollingCheck.waitFor(TOUCH_MODE_PROPAGATION_TIMEOUT_MILLIS,
-                () -> !mListView.isInTouchMode());
-        mActivityRule.getScenario().onActivity(a -> mListView.setAdapter(adapter[0]));
     }
 
     @Test
@@ -230,8 +192,8 @@ public class AlertDialog_BuilderCursorTest {
                 null, null, null, null, null);
         assertNotNull(mCursor);
 
-        mActivityRule.getScenario().onActivity(a -> {
-            mBuilder = new Builder(mDialogActivity);
+        mActivityRule.getScenario().onActivity(activity -> {
+            mBuilder = new Builder(activity);
             mBuilder.setSingleChoiceItems(mCursor, 0, TEXT_COLUMN_NAME, mOnClickListener);
             mDialog = mBuilder.show();
             mListView = mDialog.getListView();
@@ -255,8 +217,8 @@ public class AlertDialog_BuilderCursorTest {
         final OnMultiChoiceClickListener mockMultiChoiceClickListener =
                 spy(new MultiChoiceClickListener(checkedTracker));
 
-        mActivityRule.getScenario().onActivity(a -> {
-            mBuilder = new Builder(mDialogActivity);
+        mActivityRule.getScenario().onActivity(activity -> {
+            mBuilder = new Builder(activity);
             mBuilder.setMultiChoiceItems(mCursor, CHECKED_COLUMN_NAME, TEXT_COLUMN_NAME,
                     mockMultiChoiceClickListener);
             mDialog = mBuilder.show();

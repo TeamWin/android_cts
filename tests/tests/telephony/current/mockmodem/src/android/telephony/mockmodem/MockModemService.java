@@ -121,7 +121,8 @@ public class MockModemService extends Service {
         for (int i = 0; i < mNumOfPhone; i++) {
             sIRadioModemImpl[i] = new IRadioModemImpl(this, sMockModemConfigInterface, i);
             sIRadioSimImpl[i] = new IRadioSimImpl(this, sMockModemConfigInterface, i);
-            sIRadioNetworkImpl[i] = new IRadioNetworkImpl(this, sMockModemConfigInterface, i);
+            sIRadioNetworkImpl[i] = new IRadioNetworkImpl(
+                    this, mContext, sMockModemConfigInterface, i);
             sIRadioDataImpl[i] = new IRadioDataImpl(this, mContext, sMockModemConfigInterface, i);
             sIRadioMessagingImpl[i] = new IRadioMessagingImpl(this, sMockModemConfigInterface, i);
             sIRadioVoiceImpl[i] = new IRadioVoiceImpl(this, sMockModemConfigInterface, i);

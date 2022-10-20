@@ -368,6 +368,31 @@ public class TunerTest {
     }
 
     @Test
+    public void testRequestFrontendThenTune() throws Exception {
+        List<FrontendInfo> frontendInfos = mTuner.getAvailableFrontendInfos();
+        if (frontendInfos == null) return;
+        assertFalse(frontendInfos.isEmpty());
+
+        FrontendInfo frontendInfo = frontendInfos.get(0);
+        int result = mTuner.requestFrontendById(frontendInfo.getId());
+        assertEquals(Tuner.RESULT_SUCCESS, result);
+
+        result = mTuner.tune(createFrontendSettings(frontendInfo));
+        assertEquals(Tuner.RESULT_SUCCESS, result);
+
+        for (FrontendInfo info2: frontendInfos) {
+            if (info2.getType() != frontendInfo.getType()) {
+                result = mTuner.tune(createFrontendSettings(info2));
+                assertEquals(Tuner.RESULT_INVALID_STATE, result);
+            }
+        }
+
+        // After tune(), the frontend assigned by requestFrontendById should still be used.
+        FrontendInfo currentFrontendInfo = mTuner.getFrontendInfo();
+        assertEquals(frontendInfo.getId(), currentFrontendInfo.getId());
+    }
+
+    @Test
     public void testScanning() throws Exception {
         // Use the same test approach as testTune since it is not possible to test all frontends on
         // one signal source
@@ -1310,6 +1335,24 @@ public class TunerTest {
     }
 
     @Test
+    public void testRequestFrontendById() throws Exception {
+        List<FrontendInfo> frontendInfos = mTuner.getAvailableFrontendInfos();
+        if (frontendInfos == null) return;
+        assertFalse(frontendInfos.isEmpty());
+
+        FrontendInfo frontendInfo = frontendInfos.get(0);
+        int result = mTuner.requestFrontendById(frontendInfo.getId());
+        assertEquals(Tuner.RESULT_SUCCESS, result);
+
+        // Request a frontend again cases
+        FrontendInfo secondFrontend = null;
+        for (FrontendInfo info: frontendInfos) {
+            result = mTuner.requestFrontendById(info.getId());
+            assertEquals(Tuner.RESULT_INVALID_STATE, result);
+        }
+    }
+
+    @Test
     public void testShareFrontendFromTuner() throws Exception {
         Tuner tuner100 = new Tuner(mContext, null, 100);
         List<Integer> ids = tuner100.getFrontendIds();
@@ -1621,6 +1664,10 @@ public class TunerTest {
         other.close();
 
         // make sure pre-existing tuner is still functional
+        res = mTuner.requestFrontendById(info.getId());
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        assertNotNull(mTuner.getFrontendInfo());
+        mTuner.closeFrontend();
         res = mTuner.tune(feSettings);
         assertEquals(Tuner.RESULT_SUCCESS, res);
         assertNotNull(mTuner.getFrontendInfo());
@@ -1637,6 +1684,8 @@ public class TunerTest {
         // check the sharee is also closed
         // tune() would have failed even before close() but still..
         // TODO: fix this once callback sharing is implemented
+        res = sharee.requestFrontendById(info.getId());
+        assertEquals(Tuner.RESULT_UNAVAILABLE, res);
         res = sharee.tune(feSettings);
         assertEquals(Tuner.RESULT_UNAVAILABLE, res);
 

@@ -15,12 +15,19 @@
  */
 package android.service.dreams.cts;
 
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_DREAM;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeFalse;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.server.wm.ActivityManagerTestBase;
@@ -33,11 +40,32 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 public class DreamServiceTest extends ActivityManagerTestBase {
+    private static final int TIMEOUT_SECONDS = 2;
     private static final String DREAM_SERVICE_COMPONENT =
             "android.app.dream.cts.app/.SeparateProcessDreamService";
 
     private final DreamCoordinator mDreamCoordinator = new DreamCoordinator(mContext);
+
+    /**
+     * A simple {@link BroadcastReceiver} implementation that counts down a
+     * {@link CountDownLatch} when a matching message is received
+     */
+    static final class DreamBroadcastReceiver extends BroadcastReceiver {
+        final CountDownLatch mLatch;
+
+        DreamBroadcastReceiver(CountDownLatch latch) {
+            mLatch = latch;
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            mLatch.countDown();
+        }
+    }
 
     @Before
     public void setup() {
@@ -45,7 +73,7 @@ public class DreamServiceTest extends ActivityManagerTestBase {
     }
 
     @After
-    public void reset()  {
+    public void reset() {
         mDreamCoordinator.restoreDefaults();
     }
 
@@ -111,5 +139,31 @@ public class DreamServiceTest extends ActivityManagerTestBase {
                 ComponentName.unflattenFromString(dreamComponent),
                 PackageManager.ComponentInfoFlags.of(PackageManager.GET_META_DATA));
         return DreamService.getDreamMetadata(mContext, si);
+    }
+
+    @Test
+    public void testDreamServiceOnDestroyCallback() throws InterruptedException {
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUTOMOTIVE));
+
+        final ComponentName dreamService =
+                ComponentName.unflattenFromString(DREAM_SERVICE_COMPONENT);
+        final ComponentName dreamActivity = mDreamCoordinator.setActiveDream(dreamService);
+
+        mDreamCoordinator.startDream();
+        waitAndAssertTopResumedActivity(dreamActivity, Display.DEFAULT_DISPLAY,
+                "Dream activity should be the top resumed activity");
+
+        removeRootTasksWithActivityTypes(ACTIVITY_TYPE_DREAM);
+
+        // Listen for the dream to end
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        mContext.registerReceiver(
+                new DreamBroadcastReceiver(countDownLatch),
+                new IntentFilter(Intent.ACTION_DREAMING_STOPPED));
+        assertThat(countDownLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS)).isTrue();
+
+        assertFalse("DreamService is still dreaming", mDreamCoordinator.isDreaming());
+        mDreamCoordinator.stopDream();
     }
 }

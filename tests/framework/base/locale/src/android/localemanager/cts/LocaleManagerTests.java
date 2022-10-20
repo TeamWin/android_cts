@@ -21,6 +21,9 @@ import static android.localemanager.cts.util.LocaleConstants.DEFAULT_APP_LOCALES
 import static android.localemanager.cts.util.LocaleConstants.DEFAULT_SYSTEM_LOCALES;
 import static android.localemanager.cts.util.LocaleConstants.EXTRA_QUERY_LOCALES;
 import static android.localemanager.cts.util.LocaleConstants.EXTRA_SET_LOCALES;
+import static android.localemanager.cts.util.LocaleConstants.IME_APP_CREATION_INFO_PROVIDER_ACTION;
+import static android.localemanager.cts.util.LocaleConstants.IME_APP_MAIN_ACTIVITY;
+import static android.localemanager.cts.util.LocaleConstants.IME_APP_PACKAGE;
 import static android.localemanager.cts.util.LocaleConstants.INSTALLER_APP_BROADCAST_INFO_PROVIDER_ACTION;
 import static android.localemanager.cts.util.LocaleConstants.INSTALLER_APP_BROADCAST_RECEIVER;
 import static android.localemanager.cts.util.LocaleConstants.INSTALLER_APP_CREATION_INFO_PROVIDER_ACTION;
@@ -51,13 +54,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.LocaleList;
+import android.provider.Settings;
 import android.server.wm.ActivityManagerTestBase;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AmUtils;
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.compatibility.common.util.ShellUtils;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -101,6 +107,11 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
     /* Receiver to listen to the response from the installer app's activity. */
     private BlockingBroadcastReceiver mInstallerAppCreationInfoProvider;
 
+    /* Receiver to listen to the response from the ime app's activity. */
+    private BlockingBroadcastReceiver mImeAppCreationInfoProvider;
+
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(10);
+
     @BeforeClass
     public static void setUpClass() {
         sContext = InstrumentationRegistry.getTargetContext();
@@ -134,6 +145,7 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         mTestAppCreationInfoProvider = new BlockingBroadcastReceiver();
         mTestAppConfigChangedInfoProvider = new BlockingBroadcastReceiver();
         mInstallerAppCreationInfoProvider = new BlockingBroadcastReceiver();
+        mImeAppCreationInfoProvider = new BlockingBroadcastReceiver();
 
         sContext.registerReceiver(mCallingAppBroadcastReceiver,
                 new IntentFilter(Intent.ACTION_LOCALE_CHANGED));
@@ -147,6 +159,8 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
                 new IntentFilter(TEST_APP_CONFIG_CHANGED_INFO_PROVIDER_ACTION));
         sContext.registerReceiver(mInstallerAppCreationInfoProvider,
                 new IntentFilter(INSTALLER_APP_CREATION_INFO_PROVIDER_ACTION));
+        sContext.registerReceiver(mImeAppCreationInfoProvider,
+                new IntentFilter(IME_APP_CREATION_INFO_PROVIDER_ACTION));
 
         setInstallerForPackage(CALLING_PACKAGE);
         setInstallerForPackage(TEST_APP_PACKAGE);
@@ -164,6 +178,7 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         unRegisterReceiver(mInstallerBroadcastInfoProvider);
         unRegisterReceiver(mTestAppCreationInfoProvider);
         unRegisterReceiver(mInstallerAppCreationInfoProvider);
+        unRegisterReceiver(mImeAppCreationInfoProvider);
     }
 
     private void unRegisterReceiver(BlockingBroadcastReceiver receiver) {
@@ -227,6 +242,7 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         mTestAppCreationInfoProvider.reset();
         mTestAppConfigChangedInfoProvider.reset();
         mInstallerAppCreationInfoProvider.reset();
+        mImeAppCreationInfoProvider.reset();
     }
 
     @Test
@@ -458,6 +474,58 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
                 CALLING_PACKAGE, DEFAULT_APP_LOCALES);
     }
 
+    @Test
+    public void testGetApplicationLocales_forNoneCurrentIme_noBroadcastsReceived()
+            throws Exception {
+        sLocaleManager.setApplicationLocales(DEFAULT_APP_LOCALES);
+
+        // Make sure that locales were set for the app.
+        assertLocalesCorrectlySetForCallingApp(DEFAULT_APP_LOCALES);
+        // Tell the IME app to fetch locales for the test app.
+        launchActivity(IME_APP_MAIN_ACTIVITY,
+                extraString(EXTRA_QUERY_LOCALES, CALLING_PACKAGE));
+
+        // Since the locales weren't allowed to get by none current IME app, no broadcast was sent
+        // by test IME
+        mImeAppCreationInfoProvider.assertNoBroadcastReceived();
+    }
+
+    @Test
+    public void testGetApplicationLocales_forCurrentIme_getAnotherAppLocales()
+            throws Exception {
+        //Record the original active IME and set test IME as the current active IME
+        String currentIme = Settings.Secure.getString(
+                sContext.getContentResolver(),
+                Settings.Secure.DEFAULT_INPUT_METHOD);
+        ComponentName imeComponentName = new ComponentName(IME_APP_PACKAGE,
+                IME_APP_PACKAGE + ".TestIme");
+        String testIme = imeComponentName.flattenToShortString();
+        ShellUtils.runShellCommand("ime enable " + testIme);
+        ShellUtils.runShellCommand("ime set " + testIme);
+        PollingCheck.check("Make sure that TestIme becomes available", TIMEOUT,
+                () -> testIme.equals(Settings.Secure.getString(
+                        sContext.getContentResolver(),
+                        Settings.Secure.DEFAULT_INPUT_METHOD)));
+
+        //Set app locales
+        sLocaleManager.setApplicationLocales(DEFAULT_APP_LOCALES);
+        // Tell the IME app to fetch locales for the test app.
+        launchActivity(IME_APP_MAIN_ACTIVITY,
+                extraString(EXTRA_QUERY_LOCALES, CALLING_PACKAGE));
+
+        mImeAppCreationInfoProvider.await();
+        assertReceivedBroadcastContains(mImeAppCreationInfoProvider, CALLING_PACKAGE,
+                DEFAULT_APP_LOCALES);
+
+        //After the test is completed, restore the original active IME to the current active IME
+        ShellUtils.runShellCommand("ime enable " + currentIme);
+        ShellUtils.runShellCommand("ime set " + currentIme);
+        PollingCheck.check("Make sure that original active Ime becomes available", TIMEOUT,
+                () -> currentIme.equals(Settings.Secure.getString(
+                        sContext.getContentResolver(),
+                        Settings.Secure.DEFAULT_INPUT_METHOD)));
+    }
+
     @Test(expected = SecurityException.class)
     public void testGetApplicationLocales_withoutPermissionforAnotherApp_throwsException()
             throws Exception {
@@ -509,6 +577,13 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
      */
     private void assertLocalesCorrectlySetForCallingApp(LocaleList expectedLocales) {
         assertEquals(expectedLocales, sLocaleManager.getApplicationLocales());
+    }
+
+    private void assertActiveImeSetCorrectlySet(String imeId) {
+        String selectedImeId = Settings.Secure.getString(
+                sContext.getContentResolver(),
+                Settings.Secure.DEFAULT_INPUT_METHOD);
+        assertEquals(imeId, selectedImeId);
     }
 
     /**

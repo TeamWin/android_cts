@@ -36,10 +36,9 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
-/**
- * Tests {@link MediaRoute2Info} and its {@link MediaRoute2Info.Builder builder}.
- */
+/** Tests {@link MediaRoute2Info} and its {@link MediaRoute2Info.Builder builder}. */
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 @NonMediaMainlineTest
@@ -49,6 +48,7 @@ public class MediaRoute2InfoTest {
     public static final String TEST_NAME = "test_name";
     public static final String TEST_ROUTE_TYPE_0 = "test_route_type_0";
     public static final String TEST_ROUTE_TYPE_1 = "test_route_type_1";
+    public static final Set<String> TEST_DEDUPLICATION_IDS = Set.of("test_deduplication_id");
     public static final Uri TEST_ICON_URI = Uri.parse("https://developer.android.com");
     public static final String TEST_DESCRIPTION = "test_description";
     public static final int TEST_CONNECTION_STATE = MediaRoute2Info.CONNECTION_STATE_CONNECTING;
@@ -109,18 +109,20 @@ public class MediaRoute2InfoTest {
         Bundle extras = new Bundle();
         extras.putString(TEST_KEY, TEST_VALUE);
 
-        MediaRoute2Info routeInfo = new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
-                .addFeature(TEST_ROUTE_TYPE_0)
-                .addFeature(TEST_ROUTE_TYPE_1)
-                .setIconUri(TEST_ICON_URI)
-                .setDescription(TEST_DESCRIPTION)
-                .setConnectionState(TEST_CONNECTION_STATE)
-                .setClientPackageName(TEST_CLIENT_PACKAGE_NAME)
-                .setVolumeHandling(TEST_VOLUME_HANDLING)
-                .setVolumeMax(TEST_VOLUME_MAX)
-                .setVolume(TEST_VOLUME)
-                .setExtras(extras)
-                .build();
+        MediaRoute2Info routeInfo =
+                new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
+                        .addFeature(TEST_ROUTE_TYPE_0)
+                        .addFeature(TEST_ROUTE_TYPE_1)
+                        .setIconUri(TEST_ICON_URI)
+                        .setDescription(TEST_DESCRIPTION)
+                        .setConnectionState(TEST_CONNECTION_STATE)
+                        .setClientPackageName(TEST_CLIENT_PACKAGE_NAME)
+                        .setVolumeHandling(TEST_VOLUME_HANDLING)
+                        .setVolumeMax(TEST_VOLUME_MAX)
+                        .setVolume(TEST_VOLUME)
+                        .setDeduplicationIds(TEST_DEDUPLICATION_IDS)
+                        .setExtras(extras)
+                        .build();
 
         assertThat(routeInfo.getId()).isEqualTo(TEST_ID);
         assertThat(routeInfo.getName()).isEqualTo(TEST_NAME);
@@ -135,6 +137,7 @@ public class MediaRoute2InfoTest {
         assertThat(routeInfo.getVolumeHandling()).isEqualTo(TEST_VOLUME_HANDLING);
         assertThat(routeInfo.getVolumeMax()).isEqualTo(TEST_VOLUME_MAX);
         assertThat(routeInfo.getVolume()).isEqualTo(TEST_VOLUME);
+        assertThat(routeInfo.getDeduplicationIds()).isEqualTo(TEST_DEDUPLICATION_IDS);
 
         Bundle extrasOut = routeInfo.getExtras();
         assertThat(extrasOut).isNotNull();
@@ -183,31 +186,35 @@ public class MediaRoute2InfoTest {
         Bundle extras = new Bundle();
         extras.putString(TEST_KEY, TEST_VALUE);
 
-        MediaRoute2Info routeInfo1 = new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
-                .addFeature(TEST_ROUTE_TYPE_0)
-                .addFeature(TEST_ROUTE_TYPE_1)
-                .setIconUri(TEST_ICON_URI)
-                .setDescription(TEST_DESCRIPTION)
-                .setConnectionState(TEST_CONNECTION_STATE)
-                .setClientPackageName(TEST_CLIENT_PACKAGE_NAME)
-                .setVolumeHandling(TEST_VOLUME_HANDLING)
-                .setVolumeMax(TEST_VOLUME_MAX)
-                .setVolume(TEST_VOLUME)
-                .setExtras(extras)
-                .build();
+        MediaRoute2Info routeInfo1 =
+                new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
+                        .addFeature(TEST_ROUTE_TYPE_0)
+                        .addFeature(TEST_ROUTE_TYPE_1)
+                        .setIconUri(TEST_ICON_URI)
+                        .setDescription(TEST_DESCRIPTION)
+                        .setConnectionState(TEST_CONNECTION_STATE)
+                        .setClientPackageName(TEST_CLIENT_PACKAGE_NAME)
+                        .setVolumeHandling(TEST_VOLUME_HANDLING)
+                        .setVolumeMax(TEST_VOLUME_MAX)
+                        .setVolume(TEST_VOLUME)
+                        .setDeduplicationIds(TEST_DEDUPLICATION_IDS)
+                        .setExtras(extras)
+                        .build();
 
-        MediaRoute2Info routeInfo2 = new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
-                .addFeature(TEST_ROUTE_TYPE_0)
-                .addFeature(TEST_ROUTE_TYPE_1)
-                .setIconUri(TEST_ICON_URI)
-                .setDescription(TEST_DESCRIPTION)
-                .setConnectionState(TEST_CONNECTION_STATE)
-                .setClientPackageName(TEST_CLIENT_PACKAGE_NAME)
-                .setVolumeHandling(TEST_VOLUME_HANDLING)
-                .setVolumeMax(TEST_VOLUME_MAX)
-                .setVolume(TEST_VOLUME)
-                .setExtras(extras)
-                .build();
+        MediaRoute2Info routeInfo2 =
+                new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
+                        .addFeature(TEST_ROUTE_TYPE_0)
+                        .addFeature(TEST_ROUTE_TYPE_1)
+                        .setIconUri(TEST_ICON_URI)
+                        .setDescription(TEST_DESCRIPTION)
+                        .setConnectionState(TEST_CONNECTION_STATE)
+                        .setClientPackageName(TEST_CLIENT_PACKAGE_NAME)
+                        .setVolumeHandling(TEST_VOLUME_HANDLING)
+                        .setVolumeMax(TEST_VOLUME_MAX)
+                        .setVolume(TEST_VOLUME)
+                        .setDeduplicationIds(TEST_DEDUPLICATION_IDS)
+                        .setExtras(extras)
+                        .build();
 
         assertThat(routeInfo1).isEqualTo(routeInfo2);
         assertThat(routeInfo1.hashCode()).isEqualTo(routeInfo2.hashCode());
@@ -218,18 +225,20 @@ public class MediaRoute2InfoTest {
         Bundle extras = new Bundle();
         extras.putString(TEST_KEY, TEST_VALUE);
 
-        MediaRoute2Info routeInfo1 = new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
-                .addFeature(TEST_ROUTE_TYPE_0)
-                .addFeature(TEST_ROUTE_TYPE_1)
-                .setIconUri(TEST_ICON_URI)
-                .setDescription(TEST_DESCRIPTION)
-                .setConnectionState(TEST_CONNECTION_STATE)
-                .setClientPackageName(TEST_CLIENT_PACKAGE_NAME)
-                .setVolumeHandling(TEST_VOLUME_HANDLING)
-                .setVolumeMax(TEST_VOLUME_MAX)
-                .setVolume(TEST_VOLUME)
-                .setExtras(extras)
-                .build();
+        MediaRoute2Info routeInfo1 =
+                new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
+                        .addFeature(TEST_ROUTE_TYPE_0)
+                        .addFeature(TEST_ROUTE_TYPE_1)
+                        .setIconUri(TEST_ICON_URI)
+                        .setDescription(TEST_DESCRIPTION)
+                        .setConnectionState(TEST_CONNECTION_STATE)
+                        .setClientPackageName(TEST_CLIENT_PACKAGE_NAME)
+                        .setVolumeHandling(TEST_VOLUME_HANDLING)
+                        .setVolumeMax(TEST_VOLUME_MAX)
+                        .setVolume(TEST_VOLUME)
+                        .setDeduplicationIds(TEST_DEDUPLICATION_IDS)
+                        .setExtras(extras)
+                        .build();
 
         MediaRoute2Info routeInfo2 = new MediaRoute2Info.Builder(routeInfo1).build();
 
@@ -242,18 +251,20 @@ public class MediaRoute2InfoTest {
         Bundle extras = new Bundle();
         extras.putString(TEST_KEY, TEST_VALUE);
 
-        MediaRoute2Info routeInfo = new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
-                .addFeature(TEST_ROUTE_TYPE_0)
-                .addFeature(TEST_ROUTE_TYPE_1)
-                .setIconUri(TEST_ICON_URI)
-                .setDescription(TEST_DESCRIPTION)
-                .setConnectionState(TEST_CONNECTION_STATE)
-                .setClientPackageName(TEST_CLIENT_PACKAGE_NAME)
-                .setVolumeHandling(TEST_VOLUME_HANDLING)
-                .setVolumeMax(TEST_VOLUME_MAX)
-                .setVolume(TEST_VOLUME)
-                .setExtras(extras)
-                .build();
+        MediaRoute2Info routeInfo =
+                new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
+                        .addFeature(TEST_ROUTE_TYPE_0)
+                        .addFeature(TEST_ROUTE_TYPE_1)
+                        .setIconUri(TEST_ICON_URI)
+                        .setDescription(TEST_DESCRIPTION)
+                        .setConnectionState(TEST_CONNECTION_STATE)
+                        .setClientPackageName(TEST_CLIENT_PACKAGE_NAME)
+                        .setVolumeHandling(TEST_VOLUME_HANDLING)
+                        .setVolumeMax(TEST_VOLUME_MAX)
+                        .setVolume(TEST_VOLUME)
+                        .setDeduplicationIds(TEST_DEDUPLICATION_IDS)
+                        .setExtras(extras)
+                        .build();
 
         // Now, we will use copy constructor
         assertThat(new MediaRoute2Info.Builder(routeInfo)
@@ -280,6 +291,9 @@ public class MediaRoute2InfoTest {
         assertThat(new MediaRoute2Info.Builder(routeInfo)
                 .setVolume(TEST_VOLUME + 10)
                 .build()).isNotEqualTo(routeInfo);
+        assertThat(new MediaRoute2Info.Builder(routeInfo)
+                .setDeduplicationIds(Set.of("randomDeduplicationId"))
+                .build()).isNotEqualTo(routeInfo);
         // Note: Extras will not affect the equals.
     }
 
@@ -288,18 +302,20 @@ public class MediaRoute2InfoTest {
         Bundle extras = new Bundle();
         extras.putString(TEST_KEY, TEST_VALUE);
 
-        MediaRoute2Info routeInfo = new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
-                .addFeature(TEST_ROUTE_TYPE_0)
-                .addFeature(TEST_ROUTE_TYPE_1)
-                .setIconUri(TEST_ICON_URI)
-                .setDescription(TEST_DESCRIPTION)
-                .setConnectionState(TEST_CONNECTION_STATE)
-                .setClientPackageName(TEST_CLIENT_PACKAGE_NAME)
-                .setVolumeHandling(TEST_VOLUME_HANDLING)
-                .setVolumeMax(TEST_VOLUME_MAX)
-                .setVolume(TEST_VOLUME)
-                .setExtras(extras)
-                .build();
+        MediaRoute2Info routeInfo =
+                new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
+                        .addFeature(TEST_ROUTE_TYPE_0)
+                        .addFeature(TEST_ROUTE_TYPE_1)
+                        .setIconUri(TEST_ICON_URI)
+                        .setDescription(TEST_DESCRIPTION)
+                        .setConnectionState(TEST_CONNECTION_STATE)
+                        .setClientPackageName(TEST_CLIENT_PACKAGE_NAME)
+                        .setVolumeHandling(TEST_VOLUME_HANDLING)
+                        .setVolumeMax(TEST_VOLUME_MAX)
+                        .setVolume(TEST_VOLUME)
+                        .setDeduplicationIds(TEST_DEDUPLICATION_IDS)
+                        .setExtras(extras)
+                        .build();
 
         Parcel parcel = Parcel.obtain();
         parcel.writeParcelable(routeInfo, 0);
@@ -324,17 +340,19 @@ public class MediaRoute2InfoTest {
 
     @Test
     public void testDescribeContents() {
-        MediaRoute2Info routeInfo = new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
-                .addFeature(TEST_ROUTE_TYPE_0)
-                .addFeature(TEST_ROUTE_TYPE_1)
-                .setIconUri(TEST_ICON_URI)
-                .setDescription(TEST_DESCRIPTION)
-                .setConnectionState(TEST_CONNECTION_STATE)
-                .setClientPackageName(TEST_CLIENT_PACKAGE_NAME)
-                .setVolumeHandling(TEST_VOLUME_HANDLING)
-                .setVolumeMax(TEST_VOLUME_MAX)
-                .setVolume(TEST_VOLUME)
-                .build();
+        MediaRoute2Info routeInfo =
+                new MediaRoute2Info.Builder(TEST_ID, TEST_NAME)
+                        .addFeature(TEST_ROUTE_TYPE_0)
+                        .addFeature(TEST_ROUTE_TYPE_1)
+                        .setIconUri(TEST_ICON_URI)
+                        .setDescription(TEST_DESCRIPTION)
+                        .setConnectionState(TEST_CONNECTION_STATE)
+                        .setClientPackageName(TEST_CLIENT_PACKAGE_NAME)
+                        .setVolumeHandling(TEST_VOLUME_HANDLING)
+                        .setVolumeMax(TEST_VOLUME_MAX)
+                        .setVolume(TEST_VOLUME)
+                        .setDeduplicationIds(TEST_DEDUPLICATION_IDS)
+                        .build();
         assertThat(routeInfo.describeContents()).isEqualTo(0);
     }
 }

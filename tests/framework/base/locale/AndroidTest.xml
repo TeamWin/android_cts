@@ -28,6 +28,7 @@
     <option name="test-file-name" value="CtsLocaleManagerTestCases.apk" />
     <option name="test-file-name" value="CtsLocaleTestApp.apk" />
     <option name="test-file-name" value="CtsLocaleInstallerApp.apk" />
+    <option name="test-file-name" value="CtsLocaleImeApp.apk" />
   </target_preparer>
   <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
     <option name="package" value="android.localemanager.cts" />

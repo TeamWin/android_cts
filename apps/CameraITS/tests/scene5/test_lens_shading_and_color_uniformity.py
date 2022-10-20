@@ -145,8 +145,8 @@ class LensShadingAndColorUniformityTest(its_base_test.ItsBaseTest):
         hidden_physical_id=self.hidden_physical_id) as cam:
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
-      log_path = self.log_path
       debug_mode = self.debug_mode
+      name_with_log_path = os.path.join(self.log_path, _NAME)
 
       # Check SKIP conditions.
       camera_properties_utils.skip_unless(
@@ -169,16 +169,16 @@ class LensShadingAndColorUniformityTest(its_base_test.ItsBaseTest):
         cap_raw, cap = cam.do_capture(req, out_surfaces)
         img_raw = image_processing_utils.convert_capture_to_rgb_image(
             cap_raw, props=props)
-        image_processing_utils.write_image(img_raw, '%s_raw.png' % (
-            os.path.join(log_path, _NAME)), True)
+        image_processing_utils.write_image(
+            img_raw, f'{name_with_log_path}_raw.png', True)
         logging.debug('Captured RAW %dx%d', img_raw.shape[1], img_raw.shape[0])
       else:
         cap = cam.do_capture(req, out_surface)
       logging.debug('Captured YUV %dx%d', w, h)
       # Get Y channel
       img_y = image_processing_utils.convert_capture_to_planes(cap)[0]
-      image_processing_utils.write_image(img_y, '%s_y_plane.png' %
-                                         (os.path.join(log_path, _NAME)), True)
+      image_processing_utils.write_image(
+          img_y, f'{name_with_log_path}_y_plane.png', True)
       # Convert RGB image & calculate R/G, R/B ratioed images
       img_rgb = image_processing_utils.convert_capture_to_rgb_image(cap)
       img_r_g, img_b_g = _calc_color_plane_ratios(img_rgb)
@@ -293,11 +293,11 @@ class LensShadingAndColorUniformityTest(its_base_test.ItsBaseTest):
 
       # Save images
       image_processing_utils.write_image(
-          img_uniformity, '%s_color_uniformity_result.png' %
-          (os.path.join(log_path, _NAME)), True)
+          img_uniformity, f'{name_with_log_path}_color_uniformity_result.png',
+          True)
       image_processing_utils.write_image(
-          img_lens_shading, '%s_lens_shading_result.png' %
-          (os.path.join(log_path, _NAME)), True)
+          img_lens_shading, f'{name_with_log_path}_lens_shading_result.png',
+          True)
 
       # Assert results
       _assert_results(ls_test_failed, cu_test_failed, center_luma, ls_thresh_h)

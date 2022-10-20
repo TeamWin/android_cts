@@ -67,7 +67,8 @@ _IMG_SIZE_MAX = 640 * 480  # Maximum image size.
 _NUM_FRAMES_MAX = 300  # fps*test_length should be < this for smooth captures.
 
 
-def _collect_data(cam, fps, w, h, test_length, rot_rig, chart_dist, log_path):
+def _collect_data(cam, fps, w, h, test_length, rot_rig, chart_dist,
+                  name_with_log_path):
   """Capture a new set of data from the device.
 
   Captures camera frames while the user is moving the device in the proscribed
@@ -82,7 +83,7 @@ def _collect_data(cam, fps, w, h, test_length, rot_rig, chart_dist, log_path):
     test_length: length of time for test in seconds.
     rot_rig: dict with 'cntl' and 'ch' defined.
     chart_dist: float value of distance to chart in meters.
-    log_path: location to save data.
+    name_with_log_path: file name with location to save data.
 
   Returns:
     frames: list of RGB images as numpy arrays.
@@ -156,7 +157,7 @@ def _collect_data(cam, fps, w, h, test_length, rot_rig, chart_dist, log_path):
               for cap in caps]
   events = {'gyro': gyro, 'cam': list(zip(starts, exptimes, readouts)),
             'facing': facing}
-  with open('%s_events.txt' % os.path.join(log_path, _NAME), 'w') as f:
+  with open(f'{name_with_log_path}_events.txt', 'w') as f:
     f.write(json.dumps(events))
 
   # Convert frames to RGB.
@@ -165,8 +166,8 @@ def _collect_data(cam, fps, w, h, test_length, rot_rig, chart_dist, log_path):
   for i, cap in enumerate(caps):
     img = image_processing_utils.convert_capture_to_rgb_image(cap)
     frames.append(img)
-    image_processing_utils.write_image(img, '%s_frame%03d.png' % (
-        os.path.join(log_path, _NAME), i))
+    image_processing_utils.write_image(
+        img, f'{name_with_log_path}_frame{i:03d}.png')
   return events, frames
 
 
@@ -203,7 +204,7 @@ def _get_cam_times(cam_events, fps):
   return frame_times
 
 
-def _plot_best_shift(best, coeff, x, y, log_path):
+def _plot_best_shift(best, coeff, x, y, name_with_log_path):
   """Saves a plot the best offset, fit data and x,y data.
 
   Args:
@@ -211,7 +212,7 @@ def _plot_best_shift(best, coeff, x, y, log_path):
     coeff: 3 element np array. Return of np.polyfit(x,y) for 2nd order fit.
     x: np array of x data that was fit.
     y: np array of y data that was fit.
-    log_path: where to store data.
+    name_with_log_path: file name with where to store data.
   """
   xfit = np.arange(x[0], x[-1], 0.05).tolist()
   yfit = [coeff[0]*x*x + coeff[1]*x + coeff[2] for x in xfit]
@@ -224,17 +225,16 @@ def _plot_best_shift(best, coeff, x, y, log_path):
   pylab.xlabel('Relative horizontal shift between curves (ms)')
   pylab.ylabel('Correlation distance')
   pylab.legend()
-  matplotlib.pyplot.savefig(
-      '%s_plot_shifts.png' % os.path.join(log_path, _NAME))
+  matplotlib.pyplot.savefig(f'{name_with_log_path}_plot_shifts.png')
 
 
-def _plot_rotations(cam_rots, gyro_rots, log_path):
+def _plot_rotations(cam_rots, gyro_rots, name_with_log_path):
   """Saves a plot of the camera vs. gyro rotational measurements.
 
   Args:
     cam_rots: Array of camera rotation measurements (rads).
     gyro_rots: Array of gyro rotation measurements (rads).
-    log_path: Location to store data.
+    name_with_log_path: File name with location to store data.
   """
   # For plot, scale rotations to degrees.
   pylab.figure()
@@ -247,8 +247,7 @@ def _plot_rotations(cam_rots, gyro_rots, log_path):
   pylab.ylabel('Angular displacement between adjacent camera frames (degrees)')
   pylab.xlim([0, len(cam_rots)])
   pylab.legend()
-  matplotlib.pyplot.savefig(
-      '%s_plot_rotations.png' % os.path.join(log_path, _NAME))
+  matplotlib.pyplot.savefig(f'{name_with_log_path}_plot_rotations.png')
 
 
 def load_data():
@@ -330,7 +329,7 @@ class SensorFusionTest(its_base_test.ItsBaseTest):
     fps = float(self.fps)
     img_w, img_h = self.img_w, self.img_h
     test_length = float(self.test_length)
-    log_path = self.log_path
+    name_with_log_path = os.path.join(self.log_path, _NAME)
     chart_distance = self.chart_distance * _CM_TO_M
 
     if img_w * img_h > _IMG_SIZE_MAX or fps * test_length > _NUM_FRAMES_MAX:
@@ -349,11 +348,12 @@ class SensorFusionTest(its_base_test.ItsBaseTest):
 
         rot_rig['cntl'] = self.rotator_cntl
         rot_rig['ch'] = self.rotator_ch
-        events, frames = _collect_data(cam, fps, img_w, img_h, test_length,
-                                       rot_rig, chart_distance, log_path)
+        events, frames = _collect_data(
+            cam, fps, img_w, img_h, test_length, rot_rig, chart_distance,
+            name_with_log_path)
     logging.debug('Start frame: %d', _START_FRAME)
 
-    sensor_fusion_utils.plot_gyro_events(events['gyro'], _NAME, log_path)
+    sensor_fusion_utils.plot_gyro_events(events['gyro'], _NAME, self.log_path)
 
     # Validity check on gyro/camera timestamps
     cam_times = _get_cam_times(
@@ -364,16 +364,17 @@ class SensorFusionTest(its_base_test.ItsBaseTest):
     # Compute cam rotation displacement(rads) between pairs of adjacent frames.
     cam_rots = sensor_fusion_utils.get_cam_rotations(
         frames[_START_FRAME:len(frames)], events['facing'], img_h,
-        os.path.join(log_path, _NAME), _START_FRAME)
+        name_with_log_path, _START_FRAME)
     logging.debug('cam_rots: %s', str(cam_rots))
     gyro_rots = sensor_fusion_utils.get_gyro_rotations(
         events['gyro'], cam_times)
-    _plot_rotations(cam_rots, gyro_rots, log_path)
+    _plot_rotations(cam_rots, gyro_rots, name_with_log_path)
 
     # Find the best offset.
     offset_ms, coeffs, candidates, distances = sensor_fusion_utils.get_best_alignment_offset(
         cam_times, cam_rots, events['gyro'])
-    _plot_best_shift(offset_ms, coeffs, candidates, distances, log_path)
+    _plot_best_shift(
+        offset_ms, coeffs, candidates, distances, name_with_log_path)
 
     # Calculate correlation distance with best offset.
     corr_dist = scipy.spatial.distance.correlation(cam_rots, gyro_rots)

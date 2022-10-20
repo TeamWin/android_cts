@@ -67,7 +67,7 @@ class ParamSensitivityTest(its_base_test.ItsBaseTest):
       sync_latency = camera_properties_utils.sync_latency(props)
       largest_yuv = capture_request_utils.get_largest_yuv_format(props)
       match_ar = (largest_yuv['width'], largest_yuv['height'])
-      fmt = capture_request_utils.get_smallest_yuv_format(
+      fmt = capture_request_utils.get_near_vga_yuv_format(
           props, match_ar=match_ar)
 
       expt, _ = target_exposure_utils.get_target_exposure_combos(

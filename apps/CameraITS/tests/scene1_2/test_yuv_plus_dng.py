@@ -39,7 +39,7 @@ class YuvPlusDngTest(its_base_test.ItsBaseTest):
         hidden_physical_id=self.hidden_physical_id) as cam:
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
-      log_path = self.log_path
+      name_with_log_path = os.path.join(self.log_path, _NAME)
 
       # check SKIP conditions
       camera_properties_utils.skip_unless(
@@ -67,10 +67,9 @@ class YuvPlusDngTest(its_base_test.ItsBaseTest):
       cap_dng, cap_yuv = cam.do_capture(req, out_surfaces)
 
       img = image_processing_utils.convert_capture_to_rgb_image(cap_yuv)
-      image_processing_utils.write_image(
-          img, '%s_yuv.jpg' % os.path.join(log_path, _NAME))
+      image_processing_utils.write_image(img, f'{name_with_log_path}_yuv.jpg')
 
-      with open('%s.dng'%(os.path.join(log_path, _NAME)), 'wb') as f:
+      with open(f'{name_with_log_path}.dng', 'wb') as f:
         f.write(cap_dng['data'])
 
       # No specific pass/fail check; test assumed to succeed if it completes.

@@ -16,6 +16,7 @@
 
 package android.telephony.mockmodem;
 
+import android.content.Context;
 import android.hardware.radio.RadioError;
 import android.hardware.radio.RadioIndicationType;
 import android.hardware.radio.RadioResponseInfo;
@@ -31,6 +32,7 @@ import android.os.AsyncResult;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
+import android.telephony.mockmodem.MockModemConfigBase.SimInfoChangedResult;
 import android.util.Log;
 
 public class IRadioNetworkImpl extends IRadioNetwork.Stub {
@@ -61,7 +63,10 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     private MockNetworkService mServiceState;
 
     public IRadioNetworkImpl(
-            MockModemService service, MockModemConfigInterface configInterface, int instanceId) {
+            MockModemService service,
+            Context context,
+            MockModemConfigInterface configInterface,
+            int instanceId) {
         mTag = TAG + "-" + instanceId;
         Log.d(mTag, "Instantiated");
 
@@ -70,7 +75,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         mCacheUpdateMutex = new Object();
         mHandler = new IRadioNetworkHandler();
         mSubId = instanceId;
-        mServiceState = new MockNetworkService();
+        mServiceState = new MockNetworkService(context);
 
         // Default network type GPRS|EDGE|UMTS|HSDPA|HSUPA|HSPA|LTE|HSPA+|GSM|LTE_CA|NR
         mNetworkTypeBitmap =
@@ -187,7 +192,8 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
             android.hardware.radio.sim.AppStatus rilAppStatus = cardStatus.applications[i];
             if (rilAppStatus.appState == android.hardware.radio.sim.AppStatus.APP_STATE_READY) {
                 Log.i(mTag, "SIM is ready");
-                simPlmn = "46692"; // TODO: Get SIM PLMN, maybe decode from IMSI
+                simPlmn = mMockModemConfigInterface.getSimInfo(mSubId,
+                        SimInfoChangedResult.SIM_INFO_TYPE_MCC_MNC, mTag);
                 mServiceState.updateSimPlmn(simPlmn);
                 return true;
             }

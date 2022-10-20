@@ -26,18 +26,18 @@ import image_processing_utils
 import its_session_utils
 import target_exposure_utils
 
-CHART_DISTANCE_NO_SCALING = 100  # 1 meter to disable scaling
-FLASH_MODES = {'OFF': 0, 'SINGLE': 1, 'TORCH': 2}
-FLASH_STATES = {'UNAVAIL': 0, 'CHARGING': 1, 'READY': 2, 'FIRED': 3,
+_CHART_DISTANCE_NO_SCALING = 100  # 1 meter to disable scaling
+_FLASH_MODES = {'OFF': 0, 'SINGLE': 1, 'TORCH': 2}
+_FLASH_STATES = {'UNAVAIL': 0, 'CHARGING': 1, 'READY': 2, 'FIRED': 3,
                 'PARTIAL': 4}
-NAME = os.path.splitext(os.path.basename(__file__))[0]
-PATCH_H = 0.25  # center 25%
-PATCH_W = 0.25
-PATCH_X = 0.5 - PATCH_W/2
-PATCH_Y = 0.5 - PATCH_H/2
-GRADIENT_DELTA = 0.1  # used for tablet setups (tablet screen aborbs energy)
-MEAN_DELTA_FLASH = 0.1  # 10%  # used for reflective chart setups
-MEAN_DELTA_TORCH = 0.05  # 5%  # used for reflective chart setups
+_NAME = os.path.splitext(os.path.basename(__file__))[0]
+_PATCH_H = 0.25  # center 25%
+_PATCH_W = 0.25
+_PATCH_X = 0.5 - _PATCH_W/2
+_PATCH_Y = 0.5 - _PATCH_H/2
+_GRADIENT_DELTA = 0.1  # used for tablet setups (tablet screen aborbs energy)
+_MEAN_DELTA_FLASH = 0.1  # 10%  # used for reflective chart setups
+_MEAN_DELTA_TORCH = 0.05  # 5%  # used for reflective chart setups
 
 
 class ParamFlashModeTest(its_base_test.ItsBaseTest):
@@ -45,12 +45,12 @@ class ParamFlashModeTest(its_base_test.ItsBaseTest):
 
   def test_param_flash_mode(self):
     logging.debug('FLASH_MODES[OFF]: %d, [SINGLE]: %d, [TORCH]: %d',
-                  FLASH_MODES['OFF'], FLASH_MODES['SINGLE'],
-                  FLASH_MODES['TORCH'])
+                  _FLASH_MODES['OFF'], _FLASH_MODES['SINGLE'],
+                  _FLASH_MODES['TORCH'])
     logging.debug(('FLASH_STATES[UNAVAIL]: %d, [CHARGING]: %d, [READY]: %d,'
-                   '[FIRED] %d, [PARTIAL]: %d'), FLASH_STATES['UNAVAIL'],
-                  FLASH_STATES['CHARGING'], FLASH_STATES['READY'],
-                  FLASH_STATES['FIRED'], FLASH_STATES['PARTIAL'])
+                   '[FIRED] %d, [PARTIAL]: %d'), _FLASH_STATES['UNAVAIL'],
+                  _FLASH_STATES['CHARGING'], _FLASH_STATES['READY'],
+                  _FLASH_STATES['FIRED'], _FLASH_STATES['PARTIAL'])
 
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
@@ -59,7 +59,7 @@ class ParamFlashModeTest(its_base_test.ItsBaseTest):
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
       log_path = self.log_path
-      file_name_stem = f'{os.path.join(log_path, NAME)}'
+      file_name_stem = os.path.join(log_path, _NAME)
 
       # check SKIP conditions
       camera_properties_utils.skip_unless(
@@ -68,7 +68,7 @@ class ParamFlashModeTest(its_base_test.ItsBaseTest):
 
       # Load chart for scene
       its_session_utils.load_scene(
-          cam, props, self.scene, self.tablet, CHART_DISTANCE_NO_SCALING)
+          cam, props, self.scene, self.tablet, _CHART_DISTANCE_NO_SCALING)
 
       modes = []
       states = []
@@ -79,7 +79,7 @@ class ParamFlashModeTest(its_base_test.ItsBaseTest):
       # linear tonemap.
       largest_yuv = capture_request_utils.get_largest_yuv_format(props)
       match_ar = (largest_yuv['width'], largest_yuv['height'])
-      fmt = capture_request_utils.get_smallest_yuv_format(
+      fmt = capture_request_utils.get_near_vga_yuv_format(
           props, match_ar=match_ar)
       sync_latency = camera_properties_utils.sync_latency(props)
 
@@ -88,7 +88,7 @@ class ParamFlashModeTest(its_base_test.ItsBaseTest):
       e /= 2  # darken image slightly
       req = capture_request_utils.manual_capture_request(s, e, 0.0, True, props)
 
-      for flash_mode in FLASH_MODES.values():
+      for flash_mode in _FLASH_MODES.values():
         logging.debug('flash mode: %d', flash_mode)
         req['android.flash.mode'] = flash_mode
         cap = its_session_utils.do_capture_with_latency(
@@ -99,7 +99,7 @@ class ParamFlashModeTest(its_base_test.ItsBaseTest):
         image_processing_utils.write_image(
             y, '{file_name_stem}_{flash_mode}.jpg')
         patch = image_processing_utils.get_image_patch(
-            y, PATCH_X, PATCH_Y, PATCH_W, PATCH_H)
+            y, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
         image_processing_utils.write_image(
             patch, f'{file_name_stem}_{flash_mode}_patch.jpg')
         patches.append(patch)
@@ -107,27 +107,27 @@ class ParamFlashModeTest(its_base_test.ItsBaseTest):
       # Assert state behavior
       logging.debug('Reported modes: %s', str(modes))
       logging.debug('Reported states: %s', str(states))
-      if modes != list(FLASH_MODES.values()):
+      if modes != list(_FLASH_MODES.values()):
         raise AssertionError(f'modes != FLASH_MODES! {modes}')
 
-      if states[FLASH_MODES['OFF']] in [
-          FLASH_STATES['FIRED'], FLASH_STATES['PARTIAL']]:
+      if states[_FLASH_MODES['OFF']] in [
+          _FLASH_STATES['FIRED'], _FLASH_STATES['PARTIAL']]:
         raise AssertionError('flash state reported[OFF]: '
-                             f"{states[FLASH_MODES['OFF']]}")
+                             f"{states[_FLASH_MODES['OFF']]}")
 
-      if states[FLASH_MODES['SINGLE']] not in [
-          FLASH_STATES['FIRED'], FLASH_STATES['PARTIAL']]:
+      if states[_FLASH_MODES['SINGLE']] not in [
+          _FLASH_STATES['FIRED'], _FLASH_STATES['PARTIAL']]:
         raise AssertionError('flash state reported[SINGLE]: '
-                             f"{states[FLASH_MODES['SINGLE']]}")
+                             f"{states[_FLASH_MODES['SINGLE']]}")
 
-      if states[FLASH_MODES['TORCH']] not in [
-          FLASH_STATES['FIRED'], FLASH_STATES['PARTIAL']]:
+      if states[_FLASH_MODES['TORCH']] not in [
+          _FLASH_STATES['FIRED'], _FLASH_STATES['PARTIAL']]:
         raise AssertionError('flash state reported[TORCH]: '
-                             f"{states[FLASH_MODES['TORCH']]}")
+                             f"{states[_FLASH_MODES['TORCH']]}")
 
       # Compute image behavior: change between OFF & SINGLE
-      single_diff = np.subtract(patches[FLASH_MODES['SINGLE']],
-                                patches[FLASH_MODES['OFF']])
+      single_diff = np.subtract(patches[_FLASH_MODES['SINGLE']],
+                                patches[_FLASH_MODES['OFF']])
       single_mean = image_processing_utils.compute_image_means(
           single_diff)[0]
       single_grad = image_processing_utils.compute_image_max_gradients(
@@ -138,8 +138,8 @@ class ParamFlashModeTest(its_base_test.ItsBaseTest):
       logging.debug('grad(SINGLE-OFF): %.3f', single_grad)
 
       # Compute image behavior: change between OFF & TORCH
-      torch_diff = np.subtract(patches[FLASH_MODES['TORCH']],
-                               patches[FLASH_MODES['OFF']])
+      torch_diff = np.subtract(patches[_FLASH_MODES['TORCH']],
+                               patches[_FLASH_MODES['OFF']])
       image_processing_utils.write_image(
           torch_diff, f'{file_name_stem}_torch.jpg')
       torch_mean = image_processing_utils.compute_image_means(
@@ -150,18 +150,18 @@ class ParamFlashModeTest(its_base_test.ItsBaseTest):
       logging.debug('grad(TORCH-OFF): %.3f', torch_grad)
 
       # Check correct behavior
-      if not (single_grad > GRADIENT_DELTA or
-              single_mean > MEAN_DELTA_FLASH):
+      if not (single_grad > _GRADIENT_DELTA or
+              single_mean > _MEAN_DELTA_FLASH):
         raise AssertionError(f'gradient SINGLE-OFF: {single_grad:.3f}, '
-                             f'ATOL: {GRADIENT_DELTA}, '
+                             f'ATOL: {_GRADIENT_DELTA}, '
                              f'mean SINGLE-OFF {single_mean:.3f}, '
-                             f'ATOL: {MEAN_DELTA_FLASH}')
-      if not (torch_grad > GRADIENT_DELTA or
-              torch_mean > MEAN_DELTA_TORCH):
+                             f'ATOL: {_MEAN_DELTA_FLASH}')
+      if not (torch_grad > _GRADIENT_DELTA or
+              torch_mean > _MEAN_DELTA_TORCH):
         raise AssertionError(f'gradient TORCH-OFF: {torch_grad:.3f}, '
-                             f'ATOL: {GRADIENT_DELTA}, '
+                             f'ATOL: {_GRADIENT_DELTA}, '
                              f'mean TORCH-OFF {torch_mean:.3f}, '
-                             f'ATOL: {MEAN_DELTA_TORCH}')
+                             f'ATOL: {_MEAN_DELTA_TORCH}')
 
 if __name__ == '__main__':
   test_runner.main()

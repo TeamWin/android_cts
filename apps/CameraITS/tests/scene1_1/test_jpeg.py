@@ -24,12 +24,12 @@ import capture_request_utils
 import image_processing_utils
 import its_session_utils
 
-NAME = os.path.splitext(os.path.basename(__file__))[0]
-PATCH_H = 0.1  # center 10%
-PATCH_W = 0.1
-PATCH_X = 0.5 - PATCH_W/2
-PATCH_Y = 0.5 - PATCH_H/2
-THRESHOLD_MAX_RMS_DIFF = 0.01
+_NAME = os.path.splitext(os.path.basename(__file__))[0]
+_PATCH_H = 0.1  # center 10%
+_PATCH_W = 0.1
+_PATCH_X = 0.5 - _PATCH_W/2
+_PATCH_Y = 0.5 - _PATCH_H/2
+_THRESHOLD_MAX_RMS_DIFF = 0.01
 
 
 def compute_img_means_and_save(img, img_name, log_path):
@@ -44,9 +44,9 @@ def compute_img_means_and_save(img, img_name, log_path):
     means of image patch
   """
   image_processing_utils.write_image(
-      img, '%s_fmt=%s.jpg' % (os.path.join(log_path, NAME), img_name))
+      img, '%s_fmt=%s.jpg' % (os.path.join(log_path, _NAME), img_name))
   patch = image_processing_utils.get_image_patch(
-      img, PATCH_X, PATCH_Y, PATCH_W, PATCH_H)
+      img, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
   rgb_means = image_processing_utils.compute_image_means(patch)
   logging.debug('%s rgb_means: %s', img_name, str(rgb_means))
   return rgb_means
@@ -56,7 +56,7 @@ class JpegTest(its_base_test.ItsBaseTest):
   """Test that converted YUV images and device JPEG images look the same."""
 
   def test_jpeg(self):
-    logging.debug('Starting %s', NAME)
+    logging.debug('Starting %s', _NAME)
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
@@ -96,9 +96,9 @@ class JpegTest(its_base_test.ItsBaseTest):
       rms_diff = image_processing_utils.compute_image_rms_difference_1d(
           rgb_means_yuv, rgb_means_jpg)
       logging.debug('RMS difference: %.3f', rms_diff)
-      if rms_diff >= THRESHOLD_MAX_RMS_DIFF:
+      if rms_diff >= _THRESHOLD_MAX_RMS_DIFF:
         raise AssertionError(
-            f'RMS diff: {rms_diff:.3f}, spec: {THRESHOLD_MAX_RMS_DIFF}')
+            f'RMS diff: {rms_diff:.3f}, spec: {_THRESHOLD_MAX_RMS_DIFF}')
 
 if __name__ == '__main__':
   test_runner.main()

@@ -99,7 +99,7 @@ class TonemapSequenceTest(its_base_test.ItsBaseTest):
       # define formats
       largest_yuv = capture_request_utils.get_largest_yuv_format(props)
       match_ar = (largest_yuv['width'], largest_yuv['height'])
-      fmt = capture_request_utils.get_smallest_yuv_format(
+      fmt = capture_request_utils.get_near_vga_yuv_format(
           props, match_ar=match_ar)
       means = []
 

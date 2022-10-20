@@ -280,7 +280,8 @@ public class HotwordDetectedResultTest {
     private static void assertHotwordAudioStream(HotwordAudioStream hotwordAudioStream,
             AudioFormat expectedAudioFormat, byte[] expectedAudioData) throws Exception {
         assertThat(hotwordAudioStream.getAudioFormat()).isEqualTo(expectedAudioFormat);
-        assertAudioStream(hotwordAudioStream.getAudioStream(), expectedAudioData);
+        assertAudioStream(hotwordAudioStream.getAudioStreamParcelFileDescriptor(),
+                expectedAudioData);
         assertThat(hotwordAudioStream.getMetadata()).isNotNull();
         assertThat(hotwordAudioStream.getMetadata().size()).isEqualTo(0);
         assertThat(hotwordAudioStream.getTimestamp()).isNull();

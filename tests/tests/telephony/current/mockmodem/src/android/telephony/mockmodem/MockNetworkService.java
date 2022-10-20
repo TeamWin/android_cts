@@ -16,11 +16,10 @@
 
 package android.telephony.mockmodem;
 
+import android.content.Context;
 import android.hardware.radio.network.CellConnectionStatus;
 import android.hardware.radio.network.CellInfo;
-import android.hardware.radio.network.CellInfoLte;
 import android.hardware.radio.network.CellInfoRatSpecificInfo;
-import android.hardware.radio.network.CellInfoWcdma;
 import android.hardware.radio.network.RegState;
 import android.telephony.RadioAccessFamily;
 import android.telephony.ServiceState;
@@ -57,15 +56,14 @@ public class MockNetworkService {
     public static final int NR = RadioAccessFamily.RAF_NR;
 
     static final int MOCK_CARRIER_NO_SERVICE = 0;
-    // TODO: Integrate carrier network parameters with SIM profile
-    static final int MOCK_CARRIER_CHT = 1;
-    static final int MOCK_CARRIER_FET = 2;
 
     // Network status update reason
     static final int NETWORK_UPDATE_PREFERRED_MODE_CHANGE = 1;
 
     private int mCsRegState = RegState.NOT_REG_MT_NOT_SEARCHING_OP;
     private int mPsRegState = RegState.NOT_REG_MT_NOT_SEARCHING_OP;
+
+    private Context mContext;
 
     private String mSimPlmn;
     private boolean mIsHomeCamping;
@@ -87,10 +85,14 @@ public class MockNetworkService {
         // AOSP
         private CellInfo[] mCells;
 
-        MockModemCell(int carrierConfig) {
-            mCarrierId = carrierConfig;
-            updateHomeRoamingList();
-            updateCellList();
+        MockModemCell(Context context, String file) {
+            MockNetworkConfig config;
+
+            config = new MockNetworkConfig(context);
+            config.getConfigFromAssets(file);
+            mCarrierId = config.getCarrierId();
+            updateHomeRoamingList(config);
+            updateCellList(config);
         }
 
         public int getCarrierId() {
@@ -101,128 +103,18 @@ public class MockNetworkService {
             return mCells;
         }
 
-        private void updateHomeRoamingList() {
-            // TODO: Read from carrier configuration file
-            switch (mCarrierId) {
-                case MOCK_CARRIER_CHT:
-                    mEHPlmnList = new String[] {"46692"};
-                    mAllowRoamingList = new String[] {"310026"};
-                    break;
-                case MOCK_CARRIER_FET:
-                    mEHPlmnList = new String[] {"46601"};
-                    mAllowRoamingList = new String[] {"310026"};
-                    break;
-                case MOCK_CARRIER_NO_SERVICE:
-                default:
-                    break;
-            }
+        private void updateHomeRoamingList(MockNetworkConfig config) {
+            mEHPlmnList = config.getEHPlmnList();
+            mAllowRoamingList = config.getAllowRoamingList();
         }
 
-        private void updateCellList() {
-            // TODO: Read from carrier configuration file
-            switch (mCarrierId) {
-                case MOCK_CARRIER_NO_SERVICE:
-                    break;
-                case MOCK_CARRIER_CHT:
-                    // LTE Cell configuration
-                    CellInfoLte lte = new CellInfoLte();
-                    lte.cellIdentityLte = new android.hardware.radio.network.CellIdentityLte();
-                    lte.cellIdentityLte.mcc = "466";
-                    lte.cellIdentityLte.mnc = "92";
-                    lte.cellIdentityLte.ci = 101;
-                    lte.cellIdentityLte.pci = 273;
-                    lte.cellIdentityLte.tac = 13100;
-                    lte.cellIdentityLte.earfcn = 9260;
-                    lte.cellIdentityLte.operatorNames =
-                            new android.hardware.radio.network.OperatorInfo();
-                    lte.cellIdentityLte.operatorNames.alphaLong = "Chung Hwa Telecom";
-                    lte.cellIdentityLte.operatorNames.alphaShort = "CHT";
-                    lte.cellIdentityLte.operatorNames.operatorNumeric = "46692";
-                    lte.cellIdentityLte.additionalPlmns = new String[0];
-                    lte.cellIdentityLte.bands = new int[0];
+        private void updateCellList(MockNetworkConfig config) {
+            int cellNum;
 
-                    lte.signalStrengthLte = new android.hardware.radio.network.LteSignalStrength();
-                    lte.signalStrengthLte.signalStrength = 20;
-                    lte.signalStrengthLte.rsrp = 71;
-                    lte.signalStrengthLte.rsrq = 6;
-                    lte.signalStrengthLte.rssnr = 100;
-                    lte.signalStrengthLte.cqi = 13;
-                    lte.signalStrengthLte.timingAdvance = 0;
-                    lte.signalStrengthLte.cqiTableIndex = 1;
-
-                    // WCDMA Cell configuration
-                    CellInfoWcdma wcdma = new CellInfoWcdma();
-                    wcdma.cellIdentityWcdma =
-                            new android.hardware.radio.network.CellIdentityWcdma();
-                    wcdma.cellIdentityWcdma.mcc = "466";
-                    wcdma.cellIdentityWcdma.mnc = "92";
-                    wcdma.cellIdentityWcdma.lac = 9222;
-                    wcdma.cellIdentityWcdma.cid = 14549;
-                    wcdma.cellIdentityWcdma.psc = 413;
-                    wcdma.cellIdentityWcdma.uarfcn = 10613;
-                    wcdma.cellIdentityWcdma.operatorNames =
-                            new android.hardware.radio.network.OperatorInfo();
-                    wcdma.cellIdentityWcdma.operatorNames.alphaLong = "Chung Hwa 3G";
-                    wcdma.cellIdentityWcdma.operatorNames.alphaShort = "CHT";
-                    wcdma.cellIdentityWcdma.operatorNames.operatorNumeric = "46692";
-                    wcdma.cellIdentityWcdma.additionalPlmns = new String[0];
-
-                    wcdma.signalStrengthWcdma =
-                            new android.hardware.radio.network.WcdmaSignalStrength();
-                    wcdma.signalStrengthWcdma.signalStrength = 20;
-                    wcdma.signalStrengthWcdma.bitErrorRate = 3;
-                    wcdma.signalStrengthWcdma.rscp = 45;
-                    wcdma.signalStrengthWcdma.ecno = 25;
-
-                    // Fill the cells
-                    mCells = new CellInfo[2]; // TODO: 2 is read from config file
-                    mCells[0] = new CellInfo();
-                    mCells[0].registered = false;
-                    mCells[0].connectionStatus = CellConnectionStatus.PRIMARY_SERVING;
-                    mCells[0].ratSpecificInfo = new CellInfoRatSpecificInfo();
-                    mCells[0].ratSpecificInfo.setLte(lte);
-
-                    mCells[1] = new CellInfo();
-                    mCells[1].registered = false;
-                    mCells[1].connectionStatus = CellConnectionStatus.SECONDARY_SERVING;
-                    mCells[1].ratSpecificInfo = new CellInfoRatSpecificInfo();
-                    mCells[1].ratSpecificInfo.setWcdma(wcdma);
-                    break;
-                case MOCK_CARRIER_FET:
-                    // WCDMA Cell configuration
-                    CellInfoWcdma wcdma2 = new CellInfoWcdma();
-                    wcdma2.cellIdentityWcdma =
-                            new android.hardware.radio.network.CellIdentityWcdma();
-                    wcdma2.cellIdentityWcdma.mcc = "466";
-                    wcdma2.cellIdentityWcdma.mnc = "01";
-                    wcdma2.cellIdentityWcdma.lac = 8122;
-                    wcdma2.cellIdentityWcdma.cid = 16249;
-                    wcdma2.cellIdentityWcdma.psc = 413;
-                    wcdma2.cellIdentityWcdma.uarfcn = 10613;
-                    wcdma2.cellIdentityWcdma.operatorNames =
-                            new android.hardware.radio.network.OperatorInfo();
-                    wcdma2.cellIdentityWcdma.operatorNames.alphaLong = "Far EasTone";
-                    wcdma2.cellIdentityWcdma.operatorNames.alphaShort = "FET";
-                    wcdma2.cellIdentityWcdma.operatorNames.operatorNumeric = "46601";
-                    wcdma2.cellIdentityWcdma.additionalPlmns = new String[0];
-
-                    wcdma2.signalStrengthWcdma =
-                            new android.hardware.radio.network.WcdmaSignalStrength();
-                    wcdma2.signalStrengthWcdma.signalStrength = 10;
-                    wcdma2.signalStrengthWcdma.bitErrorRate = 6;
-                    wcdma2.signalStrengthWcdma.rscp = 55;
-                    wcdma2.signalStrengthWcdma.ecno = 15;
-
-                    // Fill the cells
-                    mCells = new CellInfo[1];
-                    mCells[0] = new CellInfo();
-                    mCells[0].registered = false;
-                    mCells[0].connectionStatus = CellConnectionStatus.PRIMARY_SERVING;
-                    mCells[0].ratSpecificInfo = new CellInfoRatSpecificInfo();
-                    mCells[0].ratSpecificInfo.setWcdma(wcdma2);
-                    break;
-                default:
-                    break;
+            cellNum = config.getCellNum();
+            mCells = new CellInfo[cellNum];
+            for (int i = 0; i < cellNum; i++) {
+                mCells[i] = config.getCellInfo(i);
             }
         }
 
@@ -331,22 +223,26 @@ public class MockNetworkService {
         }
     }
 
-    public MockNetworkService() {
-        loadMockModemCell(MOCK_CARRIER_CHT);
-        loadMockModemCell(MOCK_CARRIER_FET);
+    public MockNetworkService(Context context) {
+        mContext = context;
+        loadMockModemCell("mock_network_tw_cht.xml");
+        loadMockModemCell("mock_network_tw_fet.xml");
     }
 
-    public void loadMockModemCell(int carrierId) {
+    public void loadMockModemCell(String config) {
+        MockModemCell tmp = new MockModemCell(mContext, config);
+        int cid = tmp.getCarrierId();
         if (!mCellList.isEmpty()) {
             for (MockModemCell mmc : mCellList) {
-                if (mmc.getCarrierId() == carrierId) {
-                    Log.d(TAG, "Carrier ID " + carrierId + " is loaded.");
+                if (mmc.getCarrierId() == cid) {
+                    Log.d(TAG, "Carrier ID " + cid + " had been loaded.");
                     return;
                 }
             }
         }
 
-        mCellList.add(new MockModemCell(carrierId));
+        Log.d(TAG, "Load carrier(" + cid + ") " + config);
+        mCellList.add(tmp);
     }
 
     private int getHighestRatFromNetworkType(int raf) {
@@ -563,8 +459,7 @@ public class MockNetworkService {
     }
 
     public boolean isPsInService() {
-        return ((mPsRegState == RegState.REG_HOME)
-                 || (mPsRegState == RegState.REG_ROAMING));
+        return ((mPsRegState == RegState.REG_HOME) || (mPsRegState == RegState.REG_ROAMING));
     }
 
     public void updateSimPlmn(String simPlmn) {

@@ -52,6 +52,7 @@ class TouchScreenTest {
     fun setUp() {
         assumeTrue(supportsMultiDisplay())
         createDisplayAndTouchScreen()
+
         val displayId = virtualDisplay.display.displayId
         val bundle = ActivityOptions.makeBasic().setLaunchDisplayId(displayId).toBundle()
         val intent = Intent(Intent.ACTION_VIEW)
@@ -65,6 +66,9 @@ class TouchScreenTest {
 
     @After
     fun tearDown() {
+        if (!supportsMultiDisplay()) {
+            return
+        }
         releaseDisplay()
     }
 

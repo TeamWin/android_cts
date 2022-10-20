@@ -19,6 +19,7 @@
     <application android:label="Input Injection">
         <activity android:name="InputInjectionActivity"
                   android:launchMode="singleInstance"
+                  android:windowSoftInputMode="stateAlwaysHidden"
                   android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

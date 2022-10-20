@@ -38,6 +38,7 @@ import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Xml;
 import android.view.InputDevice;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.MeasureSpec;
@@ -643,6 +644,78 @@ public class ScrollViewTest {
         }
 
         assertFalse(mScrollViewCustom.arrowScroll(View.FOCUS_UP));
+        assertEquals(0, mScrollViewCustom.getScrollY());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testKeyPageUpDownScroll() {
+        final KeyEvent pageDownDownEvent =
+                new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_PAGE_DOWN);
+        final KeyEvent pageDownUpEvent =
+                new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_PAGE_DOWN);
+
+        final KeyEvent pageUpDownEvent =
+                new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_PAGE_UP);
+        final KeyEvent pageUpUpEvent =
+                new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_PAGE_UP);
+
+        mScrollViewCustom.setSmoothScrollingEnabled(false);
+        assertEquals(0, mScrollViewCustom.getScrollY());
+
+        int y = mScrollViewCustom.getScrollY();
+        while (mScrollBottom != y) {
+            assertTrue(mScrollViewCustom.dispatchKeyEvent(pageDownDownEvent));
+            assertFalse(mScrollViewCustom.dispatchKeyEvent(pageDownUpEvent));
+
+            assertTrue(y <= mScrollViewCustom.getScrollY());
+            y = mScrollViewCustom.getScrollY();
+        }
+
+        assertFalse(mScrollViewCustom.arrowScroll(View.FOCUS_DOWN));
+        assertEquals(mScrollBottom, mScrollViewCustom.getScrollY());
+
+        y = mScrollViewCustom.getScrollY();
+        while (0 != y) {
+            assertTrue(mScrollViewCustom.dispatchKeyEvent(pageUpDownEvent));
+            assertFalse(mScrollViewCustom.dispatchKeyEvent(pageUpUpEvent));
+
+            assertTrue(y >= mScrollViewCustom.getScrollY());
+            y = mScrollViewCustom.getScrollY();
+        }
+
+        assertFalse(mScrollViewCustom.arrowScroll(View.FOCUS_UP));
+        assertEquals(0, mScrollViewCustom.getScrollY());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testKeyHomeEndScroll() {
+        final KeyEvent endDownEvent =
+                new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MOVE_END);
+        final KeyEvent endUpEvent =
+                new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MOVE_END);
+
+        final KeyEvent homeDownEvent =
+                new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MOVE_HOME);
+        final KeyEvent homeUpEvent =
+                new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MOVE_HOME);
+
+        mScrollViewCustom.setSmoothScrollingEnabled(false);
+        assertEquals(0, mScrollViewCustom.getScrollY());
+
+        // Send END KeyEvent
+        assertTrue(mScrollViewCustom.dispatchKeyEvent(endDownEvent));
+        assertFalse(mScrollViewCustom.dispatchKeyEvent(endUpEvent));
+
+        // End key should scroll until end of the content.
+        assertEquals(mScrollBottom, mScrollViewCustom.getScrollY());
+
+        // Send HOME KeyEvent
+        assertTrue(mScrollViewCustom.dispatchKeyEvent(homeDownEvent));
+        assertFalse(mScrollViewCustom.dispatchKeyEvent(homeUpEvent));
+
+        // HOME key should scroll up to top.
         assertEquals(0, mScrollViewCustom.getScrollY());
     }
 

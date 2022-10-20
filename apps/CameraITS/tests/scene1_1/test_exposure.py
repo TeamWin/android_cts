@@ -30,24 +30,24 @@ import its_session_utils
 import target_exposure_utils
 
 _EXP_CORRECTION_FACTOR = 2  # mult or div factor to correct brightness
-NAME = os.path.splitext(os.path.basename(__file__))[0]
-NUM_PTS_2X_GAIN = 3  # 3 points every 2x increase in gain
-PATCH_H = 0.1  # center 10% patch params
-PATCH_W = 0.1
-PATCH_X = 0.45
-PATCH_Y = 0.45
-RAW_STATS_GRID = 9  # define 9x9 (11.11%) spacing grid for rawStats processing
-RAW_STATS_XY = RAW_STATS_GRID//2  # define X, Y location for center rawStats
-THRESH_MIN_LEVEL = 0.1
-THRESH_MAX_LEVEL = 0.9
-THRESH_MAX_LEVEL_DIFF = 0.045
-THRESH_MAX_LEVEL_DIFF_WIDE_RANGE = 0.06
-THRESH_MAX_OUTLIER_DIFF = 0.1
-THRESH_ROUND_DOWN_GAIN = 0.1
-THRESH_ROUND_DOWN_EXP = 0.03
-THRESH_ROUND_DOWN_EXP0 = 1.00  # TOL at 0ms exp; theoretical limit @ 4-line exp
-THRESH_EXP_KNEE = 6E6  # exposures less than knee have relaxed tol
-WIDE_EXP_RANGE_THRESH = 64.0  # threshold for 'wide' range sensor
+_NAME = os.path.splitext(os.path.basename(__file__))[0]
+_NUM_PTS_2X_GAIN = 3  # 3 points every 2x increase in gain
+_PATCH_H = 0.1  # center 10% patch params
+_PATCH_W = 0.1
+_PATCH_X = 0.45
+_PATCH_Y = 0.45
+_RAW_STATS_GRID = 9  # define 9x9 (11.11%) spacing grid for rawStats processing
+_RAW_STATS_XY = _RAW_STATS_GRID//2  # define X, Y location for center rawStats
+_THRESH_MIN_LEVEL = 0.1
+_THRESH_MAX_LEVEL = 0.9
+_THRESH_MAX_LEVEL_DIFF = 0.045
+_THRESH_MAX_LEVEL_DIFF_WIDE_RANGE = 0.06
+_THRESH_MAX_OUTLIER_DIFF = 0.1
+_THRESH_ROUND_DOWN_GAIN = 0.1
+_THRESH_ROUND_DOWN_EXP = 0.03
+_THRESH_ROUND_DOWN_EXP0 = 1.00  # TOL at 0ms exp; theoretical limit @ 4-line exp
+_THRESH_EXP_KNEE = 6E6  # exposures less than knee have relaxed tol
+_WIDE_EXP_RANGE_THRESH = 64.0  # threshold for 'wide' range sensor
 
 
 def adjust_exp_for_brightness(
@@ -74,13 +74,13 @@ def adjust_exp_for_brightness(
   image_processing_utils.write_image(
       img, f'{test_name_with_path}.jpg')
   patch = image_processing_utils.get_image_patch(
-      img, PATCH_X, PATCH_Y, PATCH_W, PATCH_H)
+      img, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
   r, g, b = image_processing_utils.compute_image_means(patch)
   logging.debug('Sample RGB values: %.3f, %.3f, %.3f', r, g, b)
-  if g < THRESH_MIN_LEVEL:
+  if g < _THRESH_MIN_LEVEL:
     exp *= _EXP_CORRECTION_FACTOR
     logging.debug('exp increased by %dx: %d', _EXP_CORRECTION_FACTOR, exp)
-  elif g > THRESH_MAX_LEVEL:
+  elif g > _THRESH_MAX_LEVEL:
     exp //= _EXP_CORRECTION_FACTOR
     logging.debug('exp decreased to 1/%dx: %d', _EXP_CORRECTION_FACTOR, exp)
   return exp
@@ -101,11 +101,11 @@ def plot_rgb_means(title, x, r, g, b, test_name_with_path):
   pylab.semilogx(x, r, 'ro-')
   pylab.semilogx(x, g, 'go-')
   pylab.semilogx(x, b, 'bo-')
-  pylab.title(f'{NAME} {title}')
+  pylab.title(f'{_NAME} {title}')
   pylab.xlabel('Gain Multiplier')
   pylab.ylabel('Normalized RGB Plane Avg')
   pylab.minorticks_off()
-  pylab.xticks(x[0::NUM_PTS_2X_GAIN], x[0::NUM_PTS_2X_GAIN])
+  pylab.xticks(x[0::_NUM_PTS_2X_GAIN], x[0::_NUM_PTS_2X_GAIN])
   pylab.ylim([0, 1])
   plot_name = f'{test_name_with_path}_plot_rgb_means.png'
   matplotlib.pyplot.savefig(plot_name)
@@ -128,11 +128,11 @@ def plot_raw_means(title, x, r, gr, gb, b, test_name_with_path):
   pylab.semilogx(x, gr, 'go-', label='Gr')
   pylab.semilogx(x, gb, 'ko-', label='Gb')
   pylab.semilogx(x, b, 'bo-', label='B')
-  pylab.title(f'{NAME} {title}')
+  pylab.title(f'{_NAME} {title}')
   pylab.xlabel('Gain Multiplier')
   pylab.ylabel('Normalized RAW Plane Avg')
   pylab.minorticks_off()
-  pylab.xticks(x[0::NUM_PTS_2X_GAIN], x[0::NUM_PTS_2X_GAIN])
+  pylab.xticks(x[0::_NUM_PTS_2X_GAIN], x[0::_NUM_PTS_2X_GAIN])
   pylab.ylim([0, 1])
   pylab.legend(numpoints=1)
   plot_name = f'{test_name_with_path}_plot_raw_means.png'
@@ -162,17 +162,17 @@ def check_line_fit(color, mults, values, thresh_max_level_diff):
   if max_diff >= thresh_max_level_diff:
     raise AssertionError(f'max_diff: {max_diff:.4f}, '
                          f'THRESH: {thresh_max_level_diff:.3f}')
-  if not THRESH_MAX_LEVEL > b > THRESH_MIN_LEVEL:
-    raise AssertionError(f'b: {b:.2f}, THRESH_MIN: {THRESH_MIN_LEVEL}, '
-                         f'THRESH_MAX: {THRESH_MAX_LEVEL}')
+  if not _THRESH_MAX_LEVEL > b > _THRESH_MIN_LEVEL:
+    raise AssertionError(f'b: {b:.2f}, THRESH_MIN: {_THRESH_MIN_LEVEL}, '
+                         f'THRESH_MAX: {_THRESH_MAX_LEVEL}')
   for v in values:
-    if not THRESH_MAX_LEVEL > v > THRESH_MIN_LEVEL:
-      raise AssertionError(f'v: {v:.2f}, THRESH_MIN: {THRESH_MIN_LEVEL}, '
-                           f'THRESH_MAX: {THRESH_MAX_LEVEL}')
+    if not _THRESH_MAX_LEVEL > v > _THRESH_MIN_LEVEL:
+      raise AssertionError(f'v: {v:.2f}, THRESH_MIN: {_THRESH_MIN_LEVEL}, '
+                           f'THRESH_MAX: {_THRESH_MAX_LEVEL}')
 
-    if abs(v - b) >= THRESH_MAX_OUTLIER_DIFF:
+    if abs(v - b) >= _THRESH_MAX_OUTLIER_DIFF:
       raise AssertionError(f'v: {v:.2f}, b: {b:.2f}, '
-                           f'THRESH_DIFF: {THRESH_MAX_OUTLIER_DIFF}')
+                           f'THRESH_DIFF: {_THRESH_MAX_OUTLIER_DIFF}')
 
 
 def get_raw_active_array_size(props):
@@ -201,7 +201,7 @@ class ExposureTest(its_base_test.ItsBaseTest):
     raw_gr_means = []
     raw_gb_means = []
     raw_b_means = []
-    thresh_max_level_diff = THRESH_MAX_LEVEL_DIFF
+    thresh_max_level_diff = _THRESH_MAX_LEVEL_DIFF
 
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
@@ -209,7 +209,7 @@ class ExposureTest(its_base_test.ItsBaseTest):
         hidden_physical_id=self.hidden_physical_id) as cam:
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
-      test_name_with_path = os.path.join(self.log_path, NAME)
+      test_name_with_path = os.path.join(self.log_path, _NAME)
 
       # Check SKIP conditions
       camera_properties_utils.skip_unless(
@@ -227,7 +227,7 @@ class ExposureTest(its_base_test.ItsBaseTest):
       logging.debug('sync latency: %d frames', sync_latency)
       largest_yuv = capture_request_utils.get_largest_yuv_format(props)
       match_ar = (largest_yuv['width'], largest_yuv['height'])
-      fmt = capture_request_utils.get_smallest_yuv_format(
+      fmt = capture_request_utils.get_near_vga_yuv_format(
           props, match_ar=match_ar)
       e, s = target_exposure_utils.get_target_exposure_combos(
           self.log_path, cam)['minSensitivity']
@@ -257,16 +257,16 @@ class ExposureTest(its_base_test.ItsBaseTest):
         s_res = cap['metadata']['android.sensor.sensitivity']
         e_res = cap['metadata']['android.sensor.exposureTime']
         # determine exposure tolerance based on exposure time
-        if e_req >= THRESH_EXP_KNEE:
-          thresh_round_down_exp = THRESH_ROUND_DOWN_EXP
+        if e_req >= _THRESH_EXP_KNEE:
+          thresh_round_down_exp = _THRESH_ROUND_DOWN_EXP
         else:
           thresh_round_down_exp = (
-              THRESH_ROUND_DOWN_EXP +
-              (THRESH_ROUND_DOWN_EXP0 - THRESH_ROUND_DOWN_EXP) *
-              (THRESH_EXP_KNEE - e_req) / THRESH_EXP_KNEE)
-        if not 0 <= s_req - s_res < s_req * THRESH_ROUND_DOWN_GAIN:
+              _THRESH_ROUND_DOWN_EXP +
+              (_THRESH_ROUND_DOWN_EXP0 - _THRESH_ROUND_DOWN_EXP) *
+              (_THRESH_EXP_KNEE - e_req) / _THRESH_EXP_KNEE)
+        if not 0 <= s_req - s_res < s_req * _THRESH_ROUND_DOWN_GAIN:
           raise AssertionError(f's_req: {s_req}, s_res: {s_res}, '
-                               f'TOL=-{THRESH_ROUND_DOWN_GAIN*100}%')
+                               f'TOL=-{_THRESH_ROUND_DOWN_GAIN*100}%')
         if not 0 <= e_req - e_res < e_req * thresh_round_down_exp:
           raise AssertionError(f'e_req: {e_req}ns, e_res: {e_res}ns, '
                                f'TOL=-{thresh_round_down_exp*100}%')
@@ -277,7 +277,7 @@ class ExposureTest(its_base_test.ItsBaseTest):
         image_processing_utils.write_image(
             img, f'{test_name_with_path}_mult={m:.2f}.jpg')
         patch = image_processing_utils.get_image_patch(
-            img, PATCH_X, PATCH_Y, PATCH_W, PATCH_H)
+            img, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
         rgb_means = image_processing_utils.compute_image_means(patch)
 
         # Adjust for the difference between request and result
@@ -289,23 +289,23 @@ class ExposureTest(its_base_test.ItsBaseTest):
         if raw_avlb and debug:
           aaw, aah = get_raw_active_array_size(props)
           fmt_raw = {'format': 'rawStats',
-                     'gridWidth': aaw//RAW_STATS_GRID,
-                     'gridHeight': aah//RAW_STATS_GRID}
+                     'gridWidth': aaw//_RAW_STATS_GRID,
+                     'gridHeight': aah//_RAW_STATS_GRID}
           raw_cap = its_session_utils.do_capture_with_latency(
               cam, req, sync_latency, fmt_raw)
           r, gr, gb, b = image_processing_utils.convert_capture_to_planes(
               raw_cap, props)
-          raw_r_means.append(r[RAW_STATS_XY, RAW_STATS_XY] * req_res_ratio)
-          raw_gr_means.append(gr[RAW_STATS_XY, RAW_STATS_XY] * req_res_ratio)
-          raw_gb_means.append(gb[RAW_STATS_XY, RAW_STATS_XY] * req_res_ratio)
-          raw_b_means.append(b[RAW_STATS_XY, RAW_STATS_XY] * req_res_ratio)
+          raw_r_means.append(r[_RAW_STATS_XY, _RAW_STATS_XY] * req_res_ratio)
+          raw_gr_means.append(gr[_RAW_STATS_XY, _RAW_STATS_XY] * req_res_ratio)
+          raw_gb_means.append(gb[_RAW_STATS_XY, _RAW_STATS_XY] * req_res_ratio)
+          raw_b_means.append(b[_RAW_STATS_XY, _RAW_STATS_XY] * req_res_ratio)
 
           # Test number of points per 2x gain
-        m *= pow(2, 1.0/NUM_PTS_2X_GAIN)
+        m *= pow(2, 1.0/_NUM_PTS_2X_GAIN)
 
       # Loosen threshold for devices with wider exposure range
-      if m >= WIDE_EXP_RANGE_THRESH:
-        thresh_max_level_diff = THRESH_MAX_LEVEL_DIFF_WIDE_RANGE
+      if m >= _WIDE_EXP_RANGE_THRESH:
+        thresh_max_level_diff = _THRESH_MAX_LEVEL_DIFF_WIDE_RANGE
 
     # Draw plots and check data
     if raw_avlb and debug:
