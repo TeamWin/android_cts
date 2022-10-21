@@ -31,6 +31,8 @@ static pthread_t readThread;
 static const bool DEBUG = false;
 static const bool DEBUG_MIDIDATA = false;
 
+static const int MAX_PACKET_SIZE = 1024;
+
 //
 // MIDI Messages
 //
@@ -82,6 +84,41 @@ public:
         mNumMsgBytes = numMsgBytes;
         mMsgBytes = new uint8_t[numMsgBytes];
         memcpy(mMsgBytes, msgBytes, mNumMsgBytes * sizeof(uint8_t));
+        return true;
+    }
+
+    bool setSysExMessage(int numMsgBytes) {
+        if (numMsgBytes <= 0) {
+            return false;
+        }
+        mNumMsgBytes = numMsgBytes;
+        mMsgBytes = new uint8_t[mNumMsgBytes];
+        memset(mMsgBytes, 0, mNumMsgBytes * sizeof(uint8_t));
+        mMsgBytes[0] = kMIDISysCmd_SysEx;
+        for(int index = 1; index < numMsgBytes - 1; index++) {
+            mMsgBytes[index] = (uint8_t) (index % 100);
+        }
+        mMsgBytes[numMsgBytes - 1] = kMIDISysCmd_EndOfSysEx;
+        return true;
+    }
+
+    bool setTwoSysExMessage(int firstMsgBytes, int secondMsgBytes) {
+        if (firstMsgBytes <= 0 || secondMsgBytes <= 0) {
+            return false;
+        }
+        mNumMsgBytes = firstMsgBytes + secondMsgBytes;
+        mMsgBytes = new uint8_t[mNumMsgBytes];
+        memset(mMsgBytes, 0, mNumMsgBytes * sizeof(uint8_t));
+        mMsgBytes[0] = kMIDISysCmd_SysEx;
+        for(int index = 1; index < firstMsgBytes - 1; index++) {
+            mMsgBytes[index] = (uint8_t) (index % 100);
+        }
+        mMsgBytes[firstMsgBytes - 1] = kMIDISysCmd_EndOfSysEx;
+        mMsgBytes[firstMsgBytes] = kMIDISysCmd_SysEx;
+        for(int index = firstMsgBytes + 1; index < firstMsgBytes + secondMsgBytes - 1; index++) {
+            mMsgBytes[index] = (uint8_t) (index % 100);
+        }
+        mMsgBytes[firstMsgBytes + secondMsgBytes - 1] = kMIDISysCmd_EndOfSysEx;
         return true;
     }
 }; /* class TestMessage */
@@ -248,7 +285,7 @@ int MidiTestManager::sendMessages() {
 }
 
 int MidiTestManager::ProcessInput() {
-    uint8_t readBuffer[128];
+    uint8_t readBuffer[MAX_PACKET_SIZE];
     size_t totalNumReceived = 0;
 
     bool testRunning = true;
@@ -263,7 +300,7 @@ int MidiTestManager::ProcessInput() {
 
         numBytesReceived = 0;
         ssize_t numMessagesReceived =
-            AMidiOutputPort_receive(mMidiReceivePort, &opCode, readBuffer, 128,
+            AMidiOutputPort_receive(mMidiReceivePort, &opCode, readBuffer, MAX_PACKET_SIZE,
                         &numBytesReceived, &timeStamp);
 
         if (DEBUG && numBytesReceived > 0) {
@@ -283,6 +320,7 @@ int MidiTestManager::ProcessInput() {
             if (totalNumReceived == 0 && readBuffer[0] != makeMIDICmd(kMIDIChanCmd_Control, 0)) {
                 // advance stream past the "warm up" message
                 mReceiveStreamPos += sizeof(warmupMsg);
+                totalNumReceived += sizeof(warmupMsg);
                 if (DEBUG) {
                     ALOGD("---- No Warm Up Message Detected.");
                 }
@@ -374,23 +412,18 @@ bool MidiTestManager::RunTest(jobject testModuleObj, AMidiDevice* sendDevice,
 
     // setup messages
     delete[] mTestMsgs;
-    mNumTestMsgs = 3;
+    mNumTestMsgs = 7;
     mTestMsgs = new TestMessage[mNumTestMsgs];
-
-    int sysExSize = 32;
-    uint8_t* sysExMsg = new uint8_t[sysExSize];
-    sysExMsg[0] = kMIDISysCmd_SysEx;
-    for(int index = 1; index < sysExSize-1; index++) {
-        sysExMsg[index] = (uint8_t)index;
-    }
-    sysExMsg[sysExSize-1] = kMIDISysCmd_EndOfSysEx;
 
     if (!mTestMsgs[0].set(msg0, sizeof(msg0)) ||
         !mTestMsgs[1].set(msg1, sizeof(msg1)) ||
-        !mTestMsgs[2].set(sysExMsg, sysExSize)) {
+        !mTestMsgs[2].setSysExMessage(30) ||
+        !mTestMsgs[3].setSysExMessage(6) ||
+        !mTestMsgs[4].setSysExMessage(120) ||
+        !mTestMsgs[5].setTwoSysExMessage(5, 13) ||
+        !mTestMsgs[6].setSysExMessage(340)) {
         return false;
     }
-    delete[] sysExMsg;
 
     buildMatchStream();
 

@@ -16,8 +16,6 @@
 
 package com.android.cts.verifier.audio;
 
-import java.io.IOException;
-
 import android.media.midi.MidiDevice;
 import android.media.midi.MidiDeviceInfo;
 import android.media.midi.MidiManager;
@@ -26,10 +24,11 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CddTest;
-
+import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.midilib.MidiIODevice;
 import com.android.cts.verifier.audio.midilib.NativeMidiManager;
-import com.android.cts.verifier.R;
+
+import java.io.IOException;
 
 /*
  * A note about the USB MIDI device.
@@ -126,6 +125,7 @@ public class MidiNativeTestActivity extends MidiTestActivityBase {
         @Override
         void startLoopbackTest(int testID) {
             synchronized (mTestLock) {
+                mTestCounter++;
                 mTestRunning = true;
                 enableTestButtons(false);
             }
@@ -183,7 +183,7 @@ public class MidiNativeTestActivity extends MidiTestActivityBase {
                     Log.i(TAG, "---- onDeviceOpened()");
                 }
                 mNativeMidiManager.startTest(NativeMidiTestModule.this, device,
-                        mRunningTestID == TESTID_BTLOOPBACK);
+                        false /* throttleData */);
             }
         }
     } /* class NativeMidiTestModule */

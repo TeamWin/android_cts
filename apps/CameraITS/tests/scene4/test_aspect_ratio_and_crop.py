@@ -215,7 +215,7 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       fls_physical = props['android.lens.info.availableFocalLengths']
       logging.debug('physical available focal lengths: %s', str(fls_physical))
-      log_path = self.log_path
+      name_with_log_path = os.path.join(self.log_path, _NAME)
 
       # Check SKIP conditions.
       first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
@@ -236,11 +236,10 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
       req = capture_request_utils.auto_capture_request()
 
       # If raw is available and main camera, use it as ground truth.
-      ref_img_name_stem = f'{os.path.join(log_path, _NAME)}'
       raw_bool = raw_avlb and (fls_physical == fls_logical)
       ref_fov, cc_ct_gt, aspect_ratio_gt = (
           image_fov_utils.find_fov_reference(
-              cam, req, props, raw_bool, ref_img_name_stem))
+              cam, req, props, raw_bool, name_with_log_path))
 
       run_crop_test = full_or_better and raw_avlb
       if run_crop_test:
@@ -278,8 +277,7 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
                         fmt_iter, fmt_cmpr, w_iter, h_iter, w_cmpr, h_cmpr)
           img = image_processing_utils.convert_capture_to_rgb_image(cap)
           img *= 255  # cv2 uses [0, 255].
-          img_name = '%s_%s_with_%s_w%d_h%d.png' % (
-              os.path.join(log_path, _NAME), fmt_iter, fmt_cmpr, w_iter, h_iter)
+          img_name = f'{name_with_log_path}_{fmt_iter}_with_{fmt_cmpr}_w{w_iter}_h{h_iter}.png'
           circle = opencv_processing_utils.find_circle(
               img, img_name, image_fov_utils.CIRCLE_MIN_AREA,
               image_fov_utils.CIRCLE_COLOR)

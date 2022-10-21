@@ -175,8 +175,8 @@ def determine_valid_out_surfaces(cam, props, fmt, cap_camera_ids, sizes):
   return out_surfaces
 
 
-def take_images(cam, caps, props, fmt, cap_camera_ids, out_surfaces, log_path,
-                debug):
+def take_images(cam, caps, props, fmt, cap_camera_ids, out_surfaces,
+                name_with_log_path, debug):
   """Do image captures.
 
   Args:
@@ -186,7 +186,7 @@ def take_images(cam, caps, props, fmt, cap_camera_ids, out_surfaces, log_path,
     fmt: str; capture format ('yuv' or 'raw')
     cap_camera_ids: list; camera capture ids
     out_surfaces: list; valid output surfaces for caps
-    log_path: str; location to save files
+    name_with_log_path: str; file name with location to save files
     debug: bool; determine if debug mode or not.
 
   Returns:
@@ -215,8 +215,8 @@ def take_images(cam, caps, props, fmt, cap_camera_ids, out_surfaces, log_path,
     for i in [0, 1]:
       img = image_processing_utils.convert_capture_to_rgb_image(
           caps[(fmt, cap_camera_ids[i])], props=props[cap_camera_ids[i]])
-      image_processing_utils.write_image(img, '%s_%s_%s.jpg' % (
-          os.path.join(log_path, _NAME), fmt, cap_camera_ids[i]))
+      image_processing_utils.write_image(
+          img, f'{name_with_log_path}_{fmt}_{cap_camera_ids[i]}.jpg')
 
   return caps
 
@@ -368,7 +368,7 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
         camera_id=self.camera_id,
         hidden_physical_id=self.hidden_physical_id) as cam:
       props = cam.get_camera_properties()
-      log_path = self.log_path
+      name_with_log_path = os.path.join(self.log_path, _NAME)
       chart_distance = self.chart_distance * _CM_TO_M
 
       # check SKIP conditions
@@ -444,7 +444,7 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
         out_surfaces = determine_valid_out_surfaces(
             cam, props, fmt, capture_cam_ids, physical_sizes)
         caps = take_images(cam, caps, physical_props, fmt, capture_cam_ids,
-                           out_surfaces, log_path, debug)
+                           out_surfaces, name_with_log_path, debug)
 
     # process images for correctness
     for j, fmt in enumerate(fmts):
@@ -463,7 +463,7 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
       logging.debug('Format: %s', str(fmt))
       for i in capture_cam_ids:
         # convert cap and prep image
-        img_name = '%s_%s_%s.jpg' % (os.path.join(log_path, _NAME), fmt, i)
+        img_name = f'{name_with_log_path}_{fmt}_{i}.jpg'
         img = convert_cap_and_prep_img(
             caps[(fmt, i)], physical_props[i], fmt, img_name, debug)
         size[i] = (caps[fmt, i]['width'], caps[fmt, i]['height'])
@@ -504,15 +504,15 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
               physical_props[i])
           if not np.any(cv2_distort):
             raise AssertionError(f'Camera {i} has no distortion matrix!')
-          image_processing_utils.write_image(img/255, '%s_%s_%s.jpg' % (
-              os.path.join(log_path, _NAME), fmt, i))
+          image_processing_utils.write_image(
+              img/255, f'{name_with_log_path}_{fmt}_{i}.jpg')
           img = cv2.undistort(img, k[i], cv2_distort)
-          image_processing_utils.write_image(img/255, '%s_%s_correct_%s.jpg' % (
-              os.path.join(log_path, _NAME), fmt, i))
+          image_processing_utils.write_image(
+              img/255, f'{name_with_log_path}_{fmt}_correct_{i}.jpg')
 
         # Find the circles in grayscale image
         circle[i] = opencv_processing_utils.find_circle(
-            img, '%s_%s_gray_%s.jpg' % (os.path.join(log_path, _NAME), fmt, i),
+            img, f'{name_with_log_path}_{fmt}_gray_{i}.jpg',
             _CIRCLE_MIN_AREA, _CIRCLE_COLOR)
         logging.debug('Circle radius %s:  %.2f', format(i), circle[i]['r'])
 

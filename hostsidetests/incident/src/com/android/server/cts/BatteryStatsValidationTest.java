@@ -244,21 +244,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOffScreenOn();
     }
 
-    public void testReportRadioPowerState() throws Exception {
-        // Simulate usb unplugged.
-        batteryOnScreenOff();
-
-        installPackage(DEVICE_SIDE_TEST_APK, true);
-        allowImmediateSyncs();
-
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsRadioPowerStateTest",
-                "testReportMobileRadioPowerState");
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsRadioPowerStateTest",
-                "testReportWifiRadioPowerState");
-
-        batteryOffScreenOn();
-    }
-
     private int getUid() throws Exception {
         final int currentUser = getDevice().getCurrentUser();
         final int firstUidForCurrentUser = currentUser * PER_USER_UID_RANGE;

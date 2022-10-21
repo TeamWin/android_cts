@@ -38,6 +38,7 @@ public class MidiIODevice {
     public MidiDeviceInfo mSendDevInfo;
     public MidiDeviceInfo mReceiveDevInfo;
 
+    public MidiDevice      mMidiDevice;
     public MidiInputPort   mSendPort;
     public MidiOutputPort  mReceivePort;
 
@@ -53,6 +54,7 @@ public class MidiIODevice {
         mReceiveDevInfo = null;
         mSendPort = null;
         mReceivePort = null;
+        mMidiDevice = null;
 
         for(MidiDeviceInfo devInfo : devInfos) {
             Bundle devBundle = devInfo.getProperties();
@@ -122,6 +124,7 @@ public class MidiIODevice {
         if (numInputs != 0) {
             mSendPort = device.openInputPort(0);
         }
+        mMidiDevice = device;
 
         if (DEBUG) {
             Log.i(TAG, "---- mSendPort:" + mSendPort);
@@ -140,6 +143,10 @@ public class MidiIODevice {
             if (mReceivePort != null) {
                 mReceivePort.close();
                 mReceivePort = null;
+            }
+            if (mMidiDevice != null) {
+                mMidiDevice.close();
+                mMidiDevice = null;
             }
         } catch (IOException ex) {
             Log.e(TAG, "IOException Closing MIDI ports: " + ex);

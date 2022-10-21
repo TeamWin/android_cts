@@ -4219,6 +4219,13 @@
     <permission android:name="android.permission.SUBSCRIBE_TO_KEYGUARD_LOCKED_STATE"
                 android:protectionLevel="internal|role"/>
 
+    <!-- Must be required by a {@link android.service.credentials.CredentialProviderService},
+         to ensure that only the system can bind to it.
+         <p>Protection level: signature
+    -->
+    <permission android:name="android.permission.BIND_CREDENTIAL_PROVIDER_SERVICE"
+        android:protectionLevel="signature" />
+
     <!-- Must be required by a {@link android.service.autofill.AutofillService},
          to ensure that only the system can bind to it.
          <p>Protection level: signature

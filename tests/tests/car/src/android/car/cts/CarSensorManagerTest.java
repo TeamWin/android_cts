@@ -16,6 +16,8 @@
 
 package android.car.cts;
 
+import static android.car.cts.utils.ShellPermissionUtils.runWithShellPermissionIdentity;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -58,10 +60,12 @@ public final class CarSensorManagerTest extends AbstractCarTestCase {
 
     @Before
     public void setUp() throws Exception {
-        CarSensorManager carSensorManager =
-                (CarSensorManager) getCar().getCarManager(Car.SENSOR_SERVICE);
-        mSupportedSensors = carSensorManager.getSupportedSensors();
-        assertNotNull(mSupportedSensors);
+        runWithShellPermissionIdentity(() -> {
+            CarSensorManager carSensorManager = (CarSensorManager) getCar().getCarManager(
+                    Car.SENSOR_SERVICE);
+            mSupportedSensors = carSensorManager.getSupportedSensors();
+            assertNotNull(mSupportedSensors);
+        });
     }
 
     @CddTest(requirements = {"2.5.1"})

@@ -30,6 +30,7 @@ import com.android.cts.verifier.audio.midilib.MidiIODevice;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /*
  * A note about the USB MIDI device.
@@ -100,6 +101,10 @@ public class MidiJavaTestActivity extends MidiTestActivityBase {
     private class TestMessage {
         public byte[]   mMsgBytes;
 
+        TestMessage(byte[] msgBytes) {
+            mMsgBytes = msgBytes;
+        }
+
         public boolean matches(byte[] msg, int offset, int count) {
             // Length
             if (DEBUG) {
@@ -163,7 +168,7 @@ public class MidiJavaTestActivity extends MidiTestActivityBase {
 
         // Test Data
         // - The set of messages to send
-        private TestMessage[] mTestMessages;
+        private ArrayList<TestMessage> mTestMessages = new ArrayList<TestMessage>();
 
         // - The stream of message data to walk through when MIDI data is received.
         // NOTE: To work on USB Audio Peripherals that drop the first message
@@ -172,7 +177,7 @@ public class MidiJavaTestActivity extends MidiTestActivityBase {
         private ArrayList<Byte> mMatchStream = new ArrayList<Byte>();
 
         private int mReceiveStreamPos;
-        private static final int MESSAGE_MAX_BYTES = 1024;
+        private static final int MESSAGE_MAX_BYTES = 4096;
 
         // Some MIDI interfaces have been know to consistently drop the first message
         // Send one to throw away. If it shows up, ignore it. If it doesn't then
@@ -188,6 +193,7 @@ public class MidiJavaTestActivity extends MidiTestActivityBase {
         @Override
         void startLoopbackTest(int testId) {
             synchronized (mTestLock) {
+                mTestCounter++;
                 mTestRunning = true;
                 enableTestButtons(false);
             }
@@ -243,8 +249,6 @@ public class MidiJavaTestActivity extends MidiTestActivityBase {
             if (DEBUG) {
                 Log.i(TAG, "setupTestMessages()");
             }
-            int NUM_TEST_MESSAGES = 3;
-            mTestMessages = new TestMessage[NUM_TEST_MESSAGES];
 
             //TODO - Investgate using ByteArrayOutputStream for these data streams.
 
@@ -253,25 +257,29 @@ public class MidiJavaTestActivity extends MidiTestActivityBase {
             // Except for the command IDs, the data values are purely arbitrary and meaningless
             // outside of being matched.
             // KeyDown
-            mTestMessages[0] = new TestMessage();
-            mTestMessages[0].mMsgBytes = new byte[]{makeMIDICmd(MIDICMD_NOTEON, 0), 64, 12};
+            byte[] noteOnBytes = new byte[]{ makeMIDICmd(MIDICMD_NOTEON, 0), 64, 21 };
+            mTestMessages.add(new TestMessage(noteOnBytes));
 
             // KeyUp
-            mTestMessages[1] = new TestMessage();
-            mTestMessages[1].mMsgBytes = new byte[]{makeMIDICmd(MIDICMD_NOTEOFF, 0), 73, 65};
+            byte[] noteOffBytes = new byte[]{ makeMIDICmd(MIDICMD_NOTEOFF, 0), 73, 65 };
+            mTestMessages.add(new TestMessage(noteOffBytes));
 
             // SysEx
-            // NOTE: A sysex on the MT-BT01 seems to top out at sometimes as low as 40 bytes.
-            // It is not clear, but needs more research. For now choose a conservative size.
-            int sysExSize = 32;
-            byte[] sysExMsg = new byte[sysExSize];
-            sysExMsg[0] = MIDICMD_SYSEX;
-            for(int index = 1; index < sysExSize-1; index++) {
-                sysExMsg[index] = (byte)index;
-            }
-            sysExMsg[sysExSize-1] = (byte) MIDICMD_EOSYSEX;
-            mTestMessages[2] = new TestMessage();
-            mTestMessages[2].mMsgBytes = sysExMsg;
+            mTestMessages.add(new TestMessage(generateSysExMessage(32)));
+
+            // Smaller SysEx
+            mTestMessages.add(new TestMessage(generateSysExMessage(5)));
+
+            // Larger SysEx
+            mTestMessages.add(new TestMessage(generateSysExMessage(90)));
+
+            // Two SysEx in a row
+            byte[] sysEx1 = generateSysExMessage(7);
+            byte[] sysEx2 = generateSysExMessage(23);
+            mTestMessages.add(new TestMessage(concatByteArrays(sysEx1, sysEx2)));
+
+            // Large SysEx
+            mTestMessages.add(new TestMessage(generateSysExMessage(320)));
 
             //
             // Now build the stream to match against
@@ -280,9 +288,10 @@ public class MidiJavaTestActivity extends MidiTestActivityBase {
             for(int byteIndex = 0; byteIndex < mWarmUpMsg.length; byteIndex++) {
                 mMatchStream.add(mWarmUpMsg[byteIndex]);
             }
-            for (int msgIndex = 0; msgIndex < mTestMessages.length; msgIndex++) {
-                for(int byteIndex = 0; byteIndex < mTestMessages[msgIndex].mMsgBytes.length; byteIndex++) {
-                    mMatchStream.add(mTestMessages[msgIndex].mMsgBytes[byteIndex]);
+            for (int msgIndex = 0; msgIndex < mTestMessages.size(); msgIndex++) {
+                for (int byteIndex = 0;
+                        byteIndex < mTestMessages.get(msgIndex).mMsgBytes.length; byteIndex++) {
+                    mMatchStream.add(mTestMessages.get(msgIndex).mMsgBytes[byteIndex]);
                 }
             }
 
@@ -291,6 +300,22 @@ public class MidiJavaTestActivity extends MidiTestActivityBase {
             if (DEBUG) {
                 logByteArray("mMatchStream: ", mMatchStream, 0);
             }
+        }
+
+        private byte[] generateSysExMessage(int sysExSize) {
+            byte[] sysExMsg = new byte[sysExSize];
+            sysExMsg[0] = MIDICMD_SYSEX;
+            for (int index = 1; index < sysExSize - 1; index++) {
+                sysExMsg[index] = (byte) (index % 100);
+            }
+            sysExMsg[sysExSize - 1] = (byte) MIDICMD_EOSYSEX;
+            return sysExMsg;
+        }
+
+        private byte[] concatByteArrays(byte[] array1, byte[] array2) {
+            byte[] result = Arrays.copyOf(array1, array1.length + array2.length);
+            System.arraycopy(array2, 0, result, array1.length, array2.length);
+            return result;
         }
 
         /**
@@ -390,14 +415,13 @@ public class MidiJavaTestActivity extends MidiTestActivityBase {
                     // Send a warm-up message...
                     logByteArray("warm-up: ", mWarmUpMsg, 0, mWarmUpMsg.length);
                     portSend(mIODevice.mSendPort, mWarmUpMsg, 0, mWarmUpMsg.length,
-                            mRunningTestID == TESTID_BTLOOPBACK);
-
+                            false /* throttle */);
                     for (TestMessage msg : mTestMessages) {
                         if (DEBUG) {
                             logByteArray("send: ", msg.mMsgBytes, 0, msg.mMsgBytes.length);
                         }
                         portSend(mIODevice.mSendPort, msg.mMsgBytes, 0, msg.mMsgBytes.length,
-                                mRunningTestID == TESTID_BTLOOPBACK);
+                                false /* throttle */);
                         totalSent += msg.mMsgBytes.length;
                     }
                 }
@@ -467,8 +491,6 @@ public class MidiJavaTestActivity extends MidiTestActivityBase {
                         // defer closing the ports to outside of this callback.
                         new Thread(new Runnable() {
                             public void run() {
-                                mTestStatus = mTestMismatched
-                                        ? TESTSTATUS_FAILED_MISMATCH : TESTSTATUS_PASSED;
                                 closePorts();
                             }
                         }).start();
@@ -527,6 +549,7 @@ public class MidiJavaTestActivity extends MidiTestActivityBase {
 
         @Override
         void startLoopbackTest(int testID) {
+            mTestCounter++;
             if (DEBUG) {
                 Log.i(TAG, "---- startLoopbackTest()");
             }

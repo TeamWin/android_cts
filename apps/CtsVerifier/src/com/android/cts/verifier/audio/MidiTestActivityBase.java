@@ -384,8 +384,9 @@ public abstract class MidiTestActivityBase
         protected boolean             mTestRunning;
 
         // Timeout handling
-        protected static final int    TEST_TIMEOUT_MS = 5000; // 1000;
+        protected static final int    TEST_TIMEOUT_MS = 5000;
         protected final Timer         mTimeoutTimer = new Timer();
+        protected int                 mTestCounter = 0;
 
         public MidiTestModule(int deviceType) {
             mIODevice = new MidiIODevice(deviceType);
@@ -429,12 +430,13 @@ public abstract class MidiTestActivityBase
         }
 
         void startTimeoutHandler() {
+            final int currentTestCounter = mTestCounter;
             // Start the timeout timer
             TimerTask task = new TimerTask() {
                 @Override
                 public void run() {
                     synchronized (mTestLock) {
-                        if (mTestRunning) {
+                        if (mTestRunning && currentTestCounter == mTestCounter) {
                             // Timeout
                             showTimeoutMessage();
                             enableTestButtons(true);

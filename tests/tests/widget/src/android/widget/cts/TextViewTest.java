@@ -7319,7 +7319,10 @@ public class TextViewTest {
     @Test
     public void testSendAccessibilityContentChangeTypeErrorAndInvalid() throws Throwable {
         initTextViewForTypingOnUiThread();
+        final long idleTimeoutMillis = 2000;
+        final long globalTimeoutMillis = 4000;
         UiAutomation uiAutomation = mInstrumentation.getUiAutomation();
+        uiAutomation.waitForIdle(idleTimeoutMillis, globalTimeoutMillis);
         uiAutomation.executeAndWaitForEvent(
                 () -> mInstrumentation.runOnMainSync(
                         () -> mTextView.setError("error", null)),

@@ -21,7 +21,6 @@ import static org.junit.Assert.fail;
 import android.media.MediaRecorder;
 import android.media.cts.MediaHeavyPresubmitTest;
 import android.media.cts.MediaTestBase;
-import android.media.cts.NonMediaMainlineTest;
 import android.os.Environment;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -29,6 +28,7 @@ import android.view.SurfaceHolder;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.android.compatibility.common.util.NonMediaMainlineTest;
 import com.android.compatibility.common.util.WatchDog;
 
 import org.junit.After;

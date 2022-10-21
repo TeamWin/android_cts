@@ -28,6 +28,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 import static java.util.stream.Collectors.toList;
@@ -130,6 +131,16 @@ public class ToastTest {
         // disable rate limiting for tests
         SystemUtil.runWithShellPermissionIdentity(() -> mNotificationManager
                 .setToastRateLimitingEnabled(false));
+
+        // Wait until the activity is resumed. Otherwise, custom toasts from non-resumed activity
+        // may be blocked depending on the timing.
+        PollingCheck.waitFor(TIME_OUT, () -> null != mActivityRule.getActivity());
+        try {
+            assertTrue("Timeout while waiting for onResume()",
+                    mActivityRule.getActivity().waitUntilResumed(TIME_OUT));
+        } catch (InterruptedException e) {
+            fail("Got InterruptedException while waiting for onResume()");
+        }
     }
 
     @After

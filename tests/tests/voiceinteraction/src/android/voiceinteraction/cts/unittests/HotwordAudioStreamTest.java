@@ -24,6 +24,7 @@ import static android.voiceinteraction.common.AudioStreamHelper.createFakeAudioS
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.media.AudioFormat;
 import android.media.AudioTimestamp;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
@@ -39,10 +40,43 @@ import org.junit.runner.RunWith;
 public class HotwordAudioStreamTest {
 
     @Test
+    public void testHotwordAudioStreamDefaultAndUpdateValue() throws Exception {
+        final byte[] testAudioData = new byte[]{'w', 'o', 'r', 'd'};
+        final ParcelFileDescriptor[] fakeAudioStreamPipe = createFakeAudioStreamPipe(
+                FAKE_HOTWORD_AUDIO_DATA);
+        final ParcelFileDescriptor[] testAudioStreamPipe = createFakeAudioStreamPipe(testAudioData);
+        try {
+            final AudioFormat newAudioFormat = new AudioFormat.Builder()
+                    .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                    .setSampleRate(16000)
+                    .build();
+            // build HotwordAudioStream instance
+            HotwordAudioStream audioStream = new HotwordAudioStream.Builder(FAKE_AUDIO_FORMAT,
+                    fakeAudioStreamPipe[0])
+                    .setAudioFormat(newAudioFormat) // update new value
+                    .setAudioStreamParcelFileDescriptor(testAudioStreamPipe[0])
+                    .build();
+            // Verify default value
+            assertThat(audioStream.getTimestamp()).isNull();
+            assertThat(audioStream.getMetadata().size()).isEqualTo(0);
+            // Verify the set value
+            assertThat(audioStream.getAudioFormat()).isNotNull();
+            assertThat(audioStream.getAudioStreamParcelFileDescriptor()).isNotNull();
+            assertThat(audioStream.getAudioFormat()).isEqualTo(newAudioFormat);
+            assertAudioStream(audioStream.getAudioStreamParcelFileDescriptor(), testAudioData);
+        } finally {
+            closeAudioStreamPipe(fakeAudioStreamPipe);
+            closeAudioStreamPipe(testAudioStreamPipe);
+        }
+    }
+
+    @Test
     public void testHotwordAudioStreamParcelizeDeparcelize() throws Exception {
         final ParcelFileDescriptor[] fakeAudioStreamPipe = createFakeAudioStreamPipe(
                 FAKE_HOTWORD_AUDIO_DATA);
         final AudioTimestamp timestamp = new AudioTimestamp();
+
         timestamp.framePosition = 0;
         timestamp.nanoTime = 1000;
         final String key = "testKey";
