@@ -27,6 +27,8 @@ import android.os.Looper;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 
+import com.android.systemui.qs.nano.QsTileState;
+
 import org.junit.Test;
 
 public class TileServiceTest extends BaseTileServiceTest {
@@ -115,15 +117,32 @@ public class TileServiceTest extends BaseTileServiceTest {
     }
 
     @Test
-    public void testTileInDumpAndHasState() throws Exception {
+    public void testTileInDumpAndHasNonBooleanState() throws Exception {
         initializeAndListen();
+        final QsTileState tileState = findTileState();
+        assertNotNull(tileState);
+        assertFalse(tileState.hasBooleanState());
+    }
 
-        final CharSequence tileLabel = mTileService.getQsTile().getLabel();
+    @Test
+    public void testTileInDumpAndHasCorrectState() throws Exception {
+        initializeAndListen();
+        CharSequence label = "test_label";
+        CharSequence subtitle = "test_subtitle";
 
-        final String[] dumpLines = executeShellCommand(DUMP_COMMAND).split("\n");
-        final String line = findLine(dumpLines, tileLabel);
-        assertNotNull(line);
-        assertTrue(line.trim().startsWith("State")); // Not BooleanState
+        Tile tile = mTileService.getQsTile();
+        tile.setState(Tile.STATE_ACTIVE);
+        tile.setLabel(label);
+        tile.setSubtitle(subtitle);
+        tile.updateTile();
+
+        Thread.sleep(200);
+
+        final QsTileState tileState = findTileState();
+        assertNotNull(tileState);
+        assertEquals(Tile.STATE_ACTIVE,  tileState.state);
+        assertEquals(label,  tileState.getLabel());
+        assertEquals(subtitle,  tileState.getSecondaryLabel());
     }
 
     private void clickTile(String componentName) throws Exception {

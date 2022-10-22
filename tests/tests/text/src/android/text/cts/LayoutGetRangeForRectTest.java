@@ -26,7 +26,6 @@ import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.text.WordSegmentFinder;
-import android.util.Range;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -115,11 +114,10 @@ public class LayoutGetRangeForRectTest {
                 mLayout.getLineTop(2),
                 mLayout.getPrimaryHorizontal(37) + 3f,
                 mLayout.getLineTop(2) + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mGraphemeClusterSegmentFinder, Layout.INCLUSION_STRATEGY_ANY_OVERLAP);
 
-        assertThat(range.getLower()).isEqualTo(37);
-        assertThat(range.getUpper()).isEqualTo(38);
+        assertThat(range).asList().containsExactly(37, 38).inOrder();
     }
 
     @Test
@@ -132,11 +130,10 @@ public class LayoutGetRangeForRectTest {
                 mLayout.getLineBottom(0, /* includeLineSpacing= */ false) - 1,
                 mLayout.getPrimaryHorizontal(37) + 1f,
                 mLayout.getLineTop(2) + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mGraphemeClusterSegmentFinder, Layout.INCLUSION_STRATEGY_ANY_OVERLAP);
 
-        assertThat(range.getLower()).isEqualTo(4);
-        assertThat(range.getUpper()).isEqualTo(38);
+        assertThat(range).asList().containsExactly(4, 38).inOrder();
     }
 
     @Test
@@ -145,11 +142,10 @@ public class LayoutGetRangeForRectTest {
         // Character 1 on line 0 has center 15.
         // Character 2 on line 0 has center 25.
         RectF area = new RectF(14f, mLineCenters[0] - 1f, 26f, mLineCenters[0] + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mGraphemeClusterSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
-        assertThat(range.getLower()).isEqualTo(1);
-        assertThat(range.getUpper()).isEqualTo(3);
+        assertThat(range).asList().containsExactly(1, 3).inOrder();
     }
 
     @Test
@@ -160,12 +156,11 @@ public class LayoutGetRangeForRectTest {
         // Character 2 on line 0 has center 25.
         // Character 3 on line 0 has center 35.
         RectF area = new RectF(6f, mLineCenters[0] - 1f, 34f, mLineCenters[0] + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mGraphemeClusterSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
         // Area partially overlaps characters 0 and 3 but does not contain their centers.
-        assertThat(range.getLower()).isEqualTo(1);
-        assertThat(range.getUpper()).isEqualTo(3);
+        assertThat(range).asList().containsExactly(1, 3).inOrder();
     }
 
     @Test
@@ -174,11 +169,10 @@ public class LayoutGetRangeForRectTest {
         // Character 25 on line 1 has center 102.5.
         // Character 26 on line 1 has center 95.
         RectF area = new RectF(94f, mLineCenters[1] - 1f, 103f, mLineCenters[1] + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mGraphemeClusterSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
-        assertThat(range.getLower()).isEqualTo(25);
-        assertThat(range.getUpper()).isEqualTo(27);
+        assertThat(range).asList().containsExactly(25, 27).inOrder();
     }
 
     @Test
@@ -187,11 +181,10 @@ public class LayoutGetRangeForRectTest {
         // Character 22 on line 1 has center 45.
         // The end of the RTL run (offset 24 to 32) on line 1 is at 60.
         RectF area = new RectF(44f, mLineCenters[1] - 1f, 93f, mLineCenters[1] + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mGraphemeClusterSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
-        assertThat(range.getLower()).isEqualTo(22);
-        assertThat(range.getUpper()).isEqualTo(32);
+        assertThat(range).asList().containsExactly(22, 32).inOrder();
     }
 
     @Test
@@ -200,11 +193,10 @@ public class LayoutGetRangeForRectTest {
         // The start of the RTL run (offset 24 to 32) on line 1 is at 110.
         // Character 33 on line 1 has center 125.
         RectF area = new RectF(93f, mLineCenters[1] - 1f, 131f, mLineCenters[1] + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mGraphemeClusterSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
-        assertThat(range.getLower()).isEqualTo(24);
-        assertThat(range.getUpper()).isEqualTo(34);
+        assertThat(range).asList().containsExactly(24, 34).inOrder();
     }
 
     @Test
@@ -213,7 +205,7 @@ public class LayoutGetRangeForRectTest {
         // Character 1 on line 0 has center 15.
         // Character 2 on line 0 has center 25.
         RectF area = new RectF(16f, mLineCenters[0] - 1f, 24f, mLineCenters[0] + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mGraphemeClusterSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
         assertThat(range).isNull();
@@ -225,7 +217,7 @@ public class LayoutGetRangeForRectTest {
         // Area top is below the center of line 0.
         // Area bottom is above the center of line 1.
         RectF area = new RectF(0f, mLineCenters[0] + 1f, WIDTH, mLineCenters[1] - 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mGraphemeClusterSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
         // Area partially covers two lines but does not contain the center of any characters.
@@ -238,11 +230,10 @@ public class LayoutGetRangeForRectTest {
         // Character 9 on line 0 has center 95.
         // Character 42 on line 4 has center 115.
         RectF area = new RectF(93f, 0, 118f, HEIGHT);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mGraphemeClusterSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
-        assertThat(range.getLower()).isEqualTo(9);
-        assertThat(range.getUpper()).isEqualTo(43);
+        assertThat(range).asList().containsExactly(9, 43).inOrder();
     }
 
     @Test
@@ -258,13 +249,12 @@ public class LayoutGetRangeForRectTest {
         // Character 40 on line 4 has center 50.
         // Character 41 on line 4 has center 105.
         RectF area = new RectF(66f, 0, 69f, HEIGHT);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mGraphemeClusterSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
         // Area crosses all lines but does not contain the center of any characters on lines 0, 2,
         // 3, or 4. So the only included character is character 30 on line 1.
-        assertThat(range.getLower()).isEqualTo(30);
-        assertThat(range.getUpper()).isEqualTo(31);
+        assertThat(range).asList().containsExactly(30, 31).inOrder();
     }
 
     @Test
@@ -281,7 +271,7 @@ public class LayoutGetRangeForRectTest {
         // Character 40 on line 4 has center 50.
         // Character 41 on line 4 has center 105.
         RectF area = new RectF(66f, 0, 67f, HEIGHT);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mGraphemeClusterSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
         // Area crosses all lines but does not contain the center of any characters.
@@ -293,11 +283,10 @@ public class LayoutGetRangeForRectTest {
     public void character_containsCenter_all() {
         // Entire area, should include all text.
         RectF area = new RectF(0f, 0f, WIDTH, HEIGHT);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mGraphemeClusterSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
-        assertThat(range.getLower()).isEqualTo(0);
-        assertThat(range.getUpper()).isEqualTo(DEFAULT_TEXT.length());
+        assertThat(range).asList().containsExactly(0, DEFAULT_TEXT.length()).inOrder();
     }
 
     @Test
@@ -308,11 +297,10 @@ public class LayoutGetRangeForRectTest {
                 mLayout.getLineTop(0) - 1,
                 mLayout.getPrimaryHorizontal(13) + 1,
                 mLayout.getLineBottom(0, /* includeLineSpacing= */ false) + 1);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mGraphemeClusterSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_ALL);
 
-        assertThat(range.getLower()).isEqualTo(3);
-        assertThat(range.getUpper()).isEqualTo(13);
+        assertThat(range).asList().containsExactly(3, 13).inOrder();
     }
 
     @Test
@@ -323,15 +311,14 @@ public class LayoutGetRangeForRectTest {
                 mLayout.getLineTop(0) - 1,
                 mLayout.getPrimaryHorizontal(13) - 1,
                 mLayout.getLineBottom(0, /* includeLineSpacing= */ false) + 1);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mGraphemeClusterSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_ALL);
 
         // The left edge of the area is 1 pixel to the right of the left bound of character 3, so it
         // does not fully cover the character.
         // The right edge of the area is 1 pixel to the left of the right bound of character 12, so
         // it does not fully cover the character.
-        assertThat(range.getLower()).isEqualTo(4);
-        assertThat(range.getUpper()).isEqualTo(12);
+        assertThat(range).asList().containsExactly(4, 12).inOrder();
     }
 
     @Test
@@ -342,11 +329,10 @@ public class LayoutGetRangeForRectTest {
                 mLayout.getLineTop(0) - 1,
                 mLayout.getPrimaryHorizontal(33) + 1,
                 mLayout.getLineBottom(1, /* includeLineSpacing= */ false) + 1);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mGraphemeClusterSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_ALL);
 
-        assertThat(range.getLower()).isEqualTo(3);
-        assertThat(range.getUpper()).isEqualTo(33);
+        assertThat(range).asList().containsExactly(3, 33).inOrder();
     }
 
     @Test
@@ -358,11 +344,10 @@ public class LayoutGetRangeForRectTest {
                 mLayout.getLineTop(1) - 1,
                 mLayout.getPrimaryHorizontal(27) + 1,
                 mLayout.getLineBottom(1, /* includeLineSpacing= */ false) + 1);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mGraphemeClusterSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_ALL);
 
-        assertThat(range.getLower()).isEqualTo(27);
-        assertThat(range.getUpper()).isEqualTo(31);
+        assertThat(range).asList().containsExactly(27, 31).inOrder();
     }
 
     @Test
@@ -373,7 +358,7 @@ public class LayoutGetRangeForRectTest {
                 mLayout.getLineTop(0) + 1,
                 WIDTH,
                 mLayout.getLineBottom(1, /* includeLineSpacing= */ false) - 1);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mGraphemeClusterSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_ALL);
 
         // The top edge of the area is 1 pixel below the top bound of the characters on line 0, so
@@ -392,12 +377,11 @@ public class LayoutGetRangeForRectTest {
                 mLayout.getLineTop(0),
                 mLayout.getPrimaryHorizontal(8) + 3f,
                 mLayout.getLineTop(0) + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_ANY_OVERLAP);
 
         // Selects all of word 1 (offset 5 to 11)
-        assertThat(range.getLower()).isEqualTo(5);
-        assertThat(range.getUpper()).isEqualTo(11);
+        assertThat(range).asList().containsExactly(5, 11).inOrder();
     }
 
     @Test
@@ -409,12 +393,11 @@ public class LayoutGetRangeForRectTest {
                 mLayout.getLineTop(2),
                 mLayout.getPrimaryHorizontal(37) + 3f,
                 mLayout.getLineTop(2) + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_ANY_OVERLAP);
 
         // Selects all of word 7, not just the first part on line 2.
-        assertThat(range.getLower()).isEqualTo(36);
-        assertThat(range.getUpper()).isEqualTo(41);
+        assertThat(range).asList().containsExactly(36, 41).inOrder();
     }
 
     @Test
@@ -422,11 +405,10 @@ public class LayoutGetRangeForRectTest {
     public void word_containsCenter() {
         // Word 1 (offset 5 to 11) on line 0 has center 80.
         RectF area = new RectF(79f, mLineCenters[0] - 1f, 81f, mLineCenters[0] + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
-        assertThat(range.getLower()).isEqualTo(5);
-        assertThat(range.getUpper()).isEqualTo(11);
+        assertThat(range).asList().containsExactly(5, 11).inOrder();
     }
 
     @Test
@@ -436,13 +418,12 @@ public class LayoutGetRangeForRectTest {
         // Word 1 (offset 5 to 11) on line 0 has center 80.
         // Word 2 (offset 12 to 17) on line 0 center 145
         RectF area = new RectF(21f, mLineCenters[0] - 1f, 144f, mLineCenters[0] + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
         // Area partially overlaps words 0 and 2 but does not contain their centers, so only word 1
         // is included. Whitespace between words is not included.
-        assertThat(range.getLower()).isEqualTo(5);
-        assertThat(range.getUpper()).isEqualTo(11);
+        assertThat(range).asList().containsExactly(5, 11).inOrder();
     }
 
     @Test
@@ -450,11 +431,10 @@ public class LayoutGetRangeForRectTest {
     public void word_containsCenter_rtl() {
         // Word 4 (offset 24 to 26, RTL) on line 1 center 105
         RectF area = new RectF(88f, mLineCenters[1] - 1f, 119f, mLineCenters[1] + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
-        assertThat(range.getLower()).isEqualTo(24);
-        assertThat(range.getUpper()).isEqualTo(26);
+        assertThat(range).asList().containsExactly(24, 26).inOrder();
     }
 
     @Test
@@ -463,12 +443,11 @@ public class LayoutGetRangeForRectTest {
         // Word 3 (offset 18 to 23) on line 1 has center 25
         // The end of the RTL run (offset 24 to 32) on line 1 is at 60.
         RectF area = new RectF(24f, mLineCenters[1] - 1f, 93f, mLineCenters[1] + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
         // Selects all of word 6, not just the first RTL part.
-        assertThat(range.getLower()).isEqualTo(18);
-        assertThat(range.getUpper()).isEqualTo(35);
+        assertThat(range).asList().containsExactly(18, 35).inOrder();
     }
 
     @Test
@@ -477,11 +456,10 @@ public class LayoutGetRangeForRectTest {
         // The start of the RTL run (offset 24 to 32) on line 1 is at 110.
         // End part of word 6 (offset 32 to 35) on line 1 has center 125.
         RectF area = new RectF(93f, mLineCenters[1] - 1f, 174f, mLineCenters[1] + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
-        assertThat(range.getLower()).isEqualTo(24);
-        assertThat(range.getUpper()).isEqualTo(35);
+        assertThat(range).asList().containsExactly(24, 35).inOrder();
     }
 
     @Test
@@ -490,7 +468,7 @@ public class LayoutGetRangeForRectTest {
         // Word 1 on line 0 has center 80.
         // Word 2 on line 0 has center 145.
         RectF area = new RectF(81f, mLineCenters[0] - 1f, 144f, mLineCenters[0] + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
         assertThat(range).isNull();
@@ -502,7 +480,7 @@ public class LayoutGetRangeForRectTest {
         // Area top is below the center of line 0.
         // Area bottom is above the center of line 1.
         RectF area = new RectF(0f, mLineCenters[0] + 1f, WIDTH, mLineCenters[1] - 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
         // Area partially covers two lines but does not contain the center of any words.
@@ -515,11 +493,10 @@ public class LayoutGetRangeForRectTest {
         // Word 1 (offset 5 to 11) on line 0 has center 80.
         // End part of word 7 (offset 40 to 41) on line 4 has center 50.
         RectF area = new RectF(42f, 0, 91f, HEIGHT);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
-        assertThat(range.getLower()).isEqualTo(5);
-        assertThat(range.getUpper()).isEqualTo(41);
+        assertThat(range).asList().containsExactly(5, 41).inOrder();
     }
 
     @Test
@@ -535,13 +512,12 @@ public class LayoutGetRangeForRectTest {
         // Word 40 on line 4 has center 50.
         // Word 41 on line 4 has center 105.
         RectF area = new RectF(84f, 0, 86f, HEIGHT);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
         // Area crosses all lines but does not contain the center of any words on lines 0, 2, 3, or
         // 4. So the only included word is word 5 on line 1.
-        assertThat(range.getLower()).isEqualTo(27);
-        assertThat(range.getUpper()).isEqualTo(29);
+        assertThat(range).asList().containsExactly(27, 29).inOrder();
     }
 
     @Test
@@ -558,7 +534,7 @@ public class LayoutGetRangeForRectTest {
         // Word 40 on line 4 has center 50.
         // Word 41 on line 4 has center 105.
         RectF area = new RectF(86f, 0, 89f, HEIGHT);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
         // Area crosses all lines but does not contain the center of any words.
@@ -571,12 +547,11 @@ public class LayoutGetRangeForRectTest {
         // Word 5 (offset 27 to 29) on line 1 has center 85.
         // First part of word 7 (offset 36 to 38) on line 2 has center 75.
         RectF area = new RectF(74f, mLineCenters[1] - 1f, 86f, mLineCenters[2] + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
         // Selects all of word 7, not just the first part on line 2.
-        assertThat(range.getLower()).isEqualTo(27);
-        assertThat(range.getUpper()).isEqualTo(41);
+        assertThat(range).asList().containsExactly(27, 41).inOrder();
     }
 
     @Test
@@ -584,12 +559,11 @@ public class LayoutGetRangeForRectTest {
     public void word_containsCenter_wordSpansMultipleLines_middlePartInsideArea() {
         // Middle part of word 7 (offset 38 to 40) on line 2 has center 75.
         RectF area = new RectF(74f, mLineCenters[3] - 1f, 76f, mLineCenters[3] + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
         // Selects all of word 7, not just the middle part on line 3.
-        assertThat(range.getLower()).isEqualTo(36);
-        assertThat(range.getUpper()).isEqualTo(41);
+        assertThat(range).asList().containsExactly(36, 41).inOrder();
     }
 
     @Test
@@ -598,12 +572,11 @@ public class LayoutGetRangeForRectTest {
         // End part of word 7 (offset 40 to 41) on line 4 has center 50.
         // Word 8 (offset 42 to 44) on line 4 has center 120
         RectF area = new RectF(49f, mLineCenters[4] - 1f, 121f, mLineCenters[4] + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
         // Selects all of word 7, not just the middle part on line 3.
-        assertThat(range.getLower()).isEqualTo(36);
-        assertThat(range.getUpper()).isEqualTo(44);
+        assertThat(range).asList().containsExactly(36, 44).inOrder();
     }
 
     @Test
@@ -612,12 +585,11 @@ public class LayoutGetRangeForRectTest {
         // Word 5 (offset 27 to 29) on line 1 has center 85.
         // First part of word 6 (offset 30 to 32) on line 1 has center 65.
         RectF area = new RectF(64f, mLineCenters[1] - 1f, 86f, mLineCenters[1] + 1f);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
         // Selects all of word 6, not just the first RTL part.
-        assertThat(range.getLower()).isEqualTo(27);
-        assertThat(range.getUpper()).isEqualTo(35);
+        assertThat(range).asList().containsExactly(27, 35).inOrder();
     }
 
     @Test
@@ -625,11 +597,10 @@ public class LayoutGetRangeForRectTest {
     public void word_containsCenter_all() {
         // Entire area, should include all text except the last two whitespace characters.
         RectF area = new RectF(0f, 0f, WIDTH, HEIGHT);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_CENTER);
 
-        assertThat(range.getLower()).isEqualTo(0);
-        assertThat(range.getUpper()).isEqualTo(DEFAULT_TEXT.length() - 2);
+        assertThat(range).asList().containsExactly(0, DEFAULT_TEXT.length() - 2).inOrder();
     }
 
     @Test
@@ -641,11 +612,10 @@ public class LayoutGetRangeForRectTest {
                 mLayout.getLineTop(0) - 1,
                 mLayout.getPrimaryHorizontal(11) + 1,
                 mLayout.getLineBottom(0, /* includeLineSpacing= */ false) + 1);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_ALL);
 
-        assertThat(range.getLower()).isEqualTo(5);
-        assertThat(range.getUpper()).isEqualTo(11);
+        assertThat(range).asList().containsExactly(5, 11).inOrder();
     }
 
     @Test
@@ -657,7 +627,7 @@ public class LayoutGetRangeForRectTest {
                 mLayout.getLineTop(0) - 1,
                 mLayout.getPrimaryHorizontal(11) + 1,
                 mLayout.getLineBottom(0, /* includeLineSpacing= */ false) + 1);
-        Range<Integer> range = mLayout.getRangeForRect(
+        int[] range = mLayout.getRangeForRect(
                 area, mWordSegmentFinder, Layout.INCLUSION_STRATEGY_CONTAINS_ALL);
 
         // The left edge of the area is 1 pixel to the right of the left bound of character 5, so it

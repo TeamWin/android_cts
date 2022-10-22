@@ -6500,6 +6500,11 @@
                 android:protectionLevel="signature" />
     <uses-permission android:name="android.permission.HANDLE_QUERY_PACKAGE_RESTART" />
 
+    <!-- Allows financed device kiosk apps to perform actions on the Device Lock service
+         @hide @TestApi @SystemApi(client=android.annotation.SystemApi.Client.MODULE_LIBRARIES) -->
+    <permission android:name="android.permission.MANAGE_DEVICE_LOCK_STATE"
+                android:protectionLevel="internal|role" />
+
     <!-- Allows an app to turn on the screen on, e.g. with
          {@link android.os.PowerManager#ACQUIRE_CAUSES_WAKEUP}.
          <p>Intended to only be used by home automation apps.

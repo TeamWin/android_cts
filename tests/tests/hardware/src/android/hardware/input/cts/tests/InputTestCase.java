@@ -250,6 +250,11 @@ public abstract class InputTestCase {
     }
 
     protected void verifyEvents(List<InputEvent> events) {
+        verifyFirstEvents(events);
+        assertNoMoreEvents();
+    }
+
+    protected void verifyFirstEvents(List<InputEvent> events) {
         // Make sure we received the expected input events
         if (events.size() == 0) {
             // If no event is expected we need to wait for event until timeout and fail on
@@ -276,7 +281,6 @@ public abstract class InputTestCase {
             }
             fail("Entry " + i + " is neither a KeyEvent nor a MotionEvent: " + event);
         }
-        assertNoMoreEvents();
     }
 
     private InputEvent waitForEvent() {

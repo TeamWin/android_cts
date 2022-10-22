@@ -54,8 +54,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -548,53 +546,6 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
             List<String> sortedTypes = new ArrayList<>(types);
             Collections.sort(sortedTypes);
             fail("Policy exempts domains from ban on socket usage from HAL servers: "
-                    + sortedTypes);
-        }
-    }
-
-    /**
-     * Asserts that no domains are exempted from the prohibition on initiating socket communications
-     * between core and vendor domains.
-     *
-     * <p>NOTE: socket_between_core_and_vendor_violators attribute is only there to help bring up
-     * Treble devices. It offers a convenient way to temporarily bypass the prohibition on
-     * initiating socket communications between core and vendor domains. This attribute must not be
-     * used on production Treble devices.
-     */
-    @Test
-    public void testNoExemptionsForSocketsBetweenCoreAndVendorBan() throws Exception {
-        if (!isFullTrebleDevice()) {
-            return;
-        }
-
-        Set<String> types =
-                sepolicyAnalyzeGetTypesAssociatedWithAttribute(
-                        "socket_between_core_and_vendor_violators");
-        if (!types.isEmpty()) {
-            List<String> sortedTypes = new ArrayList<>(types);
-            Collections.sort(sortedTypes);
-            fail("Policy exempts domains from ban on socket communications between core and"
-                    + " vendor: " + sortedTypes);
-        }
-    }
-
-    /**
-     * Asserts that no vendor domains are exempted from the prohibition on directly
-     * executing binaries from /system.
-     * */
-    @Test
-    public void testNoExemptionsForVendorExecutingCore() throws Exception {
-        if (!isFullTrebleDevice()) {
-            return;
-        }
-
-        Set<String> types =
-                sepolicyAnalyzeGetTypesAssociatedWithAttribute(
-                        "vendor_executes_system_violators");
-        if (!types.isEmpty()) {
-            List<String> sortedTypes = new ArrayList<>(types);
-            Collections.sort(sortedTypes);
-            fail("Policy exempts vendor domains from ban on executing files in /system: "
                     + sortedTypes);
         }
     }

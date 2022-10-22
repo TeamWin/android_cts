@@ -62,6 +62,7 @@ android_test {
     ],
     static_libs: [
         "DeviceAdminApp",
+        "Harrier",
         "Nene",
         "androidx.test.rules",
         "compatibility-device-util-axt",

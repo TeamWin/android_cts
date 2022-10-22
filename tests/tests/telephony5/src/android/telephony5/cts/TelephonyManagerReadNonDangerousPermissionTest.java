@@ -87,7 +87,7 @@ public class TelephonyManagerReadNonDangerousPermissionTest {
         }
 
         Set<Integer> premiumCapabilities = new HashSet<>();
-        premiumCapabilities.add(TelephonyManager.PREMIUM_CAPABILITY_REALTIME_INTERACTIVE_TRAFFIC);
+        premiumCapabilities.add(TelephonyManager.PREMIUM_CAPABILITY_PRIORITIZE_LATENCY);
 
         Set<Integer> nonFailures = new HashSet<>();
         nonFailures.add(TelephonyManager.PURCHASE_PREMIUM_CAPABILITY_RESULT_SUCCESS);
@@ -95,7 +95,6 @@ public class TelephonyManagerReadNonDangerousPermissionTest {
         nonFailures.add(TelephonyManager.PURCHASE_PREMIUM_CAPABILITY_RESULT_ALREADY_IN_PROGRESS);
 
         Set<Integer> hardFailures = new HashSet<>();
-        hardFailures.add(TelephonyManager.PURCHASE_PREMIUM_CAPABILITY_RESULT_USER_DISABLED);
         hardFailures.add(TelephonyManager.PURCHASE_PREMIUM_CAPABILITY_RESULT_CARRIER_DISABLED);
         hardFailures.add(TelephonyManager.PURCHASE_PREMIUM_CAPABILITY_RESULT_FEATURE_NOT_SUPPORTED);
 

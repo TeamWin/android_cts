@@ -97,7 +97,6 @@ android_test {
         "mockito-target-minus-junit4",
         "androidx.test.rules",
         "platform-test-annotations",
-        "androidx.test.rules",
     ],
     srcs: [
         "DownloadManagerApi28Test/src/**/*.java",
@@ -134,7 +133,6 @@ android_test {
         "mockito-target-minus-junit4",
         "androidx.test.rules",
         "platform-test-annotations",
-        "androidx.test.rules",
     ],
     srcs: [
         "DownloadManagerInstallerTest/src/**/*.java",

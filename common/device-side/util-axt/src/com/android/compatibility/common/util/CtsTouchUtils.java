@@ -20,6 +20,7 @@ import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.graphics.Point;
 import android.os.SystemClock;
+import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.InputDevice;
@@ -697,6 +698,9 @@ public final class CtsTouchUtils {
             emulateDragGesture(instrumentation, activityTestRule,
                     emulatedX, emulatedStartY, 0, -swipeAmount, 300, 10);
             next = new ViewStateSnapshot(viewGroup);
+	     // Wait for the UI Thread to become idle.
+            final UiDevice device = UiDevice.getInstance(instrumentation);
+            device.waitForIdle();
         } while (!prev.equals(next));
 
         // wait until the overscroll animation completes

@@ -57,7 +57,7 @@ public class CVE_2021_0921 extends NonRootSecurityTestCase {
         getDevice().executeShellCommand("input keyevent KEYCODE_MENU");
 
         //run the test
-        Assert.assertTrue(runDeviceTests(TEST_PKG, TEST_CLASS, "test"));
+        runDeviceTests(TEST_PKG, TEST_CLASS, "test");
         CLog.i("testRunDeviceTest() end");
     }
 

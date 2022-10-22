@@ -15,6 +15,7 @@
 
 import logging
 import os.path
+
 from mobly import test_runner
 
 import its_base_test
@@ -75,8 +76,8 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
   When RAW capture is available, set the height vs. width ratio of the circle in
   the full-frame RAW as ground truth. In an ideal setup such ratio should be
   very close to 1.0, but here we just use the value derived from full resolution
-  RAW as ground truth to account for the possibility that the chart is not well
-  positioned to be precisely parallel to image sensor plane.
+  RAW as ground truth to account for the possibility that the chart is not
+  well positioned to be precisely parallel to image sensor plane.
   The test then compares the ground truth ratio with the same ratio measured
   on videos captured using different formats.
 
@@ -134,6 +135,7 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       fls_physical = props['android.lens.info.availableFocalLengths']
       logging.debug('physical available focal lengths: %s', str(fls_physical))
+      name_with_log_path = os.path.join(self.log_path, _NAME)
 
       # Check SKIP conditions.
       vendor_api_level = its_session_utils.get_vendor_api_level(self.dut.serial)
@@ -150,11 +152,11 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
       logging.debug('Supported video qualities: %s', supported_video_qualities)
       full_or_better = camera_properties_utils.full_or_better(props)
       raw_avlb = camera_properties_utils.raw16(props)
+      debug = self.debug_mode
 
       # Converge 3A.
       cam.do_3a()
       req = capture_request_utils.auto_capture_request()
-      ref_img_name_stem = f'{os.path.join(self.log_path, _NAME)}'
 
       if raw_avlb and (fls_physical == fls_logical):
         logging.debug('RAW')
@@ -163,7 +165,7 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
         logging.debug('JPEG')
         raw_bool = False
       ref_fov, cc_ct_gt, aspect_ratio_gt = image_fov_utils.find_fov_reference(
-          cam, req, props, raw_bool, ref_img_name_stem)
+          cam, req, props, raw_bool, name_with_log_path)
 
       run_crop_test = full_or_better and raw_avlb
 
@@ -223,19 +225,22 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
 
             # Check fov
             circle = opencv_processing_utils.find_circle(
-                np_image, ref_img_name_stem, image_fov_utils.CIRCLE_MIN_AREA,
+                np_image, name_with_log_path, image_fov_utils.CIRCLE_MIN_AREA,
                 image_fov_utils.CIRCLE_COLOR)
+            if debug:
+              opencv_processing_utils.append_circle_center_to_img(
+                  circle, np_image, name_with_log_path)
 
             max_img_value = _MAX_8BIT_IMGS
             if hlg10_param:
               max_img_value = _MAX_10BIT_IMGS
 
             # Check pass/fail for fov coverage for all fmts in AR_CHECKED
+            img_name_stem = f'{name_with_log_path}_{quality}_w{width}_h{height}'
             fov_chk_msg = image_fov_utils.check_fov(
                 circle, ref_fov, width, height)
             if fov_chk_msg:
-              img_name = '%s_%s_w%d_h%d_fov.png' % (
-                  os.path.join(self.log_path, _NAME), quality, width, height)
+              img_name = f'{img_name_stem}_fov.png'
               fov_chk_quality_msg = f'Quality: {quality} {fov_chk_msg}'
               failed_fov.append(fov_chk_quality_msg)
               image_processing_utils.write_image(
@@ -246,8 +251,7 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
                 circle, aspect_ratio_gt, width, height,
                 f'{quality}')
             if ar_chk_msg:
-              img_name = '%s_%s_w%d_h%d_ar.png' % (
-                  os.path.join(self.log_path, _NAME), quality, width, height)
+              img_name = f'{img_name_stem}_ar.png'
               failed_ar.append(ar_chk_msg)
               image_processing_utils.write_image(
                   np_image/max_img_value, img_name, True)
@@ -263,10 +267,7 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
                   circle, cc_ct_gt, width, height,
                   f'{quality}', crop_thresh_factor)
               if crop_chk_msg:
-                crop_img_name = '%s_%s_w%d_h%d_crop.png' % (
-                    os.path.join(self.log_path, _NAME), quality, width, height)
-                opencv_processing_utils.append_circle_center_to_img(
-                    circle, np_image*max_img_value, crop_img_name)
+                crop_img_name = f'{img_name_stem}_crop.png'
                 failed_crop.append(crop_chk_msg)
                 image_processing_utils.write_image(np_image/max_img_value,
                                                    crop_img_name, True)

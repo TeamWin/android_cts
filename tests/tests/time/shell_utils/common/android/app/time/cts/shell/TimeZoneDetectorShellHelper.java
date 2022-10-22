@@ -67,6 +67,12 @@ public final class TimeZoneDetectorShellHelper {
     private static final String SHELL_COMMAND_SET_GEO_DETECTION_ENABLED =
             "set_geo_detection_enabled";
 
+    /**
+     * A shell command that sets the current time zone state for testing.
+     * @hide
+     */
+    private static final String SHELL_COMMAND_SET_TIME_ZONE_STATE = "set_time_zone_state_for_tests";
+
     private static final String SHELL_CMD_PREFIX = "cmd " + SERVICE_NAME + " ";
 
     private final DeviceShellCommandExecutor mShellCommandExecutor;
@@ -109,5 +115,14 @@ public final class TimeZoneDetectorShellHelper {
     public boolean isTelephonyDetectionSupported() throws Exception {
         return mShellCommandExecutor.executeToBoolean(
                 SHELL_CMD_PREFIX + SHELL_COMMAND_IS_TELEPHONY_DETECTION_SUPPORTED);
+    }
+
+    /** Executes "set_time_zone_state_for_tests" */
+    public void setTimeZoneState(String timeZoneId, boolean userShouldConfirmId) throws Exception {
+        String cmd = String.format("%s --zone_id %s"
+                        + " --user_should_confirm_id %s",
+                SHELL_COMMAND_SET_TIME_ZONE_STATE, timeZoneId,
+                userShouldConfirmId);
+        mShellCommandExecutor.executeToTrimmedString(SHELL_CMD_PREFIX + cmd);
     }
 }

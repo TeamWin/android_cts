@@ -170,7 +170,7 @@ public class VideoEncoderDecoderTest {
     }
 
     @Before
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         mEncodedOutputBuffer = new LinkedList<Pair<ByteBuffer, BufferInfo>>();
         mRmsErrorMargin = PIXEL_RMS_ERROR_MARGIN;
         mUpdatedSwCodec =
@@ -182,7 +182,7 @@ public class VideoEncoderDecoderTest {
     }
 
     @After
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         mEncodedOutputBuffer.clear();
         mEncodedOutputBuffer = null;
         mYBuffer = null;

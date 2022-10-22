@@ -36,11 +36,15 @@ import android.security.keystore.StrongBoxUnavailableException;
 import android.telephony.TelephonyManager;
 
 import com.android.bedstead.deviceadminapp.DeviceAdminApp;
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.compatibility.common.util.ApiTest;
 
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.security.GeneralSecurityException;
@@ -60,6 +64,9 @@ public class DeviceOwnerKeyManagementTest {
             sContext.getSystemService(DevicePolicyManager.class);
     private static final ComponentName DEVICE_ADMIN_COMPONENT_NAME =
             DeviceAdminApp.deviceAdminComponentName(sContext);
+
+    @ClassRule @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
 
     private static class SupportedKeyAlgorithm {
         public final String keyAlgorithm;
@@ -333,6 +340,7 @@ public class DeviceOwnerKeyManagementTest {
             "android.app.admin.DevicePolicyManager#ID_TYPE_IMEI",
             "android.app.admin.DevicePolicyManager#ID_TYPE_MEID",
             "android.app.admin.DevicePolicyManager#ID_TYPE_SERIAL"})
+    @RequireRunOnSystemUser
     @Test
     public void testAllVariationsOfDeviceIdAttestation() throws Exception {
         try (DeviceOwner o = TestApis.devicePolicy().setDeviceOwner(DEVICE_ADMIN_COMPONENT_NAME)) {
@@ -344,6 +352,7 @@ public class DeviceOwnerKeyManagementTest {
             "android.app.admin.DevicePolicyManager#ID_TYPE_IMEI",
             "android.app.admin.DevicePolicyManager#ID_TYPE_MEID",
             "android.app.admin.DevicePolicyManager#ID_TYPE_SERIAL"})
+    @RequireRunOnSystemUser
     @Test
     public void testAllVariationsOfDeviceIdAttestationUsingStrongBox() throws Exception {
         try (DeviceOwner o = TestApis.devicePolicy().setDeviceOwner(DEVICE_ADMIN_COMPONENT_NAME)) {

@@ -188,14 +188,10 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
                         MediaFormat.COLOR_STANDARD_BT2020,
                         MediaFormat.COLOR_TRANSFER_ST2084, true},
 
-                // TODO (b/235954984) Some devices do not support following in h/w encoders
-                // Add more combinations as required once the encoders support these
-                /*
                 {720, 480, 30, 3000000, MediaFormat.COLOR_RANGE_LIMITED,
                     MediaFormat.COLOR_STANDARD_BT2020, MediaFormat.COLOR_TRANSFER_ST2084, true},
                 {720, 480, 30, 3000000, MediaFormat.COLOR_RANGE_LIMITED,
                     MediaFormat.COLOR_STANDARD_BT709, MediaFormat.COLOR_TRANSFER_SDR_VIDEO, true},
-                */
                 // TODO (b/186511593)
                 /*
                 {1280, 720, 30, 3000000, MediaFormat.COLOR_RANGE_LIMITED,

@@ -159,7 +159,7 @@ public class MuxerUnitTest {
                 FileDescriptor[] fd = pipe();
                 muxer = new MediaMuxer(fd[1], MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP);
                 fail("pipe, a non-seekable fd accepted by constructor");
-            } catch (IOException e) {
+            } catch (IllegalArgumentException e) {
                 // expected
             } catch (Exception e) {
                 fail(e.getMessage());

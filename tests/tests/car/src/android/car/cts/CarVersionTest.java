@@ -95,6 +95,38 @@ public final class CarVersionTest extends AbstractCarLessTestCase {
     }
 
     @Test
+    @ApiTest(apis = {"android.car.CarVersion.VERSION_CODES#TIRAMISU_2"})
+    public void testTiramisu_2() {
+        CarVersion version = CarVersion.VERSION_CODES.TIRAMISU_2;
+
+        assertWithMessage("TIRAMISU_2").that(version).isNotNull();
+        expectWithMessage("TIRAMISU_2.major").that(version.getMajorVersion())
+                .isEqualTo(TIRAMISU);
+        expectWithMessage("TIRAMISU_2.minor").that(version.getMinorVersion())
+                .isEqualTo(2);
+
+        CarVersion fromEnum = ApiRequirements.CarVersion.TIRAMISU_2.get();
+        assertWithMessage("TIRAMISU_2 from enum").that(fromEnum).isNotNull();
+        expectWithMessage("TIRAMISU_2 from enum").that(fromEnum).isSameInstanceAs(version);
+
+        String toString = version.toString();
+        expectWithMessage("TIRAMISU_2.toString()").that(toString)
+                .matches(".*CarVersion.*name=TIRAMISU_2.*major=" + TIRAMISU + ".*minor=2.*");
+        CarVersion clone = clone(version);
+        expectWithMessage("TIRAMISU_2.toString() from parcel").that(clone.toString())
+                .isEqualTo(toString);
+
+        CarVersion anonymous = CarVersion.forMajorAndMinorVersions(version.getMajorVersion(),
+                version.getMinorVersion());
+        expectWithMessage("TIRAMISU_2").that(version).isEqualTo(anonymous);
+        expectWithMessage("anonymous").that(anonymous).isEqualTo(version);
+        expectWithMessage("TIRAMISU_2's hashcode").that(version.hashCode())
+                .isEqualTo(anonymous.hashCode());
+        expectWithMessage("anonymous' hashcode").that(anonymous.hashCode())
+                .isEqualTo(version.hashCode());
+    }
+
+    @Test
     @ApiTest(apis = {"android.car.CarVersion.VERSION_CODES#UPSIDE_DOWN_CAKE_0"})
     public void testUpsideDownCake_0() {
         CarVersion version = CarVersion.VERSION_CODES.UPSIDE_DOWN_CAKE_0;

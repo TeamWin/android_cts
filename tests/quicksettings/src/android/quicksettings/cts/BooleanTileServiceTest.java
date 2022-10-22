@@ -17,11 +17,14 @@
 package android.quicksettings.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
+
+import com.android.systemui.qs.nano.QsTileState;
 
 import org.junit.Test;
 
@@ -39,12 +42,9 @@ public class BooleanTileServiceTest extends BaseTileServiceTest {
     public void testTileInDumpAndHasBooleanState() throws Exception {
         initializeAndListen();
 
-        final CharSequence tileLabel = mTileService.getQsTile().getLabel();
-
-        final String[] dumpLines = executeShellCommand(DUMP_COMMAND).split("\n");
-        final String line = findLine(dumpLines, tileLabel);
-        assertNotNull(line);
-        assertTrue(line.trim().startsWith("BooleanState"));
+        final QsTileState tileState = findTileState();
+        assertNotNull(tileState);
+        assertTrue(tileState.hasBooleanState());
     }
 
     @Test
@@ -58,13 +58,10 @@ public class BooleanTileServiceTest extends BaseTileServiceTest {
     public void testValueTracksState() throws Exception {
         initializeAndListen();
 
-        final CharSequence tileLabel = mTileService.getQsTile().getLabel();
-
-        String[] dumpLines = executeShellCommand(DUMP_COMMAND).split("\n");
-        String line = findLine(dumpLines, tileLabel);
+        QsTileState tileState = findTileState();
 
         // Tile starts inactive
-        assertTrue(line.contains("value=false"));
+        assertFalse(tileState.getBooleanState());
 
         ((ToggleableTestTileService) mTileService).toggleState();
 
@@ -76,10 +73,9 @@ public class BooleanTileServiceTest extends BaseTileServiceTest {
 
         assertEquals(Tile.STATE_ACTIVE, mTileService.getQsTile().getState());
 
-        dumpLines = executeShellCommand(DUMP_COMMAND).split("\n");
-        line = findLine(dumpLines, tileLabel);
+        tileState = findTileState();
 
-        assertTrue(line.contains("value=true"));
+        assertTrue(tileState.getBooleanState());
     }
 
     @Override

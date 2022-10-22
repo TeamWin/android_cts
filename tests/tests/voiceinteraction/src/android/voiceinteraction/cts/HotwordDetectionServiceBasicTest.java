@@ -296,6 +296,12 @@ public final class HotwordDetectionServiceBasicTest
                 Utils.HOTWORD_DETECTION_SERVICE_GET_ERROR,
                 Utils.HOTWORD_DETECTION_SERVICE_BASIC);
         verifyMicrophoneChip(false);
+
+        testHotwordDetection(mActivityTestRule, mContext,
+                Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
+                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
     }
 
     @Test

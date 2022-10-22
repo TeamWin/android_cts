@@ -171,7 +171,7 @@ public final class CommandSession {
         private final String mHostId;
         private final Response mPendingResponse = new Response();
         // Only set when requiring response.
-        private long mPendingRequestToken = INVALID_REQUEST_TOKEN;
+        private volatile long mPendingRequestToken = INVALID_REQUEST_TOKEN;
         private String mPendingCommand;
         private boolean mFinished;
         private Intent mOriginalLaunchIntent;
