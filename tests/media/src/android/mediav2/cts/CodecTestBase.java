@@ -1092,6 +1092,26 @@ abstract class CodecTestBase {
         return false;
     }
 
+    static boolean isSoftwareCodec(String codecName) {
+        MediaCodecList mcl = new MediaCodecList(MediaCodecList.ALL_CODECS);
+        for (MediaCodecInfo codecInfo : mcl.getCodecInfos()) {
+            if (codecName.equals(codecInfo.getName())) {
+                return codecInfo.isSoftwareOnly();
+            }
+        }
+        return false;
+    }
+
+    static boolean isHardwareAcceleratedCodec(String codecName) {
+        MediaCodecList mcl = new MediaCodecList(MediaCodecList.ALL_CODECS);
+        for (MediaCodecInfo codecInfo : mcl.getCodecInfos()) {
+            if (codecName.equals(codecInfo.getName())) {
+                return codecInfo.isHardwareAccelerated();
+            }
+        }
+        return false;
+    }
+
     static String paramToString(Object[] param) {
         StringBuilder paramStr = new StringBuilder("[  ");
         for (int j = 0; j < param.length - 1; j++) {

@@ -16,7 +16,12 @@
 
 package android.mediav2.cts;
 
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
 import static android.mediav2.cts.CodecTestBase.hasSupportForColorFormat;
+import static android.mediav2.cts.CodecTestBase.isHardwareAcceleratedCodec;
+import static android.mediav2.cts.CodecTestBase.isSoftwareCodec;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -27,7 +32,6 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -92,6 +96,7 @@ public class CodecEncoderSurfaceTest {
     private final int mFrameRate;
     private final int mMaxBFrames;
     private final boolean mTestToneMap;
+    private final int mColorFormat;
     private int mLatency;
     private boolean mReviseLatency;
     private MediaFormat mEncoderFormat;
@@ -130,13 +135,14 @@ public class CodecEncoderSurfaceTest {
     }
 
     public CodecEncoderSurfaceTest(String encoder, String mime, String testFile, int bitrate,
-            int frameRate, boolean testToneMap, String allTestParams) {
+            int frameRate, boolean testToneMap, int colorFormat, String allTestParams) {
         mCompName = encoder;
         mMime = mime;
         mTestFile = mInpPrefix + testFile;
         mBitrate = bitrate;
         mFrameRate = frameRate;
         mTestToneMap = testToneMap;
+        mColorFormat = colorFormat;
         mTestArgs = allTestParams;
         mMaxBFrames = 0;
         mLatency = mMaxBFrames;
@@ -176,12 +182,26 @@ public class CodecEncoderSurfaceTest {
         mDecoderName = codecList.findDecoderForFormat(mDecoderFormat);
         Assume.assumeNotNull(mDecoderFormat.toString() + " not supported by any decoder.",
                 mDecoderName);
-        // findDecoderForFormat() ignores color-format and decoder returned may not be
-        // supporting the color format set in mDecoderFormat. Following check will
-        // skip the test if decoder doesn't support the color format that is set.
-        int decoderColorFormat = mDecoderFormat.getInteger(MediaFormat.KEY_COLOR_FORMAT);
-        Assume.assumeTrue(mDecoderName + " doesn't support P010 output.",
-                hasSupportForColorFormat(mDecoderName, decoderMediaType, decoderColorFormat));
+
+        if (mColorFormat == COLOR_FormatSurface) {
+            // TODO(b/253492870) Remove the following assumption check once this is supported
+            Assume.assumeFalse(
+                    mDecoderName + "is hardware accelerated and " + mCompName + "is software only.",
+                    isHardwareAcceleratedCodec(mDecoderName) && isSoftwareCodec(mCompName));
+        } else {
+            // findDecoderForFormat() ignores color-format and decoder returned may not be
+            // supporting the color format set in mDecoderFormat. Following check will
+            // skip the test if decoder doesn't support the color format that is set.
+            boolean decoderSupportsColorFormat =
+                    hasSupportForColorFormat(mDecoderName, decoderMediaType, mColorFormat);
+            if (mColorFormat == COLOR_FormatYUVP010) {
+                assumeTrue(mDecoderName + " doesn't support P010 output.",
+                        decoderSupportsColorFormat);
+            } else {
+                assertTrue(mDecoderName + " doesn't support 420p 888 flexible output.",
+                        decoderSupportsColorFormat);
+            }
+        }
 
         mEncoderFormat = setUpEncoderFormat(mDecoderFormat);
     }
@@ -191,8 +211,8 @@ public class CodecEncoderSurfaceTest {
         final boolean isEncoder = true;
         final boolean needAudio = false;
         final boolean needVideo = true;
-        final List<Object[]> exhaustiveArgsList = new ArrayList<>(Arrays.asList(new Object[][]{
-                // Video - CodecMime, test file, bit rate, frame rate, testToneMapping
+        final List<Object[]> exhaustiveArgsList = new ArrayList<>();
+        final List<Object[]> args = new ArrayList<>(Arrays.asList(new Object[][]{
                 {MediaFormat.MIMETYPE_VIDEO_H263, "bbb_176x144_128kbps_15fps_h263.3gp", 128000, 15,
                         false},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG4, "bbb_128x96_64kbps_12fps_mpeg4.mp4", 64000, 12,
@@ -208,27 +228,49 @@ public class CodecEncoderSurfaceTest {
                 {MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_cif_768kbps_30fps_avc.mp4", 512000, 30,
                         false},
         }));
+
+        final List<Object[]> argsHighBitDepth = new ArrayList<>(Arrays.asList(new Object[][]{
+                {MediaFormat.MIMETYPE_VIDEO_AVC, "cosmat_520x390_24fps_crf22_avc_10bit.mkv",
+                        512000, 30, false},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, "cosmat_520x390_24fps_crf22_avc_10bit.mkv",
+                        512000, 30, true},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, "cosmat_520x390_24fps_crf22_hevc_10bit.mkv",
+                        512000, 30, false},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, "cosmat_520x390_24fps_crf22_hevc_10bit.mkv",
+                        512000, 30, true},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, "cosmat_520x390_24fps_crf22_vp9_10bit.mkv",
+                        512000, 30, false},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, "cosmat_520x390_24fps_crf22_vp9_10bit.mkv",
+                        512000, 30, true},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, "cosmat_520x390_24fps_768kbps_av1_10bit.mkv",
+                        512000, 30, false},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, "cosmat_520x390_24fps_768kbps_av1_10bit.mkv",
+                        512000, 30, true},
+        }));
+
+        int[] argsColorFormats = {COLOR_FormatSurface, COLOR_FormatYUV420Flexible};
+        int argLength = args.get(0).length;
+        for (int colorFormat : argsColorFormats) {
+            for (Object[] arg : args) {
+                Object[] argUpdate = new Object[argLength + 1];
+                System.arraycopy(arg, 0, argUpdate, 0, argLength);
+                argUpdate[argLength] = colorFormat;
+                exhaustiveArgsList.add(argUpdate);
+            }
+        }
         // P010 support was added in Android T, hence limit the following tests to Android T and
         // above
         if (CodecTestBase.IS_AT_LEAST_T) {
-            exhaustiveArgsList.addAll(Arrays.asList(new Object[][]{
-                    {MediaFormat.MIMETYPE_VIDEO_AVC, "cosmat_520x390_24fps_crf22_avc_10bit.mkv",
-                            512000, 30, false},
-                    {MediaFormat.MIMETYPE_VIDEO_AVC, "cosmat_520x390_24fps_crf22_avc_10bit.mkv",
-                            512000, 30, true},
-                    {MediaFormat.MIMETYPE_VIDEO_HEVC, "cosmat_520x390_24fps_crf22_hevc_10bit.mkv",
-                            512000, 30, false},
-                    {MediaFormat.MIMETYPE_VIDEO_HEVC, "cosmat_520x390_24fps_crf22_hevc_10bit.mkv",
-                            512000, 30, true},
-                    {MediaFormat.MIMETYPE_VIDEO_VP9, "cosmat_520x390_24fps_crf22_vp9_10bit.mkv",
-                            512000, 30, false},
-                    {MediaFormat.MIMETYPE_VIDEO_VP9, "cosmat_520x390_24fps_crf22_vp9_10bit.mkv",
-                            512000, 30, true},
-                    {MediaFormat.MIMETYPE_VIDEO_AV1, "cosmat_520x390_24fps_768kbps_av1_10bit.mkv",
-                            512000, 30, false},
-                    {MediaFormat.MIMETYPE_VIDEO_AV1, "cosmat_520x390_24fps_768kbps_av1_10bit.mkv",
-                            512000, 30, true},
-            }));
+            int[] argsHighBitDepthColorFormats = {COLOR_FormatSurface, COLOR_FormatYUVP010};
+            int argsHighBitDepthLength = argsHighBitDepth.get(0).length;
+            for (int colorFormat : argsHighBitDepthColorFormats) {
+                for (Object[] arg : argsHighBitDepth) {
+                    Object[] argUpdate = new Object[argsHighBitDepthLength + 1];
+                    System.arraycopy(arg, 0, argUpdate, 0, argsHighBitDepthLength);
+                    argUpdate[argsHighBitDepthLength] = colorFormat;
+                    exhaustiveArgsList.add(argUpdate);
+                }
+            }
         }
         return CodecTestBase.prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo,
                 true);
@@ -251,13 +293,7 @@ public class CodecEncoderSurfaceTest {
                 formatList.add(format);
                 boolean selectHBD = CodecTestBase.doesAnyFormatHaveHDRProfile(mime, formatList) ||
                         srcFile.contains("10bit");
-                if (selectHBD) {
-                    format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
-                            MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010);
-                } else {
-                    format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
-                            MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
-                }
+                format.setInteger(MediaFormat.KEY_COLOR_FORMAT, mColorFormat);
                 return format;
             }
         }
@@ -557,8 +593,7 @@ public class CodecEncoderSurfaceTest {
         encoderFormat.setInteger(MediaFormat.KEY_FRAME_RATE, mFrameRate);
         encoderFormat.setInteger(MediaFormat.KEY_BIT_RATE, mBitrate);
         encoderFormat.setFloat(MediaFormat.KEY_I_FRAME_INTERVAL, 1.0f);
-        encoderFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT,
-                MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+        encoderFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatSurface);
         encoderFormat.setInteger(MediaFormat.KEY_MAX_B_FRAMES, mMaxBFrames);
         return encoderFormat;
     }

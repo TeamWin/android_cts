@@ -283,7 +283,12 @@ public class BTAdapterUtils {
         try {
             adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
             bluetoothAdapter.disable();
-            return waitForAdapterStateLocked(BluetoothAdapter.STATE_OFF, bluetoothAdapter);
+            if (waitForAdapterStateLocked(BluetoothAdapter.STATE_OFF, bluetoothAdapter)) {
+                //TODO b/234892968
+                Thread.sleep(2000);
+                return true;
+            }
+            return false;
         } catch (InterruptedException e) {
             Log.w(TAG, "disableAdapter(): interrupted", e);
         } finally {

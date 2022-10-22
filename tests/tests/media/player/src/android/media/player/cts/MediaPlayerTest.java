@@ -712,7 +712,10 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
             player.reset();
             player.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
             player.prepare();
-            player.seekTo(56000);
+            // Test needs the mediaplayer to playback at least about 5 seconds of content.
+            // Clip used here has a duration of 61 seconds, so seek to 50 seconds in the media file.
+            // This leaves enough remaining time, with gapless enabled or disabled,
+            player.seekTo(50000);
         }
     }
 
