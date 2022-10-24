@@ -4066,11 +4066,11 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Test that {@link WifiManager#getCurrentNetwork()} returns a Network obeject consistent
-     * with {@link ConnectivityManager#registerNetworkCallback} when connected to a Wifi network,
-     * and returns null when not connected.
+     * Helper function to test getCurrentNetwork
+     * @param shouldDisableWifi true to disable wifi, false to disconnect
+     * @throws Exception
      */
-    public void testGetCurrentNetwork() throws Exception {
+    private void testGetCurrentNetwork(boolean shouldDisableWifi) throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
@@ -4079,10 +4079,16 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         // ensure Wifi is connected
         ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.reconnect());
         PollingCheck.check(
-                "Wifi not connected - Please ensure there is a saved network in range of this "
-                        + "device",
+                "Connection info network id is invalid - Please ensure there is a " +
+                " saved network in range of this device",
                 WIFI_CONNECT_TIMEOUT_MILLIS,
                 () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
+        PollingCheck.check(
+                "Wifi current network is null - Please ensure there is a saved network " +
+                        " in range of this device",
+                WIFI_CONNECT_TIMEOUT_MILLIS,
+                () -> ShellIdentityUtils.invokeWithShellPermissions(mWifiManager::getCurrentNetwork)
+                        != null);
 
         String networkKey = mWifiManager.getConnectionInfo().getNetworkKey();
         assertNotNull(networkKey);
@@ -4122,17 +4128,43 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         Network connectivityCurrentNetwork = networkCallbackListener.network;
         assertEquals(connectivityCurrentNetwork, wifiCurrentNetwork);
 
-        setWifiEnabled(false);
+        if (shouldDisableWifi) {
+            setWifiEnabled(false);
+            PollingCheck.check(
+                    "Wifi not disabled!",
+                    20000,
+                    () -> !mWifiManager.isWifiEnabled());
+        } else {
+            ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.disconnect());
+        }
         PollingCheck.check(
-                "Wifi not disabled!",
-                20000,
-                () -> !mWifiManager.isWifiEnabled());
-        PollingCheck.check(
-                "Wifi not disconnected!",
+                "Wifi not disconnected! Connection info network id still valid",
                 20000,
                 () -> mWifiManager.getConnectionInfo().getNetworkId() == -1);
 
-        assertNull(ShellIdentityUtils.invokeWithShellPermissions(mWifiManager::getCurrentNetwork));
+        PollingCheck.check(
+                "Wifi not disconnected! Current network is not null",
+                WIFI_CONNECT_TIMEOUT_MILLIS,
+                () -> ShellIdentityUtils.invokeWithShellPermissions(mWifiManager::getCurrentNetwork)
+                        == null);
+    }
+
+    /**
+     * Test that {@link WifiManager#getCurrentNetwork()} returns a Network object consistent
+     * with {@link ConnectivityManager#registerNetworkCallback} when connected to a Wifi network,
+     * and returns null when disconnected.
+     */
+    public void testGetCurrentNetworkWifiDisconnected() throws Exception {
+        testGetCurrentNetwork(false);
+    }
+
+    /**
+     * Test that {@link WifiManager#getCurrentNetwork()} returns a Network object consistent
+     * with {@link ConnectivityManager#registerNetworkCallback} when connected to a Wifi network,
+     * and returns null when wifi disabled.
+     */
+    public void testGetCurrentNetworkWifiDisabled() throws Exception {
+        testGetCurrentNetwork(true);
     }
 
     /**

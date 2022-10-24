@@ -88,9 +88,12 @@ import java.util.function.Predicate;
  * IMF and end-to-end Stylus handwriting tests.
  */
 public class StylusHandwritingTest extends EndToEndImeTestBase {
-    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
+    private static final long TIMEOUT_IN_SECONDS = 5;
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(TIMEOUT_IN_SECONDS);
     private static final long TIMEOUT_1_S = TimeUnit.SECONDS.toMillis(1);
-    private static final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
+    private static final long NOT_EXPECT_TIMEOUT_IN_SECONDS = 1;
+    private static final long NOT_EXPECT_TIMEOUT =
+            TimeUnit.SECONDS.toMillis(NOT_EXPECT_TIMEOUT_IN_SECONDS);
     private static final int SETTING_VALUE_ON = 1;
     private static final int SETTING_VALUE_OFF = 0;
     private static final String TEST_MARKER_PREFIX =
@@ -305,7 +308,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
 
     private void verifyStylusHandwritingWindowIsShown(ImeEventStream stream,
             MockImeSession imeSession) throws InterruptedException, TimeoutException {
-        CommonTestUtils.waitUntil("Stylus handwriting window should be shown", TIMEOUT,
+        CommonTestUtils.waitUntil("Stylus handwriting window should be shown", TIMEOUT_IN_SECONDS,
                 () -> expectCommand(
                         stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
                 .getReturnBooleanValue());
@@ -314,7 +317,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     private void verifyStylusHandwritingWindowIsNotShown(ImeEventStream stream,
             MockImeSession imeSession) throws InterruptedException, TimeoutException {
         CommonTestUtils.waitUntil("Stylus handwriting window should not be shown",
-                NOT_EXPECT_TIMEOUT,
+                NOT_EXPECT_TIMEOUT_IN_SECONDS,
                 () -> !expectCommand(
                         stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
                 .getReturnBooleanValue());

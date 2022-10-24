@@ -253,17 +253,23 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
             separateTestJournal();
             fontScaleSession.set(fontScale);
             mWmState.computeState(activityName);
-            assertRelaunchOrConfigChanged(activityName, relaunch ? 1 : 0, relaunch ? 0 : 1);
+            // The number of config changes could be greater than expected as there may have
+            // other configuration change events triggered after font scale changed, such as
+            // NavigationBar recreated.
+            new ActivityLifecycleCounts(activityName).assertCountWithRetry(
+                    "relaunch or config changed",
+                    countSpec(ActivityCallback.ON_DESTROY, CountSpec.EQUALS, relaunch ? 1 : 0),
+                    countSpec(ActivityCallback.ON_CREATE, CountSpec.EQUALS, relaunch ? 1 : 0),
+                    countSpec(ActivityCallback.ON_CONFIGURATION_CHANGED,
+                            CountSpec.GREATER_THAN_OR_EQUALS, relaunch ? 0 : 1));
 
             // Verify that the display metrics are updated, and therefore the text size is also
             // updated accordingly.
             final Bundle changedExtras = TestJournalContainer.get(activityName).extras;
+            final float scale = fontScale;
             waitForOrFail("reported fontPixelSize from " + activityName,
-                    () -> changedExtras.containsKey(EXTRA_FONT_PIXEL_SIZE));
-            final int expectedFontPixelSize =
-                    scaledPixelsToPixels(EXPECTED_FONT_SIZE_SP, fontScale, densityDpi);
-            assertEquals("Expected font pixel size should match", expectedFontPixelSize,
-                    changedExtras.getInt(EXTRA_FONT_PIXEL_SIZE));
+                    () -> scaledPixelsToPixels(EXPECTED_FONT_SIZE_SP, scale, densityDpi)
+                            == changedExtras.getInt(EXTRA_FONT_PIXEL_SIZE));
         }
     }
 
