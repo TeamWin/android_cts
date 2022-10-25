@@ -136,12 +136,42 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                         .setEstimatedNetworkBytes(500, 1000));
 
+        try {
+            assertBuildFails(
+                    "Successfully built a JobInfo specifying a negative download bytes value",
+                    new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                            .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                            .setEstimatedNetworkBytes(-500, JobInfo.NETWORK_BYTES_UNKNOWN));
+        } catch (IllegalArgumentException expected) {
+            // Success. setMinimumNetworkChunkBytes() should throw the exception.
+        }
+
+        try {
+            assertBuildFails(
+                    "Successfully built a JobInfo specifying a negative upload bytes value",
+                    new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                            .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                            .setEstimatedNetworkBytes(JobInfo.NETWORK_BYTES_UNKNOWN, -500));
+        } catch (IllegalArgumentException expected) {
+            // Success. setMinimumNetworkChunkBytes() should throw the exception.
+        }
+
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setEstimatedNetworkBytes(500, 1000)
                 .build();
         assertEquals(500, ji.getEstimatedNetworkDownloadBytes());
         assertEquals(1000, ji.getEstimatedNetworkUploadBytes());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setEstimatedNetworkBytes(
+                        JobInfo.NETWORK_BYTES_UNKNOWN, JobInfo.NETWORK_BYTES_UNKNOWN)
+                .build();
+        assertEquals(JobInfo.NETWORK_BYTES_UNKNOWN, ji.getEstimatedNetworkDownloadBytes());
+        assertEquals(JobInfo.NETWORK_BYTES_UNKNOWN, ji.getEstimatedNetworkUploadBytes());
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
     }

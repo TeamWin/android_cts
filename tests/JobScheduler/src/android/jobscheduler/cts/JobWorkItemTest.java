@@ -17,6 +17,7 @@
 package android.jobscheduler.cts;
 
 import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
 import android.app.job.JobWorkItem;
 import android.content.Intent;
 import android.jobscheduler.MockJobService;
@@ -36,12 +37,27 @@ public class JobWorkItemTest extends BaseJobSchedulerTest {
         assertEquals(TEST_INTENT, jwi.getIntent());
         assertEquals(JobInfo.NETWORK_BYTES_UNKNOWN, jwi.getEstimatedNetworkDownloadBytes());
         assertEquals(JobInfo.NETWORK_BYTES_UNKNOWN, jwi.getEstimatedNetworkUploadBytes());
+        assertEquals(JobInfo.NETWORK_BYTES_UNKNOWN, jwi.getMinimumNetworkChunkBytes());
         // JobWorkItem hasn't been scheduled yet. Delivery count should be 0.
         assertEquals(0, jwi.getDeliveryCount());
     }
 
     public void testItemWithEstimatedBytes() {
         JobWorkItem jwi = new JobWorkItem(TEST_INTENT, 10, 20);
+
+        try {
+            new JobWorkItem(TEST_INTENT, -10, 20);
+            fail("Successfully created JobWorkItem with negative download bytes value");
+        } catch (IllegalArgumentException expected) {
+            // Success
+        }
+
+        try {
+            new JobWorkItem(TEST_INTENT, 10, -20);
+            fail("Successfully created JobWorkItem with negative upload bytes value");
+        } catch (IllegalArgumentException expected) {
+            // Success
+        }
 
         assertEquals(TEST_INTENT, jwi.getIntent());
         assertEquals(10, jwi.getEstimatedNetworkDownloadBytes());
@@ -96,7 +112,7 @@ public class JobWorkItemTest extends BaseJobSchedulerTest {
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setOverrideDeadline(0)
                 .build();
-        JobWorkItem jwi = new JobWorkItem(TEST_INTENT, 10, 20);
+        JobWorkItem jwi = new JobWorkItem(TEST_INTENT);
         // JobWorkItem hasn't been scheduled yet. Delivery count should be 0.
         assertEquals(0, jwi.getDeliveryCount());
 
@@ -111,5 +127,73 @@ public class JobWorkItemTest extends BaseJobSchedulerTest {
         List<JobWorkItem> executedJWIs = kTestEnvironment.getLastReceivedWork();
         assertEquals(1, executedJWIs.size());
         assertEquals(1, executedJWIs.get(0).getDeliveryCount());
+    }
+
+    public void testScheduleItemWithNetworkInfoAndNoNetworkConstraint_download() {
+        JobWorkItem jwi = new JobWorkItem(TEST_INTENT, 10, JobInfo.NETWORK_BYTES_UNKNOWN);
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setOverrideDeadline(0)
+                .build();
+        try {
+            mJobScheduler.enqueue(jobInfo, jwi);
+            fail("Successfully scheduled JobWorkItem with network implication"
+                    + " and job with no network constraint");
+        } catch (IllegalArgumentException expected) {
+            // Success
+        }
+    }
+
+    public void testScheduleItemWithNetworkInfoAndNoNetworkConstraint_upload() {
+        JobWorkItem jwi = new JobWorkItem(TEST_INTENT, JobInfo.NETWORK_BYTES_UNKNOWN, 10);
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setOverrideDeadline(0)
+                .build();
+        try {
+            mJobScheduler.enqueue(jobInfo, jwi);
+            fail("Successfully scheduled JobWorkItem with network implication"
+                    + " and job with no network constraint");
+        } catch (IllegalArgumentException expected) {
+            // Success
+        }
+    }
+
+    public void testScheduleItemWithNetworkInfoAndNoNetworkConstraint_minimumChunk() {
+        JobWorkItem jwi = new JobWorkItem(TEST_INTENT,
+                JobInfo.NETWORK_BYTES_UNKNOWN, JobInfo.NETWORK_BYTES_UNKNOWN, 10);
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setOverrideDeadline(0)
+                .build();
+        try {
+            mJobScheduler.enqueue(jobInfo, jwi);
+            fail("Successfully scheduled JobWorkItem with network implication"
+                    + " and job with no network constraint");
+        } catch (IllegalArgumentException expected) {
+            // Success
+        }
+    }
+
+    public void testScheduleItemWithNetworkInfoAndNoNetworkConstraint() {
+        JobWorkItem jwi = new JobWorkItem(TEST_INTENT, 10, 10, 10);
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setOverrideDeadline(0)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_NONE)
+                .build();
+        try {
+            mJobScheduler.enqueue(jobInfo, jwi);
+            fail("Successfully scheduled JobWorkItem with network implication"
+                    + " and job with no network constraint");
+        } catch (IllegalArgumentException expected) {
+            // Success
+        }
+    }
+
+    public void testScheduleItemWithNetworkInfoAndNetworkConstraint() {
+        JobWorkItem jwi = new JobWorkItem(TEST_INTENT,
+                JobInfo.NETWORK_BYTES_UNKNOWN, JobInfo.NETWORK_BYTES_UNKNOWN, 10);
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setOverrideDeadline(0)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .build();
+        assertEquals(JobScheduler.RESULT_SUCCESS, mJobScheduler.enqueue(jobInfo, jwi));
     }
 }

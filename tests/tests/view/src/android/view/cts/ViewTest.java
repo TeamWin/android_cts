@@ -1744,6 +1744,7 @@ public class ViewTest {
     @Test
     public void testSetEnabled_receiveEvent() throws Throwable {
         final View mockView = mActivity.findViewById(R.id.mock_view);
+        mInstrumentation.getUiAutomation().waitForIdle(2000, 4000);
         mInstrumentation.getUiAutomation().executeAndWaitForEvent(
                 () -> mInstrumentation.runOnMainSync(() -> {
                     mockView.setEnabled(!mockView.isEnabled());

@@ -3969,6 +3969,38 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    public void testAutoDataSwitchPolicy() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_DATA));
+
+        ShellIdentityUtils.ShellPermissionMethodHelper<Boolean, TelephonyManager> getPolicyHelper =
+                (tm) -> tm.isMobileDataPolicyEnabled(
+                        TelephonyManager.MOBILE_DATA_POLICY_AUTO_DATA_SWITCH);
+
+        boolean autoDatSwitchAllowed = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, getPolicyHelper);
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabled(
+                        TelephonyManager.MOBILE_DATA_POLICY_AUTO_DATA_SWITCH,
+                        !autoDatSwitchAllowed));
+
+        waitForMs(500);
+        assertNotEquals(autoDatSwitchAllowed,
+                ShellIdentityUtils.invokeMethodWithShellPermissions(
+                        mTelephonyManager, getPolicyHelper));
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabled(
+                        TelephonyManager.MOBILE_DATA_POLICY_AUTO_DATA_SWITCH,
+                        autoDatSwitchAllowed));
+
+        waitForMs(500);
+        assertEquals(autoDatSwitchAllowed,
+                ShellIdentityUtils.invokeMethodWithShellPermissions(
+                        mTelephonyManager, getPolicyHelper));
+    }
+
+    @Test
     public void testGetCdmaEnhancedRoamingIndicatorDisplayNumber() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_CDMA));
 

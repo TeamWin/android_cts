@@ -18,6 +18,7 @@ package android.companion.cts.uiautomation
 
 import android.companion.cts.common.MAC_ADDRESS_A
 import android.content.ComponentName
+import android.content.pm.PackageManager.FEATURE_AUTOMOTIVE
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlin.test.assertFailsWith
@@ -33,6 +34,7 @@ import org.junit.runner.RunWith
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 @RunWith(AndroidJUnit4::class)
 class RequestNotificationsTest : UiAutomationTestBase(null, null) {
+    private val isAuto: Boolean by lazy { pm.hasSystemFeature(FEATURE_AUTOMOTIVE) }
 
     @Test
     fun test_requestNotifications() {
@@ -46,8 +48,11 @@ class RequestNotificationsTest : UiAutomationTestBase(null, null) {
 
         cdm.requestNotificationAccess(
             ComponentName(instrumentation.targetContext, NotificationListener::class.java))
-
-        confirmationUi.waitUntilNotificationVisible()
+        if (isAuto) {
+            confirmationUi.waitUntilNotificationVisible(isAuto = true)
+        } else {
+            confirmationUi.waitUntilNotificationVisible()
+        }
     }
 
     override fun tearDown() {

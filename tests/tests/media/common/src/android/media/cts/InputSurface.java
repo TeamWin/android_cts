@@ -269,7 +269,8 @@ public class InputSurface implements InputSurfaceInterface {
         // If the Surface is resized to be larger, the new portions will be black, so
         // clearing to something other than black may look weird unless we do the clear
         // post-resize.
-        InputSurface win = new InputSurface(surface, false /* release */);
+        InputSurface win = new InputSurface(surface, /* release */ false,
+                /* useHighBitDepth */ false);
         win.makeCurrent();
         GLES20.glClearColor(0, 0, 0, 0);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);

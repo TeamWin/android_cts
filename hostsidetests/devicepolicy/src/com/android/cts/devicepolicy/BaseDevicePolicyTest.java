@@ -190,6 +190,10 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     private static final String VERIFY_CREDENTIAL_CONFIRMATION = "Lock credential verified";
 
+    public boolean skipDeviceAdminFeatureCheck() {
+        return mSkipDeviceAdminFeatureCheck;
+    }
+
     @Rule
     public final DeviceAdminFeaturesCheckerRule mFeaturesCheckerRule =
             new DeviceAdminFeaturesCheckerRule(this);
@@ -197,11 +201,6 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     @Before
     public void setUp() throws Exception {
         assertNotNull(getBuild());  // ensure build has been set before test is run.
-
-        if (!mSkipDeviceAdminFeatureCheck) {
-            // TODO(b/177965931): STOPSHIP must integrate mSkipDeviceAdminFeatureCheck into
-            // DeviceAdminFeaturesCheckerRule
-        }
 
         mSupportsMultiUser = getMaxNumberOfUsersSupported() > 1;
         mFixedPackages = getDevice().getInstalledPackageNames();

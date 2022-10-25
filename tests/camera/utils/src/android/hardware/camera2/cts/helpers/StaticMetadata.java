@@ -18,6 +18,7 @@ package android.hardware.camera2.cts.helpers;
 
 import static android.hardware.camera2.cts.helpers.AssertHelpers.assertArrayContainsAnyOf;
 
+import android.graphics.ColorSpace;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.hardware.camera2.CameraCharacteristics;
@@ -27,6 +28,7 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.cts.CameraTestUtils;
 import android.hardware.camera2.params.Capability;
+import android.hardware.camera2.params.ColorSpaceProfiles;
 import android.hardware.camera2.params.DynamicRangeProfiles;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.util.ArraySet;
@@ -78,7 +80,7 @@ public class StaticMetadata {
 
     // Last defined capability enum, for iterating over all of them
     public static final int LAST_CAPABILITY_ENUM =
-            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_STREAM_USE_CASE;
+            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_COLOR_SPACE_PROFILES;
 
     // Access via getAeModeName() to account for vendor extensions
     public static final String[] AE_MODE_NAMES = new String[] {
@@ -813,6 +815,22 @@ public class StaticMetadata {
         }
 
         return profiles.getSupportedProfiles();
+    }
+
+    /**
+     * Get and check the available data spaces.
+     *
+     * @return the available data spaces
+     */
+    public Set<ColorSpace.Named> getAvailableColorSpacesChecked(int imageFormat) {
+        ColorSpaceProfiles colorSpaceProfiles = mCharacteristics.get(
+                CameraCharacteristics.REQUEST_AVAILABLE_COLOR_SPACE_PROFILES);
+
+        if (colorSpaceProfiles == null) {
+            return new ArraySet<ColorSpace.Named>();
+        }
+
+        return colorSpaceProfiles.getSupportedColorSpaces(imageFormat);
     }
 
     /**

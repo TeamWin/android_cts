@@ -36,6 +36,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.BitmapRegionDecoder;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorSpace;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.PixelFormat;
@@ -261,6 +262,288 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 BufferFormatTestParam params = new BufferFormatTestParam(
                         ImageFormat.YCBCR_P010, /*repeating*/false);
                 params.mDynamicRangeProfile = DynamicRangeProfiles.HLG10;
+                bufferFormatTestByCamera(params);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    @Test
+    public void testDisplayP3Yuv() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                if (!mAllStaticInfo.get(id).isCapabilitySupported(CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_COLOR_SPACE_PROFILES)) {
+                    continue;
+                }
+                Set<ColorSpace.Named> availableColorSpaces =
+                        mAllStaticInfo.get(id).getAvailableColorSpacesChecked(
+                                ImageFormat.YUV_420_888);
+
+                if (!availableColorSpaces.contains(ColorSpace.Named.DISPLAY_P3)) {
+                    continue;
+                }
+
+                openDevice(id);
+                Log.v(TAG, "Testing Display P3 Yuv capture for Camera " + id);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.YUV_420_888, /*repeating*/false);
+                params.mColorSpace = ColorSpace.Named.DISPLAY_P3;
+                params.mUseColorSpace = true;
+                bufferFormatTestByCamera(params);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    @Test
+    public void testDisplayP3YuvRepeating() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                if (!mAllStaticInfo.get(id).isCapabilitySupported(CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_COLOR_SPACE_PROFILES)) {
+                    continue;
+                }
+                Set<ColorSpace.Named> availableColorSpaces =
+                        mAllStaticInfo.get(id).getAvailableColorSpacesChecked(
+                                ImageFormat.YUV_420_888);
+
+                if (!availableColorSpaces.contains(ColorSpace.Named.DISPLAY_P3)) {
+                    continue;
+                }
+
+                openDevice(id);
+                Log.v(TAG, "Testing repeating Display P3 Yuv capture for Camera " + id);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.YUV_420_888, /*repeating*/true);
+                params.mColorSpace = ColorSpace.Named.DISPLAY_P3;
+                params.mUseColorSpace = true;
+                bufferFormatTestByCamera(params);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    @Test
+    public void testDisplayP3Heic() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                if (!mAllStaticInfo.get(id).isCapabilitySupported(CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_COLOR_SPACE_PROFILES)) {
+                    continue;
+                }
+                Set<ColorSpace.Named> availableColorSpaces =
+                        mAllStaticInfo.get(id).getAvailableColorSpacesChecked(ImageFormat.HEIC);
+
+                if (!availableColorSpaces.contains(ColorSpace.Named.DISPLAY_P3)) {
+                    continue;
+                }
+
+                openDevice(id);
+                Log.v(TAG, "Testing Display P3 HEIC capture for Camera " + id);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.HEIC, /*repeating*/false);
+                params.mColorSpace = ColorSpace.Named.DISPLAY_P3;
+                params.mUseColorSpace = true;
+                bufferFormatTestByCamera(params);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    @Test
+    public void testDisplayP3HeicRepeating() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                if (!mAllStaticInfo.get(id).isCapabilitySupported(CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_COLOR_SPACE_PROFILES)) {
+                    continue;
+                }
+                Set<ColorSpace.Named> availableColorSpaces =
+                        mAllStaticInfo.get(id).getAvailableColorSpacesChecked(ImageFormat.HEIC);
+
+                if (!availableColorSpaces.contains(ColorSpace.Named.DISPLAY_P3)) {
+                    continue;
+                }
+
+                openDevice(id);
+                Log.v(TAG, "Testing repeating Display P3 HEIC capture for Camera " + id);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.HEIC, /*repeating*/true);
+                params.mColorSpace = ColorSpace.Named.DISPLAY_P3;
+                params.mUseColorSpace = true;
+                bufferFormatTestByCamera(params);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    @Test
+    public void testDisplayP3Jpeg() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                if (!mAllStaticInfo.get(id).isCapabilitySupported(CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_COLOR_SPACE_PROFILES)) {
+                    continue;
+                }
+                Set<ColorSpace.Named> availableColorSpaces =
+                        mAllStaticInfo.get(id).getAvailableColorSpacesChecked(ImageFormat.JPEG);
+
+                if (!availableColorSpaces.contains(ColorSpace.Named.DISPLAY_P3)) {
+                    continue;
+                }
+
+                openDevice(id);
+                Log.v(TAG, "Testing Display P3 JPEG capture for Camera " + id);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.JPEG, /*repeating*/false);
+                params.mColorSpace = ColorSpace.Named.DISPLAY_P3;
+                params.mUseColorSpace = true;
+                bufferFormatTestByCamera(params);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    @Test
+    public void testDisplayP3JpegRepeating() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                if (!mAllStaticInfo.get(id).isCapabilitySupported(CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_COLOR_SPACE_PROFILES)) {
+                    continue;
+                }
+                Set<ColorSpace.Named> availableColorSpaces =
+                        mAllStaticInfo.get(id).getAvailableColorSpacesChecked(ImageFormat.JPEG);
+
+                if (!availableColorSpaces.contains(ColorSpace.Named.DISPLAY_P3)) {
+                    continue;
+                }
+
+                openDevice(id);
+                Log.v(TAG, "Testing repeating Display P3 JPEG capture for Camera " + id);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.JPEG, /*repeating*/true);
+                params.mColorSpace = ColorSpace.Named.DISPLAY_P3;
+                params.mUseColorSpace = true;
+                bufferFormatTestByCamera(params);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    @Test
+    public void testDCIP3Jpeg() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                if (!mAllStaticInfo.get(id).isCapabilitySupported(CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_COLOR_SPACE_PROFILES)) {
+                    continue;
+                }
+                Set<ColorSpace.Named> availableColorSpaces =
+                        mAllStaticInfo.get(id).getAvailableColorSpacesChecked(ImageFormat.JPEG);
+
+                if (!availableColorSpaces.contains(ColorSpace.Named.DCI_P3)) {
+                    continue;
+                }
+
+                openDevice(id);
+                Log.v(TAG, "Testing DCI-P3 JPEG capture for Camera " + id);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.JPEG, /*repeating*/false);
+                params.mColorSpace = ColorSpace.Named.DCI_P3;
+                params.mUseColorSpace = true;
+                bufferFormatTestByCamera(params);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    @Test
+    public void testDCIP3JpegRepeating() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                if (!mAllStaticInfo.get(id).isCapabilitySupported(CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_COLOR_SPACE_PROFILES)) {
+                    continue;
+                }
+                Set<ColorSpace.Named> availableColorSpaces =
+                        mAllStaticInfo.get(id).getAvailableColorSpacesChecked(ImageFormat.JPEG);
+
+                if (!availableColorSpaces.contains(ColorSpace.Named.DCI_P3)) {
+                    continue;
+                }
+
+                openDevice(id);
+                Log.v(TAG, "Testing repeating DCI-P3 JPEG capture for Camera " + id);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.JPEG, /*repeating*/true);
+                params.mColorSpace = ColorSpace.Named.DCI_P3;
+                params.mUseColorSpace = true;
+                bufferFormatTestByCamera(params);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    @Test
+    public void testSRGBJpeg() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                if (!mAllStaticInfo.get(id).isCapabilitySupported(CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_COLOR_SPACE_PROFILES)) {
+                    continue;
+                }
+                Set<ColorSpace.Named> availableColorSpaces =
+                        mAllStaticInfo.get(id).getAvailableColorSpacesChecked(ImageFormat.JPEG);
+
+                if (!availableColorSpaces.contains(ColorSpace.Named.SRGB)) {
+                    continue;
+                }
+
+                openDevice(id);
+                Log.v(TAG, "Testing sRGB JPEG capture for Camera " + id);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.JPEG, /*repeating*/false);
+                params.mColorSpace = ColorSpace.Named.SRGB;
+                params.mUseColorSpace = true;
+                bufferFormatTestByCamera(params);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    @Test
+    public void testSRGBJpegRepeating() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                if (!mAllStaticInfo.get(id).isCapabilitySupported(CameraCharacteristics
+                            .REQUEST_AVAILABLE_CAPABILITIES_COLOR_SPACE_PROFILES)) {
+                    continue;
+                }
+                Set<ColorSpace.Named> availableColorSpaces =
+                        mAllStaticInfo.get(id).getAvailableColorSpacesChecked(ImageFormat.JPEG);
+
+                if (!availableColorSpaces.contains(ColorSpace.Named.SRGB)) {
+                    continue;
+                }
+
+                openDevice(id);
+                Log.v(TAG, "Testing repeating sRGB JPEG capture for Camera " + id);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.JPEG, /*repeating*/true);
+                params.mColorSpace = ColorSpace.Named.SRGB;
+                params.mUseColorSpace = true;
                 bufferFormatTestByCamera(params);
             } finally {
                 closeDevice(id);
@@ -1243,14 +1526,14 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         startCapture(request, REPEATING, listener, mHandler);
 
         // Validate images and capture results.
-        validateImage(SIZE, FORMAT, NUM_FRAME_VERIFIED, REPEATING);
+        validateImage(SIZE, FORMAT, NUM_FRAME_VERIFIED, REPEATING, /*colorSpace*/ null);
         validateCaptureResult(FORMAT, SIZE, listener, NUM_FRAME_VERIFIED);
 
         // Discard free buffers.
         mReader.discardFreeBuffers();
 
         // Validate images and capture resulst again.
-        validateImage(SIZE, FORMAT, NUM_FRAME_VERIFIED, REPEATING);
+        validateImage(SIZE, FORMAT, NUM_FRAME_VERIFIED, REPEATING, /*colorSpace*/ null);
         validateCaptureResult(FORMAT, SIZE, listener, NUM_FRAME_VERIFIED);
 
         // Stop repeating request in preparation for discardFreeBuffers
@@ -1268,7 +1551,7 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         // Do a single capture for camera device to reallocate buffers
         mListener.reset();
         startCapture(request, SINGLE, listener, mHandler);
-        validateImage(SIZE, FORMAT, /*captureCount*/1, SINGLE);
+        validateImage(SIZE, FORMAT, /*captureCount*/ 1, SINGLE, /*colorSpace*/ null);
     }
 
     private class BufferFormatTestParam {
@@ -1280,6 +1563,8 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         public boolean mValidateImageData = true;
         public String mPhysicalId = null;
         public long mDynamicRangeProfile = DynamicRangeProfiles.STANDARD;
+        public ColorSpace.Named mColorSpace;
+        public boolean mUseColorSpace = false;
         public int mTimestampBase = OutputConfiguration.TIMESTAMP_BASE_DEFAULT;
 
         BufferFormatTestParam(int format, boolean repeating) {
@@ -1363,6 +1648,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                     config.setPhysicalCameraId(physicalId);
                 }
                 config.setDynamicRangeProfile(params.mDynamicRangeProfile);
+                if (params.mUseColorSpace) {
+                    config.setColorSpace(params.mColorSpace);
+                }
                 config.setTimestampBase(params.mTimestampBase);
                 outputConfigs.add(config);
                 CaptureRequest request = prepareCaptureRequestForConfigs(
@@ -1380,7 +1668,11 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
 
                 if (validateImageData) {
                     // Validate images.
-                    validateImage(sz, format, numFrameVerified, repeating);
+                    ColorSpace colorSpace = null;
+                    if (params.mUseColorSpace) {
+                        colorSpace = ColorSpace.get(params.mColorSpace);
+                    }
+                    validateImage(sz, format, numFrameVerified, repeating, colorSpace);
                 }
 
                 // Validate capture result.
@@ -1562,8 +1854,8 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
-    private void validateImage(Size sz, int format, int captureCount,  boolean repeating)
-            throws Exception {
+    private void validateImage(Size sz, int format, int captureCount,  boolean repeating,
+            ColorSpace colorSpace) throws Exception {
         // TODO: Add more format here, and wrap each one as a function.
         Image img;
         final int MAX_RETRY_COUNT = 20;
@@ -1594,7 +1886,7 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             assertNotNull("Unable to acquire the latest image", img);
             if (VERBOSE) Log.v(TAG, "Got the latest image");
             CameraTestUtils.validateImage(img, sz.getWidth(), sz.getHeight(), format,
-                    mDebugFileNameBase);
+                    mDebugFileNameBase, colorSpace);
             HardwareBuffer hwb = img.getHardwareBuffer();
             assertNotNull("Unable to retrieve the Image's HardwareBuffer", hwb);
             if (format == ImageFormat.DEPTH_JPEG) {

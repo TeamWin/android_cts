@@ -660,6 +660,7 @@ public final class CameraDeviceInfo extends DeviceInfo {
         charsKeyNames.add(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES.getName());
         charsKeyNames.add(CameraCharacteristics.REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES.getName());
         charsKeyNames.add(CameraCharacteristics.REQUEST_RECOMMENDED_TEN_BIT_DYNAMIC_RANGE_PROFILE.getName());
+        charsKeyNames.add(CameraCharacteristics.REQUEST_AVAILABLE_COLOR_SPACE_PROFILES.getName());
         charsKeyNames.add(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM.getName());
         charsKeyNames.add(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP.getName());
         charsKeyNames.add(CameraCharacteristics.SCALER_CROPPING_TYPE.getName());

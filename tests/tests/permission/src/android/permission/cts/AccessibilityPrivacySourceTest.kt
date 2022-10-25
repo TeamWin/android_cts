@@ -64,13 +64,15 @@ class AccessibilityPrivacySourceTest {
 
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context: Context = instrumentation.targetContext
-    private val mAccessibilityServiceRule =
-        InstrumentedAccessibilityServiceTestRule(AccessibilityTestService::class.java, false)
     private val permissionControllerPackage = context.packageManager.permissionControllerPackageName
     private val accessibilityTestService =
         ComponentName(context, AccessibilityTestService::class.java).flattenToString()
     private val safetyCenterIssueId = "accessibility_$accessibilityTestService"
     private val safetyCenterManager = context.getSystemService(SafetyCenterManager::class.java)
+
+    @get:Rule
+    val mAccessibilityServiceRule =
+            InstrumentedAccessibilityServiceTestRule(AccessibilityTestService::class.java, false)
 
     @get:Rule
     val deviceConfigSafetyCenterEnabled =

@@ -38,8 +38,9 @@ open class CompanionDeviceManagerUi(private val ui: UiDevice) {
 
     fun waitUntilVisible() = ui.wait(Until.hasObject(CONFIRMATION_UI), "CDM UI has not appeared.")
 
-    fun waitUntilNotificationVisible() = ui.wait(
-        Until.hasObject(NOTIFICATION_UI), "NOTIFICATION UI has not appeared.")
+    fun waitUntilNotificationVisible(isAuto: Boolean = false) = ui.wait(
+        if (isAuto) Until.hasObject(NOTIFICATION_UI_AUTO) else Until.hasObject(NOTIFICATION_UI),
+        "NOTIFICATION UI has not appeared.")
 
     fun waitUntilGone() = ui.waitShort(Until.gone(CONFIRMATION_UI), "CDM UI has not disappeared")
 
@@ -72,12 +73,15 @@ open class CompanionDeviceManagerUi(private val ui: UiDevice) {
     companion object {
         private const val PACKAGE_NAME = "com.android.companiondevicemanager"
         private const val NOTIFICATION_PACKAGE_NAME = "com.android.settings"
+        private const val NOTIFICATION_PACKAGE_NAME_AUTO = "com.android.car.settings"
 
         private val CONFIRMATION_UI = By.pkg(PACKAGE_NAME)
                 .res(PACKAGE_NAME, "activity_confirmation")
         private val ASSOCIATION_REVOKE_APP_UI = By.pkg(ASSOCIATION_REVOKE_APP_NAME).depth(0)
 
         private val NOTIFICATION_UI = By.pkg(NOTIFICATION_PACKAGE_NAME).depth(0)
+
+        private val NOTIFICATION_UI_AUTO = By.pkg(NOTIFICATION_PACKAGE_NAME_AUTO).depth(0)
 
         private val CLICKABLE_BUTTON =
                 By.pkg(PACKAGE_NAME).clazz(".Button").clickable(true)

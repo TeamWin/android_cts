@@ -18,6 +18,7 @@ package android.hardware.camera2.cts;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.ColorSpace;
 import android.graphics.ImageFormat;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -2358,6 +2359,11 @@ public class CameraTestUtils extends Assert {
         }
     }
 
+    public static void validateImage(Image image, int width, int height, int format,
+            String filePath) {
+        validateImage(image, width, height, format, filePath, /*colorSpace*/ null);
+    }
+
 
     /**
      * Validate image based on format and size.
@@ -2368,10 +2374,11 @@ public class CameraTestUtils extends Assert {
      * @param format The image format.
      * @param filePath The debug dump file path, null if don't want to dump to
      *            file.
+     * @param colorSpace The expected color space of the image, if desired (null otherwise).
      * @throws UnsupportedOperationException if calling with an unknown format
      */
     public static void validateImage(Image image, int width, int height, int format,
-            String filePath) {
+            String filePath, ColorSpace colorSpace) {
         checkImage(image, width, height, format);
 
         /**
@@ -2389,7 +2396,7 @@ public class CameraTestUtils extends Assert {
             // regular jpeg.
             case ImageFormat.DEPTH_JPEG:
             case ImageFormat.JPEG:
-                validateJpegData(data, width, height, filePath);
+                validateJpegData(data, width, height, filePath, colorSpace);
                 break;
             case ImageFormat.YCBCR_P010:
                 validateP010Data(data, width, height, format, image.getTimestamp(), filePath);
@@ -2474,6 +2481,11 @@ public class CameraTestUtils extends Assert {
     }
 
     public static void validateJpegData(byte[] jpegData, int width, int height, String filePath) {
+        validateJpegData(jpegData, width, height, filePath, /*colorSpace*/ null);
+    }
+
+    public static void validateJpegData(byte[] jpegData, int width, int height, String filePath,
+            ColorSpace colorSpace) {
         BitmapFactory.Options bmpOptions = new BitmapFactory.Options();
         // DecodeBound mode: only parse the frame header to get width/height.
         // it doesn't decode the pixel.
@@ -2484,8 +2496,17 @@ public class CameraTestUtils extends Assert {
 
         // Pixel decoding mode: decode whole image. check if the image data
         // is decodable here.
-        assertNotNull("Decoding jpeg failed",
-                BitmapFactory.decodeByteArray(jpegData, 0, jpegData.length));
+        Bitmap bitmapImage = BitmapFactory.decodeByteArray(jpegData, 0, jpegData.length);
+        assertNotNull("Decoding jpeg failed", bitmapImage);
+        if (colorSpace != null) {
+            ColorSpace bitmapColorSpace = bitmapImage.getColorSpace();
+            boolean matchingColorSpace = colorSpace.equals(bitmapColorSpace);
+            if (!matchingColorSpace) {
+                Log.e(TAG, "Expected color space:\n\t" + colorSpace);
+                Log.e(TAG, "Bitmap color space:\n\t" + bitmapColorSpace);
+            }
+            assertTrue("Color space mismatch in decoded jpeg!", matchingColorSpace);
+        }
         if (DEBUG && filePath != null) {
             String fileName =
                     filePath + "/" + width + "x" + height + ".jpeg";

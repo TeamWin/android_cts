@@ -58,7 +58,6 @@ public class RemoteControllerTest {
         MEDIA_KEY_EVENT.add(KeyEvent.KEYCODE_MEDIA_PLAY);
         MEDIA_KEY_EVENT.add(KeyEvent.KEYCODE_MEDIA_PAUSE);
         MEDIA_KEY_EVENT.add(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
-        MEDIA_KEY_EVENT.add(KeyEvent.KEYCODE_MUTE);
         MEDIA_KEY_EVENT.add(KeyEvent.KEYCODE_HEADSETHOOK);
         MEDIA_KEY_EVENT.add(KeyEvent.KEYCODE_MEDIA_STOP);
         MEDIA_KEY_EVENT.add(KeyEvent.KEYCODE_MEDIA_NEXT);

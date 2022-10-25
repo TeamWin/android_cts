@@ -16,6 +16,8 @@
 
 package android.hardware.camera2.cts;
 
+import android.graphics.ColorSpace;
+import android.graphics.ImageFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.camera2.CameraCharacteristics;
@@ -23,16 +25,22 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.params.BlackLevelPattern;
 import android.hardware.camera2.params.Capability;
+import android.hardware.camera2.params.ColorSpaceProfiles;
 import android.hardware.camera2.params.DeviceStateSensorOrientationMap;
+import android.hardware.camera2.params.DynamicRangeProfiles;
 import android.hardware.camera2.params.Face;
 import android.util.Range;
 import android.util.Size;
 
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Set;
 
 /**
  * Test CaptureRequest/Result/CameraCharacteristics.Key objects.
@@ -321,6 +329,110 @@ public class SimpleObjectsTest {
         } catch (IllegalArgumentException e) {
             // Do nothing
         }
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.hardware.camera2.params.ColorSpaceProfiles#getSupportedColorSpaces",
+            "android.hardware.camera2.params.ColorSpaceProfiles#getSupportedColorSpacesForDynamicRange",
+            "android.hardware.camera2.params.ColorSpaceProfiles#getSupportedImageFormatsForColorSpace",
+            "android.hardware.camera2.params.ColorSpaceProfiles#getSupportedDynamicRangeProfiles"})
+    public void colorSpaceProfilesTest() {
+        long[] elements = {
+                ColorSpace.Named.DISPLAY_P3.ordinal(), ImageFormat.YUV_420_888, 0
+        };
+
+        ColorSpaceProfiles colorSpaceProfiles = new ColorSpaceProfiles(elements);
+        Set<ColorSpace.Named> supportedColorSpaces =
+                colorSpaceProfiles.getSupportedColorSpaces(ImageFormat.UNKNOWN);
+        ColorSpace.Named[] arrColorSpaces = supportedColorSpaces.toArray(new ColorSpace.Named[0]);
+        Assert.assertEquals(arrColorSpaces.length, 1);
+        Assert.assertEquals(arrColorSpaces[0], ColorSpace.Named.DISPLAY_P3);
+
+        supportedColorSpaces =
+                colorSpaceProfiles.getSupportedColorSpaces(ImageFormat.YUV_420_888);
+        arrColorSpaces = supportedColorSpaces.toArray(new ColorSpace.Named[0]);
+        Assert.assertEquals(arrColorSpaces.length, 1);
+        Assert.assertEquals(arrColorSpaces[0], ColorSpace.Named.DISPLAY_P3);
+
+        // getSupportedColorSpaces should return an empty set on an unsupported image format
+        supportedColorSpaces =
+                colorSpaceProfiles.getSupportedColorSpaces(ImageFormat.PRIVATE);
+        arrColorSpaces = supportedColorSpaces.toArray(new ColorSpace.Named[0]);
+        Assert.assertEquals(arrColorSpaces.length, 0);
+
+        Set<Integer> imageFormats =
+                colorSpaceProfiles.getSupportedImageFormatsForColorSpace(
+                                ColorSpace.Named.DISPLAY_P3);
+        Integer[] arrImageFormats = imageFormats.toArray(new Integer[0]);
+        Assert.assertEquals(arrImageFormats.length, 1);
+        Assert.assertTrue(arrImageFormats[0] == ImageFormat.YUV_420_888);
+
+        // getSupportedImageFormatsForColorSpace should return an empty set on an unsupported color
+        // space
+        imageFormats =
+                colorSpaceProfiles.getSupportedImageFormatsForColorSpace(ColorSpace.Named.SRGB);
+        arrImageFormats = imageFormats.toArray(new Integer[0]);
+        Assert.assertEquals(arrImageFormats.length, 0);
+
+        Set<Long> dynamicRangeProfiles =
+                colorSpaceProfiles.getSupportedDynamicRangeProfiles(ColorSpace.Named.DISPLAY_P3,
+                        ImageFormat.UNKNOWN);
+        Long[] arrDynamicRangeProfiles = dynamicRangeProfiles.toArray(new Long[0]);
+        Assert.assertEquals(arrDynamicRangeProfiles.length, 1);
+        Assert.assertTrue(arrDynamicRangeProfiles[0] == DynamicRangeProfiles.STANDARD);
+
+        dynamicRangeProfiles =
+                colorSpaceProfiles.getSupportedDynamicRangeProfiles(ColorSpace.Named.DISPLAY_P3,
+                        ImageFormat.YUV_420_888);
+        arrDynamicRangeProfiles = dynamicRangeProfiles.toArray(new Long[0]);
+        Assert.assertEquals(arrDynamicRangeProfiles.length, 1);
+        Assert.assertTrue(arrDynamicRangeProfiles[0] == DynamicRangeProfiles.STANDARD);
+
+        // getSupportedDynamicRangeProfiles should return an empty set on an unsupported image
+        // format
+        dynamicRangeProfiles =
+                colorSpaceProfiles.getSupportedDynamicRangeProfiles(ColorSpace.Named.DISPLAY_P3,
+                        ImageFormat.PRIVATE);
+        arrDynamicRangeProfiles = dynamicRangeProfiles.toArray(new Long[0]);
+        Assert.assertEquals(arrDynamicRangeProfiles.length, 0);
+
+        // getSupportedDynamicRangeProfiles should return an empty set on an unsupported color space
+        dynamicRangeProfiles =
+                colorSpaceProfiles.getSupportedDynamicRangeProfiles(ColorSpace.Named.SRGB,
+                        ImageFormat.UNKNOWN);
+        arrDynamicRangeProfiles = dynamicRangeProfiles.toArray(new Long[0]);
+        Assert.assertEquals(arrDynamicRangeProfiles.length, 0);
+
+        supportedColorSpaces =
+                colorSpaceProfiles.getSupportedColorSpacesForDynamicRange(ImageFormat.UNKNOWN,
+                        DynamicRangeProfiles.STANDARD);
+        arrColorSpaces = supportedColorSpaces.toArray(new ColorSpace.Named[0]);
+        Assert.assertEquals(arrColorSpaces.length, 1);
+        Assert.assertEquals(arrColorSpaces[0], ColorSpace.Named.DISPLAY_P3);
+
+        supportedColorSpaces =
+                colorSpaceProfiles.getSupportedColorSpacesForDynamicRange(ImageFormat.YUV_420_888,
+                        DynamicRangeProfiles.STANDARD);
+        arrColorSpaces = supportedColorSpaces.toArray(new ColorSpace.Named[0]);
+        Assert.assertEquals(arrColorSpaces.length, 1);
+        Assert.assertEquals(arrColorSpaces[0], ColorSpace.Named.DISPLAY_P3);
+
+        // getSupportedColorSpacesForDynamicRange should return an empty set un an unsupported image
+        // format
+        supportedColorSpaces =
+                colorSpaceProfiles.getSupportedColorSpacesForDynamicRange(ImageFormat.PRIVATE,
+                        DynamicRangeProfiles.STANDARD);
+        arrColorSpaces = supportedColorSpaces.toArray(new ColorSpace.Named[0]);
+        Assert.assertEquals(arrColorSpaces.length, 0);
+
+        // getSupportedColorSpacesForDynamicRange should return an empty set un an unsupported
+        // dynamic range profile
+        supportedColorSpaces =
+                colorSpaceProfiles.getSupportedColorSpacesForDynamicRange(ImageFormat.UNKNOWN,
+                        DynamicRangeProfiles.HLG10);
+        arrColorSpaces = supportedColorSpaces.toArray(new ColorSpace.Named[0]);
+        Assert.assertEquals(arrColorSpaces.length, 0);
     }
 
 }
