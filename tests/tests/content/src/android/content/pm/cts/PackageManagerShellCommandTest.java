@@ -1770,10 +1770,12 @@ public class PackageManagerShellCommandTest {
             }
         }
         public void assertBroadcastReceived() throws Exception {
+            executeShellCommand("am wait-for-broadcast-barrier");
             assertTrue(mUserReceivedBroadcast.get(2, TimeUnit.SECONDS));
         }
         public void assertBroadcastNotReceived() throws Exception {
             try {
+                executeShellCommand("am wait-for-broadcast-barrier");
                 assertFalse(mUserReceivedBroadcast.get(2, TimeUnit.SECONDS));
             } catch (TimeoutException ignored) {
                 // expected

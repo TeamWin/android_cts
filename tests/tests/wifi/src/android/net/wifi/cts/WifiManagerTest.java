@@ -2756,98 +2756,33 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         if (!mWifiManager.isBridgedApConcurrencySupported()) {
             return;
         }
-        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        TestExecutor executor = new TestExecutor();
-        TestSoftApCallback callback = new TestSoftApCallback(mLock);
-        try {
-            uiAutomation.adoptShellPermissionIdentity();
-            // Off/On Wifi to make sure that we get the supported channel
-            turnOffWifiAndTetheredHotspotIfEnabled();
-            mWifiManager.setWifiEnabled(true);
-            PollingCheck.check(
-                "Wifi turn on failed!", 2_000,
-                () -> mWifiManager.isWifiEnabled() == true);
-            turnOffWifiAndTetheredHotspotIfEnabled();
-            verifyRegisterSoftApCallback(executor, callback);
-            int[] testBands = {SoftApConfiguration.BAND_2GHZ,
-                    SoftApConfiguration.BAND_5GHZ};
-            int[] expectedBands = {SoftApConfiguration.BAND_2GHZ,
-                    SoftApConfiguration.BAND_2GHZ | SoftApConfiguration.BAND_5GHZ};
-            // Test bridged SoftApConfiguration set and get (setBands)
-            SoftApConfiguration testSoftApConfig =
-                    generateSoftApConfigBuilderWithSsid(TEST_SSID_UNQUOTED)
-                    .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
-                    .setBands(expectedBands)
-                    .build();
-
-            boolean shouldFallbackToSingleAp = shouldFallbackToSingleAp(testBands,
-                    callback.getCurrentSoftApCapability());
-            verifySetGetSoftApConfig(testSoftApConfig);
-
-            // start tethering which used to verify startTetheredHotspot
-            mTetheringManager.startTethering(ConnectivityManager.TETHERING_WIFI, executor,
-                new TetheringManager.StartTetheringCallback() {
-                    @Override
-                    public void onTetheringFailed(final int result) {
-                    }
-                });
-            verifyBridgedModeSoftApCallback(executor, callback,
-                    shouldFallbackToSingleAp, true /* enabled */);
-            // stop tethering which used to verify stopSoftAp
-            mTetheringManager.stopTethering(ConnectivityManager.TETHERING_WIFI);
-            verifyBridgedModeSoftApCallback(executor, callback,
-                    shouldFallbackToSingleAp, false /* disabled */);
-        } finally {
-            mWifiManager.unregisterSoftApCallback(callback);
-            uiAutomation.dropShellPermissionIdentity();
-        }
-    }
-
-    /**
-     * Test bridged AP with forced channel config enable succeeful when device supports it.
-     * Also verify the callback info update correctly.
-     * @throws Exception
-     */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
-    public void testTetheredBridgedApWifiForcedChannel() throws Exception {
-        // check that softap bridged mode is supported by the device
-        if (!mWifiManager.isBridgedApConcurrencySupported()) {
-            return;
-        }
-        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        TestExecutor executor = new TestExecutor();
-        TestSoftApCallback callback = new TestSoftApCallback(mLock);
-        try {
-            uiAutomation.adoptShellPermissionIdentity();
-            // Off/On Wifi to make sure that we get the supported channel
-            turnOffWifiAndTetheredHotspotIfEnabled();
-            mWifiManager.setWifiEnabled(true);
-            PollingCheck.check(
-                "Wifi turn on failed!", 2_000,
-                () -> mWifiManager.isWifiEnabled() == true);
-            turnOffWifiAndTetheredHotspotIfEnabled();
-            verifyRegisterSoftApCallback(executor, callback);
-
-            boolean shouldFallbackToSingleAp = shouldFallbackToSingleAp(
-                    new int[] {SoftApConfiguration.BAND_2GHZ, SoftApConfiguration.BAND_5GHZ},
-                    callback.getCurrentSoftApCapability());
-
-            // Test when there are supported channels in both of the bands.
-            if (!shouldFallbackToSingleAp) {
-                // Test bridged SoftApConfiguration set and get (setChannels)
-                SparseIntArray dual_channels = new SparseIntArray(2);
-                dual_channels.put(SoftApConfiguration.BAND_2GHZ,
-                        callback.getCurrentSoftApCapability()
-                        .getSupportedChannelList(SoftApConfiguration.BAND_2GHZ)[0]);
-                dual_channels.put(SoftApConfiguration.BAND_5GHZ,
-                        callback.getCurrentSoftApCapability()
-                        .getSupportedChannelList(SoftApConfiguration.BAND_5GHZ)[0]);
+        runWithScanning(() -> {
+            UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+            TestExecutor executor = new TestExecutor();
+            TestSoftApCallback callback = new TestSoftApCallback(mLock);
+            try {
+                uiAutomation.adoptShellPermissionIdentity();
+                // Off/On Wifi to make sure that we get the supported channel
+                turnOffWifiAndTetheredHotspotIfEnabled();
+                mWifiManager.setWifiEnabled(true);
+                PollingCheck.check(
+                    "Wifi turn on failed!", 2_000,
+                    () -> mWifiManager.isWifiEnabled() == true);
+                turnOffWifiAndTetheredHotspotIfEnabled();
+                verifyRegisterSoftApCallback(executor, callback);
+                int[] testBands = {SoftApConfiguration.BAND_2GHZ,
+                        SoftApConfiguration.BAND_5GHZ};
+                int[] expectedBands = {SoftApConfiguration.BAND_2GHZ,
+                        SoftApConfiguration.BAND_2GHZ | SoftApConfiguration.BAND_5GHZ};
+                // Test bridged SoftApConfiguration set and get (setBands)
                 SoftApConfiguration testSoftApConfig =
                         generateSoftApConfigBuilderWithSsid(TEST_SSID_UNQUOTED)
                         .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
-                        .setChannels(dual_channels)
+                        .setBands(expectedBands)
                         .build();
 
+                boolean shouldFallbackToSingleAp = shouldFallbackToSingleAp(testBands,
+                        callback.getCurrentSoftApCapability());
                 verifySetGetSoftApConfig(testSoftApConfig);
 
                 // start tethering which used to verify startTetheredHotspot
@@ -2863,11 +2798,80 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 mTetheringManager.stopTethering(ConnectivityManager.TETHERING_WIFI);
                 verifyBridgedModeSoftApCallback(executor, callback,
                         shouldFallbackToSingleAp, false /* disabled */);
+            } finally {
+                mWifiManager.unregisterSoftApCallback(callback);
+                uiAutomation.dropShellPermissionIdentity();
             }
-        } finally {
-            mWifiManager.unregisterSoftApCallback(callback);
-            uiAutomation.dropShellPermissionIdentity();
+        }, false /* run with disabled */);
+    }
+
+    /**
+     * Test bridged AP with forced channel config enable succeeful when device supports it.
+     * Also verify the callback info update correctly.
+     * @throws Exception
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    public void testTetheredBridgedApWifiForcedChannel() throws Exception {
+        // check that softap bridged mode is supported by the device
+        if (!mWifiManager.isBridgedApConcurrencySupported()) {
+            return;
         }
+        runWithScanning(() -> {
+            UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+            TestExecutor executor = new TestExecutor();
+            TestSoftApCallback callback = new TestSoftApCallback(mLock);
+            try {
+                uiAutomation.adoptShellPermissionIdentity();
+                // Off/On Wifi to make sure that we get the supported channel
+                turnOffWifiAndTetheredHotspotIfEnabled();
+                mWifiManager.setWifiEnabled(true);
+                PollingCheck.check(
+                    "Wifi turn on failed!", 2_000,
+                    () -> mWifiManager.isWifiEnabled() == true);
+                turnOffWifiAndTetheredHotspotIfEnabled();
+                verifyRegisterSoftApCallback(executor, callback);
+
+                boolean shouldFallbackToSingleAp = shouldFallbackToSingleAp(
+                        new int[] {SoftApConfiguration.BAND_2GHZ, SoftApConfiguration.BAND_5GHZ},
+                        callback.getCurrentSoftApCapability());
+
+                // Test when there are supported channels in both of the bands.
+                if (!shouldFallbackToSingleAp) {
+                    // Test bridged SoftApConfiguration set and get (setChannels)
+                    SparseIntArray dual_channels = new SparseIntArray(2);
+                    dual_channels.put(SoftApConfiguration.BAND_2GHZ,
+                            callback.getCurrentSoftApCapability()
+                            .getSupportedChannelList(SoftApConfiguration.BAND_2GHZ)[0]);
+                    dual_channels.put(SoftApConfiguration.BAND_5GHZ,
+                            callback.getCurrentSoftApCapability()
+                            .getSupportedChannelList(SoftApConfiguration.BAND_5GHZ)[0]);
+                    SoftApConfiguration testSoftApConfig =
+                            generateSoftApConfigBuilderWithSsid(TEST_SSID_UNQUOTED)
+                            .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
+                            .setChannels(dual_channels)
+                            .build();
+
+                    verifySetGetSoftApConfig(testSoftApConfig);
+
+                    // start tethering which used to verify startTetheredHotspot
+                    mTetheringManager.startTethering(ConnectivityManager.TETHERING_WIFI, executor,
+                        new TetheringManager.StartTetheringCallback() {
+                            @Override
+                            public void onTetheringFailed(final int result) {
+                            }
+                        });
+                    verifyBridgedModeSoftApCallback(executor, callback,
+                            shouldFallbackToSingleAp, true /* enabled */);
+                    // stop tethering which used to verify stopSoftAp
+                    mTetheringManager.stopTethering(ConnectivityManager.TETHERING_WIFI);
+                    verifyBridgedModeSoftApCallback(executor, callback,
+                            shouldFallbackToSingleAp, false /* disabled */);
+                }
+            } finally {
+                mWifiManager.unregisterSoftApCallback(callback);
+                uiAutomation.dropShellPermissionIdentity();
+            }
+        }, false /* run with disabled */);
     }
 
     /**

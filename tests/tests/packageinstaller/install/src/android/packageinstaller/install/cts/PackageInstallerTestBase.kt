@@ -79,6 +79,8 @@ open class PackageInstallerTestBase {
         const val SYSTEM_PACKAGE_NAME = "android"
         const val APP_OP_STR = "REQUEST_INSTALL_PACKAGES"
 
+        const val PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE = "is_preapproval_available"
+
         const val TIMEOUT = 60000L
         const val INSTALL_INSTANT_APP = 0x00000800
     }

@@ -22,8 +22,8 @@ import android.companion.cts.common.sleepFor
 import android.platform.test.annotations.AppModeFull
 import kotlin.test.assertContains
 import kotlin.test.assertFalse
-import kotlin.test.fail
 import kotlin.time.Duration.Companion.seconds
+import org.junit.Assume.assumeFalse
 import org.junit.Test
 
 /**
@@ -41,14 +41,17 @@ class AssociationRevokedTest : AssociationRevokedTestBase() {
         launchAppAndConfirmationUi()
         // Press the `Allow` button.
         confirmationUi.waitUntilPositiveButtonIsEnabledAndClick()
-        // Give it 1 second for creating the association internally.
-        sleepFor(1.seconds)
+        // Check the association until the CDM UI is gone.
+        confirmationUi.waitUntilGone()
 
-        val association = withShellPermissionIdentity(MANAGE_COMPANION_DEVICES) {
-            cdm.allAssociations.find {
+        val associations = withShellPermissionIdentity(MANAGE_COMPANION_DEVICES) {
+            cdm.allAssociations.filter {
                 it.belongsToPackage(userId, packageName)
-            } ?: fail("No association for u${associationApp.userId}/${associationApp.packageName}")
+            }
         }
+        // Terminate the test if association is not created.
+        assumeFalse(associations.isEmpty())
+
         // Give it 2 seconds for the app to grant the role.
         sleepFor(2.seconds)
 
@@ -57,7 +60,7 @@ class AssociationRevokedTest : AssociationRevokedTestBase() {
             packageName, "Not a holder of $DEVICE_PROFILE_WATCH")
 
         withShellPermissionIdentity(MANAGE_COMPANION_DEVICES) {
-            cdm.disassociate(association.id)
+            cdm.disassociate(associations[0].id)
         }
 
         // Make sure the Watch Profile is not revoked after disassociate.
@@ -74,14 +77,17 @@ class AssociationRevokedTest : AssociationRevokedTestBase() {
         launchAppAndConfirmationUi()
         // Press the `Allow` button.
         confirmationUi.waitUntilPositiveButtonIsEnabledAndClick()
-        // Give it 1 second for creating the association internally.
-        sleepFor(1.seconds)
+        // Check the association until the CDM UI is gone.
+        confirmationUi.waitUntilGone()
 
-        val association = withShellPermissionIdentity(MANAGE_COMPANION_DEVICES) {
-            cdm.allAssociations.find {
+        val associations = withShellPermissionIdentity(MANAGE_COMPANION_DEVICES) {
+            cdm.allAssociations.filter {
                 it.belongsToPackage(userId, packageName)
-            } ?: fail("No association for u${associationApp.userId}/${associationApp.packageName}")
+            }
         }
+
+        // Terminate the test if association is not created.
+        assumeFalse(associations.isEmpty())
         // Give it 2 seconds for the app to grant the role.
         sleepFor(2.seconds)
 
@@ -90,7 +96,7 @@ class AssociationRevokedTest : AssociationRevokedTestBase() {
             packageName, "Not a holder of $DEVICE_PROFILE_WATCH")
 
         withShellPermissionIdentity(MANAGE_COMPANION_DEVICES) {
-            cdm.disassociate(association.id)
+            cdm.disassociate(associations[0].id)
         }
 
         // Make sure the Watch Profile is not revoked after disassociate.

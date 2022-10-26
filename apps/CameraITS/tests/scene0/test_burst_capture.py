@@ -50,8 +50,8 @@ class BurstCaptureTest(its_base_test.ItsBaseTest):
       cap = caps[0]
       img = image_processing_utils.convert_capture_to_rgb_image(
           cap, props=props)
-      name = os.path.join(self.log_path, _NAME)
-      img_name = '%s.jpg' % (name)
+      name_with_log_path = os.path.join(self.log_path, _NAME)
+      img_name = f'{name_with_log_path}.jpg'
       logging.debug('Image Name: %s', img_name)
       image_processing_utils.write_image(img, img_name)
 

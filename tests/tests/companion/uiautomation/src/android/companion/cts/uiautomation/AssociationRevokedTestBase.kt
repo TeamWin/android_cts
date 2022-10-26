@@ -27,6 +27,7 @@ import android.companion.cts.uicommon.CompanionDeviceManagerUi
 import android.content.Context
 import androidx.test.uiautomator.UiDevice
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 open class AssociationRevokedTestBase : TestBase() {
     private val roleManager: RoleManager by lazy {
@@ -63,7 +64,7 @@ open class AssociationRevokedTestBase : TestBase() {
     protected fun launchAppAndConfirmationUi() {
         val intent = appContext.packageManager.getLaunchIntentForPackage(associationApp.packageName)
         appContext.startActivity(intent)
-        confirmationUi.waitUntilVisible()
+        confirmationUi.waitUntilVisible(10.seconds)
     }
 
     protected fun getRoleHolders(profile: String): List<String> {

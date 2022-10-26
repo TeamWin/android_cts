@@ -15,8 +15,8 @@
  */
 package com.android.compatibility.tradefed;
 
+import com.android.compatibility.common.tradefed.loading.CtsConfigLoadingTest;
 import com.android.compatibility.common.tradefed.presubmit.ApkPackageNameCheck;
-import com.android.compatibility.common.tradefed.presubmit.CtsConfigLoadingTest;
 import com.android.compatibility.common.tradefed.presubmit.PresubmitSetupValidation;
 import com.android.compatibility.common.tradefed.presubmit.ValidateTestsAbi;
 
@@ -34,9 +34,12 @@ import org.junit.runners.Suite.SuiteClasses;
     // base
     CtsTradefedTest.class,
 
+    // loading test
+    CtsConfigLoadingTest.class,
+
     // presubmit
     ApkPackageNameCheck.class,
-    CtsConfigLoadingTest.class,
+
     PresubmitSetupValidation.class,
     ValidateTestsAbi.class,
 })

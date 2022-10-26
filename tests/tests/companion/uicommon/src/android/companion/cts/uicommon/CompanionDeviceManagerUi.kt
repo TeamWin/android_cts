@@ -36,7 +36,8 @@ open class CompanionDeviceManagerUi(private val ui: UiDevice) {
         waitUntilGone()
     }
 
-    fun waitUntilVisible() = ui.wait(Until.hasObject(CONFIRMATION_UI), "CDM UI has not appeared.")
+    fun waitUntilVisible(timeout: Duration = 3.seconds) = ui.wait(
+        Until.hasObject(CONFIRMATION_UI), "CDM UI has not appeared.", timeout)
 
     fun waitUntilNotificationVisible(isAuto: Boolean = false) = ui.wait(
         if (isAuto) Until.hasObject(NOTIFICATION_UI_AUTO) else Until.hasObject(NOTIFICATION_UI),

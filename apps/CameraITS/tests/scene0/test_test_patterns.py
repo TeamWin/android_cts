@@ -29,10 +29,10 @@ import its_session_utils
 _NAME = os.path.basename(__file__).split('.')[0]
 _CHECKED_PATTERNS = [1, 2, 5]  # [SOLID_COLOR, COLOR_BARS, BLACK]
 _COLOR_BAR_ORDER = ['WHITE', 'YELLOW', 'CYAN', 'GREEN', 'MAGENTA', 'RED',
-                   'BLUE', 'BLACK']
+                    'BLUE', 'BLACK']
 _COLOR_CHECKER = {'BLACK': [0, 0, 0], 'RED': [1, 0, 0], 'GREEN': [0, 1, 0],
-                 'BLUE': [0, 0, 1], 'MAGENTA': [1, 0, 1], 'CYAN': [0, 1, 1],
-                 'YELLOW': [1, 1, 0], 'WHITE': [1, 1, 1]}
+                  'BLUE': [0, 0, 1], 'MAGENTA': [1, 0, 1], 'CYAN': [0, 1, 1],
+                  'YELLOW': [1, 1, 0], 'WHITE': [1, 1, 1]}
 _CH_TOL = 2E-3  # 1/2 DN in [0:1]
 
 
@@ -123,14 +123,14 @@ def check_pattern(cap, props, pattern):
     return True
 
 
-def test_test_patterns_impl(cam, props, af_fd, name):
+def test_test_patterns_impl(cam, props, af_fd, name_with_log_path):
   """Image sensor test patterns implementation.
 
   Args:
     cam: An open device session.
     props: Properties of cam
     af_fd: Focus distance
-    name: Path to save the captured image.
+    name_with_log_path: Path to save the captured image.
   """
 
   avail_patterns = props['android.sensor.availableTestPatternModes']
@@ -149,8 +149,8 @@ def test_test_patterns_impl(cam, props, af_fd, name):
       img = image_processing_utils.convert_capture_to_rgb_image(
           cap, props=props)
       # Save pattern
-      image_processing_utils.write_image(img, '%s_%d.jpg' % (name, pattern),
-                                         True)
+      image_processing_utils.write_image(
+          img, f'{name_with_log_path}_{pattern}.jpg', True)
 
       # Check pattern for correctness
       if not check_pattern(cap, props, pattern):
@@ -189,8 +189,8 @@ class TestPatterns(its_base_test.ItsBaseTest):
 
       # For test pattern, use min_fd
       focus_distance = props['android.lens.info.minimumFocusDistance']
-      name = os.path.join(self.log_path, _NAME)
-      test_test_patterns_impl(cam, props, focus_distance, name)
+      name_with_log_path = os.path.join(self.log_path, _NAME)
+      test_test_patterns_impl(cam, props, focus_distance, name_with_log_path)
 
 if __name__ == '__main__':
   test_runner.main()

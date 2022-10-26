@@ -253,8 +253,9 @@ public class FingerprintServiceTest extends ActivityManagerTestBase
             // and do not dispatch an acquired event via BiometricPrompt
             final boolean verifyPartial = !hasUdfps();
             if (verifyPartial) {
-                if (Utils.hasAidlProvider() && testSessions.first().equals(
-                        testSessions.find(Utils.getAidlSensorId()))) {
+                final int aidlSensorId = Utils.getAidlSensorId();
+                if (aidlSensorId > 0 && testSessions.first().equals(
+                        testSessions.find(aidlSensorId))) {
                     testSessions.first().notifyAcquired(userId, 2 /* AcquiredInfo.PARTIAL */);
                 } else {
                     testSessions.first().notifyAcquired(userId,

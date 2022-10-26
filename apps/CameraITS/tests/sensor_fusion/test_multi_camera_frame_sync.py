@@ -119,9 +119,9 @@ def _plot_frame_pair_angles(frame_pair_angles, ids, name_with_log_path):
   cam0_angles = [i for i, _ in frame_pair_angles]
   cam1_angles = [j for _, j in frame_pair_angles]
   pylab.plot(range(len(cam0_angles)), cam0_angles, '-r.', alpha=0.5,
-             label='%s' % ids[0])
+             label=f'{ids[0]}')
   pylab.plot(range(len(cam1_angles)), cam1_angles, '-g.', alpha=0.5,
-             label='%s' % ids[1])
+             label=f'{ids[1]}')
   pylab.legend()
   pylab.xlabel('Frame number')
   pylab.ylabel('Rotation angle (degrees)')
@@ -130,7 +130,7 @@ def _plot_frame_pair_angles(frame_pair_angles, ids, name_with_log_path):
   matplotlib.pyplot.figure('Angle Diffs')
   angle_diffs = [j-i for i, j in frame_pair_angles]
   pylab.plot(range(len(angle_diffs)), angle_diffs, '-b.',
-             label='cam%s-%s' % (ids[1], ids[0]))
+             label=f'cam{ids[1]}-{ids[0]}')
   pylab.legend()
   pylab.xlabel('Frame number')
   pylab.ylabel('Rotation angle difference (degrees)')

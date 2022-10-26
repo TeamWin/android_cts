@@ -16,16 +16,12 @@
 
 package android.photopicker.cts;
 
-import android.Manifest;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
-import android.provider.DeviceConfig;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.uiautomator.UiDevice;
-
-import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.Before;
 
@@ -35,32 +31,31 @@ import org.junit.Before;
  */
 public class PhotoPickerBaseTest {
     public static int REQUEST_CODE = 42;
+    private static final Instrumentation sInstrumentation =
+            InstrumentationRegistry.getInstrumentation();
+    protected static final UiDevice sDevice = UiDevice.getInstance(sInstrumentation);
 
     protected GetResultActivity mActivity;
     protected Context mContext;
-    protected UiDevice mDevice;
 
     @Before
     public void setUp() throws Exception {
-        final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
-        mDevice = UiDevice.getInstance(inst);
-
         final String setSyncDelayCommand =
                 "device_config put storage pickerdb.default_sync_delay_ms 0";
-        mDevice.executeShellCommand(setSyncDelayCommand);
+        sDevice.executeShellCommand(setSyncDelayCommand);
 
-        mContext = inst.getContext();
+        mContext = sInstrumentation.getContext();
         final Intent intent = new Intent(mContext, GetResultActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
         // Wake up the device and dismiss the keyguard before the test starts
-        mDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
-        mDevice.executeShellCommand("wm dismiss-keyguard");
+        sDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        sDevice.executeShellCommand("wm dismiss-keyguard");
 
-        mActivity = (GetResultActivity) inst.startActivitySync(intent);
+        mActivity = (GetResultActivity) sInstrumentation.startActivitySync(intent);
         // Wait for the UI Thread to become idle.
-        inst.waitForIdleSync();
+        sInstrumentation.waitForIdleSync();
         mActivity.clearResult();
-        mDevice.waitForIdle();
+        sDevice.waitForIdle();
     }
 }

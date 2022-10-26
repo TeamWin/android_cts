@@ -17,14 +17,15 @@
 import logging
 import math
 import os.path
-from mobly import test_runner
-import numpy as np
 
-import its_base_test
 import camera_properties_utils
 import capture_request_utils
 import image_processing_utils
+import its_base_test
 import its_session_utils
+from mobly import test_runner
+import numpy as np
+
 
 _AWB_AUTO_ATOL = 0.10
 _AWB_AUTO_RTOL = 0.25
@@ -45,8 +46,9 @@ def extract_awb_gains_and_xform(cap, cap_name, log_path):
     awb_gains, awb_xform
   """
   img = image_processing_utils.convert_capture_to_rgb_image(cap)
-  image_processing_utils.write_image(img, '%s_%s.jpg' % (
-      os.path.join(log_path, _NAME), cap_name))
+  name_with_log_path = os.path.join(log_path, _NAME)
+  image_processing_utils.write_image(
+      img, f'{name_with_log_path}_{cap_name}.jpg')
   awb_gains = cap['metadata']['android.colorCorrection.gains']
   awb_xform = capture_request_utils.rational_to_float(
       cap['metadata']['android.colorCorrection.transform'])
@@ -125,10 +127,12 @@ class AutoVsManualTest(its_base_test.ItsBaseTest):
       for g, x in [(awb_gains_m1, awb_xform_m1), (awb_gains_m2, awb_xform_m2)]:
         if not np.allclose(awb_xform, x, atol=_AWB_MANUAL_ATOL, rtol=0):
           raise AssertionError(
-              f'awb_xform 3A: {awb_xform}, manual: {x}, ATOL={_AWB_MANUAL_ATOL}')
+              f'awb_xform 3A: {awb_xform}, '
+              f'manual: {x}, ATOL={_AWB_MANUAL_ATOL}')
         if not np.allclose(awb_gains, g, atol=_AWB_MANUAL_ATOL, rtol=0):
           raise AssertionError(
-              f'awb_gains 3A: {awb_gains}, manual: {g}, ATOL={_AWB_MANUAL_ATOL}')
+              f'awb_gains 3A: {awb_gains}, '
+              f'manual: {g}, ATOL={_AWB_MANUAL_ATOL}')
 
       # Check AWB gains & transform in auto results match values from do_3a
       if not np.allclose(awb_xform_a, awb_xform, atol=_AWB_AUTO_ATOL,

@@ -456,7 +456,7 @@ public class MockImeSession implements AutoCloseable {
         final Intent intent = new Intent();
         intent.setPackage(MockIme.getComponentName().getPackageName());
         intent.setAction(MockIme.getCommandActionName(mImeEventActionName));
-        intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
+        intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
         intent.putExtras(command.toBundle());
         return intent;
     }

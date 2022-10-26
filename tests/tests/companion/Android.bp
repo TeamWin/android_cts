@@ -69,7 +69,7 @@ android_test {
         "general-tests",
     ],
     data: [
-        ":CtsCompanionTestApp",
+        ":CompanionDeviceTestApp",
     ],
     per_testcase_directory: true,
 

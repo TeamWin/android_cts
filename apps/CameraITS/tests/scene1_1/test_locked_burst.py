@@ -16,13 +16,14 @@
 
 import logging
 import os.path
-from mobly import test_runner
 
-import its_base_test
 import camera_properties_utils
 import capture_request_utils
 import image_processing_utils
+import its_base_test
 import its_session_utils
+from mobly import test_runner
+
 
 _BURST_LEN = 8
 _COLORS = ['R', 'G', 'B']
@@ -83,10 +84,11 @@ class LockedBurstTest(its_base_test.ItsBaseTest):
       g_means = []
       b_means = []
       caps = cam.do_capture([req]*_BURST_LEN, fmt)
+      name_with_log_path = os.path.join(log_path, _NAME)
       for i, cap in enumerate(caps):
         img = image_processing_utils.convert_capture_to_rgb_image(cap)
-        image_processing_utils.write_image(img, '%s_frame%d.jpg' % (
-            os.path.join(log_path, _NAME), i))
+        image_processing_utils.write_image(
+            img, f'{name_with_log_path}_frame{i}.jpg')
         patch = image_processing_utils.get_image_patch(
             img, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
         means = image_processing_utils.compute_image_means(patch)

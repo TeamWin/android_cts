@@ -13,19 +13,19 @@
 # limitations under the License.
 """Verifies EV compensation is applied."""
 
-
 import logging
 import math
 import os.path
+
+import camera_properties_utils
+import capture_request_utils
+import image_processing_utils
+import its_base_test
+import its_session_utils
 import matplotlib
 from matplotlib import pylab
 from mobly import test_runner
 
-import its_base_test
-import camera_properties_utils
-import capture_request_utils
-import image_processing_utils
-import its_session_utils
 
 _LINEAR_TONEMAP_CURVE = [0.0, 0.0, 1.0, 1.0]
 _LOCKED = 3
@@ -144,8 +144,8 @@ class EvCompensationAdvancedTest(its_base_test.ItsBaseTest):
       pylab.xlabel('EV Compensation')
       pylab.ylabel('Mean Luma (Normalized)')
       pylab.legend(loc='lower right', numpoints=1, fancybox=True)
-      matplotlib.pyplot.savefig(
-          '%s_plot_means.png' % os.path.join(log_path, _NAME))
+      name_with_log_path = os.path.join(log_path, _NAME)
+      matplotlib.pyplot.savefig(f'{name_with_log_path}_plot_means.png')
 
       for i, luma in enumerate(lumas):
         luma_delta_atol = luma_delta_atols[i]

@@ -80,7 +80,6 @@ android_test {
         ":CtsAutoRevokeQApp",
         ":CtsAutoRevokeSApp",
         ":CtsAutoRevokeRApp",
-        ":CtsCompanionTestApp",
     ],
     per_testcase_directory: true,
 }

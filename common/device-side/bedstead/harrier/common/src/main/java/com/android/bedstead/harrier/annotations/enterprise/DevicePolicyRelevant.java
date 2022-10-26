@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package android.os.cts.companiontestapp
+package com.android.bedstead.harrier.annotations.enterprise;
 
-import android.companion.CompanionDeviceService
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-class DevicePresenceListener : CompanionDeviceService() {
-
-    override fun onDeviceAppeared(address: String) {
-        toast("Device appeared: $address")
-    }
-
-    override fun onDeviceDisappeared(address: String) {
-        toast("Device disappeared: $address")
-    }
+/**
+ * Mark that a test is relevant to enforcing device policy.
+ */
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface DevicePolicyRelevant {
+    String reason() default "";
 }

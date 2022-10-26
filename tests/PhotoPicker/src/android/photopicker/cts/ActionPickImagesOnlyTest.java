@@ -16,15 +16,15 @@
 
 package android.photopicker.cts;
 
-import static android.photopicker.cts.util.PhotoPickerAssertionsUtils.assertPersistedGrant;
-import static android.photopicker.cts.util.PhotoPickerAssertionsUtils.assertPickerUriFormat;
-import static android.photopicker.cts.util.PhotoPickerAssertionsUtils.assertRedactedReadOnlyAccess;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createImagesAndGetUris;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.deleteMedia;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.SHORT_TIMEOUT;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.clickAndWait;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findAddButton;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findItemList;
+import static android.photopicker.cts.util.ResultsAssertionsUtils.assertPersistedGrant;
+import static android.photopicker.cts.util.ResultsAssertionsUtils.assertPickerUriFormat;
+import static android.photopicker.cts.util.ResultsAssertionsUtils.assertRedactedReadOnlyAccess;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -36,7 +36,9 @@ import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Intent;
 import android.net.Uri;
+import android.photopicker.cts.util.UiAssertionUtils;
 import android.provider.MediaStore;
+import android.util.Log;
 
 import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.UiObject;
@@ -55,6 +57,7 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
 
+    private static final String TAG = "ActionPickImagesOnlyTest";
     private List<Uri> mUriList = new ArrayList<>();
 
     @After
@@ -66,6 +69,24 @@ public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
 
         if (mActivity != null) {
             mActivity.finish();
+        }
+    }
+
+    @Test
+    public void testPhotoPickerIntentDelegation() throws Exception {
+        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+
+        for (String mimeType: new String[] {
+                null,
+                "image/*",
+                "video/*"
+        }) {
+            Log.d(TAG, "Testing Photo Picker intent delegation with MimeType " + mimeType);
+            intent.setType(mimeType);
+
+            mActivity.startActivityForResult(Intent.createChooser(intent, TAG), REQUEST_CODE);
+
+            UiAssertionUtils.assertThatShowsPickerUi();
         }
     }
 
@@ -102,10 +123,10 @@ public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
         assertThat(itemCount).isEqualTo(imageCount);
         // Select maxCount + 1 item
         for (int i = 0; i < itemCount; i++) {
-            clickAndWait(mDevice, itemList.get(i));
+            clickAndWait(sDevice, itemList.get(i));
         }
 
-        UiObject snackbarTextView = mDevice.findObject(new UiSelector().text(
+        UiObject snackbarTextView = sDevice.findObject(new UiSelector().text(
                 "Select up to 2 items"));
         assertWithMessage("Timed out while waiting for snackbar to appear").that(
                 snackbarTextView.waitForExists(SHORT_TIMEOUT)).isTrue();
@@ -113,7 +134,7 @@ public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
         assertWithMessage("Timed out waiting for snackbar to disappear").that(
                 snackbarTextView.waitUntilGone(SHORT_TIMEOUT)).isTrue();
 
-        clickAndWait(mDevice, findAddButton());
+        clickAndWait(sDevice, findAddButton());
 
         final ClipData clipData = mActivity.getResult().data.getClipData();
         final int count = clipData.getItemCount();
@@ -132,7 +153,7 @@ public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
         final int itemCount = itemList.size();
         assertThat(itemCount).isEqualTo(imageCount);
         // Select 1 item
-        clickAndWait(mDevice, itemList.get(0));
+        clickAndWait(sDevice, itemList.get(0));
 
         final Uri uri = mActivity.getResult().data.getData();
         assertPickerUriFormat(uri, mContext.getUserId());

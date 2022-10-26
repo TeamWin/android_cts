@@ -16,13 +16,14 @@
 
 import logging
 import os
-from mobly import test_runner
 
-import its_base_test
 import camera_properties_utils
 import capture_request_utils
+import its_base_test
 import its_session_utils
+from mobly import test_runner
 import target_exposure_utils
+
 
 _AE_INACTIVE = 0
 _AE_SEARCHING = 1
@@ -84,7 +85,7 @@ class AePrecaptureTest(its_base_test.ItsBaseTest):
       caps = cam.do_capture(manual_reqs, fmt)
       for i, cap in enumerate(caps):
         state = cap['metadata']['android.control.aeState']
-        msg = 'AE state after manual request %d: %d' % (i, state)
+        msg = f'AE state after manual request {i}: {state}'
         logging.debug('%s', msg)
         if state != _AE_INACTIVE:
           raise AssertionError(f'{msg} AE_INACTIVE: {_AE_INACTIVE}')
@@ -95,7 +96,7 @@ class AePrecaptureTest(its_base_test.ItsBaseTest):
       auto_req['android.control.aeMode'] = _AE_SEARCHING
       cap = cam.do_capture(auto_req, fmt)
       state = cap['metadata']['android.control.aeState']
-      msg = 'AE state after auto request: %d' % state
+      msg = f'AE state after auto request: {state}'
       logging.debug('%s', msg)
       if state not in [_AE_SEARCHING, _AE_CONVERGED]:
         raise AssertionError(f'{msg} AE_SEARCHING: {_AE_SEARCHING}, '
@@ -106,7 +107,7 @@ class AePrecaptureTest(its_base_test.ItsBaseTest):
       auto_req['android.control.aePrecaptureTrigger'] = _START_AE_PRECAP_TRIG
       cap = cam.do_capture(auto_req, fmt)
       state = cap['metadata']['android.control.aeState']
-      msg = 'AE state after auto request with precapture trigger: %d' % state
+      msg = f'AE state after auto request with precapture trigger: {state}'
       logging.debug('%s', msg)
       if state not in [_AE_SEARCHING, _AE_CONVERGED, _AE_PRECAPTURE]:
         raise AssertionError(f'{msg} AE_SEARCHING: {_AE_SEARCHING}, '
@@ -119,7 +120,7 @@ class AePrecaptureTest(its_base_test.ItsBaseTest):
       for _ in range(_ITERATIONS_TO_CONVERGE):
         caps = cam.do_capture([auto_req] * _FRAMES_PER_ITERATION, fmt)
         state = caps[-1]['metadata']['android.control.aeState']
-        msg = 'AE state after auto request: %d' % state
+        msg = f'AE state after auto request: {state}'
         logging.debug('%s', msg)
         if state == _AE_CONVERGED:
           return

@@ -25,6 +25,7 @@ android_test {
         "android.test.base",
     ],
     static_libs: [
+        "androidx.test.core",
         "compatibility-device-util-axt",
         "ctsdeviceutillegacy-axt",
         "ctstestserver",

@@ -54,6 +54,7 @@ class GyroBiasTest(its_base_test.ItsBaseTest):
       time.sleep(5)
       gyro_events = cam.get_sensor_events()['gyro']
 
+    name_with_log_path = os.path.join(self.log_path, _NAME)
     nevents = (len(gyro_events) // _N) * _N
     gyro_events = gyro_events[:nevents]
     times = numpy.array([(e['time'] - gyro_events[0]['time'])*_NSEC_TO_SEC
@@ -79,12 +80,12 @@ class GyroBiasTest(its_base_test.ItsBaseTest):
     pylab.plot(times, zs, 'b', label='z')
     pylab.title(_NAME)
     pylab.xlabel('Time (seconds)')
-    pylab.ylabel('Gyro readings (mean of %d samples)'%(_N))
+    pylab.ylabel(f'Gyro readings (mean of {_N} samples)')
     pylab.ylim([y_min, y_max])
     pylab.ticklabel_format(axis='y', style='sci', scilimits=(-3, -3))
     pylab.legend()
     logging.debug('Saving plot')
-    matplotlib.pyplot.savefig('%s_plot.png' % os.path.join(self.log_path, _NAME))
+    matplotlib.pyplot.savefig(f'{name_with_log_path}_plot.png')
 
     for samples in [xs, ys, zs]:
       mean = samples.mean()

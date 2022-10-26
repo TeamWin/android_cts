@@ -117,6 +117,7 @@ android_test {
         ":CtsAppThatRequestsMultiplePermissionsWithMinMaxSdk",
         ":CtsAppThatRequestsSystemAlertWindow22",
         ":CtsAppThatRequestsSystemAlertWindow23",
+        ":CtsAppThatRequestCustomCameraPermission",
     ],
     per_testcase_directory: true,
 }

@@ -18,7 +18,9 @@ package android.packageinstaller.install.cts
 
 import android.content.pm.PackageInstaller
 import android.platform.test.annotations.AppModeFull
+import android.provider.DeviceConfig
 import androidx.test.runner.AndroidJUnit4
+import com.android.compatibility.common.util.SystemUtil
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
@@ -248,5 +250,67 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
         val result = getInstallSessionResult()
         assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
         assertInstalled()
+    }
+
+    @Test
+    fun requestUserPreapproval_featureDisabled_statusFailureBlocked() {
+        val config = getDeviceProperty(PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE)
+        setDeviceProperty(PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE, "false")
+
+        try {
+            val (sessionId, session) = createSession(0 /* flags */, false /* isMultiPackage */,
+                    null /* packageSource */)
+            startRequestUserPreapproval(session, preparePreapprovalDetails(),
+                    false /* expectedPrompt */)
+
+            val result = getInstallSessionResult()
+            assertEquals(PackageInstaller.STATUS_FAILURE_BLOCKED, result.status)
+        } finally {
+            setDeviceProperty(PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE, config)
+        }
+    }
+
+    @Test
+    fun requestUserPreapproval_featureDisabled_couldUseCommitInstead() {
+        val config = getDeviceProperty(PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE)
+        setDeviceProperty(PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE, "false")
+
+        try {
+            val (sessionId, session) = createSession(0 /* flags */, false /* isMultiPackage */,
+                    null /* packageSource */)
+            startRequestUserPreapproval(session, preparePreapprovalDetails(),
+                    false /* expectedPrompt */)
+
+            // request should be failed
+            getInstallSessionResult()
+
+            writeSession(session, TEST_APK_NAME)
+            startInstallationViaPreapprovalSession(session)
+            // Since requestUserPreapproval isn't allowed, the installers should be able to use
+            // typical install flow instead.
+            var result = getInstallSessionResult()
+            assertEquals(PackageInstaller.STATUS_PENDING_USER_ACTION, result.status)
+
+            clickInstallerUIButton(INSTALL_BUTTON_ID)
+
+            result = getInstallSessionResult()
+            assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
+            assertInstalled()
+        } finally {
+            setDeviceProperty(PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE, config)
+        }
+    }
+
+    private fun getDeviceProperty(name: String): String? {
+        return SystemUtil.callWithShellPermissionIdentity {
+            DeviceConfig.getProperty(DeviceConfig.NAMESPACE_PACKAGE_MANAGER_SERVICE, name)
+        }
+    }
+
+    private fun setDeviceProperty(name: String, value: String?) {
+        SystemUtil.callWithShellPermissionIdentity {
+            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PACKAGE_MANAGER_SERVICE, name, value,
+                    false /* makeDefault */)
+        }
     }
 }

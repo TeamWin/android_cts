@@ -92,7 +92,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
 
         Assume.assumeTrue(getBoolean("sys.photopicker.pickerdb.enabled", true));
 
-        mDevice.executeShellCommand("setprop sys.photopicker.remote_preview true");
+        sDevice.executeShellCommand("setprop sys.photopicker.remote_preview true");
         Assume.assumeTrue(getBoolean("sys.photopicker.remote_preview", true));
 
         mCloudPrimaryMediaGenerator = PickerProviderMediaGenerator.getMediaGenerator(
@@ -134,7 +134,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
         // TODO(b/215187981): Add test for onMediaPause()
 
         // Exit preview mode
-        mDevice.pressBack();
+        sDevice.pressBack();
 
         // Remote Preview calls onSurfaceDestroyed, check if the id is the same (as the
         // CloudMediaProvider is only rendering to one surface id)
@@ -354,7 +354,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
                 + "retriable error")
                 .that(findPreviewErrorAlertDialogRetryButton().waitForExists(SHORT_TIMEOUT))
                 .isTrue();
-        clickAndWait(mDevice, findPreviewErrorAlertDialogRetryButton());
+        clickAndWait(sDevice, findPreviewErrorAlertDialogRetryButton());
         mAssertInOrder.verify(mSurfaceControllerListener).onMediaPlay(eq(surfaceId));
     }
 
@@ -402,12 +402,12 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
 
         for (final UiObject item : itemList) {
             item.click();
-            mDevice.waitForIdle();
+            sDevice.waitForIdle();
         }
 
         final UiObject viewSelectedButton = findViewSelectedButton();
         viewSelectedButton.click();
-        mDevice.waitForIdle();
+        sDevice.waitForIdle();
 
         // Wait for CloudMediaProvider binder calls to finish.
         MediaStore.waitForIdle(mContext.getContentResolver());
@@ -419,20 +419,20 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
     }
 
     private void swipeLeftAndWait() throws Exception {
-        final int width = mDevice.getDisplayWidth();
-        final int height = mDevice.getDisplayHeight();
-        mDevice.swipe(width / 2, height / 2, width / 4, height / 2, 10);
-        mDevice.waitForIdle();
+        final int width = sDevice.getDisplayWidth();
+        final int height = sDevice.getDisplayHeight();
+        sDevice.swipe(width / 2, height / 2, width / 4, height / 2, 10);
+        sDevice.waitForIdle();
 
         // Wait for CloudMediaProvider binder calls to finish.
         MediaStore.waitForIdle(mContext.getContentResolver());
     }
 
     private void swipeRightAndWait() throws Exception {
-        final int width = mDevice.getDisplayWidth();
-        final int height = mDevice.getDisplayHeight();
-        mDevice.swipe(width / 4, height / 2, width / 2, height / 2, 10);
-        mDevice.waitForIdle();
+        final int width = sDevice.getDisplayWidth();
+        final int height = sDevice.getDisplayHeight();
+        sDevice.swipe(width / 4, height / 2, width / 2, height / 2, 10);
+        sDevice.waitForIdle();
 
         // Wait for CloudMediaProvider binder calls to finish.
         MediaStore.waitForIdle(mContext.getContentResolver());

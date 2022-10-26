@@ -13,16 +13,16 @@
 # limitations under the License.
 """Verifies converted YUV images & device JPEG images look the same."""
 
-
 import logging
 import os.path
-from mobly import test_runner
 
-import its_base_test
 import camera_properties_utils
 import capture_request_utils
 import image_processing_utils
+import its_base_test
 import its_session_utils
+from mobly import test_runner
+
 
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _PATCH_H = 0.1  # center 10%
@@ -32,23 +32,24 @@ _PATCH_Y = 0.5 - _PATCH_H/2
 _THRESHOLD_MAX_RMS_DIFF = 0.01
 
 
-def compute_img_means_and_save(img, img_name, log_path):
+def compute_img_means_and_save(img, fmt_name, log_path):
   """Extract center patch, compute means, and save image.
 
   Args:
     img: image array
-    img_name: text to identify image
+    fmt_name: text to identify image
     log_path: location to save image
 
   Returns:
     means of image patch
   """
+  name_with_log_path = os.path.join(log_path, _NAME)
   image_processing_utils.write_image(
-      img, '%s_fmt=%s.jpg' % (os.path.join(log_path, _NAME), img_name))
+      img, f'{name_with_log_path}_fmt={fmt_name}.jpg')
   patch = image_processing_utils.get_image_patch(
       img, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
   rgb_means = image_processing_utils.compute_image_means(patch)
-  logging.debug('%s rgb_means: %s', img_name, str(rgb_means))
+  logging.debug('%s rgb_means: %s', fmt_name, str(rgb_means))
   return rgb_means
 
 

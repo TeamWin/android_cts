@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--s
- * Copyright (C) 2020 The Android Open Source Project
+<!--
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.os.cts.companiontestapp">
+          package="android.companion.cts.companiondevicetestapp">
 
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -35,7 +35,7 @@
     <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="30" />
 
     <application android:label="Sample Companion App">
-        <activity android:name="android.os.cts.companiontestapp.CompanionTestAppMainActivity"
+        <activity android:name="android.os.cts.companiondevicetestapp.CompanionDeviceTestAppActivity"
                   android:exported="true"
                   android:visibleToInstantApps="true" >
             <intent-filter>
@@ -45,7 +45,7 @@
         </activity>
 
         <service
-            android:name=".NotificationListener"
+            android:name="android.os.cts.companiondevicetestapp.NotificationListener"
             android:exported="true"
             android:label="Notification Listener Service"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
@@ -55,7 +55,7 @@
         </service>
 
         <service
-            android:name=".DevicePresenceListener"
+            android:name="android.os.cts.companiondevicetestapp.DevicePresenceListener"
             android:exported="true"
             android:label="Presence Listener Service"
             android:permission="android.permission.BIND_COMPANION_DEVICE_SERVICE">

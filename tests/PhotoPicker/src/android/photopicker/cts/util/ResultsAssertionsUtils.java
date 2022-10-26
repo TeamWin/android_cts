@@ -46,9 +46,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Photo Picker Utility methods for test assertions.
+ * Photo Picker Utility methods for PhotoPicker result assertions.
  */
-public class PhotoPickerAssertionsUtils {
+public class ResultsAssertionsUtils {
     private static final String TAG = "PhotoPickerTestAssertions";
 
     public static void assertPickerUriFormat(Uri uri, int expectedUserId) {

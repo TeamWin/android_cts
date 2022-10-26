@@ -16,6 +16,7 @@
 package android.app.cts
 
 import android.R
+import android.app.ActivityManager
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.Person
@@ -35,6 +36,7 @@ import androidx.annotation.ColorInt
 import androidx.test.filters.SmallTest
 import com.android.compatibility.common.util.CddTest
 import com.google.common.truth.Truth.assertThat
+import kotlin.math.min
 import kotlin.test.assertFailsWith
 
 class NotificationTemplateTest : NotificationTemplateTestBase() {
@@ -289,6 +291,7 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
         }
     }
 
+    @CddTest(requirement = "3.8.3.1/C-2-1")
     fun testBigPictureStyle_bigPictureUriIcon() {
         if (isPlatformAutomotive()) {
             Log.i(TAG, "Skipping: testBigPictureStyle_bigPictureUriIcon" +
@@ -304,8 +307,18 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
         checkViews(builder.createBigContentView()) {
             val pictureView = requireViewByIdName<ImageView>("big_picture")
             assertThat(pictureView.visibility).isEqualTo(View.VISIBLE)
-            assertThat(pictureView.drawable.intrinsicWidth).isEqualTo(400)
-            assertThat(pictureView.drawable.intrinsicHeight).isEqualTo(300)
+
+            var expectedWidth = min(400, bigPictureWidth())
+            var expectedHeight = min(300, bigPictureWidth() * 3 / 4)
+            // It's possible that big picture width is configured smaller than we expect here.
+            // In that situation, we need to flip the expected size.
+            if (bigPictureHeight() < expectedHeight) {
+                expectedHeight = bigPictureHeight()
+                expectedWidth = bigPictureHeight() * 4 / 3
+            }
+
+            assertThat(pictureView.drawable.intrinsicWidth).isEqualTo(expectedWidth)
+            assertThat(pictureView.drawable.intrinsicHeight).isEqualTo(expectedHeight)
         }
     }
 
@@ -846,8 +859,34 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
     }
 
     private fun rightIconSize(): Int {
-        return mContext.resources.getDimensionPixelSize(
-            getAndroidRDimen("notification_right_icon_size"))
+        return mContext.resources.getDimensionPixelSize(getAndroidRDimen(
+                if (isLowRamDevice()) {
+                    "notification_right_icon_size_low_ram"
+                } else {
+                    "notification_right_icon_size"
+                }))
+    }
+
+    private fun bigPictureWidth(): Int {
+        return mContext.resources.getDimensionPixelSize(getAndroidRDimen(
+                if (isLowRamDevice()) {
+                    "notification_big_picture_max_width_low_ram"
+                } else {
+                    "notification_big_picture_max_width"
+                }))
+    }
+
+    private fun bigPictureHeight(): Int {
+        return mContext.resources.getDimensionPixelSize(getAndroidRDimen(
+                if (isLowRamDevice()) {
+                    "notification_big_picture_max_width_low_ram"
+                } else {
+                    "notification_big_picture_max_width"
+                }))
+    }
+
+    private fun isLowRamDevice(): Boolean {
+        return mContext.getSystemService(ActivityManager::class.java).isLowRamDevice()
     }
 
     private fun isPlatformAutomotive(): Boolean {

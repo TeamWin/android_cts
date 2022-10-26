@@ -92,8 +92,12 @@ class CameraMicIndicatorsPermissionTest {
 
     private val isTv = packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
     private val isCar = packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
-    private val micLabel = getPermissionControllerString(MIC_LABEL_NAME)
-    private val cameraLabel = getPermissionControllerString(CAMERA_LABEL_NAME)
+    private val safetyCenterMicLabel = getPermissionControllerString(MIC_LABEL_NAME)
+    private val safetyCenterCameraLabel = getPermissionControllerString(CAMERA_LABEL_NAME)
+    private val cameraLabel = packageManager.getPermissionGroupInfo(
+        Manifest.permission_group.CAMERA, 0).loadLabel(packageManager).toString().toLowerCase()
+    private val micLabel = packageManager.getPermissionGroupInfo(
+        Manifest.permission_group.MICROPHONE, 0).loadLabel(packageManager).toString().toLowerCase()
     private var wasEnabled = false
     private var isScreenOn = false
     private var screenTimeoutBeforeTest: Long = 0L
@@ -120,8 +124,6 @@ class CameraMicIndicatorsPermissionTest {
             Settings.System.putLong(
                 context.contentResolver, Settings.System.SCREEN_OFF_TIMEOUT, 1800000L
             )
-            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY,
-                SAFETY_CENTER_ENABLED, false.toString(), false)
         }
 
         if (!isScreenOn) {
@@ -405,22 +407,28 @@ class CameraMicIndicatorsPermissionTest {
                 return@eventually
             }
             if (useMic) {
+                var micIdentifier: String
                 var iconView = if (safetyCenterEnabled) {
-                    waitFindObjectOrNull(By.text(micLabel))
+                    micIdentifier = safetyCenterMicLabel
+                    waitFindObject(By.text(micIdentifier))
                 } else {
-                    uiDevice.findObject(UiSelector().descriptionContains(micLabel))
+                    micIdentifier = micLabel
+                    waitFindObject(By.descContains(micIdentifier))
                 }
-                assertNotNull("View with description $micLabel not found", iconView)
+                assertNotNull("View with text/description $micIdentifier not found", iconView)
             }
             if (useCamera) {
+                var camIdentifier: String
                 var iconView = if (safetyCenterEnabled) {
-                    waitFindObjectOrNull(By.text(cameraLabel))
+                    camIdentifier = safetyCenterCameraLabel
+                    waitFindObject(By.text(camIdentifier))
                 } else {
-                    uiDevice.findObject(UiSelector().descriptionContains(cameraLabel))
+                    camIdentifier = cameraLabel
+                    waitFindObject(By.descContains(camIdentifier))
                 }
-                assertNotNull("View with text $APP_LABEL not found", iconView)
+                assertNotNull("View with text/description $camIdentifier not found", iconView)
             }
-            var appView = waitFindObjectOrNull(By.textContains(APP_LABEL))
+            var appView = waitFindObject(By.textContains(APP_LABEL))
             assertNotNull("View with text $APP_LABEL not found", appView)
             if (safetyCenterEnabled) {
                 assertTrue("Did not find safety center views",
@@ -454,11 +462,11 @@ class CameraMicIndicatorsPermissionTest {
         }
 
         if (safetyCenterEnabled) {
-            var micView = waitFindObjectOrNull(By.text(micLabel))
+            var micView = waitFindObject(By.text(safetyCenterMicLabel))
             assertNotNull("View with text $micLabel not found", micView)
-            var camView = waitFindObjectOrNull(By.text(cameraLabel))
+            var camView = waitFindObject(By.text(safetyCenterCameraLabel))
             assertNotNull("View with text $cameraLabel not found", camView)
-            var shellView = waitFindObjectOrNull(By.textContains(shellLabel))
+            var shellView = waitFindObject(By.textContains(shellLabel))
             assertNotNull("View with text $shellLabel not found", shellView)
         } else {
             val usageViews = uiDevice.findObjects(By.res(PRIVACY_ITEM_ID))
@@ -499,9 +507,9 @@ class CameraMicIndicatorsPermissionTest {
         assumeTrue(isSafetyCenterEnabled)
     }
 
-    protected fun waitFindObjectOrNull(selector: BySelector): UiObject2? {
+    protected fun waitFindObject(selector: BySelector): UiObject2? {
         waitForIdle()
-        return findObjectWithRetry({ t -> UiAutomatorUtils.waitFindObjectOrNull(selector, t) })
+        return findObjectWithRetry({ t -> UiAutomatorUtils.waitFindObject(selector, t) })
     }
 
     private fun findObjectWithRetry(

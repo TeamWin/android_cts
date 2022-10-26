@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2020 The Android Open Source Project
+// Copyright (C) 2022 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,20 +19,19 @@ package {
 }
 
 android_test_helper_app {
-    name: "CtsCompanionTestApp",
-    defaults: ["cts_defaults"],
-    sdk_version: "test_current",
-    static_libs: [
-        "compatibility-device-util-axt"
+    name: "CtsAppThatRequestCustomCameraPermission",
+    defaults: [
+        "cts_defaults",
+        "mts-target-sdk-version-current",
     ],
+    min_sdk_version: "30",
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "vts",
-        "vts10",
-        "mts-permission",
-        "general-tests",
+        "mts",
         "sts",
+        "general-tests",
     ],
-    srcs: ["src/**/*.java", "src/**/*.kt"],
+    srcs: ["src/**/*.java"],
+    resource_dirs: ["res"],
 }

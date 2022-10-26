@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.compatibility.common.tradefed.presubmit;
+package com.android.compatibility.common.tradefed.loading;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -41,8 +41,11 @@ import com.android.tradefed.testtype.HostTest;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 import com.android.tradefed.testtype.suite.ITestSuite;
+import com.android.tradefed.testtype.suite.TestSuiteInfo;
 import com.android.tradefed.testtype.suite.params.ModuleParameters;
 import com.android.tradefed.util.FileUtil;
+
+import com.google.common.base.Strings;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -61,7 +64,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Test that configuration in CTS can load and have expected properties.
+ * Test that configuration in *TS can load and have expected properties.
  */
 @RunWith(JUnit4.class)
 public class CtsConfigLoadingTest {
@@ -194,8 +197,12 @@ public class CtsConfigLoadingTest {
      */
     @Test
     public void testConfigurationLoad() throws Exception {
-        String ctsRoot = System.getProperty("CTS_ROOT");
-        File testcases = new File(ctsRoot, "/android-cts/testcases/");
+        String rootVar = String.format("%s_ROOT", getSuiteName().toUpperCase());
+        String suiteRoot = System.getProperty(rootVar);
+        if (Strings.isNullOrEmpty(suiteRoot)) {
+            fail(String.format("Should run within a suite context: %s doesn't exist", rootVar));
+        }
+        File testcases = new File(suiteRoot, String.format("/android-%s/testcases/", getSuiteName().toLowerCase()));
         if (!testcases.exists()) {
             fail(String.format("%s does not exists", testcases));
             return;
@@ -204,12 +211,12 @@ public class CtsConfigLoadingTest {
         assertTrue(listConfigs.size() > 0);
         // Create a FolderBuildInfo to similate the CompatibilityBuildProvider
         FolderBuildInfo stubFolder = new FolderBuildInfo("-1", "-1");
-        stubFolder.setRootDir(new File(ctsRoot));
-        stubFolder.addBuildAttribute(CompatibilityBuildHelper.SUITE_NAME, "CTS");
-        stubFolder.addBuildAttribute("ROOT_DIR", ctsRoot);
+        stubFolder.setRootDir(new File(suiteRoot));
+        stubFolder.addBuildAttribute(CompatibilityBuildHelper.SUITE_NAME, getSuiteName().toUpperCase());
+        stubFolder.addBuildAttribute("ROOT_DIR", suiteRoot);
         TestInformation stubTestInfo = TestInformation.newBuilder()
                 .setInvocationContext(new InvocationContext()).build();
-        stubTestInfo.executionFiles().put(FilesKey.TESTS_DIRECTORY, new File(ctsRoot));
+        stubTestInfo.executionFiles().put(FilesKey.TESTS_DIRECTORY, new File(suiteRoot));
 
         List<String> missingMandatoryParameters = new ArrayList<>();
         // We expect to be able to load every single config in testcases/
@@ -243,7 +250,7 @@ public class CtsConfigLoadingTest {
                            throw new ConfigurationException(
                                    String.format("%s: %s needs to be configured with "
                                            + "<option name=\"force-skip-system-props\" "
-                                           + "value=\"true\" /> in CTS.",
+                                           + "value=\"true\" /> in *TS.",
                                                  config.getName(), prep.getClass()));
                        }
                     }
@@ -260,7 +267,7 @@ public class CtsConfigLoadingTest {
                 if (!SUPPORTED_CTS_TEST_TYPE.contains(test.getClass().getCanonicalName())) {
                     throw new ConfigurationException(
                             String.format(
-                                    "testtype %s is not officially supported by CTS. "
+                                    "testtype %s is not officially supported by *TS. "
                                             + "The supported ones are: %s",
                                     test.getClass().getCanonicalName(), SUPPORTED_CTS_TEST_TYPE));
                 }
@@ -342,11 +349,12 @@ public class CtsConfigLoadingTest {
             // Check that specified tokens are expected
             checkTokens(config.getName(), cd.getMetaData(ITestSuite.TOKEN_KEY));
 
+            String suiteName = getSuiteName().toLowerCase();
             // Ensure each CTS module is tagged with <option name="test-suite-tag" value="cts" />
             Assert.assertTrue(String.format(
                     "Module config %s does not contains "
-                    + "'<option name=\"test-suite-tag\" value=\"cts\" />'", config.getName()),
-                    cd.getSuiteTags().contains("cts"));
+                    + "'<option name=\"test-suite-tag\" value=\"%s\" />'", config.getName(), suiteName),
+                    cd.getSuiteTags().contains(suiteName));
 
             // Check not-shardable: JarHostTest cannot create empty shards so it should never need
             // to be not-shardable.
@@ -443,5 +451,9 @@ public class CtsConfigLoadingTest {
                     String.format("%s: Contains some virtualenv python lib usage but no "
                             + "tracking bug to import them as source.", config.getName()));
         }
+    }
+
+    private String getSuiteName() {
+        return TestSuiteInfo.getInstance().getName();
     }
 }

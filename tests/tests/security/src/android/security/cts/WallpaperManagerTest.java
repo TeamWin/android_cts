@@ -76,7 +76,9 @@ public class WallpaperManagerTest extends StsExtraBusinessLogicTestCase {
 
     @After
     public void tearDown() throws Exception {
-        mWallpaperManager.clear(WallpaperManager.FLAG_SYSTEM | WallpaperManager.FLAG_LOCK);
+        if (mWallpaperManager != null) {
+            mWallpaperManager.clear(WallpaperManager.FLAG_SYSTEM | WallpaperManager.FLAG_LOCK);
+        }
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
     }

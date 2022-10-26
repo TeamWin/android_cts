@@ -20,11 +20,11 @@ import static android.os.SystemProperties.getBoolean;
 import static android.photopicker.cts.PickerProviderMediaGenerator.MediaGenerator;
 import static android.photopicker.cts.PickerProviderMediaGenerator.setCloudProvider;
 import static android.photopicker.cts.PickerProviderMediaGenerator.syncCloudProvider;
-import static android.photopicker.cts.util.PhotoPickerAssertionsUtils.assertRedactedReadOnlyAccess;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createImagesAndGetUris;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.deleteMedia;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findAddButton;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findItemList;
+import static android.photopicker.cts.util.ResultsAssertionsUtils.assertRedactedReadOnlyAccess;
 import static android.provider.MediaStore.PickerMediaColumns;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -374,12 +374,12 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
         for (int i = 0; i < itemList.size(); i++) {
             final UiObject item = itemList.get(i);
             item.click();
-            mDevice.waitForIdle();
+            sDevice.waitForIdle();
         }
 
         final UiObject addButton = findAddButton();
         addButton.click();
-        mDevice.waitForIdle();
+        sDevice.waitForIdle();
 
         return mActivity.getResult().data.getClipData();
     }

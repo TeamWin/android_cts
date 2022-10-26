@@ -1369,7 +1369,8 @@ public final class MockIme extends InputMethodService {
                     .setPackage(mClientPackageName)
                     .putExtras(event.toBundle())
                     .addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY
-                            | Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS);
+                            | Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS
+                            | Intent.FLAG_RECEIVER_FOREGROUND);
             mIme.sendBroadcast(intent);
         }
 

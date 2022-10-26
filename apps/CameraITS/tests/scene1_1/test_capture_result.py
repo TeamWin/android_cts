@@ -13,32 +13,32 @@
 # limitations under the License.
 """Verifies valid data return from CaptureResult objects."""
 
-
 import logging
 import os.path
+
+import camera_properties_utils
+import capture_request_utils
+# required for 3D plots
+import its_base_test
+import its_session_utils
 import matplotlib.pyplot
 from mobly import test_runner
 # mplot3 is required for 3D plots in draw_lsc_plot() though not called directly.
-from mpl_toolkits import mplot3d  # pylint: disable=unused-import
+from mpl_toolkits import mplot3d
 import numpy as np
 
-# required for 3D plots
-import its_base_test
-import camera_properties_utils
-import capture_request_utils
-import its_session_utils
 
 _AWB_GAINS_NUM = 4
 _AWB_XFORM_NUM = 9
 _ISCLOSE_ATOL = 0.05  # not for absolute ==, but if something grossly wrong
 _MANUAL_AWB_GAINS = [1, 1.5, 2.0, 3.0]
 _MANUAL_AWB_XFORM = capture_request_utils.float_to_rational([-1.5, -1.0, -0.5,
-                                                            0.0, 0.5, 1.0,
-                                                            1.5, 2.0, 3.0])
+                                                             0.0, 0.5, 1.0,
+                                                             1.5, 2.0, 3.0])
 # The camera HAL may not support different gains for two G channels.
 _MANUAL_GAINS_OK = [[1, 1.5, 2.0, 3.0],
-                   [1, 1.5, 1.5, 3.0],
-                   [1, 2.0, 2.0, 3.0]]
+                    [1, 1.5, 1.5, 3.0],
+                    [1, 2.0, 2.0, 3.0]]
 _MANUAL_TONEMAP = [0, 0, 1, 1]  # Linear tonemap
 _MANUAL_REGION = [{'x': 8, 'y': 8, 'width': 128, 'height': 128, 'weight': 1}]
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -51,6 +51,7 @@ def is_close_rational(n1, n2):
 
 
 def draw_lsc_plot(lsc_map_w, lsc_map_h, lsc_map, name, log_path):
+  """Creates Lens Shading Correction plot."""
   for ch in range(4):
     fig = matplotlib.pyplot.figure()
     ax = fig.gca(projection='3d')
@@ -58,9 +59,10 @@ def draw_lsc_plot(lsc_map_w, lsc_map_h, lsc_map, name, log_path):
     ys = np.array([[i]*lsc_map_w for i in range(lsc_map_h)]).reshape(
         lsc_map_h, lsc_map_w)
     zs = np.array(lsc_map[ch::4]).reshape(lsc_map_h, lsc_map_w)
+    name_with_log_path = os.path.join(log_path, _NAME)
     ax.plot_wireframe(xs, ys, zs)
-    matplotlib.pyplot.savefig('%s_plot_lsc_%s_ch%d.png' % (
-        os.path.join(log_path, _NAME), name, ch))
+    matplotlib.pyplot.savefig(
+        f'{name_with_log_path}_plot_lsc_{name}_ch{ch}.png')
 
 
 def metadata_checks(metadata, props):
@@ -194,9 +196,11 @@ def test_manual(cam, props, log_path):
   awb_gains = metadata['android.colorCorrection.gains']
   awb_xform = metadata['android.colorCorrection.transform']
   if not (all([np.isclose(awb_gains[i], _MANUAL_GAINS_OK[0][i],
-                          atol=_ISCLOSE_ATOL) for i in range(_AWB_GAINS_NUM)]) or
+                          atol=_ISCLOSE_ATOL)
+               for i in range(_AWB_GAINS_NUM)]) or
           all([np.isclose(awb_gains[i], _MANUAL_GAINS_OK[1][i],
-                          atol=_ISCLOSE_ATOL) for i in range(_AWB_GAINS_NUM)]) or
+                          atol=_ISCLOSE_ATOL)
+               for i in range(_AWB_GAINS_NUM)]) or
           all([np.isclose(awb_gains[i], _MANUAL_GAINS_OK[2][i],
                           atol=_ISCLOSE_ATOL) for i in range(_AWB_GAINS_NUM)])):
     raise AssertionError('request/capture mismatch in AWB gains! '

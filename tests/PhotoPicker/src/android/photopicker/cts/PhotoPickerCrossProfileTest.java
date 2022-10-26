@@ -16,14 +16,14 @@
 
 package android.photopicker.cts;
 
-import static android.photopicker.cts.util.PhotoPickerAssertionsUtils.assertPickerUriFormat;
-import static android.photopicker.cts.util.PhotoPickerAssertionsUtils.assertRedactedReadOnlyAccess;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createImagesAndGetUris;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.deleteMedia;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.SHORT_TIMEOUT;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findAddButton;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findItemList;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findProfileButton;
+import static android.photopicker.cts.util.ResultsAssertionsUtils.assertPickerUriFormat;
+import static android.photopicker.cts.util.ResultsAssertionsUtils.assertRedactedReadOnlyAccess;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -90,7 +90,7 @@ public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
         // Click the profile button to change to personal profile
         final UiObject profileButton = findProfileButton();
         profileButton.click();
-        mDevice.waitForIdle();
+        sDevice.waitForIdle();
 
         final List<UiObject> itemList = findItemList(imageCount);
         final int itemCount = itemList.size();
@@ -98,12 +98,12 @@ public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
         for (int i = 0; i < itemCount; i++) {
             final UiObject item = itemList.get(i);
             item.click();
-            mDevice.waitForIdle();
+            sDevice.waitForIdle();
         }
 
         final UiObject addButton = findAddButton();
         addButton.click();
-        mDevice.waitForIdle();
+        sDevice.waitForIdle();
 
         final ClipData clipData = mActivity.getResult().data.getClipData();
         final int count = clipData.getItemCount();
@@ -144,7 +144,7 @@ public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
         // Click the profile button to change to work profile
         final UiObject profileButton = findProfileButton();
         profileButton.click();
-        mDevice.waitForIdle();
+        sDevice.waitForIdle();
 
         assertBlockedByAdminDialog(isInvokedFromWorkProfile);
     }

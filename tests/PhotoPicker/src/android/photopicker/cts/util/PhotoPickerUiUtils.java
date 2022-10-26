@@ -95,16 +95,47 @@ public class PhotoPickerUiUtils {
     }
 
     public static void findAndClickBrowse(UiDevice uiDevice) throws Exception {
-        assertWithMessage("Timed out waiting for overflow menu to appear")
-                .that(new UiObject(new UiSelector().description("More options"))
-                        .waitForExists(SHORT_TIMEOUT))
-                .isTrue();
-
-        final UiObject overflowMenu = new UiObject(new UiSelector().description("More options"));
+        final UiObject overflowMenu = getOverflowMenuObject(uiDevice);
         clickAndWait(uiDevice, overflowMenu);
 
         final UiObject browseButton = new UiObject(new UiSelector().textContains("Browse"));
         clickAndWait(uiDevice, browseButton);
+    }
+
+    public static UiObject findSettingsOverflowMenuItem(UiDevice uiDevice) throws Exception {
+        final UiObject overflowMenu = getOverflowMenuObject(uiDevice);
+        clickAndWait(uiDevice, overflowMenu);
+        return new UiObject(new UiSelector().textContains("Settings"));
+    }
+
+    public static UiObject getOverflowMenuObject(UiDevice uiDevice)  {
+        // Wait for overflow menu to appear.
+        verifyOverflowMenuExists(uiDevice);
+        return new UiObject(new UiSelector().description("More options"));
+    }
+
+    public static void verifyActionBarExists(UiDevice uiDevice) {
+        assertWithMessage("Timed out waiting for action bar to appear")
+                .that(new UiObject(new UiSelector()
+                        .resourceIdMatches(REGEX_PACKAGE_NAME + ":id/action_bar"))
+                        .waitForExists(TIMEOUT))
+                .isTrue();
+    }
+
+    private static void verifyOverflowMenuExists(UiDevice uiDevice) {
+        assertWithMessage("Timed out waiting for overflow menu to appear")
+                .that(new UiObject(new UiSelector().description("More options"))
+                        .waitForExists(TIMEOUT))
+                .isTrue();
+    }
+
+    public static void verifySettingsActivityIsVisible(UiDevice uiDevice) {
+        // id/settings_activity_root is the root layout in activity_photo_picker_settings.xml
+        assertWithMessage("Timed out waiting for settings activity to appear")
+                .that(new UiObject(new UiSelector()
+                .resourceIdMatches(REGEX_PACKAGE_NAME + ":id/settings_activity_root"))
+                .waitForExists(TIMEOUT))
+                .isTrue();
     }
 
     public static void clickAndWait(UiDevice uiDevice, UiObject uiObject) throws Exception {

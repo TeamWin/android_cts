@@ -53,8 +53,6 @@ public class Utils {
     private static final String KEYSTORE_PROVIDER = "AndroidKeyStore";
     private static final String AIDL_HAL_PATTERN = ", provider: FingerprintProvider";
 
-    private static String sFingerprintDumpSys;
-
     /** adb command for dumping the biometric proto */
     public static final String DUMPSYS_BIOMETRIC = "dumpsys biometric --proto";
 
@@ -301,24 +299,14 @@ public class Utils {
      * @return sensorId if there is AIDL HAL, -1 otherwise
      */
     public static int getAidlSensorId() {
-        if (!hasAidlProvider()) {
-            return -1;
-        }
-        return Integer.parseInt(sFingerprintDumpSys.substring(
-                sFingerprintDumpSys.indexOf(AIDL_HAL_PATTERN) - 1,
-                sFingerprintDumpSys.indexOf(AIDL_HAL_PATTERN)));
-    }
+        final byte[] dump = executeShellCommand("dumpsys fingerprint");
+        final String fpsDumpSys = new String(dump, StandardCharsets.UTF_8);
+        final int indexOfAidlProvider = fpsDumpSys.indexOf(AIDL_HAL_PATTERN);
 
-    /**
-     * Retrieves AIDL HAL through `adb shell dumpsys fingerprint`
-     *
-     * @return true if there is AIDL HAL, false otherwise
-     */
-    public static boolean hasAidlProvider() {
-        if (sFingerprintDumpSys == null) {
-            final byte[] dump = executeShellCommand("dumpsys fingerprint");
-            sFingerprintDumpSys = new String(dump, StandardCharsets.UTF_8);
+        if (indexOfAidlProvider > 0) {
+            return Integer.parseInt(
+                    fpsDumpSys.substring(indexOfAidlProvider - 1, indexOfAidlProvider));
         }
-        return sFingerprintDumpSys.contains(AIDL_HAL_PATTERN);
+        return indexOfAidlProvider /* -1 No AIDL HAL */;
     }
 }

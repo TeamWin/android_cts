@@ -44,7 +44,7 @@ ARDUINO_SERVO_SPEED_MAX = 255
 ARDUINO_SERVO_SPEED_MIN = 1
 ARDUINO_SPEED_START_BYTE = 253
 ARDUINO_START_BYTE = 255
-ARDUINO_START_NUM_TRYS = 3
+ARDUINO_START_NUM_TRYS = 5
 ARDUINO_TEST_CMD = (b'\x01', b'\x02', b'\x03')
 ARDUINO_VALID_CH = ('1', '2', '3', '4', '5', '6')
 ARDUINO_VIDS = (0x2341, 0x2a03)
@@ -206,6 +206,8 @@ def establish_serial_comm(port):
     else:
       logging.debug(' Arduino comm established after %d try(s)', trys)
       break
+  else:
+    raise AssertionError(f'Arduino comm not established after {trys} tries')
 
 
 def convert_to_hex(cmd):

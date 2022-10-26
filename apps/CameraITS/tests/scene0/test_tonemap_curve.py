@@ -29,11 +29,11 @@ import its_session_utils
 _NAME = os.path.basename(__file__).split('.')[0]
 _COLOR_BAR_PATTERN = 2  # Note scene0/test_test_patterns must PASS
 _COLOR_BARS = ['WHITE', 'YELLOW', 'CYAN', 'GREEN', 'MAGENTA', 'RED',
-              'BLUE', 'BLACK']
+               'BLUE', 'BLACK']
 _N_BARS = len(_COLOR_BARS)
 _COLOR_CHECKER = {'BLACK': [0, 0, 0], 'RED': [1, 0, 0], 'GREEN': [0, 1, 0],
-                 'BLUE': [0, 0, 1], 'MAGENTA': [1, 0, 1], 'CYAN': [0, 1, 1],
-                 'YELLOW': [1, 1, 0], 'WHITE': [1, 1, 1]}
+                  'BLUE': [0, 0, 1], 'MAGENTA': [1, 0, 1], 'CYAN': [0, 1, 1],
+                  'YELLOW': [1, 1, 0], 'WHITE': [1, 1, 1]}
 _DELTA = 0.005  # crop on each edge of color bars
 _RAW_TOL = 0.001  # 1 DN in [0:1] (1/(1023-64)
 _RGB_VAR_TOL = 0.0039  # 1/255
@@ -122,7 +122,7 @@ def check_raw_pattern(img_raw):
     raise AssertionError('RAW _COLOR_BARS test pattern does not have all colors')
 
 
-def check_yuv_vs_raw(img_raw, img_yuv, name, debug):
+def check_yuv_vs_raw(img_raw, img_yuv, name_with_log_path, debug):
   """Checks for YUV vs RAW match in 8 patches.
 
   Check for correct values and color consistency
@@ -130,7 +130,7 @@ def check_yuv_vs_raw(img_raw, img_yuv, name, debug):
   Args:
     img_raw: RAW image
     img_yuv: YUV image
-    name: string for test name with path
+    name_with_log_path: string for test name with path
     debug: boolean to log additional information
   """
   logging.debug('Checking YUV/RAW match')
@@ -152,7 +152,7 @@ def check_yuv_vs_raw(img_raw, img_yuv, name, debug):
     raw_w_cropped = img_raw.shape[1]
     logging.debug('New RAW W, H: %d, %d', raw_w_cropped, img_raw.shape[0])
     image_processing_utils.write_image(
-        img_raw, f'{name}_raw_cropped_COLOR_BARS.jpg', True)
+        img_raw, f'{name_with_log_path}_raw_cropped_COLOR_BARS.jpg', True)
 
   # Compare YUV and RAW color patches
   color_match_errs = []
@@ -165,9 +165,9 @@ def check_yuv_vs_raw(img_raw, img_yuv, name, debug):
                                                        w_norm, _H_NORM)
     if debug:
       image_processing_utils.write_image(
-          raw_patch, f'{name}_raw_patch_{n}.jpg', True)
+          raw_patch, f'{name_with_log_path}_raw_patch_{n}.jpg', True)
       image_processing_utils.write_image(
-          yuv_patch, f'{name}_yuv_patch_{n}.jpg', True)
+          yuv_patch, f'{name_with_log_path}_yuv_patch_{n}.jpg', True)
     raw_means = np.array(image_processing_utils.compute_image_means(raw_patch))
     raw_vars = np.array(
         image_processing_utils.compute_image_variances(raw_patch))
@@ -177,11 +177,12 @@ def check_yuv_vs_raw(img_raw, img_yuv, name, debug):
         image_processing_utils.compute_image_variances(yuv_patch))
     if not np.allclose(raw_means, yuv_means, atol=_RGB_MEAN_TOL):
       color_match_errs.append(
-          'means RAW: %s, RGB(norm): %s, ATOL: %.2f' %
-          (str(raw_means), str(np.round(yuv_means, 3)), _RGB_MEAN_TOL))
+          f'means RAW: {raw_means}, RGB(norm): {np.round(yuv_means, 3)}, '
+          f'ATOL: {_RGB_MEAN_TOL}')
     if not np.allclose(raw_vars, yuv_vars, atol=_RGB_VAR_TOL):
-      color_variance_errs.append('variances RAW: %s, RGB: %s, ATOL: %.4f' %
-                                 (str(raw_vars), str(yuv_vars), _RGB_VAR_TOL))
+      color_variance_errs.append(
+          f'variances RAW: {raw_vars}, RGB: {yuv_vars}, '
+          f'ATOL: {_RGB_VAR_TOL}')
 
   # Print all errors before assertion
   if color_match_errs:
@@ -196,11 +197,11 @@ def check_yuv_vs_raw(img_raw, img_yuv, name, debug):
     raise AssertionError('Color variance errors. See test_log.DEBUG')
 
 
-def test_tonemap_curve_impl(name, cam, props, debug):
+def test_tonemap_curve_impl(name_with_log_path, cam, props, debug):
   """Test tonemap curve with sensor test pattern.
 
   Args:
-   name: Path to save the captured image.
+   name_with_log_path: Path to save the captured image.
    cam: An open device session.
    props: Properties of cam.
    debug: boolean for debug mode
@@ -222,7 +223,7 @@ def test_tonemap_curve_impl(name, cam, props, debug):
 
   # Save RAW pattern
   image_processing_utils.write_image(
-      img_raw, f'{name}_raw_COLOR_BARS.jpg', True)
+      img_raw, f'{name_with_log_path}_raw_COLOR_BARS.jpg', True)
 
   # Check pattern for correctness
   check_raw_pattern(img_raw)
@@ -244,10 +245,10 @@ def test_tonemap_curve_impl(name, cam, props, debug):
 
   # Save YUV pattern
   image_processing_utils.write_image(
-      img_yuv, f'{name}_yuv_COLOR_BARS.jpg', True)
+      img_yuv, f'{name_with_log_path}_yuv_COLOR_BARS.jpg', True)
 
   # Check pattern for correctness
-  check_yuv_vs_raw(img_raw, img_yuv, name, debug)
+  check_yuv_vs_raw(img_raw, img_yuv, name_with_log_path, debug)
 
 
 class TonemapCurveTest(its_base_test.ItsBaseTest):
@@ -258,7 +259,7 @@ class TonemapCurveTest(its_base_test.ItsBaseTest):
 
   def test_tonemap_curve(self):
     logging.debug('Starting %s', _NAME)
-    name = os.path.join(self.log_path, _NAME)
+    name_with_log_path = os.path.join(self.log_path, _NAME)
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
@@ -271,7 +272,7 @@ class TonemapCurveTest(its_base_test.ItsBaseTest):
           camera_properties_utils.manual_post_proc(props) and
           camera_properties_utils.color_bars_test_pattern(props))
 
-      test_tonemap_curve_impl(name, cam, props, self.debug_mode)
+      test_tonemap_curve_impl(name_with_log_path, cam, props, self.debug_mode)
 
 
 if __name__ == '__main__':

@@ -3,5 +3,15 @@
     {
       "name": "CtsBackupTestCases"
     }
+  ],
+  "mainline-presubmit": [
+    {
+      "name": "CtsBackupTestCases[com.google.android.permission.apex]",
+      "options": [
+        {
+          "include-filter": "android.backup.cts.PermissionTest"
+        }
+      ]
+    }
   ]
 }

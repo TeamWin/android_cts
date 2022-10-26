@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.os.cts.companiontestapp
+package android.os.cts.companiondevicetestapp
 
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
@@ -48,7 +48,7 @@ import android.widget.TextView
 import android.widget.Toast
 import java.util.regex.Pattern
 
-class CompanionTestAppMainActivity : Activity() {
+class CompanionDeviceTestAppActivity : Activity() {
 
     val associationStatus by lazy { TextView(this) }
     val permissionStatus by lazy { TextView(this) }
@@ -215,18 +215,19 @@ class CompanionTestAppMainActivity : Activity() {
         associationStatus.text = "Have associations: ${cdm.associations.isNotEmpty()}"
 
         permissionStatus.text = "Phone granted: ${
-                checkPermission(CALL_PHONE, Process.myPid(), Process.myUid()) ==
-                        PackageManager.PERMISSION_GRANTED}"
+            checkPermission(CALL_PHONE, Process.myPid(), Process.myUid()) ==
+                    PackageManager.PERMISSION_GRANTED}"
 
         notificationsStatus.postDelayed({
             notificationsStatus.text = "Notifications granted: ${
-            try {
-                cdm.hasNotificationAccess(
-                        ComponentName.createRelative(this, NotificationListener::class.java.name))
-            } catch (e: Exception) {
-                toast("" + e.message)
-                false
-            }
+                try {
+                    cdm.hasNotificationAccess(
+                            ComponentName.createRelative(
+                                    this, NotificationListener::class.java.name))
+                } catch (e: Exception) {
+                    toast("" + e.message)
+                    false
+                }
             }"
         }, 1000)
     }
