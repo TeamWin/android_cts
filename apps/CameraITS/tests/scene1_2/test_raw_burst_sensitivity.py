@@ -127,7 +127,7 @@ class RawSensitivityBurstTest(its_base_test.ItsBaseTest):
       pylab.ylabel('Image Center Patch Variance')
       pylab.title(_NAME)
       matplotlib.pyplot.savefig(
-          '%s_variances.png' % os.path.join(self.log_path, _NAME))
+          f'{os.path.join(self.log_path, _NAME)}_variances.png')
 
       # Asserts that each shot is noisier than previous
       for i in x[0:-1]:

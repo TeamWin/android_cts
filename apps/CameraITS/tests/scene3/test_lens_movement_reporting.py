@@ -84,8 +84,8 @@ def take_caps_and_determine_sharpness(
     chart.img = image_processing_utils.normalize_img(
         image_processing_utils.get_image_patch(
             y, chart.xnorm, chart.ynorm, chart.wnorm, chart.hnorm))
-    img_name = '%s_i=%d.jpg' % (os.path.join(log_path, _NAME), i)
-    image_processing_utils.write_image(chart.img, img_name)
+    image_processing_utils.write_image(
+        chart.img, f'{os.path.join(log_path, _NAME)}_i={i}.jpg')
     data['sharpness'] = (
         white_level * image_processing_utils.compute_image_sharpness(chart.img))
     data_set[i] = data

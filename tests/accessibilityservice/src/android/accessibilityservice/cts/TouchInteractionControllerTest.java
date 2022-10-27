@@ -406,6 +406,39 @@ public class TouchInteractionControllerTest {
         mTouchListener.assertNonePropagated();
     }
 
+    /** Test whether service gesture detection remains active when we rebuild the input filter. */
+    @Test
+    @AppModeFull
+    public void testRebuildInputFilter_shouldRetainState() {
+        if (!mHasTouchscreen || !mScreenBigEnough) return;
+        assertBasicConsistency();
+        // Set up a touch interaction controller that delegates everything.
+        mController.registerCallback(
+                Executors.newSingleThreadExecutor(),
+                new BaseCallback() {
+                    public void onMotionEvent(MotionEvent event) {
+                        if (event.getActionMasked() == ACTION_DOWN) {
+                            mController.requestDelegating();
+                        }
+                    }
+                });
+        dispatch(click(mTapLocation));
+        mTouchListener.assertPropagated(ACTION_DOWN, ACTION_UP);
+        // Start another service
+        StubMagnificationAccessibilityService secondService;
+        secondService =
+                InstrumentedAccessibilityService.enableService(
+                        StubMagnificationAccessibilityService.class);
+        try {
+            // Service gesture detection should still work.
+            dispatch(click(mTapLocation));
+            mHoverListener.assertNonePropagated();
+            mTouchListener.assertPropagated(ACTION_DOWN, ACTION_UP);
+        } finally {
+            secondService.disableSelfAndRemove();
+        }
+    }
+
     private void syncAccessibilityFocusToInputFocus() {
         mService.runOnServiceSync(
                 () -> {

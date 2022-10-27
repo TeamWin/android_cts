@@ -44,6 +44,7 @@ import android.car.hardware.property.EvChargeState;
 import android.car.hardware.property.EvRegenerativeBrakingState;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardStatus;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardType;
+import android.car.hardware.property.VehicleTurnSignal;
 import android.car.test.ApiCheckerRule.Builder;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
@@ -138,8 +139,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             ImmutableSet.<Integer>builder().add(VehicleUnit.METER_PER_SEC,
                     VehicleUnit.MILES_PER_HOUR, VehicleUnit.KILOMETERS_PER_HOUR).build();
     private static final ImmutableSet<Integer> TURN_SIGNAL_STATES =
-            ImmutableSet.<Integer>builder().add(/*TurnSignalState.NONE=*/0,
-                    /*TurnSignalState.RIGHT=*/1, /*TurnSignalState.LEFT=*/2).build();
+            ImmutableSet.<Integer>builder().add(VehicleTurnSignal.STATE_NONE,
+                    VehicleTurnSignal.STATE_RIGHT, VehicleTurnSignal.STATE_LEFT).build();
     private static final ImmutableSet<Integer> VEHICLE_LIGHT_STATES =
             ImmutableSet.<Integer>builder().add(/*VehicleLightState.OFF=*/0,
                     /*VehicleLightState.ON=*/1, /*VehicleLightState.DAYTIME_RUNNING=*/2).build();

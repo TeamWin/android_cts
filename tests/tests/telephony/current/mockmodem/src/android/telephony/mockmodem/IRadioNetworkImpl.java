@@ -776,7 +776,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     }
 
     @Override
-    public void cancelEmergencyNetworkScan(int serial) {
+    public void cancelEmergencyNetworkScan(int serial, boolean resetScan) {
         Log.d(TAG, "cancelEmergencyNetworkScan");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);

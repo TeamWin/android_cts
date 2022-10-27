@@ -66,7 +66,7 @@ public class GnssCapabilitiesTest {
         builder.setHasSatelliteBlocklist(true);
         builder.setHasSatellitePvt(true);
         builder.setHasScheduling(true);
-        builder.setHasSingleShot(true);
+        builder.setHasSingleShotFix(true);
         return builder.build();
     }
 
@@ -94,6 +94,6 @@ public class GnssCapabilitiesTest {
         assertEquals(true, gnssCapabilities.hasSatelliteBlocklist());
         assertEquals(true, gnssCapabilities.hasSatellitePvt());
         assertEquals(true, gnssCapabilities.hasScheduling());
-        assertEquals(true, gnssCapabilities.hasSingleShot());
+        assertEquals(true, gnssCapabilities.hasSingleShotFix());
     }
 }

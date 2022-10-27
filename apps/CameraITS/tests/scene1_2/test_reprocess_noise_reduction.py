@@ -72,8 +72,8 @@ def create_plot(snrs, reprocess_format, name_with_log_path):
   pylab.figure(reprocess_format)
   for ch, color in enumerate(_COLORS):
     pylab.plot(_NR_MODES_LIST, snrs[ch], f'-{color.lower()}o')
-  pylab.title('%s (%s)' % (_NAME, reprocess_format))
-  pylab.xlabel('%s' % str(_NR_MODES)[1:-1])  # strip '{' '}' off string
+  pylab.title(f'{_NAME} ({reprocess_format})')
+  pylab.xlabel(f'{str(_NR_MODES)[1:-1]}')  # strip '{' '}' off string
   pylab.ylabel('SNR (dB)')
   pylab.xticks(_NR_MODES_LIST)
   matplotlib.pyplot.savefig(

@@ -84,19 +84,19 @@ def create_plot(exps, means, sens, log_path):
   gr = [m[1] for m in means[1:]]
   gb = [m[2] for m in means[1:]]
   b = [m[3] for m in means[1:]]
-  pylab.figure('%s_%s' % (_NAME, sens))
+  pylab.figure(f'{_NAME}_{sens}')
   pylab.plot(exps, r, 'r.-', label='R')
   pylab.plot(exps, gr, 'g.-', label='Gr')
   pylab.plot(exps, gb, 'k.-', label='Gb')
   pylab.plot(exps, b, 'b.-', label='B')
   pylab.xscale('log')
   pylab.yscale('log')
-  pylab.title('%s ISO=%d' % (_NAME, sens))
+  pylab.title(f'{_NAME} ISO={sens}')
   pylab.xlabel('Exposure time (ms)')
   pylab.ylabel('Center patch pixel mean')
   pylab.legend(loc='lower right', numpoints=1, fancybox=True)
   matplotlib.pyplot.savefig(
-      '%s_s=%d.png' % (os.path.join(log_path, _NAME), sens))
+      f'{os.path.join(log_path, _NAME)}_s={sens}.png')
   pylab.clf()
 
 

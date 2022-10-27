@@ -196,7 +196,7 @@ class YuvJpegAllTest(its_base_test.ItsBaseTest):
         rms_diff = image_processing_utils.compute_image_rms_difference_1d(
             rgbs[0], rgb_i)  # use first capture as reference
         max_diff = max(max_diff, rms_diff)
-      msg = 'Max RMS difference: %.4f' % max_diff
+      msg = f'Max RMS difference: {max_diff:.4f}'
       logging.debug('%s', msg)
       if max_diff >= _THRESHOLD_MAX_RMS_DIFF:
         raise AssertionError(f'{msg} spec: {_THRESHOLD_MAX_RMS_DIFF}')

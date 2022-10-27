@@ -111,7 +111,7 @@ def create_plots(idx, raw_means, yuv_means, name_with_log_path):
     pylab.plot(idx, [ch[i] for ch in raw_means], '-'+'rgb'[i]+'o', label='RAW',
                alpha=0.7)
   pylab.ylim([0, 1])
-  pylab.title('%s' % _NAME)
+  pylab.title(_NAME)
   pylab.xlabel('requests')
   pylab.ylabel('RGB means')
   pylab.legend(loc='lower right', numpoints=1, fancybox=True)

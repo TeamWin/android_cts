@@ -276,9 +276,12 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         TestUtils.executeShellCommand(getInstrumentation(), "telecom reset-car-mode");
 
         if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
-             assertUiMode(Configuration.UI_MODE_TYPE_WATCH);
+            assertUiMode(Configuration.UI_MODE_TYPE_WATCH);
+        } else if (mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUTOMOTIVE)) {
+            assertUiMode(Configuration.UI_MODE_TYPE_CAR);
         } else {
-             assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
+            assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
         }
 
         AppOpsManager aom = mContext.getSystemService(AppOpsManager.class);

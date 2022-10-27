@@ -17,7 +17,6 @@
 package android.dpi.cts;
 
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.platform.test.annotations.Presubmit;
 import android.test.AndroidTestCase;
 import android.util.DisplayMetrics;
@@ -86,6 +85,7 @@ public class ConfigurationTest extends AndroidTestCase {
         allowedDensities.add(DisplayMetrics.DENSITY_440);
         allowedDensities.add(DisplayMetrics.DENSITY_450);
         allowedDensities.add(DisplayMetrics.DENSITY_XXHIGH);
+        allowedDensities.add(DisplayMetrics.DENSITY_520);
         allowedDensities.add(DisplayMetrics.DENSITY_560);
         allowedDensities.add(DisplayMetrics.DENSITY_600);
         allowedDensities.add(DisplayMetrics.DENSITY_XXXHIGH);

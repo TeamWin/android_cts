@@ -137,14 +137,10 @@ class CodecEncoderPerformanceTestBase extends CodecPerformanceTestBase {
                 mOperatingRateExpected = operatingRateToSet;
             }
 
-            if (EXCLUDE_ENCODER_OPRATE_0_TO_30_FOR_4K) {
-                int width = mEncoderFormat.getInteger(MediaFormat.KEY_WIDTH);
-                int height = mEncoderFormat.getInteger(MediaFormat.KEY_HEIGHT);
-                if (width >= 3840 && height >= 2160) {
-                    assumeTrue("For devices launched with Android R and below, operating rate " +
-                            "tests are limited to operating rate <= 0 or >= 30 for 4k and" +
-                            " above", operatingRateToSet <= 0 || operatingRateToSet >= 30);
-                }
+            if (EXCLUDE_ENCODER_OPRATE_0_TO_30) {
+                assumeTrue("For devices launched with Android R and below, operating rate tests "
+                                + "are limited to operating rate <= 0 or >= 30",
+                        operatingRateToSet <= 0 || operatingRateToSet >= 30);
             }
 
             mDecoderFormat.setInteger(MediaFormat.KEY_OPERATING_RATE, operatingRateToSet);

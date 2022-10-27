@@ -263,7 +263,7 @@ class LensShadingAndColorUniformityTest(its_base_test.ItsBaseTest):
           text_bottom = bottom - text_offset
           cv2.rectangle(img_lens_shading, (left, top), (right, bottom),
                         legend_color, line_width)
-          _draw_legend(img_lens_shading, ['Y: %.2f' % block_y],
+          _draw_legend(img_lens_shading, [f'Y: {block_y:.2f}'],
                        [left+text_offset, text_bottom], font_scale,
                        text_offset, legend_color, int(line_width/2))
 
@@ -284,8 +284,8 @@ class LensShadingAndColorUniformityTest(its_base_test.ItsBaseTest):
           top, bottom, left, right = block['position']
           cv2.rectangle(img_uniformity, (left, top), (right, bottom),
                         legend_color, line_width)
-          texts = ['R/G: %.2f' % block['block_r_g'],
-                   'B/G: %.2f' % block['block_b_g']]
+          texts = [f"R/G: {block['block_r_g']:.2f}",
+                   f"B/G: {block['block_b_g']:.2f}"]
           text_bottom = bottom - text_offset * 2
           _draw_legend(img_uniformity, texts,
                        [left+text_offset, text_bottom], font_scale,

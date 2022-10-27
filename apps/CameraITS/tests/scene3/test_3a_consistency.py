@@ -97,8 +97,8 @@ class ConsistencyTest(its_base_test.ItsBaseTest):
           cap = cam.do_capture(req, cam.CAP_YUV)
           if debug:
             img = image_processing_utils.convert_capture_to_rgb_image(cap)
-            img_name = '%s_%d.jpg' % (os.path.join(self.log_path, _NAME), i)
-            image_processing_utils.write_image(img, img_name)
+            image_processing_utils.write_image(
+                img, f'{os.path.join(self.log_path, _NAME)}_{i}.jpg')
 
           # Extract and save metadata.
           iso_result = cap['metadata']['android.sensor.sensitivity']

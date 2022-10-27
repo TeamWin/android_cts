@@ -60,7 +60,7 @@ def do_captures_and_extract_means(
     cap = cam.do_capture([req]*num_frames_per_cap, fmt)
     img = image_processing_utils.convert_capture_to_rgb_image(cap[-1])
     image_processing_utils.write_image(
-        img, '%s_%s_%d.jpg' % (os.path.join(log_path, _NAME), tonemap, i))
+        img, f'{os.path.join(log_path, _NAME)}_{tonemap}_{i}.jpg')
     patch = image_processing_utils.get_image_patch(
         img, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
     rgb_means = image_processing_utils.compute_image_means(patch)
