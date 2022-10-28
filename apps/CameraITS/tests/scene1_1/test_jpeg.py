@@ -13,16 +13,16 @@
 # limitations under the License.
 """Verifies converted YUV images & device JPEG images look the same."""
 
+
 import logging
 import os.path
+from mobly import test_runner
 
+import its_base_test
 import camera_properties_utils
 import capture_request_utils
 import image_processing_utils
-import its_base_test
 import its_session_utils
-from mobly import test_runner
-
 
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _PATCH_H = 0.1  # center 10%

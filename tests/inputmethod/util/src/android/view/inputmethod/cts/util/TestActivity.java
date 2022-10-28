@@ -188,55 +188,6 @@ public class TestActivity extends Activity {
     }
 
     /**
-     * Similar to {@link TestActivity#startSync(Function)}, but with the given display ID to
-     * specify the launching target display.
-     * @param displayId The ID of the display
-     * @param activityInitializer initializer to supply {@link View} to be passed to
-     *                            {@link Activity#setContentView(View)}
-     * @return {@link TestActivity} launched
-     * @deprecated Use {@link Starter} instead.
-     */
-    @Deprecated
-    public static TestActivity startSync(int displayId,
-            @NonNull Function<TestActivity, View> activityInitializer) throws Exception {
-        return new Starter().withDisplayId(displayId).startSync(activityInitializer);
-    }
-
-    /**
-     * Launches {@link TestActivity} with the given initialization logic for content view.
-     *
-     * <p>As long as you are using {@link androidx.test.runner.AndroidJUnitRunner}, the test
-     * runner automatically calls {@link Activity#finish()} for the {@link Activity} launched when
-     * the test finished.  You do not need to explicitly call {@link Activity#finish()}.</p>
-     *
-     * @param activityInitializer initializer to supply {@link View} to be passed to
-     *                           {@link Activity#setContentView(View)}
-     * @param additionalFlags flags to be set to {@link Intent#setFlags(int)}
-     * @return {@link TestActivity} launched
-     * @deprecated Use {@link Starter} instead.
-     */
-    @Deprecated
-    public static TestActivity startSync(
-            @NonNull Function<TestActivity, View> activityInitializer,
-            int additionalFlags) {
-        return new Starter().withAdditionalFlags(additionalFlags).startSync(activityInitializer);
-    }
-
-    /** @deprecated Use {@link Starter} instead. */
-    @Deprecated
-    public static TestActivity startNewTaskSync(
-            @NonNull Function<TestActivity, View> activityInitializer) {
-        return new Starter().asNewTask().startSync(activityInitializer);
-    }
-
-    /** @deprecated Use {@link Starter} instead. */
-    @Deprecated
-    public static TestActivity startSameTaskAndClearTopSync(
-            @NonNull Function<TestActivity, View> activityInitializer) {
-        return new Starter().asSameTaskAndClearTop().startSync(activityInitializer);
-    }
-
-    /**
      * Updates {@link WindowManager.LayoutParams#softInputMode}.
      *
      * @param newState One of {@link WindowManager.LayoutParams#SOFT_INPUT_STATE_UNSPECIFIED},

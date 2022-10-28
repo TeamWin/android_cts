@@ -13,19 +13,19 @@
 # limitations under the License.
 """Verifies EV compensation is applied."""
 
+
 import logging
 import math
 import os.path
-
-import camera_properties_utils
-import capture_request_utils
-import image_processing_utils
-import its_base_test
-import its_session_utils
 import matplotlib
 from matplotlib import pylab
 from mobly import test_runner
 
+import its_base_test
+import camera_properties_utils
+import capture_request_utils
+import image_processing_utils
+import its_session_utils
 
 _LINEAR_TONEMAP_CURVE = [0.0, 0.0, 1.0, 1.0]
 _LOCKED = 3

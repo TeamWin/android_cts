@@ -46,8 +46,6 @@ public class SystemEmojiTest {
         // NotoColorEmoji.ttf should be always available as a fallback font even if another emoji
         // font files are installed in the system.
         assertThat(emojiFont).isNotNull();
-
-        assertThat(FontFileTestUtil.containsEmojiCompatMetadata(emojiFont)).isTrue();
     }
 
     public String getFontName(String chars) {

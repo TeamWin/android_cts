@@ -13,20 +13,19 @@
 # limitations under the License.
 """Verifies valid data return from CaptureResult objects."""
 
+
 import logging
 import os.path
-
-import camera_properties_utils
-import capture_request_utils
-# required for 3D plots
-import its_base_test
-import its_session_utils
 import matplotlib.pyplot
 from mobly import test_runner
 # mplot3 is required for 3D plots in draw_lsc_plot() though not called directly.
-from mpl_toolkits import mplot3d
+from mpl_toolkits import mplot3d  # pylint: disable=unused-import
 import numpy as np
 
+import its_base_test
+import camera_properties_utils
+import capture_request_utils
+import its_session_utils
 
 _AWB_GAINS_NUM = 4
 _AWB_XFORM_NUM = 9

@@ -599,9 +599,9 @@ class AppOpsTest {
     @Test
     fun ensurePhoneCallOpsRestricted() {
         val pm = mContext.packageManager
-        assumeTrue(pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY) ||
-                pm.hasSystemFeature(PackageManager.FEATURE_MICROPHONE) ||
-                pm.hasSystemFeature(PackageManager.FEATURE_TELECOM))
+        assumeTrue((pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY) ||
+                pm.hasSystemFeature(PackageManager.FEATURE_TELECOM)) &&
+                pm.hasSystemFeature(PackageManager.FEATURE_MICROPHONE))
         val micReturn = mAppOps.noteOp(OPSTR_PHONE_CALL_MICROPHONE, Process.myUid(), mOpPackageName,
                 null, null)
         assertEquals(MODE_IGNORED, micReturn)

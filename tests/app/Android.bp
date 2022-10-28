@@ -28,7 +28,6 @@ android_test {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "ctstestserver",
-        "cts-opengl-util",
         "cts-wm-util",
         "mockito-target-minus-junit4",
         "androidx.test.ext.junit",
@@ -78,6 +77,7 @@ android_test {
         ":NotificationTrampoline",
         ":NotificationTrampolineApi30",
         ":NotificationTrampolineApi32",
+        ":WallpaperTest",
     ],
     per_testcase_directory: true,
 }

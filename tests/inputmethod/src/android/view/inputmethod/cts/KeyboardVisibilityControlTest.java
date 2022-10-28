@@ -549,7 +549,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             final String marker = getTestMarker();
             final AtomicReference<EditText> ediTextRef = new AtomicReference<>();
             final TestActivity testEditorActivity =
-                    TestActivity.startNewTaskSync(activity -> {
+                    new TestActivity.Starter().asNewTask().startSync(activity -> {
                         final LinearLayout layout = new LinearLayout(activity);
                         layout.setOrientation(LinearLayout.VERTICAL);
 
@@ -966,7 +966,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             // Start a next activity to expect IME should visible on top of the overlay.
             final String marker = getTestMarker();
             final AtomicReference<EditText> editorRef = new AtomicReference<>();
-            TestActivity.startNewTaskSync(activity -> {
+            new TestActivity.Starter().asNewTask().startSync(activity -> {
                 final LinearLayout layout = new LinearLayout(activity);
                 layout.setOrientation(LinearLayout.VERTICAL);
                 layout.setGravity(Gravity.BOTTOM);

@@ -3438,7 +3438,8 @@ public class DecoderTest extends MediaTestBase {
      *
      * TODO(b/182915887): Test all the codecs advertised by the DUT for the provided test content
      */
-    private void testTunneledVideoPeekOn(String mimeType, String videoName) throws Exception {
+    private void testTunneledVideoPeekOn(String mimeType, String videoName, float frameRate)
+            throws Exception {
         if (!MediaUtils.check(isVideoFeatureSupported(mimeType, FEATURE_TunneledPlayback),
                     "No tunneled video playback codec found for MIME " + mimeType)) {
             return;
@@ -3449,6 +3450,9 @@ public class DecoderTest extends MediaTestBase {
         mMediaCodecPlayer = new MediaCodecTunneledPlayer(
                 mContext, getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
 
+        // Frame rate is needed by some devices to initialize the display hardware
+        mMediaCodecPlayer.setFrameRate(frameRate);
+
         Uri mediaUri = Uri.fromFile(new File(mInpPrefix, videoName));
         mMediaCodecPlayer.setAudioDataSource(mediaUri, null);
         mMediaCodecPlayer.setVideoDataSource(mediaUri, null);
@@ -3456,16 +3460,23 @@ public class DecoderTest extends MediaTestBase {
         mMediaCodecPlayer.startCodec();
         mMediaCodecPlayer.setVideoPeek(true); // Enable video peek
 
-        // Assert that onFirstTunnelFrameReady is called
+        // Queue the first video frame, which should not be rendered imminently
         mMediaCodecPlayer.queueOneVideoFrame();
-        final int waitTimeMs = 150;
-        Thread.sleep(waitTimeMs);
+
+        // Assert that onFirstTunnelFrameReady is called
+        final int waitForFrameReadyMs = 150;
+        Thread.sleep(waitForFrameReadyMs);
         assertTrue(String.format("onFirstTunnelFrameReady not called within %d milliseconds",
-                        waitTimeMs),
+                        waitForFrameReadyMs),
                 mMediaCodecPlayer.isFirstTunnelFrameReady());
+
+        // This is long due to high-latency display pipelines on TV devices
+        final int waitForRenderingMs = 1000;
+        Thread.sleep(waitForRenderingMs);
+
         // Assert that video peek is enabled and working
         assertNotEquals(String.format("First frame not rendered within %d milliseconds",
-                        waitTimeMs), CodecState.UNINITIALIZED_TIMESTAMP,
+                        waitForRenderingMs), CodecState.UNINITIALIZED_TIMESTAMP,
                 mMediaCodecPlayer.getCurrentPosition());
 
         // mMediaCodecPlayer.reset() handled in TearDown();
@@ -3479,7 +3490,7 @@ public class DecoderTest extends MediaTestBase {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testTunneledVideoPeekOnHevc() throws Exception {
         testTunneledVideoPeekOn(MediaFormat.MIMETYPE_VIDEO_HEVC,
-                "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv");
+                "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv", 25);
     }
 
     /**
@@ -3490,7 +3501,7 @@ public class DecoderTest extends MediaTestBase {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testTunneledVideoPeekOnAvc() throws Exception {
         testTunneledVideoPeekOn(MediaFormat.MIMETYPE_VIDEO_AVC,
-                "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
+                "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4", 25);
     }
 
     /**
@@ -3501,7 +3512,8 @@ public class DecoderTest extends MediaTestBase {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testTunneledVideoPeekOnVp9() throws Exception {
         testTunneledVideoPeekOn(MediaFormat.MIMETYPE_VIDEO_VP9,
-                "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
+                "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
+                30);
     }
 
 
@@ -3510,7 +3522,8 @@ public class DecoderTest extends MediaTestBase {
      *
      * TODO(b/182915887): Test all the codecs advertised by the DUT for the provided test content
      */
-    private void testTunneledVideoPeekOff(String mimeType, String videoName) throws Exception {
+    private void testTunneledVideoPeekOff(String mimeType, String videoName, float frameRate)
+            throws Exception {
         if (!MediaUtils.check(isVideoFeatureSupported(mimeType, FEATURE_TunneledPlayback),
                     "No tunneled video playback codec found for MIME " + mimeType)) {
             return;
@@ -3521,6 +3534,9 @@ public class DecoderTest extends MediaTestBase {
         mMediaCodecPlayer = new MediaCodecTunneledPlayer(
                 mContext, getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
 
+        // Frame rate is needed by some devices to initialize the display hardware
+        mMediaCodecPlayer.setFrameRate(frameRate);
+
         Uri mediaUri = Uri.fromFile(new File(mInpPrefix, videoName));
         mMediaCodecPlayer.setAudioDataSource(mediaUri, null);
         mMediaCodecPlayer.setVideoDataSource(mediaUri, null);
@@ -3528,23 +3544,32 @@ public class DecoderTest extends MediaTestBase {
         mMediaCodecPlayer.startCodec();
         mMediaCodecPlayer.setVideoPeek(false); // Disable video peek
 
-        // Assert that onFirstTunnelFrameReady is called
+        // Queue the first video frame, which should not be rendered yet
         mMediaCodecPlayer.queueOneVideoFrame();
-        final int waitTimeMsStep1 = 150;
-        Thread.sleep(waitTimeMsStep1);
+
+        // Assert that onFirstTunnelFrameReady is called
+        final int waitForFrameReadyMs = 150;
+        Thread.sleep(waitForFrameReadyMs);
         assertTrue(String.format("onFirstTunnelFrameReady not called within %d milliseconds",
-                        waitTimeMsStep1),
+                        waitForFrameReadyMs),
                 mMediaCodecPlayer.isFirstTunnelFrameReady());
-        // Assert that video peek is disabled
+
+        // This is long due to high-latency display pipelines on TV devices
+        final int waitForRenderingMs = 1000;
+        Thread.sleep(waitForRenderingMs);
+
+        // Assert the video frame has not been peeked yet
         assertEquals("First frame rendered while peek disabled", CodecState.UNINITIALIZED_TIMESTAMP,
                 mMediaCodecPlayer.getCurrentPosition());
-        mMediaCodecPlayer.setVideoPeek(true); // Reenable video peek
-        final int waitTimeMsStep2 = 150;
-        Thread.sleep(waitTimeMsStep2);
-        // Assert that video peek is enabled
+
+        // Enable video peek
+        mMediaCodecPlayer.setVideoPeek(true);
+        Thread.sleep(waitForRenderingMs);
+
+        // Assert that the first frame was rendered
         assertNotEquals(String.format(
-                        "First frame not rendered within %d milliseconds while peek enabled",
-                        waitTimeMsStep2), CodecState.UNINITIALIZED_TIMESTAMP,
+                        "First frame not rendered within %d milliseconds after peek is enabled",
+                        waitForRenderingMs), CodecState.UNINITIALIZED_TIMESTAMP,
                 mMediaCodecPlayer.getCurrentPosition());
 
         // mMediaCodecPlayer.reset() handled in TearDown();
@@ -3558,7 +3583,7 @@ public class DecoderTest extends MediaTestBase {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testTunneledVideoPeekOffHevc() throws Exception {
         testTunneledVideoPeekOff(MediaFormat.MIMETYPE_VIDEO_HEVC,
-                "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv");
+                "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv", 25);
     }
 
     /**
@@ -3569,7 +3594,7 @@ public class DecoderTest extends MediaTestBase {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testTunneledVideoPeekOffAvc() throws Exception {
         testTunneledVideoPeekOff(MediaFormat.MIMETYPE_VIDEO_AVC,
-                "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
+                "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4", 25);
     }
 
     /**
@@ -3580,7 +3605,8 @@ public class DecoderTest extends MediaTestBase {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testTunneledVideoPeekOffVp9() throws Exception {
         testTunneledVideoPeekOff(MediaFormat.MIMETYPE_VIDEO_VP9,
-                "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
+                "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
+                30);
     }
 
    /**

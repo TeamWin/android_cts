@@ -16,14 +16,13 @@
 
 import logging
 import os
+from mobly import test_runner
 
+import its_base_test
 import camera_properties_utils
 import capture_request_utils
-import its_base_test
 import its_session_utils
-from mobly import test_runner
 import target_exposure_utils
-
 
 _AE_INACTIVE = 0
 _AE_SEARCHING = 1

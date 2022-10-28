@@ -16,14 +16,13 @@
 
 import logging
 import os.path
+from mobly import test_runner
 
+import its_base_test
 import camera_properties_utils
 import capture_request_utils
 import image_processing_utils
-import its_base_test
 import its_session_utils
-from mobly import test_runner
-
 
 _BURST_LEN = 8
 _COLORS = ['R', 'G', 'B']

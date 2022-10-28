@@ -152,8 +152,9 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
         return TestActivity.startSync(activity -> createLayout(windowFlags, activity));
     }
 
-    private TestActivity createTestActivity(int windowFlags, int displayId) throws Exception {
-        return TestActivity.startSync(displayId, activity -> createLayout(windowFlags, activity));
+    private TestActivity createTestActivity(int windowFlags, int displayId) {
+        return new TestActivity.Starter().withDisplayId(displayId).startSync(
+                activity -> createLayout(windowFlags, activity));
     }
 
     private TestActivity createTestActivity2(int windowFlags) {

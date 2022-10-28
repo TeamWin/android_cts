@@ -204,15 +204,6 @@ public class WebViewTest {
         mActivity = null;
     }
 
-    /**
-     * We plan to also execute these tests in the SDK Sandbox. Rather than call onMainThreadSync
-     * directly, we use this function so that it will be easier to abstract calls to that
-     * environment.
-     */
-    private void runOnUiThread(final Runnable runnable) {
-        WebkitUtils.onMainThreadSync(runnable);
-    }
-
     private void startWebServer(boolean secure) throws Exception {
         assertNull(mWebServer);
         mWebServer = new CtsTestServer(mActivity, secure);
@@ -230,7 +221,7 @@ public class WebViewTest {
 
     @Test
     public void testConstructor() {
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     WebView webView = new WebView(mActivity);
                     webView.destroy();
@@ -243,7 +234,7 @@ public class WebViewTest {
 
     @Test
     public void testCreatingWebViewWithDeviceEncrpytionFails() {
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     Context deviceEncryptedContext =
                             mActivity.createDeviceProtectedStorageContext();
@@ -259,7 +250,7 @@ public class WebViewTest {
 
     @Test
     public void testCreatingWebViewWithMultipleEncryptionContext() {
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     // Credential encryption is the default. Create one here for the sake of
                     // clarity.
@@ -284,7 +275,7 @@ public class WebViewTest {
 
     @Test
     public void testCreatingWebViewCreatesCookieSyncManager() throws Exception {
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     WebView webView = new WebView(mActivity);
                     assertNotNull(CookieSyncManager.getInstance());
@@ -319,7 +310,7 @@ public class WebViewTest {
 
     @Test
     public void testScrollBarOverlay() throws Throwable {
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     // These functions have no effect; just verify they don't crash
                     mWebView.setHorizontalScrollbarOverlay(true);
@@ -335,7 +326,7 @@ public class WebViewTest {
     public void testLoadUrl() throws Exception {
         startWebServer(false);
 
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     assertNull(mWebView.getUrl());
                     assertNull(mWebView.getOriginalUrl());
@@ -367,7 +358,7 @@ public class WebViewTest {
 
         mOnUiThread.postUrlAndWaitForCompletion(nonNetworkUrl, new byte[1]);
 
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     assertEquals(
                             "Non-network URL should have loaded",
@@ -400,7 +391,7 @@ public class WebViewTest {
 
     @Test
     public void testLoadUrlDoesNotStripParamsWhenLoadingContentUrls() throws Exception {
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     Uri.Builder uriBuilder =
                             new Uri.Builder()
@@ -419,7 +410,7 @@ public class WebViewTest {
     public void testAppInjectedXRequestedWithHeaderIsNotOverwritten() throws Exception {
         startWebServer(false);
 
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     String url = mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
                     HashMap<String, String> map = new HashMap<String, String>();
@@ -443,7 +434,7 @@ public class WebViewTest {
     public void testAppCanInjectHeadersViaImmutableMap() throws Exception {
         startWebServer(false);
 
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     String url = mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
                     HashMap<String, String> map = new HashMap<String, String>();
@@ -491,7 +482,7 @@ public class WebViewTest {
     public void testGetVisibleTitleHeight() throws Exception {
         startWebServer(false);
 
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     String url = mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
                     mOnUiThread.loadUrlAndWaitForCompletion(url);
@@ -503,7 +494,7 @@ public class WebViewTest {
     public void testGetOriginalUrl() throws Throwable {
         startWebServer(false);
 
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     final String finalUrl =
                             mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
@@ -565,7 +556,7 @@ public class WebViewTest {
     public void testGoBackAndForward() throws Exception {
         startWebServer(false);
 
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     assertGoBackOrForwardBySteps(false, -1);
                     assertGoBackOrForwardBySteps(false, 1);
@@ -889,7 +880,7 @@ public class WebViewTest {
         final AtomicReference<Picture> pictureRef = new AtomicReference<Picture>();
         for (int i = 0; i < MAX_ON_NEW_PICTURE_ITERATIONS; i++) {
             final int oldCallCount = listener.callCount;
-            runOnUiThread(
+            WebkitUtils.onMainThreadSync(
                     () -> {
                         pictureRef.set(mWebView.capturePicture());
                     });
@@ -973,7 +964,7 @@ public class WebViewTest {
 
     @Test
     public void testAccessHttpAuthUsernamePassword() {
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     try {
                         WebViewDatabase.getInstance(mActivity).clearHttpAuthUsernamePassword();
@@ -1038,7 +1029,7 @@ public class WebViewTest {
 
     @Test
     public void testWebViewDatabaseAccessHttpAuthUsernamePassword() {
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     WebViewDatabase webViewDb = WebViewDatabase.getInstance(mActivity);
                     try {
@@ -1491,7 +1482,7 @@ public class WebViewTest {
         final DocumentHasImageCheckHandler handler =
                 new DocumentHasImageCheckHandler(mWebView.getHandler().getLooper());
 
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     mOnUiThread.loadDataAndWaitForCompletion(
                             "<html><body><img src=\"" + imgUrl + "\"/></body></html>",
@@ -1665,7 +1656,7 @@ public class WebViewTest {
 
     @Test
     public void testPlatformNotifications() {
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     WebView.enablePlatformNotifications();
                     WebView.disablePlatformNotifications();
@@ -1674,7 +1665,7 @@ public class WebViewTest {
 
     @Test
     public void testAccessPluginList() {
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     assertNotNull(WebView.getPluginList());
 
@@ -1685,7 +1676,7 @@ public class WebViewTest {
 
     @Test
     public void testDestroy() {
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     // Create a new WebView, since we cannot call destroy() on a view in the
                     // hierarchy
@@ -1879,7 +1870,7 @@ public class WebViewTest {
 
     @Test
     public void testDebugDump() {
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     mWebView.debugDump();
                 });
@@ -2012,7 +2003,7 @@ public class WebViewTest {
     public void testClearHistory() throws Exception {
         startWebServer(false);
 
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     String url1 = mWebServer.getAssetUrl(TestHtmlConstants.HTML_URL1);
                     String url2 = mWebServer.getAssetUrl(TestHtmlConstants.HTML_URL2);
@@ -2038,7 +2029,7 @@ public class WebViewTest {
     public void testSaveAndRestoreState() throws Throwable {
         startWebServer(false);
 
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     assertNull(
                             "Should return null when there's nothing to save",
@@ -2184,7 +2175,7 @@ public class WebViewTest {
 
     @Test
     public void testSetLayoutParams() {
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(600, 800);
                     mWebView.setLayoutParams(params);
@@ -2194,7 +2185,7 @@ public class WebViewTest {
 
     @Test
     public void testSetMapTrackballToArrowKeys() {
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     mWebView.setMapTrackballToArrowKeys(true);
                 });
@@ -2287,7 +2278,7 @@ public class WebViewTest {
                 "<html>" + "<body onload=\"monitor.update();\"></body></html>";
 
         // Test that JavaScript is executed even with timers paused.
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     mWebView.getSettings().setJavaScriptEnabled(true);
                     mWebView.addJavascriptInterface(monitor, "monitor");
@@ -2541,7 +2532,7 @@ public class WebViewTest {
      */
     @Test
     public void testGetWebViewClient() throws Exception {
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     // getWebViewClient should return a default WebViewClient if it hasn't been set
                     // yet
@@ -2566,7 +2557,7 @@ public class WebViewTest {
      */
     @Test
     public void testGetWebChromeClient() throws Exception {
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     // getWebChromeClient should return null if the client hasn't been set yet
                     WebView webView = new WebView(mActivity);
@@ -2598,7 +2589,7 @@ public class WebViewTest {
             }
         }
 
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     TextClassifier classifier = new CustomTextClassifier();
                     WebView webView = new WebView(mActivity);
@@ -2704,7 +2695,7 @@ public class WebViewTest {
     }
 
     private void printDocumentStart(final PrintDocumentAdapter adapter) {
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     adapter.onStart();
                 });
@@ -2715,7 +2706,7 @@ public class WebViewTest {
             final PrintAttributes oldAttributes,
             final PrintAttributes newAttributes,
             final LayoutResultCallback layoutResultCallback) {
-        runOnUiThread(
+        WebkitUtils.onMainThreadSync(
                 () -> {
                     adapter.onLayout(
                             oldAttributes,

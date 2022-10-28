@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.app.cts;
+package android.app.cts.wallpapers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -22,9 +22,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.WallpaperInfo;
-import android.app.stubs.LiveWallpaper;
-import android.app.stubs.LiveWallpaperNoUnfoldTransition;
-import android.app.stubs.R;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -46,7 +43,7 @@ public class WallpaperInfoTest {
     public void test_wallpaperServiceQuery() {
         Context context = InstrumentationRegistry.getTargetContext();
         Intent intent = new Intent(WallpaperService.SERVICE_INTERFACE);
-        intent.setPackage("android.app.stubs");
+        intent.setPackage("android.app.cts.wallpapers");
         PackageManager pm = context.getPackageManager();
 
         List<ResolveInfo> result = pm.queryIntentServices(intent, PackageManager.GET_META_DATA);
@@ -63,15 +60,15 @@ public class WallpaperInfoTest {
 
         assertEquals(context.getString(R.string.wallpaper_title), wallpaperInfo.loadLabel(pm));
         assertEquals(context.getString(R.string.wallpaper_description),
-            wallpaperInfo.loadDescription(pm));
+                wallpaperInfo.loadDescription(pm));
         assertEquals(context.getString(R.string.wallpaper_collection),
-            wallpaperInfo.loadAuthor(pm));
+                wallpaperInfo.loadAuthor(pm));
         assertEquals(context.getString(R.string.wallpaper_context),
-            wallpaperInfo.loadContextDescription(pm));
+                wallpaperInfo.loadContextDescription(pm));
         assertEquals(context.getString(R.string.wallpaper_context_uri),
-            wallpaperInfo.loadContextUri(pm).toString());
+                wallpaperInfo.loadContextUri(pm).toString());
         assertEquals(context.getString(R.string.wallpaper_slice_uri),
-            wallpaperInfo.getSettingsSliceUri().toString());
+                wallpaperInfo.getSettingsSliceUri().toString());
         assertTrue(wallpaperInfo.getShowMetadataInPreview());
         assertTrue(wallpaperInfo.supportsMultipleDisplays());
         assertTrue(wallpaperInfo.shouldUseDefaultUnfoldTransition());
@@ -89,7 +86,7 @@ public class WallpaperInfoTest {
     private <T extends WallpaperService> WallpaperInfo getInfoForService(Class<T> service) {
         Context context = InstrumentationRegistry.getTargetContext();
         Intent intent = new Intent(WallpaperService.SERVICE_INTERFACE);
-        intent.setPackage("android.app.stubs");
+        intent.setPackage("android.app.cts.wallpapers");
         PackageManager pm = context.getPackageManager();
         List<ResolveInfo> result = pm.queryIntentServices(intent, PackageManager.GET_META_DATA);
 

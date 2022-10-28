@@ -15,6 +15,7 @@
  */
 package com.android.compatibility.tradefed;
 
+import com.android.compatibility.common.tradefed.loading.CommonConfigLoadingTest;
 import com.android.compatibility.common.tradefed.loading.CtsConfigLoadingTest;
 import com.android.compatibility.common.tradefed.presubmit.ApkPackageNameCheck;
 import com.android.compatibility.common.tradefed.presubmit.PresubmitSetupValidation;
@@ -35,6 +36,7 @@ import org.junit.runners.Suite.SuiteClasses;
     CtsTradefedTest.class,
 
     // loading test
+    CommonConfigLoadingTest.class,
     CtsConfigLoadingTest.class,
 
     // presubmit

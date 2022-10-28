@@ -17,15 +17,14 @@
 import logging
 import math
 import os.path
-
-import camera_properties_utils
-import capture_request_utils
-import image_processing_utils
-import its_base_test
-import its_session_utils
 from mobly import test_runner
 import numpy as np
 
+import its_base_test
+import camera_properties_utils
+import capture_request_utils
+import image_processing_utils
+import its_session_utils
 
 _AWB_AUTO_ATOL = 0.10
 _AWB_AUTO_RTOL = 0.25

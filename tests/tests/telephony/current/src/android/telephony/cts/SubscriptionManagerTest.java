@@ -1338,37 +1338,37 @@ public class SubscriptionManagerTest {
     }
 
     @Test
-    public void testSetAndGetUserHandle() throws Exception {
+    public void testSetAndGetSubscriptionUserHandle() throws Exception {
         // Throws IllegalArgumentException as SubscriptionId is invalid.
         assertThrows(IllegalArgumentException.class,
-                () -> mSm.setUserHandle(-1, UserHandle.SYSTEM));
+                () -> mSm.setSubscriptionUserHandle(-1, UserHandle.SYSTEM));
 
         // Throws IllegalArgumentException as SubscriptionId is invalid.
-        assertThrows(IllegalArgumentException.class, () -> mSm.getUserHandle(-1));
+        assertThrows(IllegalArgumentException.class, () -> mSm.getSubscriptionUserHandle(-1));
 
         // Throws SecurityException as we do not have MANAGE_SUBSCRIPTION_USER_ASSOCIATION
         // permission.
         assertThrows(SecurityException.class,
-                () -> mSm.setUserHandle(mSubId, UserHandle.SYSTEM));
+                () -> mSm.setSubscriptionUserHandle(mSubId, UserHandle.SYSTEM));
 
         // Throws SecurityException as we do not have MANAGE_SUBSCRIPTION_USER_ASSOCIATION
         // permission.
-        assertThrows(SecurityException.class, () -> mSm.getUserHandle(mSubId));
+        assertThrows(SecurityException.class, () -> mSm.getSubscriptionUserHandle(mSubId));
 
         // Set and get user handle with MANAGE_SUBSCRIPTION_USER_ASSOCIATION permission.
         try {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .adoptShellPermissionIdentity(
                             Manifest.permission.MANAGE_SUBSCRIPTION_USER_ASSOCIATION);
-            UserHandle originalUserHandle = mSm.getUserHandle(mSubId);
+            UserHandle originalUserHandle = mSm.getSubscriptionUserHandle(mSubId);
 
-            mSm.setUserHandle(mSubId, null);
-            assertThat(mSm.getUserHandle(mSubId)).isEqualTo(null);
+            mSm.setSubscriptionUserHandle(mSubId, null);
+            assertThat(mSm.getSubscriptionUserHandle(mSubId)).isEqualTo(null);
 
-            mSm.setUserHandle(mSubId, UserHandle.SYSTEM);
-            assertThat(mSm.getUserHandle(mSubId)).isEqualTo(UserHandle.SYSTEM);
+            mSm.setSubscriptionUserHandle(mSubId, UserHandle.SYSTEM);
+            assertThat(mSm.getSubscriptionUserHandle(mSubId)).isEqualTo(UserHandle.SYSTEM);
 
-            mSm.setUserHandle(mSubId, originalUserHandle);
+            mSm.setSubscriptionUserHandle(mSubId, originalUserHandle);
         } finally {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();

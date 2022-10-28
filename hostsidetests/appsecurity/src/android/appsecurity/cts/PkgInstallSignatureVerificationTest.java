@@ -1180,6 +1180,19 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     }
 
     @CddTest(requirement="4/C-0-2")
+    public void testV31SignersTargetPAnd100001PlatformUsesTargetPSigner() throws Exception {
+        // The v3.1 signature scheme allows signer configs to target SDK versions; if a rotated
+        // signer config is targeting P, the v3.0 block will include a signature with that rotated
+        // config. This test verifies when the v3.1 signer is targeting an SDK version beyond that
+        // of the platform's, the rotated signing config from the v3.0 block is used by the
+        // platform.
+        assertInstallSucceeds("v31-ec-p256_2-tgt-28-ec-p256_3-tgt-100001.apk");
+        Utils.runDeviceTests(
+                getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
+                "testUsingRotatedSigner");
+    }
+
+    @CddTest(requirement="4/C-0-2")
     public void testV31BlockStrippedWithV3StrippingProtectionAttrSet() throws Exception {
         // With the introduction of the v3.1 signature scheme, a new stripping protection attribute
         // has been added to the v3.0 signer to protect against stripping and modification of the

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.app.cts;
+package android.app.cts.wallpapers;
 
 import static android.opengl.cts.Egl14Utils.getMaxTextureSize;
 
@@ -31,7 +31,6 @@ import static org.mockito.Mockito.verify;
 
 import android.app.WallpaperColors;
 import android.app.WallpaperManager;
-import android.app.stubs.R;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -418,9 +417,9 @@ public class WallpaperManagerTest {
                 mWallpaperManager.getDesiredMinimumHeight());
         if (actualSize.x > 0 || actualSize.y > 0) {
             if ((actualSize.x != expectedSize.x || actualSize.y != expectedSize.y)) {
-                throw new AssertionError("Expected x: " + expectedSize.x + " y: "
-                        + expectedSize.y + ", got x: " + actualSize.x +
-                        " y: " + actualSize.y);
+                throw new AssertionError(
+                        "Expected x: " + expectedSize.x + " y: " + expectedSize.y
+                        + ", got x: " + actualSize.x + " y: " + actualSize.y);
             }
         }
     }
@@ -454,19 +453,19 @@ public class WallpaperManagerTest {
             handler.post(()-> {
                 received.add(whichWp);
                 boolean ok = false;
-                if ((whichWp & WallpaperManager.FLAG_LOCK) != 0 &&
-                        (whichExpected & WallpaperManager.FLAG_LOCK) != 0) {
+                if ((whichWp & WallpaperManager.FLAG_LOCK) != 0
+                        && (whichExpected & WallpaperManager.FLAG_LOCK) != 0) {
                     latch.countDown();
                     ok = true;
                 }
-                if ((whichWp & WallpaperManager.FLAG_SYSTEM) != 0 &&
-                        (whichExpected & WallpaperManager.FLAG_SYSTEM) != 0) {
+                if ((whichWp & WallpaperManager.FLAG_SYSTEM) != 0
+                        && (whichExpected & WallpaperManager.FLAG_SYSTEM) != 0) {
                     latch.countDown();
                     ok = true;
                 }
                 if (!ok) {
-                    throw new AssertionError("Unexpected which flag: " + whichWp +
-                            " should be: " + whichExpected);
+                    throw new AssertionError("Unexpected which flag: " + whichWp
+                            + " should be: " + whichExpected);
                 }
             });
         };
@@ -477,8 +476,8 @@ public class WallpaperManagerTest {
         try {
             mWallpaperManager.setResource(R.drawable.robot, which);
             if (!latch.await(5, TimeUnit.SECONDS)) {
-                throw new AssertionError("Didn't receive all color events. Expected: " +
-                        whichExpected + " received: " + received);
+                throw new AssertionError("Didn't receive all color events. Expected: "
+                        + whichExpected + " received: " + received);
             }
         } catch (InterruptedException | IOException e) {
             throw new RuntimeException(e);

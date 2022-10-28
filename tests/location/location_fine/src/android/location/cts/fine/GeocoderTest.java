@@ -16,12 +16,7 @@
 
 package android.location.cts.fine;
 
-import static android.content.pm.PackageManager.MATCH_DIRECT_BOOT_AWARE;
-import static android.content.pm.PackageManager.MATCH_DIRECT_BOOT_UNAWARE;
-
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
@@ -29,8 +24,6 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager.ResolveInfoFlags;
 import android.location.Geocoder;
 import android.location.Geocoder.GeocodeListener;
 import android.os.Build.VERSION;
@@ -68,17 +61,6 @@ public class GeocoderTest {
         // geocoding is not supported for instant apps until S (b/238831704)
         assumeTrue(
                 !mContext.getPackageManager().isInstantApp() || VERSION.SDK_INT >= VERSION_CODES.S);
-    }
-
-    @Test
-    public void testIsPresent() {
-        if (mContext.getPackageManager().queryIntentServices(
-                new Intent("com.android.location.service.GeocodeProvider"), ResolveInfoFlags.of(
-                        MATCH_DIRECT_BOOT_AWARE | MATCH_DIRECT_BOOT_UNAWARE)).isEmpty()) {
-            assertFalse(Geocoder.isPresent());
-        } else {
-            assertTrue(Geocoder.isPresent());
-        }
     }
 
     @ApiTest(apis = "android.location.Geocoder#getFromLocation")

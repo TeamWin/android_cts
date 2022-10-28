@@ -304,7 +304,7 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
             "androidx.window.extensions.layout.WindowLayoutComponent#removeWindowLayoutInfoListener"
     })
     public void testWindowLayoutComponent_updatesWindowLayoutFromContextAfterRotation()
-            throws ExecutionException, InterruptedException, TimeoutException {
+            throws InterruptedException {
         assumeExtensionVersionSupportsWindowContextLayout();
         assumeSupportsRotation();
 
@@ -313,22 +313,18 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
         TestConfigChangeHandlingActivity configHandlingActivity =
                 (TestConfigChangeHandlingActivity) startFullScreenActivityNewTask(
                         TestConfigChangeHandlingActivity.class, null);
-        TestValueCountConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
-                new TestValueCountConsumer<>();
 
         setActivityOrientationActivityHandlesOrientationChanges(configHandlingActivity,
                 ORIENTATION_PORTRAIT);
 
-        mWindowLayoutComponent.addWindowLayoutInfoListener(windowContext, windowLayoutInfoConsumer);
-        WindowLayoutInfo firstWindowLayout = windowLayoutInfoConsumer.waitAndGet();
+        WindowLayoutInfo firstWindowLayout = getExtensionWindowLayoutInfo(configHandlingActivity);
         final Rect firstBounds = getActivityBounds(configHandlingActivity);
         final Rect firstMaximumBounds = getMaximumActivityBounds(configHandlingActivity);
 
-        windowLayoutInfoConsumer.clearQueue();
         setActivityOrientationActivityHandlesOrientationChanges(configHandlingActivity,
                 ORIENTATION_LANDSCAPE);
 
-        WindowLayoutInfo secondWindowLayout = windowLayoutInfoConsumer.waitAndGet();
+        WindowLayoutInfo secondWindowLayout = getExtensionWindowLayoutInfo(configHandlingActivity);
         final Rect secondBounds = getActivityBounds(configHandlingActivity);
         final Rect secondMaximumBounds = getMaximumActivityBounds(configHandlingActivity);
 

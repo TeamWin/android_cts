@@ -42,6 +42,7 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
+import android.view.inputmethod.InputMethodManager;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -53,6 +54,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Test cases for {@code SoftKeyboardController}. It tests the accessibility APIs for interacting
@@ -163,8 +167,7 @@ public class AccessibilitySoftKeyboardTest {
         try (TestImeSession imeSession = new TestImeSession(Ime1Constants.IME_ID, false)) {
             final SoftKeyboardController controller = mService.getSoftKeyboardController();
 
-            String enabledIMEs = Settings.Secure.getString(
-                    mService.getContentResolver(), Settings.Secure.ENABLED_INPUT_METHODS);
+            List<String> enabledIMEs = getEnabledInputMethods();
             assertFalse(enabledIMEs.contains(Ime1Constants.IME_ID));
 
             // Enable the placeholder IME.
@@ -174,8 +177,7 @@ public class AccessibilitySoftKeyboardTest {
             } catch (SecurityException ignored) {
             }
 
-            enabledIMEs = Settings.Secure.getString(
-                    mService.getContentResolver(), Settings.Secure.ENABLED_INPUT_METHODS);
+            enabledIMEs = getEnabledInputMethods();
             // The placeholder IME should not be enabled;
             assertFalse(enabledIMEs.contains(Ime1Constants.IME_ID));
         }
@@ -188,14 +190,12 @@ public class AccessibilitySoftKeyboardTest {
         try (TestImeSession imeSession = new TestImeSession(ImeId, false)) {
             final SoftKeyboardController controller = mService.getSoftKeyboardController();
 
-            String enabledIMEs = Settings.Secure.getString(
-                    mService.getContentResolver(), Settings.Secure.ENABLED_INPUT_METHODS);
+            List<String> enabledIMEs = getEnabledInputMethods();
             assertFalse(enabledIMEs.contains(ImeId));
 
             // Enable the placeholder IME.
             int result = controller.setInputMethodEnabled(ImeId, true);
-            enabledIMEs = Settings.Secure.getString(
-                    mService.getContentResolver(), Settings.Secure.ENABLED_INPUT_METHODS);
+            enabledIMEs = getEnabledInputMethods();
 
             // The placeholder IME should be enabled;
             assertEquals(ENABLE_IME_SUCCESS, result);
@@ -203,8 +203,7 @@ public class AccessibilitySoftKeyboardTest {
 
             // Disable the placeholder IME.
             result = controller.setInputMethodEnabled(ImeId, false);
-            enabledIMEs = Settings.Secure.getString(
-                    mService.getContentResolver(), Settings.Secure.ENABLED_INPUT_METHODS);
+            enabledIMEs = getEnabledInputMethods();
 
             // The placeholder IME should be disabled;
             assertEquals(ENABLE_IME_SUCCESS, result);
@@ -242,6 +241,14 @@ public class AccessibilitySoftKeyboardTest {
 
         throw new IllegalStateException("last callback value <" + mLastCallbackValue
                 + "> does not match expected value < " + expectedValue + ">");
+    }
+
+    private List<String> getEnabledInputMethods() {
+        final InputMethodManager inputMethodManager = mInstrumentation.getTargetContext()
+                .getSystemService(InputMethodManager.class);
+        return inputMethodManager.getEnabledInputMethodList()
+                .stream().map(inputMethodInfo -> inputMethodInfo.getId())
+                .collect(Collectors.toList());
     }
 
     /**

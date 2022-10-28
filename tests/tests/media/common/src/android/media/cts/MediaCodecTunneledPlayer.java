@@ -57,6 +57,7 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
     private CodecState mAudioTrackState;
     private int mMediaFormatHeight;
     private int mMediaFormatWidth;
+    private Float mMediaFormatFrameRate;
     private Integer mState;
     private long mDeltaTimeUs;
     private long mDurationUs;
@@ -109,6 +110,10 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
                 }
             }
         });
+    }
+
+    public void setFrameRate(float frameRate) {
+        mMediaFormatFrameRate = frameRate;
     }
 
     public void setAudioDataSource(Uri uri, Map<String, String> headers) {
@@ -284,6 +289,9 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
                         mime+"!");
                 return false;
             }
+        }
+        if (isVideo && mMediaFormatFrameRate != null) {
+            format.setFloat(MediaFormat.KEY_FRAME_RATE, mMediaFormatFrameRate);
         }
         codec.configure(
                 format,

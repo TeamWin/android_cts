@@ -339,7 +339,8 @@ public class SimpleObjectsTest {
             "android.hardware.camera2.params.ColorSpaceProfiles#getSupportedDynamicRangeProfiles"})
     public void colorSpaceProfilesTest() {
         long[] elements = {
-                ColorSpace.Named.DISPLAY_P3.ordinal(), ImageFormat.YUV_420_888, 0
+                ColorSpace.Named.DISPLAY_P3.ordinal(), ImageFormat.YUV_420_888,
+                DynamicRangeProfiles.STANDARD
         };
 
         ColorSpaceProfiles colorSpaceProfiles = new ColorSpaceProfiles(elements);

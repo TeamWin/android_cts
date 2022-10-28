@@ -39,8 +39,6 @@ import androidx.window.extensions.layout.WindowLayoutComponent;
 import androidx.window.extensions.layout.WindowLayoutInfo;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 /**
@@ -134,7 +132,7 @@ public class ExtensionUtil {
      */
     @Nullable
     public static WindowLayoutInfo getExtensionWindowLayoutInfo(Activity activity)
-            throws ExecutionException, InterruptedException, TimeoutException {
+            throws InterruptedException {
         WindowLayoutComponent windowLayoutComponent = getExtensionWindowLayoutComponent();
         if (windowLayoutComponent == null) {
             return null;
@@ -142,7 +140,14 @@ public class ExtensionUtil {
         TestValueCountConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
                 new TestValueCountConsumer<>();
         windowLayoutComponent.addWindowLayoutInfoListener(activity, windowLayoutInfoConsumer);
-        return windowLayoutInfoConsumer.waitAndGet();
+        WindowLayoutInfo info = windowLayoutInfoConsumer.waitAndGet();
+
+        // The default implementation only allows a single listener per activity. Since we are using
+        // a local windowLayoutInfoConsumer within this function, we must remember to clean up.
+        // Otherwise, subsequent calls to addWindowLayoutInfoListener with the same activity will
+        // fail to have its callback registered.
+        windowLayoutComponent.removeWindowLayoutInfoListener(windowLayoutInfoConsumer);
+        return info;
     }
 
     /**
@@ -153,7 +158,7 @@ public class ExtensionUtil {
      */
     @Nullable
     public static WindowLayoutInfo getExtensionWindowLayoutInfo(@UiContext Context context)
-            throws ExecutionException, InterruptedException, TimeoutException {
+            throws InterruptedException {
         assertTrue(isExtensionVersionAtLeast(EXTENSION_VERSION_2));
         WindowLayoutComponent windowLayoutComponent = getExtensionWindowLayoutComponent();
         if (windowLayoutComponent == null) {
@@ -162,12 +167,19 @@ public class ExtensionUtil {
         TestValueCountConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
                 new TestValueCountConsumer<>();
         windowLayoutComponent.addWindowLayoutInfoListener(context, windowLayoutInfoConsumer);
-        return windowLayoutInfoConsumer.waitAndGet();
+        WindowLayoutInfo info = windowLayoutInfoConsumer.waitAndGet();
+
+        // The default implementation only allows a single listener per context. Since we are using
+        // a local windowLayoutInfoConsumer within this function, we must remember to clean up.
+        // Otherwise, subsequent calls to addWindowLayoutInfoListener with the same context will
+        // fail to have its callback registered.
+        windowLayoutComponent.removeWindowLayoutInfoListener(windowLayoutInfoConsumer);
+        return info;
     }
 
     @NonNull
     public static int[] getExtensionDisplayFeatureTypes(Activity activity)
-            throws ExecutionException, InterruptedException, TimeoutException {
+            throws InterruptedException {
         WindowLayoutInfo windowLayoutInfo = getExtensionWindowLayoutInfo(activity);
         if (windowLayoutInfo == null) {
             return new int[0];
