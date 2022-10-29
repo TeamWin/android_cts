@@ -30,7 +30,7 @@ import target_exposure_utils
 
 _API_LEVEL_30 = 30
 _BURST_LEN = 50
-_COLORS = ['R', 'G', 'B']
+_COLORS = ('R', 'G', 'B')
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NUM_BURSTS = 2
 _PATCH_H = 0.1  # center 10%

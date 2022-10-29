@@ -27,7 +27,7 @@ import image_processing_utils
 import its_session_utils
 import target_exposure_utils
 
-_COLORS = ['R', 'G', 'B']
+_COLORS = ('R', 'G', 'B')
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NUM_STEPS = 5
 _PATCH_H = 0.1  # center 10%

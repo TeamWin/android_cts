@@ -28,7 +28,7 @@ import image_processing_utils
 import its_session_utils
 
 
-_BAYER_LIST = ['R', 'GR', 'GB', 'B']
+_BAYER_COLORS = ('R', 'GR', 'GB', 'B')
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NUM_STEPS = 4
 _PATCH_H = 0.02  # center 2%
@@ -104,10 +104,10 @@ class DngNoiseModelTest(its_base_test.ItsBaseTest):
 
         # Test each raw color channel (R, GR, GB, B)
         noise_profile = cap['metadata']['android.sensor.noiseProfile']
-        if len(noise_profile) != len(_BAYER_LIST):
+        if len(noise_profile) != len(_BAYER_COLORS):
           raise AssertionError(
               f'noise_profile wrong length! {len(noise_profile)}')
-        for i, ch in enumerate(_BAYER_LIST):
+        for i, ch in enumerate(_BAYER_COLORS):
           # Get the noise model parameters for this channel of this shot.
           s, o = noise_profile[cfa_idxs[i]]
 
@@ -153,7 +153,7 @@ class DngNoiseModelTest(its_base_test.ItsBaseTest):
 
     # plot data and models
     pylab.figure(_NAME)
-    for i, ch in enumerate(_BAYER_LIST):
+    for i, ch in enumerate(_BAYER_COLORS):
       pylab.plot(sens_valid, var_exp[i], 'rgkb'[i], label=ch+' expected')
       pylab.plot(sens_valid, var_meas[i], 'rgkb'[i]+'.--', label=ch+' measured')
     pylab.title(_NAME)
@@ -164,7 +164,7 @@ class DngNoiseModelTest(its_base_test.ItsBaseTest):
     matplotlib.pyplot.savefig(f'{name_with_log_path}_plot.png')
 
     # PASS/FAIL check
-    for i, ch in enumerate(_BAYER_LIST):
+    for i, ch in enumerate(_BAYER_COLORS):
       var_diffs = [abs(var_meas[i][j] - var_exp[i][j])
                    for j in range(len(sens_valid))]
       logging.debug('%s variance diffs: %s', ch, str(var_diffs))

@@ -116,16 +116,18 @@ public class BatteryUtils {
     public static void enableBatterySaver(boolean enabled) throws Exception {
         if (enabled) {
             SystemUtil.runShellCommandForNoOutput("cmd power set-mode 1");
+            AmUtils.waitForBroadcastBarrier();
             putGlobalSetting(Global.LOW_POWER_MODE, "1");
             waitUntil("Battery saver still off", () -> getPowerManager().isPowerSaveMode());
         } else {
             SystemUtil.runShellCommandForNoOutput("cmd power set-mode 0");
+            AmUtils.waitForBroadcastBarrier();
             putGlobalSetting(Global.LOW_POWER_MODE, "0");
             putGlobalSetting(Global.LOW_POWER_MODE_STICKY, "0");
             waitUntil("Battery saver still on", () -> !getPowerManager().isPowerSaveMode());
         }
 
-        AmUtils.waitForBroadcastIdle();
+        AmUtils.waitForBroadcastBarrier();
         Log.d(TAG, "Battery saver turned " + (enabled ? "ON" : "OFF"));
     }
 
@@ -141,7 +143,7 @@ public class BatteryUtils {
             SystemUtil.runShellCommandForNoOutput("input keyevent KEYCODE_SLEEP");
             waitUntil("Device still interactive", () -> !getPowerManager().isInteractive());
         }
-        AmUtils.waitForBroadcastIdle();
+        AmUtils.waitForBroadcastBarrier();
         Log.d(TAG, "Screen turned " + (on ? "ON" : "OFF"));
     }
 

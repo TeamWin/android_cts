@@ -956,7 +956,8 @@ public class WindowUntrustedTouchTest {
         String activity = ComponentNameUtils.getActivityName(component);
         if (!mWmState.waitFor("activity window " + activity,
                 state -> activity.equals(state.getFocusedActivity())
-                        && state.hasActivityState(component, STATE_RESUMED))) {
+                        && state.hasActivityState(component, STATE_RESUMED)
+                        && state.isWindowSurfaceShown(activity))) {
             fail("Activity from app " + packageName + " did not appear on time");
         }
     }

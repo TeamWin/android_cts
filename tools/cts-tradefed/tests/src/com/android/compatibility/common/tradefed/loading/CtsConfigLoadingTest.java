@@ -19,7 +19,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.compatibility.common.tradefed.testtype.JarHostTest;
 import com.android.tradefed.build.FolderBuildInfo;
 import com.android.tradefed.config.ConfigurationDescriptor;
 import com.android.tradefed.config.ConfigurationException;
@@ -28,7 +27,6 @@ import com.android.tradefed.config.IConfiguration;
 import com.android.tradefed.invoker.ExecutionFiles.FilesKey;
 import com.android.tradefed.invoker.InvocationContext;
 import com.android.tradefed.invoker.TestInformation;
-import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.suite.ITestSuite;
 import com.android.tradefed.testtype.suite.TestSuiteInfo;
 import com.android.tradefed.testtype.suite.params.ModuleParameters;
@@ -217,17 +215,6 @@ public class CtsConfigLoadingTest {
                     + "'<option name=\"test-suite-tag\" value=\"%s\" />'", config.getName(), suiteName),
                     cd.getSuiteTags().contains(suiteName));
 
-            // Check not-shardable: JarHostTest cannot create empty shards so it should never need
-            // to be not-shardable.
-            if (cd.isNotShardable()) {
-                for (IRemoteTest test : c.getTests()) {
-                    if (test.getClass().isAssignableFrom(JarHostTest.class)) {
-                        throw new ConfigurationException(
-                                String.format("config: %s. JarHostTest does not need the "
-                                    + "not-shardable option.", config.getName()));
-                    }
-                }
-            }
             // Ensure options have been set
             c.validateOptions();
         }

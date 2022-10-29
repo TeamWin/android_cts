@@ -27,8 +27,8 @@ import image_processing_utils
 import its_session_utils
 import target_exposure_utils
 
-_COLORS = ['R', 'G', 'B']
-_EXP_MULT_FACTORS = [0.8, 0.9, 1.0, 1.1, 1.2]  # vary exposure +/- 20%
+_COLORS = ('R', 'G', 'B')
+_EXP_MULT_FACTORS = (0.8, 0.9, 1.0, 1.1, 1.2)  # vary exposure +/- 20%
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _PATCH_H = 0.1  # center 10%
 _PATCH_W = 0.1

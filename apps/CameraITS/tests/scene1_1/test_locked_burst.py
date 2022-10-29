@@ -25,7 +25,7 @@ import image_processing_utils
 import its_session_utils
 
 _BURST_LEN = 8
-_COLORS = ['R', 'G', 'B']
+_COLORS = ('R', 'G', 'B')
 _FPS_MAX_DIFF = 2.0
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _PATCH_H = 0.1  # center 10%

@@ -27,9 +27,9 @@ import capture_request_utils
 import image_processing_utils
 import its_session_utils
 
+_BAYER_COLORS = ('R', 'Gr', 'Gb', 'B')
 _BLK_LVL_RTOL = 0.1
 _BURST_LEN = 10  # break captures into burst of BURST_LEN requests
-_COLORS = ['R', 'Gr', 'Gb', 'B']
 _EXP_LONG_THRESH = 1E6  # 1ms
 _EXP_MULT_SHORT = pow(2, 1.0/3)  # Test 3 steps per 2x exposure
 _EXP_MULT_LONG = pow(10, 1.0/3)  # Test 3 steps per 10x exposure
@@ -38,7 +38,6 @@ _IMG_SAT_RTOL = 0.01  # 1%
 _IMG_STATS_GRID = 9  # find used to find the center 11.11%
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NS_TO_MS_FACTOR = 1.0E-6
-_NUM_COLORS = len(_COLORS)
 _NUM_ISO_STEPS = 5
 
 
@@ -104,10 +103,10 @@ def assert_increasing_means(means, exps, sens, black_levels, white_level):
   """Assert that each image increases unless over/undersaturated.
 
   Args:
-    means: COLORS means for set of images
+    means: BAYER COLORS means for set of images
     exps: exposure times in ms
     sens: ISO gain value
-    black_levels: COLORS black_level values
+    black_levels: BAYER COLORS black_level values
     white_level: full scale value
   Returns:
     None
@@ -130,7 +129,7 @@ def assert_increasing_means(means, exps, sens, black_levels, white_level):
     allow_under_saturated = False
     # Check pixel means are increasing (with small tolerance)
     logging.debug('iso: %d, exp: %.3f, means: %s', sens, exps[i-1], mean)
-    for ch, color in enumerate(_COLORS):
+    for ch, color in enumerate(_BAYER_COLORS):
       if mean[ch] <= prev_mean[ch] * _IMG_DELTA_THRESH:
         e_msg = f'{color} not increasing with increased exp time! ISO: {sens}, '
         if i == 1:
@@ -178,7 +177,7 @@ class RawExposureTest(its_base_test.ItsBaseTest):
       sens_step = (sens_max - sens_min) // _NUM_ISO_STEPS
       white_level = float(props['android.sensor.info.whiteLevel'])
       black_levels = [image_processing_utils.get_black_level(
-          i, props) for i in range(_NUM_COLORS)]
+          i, props) for i, _ in enumerate(_BAYER_COLORS)]
 
       # Do captures with exposure list over sensitivity range
       for s in range(sens_min, sens_max, sens_step):

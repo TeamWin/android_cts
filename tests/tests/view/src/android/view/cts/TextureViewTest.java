@@ -71,6 +71,8 @@ import org.junit.runner.RunWith;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import junitparams.JUnitParamsRunner;
@@ -427,10 +429,10 @@ public class TextureViewTest {
         image.setCropRect(new Rect(1, 1, textureWidth - 1, textureHeight - 1));
         bitmap.copyPixelsToBuffer(plane.getBuffer());
         writer.queueInputImage(image);
+        waitForDraw(textureView);
 
         final Rect viewPos = new Rect();
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule,
-                activity.findViewById(android.R.id.content), () -> {
+        mActivityRule.runOnUiThread(() -> {
             int[] outLocation = new int[2];
             textureView.getLocationInSurface(outLocation);
             viewPos.left = outLocation[0];
@@ -446,6 +448,17 @@ public class TextureViewTest {
         int result = pixelCopy.request(window, viewPos, bitmap);
         assertEquals("Copy request failed", PixelCopy.SUCCESS, result);
         assertBitmapEdgeColor(bitmap, Color.YELLOW);
+    }
+
+    // TODO(b/220361081) replace with runOnMainAndDrawSync once we have the
+    // runOnMainAndDrawSync updated to use the registerFrameCommitCallback
+    private void waitForDraw(final View view) throws Throwable {
+        final CountDownLatch latch = new CountDownLatch(1);
+        mActivityRule.runOnUiThread(() -> {
+            view.getViewTreeObserver().registerFrameCommitCallback(latch::countDown);
+            view.invalidate();
+        });
+        assertTrue(latch.await(1, TimeUnit.SECONDS));
     }
 
     private boolean pixelsAreSame(int ideal, int given, int threshold) {

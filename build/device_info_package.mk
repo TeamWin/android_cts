@@ -33,6 +33,7 @@ DEVICE_INFO_ACTIVITIES += \
   $(DEVICE_INFO_PACKAGE).FeatureDeviceInfo \
   $(DEVICE_INFO_PACKAGE).GenericDeviceInfo \
   $(DEVICE_INFO_PACKAGE).GlesStubActivity \
+  $(DEVICE_INFO_PACKAGE).GnssDeviceInfo \
   $(DEVICE_INFO_PACKAGE).GraphicsDeviceInfo \
   $(DEVICE_INFO_PACKAGE).HapticsDeviceInfo \
   $(DEVICE_INFO_PACKAGE).InputDeviceInfo \

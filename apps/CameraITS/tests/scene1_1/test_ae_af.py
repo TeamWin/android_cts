@@ -30,9 +30,9 @@ _G_CHANNEL = 2
 _G_GAIN = 1.0
 _G_GAIN_TOL = 0.05
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
-_THREE_A_STATES = {'AE': [True, False, True],
-                  'AF': [False, True, True],
-                  'FULL_3A': [True, True, True]}  # note no AWB solo
+_THREE_A_STATES = {'AE': (True, False, True),
+                   'AF': (False, True, True),
+                   'FULL_3A': (True, True, True)}  # note no AWB solo
 
 
 class SingleATest(its_base_test.ItsBaseTest):

@@ -230,13 +230,6 @@ public class CommonConfigLoadingTest {
             // Check that specified tokens are expected
             checkTokens(config.getName(), cd.getMetaData(ITestSuite.TOKEN_KEY));
 
-            String suiteName = getSuiteName().toLowerCase();
-            // Ensure each CTS module is tagged with <option name="test-suite-tag" value="cts" />
-            Assert.assertTrue(String.format(
-                    "Module config %s does not contain "
-                    + "'<option name=\"test-suite-tag\" value=\"%s\" />'", config.getName(), suiteName),
-                    cd.getSuiteTags().contains(suiteName));
-
             // Check not-shardable: JarHostTest cannot create empty shards so it should never need
             // to be not-shardable.
             if (cd.isNotShardable()) {

@@ -1377,8 +1377,10 @@ public class StagefrightTest extends StsExtraBusinessLogicTestCase {
         };
         server.start();
         String uri = "rtsp://127.0.0.1:8080/cve_2016_3880";
-        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener(new CrashUtils.Config()
-                .setSignals(CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT));
+        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener(
+                new CrashUtils.Config()
+                        .setSignals(CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT)
+                        .appendAbortMessageExcludes("CHECK\\(IsRTSPVersion"));
         LooperThread t = new LooperThread(new Runnable() {
             @Override
             public void run() {

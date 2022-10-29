@@ -28,7 +28,7 @@ import image_processing_utils
 import its_session_utils
 import target_exposure_utils
 
-_COLORS = ['R', 'G', 'B']
+_COLORS = ('R', 'G', 'B')
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NR_MODES = {'OFF': 0, 'FAST': 1, 'HQ': 2, 'MIN': 3, 'ZSL': 4}
 _NR_MODES_LIST = list(_NR_MODES.values())
