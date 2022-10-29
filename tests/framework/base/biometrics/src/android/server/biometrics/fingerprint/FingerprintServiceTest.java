@@ -254,7 +254,7 @@ public class FingerprintServiceTest extends ActivityManagerTestBase
             final boolean verifyPartial = !hasUdfps();
             if (verifyPartial) {
                 final int aidlSensorId = Utils.getAidlSensorId();
-                if (aidlSensorId > 0 && testSessions.first().equals(
+                if (aidlSensorId >= 0 && testSessions.first().equals(
                         testSessions.find(aidlSensorId))) {
                     testSessions.first().notifyAcquired(userId, 2 /* AcquiredInfo.PARTIAL */);
                 } else {

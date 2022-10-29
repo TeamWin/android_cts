@@ -475,7 +475,7 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testGetApplicationLocales_forNoneCurrentIme_noBroadcastsReceived()
+    public void testGetApplicationLocales_nonCurrentIme_noBroadcastReceived()
             throws Exception {
         sLocaleManager.setApplicationLocales(DEFAULT_APP_LOCALES);
 
@@ -491,9 +491,54 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testGetApplicationLocales_forCurrentIme_getAnotherAppLocales()
+    public void testGetApplicationLocales_currentImeGetNonForegroundAppLocales_noBroadcastReceived()
             throws Exception {
-        //Record the original active IME and set test IME as the current active IME
+        // Record the original active IME and set test IME as the current active IME
+        String currentIme = Settings.Secure.getString(
+                sContext.getContentResolver(),
+                Settings.Secure.DEFAULT_INPUT_METHOD);
+        ComponentName imeComponentName = new ComponentName(IME_APP_PACKAGE,
+                IME_APP_PACKAGE + ".TestIme");
+        String testIme = imeComponentName.flattenToShortString();
+        ShellUtils.runShellCommand("ime enable " + testIme);
+        ShellUtils.runShellCommand("ime set " + testIme);
+        PollingCheck.check("Make sure that TestIme becomes available", TIMEOUT,
+                () -> testIme.equals(Settings.Secure.getString(
+                        sContext.getContentResolver(),
+                        Settings.Secure.DEFAULT_INPUT_METHOD)));
+
+        // Invoke the app by launching an activity.
+        launchActivity(TEST_APP_MAIN_ACTIVITY);
+        // Send the TestApp to the background.
+        launchHomeActivity();
+        mWmState.waitAndAssertVisibilityGone(TEST_APP_MAIN_ACTIVITY);
+
+        // Set test app's locales
+        runWithShellPermissionIdentity(() ->
+                        sLocaleManager.setApplicationLocales(TEST_APP_PACKAGE, DEFAULT_APP_LOCALES),
+                Manifest.permission.CHANGE_CONFIGURATION);
+
+        // Tell the IME app to fetch locales for the background app.
+        launchActivity(IME_APP_MAIN_ACTIVITY,
+                extraString(EXTRA_QUERY_LOCALES, TEST_APP_PACKAGE));
+
+        // Since it is not allowed for the current IME app to get locales of non-foreground app, no
+        // broadcast was sent by test IME
+        mImeAppCreationInfoProvider.assertNoBroadcastReceived();
+
+        //After the test is completed, restore the original active IME to the current active IME
+        ShellUtils.runShellCommand("ime enable " + currentIme);
+        ShellUtils.runShellCommand("ime set " + currentIme);
+        PollingCheck.check("Make sure that original active Ime becomes available", TIMEOUT,
+                () -> currentIme.equals(Settings.Secure.getString(
+                        sContext.getContentResolver(),
+                        Settings.Secure.DEFAULT_INPUT_METHOD)));
+    }
+
+    @Test
+    public void testGetApplicationLocales_currentImeGetForegroundAppLocales_returnsLocales()
+            throws Exception {
+        // Record the original active IME and set test IME as the current active IME
         String currentIme = Settings.Secure.getString(
                 sContext.getContentResolver(),
                 Settings.Secure.DEFAULT_INPUT_METHOD);
@@ -509,7 +554,7 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
 
         //Set app locales
         sLocaleManager.setApplicationLocales(DEFAULT_APP_LOCALES);
-        // Tell the IME app to fetch locales for the test app.
+        // Tell the IME app to fetch locales for the foreground app.
         launchActivity(IME_APP_MAIN_ACTIVITY,
                 extraString(EXTRA_QUERY_LOCALES, CALLING_PACKAGE));
 

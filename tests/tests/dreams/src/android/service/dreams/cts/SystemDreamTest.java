@@ -16,9 +16,17 @@
 
 package android.service.dreams.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.Condition;
 import android.server.wm.DreamCoordinator;
+import android.text.TextUtils;
 import android.view.Display;
 
 import androidx.test.filters.SmallTest;
@@ -101,6 +109,45 @@ public class SystemDreamTest extends ActivityManagerTestBase {
         }
     }
 
+    @Test
+    public void broadcast_startAndStopDream_broadcastStartAndStopDreamIntents() {
+        final TestDreamBroadcastReceiver receiver = new TestDreamBroadcastReceiver();
+        mContext.registerReceiver(receiver, getDreamIntentFilter());
+
+        // Start dream and verify DREAMING_STARTED broadcast exactly once.
+        mDreamCoordinator.startDream();
+        assertThat(receiver.waitForDreamStartedCount(1)).isTrue();
+        assertThat(receiver.waitForDreamStoppedCount(0)).isTrue();
+
+        // Stop dream and verify DREAMING_STOPPED broadcast exactly once.
+        mDreamCoordinator.stopDream();
+        assertThat(receiver.waitForDreamStoppedCount(1)).isTrue();
+        assertThat(receiver.waitForDreamStartedCount(1)).isTrue();
+    }
+
+    @Test
+    public void broadcast_switchDream_noBroadcastDreamIntentsInBetweenDreams() {
+        final TestDreamBroadcastReceiver receiver = new TestDreamBroadcastReceiver();
+        mContext.registerReceiver(receiver, getDreamIntentFilter());
+
+        // Start dream and switch to system dream.
+        mDreamCoordinator.startDream();
+        assertThat(receiver.waitForDreamStartedCount(1)).isTrue();
+
+        final ComponentName systemDreamActivity = mDreamCoordinator.setSystemDream(mSystemDream);
+        waitAndAssertTopResumedActivity(systemDreamActivity, Display.DEFAULT_DISPLAY,
+                getDreamActivityVerificationMessage(systemDreamActivity));
+
+        // Verify no extra DREAMING_STARTED or DREAMING_STOPPED is broadcast.
+        assertThat(receiver.waitForDreamStartedCount(1)).isTrue();
+        assertThat(receiver.waitForDreamStoppedCount(0)).isTrue();
+
+        // Stop dream and verify DREAMING_STARTED and DREAMING_STOPPED each broadcast exactly once.
+        mDreamCoordinator.stopDream();
+        assertThat(receiver.waitForDreamStartedCount(1)).isTrue();
+        assertThat(receiver.waitForDreamStoppedCount(1)).isTrue();
+    }
+
     private void startAndVerifyDreamActivity(ComponentName expectedDreamActivity) {
         try {
             mDreamCoordinator.startDream();
@@ -113,5 +160,36 @@ public class SystemDreamTest extends ActivityManagerTestBase {
 
     private String getDreamActivityVerificationMessage(ComponentName activity) {
         return activity.flattenToString() + " should be displayed";
+    }
+
+    private IntentFilter getDreamIntentFilter() {
+        final IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_DREAMING_STARTED);
+        filter.addAction(Intent.ACTION_DREAMING_STOPPED);
+        return filter;
+    }
+
+    private static class TestDreamBroadcastReceiver extends BroadcastReceiver {
+        private int mDreamStartedCount = 0;
+        private int mDreamStoppedCount = 0;
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (TextUtils.equals(intent.getAction(), Intent.ACTION_DREAMING_STARTED)) {
+                mDreamStartedCount++;
+            } else if (TextUtils.equals(intent.getAction(), Intent.ACTION_DREAMING_STOPPED)) {
+                mDreamStoppedCount++;
+            }
+        }
+
+        boolean waitForDreamStartedCount(int count) {
+            return Condition.waitFor("dream started broadcast count to be " + count /*message*/,
+                    () -> mDreamStartedCount == count);
+        }
+
+        boolean waitForDreamStoppedCount(int count) {
+            return Condition.waitFor("dream stopped broadcast count to be " + count /*message*/,
+                    () -> mDreamStoppedCount == count);
+        }
     }
 }

@@ -78,7 +78,7 @@ def _capture_frames(cam, log_path, debug):
     cap_3a_state_list.append([ae_state, af_state, awb_state])
     if debug:
       image_processing_utils.write_image(
-          img, '%s_%d.jpg' % (os.path.join(log_path, _NAME), i))
+          img, f'{os.path.join(log_path, _NAME)}_{i}.jpg')
   return cap_3a_state_list
 
 

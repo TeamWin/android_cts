@@ -54,8 +54,8 @@ def convert_and_compare_captures(cap_raw, cap_yuv, props,
   logging.debug('%s capture shading mode: %d', raw_fmt, shading_mode)
 
   img = image_processing_utils.convert_capture_to_rgb_image(cap_yuv)
-  image_processing_utils.write_image(img, '%s_shading=%d_yuv.jpg' % (
-      log_path_with_name, shading_mode), True)
+  image_processing_utils.write_image(
+      img, f'{log_path_with_name}_shading={shading_mode}_yuv.jpg', True)
   patch = image_processing_utils.get_image_patch(
       img, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
   rgb_means_yuv = image_processing_utils.compute_image_means(patch)
@@ -64,8 +64,8 @@ def convert_and_compare_captures(cap_raw, cap_yuv, props,
   # cropping is relative.
   img = image_processing_utils.convert_capture_to_rgb_image(
       cap_raw, props=props)
-  image_processing_utils.write_image(img, '%s_shading=%d_%s.jpg' % (
-      log_path_with_name, shading_mode, raw_fmt), True)
+  image_processing_utils.write_image(
+      img, f'{log_path_with_name}_shading={shading_mode}_{raw_fmt}.jpg', True)
   patch = image_processing_utils.get_image_patch(
       img, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
   rgb_means_raw = image_processing_utils.compute_image_means(patch)

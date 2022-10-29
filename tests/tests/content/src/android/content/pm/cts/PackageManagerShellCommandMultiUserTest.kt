@@ -46,6 +46,7 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.ClassRule
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -210,6 +211,7 @@ class PackageManagerShellCommandMultiUserTest {
     }
 
     @Test
+    @Ignore("b/254763137")
     fun testPackageFullyRemovedBroadcastAfterUninstall(
         @StringTestParameter(
             "install",

@@ -42,7 +42,9 @@ CIRCLISH_ATOL = 0.10  # contour area vs ideal circle area & aspect ratio TOL
 CIRCLISH_LOW_RES_ATOL = 0.15  # loosen for low res images
 CIRCLE_MIN_PTS = 20
 CIRCLE_RADIUS_NUMPTS_THRESH = 2  # contour num_pts/radius: empirically ~3x
+CIRCLE_COLOR_ATOL = 0.01  # circle color fill tolerance
 
+CV2_CONTOUR_LINE_THICKNESS = 3  # for drawing contours if multiple circles found
 CV2_RED = (255, 0, 0)  # color in cv2 to draw lines
 
 FOV_THRESH_TELE25 = 25
@@ -312,6 +314,28 @@ def component_shape(contour):
   return shape
 
 
+def find_circle_fill_metric(shape, img_bw, color):
+  """Find the proportion of points matching a desired color on a shape's axes.
+
+  Args:
+    shape: dictionary returned by component_shape(...)
+    img_bw: binarized numpy image array
+    color: int of [0 or 255] 0 is black, 255 is white
+  Returns:
+    float: number of x, y axis points matching color / total x, y axis points
+  """
+  matching = 0
+  total = 0
+  for y in range(shape['top'], shape['bottom']):
+    total += 1
+    matching += 1 if img_bw[y][shape['ctx']] == color else 0
+  for x in range(shape['left'], shape['right']):
+    total += 1
+    matching += 1 if img_bw[shape['cty']][x] == color else 0
+  logging.debug('Found %d matching points out of %d', matching, total)
+  return matching / total
+
+
 def find_circle(img, img_name, min_area, color):
   """Find the circle in the test image.
 
@@ -343,6 +367,7 @@ def find_circle(img, img_name, min_area, color):
 
   # Check each contour and find the circle bigger than min_area
   num_circles = 0
+  circle_contours = []
   logging.debug('Initial number of contours: %d', len(contours))
   for contour in contours:
     area = cv2.contourArea(contour)
@@ -354,13 +379,16 @@ def find_circle(img, img_name, min_area, color):
       colour = img_bw[shape['cty']][shape['ctx']]
       circlish = (math.pi * radius**2) / area
       aspect_ratio = shape['width'] / shape['height']
+      fill = find_circle_fill_metric(shape, img_bw, color)
       logging.debug('Potential circle found. radius: %.2f, color: %d, '
-                    'circlish: %.3f, ar: %.3f, pts: %d', radius, colour,
-                    circlish, aspect_ratio, num_pts)
+                    'circlish: %.3f, ar: %.3f, pts: %d, fill metric: %.3f',
+                    radius, colour, circlish, aspect_ratio, num_pts, fill)
       if (colour == color and
-          numpy.isclose(1.0, circlish, atol=circlish_atol) and
-          numpy.isclose(1.0, aspect_ratio, atol=CIRCLE_AR_ATOL) and
-          num_pts/radius >= CIRCLE_RADIUS_NUMPTS_THRESH):
+          math.isclose(1.0, circlish, abs_tol=circlish_atol) and
+          math.isclose(1.0, aspect_ratio, abs_tol=CIRCLE_AR_ATOL) and
+          num_pts/radius >= CIRCLE_RADIUS_NUMPTS_THRESH and
+          math.isclose(1.0, fill, abs_tol=CIRCLE_COLOR_ATOL)):
+        circle_contours.append(contour)
 
         # Populate circle dictionary
         circle['x'] = shape['ctx']
@@ -389,6 +417,11 @@ def find_circle(img, img_name, min_area, color):
 
   if num_circles > 1:
     image_processing_utils.write_image(img/255, img_name, True)
+    cv2.drawContours(img, circle_contours, -1, CV2_RED,
+                     CV2_CONTOUR_LINE_THICKNESS)
+    img_name_parts = img_name.split('.')
+    image_processing_utils.write_image(
+        img/255, f'{img_name_parts[0]}_contours.{img_name_parts[1]}', True)
     raise AssertionError('More than 1 black circle detected. '
                          'Background of scene may be too complex.')
 

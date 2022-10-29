@@ -29,7 +29,7 @@ import target_exposure_utils
 _CHART_DISTANCE_NO_SCALING = 100  # 1 meter to disable scaling
 _FLASH_MODES = {'OFF': 0, 'SINGLE': 1, 'TORCH': 2}
 _FLASH_STATES = {'UNAVAIL': 0, 'CHARGING': 1, 'READY': 2, 'FIRED': 3,
-                'PARTIAL': 4}
+                 'PARTIAL': 4}
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _PATCH_H = 0.25  # center 25%
 _PATCH_W = 0.25
@@ -97,7 +97,7 @@ class ParamFlashModeTest(its_base_test.ItsBaseTest):
         states.append(cap['metadata']['android.flash.state'])
         y, _, _ = image_processing_utils.convert_capture_to_planes(cap, props)
         image_processing_utils.write_image(
-            y, '{file_name_stem}_{flash_mode}.jpg')
+            y, f'{file_name_stem}_{flash_mode}.jpg')
         patch = image_processing_utils.get_image_patch(
             y, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
         image_processing_utils.write_image(

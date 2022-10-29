@@ -31,6 +31,7 @@ import static android.provider.Settings.Secure.LOCATION_ACCESS_CHECK_INTERVAL_MI
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+import static com.android.compatibility.common.util.SystemUtil.waitForBroadcasts;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -617,6 +618,7 @@ public class LocationAccessCheckTest {
                     .setFlags(FLAG_RECEIVER_FOREGROUND)
                     .setPackage(PERMISSION_CONTROLLER_PKG));
         }
+        waitForBroadcasts();
     }
 
     /**
@@ -688,6 +690,7 @@ public class LocationAccessCheckTest {
 
         // Wait until package is cleared and permission controller has cleared the state
         Thread.sleep(10000);
+        waitForBroadcasts();
 
         // Clearing removed the permissions, hence grant them again
         grantPermissionToTestApp(ACCESS_FINE_LOCATION);
@@ -713,7 +716,7 @@ public class LocationAccessCheckTest {
         Thread.sleep(2000);
 
         installBackgroundAccessApp();
-
+        waitForBroadcasts();
         accessLocation();
         runLocationCheck();
 
@@ -731,12 +734,14 @@ public class LocationAccessCheckTest {
         eventually(() -> assertNotNull(getNotification(false)), EXPECTED_TIMEOUT_MILLIS);
 
         uninstallBackgroundAccessApp();
+        // wait for permission controller (broadcast receiver) to clean up things
+        Thread.sleep(5000);
+        waitForBroadcasts();
 
         try {
             eventually(() -> assertNull(getNotification(false)), UNEXPECTED_TIMEOUT_MILLIS);
         } finally {
             installBackgroundAccessApp();
-            getNotification(true);
         }
     }
 

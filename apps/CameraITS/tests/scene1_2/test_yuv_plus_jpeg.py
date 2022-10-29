@@ -45,7 +45,7 @@ def compute_means_and_save(cap, img_name, log_path):
   """
   img = image_processing_utils.convert_capture_to_rgb_image(cap, True)
   image_processing_utils.write_image(
-      img, '%s_%s.jpg' % (os.path.join(log_path, _NAME), img_name))
+      img, f'{os.path.join(log_path, _NAME)}_{img_name}.jpg')
   patch = image_processing_utils.get_image_patch(
       img, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
   rgb_means = image_processing_utils.compute_image_means(patch)

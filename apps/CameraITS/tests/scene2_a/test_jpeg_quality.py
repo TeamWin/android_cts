@@ -29,8 +29,9 @@ import capture_request_utils
 import image_processing_utils
 import its_session_utils
 
-_JPEG_APPN_MARKERS = [[255, 224], [255, 225], [255, 226], [255, 227], [255, 228],
-                     [255, 229], [255, 230], [255, 231], [255, 232], [255, 235]]
+_JPEG_APPN_MARKERS = [[255, 224], [255, 225], [255, 226], [255, 227],
+                      [255, 228], [255, 229], [255, 230], [255, 231],
+                      [255, 232], [255, 235]]
 _JPEG_DHT_MARKER = [255, 196]  # JPEG Define Huffman Table
 _JPEG_DQT_MARKER = [255, 219]  # JPEG Define Quantization Table
 _JPEG_DQT_TOL = 0.8  # -20% for each +20 in jpeg.quality (empirical number)
@@ -198,7 +199,7 @@ def plot_data(qualities, lumas, chromas, img_name):
   pylab.xlabel('jpeg.quality')
   pylab.ylabel('DQT luma/chroma matrix averages')
   pylab.legend(loc='upper right', numpoints=1, fancybox=True)
-  matplotlib.pyplot.savefig('%s_plot.png' % img_name)
+  matplotlib.pyplot.savefig(f'{img_name}_plot.png')
 
 
 class JpegQualityTest(its_base_test.ItsBaseTest):
@@ -258,7 +259,7 @@ class JpegQualityTest(its_base_test.ItsBaseTest):
         img = image_processing_utils.convert_capture_to_rgb_image(
             cap, props=props)
         img_name = os.path.join(self.log_path, _NAME)
-        image_processing_utils.write_image(img, '%s_%d.jpg' % (img_name, q))
+        image_processing_utils.write_image(img, f'{img_name}_{q}.jpg')
 
     # turn lumas/chromas into np array to ease multi-dimensional plots/asserts
     lumas = np.array(lumas)
