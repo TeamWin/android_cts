@@ -82,7 +82,7 @@ public class BaseNotificationListenerCheckTest {
      * notification
      * listeners are queried
      */
-    private static final String PROPERTY_NOTIFICATION_LISTENER_CHECK_INTERVAL_MILLIS =
+    protected static final String PROPERTY_NOTIFICATION_LISTENER_CHECK_INTERVAL_MILLIS =
             "notification_listener_check_interval_millis";
 
     protected static final Long OVERRIDE_NOTIFICATION_LISTENER_CHECK_INTERVAL_MILLIS =
@@ -158,7 +158,7 @@ public class BaseNotificationListenerCheckTest {
         reallowPreexistingNotificationListeners();
     }
 
-    private static void setDeviceConfigPrivacyProperty(String propertyName, String value) {
+    protected static void setDeviceConfigPrivacyProperty(String propertyName, String value) {
         runWithShellPermissionIdentity(() -> {
             boolean valueWasSet =  DeviceConfig.setProperty(
                     DeviceConfig.NAMESPACE_PRIVACY,

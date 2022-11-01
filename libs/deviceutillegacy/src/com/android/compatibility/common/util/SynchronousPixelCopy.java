@@ -46,6 +46,7 @@ public class SynchronousPixelCopy implements OnPixelCopyFinishedListener {
 
     public int request(Surface source, Bitmap dest) {
         synchronized (this) {
+            mStatus = -1;
             PixelCopy.request(source, dest, this, sHandler);
             return getResultLocked();
         }
@@ -53,6 +54,7 @@ public class SynchronousPixelCopy implements OnPixelCopyFinishedListener {
 
     public int request(Surface source, Rect srcRect, Bitmap dest) {
         synchronized (this) {
+            mStatus = -1;
             PixelCopy.request(source, srcRect, dest, this, sHandler);
             return getResultLocked();
         }
@@ -60,6 +62,7 @@ public class SynchronousPixelCopy implements OnPixelCopyFinishedListener {
 
     public int request(SurfaceView source, Bitmap dest) {
         synchronized (this) {
+            mStatus = -1;
             PixelCopy.request(source, dest, this, sHandler);
             return getResultLocked();
         }
@@ -67,6 +70,7 @@ public class SynchronousPixelCopy implements OnPixelCopyFinishedListener {
 
     public int request(SurfaceView source, Rect srcRect, Bitmap dest) {
         synchronized (this) {
+            mStatus = -1;
             PixelCopy.request(source, srcRect, dest, this, sHandler);
             return getResultLocked();
         }
@@ -74,6 +78,7 @@ public class SynchronousPixelCopy implements OnPixelCopyFinishedListener {
 
     public int request(Window source, Bitmap dest) {
         synchronized (this) {
+            mStatus = -1;
             PixelCopy.request(source, dest, this, sHandler);
             return getResultLocked();
         }
@@ -81,6 +86,7 @@ public class SynchronousPixelCopy implements OnPixelCopyFinishedListener {
 
     public int request(Window source, Rect srcRect, Bitmap dest) {
         synchronized (this) {
+            mStatus = -1;
             PixelCopy.request(source, srcRect, dest, this, sHandler);
             return getResultLocked();
         }
@@ -110,10 +116,10 @@ public class SynchronousPixelCopy implements OnPixelCopyFinishedListener {
     }
 
     private static final class BlockingResult implements Executor,
-            Consumer<PixelCopy.CopyResult> {
-        private PixelCopy.CopyResult mResult;
+            Consumer<PixelCopy.Result> {
+        private PixelCopy.Result mResult;
 
-        public PixelCopy.CopyResult getResult() {
+        public PixelCopy.Result getResult() {
             synchronized (this) {
                 long now = SystemClock.uptimeMillis();
                 final long end = now + TIMEOUT_MILLIS;
@@ -136,7 +142,7 @@ public class SynchronousPixelCopy implements OnPixelCopyFinishedListener {
         }
 
         @Override
-        public void accept(PixelCopy.CopyResult copyResult) {
+        public void accept(PixelCopy.Result copyResult) {
             synchronized (this) {
                 mResult = copyResult;
                 this.notify();
@@ -145,69 +151,74 @@ public class SynchronousPixelCopy implements OnPixelCopyFinishedListener {
     }
 
     /** happy lint */
-    public static PixelCopy.CopyResult copySurface(Surface source,
-            Consumer<PixelCopy.Request> func) {
+    public static PixelCopy.Result copySurface(Surface source,
+            Consumer<PixelCopy.Request.Builder> func) {
         BlockingResult resultWaiter = new BlockingResult();
-        PixelCopy.Request request = PixelCopy.ofSurface(source, resultWaiter, resultWaiter);
+        PixelCopy.Request.Builder request = PixelCopy.Request.ofSurface(
+                source, resultWaiter, resultWaiter);
         if (func != null) {
             func.accept(request);
         }
-        request.request();
+        PixelCopy.request(request.build());
         return resultWaiter.getResult();
     }
 
     /** happy lint */
-    public static PixelCopy.CopyResult copySurface(Surface source) {
+    public static PixelCopy.Result copySurface(Surface source) {
         return copySurface(source, null);
     }
 
     /** happy lint */
-    public static PixelCopy.CopyResult copySurface(SurfaceView source,
-            Consumer<PixelCopy.Request> func) {
+    public static PixelCopy.Result copySurface(SurfaceView source,
+            Consumer<PixelCopy.Request.Builder> func) {
         BlockingResult resultWaiter = new BlockingResult();
-        PixelCopy.Request request = PixelCopy.ofSurface(source, resultWaiter, resultWaiter);
+        PixelCopy.Request.Builder request = PixelCopy.Request.ofSurface(
+                source, resultWaiter, resultWaiter);
         if (func != null) {
             func.accept(request);
         }
-        request.request();
+        PixelCopy.request(request.build());
         return resultWaiter.getResult();
     }
 
     /** happy lint */
-    public static PixelCopy.CopyResult copySurface(SurfaceView source) {
+    public static PixelCopy.Result copySurface(SurfaceView source) {
         return copySurface(source, null);
     }
 
     /** happy lint */
-    public static PixelCopy.CopyResult copyWindow(View source, Consumer<PixelCopy.Request> func) {
+    public static PixelCopy.Result copyWindow(View source,
+            Consumer<PixelCopy.Request.Builder> func) {
         BlockingResult resultWaiter = new BlockingResult();
-        PixelCopy.Request request = PixelCopy.ofWindow(source, resultWaiter, resultWaiter);
+        PixelCopy.Request.Builder request = PixelCopy.Request.ofWindow(
+                source, resultWaiter, resultWaiter);
         if (func != null) {
             func.accept(request);
         }
-        request.request();
+        PixelCopy.request(request.build());
         return resultWaiter.getResult();
     }
 
     /** happy lint */
-    public static PixelCopy.CopyResult copyWindow(View source) {
+    public static PixelCopy.Result copyWindow(View source) {
         return copyWindow(source, null);
     }
 
     /** happy lint */
-    public static PixelCopy.CopyResult copyWindow(Window source,
-            Consumer<PixelCopy.Request> func) {
+    public static PixelCopy.Result copyWindow(Window source,
+            Consumer<PixelCopy.Request.Builder> func) {
         BlockingResult resultWaiter = new BlockingResult();
-        PixelCopy.Request request = PixelCopy.ofWindow(source, resultWaiter, resultWaiter);
+        PixelCopy.Request.Builder request = PixelCopy.Request.ofWindow(
+                source, resultWaiter, resultWaiter);
         if (func != null) {
             func.accept(request);
         }
-        request.request();
+        PixelCopy.request(request.build());
         return resultWaiter.getResult();
     }
 
     /** happy lint */
-    public static PixelCopy.CopyResult copyWindow(Window source) {
+    public static PixelCopy.Result copyWindow(Window source) {
         return copyWindow(source, null);
     }
 }

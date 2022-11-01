@@ -105,6 +105,7 @@ public class NotificationListenerCheckTest extends BaseNotificationListenerCheck
 
     @Test
     public void notificationIsShownOnlyOnce() throws Throwable {
+        setDeviceConfigPrivacyProperty(PROPERTY_NOTIFICATION_LISTENER_CHECK_INTERVAL_MILLIS, "0");
         runNotificationListenerCheck();
         eventually(() -> assertNotNull(getNotification(true)), UNEXPECTED_TIMEOUT_MILLIS);
 
@@ -153,6 +154,7 @@ public class NotificationListenerCheckTest extends BaseNotificationListenerCheck
     @Test
     public void notificationIsShownAgainAfterDisableAndReenableAppNotificationListener()
             throws Throwable {
+        setDeviceConfigPrivacyProperty(PROPERTY_NOTIFICATION_LISTENER_CHECK_INTERVAL_MILLIS, "0");
         runNotificationListenerCheck();
 
         eventually(() -> assertNotNull(getNotification(true)), UNEXPECTED_TIMEOUT_MILLIS);

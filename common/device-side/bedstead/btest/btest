@@ -161,6 +161,11 @@ STATE_CODES = {
     "w": RUN_ON_WORK_PROFILE
 }
 
+SHORT_PACKAGE_PREFIXES = {
+    "a.d.c" : "android.devicepolicy.cts",
+    "a.m.c": "android.multiuser.cts"
+}
+
 # We hardcode supported modules so we can optimise for
 # development of those modules. It is not our intention to support all tests.
 supported_modules = {
@@ -300,14 +305,14 @@ def get_args():
             sys.exit(1)
     args.states = [STATE_CODES[a] for a in args.states]
 
+    args.build_interactive = False
+    args.install_interactive = False
     if not args.interactive:
-        args.interactive = ""
+        args.interactive = "enabled"
 
     if args.interactive == "disabled":
         args.interactive = False
-    else:
-        args.build_interactive = False
-        args.install_interactive = False
+    elif args.interactive != "enabled":
         valid_instructions = ["b", "i"]
         for instruction in args.interactive:
             if instruction == "b":
@@ -323,8 +328,18 @@ def get_args():
 
     return args
 
+def expand_short_target(target):
+    for short in SHORT_PACKAGE_PREFIXES.keys():
+        if target.startswith(short):
+            target = SHORT_PACKAGE_PREFIXES[short] + target[len(short):]
+            break
+    return target
+
 def load_module_and_class_method(args):
     """ Parse target from args and load module and class_method. """
+    args.target = expand_short_target(args.target)
+
+
     target_parts = args.target.split(":", 1)
     args.module = target_parts[0]
     args.class_method = target_parts[1] if len(target_parts) > 1 else None

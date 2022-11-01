@@ -31,7 +31,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.IBinder;
 import android.os.PersistableBundle;
 import android.os.RemoteException;
@@ -240,23 +239,6 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                 .isNull();
     }
 
-    public void testCreateAndManageUser_newUserDisclaimer() throws Exception {
-        if (Build.IS_USER) {
-            Log.i(TAG, "Skipping testCreateAndManageUser_newUserDisclaimer on user build");
-            // TODO(b/220386262): STOPSHIP re-enable once fixed and/or migrated to new testing infra
-            return;
-        }
-
-        // First check that the current user doesn't need it
-        UserHandle currentUser = getCurrentUser();
-        Log.d(TAG, "Checking if current user (" + currentUser + ") is acked");
-        assertWithMessage("isNewUserDisclaimerAcknowledged() for current user %s", currentUser)
-                .that(mDevicePolicyManager.isNewUserDisclaimerAcknowledged()).isTrue();
-
-        UserHandle newUser = runCrossUserVerificationSwitchingUser("newUserDisclaimer");
-        PrimaryUserService.assertCrossUserCallArrived();
-    }
-
     @SuppressWarnings("unused")
     private static void newUserDisclaimer(Context context, DevicePolicyManager dpm,
             ComponentName componentName) {
@@ -397,11 +379,6 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
             Set<String> currentUserPackages) throws Exception {
         return runCrossUserVerification(callback, createAndManageUserFlags, methodName,
                 /* switchUser= */ false, currentUserPackages);
-    }
-
-    private UserHandle runCrossUserVerificationSwitchingUser(String methodName) throws Exception {
-        return runCrossUserVerification(/* callback= */ null, /* createAndManageUserFlags= */ 0,
-                methodName, /* switchUser= */ true, /* currentUserPackages= */ null);
     }
 
     private UserHandle runCrossUserVerification(UserActionCallback callback,

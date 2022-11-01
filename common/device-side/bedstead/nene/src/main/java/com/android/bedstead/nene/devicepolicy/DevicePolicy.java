@@ -48,6 +48,7 @@ import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
+import com.android.bedstead.nene.permissions.CommonPermissions;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Poll;
@@ -518,6 +519,26 @@ public final class DevicePolicy {
     @Experimental
     public boolean autoTimeRequired() {
         return autoTimeRequired(TestApis.users().instrumented());
+    }
+
+    /**
+     * See {@code DevicePolicyManager#isNewUserDisclaimerAcknowledged}.
+     */
+    @Experimental
+    public boolean isNewUserDisclaimerAcknowledged(UserReference user) {
+        try (PermissionContext p = TestApis.permissions().withPermission(
+                CommonPermissions.INTERACT_ACROSS_USERS)) {
+            return TestApis.context().androidContextAsUser(user).getSystemService(
+                    DevicePolicyManager.class).isNewUserDisclaimerAcknowledged();
+        }
+    }
+
+    /**
+     * See {@code DevicePolicyManager#isNewUserDisclaimerAcknowledged}.
+     */
+    @Experimental
+    public boolean isNewUserDisclaimerAcknowledged() {
+        return isNewUserDisclaimerAcknowledged(TestApis.users().instrumented());
     }
 
     /**

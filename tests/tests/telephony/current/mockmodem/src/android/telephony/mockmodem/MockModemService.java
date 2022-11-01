@@ -48,6 +48,7 @@ public class MockModemService extends Service {
     public static final String IRADIOMESSAGING_INTERFACE =
             "android.telephony.mockmodem.iradiomessaging";
     public static final String IRADIOVOICE_INTERFACE = "android.telephony.mockmodem.iradiovoice";
+    public static final String IRADIOIMS_INTERFACE = "android.telephony.mockmodem.iradioims";
     public static final String PHONE_ID = "phone_id";
 
     private static MockModemConfigInterface sMockModemConfigInterface;
@@ -58,6 +59,7 @@ public class MockModemService extends Service {
     private static IRadioDataImpl[] sIRadioDataImpl;
     private static IRadioMessagingImpl[] sIRadioMessagingImpl;
     private static IRadioVoiceImpl[] sIRadioVoiceImpl;
+    private static IRadioImsImpl[] sIRadioImsImpl;
 
     public static final byte PHONE_ID_0 = 0x00;
     public static final byte PHONE_ID_1 = 0x01;
@@ -67,7 +69,7 @@ public class MockModemService extends Service {
     public static final int LATCH_MAX = 2;
 
     private static final int IRADIO_CONFIG_INTERFACE_NUMBER = 1;
-    private static final int IRADIO_INTERFACE_NUMBER = 6;
+    private static final int IRADIO_INTERFACE_NUMBER = 7;
 
     private Context mContext;
     private TelephonyManager mTelephonyManager;
@@ -118,6 +120,7 @@ public class MockModemService extends Service {
         sIRadioDataImpl = new IRadioDataImpl[mNumOfPhone];
         sIRadioMessagingImpl = new IRadioMessagingImpl[mNumOfPhone];
         sIRadioVoiceImpl = new IRadioVoiceImpl[mNumOfPhone];
+        sIRadioImsImpl = new IRadioImsImpl[mNumOfPhone];
         for (int i = 0; i < mNumOfPhone; i++) {
             sIRadioModemImpl[i] = new IRadioModemImpl(this, sMockModemConfigInterface, i);
             sIRadioSimImpl[i] = new IRadioSimImpl(this, sMockModemConfigInterface, i);
@@ -126,6 +129,7 @@ public class MockModemService extends Service {
             sIRadioDataImpl[i] = new IRadioDataImpl(this, mContext, sMockModemConfigInterface, i);
             sIRadioMessagingImpl[i] = new IRadioMessagingImpl(this, sMockModemConfigInterface, i);
             sIRadioVoiceImpl[i] = new IRadioVoiceImpl(this, sMockModemConfigInterface, i);
+            sIRadioImsImpl[i] = new IRadioImsImpl(this, sMockModemConfigInterface, i);
         }
 
         mBinder = new LocalBinder();
@@ -169,6 +173,9 @@ public class MockModemService extends Service {
         } else if (action.startsWith(IRADIOVOICE_INTERFACE)) {
             Log.i(TAG, "onBind-IRadioVoice " + phoneId);
             return sIRadioVoiceImpl[phoneId];
+        } else if (action.startsWith(IRADIOIMS_INTERFACE)) {
+            Log.i(TAG, "onBind-IRadioIms " + phoneId);
+            return sIRadioImsImpl[phoneId];
         }
 
         return null;
@@ -345,5 +352,13 @@ public class MockModemService extends Service {
 
     public IRadioDataImpl getIRadioData(byte phoneId) {
         return sIRadioDataImpl[phoneId];
+    }
+
+    public IRadioImsImpl getIRadioIms() {
+        return getIRadioIms(PHONE_ID_0);
+    }
+
+    public IRadioImsImpl getIRadioIms(byte phoneId) {
+        return sIRadioImsImpl[phoneId];
     }
 }

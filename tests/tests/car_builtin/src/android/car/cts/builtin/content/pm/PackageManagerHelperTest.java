@@ -199,6 +199,17 @@ public final class PackageManagerHelperTest {
         assertWithMessage("Package %s not found", packageName).that(info).isNotNull();
     }
 
+    @Test
+    public void testGetSystemUiServiceComponent() throws Exception {
+        ComponentName systemuiComponent = PackageManagerHelper.getSystemUiServiceComponent(
+                mContext);
+        // The default SystemUI component name is com.android.systemui/.SystemUIService. But OEMs
+        // can override it via com.android.internal.R.string.config_systemUIServiceComponent. So, it
+        // can not assert with respect to a specific (constant) value.
+        Log.d(TAG, "System UI component name=" + systemuiComponent);
+        assertThat(systemuiComponent).isNotNull();
+    }
+
     private boolean hasActivity(String activityName, ActivityInfo[] activities) {
         return Arrays.stream(activities).anyMatch(a -> activityName.equals(a.name));
     }

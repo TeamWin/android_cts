@@ -237,7 +237,7 @@ public class PixelCopyTest {
     @Test
     public void testGlProducerAutoSize() {
         PixelCopyGLProducerCtsActivity activity = waitForGlProducerActivity();
-        PixelCopy.CopyResult result = copySurface(activity.getView());
+        PixelCopy.Result result = copySurface(activity.getView());
         assertEquals("Fullsize copy request failed", PixelCopy.SUCCESS, result.getStatus());
         Bitmap bitmap = result.getBitmap();
         assertEquals(100, bitmap.getWidth());
@@ -368,7 +368,7 @@ public class PixelCopyTest {
             final Window window = waitForWindowProducerActivity();
             PixelCopyViewProducerActivity activity = mWindowSourceActivityRule.getActivity();
             do {
-                PixelCopy.CopyResult result = copyWindow(window);
+                PixelCopy.Result result = copyWindow(window);
                 assertEquals("Fullsize copy request failed", PixelCopy.SUCCESS,
                         result.getStatus());
                 final Bitmap bitmap = result.getBitmap();
@@ -389,7 +389,7 @@ public class PixelCopyTest {
             PixelCopyViewProducerActivity activity = mWindowSourceActivityRule.getActivity();
             do {
                 final Rect src = makeWindowRect(0, 0, 100, 100);
-                PixelCopy.CopyResult result = copyWindow(activity.getContentView(), request -> {
+                PixelCopy.Result result = copyWindow(activity.getContentView(), request -> {
                     request.setSourceRect(src);
                 });
                 assertEquals("Fullsize copy request failed", PixelCopy.SUCCESS, result.getStatus());
@@ -1018,7 +1018,7 @@ public class PixelCopyTest {
         bitmap.copyPixelsToBuffer(plane.getBuffer());
         writer.queueInputImage(image);
 
-        PixelCopy.CopyResult copyResult = copySurface(reader.getSurface());
+        PixelCopy.Result copyResult = copySurface(reader.getSurface());
         assertEquals("Copy request failed", PixelCopy.SUCCESS, copyResult.getStatus());
         Bitmap result = copyResult.getBitmap();
         assertEquals(100, result.getWidth());
@@ -1053,7 +1053,7 @@ public class PixelCopyTest {
         image.setCropRect(new Rect(20, 70, 40, 90));
         writer.queueInputImage(image);
 
-        PixelCopy.CopyResult copyResult = copySurface(reader.getSurface());
+        PixelCopy.Result copyResult = copySurface(reader.getSurface());
         assertEquals("Copy request failed", PixelCopy.SUCCESS, copyResult.getStatus());
         Bitmap result = copyResult.getBitmap();
         assertEquals(20, result.getWidth());
@@ -1087,7 +1087,7 @@ public class PixelCopyTest {
         bitmap.copyPixelsToBuffer(plane.getBuffer());
         writer.queueInputImage(image);
 
-        PixelCopy.CopyResult copyResult = copySurface(reader.getSurface(),
+        PixelCopy.Result copyResult = copySurface(reader.getSurface(),
                 request -> request.setSourceRect(new Rect(20, 70, 40, 90)));
         assertEquals("Copy request failed", PixelCopy.SUCCESS, copyResult.getStatus());
         Bitmap result = copyResult.getBitmap();

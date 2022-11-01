@@ -33,6 +33,7 @@ android_library {
         "android.hardware.radio.data-V1-java",
         "android.hardware.radio.messaging-V1-java",
         "android.hardware.radio.voice-V1-java",
+        "android.hardware.radio.ims-V1-java",
         "telephony-cts-utils",
     ],
 

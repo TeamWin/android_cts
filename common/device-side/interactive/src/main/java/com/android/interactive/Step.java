@@ -16,6 +16,7 @@
 
 package com.android.interactive;
 
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERNAL_SYSTEM_WINDOW;
 import static com.android.bedstead.nene.permissions.CommonPermissions.SYSTEM_ALERT_WINDOW;
 import static com.android.bedstead.nene.permissions.CommonPermissions.SYSTEM_APPLICATION_OVERLAY;
 
@@ -205,8 +206,9 @@ public abstract class Step<E> {
 
         TestApis.context().instrumentationContext().getMainExecutor().execute(() -> {
             try (PermissionContext p = TestApis.permissions().withPermission(
-                    SYSTEM_ALERT_WINDOW, SYSTEM_APPLICATION_OVERLAY)) {
+                    SYSTEM_ALERT_WINDOW, SYSTEM_APPLICATION_OVERLAY, INTERNAL_SYSTEM_WINDOW)) {
                 params.setSystemApplicationOverlay(true);
+                params.privateFlags = WindowManager.LayoutParams.SYSTEM_FLAG_SHOW_FOR_ALL_USERS;
                 sWindowManager.addView(mInstructionView, params);
             }
         });
