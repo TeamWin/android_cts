@@ -67,7 +67,8 @@ public class DeviceOwnerUserRestrictionsTest extends BaseUserRestrictionsTest {
             UserManager.DISALLOW_WIFI_TETHERING,
             UserManager.DISALLOW_SHARING_ADMIN_CONFIGURED_WIFI,
             UserManager.DISALLOW_WIFI_DIRECT,
-            UserManager.DISALLOW_ADD_WIFI_CONFIG
+            UserManager.DISALLOW_ADD_WIFI_CONFIG,
+            UserManager.DISALLOW_CELLULAR_2G,
     };
 
     public static final String[] DISALLOWED = new String[] {

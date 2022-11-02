@@ -481,6 +481,21 @@ public class ExactAlarmsTest {
         }
     }
 
+    @Test
+    public void setExactAwiExecutorWithPermissionAndWhitelist() throws Exception {
+        whitelistTestApp();
+        final long now = SystemClock.elapsedRealtime();
+        // The user whitelist takes precedence, so the app should get unrestricted alarms.
+        final int numAlarms = 100;   // Number much higher than any quota.
+        for (int i = 0; i < numAlarms; i++) {
+            final int id = mIdGenerator.nextInt();
+            mAlarmManager.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, now,
+                    "test-tag", Runnable::run, null, AlarmReceiver.createListener(id, false));
+            assertTrue("Alarm " + id + " not received",
+                    AlarmReceiver.waitForAlarm(id, DEFAULT_WAIT_FOR_SUCCESS));
+        }
+    }
+
     private static void reclaimQuota(int quotaToReclaim) {
         final long eligibleAt = getNextEligibleTime(quotaToReclaim);
         long now;

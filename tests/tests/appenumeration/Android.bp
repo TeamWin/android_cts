@@ -87,6 +87,8 @@ android_test {
         ":CtsAppEnumerationForceQueryable",
         ":CtsMockSpellChecker",
         ":CtsInputMethod1",
+        ":CtsNoRestartBase",
+        ":CtsNoRestartFeature",
     ],
     per_testcase_directory: true,
 }

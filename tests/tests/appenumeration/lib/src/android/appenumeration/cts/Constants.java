@@ -21,6 +21,8 @@ public class Constants {
     public static final String TEST_PKG = "android.appenumeration.cts";
     public static final String MOCK_SPELL_CHECKER_PKG = "com.android.cts.mockspellchecker";
     public static final String MOCK_IME_PKG = "android.inputmethodservice.cts.ime1";
+    /** A package that has two split apks. */
+    public static final String SPLIT_PKG = "com.android.cts.norestart";
 
     /** The shared library for getting dependent packages */
     public static final String TEST_SHARED_LIB_NAME = "android.test.runner";
@@ -165,6 +167,8 @@ public class Constants {
             BASE_PATH + "CtsAppEnumerationQueriesNothingSeesInstaller.apk";
     public static final String CTS_MOCK_SPELL_CHECKER_APK = BASE_PATH + "CtsMockSpellChecker.apk";
     public static final String CTS_MOCK_IME_APK = BASE_PATH + "CtsInputMethod1.apk";
+    public static final String SPLIT_BASE_APK = BASE_PATH + "CtsNoRestartBase.apk";
+    public static final String SPLIT_FEATURE_APK = BASE_PATH + "CtsNoRestartFeature.apk";
 
     public static final String[] ALL_QUERIES_TARGETING_R_PACKAGES = {
             QUERIES_NOTHING,

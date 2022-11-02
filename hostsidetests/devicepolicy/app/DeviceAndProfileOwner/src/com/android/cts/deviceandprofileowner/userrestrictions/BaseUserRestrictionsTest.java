@@ -77,7 +77,8 @@ public abstract class BaseUserRestrictionsTest extends BaseDeviceAdminTest {
             UserManager.DISALLOW_WIFI_TETHERING,
             UserManager.DISALLOW_SHARING_ADMIN_CONFIGURED_WIFI,
             UserManager.DISALLOW_WIFI_DIRECT,
-            UserManager.DISALLOW_ADD_WIFI_CONFIG
+            UserManager.DISALLOW_ADD_WIFI_CONFIG,
+            UserManager.DISALLOW_CELLULAR_2G,
     };
 
     /**
@@ -105,6 +106,7 @@ public abstract class BaseUserRestrictionsTest extends BaseDeviceAdminTest {
             UserManager.DISALLOW_WIFI_TETHERING,
             UserManager.DISALLOW_WIFI_DIRECT,
             UserManager.DISALLOW_ADD_WIFI_CONFIG,
+            UserManager.DISALLOW_CELLULAR_2G,
 
             // PO can set them too, but when DO sets them, they're global.
             UserManager.DISALLOW_ADJUST_VOLUME,

@@ -178,6 +178,7 @@ class PreviewAspectRatioAndCropTest(its_base_test.ItsBaseTest):
                     supported_preview_sizes)
       raw_avlb = camera_properties_utils.raw16(props)
       full_or_better = camera_properties_utils.full_or_better(props)
+      debug = self.debug_mode
 
       # Converge 3A
       cam.do_3a()
@@ -228,9 +229,14 @@ class PreviewAspectRatioAndCropTest(its_base_test.ItsBaseTest):
           logging.debug('numpy image shape: %s', np_image.shape)
 
           # Check fov
+          ref_img_name = f'{name_with_log_path}_{quality}_w{width}_h{height}_circle.png'
           circle = opencv_processing_utils.find_circle(
-              np_image, name_with_log_path, image_fov_utils.CIRCLE_MIN_AREA,
+              np_image, ref_img_name, image_fov_utils.CIRCLE_MIN_AREA,
               image_fov_utils.CIRCLE_COLOR)
+
+          if debug:
+            opencv_processing_utils.append_circle_center_to_img(
+                circle, np_image, ref_img_name)
 
           max_img_value = _MAX_8BIT_IMGS
 
@@ -267,8 +273,6 @@ class PreviewAspectRatioAndCropTest(its_base_test.ItsBaseTest):
                 f'{quality}', crop_thresh_factor)
             if crop_chk_msg:
               crop_img_name = f'{img_name_stem}_crop.png'
-              opencv_processing_utils.append_circle_center_to_img(
-                  circle, np_image*max_img_value, crop_img_name)
               failed_crop.append(crop_chk_msg)
               image_processing_utils.write_image(np_image/max_img_value,
                                                  crop_img_name, True)

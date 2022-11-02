@@ -19,6 +19,7 @@ package android.view.inputmethod.cts;
 import static android.provider.Settings.Global.STYLUS_HANDWRITING_ENABLED;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
@@ -39,14 +40,17 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.hardware.input.InputManager;
 import android.inputmethodservice.InputMethodService;
+import android.os.Process;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Pair;
+import android.view.HandwritingDelegateConfiguration;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
@@ -1047,6 +1051,47 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     }
 
     /**
+     * Inject stylus events on top of a handwriting initiation delegate view and verify handwriting
+     * is started on the delegator editor and stylus handwriting window is displayed.
+     */
+    @Test
+    public void testHandwriting_delegate() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String editTextMarker = getTestMarker();
+            final View delegateView = launchTestActivityWithDelegate(editTextMarker);
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+            addVirtualStylusIdForTestSession();
+
+            final int touchSlop = getTouchSlop();
+            final int startX = delegateView.getWidth() / 2;
+            final int startY = delegateView.getHeight() / 2;
+            final int endX = startX + 2 * touchSlop;
+            final int endY = startY + 2 * touchSlop;
+            final int number = 5;
+            TestUtils.injectStylusDownEvent(delegateView, startX, startY);
+            TestUtils.injectStylusMoveEvents(delegateView, startX, startY, endX, endY, number);
+            // The handwriting initiator should trigger the delegate view's callback which creates
+            // the EditText and requests focus, which should then initiate handwriting for the
+            // EditText.
+            // Handwriting should already be initiated before ACTION_UP.
+            // Keyboard shouldn't show up.
+            notExpectEvent(
+                    stream, editorMatcher("onStartInputView", editTextMarker), NOT_EXPECT_TIMEOUT);
+            // Handwriting should start.
+            expectEvent(stream, editorMatcher("onStartStylusHandwriting", editTextMarker), TIMEOUT);
+
+            verifyStylusHandwritingWindowIsShown(stream, imeSession);
+
+            TestUtils.injectStylusUpEvent(delegateView, endX, endY);
+        }
+    }
+
+    /**
      * Verify that system times-out Handwriting session after given timeout.
      */
     @Test
@@ -1528,6 +1573,34 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
         return new Pair<>(focusedCustomEditorRef.get(), unfocusedCustomEditorRef.get());
     }
 
+    private View launchTestActivityWithDelegate(@NonNull String editTextMarker) {
+        final AtomicReference<View> delegateViewRef = new AtomicReference<>();
+        TestActivity.startSync(activity -> {
+            final LinearLayout layout = new LinearLayout(activity);
+            layout.setOrientation(LinearLayout.VERTICAL);
+
+            int editTextViewId = 5678;
+
+            final View delegateView = new View(activity);
+            delegateViewRef.set(delegateView);
+            delegateView.setBackgroundColor(Color.GREEN);
+            delegateView.setHandwritingDelegateConfiguration(
+                    new HandwritingDelegateConfiguration(
+                            editTextViewId,
+                            () -> {
+                                final EditText editText = new EditText(activity);
+                                editText.setId(editTextViewId);
+                                editText.setPrivateImeOptions(editTextMarker);
+                                editText.setHint("editText");
+                                layout.addView(editText);
+                                editText.requestFocus();
+                            }));
+            layout.addView(delegateView, new ViewGroup.LayoutParams(1000, 1000));
+            return layout;
+        });
+        return delegateViewRef.get();
+    }
+
     private boolean hasSupportedStylus() {
         final InputManager im = mContext.getSystemService(InputManager.class);
         for (int id : im.getInputDeviceIds()) {
@@ -1548,7 +1621,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
         SystemUtil.runWithShellPermissionIdentity(() -> {
             mContext.getSystemService(InputMethodManager.class)
                     .addVirtualStylusIdForTestSession();
-        }, Manifest.permission.INJECT_EVENTS);
+        }, Manifest.permission.TEST_INPUT_METHOD);
     }
 
     private static final class CustomEditorView extends View {

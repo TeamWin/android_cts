@@ -97,6 +97,9 @@ import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_EDITOR;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_SHARE;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_WEB;
 import static android.appenumeration.cts.Constants.SERVICE_CLASS_SELF_VISIBILITY_SERVICE;
+import static android.appenumeration.cts.Constants.SPLIT_BASE_APK;
+import static android.appenumeration.cts.Constants.SPLIT_FEATURE_APK;
+import static android.appenumeration.cts.Constants.SPLIT_PKG;
 import static android.appenumeration.cts.Constants.TARGET_APPWIDGETPROVIDER;
 import static android.appenumeration.cts.Constants.TARGET_APPWIDGETPROVIDER_SHARED_USER;
 import static android.appenumeration.cts.Constants.TARGET_BROWSER;
@@ -1272,6 +1275,28 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
                 new ComponentName(sContext, SERVICE_CLASS_SELF_VISIBILITY_SERVICE),
                 PackageManager.GET_META_DATA);
         assertNotNull(serviceInfo);
+    }
+
+    @Test
+    public void grantImplicitAccessByUriGrant_canSeeProviderAfterUpdatedWithDontKill()
+            throws Exception {
+        try {
+            new InstallMultiple().addApk(SPLIT_BASE_APK).run();
+            assertThat(sPm.canPackageQuery(SPLIT_PKG, QUERIES_PACKAGE_PROVIDER),
+                    is(false));
+            grantUriPermission(QUERIES_PACKAGE_PROVIDER, SPLIT_PKG);
+            assertThat(sPm.canPackageQuery(SPLIT_PKG, QUERIES_PACKAGE_PROVIDER),
+                    is(true));
+
+            new InstallMultiple().addApk(SPLIT_FEATURE_APK)
+                    .inheritFrom(SPLIT_PKG).dontKill().run();
+
+            assertThat(sPm.canPackageQuery(SPLIT_PKG, QUERIES_PACKAGE_PROVIDER),
+                    is(true));
+        } finally {
+            revokeUriPermission(QUERIES_PACKAGE_PROVIDER);
+            uninstallPackage(SPLIT_PKG);
+        }
     }
 
     private void assertVisible(String sourcePackageName, String targetPackageName)

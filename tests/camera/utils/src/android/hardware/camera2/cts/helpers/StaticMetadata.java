@@ -2781,6 +2781,13 @@ public class StaticMetadata {
     }
 
     /**
+     * Check if settings override is supported
+     */
+    public boolean isSettingsOverrideSupported() {
+        return areKeysAvailable(CaptureRequest.CONTROL_SETTINGS_OVERRIDE);
+    }
+
+    /**
      * Get the value in index for a fixed-size array from a given key.
      *
      * <p>If the camera device is incorrectly reporting values, log a warning and return

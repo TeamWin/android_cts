@@ -527,7 +527,7 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                     } catch (IOException e) {
                         fail("Failed to set AppOps allow for play audio: " + e);
                     }
-                });
+                }, /*muteChangesActiveState=*/true);
     }
 
     @ApiTest(apis = {"android.media.AudioManager#getActivePlaybackConfigurations",
@@ -564,7 +564,8 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 /*mute=*/
                 () -> am.adjustStreamVolume(STREAM_NOTIFICATION, ADJUST_MUTE, /* flags= */0),
                 /*unmute=*/
-                () -> am.adjustStreamVolume(STREAM_NOTIFICATION, ADJUST_UNMUTE, /* flags= */0));
+                () -> am.adjustStreamVolume(STREAM_NOTIFICATION, ADJUST_UNMUTE, /* flags= */0),
+                /*muteChangesActiveState=*/false);
     }
 
     @ApiTest(apis = {"android.media.AudioManager#getActivePlaybackConfigurations",
@@ -597,7 +598,8 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
     private void checkMuteFromClientVolumeNotification(MyPlayer player) throws Exception {
         verifyMuteUnmuteNotifications(/*start=*/player.mPlay,
                 /*mute=*/() -> player.mSetClientVolume.accept(0.f),
-                /*unmute=*/() -> player.mSetClientVolume.accept(1.f));
+                /*unmute=*/() -> player.mSetClientVolume.accept(1.f),
+                /*muteChangesActiveState=*/true);
     }
 
     @ApiTest(apis = {"android.media.AudioManager#getActivePlaybackConfigurations",
@@ -636,10 +638,11 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                     mMuteShaper.replace(SHAPER_MUTE, VolumeShaper.Operation.REVERSE, /*join=*/
                             false);
                     mMuteShaper.apply(VolumeShaper.Operation.PLAY);
-                });
+                }, /*muteChangesActiveState=*/true);
     }
 
-    private void verifyMuteUnmuteNotifications(Runnable start, Runnable mute, Runnable unmute)
+    private void verifyMuteUnmuteNotifications(Runnable start, Runnable mute, Runnable unmute,
+            boolean muteChangesActiveState)
             throws Exception {
         AudioManager am = new AudioManager(getContext());
         assertNotNull("Could not create AudioManager", am);
@@ -655,29 +658,45 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
             // start playing audio
             start.run();
 
-            assertTrue("onPlaybackConfigChanged new player, device expected",
-                    callback.waitForCallbacks(2,
-                            TEST_TIMING_TOLERANCE_MS + PLAY_ROUTING_TIMING_TOLERANCE_MS));
+            if (muteChangesActiveState) {
+                assertTrue("onPlaybackConfigChanged new player, device expected",
+                        callback.waitForCallbacks(2,
+                                TEST_TIMING_TOLERANCE_MS + PLAY_ROUTING_TIMING_TOLERANCE_MS));
+            } else {
+                Thread.sleep(TEST_TIMING_TOLERANCE_MS + PLAY_ROUTING_TIMING_TOLERANCE_MS);
+            }
 
             // mute with Runnable
             callback.reset();
             mute.run();
 
-            assertTrue("onPlaybackConfigChanged for mute expected",
-                    callback.waitForCallbacks(1,
-                            TEST_TIMING_TOLERANCE_MS + PLAY_ROUTING_TIMING_TOLERANCE_MS));
+            if (muteChangesActiveState) {
+                assertTrue("onPlaybackConfigChanged for mute expected",
+                        callback.waitForCallbacks(1,
+                                TEST_TIMING_TOLERANCE_MS + PLAY_ROUTING_TIMING_TOLERANCE_MS));
+            } else {
+                Thread.sleep(TEST_TIMING_TOLERANCE_MS + PLAY_ROUTING_TIMING_TOLERANCE_MS);
+            }
+
             assertEquals("number of active players after mute not expected",
-                    nbActivePlayersBeforeStart, am.getActivePlaybackConfigurations().size());
+                    nbActivePlayersBeforeStart + (muteChangesActiveState ? 0 : 1),
+                    am.getActivePlaybackConfigurations().size());
 
             // unmute with Runnable
             callback.reset();
             unmute.run();
 
-            assertTrue("onPlaybackConfigChanged for unmute expected",
-                    callback.waitForCallbacks(1,
-                            TEST_TIMING_TOLERANCE_MS + PLAY_ROUTING_TIMING_TOLERANCE_MS));
+            if (muteChangesActiveState) {
+                assertTrue("onPlaybackConfigChanged for unmute expected",
+                        callback.waitForCallbacks(1,
+                                TEST_TIMING_TOLERANCE_MS + PLAY_ROUTING_TIMING_TOLERANCE_MS));
+            } else {
+                Thread.sleep(TEST_TIMING_TOLERANCE_MS + PLAY_ROUTING_TIMING_TOLERANCE_MS);
+            }
+
             assertEquals("number of active players after unmute not expected",
-                    nbActivePlayersBeforeStart + 1, am.getActivePlaybackConfigurations().size());
+                    nbActivePlayersBeforeStart + 1,
+                    am.getActivePlaybackConfigurations().size());
         } finally {
             am.unregisterAudioPlaybackCallback(callback);
             unmute.run();

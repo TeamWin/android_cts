@@ -746,6 +746,10 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             waiverKeys.add(CaptureResult.SCALER_ROTATE_AND_CROP);
         }
 
+        if (!staticInfo.isSettingsOverrideSupported()) {
+            waiverKeys.add(CaptureResult.CONTROL_SETTINGS_OVERRIDE);
+        }
+
         if (staticInfo.isHardwareLevelAtLeastFull()) {
             return waiverKeys;
         }

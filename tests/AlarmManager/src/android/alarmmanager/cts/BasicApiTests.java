@@ -269,6 +269,20 @@ public class BasicApiTests {
     }
 
     @Test
+    public void testSetWindow() throws Exception {
+        final long futurityMs = 1000;
+        final long windowLength = 2000;
+        mMockAlarmReceiver.reset();
+        mAm.setWindow(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                SystemClock.elapsedRealtime() + futurityMs, windowLength, "test-tag", Runnable::run,
+                null, mMockAlarmReceiver);
+
+        Thread.sleep(futurityMs + windowLength);
+        PollingCheck.waitFor(4000, mMockAlarmReceiver::isAlarmed,
+                "Window alarm did not fire as expected");
+    }
+
+    @Test
     public void testSetRepeating() {
         mMockAlarmReceiver.reset();
         mWakeupTime = System.currentTimeMillis() + TEST_ALARM_FUTURITY;

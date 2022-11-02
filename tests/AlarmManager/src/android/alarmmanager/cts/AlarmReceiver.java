@@ -16,6 +16,7 @@
 
 package android.alarmmanager.cts;
 
+import android.app.AlarmManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -39,6 +40,18 @@ public class AlarmReceiver extends BroadcastReceiver {
     private static int sLastAlarmId;
     /** Process global history of all alarms received -- useful in quota calculations */
     private static LongArray sHistory = new LongArray();
+
+    static AlarmManager.OnAlarmListener createListener(int id, boolean quotaed) {
+        return () -> {
+            if (quotaed) {
+                recordAlarmTime(SystemClock.elapsedRealtime());
+            }
+            synchronized (sWaitLock) {
+                sLastAlarmId = id;
+                sWaitLock.notifyAll();
+            }
+        };
+    }
 
     static synchronized long getNthLastAlarmTime(int n) {
         if (n <= 0 || n > sHistory.size()) {
