@@ -23,7 +23,7 @@
 
     <application android:usesCleartextTraffic="true">
         <uses-library android:name="android.test.runner" />
-        <uses-library android:name="org.chromium.net.cronet" />
+        <uses-library android:name="framework-cronet" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

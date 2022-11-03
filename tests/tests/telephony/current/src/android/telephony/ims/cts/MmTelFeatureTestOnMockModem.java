@@ -55,6 +55,7 @@ import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -84,7 +85,6 @@ public class MmTelFeatureTestOnMockModem {
     private static final int WAIT_SIM_STATE_TIMEOUT_SEC = 3;
 
     private static ImsServiceConnector sServiceConnector;
-    private static PackageManager sPackageManager;
     private static CarrierConfigReceiver sReceiver;
     private static MockModemManager sMockModemManager;
 
@@ -125,6 +125,10 @@ public class MmTelFeatureTestOnMockModem {
     public static void beforeAllTests() throws Exception {
         if (VDBG) Log.d(LOG_TAG, "beforeAllTests");
 
+        if (!hasFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
@@ -159,7 +163,6 @@ public class MmTelFeatureTestOnMockModem {
         if (VDBG) Log.i(LOG_TAG, "sTestSub=" + sTestSub);
 
         sServiceConnector = new ImsServiceConnector(InstrumentationRegistry.getInstrumentation());
-        sPackageManager = getContext().getPackageManager();
 
         // Remove all live ImsServices until after these tests are done
         sServiceConnector.clearAllActiveImsServices(sTestSlot);
@@ -177,6 +180,14 @@ public class MmTelFeatureTestOnMockModem {
     @AfterClass
     public static void afterAllTests() throws Exception {
         if (VDBG) Log.d(LOG_TAG, "afterAllTests");
+
+        if (!hasFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
 
         // Restore all ImsService configurations that existed before the test.
         if (sServiceConnector != null) {
@@ -201,6 +212,12 @@ public class MmTelFeatureTestOnMockModem {
 
             TimeUnit.SECONDS.sleep(WAIT_SIM_STATE_TIMEOUT_SEC);
         }
+    }
+
+    @Before
+    public void beforeTest() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY));
+        assumeTrue(ImsUtils.shouldTestImsService());
     }
 
     @After
@@ -357,9 +374,14 @@ public class MmTelFeatureTestOnMockModem {
         return InstrumentationRegistry.getInstrumentation().getContext();
     }
 
-    /** Checks whether the telephony feature is supported. */
+    /** Checks whether the system feature is supported. */
     private static boolean hasFeature(String feature) {
-        return sPackageManager.hasSystemFeature(feature);
+        final PackageManager pm = getContext().getPackageManager();
+        if (!pm.hasSystemFeature(feature)) {
+            Log.d(LOG_TAG, "Skipping test that requires " + feature);
+            return false;
+        }
+        return true;
     }
 
     private static void enforceMockModemDeveloperSetting() throws Exception {

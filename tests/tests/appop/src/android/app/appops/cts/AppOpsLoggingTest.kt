@@ -84,7 +84,7 @@ import android.telephony.TelephonyManager
 import android.util.Log
 import android.util.Size
 import androidx.test.platform.app.InstrumentationRegistry
-import com.android.compatibility.common.util.SystemUtil.runShellCommand
+import com.android.compatibility.common.util.SystemUtil.waitForBroadcasts
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Assert.fail
@@ -943,7 +943,7 @@ class AppOpsLoggingTest {
         try {
             context.sendOrderedBroadcast(Intent(PRIVATE_ACTION), READ_CONTACTS, OPSTR_READ_CONTACTS,
                     null, null, RESULT_OK, null, null)
-            runShellCommand("am wait-for-broadcast-barrier")
+            waitForBroadcasts()
 
             eventually {
                 assertThat(asyncNoted[0].op).isEqualTo(OPSTR_READ_CONTACTS)
@@ -960,7 +960,7 @@ class AppOpsLoggingTest {
     fun receiveBroadcastManifestReceiver() {
         context.sendOrderedBroadcast(Intent(PUBLIC_ACTION).setPackage(myPackage), READ_CONTACTS,
                 OPSTR_READ_CONTACTS, null, null, RESULT_OK, null, null)
-        runShellCommand("am wait-for-broadcast-barrier")
+        waitForBroadcasts()
 
         eventually {
             assertThat(asyncNoted[0].op).isEqualTo(OPSTR_READ_CONTACTS)
@@ -975,7 +975,7 @@ class AppOpsLoggingTest {
     fun sendBroadcastToProtectedReceiver() {
         context.createAttributionContext(TEST_ATTRIBUTION_TAG)
                 .sendBroadcast(Intent(PROTECTED_ACTION).setPackage(myPackage))
-        runShellCommand("am wait-for-broadcast-barrier")
+        waitForBroadcasts()
 
         eventually {
             assertThat(asyncNoted[0].op).isEqualTo(OPSTR_READ_CONTACTS)

@@ -81,8 +81,7 @@ public class IRadioImsImpl extends IRadioIms.Stub {
     }
 
     @Override
-    public void startImsTraffic(int serial,
-            String token, int imsTrafficType, int accessNetworkType) {
+    public void startImsTraffic(int serial, int token, int imsTrafficType, int accessNetworkType) {
         Log.d(mTag, "startImsTraffic");
 
         android.hardware.radio.ims.ConnectionFailureInfo failureInfo = null;
@@ -95,7 +94,7 @@ public class IRadioImsImpl extends IRadioIms.Stub {
     }
 
     @Override
-    public void stopImsTraffic(int serial, String token) {
+    public void stopImsTraffic(int serial, int token) {
         Log.d(mTag, "stopImsTraffic");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
@@ -130,7 +129,7 @@ public class IRadioImsImpl extends IRadioIms.Stub {
         }
     }
 
-    public void onConnectionSetupFailure(String token,
+    public void onConnectionSetupFailure(int token,
             android.hardware.radio.ims.ConnectionFailureInfo failureInfo) {
         Log.d(mTag, "onConnectionSetupFailure");
 

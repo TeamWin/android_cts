@@ -15,6 +15,7 @@
 
 
 import logging
+import math
 import os.path
 
 from mobly import test_runner
@@ -126,7 +127,7 @@ class CropRegionRawTest(its_base_test.ItsBaseTest):
         # for a cropped capture.
         ex = _CROP_FULL_ERROR_THRESHOLD
         ey = _CROP_FULL_ERROR_THRESHOLD
-        if np.isclose(err_delta, _CROP_REGION_ERROR_THRESHOLD, rtol=0.01):
+        if math.isclose(err_delta, _CROP_REGION_ERROR_THRESHOLD, rel_tol=0.01):
           ex = aw * err_delta
           ey = ah * err_delta
         logging.debug('error X, Y: %.2f, %.2f', ex, ey)

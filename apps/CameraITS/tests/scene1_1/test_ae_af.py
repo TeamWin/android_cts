@@ -15,6 +15,7 @@
 
 
 import logging
+import math
 import os.path
 from mobly import test_runner
 import numpy as np
@@ -95,7 +96,8 @@ class SingleATest(its_base_test.ItsBaseTest):
         for x in awb_xform:
           if np.isnan(x):
             raise AssertionError('Value in AWB transform is NaN.')
-        if not np.isclose(awb_gains[_G_CHANNEL], _G_GAIN, _G_GAIN_TOL):
+        if not math.isclose(
+            awb_gains[_G_CHANNEL], _G_GAIN, rel_tol=_G_GAIN_TOL):
           raise AssertionError(
               f'AWB G channel mismatch. AWB(G): {awb_gains[_G_CHANNEL]}, '
               f'REF: {_G_GAIN}, TOL: {_G_GAIN_TOL}')

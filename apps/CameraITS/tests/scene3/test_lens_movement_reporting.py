@@ -15,6 +15,7 @@
 
 
 import logging
+import math
 import os
 from mobly import test_runner
 import numpy as np
@@ -139,7 +140,7 @@ class LensMovementReportingTest(its_base_test.ItsBaseTest):
       # Assert frames are consecutive
       frame_diffs = np.gradient([v['timestamp'] for v in d.values()])
       delta_diffs = np.amax(frame_diffs) - np.amin(frame_diffs)
-      if not np.isclose(delta_diffs, 0, atol=_FRAME_ATOL_MS):
+      if not math.isclose(delta_diffs, 0, abs_tol=_FRAME_ATOL_MS):
         raise AssertionError(f'Timestamp gradient(ms): {delta_diffs:.1f}, '
                              f'ATOL: {_FRAME_ATOL_MS}')
 
@@ -160,14 +161,14 @@ class LensMovementReportingTest(its_base_test.ItsBaseTest):
       logging.debug('Assert reported locs are close for af_fd captures')
       min_loc = min([v['loc'] for v in d_af_fd.values()])
       max_loc = max([v['loc'] for v in d_af_fd.values()])
-      if not np.isclose(min_loc, max_loc, rtol=_POSITION_RTOL):
+      if not math.isclose(min_loc, max_loc, rel_tol=_POSITION_RTOL):
         raise AssertionError(f'af_fd[loc] min: {min_loc:.3f}, max: '
                              f'{max_loc:.3f}, RTOL: {_POSITION_RTOL}')
 
       logging.debug('Assert reported sharpness is close at af_fd')
       min_sharp = min([v['sharpness'] for v in d_af_fd.values()])
       max_sharp = max([v['sharpness'] for v in d_af_fd.values()])
-      if not np.isclose(min_sharp, max_sharp, rtol=_SHARPNESS_RTOL):
+      if not math.isclose(min_sharp, max_sharp, rel_tol=_SHARPNESS_RTOL):
         raise AssertionError(f'af_fd[sharpness] min: {min_sharp:.3f}, '
                              f'max: {max_sharp:.3f}, RTOL: {_SHARPNESS_RTOL}')
 
@@ -175,21 +176,21 @@ class LensMovementReportingTest(its_base_test.ItsBaseTest):
       first_key = min(d_af_fd.keys())  # find 1st non-moving frame
       loc = d_af_fd[first_key]['loc']
       fd = d_af_fd[first_key]['fd']
-      if not np.isclose(loc, fd, rtol=_POSITION_RTOL):
+      if not math.isclose(loc, fd, rel_tol=_POSITION_RTOL):
         raise AssertionError(f'af_fd[loc]: {loc:.3f}, af_fd[fd]: {fd:.3f}, '
                              f'RTOL: {_POSITION_RTOL}')
 
       logging.debug('Assert reported locs are close for min_fd captures')
       min_loc = min([v['loc'] for v in d_min_fd.values()])
       max_loc = max([v['loc'] for v in d_min_fd.values()])
-      if not np.isclose(min_loc, max_loc, rtol=_POSITION_RTOL):
+      if not math.isclose(min_loc, max_loc, rel_tol=_POSITION_RTOL):
         raise AssertionError(f'min_fd[loc] min: {min_loc:.3f}, max: '
                              f'{max_loc:.3f}, RTOL: {_POSITION_RTOL}')
 
       logging.debug('Assert reported sharpness is close at min_fd')
       min_sharp = min([v['sharpness'] for v in d_min_fd.values()])
       max_sharp = max([v['sharpness'] for v in d_min_fd.values()])
-      if not np.isclose(min_sharp, max_sharp, rtol=_SHARPNESS_RTOL):
+      if not math.isclose(min_sharp, max_sharp, rel_tol=_SHARPNESS_RTOL):
         raise AssertionError(f'min_fd[sharpness] min: {min_sharp:.3f}, '
                              f'max: {max_sharp:.3f}, RTOL: {_SHARPNESS_RTOL}')
 
@@ -197,7 +198,7 @@ class LensMovementReportingTest(its_base_test.ItsBaseTest):
       last_key = max(d_min_fd.keys())  # find last (non-moving) frame
       loc = d_min_fd[last_key]['loc']
       fd = d_min_fd[last_key]['fd']
-      if not np.isclose(loc, fd, rtol=_POSITION_RTOL):
+      if not math.isclose(loc, fd, rel_tol=_POSITION_RTOL):
         raise AssertionError(f'min_fd[loc]: {loc:.3f}, min_fd[fd]: {fd:.3f}, '
                              f'RTOL: {_POSITION_RTOL}')
 

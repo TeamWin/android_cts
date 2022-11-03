@@ -31,6 +31,7 @@ import opencv_processing_utils
 
 _ALIGN_TOL_MM = 4.0  # mm
 _ALIGN_TOL = 0.01  # multiplied by sensor diagonal to convert to pixels
+_CHART_DISTANCE_RTOL = 0.1
 _CIRCLE_COLOR = 0  # [0: black, 255: white]
 _CIRCLE_MIN_AREA = 0.0075  # multiplied by image size
 _CIRCLE_RTOL = 0.1  # 10%
@@ -117,12 +118,14 @@ def select_ids_to_test(ids, props, chart_distance):
       logging.debug('Skipping camera. Not appropriate multi-camera testing.')
       continue  # super-TELE camera
     elif (fov <= opencv_processing_utils.FOV_THRESH_TELE and
-          np.isclose(chart_distance,
-                     opencv_processing_utils.CHART_DISTANCE_RFOV, rtol=0.1)):
+          math.isclose(chart_distance,
+                       opencv_processing_utils.CHART_DISTANCE_RFOV,
+                       rel_tol=_CHART_DISTANCE_RTOL)):
       test_ids.append(i)  # TELE camera in RFoV rig
     elif (fov >= opencv_processing_utils.FOV_THRESH_WFOV and
-          np.isclose(chart_distance,
-                     opencv_processing_utils.CHART_DISTANCE_WFOV, rtol=0.1)):
+          math.isclose(chart_distance,
+                       opencv_processing_utils.CHART_DISTANCE_WFOV,
+                       rel_tol=_CHART_DISTANCE_RTOL)):
       test_ids.append(i)  # WFoV camera in WFoV rig
     else:
       logging.debug('Skipping camera. Not appropriate for test rig.')

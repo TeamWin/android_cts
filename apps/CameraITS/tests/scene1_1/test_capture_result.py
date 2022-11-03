@@ -15,6 +15,7 @@
 
 
 import logging
+import math
 import os.path
 import matplotlib.pyplot
 from mobly import test_runner
@@ -44,9 +45,9 @@ _NAME = os.path.splitext(os.path.basename(__file__))[0]
 
 
 def is_close_rational(n1, n2):
-  return np.isclose(capture_request_utils.rational_to_float(n1),
-                    capture_request_utils.rational_to_float(n2),
-                    atol=_ISCLOSE_ATOL)
+  return math.isclose(capture_request_utils.rational_to_float(n1),
+                      capture_request_utils.rational_to_float(n2),
+                      abs_tol=_ISCLOSE_ATOL)
 
 
 def draw_lsc_plot(lsc_map_w, lsc_map_h, lsc_map, name, log_path):
@@ -194,14 +195,15 @@ def test_manual(cam, props, log_path):
   metadata_checks(metadata, props)
   awb_gains = metadata['android.colorCorrection.gains']
   awb_xform = metadata['android.colorCorrection.transform']
-  if not (all([np.isclose(awb_gains[i], _MANUAL_GAINS_OK[0][i],
-                          atol=_ISCLOSE_ATOL)
+  if not (all([math.isclose(awb_gains[i], _MANUAL_GAINS_OK[0][i],
+                            abs_tol=_ISCLOSE_ATOL)
                for i in range(_AWB_GAINS_NUM)]) or
-          all([np.isclose(awb_gains[i], _MANUAL_GAINS_OK[1][i],
-                          atol=_ISCLOSE_ATOL)
+          all([math.isclose(awb_gains[i], _MANUAL_GAINS_OK[1][i],
+                            abs_tol=_ISCLOSE_ATOL)
                for i in range(_AWB_GAINS_NUM)]) or
-          all([np.isclose(awb_gains[i], _MANUAL_GAINS_OK[2][i],
-                          atol=_ISCLOSE_ATOL) for i in range(_AWB_GAINS_NUM)])):
+          all([math.isclose(awb_gains[i], _MANUAL_GAINS_OK[2][i],
+                            abs_tol=_ISCLOSE_ATOL)
+               for i in range(_AWB_GAINS_NUM)])):
     raise AssertionError('request/capture mismatch in AWB gains! '
                          f'req: {_MANUAL_GAINS_OK}, cap: {awb_gains}, '
                          f'ATOL: {_ISCLOSE_ATOL}')
@@ -219,13 +221,13 @@ def test_manual(cam, props, log_path):
   for _, c in enumerate(curves):
     if not c:
       raise AssertionError('c in curves is empty.')
-    if not all([np.isclose(c[i], c[i+1], atol=_ISCLOSE_ATOL)
+    if not all([math.isclose(c[i], c[i+1], abs_tol=_ISCLOSE_ATOL)
                 for i in range(0, len(c), 2)]):
       raise AssertionError(f"tonemap 'RGB'[i] is not linear! {c}")
 
   # Exposure time must be close to the requested exposure time.
   exp_time = metadata['android.sensor.exposureTime']
-  if not np.isclose(exp_time, exp_min, atol=_ISCLOSE_ATOL/1E-06):
+  if not math.isclose(exp_time, exp_min, abs_tol=_ISCLOSE_ATOL/1E-06):
     raise AssertionError('request/capture exposure time mismatch! '
                          f'req: {exp_min}, cap: {exp_time}, '
                          f'ATOL: {_ISCLOSE_ATOL/1E-6}')

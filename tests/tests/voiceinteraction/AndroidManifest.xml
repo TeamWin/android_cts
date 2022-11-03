@@ -36,13 +36,6 @@
               <category android:name="android.intent.category.DEFAULT"/>
           </intent-filter>
       </activity>
-      <activity android:name="TestLocalInteractionActivity"
-           android:label="Local Interaction Activity"
-           android:exported="true">
-          <intent-filter>
-              <action android:name="android.intent.action.TEST_LOCAL_INTERACTION_ACTIVITY"/>
-          </intent-filter>
-      </activity>
         <activity android:name="TestVoiceInteractionServiceActivity"
             android:label="Voice Interaction Service Activity"
             android:exported="true">

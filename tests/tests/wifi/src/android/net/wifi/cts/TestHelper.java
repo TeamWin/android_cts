@@ -66,6 +66,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -88,6 +89,7 @@ public class TestHelper {
     private static final int DURATION_SCREEN_TOGGLE_MILLIS = 2000;
     private static final int DURATION_UI_INTERACTION_MILLIS = 25_000;
     private static final int SCAN_RETRY_CNT_TO_FIND_MATCHING_BSSID = 3;
+    private static List<ScanResult> sScanResults = null;
 
     public TestHelper(@NonNull Context context, @NonNull UiDevice uiDevice) {
         mContext = context;
@@ -181,9 +183,9 @@ public class TestHelper {
             } finally {
                 wifiManager.unregisterScanResultsCallback(scanResultsCallback);
             }
-            List<ScanResult> scanResults = wifiManager.getScanResults();
-            if (scanResults == null || scanResults.isEmpty()) continue;
-            for (ScanResult scanResult : scanResults) {
+            sScanResults = wifiManager.getScanResults();
+            if (sScanResults == null || sScanResults.isEmpty()) continue;
+            for (ScanResult scanResult : sScanResults) {
                 WifiConfiguration matchingNetwork = savedNetworks.stream()
                         .filter(network -> TextUtils.equals(
                                 scanResult.SSID, WifiInfo.sanitizeSsid(network.SSID)))
@@ -238,7 +240,7 @@ public class TestHelper {
      * Convert the provided saved network to a corresponding specifier builder.
      */
     public static WifiNetworkSpecifier.Builder createSpecifierBuilderWithCredentialFromSavedNetwork(
-            @NonNull WifiConfiguration network) {
+            @NonNull WifiConfiguration network, boolean useChannel) {
         WifiNetworkSpecifier.Builder specifierBuilder = new WifiNetworkSpecifier.Builder()
                 .setSsid(WifiInfo.sanitizeSsid(network.SSID));
         if (network.preSharedKey != null) {
@@ -255,6 +257,16 @@ public class TestHelper {
             fail("Unsupported security type found in saved networks");
         }
         specifierBuilder.setIsHiddenSsid(network.hiddenSSID);
+        if (sScanResults != null && useChannel) {
+            Optional<ScanResult> matchedResult = sScanResults
+                    .stream()
+                    .filter(scanResult -> TextUtils.equals(scanResult.SSID,
+                            WifiInfo.sanitizeSsid(network.SSID))
+                            && TextUtils.equals(scanResult.BSSID, network.BSSID)).findAny();
+            matchedResult.ifPresent(
+                    scanResult -> specifierBuilder.setPreferredChannelsFrequencyInMhz(
+                            new int[]{scanResult.frequency}));
+        }
         return specifierBuilder;
     }
 
@@ -264,7 +276,7 @@ public class TestHelper {
     public static WifiNetworkSpecifier.Builder
             createSpecifierBuilderWithCredentialFromSavedNetworkWithBssid(
             @NonNull WifiConfiguration network) {
-        return createSpecifierBuilderWithCredentialFromSavedNetwork(network)
+        return createSpecifierBuilderWithCredentialFromSavedNetwork(network, false)
                 .setBssid(MacAddress.fromString(network.BSSID));
     }
 

@@ -66,7 +66,7 @@ public class CVE_2022_20420 extends StsExtraBusinessLogicTestCase {
         }
     }
 
-    @AsbSecurityTest(cveBugId = 238477311)
+    @AsbSecurityTest(cveBugId = 238377411)
     @Test
     public void testDeviceAdminAppRestricted() {
         try {

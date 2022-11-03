@@ -3,12 +3,16 @@ package android.location.cts.privileged;
 import static org.junit.Assert.assertEquals;
 
 import android.location.GnssCapabilities;
+import android.location.GnssSignalType;
+import android.location.GnssStatus;
 import android.os.Parcel;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Arrays;
 
 /**
  * Tests fundamental functionality of {@link GnssCapabilities}. This includes writing and reading
@@ -17,6 +21,11 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class GnssCapabilitiesTest {
 
+    private static final GnssSignalType SIGNAL_TYPE_1 =
+            GnssSignalType.create(GnssStatus.CONSTELLATION_GPS, 1575.42e6, "C");
+
+    private static final GnssSignalType SIGNAL_TYPE_2 =
+            GnssSignalType.create(GnssStatus.CONSTELLATION_GALILEO, 1575.42e6, "A");
     @Test
     public void testBuilderWithGnssCapabilities() {
         GnssCapabilities gnssCapabilities =
@@ -67,6 +76,7 @@ public class GnssCapabilitiesTest {
         builder.setHasSatellitePvt(true);
         builder.setHasScheduling(true);
         builder.setHasSingleShotFix(true);
+        builder.setGnssSignalTypes(Arrays.asList(SIGNAL_TYPE_1, SIGNAL_TYPE_2));
         return builder.build();
     }
 
@@ -95,5 +105,7 @@ public class GnssCapabilitiesTest {
         assertEquals(true, gnssCapabilities.hasSatellitePvt());
         assertEquals(true, gnssCapabilities.hasScheduling());
         assertEquals(true, gnssCapabilities.hasSingleShotFix());
+        assertEquals(SIGNAL_TYPE_1, gnssCapabilities.getGnssSignalTypes().get(0));
+        assertEquals(SIGNAL_TYPE_2, gnssCapabilities.getGnssSignalTypes().get(1));
     }
 }

@@ -38,6 +38,7 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.permission4.cts" />
         <option name="runtime-hint" value="5m" />
+        <option name="shell-timeout" value="3m"/>
     </test>
 
 </configuration>

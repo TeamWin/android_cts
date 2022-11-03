@@ -38,6 +38,7 @@ import android.Manifest.permission.READ_CALL_LOG
 import android.Manifest.permission.READ_CELL_BROADCASTS
 import android.Manifest.permission.READ_CONTACTS
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
+import android.Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
 import android.Manifest.permission.READ_PHONE_NUMBERS
 import android.Manifest.permission.READ_PHONE_STATE
 import android.Manifest.permission.READ_SMS
@@ -160,6 +161,10 @@ class RuntimePermissionProperties {
         // runtime permission
         expectedPerms.add(POST_NOTIFICATIONS)
         expectedPerms.add(NEARBY_WIFI_DEVICES)
+
+        // Add runtime permissions added in U which were _not_ split from a previously existing
+        // runtime permission
+        expectedPerms.add(READ_MEDIA_VISUAL_USER_SELECTED)
 
         assertThat(expectedPerms).containsExactlyElementsIn(platformRuntimePerms.map { it.name })
     }

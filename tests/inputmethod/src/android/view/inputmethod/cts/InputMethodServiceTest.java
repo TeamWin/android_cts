@@ -68,6 +68,7 @@ import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.view.inputmethod.TextAppearanceInfo;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.SimulatedVirtualDisplaySession;
 import android.view.inputmethod.cts.util.TestActivity;
@@ -539,7 +540,9 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                             InputConnection.CURSOR_UPDATE_IMMEDIATE
                             | InputConnection.CURSOR_UPDATE_FILTER_EDITOR_BOUNDS
                             | InputConnection.CURSOR_UPDATE_FILTER_CHARACTER_BOUNDS
-                            | InputConnection.CURSOR_UPDATE_FILTER_INSERTION_MARKER),
+                            | InputConnection.CURSOR_UPDATE_FILTER_INSERTION_MARKER
+                            | InputConnection.CURSOR_UPDATE_FILTER_VISIBLE_LINE_BOUNDS
+                            | InputConnection.CURSOR_UPDATE_FILTER_TEXT_APPEARANCE),
                     TIMEOUT).getReturnBooleanValue());
 
             // Also make sure that requestCursorUpdates() actually gets called only once.
@@ -550,6 +553,8 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             final CursorAnchorInfo originalCursorAnchorInfo1 = new CursorAnchorInfo.Builder()
                     .setMatrix(new Matrix())
                     .setEditorBoundsInfo(builder.build())
+                    .addVisibleLineBounds(1f, 2f, 3f, 5f)
+                    .setTextAppearanceInfo(new TextAppearanceInfo(editText))
                     .build();
 
             runOnMainSync(() -> editText.getContext().getSystemService(InputMethodManager.class)
@@ -571,13 +576,17 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             final CursorAnchorInfo originalCursorAnchorInfo2 = new CursorAnchorInfo.Builder()
                     .setMatrix(new Matrix())
                     .setEditorBoundsInfo(builder.build())
+                    .addVisibleLineBounds(1f, 2f, 3f, 4f)
+                    .setTextAppearanceInfo(new TextAppearanceInfo(editText))
                     .build();
             assertTrue(expectCommand(stream,
                     imeSession.callRequestCursorUpdates(
                             InputConnection.CURSOR_UPDATE_IMMEDIATE,
                                     InputConnection.CURSOR_UPDATE_FILTER_EDITOR_BOUNDS
                                     | InputConnection.CURSOR_UPDATE_FILTER_CHARACTER_BOUNDS
-                                    | InputConnection.CURSOR_UPDATE_FILTER_INSERTION_MARKER),
+                                    | InputConnection.CURSOR_UPDATE_FILTER_INSERTION_MARKER
+                                    | InputConnection.CURSOR_UPDATE_FILTER_VISIBLE_LINE_BOUNDS
+                                    | InputConnection.CURSOR_UPDATE_FILTER_TEXT_APPEARANCE),
                     TIMEOUT).getReturnBooleanValue());
 
             // Make sure that requestCursorUpdates() actually gets called only once.

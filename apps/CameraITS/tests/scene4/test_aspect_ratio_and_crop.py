@@ -15,6 +15,7 @@
 
 
 import logging
+import math
 import os.path
 from mobly import test_runner
 import numpy as np
@@ -133,7 +134,7 @@ def _is_checked_aspect_ratio(first_api_level, w, h):
   for ar_check in _AR_CHECKED_PRE_API_30:
     match_ar_list = [float(x) for x in ar_check.split(':')]
     match_ar = match_ar_list[0] / match_ar_list[1]
-    if np.isclose(float(w) / h, match_ar, atol=_AR_DIFF_ATOL):
+    if math.isclose(w / h, match_ar, abs_tol=_AR_DIFF_ATOL):
       return True
 
   return False

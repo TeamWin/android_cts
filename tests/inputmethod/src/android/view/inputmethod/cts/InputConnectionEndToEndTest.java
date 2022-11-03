@@ -1622,6 +1622,23 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
 
     /**
      * Test
+     * InputConnection#performHandwritingGesture(HandwritingGesture, Executor, IntConsumer)}
+     * works as expected  for {@link InsertGesture}.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.inputmethod.InsertGesture.Builder#setInsertionPoint",
+            "android.view.inputmethod.InsertGesture.Builder#setFallbackText",
+            "android.view.inputmethod.InsertGesture.Builder#setTextToInsert",
+            "android.view.inputmethod.InputConnection#performHandwritingGesture"})
+    public void testPerformHandwritingInsertGesture_emptyText() throws Exception {
+        InsertGesture.Builder builder = new InsertGesture.Builder();
+        testPerformHandwritingGesture(builder.setTextToInsert("")
+                        .setInsertionPoint(new PointF(1, 1)).setFallbackText("").build(),
+                InputConnection.HANDWRITING_GESTURE_RESULT_SUCCESS);
+    }
+
+    /**
+     * Test
      * InputConnection#performHandwritingGesture(HandwritingGesture, Executor, IntConsumer)}}
      * works as expected for {@link DeleteGesture}.
      */

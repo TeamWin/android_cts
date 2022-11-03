@@ -70,8 +70,8 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -341,8 +341,11 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     public void testConnectionWithSpecificSsid() throws Exception {
         WifiNetworkSpecifier specifier =
                 TestHelper.createSpecifierBuilderWithCredentialFromSavedNetwork(
-                        sTestNetwork)
+                        sTestNetwork, true)
                 .build();
+        assertThat(specifier.getPreferredChannelFrequencyInMhz().length != 0).isTrue();
+        assertThat(ScanResult.convertFrequencyMhzToChannelIfSupported(specifier
+                .getPreferredChannelFrequencyInMhz()[0]) != ScanResult.UNSPECIFIED).isTrue();
         testSuccessfulConnectionWithSpecifier(specifier);
     }
 
@@ -360,9 +363,12 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         // But, we will still ensure that the UI interactions in the test still selects the
         // saved network for connection.
         WifiNetworkSpecifier specifier =
-                TestHelper.createSpecifierBuilderWithCredentialFromSavedNetwork(sTestNetwork)
+                TestHelper.createSpecifierBuilderWithCredentialFromSavedNetwork(sTestNetwork, true)
                 .setSsidPattern(new PatternMatcher(ssidPrefix, PatternMatcher.PATTERN_PREFIX))
                 .build();
+        assertThat(specifier.getPreferredChannelFrequencyInMhz().length != 0).isTrue();
+        assertThat(ScanResult.convertFrequencyMhzToChannelIfSupported(specifier
+                .getPreferredChannelFrequencyInMhz()[0]) != ScanResult.UNSPECIFIED).isTrue();
         testSuccessfulConnectionWithSpecifier(specifier);
     }
 
@@ -402,8 +408,11 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     public void testUserRejectionWithSpecificSsid() throws Exception {
         WifiNetworkSpecifier specifier =
                 TestHelper.createSpecifierBuilderWithCredentialFromSavedNetwork(
-                        sTestNetwork)
+                        sTestNetwork, true)
                         .build();
+        assertThat(specifier.getPreferredChannelFrequencyInMhz().length != 0).isTrue();
+        assertThat(ScanResult.convertFrequencyMhzToChannelIfSupported(specifier
+                .getPreferredChannelFrequencyInMhz()[0]) != ScanResult.UNSPECIFIED).isTrue();
         testUserRejectionWithSpecifier(specifier);
     }
 
@@ -471,8 +480,11 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     public void testEnsureAutoConnectToInternetConnectionOnRelease() throws Exception {
         WifiNetworkSpecifier specifier =
                 TestHelper.createSpecifierBuilderWithCredentialFromSavedNetwork(
-                        sTestNetwork)
+                        sTestNetwork, true)
                         .build();
+        assertThat(specifier.getPreferredChannelFrequencyInMhz().length != 0).isTrue();
+        assertThat(ScanResult.convertFrequencyMhzToChannelIfSupported(specifier
+                .getPreferredChannelFrequencyInMhz()[0]) != ScanResult.UNSPECIFIED).isTrue();
         testSuccessfulConnectionWithSpecifier(specifier);
 
         // Now release the network request.
@@ -592,6 +604,7 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
                         MacAddress.fromString("ff:ff:ff:00:00:00"))
                 .setBand(ScanResult.WIFI_BAND_5_GHZ)
                 .build();
+        assertThat(specifier.getPreferredChannelFrequencyInMhz().length == 0).isTrue();
 
         final NetworkSpecifier redacted = specifier.redact();
         if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {

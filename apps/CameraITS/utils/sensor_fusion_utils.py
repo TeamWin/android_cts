@@ -822,7 +822,8 @@ class SensorFusionUtilsTests(unittest.TestCase):
       e_msg += f'coeffs: {coeffs}\n'
       e_msg += f'x: {x}\n'
       e_msg += f'y: {y}'
-      self.assertTrue(np.isclose(t_offset_ms, best_fit_offset, atol=0.1), e_msg)
+      self.assertTrue(
+          math.isclose(t_offset_ms, best_fit_offset, abs_tol=0.1), e_msg)
 
 
 if __name__ == '__main__':

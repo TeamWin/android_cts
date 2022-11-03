@@ -745,7 +745,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                     // Connect using wifi network specifier.
                     WifiNetworkSpecifier specifier =
                             TestHelper.createSpecifierBuilderWithCredentialFromSavedNetwork(
-                                    testNetwork)
+                                    testNetwork, false)
                                     .build();
                     return mTestHelper.testConnectionFlowWithSpecifierWithShellIdentity(
                             testNetwork, specifier, false);

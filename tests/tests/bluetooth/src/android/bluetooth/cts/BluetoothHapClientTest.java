@@ -477,6 +477,91 @@ public class BluetoothHapClientTest {
         }
     }
 
+    @Test
+    public void testGetHearingAidType() {
+        if (shouldSkipTest()) {
+            return;
+        }
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothHapClient);
+
+        BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        // Verify returns 0x00 if bluetooth is not enabled
+        assertEquals(0x00, mBluetoothHapClient.getHearingAidType(testDevice));
+    }
+
+    @Test
+    public void testSupportSynchronizedPresets() {
+        if (shouldSkipTest()) {
+            return;
+        }
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothHapClient);
+
+        BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        // Verify returns false if bluetooth is not enabled
+        assertFalse(mBluetoothHapClient.supportSynchronizedPresets(testDevice));
+    }
+
+    @Test
+    public void testSupportIndependentPresets() {
+        if (shouldSkipTest()) {
+            return;
+        }
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothHapClient);
+
+        BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        // Verify returns false if bluetooth is not enabled
+        assertFalse(mBluetoothHapClient.supportIndependentPresets(testDevice));
+    }
+
+    @Test
+    public void testSupportDynamicPresets() {
+        if (shouldSkipTest()) {
+            return;
+        }
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothHapClient);
+
+        BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        // Verify returns false if bluetooth is not enabled
+        assertFalse(mBluetoothHapClient.supportDynamicPresets(testDevice));
+    }
+
+    @Test
+    public void testSupportWritablePresets() {
+        if (shouldSkipTest()) {
+            return;
+        }
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothHapClient);
+
+        BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        // Verify returns false if bluetooth is not enabled
+        assertFalse(mBluetoothHapClient.supportWritablePresets(testDevice));
+    }
+
     private boolean shouldSkipTest() {
         return !(mHasBluetooth && mIsHapClientSupported);
     }

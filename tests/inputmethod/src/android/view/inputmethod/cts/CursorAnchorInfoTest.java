@@ -26,16 +26,26 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.content.Context;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.RectF;
+import android.graphics.Typeface;
+import android.graphics.text.LineBreakConfig;
+import android.os.LocaleList;
 import android.os.Parcel;
+import android.text.InputFilter;
 import android.text.TextUtils;
 import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.CursorAnchorInfo.Builder;
 import android.view.inputmethod.EditorBoundsInfo;
+import android.view.inputmethod.TextAppearanceInfo;
+import android.widget.EditText;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
 
@@ -95,6 +105,8 @@ public class CursorAnchorInfoTest {
         FLAG_HAS_INVISIBLE_REGION | FLAG_IS_RTL,
     };
 
+    private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
+
     @Test
     @ApiTest(
             apis = {
@@ -109,6 +121,7 @@ public class CursorAnchorInfoTest {
                     "android.view.inputmethod.CursorAnchorInfo#getSelectionEnd",
                     "android.view.inputmethod.CursorAnchorInfo#getMatrix",
                     "android.view.inputmethod.CursorAnchorInfo#getVisibleLineBounds",
+                    "android.view.inputmethod.CursorAnchorInfo#getTextAppearanceInfo",
                     "android.view.inputmethod.CursorAnchorInfo.Builder#build",
                     "android.view.inputmethod.CursorAnchorInfo.Builder#setComposingText",
                     "android.view.inputmethod.CursorAnchorInfo.Builder#setEditorBoundsInfo",
@@ -116,6 +129,7 @@ public class CursorAnchorInfoTest {
                     "android.view.inputmethod.CursorAnchorInfo.Builder#setInsertionMarkerLocation",
                     "android.view.inputmethod.CursorAnchorInfo.Builder#setSelectinRange",
                     "android.view.inputmethod.CursorAnchorInfo.Builder#setVisibleLineBounds",
+                    "android.view.inputmethod.CursorAnchorInfo.Builder#setTextAppearanceInfo",
             }
     )
     public void testBuilder() {
@@ -137,13 +151,17 @@ public class CursorAnchorInfoTest {
                 new EditorBoundsInfo.Builder().setEditorBounds(MANY_BOUNDS[0])
                         .setHandwritingBounds(MANY_BOUNDS[1]).build();
 
+        final EditText editText = createEditTextWithAppearance();
+        final TextAppearanceInfo textAppearanceInfo = new TextAppearanceInfo(editText);
+
         final Builder builder = new Builder();
         builder.setSelectionRange(selectionStart, selectionEnd)
                 .setComposingText(composingTextStart, composingText)
                 .setInsertionMarkerLocation(insertionMarkerHorizontal, insertionMarkerTop,
                         insertionMarkerBaseline, insertionMarkerBottom, insertionMarkerFlags)
                 .setMatrix(transformMatrix)
-                .setEditorBoundsInfo(boundsInfo);
+                .setEditorBoundsInfo(boundsInfo)
+                .setTextAppearanceInfo(textAppearanceInfo);
 
         for (int i = 0; i < MANY_BOUNDS.length; i++) {
             final RectF bounds = MANY_BOUNDS[i];
@@ -182,6 +200,8 @@ public class CursorAnchorInfoTest {
         }
         assertEquals(0, info.getCharacterBoundsFlags(-1));
         assertEquals(0, info.getCharacterBoundsFlags(MANY_BOUNDS.length + 1));
+        assertEquals(textAppearanceInfo, info.getTextAppearanceInfo());
+        assertTextAppearanceInfoContentsEqual(info.getTextAppearanceInfo());
 
         // Make sure that the builder can reproduce the same object.
         final CursorAnchorInfo info2 = builder.build();
@@ -209,6 +229,8 @@ public class CursorAnchorInfoTest {
         }
         assertEquals(0, info2.getCharacterBoundsFlags(-1));
         assertEquals(0, info2.getCharacterBoundsFlags(MANY_BOUNDS.length + 1));
+        assertEquals(textAppearanceInfo, info2.getTextAppearanceInfo());
+        assertTextAppearanceInfoContentsEqual(info2.getTextAppearanceInfo());
         assertEquals(info, info2);
         assertEquals(info.hashCode(), info2.hashCode());
 
@@ -238,6 +260,8 @@ public class CursorAnchorInfoTest {
         }
         assertEquals(0, info3.getCharacterBoundsFlags(-1));
         assertEquals(0, info3.getCharacterBoundsFlags(MANY_BOUNDS.length + 1));
+        assertEquals(textAppearanceInfo, info3.getTextAppearanceInfo());
+        assertTextAppearanceInfoContentsEqual(info3.getTextAppearanceInfo());
         assertEquals(info.hashCode(), info3.hashCode());
 
         builder.reset();
@@ -254,6 +278,7 @@ public class CursorAnchorInfoTest {
         assertEquals(null, uninitializedInfo.getEditorBoundsInfo());
         assertEquals(new ArrayList<>(), uninitializedInfo.getVisibleLineBounds());
         assertEquals(new Matrix(), uninitializedInfo.getMatrix());
+        assertEquals(null, uninitializedInfo.getTextAppearanceInfo());
     }
 
     @Test
@@ -265,6 +290,7 @@ public class CursorAnchorInfoTest {
                     "android.view.inputmethod.CursorAnchorInfo.Builder#setInsertionMarkerLocation",
                     "android.view.inputmethod.CursorAnchorInfo.Builder#setSelectinRange",
                     "android.view.inputmethod.CursorAnchorInfo.Builder#setVisibleLineBounds",
+                    "android.view.inputmethod.CursorAnchorInfo.Builder#setTextAppearanceInfo",
             }
     )
     public void testEquality() {
@@ -450,6 +476,23 @@ public class CursorAnchorInfoTest {
 
             assertNotEquals(builder1.build(), builder2.build());
         }
+        {
+            EditText editText1 = createEditTextWithAppearance();
+            EditText editText2 = createEditTextWithAppearance();
+            EditText editText3 = createEditTextWithAppearance();
+            editText3.setTextColor(Color.GRAY);
+
+            TextAppearanceInfo textAppearanceInfo1 = new TextAppearanceInfo(editText1);
+            TextAppearanceInfo textAppearanceInfo2 = new TextAppearanceInfo(editText2);
+            TextAppearanceInfo textAppearanceInfo3 = new TextAppearanceInfo(editText3);
+
+            assertEquals(new Builder().setTextAppearanceInfo(textAppearanceInfo1).build(),
+                    new Builder().setTextAppearanceInfo(textAppearanceInfo1).build());
+            assertEquals(new Builder().setTextAppearanceInfo(textAppearanceInfo1).build(),
+                    new Builder().setTextAppearanceInfo(textAppearanceInfo2).build());
+            assertNotEquals(new Builder().setTextAppearanceInfo(textAppearanceInfo1).build(),
+                    new Builder().setTextAppearanceInfo(textAppearanceInfo3).build());
+        }
     }
 
     @Test
@@ -598,6 +641,21 @@ public class CursorAnchorInfoTest {
         assertEquals(rectFs, builder.build().getVisibleLineBounds());
     }
 
+    @Test
+    @ApiTest(apis = {"android.view.inputmethod.CursorAnchorInfo#getTextAppearanceInfo",
+            "android.view.inputmethod.CursorAnchorInfo.Builder#setTextAppearanceInfo"})
+    public void testTextAppearanceInfoWithEmptyEditText() {
+        EditText emptyEditText = new EditText(mContext);
+        TextAppearanceInfo textAppearanceInfo = new TextAppearanceInfo(emptyEditText);
+        CursorAnchorInfo.Builder builder = new Builder().setTextAppearanceInfo(textAppearanceInfo);
+        CursorAnchorInfo info1 = builder.build();
+        CursorAnchorInfo info2 = builder.build();
+        CursorAnchorInfo info3 = cloneViaParcel(info2);
+        assertEquals(textAppearanceInfo, info1.getTextAppearanceInfo());
+        assertEquals(textAppearanceInfo, info2.getTextAppearanceInfo());
+        assertEquals(textAppearanceInfo, info3.getTextAppearanceInfo());
+    }
+
     private static CursorAnchorInfo cloneViaParcel(CursorAnchorInfo src) {
         Parcel parcel = null;
         try {
@@ -610,5 +668,58 @@ public class CursorAnchorInfoTest {
                 parcel.recycle();
             }
         }
+    }
+
+    private EditText createEditTextWithAppearance() {
+        EditText editText = new EditText(mContext);
+        editText.getPaint().setTextSize(16.5f);
+        editText.setTextLocales(LocaleList.forLanguageTags("en,ja"));
+        editText.setTypeface(Typeface.create(Typeface.SANS_SERIF, 10, true));
+        editText.setAllCaps(true);
+        editText.setShadowLayer(2.0f, 2.0f, 2.0f, Color.GRAY);
+        editText.setElegantTextHeight(true);
+        editText.setFallbackLineSpacing(true);
+        editText.setLetterSpacing(5.0f);
+        editText.setFontFeatureSettings("smcp");
+        editText.setFontVariationSettings("'wdth' 1.0");
+        editText.setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_LOOSE);
+        editText.setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE);
+        editText.setText("hello, world");
+        editText.setTextScaleX(1.5f);
+        editText.setHighlightColor(Color.YELLOW);
+        editText.setTextColor(Color.RED);
+        editText.setHintTextColor(Color.GREEN);
+        editText.setLinkTextColor(ColorStateList.valueOf(Color.BLUE));
+        editText.setFilters(new InputFilter[] { new InputFilter.LengthFilter(25) });
+        return editText;
+    }
+
+    private void assertTextAppearanceInfoContentsEqual(TextAppearanceInfo textAppearanceInfo) {
+        assertEquals(textAppearanceInfo.getTextSize(), 16.5f, EPSILON);
+        assertEquals(textAppearanceInfo.getTextLocales(), LocaleList.forLanguageTags("en,ja"));
+        assertEquals(textAppearanceInfo.getFontFamilyName(), "sans-serif");
+        assertEquals(textAppearanceInfo.getTextFontWeight(), 10);
+        assertEquals(textAppearanceInfo.getTextStyle(), Typeface.ITALIC);
+        assertTrue(textAppearanceInfo.isAllCaps());
+        assertEquals(textAppearanceInfo.getShadowRadius(), 2.0f, EPSILON);
+        assertEquals(textAppearanceInfo.getShadowDx(), 2.0f, EPSILON);
+        assertEquals(textAppearanceInfo.getShadowDy(), 2.0f, EPSILON);
+        assertTrue(textAppearanceInfo.isElegantTextHeight());
+        assertTrue(textAppearanceInfo.isFallbackLineSpacing());
+        assertEquals(textAppearanceInfo.getLetterSpacing(), 5.0f, EPSILON);
+        assertEquals(textAppearanceInfo.getFontFeatureSettings(), "smcp");
+        assertEquals(textAppearanceInfo.getFontVariationSettings(), "'wdth' 1.0");
+        assertEquals(textAppearanceInfo.getLineBreakStyle(),
+                LineBreakConfig.LINE_BREAK_STYLE_LOOSE);
+        assertEquals(textAppearanceInfo.getLineBreakWordStyle(),
+                LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE);
+        assertEquals(textAppearanceInfo.getTextScaleX(), 1.5f, EPSILON);
+        assertEquals(textAppearanceInfo.getTextColorHighlight(), Color.YELLOW);
+        assertEquals(textAppearanceInfo.getTextColor(), Color.RED);
+        assertEquals(textAppearanceInfo.getTextColorHint(), Color.GREEN);
+        assertEquals(textAppearanceInfo.getTextColorLink().getDefaultColor(),
+                ColorStateList.valueOf(Color.BLUE).getDefaultColor());
+        assertEquals(textAppearanceInfo.getMaxLength(), 25);
+
     }
 }

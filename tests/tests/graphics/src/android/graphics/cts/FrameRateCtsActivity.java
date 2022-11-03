@@ -260,7 +260,6 @@ public class FrameRateCtsActivity extends Activity {
         public int clearFrameRate() {
             Log.i(TAG,
                     String.format("Clearing frame rate for %s", mName));
-
             int rc = 0;
             if (mApi == Api.SURFACE) {
                 mSurface.clearFrameRate();
@@ -1014,8 +1013,7 @@ public class FrameRateCtsActivity extends Activity {
 
                 // Clear the frame-rate
                 surface.clearFrameRate();
-                verifyCompatibleAndStableFrameRate(initialRefreshRate,
-                        FRAME_RATE_TOLERANCE_RELAXED, surface);
+                waitForStableFrameRate(surface);
                 break;
             }
         }

@@ -93,6 +93,7 @@ public class TelephonyManagerReadNonDangerousPermissionTest {
         nonFailures.add(TelephonyManager.PURCHASE_PREMIUM_CAPABILITY_RESULT_SUCCESS);
         nonFailures.add(TelephonyManager.PURCHASE_PREMIUM_CAPABILITY_RESULT_ALREADY_PURCHASED);
         nonFailures.add(TelephonyManager.PURCHASE_PREMIUM_CAPABILITY_RESULT_ALREADY_IN_PROGRESS);
+        nonFailures.add(TelephonyManager.PURCHASE_PREMIUM_CAPABILITY_RESULT_PENDING_NETWORK_SETUP);
 
         Set<Integer> hardFailures = new HashSet<>();
         hardFailures.add(TelephonyManager.PURCHASE_PREMIUM_CAPABILITY_RESULT_CARRIER_DISABLED);

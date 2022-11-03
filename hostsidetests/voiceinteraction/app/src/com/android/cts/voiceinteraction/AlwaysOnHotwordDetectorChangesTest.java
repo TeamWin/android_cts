@@ -297,6 +297,8 @@ public class AlwaysOnHotwordDetectorChangesTest {
                         AlwaysOnHotwordDetector.RECOGNITION_MODE_VOICE_TRIGGER,
                         new byte[]{1, 2, 3, 4})).errorCode)
                 .isEqualTo(EXCEPTION_HOTWORD_DETECTOR_ILLEGAL_STATE);
+
+        alwaysOnHotwordDetectorEnglish.destroy();
     }
 
     @Test
@@ -422,6 +424,8 @@ public class AlwaysOnHotwordDetectorChangesTest {
                 () -> alwaysOnHotwordDetectorEnglish.startRecognitionWithFlagsAndData(
                         AlwaysOnHotwordDetector.RECOGNITION_MODE_VOICE_TRIGGER,
                         new byte[]{1, 2, 3, 4}));
+
+        alwaysOnHotwordDetectorEnglish.destroy();
     }
 
     @Test
@@ -504,6 +508,8 @@ public class AlwaysOnHotwordDetectorChangesTest {
         assertThat(expectThrows(ServiceSpecificException.class,
                 () -> alwaysOnHotwordDetectorEnglish.stopRecognition()).errorCode).isEqualTo(
                 EXCEPTION_HOTWORD_DETECTOR_ILLEGAL_STATE);
+
+        alwaysOnHotwordDetectorEnglish.destroy();
     }
 
     @Test
@@ -580,6 +586,8 @@ public class AlwaysOnHotwordDetectorChangesTest {
         alwaysOnHotwordDetectorEnglish.overrideAvailability(0 /* STATE_NOT_READY */);
         assertThrows(UnsupportedOperationException.class,
                 () -> alwaysOnHotwordDetectorEnglish.stopRecognition());
+
+        alwaysOnHotwordDetectorEnglish.destroy();
     }
 
     @Test
@@ -683,6 +691,8 @@ public class AlwaysOnHotwordDetectorChangesTest {
         assertThrows(IllegalStateException.class,
                 () -> alwaysOnHotwordDetectorNotUsingTrustedService.updateState(testOptions,
                         testSharedMemory));
+
+        alwaysOnHotwordDetectorNotUsingTrustedService.destroy();
     }
 
     @Test
@@ -783,5 +793,7 @@ public class AlwaysOnHotwordDetectorChangesTest {
         assertThrows(IllegalStateException.class,
                 () -> alwaysOnHotwordDetectorNotUsingTrustedService.updateState(testOptions,
                         testSharedMemory));
+
+        alwaysOnHotwordDetectorNotUsingTrustedService.destroy();
     }
 }

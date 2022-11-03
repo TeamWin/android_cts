@@ -98,7 +98,10 @@ open class UiAutomationTestBase(
         withShellPermissionIdentity { roleManager.isBypassingRoleQualification = false }
 
         CompanionActivity.safeFinish()
+        CompanionActivity.waitUntilGone()
+
         confirmationUi.dismiss()
+        confirmationUi.waitUntilGone()
 
         restoreDiscoveryTimeout()
 
@@ -236,13 +239,19 @@ open class UiAutomationTestBase(
         // delivered via onActivityResult().
         assertEquals(associationFromCallback, associationFromActivityResult)
 
-        // Make sure "device data" was included (for backwards compatibility), and that the
-        // MAC address extracted from this data matches the MAC address from AssociationInfo.
-        val deviceFromActivityResult: Parcelable? = associationFromActivityResult.associatedDevice
+        // Make sure "device data" was included (for backwards compatibility)
+        val deviceFromActivityResult = associationFromActivityResult.associatedDevice
         assertNotNull(deviceFromActivityResult)
 
-        val deviceMacAddress =
-                BluetoothDeviceFilterUtils.getDeviceMacAddress(deviceFromActivityResult)
+        // At least one of three types of devices is not null and MAC address from this data
+        // matches the MAC address from AssociationInfo
+        val deviceData: Parcelable = listOf(
+            deviceFromActivityResult.bluetoothDevice,
+            deviceFromActivityResult.bleDevice,
+            deviceFromActivityResult.wifiDevice
+        ).firstNotNullOf { it }
+        assertNotNull(deviceData)
+        val deviceMacAddress = BluetoothDeviceFilterUtils.getDeviceMacAddress(deviceData)
         assertEquals(actual = MacAddress.fromString(deviceMacAddress),
                 expected = associationFromCallback.deviceMacAddress)
 

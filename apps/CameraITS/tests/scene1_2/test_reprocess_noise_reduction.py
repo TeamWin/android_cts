@@ -15,6 +15,7 @@
 
 
 import logging
+import math
 import os.path
 import matplotlib
 from matplotlib import pylab
@@ -213,17 +214,17 @@ class ReprocessNoiseReductionTest(its_base_test.ItsBaseTest):
                                    f'TOL: {_SNR_TOL}')
 
             # ZSL ~ MIN
-            if not np.isclose(
+            if not math.isclose(
                 snrs[j][_NR_MODES['ZSL']], snrs[j][_NR_MODES['MIN']],
-                atol=_SNR_TOL):
+                abs_tol=_SNR_TOL):
               raise AssertionError(f'ZSL: {snrs[j][_NR_MODES["ZSL"]]:.2f}, '
                                    f'MIN: {snrs[j][_NR_MODES["MIN"]]:.2f}, '
                                    f'TOL: {_SNR_TOL}')
           else:
             # ZSL ~ OFF
-            if not np.isclose(
+            if not math.isclose(
                 snrs[j][_NR_MODES['ZSL']], snrs[j][_NR_MODES['OFF']],
-                atol=_SNR_TOL):
+                abs_tol=_SNR_TOL):
               raise AssertionError(f'ZSL: {snrs[j][_NR_MODES["ZSL"]]:.2f}, '
                                    f'OFF: {snrs[j][_NR_MODES["OFF"]]:.2f}, '
                                    f'TOL: {_SNR_TOL}')

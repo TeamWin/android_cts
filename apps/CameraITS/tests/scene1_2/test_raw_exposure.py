@@ -15,6 +15,7 @@
 
 
 import logging
+import math
 import os.path
 import matplotlib
 from matplotlib import pylab
@@ -118,7 +119,7 @@ def assert_increasing_means(means, exps, sens, black_levels, white_level):
     prev_mean = means[i-1]
     mean = means[i]
 
-    if np.isclose(max(mean), white_level, rtol=_IMG_SAT_RTOL):
+    if math.isclose(max(mean), white_level, rel_tol=_IMG_SAT_RTOL):
       logging.debug('Saturated: white_level %f, max_mean %f',
                     white_level, max(mean))
       break

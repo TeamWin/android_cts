@@ -147,13 +147,13 @@ public class AudioDescriptorActivity extends PassFailButtons.Activity {
                 mHalVersionStr,
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
-        Log.i("flamme", "halVersion:" + mHalVersionStr);
+        Log.i(TAG, "halVersion:" + mHalVersionStr);
         reportLog.addValue(
                 KEY_AUDIO_DESCRIPTOR,
                 mLastTestedAudioDescriptor == null ? "" : mLastTestedAudioDescriptor.toString(),
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
-        Log.i("flamme", "desc:" + mLastTestedAudioDescriptor);
+        Log.i(TAG, "desc:" + mLastTestedAudioDescriptor);
 
         reportLog.submit();
     }

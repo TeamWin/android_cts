@@ -1221,8 +1221,9 @@ public abstract class ActivityManagerTestBase {
     protected void waitAndAssertActivityStateOnDisplay(ComponentName activityName, String state,
             int displayId, String message) {
         waitAndAssertActivityState(activityName, state, message);
-        assertEquals(message, mWmState.getDisplayByActivity(activityName),
-                displayId);
+        assertEquals(message,
+                /* expected = */ displayId,
+                /* actual = */ mWmState.getDisplayByActivity(activityName));
     }
 
     public void waitAndAssertTopResumedActivity(ComponentName activityName, int displayId,

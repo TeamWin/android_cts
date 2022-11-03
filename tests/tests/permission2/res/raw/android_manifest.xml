@@ -1112,6 +1112,18 @@
                 android:description="@string/permdesc_readMediaImage"
                 android:protectionLevel="dangerous" />
 
+    <!-- Allows an application to read image or video files from external storage that a user has
+      selected via the permission prompt photo picker. Apps can check this permission to verify that
+      a user has decided to use the photo picker, instead of granting access to
+      {@link #READ_MEDIA_IMAGES or #READ_MEDIA_VIDEO}. It does not prevent apps from accessing the
+      standard photo picker manually.
+   <p>Protection level: dangerous -->
+    <permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
+        android:permissionGroup="android.permission-group.UNDEFINED"
+        android:label="@string/permlab_readVisualUserSelect"
+        android:description="@string/permdesc_readVisualUserSelect"
+        android:protectionLevel="dangerous" />
+
     <!-- Allows an application to write to external storage.
          <p class="note"><strong>Note:</strong> If <em>both</em> your <a
          href="{@docRoot}guide/topics/manifest/uses-sdk-element.html#min">{@code

@@ -15,11 +15,13 @@
 
 
 import logging
+import math
 import unittest
 from mobly import asserts
 import numpy as np
 import capture_request_utils
 
+FD_CAL_RTOL = 0.20
 LENS_FACING_FRONT = 0
 LENS_FACING_BACK = 1
 LENS_FACING_EXTERNAL = 2
@@ -649,10 +651,10 @@ def get_intrinsic_calibration(props, debug, fd=None):
     fd_w_pix = pixel_w * fd / sensor_w
     fd_h_pix = pixel_h * fd / sensor_h
 
-    if not np.isclose(fd_w_pix, ical[0], rtol=0.20):
+    if not math.isclose(fd_w_pix, ical[0], rel_tol=FD_CAL_RTOL):
       raise ValueError('fd_w(pixels): %.2f\tcal[0](pixels): %.2f\tTOL=20%%' % (
           fd_w_pix, ical[0]))
-    if not np.isclose(fd_h_pix, ical[1], rtol=0.20):
+    if not math.isclose(fd_h_pix, ical[1], rel_tol=FD_CAL_RTOL):
       raise ValueError('fd_h(pixels): %.2f\tcal[1](pixels): %.2f\tTOL=20%%' % (
           fd_h_pix, ical[0]))
 

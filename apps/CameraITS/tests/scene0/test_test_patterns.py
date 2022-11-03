@@ -14,6 +14,7 @@
 """CameraITS test to check test patterns generation."""
 
 import logging
+import math
 import os
 
 from mobly import test_runner
@@ -59,7 +60,7 @@ def check_solid_color(cap, props):
   white_level = int(props['android.sensor.info.whiteLevel'])
   logging.debug('pixel min: %.f, pixel max: %.f', white_level * var_min,
                 white_level * var_max)
-  return np.isclose(var_max, var_min, atol=_CH_TOL)
+  return math.isclose(var_max, var_min, abs_tol=_CH_TOL)
 
 
 def check_color_bars(cap, props, mirror=False):

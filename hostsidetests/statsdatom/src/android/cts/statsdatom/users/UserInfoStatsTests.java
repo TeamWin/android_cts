@@ -76,13 +76,14 @@ public class UserInfoStatsTests extends DeviceTestCase implements IBuildReceiver
 
         assertThat(data).isNotEmpty();
 
-        UserInfo systemUser = data.get(0).getUserInfo();
-
-        assertThat(systemUser.getUserId()).isEqualTo(0);
-        assertThat(systemUser.getUserType().toString()).isEqualTo("FULL_SYSTEM");
+        UserInfo systemUser = findUserById(data, 0);
+        assertThat(systemUser).isNotNull();
+        assertThat(systemUser.getUserType().toString())
+                .isAnyOf("FULL_SYSTEM", "SYSTEM_HEADLESS");
         assertThat(systemUser.getIsUserRunningUnlocked()).isTrue();
-        UserInfo guestUser = data.get(1).getUserInfo();
-        assertThat(guestUser.getUserId()).isEqualTo(userId);
+
+        UserInfo guestUser = findUserById(data, userId);
+        assertThat(guestUser).isNotNull();
         assertThat(guestUser.getUserType().toString()).isEqualTo("FULL_GUEST");
         assertThat(guestUser.getIsUserRunningUnlocked()).isFalse();
     }
@@ -91,22 +92,33 @@ public class UserInfoStatsTests extends DeviceTestCase implements IBuildReceiver
     public void testSecondaryUserExists() throws Exception {
         String userName = "TestUser_" + System.currentTimeMillis();
         int userId = userCreate(userName, false);
-        uploadConfigForPulledAtom();
 
+        uploadConfigForPulledAtom();
         AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
-
         List<AtomsProto.Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
+
         assertThat(data).isNotEmpty();
 
-        UserInfo systemUser = data.get(0).getUserInfo();
-        assertThat(systemUser.getUserId()).isEqualTo(0);
-        assertThat(systemUser.getUserType().toString()).isEqualTo("FULL_SYSTEM");
+        UserInfo systemUser = findUserById(data, 0);
+        assertThat(systemUser).isNotNull();
+        assertThat(systemUser.getUserType().toString())
+                .isAnyOf("FULL_SYSTEM", "SYSTEM_HEADLESS");
         assertThat(systemUser.getIsUserRunningUnlocked()).isTrue();
-        UserInfo secondaryUser = data.get(1).getUserInfo();
-        assertThat(secondaryUser.getUserId()).isEqualTo(userId);
+
+        UserInfo secondaryUser = findUserById(data, userId);
+        assertThat(secondaryUser).isNotNull();
         assertThat(secondaryUser.getUserType().toString()).isEqualTo("FULL_SECONDARY");
         assertThat(secondaryUser.getIsUserRunningUnlocked()).isFalse();
+    }
+
+    private UserInfo findUserById(List<AtomsProto.Atom> data, int userId) {
+        for (AtomsProto.Atom atom: data) {
+            if (atom.getUserInfo().getUserId() == userId) {
+                return atom.getUserInfo();
+            }
+        }
+        return null;
     }
 
     private int userCreate(String userName, boolean isGuest) throws Exception {
