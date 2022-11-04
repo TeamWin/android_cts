@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.mediav2.cts;
+package android.mediav2.common.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -46,7 +46,7 @@ public class DecodeStreamToYuv extends CodecDecoderTestBase {
     private int mHeight;
     private int mBytesPerSample;
 
-    DecodeStreamToYuv(String mediaType, String inpFile) throws IOException {
+    public DecodeStreamToYuv(String mediaType, String inpFile) throws IOException {
         super(findDecoderForStream(mediaType, inpFile), mediaType, inpFile, LOG_TAG);
     }
 
@@ -93,7 +93,7 @@ public class DecodeStreamToYuv extends CodecDecoderTestBase {
         return codecName;
     }
 
-    void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
+    protected void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
         if (info.size > 0) {
             Image img = mCodec.getOutputImage(bufferIndex);
             assertNotNull(img);

@@ -77,7 +77,8 @@ public class ConditionProviderServiceTest {
         mModeReceiver = new ZenModeBroadcastReceiver();
         mModeFilter = new IntentFilter();
         mModeFilter.addAction(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED);
-        mContext.registerReceiver(mModeReceiver, mModeFilter);
+        mContext.registerReceiver(mModeReceiver, mModeFilter,
+                Context.RECEIVER_EXPORTED_UNAUDITED);
     }
 
     @After

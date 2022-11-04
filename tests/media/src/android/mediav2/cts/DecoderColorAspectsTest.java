@@ -16,11 +16,13 @@
 
 package android.mediav2.cts;
 
-import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_ALL;
-import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_ANY;
-import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_OPTIONAL;
+import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_ALL;
+import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_ANY;
+import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_OPTIONAL;
 
 import android.media.MediaFormat;
+import android.mediav2.common.cts.CodecDecoderTestBase;
+import android.mediav2.common.cts.CodecTestActivity;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.filters.SmallTest;
@@ -55,6 +57,7 @@ import java.util.List;
 @RunWith(Parameterized.class)
 public class DecoderColorAspectsTest extends CodecDecoderTestBase {
     private static final String LOG_TAG = DecoderColorAspectsTest.class.getSimpleName();
+    private static final String mInpPrefix = WorkDir.getMediaDirString();
     private final int mColorRange;
     private final int mColorStandard;
     private final int mColorTransferCurve;

@@ -252,7 +252,7 @@ public class BugreportManagerTest {
         } else {
             intentFilter = new IntentFilter(INTENT_BUGREPORT_FINISHED);
         }
-        mContext.registerReceiver(br, intentFilter);
+        mContext.registerReceiver(br, intentFilter, Context.RECEIVER_EXPORTED_UNAUDITED);
         final BugreportParams params = new BugreportParams(type);
         mBugreportManager.requestBugreport(params, "" /* shareTitle */, "" /* shareDescription */);
 

@@ -58,7 +58,7 @@ public class BatteryStatsAlarmTest {
             public void onReceive(Context context, Intent intent) {
                 Log.i(TAG, "Received: " + intent);
                 latch.countDown();
-            }}, inf);
+            }}, inf, Context.RECEIVER_EXPORTED_UNAUDITED);
 
         final AlarmManager alm = context.getSystemService(AlarmManager.class);
         for (int i = 0; i < NUM_ALARMS; i++) {

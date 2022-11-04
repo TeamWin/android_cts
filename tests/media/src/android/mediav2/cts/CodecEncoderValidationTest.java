@@ -17,7 +17,7 @@
 package android.mediav2.cts;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
-import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_OPTIONAL;
+import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_OPTIONAL;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -26,6 +26,9 @@ import static org.junit.Assert.assertTrue;
 import android.media.AudioFormat;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
+import android.mediav2.common.cts.CodecDecoderTestBase;
+import android.mediav2.common.cts.CodecEncoderTestBase;
+import android.mediav2.common.cts.OutputManager;
 
 import androidx.test.filters.LargeTest;
 
@@ -79,12 +82,9 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
     public CodecEncoderValidationTest(String encoder, String mediaType, int bitrate,
             int encoderInfo1, int encoderInfo2, boolean useHBD, String allTestParams) {
         super(encoder, mediaType, new int[]{bitrate}, new int[]{encoderInfo1},
-                new int[]{encoderInfo2}, allTestParams);
+                new int[]{encoderInfo2}, EncoderInput.getRawResource(mediaType, useHBD),
+                allTestParams);
         mUseHBD = useHBD;
-        if (mUseHBD) {
-            mActiveRawRes = mIsAudio ? INPUT_AUDIO_FILE_HBD : INPUT_VIDEO_FILE_HBD;
-            mBytesPerSample = mActiveRawRes.mBytesPerSample;
-        }
     }
 
     private static List<Object[]> flattenParams(List<Object[]> params) {

@@ -308,7 +308,8 @@ public class MediaCodecResourceTest {
         ProcessInfoBroadcastReceiver processInfoBroadcastReceiver =
                 new ProcessInfoBroadcastReceiver();
         context.registerReceiver(processInfoBroadcastReceiver,
-                new IntentFilter(ACTION_LOW_PRIORITY_SERVICE_READY));
+                new IntentFilter(ACTION_LOW_PRIORITY_SERVICE_READY),
+                Context.RECEIVER_EXPORTED_UNAUDITED);
         Intent intent = new Intent(context, MediaCodecResourceTestLowPriorityService.class);
         context.startForegroundService(intent);
         // Starting the service and receiving the broadcast should take less than 5 seconds
@@ -322,7 +323,8 @@ public class MediaCodecResourceTest {
         ProcessInfoBroadcastReceiver processInfoBroadcastReceiver =
                 new ProcessInfoBroadcastReceiver();
         context.registerReceiver(processInfoBroadcastReceiver,
-                new IntentFilter(ACTION_HIGH_PRIORITY_ACTIVITY_READY));
+                new IntentFilter(ACTION_HIGH_PRIORITY_ACTIVITY_READY),
+                Context.RECEIVER_EXPORTED_UNAUDITED);
         Intent intent = new Intent(context, MediaCodecResourceTestHighPriorityActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         context.startActivity(intent);

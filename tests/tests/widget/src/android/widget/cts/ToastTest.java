@@ -1131,7 +1131,7 @@ public class ToastTest {
             public void onReceive(Context context, Intent intent) {
                 broadcastReceived.open();
             }
-        }, filter);
+        }, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
         return broadcastReceived;
     }
 

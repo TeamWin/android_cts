@@ -61,7 +61,8 @@ public class AppValidationTest {
                 .getString(NOT_LOADED_COMPONENTS_TAG).split(",");
         StatusReceiver statusReceiver = new StatusReceiver();
         IntentFilter intentFilter = new IntentFilter(INCREMENTAL_TEST_APP_STATUS_RECEIVER_ACTION);
-        mContext.registerReceiver(statusReceiver, intentFilter);
+        mContext.registerReceiver(statusReceiver, intentFilter,
+                Context.RECEIVER_EXPORTED_UNAUDITED);
         launchTestApp();
         for (String component : loadedComponents) {
             assertEquals(

@@ -177,12 +177,17 @@ public class SmsManagerTest {
         mSmsReceivedReceiver = new SmsBroadcastReceiver(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
         mSmsRetrieverReceiver = new SmsBroadcastReceiver(SMS_RETRIEVER_ACTION);
 
-        mContext.registerReceiver(mSendReceiver, sendIntentFilter);
-        mContext.registerReceiver(mDeliveryReceiver, deliveryIntentFilter);
-        mContext.registerReceiver(mDataSmsReceiver, dataSmsReceivedIntentFilter);
-        mContext.registerReceiver(mSmsDeliverReceiver, smsDeliverIntentFilter);
+        mContext.registerReceiver(mSendReceiver, sendIntentFilter,
+                Context.RECEIVER_EXPORTED_UNAUDITED);
+        mContext.registerReceiver(mDeliveryReceiver, deliveryIntentFilter,
+                Context.RECEIVER_EXPORTED_UNAUDITED);
+        mContext.registerReceiver(mDataSmsReceiver, dataSmsReceivedIntentFilter,
+                Context.RECEIVER_EXPORTED_UNAUDITED);
+        mContext.registerReceiver(mSmsDeliverReceiver, smsDeliverIntentFilter,
+                Context.RECEIVER_EXPORTED_UNAUDITED);
         mContext.registerReceiver(mSmsReceivedReceiver, smsReceivedIntentFilter);
-        mContext.registerReceiver(mSmsRetrieverReceiver, smsRetrieverIntentFilter);
+        mContext.registerReceiver(mSmsRetrieverReceiver, smsRetrieverIntentFilter,
+                Context.RECEIVER_EXPORTED_UNAUDITED);
 
         DefaultSmsAppHelper.stopBeingDefaultSmsApp();
     }

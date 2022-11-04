@@ -1341,7 +1341,8 @@ public class StrictModeTest {
                         .build());
         Context context = getContext();
         String receiverAction = "android.os.cts.TEST_INTENT_LAUNCH_RECEIVER_ACTION";
-        context.registerReceiver(new IntentLaunchReceiver(), new IntentFilter(receiverAction));
+        context.registerReceiver(new IntentLaunchReceiver(), new IntentFilter(receiverAction),
+                Context.RECEIVER_EXPORTED_UNAUDITED);
         Intent intent = new Intent(receiverAction);
         Intent innerIntent = new Intent("android.os.cts.TEST_BROADCAST_ACTION");
         intent.putExtra(IntentLaunchReceiver.INNER_INTENT_KEY, innerIntent);

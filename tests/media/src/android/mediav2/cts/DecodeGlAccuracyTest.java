@@ -24,6 +24,9 @@ import static org.junit.Assume.assumeTrue;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
+import android.mediav2.common.cts.CodecDecoderTestBase;
+import android.mediav2.common.cts.CodecTestBase;
+import android.mediav2.common.cts.OutputManager;
 import android.opengl.GLES20;
 import android.util.Log;
 
@@ -56,6 +59,7 @@ import javax.microedition.khronos.opengles.GL10;
 @RunWith(Parameterized.class)
 public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
     private static final String LOG_TAG = DecodeGlAccuracyTest.class.getSimpleName();
+    private static final String mInpPrefix = WorkDir.getMediaDirString();
 
     // Allowed color tolerance to account for differences in the conversion process
     private static final int ALLOWED_COLOR_DELTA = 8;
@@ -307,7 +311,7 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
         return frameFailed;
     }
 
-    void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
+    protected void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
         if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
             mSawOutputEOS = true;
         }

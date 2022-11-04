@@ -43,6 +43,7 @@ private const val SHOW_7_DAYS = "Show 7 days"
 private const val SHOW_24_HOURS = "Show 24 hours"
 private const val MORE_OPTIONS = "More options"
 private const val DASHBOARD_7_DAYS_DESCRIPTION_REGEX = "^.*7.*days$"
+private const val DASHBOARD_TIME_DESCRIPTION_REGEX = "^[0-2]?[0-9]:[0-5][0-9].*"
 private const val PRIV_DASH_7_DAY_ENABLED = "privacy_dashboard_7_day_toggle"
 private const val REFRESH = "Refresh"
 
@@ -225,10 +226,18 @@ class PermissionHistoryTest : BasePermissionHubTest() {
         openMicrophoneTimeline()
         waitFindObject(By.textContains(micLabel))
         waitFindObject(By.textContains(APP_LABEL_1))
-        waitFindObject(By.res(
-                PERMISSION_CONTROLLER_PACKAGE_ID_PREFIX + HISTORY_PREFERENCE_ICON))
-        waitFindObject(By.res(
-                PERMISSION_CONTROLLER_PACKAGE_ID_PREFIX + HISTORY_PREFERENCE_TIME))
+        if (isAutomotive) {
+            // Automotive views don't have the same ids as phones - find an example of the time
+            // usage instead. Specify the package name to avoid matching with the system UI time.
+            waitFindObject(
+                By.text(Pattern.compile(DASHBOARD_TIME_DESCRIPTION_REGEX, Pattern.DOTALL))
+                    .pkg(context.packageManager.permissionControllerPackageName))
+        } else {
+            waitFindObject(By.res(
+                    PERMISSION_CONTROLLER_PACKAGE_ID_PREFIX + HISTORY_PREFERENCE_ICON))
+            waitFindObject(By.res(
+                    PERMISSION_CONTROLLER_PACKAGE_ID_PREFIX + HISTORY_PREFERENCE_TIME))
+        }
         pressBack()
     }
 

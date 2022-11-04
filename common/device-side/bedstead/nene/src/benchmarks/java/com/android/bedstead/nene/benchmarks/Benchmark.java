@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.nene.benchmarking;
+package com.android.bedstead.nene.benchmarks;
 
 /**
  * A benchmark which implements setup, teardown, and run methods, as well as its associated

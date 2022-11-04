@@ -30,6 +30,8 @@ import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
+import android.mediav2.common.cts.CodecEncoderTestBase;
+import android.mediav2.common.cts.OutputManager;
 import android.util.Log;
 import android.util.Pair;
 
@@ -80,11 +82,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
     public EncoderProfileLevelTest(String encoder, String mime, int bitrate, int encoderInfo1,
             int encoderInfo2, int frameRate, boolean useHighBitDepth, String allTestParams) {
         super(encoder, mime, new int[]{bitrate}, new int[]{encoderInfo1}, new int[]{encoderInfo2},
-                allTestParams);
-        if (mIsVideo && useHighBitDepth) {
-            mActiveRawRes = INPUT_VIDEO_FILE_HBD;
-            mBytesPerSample = mActiveRawRes.mBytesPerSample;
-        }
+                EncoderInput.getRawResource(mime, useHighBitDepth), allTestParams);
         mUseHighBitDepth = useHighBitDepth;
         if (mIsAudio) {
             mSampleRate = encoderInfo1;
@@ -223,7 +221,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
             // P010 support was added in Android T, hence limit the following tests to Android T and
             // above
             if (IS_AT_LEAST_T) {
-                if (mProfileHdrMap.get(arg[0]) != null) {
+                if (PROFILE_HDR_MAP.get(arg[0]) != null) {
                     Object[] testArgsHighBitDepth = new Object[argLength + 1];
                     System.arraycopy(arg, 0, testArgsHighBitDepth, 0, argLength);
                     testArgsHighBitDepth[argLength] = true;
@@ -627,7 +625,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
     }
 
     @Override
-    boolean isFormatSimilar(MediaFormat inpFormat, MediaFormat outFormat) {
+    public boolean isFormatSimilar(MediaFormat inpFormat, MediaFormat outFormat) {
         if (!super.isFormatSimilar(inpFormat, outFormat)) {
             Log.e(LOG_TAG, "Basic channel-rate/resolution comparisons failed");
             return false;
@@ -702,15 +700,15 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
         MediaFormat format = mConfigFormat;
         String outputFilePrefix = "tmp";
         if (mIsAudio) {
-            profiles = mProfileMap.get(mMime);
+            profiles = PROFILE_MAP.get(mMime);
         } else {
             if (mUseHighBitDepth) {
                 Assume.assumeTrue(hasSupportForColorFormat(mCodecName, mMime, COLOR_FormatYUVP010));
                 format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUVP010);
                 outputFilePrefix += "_10bit";
-                profiles = mProfileHlgMap.get(mMime);
+                profiles = PROFILE_HLG_MAP.get(mMime);
             } else {
-                profiles = mProfileSdrMap.get(mMime);
+                profiles = PROFILE_SDR_MAP.get(mMime);
             }
         }
         assertNotNull("no profile entry found for mime" + mMime + ". \n" + mTestConfig + mTestEnv,

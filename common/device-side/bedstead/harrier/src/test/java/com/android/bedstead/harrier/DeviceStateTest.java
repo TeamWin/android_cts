@@ -32,6 +32,8 @@ import static com.android.bedstead.harrier.annotations.RequireCnGmsBuild.CHINA_G
 import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.AdminType.DEVICE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.AdminType.PRIMARY;
 import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.DISABLE_RESOURCES_UPDATABILITY_FLAG;
+import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 import static com.android.bedstead.nene.permissions.CommonPermissions.READ_CONTACTS;
 import static com.android.bedstead.nene.types.OptionalBoolean.FALSE;
 import static com.android.bedstead.nene.types.OptionalBoolean.TRUE;
@@ -56,6 +58,9 @@ import com.android.bedstead.harrier.annotations.EnsureCanAddUser;
 import com.android.bedstead.harrier.annotations.EnsureDemoMode;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveAppOp;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
+import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
+import com.android.bedstead.harrier.annotations.EnsureFeatureFlagNotEnabled;
+import com.android.bedstead.harrier.annotations.EnsureFeatureFlagValue;
 import com.android.bedstead.harrier.annotations.EnsureGlobalSettingSet;
 import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasAppOp;
@@ -79,6 +84,9 @@ import com.android.bedstead.harrier.annotations.RequireAospBuild;
 import com.android.bedstead.harrier.annotations.RequireCnGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.RequireFeatureFlagEnabled;
+import com.android.bedstead.harrier.annotations.RequireFeatureFlagNotEnabled;
+import com.android.bedstead.harrier.annotations.RequireFeatureFlagValue;
 import com.android.bedstead.harrier.annotations.RequireGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireInstantApp;
@@ -122,6 +130,7 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.devicepolicy.DeviceOwnerType;
 import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.flags.Flags;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.types.OptionalBoolean;
 import com.android.bedstead.nene.users.UserReference;
@@ -155,11 +164,18 @@ public class DeviceStateTest {
     private static final DevicePolicyManager sLocalDevicePolicyManager =
             TestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
 
+    private static final String NAMESPACE = NAMESPACE_DEVICE_POLICY_MANAGER;
+    private static final String KEY = DISABLE_RESOURCES_UPDATABILITY_FLAG;
+    private static final String VALUE = Flags.ENABLED_VALUE;
+
     // Expects that this package name matches an actual test app
     private static final String TEST_APP_PACKAGE_NAME = "com.android.bedstead.testapp.LockTaskApp";
     private static final String TEST_APP_PACKAGE_NAME2 = "com.android.bedstead.testapp.SmsApp";
     private static final String TEST_APP_USED_IN_FIELD_NAME =
             "com.android.bedstead.testapp.NotEmptyTestApp";
+
+    // This is not used but is depended on by testApps_staticTestAppsAreNotReleased_1 and
+    // testApps_staticTestAppsAreNotReleased_2 which test that this testapp isn't released
     private static final TestApp sTestApp = sDeviceState.testApps().query()
             .wherePackageName().isEqualTo(TEST_APP_USED_IN_FIELD_NAME).get();
 
@@ -1150,4 +1166,39 @@ public class DeviceStateTest {
         assertThat(TestApis.users().instrumented()).isNotEqualTo(TestApis.users().current());
     }
 
+    @RequireFeatureFlagEnabled(namespace = NAMESPACE, key = KEY)
+    @Test
+    public void requireFeatureFlagEnabledAnnotation_featureFlagIsEnabled() {
+        assertThat(TestApis.flags().isEnabled(NAMESPACE, KEY)).isTrue();
+    }
+
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE, key = KEY)
+    @Test
+    public void ensureFeatureFlagEnabledAnnotation_featureFlagIsEnabled() {
+        assertThat(TestApis.flags().isEnabled(NAMESPACE, KEY)).isTrue();
+    }
+
+    @RequireFeatureFlagNotEnabled(namespace = NAMESPACE, key = KEY)
+    @Test
+    public void requireFeatureFlagNotEnabledAnnotation_featureFlagIsNotEnabled() {
+        assertThat(TestApis.flags().isEnabled(NAMESPACE, KEY)).isFalse();
+    }
+
+    @EnsureFeatureFlagNotEnabled(namespace = NAMESPACE, key = KEY)
+    @Test
+    public void ensureFeatureFlagNotEnabledAnnotation_featureFlagIsNotEnabled() {
+        assertThat(TestApis.flags().isEnabled(NAMESPACE, KEY)).isFalse();
+    }
+
+    @RequireFeatureFlagValue(namespace = NAMESPACE, key = KEY, value = VALUE)
+    @Test
+    public void requireFeatureFlagValueAnnotation_featureFlagIsSetToValue() {
+        assertThat(TestApis.flags().get(NAMESPACE, KEY)).isEqualTo(VALUE);
+    }
+
+    @EnsureFeatureFlagValue(namespace = NAMESPACE, key = KEY, value = VALUE)
+    @Test
+    public void ensureFeatureFlagValueAnnotation_featureFlagIsSetToValue() {
+        assertThat(TestApis.flags().get(NAMESPACE, KEY)).isEqualTo(VALUE);
+    }
 }

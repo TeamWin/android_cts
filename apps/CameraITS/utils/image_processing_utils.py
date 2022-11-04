@@ -933,9 +933,9 @@ class ImageProcessingUtilsTest(unittest.TestCase):
           chart_blurred / white_level)
 
     for i in range(len(blur_levels)-1):
-      self.assertTrue(numpy.isclose(
+      self.assertTrue(math.isclose(
           sharpness[blur_levels[i]]/sharpness[blur_levels[i+1]], self._SQRT_2,
-          atol=0.1))
+          abs_tol=0.1))
 
   def test_apply_lut_to_image(self):
     """Unit test for apply_lut_to_image.

@@ -16,8 +16,8 @@
 
 package android.mediav2.cts;
 
-import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_ALL;
-import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_OPTIONAL;
+import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_ALL;
+import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_OPTIONAL;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -25,6 +25,9 @@ import static org.junit.Assert.fail;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.mediav2.common.cts.CodecDecoderTestBase;
+import android.mediav2.common.cts.CodecTestActivity;
+import android.mediav2.common.cts.OutputManager;
 import android.util.Log;
 import android.view.Surface;
 
@@ -65,9 +68,14 @@ import java.util.List;
 @RunWith(Parameterized.class)
 public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     private static final String LOG_TAG = CodecDecoderSurfaceTest.class.getSimpleName();
+    private static final String mInpPrefix = WorkDir.getMediaDirString();
 
     private final String mReconfigFile;
     private final SupportClass mSupportRequirements;
+
+    static {
+        System.loadLibrary("ctsmediav2codec_jni");
+    }
 
     public CodecDecoderSurfaceTest(String decoder, String mime, String testFile,
             String reconfigFile, SupportClass supportRequirements, String allTestParams) {
@@ -76,7 +84,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         mSupportRequirements = supportRequirements;
     }
 
-    void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
+    protected void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
         if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
             mSawOutputEOS = true;
         }

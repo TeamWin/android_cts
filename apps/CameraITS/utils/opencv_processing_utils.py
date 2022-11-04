@@ -33,6 +33,7 @@ CHART_FILE = os.path.join(TEST_IMG_DIR, 'ISO12233.png')
 CHART_HEIGHT = 13.5  # cm
 CHART_DISTANCE_RFOV = 31.0  # cm
 CHART_DISTANCE_WFOV = 22.0  # cm
+CHART_SCALE_RTOL = 0.1
 CHART_SCALE_START = 0.65
 CHART_SCALE_STOP = 1.35
 CHART_SCALE_STEP = 0.025
@@ -93,20 +94,25 @@ def calc_chart_scaling(chart_distance, camera_fov):
   chart_scaling = 1.0
   camera_fov = float(camera_fov)
   if (FOV_THRESH_TELE < camera_fov < FOV_THRESH_WFOV and
-      numpy.isclose(chart_distance, CHART_DISTANCE_WFOV, rtol=0.1)):
+      math.isclose(
+          chart_distance, CHART_DISTANCE_WFOV, rel_tol=CHART_SCALE_RTOL)):
     chart_scaling = SCALE_RFOV_IN_WFOV_BOX
   elif (camera_fov <= FOV_THRESH_TELE and
-        numpy.isclose(chart_distance, CHART_DISTANCE_WFOV, rtol=0.1)):
+        math.isclose(
+            chart_distance, CHART_DISTANCE_WFOV, rel_tol=CHART_SCALE_RTOL)):
     chart_scaling = SCALE_TELE_IN_WFOV_BOX
   elif (camera_fov <= FOV_THRESH_TELE25 and
-        (numpy.isclose(chart_distance, CHART_DISTANCE_RFOV, rtol=0.1) or
+        (math.isclose(
+            chart_distance, CHART_DISTANCE_RFOV, rel_tol=CHART_SCALE_RTOL) or
          chart_distance > CHART_DISTANCE_RFOV)):
     chart_scaling = SCALE_TELE25_IN_RFOV_BOX
   elif (camera_fov <= FOV_THRESH_TELE40 and
-        numpy.isclose(chart_distance, CHART_DISTANCE_RFOV, rtol=0.1)):
+        math.isclose(
+            chart_distance, CHART_DISTANCE_RFOV, rel_tol=CHART_SCALE_RTOL)):
     chart_scaling = SCALE_TELE40_IN_RFOV_BOX
   elif (camera_fov <= FOV_THRESH_TELE and
-        numpy.isclose(chart_distance, CHART_DISTANCE_RFOV, rtol=0.1)):
+        math.isclose(
+            chart_distance, CHART_DISTANCE_RFOV, rel_tol=CHART_SCALE_RTOL)):
     chart_scaling = SCALE_TELE_IN_RFOV_BOX
   return chart_scaling
 
@@ -535,7 +541,7 @@ def get_angle(input_img):
     _, (width, height), angle = rect
 
     # Skip non-squares
-    if not numpy.isclose(width, height, rtol=SQUARE_TOL):
+    if not math.isclose(width, height, rel_tol=SQUARE_TOL):
       continue
 
     # Remove very small contours: usually just tiny dots due to noise.
@@ -556,7 +562,7 @@ def get_angle(input_img):
   filtered_angles = []
   for square in square_contours:
     area = cv2.contourArea(square)
-    if not numpy.isclose(area, median_area, rtol=SQUARE_TOL):
+    if not math.isclose(area, median_area, rel_tol=SQUARE_TOL):
       continue
 
     filtered_squares.append(square)

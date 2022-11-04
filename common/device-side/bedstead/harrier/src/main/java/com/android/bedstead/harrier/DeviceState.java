@@ -52,6 +52,9 @@ import com.android.bedstead.harrier.annotations.EnsureCanAddUser;
 import com.android.bedstead.harrier.annotations.EnsureCanGetPermission;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveAppOp;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
+import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
+import com.android.bedstead.harrier.annotations.EnsureFeatureFlagNotEnabled;
+import com.android.bedstead.harrier.annotations.EnsureFeatureFlagValue;
 import com.android.bedstead.harrier.annotations.EnsureGlobalSettingSet;
 import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasAppOp;
@@ -69,6 +72,9 @@ import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.OtherUser;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.RequireFeatureFlagEnabled;
+import com.android.bedstead.harrier.annotations.RequireFeatureFlagNotEnabled;
+import com.android.bedstead.harrier.annotations.RequireFeatureFlagValue;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireInstantApp;
 import com.android.bedstead.harrier.annotations.RequireLowRamDevice;
@@ -106,6 +112,7 @@ import com.android.bedstead.nene.devicepolicy.DevicePolicyController;
 import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.flags.Flags;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.permissions.PermissionContextImpl;
@@ -902,6 +909,65 @@ public final class DeviceState extends HarrierRule {
                         ensureCanAddUserAnnotation.failureMode());
                 continue;
             }
+
+            if (annotation instanceof RequireFeatureFlagEnabled) {
+                RequireFeatureFlagEnabled requireFeatureFlagEnabledAnnotation =
+                        (RequireFeatureFlagEnabled) annotation;
+                requireFeatureFlagEnabled(
+                        requireFeatureFlagEnabledAnnotation.namespace(),
+                        requireFeatureFlagEnabledAnnotation.key(),
+                        requireFeatureFlagEnabledAnnotation.failureMode());
+                continue;
+            }
+
+            if (annotation instanceof EnsureFeatureFlagEnabled) {
+                EnsureFeatureFlagEnabled ensureFeatureFlagEnabledAnnotation =
+                        (EnsureFeatureFlagEnabled) annotation;
+                ensureFeatureFlagEnabled(
+                        ensureFeatureFlagEnabledAnnotation.namespace(),
+                        ensureFeatureFlagEnabledAnnotation.key());
+                continue;
+            }
+
+            if (annotation instanceof RequireFeatureFlagNotEnabled) {
+                RequireFeatureFlagNotEnabled requireFeatureFlagNotEnabledAnnotation =
+                        (RequireFeatureFlagNotEnabled) annotation;
+                requireFeatureFlagNotEnabled(
+                        requireFeatureFlagNotEnabledAnnotation.namespace(),
+                        requireFeatureFlagNotEnabledAnnotation.key(),
+                        requireFeatureFlagNotEnabledAnnotation.failureMode());
+                continue;
+            }
+
+            if (annotation instanceof EnsureFeatureFlagNotEnabled) {
+                EnsureFeatureFlagNotEnabled ensureFeatureFlagNotEnabledAnnotation =
+                        (EnsureFeatureFlagNotEnabled) annotation;
+                ensureFeatureFlagNotEnabled(
+                        ensureFeatureFlagNotEnabledAnnotation.namespace(),
+                        ensureFeatureFlagNotEnabledAnnotation.key());
+                continue;
+            }
+
+            if (annotation instanceof RequireFeatureFlagValue) {
+                RequireFeatureFlagValue requireFeatureFlagValueAnnotation =
+                        (RequireFeatureFlagValue) annotation;
+                requireFeatureFlagValue(
+                        requireFeatureFlagValueAnnotation.namespace(),
+                        requireFeatureFlagValueAnnotation.key(),
+                        requireFeatureFlagValueAnnotation.value(),
+                        requireFeatureFlagValueAnnotation.failureMode());
+                continue;
+            }
+
+            if (annotation instanceof EnsureFeatureFlagValue) {
+                EnsureFeatureFlagValue ensureFeatureFlagValueAnnotation =
+                        (EnsureFeatureFlagValue) annotation;
+                ensureFeatureFlagValue(
+                        ensureFeatureFlagValueAnnotation.namespace(),
+                        ensureFeatureFlagValueAnnotation.key(),
+                        ensureFeatureFlagValueAnnotation.value());
+                continue;
+            }
         }
 
         requireSdkVersion(/* min= */ mMinSdkVersionCurrentTest,
@@ -984,8 +1050,11 @@ public final class DeviceState extends HarrierRule {
                     Tags.addTag(Tags.INSTANT_APP);
                 }
 
+                boolean originalFlagSyncEnabled = TestApis.flags().getFlagSyncEnabled();
+
                 try {
                     TestApis.device().keepScreenOn(true);
+                    TestApis.flags().setFlagSyncEnabled(false);
 
                     if (!Tags.hasTag(Tags.INSTANT_APP)) {
                         TestApis.device().setKeyguardEnabled(false);
@@ -1032,6 +1101,7 @@ public final class DeviceState extends HarrierRule {
                     // TODO(b/249710985): Reset to the default for the device or the previous value
                     // TestApis.device().keepScreenOn(false);
                     TestApis.users().setStopBgUsersOnSwitch(OptionalBoolean.ANY);
+                    TestApis.flags().setFlagSyncEnabled(originalFlagSyncEnabled);
                 }
             }
         };
@@ -1291,6 +1361,7 @@ public final class DeviceState extends HarrierRule {
     private Map<UserReference, DevicePolicyController> mChangedProfileOwners = new HashMap<>();
     private UserReference mOriginalSwitchedUser;
     private Boolean mOriginalBluetoothEnabled;
+    private Map<String, Map<String, String>> mOriginalFlagValues = new HashMap<>();
     private TestAppProvider mTestAppProvider = new TestAppProvider();
     private Map<String, TestAppInstance> mTestApps = new HashMap<>();
     private final Map<String, String> mOriginalGlobalSettings = new HashMap<>();
@@ -2133,6 +2204,13 @@ public final class DeviceState extends HarrierRule {
             TestApis.settings().global().putString(s.getKey(), s.getValue());
         }
         mOriginalGlobalSettings.clear();
+
+        for (Map.Entry<String, Map<String, String>> namespace : mOriginalFlagValues.entrySet()) {
+            for (Map.Entry<String, String> key : namespace.getValue().entrySet()) {
+                TestApis.flags().set(namespace.getKey(), key.getKey(), key.getValue());
+            }
+        }
+        mOriginalFlagValues.clear();
     }
 
     private UserReference createProfile(
@@ -2967,6 +3045,41 @@ public final class DeviceState extends HarrierRule {
     private void requireNotInstantApp(String reason, FailureMode failureMode) {
         checkFailOrSkip("Test does not run as an instant-app: " + reason,
                 !TestApis.packages().instrumented().isInstantApp(), failureMode);
+    }
+
+    private void requireFeatureFlagEnabled(String namespace, String key, FailureMode failureMode) {
+        checkFailOrSkip("Feature flag " + namespace + ":" + key + " must be enabled",
+                TestApis.flags().isEnabled(namespace, key), failureMode);
+    }
+
+    private void ensureFeatureFlagEnabled(String namespace, String key) {
+        ensureFeatureFlagValue(namespace, key, Flags.ENABLED_VALUE);
+    }
+
+    private void requireFeatureFlagNotEnabled(
+            String namespace, String key, FailureMode failureMode) {
+        checkFailOrSkip("Feature flag " + namespace + ":" + key + " must not be enabled",
+                !TestApis.flags().isEnabled(namespace, key), failureMode);
+    }
+
+    private void ensureFeatureFlagNotEnabled(String namespace, String key) {
+        ensureFeatureFlagValue(namespace, key, Flags.DISABLED_VALUE);
+    }
+
+    private void requireFeatureFlagValue(
+            String namespace, String key, String value, FailureMode failureMode) {
+        checkFailOrSkip("Feature flag " + namespace + ":" + key + " must be enabled",
+                Objects.equal(value, TestApis.flags().get(namespace, key)), failureMode);
+    }
+
+    private void ensureFeatureFlagValue(String namespace, String key, String value) {
+        Map<String, String> originalNamespace =
+                mOriginalFlagValues.computeIfAbsent(namespace, k -> new HashMap<>());
+        if (!originalNamespace.containsKey(key)) {
+            originalNamespace.put(key, TestApis.flags().get(namespace, key));
+        }
+
+        TestApis.flags().set(namespace, key, value);
     }
 
     @Override

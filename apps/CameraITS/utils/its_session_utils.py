@@ -39,6 +39,7 @@ ANDROID13_API_LEVEL = 33
 ANDROID14_API_LEVEL = 34
 CHART_DISTANCE_NO_SCALING = 0
 LOAD_SCENE_DELAY_SEC = 3
+SCALING_TO_FILE_ATOL = 0.01
 SUB_CAMERA_SEPARATOR = '.'
 _VALIDATE_LIGHTING_PATCH_H = 0.05
 _VALIDATE_LIGHTING_PATCH_W = 0.05
@@ -50,6 +51,7 @@ _VALIDATE_LIGHTING_REGIONS = {
                      1-_VALIDATE_LIGHTING_PATCH_H),
 }
 _VALIDATE_LIGHTING_THRESH = 0.05  # Determined empirically from scene[1:6] tests
+
 
 class ItsSession(object):
   """Controls a device over adb to run ITS scripts.
@@ -1389,34 +1391,34 @@ class ItsSession(object):
     """
     chart_scaling = opencv_processing_utils.calc_chart_scaling(
         chart_distance, camera_fov)
-    if numpy.isclose(
+    if math.isclose(
         chart_scaling,
         opencv_processing_utils.SCALE_RFOV_IN_WFOV_BOX,
-        atol=0.01):
+        abs_tol=SCALING_TO_FILE_ATOL):
       file_name = '%s_%sx_scaled.png' % (
           scene, str(opencv_processing_utils.SCALE_RFOV_IN_WFOV_BOX))
-    elif numpy.isclose(
+    elif math.isclose(
         chart_scaling,
         opencv_processing_utils.SCALE_TELE_IN_WFOV_BOX,
-        atol=0.01):
+        abs_tol=SCALING_TO_FILE_ATOL):
       file_name = '%s_%sx_scaled.png' % (
           scene, str(opencv_processing_utils.SCALE_TELE_IN_WFOV_BOX))
-    elif numpy.isclose(
+    elif math.isclose(
         chart_scaling,
         opencv_processing_utils.SCALE_TELE25_IN_RFOV_BOX,
-        atol=0.01):
+        abs_tol=SCALING_TO_FILE_ATOL):
       file_name = '%s_%sx_scaled.png' % (
           scene, str(opencv_processing_utils.SCALE_TELE25_IN_RFOV_BOX))
-    elif numpy.isclose(
+    elif math.isclose(
         chart_scaling,
         opencv_processing_utils.SCALE_TELE40_IN_RFOV_BOX,
-        atol=0.01):
+        abs_tol=SCALING_TO_FILE_ATOL):
       file_name = '%s_%sx_scaled.png' % (
           scene, str(opencv_processing_utils.SCALE_TELE40_IN_RFOV_BOX))
-    elif numpy.isclose(
+    elif math.isclose(
         chart_scaling,
         opencv_processing_utils.SCALE_TELE_IN_RFOV_BOX,
-        atol=0.01):
+        abs_tol=SCALING_TO_FILE_ATOL):
       file_name = '%s_%sx_scaled.png' % (
           scene, str(opencv_processing_utils.SCALE_TELE_IN_RFOV_BOX))
     else:
@@ -1624,15 +1626,15 @@ def load_scene(cam, props, scene, tablet, chart_distance, lighting_check=True,
       f'-d file://mnt/sdcard/Download/{file_name}')
   time.sleep(LOAD_SCENE_DELAY_SEC)
   rfov_camera_in_rfov_box = (
-      numpy.isclose(
+      math.isclose(
           chart_distance,
-          opencv_processing_utils.CHART_DISTANCE_RFOV, rtol=0.1) and
+          opencv_processing_utils.CHART_DISTANCE_RFOV, rel_tol=0.1) and
       opencv_processing_utils.FOV_THRESH_TELE <= float(camera_fov)
       <= opencv_processing_utils.FOV_THRESH_WFOV)
   wfov_camera_in_wfov_box = (
-      numpy.isclose(
+      math.isclose(
           chart_distance,
-          opencv_processing_utils.CHART_DISTANCE_WFOV, rtol=0.1) and
+          opencv_processing_utils.CHART_DISTANCE_WFOV, rel_tol=0.1) and
       float(camera_fov) > opencv_processing_utils.FOV_THRESH_WFOV)
   if (rfov_camera_in_rfov_box or wfov_camera_in_wfov_box) and lighting_check:
     cam.do_3a()

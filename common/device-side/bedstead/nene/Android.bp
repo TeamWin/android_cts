@@ -82,8 +82,8 @@ android_test {
 android_test {
     name: "NeneBenchmarks",
     srcs: [
-        "src/benchmarks/java/**/benchmarking/*.java",
-        "src/benchmarks/java/**/benchmarking/*.proto",
+        "src/benchmarks/java/**/benchmarks/*.java",
+        "src/benchmarks/java/**/benchmarks/*.proto",
     ],
     test_suites: [
         "general-tests",

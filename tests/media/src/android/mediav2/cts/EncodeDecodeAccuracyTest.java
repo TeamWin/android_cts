@@ -28,6 +28,10 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
+import android.mediav2.common.cts.CodecAsyncHandler;
+import android.mediav2.common.cts.CodecDecoderTestBase;
+import android.mediav2.common.cts.CodecTestBase;
+import android.mediav2.common.cts.OutputManager;
 import android.opengl.GLES20;
 import android.opengl.GLES30;
 import android.util.Log;
@@ -452,7 +456,7 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
         return frameFailed;
     }
 
-    void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
+    protected void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
         if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
             mSawOutputEOS = true;
         }

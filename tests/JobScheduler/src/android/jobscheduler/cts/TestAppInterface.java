@@ -71,7 +71,7 @@ class TestAppInterface {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ACTION_JOB_STARTED);
         intentFilter.addAction(ACTION_JOB_STOPPED);
-        mContext.registerReceiver(mReceiver, intentFilter);
+        mContext.registerReceiver(mReceiver, intentFilter, Context.RECEIVER_EXPORTED_UNAUDITED);
     }
 
     void cleanup() {

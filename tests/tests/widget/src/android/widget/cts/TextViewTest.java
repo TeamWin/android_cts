@@ -3877,6 +3877,8 @@ public class TextViewTest {
             mTextView.setText(threeLines);
             mTextView.setTextSize(8f);
             mTextView.setLines(2);
+            mTextView.setTypeface(Typeface.createFromAsset(
+                    mTextView.getContext().getAssets(), "fonts/all_one_em_font.ttf"));
         });
         mInstrumentation.waitForIdleSync();
 
@@ -3943,6 +3945,8 @@ public class TextViewTest {
             mTextView.setText(threeLines);
             mTextView.setTextSize(8f);
             mTextView.setLines(2);
+            mTextView.setTypeface(Typeface.createFromAsset(
+                    mTextView.getContext().getAssets(), "fonts/all_one_em_font.ttf"));
         });
         mInstrumentation.waitForIdleSync();
 

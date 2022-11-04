@@ -16,13 +16,17 @@
 
 package android.mediav2.cts;
 
-import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_ALL;
-import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_OPTIONAL;
+import static android.mediav2.common.cts.CodecDecoderTestBase.hasCSD;
+import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_ALL;
+import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_OPTIONAL;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.mediav2.common.cts.CodecDecoderTestBase;
+import android.mediav2.common.cts.CodecTestActivity;
+import android.mediav2.common.cts.OutputManager;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.filters.LargeTest;
@@ -58,6 +62,7 @@ import java.util.List;
 public class AdaptivePlaybackTest extends CodecDecoderTestBase {
     private final String[] mSrcFiles;
     private final SupportClass mSupportRequirements;
+    private static final String mInpPrefix = WorkDir.getMediaDirString();
 
     private long mMaxPts = 0;
 
@@ -175,7 +180,7 @@ public class AdaptivePlaybackTest extends CodecDecoderTestBase {
     }
 
     @Override
-    void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
+    protected void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
         if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
             mSawOutputEOS = true;
         }
@@ -232,7 +237,7 @@ public class AdaptivePlaybackTest extends CodecDecoderTestBase {
      */
     @ApiTest(apis = "MediaCodecInfo.CodecCapabilities#FEATURE_AdaptivePlayback")
     @LargeTest
-    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testAdaptivePlayback() throws IOException, InterruptedException {
         Assume.assumeTrue("codec: " + mCodecName + " does not support FEATURE_AdaptivePlayback",
                 isFeatureSupported(mCodecName, mMime,

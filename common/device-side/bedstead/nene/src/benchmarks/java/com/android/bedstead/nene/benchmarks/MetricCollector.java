@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.nene.benchmarking;
+package com.android.bedstead.nene.benchmarks;
 
 import android.device.collectors.BaseMetricListener;
 import android.device.collectors.DataRecord;
@@ -42,9 +42,13 @@ import java.util.regex.Pattern;
 /** {@link BaseMetricListener} which reports benchmark results as benchmark tests execute. */
 public class MetricCollector extends BaseMetricListener {
     private static final String LOG_TAG = MetricCollector.class.getSimpleName();
+
+    private static final String BENCHMARKS_PACKAGE = MetricCollector.class.getPackage().getName();
     private static final String BENCHMARKS_JSON_PATH =
-            "/storage/emulated/0/Android/media/com.android.bedstead.nene.test"
-                    + "/com.android.bedstead.nene.test-benchmarkData.json";
+            String.format(
+                    "/storage/emulated/0/Android/media/%1$s/%1$s-benchmarkData.json",
+                    BENCHMARKS_PACKAGE);
+
     private static final Pattern BENCHMARK_PATTERN = Pattern.compile("^.*\\[(.+)].*$");
 
     private final Map<String, BenchmarkResult> mBenchmarkResultsMap = new HashMap<>();

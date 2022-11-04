@@ -19,6 +19,7 @@ package android.mediav2.cts;
 import static org.junit.Assert.assertTrue;
 
 import android.media.MediaFormat;
+import android.mediav2.common.cts.CodecTestBase;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;

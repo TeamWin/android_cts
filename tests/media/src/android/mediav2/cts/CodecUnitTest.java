@@ -26,6 +26,8 @@ import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
+import android.mediav2.common.cts.CodecAsyncHandler;
+import android.mediav2.common.cts.CodecTestBase;
 import android.os.Bundle;
 import android.util.Pair;
 
@@ -70,11 +72,11 @@ public class CodecUnitTest {
             mAsyncHandle = new CodecAsyncHandler();
         }
 
-        void enqueueInput(int bufferIndex) {
+        protected void enqueueInput(int bufferIndex) {
             fail("something went wrong, shouldn't have reached here");
         }
 
-        void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
+        protected void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
             if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                 mSawOutputEOS = true;
             }

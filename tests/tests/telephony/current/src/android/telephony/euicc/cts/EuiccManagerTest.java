@@ -128,7 +128,8 @@ public class EuiccManagerTest {
         mCallbackReceiver = new CallbackReceiver(countDownLatch);
         getContext()
                 .registerReceiver(
-                        mCallbackReceiver, new IntentFilter(ACTION_DOWNLOAD_SUBSCRIPTION));
+                        mCallbackReceiver, new IntentFilter(ACTION_DOWNLOAD_SUBSCRIPTION),
+                        Context.RECEIVER_EXPORTED_UNAUDITED);
 
         // call downloadSubscription()
         DownloadableSubscription subscription = createDownloadableSubscription();
@@ -173,7 +174,8 @@ public class EuiccManagerTest {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         mCallbackReceiver = new CallbackReceiver(countDownLatch);
         getContext()
-                .registerReceiver(mCallbackReceiver, new IntentFilter(ACTION_DELETE_SUBSCRIPTION));
+                .registerReceiver(mCallbackReceiver, new IntentFilter(ACTION_DELETE_SUBSCRIPTION),
+                        Context.RECEIVER_EXPORTED_UNAUDITED);
 
         // call deleteSubscription()
         PendingIntent callbackIntent = createCallbackIntent(ACTION_DELETE_SUBSCRIPTION);
@@ -210,7 +212,8 @@ public class EuiccManagerTest {
         mCallbackReceiver = new CallbackReceiver(countDownLatch);
         getContext()
                 .registerReceiver(
-                        mCallbackReceiver, new IntentFilter(ACTION_SWITCH_TO_SUBSCRIPTION));
+                        mCallbackReceiver, new IntentFilter(ACTION_SWITCH_TO_SUBSCRIPTION),
+                        Context.RECEIVER_EXPORTED_UNAUDITED);
 
         // call switchToSubscription()
         PendingIntent callbackIntent = createCallbackIntent(ACTION_SWITCH_TO_SUBSCRIPTION);
@@ -262,7 +265,8 @@ public class EuiccManagerTest {
         mCallbackReceiver = new CallbackReceiver(countDownLatch);
         getContext()
                 .registerReceiver(
-                        mCallbackReceiver, new IntentFilter(ACTION_SWITCH_TO_SUBSCRIPTION));
+                        mCallbackReceiver, new IntentFilter(ACTION_SWITCH_TO_SUBSCRIPTION),
+                        Context.RECEIVER_EXPORTED_UNAUDITED);
 
         // call switchToSubscription()
         PendingIntent callbackIntent = createCallbackIntent(ACTION_SWITCH_TO_SUBSCRIPTION);
@@ -292,7 +296,8 @@ public class EuiccManagerTest {
         mCallbackReceiver = new CallbackReceiver(countDownLatch);
         getContext()
                 .registerReceiver(
-                        mCallbackReceiver, new IntentFilter(ACTION_SWITCH_TO_SUBSCRIPTION));
+                        mCallbackReceiver, new IntentFilter(ACTION_SWITCH_TO_SUBSCRIPTION),
+                        Context.RECEIVER_EXPORTED_UNAUDITED);
 
         // call switchToSubscription()
         PendingIntent callbackIntent = createCallbackIntent(ACTION_SWITCH_TO_SUBSCRIPTION);
@@ -322,7 +327,8 @@ public class EuiccManagerTest {
         mCallbackReceiver = new CallbackReceiver(countDownLatch);
         getContext()
                 .registerReceiver(
-                        mCallbackReceiver, new IntentFilter(ACTION_ERASE_SUBSCRIPTIONS));
+                        mCallbackReceiver, new IntentFilter(ACTION_ERASE_SUBSCRIPTIONS),
+                        Context.RECEIVER_EXPORTED_UNAUDITED);
 
         // call eraseSubscriptions()
         PendingIntent callbackIntent = createCallbackIntent(ACTION_ERASE_SUBSCRIPTIONS);
@@ -348,7 +354,8 @@ public class EuiccManagerTest {
         mCallbackReceiver = new CallbackReceiver(countDownLatch);
         getContext()
                 .registerReceiver(
-                        mCallbackReceiver, new IntentFilter(ACTION_START_TEST_RESOLUTION_ACTIVITY));
+                        mCallbackReceiver, new IntentFilter(ACTION_START_TEST_RESOLUTION_ACTIVITY),
+                        Context.RECEIVER_EXPORTED_UNAUDITED);
 
         /*
          * Start EuiccTestResolutionActivity to test EuiccManager#startResolutionActivity(), since

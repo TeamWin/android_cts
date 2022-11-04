@@ -16,13 +16,15 @@
 
 package android.mediav2.cts;
 
-import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_ALL;
+import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_ALL;
 
 import static org.junit.Assert.fail;
 
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.mediav2.common.cts.CodecDecoderTestBase;
+import android.mediav2.common.cts.OutputManager;
 
 import androidx.test.filters.LargeTest;
 
@@ -47,6 +49,7 @@ public class CodecDecoderPauseTest extends CodecDecoderTestBase {
     private static final String LOG_TAG = CodecDecoderPauseTest.class.getSimpleName();
     private static final long PAUSE_TIME_MS = 10000;
     private static final int NUM_FRAMES = 8;
+    private static final String mInpPrefix = WorkDir.getMediaDirString();
 
     private final SupportClass mSupportRequirements;
 

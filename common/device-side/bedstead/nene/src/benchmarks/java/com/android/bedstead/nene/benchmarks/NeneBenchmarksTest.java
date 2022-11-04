@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.nene.benchmarking;
+package com.android.bedstead.nene.benchmarks;
 
 import androidx.benchmark.BenchmarkState;
 import androidx.benchmark.junit4.BenchmarkRule;

@@ -17,6 +17,7 @@
 package android.mediav2.cts;
 
 import android.media.MediaFormat;
+import android.mediav2.common.cts.HDREncoderTestBase;
 import android.os.Build;
 
 import androidx.test.filters.SdkSuppress;
@@ -56,11 +57,10 @@ public class EncoderHDRInfoTest extends HDREncoderTestBase {
     public EncoderHDRInfoTest(String encoderName, String mediaType, int bitrate,
             int width, int height, String hdrStaticInfo, Map<Integer, String> hdrDynamicInfo,
             String allTestParams) {
-        super(encoderName, mediaType, bitrate, width, height, allTestParams);
+        super(encoderName, mediaType, bitrate, width, height,
+                EncoderInput.getRawResource(mediaType, /* isHighBitDepth */ true), allTestParams);
         mHDRStaticInfo = hdrStaticInfo;
         mHDRDynamicInfo = hdrDynamicInfo;
-        mActiveRawRes = INPUT_VIDEO_FILE_HBD;
-        mBytesPerSample = mActiveRawRes.mBytesPerSample;
     }
 
     @Parameterized.Parameters(name = "{index}({0}_{1})")

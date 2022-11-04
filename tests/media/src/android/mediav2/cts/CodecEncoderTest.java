@@ -23,6 +23,8 @@ import static org.junit.Assert.fail;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
+import android.mediav2.common.cts.CodecEncoderTestBase;
+import android.mediav2.common.cts.OutputManager;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -75,6 +77,8 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     private ArrayList<Integer> mSyncFramesPos;
 
     static {
+        System.loadLibrary("ctsmediav2codec_jni");
+
         sAdaptiveBitrateMimeList.add(MediaFormat.MIMETYPE_VIDEO_AVC);
         sAdaptiveBitrateMimeList.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
         sAdaptiveBitrateMimeList.add(MediaFormat.MIMETYPE_VIDEO_VP8);
@@ -83,25 +87,26 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
 
     public CodecEncoderTest(String encoder, String mime, int[] bitrates, int[] encoderInfo1,
             int[] encoderInfo2, String allTestParams) {
-        super(encoder, mime, bitrates, encoderInfo1, encoderInfo2, allTestParams);
+        super(encoder, mime, bitrates, encoderInfo1, encoderInfo2,
+                EncoderInput.getRawResource(mime, /* isHighBitDepth */ false), allTestParams);
         mSyncFramesPos = new ArrayList<>();
     }
 
     @Override
-    void resetContext(boolean isAsync, boolean signalEOSWithLastFrame) {
+    protected void resetContext(boolean isAsync, boolean signalEOSWithLastFrame) {
         super.resetContext(isAsync, signalEOSWithLastFrame);
         mNumSyncFramesReceived = 0;
         mSyncFramesPos.clear();
     }
 
     @Override
-    void flushCodec() {
+    protected void flushCodec() {
         super.flushCodec();
         mNumSyncFramesReceived = 0;
         mSyncFramesPos.clear();
     }
 
-    void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
+    protected void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
         if (info.size > 0 && (info.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0) {
             mNumSyncFramesReceived += 1;
             mSyncFramesPos.add(mOutputCount);

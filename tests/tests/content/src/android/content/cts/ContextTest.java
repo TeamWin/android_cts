@@ -793,7 +793,7 @@ public class ContextTest extends AndroidTestCase {
         final IntentFilter filter = new IntentFilter(MOCK_ACTION1);
 
         // Test registerReceiver
-        mContext.registerReceiver(broadcastReceiver, filter);
+        mContext.registerReceiver(broadcastReceiver, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
 
         // Test unwanted intent(action = MOCK_ACTION2)
         broadcastReceiver.reset();
@@ -811,7 +811,7 @@ public class ContextTest extends AndroidTestCase {
 
         // Test unregisterReceiver
         FilteredReceiver broadcastReceiver2 = new FilteredReceiver();
-        mContext.registerReceiver(broadcastReceiver2, filter);
+        mContext.registerReceiver(broadcastReceiver2, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
         mContext.unregisterReceiver(broadcastReceiver2);
 
         // Test unwanted intent(action = MOCK_ACTION2)
@@ -833,7 +833,8 @@ public class ContextTest extends AndroidTestCase {
         filter.addAction(MOCK_ACTION1);
 
         // Test registerReceiver
-        mContext.registerReceiver(broadcastReceiver, filter, null, null);
+        mContext.registerReceiver(broadcastReceiver, filter, null, null,
+                Context.RECEIVER_EXPORTED_UNAUDITED);
 
         // Test unwanted intent(action = MOCK_ACTION2)
         broadcastReceiver.reset();
@@ -857,7 +858,8 @@ public class ContextTest extends AndroidTestCase {
 
         // Test registerReceiverForAllUsers without permission: verify SecurityException.
         try {
-            mContext.registerReceiverForAllUsers(broadcastReceiver, filter, null, null);
+            mContext.registerReceiverForAllUsers(broadcastReceiver, filter, null, null,
+                    Context.RECEIVER_EXPORTED_UNAUDITED);
             fail("testRegisterReceiverForAllUsers: "
                     + "SecurityException expected on registerReceiverForAllUsers");
         } catch (SecurityException se) {
@@ -868,7 +870,8 @@ public class ContextTest extends AndroidTestCase {
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissions(
                     mContext,
-                    (ctx) -> ctx.registerReceiverForAllUsers(broadcastReceiver, filter, null, null)
+                    (ctx) -> ctx.registerReceiverForAllUsers(broadcastReceiver, filter, null, null,
+                            Context.RECEIVER_EXPORTED_UNAUDITED)
             );
         } catch (SecurityException se) {
             fail("testRegisterReceiverForAllUsers: SecurityException not expected");
@@ -1235,7 +1238,8 @@ public class ContextTest extends AndroidTestCase {
         waitForReceiveBroadCast(resultReceiver);
 
         assertEquals(intent.getAction(), mContext.registerReceiver(stickyReceiver,
-                new IntentFilter(MOCK_STICKY_ACTION)).getAction());
+                new IntentFilter(MOCK_STICKY_ACTION)).getAction(),
+                Context.RECEIVER_EXPORTED_UNAUDITED);
 
         synchronized (mLockObj) {
             mLockObj.wait(BROADCAST_TIMEOUT);
@@ -1247,7 +1251,7 @@ public class ContextTest extends AndroidTestCase {
         mContext.removeStickyBroadcast(intent);
 
         assertNull(mContext.registerReceiver(stickyReceiver,
-                new IntentFilter(MOCK_STICKY_ACTION)));
+                new IntentFilter(MOCK_STICKY_ACTION), Context.RECEIVER_EXPORTED_UNAUDITED));
         mContext.unregisterReceiver(stickyReceiver);
     }
 

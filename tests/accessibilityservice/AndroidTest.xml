@@ -24,7 +24,6 @@
         <option name="run-command" value="cmd accessibility set-bind-instant-service-allowed true" />
         <option name="teardown-command" value="cmd accessibility set-bind-instant-service-allowed false" />
     </target_preparer>
-    <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer"/>
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
         <option name="cleanup" value="true" />
         <option name="push-file" key="CtsAccessibilityMultipleServicesApp.apk"

@@ -19,9 +19,9 @@ package android.mediav2.cts;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
-import static android.mediav2.cts.CodecTestBase.hasSupportForColorFormat;
-import static android.mediav2.cts.CodecTestBase.isHardwareAcceleratedCodec;
-import static android.mediav2.cts.CodecTestBase.isSoftwareCodec;
+import static android.mediav2.common.cts.CodecTestBase.hasSupportForColorFormat;
+import static android.mediav2.common.cts.CodecTestBase.isHardwareAcceleratedCodec;
+import static android.mediav2.common.cts.CodecTestBase.isSoftwareCodec;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -36,6 +36,9 @@ import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
+import android.mediav2.common.cts.CodecAsyncHandler;
+import android.mediav2.common.cts.CodecTestBase;
+import android.mediav2.common.cts.OutputManager;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Surface;
@@ -130,6 +133,8 @@ public class CodecEncoderSurfaceTest {
     private int mTrackID = -1;
 
     static {
+        System.loadLibrary("ctsmediav2codec_jni");
+
         android.os.Bundle args = InstrumentationRegistry.getArguments();
         CodecTestBase.mimeSelKeys = args.getString(CodecTestBase.MIME_SEL_KEY);
     }
@@ -607,7 +612,7 @@ public class CodecEncoderSurfaceTest {
                 format.getInteger(MediaFormat.KEY_COLOR_STANDARD, 0));
 
         int profile = format.getInteger(MediaFormat.KEY_PROFILE, -1);
-        int[] profileArray = CodecTestBase.mProfileHdrMap.get(mMime);
+        int[] profileArray = CodecTestBase.PROFILE_HDR_MAP.get(mMime);
         assertFalse(descriptor + " must not contain HDR profile after tone mapping",
                 IntStream.of(profileArray).anyMatch(x -> x == profile));
     }

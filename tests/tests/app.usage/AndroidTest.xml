@@ -33,6 +33,9 @@
         <option name="test-file-name" value="CtsUsageStatsTestAssistApp.apk" />
         <option name="test-file-name" value="CtsUsageStatsTestExactAlarmApp.apk" />
     </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="settings put global device_config_sync_disabled 0" />
+    </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.app.usage.cts" />
         <option name="runtime-hint" value="1m47s" />

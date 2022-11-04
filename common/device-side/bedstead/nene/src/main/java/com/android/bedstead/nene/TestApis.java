@@ -24,6 +24,7 @@ import com.android.bedstead.nene.bluetooth.Bluetooth;
 import com.android.bedstead.nene.context.Context;
 import com.android.bedstead.nene.device.Device;
 import com.android.bedstead.nene.devicepolicy.DevicePolicy;
+import com.android.bedstead.nene.flags.Flags;
 import com.android.bedstead.nene.inputmethods.InputMethods;
 import com.android.bedstead.nene.instrumentation.Instrumentation;
 import com.android.bedstead.nene.location.Locations;
@@ -137,6 +138,11 @@ public final class TestApis {
     @Experimental
     public static Ui ui() {
         return Ui.sInstance;
+    }
+
+    /** Access Tet APIs related to flags. */
+    public static Flags flags() {
+        return Flags.sInstance;
     }
 
     /** @deprecated Use statically */

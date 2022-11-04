@@ -26,6 +26,7 @@ import static org.junit.Assume.assumeTrue;
 import android.car.Car;
 import android.car.EvConnectorType;
 import android.car.FuelType;
+import android.car.GsrComplianceType;
 import android.car.PortLocationType;
 import android.car.VehicleAreaSeat;
 import android.car.VehicleAreaType;
@@ -932,6 +933,23 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                         .ELECTRONIC_TOLL_COLLECTION_CARD_INVALID,
                                 VehicleElectronicTollCollectionCardStatus
                                         .ELECTRONIC_TOLL_COLLECTION_CARD_NOT_INSERTED))
+                .addReadPermission(Car.PERMISSION_CAR_INFO)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testGeneralSafetyRegulationComplianceIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.GENERAL_SAFETY_REGULATION_COMPLIANCE,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_STATIC,
+                        Integer.class)
+                .setPossibleCarPropertyValues(
+                        ImmutableSet.of(
+                                GsrComplianceType.GSR_COMPLIANCE_TYPE_NOT_REQUIRED,
+                                GsrComplianceType.GSR_COMPLIANCE_TYPE_REQUIRED_V1))
                 .addReadPermission(Car.PERMISSION_CAR_INFO)
                 .build()
                 .verify(mCarPropertyManager);

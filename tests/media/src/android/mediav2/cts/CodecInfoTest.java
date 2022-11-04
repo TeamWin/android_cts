@@ -21,15 +21,15 @@ import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
 import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_HdrEditing;
-import static android.mediav2.cts.CodecTestBase.FIRST_SDK_IS_AT_LEAST_T;
-import static android.mediav2.cts.CodecTestBase.IS_AT_LEAST_T;
-import static android.mediav2.cts.CodecTestBase.VNDK_IS_AT_LEAST_T;
-import static android.mediav2.cts.CodecTestBase.isVendorCodec;
-import static android.mediav2.cts.CodecTestBase.mContext;
-import static android.mediav2.cts.CodecTestBase.mProfileHdr10Map;
-import static android.mediav2.cts.CodecTestBase.mProfileHdr10PlusMap;
-import static android.mediav2.cts.CodecTestBase.mProfileHdrMap;
-import static android.mediav2.cts.CodecTestBase.selectCodecs;
+import static android.mediav2.common.cts.CodecTestBase.CONTEXT;
+import static android.mediav2.common.cts.CodecTestBase.FIRST_SDK_IS_AT_LEAST_T;
+import static android.mediav2.common.cts.CodecTestBase.IS_AT_LEAST_T;
+import static android.mediav2.common.cts.CodecTestBase.PROFILE_HDR10_MAP;
+import static android.mediav2.common.cts.CodecTestBase.PROFILE_HDR10_PLUS_MAP;
+import static android.mediav2.common.cts.CodecTestBase.PROFILE_HDR_MAP;
+import static android.mediav2.common.cts.CodecTestBase.VNDK_IS_AT_LEAST_T;
+import static android.mediav2.common.cts.CodecTestBase.isVendorCodec;
+import static android.mediav2.common.cts.CodecTestBase.selectCodecs;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -38,6 +38,7 @@ import android.hardware.display.DisplayManager;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.MediaCodecList;
+import android.mediav2.common.cts.CodecTestBase;
 import android.os.Build;
 import android.view.Display;
 
@@ -73,7 +74,7 @@ public class CodecInfoTest {
     public MediaCodecInfo mCodecInfo;
 
     static {
-        DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
+        DisplayManager displayManager = CONTEXT.getSystemService(DisplayManager.class);
         DISPLAY_HDR_TYPES =
                 displayManager.getDisplay(Display.DEFAULT_DISPLAY).getHdrCapabilities()
                         .getSupportedHdrTypes();
@@ -127,8 +128,8 @@ public class CodecInfoTest {
         // display capabilities at native level, till then limit the test to vendor codecs
         Assume.assumeTrue("Test is restricted to vendor codecs", isVendorCodec(mCodecName));
 
-        int[] Hdr10Profiles = mProfileHdr10Map.get(mMediaType);
-        int[] Hdr10PlusProfiles = mProfileHdr10PlusMap.get(mMediaType);
+        int[] Hdr10Profiles = PROFILE_HDR10_MAP.get(mMediaType);
+        int[] Hdr10PlusProfiles = PROFILE_HDR10_PLUS_MAP.get(mMediaType);
         Assume.assumeTrue("Test is applicable for codecs with HDR10/HDR10+ profiles",
                 Hdr10Profiles != null || Hdr10PlusProfiles != null);
 
@@ -189,7 +190,7 @@ public class CodecInfoTest {
 
         // For devices launching with Android T, if a codec supports an HDR profile and device
         // supports HDR display, it must advertise P010 support
-        int[] HdrProfileArray = mProfileHdrMap.get(mMediaType);
+        int[] HdrProfileArray = PROFILE_HDR_MAP.get(mMediaType);
         if (FIRST_SDK_IS_AT_LEAST_T && VNDK_IS_AT_LEAST_T
                 && HdrProfileArray != null && DISPLAY_HDR_TYPES.length > 0) {
             for (CodecProfileLevel pl : caps.profileLevels) {

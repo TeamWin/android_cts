@@ -373,7 +373,8 @@ public class CtsSharesheetDeviceTest {
                 latch.countDown();
             }
         };
-        mContext.registerReceiver(br, new IntentFilter(ACTION_INTENT_SENDER_FIRED_ON_CLICK));
+        mContext.registerReceiver(br, new IntentFilter(ACTION_INTENT_SENDER_FIRED_ON_CLICK),
+                Context.RECEIVER_EXPORTED_UNAUDITED);
 
         // Start the event sequence and wait for results
         shareTarget.click();

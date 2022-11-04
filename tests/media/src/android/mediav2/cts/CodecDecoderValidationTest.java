@@ -16,9 +16,9 @@
 
 package android.mediav2.cts;
 
-import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_ALL;
-import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_ANY;
-import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_DEFAULT;
+import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_ALL;
+import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_ANY;
+import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_DEFAULT;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -27,6 +27,8 @@ import android.media.AudioFormat;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.mediav2.common.cts.CodecDecoderTestBase;
+import android.mediav2.common.cts.OutputManager;
 
 import androidx.test.filters.LargeTest;
 
@@ -90,6 +92,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
     private static final String MEDIA_TYPE_HEVC = MediaFormat.MIMETYPE_VIDEO_HEVC;
     private static final String MEDIA_TYPE_VP9 = MediaFormat.MIMETYPE_VIDEO_VP9;
     private static final String MEDIA_TYPE_AV1 = MediaFormat.MIMETYPE_VIDEO_AV1;
+    private static final String mInpPrefix = WorkDir.getMediaDirString();
     private final String[] mSrcFiles;
     private final String mRefFile;
     private final float mRmsError;

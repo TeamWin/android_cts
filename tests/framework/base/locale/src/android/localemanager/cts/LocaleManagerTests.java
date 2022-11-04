@@ -150,17 +150,23 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         sContext.registerReceiver(mCallingAppBroadcastReceiver,
                 new IntentFilter(Intent.ACTION_LOCALE_CHANGED));
         sContext.registerReceiver(mTestAppBroadcastInfoProvider,
-                new IntentFilter(TEST_APP_BROADCAST_INFO_PROVIDER_ACTION));
+                new IntentFilter(TEST_APP_BROADCAST_INFO_PROVIDER_ACTION),
+                Context.RECEIVER_EXPORTED_UNAUDITED);
         sContext.registerReceiver(mInstallerBroadcastInfoProvider,
-                new IntentFilter(INSTALLER_APP_BROADCAST_INFO_PROVIDER_ACTION));
+                new IntentFilter(INSTALLER_APP_BROADCAST_INFO_PROVIDER_ACTION),
+                Context.RECEIVER_EXPORTED_UNAUDITED);
         sContext.registerReceiver(mTestAppCreationInfoProvider,
-                new IntentFilter(TEST_APP_CREATION_INFO_PROVIDER_ACTION));
+                new IntentFilter(TEST_APP_CREATION_INFO_PROVIDER_ACTION),
+                Context.RECEIVER_EXPORTED_UNAUDITED);
         sContext.registerReceiver(mTestAppConfigChangedInfoProvider,
-                new IntentFilter(TEST_APP_CONFIG_CHANGED_INFO_PROVIDER_ACTION));
+                new IntentFilter(TEST_APP_CONFIG_CHANGED_INFO_PROVIDER_ACTION),
+                Context.RECEIVER_EXPORTED_UNAUDITED);
         sContext.registerReceiver(mInstallerAppCreationInfoProvider,
-                new IntentFilter(INSTALLER_APP_CREATION_INFO_PROVIDER_ACTION));
+                new IntentFilter(INSTALLER_APP_CREATION_INFO_PROVIDER_ACTION),
+                Context.RECEIVER_EXPORTED_UNAUDITED);
         sContext.registerReceiver(mImeAppCreationInfoProvider,
-                new IntentFilter(IME_APP_CREATION_INFO_PROVIDER_ACTION));
+                new IntentFilter(IME_APP_CREATION_INFO_PROVIDER_ACTION),
+                Context.RECEIVER_EXPORTED_UNAUDITED);
 
         setInstallerForPackage(CALLING_PACKAGE);
         setInstallerForPackage(TEST_APP_PACKAGE);

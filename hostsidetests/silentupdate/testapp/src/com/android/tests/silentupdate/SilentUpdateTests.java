@@ -381,7 +381,8 @@ public class SilentUpdateTests {
         public IntentSender getIntentSender() {
             final Context context = getContext();
             final String action = UUID.randomUUID().toString();
-            context.registerReceiver(this, new IntentFilter(action));
+            context.registerReceiver(this, new IntentFilter(action),
+                    Context.RECEIVER_EXPORTED_UNAUDITED);
             Intent intent = new Intent(action);
             PendingIntent pending = PendingIntent.getBroadcast(context, 0, intent, FLAG_MUTABLE);
             return pending.getIntentSender();

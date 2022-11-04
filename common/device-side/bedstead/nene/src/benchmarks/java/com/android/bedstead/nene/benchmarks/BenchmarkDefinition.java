@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.nene.benchmarking;
+package com.android.bedstead.nene.benchmarks;
 
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
 

@@ -27,6 +27,10 @@ import android.media.MediaCodec;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
+import android.mediav2.common.cts.CodecDecoderTestBase;
+import android.mediav2.common.cts.CodecEncoderTestBase;
+import android.mediav2.common.cts.CodecTestBase;
+import android.mediav2.common.cts.OutputManager;
 import android.opengl.GLES20;
 import android.os.Build;
 import android.util.Log;
@@ -96,11 +100,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
             int range, int standard, int transferCurve, boolean useHighBitDepth,
             boolean surfaceMode, String allTestParams) {
         super(encoderName, mime, new int[]{64000}, new int[]{width}, new int[]{height},
-                allTestParams);
-        if (useHighBitDepth) {
-            mActiveRawRes = INPUT_VIDEO_FILE_HBD;
-            mBytesPerSample = mActiveRawRes.mBytesPerSample;
-        }
+                EncoderInput.getRawResource(mime, useHighBitDepth), allTestParams);
         mRange = range;
         mStandard = standard;
         mTransferCurve = transferCurve;
@@ -121,7 +121,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
         mCheckESList.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
     }
 
-    void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
+    protected void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
         if (info.size > 0) {
             ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
             if (mMuxer != null) {
@@ -251,7 +251,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
         }
     }
 
-    void queueEOS() throws InterruptedException {
+    public void queueEOS() throws InterruptedException {
         if (!mSurfaceMode) {
             super.queueEOS();
         } else {
@@ -263,7 +263,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
         }
     }
 
-    void doWork(int frameLimit) throws IOException, InterruptedException {
+    protected void doWork(int frameLimit) throws IOException, InterruptedException {
         if (!mSurfaceMode) {
             super.doWork(frameLimit);
         } else {

@@ -118,7 +118,8 @@ public class RestrictedPermissionsTest {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("installRestrictedPermissionUserApp");
         intentFilter.addAction("uninstallApp");
-        getContext().registerReceiver(sCommandReceiver, intentFilter);
+        getContext().registerReceiver(sCommandReceiver, intentFilter,
+                Context.RECEIVER_EXPORTED_UNAUDITED);
     }
 
     @AfterClass
@@ -389,7 +390,8 @@ public class RestrictedPermissionsTest {
         // Register the result receiver.
         final String action = "android.permission2.cts.ACTION_INSTALL_COMMIT";
         final IntentFilter intentFilter = new IntentFilter(action);
-        getContext().registerReceiver(installReceiver, intentFilter);
+        getContext().registerReceiver(installReceiver, intentFilter,
+                Context.RECEIVER_EXPORTED_UNAUDITED);
 
         try {
             // Create a session.

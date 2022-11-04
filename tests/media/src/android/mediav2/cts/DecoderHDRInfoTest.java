@@ -17,6 +17,7 @@
 package android.mediav2.cts;
 
 import android.media.MediaFormat;
+import android.mediav2.common.cts.HDRDecoderTestBase;
 import android.os.Build;
 
 import androidx.test.filters.SdkSuppress;
@@ -49,7 +50,7 @@ import java.util.Map;
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 public class DecoderHDRInfoTest extends HDRDecoderTestBase {
     private static final String LOG_TAG = DecoderHDRInfoTest.class.getSimpleName();
-
+    private static final String mInpPrefix = WorkDir.getMediaDirString();
     private final String mHDRStaticInfoStream;
     private final String mHDRStaticInfoContainer;
     private final Map<Integer, String> mHDRDynamicInfoStream;

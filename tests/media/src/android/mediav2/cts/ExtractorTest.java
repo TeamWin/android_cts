@@ -16,7 +16,7 @@
 
 package android.mediav2.cts;
 
-import static android.mediav2.cts.CodecTestBase.hasDecoder;
+import static android.mediav2.common.cts.CodecTestBase.hasDecoder;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -30,6 +30,8 @@ import android.media.MediaCodecInfo;
 import android.media.MediaDataSource;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.mediav2.common.cts.CodecDecoderTestBase;
+import android.mediav2.common.cts.CodecTestBase;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;

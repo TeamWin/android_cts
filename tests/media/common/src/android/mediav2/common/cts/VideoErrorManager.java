@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.mediav2.cts;
+package android.mediav2.common.cts;
 
 import static org.junit.Assert.assertEquals;
 

@@ -265,7 +265,8 @@ public class MmsTest {
         final Context context = getContext();
         // Register sent receiver
         mSentReceiver = new SentReceiver(expectedErrorResultCode, ACTION_MMS_SENT);
-        context.registerReceiver(mSentReceiver, new IntentFilter(ACTION_MMS_SENT));
+        context.registerReceiver(mSentReceiver, new IntentFilter(ACTION_MMS_SENT),
+                Context.RECEIVER_EXPORTED_UNAUDITED);
 
         mDeliveryReceiver = new SentReceiver(expectedErrorResultCode,
                 ACTION_WAP_PUSH_DELIVER_DEFAULT_APP);

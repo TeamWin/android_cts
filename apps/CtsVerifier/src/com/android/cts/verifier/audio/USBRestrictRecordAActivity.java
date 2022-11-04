@@ -154,7 +154,7 @@ public class USBRestrictRecordAActivity extends PassFailButtons.Activity {
             IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
             ConnectDeviceBroadcastReceiver usbReceiver =
                     new ConnectDeviceBroadcastReceiver();
-            context.registerReceiver(usbReceiver, filter);
+            context.registerReceiver(usbReceiver, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
 
             mUsbManager.requestPermission(theDevice, permissionIntent);
         }

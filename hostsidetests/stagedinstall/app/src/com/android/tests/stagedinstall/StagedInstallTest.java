@@ -1578,7 +1578,8 @@ public class StagedInstallTest {
 
         BroadcastCounter(String action) {
             mContext = InstrumentationRegistry.getInstrumentation().getContext();
-            mContext.registerReceiver(this, new IntentFilter(action));
+            mContext.registerReceiver(this, new IntentFilter(action),
+                    Context.RECEIVER_EXPORTED_UNAUDITED);
         }
 
         @Override

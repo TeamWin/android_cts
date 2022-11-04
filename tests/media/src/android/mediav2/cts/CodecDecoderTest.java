@@ -20,8 +20,9 @@ import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420F
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420PackedPlanar;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar;
-import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_ALL;
-import static android.mediav2.cts.CodecTestBase.SupportClass.CODEC_OPTIONAL;
+import static android.mediav2.common.cts.CodecDecoderTestBase.hasCSD;
+import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_ALL;
+import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_OPTIONAL;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -32,6 +33,8 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.mediav2.common.cts.CodecDecoderTestBase;
+import android.mediav2.common.cts.OutputManager;
 import android.util.Log;
 import android.view.Surface;
 
@@ -92,12 +95,17 @@ import java.util.stream.IntStream;
 public class CodecDecoderTest extends CodecDecoderTestBase {
     private static final String LOG_TAG = CodecDecoderTest.class.getSimpleName();
     private static final float RMS_ERROR_TOLERANCE = 1.05f;        // 5%
+    private static final String mInpPrefix = WorkDir.getMediaDirString();
 
     private final String mRefFile;
     private final String mReconfigFile;
     private final float mRmsError;
     private final long mRefCRC;
     private final SupportClass mSupportRequirements;
+
+    static {
+        System.loadLibrary("ctsmediav2codec_jni");
+    }
 
     public CodecDecoderTest(String decoder, String mime, String testFile, String refFile,
             String reconfigFile, float rmsError, long refCRC, SupportClass supportRequirements,

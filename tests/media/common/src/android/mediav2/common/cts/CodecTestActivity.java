@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.mediav2.cts;
+package android.mediav2.common.cts;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -80,8 +80,8 @@ public class CodecTestActivity extends Activity implements SurfaceHolder.Callbac
         final int retries = 3;
         mLock.lock();
         final long start = SystemClock.elapsedRealtime();
-        while ((SystemClock.elapsedRealtime() - start) < (retries * mWaitTimeMs) &&
-                mSurface == null) {
+        while ((SystemClock.elapsedRealtime() - start) < (retries * mWaitTimeMs)
+                && mSurface == null) {
             mCondition.await(mWaitTimeMs, TimeUnit.MILLISECONDS);
         }
         mLock.unlock();
