@@ -80,6 +80,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.InputMethodSubtype;
 import android.view.inputmethod.InsertGesture;
 import android.view.inputmethod.JoinOrSplitGesture;
+import android.view.inputmethod.PreviewableHandwritingGesture;
 import android.view.inputmethod.RemoveSpaceGesture;
 import android.view.inputmethod.SelectGesture;
 import android.view.inputmethod.SelectRangeGesture;
@@ -384,6 +385,31 @@ public final class MockIme extends InputMethodService {
                         final Bundle data = command.getExtras().getBundle("data");
                         return getMemorizedOrCurrentInputConnection().performPrivateCommand(action,
                                 data);
+                    }
+                    case "previewHandwritingGesture": {
+                        int type = command.getExtras().getInt("type");
+
+                        Class<? extends Parcelable> clazz = null;
+                        switch (type) {
+                            case GESTURE_TYPE_SELECT:
+                                clazz = SelectGesture.class;
+                                break;
+                            case GESTURE_TYPE_SELECT_RANGE:
+                                clazz = SelectRangeGesture.class;
+                                break;
+                            case GESTURE_TYPE_DELETE:
+                                clazz = DeleteGesture.class;
+                                break;
+                            case GESTURE_TYPE_DELETE_RANGE:
+                                clazz = DeleteRangeGesture.class;
+                                break;
+                        }
+                        PreviewableHandwritingGesture gesture =
+                                (PreviewableHandwritingGesture) command.getExtras().getParcelable(
+                                        "gesture", clazz);
+                        getMemorizedOrCurrentInputConnection()
+                                .previewHandwritingGesture(gesture, null /* cancellationSignal */);
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     }
                     case "performHandwritingGesture": {
                         int type = command.getExtras().getInt("type");

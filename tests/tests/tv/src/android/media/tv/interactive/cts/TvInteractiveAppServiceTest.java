@@ -116,15 +116,18 @@ public class TvInteractiveAppServiceTest {
         private int mStateChangedCount = 0;
         private int mBiIAppCreatedCount = 0;
         private int mRequestSigningCount = 0;
+        private int mRequestStartRecordingCount;
 
         private String mIAppServiceId = null;
         private Integer mState = null;
         private Integer mErr = null;
         private Uri mBiIAppUri = null;
         private String mBiIAppId = null;
+        private Uri mProgramUri = null;
 
         private void resetValues() {
             mRequestCurrentChannelUriCount = 0;
+            mRequestStartRecordingCount = 0;
             mStateChangedCount = 0;
             mBiIAppCreatedCount = 0;
             mRequestSigningCount = 0;
@@ -134,6 +137,7 @@ public class TvInteractiveAppServiceTest {
             mErr = null;
             mBiIAppUri = null;
             mBiIAppId = null;
+            mProgramUri = null;
         }
 
         @Override
@@ -201,6 +205,13 @@ public class TvInteractiveAppServiceTest {
         @Override
         public void onTeletextAppStateChanged(String id, int state) {
             super.onTeletextAppStateChanged(id, state);
+        }
+
+        @Override
+        public void onRequestStartRecording(String id, Uri programUri) {
+            super.onRequestStartRecording(id, programUri);
+            mRequestStartRecordingCount++;
+            mProgramUri = programUri;
         }
 
     }
@@ -359,6 +370,17 @@ public class TvInteractiveAppServiceTest {
         PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mRequestCurrentChannelUriCount > 0);
 
         assertThat(mCallback.mRequestCurrentChannelUriCount).isEqualTo(1);
+    }
+
+    @Test
+    public void testNotifyRecordingStarted() throws Throwable {
+        final String recordingId = "testRecording";
+        assertNotNull(mSession);
+        mSession.resetValues();
+        mTvIAppView.notifyRecordingStarted(recordingId);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mRecordingStartedCount > 0);
+        assertThat(mSession.mRecordingStartedCount).isEqualTo(1);
+        assertThat(mSession.mRecordingId).isEqualTo(recordingId);
     }
 
     @Test
@@ -684,6 +706,18 @@ public class TvInteractiveAppServiceTest {
     public void testRequestTrackInfoList() throws Throwable {
         mSession.requestTrackInfoList();
         mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testRequestStartRecording() throws Throwable {
+        final Uri testUri = createTestUri();
+        mSession.requestStartRecording(testUri);
+        mCallback.resetValues();
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mRequestStartRecordingCount > 0);
+
+        assertThat(mCallback.mRequestStartRecordingCount).isEqualTo(1);
+        assertThat(mCallback.mProgramUri).isEqualTo(testUri);
     }
 
     @Test

@@ -1,4 +1,4 @@
-// Copyright (C) 2022 The Android Open Source Project
+// Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,19 +16,22 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test_helper_app {
-    name: "CtsNoLocaleConfigTagTests",
-    defaults: ["cts_support_defaults"],
-    sdk_version: "test_current",
+android_test {
+    name: "CtsVideoCodecTestCases",
+    defaults: ["cts_defaults"],
+    compile_multilib: "both",
+    static_libs: [
+        "androidx.test.core",
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+        "ctsmediav2common",
+    ],
+    platform_apis: true,
     srcs: ["src/**/*.java"],
-    static_libs: ["androidx.legacy_legacy-support-v4"],
-    libs: ["android.test.base"],
+    // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
     ],
-    certificate: ":cts-testkey1",
-    dex_preopt: {
-            enabled: false,
-        },
+    min_sdk_version: "29",
 }

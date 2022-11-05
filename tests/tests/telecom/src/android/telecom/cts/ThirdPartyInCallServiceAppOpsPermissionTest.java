@@ -16,33 +16,25 @@
 
 package android.telecom.cts;
 
-import static android.telecom.cts.TestUtils.TEST_PHONE_ACCOUNT_HANDLE;
 import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 
-import static com.android.compatibility.common.util.ShellIdentityUtils
-        .invokeMethodWithShellPermissionsNoReturn;
-import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+import static com.android.compatibility.common.util.ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn;
 
 import android.app.AppOpsManager;
-import android.app.UiModeManager;
-import android.app.role.RoleManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.telecom.TelecomManager;
 import android.telecom.cts.thirdptyincallservice.CtsThirdPartyInCallService;
 import android.telecom.cts.thirdptyincallservice.CtsThirdPartyInCallServiceControl;
 import android.telecom.cts.thirdptyincallservice.ICtsThirdPartyInCallServiceControl;
-import android.text.TextUtils;
 import android.util.Log;
 
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -78,11 +70,11 @@ public class ThirdPartyInCallServiceAppOpsPermissionTest extends BaseTelecomTest
 
     @Override
     public void tearDown() throws Exception {
+        super.tearDown();
         if (!mShouldTestTelecom) {
             return;
         }
         mICtsThirdPartyInCallServiceControl.resetCalls();
-        super.tearDown();
         if (mExpectedTearDownBindingStatus) {
             assertBindStatus(/* true: bind, false: unbind */false, /* expected result */true);
         }

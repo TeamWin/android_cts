@@ -112,10 +112,12 @@ public class BasicApiTests {
         mMockAlarmReceiver2 = new MockAlarmReceiver(mIntent2.getAction());
 
         IntentFilter filter = new IntentFilter(mIntent.getAction());
-        mContext.registerReceiver(mMockAlarmReceiver, filter);
+        mContext.registerReceiver(mMockAlarmReceiver, filter,
+                Context.RECEIVER_EXPORTED_UNAUDITED);
 
         IntentFilter filter2 = new IntentFilter(mIntent2.getAction());
-        mContext.registerReceiver(mMockAlarmReceiver2, filter2);
+        mContext.registerReceiver(mMockAlarmReceiver2, filter2,
+                Context.RECEIVER_EXPORTED_UNAUDITED);
 
         mDeviceConfigHelper.with("min_futurity", 0L)
                 .with("min_interval", REPEAT_PERIOD)

@@ -153,7 +153,8 @@ public class AppStandbyTests {
 
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(TestAlarmReceiver.ACTION_REPORT_ALARM_EXPIRED);
-        sContext.registerReceiver(mAlarmStateReceiver, intentFilter);
+        sContext.registerReceiver(mAlarmStateReceiver, intentFilter,
+                Context.RECEIVER_EXPORTED_UNAUDITED);
 
         setBatteryCharging(false);
         updateAlarmManagerConstants();

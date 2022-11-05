@@ -216,6 +216,25 @@ public abstract class CodecTestBase {
         }
     }
 
+    public enum ComponentClass {
+        ALL,
+        SOFTWARE,
+        HARDWARE;
+
+        public static String toString(ComponentClass selectSwitch) {
+            switch (selectSwitch) {
+                case ALL:
+                    return "all";
+                case SOFTWARE:
+                    return "software only";
+                case HARDWARE:
+                    return "hardware accelerated";
+                default:
+                    return "Unknown select switch";
+            }
+        }
+    }
+
     protected CodecAsyncHandler mAsyncHandle;
     protected boolean mIsCodecInAsyncMode;
     protected boolean mSawInputEOS;
@@ -718,13 +737,21 @@ public abstract class CodecTestBase {
 
     public static List<Object[]> prepareParamList(List<Object[]> exhaustiveArgsList,
             boolean isEncoder, boolean needAudio, boolean needVideo, boolean mustTestAllCodecs) {
+        return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo,
+                mustTestAllCodecs, ComponentClass.ALL);
+    }
+
+    public static List<Object[]> prepareParamList(List<Object[]> exhaustiveArgsList,
+            boolean isEncoder, boolean needAudio, boolean needVideo, boolean mustTestAllCodecs,
+            ComponentClass selectSwitch) {
         ArrayList<String> mimes = compileCompleteTestMimeList(isEncoder, needAudio, needVideo);
         ArrayList<String> cddRequiredMimeList =
                 compileRequiredMimeList(isEncoder, needAudio, needVideo);
         final List<Object[]> argsList = new ArrayList<>();
         int argLength = exhaustiveArgsList.get(0).length;
         for (String mime : mimes) {
-            ArrayList<String> totalListOfCodecs = selectCodecs(mime, null, null, isEncoder);
+            ArrayList<String> totalListOfCodecs =
+                    selectCodecs(mime, null, null, isEncoder, selectSwitch);
             ArrayList<String> listOfCodecs = new ArrayList<>();
             if (codecPrefix != null) {
                 for (String codec : totalListOfCodecs) {
@@ -771,11 +798,21 @@ public abstract class CodecTestBase {
 
     public static ArrayList<String> selectCodecs(String mime, ArrayList<MediaFormat> formats,
             String[] features, boolean isEncoder) {
+        return selectCodecs(mime, formats, features, isEncoder, ComponentClass.ALL);
+    }
+
+    public static ArrayList<String> selectCodecs(String mime, ArrayList<MediaFormat> formats,
+            String[] features, boolean isEncoder, ComponentClass selectSwitch) {
         MediaCodecInfo[] codecInfos = MEDIA_CODEC_LIST_REGULAR.getCodecInfos();
         ArrayList<String> listOfCodecs = new ArrayList<>();
         for (MediaCodecInfo codecInfo : codecInfos) {
             if (codecInfo.isEncoder() != isEncoder) continue;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && codecInfo.isAlias()) continue;
+            if (selectSwitch == ComponentClass.HARDWARE && !codecInfo.isHardwareAccelerated()) {
+                continue;
+            } else if (selectSwitch == ComponentClass.SOFTWARE && !codecInfo.isSoftwareOnly()) {
+                continue;
+            }
             String[] types = codecInfo.getSupportedTypes();
             for (String type : types) {
                 if (type.equalsIgnoreCase(mime)) {

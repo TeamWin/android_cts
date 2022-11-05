@@ -60,7 +60,6 @@ class CodecEncoderTest final : CodecTestBase {
     void deleteParams();
     bool configureCodec(AMediaFormat* format, bool isAsync, bool signalEOSWithLastFrame,
                         bool isEncoder) override;
-    bool flushCodec() override;
     void resetContext(bool isAsync, bool signalEOSWithLastFrame) override;
     bool enqueueInput(size_t bufferIndex) override;
     bool dequeueOutput(size_t bufferIndex, AMediaCodecBufferInfo* bufferInfo) override;
@@ -78,7 +77,6 @@ class CodecEncoderTest final : CodecTestBase {
     ~CodecEncoderTest();
 
     bool testSimpleEncode(const char* encoder, const char* srcPath);
-    bool testFlush(const char* encoder, const char* srcPath);
     bool testReconfigure(const char* encoder, const char* srcPath);
     bool testSetForceSyncFrame(const char* encoder, const char* srcPath);
     bool testAdaptiveBitRate(const char* encoder, const char* srcPath);
@@ -225,20 +223,6 @@ void CodecEncoderTest::resetContext(bool isAsync, bool signalEOSWithLastFrame) {
     mInputOffsetPts = 0;
     mNumSyncFramesReceived = 0;
     mSyncFramesPos.clear();
-}
-
-bool CodecEncoderTest::flushCodec() {
-    bool isOk = CodecTestBase::flushCodec();
-    if (mIsAudio) {
-        mInputOffsetPts = (mNumBytesSubmitted + 1024) * 1000000LL / (2 * mChannels * mSampleRate);
-    } else {
-        mInputOffsetPts = (mInputCount + 5) * 1000000LL / mDefFrameRate;
-    }
-    mPrevOutputPts = mInputOffsetPts - 1;
-    mNumBytesSubmitted = 0;
-    mNumSyncFramesReceived = 0;
-    mSyncFramesPos.clear();
-    return isOk;
 }
 
 void CodecEncoderTest::fillByteBuffer(uint8_t* inputBuffer) {
@@ -490,88 +474,6 @@ bool CodecEncoderTest::testSimpleEncode(const char* encoder, const char* srcPath
                 loopCounter++;
             }
         }
-    }
-    return isPass;
-}
-
-bool CodecEncoderTest::testFlush(const char* encoder, const char* srcPath) {
-    bool isPass = true;
-    setUpSource(srcPath);
-    if (!mInputData) return false;
-    setUpParams(1);
-    mOutputBuff = &mTestBuff;
-    AMediaFormat* format = mFormats[0];
-    const bool boolStates[]{true, false};
-    for (auto isAsync : boolStates) {
-        if (!isPass) break;
-        char log[1000];
-        snprintf(log, sizeof(log),
-                 "format: %s \n codec: %s, file: %s, mode: %s:: ", AMediaFormat_toString(format),
-                 encoder, srcPath, (isAsync ? "async" : "sync"));
-        /* TODO(b/147348711) */
-        /* Instead of create and delete codec at every iteration, we would like to create
-         * once and use it for all iterations and delete before exiting */
-        mCodec = AMediaCodec_createCodecByName(encoder);
-        if (!mCodec) {
-            ALOGE("unable to create media codec by name %s", encoder);
-            isPass = false;
-            continue;
-        }
-        if (!configureCodec(format, isAsync, true, true)) return false;
-        CHECK_STATUS(AMediaCodec_start(mCodec), "AMediaCodec_start failed");
-
-        /* test flush in running state before queuing input */
-        if (!flushCodec()) return false;
-        mOutputBuff->reset();
-        if (mIsCodecInAsyncMode) {
-            CHECK_STATUS(AMediaCodec_start(mCodec), "AMediaCodec_start failed");
-        }
-        if (!doWork(23)) return false;
-        CHECK_ERR((!mOutputBuff->isPtsStrictlyIncreasing(mPrevOutputPts)), log,
-                  "pts is not strictly increasing", isPass);
-        if (!isPass) continue;
-
-        /* test flush in running state */
-        if (!flushCodec()) return false;
-        mOutputBuff->reset();
-        if (mIsCodecInAsyncMode) {
-            CHECK_STATUS(AMediaCodec_start(mCodec), "AMediaCodec_start failed");
-        }
-        if (!doWork(INT32_MAX)) return false;
-        if (!queueEOS()) return false;
-        if (!waitForAllOutputs()) return false;
-        CHECK_ERR((hasSeenError()), log, "has seen error", isPass);
-        CHECK_ERR((0 == mInputCount), log, "queued 0 inputs", isPass);
-        CHECK_ERR((0 == mOutputCount), log, "received 0 outputs", isPass);
-        CHECK_ERR((mIsAudio && !mOutputBuff->isPtsStrictlyIncreasing(mPrevOutputPts)), log,
-                  "pts is not strictly increasing", isPass);
-        CHECK_ERR((!mIsAudio && mInputCount != mOutputCount), log, "input cnt != output cnt",
-                  isPass);
-        CHECK_ERR((!mIsAudio && !mOutputBuff->isOutPtsListIdenticalToInpPtsList(mMaxBFrames != 0)),
-                  log, "input pts list and output pts list are not identical", isPass);
-        if (!isPass) continue;
-
-        /* test flush in eos state */
-        if (!flushCodec()) return false;
-        mOutputBuff->reset();
-        if (mIsCodecInAsyncMode) {
-            CHECK_STATUS(AMediaCodec_start(mCodec), "AMediaCodec_start failed");
-        }
-        if (!doWork(INT32_MAX)) return false;
-        if (!queueEOS()) return false;
-        if (!waitForAllOutputs()) return false;
-        CHECK_ERR((hasSeenError()), log, "has seen error", isPass);
-        CHECK_ERR((0 == mInputCount), log, "queued 0 inputs", isPass);
-        CHECK_ERR((0 == mOutputCount), log, "received 0 outputs", isPass);
-        CHECK_ERR((mIsAudio && !mOutputBuff->isPtsStrictlyIncreasing(mPrevOutputPts)), log,
-                  "pts is not strictly increasing", isPass);
-        CHECK_ERR(!mIsAudio && (mInputCount != mOutputCount), log, "input cnt != output cnt",
-                  isPass);
-        CHECK_ERR(!mIsAudio && (!mOutputBuff->isOutPtsListIdenticalToInpPtsList(mMaxBFrames != 0)),
-                  log, "input pts list and output pts list are not identical", isPass);
-        CHECK_STATUS(AMediaCodec_stop(mCodec), "AMediaCodec_stop failed");
-        CHECK_STATUS(AMediaCodec_delete(mCodec), "AMediaCodec_delete failed");
-        mCodec = nullptr;
     }
     return isPass;
 }
@@ -913,31 +815,6 @@ static jboolean nativeTestSimpleEncode(JNIEnv* env, jobject, jstring jEncoder, j
     return static_cast<jboolean>(isPass);
 }
 
-static jboolean nativeTestFlush(JNIEnv* env, jobject, jstring jEncoder, jstring jsrcPath,
-                                jstring jMime, jintArray jList0, jintArray jList1, jintArray jList2,
-                                jint colorFormat) {
-    const char* csrcPath = env->GetStringUTFChars(jsrcPath, nullptr);
-    const char* cmime = env->GetStringUTFChars(jMime, nullptr);
-    const char* cEncoder = env->GetStringUTFChars(jEncoder, nullptr);
-    jsize cLen0 = env->GetArrayLength(jList0);
-    jint* cList0 = env->GetIntArrayElements(jList0, nullptr);
-    jsize cLen1 = env->GetArrayLength(jList1);
-    jint* cList1 = env->GetIntArrayElements(jList1, nullptr);
-    jsize cLen2 = env->GetArrayLength(jList2);
-    jint* cList2 = env->GetIntArrayElements(jList2, nullptr);
-    auto codecEncoderTest = new CodecEncoderTest(cmime, cList0, cLen0, cList1, cLen1, cList2, cLen2,
-                                                 (int)colorFormat);
-    bool isPass = codecEncoderTest->testFlush(cEncoder, csrcPath);
-    delete codecEncoderTest;
-    env->ReleaseIntArrayElements(jList0, cList0, 0);
-    env->ReleaseIntArrayElements(jList1, cList1, 0);
-    env->ReleaseIntArrayElements(jList2, cList2, 0);
-    env->ReleaseStringUTFChars(jEncoder, cEncoder);
-    env->ReleaseStringUTFChars(jMime, cmime);
-    env->ReleaseStringUTFChars(jsrcPath, csrcPath);
-    return static_cast<jboolean>(isPass);
-}
-
 static jboolean nativeTestReconfigure(JNIEnv* env, jobject, jstring jEncoder, jstring jsrcPath,
                                       jstring jMime, jintArray jList0, jintArray jList1,
                                       jintArray jList2, jint colorFormat) {
@@ -1042,8 +919,6 @@ int registerAndroidMediaV2CtsEncoderTest(JNIEnv* env) {
             {"nativeTestSimpleEncode",
              "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[I[I[II)Z",
              (void*)nativeTestSimpleEncode},
-            {"nativeTestFlush", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[I[I[II)Z",
-             (void*)nativeTestFlush},
             {"nativeTestReconfigure",
              "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[I[I[II)Z",
              (void*)nativeTestReconfigure},

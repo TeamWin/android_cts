@@ -24,6 +24,7 @@ import static android.voiceinteraction.cts.testcore.VoiceInteractionDetectionHel
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
 import android.app.compat.CompatChanges;
@@ -32,6 +33,7 @@ import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.os.Process;
@@ -42,6 +44,7 @@ import android.service.voice.HotwordDetectionService;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
+import android.util.Log;
 import android.voiceinteraction.common.Utils;
 import android.voiceinteraction.service.EventPayloadParcelable;
 import android.voiceinteraction.service.MainHotwordDetectionService;
@@ -81,6 +84,7 @@ public final class HotwordDetectionServiceBasicTest
     private static final String PRIVACY_CHIP_PKG = "com.android.systemui";
     private static final String PRIVACY_CHIP_ID = "privacy_chip";
     private static final Long PERMISSION_INDICATORS_NOT_PRESENT = 162547999L;
+    private static final long MULTIPLE_ACTIVE_HOTWORD_DETECTORS = 193232191L;
     private static final Long CLEAR_CHIP_MS = 10000L;
 
     private static Instrumentation sInstrumentation = InstrumentationRegistry.getInstrumentation();
@@ -218,6 +222,76 @@ public final class HotwordDetectionServiceBasicTest
                 Utils.VIS_HOLD_BIND_HOTWORD_DETECTION_PERMISSION_TEST,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SECURITY_EXCEPTION,
+                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
+    }
+
+    @Test
+    public void testVoiceInteractionService_disallowCreateAlwaysOnHotwordDetectorTwice()
+            throws Throwable {
+        final boolean enableMultipleHotwordDetectors = CompatChanges.isChangeEnabled(
+                MULTIPLE_ACTIVE_HOTWORD_DETECTORS);
+        Log.d(TAG, "enableMultipleHotwordDetectors = " + enableMultipleHotwordDetectors);
+        assumeTrue("Not support multiple hotword detectors", enableMultipleHotwordDetectors);
+
+        Thread.sleep(CLEAR_CHIP_MS);
+        // Create first AlwaysOnHotwordDetector and wait the HotwordDetectionService ready.
+        testHotwordDetection(mActivityTestRule, mContext,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
+                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
+
+        // Create second AlwaysOnHotwordDetector, it will get the IllegalStateException due to
+        // the previous AlwaysOnHotwordDetector is not destroy.
+        final Bundle bundle = new Bundle();
+        bundle.putBoolean(Utils.KEY_KEEP_DETECTOR, false);
+        testHotwordDetection(mActivityTestRule, mContext,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
+                bundle,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION,
+                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
+
+        // Destroy first AlwaysOnHotwordDetector.
+        testHotwordDetection(mActivityTestRule, mContext,
+                Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
+                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
+    }
+
+    @Test
+    public void testVoiceInteractionService_disallowCreateSoftwareHotwordDetectorTwice()
+            throws Throwable {
+        final boolean enableMultipleHotwordDetectors = CompatChanges.isChangeEnabled(
+                MULTIPLE_ACTIVE_HOTWORD_DETECTORS);
+        Log.d(TAG, "enableMultipleHotwordDetectors = " + enableMultipleHotwordDetectors);
+        assumeTrue("Not support multiple hotword detectors", enableMultipleHotwordDetectors);
+
+        Thread.sleep(CLEAR_CHIP_MS);
+        // Create first SoftwareHotwordDetector and wait the HotwordDetectionService ready.
+        testHotwordDetection(mActivityTestRule, mContext,
+                Utils.HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST,
+                Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
+                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
+
+        // Create second SoftwareHotwordDetector, it will get the IllegalStateException due to
+        // the previous SoftwareHotwordDetector is not destroy.
+        final Bundle bundle = new Bundle();
+        bundle.putBoolean(Utils.KEY_KEEP_DETECTOR, false);
+        testHotwordDetection(mActivityTestRule, mContext,
+                Utils.HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST,
+                bundle,
+                Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION,
+                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
+
+        // Destroy first SoftwareHotwordDetector.
+        testHotwordDetection(mActivityTestRule, mContext,
+                Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_DESTROY_DETECTOR,
+                Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
                 Utils.HOTWORD_DETECTION_SERVICE_BASIC);
     }
 

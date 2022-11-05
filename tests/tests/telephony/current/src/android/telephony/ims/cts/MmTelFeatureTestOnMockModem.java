@@ -21,6 +21,10 @@ import static android.telephony.CarrierConfigManager.ImsSs.KEY_TERMINAL_BASED_CA
 import static android.telephony.CarrierConfigManager.ImsSs.KEY_UT_TERMINAL_BASED_SERVICES_INT_ARRAY;
 import static android.telephony.CarrierConfigManager.ImsSs.SUPPLEMENTARY_SERVICE_CW;
 import static android.telephony.CarrierConfigManager.KEY_USE_CALL_WAITING_USSD_BOOL;
+import static android.telephony.TelephonyManager.SRVCC_STATE_HANDOVER_CANCELED;
+import static android.telephony.TelephonyManager.SRVCC_STATE_HANDOVER_COMPLETED;
+import static android.telephony.TelephonyManager.SRVCC_STATE_HANDOVER_FAILED;
+import static android.telephony.TelephonyManager.SRVCC_STATE_HANDOVER_STARTED;
 import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_TWN_CHT;
 
 import static junit.framework.Assert.assertFalse;
@@ -226,9 +230,11 @@ public class MmTelFeatureTestOnMockModem {
 
         // Unbind the ImsService after the test completes.
         if (sServiceConnector != null) {
+            TestImsService imsService = sServiceConnector.getCarrierService();
             sServiceConnector.setSingleRegistrationTestModeEnabled(false);
             sServiceConnector.disconnectCarrierImsService();
             sServiceConnector.disconnectDeviceImsService();
+            imsService.waitForExecutorFinish();
         }
     }
 
@@ -328,6 +334,31 @@ public class MmTelFeatureTestOnMockModem {
         }
     }
 
+    @Test
+    public void testNotifySrvccState() throws Exception {
+        if (VDBG) Log.d(LOG_TAG, "testNotifySrvccState");
+
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_CALLING));
+
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        // Connect to device ImsService with MmTelFeature
+        triggerFrameworkConnectToCarrierImsService(0);
+
+        verifySrvccStateChange(SRVCC_STATE_HANDOVER_STARTED);
+        verifySrvccStateChange(SRVCC_STATE_HANDOVER_COMPLETED);
+
+        verifySrvccStateChange(SRVCC_STATE_HANDOVER_STARTED);
+        verifySrvccStateChange(SRVCC_STATE_HANDOVER_FAILED);
+
+        verifySrvccStateChange(SRVCC_STATE_HANDOVER_STARTED);
+        verifySrvccStateChange(SRVCC_STATE_HANDOVER_CANCELED);
+
+        sServiceConnector.getCarrierService().getMmTelFeature().resetSrvccState();
+    }
+
     private void triggerFrameworkConnectToCarrierImsService(long capabilities) throws Exception {
         assertTrue(sServiceConnector.connectCarrierImsServiceLocally());
         sServiceConnector.getCarrierService().addCapabilities(capabilities);
@@ -392,5 +423,14 @@ public class MmTelFeatureTestOnMockModem {
                 "!! Enable Mock Modem before running this test !! "
                     + "Developer options => Allow Mock Modem");
         }
+    }
+
+    private void verifySrvccStateChange(int state) throws Exception {
+        assertTrue(sMockModemManager.srvccStateNotify(sTestSlot, state));
+        sServiceConnector.getCarrierService().getMmTelFeature()
+                .getSrvccStateLatch().await(WAIT_UPDATE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+
+        assertEquals(state,
+                sServiceConnector.getCarrierService().getMmTelFeature().getSrvccState());
     }
 }

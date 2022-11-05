@@ -142,7 +142,7 @@ public class CloseSystemDialogsTest {
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
         filter.addAction(ACTION_SENTINEL);
-        mContext.registerReceiver(mIntentReceiver, filter);
+        mContext.registerReceiver(mIntentReceiver, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
 
         // Add a view to verify if the view got the callback or not
         mSawContext = getContextForSaw(mContext);

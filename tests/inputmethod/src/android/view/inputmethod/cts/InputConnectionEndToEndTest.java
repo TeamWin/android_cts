@@ -49,6 +49,7 @@ import android.graphics.PointF;
 import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.Parcelable;
 import android.os.Process;
@@ -72,6 +73,7 @@ import android.view.inputmethod.InputConnectionWrapper;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InsertGesture;
 import android.view.inputmethod.JoinOrSplitGesture;
+import android.view.inputmethod.PreviewableHandwritingGesture;
 import android.view.inputmethod.RemoveSpaceGesture;
 import android.view.inputmethod.SelectGesture;
 import android.view.inputmethod.SelectRangeGesture;
@@ -1792,6 +1794,72 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             }
             return event.getArguments().getLong("requestId") == requestId;
         };
+    }
+
+    /**
+     * Test
+     * {@link InputConnection#previewHandwritingGesture(HandwritingGesture, CancellationSignal)}
+     * works as expected for {@link SelectGesture}.
+     */
+    @Test
+    @ApiTest(apis = {"android.view.inputmethod.SelectGesture.Builder#setGranularity",
+            "android.view.inputmethod.SelectGesture.Builder#setSelectionArea",
+            "android.view.inputmethod.SelectGesture.Builder#setGranularity",
+            "android.view.inputmethod.InputConnection#previewHandwritingGesture"})
+    public void testPreviewHandwritingSelectGesture() throws Exception {
+        SelectGesture.Builder builder = new SelectGesture.Builder();
+        testPreviewHandwritingGesture(
+                builder.setGranularity(HandwritingGesture.GRANULARITY_WORD)
+                        .setSelectionArea(new RectF(1, 2, 3, 4))
+                        .build());
+    }
+
+    private <T extends HandwritingGesture> void testPreviewHandwritingGesture(T gesture)
+            throws Exception {
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final AtomicReference<Class<? extends Parcelable>> classRef = new AtomicReference<>();
+        switch (gesture.getGestureType()) {
+            case GESTURE_TYPE_SELECT:
+                classRef.set(SelectGesture.class);
+                break;
+            case GESTURE_TYPE_SELECT_RANGE:
+                classRef.set(SelectRangeGesture.class);
+                break;
+            case GESTURE_TYPE_DELETE:
+                classRef.set(DeleteGesture.class);
+                break;
+            case GESTURE_TYPE_DELETE_RANGE:
+                classRef.set(DeleteRangeGesture.class);
+                break;
+        }
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean previewHandwritingGesture(
+                    PreviewableHandwritingGesture gesture, CancellationSignal cancellationSignal) {
+                assertNotNull(gesture);
+
+                methodCallVerifier.onMethodCalled(args ->
+                        args.putParcelable("gesture", classRef.get().cast(gesture)));
+
+                return true;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            ImeCommand command =
+                    session.callPreviewHandwritingGesture(
+                            classRef.get().cast(gesture), gesture.getGestureType());
+
+            expectCommand(stream, command, TIMEOUT);
+            methodCallVerifier.assertCalledOnce(
+                    args -> assertEquals(gesture, args.getParcelable("gesture", classRef.get())));
+        });
     }
 
     /**

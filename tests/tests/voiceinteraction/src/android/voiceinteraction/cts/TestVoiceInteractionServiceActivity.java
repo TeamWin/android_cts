@@ -19,6 +19,7 @@ package android.voiceinteraction.cts;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.os.Bundle;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
 
@@ -26,6 +27,10 @@ public class TestVoiceInteractionServiceActivity extends Activity {
     static final String TAG = "TestVoiceInteractionServiceActivity";
 
     public void triggerHotwordDetectionServiceTest(int serviceType, int testEvent) {
+        triggerHotwordDetectionServiceTest(serviceType, testEvent, /* bundle= */ null);
+    }
+
+    public void triggerHotwordDetectionServiceTest(int serviceType, int testEvent, Bundle bundle) {
         Intent serviceIntent = new Intent();
         if (serviceType == Utils.HOTWORD_DETECTION_SERVICE_NONE) {
             serviceIntent.setComponent(new ComponentName(this,
@@ -42,6 +47,7 @@ public class TestVoiceInteractionServiceActivity extends Activity {
             return;
         }
         serviceIntent.putExtra(Utils.KEY_TEST_EVENT, testEvent);
+        serviceIntent.putExtra(Utils.KEY_EXTRA_BUNDLE_DATA, bundle);
         ComponentName serviceName = startService(serviceIntent);
         Log.i(TAG, "triggerHotwordDetectionServiceTest Started service: " + serviceName);
     }

@@ -236,7 +236,7 @@ public class LauncherAppsTests {
         ActivityLaunchedReceiver receiver = new ActivityLaunchedReceiver();
         IntentFilter filter = new IntentFilter();
         filter.addAction(ActivityLaunchedReceiver.ACTIVITY_LAUNCHED_ACTION);
-        mContext.registerReceiver(receiver, filter);
+        mContext.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
         ComponentName compName = new ComponentName(SIMPLE_APP_PACKAGE, SIMPLE_APP_PACKAGE
                 + ".SimpleActivity");
         Log.i(TAG, "Launching " + compName.flattenToShortString() + " on user " + mUser);

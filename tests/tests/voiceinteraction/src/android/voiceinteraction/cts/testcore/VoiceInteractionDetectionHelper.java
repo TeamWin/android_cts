@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Parcelable;
 import android.voiceinteraction.common.Utils;
 import android.voiceinteraction.cts.TestVoiceInteractionServiceActivity;
@@ -39,19 +40,33 @@ public class VoiceInteractionDetectionHelper {
     public static void perform(
             ActivityScenarioRule<TestVoiceInteractionServiceActivity> activityTestRule,
             int testType, int serviceType) {
+        perform(activityTestRule, testType, /* bundle= */ null, serviceType);
+    }
+
+    public static void perform(
+            ActivityScenarioRule<TestVoiceInteractionServiceActivity> activityTestRule,
+            int testType, Bundle bundle, int serviceType) {
         activityTestRule.getScenario().onActivity(
                 activity -> activity.triggerHotwordDetectionServiceTest(
-                        serviceType, testType));
+                        serviceType, testType, bundle));
     }
 
     public static void testHotwordDetection(
             ActivityScenarioRule<TestVoiceInteractionServiceActivity> activityTestRule,
             Context context, int testType, String expectedIntent, int expectedResult,
             int serviceType) {
+        testHotwordDetection(activityTestRule, context, testType, /* bundle= */ null,
+                expectedIntent, expectedResult, serviceType);
+    }
+
+    public static void testHotwordDetection(
+            ActivityScenarioRule<TestVoiceInteractionServiceActivity> activityTestRule,
+            Context context, int testType, Bundle bundle, String expectedIntent, int expectedResult,
+            int serviceType) {
         final BlockingBroadcastReceiver receiver = new BlockingBroadcastReceiver(context,
                 expectedIntent);
         receiver.register();
-        perform(activityTestRule, testType, serviceType);
+        perform(activityTestRule, testType, bundle, serviceType);
         final Intent intent = receiver.awaitForBroadcast(TEST_RESULT_AWAIT_TIMEOUT_MS);
         receiver.unregisterQuietly();
 

@@ -25,6 +25,7 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -334,5 +335,43 @@ public class MockModemManager {
      */
     public void newBroadcastSms(byte[] data) {
         mMockModemService.getIRadioMessaging().newBroadcastSms(data);
+    }
+
+    /**
+     * Indicates when Single Radio Voice Call Continuity (SRVCC) progress state has changed.
+     *
+     * @param slotId which slot would insert.
+     * @param state New SRVCC State
+     * @return boolean true if the operation is successful, otherwise false.
+     */
+    public boolean srvccStateNotify(int slotId, int state) {
+        Log.d(TAG, "notifySrvccState[" + slotId + "] with state(" + state + ")");
+
+        boolean result = false;
+        try {
+            IRadioVoiceImpl radioVoice = mMockModemService.getIRadioVoice((byte) slotId);
+            if (radioVoice != null) {
+                radioVoice.srvccStateNotify(state);
+
+                waitForTelephonyFrameworkDone(1);
+                result = true;
+            }
+        } catch (Exception e) {
+        }
+        return result;
+    }
+
+    /**
+     * Returns the list of MockSrvccCall
+     *
+     * @param slotId for which slot to get the list
+     * @return the list of {@link MockSrvccCall}
+     */
+    public List<MockSrvccCall> getSrvccCalls(int slotId) {
+        Log.d(TAG, "getSrvccCalls[" + slotId + "]");
+
+        IRadioImsImpl radioIms = mMockModemService.getIRadioIms((byte) slotId);
+        if (radioIms == null) return null;
+        return radioIms.getSrvccCalls();
     }
 }

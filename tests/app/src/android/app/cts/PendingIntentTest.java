@@ -260,7 +260,7 @@ public class PendingIntentTest extends AndroidTestCase {
         final Context context = getContext();
         final ExtraReceiver br = new ExtraReceiver(EXTRA_NAME);
         final IntentFilter filter = new IntentFilter(BROADCAST_ACTION);
-        context.registerReceiver(br, filter);
+        context.registerReceiver(br, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
 
         // Baseline: establish that we get the extra properly
         PendingIntent pi;

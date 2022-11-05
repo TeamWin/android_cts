@@ -16,10 +16,7 @@
 
 package android.telecom.cts;
 
-import static org.junit.Assert.assertTrue;
-
 import android.content.Intent;
-import android.os.IBinder;
 import android.telecom.Conference;
 import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
@@ -80,6 +77,7 @@ public class CtsConnectionService extends ConnectionService {
     public static void tearDown() {
         synchronized(sLock) {
             sConnectionService = null;
+            sTelecomConnectionService = null;
         }
     }
 

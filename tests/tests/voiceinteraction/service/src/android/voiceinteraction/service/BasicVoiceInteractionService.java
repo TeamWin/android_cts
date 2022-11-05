@@ -33,6 +33,7 @@ import android.hardware.soundtrigger.SoundTrigger.KeyphraseRecognitionExtra;
 import android.media.AudioFormat;
 import android.media.soundtrigger.SoundTriggerManager;
 import android.media.voice.KeyphraseModelManager;
+import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
@@ -102,12 +103,17 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
         uiAutomation.dropShellPermissionIdentity();
 
         final int testEvent = intent.getIntExtra(Utils.KEY_TEST_EVENT, -1);
-        Log.i(TAG, "testEvent = " + testEvent);
+        final Bundle bundle = intent.getBundleExtra(Utils.KEY_EXTRA_BUNDLE_DATA);
+        Log.i(TAG, "testEvent = " + testEvent + ", bundle = " + bundle);
 
         try {
             if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST) {
                 runWithShellPermissionIdentity(() -> {
-                    mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector();
+                    if (bundle == null || bundle.getBoolean(Utils.KEY_KEEP_DETECTOR, true)) {
+                        mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector();
+                    } else {
+                        callCreateAlwaysOnHotwordDetector();
+                    }
                 }, MANAGE_HOTWORD_DETECTION);
             } else if (testEvent == Utils.VIS_WITHOUT_MANAGE_HOTWORD_DETECTION_PERMISSION_TEST) {
                 runWithShellPermissionIdentity(() -> callCreateAlwaysOnHotwordDetector(),
@@ -154,7 +160,11 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                 }
             } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST) {
                 runWithShellPermissionIdentity(() -> {
-                    mSoftwareHotwordDetector = callCreateSoftwareHotwordDetector();
+                    if (bundle == null || bundle.getBoolean(Utils.KEY_KEEP_DETECTOR, true)) {
+                        mSoftwareHotwordDetector = callCreateSoftwareHotwordDetector();
+                    } else {
+                        callCreateSoftwareHotwordDetector();
+                    }
                 }, MANAGE_HOTWORD_DETECTION);
             } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST) {
                 uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
@@ -411,6 +421,11 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                             Log.i(TAG, "onHotwordDetectionServiceRestarted");
                         }
                     });
+        } catch (IllegalStateException e) {
+            Log.w(TAG, "callCreateSoftwareHotwordDetector() exception: " + e);
+            broadcastIntentWithResult(
+                    Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT,
+                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION);
         } catch (Exception e) {
             Log.w(TAG, "callCreateSoftwareHotwordDetector() exception: " + e);
         }

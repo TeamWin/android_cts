@@ -47,6 +47,7 @@ public class GnssCapabilitiesTest {
         parcel.setDataPosition(0);
         GnssCapabilities newGnssCapabilities = GnssCapabilities.CREATOR.createFromParcel(parcel);
         verifyTestValues(newGnssCapabilities);
+        assertEquals(newGnssCapabilities, gnssCapabilities);
         parcel.recycle();
     }
 

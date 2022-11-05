@@ -17,9 +17,11 @@
 package android.telephony.ims.cts;
 
 import android.os.Bundle;
+import android.telephony.TelephonyManager;
 import android.telephony.ims.ImsCallProfile;
 import android.telephony.ims.ImsStreamMediaProfile;
 import android.telephony.ims.RtpHeaderExtensionType;
+import android.telephony.ims.SrvccCall;
 import android.telephony.ims.feature.CapabilityChangeRequest;
 import android.telephony.ims.feature.MmTelFeature;
 import android.telephony.ims.stub.ImsCallSessionImplBase;
@@ -30,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 
 public class TestMmTelFeature extends MmTelFeature {
 
@@ -49,6 +52,9 @@ public class TestMmTelFeature extends MmTelFeature {
     private CountDownLatch mTerminalBasedCallWaitingLatch = new CountDownLatch(1);
     private boolean mIsTerminalBasedCallWaitingNotified = false;
     private boolean mIsTerminalBasedCallWaitingEnabled = false;
+    private CountDownLatch mSrvccStateLatch = new CountDownLatch(1);
+    private int mSrvccState = TelephonyManager.SRVCC_STATE_HANDOVER_NONE;
+    private Consumer<List<SrvccCall>> mSrvccStartedCallback;
 
     TestMmTelFeature(TestImsService.ReadyListener readyListener,
             TestImsService.RemovedListener removedListener,
@@ -157,6 +163,30 @@ public class TestMmTelFeature extends MmTelFeature {
         mTerminalBasedCallWaitingLatch.countDown();
     }
 
+    @Override
+    public void notifySrvccStarted(Consumer<List<SrvccCall>> cb) {
+        mSrvccState = TelephonyManager.SRVCC_STATE_HANDOVER_STARTED;
+        mSrvccStartedCallback = cb;
+    }
+
+    @Override
+    public void notifySrvccCompleted() {
+        mSrvccState = TelephonyManager.SRVCC_STATE_HANDOVER_COMPLETED;
+        mSrvccStartedCallback = null;
+    }
+
+    @Override
+    public void notifySrvccFailed() {
+        mSrvccState = TelephonyManager.SRVCC_STATE_HANDOVER_FAILED;
+        mSrvccStartedCallback = null;
+    }
+
+    @Override
+    public void notifySrvccCanceled() {
+        mSrvccState = TelephonyManager.SRVCC_STATE_HANDOVER_CANCELED;
+        mSrvccStartedCallback = null;
+    }
+
     public void setCapabilities(MmTelCapabilities capabilities) {
         mCapabilities = capabilities;
     }
@@ -230,5 +260,26 @@ public class TestMmTelFeature extends MmTelFeature {
 
     public boolean isTerminalBasedCallWaitingEnabled() {
         return mIsTerminalBasedCallWaitingEnabled;
+    }
+
+    public CountDownLatch getSrvccStateLatch() {
+        return mSrvccStateLatch;
+    }
+
+    public int getSrvccState() {
+        return mSrvccState;
+    }
+
+    public void notifySrvccCall(List<SrvccCall> profiles) {
+        if (mSrvccStartedCallback != null) {
+            mSrvccStartedCallback.accept(profiles);
+            mSrvccStartedCallback = null;
+        }
+    }
+
+    public void resetSrvccState() {
+        mSrvccStateLatch = new CountDownLatch(1);
+        mSrvccState = TelephonyManager.SRVCC_STATE_HANDOVER_NONE;
+        mSrvccStartedCallback = null;
     }
 }

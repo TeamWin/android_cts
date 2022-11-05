@@ -86,6 +86,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public int mBroadcastInfoResponseCount;
         public int mSigningResultCount;
         public int mErrorCount;
+        public int mRecordingStartedCount;
 
         public Integer mKeyDownCode;
         public Integer mKeyUpCode;
@@ -99,6 +100,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public String mDestroyBiIAppId;
         public AdResponse mAdResponse;
         public BroadcastInfoResponse mBroadcastInfoResponse;
+        public String mRecordingId;
 
         StubSessionImpl(Context context) {
             super(context);
@@ -120,6 +122,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mBroadcastInfoResponseCount = 0;
             mSigningResultCount = 0;
             mErrorCount = 0;
+            mRecordingStartedCount = 0;
 
             mKeyDownCode = null;
             mKeyUpCode = null;
@@ -133,6 +136,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mDestroyBiIAppId = null;
             mAdResponse = null;
             mBroadcastInfoResponse = null;
+            mRecordingId = null;
         }
 
         @Override
@@ -411,6 +415,13 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public void onError(String errMsg, Bundle params) {
             super.onError(errMsg, params);
             mErrorCount++;
+        }
+
+        @Override
+        public void onRecordingStarted(String recordingId) {
+            super.onRecordingStarted(recordingId);
+            mRecordingStartedCount++;
+            mRecordingId = recordingId;
         }
     }
 }

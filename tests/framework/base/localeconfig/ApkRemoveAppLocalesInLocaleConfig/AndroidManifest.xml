@@ -15,7 +15,7 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.cts.nolocaleconfigtag">
+    package="com.android.cts.localeconfiginorout">
   <application android:debuggable="true">
   </application>
 </manifest>

@@ -120,6 +120,9 @@ TEST(VerifiedBootTest, avbNotUsingCheckAtMostOnce) {
     if (isExemptFromAVBTests()) {
         GTEST_SKIP();
     }
+    if (getFirstApiLevel() < __ANDROID_API_U__) {
+        GTEST_SKIP() << "Skipping test: Exempt due to old API level";
+    }
 
     // Any device with sufficient RAM or a 64-bit CPU is not allowed to use
     // check_at_most_once.

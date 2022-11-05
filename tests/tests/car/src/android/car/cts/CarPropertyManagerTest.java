@@ -45,6 +45,7 @@ import android.car.hardware.property.EvChargeState;
 import android.car.hardware.property.EvRegenerativeBrakingState;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardStatus;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardType;
+import android.car.hardware.property.VehicleLightSwitch;
 import android.car.hardware.property.VehicleTurnSignal;
 import android.car.test.ApiCheckerRule.Builder;
 import android.os.SystemClock;
@@ -146,9 +147,9 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
             ImmutableSet.<Integer>builder().add(/*VehicleLightState.OFF=*/0,
                     /*VehicleLightState.ON=*/1, /*VehicleLightState.DAYTIME_RUNNING=*/2).build();
     private static final ImmutableSet<Integer> VEHICLE_LIGHT_SWITCHES =
-            ImmutableSet.<Integer>builder().add(/*VehicleLightSwitch.OFF=*/0,
-                    /*VehicleLightSwitch.ON=*/1, /*VehicleLightSwitch.DAYTIME_RUNNING=*/2,
-                    /*VehicleLightSwitch.AUTOMATIC=*/256).build();
+            ImmutableSet.<Integer>builder().add(VehicleLightSwitch.STATE_OFF,
+                    VehicleLightSwitch.STATE_ON, VehicleLightSwitch.STATE_DAYTIME_RUNNING,
+                    VehicleLightSwitch.STATE_AUTOMATIC).build();
     private static final ImmutableSet<Integer> HVAC_TEMPERATURE_DISPLAY_UNITS =
             ImmutableSet.<Integer>builder().add(VehicleUnit.CELSIUS,
                     VehicleUnit.FAHRENHEIT).build();

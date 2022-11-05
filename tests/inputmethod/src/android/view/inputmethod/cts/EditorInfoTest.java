@@ -18,6 +18,7 @@ package android.view.inputmethod.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -36,6 +37,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.HandwritingGesture;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InsertGesture;
+import android.view.inputmethod.PreviewableHandwritingGesture;
 import android.view.inputmethod.SelectGesture;
 import android.view.inputmethod.SurroundingText;
 
@@ -49,7 +51,11 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -92,6 +98,8 @@ public class EditorInfoTest {
         info.contentMimeTypes = new String[]{"image/gif", "image/png"};
         info.setInitialToolType(MotionEvent.TOOL_TYPE_FINGER);
         info.setSupportedHandwritingGestures(Arrays.asList(SelectGesture.class));
+        info.setSupportedHandwritingGesturePreviews(
+                Stream.of(SelectGesture.class).collect(Collectors.toSet()));
 
         assertEquals(0, info.describeContents());
 
@@ -148,6 +156,32 @@ public class EditorInfoTest {
         assertTrue(gestures.contains(SelectGesture.class));
         assertTrue(gestures.contains(DeleteGesture.class));
         assertTrue(gestures.contains(InsertGesture.class));
+    }
+
+    @ApiTest(apis = {"android.view.inputmethod.EditorInfo#setSupportedHandwritingGesturePreviews",
+            "android.view.inputmethod.EditorInfo#getSupportedHandwritingGesturePreviews",
+            "android.view.inputmethod.EditorInfo#getSupportedHandwritingGestures"})
+    @Test
+    public void testSupportedHandwritingGesturePreviews() {
+        EditorInfo info = new EditorInfo();
+        info.setSupportedHandwritingGesturePreviews(new HashSet<>());
+        assertTrue(info.getSupportedHandwritingGesturePreviews().isEmpty());
+
+        Set<Class<? extends PreviewableHandwritingGesture>> selectGestureSet =
+                Stream.of(SelectGesture.class).collect(Collectors.toSet());
+        info.setSupportedHandwritingGesturePreviews(selectGestureSet);
+        assertEquals(info.getSupportedHandwritingGesturePreviews(), selectGestureSet);
+
+        assertNotEquals(info.getSupportedHandwritingGesturePreviews(),
+                info.getSupportedHandwritingGestures());
+
+        info.setSupportedHandwritingGesturePreviews(
+                Stream.of(SelectGesture.class, DeleteGesture.class).collect(Collectors.toSet()));
+        Set<Class<? extends PreviewableHandwritingGesture>> gestures =
+                info.getSupportedHandwritingGesturePreviews();
+        assertEquals(gestures.size(), 2);
+        assertTrue(gestures.contains(SelectGesture.class));
+        assertTrue(gestures.contains(DeleteGesture.class));
     }
 
     @Test

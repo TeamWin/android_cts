@@ -32,6 +32,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.ParcelFileDescriptor;
@@ -45,6 +46,7 @@ import android.view.KeyEvent;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.CorrectionInfo;
 import android.view.inputmethod.DeleteGesture;
+import android.view.inputmethod.DeleteRangeGesture;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.HandwritingGesture;
 import android.view.inputmethod.InputConnection;
@@ -53,7 +55,9 @@ import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.InputMethodSubtype;
 import android.view.inputmethod.InsertGesture;
+import android.view.inputmethod.PreviewableHandwritingGesture;
 import android.view.inputmethod.SelectGesture;
+import android.view.inputmethod.SelectRangeGesture;
 import android.view.inputmethod.TextAttribute;
 
 import androidx.annotation.AnyThread;
@@ -1255,6 +1259,33 @@ public class MockImeSession implements AutoCloseable {
         params.putParcelable("gesture", gesture);
         params.putInt("type", type);
         return callCommandInternal("performHandwritingGesture", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call
+     * {@link InputConnection#previewHandwritingGesture(PreviewableHandwritingGesture,
+     *  CancellationSignal)} with the given parameters.
+     *
+     * <p>Use {@link ImeEvent#getReturnIntegerValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
+     * @param gesture one of {@link SelectGesture}, {@link SelectRangeGesture},
+     * {@link DeleteGesture}, {@link DeleteRangeGesture}.
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    public ImeCommand callPreviewHandwritingGesture(@NonNull Parcelable gesture, int type) {
+        final Bundle params = new Bundle();
+        // TODO(b/217957587): Create @TestApi util in HandwritingGesture for easy
+        // serialization/deserialization.
+        params.putParcelable("gesture", gesture);
+        params.putInt("type", type);
+        return callCommandInternal("previewHandwritingGesture", params);
     }
 
     /**

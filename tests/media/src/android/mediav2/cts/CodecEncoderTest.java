@@ -99,13 +99,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         mSyncFramesPos.clear();
     }
 
-    @Override
-    protected void flushCodec() {
-        super.flushCodec();
-        mNumSyncFramesReceived = 0;
-        mSyncFramesPos.clear();
-    }
-
     protected void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
         if (info.size > 0 && (info.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0) {
             mNumSyncFramesReceived += 1;
@@ -245,104 +238,6 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                         colorFormat != -1);
             }
             assertTrue(nativeTestSimpleEncode(mCodecName, mActiveRawRes.mFileName, mMime, mBitrates,
-                    mEncParamList1, mEncParamList2, colorFormat));
-        }
-    }
-
-    /**
-     * Checks component and framework behaviour to flush API when the codec is operating in
-     * byte buffer mode.
-     * <p>
-     * While the component is encoding the test clip, mediacodec flush() api is called. The flush
-     * API is called at various points.
-     * <ul>
-     *     <li>In running state, before queueing any input.</li>
-     *     <li>In running state, after queueing n frames.</li>
-     *     <li>In eos state.</li>
-     * </ul>
-     * Upon calling a flush, the encoder plugin will drop all the frames that is holding in its
-     * pipeline. Once the fresh set of frames are supplied for encoding, it is component's choice
-     * to start with a sync frame or continue with previous GOP. Even if the component starts
-     * with a sync frame, the internal state of component like rate-control, qp, intra/inter
-     * statistics, ... will be reset as well is not guaranteed. In short, the response of an
-     * encoder to flush api is not normative. Due to these restrictions, the test only expects
-     * the output timestamps received to be strictly increasing.
-     * <p>
-     * The test runs mediacodec in synchronous and asynchronous mode.
-     */
-    @Ignore("TODO(b/147576107, b/148652492, b/148651699)")
-    @ApiTest(apis = {"android.media.MediaCodec#flush"})
-    @LargeTest
-    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    public void testFlush() throws IOException, InterruptedException {
-        setUpParams(1);
-        setUpSource(mActiveRawRes.mFileName);
-        boolean[] boolStates = {true, false};
-        mOutputBuff = new OutputManager();
-        {
-            MediaFormat inpFormat = mFormats.get(0);
-            mCodec = MediaCodec.createByCodecName(mCodecName);
-            for (boolean isAsync : boolStates) {
-                configureCodec(inpFormat, isAsync, true, true);
-                mCodec.start();
-
-                /* test flush in running state before queuing input */
-                flushCodec();
-                mOutputBuff.reset();
-                mInfoList.clear();
-                if (mIsCodecInAsyncMode) mCodec.start();
-                doWork(23);
-                if ((mIsAudio || (mIsVideo && mMaxBFrames == 0))
-                        && !mOutputBuff.isPtsStrictlyIncreasing(mPrevOutputPts)) {
-                    fail("Output timestamps are not strictly increasing \n" + mTestConfig + mTestEnv
-                            + mOutputBuff.getErrMsg());
-                }
-                boolean checkMetrics = (mOutputCount != 0);
-
-                /* test flush in running state */
-                flushCodec();
-                mOutputBuff.reset();
-                mInfoList.clear();
-                if (mIsCodecInAsyncMode) mCodec.start();
-                if (checkMetrics) validateMetrics(mCodecName, inpFormat);
-                doWork(Integer.MAX_VALUE);
-                queueEOS();
-                waitForAllOutputs();
-
-                /* test flush in eos state */
-                flushCodec();
-                mOutputBuff.reset();
-                mInfoList.clear();
-                if (mIsCodecInAsyncMode) mCodec.start();
-                doWork(Integer.MAX_VALUE);
-                queueEOS();
-                waitForAllOutputs();
-                /* TODO(b/147348711) */
-                if (false) mCodec.stop();
-                else mCodec.reset();
-            }
-            mCodec.release();
-        }
-    }
-
-    private native boolean nativeTestFlush(String encoder, String file, String mime,
-            int[] list0, int[] list1, int[] list2, int colorFormat);
-
-    /**
-     * Test is similar to {@link #testFlush()} but uses ndk api
-     */
-    @Ignore("TODO(b/147576107, b/148652492, b/148651699)")
-    @ApiTest(apis = {"android.media.MediaCodec#flush"})
-    @LargeTest
-    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    public void testFlushNative() throws IOException {
-        int colorFormat = -1;
-        {
-            if (mIsVideo) {
-                colorFormat = findByteBufferColorFormat(mCodecName, mMime);
-                assertTrue("no valid color formats received", colorFormat != -1);
-            }
-            assertTrue(nativeTestFlush(mCodecName, mActiveRawRes.mFileName, mMime, mBitrates,
                     mEncParamList1, mEncParamList2, colorFormat));
         }
     }

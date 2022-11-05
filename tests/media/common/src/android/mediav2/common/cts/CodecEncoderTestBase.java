@@ -117,6 +117,21 @@ public class CodecEncoderTestBase extends CodecTestBase {
         mBytesPerSample = mActiveRawRes.mBytesPerSample;
     }
 
+    public static String bitRateModeToString(int mode) {
+        switch (mode) {
+            case MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR:
+                return "cbr";
+            case MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR:
+                return "vbr";
+            case MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CQ:
+                return "cq";
+            case MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR_FD:
+                return "cbrwithfd";
+            default:
+                return "unknown";
+        }
+    }
+
     @Before
     public void setUpCodecEncoderTestBase() {
         assertTrue("Testing a mime that is neither audio nor video is not supported \n"
@@ -142,19 +157,6 @@ public class CodecEncoderTestBase extends CodecTestBase {
         mInputBufferReadOffset = 0;
         mNumBytesSubmitted = 0;
         mInputOffsetPts = 0;
-    }
-
-    @Override
-    protected void flushCodec() {
-        super.flushCodec();
-        if (mIsAudio) {
-            mInputOffsetPts = (mNumBytesSubmitted + 1024) * 1000000L
-                    / ((long) mBytesPerSample * mChannels * mSampleRate);
-        } else {
-            mInputOffsetPts = (mInputCount + 5) * 1000000L / mFrameRate;
-        }
-        mPrevOutputPts = mInputOffsetPts - 1;
-        mNumBytesSubmitted = 0;
     }
 
     protected void setUpSource(String inpPath) throws IOException {
