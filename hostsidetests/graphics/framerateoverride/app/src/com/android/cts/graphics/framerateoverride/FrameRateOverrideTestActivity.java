@@ -494,7 +494,8 @@ public class FrameRateOverrideTestActivity extends Activity {
             FrameRateObserver frameRateObserver, float initialRefreshRate)
             throws InterruptedException, IOException {
         synchronized (mLock) {
-            Log.i(TAG, "testFrameRateOverride started");
+            Log.i(TAG, "testFrameRateOverride started with initial refresh rate "
+                    + initialRefreshRate);
             int attempts = 0;
             boolean testPassed = false;
             try {

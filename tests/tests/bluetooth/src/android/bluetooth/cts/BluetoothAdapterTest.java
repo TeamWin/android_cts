@@ -240,13 +240,13 @@ public class BluetoothAdapterTest extends AndroidTestCase {
             return;
         }
 
-        assertEquals(mAdapter.getProfileConnectionState(BluetoothProfile.A2DP),
-                BluetoothAdapter.STATE_DISCONNECTED);
-        assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
         mUiAutomation.dropShellPermissionIdentity();
         assertThrows(SecurityException.class,
                 () -> mAdapter.getProfileConnectionState(BluetoothProfile.A2DP));
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
+        assertEquals(mAdapter.getProfileConnectionState(BluetoothProfile.A2DP),
+                BluetoothAdapter.STATE_DISCONNECTED);
+        assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
         assertEquals(mAdapter.getProfileConnectionState(BluetoothProfile.A2DP),
                 BluetoothAdapter.STATE_DISCONNECTED);
     }

@@ -22,6 +22,7 @@ import android.hardware.display.DisplayManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.test.uiautomator.UiDevice;
+import android.sysprop.DisplayProperties;
 import android.sysprop.SurfaceFlingerProperties;
 import android.util.Log;
 import android.view.Display;
@@ -83,7 +84,8 @@ public final class FrameRateOverrideTest {
         mDisplayManager = mActivityRule.getActivity().getSystemService(DisplayManager.class);
         mInitialMatchContentFrameRate = toSwitchingType(
                 mDisplayManager.getMatchContentFrameRateUserPreference());
-        mDisplayManager.setRefreshRateSwitchingType(DisplayManager.SWITCHING_TYPE_NONE);
+        mDisplayManager.setRefreshRateSwitchingType(
+                DisplayManager.SWITCHING_TYPE_RENDER_FRAME_RATE_ONLY);
         mDisplayManager.setShouldAlwaysRespectAppRequestedMode(true);
         boolean changeIsEnabled =
                 CompatChanges.isChangeEnabled(DISPLAY_MODE_RETURNS_PHYSICAL_REFRESH_RATE_CHANGEID);
@@ -127,13 +129,23 @@ public final class FrameRateOverrideTest {
         return Math.abs(a - b) <= REFRESH_RATE_TOLERANCE;
     }
 
-    // Find refresh rates where the device also natively supports half that rate with the same
-    // resolution (for example, a 120Hz mode when the device also supports a 60Hz mode).
+    // Find refresh rates with the same resolution. If FrameRateOverride is only enabled for
+    // native refresh rates, then this function returns refresh rates which natively supports
+    // half that rate with the same resolution (for example, a 120Hz mode when the device also
+    // supports a 60Hz mode).
     private List<Display.Mode> getModesToTest() {
         List<Display.Mode> modesToTest = new ArrayList<>();
         if (!SurfaceFlingerProperties.enable_frame_rate_override().orElse(false)) {
             return modesToTest;
         }
+        // TODO(b/241447632): Remove the flag once SF changes are ready.
+        //  debug_render_frame_rate_is_physical_refresh_rate will prevent from SF choose a
+        //  frame rate which is different than the refresh rate, so the test can't run unless this
+        //  flag is turned off.
+        if (DisplayProperties.debug_render_frame_rate_is_physical_refresh_rate().orElse(true)) {
+            return modesToTest;
+        }
+
         Display.Mode[] modes = mActivityRule.getActivity().getDisplay().getSupportedModes();
         for (Display.Mode mode : modes) {
             for (Display.Mode otherMode : modes) {
@@ -146,7 +158,14 @@ public final class FrameRateOverrideTest {
                     continue;
                 }
 
-                if (areEqual(mode.getRefreshRate(), 2 * otherMode.getRefreshRate())) {
+                boolean overrideForNativeRates = SurfaceFlingerProperties
+                        .frame_rate_override_for_native_rates().orElse(true);
+                if (overrideForNativeRates) {
+                    // only add if this refresh rate is a multiple of the other
+                    if (areEqual(mode.getRefreshRate(), 2 * otherMode.getRefreshRate())) {
+                        modesToTest.add(mode);
+                    }
+                } else {
                     modesToTest.add(mode);
                 }
             }
