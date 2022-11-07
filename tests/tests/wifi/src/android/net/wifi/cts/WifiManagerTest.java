@@ -82,6 +82,7 @@ import android.os.HandlerExecutor;
 import android.os.HandlerThread;
 import android.os.Process;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
@@ -172,6 +173,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     private static final String TAG = "WifiManagerTest";
     private static final String SSID1 = "\"WifiManagerTest\"";
+    private static final String BOOT_DEFAULT_WIFI_COUNTRY_CODE = "ro.boot.wificountrycode";
     // A full single scan duration is typically about 6-7 seconds, but
     // depending on devices it takes more time (9-11 seconds). For a
     // safety margin, the test waits for 15 seconds.
@@ -2716,6 +2718,15 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Skip the test if telephony is not supported and default country code
+     * is not stored in system property.
+     */
+    private boolean shouldSkipCountryCodeDependentTest() {
+        String countryCode = SystemProperties.get(BOOT_DEFAULT_WIFI_COUNTRY_CODE);
+        return TextUtils.isEmpty(countryCode) && !WifiFeature.isTelephonySupported(getContext());
+    }
+
+    /**
      * Test SoftApConfiguration#getPersistentRandomizedMacAddress(). There are two test cases in
      * this test.
      * 1. configure two different SoftApConfigurations (different SSID) and verify that randomized
@@ -2890,6 +2901,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         if (!mWifiManager.isPortableHotspotSupported()) {
             return;
         }
+        if (shouldSkipCountryCodeDependentTest()) {
+            // skip the test  when there is no Country Code available
+            return;
+        }
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         TestExecutor executor = new TestExecutor();
         TestSoftApCallback callback = new TestSoftApCallback(mLock);
@@ -2999,6 +3014,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
         // check that softap mode is supported by the device
         if (!mWifiManager.isPortableHotspotSupported()) {
+            return;
+        }
+        if (shouldSkipCountryCodeDependentTest()) {
+            // skip the test  when there is no Country Code available
             return;
         }
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -3966,6 +3985,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         if (!isLocationEnabled()) {
             fail("Please enable location for this test - since country code is not available"
                     + " when location is disabled!");
+        }
+        if (shouldSkipCountryCodeDependentTest()) {
+            // skip the test when there is no Country Code available
+            return;
         }
         TestActiveCountryCodeChangedCallback testCountryCodeChangedCallback =
                 new TestActiveCountryCodeChangedCallback();
