@@ -16,6 +16,8 @@
 
 package com.android.cts.localeconfig;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -47,10 +49,8 @@ import java.util.stream.Collectors;
 @RunWith(AndroidJUnit4.class)
 public class LocaleConfigTest {
     private static final String APK_PATH = "/data/local/tmp/cts/localeconfig/";
-    private static final String APK_WITH_LOCALECONFIG =
-            APK_PATH + "ApkWithLocaleConfig.apk";
-    private static final String APK_WITHOUT_LOCALECONFIG =
-            APK_PATH + "ApkWithoutLocaleConfig.apk";
+    private static final String APK_WITH_LOCALECONFIG = APK_PATH + "ApkWithLocaleConfig.apk";
+    private static final String APK_WITHOUT_LOCALECONFIG = APK_PATH + "ApkWithoutLocaleConfig.apk";
     private static final String TEST_PACKAGE = "com.android.cts.localeconfiginorout";
     private static final List<String> EXPECT_LOCALES = Arrays.asList(
             new String[]{"en-US", "zh-TW", "pt", "fr", "zh-Hans-SG"});
@@ -76,13 +76,10 @@ public class LocaleConfigTest {
         Context appContext = mContext.createPackageContext(TEST_PACKAGE, 0);
         LocaleConfig localeConfig = new LocaleConfig(appContext);
 
-        assertEquals(EXPECT_LOCALES.stream()
-                .sorted()
-                .collect(Collectors.toList()),
+        assertEquals(EXPECT_LOCALES.stream().sorted().collect(Collectors.toList()),
                 new ArrayList<String>(Arrays.asList(
-                        localeConfig.getSupportedLocales().toLanguageTags().split(","))).stream()
-                .sorted()
-                .collect(Collectors.toList()));
+                        localeConfig.getSupportedLocales().toLanguageTags().split(
+                                ","))).stream().sorted().collect(Collectors.toList()));
 
         assertEquals(LocaleConfig.STATUS_SUCCESS, localeConfig.getStatus());
     }
@@ -104,12 +101,16 @@ public class LocaleConfigTest {
         assertEquals(LocaleConfig.STATUS_NOT_SPECIFIED, localeConfig.getStatus());
     }
 
-    private void install(String apk) {
-        ShellUtils.runShellCommand("pm install -r " + apk);
+    private void install(String apk) throws InterruptedException {
+        String installResult = ShellUtils.runShellCommand("pm install " + apk);
+        Thread.sleep(3000);
+        assertThat(installResult.trim()).isEqualTo("Success");
     }
 
-    private void uninstall(String packageName) {
-        ShellUtils.runShellCommand("pm uninstall " + packageName);
+    private void uninstall(String packageName) throws InterruptedException {
+        String uninstallResult = ShellUtils.runShellCommand("pm uninstall " + packageName);
+        Thread.sleep(3000);
+        assertThat(uninstallResult.trim()).isEqualTo("Success");
     }
 }
 

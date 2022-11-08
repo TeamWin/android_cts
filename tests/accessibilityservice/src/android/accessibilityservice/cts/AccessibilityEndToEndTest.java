@@ -1491,6 +1491,19 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
         }
     }
 
+    @Test
+    @ApiTest(apis = {
+            "android.view.accessibility.AccessibilityNodeInfo#setContainerTitle"})
+    public void testSetContainerTitle() {
+        View testView = mActivity.findViewById(R.id.buttonLayout);
+        AccessibilityNodeInfo nodeInfo = testView.createAccessibilityNodeInfo();
+        nodeInfo.setContainerTitle("Container title");
+        assertEquals("Container title", nodeInfo.getContainerTitle());
+
+        nodeInfo.setContainerTitle(null);
+        assertEquals(null, nodeInfo.getContainerTitle());
+    }
+
     private List<AccessibilityServiceInfo> getEnabledServices() {
         return ((AccessibilityManager) sInstrumentation.getContext().getSystemService(
                 Context.ACCESSIBILITY_SERVICE)).getEnabledAccessibilityServiceList(

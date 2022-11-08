@@ -82,7 +82,9 @@ public class CommonConfigLoadingTest {
             "com.android.tradefed.testtype.ArtRunTest",
             "com.android.tradefed.testtype.HostTest",
             "com.android.tradefed.testtype.GTest",
-            "com.android.tradefed.testtype.mobly.MoblyBinaryHostTest"
+            "com.android.tradefed.testtype.mobly.MoblyBinaryHostTest",
+            // VTS specific runners
+            "com.android.tradefed.testtype.binary.KernelTargetTest"
     ));
 
     /**

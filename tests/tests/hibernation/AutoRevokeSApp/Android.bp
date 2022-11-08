@@ -1,4 +1,5 @@
-// Copyright (C) 2022 The Android Open Source Project
+//
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -10,42 +11,29 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// limitations under the License
+// limitations under the License.
+//
 
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsLocaleConfigTestCases",
+android_test_helper_app {
+    name: "CtsAutoRevokeSApp",
     defaults: ["cts_defaults"],
-
+    sdk_version: "test_current",
+    min_sdk_version: "31",
+    target_sdk_version: "31",
+    // Tag this module as a cts test artifact
     test_suites: [
         "cts",
+        "vts",
+        "mts-permission",
         "general-tests",
+        "sts",
     ],
-
-    libs: [
-        "android.test.base",
-        "android.test.runner",
-    ],
-
-    static_libs: [
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
-        "cts-wm-util",
-        "junit",
-    ],
-
     srcs: [
         "src/**/*.java",
+        "src/**/*.kt",
     ],
-
-    sdk_version: "test_current",
-    data: [
-        ":ApkWithoutLocaleConfig",
-        ":ApkWithLocaleConfig",
-        ":ApkRemoveAppLocalesInLocaleConfig",
-    ],
-    per_testcase_directory: true,
 }

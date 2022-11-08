@@ -16,6 +16,8 @@
 
 package com.android.cts.localeconfig;
 
+import static android.server.wm.CliIntentExtra.extraString;
+
 import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
@@ -28,10 +30,12 @@ import android.Manifest;
 import android.app.LocaleConfig;
 import android.app.LocaleManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.LocaleList;
+import android.server.wm.ActivityManagerTestBase;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -52,12 +56,10 @@ import java.util.concurrent.TimeUnit;
  * Build/Install/Run: atest LocaleConfigAppUpdateTest
  */
 @RunWith(AndroidJUnit4.class)
-public class LocaleConfigAppUpdateTest {
+public class LocaleConfigAppUpdateTest extends ActivityManagerTestBase {
     private static final String APK_PATH = "/data/local/tmp/cts/localeconfig/";
-    private static final String APK_WITH_LOCALECONFIG =
-            APK_PATH + "ApkWithLocaleConfig.apk";
-    private static final String APK_WITHOUT_LOCALECONFIG =
-            APK_PATH + "ApkWithoutLocaleConfig.apk";
+    private static final String APK_WITH_LOCALECONFIG = APK_PATH + "ApkWithLocaleConfig.apk";
+    private static final String APK_WITHOUT_LOCALECONFIG = APK_PATH + "ApkWithoutLocaleConfig.apk";
     private static final String APK_REMOVEAPPLOCALES_INLOCALECONFIG =
             APK_PATH + "ApkRemoveAppLocalesInLocaleConfig.apk";
     private static final String TEST_PACKAGE = "com.android.cts.localeconfiginorout";
@@ -86,22 +88,19 @@ public class LocaleConfigAppUpdateTest {
     @Test
     public void testUpgradedApk_KeepLocaleConfig_keepAppLocales() throws Exception {
         install(APK_WITH_LOCALECONFIG);
-        LocaleList setAppLocales = LocaleList.forLanguageTags("fr");
-        runWithShellPermissionIdentity(() ->
-                mLocaleManager.setApplicationLocales(TEST_PACKAGE, setAppLocales));
-        LocaleList getAppLocales = callWithShellPermissionIdentity(() ->
-                        mLocaleManager.getApplicationLocales(TEST_PACKAGE),
-                Manifest.permission.READ_APP_SPECIFIC_LOCALES);
-
-        assertEquals(setAppLocales, getAppLocales);
-
+        LocaleList expectedLocales = LocaleList.forLanguageTags("fr");
+        runWithShellPermissionIdentity(
+                () -> mLocaleManager.setApplicationLocales(TEST_PACKAGE, expectedLocales),
+                Manifest.permission.CHANGE_CONFIGURATION);
+        Thread.sleep(1000);
+        verifyLocalesCorrectlySetForAnotherApp(TEST_PACKAGE, expectedLocales);
 
         install(APK_WITH_LOCALECONFIG);
         LocaleList getAppLocales_afterUpgraded = callWithShellPermissionIdentity(() ->
                         mLocaleManager.getApplicationLocales(TEST_PACKAGE),
                 Manifest.permission.READ_APP_SPECIFIC_LOCALES);
 
-        assertEquals(setAppLocales, getAppLocales_afterUpgraded);
+        assertEquals(expectedLocales, getAppLocales_afterUpgraded);
     }
 
     /**
@@ -116,12 +115,12 @@ public class LocaleConfigAppUpdateTest {
     @Test
     public void testUpgradedApk_setFromApp_KeepAppLocales() throws Exception {
         install(APK_WITHOUT_LOCALECONFIG);
-        executeSetApplicationLocalesCommand(TEST_PACKAGE, "fr", "false");
-        LocaleList appLocales = callWithShellPermissionIdentity(() ->
-                        mLocaleManager.getApplicationLocales(TEST_PACKAGE),
-                Manifest.permission.READ_APP_SPECIFIC_LOCALES);
-
-        assertEquals(LocaleList.forLanguageTags("fr"), appLocales);
+        // Tell the app to set its app-specific locales
+        launchActivity(new ComponentName(TEST_PACKAGE, TEST_PACKAGE + ".MainActivity"),
+                extraString("set_locales", "fr"));
+        Thread.sleep(1000);
+        LocaleList expectedLocales = LocaleList.forLanguageTags("fr");
+        verifyLocalesCorrectlySetForAnotherApp(TEST_PACKAGE, expectedLocales);
 
         install(APK_WITHOUT_LOCALECONFIG);
         Context appContext = mContext.createPackageContext(TEST_PACKAGE, 0);
@@ -135,7 +134,7 @@ public class LocaleConfigAppUpdateTest {
                         mLocaleManager.getApplicationLocales(TEST_PACKAGE),
                 Manifest.permission.READ_APP_SPECIFIC_LOCALES);
 
-        assertEquals(LocaleList.forLanguageTags("fr"), upgradedAppLocales);
+        assertEquals(expectedLocales, upgradedAppLocales);
     }
 
     /**
@@ -149,14 +148,12 @@ public class LocaleConfigAppUpdateTest {
     @Test
     public void testUpgradedApk_removeLocaleConfig_ClearAppLocales() throws Exception {
         install(APK_WITH_LOCALECONFIG);
-        LocaleList setAppLocales = LocaleList.forLanguageTags("fr");
-        runWithShellPermissionIdentity(() ->
-                mLocaleManager.setApplicationLocales(TEST_PACKAGE, setAppLocales));
-        LocaleList getAppLocales = callWithShellPermissionIdentity(() ->
-                        mLocaleManager.getApplicationLocales(TEST_PACKAGE),
-                Manifest.permission.READ_APP_SPECIFIC_LOCALES);
-
-        assertEquals(setAppLocales, getAppLocales);
+        LocaleList expectedLocales = LocaleList.forLanguageTags("fr");
+        runWithShellPermissionIdentity(
+                () -> mLocaleManager.setApplicationLocales(TEST_PACKAGE, expectedLocales),
+                Manifest.permission.CHANGE_CONFIGURATION);
+        Thread.sleep(1000);
+        verifyLocalesCorrectlySetForAnotherApp(TEST_PACKAGE, expectedLocales);
 
         BlockingBroadcastReceiver appSpecificLocaleBroadcastReceiver =
                 new BlockingBroadcastReceiver();
@@ -194,14 +191,12 @@ public class LocaleConfigAppUpdateTest {
     @Test
     public void testUpgradedApk_removeAppLocalesInLocaleConfig_ClearAppLocales() throws Exception {
         install(APK_WITH_LOCALECONFIG);
-        LocaleList setAppLocales = LocaleList.forLanguageTags("fr");
-        runWithShellPermissionIdentity(() ->
-                mLocaleManager.setApplicationLocales(TEST_PACKAGE, setAppLocales));
-        LocaleList getAppLocales = callWithShellPermissionIdentity(() ->
-                        mLocaleManager.getApplicationLocales(TEST_PACKAGE),
-                Manifest.permission.READ_APP_SPECIFIC_LOCALES);
-
-        assertEquals(setAppLocales, getAppLocales);
+        LocaleList expectedLocales = LocaleList.forLanguageTags("fr");
+        runWithShellPermissionIdentity(
+                () -> mLocaleManager.setApplicationLocales(TEST_PACKAGE, expectedLocales),
+                Manifest.permission.CHANGE_CONFIGURATION);
+        Thread.sleep(1000);
+        verifyLocalesCorrectlySetForAnotherApp(TEST_PACKAGE, expectedLocales);
 
         BlockingBroadcastReceiver appSpecificLocaleBroadcastReceiver =
                 new BlockingBroadcastReceiver();
@@ -231,16 +226,14 @@ public class LocaleConfigAppUpdateTest {
         Thread.sleep(3000);
         assertThat(uninstallResult.trim()).isEqualTo("Success");
     }
-    private void executeSetApplicationLocalesCommand(String packageName, String languageTags,
-            String fromDelegate) throws Exception {
-        ShellUtils.runShellCommand(
-                String.format(
-                        "cmd locale set-app-locales %s --user 0 --locales %s --delegate %s",
-                        packageName,
-                        languageTags,
-                        fromDelegate
-                )
-        );
+
+    private void verifyLocalesCorrectlySetForAnotherApp(String packageName,
+            LocaleList expectedLocales) throws Exception {
+        LocaleList getAppLocales = callWithShellPermissionIdentity(
+                () -> mLocaleManager.getApplicationLocales(packageName),
+                Manifest.permission.READ_APP_SPECIFIC_LOCALES);
+
+        assertEquals(expectedLocales, getAppLocales);
     }
 
     private static final class BlockingBroadcastReceiver extends BroadcastReceiver {

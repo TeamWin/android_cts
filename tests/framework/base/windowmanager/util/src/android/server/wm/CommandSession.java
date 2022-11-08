@@ -316,8 +316,8 @@ public final class CommandSession {
             if (incomingToken == mPendingRequestToken) {
                 mPendingResponse.setResult(reply);
             } else {
-                throw new IllegalStateException("Mismatched token: incoming=" + incomingToken
-                        + " pending=" + mPendingRequestToken);
+                Log.e(TAG, "Mismatched token: incoming=" + incomingToken + " pending="
+                        + mPendingRequestToken + ". Ignoring this reply.");
             }
         }
 

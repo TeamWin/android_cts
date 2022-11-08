@@ -187,6 +187,18 @@ public class FontManagerTest {
     }
 
     @Test
+    public void fontManager_insertDebugCertPermissionTest() throws Exception {
+        UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+
+        ui.adoptShellPermissionIdentity(Manifest.permission.UPDATE_FONTS);
+        try {
+            assertSecurityException("insert-debug-cert");
+        } finally {
+            ui.dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
     public void fontManager_updateFontFile_negativeBaseVersion() throws Exception {
         FontManager fm = getContext().getSystemService(FontManager.class);
         assertThat(fm).isNotNull();

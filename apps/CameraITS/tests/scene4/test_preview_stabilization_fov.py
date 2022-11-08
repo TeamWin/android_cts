@@ -245,9 +245,9 @@ class PreviewStabilizationFoVTest(its_base_test.ItsBaseTest):
 
         # Ensure the circles are equally round w/ and w/o stabilization
         ustab_roundness = ustab_circle['w'] / ustab_circle['h']
-        logging.debug('unstabilized roundess: %f', ustab_roundness)
+        logging.debug('unstabilized roundness: %f', ustab_roundness)
         stab_roundness = stab_circle['w'] / stab_circle['h']
-        logging.debug('stabilized roundess: %f', stab_roundness)
+        logging.debug('stabilized roundness: %f', stab_roundness)
 
         roundness_diff = abs(stab_roundness - ustab_roundness)
         if roundness_diff > _ROUNDESS_DELTA_THRESHOLD:

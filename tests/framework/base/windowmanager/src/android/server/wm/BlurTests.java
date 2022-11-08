@@ -63,7 +63,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 @Presubmit
-@FlakyTest(detail = "Promote once confirmed non-flaky")
 public class BlurTests extends WindowManagerTestBase {
     private static final int BACKGROUND_BLUR_PX = 80;
     private static final int BLUR_BEHIND_PX = 40;
