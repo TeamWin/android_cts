@@ -16,19 +16,13 @@
 
 package android.jobscheduler.cts;
 
-import static android.jobscheduler.cts.ConnectivityConstraintTest.setWifiState;
-
 import android.app.job.JobInfo;
 import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
-import android.net.wifi.WifiManager;
 import android.os.UserHandle;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
-
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.SystemUtil;
@@ -45,13 +39,15 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
     private String mPreviousLowPowerTriggerLevel;
 
     private DeviceConfigStateHelper mAlarmManagerDeviceConfigStateHelper;
+    private NetworkingHelper mNetworkingHelper;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
         mBuilder = new JobInfo.Builder(FLEXIBLE_JOB_ID, kJobServiceComponent);
-        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        mUiDevice = UiDevice.getInstance(getInstrumentation());
+        mNetworkingHelper = new NetworkingHelper(getInstrumentation(), getContext());
 
         mAlarmManagerDeviceConfigStateHelper =
                 new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ALARM_MANAGER);
@@ -260,14 +256,15 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         if (!deviceSupportsFlexConstraints()) {
             return;
         }
-        PackageManager packageManager = mContext.getPackageManager();
-        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI)) {
+        if (mNetworkingHelper.hasEthernetConnection()) {
+            Log.d(TAG, "Can't run test with an active ethernet connection");
+            return;
+        }
+        if (!mNetworkingHelper.hasWifiFeature()) {
             Log.d(TAG, "Skipping test that requires the device be WiFi enabled.");
             return;
         }
-
-        WifiManager mWifiManager = mContext.getSystemService(WifiManager.class);
-        ConnectivityManager mCm = mContext.getSystemService(ConnectivityManager.class);
+        mNetworkingHelper.setWifiMeteredState(true);
 
         mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
         scheduleJobToExecute();
@@ -278,8 +275,7 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         Thread.sleep(12_000);
 
         assertJobNotReady();
-        setWifiState(true, mCm, mWifiManager);
-        toggleIdle(false);
+        mNetworkingHelper.setWifiMeteredState(false);
         Thread.sleep(1_000);
 
         runJob();
@@ -315,6 +311,11 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         if (!deviceSupportsFlexConstraints()) {
             return;
         }
+        if (!mNetworkingHelper.hasWifiFeature()) {
+            Log.d(TAG, "Skipping test that requires WiFi.");
+            return;
+        }
+        mNetworkingHelper.setWifiMeteredState(false);
         mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED);
         scheduleJobToExecute();
         assertJobNotReady();

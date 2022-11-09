@@ -507,6 +507,8 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
             List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
             for (Integer extension : supportedExtensions) {
+                boolean captureProgressSupported = extensionChars.isCaptureProcessProgressAvailable(
+                        extension);
                 for (int captureFormat : SUPPORTED_CAPTURE_OUTPUT_FORMATS) {
                     List<Size> extensionSizes = extensionChars.getExtensionSupportedSizes(extension,
                             captureFormat);
@@ -568,6 +570,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                             }
                             CaptureRequest request = captureBuilder.build();
                             long startTimeMs = SystemClock.elapsedRealtime();
+                            captureCallback.resetCaptureProgress();
                             int sequenceId = extensionSession.capture(request,
                                     new HandlerExecutor(mTestRule.getHandler()), captureCallback);
 
@@ -599,6 +602,12 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                                         timeout(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS).times(1))
                                         .onCaptureResultAvailable(eq(extensionSession), eq(request),
                                                 any(TotalCaptureResult.class));
+                            }
+                            if (captureProgressSupported) {
+                                verify(captureMockCallback,
+                                        timeout(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS).times(1))
+                                    .onCaptureProcessProgressed(eq(extensionSession),
+                                            eq(request), eq(100));
                             }
                         }
 
@@ -903,6 +912,8 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                                 .onCaptureResultAvailable(eq(extensionSession),
                                         eq(repeatingRequest), any(TotalCaptureResult.class));
                     }
+                    verify(repeatingCallbackMock, times(0)).onCaptureProcessProgressed(
+                            any(CameraExtensionSession.class), any(CaptureRequest.class), anyInt());
 
                     captureBuilder = mTestRule.getCamera().createCaptureRequest(
                             android.hardware.camera2.CameraDevice.TEMPLATE_STILL_CAPTURE);
@@ -1042,6 +1053,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         private int mNumFramesArrived = 0;
         private int mNumFramesStarted = 0;
         private int mNumFramesFailed = 0;
+        private int mLastProgressValue = -1;
         private boolean mNonIncreasingTimestamps = false;
         private HashSet<Long> mExpectedResultTimestamps = new HashSet<>();
         private final CameraExtensionSession.ExtensionCaptureCallback mProxy;
@@ -1069,6 +1081,10 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
             mFlashStateListener = flashState;
             mAEStateListener = aeState;
             mPerFrameControl = perFrameControl;
+        }
+
+        public void resetCaptureProgress() {
+            mLastProgressValue = -1;
         }
 
         @Override
@@ -1116,6 +1132,24 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                                                int sequenceId) {
             if (mProxy != null) {
                 mProxy.onCaptureSequenceCompleted(session, sequenceId);
+            }
+        }
+
+        @Override
+        public void onCaptureProcessProgressed(CameraExtensionSession session,
+                CaptureRequest request, int progress) {
+            if ((progress < 0) || (progress > 100)) {
+                mCollector.addMessage("Capture progress invalid value: " + progress);
+                return;
+            }
+            if (mLastProgressValue >= progress) {
+                mCollector.addMessage("Unexpected progress value: " + progress +
+                        " last progress value: " + mLastProgressValue);
+                return;
+            }
+            mLastProgressValue = progress;
+            if (mProxy != null) {
+                mProxy.onCaptureProcessProgressed(session, request, progress);
             }
         }
 

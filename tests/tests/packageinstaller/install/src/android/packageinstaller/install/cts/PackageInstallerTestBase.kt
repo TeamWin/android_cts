@@ -51,7 +51,6 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import org.junit.After
 import org.junit.Assert
-import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Rule
 
@@ -356,14 +355,6 @@ open class PackageInstallerTestBase {
     fun installTestPackage() {
         uiDevice.executeShellCommand("pm install " +
                 File(TEST_APK_LOCATION, TEST_APK_NAME).canonicalPath)
-    }
-
-    fun assumeNotWatch() {
-        assumeFalse("Installing APKs not supported on watch", hasFeatureWatch())
-    }
-
-    private fun hasFeatureWatch(): Boolean {
-        return pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
     }
 
     protected fun preparePreapprovalDetails(): PreapprovalDetails {

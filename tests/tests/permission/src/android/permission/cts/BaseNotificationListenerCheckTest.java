@@ -24,6 +24,7 @@ import static android.permission.cts.TestUtils.eventually;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+import static com.android.compatibility.common.util.SystemUtil.waitForBroadcasts;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -86,7 +87,7 @@ public class BaseNotificationListenerCheckTest {
             "notification_listener_check_interval_millis";
 
     protected static final Long OVERRIDE_NOTIFICATION_LISTENER_CHECK_INTERVAL_MILLIS =
-            SECONDS.toMillis(1);
+            SECONDS.toMillis(0);
 
     private static final String ACTION_SET_UP_NOTIFICATION_LISTENER_CHECK =
             "com.android.permissioncontroller.action.SET_UP_NOTIFICATION_LISTENER_CHECK";
@@ -315,6 +316,7 @@ public class BaseNotificationListenerCheckTest {
                     .setFlags(FLAG_RECEIVER_FOREGROUND)
                     .setPackage(PERMISSION_CONTROLLER_PKG));
         }
+        waitForBroadcasts();
 
         // Wait until jobs are set up
         TestUtils.awaitJobUntilRequestedState(

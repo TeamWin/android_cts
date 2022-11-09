@@ -27,16 +27,12 @@ import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @AppModeFull(reason = "Instant apps cannot create installer sessions")
 @RunWith(AndroidJUnit4::class)
 class SessionTest : PackageInstallerTestBase() {
-
-    @get:Rule
-    val excludeWatch = ExcludeWatch("Installing APKs not supported on watch", pm)
 
     /**
      * Check that we can install an app via a package-installer session

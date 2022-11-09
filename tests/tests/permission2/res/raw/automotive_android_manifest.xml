@@ -150,10 +150,6 @@
                 android:protectionLevel="signature|privileged"
                 android:label="@string/car_permission_label_car_epoch_time"
                 android:description="@string/car_permission_desc_car_epoch_time"/>
-    <permission android:name="android.car.permission.STORAGE_ENCRYPTION_BINDING_SEED"
-                android:protectionLevel="signature|privileged"
-                android:label="@string/car_permission_label_encryption_binding_seed"
-                android:description="@string/car_permission_desc_encryption_binding_seed"/>
     <permission android:name="android.car.permission.CAR_EXTERIOR_LIGHTS"
          android:protectionLevel="signature|privileged"
          android:label="@string/car_permission_label_car_exterior_lights"

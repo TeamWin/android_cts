@@ -303,7 +303,7 @@ public class ConnectivityManagerTestOnMockModem {
         sMockModemManager.insertSimCard(slotId, MOCK_SIM_PROFILE_ID_TWN_CHT);
 
         // Enter Service
-        Log.d(TAG, "testServiceStateChange: Enter Service");
+        Log.d(TAG, "testNetworkValidated: Enter Service");
         sMockModemManager.changeNetworkService(slotId, MOCK_SIM_PROFILE_ID_TWN_CHT, true);
 
         // make sure the network is available
@@ -315,6 +315,10 @@ public class ConnectivityManagerTestOnMockModem {
         waitForExpectedValidationState(true, TIMEOUT_NETWORK_VALIDATION);
         TimeUnit.SECONDS.sleep(2);
         assertTrue(getNetworkValidated());
+
+        // Leave Service
+        Log.d(TAG, "testNetworkValidated: Leave Service");
+        sMockModemManager.changeNetworkService(slotId, MOCK_SIM_PROFILE_ID_TWN_CHT, false);
 
         // Remove the SIM
         sMockModemManager.removeSimCard(slotId);

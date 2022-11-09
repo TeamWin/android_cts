@@ -105,12 +105,10 @@ public class NotificationListenerCheckTest extends BaseNotificationListenerCheck
 
     @Test
     public void notificationIsShownOnlyOnce() throws Throwable {
-        setDeviceConfigPrivacyProperty(PROPERTY_NOTIFICATION_LISTENER_CHECK_INTERVAL_MILLIS, "0");
         runNotificationListenerCheck();
         eventually(() -> assertNotNull(getNotification(true)), UNEXPECTED_TIMEOUT_MILLIS);
 
         runNotificationListenerCheck();
-
         ensure(() -> assertNull("Expected no notifications", getNotification(false)),
                 ENSURE_NOTIFICATION_NOT_SHOWN_EXPECTED_TIMEOUT_MILLIS);
     }
@@ -118,11 +116,9 @@ public class NotificationListenerCheckTest extends BaseNotificationListenerCheck
     @Test
     public void notificationIsShownAgainAfterClear() throws Throwable {
         runNotificationListenerCheck();
-
         eventually(() -> assertNotNull(getNotification(true)), UNEXPECTED_TIMEOUT_MILLIS);
 
         clearAppState(TEST_APP_PKG);
-
         // Wait until package is cleared and permission controller has cleared the state
         Thread.sleep(2000);
 
@@ -154,7 +150,6 @@ public class NotificationListenerCheckTest extends BaseNotificationListenerCheck
     @Test
     public void notificationIsShownAgainAfterDisableAndReenableAppNotificationListener()
             throws Throwable {
-        setDeviceConfigPrivacyProperty(PROPERTY_NOTIFICATION_LISTENER_CHECK_INTERVAL_MILLIS, "0");
         runNotificationListenerCheck();
 
         eventually(() -> assertNotNull(getNotification(true)), UNEXPECTED_TIMEOUT_MILLIS);

@@ -764,28 +764,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
-    public void testNoHiddenActivityFoundTest() throws Exception {
-        try {
-            // Install app to primary user
-            installAppAsUser(BaseLauncherAppsTest.LAUNCHER_TESTS_APK, mPrimaryUserId);
-            installAppAsUser(BaseLauncherAppsTest.LAUNCHER_TESTS_SUPPORT_APK, mPrimaryUserId);
-            installAppAsUser(LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK, mPrimaryUserId);
-
-            // Run test to check if launcher api shows hidden app
-            String mSerialNumber = Integer.toString(getUserSerialNumber(mPrimaryUserId));
-            runDeviceTestsAsUser(BaseLauncherAppsTest.LAUNCHER_TESTS_PKG,
-                    BaseLauncherAppsTest.LAUNCHER_TESTS_CLASS,
-                    "testDoPoNoTestAppInjectedActivityFound",
-                    mPrimaryUserId, Collections.singletonMap(BaseLauncherAppsTest.PARAM_TEST_USER,
-                            mSerialNumber));
-        } finally {
-            getDevice().uninstallPackage(LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK);
-            getDevice().uninstallPackage(BaseLauncherAppsTest.LAUNCHER_TESTS_SUPPORT_APK);
-            getDevice().uninstallPackage(BaseLauncherAppsTest.LAUNCHER_TESTS_APK);
-        }
-    }
-
-    @Test
     public void testSetGlobalSettingLogged() throws Exception {
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".DevicePolicyLoggingTest", "testSetGlobalSettingLogged");

@@ -21,7 +21,6 @@ import static org.junit.Assert.assertNotNull;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
@@ -38,14 +37,9 @@ import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
-import org.junit.AssumptionViolatedException;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
 import org.junit.runner.RunWith;
-import org.junit.runners.model.Statement;
 
 @RunWith(AndroidJUnit4.class)
 @MediumTest
@@ -64,11 +58,8 @@ public class TapjackingTest {
     private Context mContext = InstrumentationRegistry.getTargetContext();
     private String mPackageName;
     private UiDevice mUiDevice;
-    boolean isWatch = mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
-    ActivityScenario<TestActivity> mScenario;
 
-    @Rule
-    public final RequiredRule mRequiredRule = new RequiredRule(isWatch);
+    ActivityScenario<TestActivity> mScenario;
 
     @Before
     public void setUp() throws Exception {
@@ -124,26 +115,6 @@ public class TapjackingTest {
     @After
     public void tearDown() throws Exception {
         mUiDevice.pressHome();
-    }
-
-    private static final class RequiredRule implements TestRule {
-        boolean mIsWatch;
-        RequiredRule(boolean isWatch) {
-            mIsWatch = isWatch;
-        }
-        @Override
-        public Statement apply(Statement base, Description description) {
-            return new Statement() {
-
-                @Override
-                public void evaluate() throws Throwable {
-                    if (mIsWatch) {
-                        throw new AssumptionViolatedException("Install/uninstall feature is not supported on WearOs");
-                    }
-                    base.evaluate();
-                }
-            };
-        }
     }
 
     public static final class TestActivity extends Activity {

@@ -116,21 +116,6 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
                 mParentUserId, Collections.singletonMap(PARAM_TEST_USER, mMainUserSerialNumber));
     }
 
-    @Test
-    public void testNoHiddenActivityInProfile() throws Exception {
-        // Install app for all users.
-        installAppAsUser(LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK, mParentUserId);
-        installAppAsUser(LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK, mProfileUserId);
-
-        // Run tests to check SimpleApp exists in both profile and main user.
-        runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
-                LAUNCHER_TESTS_CLASS, "testDoPoNoTestAppInjectedActivityFound",
-                mParentUserId, Collections.singletonMap(PARAM_TEST_USER, mProfileSerialNumber));
-        runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
-                LAUNCHER_TESTS_CLASS, "testHasLauncherActivityAppHasAppDetailsActivityInjected",
-                mParentUserId, Collections.singletonMap(PARAM_TEST_USER, mMainUserSerialNumber));
-    }
-
     @FlakyTest
     @Test
     public void testLauncherCallbackPackageAddedProfile() throws Exception {

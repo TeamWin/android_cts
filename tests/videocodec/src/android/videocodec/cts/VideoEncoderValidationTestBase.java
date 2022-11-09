@@ -76,9 +76,9 @@ public class VideoEncoderValidationTestBase extends CodecEncoderTestBase {
         }
     }
 
-    protected static final CompressedResource RIVER_FULLHD_LANDSCAPE =
-            new CompressedResource(MediaFormat.MIMETYPE_VIDEO_AVC,
-                    MEDIA_DIR + "AVICON-MOBILE-River-SO03-CRW01-L-420-8bit-SDR-1080p-30fps.mp4");
+    protected static final CompressedResource BIRTHDAY_FULLHD_LANDSCAPE =
+            new CompressedResource(MediaFormat.MIMETYPE_VIDEO_AVC, MEDIA_DIR
+                    + "AVICON-MOBILE-BirthdayHalfway-SI17-CRUW03-L-420-8bit-SDR-1080p-30fps.mp4");
     protected static final CompressedResource SELFIEGROUP_FULLHD_PORTRAIT =
             new CompressedResource(MediaFormat.MIMETYPE_VIDEO_AVC, MEDIA_DIR
                     + "AVICON-MOBILE-SelfieGroupGarden-SF15-CF01-P-420-8bit-SDR-1080p-30fps.mp4");

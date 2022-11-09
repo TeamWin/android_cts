@@ -114,7 +114,7 @@ public class VideoEncoderTargetBitrateTest extends VideoEncoderValidationTestBas
 
     @Parameterized.Parameters(name = "{index}({0}_{1}_{8})")
     public static Collection<Object[]> input() {
-        addParams(1920, 1080, RIVER_FULLHD_LANDSCAPE);
+        addParams(1920, 1080, BIRTHDAY_FULLHD_LANDSCAPE);
         addParams(1080, 1920, SELFIEGROUP_FULLHD_PORTRAIT);
         return prepareParamList(exhaustiveArgsList, true, false, true, false, HARDWARE);
     }

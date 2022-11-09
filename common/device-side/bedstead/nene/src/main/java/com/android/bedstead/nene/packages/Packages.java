@@ -44,6 +44,7 @@ import androidx.annotation.CheckResult;
 import androidx.annotation.RequiresApi;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.activities.ActivityReference;
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.AdbParseException;
@@ -533,6 +534,21 @@ public final class Packages {
             throw new NullPointerException();
         }
         return new Package(packageName);
+    }
+
+    /**
+     * Get a reference to a given {@code componentName} activity.
+     *
+     * <p>This does not guarantee that the component exists - nor that it is actually an activity.
+     */
+    @Experimental
+    public ActivityReference activity(ComponentName componentName) {
+        if (componentName == null) {
+            throw new NullPointerException();
+        }
+
+        return new ActivityReference(
+                find(componentName.getPackageName()), componentName.getClassName());
     }
 
     /**

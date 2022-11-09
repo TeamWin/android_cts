@@ -35,8 +35,6 @@ class InstallSourceInfoTest : PackageInstallerTestBase() {
 
     @Test
     fun installViaIntent() {
-        assumeNotWatch()
-
         val packageInstallerPackageName = getPackageInstallerPackageName()
 
         val installation = startInstallationViaIntent()
@@ -53,8 +51,6 @@ class InstallSourceInfoTest : PackageInstallerTestBase() {
 
     @Test
     fun installViaAdb() {
-        assumeNotWatch()
-
         uiDevice.executeShellCommand("pm install $TEST_APK_LOCATION/$TEST_APK_NAME")
 
         val info = pm.getInstallSourceInfo(TEST_APK_PACKAGE_NAME)
@@ -80,8 +76,6 @@ class InstallSourceInfoTest : PackageInstallerTestBase() {
     }
 
     private fun installViaSession(packageSource: Int?) {
-        assumeNotWatch()
-
         startInstallationViaSessionWithPackageSource(packageSource)
         clickInstallerUIButton(INSTALL_BUTTON_ID)
 

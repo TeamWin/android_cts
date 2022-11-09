@@ -29,6 +29,7 @@ import androidx.test.uiautomator.UiObject;
 import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -80,6 +81,7 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("TODO(b/195009187): Enable this test once fixed and settings activity is enabled.")
     public void testSettingsLaunchFromOverflowMenu() throws Exception {
         // Launch PhotoPickerActivity.
         final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);

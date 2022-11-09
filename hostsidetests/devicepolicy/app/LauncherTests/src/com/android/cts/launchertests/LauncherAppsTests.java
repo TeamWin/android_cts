@@ -254,56 +254,6 @@ public class LauncherAppsTests {
     }
 
     @Test
-    public void testHasLauncherActivityAppHasAppDetailsActivityInjected() throws Exception {
-        assumeNotHeadlessSystemUserMode();
-
-        // HasLauncherActivityApp is installed for duration of this test - make sure
-        // it's present on the activity list, has the synthetic activity generated, and it's
-        // enabled and exported
-        disableLauncherActivity();
-        assertActivityInjected(HAS_LAUNCHER_ACTIVITY_APP_PACKAGE);
-    }
-
-    @Test
-    public void testGetSetSyntheticAppDetailsActivityEnabled() throws Exception {
-        assumeNotHeadlessSystemUserMode();
-
-        disableLauncherActivity();
-        assertActivityInjected(HAS_LAUNCHER_ACTIVITY_APP_PACKAGE);
-        PackageManager pm = mContext.getPackageManager();
-        try {
-            pm.setSyntheticAppDetailsActivityEnabled(mContext.getPackageName(), false);
-            fail("Should not able to change current app's app details activity state");
-        } catch (SecurityException e) {
-            // Expected: No permission
-        }
-        try {
-            pm.setSyntheticAppDetailsActivityEnabled(HAS_LAUNCHER_ACTIVITY_APP_PACKAGE, false);
-            fail("Should not able to change other app's app details activity state");
-        } catch (SecurityException e) {
-            // Expected: No permission
-        }
-        mInstrumentation.getUiAutomation().adoptShellPermissionIdentity();
-        try {
-            assertThat(pm.getSyntheticAppDetailsActivityEnabled(HAS_LAUNCHER_ACTIVITY_APP_PACKAGE))
-                    .isTrue();
-            // Disable app details activity and assert if the change is applied
-            pm.setSyntheticAppDetailsActivityEnabled(HAS_LAUNCHER_ACTIVITY_APP_PACKAGE, false);
-            assertThat(pm.getSyntheticAppDetailsActivityEnabled(HAS_LAUNCHER_ACTIVITY_APP_PACKAGE))
-                    .isFalse();
-            assertInjectedActivityNotFound(HAS_LAUNCHER_ACTIVITY_APP_PACKAGE);
-            // Enable app details activity and assert if the change is applied
-            pm.setSyntheticAppDetailsActivityEnabled(HAS_LAUNCHER_ACTIVITY_APP_PACKAGE, true);
-            assertThat(pm.getSyntheticAppDetailsActivityEnabled(HAS_LAUNCHER_ACTIVITY_APP_PACKAGE))
-                    .isTrue();
-            assertActivityInjected(HAS_LAUNCHER_ACTIVITY_APP_PACKAGE);
-        } finally {
-            mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
-        }
-    }
-
-
-    @Test
     public void testProfileOwnerLauncherActivityInjected() throws Exception {
         assertActivityInjected(MANAGED_PROFILE_PKG);
     }
@@ -322,14 +272,7 @@ public class LauncherAppsTests {
         assertInjectedActivityNotFound(NO_PERMISSION_APP_PACKAGE);
     }
 
-    @Test
-    public void testDoPoNoTestAppInjectedActivityFound() throws Exception {
-        // HasLauncherActivityApp is installed for duration of this test - make sure
-        // it's NOT present on the activity list For example, DO / PO mode won't show icons.
-        // This test is being called by DeviceOwnerTest.
-        disableLauncherActivity();
-        assertInjectedActivityNotFound(HAS_LAUNCHER_ACTIVITY_APP_PACKAGE);
-    }
+
 
     @Test
     public void testProfileOwnerInjectedActivityNotFound() throws Exception {
