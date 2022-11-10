@@ -18,7 +18,6 @@ package android.mediapc.cts.common;
 
 import static android.util.DisplayMetrics.DENSITY_400;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityManager;
@@ -65,7 +64,7 @@ public class Utils {
     // Android T Media performance requires 8 GB min RAM, so setting lower as above
     public static final long MIN_MEMORY_PERF_CLASS_T_MB = 7 * 1024;
 
-    public static final boolean MEETS_AVC_CODEC_MINIMUM_REQUIREMENTS;
+    private static final boolean MEETS_AVC_CODEC_PRECONDITIONS;
     static {
         // with a default-media-performance-class that can be configured through a command line
         // argument.
@@ -103,7 +102,7 @@ public class Utils {
             DISPLAY_SHORT_PIXELS = 0;
             TOTAL_MEMORY_MB = 0;
         }
-        MEETS_AVC_CODEC_MINIMUM_REQUIREMENTS = meetsAvcCodecMinimumRequirements();
+        MEETS_AVC_CODEC_PRECONDITIONS = meetsAvcCodecPreconditions();
     }
 
     /**
@@ -139,7 +138,7 @@ public class Utils {
                 && !pm.hasSystemFeature(pm.FEATURE_AUTOMOTIVE);
     }
 
-    private static boolean avcCodecMeetsRequirements(boolean isEncoder) {
+    private static boolean meetsAvcCodecPreconditions(boolean isEncoder) {
         // Latency tests need the following instances of codecs at 30 fps
         // 1920x1080 encoder in MediaRecorder for load conditions
         // 1920x1080 decoder and 1920x1080 encoder for load conditions
@@ -169,7 +168,12 @@ public class Utils {
         MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType(avcMediaType);
         List<PerformancePoint> pps =
                 caps.getVideoCapabilities().getSupportedPerformancePoints();
-        assertTrue(info.getName() + " doesn't advertise performance points", pps.size() > 0);
+        if (pps == null || pps.size() == 0) {
+            Log.w(TAG, info.getName() + " doesn't advertise performance points. Assuming codec "
+                    + "meets the requirements");
+            codec.release();
+            return true;
+        }
         boolean supportsRequiredRate = false;
         for (PerformancePoint pp : pps) {
             if (pp.covers(pp1080p)) {
@@ -186,9 +190,9 @@ public class Utils {
         return supportsRequiredRate && supportsRequiredSize && supportsRequiredInstances;
     }
 
-    private static boolean meetsAvcCodecMinimumRequirements() {
-        return avcCodecMeetsRequirements(/* isEncoder */ true)
-                && avcCodecMeetsRequirements(/* isEncoder */ false);
+    private static boolean meetsAvcCodecPreconditions() {
+        return meetsAvcCodecPreconditions(/* isEncoder */ true)
+                && meetsAvcCodecPreconditions(/* isEncoder */ false);
     }
 
     public static int getPerfClass() {
@@ -212,7 +216,7 @@ public class Utils {
                 || DISPLAY_DPI < MIN_DISPLAY_CANDIDATE_DPI
                 || DISPLAY_LONG_PIXELS < MIN_DISPLAY_LONG_CANDIDATE_PIXELS
                 || DISPLAY_SHORT_PIXELS < MIN_DISPLAY_SHORT_CANDIDATE_PIXELS
-                || !MEETS_AVC_CODEC_MINIMUM_REQUIREMENTS) {
+                || !MEETS_AVC_CODEC_PRECONDITIONS) {
             return false;
         }
         return true;

@@ -390,9 +390,6 @@ public class BuildTest extends TestCase {
                 Build.VERSION.MEDIA_PERFORMANCE_CLASS <= Build.VERSION.RESOURCES_SDK_INT);
     }
 
-    static final String RO_DEBUGGABLE = "ro.debuggable";
-    private static final String RO_SECURE = "ro.secure";
-
     /**
      * Assert that the device is a secure, not debuggable user build.
      *
@@ -404,11 +401,10 @@ public class BuildTest extends TestCase {
      */
     @RestrictedBuildTest
     @AppModeFull(reason = "Instant apps cannot access APIs")
-    public void testIsSecureUserBuild() throws IOException {
+    public void testIsSecureUserBuild() {
         assertEquals("Must be a user build", "user", Build.TYPE);
-        assertProperty("Must be a non-debuggable build", RO_DEBUGGABLE, "0");
         assertFalse("Must be a non-debuggable build", Build.isDebuggable());
-        assertProperty("Must be a secure build", RO_SECURE, "1");
+        assertTrue("Must be a secure build", Build.isSecure());
     }
 
     private void assertNotEmpty(String value) {

@@ -287,7 +287,7 @@ public final class BackgroundDexOptimizationTest extends BaseHostJUnit4Test {
         for (String line: getDexOptDumpForBgDexOpt()) {
             String[] vals = line.split(":");
             switch (vals[0]) {
-                case "mLastExecutionStartTimeMs":
+                case "mLastExecutionStartUptimeMs":
                     startTime = Long.parseLong(vals[1]);
                     break;
                 case "mLastExecutionDurationMs":

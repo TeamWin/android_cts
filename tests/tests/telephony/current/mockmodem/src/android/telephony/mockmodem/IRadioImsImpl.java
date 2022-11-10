@@ -25,7 +25,6 @@ import android.hardware.radio.ims.IRadioImsResponse;
 import android.os.RemoteException;
 import android.util.Log;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class IRadioImsImpl extends IRadioIms.Stub {
@@ -38,7 +37,7 @@ public class IRadioImsImpl extends IRadioIms.Stub {
     private final int mSubId;
     private final String mTag;
 
-    private final List<MockSrvccCall> mSrvccCalls = new ArrayList<>();
+    private final MockImsService mImsState = new MockImsService();
 
     public IRadioImsImpl(
             MockModemService service, MockModemConfigInterface configInterface, int instanceId) {
@@ -64,12 +63,7 @@ public class IRadioImsImpl extends IRadioIms.Stub {
     public void setSrvccCallInfo(int serial, android.hardware.radio.ims.SrvccCall[] srvccCalls) {
         Log.d(mTag, "setSrvccCallInfo");
 
-        mSrvccCalls.clear();
-        if (srvccCalls != null) {
-            for (android.hardware.radio.ims.SrvccCall call : srvccCalls) {
-                mSrvccCalls.add(new MockSrvccCall(call));
-            }
-        }
+        mImsState.setSrvccCallInfo(srvccCalls);
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
@@ -190,8 +184,9 @@ public class IRadioImsImpl extends IRadioIms.Stub {
         }
     }
 
+    /** @return The list of {@link MockSrvccCall} instances. */
     public List<MockSrvccCall> getSrvccCalls() {
-        return mSrvccCalls;
+        return mImsState.getSrvccCalls();
     }
 
     @Override
@@ -204,6 +199,23 @@ public class IRadioImsImpl extends IRadioIms.Stub {
         } catch (RemoteException ex) {
             Log.e(mTag, "Failed to updateImsCallStatus from AIDL. Exception" + ex);
         }
+    }
+
+    /**
+     * Waits for the event of IMS state.
+     *
+     * @param latchIndex The index of the event.
+     * @param waitMs The timeout in milliseconds.
+     */
+    public boolean waitForLatchCountdown(int latchIndex, int waitMs) {
+        return mImsState.waitForLatchCountdown(latchIndex, waitMs);
+    }
+
+    /**
+     * Resets the CountDownLatches
+     */
+    public void resetAllLatchCountdown() {
+        mImsState.resetAllLatchCountdown();
     }
 
     @Override

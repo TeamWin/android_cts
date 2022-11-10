@@ -374,4 +374,21 @@ public class MockModemManager {
         if (radioIms == null) return null;
         return radioIms.getSrvccCalls();
     }
+
+    /**
+     * Waits for the event of mock IMS state.
+     *
+     * @param latchIndex The index of the event.
+     * @param waitMs The timeout in milliseconds.
+     */
+    public boolean waitForImsLatchCountdown(int latchIndex, int waitMs) {
+        return mMockModemService.getIRadioIms().waitForLatchCountdown(latchIndex, waitMs);
+    }
+
+    /**
+     * Resets the CountDownLatches of IMS state.
+     */
+    public void resetImsAllLatchCountdown() {
+        mMockModemService.getIRadioIms().resetAllLatchCountdown();
+    }
 }

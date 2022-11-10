@@ -231,6 +231,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         new InstallMultiple(installIncremental)
                 .addFile(BASE_APK)
                 .run();
+        verifyFsverityInstall(installIncremental, BASE_APK);
 
         new InstallMultiple(updateIncremental)
                 .inheritFrom(PACKAGE_NAME)
@@ -251,6 +252,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         new InstallMultiple(installIncremental)
                 .addFile(BASE_APK)
                 .run();
+        verifyFsverityInstall(installIncremental, BASE_APK);
 
         new InstallMultiple(updateIncremental)
                 .inheritFrom(PACKAGE_NAME)
@@ -378,6 +380,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         new InstallMultiple(/*incremental=*/true)
                 .addFile(BASE_APK)
                 .run();
+        verifyFsverityInstall(true, BASE_APK);
     }
 
     @Test

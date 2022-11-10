@@ -6646,42 +6646,27 @@ Follow the instructions on the screen to measure the frequency response for the 
         \nReference device instructions
         \n1. Ensure that the "Is reference device" checkbox is checked, then click, "Start Advertising"
     </string>
-    <string name="report_ble_rssi_range">Report RSSI Range (dBm)</string>
 
-    <!-- Strings for BLE Rx/Tx Calibration Test -->
-    <string name="ble_rx_tx_calibration_name">BLE Rx/Tx Calibration Test</string>
-    <string name="ble_rx_tx_calibration_test_instructions">
-        To verify this requirement, work with your chip vendor. The chip vendor can measure the
-        channel flatness and identify the differences between cores and channels.
-        \n1. Must include Rx/Tx corrections to reduce per-channel deviations so that the measurements on each of the 3 channels, on each of the antennas (if multiple are used), are within +/-3dBm of one another for 95% of the measurements.
-        \n2. For 1000 sorted measurements, report the range as 975th measurement - 25th measurement. Must be within 6dBm to pass.
+    <!-- Strings for NAN Accuracy Test -->
+    <string name="nan_accuracy_test_instructions">
+        Place the device under test (DUT) at the test distance (either 10cm, 1m, 3m, or 5m) away from the reference device, in a line of sight environment. On the reference device, ensure that the "Is reference device" checkbox is checked, then click "Start Publishing"
+        \n\nDUT instructions
+        \n1. Ensure that the reference device is already publishing the NAN service.
+        \n2. Make sure that the toggle for the right test distance is checked.
+        \n3. Click "Start Test". The display would be updated to show status "IN_PROGRESS" for the corresponding test distance.
+        \n4. When all the required data is collected at the test distance, the display would be updated to show the status of the test, either PASSED or FAILED.
+        \n5. The test is passed if more than 68% of the results are in the required range for the test distance (x). Where range is in [x-2,x+2]. E.g. for 5m, range is 3m to 7m.
+        \n6. Repeat for the other distances by selecting the corresponding radio button.
     </string>
-    <string name="report_channels_ble_rssi_range">Report RSSI Range Across Channels (dBm)</string>
-    <string name="report_cores_ble_rssi_range">[Optional] Report RSSI Range Across Cores (dBm)</string>
-
-    <string name="nan_precision_instruction">
-        1. Take 1000 ranging measurements at each of the ground truth points of 10cm, 1m, 3m, and 5m. The WifiNanScan app in Play Store is recommended for data collection.
-        \n2. Report the bandwidth at which the data was collected. Must be either 160, 80, 40, 20 MHz.
-        \n3. For each ground truth point:
-        \n\t\ta. Sort the measurements, and report the range at the 68th percentile (840th measurement - 160th measurement), accurately to within:
-        \n\t\t\ti. 2 meters at 160 MHz bandwidth
-        \n\t\t\tii. 4 meters at 80 MHz bandwidth
-        \n\t\t\tiii. 8 meters at 40 MHz bandwidth
-        \n\t\t\tiv. 16 meters at 20 MHz bandwidth
-        \n4. Following the same instructions above, it is strongly recommended (but not required), to report the range at the 90th percentile (950th measurement - 50th measurement) as calculated with the Cumulative Distribution Function. If the range at 90th percentile is inputted, it must be within the expected range, and inputted for all distance ranges.
-        \n5. Report reference device used. All required fields must be filled before test can be passed.
-    </string>
-    <string name="report_nan_bandwidth_mhz">Bandwidth (MHz)</string>
-    <string name="report_distance_range_10cm_gt_68p">Measurement Range at 10cm (68th percentile)</string>
-    <string name="report_distance_range_1m_gt_68p">Measurement Range at 1m (68th percentile)</string>
-    <string name="report_distance_range_3m_gt_68p">Measurement Range at 3m (68th percentile)</string>
-    <string name="report_distance_range_5m_gt_68p">Measurement Range at 5m (68th percentile)</string>
-    <string name="report_distance_range_10cm_gt_90p">Measurement Range at 10cm (90th percentile)</string>
-    <string name="report_distance_range_1m_gt_90p">Measurement Range at 1m (90th percentile)</string>
-    <string name="report_distance_range_3m_gt_90p">Measurement Range at 3m (90th percentile)</string>
-    <string name="report_distance_range_5m_gt_90p">Measurement Range at 5m (90th percentile)</string>
-    <string name="nan_precision">Nan Precision Test</string>
+    <string name="nan_accuracy_test_name">Nan Accuracy Test</string>
     <string name="wifi_nan">WiFi NAN</string>
+    <string name="start_publishing_presence">Start Publishing</string>
+    <string name="stop_publishing_presence">Stop Publishing</string>
+    <string name="select_test_distance_presence">Select Test Distance</string>
+    <string name="distance_10cm_presence">10cm</string>
+    <string name="distance_1m_presence">1m</string>
+    <string name="distance_3m_presence">3m</string>
+    <string name="distance_5m_presence">5m</string>
 
     <!-- Strings for AudioMicrophoneMuteToggleActivity -->
     <string name="audio_mic_toggle_test">Audio Microphone Hardware Toggle Mute Test</string>

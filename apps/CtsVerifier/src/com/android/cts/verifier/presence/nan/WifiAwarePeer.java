@@ -55,10 +55,10 @@ public class WifiAwarePeer {
     private WifiAwarePeerListener wifiAwarePeerListener;
     private NanResultListener nanResultListener;
 
-    public WifiAwarePeer(Context context, Handler handler, RttRanger rttRanger) {
+    public WifiAwarePeer(Context context, Handler handler) {
         this.handler = handler;
         this.wifiAwareManager = context.getSystemService(WifiAwareManager.class);
-        this.rttRanger = rttRanger;
+        this.rttRanger = new RttRanger(context, handler::post);
     }
 
     public void publish() {

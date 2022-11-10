@@ -1965,15 +1965,16 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                         profile.videoFrameRate);
                 videoSnapshotRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
                         fpsRange);
-                if (mStaticInfo.isVideoStabilizationSupported()) {
-                    videoSnapshotRequestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                            CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON);
+                boolean videoStabilizationSupported = mStaticInfo.isVideoStabilizationSupported();
+                if (videoStabilizationSupported) {
+                   videoSnapshotRequestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                            mStaticInfo.getChosenVideoStabilizationMode());
                 }
                 CaptureRequest request = videoSnapshotRequestBuilder.build();
 
                 // Start recording
                 startRecording(/* useMediaRecorder */true, resultListener,
-                        /*useVideoStab*/mStaticInfo.isVideoStabilizationSupported());
+                        /*useVideoStab*/videoStabilizationSupported);
                 long startTime = SystemClock.elapsedRealtime();
 
                 // Record certain duration.
@@ -2282,7 +2283,8 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         recordingRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
         if (useVideoStab) {
             recordingRequestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON);
+                    mStaticInfo.getChosenVideoStabilizationMode());
+
         }
         if (useIntermediateSurface) {
             recordingRequestBuilder.addTarget(mIntermediateSurface);
@@ -2335,7 +2337,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         recordingRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
         if (useVideoStab) {
             recordingRequestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
-                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON);
+                    mStaticInfo.getChosenVideoStabilizationMode());
         }
         CaptureRequest recordingRequest = recordingRequestBuilder.build();
 

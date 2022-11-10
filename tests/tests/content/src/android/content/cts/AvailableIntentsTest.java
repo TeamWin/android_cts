@@ -334,6 +334,24 @@ public class AvailableIntentsTest extends AndroidTestCase {
         assertCanBeHandled(intent);
     }
 
+    /**
+     * Test to make sure {@link Intent#ACTION_SHOW_OUTPUT_SWITCHER} is handled
+     */
+    public void testShowOutputSwitcher() {
+        Intent intent = new Intent(Intent.ACTION_SHOW_OUTPUT_SWITCHER);
+        intent.putExtra(Intent.EXTRA_PACKAGE_NAME, getContext().getPackageName());
+        PackageManager packageManager = mContext.getPackageManager();
+        List<ResolveInfo> resolveInfoList = packageManager.queryBroadcastReceivers(intent, 0);
+
+        // exactly one receiver can handle this intent.
+        assertEquals(1, resolveInfoList.size());
+
+        // make sure that the only receiver belongs to the system.
+        for (ResolveInfo resolveInfo : resolveInfoList) {
+            assertTrue(resolveInfo.priority > 0);
+        }
+    }
+
     public void testAlarmClockSetAlarm() {
         Intent intent = new Intent(AlarmClock.ACTION_SET_ALARM);
         intent.putExtra(AlarmClock.EXTRA_MESSAGE, "Custom message");

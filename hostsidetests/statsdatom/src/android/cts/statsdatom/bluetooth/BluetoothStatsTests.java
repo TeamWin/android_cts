@@ -155,25 +155,4 @@ public class BluetoothStatsTests extends DeviceTestCase implements IBuildReceive
         assertThat(a1.getIsFirstMatch()).isFalse();
         assertThat(a1.getIsOpportunistic()).isTrue();
     }
-
-    public void testBleScanResult() throws Exception {
-        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_BLUETOOTH_LE)) return;
-
-        final int atom = AtomsProto.Atom.BLE_SCAN_RESULT_RECEIVED_FIELD_NUMBER;
-        final int field = AtomsProto.BleScanResultReceived.NUM_RESULTS_FIELD_NUMBER;
-        StatsdConfigProto.StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
-                DeviceUtils.STATSD_ATOM_TEST_PKG);
-        ConfigUtils.addEventMetric(config, atom, Arrays.asList(
-                ConfigUtils.createUidFvm(/*useAttributionChain=*/ true,
-                        DeviceUtils.STATSD_ATOM_TEST_PKG),
-                ConfigUtils.createFvm(field).setGteInt(0)));
-        ConfigUtils.uploadConfig(getDevice(), config);
-
-        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testBleScanResult");
-
-        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertThat(data.size()).isAtLeast(1);
-        AtomsProto.BleScanResultReceived a0 = data.get(0).getAtom().getBleScanResultReceived();
-        assertThat(a0.getNumResults()).isAtLeast(1);
-    }
 }

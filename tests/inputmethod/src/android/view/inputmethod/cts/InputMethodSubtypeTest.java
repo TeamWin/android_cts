@@ -27,8 +27,14 @@ import static org.junit.Assert.assertThrows;
 
 import android.app.Instrumentation;
 import android.content.ComponentName;
+import android.content.Context;
+import android.graphics.Color;
+import android.os.Parcel;
 import android.os.SystemClock;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
+import android.text.style.ForegroundColorSpan;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.InputMethodSubtype;
@@ -84,6 +90,8 @@ public class InputMethodSubtypeTest extends EndToEndImeTestBase {
             new InputMethodSubtype.InputMethodSubtypeBuilder()
                     .setSubtypeId(0x456789ab)
                     .build();
+
+    private static final CharSequence SUBTYPE_UNTRANSLATABLE_NAME = "my_new_subtype";
 
     private static final String NONEXISTENCE_PACKAGE = "com.android.cts.ime.nonexistentpackage";
 
@@ -329,4 +337,103 @@ public class InputMethodSubtypeTest extends EndToEndImeTestBase {
                         .flattenToShortString();
         assertThrows(NullPointerException.class,
                 () -> mImm.setExplicitlyEnabledInputMethodSubtypes(nonexistenceImeId, null));
-    }}
+    }
+
+    /**
+     * Verifies the subtype with name override can be parcelled and un-parcelled correctly.
+     */
+    @Test
+    public void testSubtypeNameOverrideParcel() throws Exception {
+        final SpannableStringBuilder expectedSubtypeName =
+                new SpannableStringBuilder(SUBTYPE_UNTRANSLATABLE_NAME);
+        expectedSubtypeName.setSpan(new ForegroundColorSpan(Color.RED), 3, 5, 0);
+        final InputMethodSubtype newSubtype =
+                new InputMethodSubtype.InputMethodSubtypeBuilder()
+                        .setSubtypeNameOverride(expectedSubtypeName)
+                        .build();
+
+        assertThat(newSubtype.getNameOverride()).isEqualTo(expectedSubtypeName);
+
+        final Parcel parcel = Parcel.obtain();
+        newSubtype.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        final Spannable subtypeNameSpannable =
+                (Spannable) InputMethodSubtype.CREATOR.createFromParcel(parcel).getNameOverride();
+        parcel.recycle();
+
+        assertThat(subtypeNameSpannable.toString()).isEqualTo(expectedSubtypeName.toString());
+        Object[] spans =
+                subtypeNameSpannable.getSpans(0, expectedSubtypeName.length(), Object.class);
+        assertThat(spans.length).isEqualTo(1);
+        assertThat(subtypeNameSpannable.getSpanStart(spans[0])).isEqualTo(3);
+        assertThat(subtypeNameSpannable.getSpanEnd(spans[0])).isEqualTo(5);
+    }
+
+    /**
+     * Verifies the subtype without the name override can be parcelled and un-parcelled correctly.
+     */
+    @Test
+    public void testSubtypeNoNameOverrideParcel() throws Exception {
+        final InputMethodSubtype newSubtype =
+                new InputMethodSubtype.InputMethodSubtypeBuilder().build();
+
+        assertThat(newSubtype.getNameOverride().length()).isEqualTo(0);
+
+        final Parcel parcel = Parcel.obtain();
+        newSubtype.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        final CharSequence subtypeName =
+                InputMethodSubtype.CREATOR.createFromParcel(parcel).getNameOverride();
+        parcel.recycle();
+
+        assertThat(subtypeName.length()).isEqualTo(0);
+    }
+
+    /**
+     * Verifies that
+     * {@link InputMethodSubtypeBuilder#setSubtypeNameOverride(String)} can correctly set the
+     * display name for the subtype.
+     */
+    @Test
+    public void testSetSubtypeNameOverride() throws Exception {
+        final CharSequence expectedSubtypeName = SUBTYPE_UNTRANSLATABLE_NAME;
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        final Context context = instrumentation.getTargetContext();
+        final InputMethodSubtype newSubtype =
+                new InputMethodSubtype.InputMethodSubtypeBuilder()
+                        .setSubtypeNameOverride(expectedSubtypeName)
+                        .build();
+
+        assertThat(newSubtype.getNameOverride()).isEqualTo(expectedSubtypeName);
+
+        final String actualSubtypeName = newSubtype.getDisplayName(
+                context, context.getPackageName(), null).toString();
+
+        assertThat(actualSubtypeName).isEqualTo(expectedSubtypeName);
+    }
+
+    /**
+     * Verifies that
+     * {@link InputMethodSubtypeBuilder#setSubtypeNameOverride(String)} won't impact the
+     * display name if the subtype's name has been configured by
+     * {@link InputMethodSubtypeBuilder#setSubtypeNameResId(int)}.
+     */
+    @Test
+    public void testSetSubtypeNameOverrideWithNameResId() throws Exception {
+        final CharSequence expectedSubtypeName = SUBTYPE_UNTRANSLATABLE_NAME;
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        final Context context = instrumentation.getTargetContext();
+        final InputMethodSubtype newSubtype =
+                new InputMethodSubtype.InputMethodSubtypeBuilder()
+                        .setSubtypeNameOverride(expectedSubtypeName)
+                        .setSubtypeNameResId(R.string.new_subtype_name)
+                        .build();
+
+        assertThat(newSubtype.getNameOverride()).isEqualTo(expectedSubtypeName);
+
+        String actualSubtypeName = newSubtype.getDisplayName(
+                context, context.getPackageName(), null).toString();
+
+        assertThat(actualSubtypeName).isEqualTo("new_subtype_name");
+    }
+}

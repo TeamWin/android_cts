@@ -4363,6 +4363,35 @@
                 android:value="7.4.3/C-7-1" />
         </activity>
 
+        <!--
+           CTS Verifier NAN Precision Test Screen
+               test category : NAN
+               test parent : PresenceTestActivity
+       -->
+        <activity
+            android:name=".presence.NanAccuracyActivity"
+            android:exported="true"
+            android:label="@string/nan_accuracy_test_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/wifi_nan" />
+            <meta-data
+                android:name="test_parent"
+                android:value="com.android.cts.verifier.presence.PresenceTestActivity" />
+            <meta-data
+                android:name="display_mode"
+                android:value="single_display_mode" />
+            <meta-data
+                android:name="CddTest"
+                android:value="7.4.2.5/H-1-1" />
+        </activity>
+
         <activity-alias android:name=".CtsVerifierActivity"
                         android:targetActivity=".TestListActivity"
                         android:exported="true"

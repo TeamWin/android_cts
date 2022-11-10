@@ -136,7 +136,8 @@ public class CameraUtils {
             return false;
         }
 
-        if (staticMeta.isVideoStabilizationSupported() != params.isVideoStabilizationSupported()) {
+        if (staticMeta.isVideoStabilizationSupported() !=
+                params.isVideoStabilizationSupported()) {
             return false;
         }
 

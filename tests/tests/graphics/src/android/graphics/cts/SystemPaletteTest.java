@@ -36,6 +36,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.FeatureUtil;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -77,6 +78,11 @@ public class SystemPaletteTest {
     @Test
     @CddTest(requirements = {"3.8.6/C-1-4,C-1-5,C-1-6"})
     public void testThemeStyles() {
+        // THEME_CUSTOMIZATION_OVERLAY_PACKAGES is not available in Wear OS
+        // TODO: Remove this check when THEME_CUSTOMIZATION_OVERLAY_PACKAGES is supported in Wear OS
+        if (FeatureUtil.isWatch()) {
+            return;
+        }
         final Context context = getInstrumentation().getTargetContext();
         forEachThemeDefinition((color, style, expectedPalette) -> {
             // Update setting, so system colors will change

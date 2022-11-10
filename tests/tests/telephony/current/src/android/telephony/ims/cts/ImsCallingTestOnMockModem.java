@@ -26,6 +26,7 @@ import static android.telephony.PreciseCallState.PRECISE_CALL_STATE_INCOMING;
 import static android.telephony.PreciseCallState.PRECISE_CALL_STATE_INCOMING_SETUP;
 import static android.telephony.TelephonyManager.SRVCC_STATE_HANDOVER_CANCELED;
 import static android.telephony.TelephonyManager.SRVCC_STATE_HANDOVER_STARTED;
+import static android.telephony.mockmodem.MockImsService.LATCH_WAIT_FOR_SRVCC_CALL_INFO;
 import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_TWN_CHT;
 
 import static junit.framework.Assert.assertNotNull;
@@ -56,6 +57,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -140,6 +142,17 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
             sMockModemManager = null;
 
             TimeUnit.MILLISECONDS.sleep(WAIT_UPDATE_TIMEOUT_MS);
+        }
+    }
+
+    @Before
+    public void beforeTest() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        if (sMockModemManager != null) {
+            sMockModemManager.resetImsAllLatchCountdown();
         }
     }
 
@@ -371,11 +384,6 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
         profiles.clear();
         effectiveProfiles.clear();
 
-        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_STATE_RESUME);
-        // Put on resume
-        call.unhold();
-        isCallActive(call, callSession);
-
         callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_DISCONNECT);
         call.disconnect();
 
@@ -414,7 +422,7 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
         verifySrvccStateChange(SRVCC_STATE_HANDOVER_STARTED);
 
         sServiceConnector.getCarrierService().getMmTelFeature().notifySrvccCall(profiles);
-        TimeUnit.MILLISECONDS.sleep(WAIT_UPDATE_TIMEOUT_MS);
+        assertTrue(waitForMockImsStateLatchCountdown(LATCH_WAIT_FOR_SRVCC_CALL_INFO));
 
         List<MockSrvccCall> srvccCalls = sMockModemManager.getSrvccCalls(sTestSlot);
         assertNotNull(srvccCalls);
@@ -441,5 +449,13 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
         Call call = getCall(mCurrentCallId);
 
         return call;
+    }
+
+    public boolean waitForMockImsStateLatchCountdown(int latchIndex) {
+        return waitForMockImsStateLatchCountdown(latchIndex, WAIT_UPDATE_TIMEOUT_MS);
+    }
+
+    public boolean waitForMockImsStateLatchCountdown(int latchIndex, int waitMs) {
+        return sMockModemManager.waitForImsLatchCountdown(latchIndex, waitMs);
     }
 }
