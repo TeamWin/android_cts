@@ -41,9 +41,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
+
 @AppModeFull(reason = "Instant apps cannot read state of other packages.")
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
-public class RemovePermissionTest {
+public class RemovePermissionTest extends StsExtraBusinessLogicTestCase {
     private static final String APP_PKG_NAME_BASE =
             "android.permission.cts.revokepermissionwhenremoved";
     private static final String ADVERSARIAL_PERMISSION_DEFINER_PKG_NAME =

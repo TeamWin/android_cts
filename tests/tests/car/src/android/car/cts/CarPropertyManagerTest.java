@@ -1091,6 +1091,20 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void testDoorChildLockEnabledIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.DOOR_CHILD_LOCK_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_DOOR,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class)
+                .addReadPermission(Car.PERMISSION_CONTROL_CAR_DOORS)
+                .addWritePermission(Car.PERMISSION_CONTROL_CAR_DOORS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
     @ApiTest(
             apis = {
                 "android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",

@@ -26,9 +26,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityManager;
 import android.content.Context;
+import android.hardware.display.DisplayManager;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.AudioCapabilities;
@@ -42,6 +44,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Range;
 import android.util.Size;
+import android.view.Display;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -55,9 +58,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
+import java.util.stream.Stream;
 
 /**
  * Basic validation test of data returned by MediaCodeCapabilities.
@@ -249,11 +255,32 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         }
     }
 
+    private int getMaxDisplayHeight() {
+        return Arrays.stream(mContext.getSystemService(DisplayManager.class).getDisplays())
+                .map(Display::getSupportedModes)
+                .flatMap(Stream::of)
+                .max(Comparator.comparing(Display.Mode::getPhysicalHeight))
+                .orElseThrow(() -> new RuntimeException("Failed to determine max height"))
+                .getPhysicalHeight();
+    }
+
+    private boolean mustSupportAvcHeight(int videoResolutionHeight) {
+        // https://source.android.com/docs/compatibility/13/android-13-cdd#534_h264
+
+        // If the height that is reported by the Display.getSupportedModes() method is equal or
+        // greater than the video resolution, device implementations:
+        //  [C-2-1] MUST support the HD 720p video decoding profiles in the following table.
+        //  [C-2-2] MUST support the HD 1080p video decoding profiles in the following table.
+        return getMaxDisplayHeight() >= videoResolutionHeight;
+    }
+
     @Test
     public void testAvcHigh31() throws Exception {
         if (!checkDecoder(MIMETYPE_VIDEO_AVC, AVCProfileHigh, AVCLevel31)) {
             return; // skip
         }
+
+        assumeTrue(mustSupportAvcHeight(720));
 
         if (checkDecodeWithDefaultPlayer(MIMETYPE_VIDEO_AVC, AVCProfileHigh, AVCLevel31)) {
             String urlString = dynamicConfig.getValue(AVC_HIGH_31_KEY);
@@ -270,6 +297,8 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
             MediaUtils.skipTest(TAG, "fragmented mp4 not supported");
             return;
         }
+
+        assumeTrue(mustSupportAvcHeight(1080));
 
         if (checkDecodeWithDefaultPlayer(MIMETYPE_VIDEO_AVC, AVCProfileHigh, AVCLevel4)) {
             String urlString = dynamicConfig.getValue(AVC_HIGH_40_KEY);

@@ -186,6 +186,10 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <action android:name="android.intent.action.PICK"/>
             </intent-filter>
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="android.intent.action.SEND_MULTIPLE"/>
+            </intent-filter>
         </activity>
 
         <receiver android:name="com.android.bedstead.testapp.TestAppBroadcastController"

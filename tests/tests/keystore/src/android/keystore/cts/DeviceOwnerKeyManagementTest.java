@@ -37,6 +37,7 @@ import android.telephony.TelephonyManager;
 
 import com.android.bedstead.deviceadminapp.DeviceAdminApp;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
@@ -336,24 +337,28 @@ public class DeviceOwnerKeyManagementTest {
         }
     }
 
+    @Test
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#generateKeyPair",
             "android.app.admin.DevicePolicyManager#ID_TYPE_IMEI",
             "android.app.admin.DevicePolicyManager#ID_TYPE_MEID",
             "android.app.admin.DevicePolicyManager#ID_TYPE_SERIAL"})
     @RequireRunOnSystemUser
-    @Test
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ID_ATTESTATION)
     public void testAllVariationsOfDeviceIdAttestation() throws Exception {
         try (DeviceOwner o = TestApis.devicePolicy().setDeviceOwner(DEVICE_ADMIN_COMPONENT_NAME)) {
             assertAllVariantsOfDeviceIdAttestation(false /* useStrongBox */);
         }
     }
 
+    @Test
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#generateKeyPair",
             "android.app.admin.DevicePolicyManager#ID_TYPE_IMEI",
             "android.app.admin.DevicePolicyManager#ID_TYPE_MEID",
             "android.app.admin.DevicePolicyManager#ID_TYPE_SERIAL"})
     @RequireRunOnSystemUser
-    @Test
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(PackageManager.FEATURE_DEVICE_ID_ATTESTATION)
     public void testAllVariationsOfDeviceIdAttestationUsingStrongBox() throws Exception {
         try (DeviceOwner o = TestApis.devicePolicy().setDeviceOwner(DEVICE_ADMIN_COMPONENT_NAME)) {
             assertAllVariantsOfDeviceIdAttestation(true  /* useStrongBox */);

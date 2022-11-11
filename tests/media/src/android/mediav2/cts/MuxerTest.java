@@ -33,7 +33,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.NonMediaMainlineTest;
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -421,7 +421,7 @@ public class MuxerTest {
      * setOrientationHint are dependent on the mime type and OutputFormat. Legality of these APIs
      * are tested in this class.
      */
-    @NonMediaMainlineTest
+    @NonMainlineTest
     @SmallTest
     @RunWith(Parameterized.class)
     public static class TestApi {
@@ -726,7 +726,7 @@ public class MuxerTest {
     /**
      * Tests muxing multiple Video/Audio Tracks
      */
-    @NonMediaMainlineTest
+    @NonMainlineTest
     @LargeTest
     @RunWith(Parameterized.class)
     public static class TestMultiTrack {
@@ -865,7 +865,7 @@ public class MuxerTest {
      * Add an offset to the presentation time of samples of a track. Mux with the added offset,
      * validate by re-extracting the muxer output file and compare with original.
      */
-    @NonMediaMainlineTest
+    @NonMainlineTest
     @LargeTest
     @RunWith(Parameterized.class)
     public static class TestOffsetPts {
@@ -1073,7 +1073,7 @@ public class MuxerTest {
      * This test takes the output of a codec and muxes it in to all possible container formats.
      * The results are checked for inconsistencies with the requirements of CDD.
      */
-    @NonMediaMainlineTest
+    @NonMainlineTest
     @LargeTest
     @RunWith(Parameterized.class)
     public static class TestSimpleMux {
@@ -1227,7 +1227,7 @@ public class MuxerTest {
         }
     }
 
-    @NonMediaMainlineTest
+    @NonMainlineTest
     @LargeTest
     @RunWith(Parameterized.class)
     public static class TestAddEmptyTracks {

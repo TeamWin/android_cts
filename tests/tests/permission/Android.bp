@@ -49,6 +49,7 @@ android_test {
         "bluetooth-test-util-lib",
         "CtsAccessibilityCommon",
         "safety-center-internal-data",
+        "sts-device-util",
     ],
     jni_libs: [
         "libctspermission_jni",

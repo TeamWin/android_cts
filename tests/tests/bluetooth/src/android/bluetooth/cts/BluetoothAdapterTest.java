@@ -385,20 +385,20 @@ public class BluetoothAdapterTest extends AndroidTestCase {
             return;
         }
 
-        Duration minute = Duration.ofMinutes(1);
+        Duration minutes = Duration.ofMinutes(2);
 
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
         assertEquals(null, mAdapter.getDiscoverableTimeout());
         assertEquals(BluetoothStatusCodes.ERROR_BLUETOOTH_NOT_ENABLED,
-                mAdapter.setDiscoverableTimeout(minute));
+                mAdapter.setDiscoverableTimeout(minutes));
 
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         assertThrows(IllegalArgumentException.class, () -> mAdapter.setDiscoverableTimeout(
                 Duration.ofDays(25000)));
         assertEquals(BluetoothStatusCodes.SUCCESS,
-                mAdapter.setDiscoverableTimeout(minute));
-        assertEquals(minute, mAdapter.getDiscoverableTimeout());
+                mAdapter.setDiscoverableTimeout(minutes));
+        assertEquals(minutes, mAdapter.getDiscoverableTimeout());
     }
 
     public void test_getConnectionState() {

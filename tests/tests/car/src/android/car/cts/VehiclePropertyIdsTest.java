@@ -216,6 +216,8 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("HW_KEY_INPUT");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.DOOR_LOCK))
                 .isEqualTo("DOOR_LOCK");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.DOOR_CHILD_LOCK_ENABLED))
+                .isEqualTo("DOOR_CHILD_LOCK_ENABLED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.DOOR_MOVE))
                 .isEqualTo("DOOR_MOVE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.DOOR_POS))

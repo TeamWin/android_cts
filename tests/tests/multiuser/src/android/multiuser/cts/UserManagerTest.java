@@ -88,6 +88,7 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -340,7 +341,7 @@ public final class UserManagerTest {
     @RequireRunOnInitialUser
     @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call getVisibleUsers()
     public void testGetVisibleUsers_currentUser() throws Exception {
-        List<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
+        Collection<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
 
         assertWithMessage("getVisibleUsers()").that(visibleUsers)
                 .contains(TestApis.users().current().userHandle());
@@ -351,7 +352,7 @@ public final class UserManagerTest {
     @RequireRunOnSecondaryUser(switchedToUser = FALSE)
     @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call getVisibleUsers()
     public void testGetVisibleUsers_backgroundUser() throws Exception {
-        List<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
+        Collection<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
 
         assertWithMessage("getVisibleUsers()").that(visibleUsers)
                 .contains(TestApis.users().current().userHandle());
@@ -364,7 +365,7 @@ public final class UserManagerTest {
     @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call getVisibleUsers()
     public void testGetVisibleUsers_startedProfileOfCurrentUser() throws Exception {
         UserReference myUser = TestApis.users().instrumented();
-        List<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
+        Collection<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
 
         assertWithMessage("getVisibleUsers()").that(visibleUsers)
                 .containsAtLeast(myUser.userHandle(), myUser.parent().userHandle());
@@ -385,7 +386,7 @@ public final class UserManagerTest {
         Context context = getContextForUser(profile.userHandle().getIdentifier());
         UserManager um = context.getSystemService(UserManager.class);
 
-        List<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
+        Collection<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
 
         assertWithMessage("getVisibleUsers()").that(visibleUsers)
                 .contains(TestApis.users().current().userHandle());

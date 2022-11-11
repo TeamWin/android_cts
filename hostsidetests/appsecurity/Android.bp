@@ -32,6 +32,7 @@ java_test_host {
         "compatibility-host-util",
         "truth-prebuilt",
         "hamcrest-library",
+        "sts-host-util",
     ],
 
     static_libs: [

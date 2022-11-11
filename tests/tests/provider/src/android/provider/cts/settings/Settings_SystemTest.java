@@ -40,8 +40,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
+
 @RunWith(AndroidJUnit4.class)
-public class Settings_SystemTest {
+public class Settings_SystemTest extends StsExtraBusinessLogicTestCase {
     private static final String INT_FIELD = System.END_BUTTON_BEHAVIOR;
     private static final String LONG_FIELD = System.SCREEN_OFF_TIMEOUT;
     private static final String FLOAT_FIELD = System.FONT_SCALE;

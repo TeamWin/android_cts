@@ -67,7 +67,7 @@ import org.junit.runner.RunWith;
 
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 
 /**
  * Tests for user-related APIs that are only available on devices that
@@ -144,7 +144,7 @@ public final class MultipleUsersOnMultipleDisplaysTest {
     public void testGetVisibleUsers_stoppedProfileOfBackgroundUserOnSecondaryDisplay()
             throws Exception {
         runTestOnSecondaryDisplay((user, profile, display, instance) -> {
-            List<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
+            Collection<UserHandle> visibleUsers = mUserManager.getVisibleUsers();
             Log.d(TAG, "Visible users: " + visibleUsers);
 
             assertWithMessage("getVisibleUsers()").that(visibleUsers)

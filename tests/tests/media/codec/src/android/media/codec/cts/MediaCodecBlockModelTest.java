@@ -42,7 +42,7 @@ import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
-import com.android.compatibility.common.util.NonMediaMainlineTest;
+import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.Preconditions;
 
 import org.junit.Test;
@@ -61,7 +61,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * MediaCodec tests with CONFIGURE_FLAG_USE_BLOCK_MODEL.
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.R)
-@NonMediaMainlineTest
+@NonMainlineTest
 @AppModeFull(reason = "Instant apps cannot access the SD card")
 @RunWith(AndroidJUnit4.class)
 public class MediaCodecBlockModelTest {

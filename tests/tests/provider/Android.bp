@@ -32,6 +32,7 @@ android_test {
         "mockito-target-minus-junit4",
         // TODO: remove testng once Android migrates to JUnit 4.12, which provides assertThrows
         "testng",
+        "sts-device-util",
     ],
 
     jni_libs: [
