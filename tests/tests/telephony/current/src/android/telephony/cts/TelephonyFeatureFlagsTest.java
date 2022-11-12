@@ -103,10 +103,6 @@ public final class TelephonyFeatureFlagsTest {
             assertTrue(hasFeatureRadio);
         }
 
-        if (hasFeatureIms) {
-            assertTrue(hasFeatureData);
-        }
-
         if (hasFeatureSingleReg) {
             assertTrue(hasFeatureIms);
         }

@@ -89,7 +89,7 @@ import java.util.stream.IntStream;
 @RunWith(Parameterized.class)
 public class CodecEncoderSurfaceTest {
     private static final String LOG_TAG = CodecEncoderSurfaceTest.class.getSimpleName();
-    private static final String mInpPrefix = WorkDir.getMediaDirString();
+    private static final String MEDIA_DIR = WorkDir.getMediaDirString();
     private static final boolean ENABLE_LOGS = false;
 
     private final String mCompName;
@@ -143,7 +143,7 @@ public class CodecEncoderSurfaceTest {
             int frameRate, boolean testToneMap, int colorFormat, String allTestParams) {
         mCompName = encoder;
         mMime = mime;
-        mTestFile = mInpPrefix + testFile;
+        mTestFile = MEDIA_DIR + testFile;
         mBitrate = bitrate;
         mFrameRate = frameRate;
         mTestToneMap = testToneMap;

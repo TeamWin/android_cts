@@ -21,7 +21,6 @@ import static org.junit.Assert.fail;
 
 import android.media.MediaPlayer;
 import android.media.cts.MediaPlayerTestBase;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.Preconditions;
 import android.media.cts.TestUtils.Monitor;
 import android.platform.test.annotations.AppModeFull;
@@ -30,6 +29,7 @@ import android.webkit.cts.CtsTestServer;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.apache.http.impl.DefaultHttpServerConnection;
 import org.apache.http.impl.io.SocketOutputBuffer;
@@ -53,7 +53,7 @@ import java.util.concurrent.FutureTask;
  * Executes a range of tests on MediaPlayer while streaming a video
  * from an HTTP server over a simulated "flaky" network.
  */
-@NonMediaMainlineTest
+@NonMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 @RunWith(AndroidJUnit4.class)
 public class MediaPlayerFlakyNetworkTest extends MediaPlayerTestBase {

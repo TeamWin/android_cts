@@ -132,7 +132,7 @@ def create_noise_model_code(noise_model_a, noise_model_b,
           }}
           """)
   text_file = open(os.path.join(log_path, 'noise_model.c'), 'w')
-  text_file.write('%s' % code)
+  text_file.write(code)
   text_file.close()
 
   # Creates the noise profile C++ file
@@ -164,7 +164,7 @@ def create_noise_model_code(noise_model_a, noise_model_b,
                                         .offset_intercept = {noise_model_d[3]}}}}},
           """)
   text_file = open(os.path.join(log_path, 'noise_profile.cc'), 'w')
-  text_file.write('%s' % code)
+  text_file.write(code)
   text_file.close()
 
 
@@ -379,7 +379,7 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
         color_plane_plots[iso_cap] = [plt_r, plt_gr, plt_gb, plt_b]
         fig.suptitle('ISO %d' % iso_cap, x=0.54, y=0.99)
         for i, plot in enumerate(color_plane_plots[iso_cap]):
-          plot.set_title('%s' % _BAYER_LIST[i])
+          plot.set_title(_BAYER_LIST[i])
           plot.set_xlabel('Mean signal level')
           plot.set_ylabel('Variance')
 

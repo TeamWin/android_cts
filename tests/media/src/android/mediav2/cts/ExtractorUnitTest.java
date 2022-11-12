@@ -47,8 +47,8 @@ import java.nio.ByteBuffer;
 @RunWith(Enclosed.class)
 public class ExtractorUnitTest {
     private static final int MAX_SAMPLE_SIZE = 4 * 1024 * 1024;
-    private static final String mInpPrefix = WorkDir.getMediaDirString();
-    private static final String mInpMedia = "ForBiggerEscapes.mp4";
+    private static final String MEDIA_DIR = WorkDir.getMediaDirString();
+    private static final String INPUT_MEDIA = "ForBiggerEscapes.mp4";
     private static final String TAG = "ExtractorUnitTest";
 
     private static boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
@@ -99,8 +99,8 @@ public class ExtractorUnitTest {
         @Test
         public void testSelectTrackForInvalidIndex() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            extractor.setDataSource(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            extractor.setDataSource(MEDIA_DIR + INPUT_MEDIA);
             try {
                 try {
                     extractor.selectTrack(-1);
@@ -123,8 +123,8 @@ public class ExtractorUnitTest {
         @Test
         public void testIdempotentSelectTrack() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            extractor.setDataSource(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            extractor.setDataSource(MEDIA_DIR + INPUT_MEDIA);
             try {
                 extractor.selectTrack(0);
                 extractor.selectTrack(0);
@@ -163,8 +163,8 @@ public class ExtractorUnitTest {
         @Test
         public void testUnselectTrackForInvalidIndex() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            extractor.setDataSource(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            extractor.setDataSource(MEDIA_DIR + INPUT_MEDIA);
             try {
                 try {
                     extractor.unselectTrack(-1);
@@ -187,8 +187,8 @@ public class ExtractorUnitTest {
         @Test
         public void testUnselectTrackForUnSelectedTrackIndex() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            extractor.setDataSource(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            extractor.setDataSource(MEDIA_DIR + INPUT_MEDIA);
             try {
                 extractor.unselectTrack(0);
             } catch (Exception e) {
@@ -201,8 +201,8 @@ public class ExtractorUnitTest {
         @Test
         public void testIdempotentUnselectTrack() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            extractor.setDataSource(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            extractor.setDataSource(MEDIA_DIR + INPUT_MEDIA);
             try {
                 extractor.selectTrack(0);
                 extractor.unselectTrack(0);
@@ -246,8 +246,8 @@ public class ExtractorUnitTest {
         @Test
         public void testSeekToBeforeSelectTrack() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            extractor.setDataSource(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            extractor.setDataSource(MEDIA_DIR + INPUT_MEDIA);
             try {
                 extractor.seekTo(33000, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                 if (extractor.getSampleTime() != -1 || extractor.getSampleSize() != -1 ||
@@ -265,8 +265,8 @@ public class ExtractorUnitTest {
         @Test
         public void testSeekToForInvalidMode() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            extractor.setDataSource(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            extractor.setDataSource(MEDIA_DIR + INPUT_MEDIA);
             extractor.selectTrack(0);
             long pts = 33000;
             try {
@@ -282,8 +282,8 @@ public class ExtractorUnitTest {
         @Test
         public void testSeekToAfterRelease() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            extractor.setDataSource(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            extractor.setDataSource(MEDIA_DIR + INPUT_MEDIA);
             extractor.release();
             try {
                 extractor.seekTo(33000, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
@@ -396,8 +396,8 @@ public class ExtractorUnitTest {
         @Test
         public void testAdvanceBeforeSelectTrack() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            extractor.setDataSource(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            extractor.setDataSource(MEDIA_DIR + INPUT_MEDIA);
             try {
                 assertTrue("advance succeeds without any active tracks", !extractor.advance());
             } catch (Exception e) {
@@ -435,8 +435,8 @@ public class ExtractorUnitTest {
         @Test
         public void testGetSampleFlagsBeforeSelectTrack() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            extractor.setDataSource(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            extractor.setDataSource(MEDIA_DIR + INPUT_MEDIA);
             try {
                 assertTrue("received valid sampleFlag without any active tracks",
                         extractor.getSampleFlags() == -1);
@@ -475,8 +475,8 @@ public class ExtractorUnitTest {
         @Test
         public void testGetSampleTimeBeforeSelectTrack() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            extractor.setDataSource(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            extractor.setDataSource(MEDIA_DIR + INPUT_MEDIA);
             try {
                 assertTrue("received valid sampleTime without any active tracks",
                         extractor.getSampleTime() == -1);
@@ -515,8 +515,8 @@ public class ExtractorUnitTest {
         @Test
         public void testGetSampleSizeBeforeSelectTrack() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            extractor.setDataSource(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            extractor.setDataSource(MEDIA_DIR + INPUT_MEDIA);
             try {
                 assertTrue("received valid sampleSize without any active tracks",
                         extractor.getSampleSize() == -1);
@@ -555,8 +555,8 @@ public class ExtractorUnitTest {
         @Test
         public void testGetSampleTrackIndexBeforeSelectTrack() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            extractor.setDataSource(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            extractor.setDataSource(MEDIA_DIR + INPUT_MEDIA);
             try {
                 assertTrue("received valid sampleTrackIndex without any active tracks",
                         extractor.getSampleTrackIndex() == -1);
@@ -595,8 +595,8 @@ public class ExtractorUnitTest {
         @Test
         public void testGetTrackFormatForInvalidIndex() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            extractor.setDataSource(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            extractor.setDataSource(MEDIA_DIR + INPUT_MEDIA);
             try {
                 try {
                     extractor.getTrackFormat(-1);
@@ -646,8 +646,8 @@ public class ExtractorUnitTest {
         public void testReadSampleDataBeforeSelectTrack() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
             ByteBuffer byteBuffer = ByteBuffer.allocate(MAX_SAMPLE_SIZE);
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            extractor.setDataSource(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            extractor.setDataSource(MEDIA_DIR + INPUT_MEDIA);
             try {
                 assertTrue("readSampleData returns val >= 0 without any active tracks",
                         extractor.readSampleData(byteBuffer, 0) < 0);
@@ -662,8 +662,8 @@ public class ExtractorUnitTest {
         public void testIfInvalidOffsetIsRejectedByReadSampleData() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
             ByteBuffer byteBuffer = ByteBuffer.allocate(MAX_SAMPLE_SIZE);
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            extractor.setDataSource(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            extractor.setDataSource(MEDIA_DIR + INPUT_MEDIA);
             extractor.selectTrack(0);
             try {
                 // readSampleData with negative offset
@@ -704,9 +704,9 @@ public class ExtractorUnitTest {
         @Test
         public void testIfInvalidDataSourceIsRejectedBySetDataSource() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
             TestMediaDataSource dataSource =
-                    TestMediaDataSource.fromString(mInpPrefix + mInpMedia, false, true);
+                    TestMediaDataSource.fromString(MEDIA_DIR + INPUT_MEDIA, false, true);
             try {
                 extractor.setDataSource(dataSource);
                 fail("setDataSource succeeds with malformed media data source");
@@ -827,15 +827,15 @@ public class ExtractorUnitTest {
 
         @Test
         public void testSelectTrackForInvalidIndex() {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            assertTrue(nativeTestSelectTrackForInvalidIndex(mInpPrefix + mInpMedia));
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            assertTrue(nativeTestSelectTrackForInvalidIndex(MEDIA_DIR + INPUT_MEDIA));
         }
         private native boolean nativeTestSelectTrackForInvalidIndex(String srcPath);
 
         @Test
         public void testIdempotentSelectTrack() {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            assertTrue(nativeTestIdempotentSelectTrack(mInpPrefix + mInpMedia));
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            assertTrue(nativeTestIdempotentSelectTrack(MEDIA_DIR + INPUT_MEDIA));
         }
         private native boolean nativeTestIdempotentSelectTrack(String srcPath);
 
@@ -847,22 +847,22 @@ public class ExtractorUnitTest {
 
         @Test
         public void testUnselectTrackForInvalidIndex() {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            assertTrue(nativeTestUnselectTrackForInvalidIndex(mInpPrefix + mInpMedia));
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            assertTrue(nativeTestUnselectTrackForInvalidIndex(MEDIA_DIR + INPUT_MEDIA));
         }
         private native boolean nativeTestUnselectTrackForInvalidIndex(String srcPath);
 
         @Test
         public void testUnselectTrackForUnSelectedTrackIndex() {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            assertTrue(nativeTestUnselectTrackForUnSelectedTrackIndex(mInpPrefix + mInpMedia));
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            assertTrue(nativeTestUnselectTrackForUnSelectedTrackIndex(MEDIA_DIR + INPUT_MEDIA));
         }
         private native boolean nativeTestUnselectTrackForUnSelectedTrackIndex(String srcPath);
 
         @Test
         public void testIdempotentUnselectTrack() {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            assertTrue(nativeTestIdempotentUnselectTrack(mInpPrefix + mInpMedia));
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            assertTrue(nativeTestIdempotentUnselectTrack(MEDIA_DIR + INPUT_MEDIA));
         }
         private native boolean nativeTestIdempotentUnselectTrack(String srcPath);
 
@@ -874,8 +874,8 @@ public class ExtractorUnitTest {
 
         @Test
         public void testSeekToBeforeSelectTrack() {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            assertTrue(nativeTestSeekToBeforeSelectTrack(mInpPrefix + mInpMedia));
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            assertTrue(nativeTestSeekToBeforeSelectTrack(MEDIA_DIR + INPUT_MEDIA));
         }
         private native boolean nativeTestSeekToBeforeSelectTrack(String srcPath);
 
@@ -900,8 +900,8 @@ public class ExtractorUnitTest {
 
         @Test
         public void testAdvanceBeforeSelectTrack() {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            assertTrue(nativeTestAdvanceBeforeSelectTrack(mInpPrefix + mInpMedia));
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            assertTrue(nativeTestAdvanceBeforeSelectTrack(MEDIA_DIR + INPUT_MEDIA));
         }
         private native boolean nativeTestAdvanceBeforeSelectTrack(String srcPath);
 
@@ -913,8 +913,8 @@ public class ExtractorUnitTest {
 
         @Test
         public void testGetSampleFlagsBeforeSelectTrack() {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            assertTrue(nativeTestGetSampleFlagsBeforeSelectTrack(mInpPrefix + mInpMedia));
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            assertTrue(nativeTestGetSampleFlagsBeforeSelectTrack(MEDIA_DIR + INPUT_MEDIA));
         }
         private native boolean nativeTestGetSampleFlagsBeforeSelectTrack(String srcPath);
 
@@ -926,8 +926,8 @@ public class ExtractorUnitTest {
 
         @Test
         public void testGetSampleTimeBeforeSelectTrack() {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            assertTrue(nativeTestGetSampleTimeBeforeSelectTrack(mInpPrefix + mInpMedia));
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            assertTrue(nativeTestGetSampleTimeBeforeSelectTrack(MEDIA_DIR + INPUT_MEDIA));
         }
         private native boolean nativeTestGetSampleTimeBeforeSelectTrack(String srcPath);
 
@@ -939,8 +939,8 @@ public class ExtractorUnitTest {
 
         @Test
         public void testGetSampleSizeBeforeSelectTrack() {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            assertTrue(nativeTestGetSampleSizeBeforeSelectTrack(mInpPrefix + mInpMedia));
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            assertTrue(nativeTestGetSampleSizeBeforeSelectTrack(MEDIA_DIR + INPUT_MEDIA));
         }
         private native boolean nativeTestGetSampleSizeBeforeSelectTrack(String srcPath);
 
@@ -952,8 +952,8 @@ public class ExtractorUnitTest {
 
         @Test
         public void testIfGetSampleFormatBeforeSelectTrack() {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            assertTrue(nativeTestIfGetSampleFormatBeforeSelectTrack(mInpPrefix + mInpMedia));
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            assertTrue(nativeTestIfGetSampleFormatBeforeSelectTrack(MEDIA_DIR + INPUT_MEDIA));
         }
         private native boolean nativeTestIfGetSampleFormatBeforeSelectTrack(String srcPath);
 
@@ -965,9 +965,9 @@ public class ExtractorUnitTest {
 
         @Test
         public void testGetSampleTrackIndexBeforeSelectTrack() {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
             assertTrue(
-                    nativeTestGetSampleTrackIndexBeforeSelectTrack(mInpPrefix + mInpMedia));
+                    nativeTestGetSampleTrackIndexBeforeSelectTrack(MEDIA_DIR + INPUT_MEDIA));
         }
         private native boolean nativeTestGetSampleTrackIndexBeforeSelectTrack(String srcPath);
 
@@ -979,8 +979,8 @@ public class ExtractorUnitTest {
 
         @Test
         public void testGetTrackFormatForInvalidIndex() {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            assertTrue(nativeTestGetTrackFormatForInvalidIndex(mInpPrefix + mInpMedia));
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            assertTrue(nativeTestGetTrackFormatForInvalidIndex(MEDIA_DIR + INPUT_MEDIA));
         }
         private native boolean nativeTestGetTrackFormatForInvalidIndex(String srcPath);
 
@@ -992,8 +992,8 @@ public class ExtractorUnitTest {
 
         @Test
         public void testReadSampleDataBeforeSelectTrack() {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            assertTrue(nativeTestReadSampleDataBeforeSelectTrack(mInpPrefix + mInpMedia));
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            assertTrue(nativeTestReadSampleDataBeforeSelectTrack(MEDIA_DIR + INPUT_MEDIA));
         }
         private native boolean nativeTestReadSampleDataBeforeSelectTrack(String srcPath);
 
@@ -1009,8 +1009,8 @@ public class ExtractorUnitTest {
                 Log.d(TAG, "testVideoSampleFileOffsetByGetSampleFormat requires Android 12");
                 return;
             }
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            assertTrue(nativeTestVideoSampleFileOffsetByGetSampleFormat(mInpPrefix + mInpMedia));
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            assertTrue(nativeTestVideoSampleFileOffsetByGetSampleFormat(MEDIA_DIR + INPUT_MEDIA));
         }
         private native boolean nativeTestVideoSampleFileOffsetByGetSampleFormat(String srcPath);
 
@@ -1020,8 +1020,8 @@ public class ExtractorUnitTest {
                 Log.d(TAG, "testAudioSampleFileOffsetByGetSampleFormat requires Android 12");
                 return;
             }
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            assertTrue(nativeTestAudioSampleFileOffsetByGetSampleFormat(mInpPrefix + mInpMedia));
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            assertTrue(nativeTestAudioSampleFileOffsetByGetSampleFormat(MEDIA_DIR + INPUT_MEDIA));
         }
         private native boolean nativeTestAudioSampleFileOffsetByGetSampleFormat(String srcPath);
     }

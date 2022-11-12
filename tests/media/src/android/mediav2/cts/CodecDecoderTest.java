@@ -95,7 +95,7 @@ import java.util.stream.IntStream;
 public class CodecDecoderTest extends CodecDecoderTestBase {
     private static final String LOG_TAG = CodecDecoderTest.class.getSimpleName();
     private static final float RMS_ERROR_TOLERANCE = 1.05f;        // 5%
-    private static final String mInpPrefix = WorkDir.getMediaDirString();
+    private static final String MEDIA_DIR = WorkDir.getMediaDirString();
 
     private final String mRefFile;
     private final String mReconfigFile;
@@ -110,9 +110,9 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     public CodecDecoderTest(String decoder, String mime, String testFile, String refFile,
             String reconfigFile, float rmsError, long refCRC, SupportClass supportRequirements,
             String allTestParams) {
-        super(decoder, mime, mInpPrefix + testFile, allTestParams);
-        mRefFile = mInpPrefix + refFile;
-        mReconfigFile = mInpPrefix + reconfigFile;
+        super(decoder, mime, MEDIA_DIR + testFile, allTestParams);
+        mRefFile = MEDIA_DIR + refFile;
+        mReconfigFile = MEDIA_DIR + reconfigFile;
         mRmsError = rmsError;
         mRefCRC = refCRC;
         mSupportRequirements = supportRequirements;

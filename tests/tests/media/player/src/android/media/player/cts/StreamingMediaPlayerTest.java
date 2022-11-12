@@ -24,7 +24,6 @@ import android.media.MediaPlayer;
 import android.media.MediaPlayer.TrackInfo;
 import android.media.TimedMetaData;
 import android.media.cts.MediaPlayerTestBase;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.Preconditions;
 import android.net.Uri;
 import android.os.Bundle;
@@ -40,6 +39,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -62,7 +62,7 @@ import java.util.Map;
 /**
  * Tests of MediaPlayer streaming capabilities.
  */
-@NonMediaMainlineTest
+@NonMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 @RunWith(AndroidJUnit4.class)
 public class StreamingMediaPlayerTest extends MediaPlayerTestBase {

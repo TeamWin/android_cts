@@ -69,14 +69,14 @@ import java.util.Map;
 public class CodecEncoderValidationTest extends CodecEncoderTestBase {
     private final boolean mUseHBD;
     // Key: mediaType, Value: tolerance duration in ms
-    private static final Map<String, Integer> toleranceMap = new HashMap<>();
+    private static final Map<String, Integer> TOLERANCE_MAP = new HashMap<>();
 
     static {
-        toleranceMap.put(MediaFormat.MIMETYPE_AUDIO_AAC, 20);
-        toleranceMap.put(MediaFormat.MIMETYPE_AUDIO_OPUS, 10);
-        toleranceMap.put(MediaFormat.MIMETYPE_AUDIO_AMR_NB, 10);
-        toleranceMap.put(MediaFormat.MIMETYPE_AUDIO_AMR_WB, 20);
-        toleranceMap.put(MediaFormat.MIMETYPE_AUDIO_FLAC, 0);
+        TOLERANCE_MAP.put(MediaFormat.MIMETYPE_AUDIO_AAC, 20);
+        TOLERANCE_MAP.put(MediaFormat.MIMETYPE_AUDIO_OPUS, 10);
+        TOLERANCE_MAP.put(MediaFormat.MIMETYPE_AUDIO_AMR_NB, 10);
+        TOLERANCE_MAP.put(MediaFormat.MIMETYPE_AUDIO_AMR_WB, 20);
+        TOLERANCE_MAP.put(MediaFormat.MIMETYPE_AUDIO_FLAC, 0);
     }
 
     public CodecEncoderValidationTest(String encoder, String mediaType, int bitrate,
@@ -224,8 +224,8 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
                     }
                 }
                 if (mIsAudio) {
-                    int tolerance = toleranceMap.get(mMime) * mSampleRate * mChannels *
-                            mBytesPerSample / 1000;
+                    int tolerance = TOLERANCE_MAP.get(mMime) * mSampleRate * mChannels
+                            * mBytesPerSample / 1000;
                     String errMsg = "################    Error Details   #################\n";
                     errMsg += String.format("Input sample count is %d, output sample count is %d",
                             mInputData.length, out.limit());

@@ -225,19 +225,19 @@ class ItsSession(object):
         if len(s) > 7 and s[6] == '=':
           duration = int(s[7:])
         logging.debug('Rebooting device')
-        _run('%s reboot' % (self.adb))
-        _run('%s wait-for-device' % (self.adb))
+        _run(f'{self.adb} reboot')
+        _run(f'{self.adb} wait-for-device')
         time.sleep(duration)
         logging.debug('Reboot complete')
 
     # Flush logcat so following code won't be misled by previous
     # 'ItsService ready' log.
-    _run('%s logcat -c' % (self.adb))
+    _run(f'{self.adb} logcat -c')
     time.sleep(1)
 
-    _run('%s shell am force-stop --user 0 %s' % (self.adb, self.PACKAGE))
-    _run(('%s shell am start-foreground-service --user 0 -t text/plain '
-          '-a %s') % (self.adb, self.INTENT_START))
+    _run(f'{self.adb} shell am force-stop --user 0 {self.PACKAGE}')
+    _run(f'{self.adb} shell am start-foreground-service --user 0 '
+         f'-t text/plain -a {self.INTENT_START}')
 
     # Wait until the socket is ready to accept a connection.
     proc = subprocess.Popen(
@@ -1395,34 +1395,29 @@ class ItsSession(object):
         chart_scaling,
         opencv_processing_utils.SCALE_RFOV_IN_WFOV_BOX,
         abs_tol=SCALING_TO_FILE_ATOL):
-      file_name = '%s_%sx_scaled.png' % (
-          scene, str(opencv_processing_utils.SCALE_RFOV_IN_WFOV_BOX))
+      file_name = f'{scene}_{opencv_processing_utils.SCALE_RFOV_IN_WFOV_BOX}x_scaled.png'
     elif math.isclose(
         chart_scaling,
         opencv_processing_utils.SCALE_TELE_IN_WFOV_BOX,
         abs_tol=SCALING_TO_FILE_ATOL):
-      file_name = '%s_%sx_scaled.png' % (
-          scene, str(opencv_processing_utils.SCALE_TELE_IN_WFOV_BOX))
+      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE_IN_WFOV_BOX}x_scaled.png'
     elif math.isclose(
         chart_scaling,
         opencv_processing_utils.SCALE_TELE25_IN_RFOV_BOX,
         abs_tol=SCALING_TO_FILE_ATOL):
-      file_name = '%s_%sx_scaled.png' % (
-          scene, str(opencv_processing_utils.SCALE_TELE25_IN_RFOV_BOX))
+      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE25_IN_RFOV_BOX}s_scaled.png'
     elif math.isclose(
         chart_scaling,
         opencv_processing_utils.SCALE_TELE40_IN_RFOV_BOX,
         abs_tol=SCALING_TO_FILE_ATOL):
-      file_name = '%s_%sx_scaled.png' % (
-          scene, str(opencv_processing_utils.SCALE_TELE40_IN_RFOV_BOX))
+      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE40_IN_RFOV_BOX}x_scaled.png'
     elif math.isclose(
         chart_scaling,
         opencv_processing_utils.SCALE_TELE_IN_RFOV_BOX,
         abs_tol=SCALING_TO_FILE_ATOL):
-      file_name = '%s_%sx_scaled.png' % (
-          scene, str(opencv_processing_utils.SCALE_TELE_IN_RFOV_BOX))
+      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE_IN_RFOV_BOX}x_scaled.png'
     else:
-      file_name = '%s.png' % scene
+      file_name = f'{scene}.png'
     logging.debug('Scene to load: %s', file_name)
     return file_name
 
@@ -1689,7 +1684,7 @@ def validate_lighting(y_plane, scene, state='ON', log_path=None):
 
 def get_build_sdk_version(device_id):
   """Return the int build version of the device."""
-  cmd = 'adb -s %s shell getprop ro.build.version.sdk' % device_id
+  cmd = f'adb -s {device_id} shell getprop ro.build.version.sdk'
   try:
     build_sdk_version = int(subprocess.check_output(cmd.split()).rstrip())
     logging.debug('Build SDK version: %d', build_sdk_version)
@@ -1700,7 +1695,7 @@ def get_build_sdk_version(device_id):
 
 def get_first_api_level(device_id):
   """Return the int value for the first API level of the device."""
-  cmd = 'adb -s %s shell getprop ro.product.first_api_level' % device_id
+  cmd = f'adb -s {device_id} shell getprop ro.product.first_api_level'
   try:
     first_api_level = int(subprocess.check_output(cmd.split()).rstrip())
     logging.debug('First API level: %d', first_api_level)
@@ -1712,7 +1707,7 @@ def get_first_api_level(device_id):
 
 def get_vendor_api_level(device_id):
   """Return the int value for the vendor API level of the device."""
-  cmd = 'adb -s %s shell getprop ro.vendor.api_level' % device_id
+  cmd = f'adb -s {device_id} shell getprop ro.vendor.api_level'
   try:
     vendor_api_level = int(subprocess.check_output(cmd.split()).rstrip())
     logging.debug('First vendor API level: %d', vendor_api_level)

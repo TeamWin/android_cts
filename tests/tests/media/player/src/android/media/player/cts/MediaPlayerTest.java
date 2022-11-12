@@ -43,7 +43,6 @@ import android.media.TimedText;
 import android.media.audiofx.AudioEffect;
 import android.media.audiofx.Visualizer;
 import android.media.cts.MediaPlayerTestBase;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.Preconditions;
 import android.media.cts.TestMediaDataSource;
 import android.media.cts.TestUtils.Monitor;
@@ -64,6 +63,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import junit.framework.AssertionFailedError;
 
@@ -101,7 +101,7 @@ import java.util.stream.Stream;
  */
 @SmallTest
 @RequiresDevice
-@NonMediaMainlineTest
+@NonMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 @RunWith(AndroidJUnit4.class)
 public class MediaPlayerTest extends MediaPlayerTestBase {

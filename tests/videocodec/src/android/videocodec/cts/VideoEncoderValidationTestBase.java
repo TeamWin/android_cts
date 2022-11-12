@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
+import android.mediav2.common.cts.BitStreamUtils;
 import android.mediav2.common.cts.CodecEncoderTestBase;
 import android.mediav2.common.cts.DecodeStreamToYuv;
 import android.mediav2.common.cts.RawResource;
@@ -37,6 +38,7 @@ import com.android.compatibility.common.util.Preconditions;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.TreeMap;
@@ -172,6 +174,10 @@ public class VideoEncoderValidationTestBase extends CodecEncoderTestBase {
             if (picType == PICTURE_TYPE_UNKNOWN) {
                 MediaFormat format = mCodec.getOutputFormat(bufferIndex);
                 picType = format.getInteger(MediaFormat.KEY_PICTURE_TYPE, PICTURE_TYPE_UNKNOWN);
+            }
+            if (picType == PICTURE_TYPE_UNKNOWN) {
+                ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
+                picType = BitStreamUtils.getFrameTypeFromBitStream(mMime, buf, info);
             }
             mPtsPicTypeMap.put(info.presentationTimeUs, picType);
         }

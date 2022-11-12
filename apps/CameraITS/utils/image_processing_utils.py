@@ -90,7 +90,7 @@ def convert_capture_to_rgb_image(cap,
     y = cap['data'][0: w * h]
     return convert_y8_to_rgb_image(y, w, h)
   else:
-    raise error_util.CameraItsError('Invalid format %s' % (cap['format']))
+    raise error_util.CameraItsError(f"Invalid format {cap['format']}")
 
 
 def unpack_raw10_capture(cap):
@@ -372,7 +372,7 @@ def convert_capture_to_planes(cap, props=None):
     idxs = get_canonical_cfa_order(props)
     return [mean_image[:, :, i] / white_level for i in idxs]
   else:
-    raise error_util.CameraItsError('Invalid format %s' % (cap['format']))
+    raise error_util.CameraItsError(f"Invalid format {cap['format']}")
 
 
 def downscale_image(img, f):

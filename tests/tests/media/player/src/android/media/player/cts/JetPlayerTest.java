@@ -23,7 +23,6 @@ import static org.junit.Assert.fail;
 import android.content.Context;
 import android.media.JetPlayer;
 import android.media.JetPlayer.OnJetEventListener;
-import android.media.cts.NonMediaMainlineTest;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
@@ -31,6 +30,8 @@ import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -43,7 +44,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-@NonMediaMainlineTest
+@NonMainlineTest
 @RunWith(AndroidJUnit4.class)
 public class JetPlayerTest {
     private OnJetEventListener mOnJetEventListener;

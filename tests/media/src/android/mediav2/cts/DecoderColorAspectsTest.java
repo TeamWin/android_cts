@@ -57,7 +57,7 @@ import java.util.List;
 @RunWith(Parameterized.class)
 public class DecoderColorAspectsTest extends CodecDecoderTestBase {
     private static final String LOG_TAG = DecoderColorAspectsTest.class.getSimpleName();
-    private static final String mInpPrefix = WorkDir.getMediaDirString();
+    private static final String MEDIA_DIR = WorkDir.getMediaDirString();
     private final int mColorRange;
     private final int mColorStandard;
     private final int mColorTransferCurve;
@@ -68,7 +68,7 @@ public class DecoderColorAspectsTest extends CodecDecoderTestBase {
     public DecoderColorAspectsTest(String decoderName, String mime, String testFile, int range,
             int standard, int transferCurve, boolean canIgnoreColorBox,
             SupportClass supportRequirements, String allTestParams) {
-        super(decoderName, mime, mInpPrefix + testFile, allTestParams);
+        super(decoderName, mime, MEDIA_DIR + testFile, allTestParams);
         mColorRange = range;
         mColorStandard = standard;
         mColorTransferCurve = transferCurve;

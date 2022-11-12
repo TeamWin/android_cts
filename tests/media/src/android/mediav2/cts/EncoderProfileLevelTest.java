@@ -72,7 +72,7 @@ import java.util.List;
 @RunWith(Parameterized.class)
 public class EncoderProfileLevelTest extends CodecEncoderTestBase {
     private static final String LOG_TAG = EncoderProfileLevelTest.class.getSimpleName();
-    private static final HashMap<String, Pair<int[], Integer>> mProfileLevelCdd = new HashMap<>();
+    private static final HashMap<String, Pair<int[], Integer>> PROFILE_LEVEL_CDD = new HashMap<>();
 
     private final boolean mUseHighBitDepth;
     private final MediaFormat mConfigFormat;
@@ -233,17 +233,17 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
     }
 
     static {
-        mProfileLevelCdd.put(MediaFormat.MIMETYPE_AUDIO_AAC,
+        PROFILE_LEVEL_CDD.put(MediaFormat.MIMETYPE_AUDIO_AAC,
                 new Pair<>(new int[]{AACObjectLC, AACObjectHE, AACObjectELD}, -1));
-        mProfileLevelCdd.put(MediaFormat.MIMETYPE_VIDEO_H263,
+        PROFILE_LEVEL_CDD.put(MediaFormat.MIMETYPE_VIDEO_H263,
                 new Pair<>(new int[]{H263ProfileBaseline}, H263Level45));
-        mProfileLevelCdd.put(MediaFormat.MIMETYPE_VIDEO_AVC,
+        PROFILE_LEVEL_CDD.put(MediaFormat.MIMETYPE_VIDEO_AVC,
                 new Pair<>(new int[]{AVCProfileBaseline}, AVCLevel3));
-        mProfileLevelCdd.put(MediaFormat.MIMETYPE_VIDEO_HEVC,
+        PROFILE_LEVEL_CDD.put(MediaFormat.MIMETYPE_VIDEO_HEVC,
                 new Pair<>(new int[]{HEVCProfileMain}, HEVCMainTierLevel3));
-        mProfileLevelCdd.put(MediaFormat.MIMETYPE_VIDEO_VP8,
+        PROFILE_LEVEL_CDD.put(MediaFormat.MIMETYPE_VIDEO_VP8,
                 new Pair<>(new int[]{VP8ProfileMain}, VP8Level_Version0));
-        mProfileLevelCdd.put(MediaFormat.MIMETYPE_VIDEO_VP9,
+        PROFILE_LEVEL_CDD.put(MediaFormat.MIMETYPE_VIDEO_VP9,
                 new Pair<>(new int[]{VP9Profile0}, VP9Level3));
     }
 
@@ -713,11 +713,11 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
         }
         assertNotNull("no profile entry found for mime" + mMime + ". \n" + mTestConfig + mTestEnv,
                 profiles);
-        boolean cddSupportedMime = mProfileLevelCdd.get(mMime) != null;
+        boolean cddSupportedMime = PROFILE_LEVEL_CDD.get(mMime) != null;
         int[] profileCdd = new int[0];
         int levelCdd = 0;
         if (cddSupportedMime) {
-            Pair<int[], Integer> cddProfileLevel = mProfileLevelCdd.get(mMime);
+            Pair<int[], Integer> cddProfileLevel = PROFILE_LEVEL_CDD.get(mMime);
             profileCdd = cddProfileLevel.first;
             levelCdd = cddProfileLevel.second;
         }

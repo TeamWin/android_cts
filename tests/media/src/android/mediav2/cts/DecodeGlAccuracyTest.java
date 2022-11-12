@@ -59,7 +59,7 @@ import javax.microedition.khronos.opengles.GL10;
 @RunWith(Parameterized.class)
 public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
     private static final String LOG_TAG = DecodeGlAccuracyTest.class.getSimpleName();
-    private static final String mInpPrefix = WorkDir.getMediaDirString();
+    private static final String MEDIA_DIR = WorkDir.getMediaDirString();
 
     // Allowed color tolerance to account for differences in the conversion process
     private static final int ALLOWED_COLOR_DELTA = 8;
@@ -168,7 +168,7 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
 
     public DecodeGlAccuracyTest(String decoder, String mediaType, String fileName, int range,
             int standard, int transfer, boolean useYuvSampling, String allTestParams) {
-        super(decoder, mediaType, mInpPrefix + fileName, allTestParams);
+        super(decoder, mediaType, MEDIA_DIR + fileName, allTestParams);
         mRange = range;
         mStandard = standard;
         mTransferCurve = transfer;

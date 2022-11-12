@@ -474,8 +474,7 @@ def main():
     # A subdir in topdir will be created for each camera_id. All scene test
     # output logs for each camera id will be stored in this subdir.
     # This output log path is a mobly param : LogPath
-    cam_id_string = 'cam_id_%s' % (
-        camera_id.replace(its_session_utils.SUB_CAMERA_SEPARATOR, '_'))
+    cam_id_string = f"cam_id_{camera_id.replace(its_session_utils.SUB_CAMERA_SEPARATOR, '_')}"
     mobly_output_logs_path = os.path.join(topdir, cam_id_string)
     os.mkdir(mobly_output_logs_path)
     tot_pass = 0
@@ -536,14 +535,14 @@ def main():
           cmd = [
               'python3',
               os.path.join(os.environ['CAMERA_ITS_TOP'], test), '-c',
-              '%s' % new_yml_file_name
+              f'{new_yml_file_name}'
           ]
         else:
           cmd = [
               'python3',
               os.path.join(os.environ['CAMERA_ITS_TOP'], 'tests', s, test),
               '-c',
-              '%s' % new_yml_file_name
+              f'{new_yml_file_name}'
           ]
         for num_try in range(NUM_TRIES):
           # Handle manual lighting control redirected stdout in test
@@ -610,7 +609,7 @@ def main():
             'status': return_string.strip()})
         if test_mpc_req:
           results[s][METRICS_KEY].append(test_mpc_req)
-        msg_short = '%s %s' % (return_string, test)
+        msg_short = f'{return_string} {test}'
         scene_test_summary += msg_short + '\n'
         if test in _LIGHTING_CONTROL_TESTS and not testing_flash_with_controller:
           print('Turn lights ON in rig and press <ENTER> to continue.')
@@ -619,13 +618,16 @@ def main():
       scene_end_time = int(round(time.time() * 1000))
       skip_string = ''
       tot_tests = len(scene_test_list)
+      tot_tests_run = tot_tests - num_skip
+      if tot_tests_run != 0:
+        tests_passed_ratio = (num_pass + num_not_mandated_fail) / tot_tests_run
+      else:
+        tests_passed_ratio = (num_pass + num_not_mandated_fail) / 100.0
+      tests_passed_ratio_format = f'{(100 * tests_passed_ratio):.1f}%'
       if num_skip > 0:
         skip_string = f",{num_skip} test{'s' if num_skip > 1 else ''} skipped"
-      test_result = '%d / %d tests passed (%.1f%%)%s' % (
-          num_pass + num_not_mandated_fail, len(scene_test_list) - num_skip,
-          100.0 * float(num_pass + num_not_mandated_fail) /
-          (len(scene_test_list) - num_skip)
-          if len(scene_test_list) != num_skip else 100.0, skip_string)
+      test_result = (f'{num_pass + num_not_mandated_fail} / {tot_tests_run} '
+                     f'tests passed ({tests_passed_ratio_format}){skip_string}')
       logging.info(test_result)
       if num_not_mandated_fail > 0:
         logging.info('(*) %s not_yet_mandated tests failed',

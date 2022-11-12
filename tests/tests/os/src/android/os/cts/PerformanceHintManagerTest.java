@@ -31,6 +31,8 @@ import android.os.Process;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import com.google.common.base.Strings;
 
 import org.junit.Before;
@@ -162,6 +164,25 @@ public class PerformanceHintManagerTest {
         if (!Strings.isNullOrEmpty(failureMessage)) {
             fail(failureMessage);
         }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.PerformanceHintManager.Session#sendHint"})
+    public void testSendHint() {
+        Session s = createSession();
+        assumeNotNull(s);
+        s.sendHint(Session.CPU_LOAD_UP);
+        s.sendHint(Session.CPU_LOAD_RESET);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.PerformanceHintManager.Session#sendHint"})
+    public void testSendHintWithNegativeHint() {
+        Session s = createSession();
+        assumeNotNull(s);
+        assertThrows(IllegalArgumentException.class, () -> {
+            s.sendHint(-1);
+        });
     }
 
     @Test

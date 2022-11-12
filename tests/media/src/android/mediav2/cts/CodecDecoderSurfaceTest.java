@@ -68,7 +68,7 @@ import java.util.List;
 @RunWith(Parameterized.class)
 public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     private static final String LOG_TAG = CodecDecoderSurfaceTest.class.getSimpleName();
-    private static final String mInpPrefix = WorkDir.getMediaDirString();
+    private static final String MEDIA_DIR = WorkDir.getMediaDirString();
 
     private final String mReconfigFile;
     private final SupportClass mSupportRequirements;
@@ -79,8 +79,8 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
 
     public CodecDecoderSurfaceTest(String decoder, String mime, String testFile,
             String reconfigFile, SupportClass supportRequirements, String allTestParams) {
-        super(decoder, mime, mInpPrefix + testFile, allTestParams);
-        mReconfigFile = mInpPrefix + reconfigFile;
+        super(decoder, mime, MEDIA_DIR + testFile, allTestParams);
+        mReconfigFile = MEDIA_DIR + reconfigFile;
         mSupportRequirements = supportRequirements;
     }
 

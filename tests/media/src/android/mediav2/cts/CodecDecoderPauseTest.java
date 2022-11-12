@@ -49,13 +49,13 @@ public class CodecDecoderPauseTest extends CodecDecoderTestBase {
     private static final String LOG_TAG = CodecDecoderPauseTest.class.getSimpleName();
     private static final long PAUSE_TIME_MS = 10000;
     private static final int NUM_FRAMES = 8;
-    private static final String mInpPrefix = WorkDir.getMediaDirString();
+    private static final String MEDIA_DIR = WorkDir.getMediaDirString();
 
     private final SupportClass mSupportRequirements;
 
     public CodecDecoderPauseTest(String decoder, String mime, String srcFile,
             SupportClass supportRequirements, String allTestParams) {
-        super(decoder, mime, mInpPrefix + srcFile, allTestParams);
+        super(decoder, mime, MEDIA_DIR + srcFile, allTestParams);
         mSupportRequirements = supportRequirements;
     }
 

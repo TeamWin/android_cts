@@ -92,7 +92,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
     private static final String MEDIA_TYPE_HEVC = MediaFormat.MIMETYPE_VIDEO_HEVC;
     private static final String MEDIA_TYPE_VP9 = MediaFormat.MIMETYPE_VIDEO_VP9;
     private static final String MEDIA_TYPE_AV1 = MediaFormat.MIMETYPE_VIDEO_AV1;
-    private static final String mInpPrefix = WorkDir.getMediaDirString();
+    private static final String MEDIA_DIR = WorkDir.getMediaDirString();
     private final String[] mSrcFiles;
     private final String mRefFile;
     private final float mRmsError;
@@ -108,7 +108,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
             int width, int height, SupportClass supportRequirements, String allTestParams) {
         super(decoder, mime, null, allTestParams);
         mSrcFiles = srcFiles;
-        mRefFile = mInpPrefix + refFile;
+        mRefFile = MEDIA_DIR + refFile;
         mRmsError = rmsError;
         mRefCRC = refCRC;
         mSampleRate = sampleRate;
@@ -645,7 +645,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
     public void testDecodeAndValidate() throws IOException, InterruptedException {
         ArrayList<MediaFormat> formats = new ArrayList<>();
         for (String file : mSrcFiles) {
-            formats.add(setUpSource(mInpPrefix + file));
+            formats.add(setUpSource(MEDIA_DIR + file));
             mExtractor.release();
         }
         checkFormatSupport(mCodecName, mMime, false, formats, null, mSupportRequirements);
@@ -655,7 +655,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
             for (String file : mSrcFiles) {
                 mOutputBuff = new OutputManager();
                 mCodec = MediaCodec.createByCodecName(mCodecName);
-                MediaFormat format = setUpSource(mInpPrefix + file);
+                MediaFormat format = setUpSource(MEDIA_DIR + file);
                 configureCodec(format, false, true, false);
                 mCodec.start();
                 mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);

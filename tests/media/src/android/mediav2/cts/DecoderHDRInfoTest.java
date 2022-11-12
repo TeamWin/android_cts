@@ -50,7 +50,7 @@ import java.util.Map;
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 public class DecoderHDRInfoTest extends HDRDecoderTestBase {
     private static final String LOG_TAG = DecoderHDRInfoTest.class.getSimpleName();
-    private static final String mInpPrefix = WorkDir.getMediaDirString();
+    private static final String MEDIA_DIR = WorkDir.getMediaDirString();
     private final String mHDRStaticInfoStream;
     private final String mHDRStaticInfoContainer;
     private final Map<Integer, String> mHDRDynamicInfoStream;
@@ -60,7 +60,7 @@ public class DecoderHDRInfoTest extends HDRDecoderTestBase {
             String hdrStaticInfoStream, String hdrStaticInfoContainer,
             Map<Integer, String> hdrDynamicInfoStream, Map<Integer, String> hdrDynamicInfoContainer,
             String allTestParams) {
-        super(codecName, mediaType, mInpPrefix + testFile, allTestParams);
+        super(codecName, mediaType, MEDIA_DIR + testFile, allTestParams);
         mHDRStaticInfoStream = hdrStaticInfoStream;
         mHDRStaticInfoContainer = hdrStaticInfoContainer;
         mHDRDynamicInfoStream = hdrDynamicInfoStream;

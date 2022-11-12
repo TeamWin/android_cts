@@ -180,7 +180,7 @@ public class ExtractorTest {
     static private final List<String> codecListSupp =
             Arrays.asList(MediaFormat.MIMETYPE_VIDEO_AV1, MediaFormat.MIMETYPE_AUDIO_AC3,
                     MediaFormat.MIMETYPE_AUDIO_AC4, MediaFormat.MIMETYPE_AUDIO_EAC3);
-    private static String mInpPrefix = WorkDir.getMediaDirString();
+    private static final String MEDIA_DIR = WorkDir.getMediaDirString();
     private static String extSel;
 
     static {
@@ -488,8 +488,8 @@ public class ExtractorTest {
         @Rule
         public TestName testName = new TestName();
 
-        private static final String mInpMedia = "ForBiggerEscapes.mp4";
-        private static final String mResString = "raw/forbiggerescapes";
+        private static final String INPUT_MEDIA = "ForBiggerEscapes.mp4";
+        private static final String RES_STRING = "raw/forbiggerescapes";
         private CtsTestServer mWebServer;
         private String mInpMediaUrl;
         private MediaExtractor mRefExtractor;
@@ -501,12 +501,12 @@ public class ExtractorTest {
         @Before
         public void setUp() throws IOException {
             mRefExtractor = new MediaExtractor();
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            mRefExtractor.setDataSource(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            mRefExtractor.setDataSource(MEDIA_DIR + INPUT_MEDIA);
             try {
                 Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
                 mWebServer = new CtsTestServer(context);
-                mInpMediaUrl = mWebServer.getAssetUrl(mResString);
+                mInpMediaUrl = mWebServer.getAssetUrl(RES_STRING);
             } catch (Exception e) {
                 fail(e.getMessage());
             }
@@ -584,8 +584,8 @@ public class ExtractorTest {
 
         @Test
         public void testAssetFD() throws IOException {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            File inpFile = new File(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            File inpFile = new File(MEDIA_DIR + INPUT_MEDIA);
             MediaExtractor testExtractor = new MediaExtractor();
             try (ParcelFileDescriptor parcelFD = ParcelFileDescriptor
                     .open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
@@ -604,8 +604,8 @@ public class ExtractorTest {
 
         @Test
         public void testFileDescriptor() throws IOException {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            File inpFile = new File(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            File inpFile = new File(MEDIA_DIR + INPUT_MEDIA);
             MediaExtractor testExtractor = new MediaExtractor();
             try (FileInputStream fInp = new FileInputStream(inpFile)) {
                 testExtractor.setDataSource(fInp.getFD());
@@ -617,7 +617,7 @@ public class ExtractorTest {
                 fail("setDataSource failed: " + testName.getMethodName());
             }
             long sdkChecksum = readAllData(testExtractor, null, Integer.MAX_VALUE);
-            long ndkChecksum = nativeReadAllData(mInpPrefix + mInpMedia, "",
+            long ndkChecksum = nativeReadAllData(MEDIA_DIR + INPUT_MEDIA, "",
                     Integer.MAX_VALUE, null, null, false);
             testExtractor.release();
             assertEquals("SDK and NDK checksums mismatch", sdkChecksum, ndkChecksum);
@@ -625,8 +625,8 @@ public class ExtractorTest {
 
         @Test
         public void testFileDescriptorLenOffset() throws IOException {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
-            File inpFile = new File(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
+            File inpFile = new File(MEDIA_DIR + INPUT_MEDIA);
             File outFile = File.createTempFile("temp", ".out");
             byte[] garbageAppend = "PrefixGarbage".getBytes();
             try (FileInputStream fInp = new FileInputStream(inpFile);
@@ -656,9 +656,9 @@ public class ExtractorTest {
 
         @Test
         public void testMediaDataSource() throws Exception {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
             TestMediaDataSource dataSource =
-                    TestMediaDataSource.fromString(mInpPrefix + mInpMedia, false, false);
+                    TestMediaDataSource.fromString(MEDIA_DIR + INPUT_MEDIA, false, false);
             MediaExtractor testExtractor = new MediaExtractor();
             testExtractor.setDataSource(dataSource);
             assertTrue(testExtractor.getCachedDuration() < 0);
@@ -674,7 +674,7 @@ public class ExtractorTest {
         @Test
         public void testContextUri() throws IOException {
             Context context = InstrumentationRegistry.getInstrumentation().getContext();
-            String path = "android.resource://android.mediav2.cts/" + mResString;
+            String path = "android.resource://android.mediav2.cts/" + RES_STRING;
             MediaExtractor testExtractor = new MediaExtractor();
             testExtractor.setDataSource(context, Uri.parse(path), null);
             assertTrue(testExtractor.getCachedDuration() < 0);
@@ -689,7 +689,7 @@ public class ExtractorTest {
         private void checkExtractorOkForUrlDS(Map<String, String> headers) throws Exception {
             MediaExtractor testExtractor = new MediaExtractor();
             testExtractor.setDataSource(mInpMediaUrl, headers);
-            HttpRequest req = mWebServer.getLastRequest(mResString);
+            HttpRequest req = mWebServer.getLastRequest(RES_STRING);
             if (headers != null) {
                 for (String key : headers.keySet()) {
                     String value = headers.get(key);
@@ -750,9 +750,9 @@ public class ExtractorTest {
 
         @Test
         public void testDataSourceNative() {
-            Preconditions.assertTestFileExists(mInpPrefix + mInpMedia);
+            Preconditions.assertTestFileExists(MEDIA_DIR + INPUT_MEDIA);
             assertTrue(testName.getMethodName() + " failed ",
-                    nativeTestDataSource(mInpPrefix + mInpMedia, mInpMediaUrl));
+                    nativeTestDataSource(MEDIA_DIR + INPUT_MEDIA, mInpMediaUrl));
         }
     }
 
@@ -762,8 +762,8 @@ public class ExtractorTest {
     @RunWith(Parameterized.class)
     public static class FunctionalityTest {
         private static final int MAX_SEEK_POINTS = 7;
-        private static final long mSeed = 0x12b9b0a1;
-        private final Random mRandNum = new Random(mSeed);
+        private static final long SEED = 0x12b9b0a1;
+        private final Random mRandNum = new Random(SEED);
         private String[] mSrcFiles;
         private String mMime;
 
@@ -885,8 +885,8 @@ public class ExtractorTest {
             ArrayList<MediaCodec.BufferInfo> bookmarks = null;
             if (mime == null) return null;
             MediaExtractor extractor = new MediaExtractor();
-            Preconditions.assertTestFileExists(mInpPrefix + srcFile);
-            extractor.setDataSource(mInpPrefix + srcFile);
+            Preconditions.assertTestFileExists(MEDIA_DIR + srcFile);
+            extractor.setDataSource(MEDIA_DIR + srcFile);
             for (int trackID = 0; trackID < extractor.getTrackCount(); trackID++) {
                 MediaFormat format = extractor.getTrackFormat(trackID);
                 if (!mime.equals(format.getString(MediaFormat.KEY_MIME))) continue;
@@ -912,10 +912,10 @@ public class ExtractorTest {
                 boolean isRandom) throws IOException {
             ArrayList<SeekTestParams> testArgs = new ArrayList<>();
             if (mime == null) return null;
-            Preconditions.assertTestFileExists(mInpPrefix + srcFile);
+            Preconditions.assertTestFileExists(MEDIA_DIR + srcFile);
             if (isRandom) {
                 MediaExtractor extractor = new MediaExtractor();
-                extractor.setDataSource(mInpPrefix + srcFile);
+                extractor.setDataSource(MEDIA_DIR + srcFile);
                 final long maxEstDuration = 4000000;
                 for (int trackID = 0; trackID < extractor.getTrackCount(); trackID++) {
                     MediaFormat format = extractor.getTrackFormat(trackID);
@@ -995,9 +995,9 @@ public class ExtractorTest {
         int checkSeekPoints(String srcFile, String mime,
                 ArrayList<SeekTestParams> seekTestArgs) throws IOException {
             int errCnt = 0;
-            Preconditions.assertTestFileExists(mInpPrefix + srcFile);
+            Preconditions.assertTestFileExists(MEDIA_DIR + srcFile);
             MediaExtractor extractor = new MediaExtractor();
-            extractor.setDataSource(mInpPrefix + srcFile);
+            extractor.setDataSource(MEDIA_DIR + srcFile);
             for (int trackID = 0; trackID < extractor.getTrackCount(); trackID++) {
                 MediaFormat format = extractor.getTrackFormat(trackID);
                 if (!format.getString(MediaFormat.KEY_MIME).equals(mime)) continue;
@@ -1029,8 +1029,8 @@ public class ExtractorTest {
 
         private boolean isFileSeekable(String srcFile) throws IOException {
             MediaExtractor ext = new MediaExtractor();
-            Preconditions.assertTestFileExists(mInpPrefix + srcFile);
-            ext.setDataSource(mInpPrefix + srcFile);
+            Preconditions.assertTestFileExists(MEDIA_DIR + srcFile);
+            ext.setDataSource(MEDIA_DIR + srcFile);
             String format = ext.getMetrics().getString(MediaExtractor.MetricsConstants.FORMAT);
             ext.release();
             // MPEG2TS and MPEG2PS files are non-seekable
@@ -1049,11 +1049,11 @@ public class ExtractorTest {
         @Test
         public void testExtract() throws IOException {
             assumeTrue(shouldRunTest(mMime));
-            Preconditions.assertTestFileExists(mInpPrefix + mSrcFiles[0]);
+            Preconditions.assertTestFileExists(MEDIA_DIR + mSrcFiles[0]);
             MediaExtractor refExtractor = new MediaExtractor();
-            refExtractor.setDataSource(mInpPrefix + mSrcFiles[0]);
+            refExtractor.setDataSource(MEDIA_DIR + mSrcFiles[0]);
             long sdkChecksum = readAllData(refExtractor, mMime, Integer.MAX_VALUE);
-            long ndkChecksum = nativeReadAllData(mInpPrefix + mSrcFiles[0], mMime,
+            long ndkChecksum = nativeReadAllData(MEDIA_DIR + mSrcFiles[0], mMime,
                     Integer.MAX_VALUE, null, null, false);
             assertEquals("SDK and NDK checksums mismatch", sdkChecksum, ndkChecksum);
             if (mSrcFiles.length == 1) {
@@ -1067,8 +1067,8 @@ public class ExtractorTest {
             boolean isOk = true;
             for (int i = 1; i < mSrcFiles.length && isOk; i++) {
                 MediaExtractor testExtractor = new MediaExtractor();
-                Preconditions.assertTestFileExists(mInpPrefix + mSrcFiles[i]);
-                testExtractor.setDataSource(mInpPrefix + mSrcFiles[i]);
+                Preconditions.assertTestFileExists(MEDIA_DIR + mSrcFiles[i]);
+                testExtractor.setDataSource(MEDIA_DIR + mSrcFiles[i]);
                 if (!isMediaSimilar(refExtractor, testExtractor, mMime, Integer.MAX_VALUE)) {
                     if (ENABLE_LOGS) {
                         Log.d(LOG_TAG, "Files: " + mSrcFiles[0] + ", " + mSrcFiles[i] +
@@ -1160,8 +1160,8 @@ public class ExtractorTest {
             for (String srcFile : mSrcFiles) {
                 if (!isFileSeekable(srcFile)) continue;
                 MediaExtractor extractor = new MediaExtractor();
-                Preconditions.assertTestFileExists(mInpPrefix + srcFile);
-                extractor.setDataSource(mInpPrefix + srcFile);
+                Preconditions.assertTestFileExists(MEDIA_DIR + srcFile);
+                extractor.setDataSource(MEDIA_DIR + srcFile);
                 MediaCodec.BufferInfo sampleInfoAtZero = new MediaCodec.BufferInfo();
                 MediaCodec.BufferInfo currInfo = new MediaCodec.BufferInfo();
                 final long randomSeekPts = 1 << 20;
@@ -1223,8 +1223,8 @@ public class ExtractorTest {
             assumeTrue(shouldRunTest(mMime));
             for (String srcFile : mSrcFiles) {
                 MediaExtractor extractor = new MediaExtractor();
-                Preconditions.assertTestFileExists(mInpPrefix + srcFile);
-                extractor.setDataSource(mInpPrefix + srcFile);
+                Preconditions.assertTestFileExists(MEDIA_DIR + srcFile);
+                extractor.setDataSource(MEDIA_DIR + srcFile);
                 PersistableBundle bundle = extractor.getMetrics();
                 int numTracks = bundle.getInt(MediaExtractor.MetricsConstants.TRACKS);
                 String format = bundle.getString(MediaExtractor.MetricsConstants.FORMAT);
@@ -1245,10 +1245,10 @@ public class ExtractorTest {
             assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_MPEG));
             assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC));
             boolean isOk = true;
-            Preconditions.assertTestFileExists(mInpPrefix + mSrcFiles[0]);
+            Preconditions.assertTestFileExists(MEDIA_DIR + mSrcFiles[0]);
             for (int i = 1; i < mSrcFiles.length; i++) {
-                Preconditions.assertTestFileExists(mInpPrefix + mSrcFiles[i]);
-                if (!nativeTestExtract(mInpPrefix + mSrcFiles[0], mInpPrefix + mSrcFiles[i],
+                Preconditions.assertTestFileExists(MEDIA_DIR + mSrcFiles[i]);
+                if (!nativeTestExtract(MEDIA_DIR + mSrcFiles[0], MEDIA_DIR + mSrcFiles[i],
                         mMime)) {
                     Log.d(LOG_TAG, "Files: " + mSrcFiles[0] + ", " + mSrcFiles[i] +
                             " are different from extractor perpsective");
@@ -1268,9 +1268,9 @@ public class ExtractorTest {
             assumeTrue(shouldRunTest(mMime) && !mMime.equals(MediaFormat.MIMETYPE_AUDIO_RAW));
             boolean isOk = true;
             for (String srcFile : mSrcFiles) {
-                Preconditions.assertTestFileExists(mInpPrefix + srcFile);
+                Preconditions.assertTestFileExists(MEDIA_DIR + srcFile);
                 if (!isFileSeekable(srcFile)) continue;
-                if (!nativeTestSeek(mInpPrefix + srcFile, mMime)) {
+                if (!nativeTestSeek(MEDIA_DIR + srcFile, mMime)) {
                     if (!codecListSupp.contains(mMime)) {
                         isOk = false;
                         break;
@@ -1286,9 +1286,9 @@ public class ExtractorTest {
             assumeTrue(shouldRunTest(mMime));
             boolean isOk = true;
             for (String srcFile : mSrcFiles) {
-                Preconditions.assertTestFileExists(mInpPrefix + srcFile);
+                Preconditions.assertTestFileExists(MEDIA_DIR + srcFile);
                 if (!isFileSeekable(srcFile)) continue;
-                if (!nativeTestSeekFlakiness(mInpPrefix + srcFile, mMime)) {
+                if (!nativeTestSeekFlakiness(MEDIA_DIR + srcFile, mMime)) {
                     if (!codecListSupp.contains(mMime)) {
                         isOk = false;
                         break;
@@ -1307,9 +1307,9 @@ public class ExtractorTest {
             assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC));
             boolean isOk = true;
             for (String srcFile : mSrcFiles) {
-                Preconditions.assertTestFileExists(mInpPrefix + srcFile);
+                Preconditions.assertTestFileExists(MEDIA_DIR + srcFile);
                 if (!isFileSeekable(srcFile)) continue;
-                if (!nativeTestSeekToZero(mInpPrefix + srcFile, mMime)) {
+                if (!nativeTestSeekToZero(MEDIA_DIR + srcFile, mMime)) {
                     if (!codecListSupp.contains(mMime)) {
                         isOk = false;
                         break;
@@ -1325,8 +1325,8 @@ public class ExtractorTest {
             assumeTrue(shouldRunTest(mMime));
             boolean isOk = true;
             for (String srcFile : mSrcFiles) {
-                Preconditions.assertTestFileExists(mInpPrefix + srcFile);
-                if (!nativeTestFileFormat(mInpPrefix + srcFile)) {
+                Preconditions.assertTestFileExists(MEDIA_DIR + srcFile);
+                if (!nativeTestFileFormat(MEDIA_DIR + srcFile)) {
                     isOk = false;
                     break;
                 }
@@ -1366,7 +1366,7 @@ public class ExtractorTest {
         @Test
         public void testExtractDecodeAndValidate() throws IOException, InterruptedException {
             MediaExtractor testExtractor = new MediaExtractor();
-            testExtractor.setDataSource(mInpPrefix + mTestFile);
+            testExtractor.setDataSource(MEDIA_DIR + mTestFile);
             MediaFormat format = testExtractor.getTrackFormat(0);
             String mime = format.getString(MediaFormat.KEY_MIME);
             if (mime.equals(MediaFormat.MIMETYPE_AUDIO_RAW)) {
@@ -1376,7 +1376,7 @@ public class ExtractorTest {
                         !listOfDecoders.isEmpty());
                 CodecDecoderTestBase cdtb =
                         new CodecDecoderTestBase(listOfDecoders.get(0), mMime, mRefFile, "invalid");
-                cdtb.decodeToMemory(mInpPrefix + mRefFile, listOfDecoders.get(0), 0,
+                cdtb.decodeToMemory(MEDIA_DIR + mRefFile, listOfDecoders.get(0), 0,
                         MediaExtractor.SEEK_TO_CLOSEST_SYNC, Integer.MAX_VALUE);
                 String log = String.format("test file: %s, ref file: %s:: ", mTestFile, mRefFile);
                 assertTrue(log + "no output received", 0 != cdtb.mOutputCount);
@@ -1397,7 +1397,7 @@ public class ExtractorTest {
                         cdtb.isFormatSimilar(cdtb.mOutFormat, format));
             } else if (mime.equals(mMime)) {
                 MediaExtractor refExtractor = new MediaExtractor();
-                refExtractor.setDataSource(mInpPrefix + mRefFile);
+                refExtractor.setDataSource(MEDIA_DIR + mRefFile);
                 if (!isMediaSimilar(refExtractor, testExtractor, mMime, Integer.MAX_VALUE)) {
                     fail("Files: " + mRefFile + ", " + mTestFile +
                             " are different from extractor perspective");
@@ -1415,7 +1415,7 @@ public class ExtractorTest {
      */
     @RunWith(Parameterized.class)
     public static class ValidateKeyValuePairs {
-        private static final String mInpPrefix = WorkDir.getMediaDirString();
+        private static final String MEDIA_DIR = WorkDir.getMediaDirString();
         private final String mMime;
         private final String[] mInpFiles;
         private final int mProfile;
@@ -1608,8 +1608,8 @@ public class ExtractorTest {
             for (String file : mInpFiles) {
                 MediaFormat format = null;
                 MediaExtractor extractor = new MediaExtractor();
-                Preconditions.assertTestFileExists(mInpPrefix + file);
-                extractor.setDataSource(mInpPrefix + file);
+                Preconditions.assertTestFileExists(MEDIA_DIR + file);
+                extractor.setDataSource(MEDIA_DIR + file);
                 for (int trackID = 0; trackID < extractor.getTrackCount(); trackID++) {
                     MediaFormat fmt = extractor.getTrackFormat(trackID);
                     if (mMime.equalsIgnoreCase(fmt.getString(MediaFormat.KEY_MIME))) {
@@ -1751,15 +1751,15 @@ public class ExtractorTest {
         @LargeTest
         @Test
         public void testPresentationTimeStampsMatch() throws IOException {
-            try (FileInputStream file = new FileInputStream(mInpPrefix + mPTSListFile);
+            try (FileInputStream file = new FileInputStream(MEDIA_DIR + mPTSListFile);
                  InputStreamReader input = new InputStreamReader(file);
                  Reader txtRdr = new BufferedReader(input)) {
                 StreamTokenizer strTok = new StreamTokenizer(txtRdr);
                 strTok.parseNumbers();
 
                 MediaExtractor extractor = new MediaExtractor();
-                Preconditions.assertTestFileExists(mInpPrefix + mRefFile);
-                extractor.setDataSource(mInpPrefix + mRefFile);
+                Preconditions.assertTestFileExists(MEDIA_DIR + mRefFile);
+                extractor.setDataSource(MEDIA_DIR + mRefFile);
                 assertTrue(mTrackIndex < extractor.getTrackCount());
                 extractor.selectTrack(mTrackIndex);
                 while (true) {

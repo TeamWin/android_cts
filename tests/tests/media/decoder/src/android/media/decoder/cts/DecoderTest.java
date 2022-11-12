@@ -70,7 +70,7 @@ import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 import com.android.compatibility.common.util.MediaUtils;
-import com.android.compatibility.common.util.NonMediaMainlineTest;
+import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.Preconditions;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
@@ -4485,7 +4485,7 @@ public class DecoderTest extends MediaTestBase {
                 true /* useNdk */);
     }
 
-    @NonMediaMainlineTest
+    @NonMainlineTest
     @Test
     public void testLowLatencyAVCAt1280x720() throws Exception {
         testLowLatencyVideo(
@@ -4496,7 +4496,7 @@ public class DecoderTest extends MediaTestBase {
                 true /* useNdk */);
     }
 
-    @NonMediaMainlineTest
+    @NonMainlineTest
     @Test
     public void testLowLatencyHEVCAt480x360() throws Exception {
         testLowLatencyVideo(

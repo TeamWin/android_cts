@@ -24,19 +24,19 @@ import android.mediav2.common.cts.RawResource;
  * Class containing encoder input resources.
  */
 public class EncoderInput {
-    private static final String mInpPrefix = WorkDir.getMediaDirString();
+    private static final String MEDIA_DIR = WorkDir.getMediaDirString();
 
     // files are in WorkDir.getMediaDirString();
     private static final RawResource INPUT_VIDEO_FILE =
             new RawResource.Builder()
-                    .setFileName(mInpPrefix + "bbb_cif_yuv420p_30fps.yuv", false)
+                    .setFileName(MEDIA_DIR + "bbb_cif_yuv420p_30fps.yuv", false)
                     .setDimension(352, 288)
                     .setBytesPerSample(1)
                     .setColorFormat(ImageFormat.YUV_420_888)
                     .build();
     private static final RawResource INPUT_VIDEO_FILE_HBD =
             new RawResource.Builder()
-                    .setFileName(mInpPrefix + "cosmat_cif_24fps_yuv420p16le.yuv", false)
+                    .setFileName(MEDIA_DIR + "cosmat_cif_24fps_yuv420p16le.yuv", false)
                     .setDimension(352, 288)
                     .setBytesPerSample(2)
                     .setColorFormat(ImageFormat.YCBCR_P010)
@@ -50,7 +50,7 @@ public class EncoderInput {
     the resource file to be of testSampleRate and testChannelCount. */
     private static final RawResource INPUT_AUDIO_FILE =
             new RawResource.Builder()
-                    .setFileName(mInpPrefix + "bbb_2ch_44kHz_s16le.raw", true)
+                    .setFileName(MEDIA_DIR + "bbb_2ch_44kHz_s16le.raw", true)
                     .setSampleRate(44100)
                     .setChannelCount(2)
                     .setBytesPerSample(2)
@@ -58,7 +58,7 @@ public class EncoderInput {
                     .build();
     private static final RawResource INPUT_AUDIO_FILE_HBD =
             new RawResource.Builder()
-                    .setFileName(mInpPrefix + "audio/sd_2ch_48kHz_f32le.raw", true)
+                    .setFileName(MEDIA_DIR + "audio/sd_2ch_48kHz_f32le.raw", true)
                     .setSampleRate(48000)
                     .setChannelCount(2)
                     .setBytesPerSample(4)
