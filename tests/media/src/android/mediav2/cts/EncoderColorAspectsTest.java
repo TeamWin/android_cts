@@ -251,7 +251,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
         }
     }
 
-    public void queueEOS() throws InterruptedException {
+    protected void queueEOS() throws InterruptedException {
         if (!mSurfaceMode) {
             super.queueEOS();
         } else {

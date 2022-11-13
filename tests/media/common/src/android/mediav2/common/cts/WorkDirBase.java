@@ -24,6 +24,9 @@ import org.junit.Assert;
 
 import java.io.File;
 
+/**
+ * Return the primary shared/external storage directory used by the tests
+ */
 public class WorkDirBase {
     private static final String MEDIA_PATH_INSTR_ARG_KEY = "media-path";
 

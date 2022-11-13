@@ -296,6 +296,10 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("WINDOW_MOVE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.WINDOW_POS))
                 .isEqualTo("WINDOW_POS");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.STEERING_WHEEL_DEPTH_MOVE))
+                .isEqualTo("STEERING_WHEEL_DEPTH_MOVE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.STEERING_WHEEL_DEPTH_POS))
+                .isEqualTo("STEERING_WHEEL_DEPTH_POS");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.VEHICLE_MAP_SERVICE))
                 .isEqualTo("VEHICLE_MAP_SERVICE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.OBD2_FREEZE_FRAME))

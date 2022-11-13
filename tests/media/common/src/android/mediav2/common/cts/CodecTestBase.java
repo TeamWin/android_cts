@@ -116,7 +116,7 @@ public abstract class CodecTestBase {
     public static final boolean IS_HDR_EDITING_SUPPORTED;
     private static final String LOG_TAG = CodecTestBase.class.getSimpleName();
 
-    static final ArrayList<String> HDR_INFO_IN_BITSTREAM_CODECS = new ArrayList<>();
+    public static final ArrayList<String> HDR_INFO_IN_BITSTREAM_CODECS = new ArrayList<>();
     public static final String HDR_STATIC_INFO =
             "00 d0 84 80 3e c2 33 c4 86 4c 1d b8 0b 13 3d 42 40 a0 0f 32 00 10 27 df 0d";
     public static final String HDR_STATIC_INCORRECT_INFO =
@@ -126,9 +126,9 @@ public abstract class CodecTestBase {
     public static final String CODEC_PREFIX_KEY = "codec-prefix";
     public static final String MEDIA_TYPE_PREFIX_KEY = "media-type-prefix";
     public static final String MIME_SEL_KEY = "mime-sel";
-    static final Map<String, String> CODEC_SEL_KEY_MIME_MAP = new HashMap<>();
-    static final Map<String, String> DEFAULT_ENCODERS = new HashMap<>();
-    static final Map<String, String> DEFAULT_DECODERS = new HashMap<>();
+    public static final Map<String, String> CODEC_SEL_KEY_MIME_MAP = new HashMap<>();
+    public static final Map<String, String> DEFAULT_ENCODERS = new HashMap<>();
+    public static final Map<String, String> DEFAULT_DECODERS = new HashMap<>();
     public static final HashMap<String, int[]> PROFILE_MAP = new HashMap<>();
     public static final HashMap<String, int[]> PROFILE_SDR_MAP = new HashMap<>();
     public static final HashMap<String, int[]> PROFILE_HLG_MAP = new HashMap<>();
@@ -235,37 +235,47 @@ public abstract class CodecTestBase {
         }
     }
 
-    protected CodecAsyncHandler mAsyncHandle;
+    public CodecTestBase(String encoder, String mime, String allTestParams) {
+        mCodecName = encoder;
+        mMime = mime;
+        mAllTestParams = allTestParams;
+        mAsyncHandle = new CodecAsyncHandler();
+        mIsAudio = mMime.startsWith("audio/");
+        mIsVideo = mMime.startsWith("video/");
+    }
+
+    protected final String mCodecName;
+    protected final String mMime;
+    protected final String mAllTestParams;  // logging
+
+    protected final boolean mIsAudio;
+    protected final boolean mIsVideo;
+    protected final CodecAsyncHandler mAsyncHandle;
     protected boolean mIsCodecInAsyncMode;
     protected boolean mSawInputEOS;
     protected boolean mSawOutputEOS;
     protected boolean mSignalEOSWithLastFrame;
     protected int mInputCount;
-    public int mOutputCount;
+    protected int mOutputCount;
     protected long mPrevOutputPts;
     protected boolean mSignalledOutFormatChanged;
-    public MediaFormat mOutFormat;
-    protected boolean mIsAudio;
-    protected boolean mIsVideo;
+    protected MediaFormat mOutFormat;
 
-    public String mAllTestParams;  // logging
-    public String mTestConfig;
-    public String mTestEnv;
+    protected String mTestConfig;
+    protected String mTestEnv;
 
-    public boolean mSaveToMem;
-    public OutputManager mOutputBuff;
+    protected boolean mSaveToMem;
+    protected OutputManager mOutputBuff;
 
-    public String mCodecName;
-    public MediaCodec mCodec;
-    public Surface mSurface;
+    protected MediaCodec mCodec;
+    protected Surface mSurface;
+    protected CodecTestActivity mActivity;
 
     private static final MediaCodecList MEDIA_CODEC_LIST_ALL;
     private static final MediaCodecList MEDIA_CODEC_LIST_REGULAR;
     static {
-        MEDIA_CODEC_LIST_ALL =
-                new MediaCodecList(MediaCodecList.ALL_CODECS);
-        MEDIA_CODEC_LIST_REGULAR =
-                new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        MEDIA_CODEC_LIST_ALL = new MediaCodecList(MediaCodecList.ALL_CODECS);
+        MEDIA_CODEC_LIST_REGULAR = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         IS_HDR_EDITING_SUPPORTED = isHDREditingSupported();
         CODEC_SEL_KEY_MIME_MAP.put("vp8", MediaFormat.MIMETYPE_VIDEO_VP8);
         CODEC_SEL_KEY_MIME_MAP.put("vp9", MediaFormat.MIMETYPE_VIDEO_VP9);
@@ -496,7 +506,7 @@ public abstract class CodecTestBase {
                 .getSupportedHdrTypes().length != 0;
     }
 
-    protected static boolean areFormatsSupported(String name, String mime,
+    public static boolean areFormatsSupported(String name, String mime,
             ArrayList<MediaFormat> formats) throws IOException {
         MediaCodec codec = MediaCodec.createByCodecName(name);
         MediaCodecInfo.CodecCapabilities codecCapabilities =
@@ -858,7 +868,7 @@ public abstract class CodecTestBase {
         return height;
     }
 
-    protected static byte[] loadByteArrayFromString(final String str) {
+    public static byte[] loadByteArrayFromString(final String str) {
         if (str == null) {
             return null;
         }
@@ -890,7 +900,7 @@ public abstract class CodecTestBase {
         }
     }
 
-    public void configureCodec(MediaFormat format, boolean isAsync,
+    protected void configureCodec(MediaFormat format, boolean isAsync,
             boolean signalEOSWithLastFrame, boolean isEncoder) {
         resetContext(isAsync, signalEOSWithLastFrame);
         mAsyncHandle.setCallBack(mCodec, isAsync);
@@ -913,6 +923,14 @@ public abstract class CodecTestBase {
         if (ENABLE_LOGS) {
             Log.v(LOG_TAG, "codec configured");
         }
+    }
+
+    public OutputManager getOutputManager() {
+        return mOutputBuff;
+    }
+
+    public MediaFormat getOutputFormat() {
+        return mIsCodecInAsyncMode ? mAsyncHandle.getOutputFormat() : mOutFormat;
     }
 
     protected void flushCodec() {
@@ -998,7 +1016,7 @@ public abstract class CodecTestBase {
         }
     }
 
-    public void queueEOS() throws InterruptedException {
+    protected void queueEOS() throws InterruptedException {
         if (mIsCodecInAsyncMode) {
             while (!mAsyncHandle.hasSeenError() && !mSawInputEOS) {
                 Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandle.getWork();
@@ -1030,7 +1048,7 @@ public abstract class CodecTestBase {
         }
     }
 
-    public void waitForAllOutputs() throws InterruptedException {
+    protected void waitForAllOutputs() throws InterruptedException {
         if (mIsCodecInAsyncMode) {
             while (!mAsyncHandle.hasSeenError() && !mSawOutputEOS) {
                 Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandle.getOutput();
@@ -1071,7 +1089,7 @@ public abstract class CodecTestBase {
         }*/
     }
 
-    void insertHdrDynamicInfo(byte[] info) {
+    protected void insertHdrDynamicInfo(byte[] info) {
         final Bundle params = new Bundle();
         params.putByteArray(MediaFormat.KEY_HDR10_PLUS_INFO, info);
         mCodec.setParameters(params);
@@ -1109,7 +1127,7 @@ public abstract class CodecTestBase {
         return metrics;
     }
 
-    PersistableBundle validateMetrics(String codec, MediaFormat format) {
+    protected PersistableBundle validateMetrics(String codec, MediaFormat format) {
         PersistableBundle metrics = validateMetrics(codec);
         if (mIsVideo) {
             assertEquals("error! metrics#MetricsConstants.WIDTH is not as expected\n" + mTestConfig
@@ -1142,7 +1160,7 @@ public abstract class CodecTestBase {
         }
     }
 
-    public void validateHDRInfo(MediaFormat fmt, String hdrInfoKey, ByteBuffer hdrInfoRef) {
+    protected void validateHDRInfo(MediaFormat fmt, String hdrInfoKey, ByteBuffer hdrInfoRef) {
         ByteBuffer hdrInfo = fmt.getByteBuffer(hdrInfoKey, null);
         assertNotNull("error! no " + hdrInfoKey + " present in format : " + fmt + "\n "
                 + mTestConfig + mTestEnv, hdrInfo);

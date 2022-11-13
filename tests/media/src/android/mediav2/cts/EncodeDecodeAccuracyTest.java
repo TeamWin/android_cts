@@ -138,7 +138,6 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
             boolean useHighBitDepth, String allTestParams) {
         super(null, mime, null, allTestParams);
         mCompName = encoder;
-        mMime = mime;
         mWidth = width;
         mHeight = height;
         mFrameRate = frameRate;

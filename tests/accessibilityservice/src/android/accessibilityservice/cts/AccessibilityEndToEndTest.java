@@ -1441,6 +1441,25 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
                 "AccessibilityManager#hasAnyDirectConnection() still true");
     }
 
+    @Test
+    @ApiTest(apis = {
+            "android.view.accessibility.AccessibilityNodeInfo"
+                    + "#setMinMillisBetweenContentChanges",
+            "android.view.accessibility.AccessibilityNodeInfo"
+                    + "#getMinMillisBetweenContentChanges"})
+    public void testSetMinMillisBetweenContentChanges() {
+        final View testView = mActivity.findViewById(R.id.buttonLayout);
+        final AccessibilityNodeInfo nodeInfo = testView.createAccessibilityNodeInfo();
+        nodeInfo.setMinMillisBetweenContentChanges(200);
+        assertThat(nodeInfo.getMinMillisBetweenContentChanges()).isEqualTo(200);
+
+        nodeInfo.setMinMillisBetweenContentChanges(
+                AccessibilityNodeInfo.MINIMUM_MIN_MILLIS_BETWEEN_CONTENT_CHANGES - 1);
+        assertThat(nodeInfo.getMinMillisBetweenContentChanges())
+               .isEqualTo(AccessibilityNodeInfo.UNDEFINED_MIN_MILLIS_BETWEEN_CONTENT_CHANGES);
+    }
+
+
     @AsbSecurityTest(cveBugId = {243378132})
     @Test
     public void testUninstallPackage_DisablesMultipleServices() throws Exception {

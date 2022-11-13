@@ -49,29 +49,22 @@ import java.util.ArrayList;
 public class CodecDecoderTestBase extends CodecTestBase {
     private static final String LOG_TAG = CodecDecoderTestBase.class.getSimpleName();
 
-    public String mMime;
-    public String mTestFile;
-    public boolean mIsInterlaced;
-    public boolean mSkipChecksumVerification;
+    protected final String mTestFile;
+    protected boolean mIsInterlaced;
+    protected boolean mSkipChecksumVerification;
 
-    public ArrayList<ByteBuffer> mCsdBuffers;
+    protected final ArrayList<ByteBuffer> mCsdBuffers;
     private int mCurrCsdIdx;
 
     private final ByteBuffer mFlatBuffer = ByteBuffer.allocate(4 * Integer.BYTES);
 
-    public MediaExtractor mExtractor;
-    public CodecTestActivity mActivity;
+    protected MediaExtractor mExtractor;
 
     public CodecDecoderTestBase(String codecName, String mime, String testFile,
             String allTestParams) {
-        mCodecName = codecName;
-        mMime = mime;
+        super(codecName, mime, allTestParams);
         mTestFile = testFile;
-        mAsyncHandle = new CodecAsyncHandler();
         mCsdBuffers = new ArrayList<>();
-        mIsAudio = mMime.startsWith("audio/");
-        mIsVideo = mMime.startsWith("video/");
-        mAllTestParams = allTestParams;
     }
 
     @Before
@@ -245,7 +238,7 @@ public class CodecDecoderTestBase extends CodecTestBase {
         mCodec.releaseOutputBuffer(bufferIndex, false);
     }
 
-    public void doWork(ByteBuffer buffer, ArrayList<MediaCodec.BufferInfo> list)
+    protected void doWork(ByteBuffer buffer, ArrayList<MediaCodec.BufferInfo> list)
             throws InterruptedException {
         int frameCount = 0;
         if (mIsCodecInAsyncMode) {
@@ -330,6 +323,21 @@ public class CodecDecoderTestBase extends CodecTestBase {
         mCodec.stop();
         mCodec.release();
         mExtractor.release();
+        mSaveToMem = false;
+    }
+
+    public void decodeToMemory(ByteBuffer buffer, ArrayList<MediaCodec.BufferInfo> list,
+            MediaFormat format, String decoder) throws IOException, InterruptedException {
+        mSaveToMem = true;
+        mOutputBuff = new OutputManager();
+        mCodec = MediaCodec.createByCodecName(decoder);
+        configureCodec(format, false, true, false);
+        mCodec.start();
+        doWork(buffer, list);
+        queueEOS();
+        waitForAllOutputs();
+        mCodec.stop();
+        mCodec.release();
         mSaveToMem = false;
     }
 

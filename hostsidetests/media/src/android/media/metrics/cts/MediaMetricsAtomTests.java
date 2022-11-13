@@ -429,7 +429,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertThat(data.size()).isEqualTo(0);
+        assertThat(data).isEmpty();
     }
 
     public void testRecordingSession() throws Exception {
@@ -443,7 +443,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertThat(data.size()).isEqualTo(0);
+        assertThat(data).isEmpty();
     }
 
     public void testEditingSession() throws Exception {
@@ -457,7 +457,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertThat(data.size()).isEqualTo(0);
+        assertThat(data).isEmpty();
     }
 
     public void testTranscodingSession() throws Exception {
@@ -471,7 +471,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertThat(data.size()).isEqualTo(0);
+        assertThat(data).isEmpty();
     }
 
     public void testBundleSession() throws Exception {
@@ -485,7 +485,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertThat(data.size()).isEqualTo(0);
+        assertThat(data).isEmpty();
     }
 
     public void testAppBlocklist() throws Exception {
@@ -499,8 +499,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-
-        assertThat(data.size()).isEqualTo(0);
+        assertThat(data).isEmpty();
     }
 
     public void testAttributionBlocklist() throws Exception {

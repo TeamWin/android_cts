@@ -26,7 +26,6 @@ import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
-import android.mediav2.common.cts.CodecAsyncHandler;
 import android.mediav2.common.cts.CodecTestBase;
 import android.os.Bundle;
 import android.util.Pair;
@@ -69,7 +68,7 @@ public class CodecUnitTest {
         }
 
         public TestApi() {
-            mAsyncHandle = new CodecAsyncHandler();
+            super("", "", "");
         }
 
         protected void enqueueInput(int bufferIndex) {

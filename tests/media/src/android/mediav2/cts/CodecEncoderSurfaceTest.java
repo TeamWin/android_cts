@@ -296,8 +296,6 @@ public class CodecEncoderSurfaceTest {
                 mExtractor.selectTrack(trackID);
                 ArrayList<MediaFormat> formatList = new ArrayList<>();
                 formatList.add(format);
-                boolean selectHBD = CodecTestBase.doesAnyFormatHaveHDRProfile(mime, formatList) ||
-                        srcFile.contains("10bit");
                 format.setInteger(MediaFormat.KEY_COLOR_FORMAT, mColorFormat);
                 return format;
             }

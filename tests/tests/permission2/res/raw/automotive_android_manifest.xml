@@ -486,4 +486,8 @@
         android:protectionLevel="signature|privileged"
         android:label="@string/car_permission_label_manage_occupant_zone"
         android:description="@string/car_permission_desc_manage_occupant_zone"/>
+     <permission android:name="android.car.permission.CONTROL_STEERING_WHEEL"
+        android:protectionLevel="signature|privileged"
+        android:label="@string/car_permission_label_control_steering_wheel"
+        android:description="@string/car_permission_desc_control_steering_wheel"/>
 </manifest>

@@ -358,6 +358,7 @@
 
         <activity android:name="android.app.stubs.ActivityManagerRecentTwoActivity"
              android:label="ActivityManagerRecentTwoActivity"
+             android:theme="@style/Theme_NoSwipeDismiss"
              android:allowTaskReparenting="true"
              android:taskAffinity="android.app.stubs.recentTwo"
              android:exported="true">

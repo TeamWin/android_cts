@@ -53,14 +53,14 @@ public class HDREncoderTestBase extends CodecEncoderTestBase {
                 rawResoure, allTestParams);
     }
 
-    public void enqueueInput(int bufferIndex) {
+    protected void enqueueInput(int bufferIndex) {
         if (mHdrDynamicInfo != null && mHdrDynamicInfo.containsKey(mInputCount)) {
             insertHdrDynamicInfo(loadByteArrayFromString(mHdrDynamicInfo.get(mInputCount)));
         }
         super.enqueueInput(bufferIndex);
     }
 
-    public void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
+    protected void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
         MediaFormat bufferFormat = mCodec.getOutputFormat(bufferIndex);
         if (info.size > 0) {
             ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);

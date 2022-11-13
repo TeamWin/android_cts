@@ -75,19 +75,13 @@ public class ConnectivityManagerTestOnMockModem {
         Log.d(TAG, "ConnectivityManagerTestOnMockModem#beforeAllTests()");
 
         if (!hasTelephonyFeature()) {
-            return;
+            fail("This test requires the FEATURE_TELEPHONY.");
         }
 
         enforceMockModemDeveloperSetting();
         sTelephonyManager =
                 (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         sIsMultiSimDevice = isMultiSim(sTelephonyManager);
-
-        // TODO: Support DSDS b/241618728
-        if (sIsMultiSimDevice) {
-            Log.d(TAG, "Not support MultiSIM");
-            return;
-        }
 
         sConnectivityManager =
                 (ConnectivityManager) getContext().getSystemService(ConnectivityManager.class);
@@ -134,10 +128,6 @@ public class ConnectivityManagerTestOnMockModem {
         if (!hasTelephonyFeature()) {
             return;
         }
-        // TODO: Support DSDS b/241618728
-        if (sIsMultiSimDevice) {
-            return;
-        }
         // unregister the network call back
         unregisterNetworkCallback();
         // Rebind all interfaces which is binding to MockModemService to default.
@@ -148,7 +138,7 @@ public class ConnectivityManagerTestOnMockModem {
 
     @Before
     public void beforeTest() throws Exception {
-        assumeTrue(!sIsMultiSimDevice);
+        assumeTrue(hasTelephonyFeature());
     }
 
     private static boolean isMultiSim(TelephonyManager tm) {

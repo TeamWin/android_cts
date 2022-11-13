@@ -54,8 +54,9 @@ public class MockDataService {
     // setup data call
     public static final int APN_TYPE_IMS = 0;
     public static final int APN_TYPE_DEFAULT = 1;
-    public static final int CID_IMS = 0;
-    public static final int CID_DEFAULT = 1;
+    public static final int PHONE0 = 0;
+    public static final int PHONE1 = 1;
+
     SetupDataCallResult mSetupDataCallResultIms = new SetupDataCallResult();
     SetupDataCallResult mSetupDataCallResultDefault = new SetupDataCallResult();
 
@@ -71,11 +72,13 @@ public class MockDataService {
     private static final String MOCK_DNS_ADDRESS_TAG = "DnsAddress";
     private static final String MOCK_GATEWAY_ADDRESS_TAG = "GatewayAddress";
     private static final String MOCK_MTU_V4_TAG = "MtuV4";
-    private static String sQueryNetworkAgentCommand = "dumpsys connectivity";
+    private static String sQueryTelephonyDebugServiceCommand =
+            "dumpsys activity service com.android.phone.TelephonyDebugService";
 
     // Setup data call result parameteres
     int mDataCallFailCause;
     int mSuggestedRetryTime;
+    int mImsCid;
     int mImsType;
     String mImsIfname;
     String mImsAddress;
@@ -83,6 +86,7 @@ public class MockDataService {
     String[] mImsPcscf;
     int mImsMtuV4;
     int mImsMtuV6;
+    int mInternetCid;
     int mInternetType;
     String mInternetIfname;
     String mInternetAddress;
@@ -107,9 +111,11 @@ public class MockDataService {
     private final Object mDataCallListLock = new Object();
     LinkAddress[] mImsLinkAddress;
     LinkAddress[] mDefaultLinkAddress;
+    int mPhoneId;
 
-    public MockDataService(Context context) {
+    public MockDataService(Context context, int instanceId) {
         mContext = context;
+        mPhoneId = instanceId;
         initializeParameter();
 
         try {
@@ -122,7 +128,8 @@ public class MockDataService {
     private void setDataCallListFromNetworkAgent() throws Exception {
         String result =
                 TelephonyUtils.executeShellCommand(
-                        InstrumentationRegistry.getInstrumentation(), sQueryNetworkAgentCommand);
+                        InstrumentationRegistry.getInstrumentation(),
+                        sQueryTelephonyDebugServiceCommand);
         setBridgeTheDataConnection(result);
     }
 
@@ -202,7 +209,7 @@ public class MockDataService {
 
         switch (apnType) {
             case APN_TYPE_IMS:
-                dc.cid = CID_IMS;
+                dc.cid = this.mImsCid;
                 dc.type = this.mImsType;
                 dc.ifname = this.mImsIfname;
                 linkAddress.address = this.mImsAddress;
@@ -217,7 +224,7 @@ public class MockDataService {
                 dc.mtuV6 = this.mImsMtuV6;
                 break;
             case APN_TYPE_DEFAULT:
-                dc.cid = CID_DEFAULT;
+                dc.cid = this.mInternetCid;
                 dc.type = this.mInternetType;
                 dc.ifname = this.mInternetIfname;
                 linkAddress.address = this.mInternetAddress;
@@ -266,20 +273,16 @@ public class MockDataService {
     }
 
     /**
-     * Get data call list changed
+     * Get current data call list
      *
      * @return The SetupDataCallResult array list.
      */
-    List<SetupDataCallResult> getDataCallListChanged() {
+    List<SetupDataCallResult> getDataCallList() {
         List<SetupDataCallResult> dataCallLists;
         synchronized (mDataCallListLock) {
-            dataCallLists = getDataCallList();
+            dataCallLists = sDataCallLists;
         }
         return dataCallLists;
-    }
-
-    List<SetupDataCallResult> getDataCallList() {
-        return sDataCallLists;
     }
 
     void deactivateDataCall(int cid, int reason) {
@@ -476,7 +479,7 @@ public class MockDataService {
                             .split(" ] Domains:")[0]
                             .replace("/", "")
                             .split(",");
-            Log.e(TAG, "getPcscf: " + Arrays.toString(pcscf));
+            Log.d(TAG, "getPcscf: " + Arrays.toString(pcscf));
         } catch (Exception e) {
             Log.e(TAG, "Exception error: " + e);
         }
@@ -487,20 +490,39 @@ public class MockDataService {
         String capabilities = "";
         try {
             capabilities = string.trim().split("Capabilities:")[1].split("LinkUpBandwidth")[0];
+            Log.d(TAG, "getCapabilities: " + capabilities);
         } catch (Exception e) {
             Log.e(TAG, "getCapabilities(): Exception error: " + e);
         }
         return capabilities;
     }
 
+    private int getCid(String string) {
+        int cid = 0;
+        try {
+            String strCid = string.split("WWAN cid=")[1].split("WLAN cid")[0].trim();
+            cid = Integer.parseInt(strCid);
+            Log.d(TAG, "getCid: " + strCid);
+        } catch (Exception e) {
+            Log.e(TAG, "getCid(): Exception error: " + e);
+        }
+        return cid;
+    }
+
     public synchronized void setBridgeTheDataConnection(String string) {
         try {
-            String[] lines = string.split("NetworkAgentInfo\\{network\\{");
+            String[] lines = new String[] {};
+            String line =
+                    string.split("DataNetworkController-" + mPhoneId)[1]
+                            .split("All telephony network requests:")[0];
+            if (line.contains("curState=ConnectedState")) {
+                lines = line.split(("curState=ConnectedState"));
+            }
             for (String str : lines) {
                 String capabilities = getCapabilities(str);
-                Log.e(TAG, "capabilities: " + capabilities);
                 if (capabilities.contains("INTERNET")) {
                     Log.d(TAG, "[internet]:" + str);
+                    this.mInternetCid = getCid(str);
                     this.mInternetIfname = getInterfaceName(str);
                     this.mDefaultLinkAddress = getIpAddress(str);
                     this.mInternetDnses = getDnses(str);
@@ -509,6 +531,7 @@ public class MockDataService {
                     this.mInternetMtuV6 = getMtu(str);
                 } else if (capabilities.contains("IMS")) {
                     Log.d(TAG, "[ims]:" + str);
+                    this.mImsCid = getCid(str);
                     this.mImsIfname = getInterfaceName(str);
                     this.mImsLinkAddress = getIpAddress(str);
                     this.mImsGateways = getGateways();

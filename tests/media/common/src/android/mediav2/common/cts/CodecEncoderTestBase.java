@@ -65,12 +65,11 @@ public class CodecEncoderTestBase extends CodecTestBase {
         return colorFormat;
     }
 
-    protected final String mMime;
     protected final int[] mBitrates;
     protected final int[] mEncParamList1;
     protected final int[] mEncParamList2;
 
-    public RawResource mActiveRawRes;
+    protected RawResource mActiveRawRes;
     protected byte[] mInputData;
     protected int mInputBufferReadOffset;
     protected int mNumBytesSubmitted;
@@ -90,12 +89,10 @@ public class CodecEncoderTestBase extends CodecTestBase {
 
     public CodecEncoderTestBase(String encoder, String mime, int[] bitrates, int[] encoderInfo1,
             int[] encoderInfo2, RawResource rawResource, String allTestParams) {
-        mMime = mime;
-        mCodecName = encoder;
+        super(encoder, mime, allTestParams);
         mBitrates = bitrates;
         mEncParamList1 = encoderInfo1;
         mEncParamList2 = encoderInfo2;
-        mAllTestParams = allTestParams;
         mFormats = new ArrayList<>();
         mInfoList = new ArrayList<>();
         mWidth = 0;
@@ -110,9 +107,6 @@ public class CodecEncoderTestBase extends CodecTestBase {
         mMaxBFrames = 0;
         mChannels = 0;
         mSampleRate = 0;
-        mAsyncHandle = new CodecAsyncHandler();
-        mIsAudio = mMime.startsWith("audio/");
-        mIsVideo = mMime.startsWith("video/");
         mActiveRawRes = rawResource;
         mBytesPerSample = mActiveRawRes.mBytesPerSample;
     }
@@ -139,7 +133,7 @@ public class CodecEncoderTestBase extends CodecTestBase {
     }
 
     @Override
-    public void configureCodec(MediaFormat format, boolean isAsync,
+    protected void configureCodec(MediaFormat format, boolean isAsync,
             boolean signalEOSWithLastFrame, boolean isEncoder) {
         super.configureCodec(format, isAsync, signalEOSWithLastFrame, isEncoder);
         if (mIsAudio) {
@@ -411,7 +405,7 @@ public class CodecEncoderTestBase extends CodecTestBase {
         }
     }
 
-    protected void encodeToMemory(String file, String encoder, int frameLimit, MediaFormat format,
+    public void encodeToMemory(String file, String encoder, int frameLimit, MediaFormat format,
             boolean saveToMem) throws IOException, InterruptedException {
         mSaveToMem = saveToMem;
         mOutputBuff = new OutputManager();

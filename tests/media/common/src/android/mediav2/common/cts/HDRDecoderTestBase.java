@@ -50,7 +50,7 @@ public class HDRDecoderTestBase extends CodecDecoderTestBase {
         super(decoder, mime, testFile, allTestParams);
     }
 
-    public void enqueueInput(int bufferIndex) {
+    protected void enqueueInput(int bufferIndex) {
         if (mHdrDynamicInfoContainer != null && mHdrDynamicInfoContainer.containsKey(mInputCount)
                 && mExtractor.getSampleSize() != -1) {
             insertHdrDynamicInfo(
@@ -59,7 +59,7 @@ public class HDRDecoderTestBase extends CodecDecoderTestBase {
         super.enqueueInput(bufferIndex);
     }
 
-    public void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
+    protected void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
         if (info.size > 0 && mHdrDynamicInfoRef != null) {
             MediaFormat format = mCodec.getOutputFormat(bufferIndex);
             if (mHdrDynamicInfoRef.containsKey(mOutputCount)) {

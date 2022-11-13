@@ -199,24 +199,16 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
                         + mTestEnv, listOfDecoders.isEmpty());
                 CodecDecoderTestBase cdtb = new CodecDecoderTestBase(listOfDecoders.get(0), mMime,
                         null, mAllTestParams);
-                cdtb.mOutputBuff = new OutputManager();
-                cdtb.mSaveToMem = true;
-                cdtb.mCodec = MediaCodec.createByCodecName(cdtb.mCodecName);
-                cdtb.configureCodec(mOutFormat, false, true, false);
-                cdtb.mCodec.start();
-                cdtb.doWork(mOutputBuff.getBuffer(), mInfoList);
-                cdtb.queueEOS();
-                cdtb.waitForAllOutputs();
+                cdtb.decodeToMemory(mOutputBuff.getBuffer(), mInfoList, mOutFormat,
+                        listOfDecoders.get(0));
                 if (mUseHBD && mIsAudio) {
                     assertEquals(AudioFormat.ENCODING_PCM_FLOAT,
-                            cdtb.mOutFormat.getInteger(MediaFormat.KEY_PCM_ENCODING));
+                            cdtb.getOutputFormat().getInteger(MediaFormat.KEY_PCM_ENCODING));
                 }
-                cdtb.mCodec.stop();
-                cdtb.mCodec.release();
-                ByteBuffer out = cdtb.mOutputBuff.getBuffer();
+                ByteBuffer out = cdtb.getOutputManager().getBuffer();
                 if (isMediaTypeLossless(mMime)) {
                     if (mUseHBD && mMime.equals(MediaFormat.MIMETYPE_AUDIO_FLAC)) {
-                        CodecDecoderTest.verify(cdtb.mOutputBuff, inputFile, 3.446394f,
+                        CodecDecoderTest.verify(cdtb.getOutputManager(), inputFile, 3.446394f,
                                 AudioFormat.ENCODING_PCM_FLOAT, -1L, mTestConfig + mTestEnv);
                     } else {
                         assertEquals("Identity test failed for lossless codec \n " + mTestConfig
@@ -232,8 +224,8 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
                     assertTrue("In the process {[i/p] -> Encode -> Decode [o/p]}, the "
                             + "output sample count is less than input sample count. "
                             + "Repetitive encode -> decode cycles will eventually result"
-                            + " in mute \n" + mTestConfig + mTestEnv + cdtb.mTestEnv
-                            + errMsg, mInputData.length <= out.limit() + tolerance);
+                            + " in mute \n" + mTestConfig + mTestEnv + errMsg,
+                            mInputData.length <= out.limit() + tolerance);
                 }
             }
             mCodec.release();

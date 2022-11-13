@@ -45,6 +45,7 @@ import android.text.style.ImageSpan;
 import android.text.style.ReplacementSpan;
 import android.util.ArrayMap;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 import android.view.accessibility.AccessibilityNodeInfo.CollectionInfo;
@@ -292,6 +293,13 @@ public class AccessibilityNodeInfoTest {
         assertFalse(info.isHeading());
     }
 
+    @SmallTest
+    @Test
+    public void testMinMillisBetweenContentChangesConstantInSyncWithViewConfigurationConstant() {
+        assertThat(AccessibilityNodeInfo.MINIMUM_MIN_MILLIS_BETWEEN_CONTENT_CHANGES)
+                .isEqualTo((int) ViewConfiguration.getSendRecurringAccessibilityEventsInterval());
+    }
+
     /**
      * Fully populates the {@link AccessibilityNodeInfo} to marshal.
      *
@@ -352,6 +360,7 @@ public class AccessibilityNodeInfoTest {
         info.setLeashedParent(new MockBinder(), 1); // Populates 2 fields
         info.setTraversalBefore(new View(getContext()));
         info.setTraversalAfter(new View(getContext()));
+        info.setMinMillisBetweenContentChanges(200);
 
         // Populate 3 fields
         info.setLabeledBy(new View(getContext()));
@@ -473,6 +482,9 @@ public class AccessibilityNodeInfoTest {
                 receivedInfo.getMovementGranularities());
         assertEquals("viewId has incorrect value", expectedInfo.getViewIdResourceName(),
                 receivedInfo.getViewIdResourceName());
+        assertEquals("MinMillisBetweenContentChanges has incorrect value",
+                expectedInfo.getMinMillisBetweenContentChanges(),
+                receivedInfo.getMinMillisBetweenContentChanges());
         assertEquals("Unique id has incorrect value", expectedInfo.getUniqueId(),
             receivedInfo.getUniqueId());
         assertEquals("Container title has incorrect value", expectedInfo.getContainerTitle(),
@@ -652,6 +664,8 @@ public class AccessibilityNodeInfoTest {
         assertNull("packageName not properly recycled", info.getPackageName());
         assertNull("text not properly recycled", info.getText());
         assertNull("Hint text not properly recycled", info.getHintText());
+        assertNull("minMillisBetweenContentChanges not properly recycled",
+                info.getMinMillisBetweenContentChanges());
         assertEquals("Children list not properly recycled", 0, info.getChildCount());
         // Actions are in one field
         assertSame("actions not properly recycled", 0, info.getActions());

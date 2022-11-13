@@ -62,7 +62,7 @@ public class IRadioDataImpl extends IRadioData.Stub {
         mTag = TAG + "-" + instanceId;
         Log.d(mTag, "Instantiated");
 
-        mMockDataService = new MockDataService(context);
+        mMockDataService = new MockDataService(context, instanceId);
         this.mService = service;
 
         mMockModemConfigInterface = configInterface;
@@ -129,7 +129,7 @@ public class IRadioDataImpl extends IRadioData.Stub {
     public void getDataCallList(int serial) {
         Log.d(mTag, "getDataCallList");
 
-        List<SetupDataCallResult> dataCallLists = mMockDataService.getDataCallListChanged();
+        List<SetupDataCallResult> dataCallLists = mMockDataService.getDataCallList();
         SetupDataCallResult[] dcList = new SetupDataCallResult[dataCallLists.size()];
         dcList = dataCallLists.toArray(dcList);
 
@@ -307,7 +307,7 @@ public class IRadioDataImpl extends IRadioData.Stub {
         Log.d(mTag, "unsolDataCallListChanged");
 
         if (mRadioDataIndication != null) {
-            List<SetupDataCallResult> dataCallLists = mMockDataService.getDataCallListChanged();
+            List<SetupDataCallResult> dataCallLists = mMockDataService.getDataCallList();
             SetupDataCallResult[] dcList = new SetupDataCallResult[dataCallLists.size()];
             dcList = dataCallLists.toArray(dcList);
 

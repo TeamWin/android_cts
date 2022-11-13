@@ -23,7 +23,7 @@ import android.mediav2.common.cts.WorkDirBase;
  * Note: Path returned includes File.separator() at the end.
  */
 class WorkDir extends WorkDirBase {
-    public static final String getMediaDirString() {
+    static final String getMediaDirString() {
         return getMediaDirString("CtsMediaV2TestCases-3.0");
     }
 }

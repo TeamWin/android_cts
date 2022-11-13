@@ -17,21 +17,22 @@
 import logging
 import os.path
 
+from mobly import test_runner
+
+import its_base_test
 import camera_properties_utils
 import capture_request_utils
 import image_processing_utils
-import its_base_test
 import its_session_utils
 import lighting_control_utils
-from mobly import test_runner
 
 _AE_MODES = {0: 'OFF', 1: 'ON', 2: 'ON_AUTO_FLASH', 3: 'ON_ALWAYS_FLASH',
-            4: 'ON_AUTO_FLASH_REDEYE', 5: 'ON_EXTERNAL_FLASH'}
+             4: 'ON_AUTO_FLASH_REDEYE', 5: 'ON_EXTERNAL_FLASH'}
 _AE_STATES = {0: 'INACTIVE', 1: 'SEARCHING', 2: 'CONVERGED', 3: 'LOCKED',
-             4: 'FLASH_REQUIRED', 5: 'PRECAPTURE'}
+              4: 'FLASH_REQUIRED', 5: 'PRECAPTURE'}
 _FLASH_STATES = {0: 'FLASH_STATE_UNAVAILABLE', 1: 'FLASH_STATE_CHARGING',
-                2: 'FLASH_STATE_READY', 3: 'FLASH_STATE_FIRED',
-                4: 'FLASH_STATE_PARTIAL'}
+                 2: 'FLASH_STATE_READY', 3: 'FLASH_STATE_FIRED',
+                 4: 'FLASH_STATE_PARTIAL'}
 _GRAD_DELTA_ATOL = 15  # gradiant for tablets as screen aborbs energy
 _MEAN_DELTA_ATOL = 15  # mean used for reflective charts
 
@@ -50,13 +51,6 @@ _CAPTURE_INTENT_PREVIEW = 1
 _CAPTURE_INTENT_STILL_CAPTURE = 2
 _AE_PRECAPTURE_TRIGGER_START = 1
 _AE_PRECAPTURE_TRIGGER_IDLE = 0
-
-
-def turn_off_tablet(tablet_device):
-  output = tablet_device.adb.shell('dumpsys display | grep mScreenState=')
-  output_val = str(output.decode('utf-8')).strip()
-  if 'ON' in output_val:
-    tablet_device.adb.shell(['input', 'keyevent', 'KEYCODE_POWER'])
 
 
 def take_captures_with_flash(cam, fmt):
@@ -126,7 +120,7 @@ class AutoFlashTest(its_base_test.ItsBaseTest):
 
       # turn OFF tablet to darken scene
       if self.tablet:
-        turn_off_tablet(self.tablet)
+        lighting_control_utils.turn_off_device(self.tablet)
 
       for fmt_name in _FORMAT_NAMES:
         for size in _IMG_SIZES:
@@ -242,7 +236,7 @@ class AutoFlashTest(its_base_test.ItsBaseTest):
           req['android.control.captureIntent'] = _CAPTURE_INTENT_STILL_CAPTURE
           cap = cam.do_capture(req, out_surfaces)
           flash_state_after = _FLASH_STATES[cap['metadata']
-                                           ['android.flash.state']]
+                                            ['android.flash.state']]
           logging.debug('FLASH_STATE after flash fired: %s', flash_state_after)
           if flash_state_after != 'FLASH_STATE_READY':
             raise AssertionError('Flash should turn OFF after it was fired.')

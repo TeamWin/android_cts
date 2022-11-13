@@ -18,9 +18,13 @@
 # only if supported by the camera device.
 import logging
 import os.path
+import re
 import subprocess
 import error_util
 
+
+HR_TO_SEC = 3600
+MIN_TO_SEC = 60
 
 ITS_SUPPORTED_QUALITIES = (
     'HIGH',
@@ -164,3 +168,82 @@ def extract_all_frames_from_video(log_path, video_file_name, img_format):
     raise AssertionError('No frames extracted. Check source video.')
 
   return file_list
+
+
+def get_average_frame_rate(video_file_name_with_path):
+  """Get average frame rate assuming variable frame rate video.
+
+  Args:
+    video_file_name_with_path: path to the video to be analyzed
+  Returns:
+    Float. average frames per second.
+  """
+
+  cmd = ['ffmpeg',
+         '-i',
+         video_file_name_with_path,
+         '-vf',
+         'vfrdet',
+         '-f',
+         'null',
+         '-',
+        ]
+  logging.debug('Getting frame rate')
+  raw_output = ''
+  try:
+    raw_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+  except subprocess.CalledProcessError as e:
+    raise AssertionError(str(e.output)) from e
+  if raw_output:
+    output = str(raw_output.decode('utf-8')).strip()
+    logging.debug('FFmpeg command %s output: %s', ' '.join(cmd), output)
+    fps_data = output.splitlines()[-3]  # frames printed on third to last line
+    frames = int(re.search(r'frame= *([0-9]+)', fps_data).group(1))
+    duration = re.search(r'time= *([0-9][0-9:\.]*)', fps_data).group(1)
+    time_parts = [float(t) for t in duration.split(':')]
+    seconds = time_parts[0] * HR_TO_SEC + time_parts[
+        1] * MIN_TO_SEC + time_parts[2]
+    logging.debug('Average FPS: %d / %d = %.4f',
+                  frames, seconds, frames / seconds)
+    return frames / seconds
+  else:
+    raise AssertionError('ffmpeg failed to provide frame rate data')
+
+
+def get_frame_deltas(video_file_name_with_path, timestamp_type='pts'):
+  """Get list of time diffs between frames.
+
+  Args:
+    video_file_name_with_path: path to the video to be analyzed
+    timestamp_type: 'pts' or 'dts'
+  Returns:
+    List of floats. Time diffs between frames in seconds.
+  """
+
+  cmd = ['ffprobe',
+         '-show_entries',
+         f'frame=pkt_{timestamp_type}_time',
+         '-select_streams',
+         'v',
+         video_file_name_with_path
+         ]
+  logging.debug('Getting frame deltas')
+  raw_output = ''
+  try:
+    raw_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+  except subprocess.CalledProcessError as e:
+    raise AssertionError(str(e.output)) from e
+  if raw_output:
+    output = str(raw_output.decode('utf-8')).strip().split('\n')
+    deltas = []
+    prev_time = 0
+    for line in output:
+      if timestamp_type not in line:
+        continue
+      curr_time = float(re.search(r'time= *([0-9][0-9\.]*)', line).group(1))
+      deltas.append(curr_time - prev_time)
+      prev_time = curr_time
+    logging.debug('Frame deltas: %s', deltas)
+    return deltas
+  else:
+    raise AssertionError('ffprobe failed to provide frame delta data')

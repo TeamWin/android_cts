@@ -1035,7 +1035,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
             Float physicalFocalLength = physicalResult.get(CaptureResult.LENS_FOCAL_LENGTH);
             Float physicalZoomRatio = physicalResult.get(CaptureResult.CONTROL_ZOOM_RATIO);
             Rect physicalActiveArraySize = physicalStaticInfo.getActiveArraySizeChecked();
-            SizeF physicalSensorSize = mStaticInfo.getValueFromKeyNonNull(
+            SizeF physicalSensorSize = physicalStaticInfo.getValueFromKeyNonNull(
                     CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
 
             // Physical result metadata's ZOOM_RATIO is 1.0f.

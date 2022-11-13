@@ -16,7 +16,6 @@
 
 package android.mediav2.cts;
 
-import static android.mediav2.common.cts.CodecDecoderTestBase.hasCSD;
 import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_ALL;
 import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_OPTIONAL;
 

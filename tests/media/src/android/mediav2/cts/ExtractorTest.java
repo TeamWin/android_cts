@@ -1379,8 +1379,7 @@ public class ExtractorTest {
                 cdtb.decodeToMemory(MEDIA_DIR + mRefFile, listOfDecoders.get(0), 0,
                         MediaExtractor.SEEK_TO_CLOSEST_SYNC, Integer.MAX_VALUE);
                 String log = String.format("test file: %s, ref file: %s:: ", mTestFile, mRefFile);
-                assertTrue(log + "no output received", 0 != cdtb.mOutputCount);
-                final ByteBuffer refBuffer = cdtb.mOutputBuff.getBuffer();
+                final ByteBuffer refBuffer = cdtb.getOutputManager().getBuffer();
 
                 testExtractor.selectTrack(0);
                 ByteBuffer testBuffer = ByteBuffer.allocate(refBuffer.limit());
@@ -1394,7 +1393,7 @@ public class ExtractorTest {
                 testBuffer.rewind();
                 assertEquals(log + "Output mismatch", 0, refBuffer.compareTo(testBuffer));
                 assertTrue(log + "Output formats mismatch",
-                        cdtb.isFormatSimilar(cdtb.mOutFormat, format));
+                        cdtb.isFormatSimilar(cdtb.getOutputFormat(), format));
             } else if (mime.equals(mMime)) {
                 MediaExtractor refExtractor = new MediaExtractor();
                 refExtractor.setDataSource(MEDIA_DIR + mRefFile);
