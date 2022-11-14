@@ -297,7 +297,7 @@ public class AccessibilityTakeScreenshotTest {
 
             final AccessibilityWindowInfo secureWindowInfo =
                     ActivityLaunchUtils.findWindowByTitle(sUiAutomation, secureWindowTitle);
-            assertThat(secureWindowTitle).isNotNull();
+            assertThat(secureWindowInfo).isNotNull();
 
             mService.takeScreenshotOfWindow(secureWindowInfo.getId(),
                     mContext.getMainExecutor(), mCallback);
