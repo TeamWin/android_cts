@@ -1031,8 +1031,12 @@ public class ListViewTest {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             final View view = super.getView(position, convertView, parent);
-            if (view.getBackground() == null) {
-                view.setBackground(spy(new ColorDrawable(Color.BLACK)));
+            if (convertView == null) {
+                if (view.getBackground() == null) {
+                    view.setBackground(spy(new ColorDrawable(Color.BLACK)));
+                } else {
+                    view.setBackground(spy(view.getBackground()));
+                }
             }
             return view;
         }

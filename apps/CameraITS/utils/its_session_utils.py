@@ -489,7 +489,8 @@ class ItsSession(object):
 
   def do_basic_recording(self, profile_id, quality, duration,
                          video_stabilization_mode=0, hlg10_enabled=False,
-                         zoom_ratio=None):
+                         zoom_ratio=None, ae_target_fps_min=None,
+                         ae_target_fps_max=None):
     """Issue a recording request and read back the video recording object.
 
     The recording will be done with the format specified in quality. These
@@ -507,6 +508,8 @@ class ItsSession(object):
       hlg10_enabled: boolean: True Enable 10-bit HLG video recording, False
       record using the regular SDR profile
       zoom_ratio: float; zoom ratio. None if default zoom
+      ae_target_fps_min: int; CONTROL_AE_TARGET_FPS_RANGE min. Set if not None
+      ae_target_fps_max: int; CONTROL_AE_TARGET_FPS_RANGE max. Set if not None
     Returns:
       video_recorded_object: The recorded object returned from ItsService which
       contains path at which the recording is saved on the device, quality of
@@ -535,6 +538,9 @@ class ItsSession(object):
         cmd['zoomRatio'] = zoom_ratio
       else:
         raise AssertionError(f'Zoom ratio {zoom_ratio} out of range')
+    if ae_target_fps_min and ae_target_fps_max:
+      cmd['aeTargetFpsMin'] = ae_target_fps_min
+      cmd['aeTargetFpsMax'] = ae_target_fps_max
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
     self.sock.settimeout(timeout)

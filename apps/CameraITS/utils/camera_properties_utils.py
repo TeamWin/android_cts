@@ -430,6 +430,21 @@ def get_max_digital_zoom(props):
   return z_max
 
 
+def get_ae_target_fps_ranges(props):
+  """Returns the AE target FPS ranges supported by the camera device.
+
+  Args:
+    props: Camera properties object.
+
+  Returns:
+    A list of AE target FPS ranges supported by the camera device.
+  """
+  ranges = []  # return empty list instead of Boolean if no FPS range in props
+  if 'android.control.aeAvailableTargetFpsRanges' in props:
+    ranges = props['android.control.aeAvailableTargetFpsRanges']
+  return ranges
+
+
 def ae_lock(props):
   """Returns whether a device supports AE lock.
 
@@ -516,7 +531,7 @@ def noise_reduction_mode(props, mode):
     mode: Integer indicating noise reduction mode to check for availability.
 
   Returns:
-    Boolean. Ture if devices supports noise reduction mode(s).
+    Boolean. True if devices supports noise reduction mode(s).
   """
   return ('android.noiseReduction.availableNoiseReductionModes' in props and
           mode in props['android.noiseReduction.availableNoiseReductionModes'])
@@ -652,11 +667,11 @@ def get_intrinsic_calibration(props, debug, fd=None):
     fd_h_pix = pixel_h * fd / sensor_h
 
     if not math.isclose(fd_w_pix, ical[0], rel_tol=FD_CAL_RTOL):
-      raise ValueError('fd_w(pixels): %.2f\tcal[0](pixels): %.2f\tTOL=20%%' % (
-          fd_w_pix, ical[0]))
+      raise ValueError(f'fd_w(pixels): {fd_w_pix:.2f}\tcal[0](pixels): '
+                       f'{ical[0]:.2f}\tTOL=20%')
     if not math.isclose(fd_h_pix, ical[1], rel_tol=FD_CAL_RTOL):
-      raise ValueError('fd_h(pixels): %.2f\tcal[1](pixels): %.2f\tTOL=20%%' % (
-          fd_h_pix, ical[0]))
+      raise ValueError(f'fd_h(pixels): {fd_h_pix:.2f}\tcal[1](pixels): '
+                       f'{ical[1]:.2f}\tTOL=20%')
 
   # generate instrinsic matrix
   k = np.array([[ical[0], ical[4], ical[2]],

@@ -545,7 +545,7 @@ def apply_lut_to_image(img, lut):
   """
   n = len(lut)
   if n <= 0 or n > MAX_LUT_SIZE or (n & (n - 1)) != 0:
-    raise error_util.CameraItsError('Invalid arg LUT size: %d' % (n))
+    raise error_util.CameraItsError(f'Invalid arg LUT size: {n}')
   m = float(n - 1)
   return (lut[(img * m).astype(numpy.uint16)] / m).astype(numpy.float32)
 

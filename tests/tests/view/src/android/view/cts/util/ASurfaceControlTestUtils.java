@@ -122,14 +122,14 @@ public class ASurfaceControlTestUtils {
 
     public static native long nSurfaceTransaction_create();
     public static native void nSurfaceTransaction_delete(long surfaceTransaction);
-    public static native long nSurfaceTransaction_fromTransaction(
+    public static native long nSurfaceTransaction_fromJava(
             SurfaceControl.Transaction transaction);
     public static native void nSurfaceTransaction_apply(long surfaceTransaction);
     public static native long nSurfaceControl_createFromWindow(Surface surface);
     public static native long nSurfaceControl_create(long surfaceControl);
     public static native void nSurfaceControl_acquire(long surfaceControl);
     public static native void nSurfaceControl_release(long surfaceControl);
-    public static native long nSurfaceControl_fromSurfaceControl(
+    public static native long nSurfaceControl_fromJava(
             SurfaceControl surfaceControl);
     public static native long nSurfaceTransaction_setSolidBuffer(
             long surfaceControl, long surfaceTransaction, int width, int height, int color);

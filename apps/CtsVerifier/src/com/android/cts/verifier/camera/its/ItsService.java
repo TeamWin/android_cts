@@ -78,6 +78,7 @@ import android.os.IBinder;
 import android.os.SystemClock;
 import android.os.Vibrator;
 import android.util.Log;
+import android.util.Range;
 import android.util.Rational;
 import android.util.Size;
 import android.util.SparseArray;
@@ -818,16 +819,21 @@ public class ItsService extends Service implements SensorEventListener {
                     int videoStabilizationMode = cmdObj.getInt("videoStabilizationMode");
                     boolean hlg10Enabled = cmdObj.getBoolean("hlg10Enabled");
                     double zoomRatio = cmdObj.optDouble("zoomRatio");
+                    int aeTargetFpsMin = cmdObj.optInt("aeTargetFpsMin");
+                    int aeTargetFpsMax = cmdObj.optInt("aeTargetFpsMax");
                     doBasicRecording(cameraId, profileId, quality, recordingDuration,
-                            videoStabilizationMode, hlg10Enabled, zoomRatio);
+                            videoStabilizationMode, hlg10Enabled, zoomRatio,
+                            aeTargetFpsMin, aeTargetFpsMax);
                 } else if ("doPreviewRecording".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
                     String videoSize = cmdObj.getString("videoSize");
                     int recordingDuration = cmdObj.getInt("recordingDuration");
                     boolean stabilize = cmdObj.getBoolean("stabilize");
                     double zoomRatio = cmdObj.optDouble("zoomRatio");
+                    int aeTargetFpsMin = cmdObj.optInt("aeTargetFpsMin");
+                    int aeTargetFpsMax = cmdObj.optInt("aeTargetFpsMax");
                     doBasicPreviewRecording(cameraId, videoSize, recordingDuration,
-                            stabilize, zoomRatio);
+                            stabilize, zoomRatio, aeTargetFpsMin, aeTargetFpsMax);
                 } else if ("isHLG10Supported".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
                     int profileId = cmdObj.getInt("profileId");
@@ -1939,13 +1945,13 @@ public class ItsService extends Service implements SensorEventListener {
 
     private void doBasicRecording(String cameraId, int profileId, String quality,
             int recordingDuration, int videoStabilizationMode,
-            boolean hlg10Enabled, double zoomRatio)
+            boolean hlg10Enabled, double zoomRatio, int aeTargetFpsMin, int aeTargetFpsMax)
             throws ItsException {
         final long SESSION_CLOSE_TIMEOUT_MS  = 3000;
 
         if (!hlg10Enabled) {
             doBasicRecording(cameraId, profileId, quality, recordingDuration,
-                    videoStabilizationMode, zoomRatio);
+                    videoStabilizationMode, zoomRatio, aeTargetFpsMin, aeTargetFpsMax);
             return;
         }
 
@@ -2013,7 +2019,8 @@ public class ItsService extends Service implements SensorEventListener {
         // Configure and create capture session.
         try {
             configureAndCreateCaptureSession(CameraDevice.TEMPLATE_RECORD, mRecordSurface,
-                    videoStabilizationMode, DynamicRangeProfiles.HLG10, mockCallback, zoomRatio);
+                    videoStabilizationMode, DynamicRangeProfiles.HLG10, mockCallback,
+                    zoomRatio, aeTargetFpsMin, aeTargetFpsMax);
         } catch (CameraAccessException e) {
             throw new ItsException("Access error: ", e);
         }
@@ -2057,7 +2064,7 @@ public class ItsService extends Service implements SensorEventListener {
 
     private void doBasicRecording(String cameraId, int profileId, String quality,
             int recordingDuration, int videoStabilizationMode,
-            double zoomRatio) throws ItsException {
+            double zoomRatio, int aeTargetFpsMin, int aeTargetFpsMax) throws ItsException {
         int cameraDeviceId = Integer.parseInt(cameraId);
         mMediaRecorder = new MediaRecorder();
         CamcorderProfile camcorderProfile = getCamcorderProfile(cameraDeviceId, profileId);
@@ -2089,7 +2096,8 @@ public class ItsService extends Service implements SensorEventListener {
         // Configure and create capture session.
         try {
             configureAndCreateCaptureSession(CameraDevice.TEMPLATE_RECORD, mRecordSurface,
-                    videoStabilizationMode, zoomRatio);
+                    videoStabilizationMode, DynamicRangeProfiles.STANDARD,
+                    /*callback =*/ null, zoomRatio, aeTargetFpsMin, aeTargetFpsMax);
         } catch (android.hardware.camera2.CameraAccessException e) {
             throw new ItsException("Access error: ", e);
         }
@@ -2134,7 +2142,8 @@ public class ItsService extends Service implements SensorEventListener {
      * ImageReader to the MediaRecorder surface which is encoded into a video.
      */
     private void doBasicPreviewRecording(String cameraId, String videoSizeString,
-            int recordingDuration, boolean stabilize, double zoomRatio)
+            int recordingDuration, boolean stabilize, double zoomRatio,
+            int aeTargetFpsMin, int aeTargetFpsMax)
             throws ItsException {
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
@@ -2165,7 +2174,8 @@ public class ItsService extends Service implements SensorEventListener {
                     ? CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION
                     : CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF;
             configureAndCreateCaptureSession(CameraDevice.TEMPLATE_PREVIEW,
-                    pr.getCameraSurface(), stabilizationMode, zoomRatio);
+                    pr.getCameraSurface(), stabilizationMode, DynamicRangeProfiles.STANDARD,
+                    /*callback=*/ null, zoomRatio, aeTargetFpsMin, aeTargetFpsMax);
             pr.recordPreview(recordingDuration * 1000L);
             mSession.close();
         } catch (CameraAccessException e) {
@@ -2180,20 +2190,22 @@ public class ItsService extends Service implements SensorEventListener {
     }
 
     private void configureAndCreateCaptureSession(int requestTemplate, Surface recordSurface,
-            int videoStabilizationMode, double zoomRatio) throws CameraAccessException {
-        configureAndCreateCaptureSession(requestTemplate, recordSurface, videoStabilizationMode,
-                DynamicRangeProfiles.STANDARD, /* stateCallback= */ null, zoomRatio);
-    }
-
-    private void configureAndCreateCaptureSession(int requestTemplate, Surface recordSurface,
             int videoStabilizationMode, long dynamicRangeProfile,
             CameraCaptureSession.StateCallback stateCallback,
-            double zoomRatio) throws CameraAccessException {
+            double zoomRatio, int aeTargetFpsMin, int aeTargetFpsMax) throws CameraAccessException {
         assert (recordSurface != null);
         // Create capture request builder
         mCaptureRequestBuilder = mCamera.createCaptureRequest(requestTemplate);
+
+        // handle optional arguments
         if (!Double.isNaN(zoomRatio)) {
+            Logt.i(TAG, "zoomRatio set to " + zoomRatio);
             mCaptureRequestBuilder.set(CaptureRequest.CONTROL_ZOOM_RATIO, (float) zoomRatio);
+        }
+        if (aeTargetFpsMin > 0 && aeTargetFpsMax > 0) {
+            Logt.i(TAG, "AE target FPS range: (" + aeTargetFpsMin + ", " + aeTargetFpsMax + ")");
+            mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
+                    new Range<Integer>(aeTargetFpsMin, aeTargetFpsMax));
         }
 
         switch (videoStabilizationMode) {

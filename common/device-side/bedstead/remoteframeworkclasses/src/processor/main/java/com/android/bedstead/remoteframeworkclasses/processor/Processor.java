@@ -105,7 +105,7 @@ public final class Processor extends AbstractProcessor {
 
     private static final Set<String> BLOCKLISTED_METHODS = ImmutableSet.of(
             // DevicePolicyManager
-
+            "public android.app.admin.DevicePolicyResourcesManager getResources()",
             // Uses ServiceConnection
             "public boolean bindDeviceAdminServiceAsUser(android.content.ComponentName, android"
                     + ".content.Intent, android.content.ServiceConnection, int, android.os"

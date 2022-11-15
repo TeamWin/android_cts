@@ -18,8 +18,9 @@ package android.systemui.cts;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.provider.DeviceConfig.NAMESPACE_ANDROID;
 import static android.provider.AndroidDeviceConfig.KEY_SYSTEM_GESTURE_EXCLUSION_LIMIT_DP;
+import static android.provider.DeviceConfig.NAMESPACE_ANDROID;
+import static android.provider.Settings.Secure.IMMERSIVE_MODE_CONFIRMATIONS;
 import static android.view.View.SYSTEM_UI_CLEARABLE_FLAGS;
 import static android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;
 import static android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
@@ -48,6 +49,8 @@ import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.provider.DeviceConfig;
+import android.provider.Settings;
+import android.server.wm.settings.SettingsSession;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
@@ -70,7 +73,9 @@ import com.android.compatibility.common.util.ThrowingRunnable;
 import com.google.common.collect.Lists;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -86,6 +91,7 @@ import java.util.function.Consumer;
 
 @RunWith(AndroidJUnit4.class)
 public class WindowInsetsBehaviorTests {
+    private static SettingsSession<String> sImmersiveModeConfirmationSetting;
     private static final String DEF_SCREENSHOT_BASE_PATH =
             "/sdcard/WindowInsetsBehaviorTests";
     private static final String SETTINGS_PACKAGE_NAME = "com.android.settings";
@@ -113,6 +119,21 @@ public class WindowInsetsBehaviorTests {
     private String mGesturePreferenceTitle;
     private TouchHelper mTouchHelper;
     private boolean mConfiguredInSettings;
+
+    @BeforeClass
+    public static void setUpClass() {
+        sImmersiveModeConfirmationSetting = new SettingsSession<>(
+                Settings.Secure.getUriFor(IMMERSIVE_MODE_CONFIRMATIONS),
+                Settings.Secure::getString, Settings.Secure::putString);
+        sImmersiveModeConfirmationSetting.set("confirmed");
+    }
+
+    @AfterClass
+    public static void tearDownClass() {
+        if (sImmersiveModeConfirmationSetting != null) {
+            sImmersiveModeConfirmationSetting.close();
+        }
+    }
 
     private static String getSettingsString(Resources res, String strResName) {
         int resIdString = res.getIdentifier(strResName, "string", SETTINGS_PACKAGE_NAME);

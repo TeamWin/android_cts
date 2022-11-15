@@ -105,7 +105,7 @@ public class PhotoPickerUiUtils {
     public static UiObject findSettingsOverflowMenuItem(UiDevice uiDevice) throws Exception {
         final UiObject overflowMenu = getOverflowMenuObject(uiDevice);
         clickAndWait(uiDevice, overflowMenu);
-        return new UiObject(new UiSelector().textContains("Settings"));
+        return new UiObject(new UiSelector().textContains("Cloud media app"));
     }
 
     public static UiObject getOverflowMenuObject(UiDevice uiDevice)  {

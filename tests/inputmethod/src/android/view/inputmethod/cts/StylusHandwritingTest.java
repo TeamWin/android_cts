@@ -1595,7 +1595,9 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                                 layout.addView(editText);
                                 editText.requestFocus();
                             }));
-            layout.addView(delegateView, new ViewGroup.LayoutParams(1000, 1000));
+            layout.addView(
+                    delegateView,
+                    new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 40));
             return layout;
         });
         return delegateViewRef.get();

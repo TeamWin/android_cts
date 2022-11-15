@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 import com.android.tradefed.util.CommandResult;
@@ -101,8 +102,15 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
 
     protected void runDeviceTestAsUserInPkgA(@Nonnull String testMethod, int userId,
             @Nonnull Map<String, String> args) throws Exception {
-        DeviceTestRunOptions deviceTestRunOptions = new DeviceTestRunOptions(APP_A_PACKAGE)
-                .setTestClassName(TEST_CLASS_A)
+
+        runDeviceTestAsUser(APP_A_PACKAGE, TEST_CLASS_A, testMethod, userId, args);
+    }
+
+    protected void runDeviceTestAsUser(@Nonnull String testPackage, @Nonnull String testClass,
+            @Nonnull String testMethod, int userId, @Nonnull Map<String, String> args)
+            throws Exception {
+        DeviceTestRunOptions deviceTestRunOptions = new DeviceTestRunOptions(testPackage)
+                .setTestClassName(testClass)
                 .setTestMethodName(testMethod)
                 .setMaxInstrumentationTimeoutMs(DEFAULT_INSTRUMENTATION_TIMEOUT_MS)
                 .setUserId(userId);
@@ -112,5 +120,18 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
 
         assertWithMessage(testMethod + " failed").that(
                 runDeviceTests(deviceTestRunOptions)).isTrue();
+    }
+
+    /**
+     * Set the feature flag value on device
+     * @param flag name of feature flag
+     * @param value to be assigned
+     * @throws DeviceNotAvailableException if connection with device is lost and cannot be
+     * recovered.
+     */
+    protected static void setFeatureFlagValue(String flag, String value)
+            throws DeviceNotAvailableException {
+        sDevice.executeShellCommand("settings put global "
+                + flag + " " + value);
     }
 }

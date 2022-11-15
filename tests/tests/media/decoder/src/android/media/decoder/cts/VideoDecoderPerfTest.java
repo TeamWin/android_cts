@@ -209,7 +209,7 @@ public class VideoDecoderPerfTest extends MediaTestBase {
         }
 
         // allow improvements in mainline-updated google-supplied software codecs.
-        boolean fasterIsOk = mUpdatedSwCodec & name.startsWith("c2.android.");
+        boolean fasterIsOk = mUpdatedSwCodec & TestUtils.isMainlineCodec(name);
         String error =
             MediaPerfUtils.verifyAchievableFrameRates(name, mime, width, height,
                            fasterIsOk,  measuredFps);

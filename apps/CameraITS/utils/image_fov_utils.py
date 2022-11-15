@@ -181,7 +181,7 @@ def find_fov_reference(cam, req, props, raw_bool, ref_img_name_stem):
     ref_img_name_stem: test _NAME + location to save data
 
   Returns:
-    ref_fov: dict with [fmt, % coverage, w, h, circle_w, circle_h]
+    ref_fov: dict with {fmt, % coverage, w, h, circle_w, circle_h}
     cc_ct_gt: circle center position relative to the center of image.
     aspect_ratio_gt: aspect ratio of the detected circle in float.
   """

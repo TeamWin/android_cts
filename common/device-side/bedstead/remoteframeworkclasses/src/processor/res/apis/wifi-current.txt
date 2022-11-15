@@ -1231,6 +1231,7 @@ package android.net.wifi.p2p {
     method public void setServiceResponseListener(android.net.wifi.p2p.WifiP2pManager.Channel, android.net.wifi.p2p.WifiP2pManager.ServiceResponseListener);
     method public void setUpnpServiceResponseListener(android.net.wifi.p2p.WifiP2pManager.Channel, android.net.wifi.p2p.WifiP2pManager.UpnpServiceResponseListener);
     method @RequiresPermission(allOf={android.Manifest.permission.NEARBY_WIFI_DEVICES, android.Manifest.permission.OVERRIDE_WIFI_CONFIG}) public void setVendorElements(@NonNull android.net.wifi.p2p.WifiP2pManager.Channel, @NonNull java.util.List<android.net.wifi.ScanResult.InformationElement>, @Nullable android.net.wifi.p2p.WifiP2pManager.ActionListener);
+    method @RequiresPermission(android.Manifest.permission.CONFIGURE_WIFI_DISPLAY) public void setWfdInfo(@NonNull android.net.wifi.p2p.WifiP2pManager.Channel, @NonNull android.net.wifi.p2p.WifiP2pWfdInfo, @Nullable android.net.wifi.p2p.WifiP2pManager.ActionListener);
     method @RequiresPermission(allOf={android.Manifest.permission.NEARBY_WIFI_DEVICES, android.Manifest.permission.ACCESS_FINE_LOCATION}, conditional=true) public void startListening(@NonNull android.net.wifi.p2p.WifiP2pManager.Channel, @Nullable android.net.wifi.p2p.WifiP2pManager.ActionListener);
     method public void stopListening(@NonNull android.net.wifi.p2p.WifiP2pManager.Channel, @Nullable android.net.wifi.p2p.WifiP2pManager.ActionListener);
     method public void stopPeerDiscovery(android.net.wifi.p2p.WifiP2pManager.Channel, android.net.wifi.p2p.WifiP2pManager.ActionListener);
@@ -1244,6 +1245,7 @@ package android.net.wifi.p2p {
     field public static final String EXTRA_DISCOVERY_STATE = "discoveryState";
     field public static final String EXTRA_NETWORK_INFO = "networkInfo";
     field public static final String EXTRA_P2P_DEVICE_LIST = "wifiP2pDeviceList";
+    field public static final String EXTRA_REQUEST_CONFIG = "android.net.wifi.p2p.extra.REQUEST_CONFIG";
     field public static final String EXTRA_REQUEST_RESPONSE = "android.net.wifi.p2p.extra.REQUEST_RESPONSE";
     field public static final String EXTRA_WIFI_P2P_DEVICE = "wifiP2pDevice";
     field public static final String EXTRA_WIFI_P2P_GROUP = "p2pGroupInfo";
@@ -1578,9 +1580,13 @@ package android.net.wifi.rtt {
   }
 
   public class WifiRttManager {
+    method @NonNull @RequiresPermission(android.Manifest.permission.ACCESS_WIFI_STATE) public android.os.Bundle getRttCharacteristics();
     method public boolean isAvailable();
     method @RequiresPermission(allOf={android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.CHANGE_WIFI_STATE, android.Manifest.permission.ACCESS_WIFI_STATE, android.Manifest.permission.NEARBY_WIFI_DEVICES}) public void startRanging(@NonNull android.net.wifi.rtt.RangingRequest, @NonNull java.util.concurrent.Executor, @NonNull android.net.wifi.rtt.RangingResultCallback);
     field public static final String ACTION_WIFI_RTT_STATE_CHANGED = "android.net.wifi.rtt.action.WIFI_RTT_STATE_CHANGED";
+    field public static final String CHARACTERISTICS_KEY_BOOLEAN_LCI = "key_lci";
+    field public static final String CHARACTERISTICS_KEY_BOOLEAN_LCR = "key_lcr";
+    field public static final String CHARACTERISTICS_KEY_BOOLEAN_ONE_SIDED_RTT = "key_one_sided_rtt";
   }
 
 }

@@ -28,12 +28,14 @@ import android.net.wifi.aware.SubscribeConfig;
 import android.net.wifi.aware.SubscribeDiscoverySession;
 import android.net.wifi.aware.WifiAwareManager;
 import android.net.wifi.aware.WifiAwareSession;
+import android.os.Build;
 import android.os.Handler;
 import android.os.ParcelUuid;
 import android.util.Log;
 
 import com.android.cts.verifier.presence.nan.RttRanger.NanResultListener;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -42,6 +44,7 @@ import java.util.UUID;
 public class WifiAwarePeer {
     private static final String TAG = RttRanger.class.getName();
     private static final String UUID_STRING = "CDB7950D-73F1-4D4D-8E47-C090502DBD63";
+    private static final int CTS_V_MESSAGE_ID = 52;
     private static final ParcelUuid PARCEL_UUID = new ParcelUuid(UUID.fromString(UUID_STRING));
     private static final String CTS_V_SERVICE_NAME = "cts-v-service";
     private static final List<byte[]> MATCH_FILTER =
@@ -54,6 +57,8 @@ public class WifiAwarePeer {
     private WifiAwareSession wifiAwareSession;
     private WifiAwarePeerListener wifiAwarePeerListener;
     private NanResultListener nanResultListener;
+    private PublishDiscoverySession currentPublishDiscoverySession = null;
+    private SubscribeDiscoverySession currentSubscribeDiscoverySession = null;
 
     public WifiAwarePeer(Context context, Handler handler) {
         this.handler = handler;
@@ -63,6 +68,18 @@ public class WifiAwarePeer {
 
     public void publish() {
         attach(/*isPublisher=*/ true);
+    }
+
+    public void sendMessage(PeerHandle peerHandle) {
+        if (currentPublishDiscoverySession != null) {
+            currentPublishDiscoverySession.sendMessage(peerHandle, CTS_V_MESSAGE_ID,
+                    Build.MODEL.getBytes(
+                            UTF_8));
+        } else if (currentSubscribeDiscoverySession != null) {
+            currentSubscribeDiscoverySession.sendMessage(peerHandle, CTS_V_MESSAGE_ID,
+                    "Request".getBytes(
+                            UTF_8));
+        }
     }
 
     public void subscribe(
@@ -87,6 +104,8 @@ public class WifiAwarePeer {
         if (wifiAwareSession != null) {
             wifiAwareSession.close();
             wifiAwareSession = null;
+            currentPublishDiscoverySession = null;
+            currentSubscribeDiscoverySession = null;
         }
 
         nanResultListener = null;
@@ -119,9 +138,10 @@ public class WifiAwarePeer {
             Log.i(TAG, "onAttached, session = " + session);
             wifiAwareSession = session;
             if (isPublisher) {
-                session.publish(publishConfig, createDiscoverySessionCallback(), handler);
+                session.publish(publishConfig, createPublishDiscoverySessionCallback(), handler);
             } else {
-                session.subscribe(subscribeConfig, createDiscoverySessionCallback(), handler);
+                session.subscribe(subscribeConfig, createSubscribeDiscoverySessionCallback(),
+                        handler);
             }
         }
 
@@ -131,16 +151,37 @@ public class WifiAwarePeer {
         }
     }
 
-    private DiscoverySessionCallback createDiscoverySessionCallback() {
+    private DiscoverySessionCallback createPublishDiscoverySessionCallback() {
         return new DiscoverySessionCallback() {
             @Override
             public void onPublishStarted(PublishDiscoverySession session) {
                 Log.i(TAG, "onPublishStarted, PublishDiscoverySession= " + session);
+                currentPublishDiscoverySession = session;
             }
+
+            @Override
+            public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
+                Log.i(TAG, "onMessageReceived from subscriber");
+                // Received message from subscriber. We automatically assume this is a reference
+                // device name request
+                sendMessage(peerHandle);
+            }
+        };
+    }
+
+    private DiscoverySessionCallback createSubscribeDiscoverySessionCallback() {
+        return new DiscoverySessionCallback() {
 
             @Override
             public void onSubscribeStarted(SubscribeDiscoverySession session) {
                 Log.i(TAG, "onSubscribeStarted, SubscribeDiscoverySession= " + session);
+                currentSubscribeDiscoverySession = session;
+            }
+
+            @Override
+            public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
+                Log.i(TAG, "onMessageReceived from publisher");
+                wifiAwarePeerListener.onReferenceDeviceNameReceived(new String(message, UTF_8));
             }
 
             @Override
@@ -154,6 +195,7 @@ public class WifiAwarePeer {
                                 + distanceMm);
 
                 wifiAwarePeerListener.onDeviceFound(peerHandle);
+                sendMessage(peerHandle);
                 rttRanger.startRanging(peerHandle, nanResultListener);
             }
         };
@@ -162,6 +204,6 @@ public class WifiAwarePeer {
     /** Listener for range results. */
     public interface WifiAwarePeerListener {
         void onDeviceFound(PeerHandle peerHandle);
+        void onReferenceDeviceNameReceived(String referenceDeviceName);
     }
 }
-

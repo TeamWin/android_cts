@@ -22,6 +22,7 @@ java_test_host {
         "hostside/src/**/AppCloningHostTest.java",
         "hostside/src/**/BaseHostTestCase.java",
         "hostside/src/**/AppCloningBaseHostTest.java",
+        "hostside/src/**/IntentRedirectionTest.java",
     ],
     libs: [
         "cts-tradefed",
@@ -38,5 +39,8 @@ java_test_host {
     test_config: "AndroidTestAppCloning.xml",
     data: [
         ":CtsAppCloningTestApp",
+        ":CtsAppCloningIntentRedirectionCloneProfileApp",
+        ":CtsAppCloningIntentRedirectionOwnerProfileApp",
+        ":CtsIntentRedirectionTestApp",
     ],
 }

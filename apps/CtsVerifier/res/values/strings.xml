@@ -6632,7 +6632,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="start_advertising_presence">Start Advertising</string>
     <string name="stop_advertising_presence">Stop Advertising</string>
     <string name="device_id_info_presence">You are advertising with deviceId: %1$d</string>
-    <string name="device_found_presence">Reference device found. %1$d of 1000 samples collected</string>
+    <string name="device_found_presence">Reference device found. %1$d of 100 samples collected</string>
     <string name="reference_device_id_input_presence">Enter the device ID displayed on the advertising device</string>
 
     <!-- Strings for BLE RSSI Precision Test -->

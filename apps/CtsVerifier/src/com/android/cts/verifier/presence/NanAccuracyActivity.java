@@ -30,9 +30,12 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.presence.nan.WifiAwarePeer;
+import com.android.cts.verifier.presence.nan.WifiAwarePeer.WifiAwarePeerListener;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -42,6 +45,9 @@ import java.util.HashMap;
 public class NanAccuracyActivity extends PassFailButtons.Activity {
     private static final String TAG = NanAccuracyActivity.class.getName();
     private static final int MAX_ACCEPTABLE_RANGE = 2;
+
+    // Report log schema
+    private static final String KEY_REFERENCE_DEVICE = "reference_device";
 
     private HashMap<PeerHandle, ArrayList<Double>> mReceivedSamples;
     private WifiAwarePeer mWifiAwarePeer;
@@ -55,6 +61,25 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
     private TextView mDeviceFoundTextView;
     private TextView mTestStatusTextView;
     private RadioGroup mTestDistanceRadioGroup;
+    private String mReferenceDeviceName = "";
+    private final WifiAwarePeerListener mWifiAwarePeerListener = new WifiAwarePeerListener() {
+        @Override
+        public void onDeviceFound(PeerHandle peerHandle) {
+            Log.i(TAG, "Discovered NAN Peer");
+            mReceivedSamples.put(peerHandle, new ArrayList<>());
+            mDeviceFoundTextView.setText(getString(R.string.device_found_presence,
+                    mReceivedSamples.get(peerHandle).size()));
+            mDeviceFoundTextView.setVisibility(View.VISIBLE);
+            updateTestStatus(TestStatus.IN_PROGRESS);
+        }
+
+        @Override
+        public void onReferenceDeviceNameReceived(String referenceDeviceName) {
+            Log.i(TAG, "Reference device name received");
+            makeToast("Reference device name received: " + referenceDeviceName);
+            mReferenceDeviceName = referenceDeviceName;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,7 +127,7 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
 
     private void startTest() {
         mReceivedSamples.clear();
-        mWifiAwarePeer.subscribe(this::nanPeerListener, this::nanResultListener);
+        mWifiAwarePeer.subscribe(mWifiAwarePeerListener, this::nanResultListener);
         mStartTestButton.setEnabled(false);
     }
 
@@ -121,15 +146,6 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
         mStartPublishingButton.setEnabled(true);
     }
 
-    private void nanPeerListener(PeerHandle peerHandle) {
-        Log.i(TAG, "Discovered NAN Peer");
-        mReceivedSamples.put(peerHandle, new ArrayList<>());
-        mDeviceFoundTextView.setText(getString(R.string.device_found_presence,
-                mReceivedSamples.get(peerHandle).size()));
-        mDeviceFoundTextView.setVisibility(View.VISIBLE);
-        updateTestStatus(TestStatus.IN_PROGRESS);
-    }
-
     private void nanResultListener(RangingResult result) {
         Log.i(TAG, "Got range result");
         if (mReceivedSamples.containsKey(result.getPeerHandle())) {
@@ -142,7 +158,7 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
     }
 
     private void checkDataCollectionStatus(PeerHandle peerHandle) {
-        if (mReceivedSamples.get(peerHandle).size() >= 1000) {
+        if (mReceivedSamples.get(peerHandle).size() >= 100) {
             stopTest();
             computeTestResults(mReceivedSamples.get(peerHandle));
         }
@@ -154,16 +170,16 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
                         > MAX_ACCEPTABLE_RANGE);
 
         // Calculate range at 68th percentile
-        if (data.size() >= 680) {
+        if (data.size() >= 68) {
             updateTestStatus(TestStatus.PASSED);
             makeToast("Test passed for " + mCurrentTestDistance
                     + "\r\nPercentage of results in range: "
-                    + new DecimalFormat("#.##").format((data.size() / (double) 1000) * 100) + "%");
+                    + new DecimalFormat("#.##").format((data.size() / (double) 100) * 100) + "%");
         } else {
             updateTestStatus(TestStatus.FAILED);
             makeToast("Test failed for " + mCurrentTestDistance
                     + "\r\nPercentage of results in range: "
-                    + new DecimalFormat("#.##").format((data.size() / (double) 1000) * 100) + "%");
+                    + new DecimalFormat("#.##").format((data.size() / (double) 100) * 100) + "%");
         }
         if (mTestResult.isAllPassed()) {
             getPassButton().performClick();
@@ -190,7 +206,14 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
     }
 
     private void makeToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void recordTestResults() {
+            getReportLog().addValue(KEY_REFERENCE_DEVICE, mReferenceDeviceName,
+                    ResultType.NEUTRAL, ResultUnit.NONE);
+            getReportLog().submit();
     }
 
     enum TestDistance {

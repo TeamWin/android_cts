@@ -160,7 +160,8 @@ public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase
 
         waitForOrFail("Waiting until animation done", () -> mActivity.mCallback.animationDone);
         commonAnimationAssertions(mActivity, before, true /* show */, ime());
-        mActivity.mCallback.animationDone = false;
+
+        mActivity.resetAnimationDone();
 
         before = mActivity.mLastWindowInsets;
 

@@ -19,6 +19,7 @@
     <option name="config-descriptor:metadata" key="parameter" value="multi_abi" />
     <option name="config-descriptor:metadata" key="parameter" value="no_foldable_states" />
     <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
+    <option name="config-descriptor:metadata" key="parameter" value="run_on_sdk_sandbox" />
 
     <!-- TODO(b/245579250): update to Sdk34 once sdk finalized -->
     <object type="module_controller" class="com.android.tradefed.testtype.suite.module.Sdk33ModuleController" />

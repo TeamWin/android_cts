@@ -18,6 +18,7 @@
     <option name="config-descriptor:metadata" key="component" value="webview" />
     <!-- Note: about half of webkit CTS tests are skipped in instant_app mode since it requires HTTPS -->
     <option name="config-descriptor:metadata" key="parameter" value="instant_app" />
+    <option name="config-descriptor:metadata" key="parameter" value="run_on_sdk_sandbox" />
 
     <option name="config-descriptor:metadata" key="parameter" value="multi_abi" />
     <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />

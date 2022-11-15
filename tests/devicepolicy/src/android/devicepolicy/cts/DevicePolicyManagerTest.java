@@ -45,6 +45,7 @@ import static android.nfc.NfcAdapter.ACTION_NDEF_DISCOVERED;
 import static android.nfc.NfcAdapter.EXTRA_NDEF_MESSAGES;
 
 import static com.android.bedstead.harrier.UserType.ADDITIONAL_USER;
+import static com.android.bedstead.harrier.UserType.INITIAL_USER;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.remotedpc.RemoteDpc.REMOTE_DPC_TEST_APP;
 
@@ -85,6 +86,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.AfterClass;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
+import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
@@ -92,10 +94,13 @@ import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
@@ -1757,5 +1762,64 @@ public final class DevicePolicyManagerTest {
     public void getPolicyManagedProfiles_noPermission_returnsEmptyList() {
         assertThrows(SecurityException.class, () -> sDevicePolicyManager.getPolicyManagedProfiles(
                 TestApis.context().instrumentationContext().getUser()));
+    }
+
+    @Postsubmit(reason = "new test")
+    @Test
+    @EnsureHasWorkProfile(dpcIsPrimary = true)
+    @RequireRunOnInitialUser
+    public void wipeData_po_removeWorkProfile() {
+        sDeviceState.dpc().devicePolicyManager().wipeData(/* flags= */ 0);
+
+        assertWithMessage("Work profile should have been removed")
+                .that(sDeviceState.workProfile(sDeviceState.initialUser()).exists())
+                .isFalse();
+    }
+
+    @Postsubmit(reason = "new test")
+    @Test
+    public void wipeData_notAuthorized_throwsException() {
+        assertThrows("No license - no wiping",
+                IllegalStateException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().wipeDevice(/* flags= */ 0));
+    }
+
+    @Postsubmit(reason = "new test")
+    @Test
+    @EnsureHasNoAdditionalUser
+    @RequireRunOnInitialUser
+    @RequireHeadlessSystemUserMode(reason = "tests headless user behaviour")
+    public void wipeData_noAdditionalUsers_throwsException() {
+        assertThrows("Should prevent the removal of last full user",
+                IllegalStateException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().wipeData(/* flags= */ 0));
+    }
+
+    @Postsubmit(reason = "new test")
+    @Test
+    @EnsureHasProfileOwner(onUser = INITIAL_USER, isPrimary = true)
+    // TODO(b/242189747) Verify that it behaves properly
+    @RequireRunOnAdditionalUser
+    @RequireHeadlessSystemUserMode(reason = "tests headless user behaviour")
+    @Ignore("b/242189747")
+    public void wipeData_additionalUsers_removeUser() {
+        sDeviceState.dpc().devicePolicyManager().wipeData(/* flags= */ 0);
+
+        assertWithMessage(
+                "User should have been removed,"
+                        + " since there are other users on the device")
+                .that(sDeviceState.initialUser().exists()).isFalse();
+    }
+
+    @Postsubmit(reason = "new test")
+    @Test
+    @EnsureHasDeviceOwner
+    @EnsureHasAdditionalUser
+    @RequireRunOnSystemUser
+    @RequireHeadlessSystemUserMode(reason = "tests headless user behaviour")
+    public void wipeData_systemUser_throwsException() {
+        assertThrows("System user should not be removed",
+                IllegalStateException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().wipeData(/* flags= */ 0));
     }
 }

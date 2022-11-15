@@ -24,12 +24,12 @@ import static android.view.cts.util.ASurfaceControlTestUtils.createSurfaceTransa
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_acquire;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_create;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_createFromWindow;
-import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_fromSurfaceControl;
+import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_fromJava;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_release;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_apply;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_create;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_delete;
-import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_fromTransaction;
+import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_fromJava;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_releaseBuffer;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setDamageRegion;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setDesiredPresentTime;
@@ -325,11 +325,11 @@ public class ASurfaceControlTest {
     }
 
     @Test
-    public void testSurfaceControl_fromSurfaceControl() {
+    public void testSurfaceControl_fromJava() {
         SurfaceControl.Builder builder = new SurfaceControl.Builder();
-        builder.setName("testSurfaceControl_fromSurfaceControl");
+        builder.setName("testSurfaceControl_fromJava");
         SurfaceControl control = builder.build();
-        final long childSurfaceControl = nSurfaceControl_fromSurfaceControl(control);
+        final long childSurfaceControl = nSurfaceControl_fromJava(control);
         assertTrue(childSurfaceControl != 0);
         verifyTest(
                 new BasicSurfaceHolderCallback() {
@@ -352,9 +352,9 @@ public class ASurfaceControlTest {
     }
 
     @Test
-    public void testSurfaceTransaction_fromTransaction() {
+    public void testSurfaceTransaction_fromJava() {
         SurfaceControl.Transaction jTransaction = new SurfaceControl.Transaction();
-        final long transaction = nSurfaceTransaction_fromTransaction(jTransaction);
+        final long transaction = nSurfaceTransaction_fromJava(jTransaction);
         verifyTest(
                 new BasicSurfaceHolderCallback() {
                     @Override
