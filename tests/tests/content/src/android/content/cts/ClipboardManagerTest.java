@@ -72,7 +72,9 @@ public class ClipboardManagerTest {
 
     @After
     public void cleanUp() {
-        mClipboardManager.clearPrimaryClip();
+        if (mClipboardManager != null) {
+            mClipboardManager.clearPrimaryClip();
+        }
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
     }

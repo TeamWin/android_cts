@@ -18,6 +18,8 @@ package android.app.cts.wallpapers;
 
 import static android.opengl.cts.Egl14Utils.getMaxTextureSize;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeTrue;
@@ -32,6 +34,7 @@ import static org.mockito.Mockito.verify;
 import android.app.WallpaperColors;
 import android.app.WallpaperManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -42,12 +45,15 @@ import android.graphics.ColorSpace;
 import android.graphics.Point;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
 import android.view.Display;
+import android.view.Window;
 import android.view.WindowManager;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.core.app.ActivityScenario;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
@@ -105,6 +111,7 @@ public class WallpaperManagerTest {
         if (mBroadcastReceiver != null) {
             mContext.unregisterReceiver(mBroadcastReceiver);
         }
+        TestWallpaperService.Companion.checkAssertions();
     }
 
     @Test
@@ -400,6 +407,38 @@ public class WallpaperManagerTest {
             srgbBitmap.recycle();
             p3Bitmap.recycle();
         }
+    }
+
+    /**
+     * Check that all the callback methods of the wallpaper are invoked by the same thread.
+     * Also checks that the callback methods are called in a proper order.
+     * See {@link TestWallpaperService} to see the checks that are performed.
+     */
+    @Test
+    public void wallpaperCallbackMainThreadTest() {
+
+        ComponentName componentName = new ComponentName(
+                TestLiveWallpaper.class.getPackageName(), TestLiveWallpaper.class.getName());
+        runWithShellPermissionIdentity(() ->
+                mWallpaperManager.setWallpaperComponent(componentName));
+
+        // triggers Engine.onDesiredDimensionsChanged
+        mWallpaperManager.suggestDesiredDimensions(1000, 1000);
+        ActivityScenario<WallpaperTestActivity> scenario =
+                ActivityScenario.launch(WallpaperTestActivity.class);
+        scenario.onActivity(activity -> {
+            Window window = activity.getWindow();
+            IBinder windowToken = window.getDecorView().getWindowToken();
+
+            // send some command to trigger Engine.onCommand
+            mWallpaperManager.sendWallpaperCommand(
+                    windowToken, WallpaperManager.COMMAND_TAP, 50, 50, 0, null);
+
+            // trigger Engine.onZoomChanged
+            mWallpaperManager.setWallpaperZoomOut(windowToken, 0.5f);
+        });
+
+        runWithShellPermissionIdentity(() -> mWallpaperManager.clearWallpaper());
     }
 
     private void assertBitmapDimensions(Bitmap bitmap) {

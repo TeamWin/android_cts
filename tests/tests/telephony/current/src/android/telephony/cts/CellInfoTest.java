@@ -186,7 +186,7 @@ public class CellInfoTest {
     private PackageManager mPm;
     private TelephonyManager mTm;
 
-    private int mRadioHalVersion;
+    private int mNetworkHalVersion;
 
     private static final int makeRadioVersion(int major, int minor) {
         if (major < 0 || minor < 0) return 0;
@@ -255,8 +255,9 @@ public class CellInfoTest {
     public void setUp() throws Exception {
         mTm = (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mPm = getContext().getPackageManager();
-        Pair<Integer, Integer> verPair = mTm.getRadioHalVersion();
-        mRadioHalVersion = makeRadioVersion(verPair.first, verPair.second);
+        Pair<Integer, Integer> verPair =
+                mTm.getHalVersion(TelephonyManager.HAL_SERVICE_NETWORK);
+        mNetworkHalVersion = makeRadioVersion(verPair.first, verPair.second);
         TelephonyManagerTest.grantLocationPermissions();
     }
 
@@ -371,14 +372,14 @@ public class CellInfoTest {
         assertTrue("Invalid timestamp in CellInfo: " + info.getTimestampMillis(),
                 info.getTimestampMillis() > 0 && info.getTimestampMillis() <= curTime);
 
-        if (mRadioHalVersion >= RADIO_HAL_VERSION_1_2) {
+        if (mNetworkHalVersion >= RADIO_HAL_VERSION_1_2) {
             // In HAL 1.2 or greater, the connection status must be reported
             assertTrue(info.getCellConnectionStatus() != CellInfo.CONNECTION_UNKNOWN);
         }
     }
 
     private void verifyBaseCellIdentity(CellIdentity id, boolean isRegistered) {
-        if (mRadioHalVersion >= RADIO_HAL_VERSION_1_2) {
+        if (mNetworkHalVersion >= RADIO_HAL_VERSION_1_2) {
             if (isRegistered) {
                 String alphaLong = (String) id.getOperatorAlphaLong();
                 assertNotNull("getOperatorAlphaLong() returns NULL!", alphaLong);
@@ -592,7 +593,7 @@ public class CellInfoTest {
             verifyPlmnId(plmnId);
         }
 
-        if (mRadioHalVersion >= RADIO_HAL_VERSION_1_5) {
+        if (mNetworkHalVersion >= RADIO_HAL_VERSION_1_5) {
             int[] bands = nr.getBands();
 
             for (int band: bands) {
@@ -720,7 +721,7 @@ public class CellInfoTest {
                 "getEarfcn() out of range [" + minEarfcn + "," + maxEarfcn + "], earfcn=" + earfcn,
                 (earfcn >= minEarfcn && earfcn <= maxEarfcn));
 
-        if (mRadioHalVersion >= RADIO_HAL_VERSION_1_5) {
+        if (mNetworkHalVersion >= RADIO_HAL_VERSION_1_5) {
             int[] bands = lte.getBands();
 
             for (int band: bands) {
@@ -818,7 +819,7 @@ public class CellInfoTest {
                 timingAdvance == CellInfo.UNAVAILABLE
                         || (timingAdvance >= 0 && timingAdvance <= 1282));
 
-        if (mRadioHalVersion >= RADIO_HAL_VERSION_1_2) {
+        if (mNetworkHalVersion >= RADIO_HAL_VERSION_1_2) {
             assertTrue("RSRP Must be valid for LTE",
                     cellSignalStrengthLte.getRsrp() != CellInfo.UNAVAILABLE);
         }
@@ -946,7 +947,7 @@ public class CellInfoTest {
         int level = wcdma.getLevel();
         assertTrue("getLevel() out of range [0,4], level=" + level, level >= 0 && level <= 4);
 
-        if (mRadioHalVersion >= RADIO_HAL_VERSION_1_2) {
+        if (mNetworkHalVersion >= RADIO_HAL_VERSION_1_2) {
             assertTrue("RSCP Must be valid for WCDMA", wcdma.getRscp() != CellInfo.UNAVAILABLE);
         }
 
@@ -1060,7 +1061,7 @@ public class CellInfoTest {
         assertTrue("getBitErrorRate out of range [0,7], 99, or CellInfo.UNAVAILABLE, ber=" + ber,
                 ber == 99 || ber == CellInfo.UNAVAILABLE || (ber >= 0 && ber <= 7));
 
-        if (mRadioHalVersion >= RADIO_HAL_VERSION_1_2) {
+        if (mNetworkHalVersion >= RADIO_HAL_VERSION_1_2) {
             assertTrue("RSSI Must be valid for GSM", gsm.getDbm() != CellInfo.UNAVAILABLE);
         }
     }
@@ -1176,7 +1177,7 @@ public class CellInfoTest {
         int level = tdscdma.getLevel();
         assertTrue("getLevel() out of range [0,4], level=" + level, level >= 0 && level <= 4);
 
-        if (mRadioHalVersion >= RADIO_HAL_VERSION_1_2) {
+        if (mNetworkHalVersion >= RADIO_HAL_VERSION_1_2) {
             assertTrue("RSCP Must be valid for TDSCDMA", tdscdma.getRscp() != CellInfo.UNAVAILABLE);
         }
     }

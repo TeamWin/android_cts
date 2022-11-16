@@ -16,12 +16,4 @@
 
 package android.app.cts.wallpapers;
 
-import android.service.wallpaper.WallpaperService;
-
-public class LiveWallpaper extends WallpaperService {
-
-    @Override
-    public Engine onCreateEngine() {
-        return new Engine();
-    }
-}
+public class TestLiveWallpaper extends TestWallpaperService { }

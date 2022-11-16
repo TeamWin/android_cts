@@ -596,7 +596,6 @@ public class KeyEventTest {
         assertTrue(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_MEDIA_PLAY));
         assertTrue(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_MEDIA_PAUSE));
         assertTrue(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE));
-        assertTrue(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_MUTE));
         assertTrue(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_HEADSETHOOK));
         assertTrue(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_MEDIA_STOP));
         assertTrue(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_MEDIA_NEXT));

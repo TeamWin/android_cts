@@ -56,7 +56,7 @@ public class WallpaperInfoTest {
         Context context = InstrumentationRegistry.getTargetContext();
         PackageManager pm = context.getPackageManager();
 
-        WallpaperInfo wallpaperInfo = getInfoForService(LiveWallpaper.class);
+        WallpaperInfo wallpaperInfo = getInfoForService(TestLiveWallpaper.class);
 
         assertEquals(context.getString(R.string.wallpaper_title), wallpaperInfo.loadLabel(pm));
         assertEquals(context.getString(R.string.wallpaper_description),
@@ -78,7 +78,7 @@ public class WallpaperInfoTest {
 
     @Test
     public void test_defaultUnfoldTransitionDisabled() {
-        WallpaperInfo wallpaperInfo = getInfoForService(LiveWallpaperNoUnfoldTransition.class);
+        WallpaperInfo wallpaperInfo = getInfoForService(TestLiveWallpaperNoUnfoldTransition.class);
 
         assertFalse(wallpaperInfo.shouldUseDefaultUnfoldTransition());
     }

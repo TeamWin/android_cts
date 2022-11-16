@@ -340,7 +340,9 @@ public class TelephonyManagerTest {
     }
 
     private int mTestSub;
-    private int mRadioVersion;
+    private int mNetworkHalVersion;
+    private int mModemHalVersion;
+    private int mConfigHalVersion;
     private boolean mIsAllowedNetworkTypeChanged;
     private Map<Integer, Long> mAllowedNetworkTypesList = new HashMap<>();
 
@@ -397,8 +399,15 @@ public class TelephonyManagerTest {
         mTestSub = SubscriptionManager.getDefaultSubscriptionId();
         mTelephonyManager = getContext().getSystemService(TelephonyManager.class)
                 .createForSubscriptionId(mTestSub);
-        Pair<Integer, Integer> radioVersion = mTelephonyManager.getRadioHalVersion();
-        mRadioVersion = makeRadioVersion(radioVersion.first, radioVersion.second);
+        Pair<Integer, Integer> networkHalVersion =
+                mTelephonyManager.getHalVersion(TelephonyManager.HAL_SERVICE_NETWORK);
+        mNetworkHalVersion = makeRadioVersion(networkHalVersion.first, networkHalVersion.second);
+        Pair<Integer, Integer> modemHalVersion =
+                mTelephonyManager.getHalVersion(TelephonyManager.HAL_SERVICE_MODEM);
+        mModemHalVersion = makeRadioVersion(modemHalVersion.first, modemHalVersion.second);
+        Pair<Integer, Integer> simHalVersion =
+                mTelephonyManager.getHalVersion(TelephonyManager.HAL_SERVICE_RADIO);
+        mConfigHalVersion = makeRadioVersion(simHalVersion.first, simHalVersion.second);
         IntentFilter filter = new IntentFilter(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED);
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(android.Manifest.permission.READ_PHONE_STATE);
@@ -1010,12 +1019,16 @@ public class TelephonyManagerTest {
     }
 
     @Test
-    public void testGetRadioHalVersion() {
-        Pair<Integer, Integer> version = mTelephonyManager.getRadioHalVersion();
+    public void testGetHalVersion() {
+        Pair<Integer, Integer> halversion;
+        for (int i = TelephonyManager.HAL_SERVICE_DATA;
+                i <= TelephonyManager.HAL_SERVICE_VOICE; i++) {
+            halversion = mTelephonyManager.getHalVersion(i);
 
-        // The version must be valid, and the versions start with 1.0
-        assertFalse("Invalid Radio HAL Version: " + version,
-                version.first < 1 || version.second < 0);
+            // The version must be valid, and the versions start with 1.0
+            assertFalse("Invalid HAL Version (" + halversion + ") of service (" + i + ")",
+                    halversion.first < 1 || halversion.second < 0);
+        }
     }
 
     @Test
@@ -1846,7 +1859,7 @@ public class TelephonyManagerTest {
     @Test
     public void testRebootRadio() throws Throwable {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
-        if (mRadioVersion <= RADIO_HAL_VERSION_2_0) {
+        if (mModemHalVersion <= RADIO_HAL_VERSION_2_0) {
             Log.d(TAG, "Skipping test since rebootModem is not supported.");
             return;
         }
@@ -4077,7 +4090,7 @@ public class TelephonyManagerTest {
                 ShellIdentityUtils.invokeMethodWithShellPermissions(
                         mTelephonyManager, (tm) -> tm.isNrDualConnectivityEnabled());
         // Only verify the result for supported devices on IRadio 1.6+
-        if (mRadioVersion >= RADIO_HAL_VERSION_1_6
+        if (mNetworkHalVersion >= RADIO_HAL_VERSION_1_6
                 && result != TelephonyManager.ENABLE_NR_DUAL_CONNECTIVITY_NOT_SUPPORTED) {
             assertFalse(isNrDualConnectivityEnabled);
         }
@@ -4120,7 +4133,7 @@ public class TelephonyManagerTest {
         isNrDualConnectivityEnabled = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.isNrDualConnectivityEnabled());
         // Only verify the result for supported devices on IRadio 1.6+
-        if (mRadioVersion >= RADIO_HAL_VERSION_1_6) {
+        if (mNetworkHalVersion >= RADIO_HAL_VERSION_1_6) {
             assertTrue(isNrDualConnectivityEnabled);
         }
 
@@ -4658,8 +4671,8 @@ public class TelephonyManagerTest {
     @Test
     public void testGetAllCellInfo() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
-        // For IRadio <1.5, just verify that calling the method doesn't throw an error.
-        if (mRadioVersion < RADIO_HAL_VERSION_1_5) {
+        // For INetworkRadio <1.5, just verify that calling the method doesn't throw an error.
+        if (mNetworkHalVersion < RADIO_HAL_VERSION_1_5) {
             mTelephonyManager.getAllCellInfo();
             return;
         }
@@ -5309,7 +5322,7 @@ public class TelephonyManagerTest {
         } catch (IllegalArgumentException | IllegalStateException e) {
             // if HAL version is less than 2.0, vendors may not have implemented API,
             // skipping the failure.
-            if (mRadioVersion >= RADIO_HAL_VERSION_2_0) {
+            if (mConfigHalVersion >= RADIO_HAL_VERSION_2_0) {
                 fail("Not Expected Fail, Error in setSimSlotMapping :" + e);
             }
         }

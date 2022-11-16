@@ -2196,6 +2196,8 @@ public class ItsService extends Service implements SensorEventListener {
         assert (recordSurface != null);
         // Create capture request builder
         mCaptureRequestBuilder = mCamera.createCaptureRequest(requestTemplate);
+        mCaptureRequestBuilder.set(CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE,
+            CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF);
 
         // handle optional arguments
         if (!Double.isNaN(zoomRatio)) {

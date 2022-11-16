@@ -24,6 +24,7 @@ import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
+import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -341,7 +342,9 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
 
     private void satisfySystemWideConstraints(
             boolean charging, boolean batteryNotLow, boolean idle) throws Exception {
-        setBatteryState(charging, batteryNotLow ? 100 : 5);
+        if (BatteryUtils.hasBattery()) {
+            setBatteryState(charging, batteryNotLow ? 100 : 5);
+        }
         toggleIdle(idle);
     }
 

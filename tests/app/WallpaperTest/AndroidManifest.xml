@@ -24,11 +24,11 @@
     <application>
         <uses-library android:name="android.test.runner" />
 
-        <service android:name="android.app.cts.wallpapers.LiveWallpaper"
+        <service android:name="android.app.cts.wallpapers.TestLiveWallpaper"
                  android:icon="@drawable/robot"
                  android:label="@string/wallpaper_title"
                  android:permission="android.permission.BIND_WALLPAPER"
-                 android:exported="true">
+                 android:exported="false">
             <intent-filter>
                 <action android:name="android.service.wallpaper.WallpaperService">
                 </action>
@@ -38,11 +38,11 @@
             </meta-data>
         </service>
 
-        <service android:name="android.app.cts.wallpapers.LiveWallpaperNoUnfoldTransition"
+        <service android:name="android.app.cts.wallpapers.TestLiveWallpaperNoUnfoldTransition"
                  android:icon="@drawable/robot"
                  android:label="@string/wallpaper_title"
                  android:permission="android.permission.BIND_WALLPAPER"
-                 android:exported="true">
+                 android:exported="false">
             <intent-filter>
                 <action android:name="android.service.wallpaper.WallpaperService">
                 </action>
@@ -51,6 +51,10 @@
                        android:resource="@xml/wallpaper_no_default_device_state_change_transition">
             </meta-data>
         </service>
+
+        <activity android:name=".WallpaperTestActivity"
+                  android:theme="@style/Theme.Transparent">
+        </activity>
 
     </application>
 

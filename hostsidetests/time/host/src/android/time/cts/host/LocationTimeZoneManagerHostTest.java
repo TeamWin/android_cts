@@ -20,8 +20,11 @@ package android.time.cts.host;
 import static android.app.time.cts.shell.DeviceConfigKeys.LocationTimeZoneManager.KEY_LTZP_EVENT_FILTERING_AGE_THRESHOLD_MILLIS;
 import static android.app.time.cts.shell.DeviceConfigKeys.NAMESPACE_SYSTEM_TIME;
 import static android.app.time.cts.shell.DeviceConfigShellHelper.SYNC_DISABLED_MODE_UNTIL_REBOOT;
+import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.DEPENDENCY_STATUS_OK;
+import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.DEPENDENCY_STATUS_TEMPORARILY_UNAVAILABLE;
 import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.FAKE_TZPS_APP_APK;
 import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.FAKE_TZPS_APP_PACKAGE;
+import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.OPERATION_STATUS_OK;
 import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.PROVIDER_STATE_CERTAIN;
 import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.PROVIDER_STATE_DISABLED;
 import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.PROVIDER_STATE_INITIALIZING;
@@ -156,9 +159,18 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         mLocationTimeZoneManagerShellHelper.start();
     }
 
-    /** Tests what happens when there's only a primary provider and it makes a suggestion. */
     @Test
     public void testOnlyPrimary_suggestionMade() throws Exception {
+        testOnlyPrimary_suggestionMade(false);
+    }
+
+    @Test
+    public void testOnlyPrimary_suggestionMade_legacy() throws Exception {
+        testOnlyPrimary_suggestionMade(true);
+    }
+
+    /** Tests what happens when there's only a primary provider and it makes a suggestion. */
+    private void testOnlyPrimary_suggestionMade(boolean useLegacyApi) throws Exception {
         String testPrimaryLocationTimeZoneProviderPackageName = FAKE_TZPS_APP_PACKAGE;
         String testSecondaryLocationTimeZoneProviderPackageName = null;
         mLocationTimeZoneManagerShellHelper.startWithTestProviders(
@@ -186,7 +198,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         }
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
-        mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/London");
+        reportSuccess(mPrimaryFakeTimeZoneProviderShellHelper, "Europe/London", useLegacyApi);
 
         {
             LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
@@ -201,13 +213,22 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         }
     }
 
+    @Test
+    public void test_dupeSuggestionsMade_rateLimited() throws Exception {
+        test_dupeSuggestionsMade_rateLimited(false);
+    }
+
+    @Test
+    public void test_dupeSuggestionsMade_rateLimited_legacy() throws Exception {
+        test_dupeSuggestionsMade_rateLimited(true);
+    }
+
     /**
      * Demonstrates that duplicate equivalent reports made by location time zone providers within
      * a threshold time are ignored. It focuses on a single LTZP setup (primary only); the behavior
      * for the secondary is assumed to be identical.
      */
-    @Test
-    public void test_dupeSuggestionsMade_rateLimited() throws Exception {
+    private void test_dupeSuggestionsMade_rateLimited(boolean useLegacyApis) throws Exception {
         // Set the rate setting sufficiently high that rate limiting will definitely take place.
         mDeviceConfigShellHelper.put(NAMESPACE_SYSTEM_TIME,
                 KEY_LTZP_EVENT_FILTERING_AGE_THRESHOLD_MILLIS,
@@ -227,39 +248,49 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
         // Report a new time zone.
-        mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/London");
+        reportSuccess(mPrimaryFakeTimeZoneProviderShellHelper, "Europe/London", useLegacyApis);
         assertPrimaryReportedCertain();
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
         // Duplicate time zone suggestion.
-        mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/London");
+        reportSuccess(mPrimaryFakeTimeZoneProviderShellHelper, "Europe/London", useLegacyApis);
         assertPrimaryMadeNoReport();
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
         // Report a new time zone.
-        mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/Paris");
+        reportSuccess(mPrimaryFakeTimeZoneProviderShellHelper, "Europe/Paris", useLegacyApis);
         assertPrimaryReportedCertain();
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
         // Duplicate time zone suggestion.
-        mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/Paris");
+        reportSuccess(mPrimaryFakeTimeZoneProviderShellHelper, "Europe/Paris", useLegacyApis);
         assertPrimaryMadeNoReport();
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
         // Report uncertain.
-        mPrimaryFakeTimeZoneProviderShellHelper.reportUncertain();
+        reportUncertain(mPrimaryFakeTimeZoneProviderShellHelper, useLegacyApis);
         assertPrimaryReportedUncertain();
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
         // Duplicate uncertain report.
-        mPrimaryFakeTimeZoneProviderShellHelper.reportUncertain();
+        reportUncertain(mPrimaryFakeTimeZoneProviderShellHelper, useLegacyApis);
         assertPrimaryMadeNoReport();
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
         // Report a new time zone.
-        mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/Paris");
+        reportSuccess(mPrimaryFakeTimeZoneProviderShellHelper, "Europe/Paris", useLegacyApis);
         assertPrimaryReportedCertain();
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
+    }
+
+    @Test
+    public void test_dupeSuggestionsMade_notRateLimited() throws Exception {
+        test_dupeSuggestionsMade_notRateLimited(false);
+    }
+
+    @Test
+    public void test_dupeSuggestionsMade_notRateLimited_legacy() throws Exception {
+        test_dupeSuggestionsMade_notRateLimited(true);
     }
 
     /**
@@ -267,8 +298,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
      * a threshold time are not filtered. It focuses on a single LTZP setup (primary only); the
      * behavior for the secondary is assumed to be identical.
      */
-    @Test
-    public void test_dupeSuggestionsMade_notRateLimited() throws Exception {
+    private void test_dupeSuggestionsMade_notRateLimited(boolean useLegacyApis) throws Exception {
         // Set the rate sufficiently low that rate limiting will not take place.
         mDeviceConfigShellHelper.put(NAMESPACE_SYSTEM_TIME,
                 KEY_LTZP_EVENT_FILTERING_AGE_THRESHOLD_MILLIS,
@@ -287,22 +317,22 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
         // Report a new time zone.
-        mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/London");
+        reportSuccess(mPrimaryFakeTimeZoneProviderShellHelper, "Europe/London", useLegacyApis);
         assertPrimaryReportedCertain();
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
         // Duplicate time zone suggestion.
-        mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/London");
+        reportSuccess(mPrimaryFakeTimeZoneProviderShellHelper, "Europe/London", useLegacyApis);
         assertPrimaryReportedCertain();
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
         // Report uncertain.
-        mPrimaryFakeTimeZoneProviderShellHelper.reportUncertain();
+        reportUncertain(mPrimaryFakeTimeZoneProviderShellHelper, useLegacyApis);
         assertPrimaryReportedUncertain();
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
         // Duplicate uncertain report.
-        mPrimaryFakeTimeZoneProviderShellHelper.reportUncertain();
+        reportUncertain(mPrimaryFakeTimeZoneProviderShellHelper, useLegacyApis);
         assertPrimaryReportedUncertain();
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
     }
@@ -327,6 +357,16 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
     /** Tests what happens when there's only a secondary provider and it makes a suggestion. */
     @Test
     public void testOnlySecondary_suggestionMade() throws Exception {
+        testOnlySecondary_suggestionMade(false);
+    }
+
+    /** Tests what happens when there's only a secondary provider and it makes a suggestion. */
+    @Test
+    public void testOnlySecondary_suggestionMade_legacy() throws Exception {
+        testOnlySecondary_suggestionMade(true);
+    }
+
+    private void testOnlySecondary_suggestionMade(boolean useLegacyApis) throws Exception {
         String testPrimaryLocationTimeZoneProviderPackageName = null;
         String testSecondaryLocationTimeZoneProviderPackageName = FAKE_TZPS_APP_PACKAGE;
         mLocationTimeZoneManagerShellHelper.startWithTestProviders(
@@ -355,7 +395,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         }
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
-        mSecondaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/London");
+        reportSuccess(mSecondaryFakeTimeZoneProviderShellHelper, "Europe/London", useLegacyApis);
 
         {
             LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
@@ -370,12 +410,21 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         }
     }
 
+    @Test
+    public void testPrimaryAndSecondary() throws Exception {
+        testPrimaryAndSecondary(false);
+    }
+
+    @Test
+    public void testPrimaryAndSecondary_legacy() throws Exception {
+        testPrimaryAndSecondary(true);
+    }
+
     /**
      * Tests what happens when there's both a primary and a secondary provider, the primary starts
      * by being uncertain, the secondary makes a suggestion, then the primary makes a suggestion.
      */
-    @Test
-    public void testPrimaryAndSecondary() throws Exception {
+    private void testPrimaryAndSecondary(boolean useLegacyApis) throws Exception {
         String testPrimaryLocationTimeZoneProviderPackageName = FAKE_TZPS_APP_PACKAGE;
         String testSecondaryLocationTimeZoneProviderPackageName = FAKE_TZPS_APP_PACKAGE;
         mLocationTimeZoneManagerShellHelper.startWithTestProviders(
@@ -405,7 +454,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
         // Make the primary report being uncertain. This should cause the secondary to be started.
-        mPrimaryFakeTimeZoneProviderShellHelper.reportUncertain();
+        reportUncertain(mPrimaryFakeTimeZoneProviderShellHelper, useLegacyApis);
 
         {
             LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
@@ -423,7 +472,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
         // Make the secondary report being certain.
-        mSecondaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/London");
+        reportSuccess(mSecondaryFakeTimeZoneProviderShellHelper, "Europe/London", useLegacyApis);
 
         {
             LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
@@ -440,7 +489,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
         // Make the primary report being certain.
-        mPrimaryFakeTimeZoneProviderShellHelper.reportSuccess("Europe/Paris");
+        reportSuccess(mPrimaryFakeTimeZoneProviderShellHelper, "Europe/Paris", useLegacyApis);
 
         {
             LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
@@ -496,5 +545,36 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         Parser<LocationTimeZoneManagerServiceStateProto> parser =
                 LocationTimeZoneManagerServiceStateProto.parser();
         return parser.parseFrom(protoBytes);
+    }
+
+    /**
+     * Method used to report success when it shouldn't matter whether newer APIs that include status
+     * or older APIs that don't are used. The status provided for newer APIs is a generic "success"
+     * status.
+     */
+    private void reportSuccess(FakeTimeZoneProviderShellHelper providerShellHelper, String zoneId,
+            boolean useLegacyApi) throws Exception {
+        if (useLegacyApi) {
+            providerShellHelper.reportSuccessLegacy(zoneId);
+        } else {
+            providerShellHelper.reportSuccess(
+                    zoneId, DEPENDENCY_STATUS_OK, DEPENDENCY_STATUS_OK);
+        }
+    }
+
+    /**
+     * Method used to report uncertainty when it shouldn't matter whether newer APIs that include
+     * status or older APIs that don't are used. The status provided for newer APIs is a generic
+     * "uncertain" status that doesn't trigger any interesting behavior.
+     */
+    private void reportUncertain(FakeTimeZoneProviderShellHelper providerShellHelper,
+            boolean useLegacyApis) throws Exception {
+        if (useLegacyApis) {
+            providerShellHelper.reportUncertainLegacy();
+        } else {
+            providerShellHelper.reportUncertain(
+                    DEPENDENCY_STATUS_TEMPORARILY_UNAVAILABLE, DEPENDENCY_STATUS_OK,
+                    OPERATION_STATUS_OK);
+        }
     }
 }

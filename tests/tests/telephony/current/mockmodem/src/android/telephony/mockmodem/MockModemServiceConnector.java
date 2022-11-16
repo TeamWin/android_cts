@@ -191,6 +191,8 @@ class MockModemServiceConnector {
 
             if (isComplete) {
                 isComplete = mMockModemService.initialize(simprofiles);
+            } else {
+                Log.e(TAG, "Timeout: Wait for radio proxy clients to bind failed!");
             }
         }
 

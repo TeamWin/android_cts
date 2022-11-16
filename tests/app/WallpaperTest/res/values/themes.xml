@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2021 The Android Open Source Project
+<!-- Copyright (C) 2022 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -14,16 +14,8 @@
      limitations under the License.
 -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-     package="android.media.metrics.cts"
-     android:targetSandboxVersion="2">
-
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-sdk android:minSdkVersion="30"/>
-
-    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-         android:targetPackage="android.media.metrics.cts"
-         android:label="Media metrics CTS Tests"/>
-
-</manifest>
+<resources>
+    <style name="Theme.Transparent" parent="android:Theme">
+        <item name="android:windowShowWallpaper">true</item>
+    </style>
+</resources>

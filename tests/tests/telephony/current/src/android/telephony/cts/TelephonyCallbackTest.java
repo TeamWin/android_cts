@@ -1375,16 +1375,17 @@ public class TelephonyCallbackTest {
             return;
         }
 
-        Pair<Integer, Integer> radioVersion = mTelephonyManager.getRadioHalVersion();
+        Pair<Integer, Integer> networkHalVersion =
+                mTelephonyManager.getHalVersion(TelephonyManager.HAL_SERVICE_NETWORK);
         // 1.2+ or 1.6 with CAPABILITY_PHYSICAL_CHANNEL_CONFIG_1_6_SUPPORTED or 2.0+
         boolean physicalChannelConfigSupported;
-        if (radioVersion.first == 1 && radioVersion.second == 6) {
+        if (networkHalVersion.first == 1 && networkHalVersion.second == 6) {
             physicalChannelConfigSupported = ShellIdentityUtils.invokeMethodWithShellPermissions(
                     mTelephonyManager, (tm) -> tm.isRadioInterfaceCapabilitySupported(
                             TelephonyManager.CAPABILITY_PHYSICAL_CHANNEL_CONFIG_1_6_SUPPORTED));
         } else {
             physicalChannelConfigSupported =
-                    radioVersion.first > 1 || radioVersion.second >= 2;
+                    networkHalVersion.first > 1 || networkHalVersion.second >= 2;
         }
         if (!physicalChannelConfigSupported) {
             Log.d(TAG, "Skipping test because physical channel configs are not available.");

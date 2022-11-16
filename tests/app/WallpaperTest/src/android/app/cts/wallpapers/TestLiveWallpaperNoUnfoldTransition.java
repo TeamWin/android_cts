@@ -16,12 +16,4 @@
 
 package android.app.cts.wallpapers;
 
-import android.service.wallpaper.WallpaperService;
-
-public class LiveWallpaperNoUnfoldTransition extends WallpaperService {
-
-    @Override
-    public Engine onCreateEngine() {
-        return new Engine();
-    }
-}
+public class TestLiveWallpaperNoUnfoldTransition extends TestWallpaperService { }

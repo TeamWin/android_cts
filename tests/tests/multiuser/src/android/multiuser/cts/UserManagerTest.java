@@ -71,6 +71,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireNotMultipleUsersOnMultipleDisplays;
+import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
@@ -893,6 +894,24 @@ public final class UserManagerTest {
         assertThat(properties.getShowInLauncher()).isIn(Arrays.asList(
                 UserProperties.SHOW_IN_LAUNCHER_WITH_PARENT,
                 UserProperties.SHOW_IN_LAUNCHER_SEPARATE));
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#isMainUser"})
+    @RequireRunOnInitialUser
+    @EnsureHasPermission({QUERY_USERS})
+    public void testIsMainUser_initialUser() throws Exception {
+        assertWithMessage("isMainUser() for initial user")
+                .that(mUserManager.isMainUser()).isTrue();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#isFirstFullUser"})
+    @RequireRunOnAdditionalUser
+    @EnsureHasPermission({QUERY_USERS})
+    public void testIsMainUser_additionalUser() throws Exception {
+        assertWithMessage("isMainUser() for additional user")
+                .that(mUserManager.isMainUser()).isFalse();
     }
 
     static Context getContextForOtherUser() {

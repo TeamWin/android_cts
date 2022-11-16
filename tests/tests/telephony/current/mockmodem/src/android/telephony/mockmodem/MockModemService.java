@@ -28,6 +28,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -104,8 +105,22 @@ public class MockModemService extends Service {
         for (int i = 0; i < LATCH_MAX; i++) {
             sLatches[i] = new CountDownLatch(1);
             if (i == LATCH_RADIO_INTERFACES_READY) {
-                int radioInterfaceNumber =
-                        IRADIO_CONFIG_INTERFACE_NUMBER + mNumOfPhone * IRADIO_INTERFACE_NUMBER;
+                int radioServiceSupportedNumber = 0;
+                int radioInterfaceNumber = 0;
+
+                for (int j = TelephonyManager.HAL_SERVICE_DATA;
+                        j <= TelephonyManager.HAL_SERVICE_IMS;
+                        j++) {
+                    Pair<Integer, Integer> halVersion = mTelephonyManager.getHalVersion(j);
+                    if (halVersion.first == -2 && halVersion.second == -2) {
+                        Log.d(TAG, "Service: " + j + " unsupported");
+                    } else {
+                        radioServiceSupportedNumber++;
+                    }
+                }
+
+                radioInterfaceNumber =
+                        IRADIO_CONFIG_INTERFACE_NUMBER + mNumOfPhone * radioServiceSupportedNumber;
                 sLatches[i] = new CountDownLatch(radioInterfaceNumber);
             } else {
                 sLatches[i] = new CountDownLatch(1);
@@ -124,8 +139,8 @@ public class MockModemService extends Service {
         for (int i = 0; i < mNumOfPhone; i++) {
             sIRadioModemImpl[i] = new IRadioModemImpl(this, sMockModemConfigInterface, i);
             sIRadioSimImpl[i] = new IRadioSimImpl(this, sMockModemConfigInterface, i);
-            sIRadioNetworkImpl[i] = new IRadioNetworkImpl(
-                    this, mContext, sMockModemConfigInterface, i);
+            sIRadioNetworkImpl[i] =
+                    new IRadioNetworkImpl(this, mContext, sMockModemConfigInterface, i);
             sIRadioDataImpl[i] = new IRadioDataImpl(this, mContext, sMockModemConfigInterface, i);
             sIRadioMessagingImpl[i] = new IRadioMessagingImpl(this, sMockModemConfigInterface, i);
             sIRadioVoiceImpl[i] = new IRadioVoiceImpl(this, sMockModemConfigInterface, i);

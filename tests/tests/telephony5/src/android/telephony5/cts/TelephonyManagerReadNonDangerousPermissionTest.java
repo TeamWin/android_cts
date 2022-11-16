@@ -106,10 +106,10 @@ public class TelephonyManagerReadNonDangerousPermissionTest {
             // Try to purchase the capability.
             mTelephonyManager.purchasePremiumCapability(
                     capability, mContext.getMainExecutor(), purchaseRequests::offer);
-            int result = purchaseRequests.poll(TIMEOUT_FOR_PURCHASE, TimeUnit.MILLISECONDS);
+            Integer result = purchaseRequests.poll(TIMEOUT_FOR_PURCHASE, TimeUnit.MILLISECONDS);
             if (mTelephonyManager.isPremiumCapabilityAvailableForPurchase(capability)) {
                 assertFalse(hardFailures.contains(result));
-                if (nonFailures.contains(result)) {
+                if (result == null || nonFailures.contains(result)) {
                     // If the purchase request was successful, check that purchasing the capability
                     // again will also be successful.
                     mTelephonyManager.purchasePremiumCapability(

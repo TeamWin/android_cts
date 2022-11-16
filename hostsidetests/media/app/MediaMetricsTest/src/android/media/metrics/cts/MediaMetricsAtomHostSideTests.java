@@ -34,14 +34,23 @@ import android.media.metrics.TranscodingSession;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.provider.DeviceConfig;
+import android.util.Log;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
+@RunWith(AndroidJUnit4.class)
 public class MediaMetricsAtomHostSideTests {
+    private static final String TAG = "MediaMetricsAtomHostSideTests";
     private static final String MEDIA_METRICS_MODE = "media_metrics_mode";
     private static final String PLAYER_METRICS_APP_ALLOWLIST = "player_metrics_app_allowlist";
     private static final String PLAYER_METRICS_APP_BLOCKLIST = "player_metrics_app_blocklist";
@@ -87,7 +96,7 @@ public class MediaMetricsAtomHostSideTests {
     @Test
     public void testPlaybackStateEvent_default() throws Exception {
         turnOnForTesting();
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
         PlaybackStateEvent e =
@@ -100,7 +109,7 @@ public class MediaMetricsAtomHostSideTests {
     @Test
     public void testPlaybackStateEvent() throws Exception {
         turnOnForTesting();
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
         PlaybackStateEvent e =
@@ -116,7 +125,7 @@ public class MediaMetricsAtomHostSideTests {
     @Test
     public void testPlaybackErrorEvent_default() throws Exception {
         turnOnForTesting();
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
         PlaybackErrorEvent e =
@@ -130,7 +139,7 @@ public class MediaMetricsAtomHostSideTests {
     @Test
     public void testPlaybackErrorEvent() throws Exception {
         turnOnForTesting();
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
         PlaybackErrorEvent e =
@@ -148,7 +157,7 @@ public class MediaMetricsAtomHostSideTests {
     @Test
     public void testTrackChangeEvent_default() throws Exception {
         turnOnForTesting();
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
         TrackChangeEvent e =
@@ -160,7 +169,7 @@ public class MediaMetricsAtomHostSideTests {
     @Test
     public void testTrackChangeEvent_text() throws Exception {
         turnOnForTesting();
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
         TrackChangeEvent e =
@@ -182,7 +191,7 @@ public class MediaMetricsAtomHostSideTests {
     @Test
     public void testTrackChangeEvent_audio() throws Exception {
         turnOnForTesting();
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
         TrackChangeEvent e =
@@ -206,7 +215,7 @@ public class MediaMetricsAtomHostSideTests {
     @Test
     public void testTrackChangeEvent_video() throws Exception {
         turnOnForTesting();
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
         TrackChangeEvent e =
@@ -232,7 +241,7 @@ public class MediaMetricsAtomHostSideTests {
     @Test
     public void testNetworkEvent_default() throws Exception {
         turnOnForTesting();
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
         NetworkEvent e =
@@ -244,7 +253,7 @@ public class MediaMetricsAtomHostSideTests {
     @Test
     public void testNetworkEvent() throws Exception {
         turnOnForTesting();
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
         NetworkEvent e =
@@ -260,7 +269,7 @@ public class MediaMetricsAtomHostSideTests {
     @Test
     public void testPlaybackMetrics_default() throws Exception {
         turnOnForTesting();
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
         PlaybackMetrics e =
@@ -272,7 +281,7 @@ public class MediaMetricsAtomHostSideTests {
     @Test
     public void testPlaybackMetrics() throws Exception {
         turnOnForTesting();
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
         PlaybackMetrics e =
@@ -301,10 +310,10 @@ public class MediaMetricsAtomHostSideTests {
 
     @Test
     public void testSessionId() throws Exception {
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
 
-        try(PlaybackSession s = manager.createPlaybackSession()) {
+        try (PlaybackSession s = manager.createPlaybackSession()) {
             LogSessionId idObj = s.getSessionId();
             assertThat(idObj).isNotEqualTo(null);
             assertThat(idObj.getStringId().length()).isGreaterThan(0);
@@ -313,10 +322,10 @@ public class MediaMetricsAtomHostSideTests {
 
     @Test
     public void testRecordingSession() throws Exception {
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
 
-        try(RecordingSession s = manager.createRecordingSession()) {
+        try (RecordingSession s = manager.createRecordingSession()) {
             assertThat(s).isNotEqualTo(null);
             LogSessionId idObj = s.getSessionId();
             assertThat(idObj).isNotEqualTo(null);
@@ -326,7 +335,7 @@ public class MediaMetricsAtomHostSideTests {
 
     @Test
     public void testEditingSession() throws Exception {
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
 
         try (EditingSession s = manager.createEditingSession()) {
@@ -339,7 +348,7 @@ public class MediaMetricsAtomHostSideTests {
 
     @Test
     public void testTranscodingSession() throws Exception {
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
 
         try (TranscodingSession s = manager.createTranscodingSession()) {
@@ -352,7 +361,7 @@ public class MediaMetricsAtomHostSideTests {
 
     @Test
     public void testBundleSession() throws Exception {
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
 
         try (BundleSession s = manager.createBundleSession()) {
@@ -366,12 +375,12 @@ public class MediaMetricsAtomHostSideTests {
     @Test
     public void testBundleSessionPlaybackStateEvent() throws Exception {
         turnOnForTesting();
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         BundleSession s = manager.createBundleSession();
         PersistableBundle b = new PersistableBundle();
         b.putInt(BundleSession.KEY_STATSD_ATOM, 322);
-                // eventually want these keys from within the service side.
+        // eventually want these keys from within the service side.
         b.putString("playbackstateevent-sessionid", s.getSessionId().getStringId());
         b.putInt("playbackstateevent-state", PlaybackStateEvent.STATE_JOINING_FOREGROUND);
         b.putLong("playbackstateevent-lifetime", 1763L);
@@ -390,7 +399,7 @@ public class MediaMetricsAtomHostSideTests {
                             .build());
         });
         Thread.sleep(DEVICE_PROPERTY_PROPAGATION_DELAY_MICROSECONDS);
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
         PlaybackStateEvent e =
@@ -400,6 +409,7 @@ public class MediaMetricsAtomHostSideTests {
                         .setMetricsBundle(new Bundle())
                         .build();
         s.reportPlaybackStateEvent(e);
+        writeSessionIdToFile(s.getSessionId().getStringId());
         resetProperties();
     }
 
@@ -414,7 +424,7 @@ public class MediaMetricsAtomHostSideTests {
                             .build());
         });
         Thread.sleep(DEVICE_PROPERTY_PROPAGATION_DELAY_MICROSECONDS);
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
         PlaybackMetrics e =
@@ -438,6 +448,7 @@ public class MediaMetricsAtomHostSideTests {
                         .addExperimentId(123)
                         .build();
         s.reportPlaybackMetrics(e);
+        writeSessionIdToFile(s.getSessionId().getStringId());
         resetProperties();
     }
 
@@ -452,7 +463,7 @@ public class MediaMetricsAtomHostSideTests {
                             .build());
         });
         Thread.sleep(DEVICE_PROPERTY_PROPAGATION_DELAY_MICROSECONDS);
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
         PlaybackStateEvent e =
@@ -462,6 +473,7 @@ public class MediaMetricsAtomHostSideTests {
                         .setMetricsBundle(new Bundle())
                         .build();
         s.reportPlaybackStateEvent(e);
+        writeSessionIdToFile(s.getSessionId().getStringId());
         resetProperties();
     }
 
@@ -476,7 +488,7 @@ public class MediaMetricsAtomHostSideTests {
                             .build());
         });
         Thread.sleep(DEVICE_PROPERTY_PROPAGATION_DELAY_MICROSECONDS);
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
         PlaybackSession s = manager.createPlaybackSession();
         PlaybackMetrics e =
@@ -500,6 +512,7 @@ public class MediaMetricsAtomHostSideTests {
                         .addExperimentId(123)
                         .build();
         s.reportPlaybackMetrics(e);
+        writeSessionIdToFile(s.getSessionId().getStringId());
         resetProperties();
     }
 
@@ -526,4 +539,17 @@ public class MediaMetricsAtomHostSideTests {
      */
     @Test
     public native void testAAudioLegacyInputStream();
+
+    private void writeSessionIdToFile(String stringId) throws IOException {
+        // TODO(b/259258249): Name session id after the test.
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        Log.i(TAG, "log_session_id=" + stringId);
+        File logDir = context.getExternalFilesDir(null);
+        File logFile = new File(logDir, "log_session_id.txt");
+        logFile.createNewFile();
+        FileWriter fw = new FileWriter(logFile.getAbsolutePath());
+        fw.write(stringId);
+        fw.close();
+        Log.i(TAG, "Logged to " + logFile.getAbsolutePath());
+    }
 }

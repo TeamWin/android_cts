@@ -20,10 +20,14 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
+import android.keystore.cts.util.ImportedKey;
 import android.keystore.cts.util.TestUtils;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyInfo;
 import android.security.keystore.KeyProperties;
+import android.security.keystore.KeyProtection;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
 
@@ -104,6 +108,22 @@ public class KeyAgreementTest {
         byte[] sharedSecret2 = ka.generateSecret();
 
         Assert.assertArrayEquals(sharedSecret1, sharedSecret2);
+    }
+
+    @Test
+    public void testGenerateSecret_withImportedKey() throws Exception {
+        KeyProtection importParams =
+                new KeyProtection.Builder(KeyProperties.PURPOSE_AGREE_KEY).build();
+        ImportedKey importedKey = TestUtils.importIntoAndroidKeyStore("testECsecp256r1",
+                InstrumentationRegistry.getTargetContext(),
+                R.raw.ec_key4_secp256r1_pkcs8, R.raw.ec_key4_secp256r1_cert, importParams);
+        KeyPair keyPair = importedKey.getKeystoreBackedKeyPair();
+
+        KeyAgreement ka = getKeyStoreKeyAgreement();
+        ka.init(keyPair.getPrivate());
+        ka.doPhase(generateEphemeralServerKeyPair().getPublic(), true);
+        byte[] sharedSecret = ka.generateSecret();
+        assertNotNull(sharedSecret);
     }
 
     @Test

@@ -377,6 +377,9 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                     TestUtils.turnScreenOff();
                     TestUtils.turnScreenOn();
                     TestUtils.unlockScreen();
+                    // Before testing the back procedure, ensure the test activity has the window
+                    // focus and the IME visible after screen-on.
+                    TestUtils.waitOnMainUntil(editorRef.get()::hasWindowFocus, TIMEOUT);
                     expectImeVisible(TIMEOUT);
                 } /* pre back press procedure */);
     }

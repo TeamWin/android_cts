@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-SCRIPT=$(readlink -f "$0")
+SCRIPT=$(readlink -f "${BASH_SOURCE:-$0}")
 SCRIPTPATH=$(dirname "$SCRIPT")
 source ${SCRIPTPATH}/../../../../build/envsetup.sh
-export PATH=${PATH}:${ANDROID_BUILD_TOP}/cts/common/device-side/bedstead/btest
+export PATH=${PATH}:$SCRIPTPATH/btest

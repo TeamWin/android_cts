@@ -139,7 +139,7 @@ class ItsBaseTest(base_test.BaseTestClass):
 
     arduino_serial_port = lighting_control_utils.lighting_control(
         self.lighting_cntl, self.lighting_ch)
-    if arduino_serial_port:
+    if arduino_serial_port and self.scene != 'scene0':
       lighting_control_utils.set_light_brightness(
           self.lighting_ch, 255, arduino_serial_port)
       logging.debug('Light is turned ON.')

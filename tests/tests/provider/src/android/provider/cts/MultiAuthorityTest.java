@@ -63,7 +63,6 @@ public class MultiAuthorityTest {
                 am.forceStopPackage("android.provider.apps.cts.multiauthority"));
     }
 
-    @Ignore
     @Test
     public void testAuthority1() {
         ContentProviderClient cpc = mContentResolver.acquireContentProviderClient(PROVIDER1);
