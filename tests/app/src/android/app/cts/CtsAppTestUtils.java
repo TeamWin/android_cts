@@ -66,6 +66,18 @@ class CtsAppTestUtils {
     }
 
     /**
+     * Find a line containing {@code label} in {@code lines}.
+     */
+    public static String findLine(String[] lines, CharSequence label) {
+        for (String line : lines) {
+            if (line.contains(label)) {
+                return line;
+            }
+        }
+        return null;
+    }
+
+    /**
      * This method returns the ambiguously nullable platform type <code>T!</code> in Kotlin.
      * This allows Kotlin tests cases to pass <code>null</code> to a Java method parameter annotated
      * with <code>@NonNull</code>, which can be important for validating that the Java code under

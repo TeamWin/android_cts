@@ -84,8 +84,8 @@ public class NetworkingHelper {
     private final boolean mInitialDataSaverState;
     private final String mInitialLocationMode;
     private final boolean mInitialWiFiState;
-    private final String mInitialWiFiMeteredState;
-    private final String mInitialWiFiSSID;
+    private String mInitialWiFiMeteredState;
+    private String mInitialWiFiSSID;
 
     NetworkingHelper(@NonNull Instrumentation instrumentation, @NonNull Context context)
             throws Exception {
@@ -103,25 +103,24 @@ public class NetworkingHelper {
         mInitialDataSaverState = isDataSaverEnabled();
         mInitialLocationMode = Settings.Secure.getString(
                 mContext.getContentResolver(), Settings.Secure.LOCATION_MODE);
-        if (mHasWifi) {
-            mInitialWiFiState = isWifiEnabled();
-            ensureSavedWifiNetwork();
-            setWifiState(true);
-            mInitialWiFiSSID = getWifiSSID();
-            mInitialWiFiMeteredState = getWifiMeteredStatus(mInitialWiFiSSID);
-        } else {
-            mInitialWiFiState = false;
-            mInitialWiFiSSID = null;
-            mInitialWiFiMeteredState = null;
-        }
+        mInitialWiFiState = mHasWifi && isWifiEnabled();
     }
 
     /** Ensures that the device has a wifi network saved. */
-    void ensureSavedWifiNetwork() {
+    void ensureSavedWifiNetwork() throws Exception {
+        if (!mHasWifi) {
+            return;
+        }
         final List<WifiConfiguration> savedNetworks =
                 ShellIdentityUtils.invokeMethodWithShellPermissions(
                         mWifiManager, WifiManager::getConfiguredNetworks);
         assertFalse("Need at least one saved wifi network", savedNetworks.isEmpty());
+
+        setWifiState(true);
+        if (mInitialWiFiSSID == null) {
+            mInitialWiFiSSID = getWifiSSID();
+            mInitialWiFiMeteredState = getWifiMeteredStatus(mInitialWiFiSSID);
+        }
     }
 
     // Returns "true", "false", or "none".
@@ -142,6 +141,7 @@ public class NetworkingHelper {
         return m.group(1);
     }
 
+    @NonNull
     private String getWifiSSID() throws Exception {
         // Location needs to be enabled to get the WiFi information.
         setLocationMode(String.valueOf(Settings.Secure.LOCATION_MODE_ON));
@@ -300,7 +300,9 @@ public class NetworkingHelper {
 
         // Ensure that we leave WiFi in its previous state.
         if (mHasWifi) {
-            setWifiMeteredState(mInitialWiFiSSID, mInitialWiFiMeteredState);
+            if (mInitialWiFiSSID != null) {
+                setWifiMeteredState(mInitialWiFiSSID, mInitialWiFiMeteredState);
+            }
             if (mWifiManager.isWifiEnabled() != mInitialWiFiState) {
                 try {
                     setWifiState(mInitialWiFiState);

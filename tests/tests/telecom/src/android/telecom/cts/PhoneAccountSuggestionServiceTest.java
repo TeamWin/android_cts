@@ -77,16 +77,13 @@ public class PhoneAccountSuggestionServiceTest extends BaseTelecomTestWithMockSe
             return;
         }
 
-        CtsPhoneAccountSuggestionService.sSuggestionsToProvide =
-                new ArrayList<PhoneAccountSuggestion>() {{
-                    add(new PhoneAccountSuggestion(TestUtils.TEST_PHONE_ACCOUNT_HANDLE,
-                            PhoneAccountSuggestion.REASON_NONE,
-                            false));
-
-                    add(new PhoneAccountSuggestion(TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2,
-                            PhoneAccountSuggestion.REASON_FREQUENT,
-                            true));
-                }};
+        CtsPhoneAccountSuggestionService.sSuggestionsToProvide = List.of(
+                new PhoneAccountSuggestion(TestUtils.TEST_PHONE_ACCOUNT_HANDLE,
+                        PhoneAccountSuggestion.REASON_NONE,
+                        false),
+                new PhoneAccountSuggestion(TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2,
+                        PhoneAccountSuggestion.REASON_FREQUENT,
+                        true));
 
         Uri number = createTestNumber();
         mTelecomManager.placeCall(number, new Bundle());
@@ -117,16 +114,13 @@ public class PhoneAccountSuggestionServiceTest extends BaseTelecomTestWithMockSe
             return;
         }
 
-        CtsPhoneAccountSuggestionService.sSuggestionsToProvide =
-                new ArrayList<PhoneAccountSuggestion>() {{
-                    add(new PhoneAccountSuggestion(TestUtils.TEST_PHONE_ACCOUNT_HANDLE,
-                            PhoneAccountSuggestion.REASON_NONE,
-                            false));
-
-                    add(new PhoneAccountSuggestion(TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2,
-                            PhoneAccountSuggestion.REASON_FREQUENT,
-                            true));
-                }};
+        CtsPhoneAccountSuggestionService.sSuggestionsToProvide = List.of(
+                new PhoneAccountSuggestion(TestUtils.TEST_PHONE_ACCOUNT_HANDLE,
+                        PhoneAccountSuggestion.REASON_NONE,
+                        false),
+                new PhoneAccountSuggestion(TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2,
+                        PhoneAccountSuggestion.REASON_FREQUENT,
+                        true));
 
         // Force a Telecom time out
         CtsPhoneAccountSuggestionService.sSuggestionWaitTime =
@@ -197,12 +191,10 @@ public class PhoneAccountSuggestionServiceTest extends BaseTelecomTestWithMockSe
             return;
         }
 
-        CtsPhoneAccountSuggestionService.sSuggestionsToProvide =
-                new ArrayList<PhoneAccountSuggestion>() {{
-                    add(new PhoneAccountSuggestion(TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2,
-                            PhoneAccountSuggestion.REASON_FREQUENT,
-                            true));
-                }};
+        CtsPhoneAccountSuggestionService.sSuggestionsToProvide = List.of(
+                new PhoneAccountSuggestion(TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2,
+                        PhoneAccountSuggestion.REASON_FREQUENT,
+                        true));
 
         Uri number = createTestNumber();
         mTelecomManager.placeCall(number, new Bundle());

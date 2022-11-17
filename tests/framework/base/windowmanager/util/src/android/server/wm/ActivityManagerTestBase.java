@@ -179,6 +179,7 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 
 import com.android.compatibility.common.util.AppOpsUtils;
+import com.android.compatibility.common.util.GestureNavSwitchHelper;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
@@ -256,6 +257,7 @@ public abstract class ActivityManagerTestBase {
     private static Boolean sIsAssistantOnTop = null;
     private static Boolean sIsTablet = null;
     private static Boolean sDismissDreamOnActivityStart = null;
+    private static GestureNavSwitchHelper sGestureNavSwitchHelper = null;
     private static boolean sIllegalTaskStateFound;
 
     protected static final int INVALID_DEVICE_ROTATION = -1;
@@ -856,6 +858,15 @@ public abstract class ActivityManagerTestBase {
         return mInstrumentation.getUiAutomation().takeScreenshot();
     }
 
+    /**
+     * Do a back gesture and trigger a back event from it.
+     * Attempt to simulate human behavior, so don't wait for animations.
+     */
+    void triggerBackEventByGesture(int displayId) {
+        mTouchHelper.triggerBackEventByGesture(
+                displayId, true /* sync */, false /* waitForAnimations */);
+    }
+
     protected Bitmap takeScreenshotForBounds(Rect rect) {
         Bitmap fullBitmap = takeScreenshot();
         return Bitmap.createBitmap(fullBitmap, rect.left, rect.top,
@@ -1172,6 +1183,14 @@ public abstract class ActivityManagerTestBase {
                 && !hasDeviceFeature(FEATURE_EMBEDDED)
                 && !hasDeviceFeature(FEATURE_AUTOMOTIVE)
                 && getSupportsInsecureLockScreen();
+    }
+
+    /** Try to enable gesture navigation mode */
+    protected void enableAndAssumeGestureNavigationMode() {
+        if (sGestureNavSwitchHelper == null) {
+            sGestureNavSwitchHelper = new GestureNavSwitchHelper();
+        }
+        assumeTrue(sGestureNavSwitchHelper.enableGestureNavigationMode());
     }
 
     protected boolean supportsBlur() {

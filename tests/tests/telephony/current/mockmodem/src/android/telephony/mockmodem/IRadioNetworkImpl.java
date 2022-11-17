@@ -800,6 +800,18 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     }
 
     @Override
+    public void setNullCipherAndIntegrityEnabled(int serial, boolean enabled) {
+        Log.d(TAG, "setNullCipherAndIntegrityEnabled");
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.NONE);
+        try {
+            mRadioNetworkResponse.setNullCipherAndIntegrityEnabledResponse(rsp);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to setNullCipherAndIntegrityEnabled from AIDL. Exception " + ex);
+        }
+    }
+
+    @Override
     public String getInterfaceHash() {
         return IRadioNetwork.HASH;
     }

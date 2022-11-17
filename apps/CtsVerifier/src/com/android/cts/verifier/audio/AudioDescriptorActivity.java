@@ -66,34 +66,29 @@ public class AudioDescriptorActivity extends PassFailButtons.Activity {
 
     // Description of not used format extended codes can be found at
     // https://en.wikipedia.org/wiki/Extended_Display_Identification_Data.
-    private static final Set<Integer> NOT_USED_FORMAT_EXTENDED_CODES = new HashSet<Integer>() {{
-            add(1);
-            add(2);
-            add(3);
-        }};
+    private static final Set<Integer> NOT_USED_FORMAT_EXTENDED_CODES = Set.of(1, 2, 3);
 
     // Description of short audio descriptor can be found at
     // https://en.wikipedia.org/wiki/Extended_Display_Identification_Data.
     // The collection is sorted decreasingly by HAL version.
     private static final SortedMap<HalVersion, HalFormats> ALL_HAL_FORMATS =
-            new TreeMap<>(Collections.reverseOrder()) {{
-            // Formats defined by audio HAL v7.0 can be found at
-            // hardware/interfaces/audio/7.0/config/audio_policy_configuration.xsd
-            put(new HalVersion(HAL_TYPE_HIDL, 7 /*majorVersion*/, 0 /*minorVersion*/),
-                    new HalFormats(new HashMap<Integer, String>() {{
-                            put(2, "AC-3");
-                            put(4, "MP3");
-                            put(6, "AAC-LC");
-                            put(11, "DTS-HD");
-                            put(12, "Dolby TrueHD");
-                        }},
-                    new HashMap<Integer, String>() {{
-                            put(7, "DRA");
-                            // put(11, "MPEG-H"); MPEG-H is defined by Android but its capability
-                            // can only be reported by short audio descriptor.
-                            put(12, "AC-4");
-                        }}));
-        }};
+            new TreeMap<>(Collections.reverseOrder());
+    static {
+        // Formats defined by audio HAL v7.0 can be found at
+        // hardware/interfaces/audio/7.0/config/audio_policy_configuration.xsd
+        ALL_HAL_FORMATS.put(new HalVersion(HAL_TYPE_HIDL, 7 /*majorVersion*/, 0 /*minorVersion*/),
+                new HalFormats(Map.of(
+                        2, "AC-3",
+                        4, "MP3",
+                        6, "AAC-LC",
+                        11, "DTS-HD",
+                        12, "Dolby TrueHD"),
+                Map.of(
+                        7, "DRA",
+                        // put(11, "MPEG-H"); MPEG-H is defined by Android but its capability
+                        // can only be reported by short audio descriptor.
+                        12, "AC-4")));
+    }
 
     private AudioManager mAudioManager;
 
@@ -210,7 +205,7 @@ public class AudioDescriptorActivity extends PassFailButtons.Activity {
                             v.getContext(), android.R.style.Theme_Material_Dialog_Alert);
                     builder.setTitle(R.string.audio_descriptor_hdmi_info_title);
                     builder.setMessage(R.string.audio_descriptor_hdmi_message);
-                    builder.setPositiveButton(android.R.string.yes,
+                    builder.setPositiveButton(android.R.string.ok,
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int which) {
                                 }

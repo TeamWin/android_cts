@@ -628,7 +628,7 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
 
                 // Increase tolerance on edge pixels since blending might occur there
                 final float varianceTolerance = Math.abs(x - xIndex) <= 1
-                        ? 0.5f : COLOR_VALUE_VARIANCE_TOLERANCE;
+                        ? 0.6f : COLOR_VALUE_VARIANCE_TOLERANCE;
                 if (arrayEquals(new float[]{
                                 expectedColor.red(), expectedColor.green(), expectedColor.blue()},
                         new float[]{sRgbColor.red(), sRgbColor.green(), sRgbColor.blue()},

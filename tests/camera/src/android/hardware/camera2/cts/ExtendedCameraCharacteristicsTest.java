@@ -983,6 +983,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 expectKeyAvailable(c, CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP                    , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.CONTROL_AE_LOCK_AVAILABLE                       , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES                      , OPT      ,   BC                   );
+                expectKeyAvailable(c, CameraCharacteristics.CONTROL_AUTOFRAMING_AVAILABLE                   , LIMITED  ,   NONE                 );
                 expectKeyAvailable(c, CameraCharacteristics.CONTROL_AVAILABLE_EFFECTS                       , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.CONTROL_AVAILABLE_SCENE_MODES                   , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES     , OPT      ,   BC                   );
@@ -1869,7 +1870,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                         dynamicProfiles.getProfileCaptureRequestConstraints(profile);
                 boolean isSameProfilePresent = false;
                 for (Long concurrentProfile : currentConstraints) {
-                    if (concurrentProfile == profile) {
+                    if (Objects.equals(concurrentProfile, profile)) {
                         isSameProfilePresent = true;
                         continue;
                     }
@@ -2593,7 +2594,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                         // [previewFps, fps_max] in the high speed range list; if it's variable FPS
                         // range, the corresponding fixed FPS Range must be included in the range
                         // list.
-                        if (range.getLower() == range.getUpper()) {
+                        if (Objects.equals(range.getLower(), range.getUpper())) {
                             Range<Integer> variableRange = new Range<Integer>(previewFps,
                                     range.getUpper());
                             assertTrue("The variable FPS range " + variableRange +
@@ -3147,6 +3148,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
      * in CDD camera section 7.5
      */
     @Test
+    @AppModeFull(reason = "DeviceStateManager is not accessible to instant apps")
     @CddTest(requirements = {
             "2.2.7.2/7.5/H-1-1",
             "2.2.7.2/7.5/H-1-2",

@@ -104,34 +104,31 @@ import java.util.stream.IntStream;
 
 @NonMediaMainlineTest
 public class AudioManagerTest extends InstrumentationTestCase {
-    private final static String TAG = "AudioManagerTest";
+    private static final String TAG = "AudioManagerTest";
 
-    private final static long ASYNC_TIMING_TOLERANCE_MS = 50;
-    private final static long POLL_TIME_VOLUME_ADJUST = 200;
-    private final static long POLL_TIME_UPDATE_INTERRUPTION_FILTER = 5000;
-    private final static int MP3_TO_PLAY = R.raw.testmp3; // ~ 5 second mp3
-    private final static long POLL_TIME_PLAY_MUSIC = 2000;
-    private final static long TIME_TO_PLAY = 2000;
-    private final static String APPOPS_OP_STR = "android:write_settings";
-    private final static Set<Integer> ALL_KNOWN_ENCAPSULATION_TYPES = new HashSet<>() {{
-            add(AudioProfile.AUDIO_ENCAPSULATION_TYPE_IEC61937);
-    }};
-    private final static Set<Integer> ALL_ENCAPSULATION_TYPES = new HashSet<>() {{
-            add(AudioProfile.AUDIO_ENCAPSULATION_TYPE_NONE);
-            add(AudioProfile.AUDIO_ENCAPSULATION_TYPE_IEC61937);
-    }};
-    private final static HashSet<Integer> ALL_AUDIO_STANDARDS = new HashSet<>() {{
-            add(AudioDescriptor.STANDARD_NONE);
-            add(AudioDescriptor.STANDARD_EDID);
-    }};
-    private static final HashMap<Integer, Integer> DIRECT_OFFLOAD_MAP = new HashMap<>() {{
-            put(AudioManager.PLAYBACK_OFFLOAD_NOT_SUPPORTED,
-                    AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED);
-            put(AudioManager.PLAYBACK_OFFLOAD_SUPPORTED,
-                    AudioManager.DIRECT_PLAYBACK_OFFLOAD_SUPPORTED);
-            put(AudioManager.PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED,
-                    AudioManager.DIRECT_PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED);
-        }};
+    private static final long ASYNC_TIMING_TOLERANCE_MS = 50;
+    private static final long POLL_TIME_VOLUME_ADJUST = 200;
+    private static final long POLL_TIME_UPDATE_INTERRUPTION_FILTER = 5000;
+    private static final int MP3_TO_PLAY = R.raw.testmp3; // ~ 5 second mp3
+    private static final long POLL_TIME_PLAY_MUSIC = 2000;
+    private static final long TIME_TO_PLAY = 2000;
+    private static final String APPOPS_OP_STR = "android:write_settings";
+    private static final Set<Integer> ALL_KNOWN_ENCAPSULATION_TYPES = Set.of(
+            AudioProfile.AUDIO_ENCAPSULATION_TYPE_IEC61937);
+    private static final Set<Integer> ALL_ENCAPSULATION_TYPES = Set.of(
+            AudioProfile.AUDIO_ENCAPSULATION_TYPE_NONE,
+            AudioProfile.AUDIO_ENCAPSULATION_TYPE_IEC61937);
+    private static final Set<Integer> ALL_AUDIO_STANDARDS = Set.of(
+            AudioDescriptor.STANDARD_NONE,
+            AudioDescriptor.STANDARD_EDID);
+    private static final Map<Integer, Integer> DIRECT_OFFLOAD_MAP = Map.of(
+            AudioManager.PLAYBACK_OFFLOAD_NOT_SUPPORTED,
+                AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED,
+            AudioManager.PLAYBACK_OFFLOAD_SUPPORTED,
+                AudioManager.DIRECT_PLAYBACK_OFFLOAD_SUPPORTED,
+            AudioManager.PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED,
+                AudioManager.DIRECT_PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED);
+
     private static final int INVALID_DIRECT_PLAYBACK_MODE = -1;
     private AudioManager mAudioManager;
     private NotificationManager mNm;
@@ -1916,14 +1913,14 @@ public class AudioManagerTest extends InstrumentationTestCase {
     public void testGetDevices() {
         AudioDeviceInfo[] devices = mAudioManager.getDevices(AudioManager.GET_DEVICES_ALL);
         for (AudioDeviceInfo device : devices) {
-            HashSet<Integer> formats = IntStream.of(device.getEncodings()).boxed()
-                    .collect(Collectors.toCollection(HashSet::new));
-            HashSet<Integer> channelMasks = IntStream.of(device.getChannelMasks()).boxed()
-                    .collect(Collectors.toCollection(HashSet::new));
-            HashSet<Integer> channelIndexMasks = IntStream.of(device.getChannelIndexMasks()).boxed()
-                    .collect(Collectors.toCollection(HashSet::new));
-            HashSet<Integer> sampleRates = IntStream.of(device.getSampleRates()).boxed()
-                    .collect(Collectors.toCollection(HashSet::new));
+            Set<Integer> formats = IntStream.of(device.getEncodings()).boxed()
+                    .collect(Collectors.toSet());
+            Set<Integer> channelMasks = IntStream.of(device.getChannelMasks()).boxed()
+                    .collect(Collectors.toSet());
+            Set<Integer> channelIndexMasks = IntStream.of(device.getChannelIndexMasks()).boxed()
+                    .collect(Collectors.toSet());
+            Set<Integer> sampleRates = IntStream.of(device.getSampleRates()).boxed()
+                    .collect(Collectors.toSet());
             HashSet<Integer> formatsFromProfile = new HashSet<>();
             HashSet<Integer> channelMasksFromProfile = new HashSet<>();
             HashSet<Integer> channelIndexMasksFromProfile = new HashSet<>();

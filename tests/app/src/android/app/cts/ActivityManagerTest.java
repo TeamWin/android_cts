@@ -107,6 +107,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AmMonitor;
+import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
@@ -197,7 +198,7 @@ public class ActivityManagerTest {
         mAutomotiveDevice = mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
         mLeanbackOnly = mPackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY);
         startSubActivity(ScreenOnActivity.class);
-        drainOrderedBroadcastQueue(2);
+        AmUtils.waitForBroadcastBarrier();
     }
 
     @After
@@ -214,27 +215,6 @@ public class ActivityManagerTest {
         if (mErrorProcessID != -1) {
             android.os.Process.killProcess(mErrorProcessID);
         }
-    }
-
-    /**
-     * Drain the ordered broadcast queue, it'll be useful when the test runs right after
-     * the device booted, the ordered broadcast queue could be clogged.
-     */
-    private void drainOrderedBroadcastQueue(int loopCount) throws Exception {
-        for (int i = loopCount; i > 0; i--) {
-            final CountDownLatch latch = new CountDownLatch(1);
-            final BroadcastReceiver receiver = new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    latch.countDown();
-                }
-            };
-            CommandReceiver.sendCommandWithResultReceiver(mTargetContext,
-                    CommandReceiver.COMMAND_EMPTY,
-                    STUB_PACKAGE_NAME, STUB_PACKAGE_NAME, 0, null, receiver);
-            latch.await(WAITFOR_ORDERED_BROADCAST_DRAINED, TimeUnit.MILLISECONDS);
-        }
-        Log.i(TAG, "Ordered broadcast queue drained");
     }
 
     @Test
@@ -346,7 +326,8 @@ public class ActivityManagerTest {
             }
         }
 
-        public int waitForActivity() {
+        public int waitForActivity() throws Exception {
+            AmUtils.waitForBroadcastBarrier();
             synchronized(this) {
                 try {
                     wait(TIMEOUT_IN_MS);

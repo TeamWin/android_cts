@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 
+import android.app.appsearch.PropertyPath;
 import android.app.appsearch.SearchResult;
 import android.app.appsearch.testutil.AppSearchEmail;
 
@@ -55,6 +56,7 @@ public class SearchResultCtsTest {
         assertThat(searchResult.getMatchInfos()).hasSize(1);
         SearchResult.MatchInfo actualMatchInfo = searchResult.getMatchInfos().get(0);
         assertThat(actualMatchInfo.getPropertyPath()).isEqualTo("body");
+        assertThat(actualMatchInfo.getPropertyPathObject()).isEqualTo(new PropertyPath("body"));
         assertThat(actualMatchInfo.getExactMatchRange()).isEqualTo(exactMatchRange);
         assertThat(actualMatchInfo.getSubmatchRange()).isEqualTo(submatchRange);
         assertThat(actualMatchInfo.getSnippetRange()).isEqualTo(snippetMatchRange);

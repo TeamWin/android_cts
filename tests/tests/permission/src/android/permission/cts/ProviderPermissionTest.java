@@ -52,17 +52,16 @@ public class ProviderPermissionTest extends AndroidTestCase {
 
     private static final String TAG = ProviderPermissionTest.class.getSimpleName();
 
-    private static final List<Uri> CONTACT_URIS = new ArrayList<Uri>() {{
-        add(Contacts.People.CONTENT_URI); // Deprecated.
-        add(ContactsContract.Contacts.CONTENT_FILTER_URI);
-        add(ContactsContract.Contacts.CONTENT_GROUP_URI);
-        add(ContactsContract.Contacts.CONTENT_LOOKUP_URI);
-        add(ContactsContract.CommonDataKinds.Email.CONTENT_URI);
-        add(ContactsContract.CommonDataKinds.Email.CONTENT_FILTER_URI);
-        add(ContactsContract.Directory.CONTENT_URI);
-        add(ContactsContract.Directory.ENTERPRISE_CONTENT_URI);
-        add(ContactsContract.Profile.CONTENT_URI);
-    }};
+    private static final List<Uri> CONTACT_URIS = List.of(
+            Contacts.People.CONTENT_URI, // Deprecated.
+            ContactsContract.Contacts.CONTENT_FILTER_URI,
+            ContactsContract.Contacts.CONTENT_GROUP_URI,
+            ContactsContract.Contacts.CONTENT_LOOKUP_URI,
+            ContactsContract.CommonDataKinds.Email.CONTENT_URI,
+            ContactsContract.CommonDataKinds.Email.CONTENT_FILTER_URI,
+            ContactsContract.Directory.CONTENT_URI,
+            ContactsContract.Directory.ENTERPRISE_CONTENT_URI,
+            ContactsContract.Profile.CONTENT_URI);
 
     /**
      * Verify that reading contacts requires permissions.

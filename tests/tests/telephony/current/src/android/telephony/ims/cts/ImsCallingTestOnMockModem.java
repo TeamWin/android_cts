@@ -33,6 +33,7 @@ import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.net.Uri;
@@ -51,6 +52,7 @@ import android.telephony.ims.ImsCallProfile;
 import android.telephony.ims.SrvccCall;
 import android.telephony.mockmodem.MockModemManager;
 import android.telephony.mockmodem.MockSrvccCall;
+import android.util.Pair;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -83,6 +85,7 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
     private static final int WAIT_UPDATE_TIMEOUT_MS = 2000;
 
     private static MockModemManager sMockModemManager;
+    private static boolean sSupportsImsHal = false;
 
     static {
         initializeLatches();
@@ -94,13 +97,19 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
             return;
         }
 
+        TelephonyManager tm = (TelephonyManager) getContext()
+                .getSystemService(Context.TELEPHONY_SERVICE);
+
+        Pair<Integer, Integer> halVersion = tm.getHalVersion(TelephonyManager.HAL_SERVICE_IMS);
+        if (!(halVersion.equals(TelephonyManager.HAL_VERSION_UNKNOWN)
+                || halVersion.equals(TelephonyManager.HAL_VERSION_UNSUPPORTED))) {
+            sSupportsImsHal = true;
+        }
+
         enforceMockModemDeveloperSetting();
         sMockModemManager = new MockModemManager();
         assertNotNull(sMockModemManager);
         assertTrue(sMockModemManager.connectMockModemService(MOCK_SIM_PROFILE_ID_TWN_CHT));
-
-        TelephonyManager tm = (TelephonyManager) getContext()
-                .getSystemService(Context.TELEPHONY_SERVICE);
 
         TimeUnit.MILLISECONDS.sleep(WAIT_UPDATE_TIMEOUT_MS);
 
@@ -186,6 +195,8 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
             return;
         }
 
+        assumeTrue(sSupportsImsHal);
+
         bindImsService();
 
         // Place outgoing call
@@ -232,6 +243,8 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
+
+        assumeTrue(sSupportsImsHal);
 
         bindImsService();
         mServiceCallBack = new ServiceCallBack();
@@ -300,6 +313,8 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
             return;
         }
 
+        assumeTrue(sSupportsImsHal);
+
         bindImsService();
 
         List<SrvccCall> profiles = new ArrayList<>();
@@ -336,6 +351,8 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
+
+        assumeTrue(sSupportsImsHal);
 
         bindImsService();
 

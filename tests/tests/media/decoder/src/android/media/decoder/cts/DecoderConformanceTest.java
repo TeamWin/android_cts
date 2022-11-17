@@ -74,9 +74,8 @@ public class DecoderConformanceTest {
     private static final String TAG = "DecoderConformanceTest";
     private static final String CONFORMANCE_SUBDIR = "conformance_vectors/";
     private static final String mInpPrefix = WorkDir.getMediaDirString() + CONFORMANCE_SUBDIR;
-    private static final Map<String, String> MIMETYPE_TO_TAG = new HashMap<String, String>() {{
-        put(MediaFormat.MIMETYPE_VIDEO_VP9, "vp9");
-    }};
+    private static final Map<String, String> MIMETYPE_TO_TAG = Map.of(
+            MediaFormat.MIMETYPE_VIDEO_VP9, "vp9");
 
     private final String mDecoderName;
     private final String mMediaType;

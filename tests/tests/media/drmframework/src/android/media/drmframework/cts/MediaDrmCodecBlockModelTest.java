@@ -39,7 +39,7 @@ import com.android.compatibility.common.util.MediaUtils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.UUID;;
+import java.util.UUID;
 
 /**
  * Media DRM Codec tests with CONFIGURE_FLAG_USE_BLOCK_MODEL.

@@ -700,8 +700,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     // is functional
                     for (Long profile : profiles.getSupportedProfiles()) {
                         if (profile != DynamicRangeProfiles.STANDARD) {
-                            ArrayList<Long> testProfiles = new ArrayList<Long>() {
-                                { add(profile); } };
+                            ArrayList<Long> testProfiles = new ArrayList<Long>();
+                            testProfiles.add(profile);
                             testMandatory10BitStreamCombination(id, combination, profiles,
                                     testProfiles);
                         }

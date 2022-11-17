@@ -41,6 +41,7 @@ import android.app.appsearch.GenericDocument;
 import android.app.appsearch.GetByDocumentIdRequest;
 import android.app.appsearch.GetSchemaResponse;
 import android.app.appsearch.PackageIdentifier;
+import android.app.appsearch.PropertyPath;
 import android.app.appsearch.PutDocumentsRequest;
 import android.app.appsearch.RemoveByDocumentIdRequest;
 import android.app.appsearch.ReportUsageRequest;
@@ -3804,6 +3805,8 @@ public abstract class AppSearchSessionCtsTestBase {
         List<SearchResult.MatchInfo> matches = page.get(0).getMatchInfos();
         assertThat(matches).hasSize(1);
         assertThat(matches.get(0).getPropertyPath()).isEqualTo("prop.subject");
+        assertThat(matches.get(0).getPropertyPathObject())
+                .isEqualTo(new PropertyPath("prop.subject"));
         assertThat(matches.get(0).getFullText()).isEqualTo("This is the body");
         assertThat(matches.get(0).getExactMatch()).isEqualTo("body");
     }

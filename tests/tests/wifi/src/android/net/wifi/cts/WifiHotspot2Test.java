@@ -32,7 +32,6 @@ import java.security.PrivateKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -43,14 +42,11 @@ public class WifiHotspot2Test extends WifiJUnit3TestBase {
     static final int CERT_CREDENTIAL = 2;
     private static final String TEST_SSID = "TEST SSID";
     private static final String TEST_FRIENDLY_NAME = "Friendly Name";
-    private static final Map<String, String> TEST_FRIENDLY_NAMES =
-            new HashMap<String, String>() {
-                {
-                    put("en", TEST_FRIENDLY_NAME);
-                    put("kr", TEST_FRIENDLY_NAME + 2);
-                    put("jp", TEST_FRIENDLY_NAME + 3);
-                }
-            };
+    private static final Map<String, String> TEST_FRIENDLY_NAMES = Map.of(
+            "en", TEST_FRIENDLY_NAME,
+            "kr", TEST_FRIENDLY_NAME + 2,
+            "jp", TEST_FRIENDLY_NAME + 3);
+
     private static final String TEST_SERVICE_DESCRIPTION = "Dummy Service";
     private static final Uri TEST_SERVER_URI = Uri.parse("https://test.com");
     private static final String TEST_NAI = "test.access.com";

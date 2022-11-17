@@ -73,6 +73,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -1201,7 +1202,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                     // Map to store  max_fps and preview fps for each video size
                     HashMap<Integer, Integer> previewRateMap = new HashMap();
                     for (Range<Integer> r : highSpeedFpsRangesForSize ) {
-                        if (r.getLower() != r.getUpper()) {
+                        if (!Objects.equals(r.getLower(), r.getUpper())) {
                             if (previewRateMap.containsKey(r.getUpper())) {
                                 Log.w(TAG, "previewFps for max_fps already exists.");
                             } else {

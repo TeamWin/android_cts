@@ -16,6 +16,10 @@
 
 package android.virtualdevice.cts;
 
+import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
+import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAULT;
+import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_SENSORS;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
@@ -168,6 +172,25 @@ public class VirtualDeviceParamsTest {
                 .build();
 
         assertThat(params.getName()).isEqualTo(VIRTUAL_DEVICE_NAME);
+    }
+
+    @Test
+    public void getDevicePolicy_noPolicySpecified_shouldReturnDefault() {
+        VirtualDeviceParams params = new VirtualDeviceParams.Builder()
+                .setName(VIRTUAL_DEVICE_NAME)
+                .build();
+
+        assertThat(params.getDevicePolicy(POLICY_TYPE_SENSORS)).isEqualTo(DEVICE_POLICY_DEFAULT);
+    }
+
+    @Test
+    public void getDevicePolicy_shouldReturnConfiguredValue() {
+        VirtualDeviceParams params = new VirtualDeviceParams.Builder()
+                .setName(VIRTUAL_DEVICE_NAME)
+                .addDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                .build();
+
+        assertThat(params.getDevicePolicy(POLICY_TYPE_SENSORS)).isEqualTo(DEVICE_POLICY_CUSTOM);
     }
 }
 

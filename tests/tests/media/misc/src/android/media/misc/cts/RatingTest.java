@@ -189,6 +189,7 @@ public class RatingTest {
         assertTrue(percentageRating.getStarRating() < 0f);
     }
 
+    @SuppressWarnings("ReturnValueIgnored")
     @Test
     public void testToStringDoesNotCrash() {
         Rating rating = Rating.newHeartRating(/*hasHeart=*/ true);

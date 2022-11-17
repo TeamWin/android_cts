@@ -156,7 +156,7 @@ public class GlobalSearchSessionPlatformCtsTest {
     }
 
     private void cleanup() throws Exception {
-        mDb.setSchema(new SetSchemaRequest.Builder().setForceOverride(true).build()).get();
+        mDb.setSchemaAsync(new SetSchemaRequest.Builder().setForceOverride(true).build()).get();
 
         clearData(PKG_A, DB_NAME);
         clearData(PKG_B, DB_NAME);
@@ -164,10 +164,10 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     @Test
     public void testNoPackageAccess_default() throws Exception {
-        mDb.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+        mDb.setSchemaAsync(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
                 .get();
         checkIsBatchResultSuccess(
-                mDb.put(
+                mDb.putAsync(
                         new PutDocumentsRequest.Builder()
                                 .addGenericDocuments(EMAIL_DOCUMENT)
                                 .build()));
@@ -179,7 +179,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     @Test
     public void testNoPackageAccess_wrongPackageName() throws Exception {
-        mDb.setSchema(
+        mDb.setSchemaAsync(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(AppSearchEmail.SCHEMA)
                                 .setSchemaTypeVisibilityForPackage(
@@ -190,7 +190,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                                 .build())
                 .get();
         checkIsBatchResultSuccess(
-                mDb.put(
+                mDb.putAsync(
                         new PutDocumentsRequest.Builder()
                                 .addGenericDocuments(EMAIL_DOCUMENT)
                                 .build()));
@@ -200,7 +200,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     @Test
     public void testNoPackageAccess_wrongCertificate() throws Exception {
-        mDb.setSchema(
+        mDb.setSchemaAsync(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(AppSearchEmail.SCHEMA)
                                 .setSchemaTypeVisibilityForPackage(
@@ -210,7 +210,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                                 .build())
                 .get();
         checkIsBatchResultSuccess(
-                mDb.put(
+                mDb.putAsync(
                         new PutDocumentsRequest.Builder()
                                 .addGenericDocuments(EMAIL_DOCUMENT)
                                 .build()));
@@ -220,7 +220,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     @Test
     public void testAllowPackageAccess() throws Exception {
-        mDb.setSchema(
+        mDb.setSchemaAsync(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(AppSearchEmail.SCHEMA)
                                 .setSchemaTypeVisibilityForPackage(
@@ -230,7 +230,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                                 .build())
                 .get();
         checkIsBatchResultSuccess(
-                mDb.put(
+                mDb.putAsync(
                         new PutDocumentsRequest.Builder()
                                 .addGenericDocuments(EMAIL_DOCUMENT)
                                 .build()));
@@ -242,7 +242,7 @@ public class GlobalSearchSessionPlatformCtsTest {
     @Test
     public void testRemoveVisibilitySetting_noRemainingSettings() throws Exception {
         // Set schema and allow PKG_A to access.
-        mDb.setSchema(
+        mDb.setSchemaAsync(
                 new SetSchemaRequest.Builder()
                         .addSchemas(AppSearchEmail.SCHEMA)
                         .setSchemaTypeVisibilityForPackage(
@@ -252,7 +252,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                         .build())
                 .get();
         checkIsBatchResultSuccess(
-                mDb.put(
+                mDb.putAsync(
                         new PutDocumentsRequest.Builder()
                                 .addGenericDocuments(EMAIL_DOCUMENT)
                                 .build()));
@@ -262,10 +262,10 @@ public class GlobalSearchSessionPlatformCtsTest {
         assertPackageCannotAccess(PKG_B);
 
         // Remove the schema.
-        mDb.setSchema(new SetSchemaRequest.Builder().setForceOverride(true).build()).get();
+        mDb.setSchemaAsync(new SetSchemaRequest.Builder().setForceOverride(true).build()).get();
 
         // Add the schema back with default visibility setting.
-        mDb.setSchema(new SetSchemaRequest.Builder()
+        mDb.setSchemaAsync(new SetSchemaRequest.Builder()
                 .addSchemas(AppSearchEmail.SCHEMA).build()).get();
 
         // No pcakage can access.
@@ -275,7 +275,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     @Test
     public void testAllowMultiplePackageAccess() throws Exception {
-        mDb.setSchema(
+        mDb.setSchemaAsync(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(AppSearchEmail.SCHEMA)
                                 .setSchemaTypeVisibilityForPackage(
@@ -289,7 +289,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                                 .build())
                 .get();
         checkIsBatchResultSuccess(
-                mDb.put(
+                mDb.putAsync(
                         new PutDocumentsRequest.Builder()
                                 .addGenericDocuments(EMAIL_DOCUMENT)
                                 .build()));
@@ -300,7 +300,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     @Test
     public void testNoPackageAccess_revoked() throws Exception {
-        mDb.setSchema(
+        mDb.setSchemaAsync(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(AppSearchEmail.SCHEMA)
                                 .setSchemaTypeVisibilityForPackage(
@@ -310,14 +310,14 @@ public class GlobalSearchSessionPlatformCtsTest {
                                 .build())
                 .get();
         checkIsBatchResultSuccess(
-                mDb.put(
+                mDb.putAsync(
                         new PutDocumentsRequest.Builder()
                                 .addGenericDocuments(EMAIL_DOCUMENT)
                                 .build()));
         assertPackageCanAccess(EMAIL_DOCUMENT, PKG_A);
 
         // Set the schema again, but package access as false.
-        mDb.setSchema(
+        mDb.setSchemaAsync(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(AppSearchEmail.SCHEMA)
                                 .setSchemaTypeVisibilityForPackage(
@@ -327,14 +327,14 @@ public class GlobalSearchSessionPlatformCtsTest {
                                 .build())
                 .get();
         checkIsBatchResultSuccess(
-                mDb.put(
+                mDb.putAsync(
                         new PutDocumentsRequest.Builder()
                                 .addGenericDocuments(EMAIL_DOCUMENT)
                                 .build()));
         assertPackageCannotAccess(PKG_A);
 
         // Set the schema again, but with default (i.e. no) access
-        mDb.setSchema(
+        mDb.setSchemaAsync(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(AppSearchEmail.SCHEMA)
                                 .setSchemaTypeVisibilityForPackage(
@@ -344,7 +344,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                                 .build())
                 .get();
         checkIsBatchResultSuccess(
-                mDb.put(
+                mDb.putAsync(
                         new PutDocumentsRequest.Builder()
                                 .addGenericDocuments(EMAIL_DOCUMENT)
                                 .build()));
@@ -636,7 +636,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                                             .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                                             .addFilterPackageNames(PKG_A, PKG_B)
                                             .build());
-                    List<SearchResult> page = searchResults.getNextPage().get();
+                    List<SearchResult> page = searchResults.getNextPageAsync().get();
                     assertThat(page).hasSize(2);
 
                     Set<String> actualPackageNames =
@@ -665,7 +665,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                                             .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                                             .addFilterPackageNames(PKG_A, PKG_B)
                                             .build());
-                    List<SearchResult> page = searchResults.getNextPage().get();
+                    List<SearchResult> page = searchResults.getNextPageAsync().get();
                     assertThat(page).hasSize(1);
 
                     assertThat(page.get(0).getPackageName()).isEqualTo(PKG_A);
@@ -691,7 +691,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                                             .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                                             .addFilterPackageNames(PKG_B)
                                             .build());
-                    List<SearchResult> page = searchResults.getNextPage().get();
+                    List<SearchResult> page = searchResults.getNextPageAsync().get();
                     assertThat(page).hasSize(1);
 
                     assertThat(page.get(0).getPackageName()).isEqualTo(PKG_B);
@@ -714,14 +714,14 @@ public class GlobalSearchSessionPlatformCtsTest {
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                                 .addFilterPackageNames(PKG_A, PKG_B)
                                 .build());
-        List<SearchResult> page = searchResults.getNextPage().get();
+        List<SearchResult> page = searchResults.getNextPageAsync().get();
         assertThat(page).isEmpty();
     }
 
     @Test
     public void testGlobalGetSchema_packageAccess_defaultAccess() throws Exception {
         // 1. Create a schema in the test with default (no) access.
-        mDb.setSchema(
+        mDb.setSchemaAsync(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(AppSearchEmail.SCHEMA)
                                 .build())
@@ -738,7 +738,7 @@ public class GlobalSearchSessionPlatformCtsTest {
     @Test
     public void testGlobalGetSchema_packageAccess_singleAccess() throws Exception {
         // 1. Create a schema in the test with access granted to PKG_A, but not PKG_B.
-        mDb.setSchema(
+        mDb.setSchemaAsync(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(AppSearchEmail.SCHEMA)
                                 .setSchemaTypeVisibilityForPackage(
@@ -759,7 +759,7 @@ public class GlobalSearchSessionPlatformCtsTest {
     @Test
     public void testGlobalGetSchema_packageAccess_multiAccess() throws Exception {
         // 1. Create a schema in the test with access granted to PKG_A and PKG_B.
-        mDb.setSchema(
+        mDb.setSchemaAsync(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(AppSearchEmail.SCHEMA)
                                 .setSchemaTypeVisibilityForPackage(
@@ -784,7 +784,7 @@ public class GlobalSearchSessionPlatformCtsTest {
     @Test
     public void testGlobalGetSchema_packageAccess_revokeAccess() throws Exception {
         // 1. Create a schema in the test with access granted to PKG_A.
-        mDb.setSchema(
+        mDb.setSchemaAsync(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(AppSearchEmail.SCHEMA)
                                 .setSchemaTypeVisibilityForPackage(
@@ -795,7 +795,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                 .get();
 
         // 2. Now revoke that access.
-        mDb.setSchema(
+        mDb.setSchemaAsync(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(AppSearchEmail.SCHEMA)
                                 .setSchemaTypeVisibilityForPackage(
@@ -825,10 +825,10 @@ public class GlobalSearchSessionPlatformCtsTest {
 
                     // 2. The schema for PKG_A should be retrievable, but PKG_B should not be.
                     GetSchemaResponse response =
-                            mGlobalSearchSession.getSchema(PKG_A, DB_NAME).get();
+                            mGlobalSearchSession.getSchemaAsync(PKG_A, DB_NAME).get();
                     assertThat(response.getSchemas()).hasSize(1);
 
-                    response = mGlobalSearchSession.getSchema(PKG_B, DB_NAME).get();
+                    response = mGlobalSearchSession.getSchemaAsync(PKG_B, DB_NAME).get();
                     assertThat(response.getSchemas()).isEmpty();
                 },
                 READ_GLOBAL_APP_SEARCH_DATA);
@@ -849,10 +849,10 @@ public class GlobalSearchSessionPlatformCtsTest {
 
                     // 2. The schema for both PKG_A and PKG_B should be retrievable.
                     GetSchemaResponse response =
-                            mGlobalSearchSession.getSchema(PKG_A, DB_NAME).get();
+                            mGlobalSearchSession.getSchemaAsync(PKG_A, DB_NAME).get();
                     assertThat(response.getSchemas()).hasSize(1);
 
-                    response = mGlobalSearchSession.getSchema(PKG_B, DB_NAME).get();
+                    response = mGlobalSearchSession.getSchemaAsync(PKG_B, DB_NAME).get();
                     assertThat(response.getSchemas()).hasSize(1);
                 },
                 READ_GLOBAL_APP_SEARCH_DATA);
@@ -862,7 +862,7 @@ public class GlobalSearchSessionPlatformCtsTest {
     @Test
     public void testReportSystemUsage() throws Exception {
         // Insert schema
-        mDb.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+        mDb.setSchemaAsync(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
                 .get();
 
         // Insert two docs
@@ -872,21 +872,22 @@ public class GlobalSearchSessionPlatformCtsTest {
         GenericDocument document2 =
                 new GenericDocument.Builder<>(NAMESPACE_NAME, "id2", AppSearchEmail.SCHEMA_TYPE)
                         .build();
-        mDb.put(new PutDocumentsRequest.Builder().addGenericDocuments(document1, document2).build())
+        mDb.putAsync(
+                new PutDocumentsRequest.Builder().addGenericDocuments(document1, document2).build())
                 .get();
 
         // Report some usages. id1 has 2 app and 1 system usage, id2 has 1 app and 2 system usage.
-        mDb.reportUsage(
+        mDb.reportUsageAsync(
                 new ReportUsageRequest.Builder(NAMESPACE_NAME, "id1")
                         .setUsageTimestampMillis(10)
                         .build())
                 .get();
-        mDb.reportUsage(
+        mDb.reportUsageAsync(
                 new ReportUsageRequest.Builder(NAMESPACE_NAME, "id1")
                         .setUsageTimestampMillis(20)
                         .build())
                 .get();
-        mDb.reportUsage(
+        mDb.reportUsageAsync(
                 new ReportUsageRequest.Builder(NAMESPACE_NAME, "id2")
                         .setUsageTimestampMillis(100)
                         .build())
@@ -896,21 +897,21 @@ public class GlobalSearchSessionPlatformCtsTest {
             mGlobalSearchSession =
                     GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext).get();
             mGlobalSearchSession
-                    .reportSystemUsage(
+                    .reportSystemUsageAsync(
                             new ReportSystemUsageRequest.Builder(
                                     mContext.getPackageName(), DB_NAME, NAMESPACE_NAME, "id1")
                                     .setUsageTimestampMillis(1000)
                                     .build())
                     .get();
             mGlobalSearchSession
-                    .reportSystemUsage(
+                    .reportSystemUsageAsync(
                             new ReportSystemUsageRequest.Builder(
                                     mContext.getPackageName(), DB_NAME, NAMESPACE_NAME, "id2")
                                     .setUsageTimestampMillis(200)
                                     .build())
                     .get();
             mGlobalSearchSession
-                    .reportSystemUsage(
+                    .reportSystemUsageAsync(
                             new ReportSystemUsageRequest.Builder(
                                     mContext.getPackageName(), DB_NAME, NAMESPACE_NAME, "id2")
                                     .setUsageTimestampMillis(150)
@@ -929,7 +930,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                         .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                         .setRankingStrategy(SearchSpec.RANKING_STRATEGY_USAGE_COUNT)
                         .build())) {
-            List<SearchResult> page = results.getNextPage().get();
+            List<SearchResult> page = results.getNextPageAsync().get();
             assertThat(page).hasSize(2);
             assertThat(page.get(0).getGenericDocument().getId()).isEqualTo("id1");
             assertThat(page.get(1).getGenericDocument().getId()).isEqualTo("id2");
@@ -942,7 +943,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                         .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                         .setRankingStrategy(SearchSpec.RANKING_STRATEGY_USAGE_LAST_USED_TIMESTAMP)
                         .build())) {
-            List<SearchResult> page = results.getNextPage().get();
+            List<SearchResult> page = results.getNextPageAsync().get();
             assertThat(page).hasSize(2);
             assertThat(page.get(0).getGenericDocument().getId()).isEqualTo("id2");
             assertThat(page.get(1).getGenericDocument().getId()).isEqualTo("id1");
@@ -956,7 +957,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                         .setRankingStrategy(
                                 SearchSpec.RANKING_STRATEGY_SYSTEM_USAGE_COUNT)
                         .build())) {
-            List<SearchResult> page = results.getNextPage().get();
+            List<SearchResult> page = results.getNextPageAsync().get();
             assertThat(page).hasSize(2);
             assertThat(page.get(0).getGenericDocument().getId()).isEqualTo("id2");
             assertThat(page.get(1).getGenericDocument().getId()).isEqualTo("id1");
@@ -968,7 +969,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                 .setRankingStrategy(SearchSpec.RANKING_STRATEGY_SYSTEM_USAGE_LAST_USED_TIMESTAMP)
                 .build();
         try (SearchResultsShim results = mDb.search("", searchSpec)) {
-            List<SearchResult> page = results.getNextPage().get();
+            List<SearchResult> page = results.getNextPageAsync().get();
             assertThat(page).hasSize(2);
             assertThat(page.get(0).getGenericDocument().getId()).isEqualTo("id1");
             assertThat(page.get(1).getGenericDocument().getId()).isEqualTo("id2");
@@ -983,7 +984,7 @@ public class GlobalSearchSessionPlatformCtsTest {
         // Set up schema
         mGlobalSearchSession =
                 GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext).get();
-        mDb.setSchema(new SetSchemaRequest.Builder()
+        mDb.setSchemaAsync(new SetSchemaRequest.Builder()
                 .addSchemas(AppSearchEmail.SCHEMA).build()).get();
 
         // Register this observer twice, on different packages.
@@ -1011,7 +1012,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                 new AppSearchEmail.Builder(NAMESPACE_NAME, "id3").setBody("foo").build();
 
         checkIsBatchResultSuccess(
-                mDb.put(new PutDocumentsRequest.Builder()
+                mDb.putAsync(new PutDocumentsRequest.Builder()
                         .addGenericDocuments(email1).build()));
 
         // Make sure the notifications were received.
@@ -1033,7 +1034,8 @@ public class GlobalSearchSessionPlatformCtsTest {
         // Index some more documents
         assertThat(observer.getDocumentChanges()).isEmpty();
         checkIsBatchResultSuccess(
-                mDb.put(new PutDocumentsRequest.Builder().addGenericDocuments(email2).build()));
+                mDb.putAsync(
+                        new PutDocumentsRequest.Builder().addGenericDocuments(email2).build()));
 
         // Make sure data was still received
         observer.waitForNotificationCount(1);
@@ -1052,7 +1054,8 @@ public class GlobalSearchSessionPlatformCtsTest {
         // Index some more documents
         assertThat(observer.getDocumentChanges()).isEmpty();
         checkIsBatchResultSuccess(
-                mDb.put(new PutDocumentsRequest.Builder().addGenericDocuments(email3).build()));
+                mDb.putAsync(
+                        new PutDocumentsRequest.Builder().addGenericDocuments(email3).build()));
 
         // Make sure there have been no further notifications
         assertThat(observer.getDocumentChanges()).isEmpty();

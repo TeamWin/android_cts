@@ -16,6 +16,8 @@
 
 package android.security.cts;
 
+import static java.util.Map.entry;
+
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -222,84 +224,82 @@ public class KernelConfigTest extends BaseHostJUnit4Test {
         return lsGrep.trim().equals(filePath);
     }
 
-    private Map<String, String[]> hardwareMitigations = new HashMap<String, String[]>() {
-    {
-        put("VULN_SAFE", null);
-        put("EXYNOS990", null);
-        put("EXYNOS980", null);
-        put("EXYNOS850", null);
-        put("EXYNOS3830", null);
-        put("EXYNOS9630", null);
-        put("EXYNOS9830", null);
-        put("EXYNOS7870", null);
-        put("EXYNOS7880", null);
-        put("EXYNOS7570", null);
-        put("EXYNOS7872", null);
-        put("EXYNOS7885", null);
-        put("EXYNOS9610", null);
-        put("S5E8825", null);
-        put("S5E9925", null);
-        put("Kirin980", null);
-        put("Kirin970", null);
-        put("Kirin810", null);
-        put("Kirin710", null);
-        put("MT6889Z/CZA", null);
-        put("MT6889Z/CIZA", null);
-        put("mt6873", null);
-        put("MT6853V/TZA", null);
-        put("MT6853V/TNZA", null);
-        put("MT6833V/ZA", null);
-        put("MT6833V/NZA", null);
-        put("MT6833V/TZA", null);
-        put("MT6833V/TNZA", null);
-        put("MT6833V/MZA", null);
-        put("MT6833V/MNZA", null);
-        put("MT6877V/ZA", null);
-        put("MT6877V/NZA", null);
-        put("MT6877V/TZA", null);
-        put("MT6877V/TNZA", null);
-        put("MT6768V/WA", null);
-        put("MT6768V/CA", null);
-        put("MT6768V/WB", null);
-        put("MT6768V/CB", null);
-        put("MT6767V/WA", null);
-        put("MT6767V/CA", null);
-        put("MT6767V/WB", null);
-        put("MT6767V/CB", null);
-        put("MT6769V/WA", null);
-        put("MT6769V/CA", null);
-        put("MT6769V/WB", null);
-        put("MT6769V/CB", null);
-        put("MT6769V/WT", null);
-        put("MT6769V/CT", null);
-        put("MT6769V/WU", null);
-        put("MT6769V/CU", null);
-        put("MT6769V/WZ", null);
-        put("MT6769V/CZ", null);
-        put("MT6769V/WY", null);
-        put("MT6769V/CY", null);
-        put("SDMMAGPIE", null);
-        put("SM6150", null);
-        put("SM7150", null);
-        put("SM7250", null);
-        put("LITO", null);
-        put("LAGOON", null);
-        put("SM8150", null);
-        put("SM8150P", null);
-        put("SM8250", null);
-        put("KONA", null);
-        put("SDM429", null);
-        put("SDM439", null);
-        put("QM215", null);
-        put("ATOLL", null);
-        put("ATOLL-AB", null);
-        put("SDM660", null);
-        put("BENGAL", null);
-        put("KHAJE", null);
-        put("BENGAL-IOT", null);
-        put("BENGALP-IOT", null);
-        put("DEFAULT", new String[]{"CONFIG_UNMAP_KERNEL_AT_EL0=y"});
-    }};
+    private Map<String, String[]> hardwareMitigations = Map.ofEntries(
+            entry("VULN_SAFE", null),
+            entry("EXYNOS990", null),
+            entry("EXYNOS980", null),
+            entry("EXYNOS850", null),
+            entry("EXYNOS3830", null),
+            entry("EXYNOS9630", null),
+            entry("EXYNOS9830", null),
+            entry("EXYNOS7870", null),
+            entry("EXYNOS7880", null),
+            entry("EXYNOS7570", null),
+            entry("EXYNOS7872", null),
+            entry("EXYNOS7885", null),
+            entry("EXYNOS9610", null),
+            entry("S5E8825", null),
+            entry("S5E9925", null),
+            entry("Kirin980", null),
+            entry("Kirin970", null),
+            entry("Kirin810", null),
+            entry("Kirin710", null),
+            entry("MT6889Z/CZA", null),
+            entry("MT6889Z/CIZA", null),
+            entry("mt6873", null),
+            entry("MT6853V/TZA", null),
+            entry("MT6853V/TNZA", null),
+            entry("MT6833V/ZA", null),
+            entry("MT6833V/NZA", null),
+            entry("MT6833V/TZA", null),
+            entry("MT6833V/TNZA", null),
+            entry("MT6833V/MZA", null),
+            entry("MT6833V/MNZA", null),
+            entry("MT6877V/ZA", null),
+            entry("MT6877V/NZA", null),
+            entry("MT6877V/TZA", null),
+            entry("MT6877V/TNZA", null),
+            entry("MT6768V/WA", null),
+            entry("MT6768V/CA", null),
+            entry("MT6768V/WB", null),
+            entry("MT6768V/CB", null),
+            entry("MT6767V/WA", null),
+            entry("MT6767V/CA", null),
+            entry("MT6767V/WB", null),
+            entry("MT6767V/CB", null),
+            entry("MT6769V/WA", null),
+            entry("MT6769V/CA", null),
+            entry("MT6769V/WB", null),
+            entry("MT6769V/CB", null),
+            entry("MT6769V/WT", null),
+            entry("MT6769V/CT", null),
+            entry("MT6769V/WU", null),
+            entry("MT6769V/CU", null),
+            entry("MT6769V/WZ", null),
+            entry("MT6769V/CZ", null),
+            entry("MT6769V/WY", null),
+            entry("MT6769V/CY", null),
+            entry("SDMMAGPIE", null),
+            entry("SM6150", null),
+            entry("SM7150", null),
+            entry("SM7250", null),
+            entry("LITO", null),
+            entry("LAGOON", null),
+            entry("SM8150", null),
+            entry("SM8150P", null),
+            entry("SM8250", null),
+            entry("KONA", null),
+            entry("SDM429", null),
+            entry("SDM439", null),
+            entry("QM215", null),
+            entry("ATOLL", null),
+            entry("ATOLL-AB", null),
+            entry("SDM660", null),
+            entry("BENGAL", null),
+            entry("KHAJE", null),
+            entry("BENGAL-IOT", null),
+            entry("BENGALP-IOT", null),
+            entry("DEFAULT", new String[]{"CONFIG_UNMAP_KERNEL_AT_EL0=y"}));
 
     private String[] lookupMitigations() throws Exception {
         return hardwareMitigations.get(getHardware());

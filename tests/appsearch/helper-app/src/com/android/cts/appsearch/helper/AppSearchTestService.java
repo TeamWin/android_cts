@@ -124,7 +124,7 @@ public class AppSearchTestService extends Service {
         public List<String> globalGetSchema(String packageName, String databaseName) {
             try {
                 GetSchemaResponse response =
-                        mGlobalSearchSessionShim.getSchema(packageName, databaseName).get();
+                        mGlobalSearchSessionShim.getSchemaAsync(packageName, databaseName).get();
                 if (response == null || response.getSchemas().isEmpty()) {
                     return null;
                 }
@@ -162,7 +162,7 @@ public class AppSearchTestService extends Service {
                             new ArraySet<>(permissionBundles.get(i)
                                     .getIntegerArrayList("permission")));
                 }
-                db.setSchema(setSchemaRequestBuilder.build()).get();
+                db.setSchemaAsync(setSchemaRequestBuilder.build()).get();
 
                 AppSearchEmail emailDocument =
                         new AppSearchEmail.Builder(namespace, id)
@@ -172,7 +172,7 @@ public class AppSearchTestService extends Service {
                                 .setBody("this is the body of the email")
                                 .build();
                 checkIsBatchResultSuccess(
-                        db.put(
+                        db.putAsync(
                                 new PutDocumentsRequest.Builder()
                                         .addGenericDocuments(emailDocument)
                                         .build()));
@@ -194,7 +194,7 @@ public class AppSearchTestService extends Service {
                                 Executors.newCachedThreadPool())
                                 .get();
 
-                db.setSchema(
+                db.setSchemaAsync(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(AppSearchEmail.SCHEMA)
                                 .setForceOverride(true)
@@ -211,7 +211,7 @@ public class AppSearchTestService extends Service {
                                 .setBody("this is the body of the email")
                                 .build();
                 checkIsBatchResultSuccess(
-                        db.put(
+                        db.putAsync(
                                 new PutDocumentsRequest.Builder()
                                         .addGenericDocuments(emailDocument)
                                         .build()));
@@ -233,7 +233,8 @@ public class AppSearchTestService extends Service {
                                 Executors.newCachedThreadPool())
                                 .get();
 
-                db.setSchema(new SetSchemaRequest.Builder().setForceOverride(true).build()).get();
+                db.setSchemaAsync(
+                        new SetSchemaRequest.Builder().setForceOverride(true).build()).get();
 
                 return true;
             } catch (Exception e) {

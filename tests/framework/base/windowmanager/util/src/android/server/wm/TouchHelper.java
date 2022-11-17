@@ -174,4 +174,43 @@ public class TouchHelper {
         final int y = bounds.top + bounds.height() / 2;
         tapOnDisplay(x, y, task.mDisplayId, false /* sync*/);
     }
+
+    public void triggerBackEventByGesture(int displayId, boolean sync, boolean waitForAnimations) {
+        final Rect bounds = mWmState.getDisplay(displayId).getDisplayRect();
+        int midHeight = bounds.top + bounds.height() / 2;
+        int midWidth = bounds.left + bounds.width() / 2;
+        quickSwipe(displayId, 0, midHeight, midWidth, midHeight, 10, sync, waitForAnimations);
+        mWmState.waitForAppTransitionIdleOnDisplay(displayId);
+    }
+
+    /**
+     * Injecting a sequence of motion event to simulate a gesture swipe.
+     */
+    private void quickSwipe(int displayId, int startX, int startY, int endX, int endY, int steps,
+            boolean sync, boolean waitForAnimations) {
+        if (steps <= 0) {
+            steps = 1;
+        }
+        final long startDownTime = SystemClock.uptimeMillis();
+        injectMotion(startDownTime, startDownTime, MotionEvent.ACTION_DOWN, startX, startY,
+                displayId, sync, waitForAnimations);
+
+        // inject in every 5 ms.
+        final int delayMillis = 5;
+        long nextEventTime = startDownTime + delayMillis;
+        final int stepGapX = (endX - startX) / steps;
+        final int stepGapY = (endY - startY) / steps;
+        for (int i = 0; i < steps; i++) {
+            SystemClock.sleep(delayMillis);
+            final int nextX = startX + stepGapX * i;
+            final int nextY = startY + stepGapY * i;
+            injectMotion(startDownTime, nextEventTime,
+                    MotionEvent.ACTION_MOVE, nextX, nextY, displayId, sync, waitForAnimations);
+            nextEventTime += delayMillis;
+        }
+
+        SystemClock.sleep(delayMillis);
+        injectMotion(startDownTime, nextEventTime,
+                MotionEvent.ACTION_UP, endX, endY, displayId, sync, waitForAnimations);
+    }
 }

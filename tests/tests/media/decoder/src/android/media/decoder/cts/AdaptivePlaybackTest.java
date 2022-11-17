@@ -1517,7 +1517,7 @@ class Codec {
     }
 }
 
-class CodecList extends ArrayList<Codec> { };
+class CodecList extends ArrayList<Codec> {}
 
 /* all codecs of mime, plus named codec if exists */
 class CodecFamily extends CodecList {

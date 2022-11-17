@@ -29,9 +29,13 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application android:requestLegacyExternalStorage="true">
+        <!-- Have LightBarActivity always take up the full screen, regardless of orientation,
+             so it's never letterboxed. If the activity is letterboxed, then the status icons will
+             be outside of the activity and the tests will fail. See b/246515090. -->
         <activity android:name=".LightBarActivity"
              android:theme="@android:style/Theme.Material.NoActionBar"
-             android:screenOrientation="portrait"/>
+             android:screenOrientation="unspecified"
+             android:resizeableActivity="true"/>
         <activity android:name=".LightBarThemeActivity"
              android:theme="@style/LightBarTheme"
              android:screenOrientation="portrait"/>

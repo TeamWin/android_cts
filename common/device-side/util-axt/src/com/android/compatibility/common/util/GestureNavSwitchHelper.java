@@ -16,8 +16,6 @@
 
 package com.android.compatibility.common.util;
 
-import static org.junit.Assume.assumeTrue;
-
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -31,69 +29,44 @@ import android.view.WindowManager;
 
 import androidx.test.InstrumentationRegistry;
 
-import org.junit.ClassRule;
-import org.junit.rules.ExternalResource;
-
 import java.io.IOException;
 
 /**
- * Test rule to enable gesture navigation on the device. Designed to be a {@link ClassRule}.
+ * Helper class to enable gesture navigation on the device.
  */
-public class GestureNavRule extends ExternalResource {
+public class GestureNavSwitchHelper {
     private static final String NAV_BAR_INTERACTION_MODE_RES_NAME = "config_navBarInteractionMode";
-    private static final int NAV_BAR_MODE_3BUTTON = 0;
-    private static final int NAV_BAR_MODE_2BUTTON = 1;
     private static final int NAV_BAR_MODE_GESTURAL = 2;
 
-    private static final String NAV_BAR_MODE_3BUTTON_OVERLAY =
-            "com.android.internal.systemui.navbar.threebutton";
-    private static final String NAV_BAR_MODE_2BUTTON_OVERLAY =
-            "com.android.internal.systemui.navbar.twobutton";
     private static final String GESTURAL_OVERLAY_NAME =
             "com.android.internal.systemui.navbar.gestural";
 
     private static final int WAIT_OVERLAY_TIMEOUT = 3000;
     private static final int PEEK_INTERVAL = 200;
 
-    private final Context mTargetContext;
+    private final Instrumentation mInstrumentation;
     private final UiDevice mDevice;
     private final WindowManager mWindowManager;
-
-    private final String mOriginalOverlayPackage;
-
-    @Override
-    protected void before() throws Throwable {
-        if (!isGestureMode()) {
-            enableGestureNav();
-        }
-    }
-
-    @Override
-    protected void after() {
-        if (!mOriginalOverlayPackage.equals(GESTURAL_OVERLAY_NAME)) {
-            disableGestureNav();
-        }
-    }
+    // This object has tried to enable gesture navigation but failed.
+    private boolean mTriedEnableButFail;
 
     /**
      * Initialize all options in System Gesture.
      */
-    public GestureNavRule() {
-        @SuppressWarnings("deprecation")
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        mDevice = UiDevice.getInstance(instrumentation);
-        mTargetContext = instrumentation.getTargetContext();
+    public GestureNavSwitchHelper() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mDevice = UiDevice.getInstance(mInstrumentation);
+        final Context context = mInstrumentation.getTargetContext();
 
-        mOriginalOverlayPackage = getCurrentOverlayPackage();
-        mWindowManager = mTargetContext.getSystemService(WindowManager.class);
+        mWindowManager = context.getSystemService(WindowManager.class);
     }
 
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean hasSystemGestureFeature() {
         if (!containsNavigationBar()) {
             return false;
         }
-        final PackageManager pm = mTargetContext.getPackageManager();
+        Context context = mInstrumentation.getTargetContext();
+        final PackageManager pm = context.getPackageManager();
 
         // No bars on embedded devices.
         // No bars on TVs and watches.
@@ -103,21 +76,29 @@ public class GestureNavRule extends ExternalResource {
                 || pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
     }
 
-    private String getCurrentOverlayPackage() {
-        final int currentNavMode = getCurrentNavMode();
-        switch (currentNavMode) {
-            case NAV_BAR_MODE_GESTURAL:
-                return GESTURAL_OVERLAY_NAME;
-            case NAV_BAR_MODE_2BUTTON:
-                return NAV_BAR_MODE_2BUTTON_OVERLAY;
-            case NAV_BAR_MODE_3BUTTON:
-            default:
-                return NAV_BAR_MODE_3BUTTON_OVERLAY;
-        }
-    }
-
     private void insetsToRect(Insets insets, Rect outRect) {
         outRect.set(insets.left, insets.top, insets.right, insets.bottom);
+    }
+
+    /**
+     * Attempt to enable gesture navigation mode.
+     * @return true if gesture navigation mode is enabled.
+     */
+    public boolean enableGestureNavigationMode() {
+        // skip retry
+        if (mTriedEnableButFail) {
+            return false;
+        }
+        if (!hasSystemGestureFeature()) {
+            return false;
+        }
+        if (isGestureMode()) {
+            return true;
+        }
+        enableGestureNav();
+        final boolean success = isGestureMode();
+        mTriedEnableButFail = !success;
+        return success;
     }
 
     private void enableGestureNav() {
@@ -140,19 +121,6 @@ public class GestureNavRule extends ExternalResource {
         });
     }
 
-    private void disableGestureNav() {
-        if (!hasSystemGestureFeature()) {
-            return;
-        }
-        monitorOverlayChange(() -> {
-            try {
-                mDevice.executeShellCommand("cmd overlay enable " + mOriginalOverlayPackage);
-            } catch (IOException ignore) {
-                // Do nothing
-            }
-        });
-    }
-
     private void getCurrentInsetsSize(Rect outSize) {
         outSize.setEmpty();
         if (mWindowManager != null) {
@@ -170,7 +138,6 @@ public class GestureNavRule extends ExternalResource {
         if (mWindowManager != null) {
             final Rect initSize = new Rect();
             getCurrentInsetsSize(initSize);
-
             overlayChangeCommand.run();
             // wait for insets size change
             final Rect peekSize = new Rect();
@@ -190,18 +157,9 @@ public class GestureNavRule extends ExternalResource {
         }
     }
 
-    /**
-     * Assumes the device is in gesture navigation mode. Due to constraints of AndroidJUnitRunner we
-     * can't make assumptions in static contexts like in a {@link ClassRule} so tests need to call
-     * this method explicitly.
-     */
-    public void assumeGestureNavigationMode() {
-        boolean isGestureMode = isGestureMode();
-        assumeTrue("Gesture navigation required", isGestureMode);
-    }
-
     private int getCurrentNavMode() {
-        Resources res = mTargetContext.getResources();
+        final Context context  = mInstrumentation.getTargetContext();
+        final Resources res = context.getResources();
         int naviModeId = res.getIdentifier(NAV_BAR_INTERACTION_MODE_RES_NAME, "integer", "android");
         return res.getInteger(naviModeId);
     }
@@ -212,7 +170,10 @@ public class GestureNavRule extends ExternalResource {
         return peekSize.height() != 0;
     }
 
-    private boolean isGestureMode() {
+    /**
+     * @return Whether gesture navigation mode is enabled.
+     */
+    public boolean isGestureMode() {
         if (!containsNavigationBar()) {
             return false;
         }

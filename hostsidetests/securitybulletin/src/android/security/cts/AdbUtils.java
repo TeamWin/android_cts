@@ -63,6 +63,10 @@ public class AdbUtils {
     final static Pattern regexSpecialCharsEscapedPattern =
             Pattern.compile("[" + regexSpecialCharsEscaped + "]");
 
+    /**
+     * @deprecated Use {@link NativePoc} instead.
+     */
+    @Deprecated
     public static class pocConfig {
         String binaryName;
         String arguments;
@@ -79,12 +83,15 @@ public class AdbUtils {
         }
     }
 
-    /** Runs a commandline on the specified device
+    /**
+     * Runs a commandline on the specified device
      *
+     * @deprecated Use {@link CommandUtil} instead.
      * @param command the command to be ran
      * @param device device for the command to be ran on
      * @return the console output from running the command
      */
+    @Deprecated
     public static String runCommandLine(String command, ITestDevice device) throws Exception {
         if ("reboot".equals(command)) {
             throw new IllegalArgumentException(
@@ -96,10 +103,12 @@ public class AdbUtils {
     /**
      * Pushes and runs a binary to the selected device
      *
+     * @deprecated Use {@link NativePoc} instead.
      * @param pocName name of the poc binary
      * @param device device to be ran on
      * @return the console output from the binary
      */
+    @Deprecated
     public static String runPoc(String pocName, ITestDevice device) throws Exception {
         return runPoc(pocName, device, SecurityTestCase.TIMEOUT_NONDETERMINISTIC);
     }
@@ -107,11 +116,13 @@ public class AdbUtils {
     /**
      * Pushes and runs a binary to the selected device
      *
+     * @deprecated Use {@link NativePoc} instead.
      * @param pocName name of the poc binary
      * @param device device to be ran on
      * @param timeout time to wait for output in seconds
      * @return the console output from the binary
      */
+    @Deprecated
     public static String runPoc(String pocName, ITestDevice device, int timeout) throws Exception {
         return runPoc(pocName, device, timeout, null);
     }
@@ -119,12 +130,14 @@ public class AdbUtils {
     /**
      * Pushes and runs a binary to the selected device
      *
+     * @deprecated Use {@link NativePoc} instead.
      * @param pocName name of the poc binary
      * @param device device to be ran on
      * @param timeout time to wait for output in seconds
      * @param arguments the input arguments for the poc
      * @return the console output from the binary
      */
+    @Deprecated
     public static String runPoc(String pocName, ITestDevice device, int timeout, String arguments)
             throws Exception {
         CollectingOutputReceiver receiver = new CollectingOutputReceiver();
@@ -135,48 +148,57 @@ public class AdbUtils {
     /**
      * Pushes and runs a binary to the selected device and ignores any of its output.
      *
+     * @deprecated Use {@link NativePoc} instead.
      * @param pocName name of the poc binary
      * @param device device to be ran on
      * @param timeout time to wait for output in seconds
      */
+    @Deprecated
     public static void runPocNoOutput(String pocName, ITestDevice device, int timeout)
             throws Exception {
         runPocNoOutput(pocName, device, timeout, null);
     }
 
     /**
-     * Pushes and runs a binary with arguments to the selected device and
-     * ignores any of its output.
+     * Pushes and runs a binary with arguments to the selected device and ignores any of its output.
      *
+     * @deprecated Use {@link NativePoc} instead.
      * @param pocName name of the poc binary
      * @param device device to be ran on
      * @param timeout time to wait for output in seconds
      * @param arguments input arguments for the poc
      */
-    public static void runPocNoOutput(String pocName, ITestDevice device, int timeout,
-            String arguments) throws Exception {
+    @Deprecated
+    public static void runPocNoOutput(
+            String pocName, ITestDevice device, int timeout, String arguments) throws Exception {
         runPoc(pocName, device, timeout, arguments, null);
     }
 
     /**
-     * Pushes and runs a binary with arguments to the selected device and
-     * ignores any of its output.
+     * Pushes and runs a binary with arguments to the selected device and ignores any of its output.
      *
+     * @deprecated Use {@link NativePoc} instead.
      * @param pocName name of the poc binary
      * @param device device to be ran on
      * @param timeout time to wait for output in seconds
      * @param arguments input arguments for the poc
      * @param receiver the type of receiver to run against
      */
-    public static int runPoc(String pocName, ITestDevice device, int timeout,
-            String arguments, IShellOutputReceiver receiver) throws Exception {
+    @Deprecated
+    public static int runPoc(
+            String pocName,
+            ITestDevice device,
+            int timeout,
+            String arguments,
+            IShellOutputReceiver receiver)
+            throws Exception {
               return runPoc(pocName, device, timeout, arguments, null, receiver);
     }
 
     /**
-     * Pushes and runs a binary with arguments to the selected device and
-     * ignores any of its output.
+     * Pushes and runs a binary with arguments to the selected device and ignores any of its output.
      *
+     * @deprecated Use {@link NativePoc} instead.
      * @param pocName name of the poc binary
      * @param device device to be ran on
      * @param timeout time to wait for output in seconds
@@ -184,9 +206,15 @@ public class AdbUtils {
      * @param envVars run the poc with environment variables
      * @param receiver the type of receiver to run against
      */
-    public static int runPoc(String pocName, ITestDevice device, int timeout,
-            String arguments, Map<String, String> envVars,
-            IShellOutputReceiver receiver) throws Exception {
+    @Deprecated
+    public static int runPoc(
+            String pocName,
+            ITestDevice device,
+            int timeout,
+            String arguments,
+            Map<String, String> envVars,
+            IShellOutputReceiver receiver)
+            throws Exception {
         String remoteFile = String.format("%s%s", TMP_PATH, pocName);
         SecurityTestCase.getPocPusher(device).pushFile(pocName + "_sts", remoteFile);
 
@@ -242,9 +270,12 @@ public class AdbUtils {
 
     /**
      * Assert the poc is executable
+     *
+     * @deprecated Use {@link NativePoc} instead.
      * @param pocName name of the poc binary
      * @param device device to be ran on
      */
+    @Deprecated
     private static void assertPocExecutable(String pocName, ITestDevice device) throws Exception {
         String fullPocPath = TMP_PATH + pocName;
         device.executeShellCommand("chmod 777 " + fullPocPath);
@@ -351,7 +382,10 @@ public class AdbUtils {
     }
     /**
      * Utility function to help check the exit code of a shell command
+     *
+     * @deprecated Use {@link CommandUtil} instead.
      */
+    @Deprecated
     public static int runCommandGetExitCode(String cmd, ITestDevice device) throws Exception {
         long time = System.currentTimeMillis();
         String exitStatusString = runCommandLine(
@@ -373,16 +407,17 @@ public class AdbUtils {
     }
 
     /**
-     * Pushes and runs a binary to the selected device and checks exit code
-     * Return code 113 is used to indicate the vulnerability
+     * Pushes and runs a binary to the selected device and checks exit code Return code 113 is used
+     * to indicate the vulnerability
      *
+     * @deprecated Use {@link NativePoc} instead.
      * @param pocName a string path to poc from the /res folder
      * @param device device to be ran on
      * @param timeout time to wait for output in seconds
      */
     @Deprecated
-    public static boolean runPocCheckExitCode(String pocName, ITestDevice device,
-                                              int timeout) throws Exception {
+    public static boolean runPocCheckExitCode(String pocName, ITestDevice device, int timeout)
+            throws Exception {
 
        //Refer to go/asdl-sts-guide Test section for knowing the significance of 113 code
        return runPocGetExitStatus(pocName, device, timeout) == 113;
@@ -390,11 +425,13 @@ public class AdbUtils {
 
     /**
      * Pushes and runs a binary to the device and returns the exit status.
+     *
+     * @deprecated Use {@link NativePoc} instead.
      * @param pocName a string path to poc from the /res folder
      * @param device device to be ran on
      * @param timeout time to wait for output in seconds
-
      */
+    @Deprecated
     public static int runPocGetExitStatus(String pocName, ITestDevice device, int timeout)
             throws Exception {
        return runPocGetExitStatus(pocName, null, device, timeout);
@@ -402,36 +439,49 @@ public class AdbUtils {
 
     /**
      * Pushes and runs a binary to the device and returns the exit status.
+     *
+     * @deprecated Use {@link NativePoc} instead.
      * @param pocName a string path to poc from the /res folder
      * @param arguments input arguments for the poc
      * @param device device to be ran on
      * @param timeout time to wait for output in seconds
      */
-    public static int runPocGetExitStatus(String pocName, String arguments, ITestDevice device,
-            int timeout) throws Exception {
+    @Deprecated
+    public static int runPocGetExitStatus(
+            String pocName, String arguments, ITestDevice device, int timeout) throws Exception {
               return runPocGetExitStatus(pocName, arguments, null, device, timeout);
     }
 
     /**
      * Pushes and runs a binary to the device and returns the exit status.
+     *
+     * @deprecated Use {@link NativePoc} instead.
      * @param pocName name of the poc binary
      * @param arguments input arguments for the poc
      * @param envVars run the poc with environment variables
      * @param device device to be run on
      * @param timeout time to wait for output in seconds
      */
+    @Deprecated
     public static int runPocGetExitStatus(
-            String pocName, String arguments, Map<String, String> envVars,
-            ITestDevice device, int timeout) throws Exception {
+            String pocName,
+            String arguments,
+            Map<String, String> envVars,
+            ITestDevice device,
+            int timeout)
+            throws Exception {
         return runPoc(pocName, device, timeout, arguments, envVars, null);
     }
 
     /**
      * Pushes and runs a binary and asserts that the exit status isn't 113: vulnerable.
+     *
+     * @deprecated Use {@link NativePoc} instead.
      * @param pocName a string path to poc from the /res folder
      * @param device device to be ran on
      * @param timeout time to wait for output in seconds
      */
+    @Deprecated
     public static void runPocAssertExitStatusNotVulnerable(
             String pocName, ITestDevice device, int timeout) throws Exception {
         runPocAssertExitStatusNotVulnerable(pocName, null, device, timeout);
@@ -439,27 +489,37 @@ public class AdbUtils {
 
     /**
      * Pushes and runs a binary and asserts that the exit status isn't 113: vulnerable.
+     *
+     * @deprecated Use {@link NativePoc} instead.
      * @param pocName a string path to poc from the /res folder
      * @param arguments input arguments for the poc
      * @param device device to be ran on
      * @param timeout time to wait for output in seconds
      */
-    public static void runPocAssertExitStatusNotVulnerable(String pocName, String arguments,
-            ITestDevice device, int timeout) throws Exception {
+    @Deprecated
+    public static void runPocAssertExitStatusNotVulnerable(
+            String pocName, String arguments, ITestDevice device, int timeout) throws Exception {
         runPocAssertExitStatusNotVulnerable(pocName, arguments, null, device, timeout);
     }
 
     /**
      * Pushes and runs a binary and asserts that the exit status isn't 113: vulnerable.
+     *
+     * @deprecated Use {@link NativePoc} instead.
      * @param pocName name of the poc binary
      * @param arguments input arguments for the poc
      * @param envVars run the poc with environment variables
      * @param device device to be ran on
      * @param timeout time to wait for output in seconds
      */
+    @Deprecated
     public static void runPocAssertExitStatusNotVulnerable(
-            String pocName, String arguments, Map<String, String> envVars,
-            ITestDevice device, int timeout) throws Exception {
+            String pocName,
+            String arguments,
+            Map<String, String> envVars,
+            ITestDevice device,
+            int timeout)
+            throws Exception {
         assertTrue("PoC returned exit status 113: vulnerable",
                 runPocGetExitStatus(pocName, arguments, envVars, device, timeout) != 113);
     }
@@ -467,12 +527,15 @@ public class AdbUtils {
     /**
      * Runs the poc binary and asserts that there are no security crashes that match the expected
      * process pattern.
+     *
+     * @deprecated Use {@link NativePoc} instead.
      * @param pocName a string path to poc from the /res folder
      * @param device device to be ran on
      * @param processPatternStrings a Pattern string to match the crash tombstone process
      */
-    public static void runPocAssertNoCrashes(String pocName, ITestDevice device,
-            String... processPatternStrings) throws Exception {
+    @Deprecated
+    public static void runPocAssertNoCrashes(
+            String pocName, ITestDevice device, String... processPatternStrings) throws Exception {
         runPocAssertNoCrashes(pocName, device,
                 new CrashUtils.Config().setProcessPatterns(processPatternStrings));
     }
@@ -480,25 +543,32 @@ public class AdbUtils {
     /**
      * Runs the poc binary and asserts that there are no security crashes that match the expected
      * process pattern.
+     *
+     * @deprecated Use {@link NativePoc} instead.
      * @param pocName a string path to poc from the /res folder
      * @param device device to be ran on
      * @param config a crash parser configuration
      */
-    public static void runPocAssertNoCrashes(String pocName, ITestDevice device,
-            CrashUtils.Config config) throws Exception {
+    @Deprecated
+    public static void runPocAssertNoCrashes(
+            String pocName, ITestDevice device, CrashUtils.Config config) throws Exception {
         runPocAssertNoCrashes(pocName, device, null, config);
     }
 
     /**
      * Runs the poc binary and asserts that there are no security crashes that match the expected
      * process pattern, including arguments when running.
+     *
+     * @deprecated Use {@link NativePoc} instead.
      * @param pocName a string path to poc from the /res folder
      * @param device device to be ran on
      * @param arguments input arguments for the poc
      * @param config a crash parser configuration
      */
-    public static void runPocAssertNoCrashes(String pocName, ITestDevice device, String arguments,
-            CrashUtils.Config config) throws Exception {
+    @Deprecated
+    public static void runPocAssertNoCrashes(
+            String pocName, ITestDevice device, String arguments, CrashUtils.Config config)
+            throws Exception {
         AdbUtils.runCommandLine("logcat -c", device);
         AdbUtils.runPocNoOutput(pocName, device,
                 SecurityTestCase.TIMEOUT_NONDETERMINISTIC, arguments);
@@ -506,97 +576,115 @@ public class AdbUtils {
     }
 
     /**
-     * Runs the poc binary and asserts following 2 conditions.
-     *  1. There are no security crashes in the binary.
-     *  2. The exit status isn't 113 (Code 113 is used to indicate the vulnerability condition).
+     * Runs the poc binary and asserts following 2 conditions. 1. There are no security crashes in
+     * the binary. 2. The exit status isn't 113 (Code 113 is used to indicate the vulnerability
+     * condition).
      *
+     * @deprecated Use {@link NativePoc} instead.
      * @param binaryName name of the binary
      * @param arguments arguments for running the binary
      * @param device device to be run on
      */
-    public static void runPocAssertNoCrashesNotVulnerable(String binaryName, String arguments,
-            ITestDevice device) throws Exception {
+    @Deprecated
+    public static void runPocAssertNoCrashesNotVulnerable(
+            String binaryName, String arguments, ITestDevice device) throws Exception {
         runPocAssertNoCrashesNotVulnerable(binaryName, arguments, null, null, device, null);
     }
 
     /**
-     * Runs the poc binary and asserts following 2 conditions.
-     *  1. There are no security crashes in the binary.
-     *  2. The exit status isn't 113 (Code 113 is used to indicate the vulnerability condition).
+     * Runs the poc binary and asserts following 2 conditions. 1. There are no security crashes in
+     * the binary. 2. The exit status isn't 113 (Code 113 is used to indicate the vulnerability
+     * condition).
      *
+     * @deprecated Use {@link NativePoc} instead.
      * @param binaryName name of the binary
      * @param arguments arguments for running the binary
      * @param device device to be run on
-     * @param processPatternStrings a Pattern string to match the crash tombstone
-     *        process
+     * @param processPatternStrings a Pattern string to match the crash tombstone process
      */
-    public static void runPocAssertNoCrashesNotVulnerable(String binaryName, String arguments,
-            ITestDevice device, String processPatternStrings[]) throws Exception {
+    @Deprecated
+    public static void runPocAssertNoCrashesNotVulnerable(
+            String binaryName, String arguments, ITestDevice device, String processPatternStrings[])
+            throws Exception {
         runPocAssertNoCrashesNotVulnerable(binaryName, arguments, null, null, device,
                 processPatternStrings);
     }
 
     /**
-     * Runs the poc binary and asserts following 2 conditions.
-     *  1. There are no security crashes in the binary.
-     *  2. The exit status isn't 113 (Code 113 is used to indicate the vulnerability condition).
+     * Runs the poc binary and asserts following 2 conditions. 1. There are no security crashes in
+     * the binary. 2. The exit status isn't 113 (Code 113 is used to indicate the vulnerability
+     * condition).
      *
+     * @deprecated Use {@link NativePoc} instead.
      * @param binaryName name of the binary
      * @param arguments arguments for running the binary
      * @param inputFiles files required as input
-     * @param inputFilesDestination destination directory to which input files are
-     *        pushed
+     * @param inputFilesDestination destination directory to which input files are pushed
      * @param device device to be run on
      */
-    public static void runPocAssertNoCrashesNotVulnerable(String binaryName, String arguments,
-            String inputFiles[], String inputFilesDestination, ITestDevice device)
+    @Deprecated
+    public static void runPocAssertNoCrashesNotVulnerable(
+            String binaryName,
+            String arguments,
+            String inputFiles[],
+            String inputFilesDestination,
+            ITestDevice device)
             throws Exception {
         runPocAssertNoCrashesNotVulnerable(binaryName, arguments, inputFiles, inputFilesDestination,
                 device, null);
     }
 
     /**
-     * Runs the poc binary and asserts following 3 conditions.
-     *  1. There are no security crashes in the binary.
-     *  2. There are no security crashes that match the expected process pattern.
-     *  3. The exit status isn't 113 (Code 113 is used to indicate the vulnerability condition).
+     * Runs the poc binary and asserts following 3 conditions. 1. There are no security crashes in
+     * the binary. 2. There are no security crashes that match the expected process pattern. 3. The
+     * exit status isn't 113 (Code 113 is used to indicate the vulnerability condition).
      *
+     * @deprecated Use {@link NativePoc} instead.
      * @param binaryName name of the binary
      * @param arguments arguments for running the binary
      * @param inputFiles files required as input
-     * @param inputFilesDestination destination directory to which input files are
-     *        pushed
+     * @param inputFilesDestination destination directory to which input files are pushed
      * @param device device to be run on
-     * @param processPatternStrings a Pattern string to match the crash tombstone
-     *        process
+     * @param processPatternStrings a Pattern string to match the crash tombstone process
      */
-    public static void runPocAssertNoCrashesNotVulnerable(String binaryName, String arguments,
-            String inputFiles[], String inputFilesDestination, ITestDevice device,
-            String processPatternStrings[]) throws Exception {
+    @Deprecated
+    public static void runPocAssertNoCrashesNotVulnerable(
+            String binaryName,
+            String arguments,
+            String inputFiles[],
+            String inputFilesDestination,
+            ITestDevice device,
+            String processPatternStrings[])
+            throws Exception {
         runPocAssertNoCrashesNotVulnerable(binaryName, arguments, null,
                 inputFiles, inputFilesDestination, device, processPatternStrings);
     }
 
     /**
-     * Runs the poc binary and asserts following 3 conditions.
-     *  1. There are no security crashes in the binary.
-     *  2. There are no security crashes that match the expected process pattern.
-     *  3. The exit status isn't 113 (Code 113 is used to indicate the vulnerability condition).
+     * Runs the poc binary and asserts following 3 conditions. 1. There are no security crashes in
+     * the binary. 2. There are no security crashes that match the expected process pattern. 3. The
+     * exit status isn't 113 (Code 113 is used to indicate the vulnerability condition).
      *
+     * @deprecated Use {@link NativePoc} instead.
      * @param binaryName name of the binary
      * @param arguments arguments for running the binary
      * @param envVars run the poc with environment variables
      * @param inputFiles files required as input
-     * @param inputFilesDestination destination directory to which input files are
-     *        pushed
+     * @param inputFilesDestination destination directory to which input files are pushed
      * @param device device to be run on
      * @param processPatternStrings a Pattern string (other than binary name) to match the crash
-     *        tombstone process
+     *     tombstone process
      */
+    @Deprecated
     public static void runPocAssertNoCrashesNotVulnerable(
-            String binaryName, String arguments, Map<String, String> envVars,
-            String inputFiles[], String inputFilesDestination, ITestDevice device,
-            String... processPatternStrings) throws Exception {
+            String binaryName,
+            String arguments,
+            Map<String, String> envVars,
+            String inputFiles[],
+            String inputFilesDestination,
+            ITestDevice device,
+            String... processPatternStrings)
+            throws Exception {
         pocConfig testConfig = new pocConfig(binaryName, device);
         testConfig.arguments = arguments;
         testConfig.envVars = envVars;
@@ -620,13 +708,14 @@ public class AdbUtils {
     }
 
     /**
-     * Runs the poc binary and asserts following 3 conditions.
-     *  1. There are no security crashes in the binary.
-     *  2. There are no security crashes that match the expected process pattern.
-     *  3. The exit status isn't 113 (Code 113 is used to indicate the vulnerability condition).
+     * Runs the poc binary and asserts following 3 conditions. 1. There are no security crashes in
+     * the binary. 2. There are no security crashes that match the expected process pattern. 3. The
+     * exit status isn't 113 (Code 113 is used to indicate the vulnerability condition).
      *
+     * @deprecated Use {@link NativePoc} instead.
      * @param testConfig test configuration
      */
+    @Deprecated
     public static void runPocAssertNoCrashesNotVulnerable(pocConfig testConfig) throws Exception {
         String[] inputFiles = null;
         if(!testConfig.inputFiles.isEmpty()) {
@@ -660,11 +749,14 @@ public class AdbUtils {
 
     /**
      * Dumps logcat and asserts that there are no security crashes that match the expected process.
-     * By default, checks min crash addresses
-     * pattern. Ensure that adb logcat -c is called beforehand.
+     * By default, checks min crash addresses pattern. Ensure that adb logcat -c is called
+     * beforehand.
+     *
+     * @deprecated Use {@link TombstoneUtils} instead.
      * @param device device to be ran on
      * @param processPatternStrings a Pattern string to match the crash tombstone process
      */
+    @Deprecated
     public static void assertNoCrashes(ITestDevice device, String... processPatternStrings)
             throws Exception {
         assertNoCrashes(device, new CrashUtils.Config().setProcessPatterns(processPatternStrings));
@@ -673,11 +765,14 @@ public class AdbUtils {
     /**
      * Dumps logcat and asserts that there are no security crashes that match the expected process
      * pattern. Ensure that adb logcat -c is called beforehand.
+     *
      * @param device device to be ran on
      * @param config a crash parser configuration
+     * @deprecated Use {@link TombstoneUtils} instead.
      */
-    public static void assertNoCrashes(ITestDevice device,
-            CrashUtils.Config config) throws Exception {
+    @Deprecated
+    public static void assertNoCrashes(ITestDevice device, CrashUtils.Config config)
+            throws Exception {
         String logcat = AdbUtils.runCommandLine("logcat -d *:S DEBUG:V", device);
 
         JSONArray crashes = CrashUtils.addAllCrashes(logcat, new JSONArray());

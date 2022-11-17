@@ -622,6 +622,7 @@ public class JobThrottlingTest {
         assumeFalse("not testable in leanback device", mLeanbackOnly);
         assumeFalse("not testable, since ethernet is connected", hasEthernetConnection());
         assumeTrue(mNetworkingHelper.hasWifiFeature());
+        mNetworkingHelper.ensureSavedWifiNetwork();
 
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare", "false");
@@ -974,6 +975,7 @@ public class JobThrottlingTest {
         assumeFalse("not testable, since ethernet is connected", hasEthernetConnection());
 
         assumeTrue(mNetworkingHelper.hasWifiFeature());
+        mNetworkingHelper.ensureSavedWifiNetwork();
 
         // This test is designed for the old quota system.
         mTareDeviceConfigStateHelper.set("enable_tare", "false");

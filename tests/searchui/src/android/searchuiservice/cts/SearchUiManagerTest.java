@@ -239,9 +239,6 @@ public class SearchUiManagerTest {
         assertTrue(expectedQuery.getInput().equals(QUERY_INPUT));
         assertEquals(expectedQuery.getTimestampMillis(), QUERY_TIMESTAMP);
         assertTrue(equalBundles(expectedQuery.getExtras(), extras));
-
-        Consumer<List<SearchTarget>> expectedCallback = callbackArg.getValue();
-        expectedCallback.andThen(callbackVerifier);
     }
 
     private void setService(String service) {

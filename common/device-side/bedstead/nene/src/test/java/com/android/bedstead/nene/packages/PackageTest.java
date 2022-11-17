@@ -100,7 +100,7 @@ public class PackageTest {
 
     @Test
     public void packageName_returnsPackageName() {
-        TestApis.packages().find(PACKAGE_NAME).packageName().equals(PACKAGE_NAME);
+        assertThat(TestApis.packages().find(PACKAGE_NAME).packageName()).isEqualTo(PACKAGE_NAME);
     }
 
     @Test

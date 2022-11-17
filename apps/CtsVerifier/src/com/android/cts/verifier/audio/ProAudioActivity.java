@@ -305,7 +305,7 @@ public class ProAudioActivity
                         this, android.R.style.Theme_Material_Dialog_Alert);
                 builder.setTitle(getResources().getString(R.string.proaudio_hdmi_infotitle));
                 builder.setMessage(getResources().getString(R.string.proaudio_hdmi_message));
-                builder.setPositiveButton(android.R.string.yes,
+                builder.setPositiveButton(android.R.string.ok,
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                             }

@@ -4162,7 +4162,7 @@ public class ParcelTest extends AndroidTestCase {
      * A class that would be Parcelable except that it doesn't have a CREATOR field declared to be
      * of the correct type.
      */
-    @SuppressWarnings("unused") // Referenced via reflection only
+    @SuppressWarnings({"unused", "ParcelableCreator"}) // Referenced via reflection only
     private static class ParcelableWithBadCreator implements Parcelable {
 
         static {

@@ -80,6 +80,11 @@ public class Utils {
         }
     }
 
+    /** Waits for the service to become idle. */
+    public static void waitForIdleService() throws Exception {
+        waitForIdleService(() -> getBiometricServiceCurrentState().mSensorStates);
+    }
+
     /**
      * Waits for the service to become idle
      * @throws Exception
@@ -94,6 +99,12 @@ public class Utils {
             }
         }
         Log.d(TAG, "Timed out waiting for idle");
+    }
+
+
+    /** Waits for the specified sensor to become non-idle. */
+    public static void waitForBusySensor(int sensorId) throws Exception {
+        waitForBusySensor(sensorId, () -> getBiometricServiceCurrentState().mSensorStates);
     }
 
     /**

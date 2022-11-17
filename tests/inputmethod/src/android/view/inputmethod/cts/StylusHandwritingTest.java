@@ -68,7 +68,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CommonTestUtils;
-import com.android.compatibility.common.util.GestureNavRule;
+import com.android.compatibility.common.util.GestureNavSwitchHelper;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
@@ -77,7 +77,6 @@ import com.android.cts.mockime.MockImeSession;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -108,8 +107,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     private int mHwInitialState;
     private boolean mShouldRestoreInitialHwState;
 
-    @ClassRule
-    public static GestureNavRule sGestureNavRule = new GestureNavRule();
+    private static final GestureNavSwitchHelper sGestureNavRule = new GestureNavSwitchHelper();
 
     @Before
     public void setup() {
@@ -578,7 +576,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
      */
     @Test
     public void testStylusSession_stylusWouldNotTriggerNavbarGestures() throws Exception {
-        sGestureNavRule.assumeGestureNavigationMode();
+        assumeTrue(sGestureNavRule.isGestureMode());
 
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
@@ -634,7 +632,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
      */
     @Test
     public void testStylusSession_fingerTriggersNavbarGestures() throws Exception {
-        sGestureNavRule.assumeGestureNavigationMode();
+        assumeTrue(sGestureNavRule.isGestureMode());
 
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),

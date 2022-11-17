@@ -926,6 +926,25 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         }
     }
 
+    /**
+     * Test basic auto-framing.
+     */
+    @Test
+    public void testAutoframing() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                if (!mAllStaticInfo.get(id).isAutoframingSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support auto-framing, skipping");
+                    continue;
+                }
+                openDevice(id);
+                autoframingTestByCamera();
+            } finally {
+                closeDevice();
+            }
+        }
+    }
+
     // TODO: add 3A state machine test.
 
     /**
@@ -3071,6 +3090,24 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                         ratio, listener, NUM_FRAMES_VERIFIED);
             }
         }
+    }
+
+    /**
+     * Basic sanity test that just checks if CONTROL_AUTOFRAMING can be set as a part of the
+     * CAPTURE_REQUEST.
+     * TODO: @bkukreja expand the test to cover the correct auto-framing behavior once the
+     *       cuttlefish implementation is complete.
+     */
+    private void autoframingTestByCamera() throws Exception {
+        CaptureRequest.Builder requestBuilder =
+                mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        requestBuilder.set(CaptureRequest.CONTROL_AUTOFRAMING, CONTROL_AUTOFRAMING_ON);
+
+        SimpleCaptureCallback listener;
+        listener = new SimpleCaptureCallback();
+        Size maxPreviewSz = mOrderedPreviewSizes.get(0); // Max preview size.
+        startPreview(requestBuilder, maxPreviewSz, listener);
+        stopPreview();
     }
 
     //----------------------------------------------------------------

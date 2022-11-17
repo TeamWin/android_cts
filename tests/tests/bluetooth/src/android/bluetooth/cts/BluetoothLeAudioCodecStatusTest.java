@@ -42,25 +42,17 @@ public class BluetoothLeAudioCodecStatusTest extends AndroidTestCase {
                .setSampleRate(BluetoothLeAudioCodecConfig.SAMPLE_RATE_48000
                                 | BluetoothLeAudioCodecConfig.SAMPLE_RATE_16000)
                .build();
-    private static final List<BluetoothLeAudioCodecConfig> INPUT_CAPABILITIES_CONFIG =
-            new ArrayList() {{
-                    add(LC3_48KHZ_16KHZ_CONFIG);
-            }};
+    private static final List<BluetoothLeAudioCodecConfig> INPUT_CAPABILITIES_CONFIG = List.of(
+            LC3_48KHZ_16KHZ_CONFIG);
 
-    private static final List<BluetoothLeAudioCodecConfig> OUTPUT_CAPABILITIES_CONFIG =
-            new ArrayList() {{
-                    add(LC3_48KHZ_16KHZ_CONFIG);
-            }};
+    private static final List<BluetoothLeAudioCodecConfig> OUTPUT_CAPABILITIES_CONFIG = List.of(
+            LC3_48KHZ_16KHZ_CONFIG);
 
-    private static final List<BluetoothLeAudioCodecConfig> INPUT_SELECTABLE_CONFIG =
-            new ArrayList() {{
-                    add(LC3_16KHZ_CONFIG);
-            }};
+    private static final List<BluetoothLeAudioCodecConfig> INPUT_SELECTABLE_CONFIG = List.of(
+            LC3_16KHZ_CONFIG);
 
-    private static final List<BluetoothLeAudioCodecConfig> OUTPUT_SELECTABLE_CONFIG =
-            new ArrayList() {{
-                    add(LC3_48KHZ_16KHZ_CONFIG);
-            }};
+    private static final List<BluetoothLeAudioCodecConfig> OUTPUT_SELECTABLE_CONFIG = List.of(
+            LC3_48KHZ_16KHZ_CONFIG);
 
     private static final BluetoothLeAudioCodecStatus LE_CODEC_STATUS =
             new BluetoothLeAudioCodecStatus(LC3_16KHZ_CONFIG, LC3_48KHZ_CONFIG,

@@ -312,6 +312,7 @@ public class MotionEventTest {
         }
     }
 
+    @SuppressWarnings("ReturnValueIgnored")
     @Test
     public void testToString() {
         // make sure this method never throw exception.

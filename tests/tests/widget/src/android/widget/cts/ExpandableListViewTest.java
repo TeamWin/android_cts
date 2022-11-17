@@ -394,7 +394,7 @@ public class ExpandableListViewTest {
         } catch (NullPointerException e) {
         }
         assertEquals(0, mExpandableListView.getFlatListPosition(
-                ExpandableListView.PACKED_POSITION_TYPE_CHILD<<32));
+                ((long) ExpandableListView.PACKED_POSITION_TYPE_CHILD)<<32L));
         // 0x8000000100000000L means this is a child and group position is 1.
         assertEquals(1, mExpandableListView.getFlatListPosition(0x8000000100000000L));
     }

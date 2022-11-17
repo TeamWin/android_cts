@@ -207,6 +207,10 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver implements Auto
      */
     public @Nullable
     Intent awaitForBroadcast(long timeoutMillis) {
+        // Give ourselves a better shot at finding the broadcast by draining
+        // past all pending broadcasts
+        AmUtils.waitForBroadcastBarrier();
+
         if (mReceivedIntent != null) {
             return mReceivedIntent;
         }

@@ -1021,6 +1021,7 @@ public class MediaSessionTest {
      *
      * @param controller The controller for the session
      */
+    @SuppressWarnings("ReturnValueIgnored")
     private void verifyNewSession(MediaController controller) {
         assertWithMessage("New session has unexpected configuration")
                 .that(controller.getFlags()).isEqualTo(0);

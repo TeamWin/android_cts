@@ -100,4 +100,34 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
         assertThat(report.getIsMoveInstall()).isEqualTo(expectedIsMoveInstall);
         assertThat(report.getIsStaged()).isEqualTo(expectedIsStaged);
     }
+
+    public void testPackageUninstalledReported() throws Exception {
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                AtomsProto.Atom.PACKAGE_UNINSTALLATION_REPORTED_FIELD_NUMBER);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        DeviceUtils.installTestApp(getDevice(), TEST_INSTALL_APK, TEST_INSTALL_PACKAGE, mCtsBuild);
+        assertThat(getDevice().isPackageInstalled(TEST_INSTALL_PACKAGE,
+                String.valueOf(getDevice().getCurrentUser()))).isTrue();
+        final int expectedUid = getAppUid(TEST_INSTALL_PACKAGE);
+        DeviceUtils.uninstallTestApp(getDevice(), TEST_INSTALL_PACKAGE);
+        assertThat(getDevice().isPackageInstalled(TEST_INSTALL_PACKAGE,
+                String.valueOf(getDevice().getCurrentUser()))).isFalse();
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        List<AtomsProto.PackageUninstallationReported> reports = new ArrayList<>();
+        for (StatsLog.EventMetricData data : ReportUtils.getEventMetricDataList(getDevice())) {
+            if (data.getAtom().hasPackageUninstallationReported()) {
+                reports.add(data.getAtom().getPackageUninstallationReported());
+            }
+        }
+        assertThat(reports.size()).isEqualTo(1);
+        AtomsProto.PackageUninstallationReported report = reports.get(0);
+        assertThat(report.getUid()).isEqualTo(expectedUid);
+        final List<Integer> users = Collections.singletonList(getDevice().getCurrentUser());
+        assertThat(report.getUserIdsList()).isEqualTo(users);
+        assertThat(report.getOriginalUserIdsList()).isEqualTo(users);
+        assertThat(report.getUninstallFlags()).isEqualTo(2 /* DELETE_ALL_USERS */);
+        assertThat(report.getReturnCode()).isEqualTo(1);
+        assertThat(report.getIsSystem()).isFalse();
+        assertThat(report.getIsUninstallForUsers()).isFalse();
+    }
 }

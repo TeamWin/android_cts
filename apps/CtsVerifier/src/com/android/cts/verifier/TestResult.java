@@ -133,7 +133,7 @@ public class TestResult {
      * {@link TestListActivity}.
      */
     static TestResult fromActivityResult(int resultCode, Intent data) {
-        String name = data.getStringExtra(TEST_NAME);
+        String name = setTestNameSuffix(sCurrentDisplayMode, data.getStringExtra(TEST_NAME));
         int result = data.getIntExtra(TEST_RESULT, TEST_RESULT_NOT_EXECUTED);
         String details = data.getStringExtra(TEST_DETAILS);
         ReportLog reportLog = (ReportLog) data.getSerializableExtra(TEST_METRICS);

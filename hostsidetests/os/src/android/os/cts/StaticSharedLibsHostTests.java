@@ -106,6 +106,8 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
     private static final String STATIC_LIB_TEST_APP_PKG = "android.os.lib.app";
     private static final String STATIC_LIB_TEST_APP_CLASS_NAME = STATIC_LIB_TEST_APP_PKG
             + ".StaticSharedLibsTests";
+    private static final String STATIC_LIB_MULTI_USER_TEST_APP_CLASS_NAME = STATIC_LIB_TEST_APP_PKG
+            + ".StaticSharedLibsMultiUserTests";
 
     private static final String SETTING_UNUSED_STATIC_SHARED_LIB_MIN_CACHE_PERIOD =
             "unused_static_shared_lib_min_cache_period";
@@ -846,6 +848,69 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
             getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
             getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
         }
+    }
+
+    @AppModeFull
+    public void testStaticSharedLibInstall_broadcastReceived() throws Exception {
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+        // Install library dependency
+        assertNull(install(STATIC_LIB_PROVIDER_RECURSIVE_APK));
+        runDeviceTests(STATIC_LIB_TEST_APP_PKG, STATIC_LIB_TEST_APP_CLASS_NAME,
+                    "testStaticSharedLibInstall_broadcastReceived");
+    }
+
+    @AppModeFull
+    public void testStaticSharedLibInstall_incorrectInstallerPkgName_broadcastNotReceived()
+            throws Exception {
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+        // Install library dependency
+        assertNull(install(STATIC_LIB_PROVIDER_RECURSIVE_APK));
+        runDeviceTests(STATIC_LIB_TEST_APP_PKG, STATIC_LIB_TEST_APP_CLASS_NAME,
+                "testStaticSharedLibInstall_incorrectInstallerPkgName_broadcastNotReceived");
+    }
+
+    @AppModeFull
+    public void testStaticSharedLibUninstall_broadcastReceived()
+            throws Exception {
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+        // Install library dependency
+        assertNull(install(STATIC_LIB_PROVIDER_RECURSIVE_APK));
+        runDeviceTests(STATIC_LIB_TEST_APP_PKG, STATIC_LIB_TEST_APP_CLASS_NAME,
+                "testStaticSharedLibUninstall_broadcastReceived");
+    }
+
+    @AppModeFull
+    public void testStaticSharedLibUninstall_incorrectInstallerPkgName_broadcastNotReceived()
+            throws Exception {
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+        // Install library dependency
+        assertNull(install(STATIC_LIB_PROVIDER_RECURSIVE_APK));
+        runDeviceTests(STATIC_LIB_TEST_APP_PKG, STATIC_LIB_TEST_APP_CLASS_NAME,
+                "testStaticSharedLibUninstall_incorrectInstallerPkgName_broadcastNotReceived");
+    }
+
+    @AppModeFull
+    public void testStaticSharedLibInstallOnSecondaryUser_broadcastReceivedByAllUsers()
+            throws Exception {
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+
+        runDeviceTests(STATIC_LIB_TEST_APP_PKG, STATIC_LIB_MULTI_USER_TEST_APP_CLASS_NAME,
+                "testStaticSharedLibInstallOnSecondaryUser_broadcastReceivedByAllUsers");
+    }
+
+    @AppModeFull
+    public void testStaticSharedLibUninstallOnAllUsers_broadcastReceivedByAllUsers()
+            throws Exception {
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+
+        runDeviceTests(STATIC_LIB_TEST_APP_PKG, STATIC_LIB_MULTI_USER_TEST_APP_CLASS_NAME,
+                "testStaticSharedLibUninstallOnAllUsers_broadcastReceivedByAllUsers");
     }
 
     private String install(String apk) throws DeviceNotAvailableException, FileNotFoundException {

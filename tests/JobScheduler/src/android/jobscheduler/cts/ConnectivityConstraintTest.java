@@ -81,6 +81,9 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         mHasTelephony = packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
         mBuilder = new JobInfo.Builder(CONNECTIVITY_JOB_ID, kJobServiceComponent);
 
+        if (mHasWifi) {
+            mNetworkingHelper.ensureSavedWifiNetwork();
+        }
         mInitialRestrictedBucketEnabled = Settings.Global.getString(mContext.getContentResolver(),
                 Settings.Global.ENABLE_RESTRICTED_BUCKET);
         setDataSaverEnabled(false);

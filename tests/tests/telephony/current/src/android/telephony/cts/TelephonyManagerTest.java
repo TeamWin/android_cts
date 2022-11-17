@@ -2632,18 +2632,16 @@ public class TelephonyManagerTest {
     }
 
     // Reference: packages/services/Telephony/ecc/input/eccdata.txt
-    private static final Map<String, String> EMERGENCY_NUMBERS_FOR_COUNTRIES =
-            new HashMap<String, String>() {{
-                put("au", "000");
-                put("ca", "911");
-                put("de", "112");
-                put("gb", "999");
-                put("in", "112");
-                put("jp", "110");
-                put("sg", "999");
-                put("tw", "110");
-                put("us", "911");
-            }};
+    private static final Map<String, String> EMERGENCY_NUMBERS_FOR_COUNTRIES = Map.of(
+            "au", "000",
+            "ca", "911",
+            "de", "112",
+            "gb", "999",
+            "in", "112",
+            "jp", "110",
+            "sg", "999",
+            "tw", "110",
+            "us", "911");
 
     /**
      * Tests TelephonyManager.getEmergencyNumberList.
@@ -4927,6 +4925,7 @@ public class TelephonyManagerTest {
         return isInAnyCategory;
     }
 
+    @SuppressWarnings("SelfComparison") // TODO: Fix me
     private static boolean validateEmergencyNumberCompareTo(
             List<EmergencyNumber> emergencyNumberList) {
         if (emergencyNumberList == null) {

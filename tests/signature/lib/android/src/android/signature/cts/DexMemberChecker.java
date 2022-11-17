@@ -156,6 +156,7 @@ public class DexMemberChecker {
         }
     }
 
+    @SuppressWarnings("ReturnValueIgnored")
     private static boolean hasMatchingField_Reflection(Class<?> klass, DexField dexField) {
         try {
             klass.getDeclaredField(dexField.getName());

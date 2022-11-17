@@ -594,6 +594,10 @@
                   android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <activity android:name="android.server.wm.LockTaskModeTests$TestActivity"
                   android:exported="true" />
+        <activity android:name="android.server.wm.BackGestureInvokedTest$BackInvokedActivity"
+                  android:label="BackInvokedActivity"
+                  android:exported="true">
+        </activity>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

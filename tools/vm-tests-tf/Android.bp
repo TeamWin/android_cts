@@ -23,6 +23,12 @@ java_library {
     installable: false,
     include_srcs: true,
     host_supported: true,
+    errorprone: {
+        javacflags: [
+            "-Xep:IdentityBinaryExpression:WARN",
+            "-Xep:BadShiftAmount:WARN",
+        ],
+    },
 }
 
 java_binary_host {
@@ -114,6 +120,12 @@ java_library_host {
         "d8",
         "smali",
     ],
+    errorprone: {
+        javacflags: [
+            "-Xep:IdentityBinaryExpression:WARN",
+            "-Xep:BadShiftAmount:WARN",
+        ],
+    },
 }
 
 java_genrule_host {

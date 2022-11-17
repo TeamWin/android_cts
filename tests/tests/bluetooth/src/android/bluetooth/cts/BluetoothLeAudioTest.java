@@ -73,10 +73,8 @@ public class BluetoothLeAudioTest extends AndroidTestCase {
                     .setSampleRate(BluetoothLeAudioCodecConfig.SAMPLE_RATE_16000)
                     .build();
 
-    private static final List<BluetoothLeAudioCodecConfig> TEST_CODEC_CAPA_CONFIG =
-            new ArrayList() {{
-                    add(LC3_16KHZ_CONFIG);
-            }};
+    private static final List<BluetoothLeAudioCodecConfig> TEST_CODEC_CAPA_CONFIG = List.of(
+            LC3_16KHZ_CONFIG);
 
     private static final BluetoothLeAudioCodecStatus TEST_CODEC_STATUS =
             new BluetoothLeAudioCodecStatus(LC3_16KHZ_CONFIG, LC3_16KHZ_CONFIG,

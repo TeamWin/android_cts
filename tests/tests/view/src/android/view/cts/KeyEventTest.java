@@ -308,6 +308,7 @@ public class KeyEventTest {
         assertEquals(deviceId, mKeyEvent.getDeviceId());
     }
 
+    @SuppressWarnings("ReturnValueIgnored")
     @Test
     public void testToString() {
         // make sure it does not throw any exception.

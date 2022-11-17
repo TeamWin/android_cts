@@ -508,6 +508,7 @@
         <service android:name="android.app.stubs.LocalAlertService"/>
 
         <activity android:name=".SimpleActivity"
+             android:theme="@style/Theme_NoSwipeDismiss"
              android:excludeFromRecents="true"
              android:exported="true">
             <intent-filter>

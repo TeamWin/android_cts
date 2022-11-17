@@ -686,6 +686,7 @@ public class StrictModeTest {
         );
     }
 
+    @SuppressWarnings("ReturnValueIgnored")
     @Test
     public void testNonSdkApiUsage() throws Exception {
         StrictMode.VmPolicy oldVmPolicy = StrictMode.getVmPolicy();

@@ -2800,6 +2800,13 @@ public class StaticMetadata {
     }
 
     /**
+     * Check if auto-framing is supported
+     */
+    public boolean isAutoframingSupported() {
+        return getValueFromKeyNonNull(CameraCharacteristics.CONTROL_AUTOFRAMING_AVAILABLE);
+    }
+
+    /**
      * Check if the camera device's poseReference is UNDEFINED.
      */
     public boolean isPoseReferenceUndefined() {

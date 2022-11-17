@@ -96,31 +96,30 @@ public class ItsTestActivity extends DialogTestListActivity {
     String mPrimaryFrontCameraId = null;
 
     // Scenes
-    private static final ArrayList<String> mSceneIds = new ArrayList<String> () {{
-            add("scene0");
-            add("scene1_1");
-            add("scene1_2");
-            add("scene2_a");
-            add("scene2_b");
-            add("scene2_c");
-            add("scene2_d");
-            add("scene2_e");
-            add("scene3");
-            add("scene4");
-            add("scene5");
-            add("scene6");
-            add("sensor_fusion");
-        }};
+    private static final List<String> mSceneIds = List.of(
+            "scene0",
+            "scene1_1",
+            "scene1_2",
+            "scene2_a",
+            "scene2_b",
+            "scene2_c",
+            "scene2_d",
+            "scene2_e",
+            "scene3",
+            "scene4",
+            "scene5",
+            "scene6",
+            "sensor_fusion");
+
     // This must match scenes of SUB_CAMERA_TESTS in tools/run_all_tests.py
-    private static final ArrayList<String> mHiddenPhysicalCameraSceneIds =
-            new ArrayList<String> () {{
-                    add("scene0");
-                    add("scene1_1");
-                    add("scene1_2");
-                    add("scene2_a");
-                    add("scene4");
-                    add("sensor_fusion");
-            }};
+    private static final List<String> mHiddenPhysicalCameraSceneIds = List.of(
+            "scene0",
+            "scene1_1",
+            "scene1_2",
+            "scene2_a",
+            "scene4",
+            "sensor_fusion");
+
     // TODO: cache the following in saved bundle
     private Set<ResultKey> mAllScenes = null;
     // (camera, scene) -> (pass, fail)

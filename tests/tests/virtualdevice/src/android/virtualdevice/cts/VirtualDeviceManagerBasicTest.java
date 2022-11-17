@@ -21,6 +21,9 @@ import static android.Manifest.permission.ADD_ALWAYS_UNLOCKED_DISPLAY;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.companion.virtual.VirtualDeviceManager.DEFAULT_DEVICE_ID;
 import static android.companion.virtual.VirtualDeviceManager.INVALID_DEVICE_ID;
+import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
+import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAULT;
+import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_SENSORS;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
@@ -47,6 +50,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
+
+import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
@@ -157,9 +162,16 @@ public class VirtualDeviceManagerBasicTest {
                         NAMED_VIRTUAL_DEVICE_PARAMS);
         assertThat(mAnotherVirtualDevice).isNotNull();
 
-        assertThat(mVirtualDeviceManager.getVirtualDevices()).containsExactly(
-                new VirtualDevice(mVirtualDevice.getDeviceId(), /* name= */ null),
-                new VirtualDevice(mAnotherVirtualDevice.getDeviceId(), VIRTUAL_DEVICE_NAME));
+        List<VirtualDevice> virtualDevices = mVirtualDeviceManager.getVirtualDevices();
+        assertThat(virtualDevices).hasSize(2);
+
+        VirtualDevice device = virtualDevices.get(0);
+        assertThat(device.getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
+        assertThat(device.getName()).isNull();
+
+        VirtualDevice anotherDevice = virtualDevices.get(1);
+        assertThat(anotherDevice.getDeviceId()).isEqualTo(mAnotherVirtualDevice.getDeviceId());
+        assertThat(anotherDevice.getName()).isEqualTo(VIRTUAL_DEVICE_NAME);
     }
 
     @Test
@@ -208,6 +220,50 @@ public class VirtualDeviceManagerBasicTest {
         Context defaultDeviceContext = virtualDeviceContext.createDeviceContext(DEFAULT_DEVICE_ID);
 
         assertThat(defaultDeviceContext.getDeviceId()).isEqualTo(DEFAULT_DEVICE_ID);
+    }
+
+    @Test
+    public void getDevicePolicy_noPolicySpecified_shouldReturnDefault() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        assertThat(
+                mVirtualDeviceManager.getDevicePolicy(mVirtualDevice.getDeviceId(),
+                        POLICY_TYPE_SENSORS))
+                .isEqualTo(DEVICE_POLICY_DEFAULT);
+    }
+
+    @Test
+    public void getDevicePolicy_shouldReturnConfiguredValue() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        new VirtualDeviceParams.Builder()
+                                .addDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                                .build());
+
+        assertThat(
+                mVirtualDeviceManager.getDevicePolicy(mVirtualDevice.getDeviceId(),
+                        POLICY_TYPE_SENSORS))
+                .isEqualTo(DEVICE_POLICY_CUSTOM);
+    }
+
+    @Test
+    public void getDevicePolicy_virtualDeviceClosed_shouldReturnDefault() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        new VirtualDeviceParams.Builder()
+                                .addDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                                .build());
+        mVirtualDevice.close();
+
+        assertThat(
+                mVirtualDeviceManager.getDevicePolicy(mVirtualDevice.getDeviceId(),
+                        POLICY_TYPE_SENSORS))
+                .isEqualTo(DEVICE_POLICY_DEFAULT);
     }
 }
 

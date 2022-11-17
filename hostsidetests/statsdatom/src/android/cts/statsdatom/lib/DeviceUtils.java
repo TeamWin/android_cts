@@ -43,6 +43,7 @@ import com.google.protobuf.Parser;
 
 import java.io.FileNotFoundException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.StringTokenizer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -462,7 +463,8 @@ public final class DeviceUtils {
             throws Exception {
         Pair<Integer, Integer> kernelVersion = getKernelVersion(device);
         return kernelVersion.first > version.first
-                || (kernelVersion.first == version.first && kernelVersion.second >= version.second);
+                || (Objects.equals(kernelVersion.first, version.first)
+                && kernelVersion.second >= version.second);
     }
 
     private DeviceUtils() {}

@@ -194,3 +194,45 @@ android_test {
     ],
     per_testcase_directory: true,
 }
+
+android_test {
+    name: "CtsAppFgsTestCases",
+    defaults: ["cts_defaults"],
+    libs: [
+        "android.test.runner",
+        "org.apache.http.legacy",
+        "android.test.base",
+    ],
+    static_libs: [
+        "ub-uiautomator",
+        "androidx.test.rules",
+        "compatibility-device-util-axt",
+        "CtsExternalServiceCommon",
+        "cts-wm-util",
+        "libprotobuf-java-lite",
+    ],
+    aidl: {
+        local_include_dirs: ["app/src"],
+    },
+    srcs: [
+        "FgsTest/src/**/*.java",
+        "app/src/**/*.aidl",
+        "app/src/android/app/stubs/ScreenOnActivity.java",
+        "src/android/app/cts/android/app/cts/tools/WatchUidRunner.java",
+        "FgsTestHelper/src/android/app/fgstesthelper/LocalForegroundServiceBase.java",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    instrumentation_for: "CtsAppTestFgsTestHelper",
+    manifest: "FgsTest/AndroidManifest.xml",
+    test_config: "FgsTest/AndroidTest.xml",
+    platform_apis: true,
+    data: [
+        ":CtsAppTestFgsTestHelper",
+        ":CtsAppTestFgsTestHelperCurrent",
+        ":CtsAppTestFgsTestHelperApi33",
+    ],
+    per_testcase_directory: true,
+}

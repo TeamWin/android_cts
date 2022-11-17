@@ -476,6 +476,7 @@ public class VideoEncoderTest extends MediaTestBase {
             }
         }
 
+        @SuppressWarnings("ReturnValueIgnored") // TODO: mCheckOutputFormatHook should be a Consumer
         protected void saveEncoderFormat(MediaFormat format) {
             mEncodedStream.setFormat(format);
             if (mCheckOutputFormatHook != null) {

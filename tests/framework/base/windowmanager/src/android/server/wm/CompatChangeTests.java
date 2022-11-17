@@ -48,13 +48,10 @@ import android.util.Size;
 
 import androidx.annotation.Nullable;
 
-import com.android.compatibility.common.util.GestureNavRule;
-
 import libcore.junit.util.compat.CoreCompatChangeRule.DisableCompatChanges;
 import libcore.junit.util.compat.CoreCompatChangeRule.EnableCompatChanges;
 
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -104,16 +101,13 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Rule
     public TestRule compatChangeRule = new PlatformCompatChangeRule();
 
-    @ClassRule
-    public static GestureNavRule GESTURE_NAV_RULE = new GestureNavRule();
-
     private DisplayMetricsSession mDisplayMetricsSession;
 
     @Before
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        GESTURE_NAV_RULE.assumeGestureNavigationMode();
+        enableAndAssumeGestureNavigationMode();
 
         mDisplayMetricsSession =
                 createManagedDisplayMetricsSession(DEFAULT_DISPLAY);

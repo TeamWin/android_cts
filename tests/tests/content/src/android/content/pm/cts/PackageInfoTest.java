@@ -144,7 +144,7 @@ public class PackageInfoTest extends AndroidTestCase {
             assertNotNull(actual);
             assertEquals(expected.length, actual.length);
             for (int i = 0; i < expected.length; i++) {
-                actual[i].equals(expected[i]);
+                assertEquals(expected[i], actual[i]);
             }
         } else if (expected == null) {
             assertNull(actual);

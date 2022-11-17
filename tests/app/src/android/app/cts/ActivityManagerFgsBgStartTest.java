@@ -108,8 +108,8 @@ public class ActivityManagerFgsBgStartTest {
 
     public static final Integer LOCAL_SERVICE_PROCESS_CAPABILITY = new Integer(
             PROCESS_CAPABILITY_FOREGROUND_CAMERA
-            | PROCESS_CAPABILITY_FOREGROUND_MICROPHONE
-            | PROCESS_CAPABILITY_NETWORK);
+                    | PROCESS_CAPABILITY_FOREGROUND_MICROPHONE
+                    | PROCESS_CAPABILITY_NETWORK);
 
     static final int WAITFOR_MSEC = 10000;
 
@@ -153,7 +153,7 @@ public class ActivityManagerFgsBgStartTest {
         }
         cleanupResiduals();
         enableFgsRestriction(true, true, null);
-        for (String packageName: PACKAGE_NAMES) {
+        for (String packageName : PACKAGE_NAMES) {
             resetFgsRestriction(packageName);
         }
     }
@@ -1338,7 +1338,7 @@ public class ActivityManagerFgsBgStartTest {
             throws Exception {
         testVisibleActivityGracePeriodInternal(uidWatcher, keyCode, null,
                 () -> uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
-                                         WatchUidRunner.STATE_FG_SERVICE), true);
+                        WatchUidRunner.STATE_FG_SERVICE), true);
 
         testVisibleActivityGracePeriodInternal(uidWatcher, keyCode,
                 () -> SystemClock.sleep(WAITFOR_MSEC + 2000), // Wait for the grace period to expire
@@ -1620,12 +1620,11 @@ public class ActivityManagerFgsBgStartTest {
      * is TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED (not allowed to start FGS). But
      * the behavior can be changed by device config command. There are three possible values:
      * {@link TEMPORARY_ALLOW_LIST_TYPE_NONE} (-1):
-     *      not temp allowlisted.
+     * not temp allowlisted.
      * {@link TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_ALLOWED} (0):
-     *      temp allowlisted and allow FGS.
+     * temp allowlisted and allow FGS.
      * {@link TEMPORARY_ALLOW_LIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED} (1):
-     *      temp allowlisted, not allow FGS.
-     * @throws Exception
+     * temp allowlisted, not allow FGS.
      */
     @Test
     public void testPushMessagingOverQuota() throws Exception {
@@ -1738,7 +1737,7 @@ public class ActivityManagerFgsBgStartTest {
             // Now it can start FGS.
             WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
             waiter.prepare(ACTION_START_FGS_RESULT);
-            runWithShellPermissionIdentity(()-> {
+            runWithShellPermissionIdentity(() -> {
                 final BroadcastOptions options = BroadcastOptions.makeBasic();
                 // setTemporaryAppAllowlist API requires
                 // START_FOREGROUND_SERVICES_FROM_BACKGROUND permission.
@@ -1883,7 +1882,7 @@ public class ActivityManagerFgsBgStartTest {
 
             String[] dumpLines = CtsAppTestUtils.executeShellCmd(
                     mInstrumentation, dumpCommand).split("\n");
-            assertNotNull(findLine(dumpLines, "isForeground=true"));
+            assertNotNull(CtsAppTestUtils.findLine(dumpLines, "isForeground=true"));
 
             // Finish the activity in APP1
             CommandReceiver.sendCommand(mContext,
@@ -1928,7 +1927,7 @@ public class ActivityManagerFgsBgStartTest {
 
             dumpLines = CtsAppTestUtils.executeShellCmd(
                     mInstrumentation, dumpCommand).split("\n");
-            assertNotNull(findLine(dumpLines, "isForeground=true"));
+            assertNotNull(CtsAppTestUtils.findLine(dumpLines, "isForeground=true"));
 
             // Set background restriction for APP1.
             setAppOp(PACKAGE_NAME_APP1, "RUN_ANY_IN_BACKGROUND", false);
@@ -1946,18 +1945,6 @@ public class ActivityManagerFgsBgStartTest {
             CtsAppTestUtils.executeShellCmd(mInstrumentation,
                     "appops reset " + PACKAGE_NAME_APP2);
         }
-    }
-
-    /**
-     * Find a line containing {@code label} in {@code lines}.
-     */
-    private String findLine(String[] lines, CharSequence label) {
-        for (String line: lines) {
-            if (line.contains(label)) {
-                return line;
-            }
-        }
-        return null;
     }
 
     /**
@@ -2143,10 +2130,10 @@ public class ActivityManagerFgsBgStartTest {
     /**
      * Turn on the FGS BG-launch restriction. DeviceConfig can turn on restriction on the whole
      * device (across all apps). AppCompat can turn on restriction on a single app package.
-     * @param enable true to turn on restriction, false to turn off.
+     *
+     * @param enable          true to turn on restriction, false to turn off.
      * @param useDeviceConfig true to use DeviceConfig, false to use AppCompat CHANGE ID.
-     * @param packageName the packageName if using AppCompat CHANGE ID.
-     * @throws Exception
+     * @param packageName     the packageName if using AppCompat CHANGE ID.
      */
     private void enableFgsRestriction(boolean enable, boolean useDeviceConfig, String packageName)
             throws Exception {
@@ -2166,8 +2153,8 @@ public class ActivityManagerFgsBgStartTest {
 
     /**
      * Clean up the FGS BG-launch restriction.
+     *
      * @param packageName the packageName that will have its changeid override reset.
-     * @throws Exception
      */
     private void resetFgsRestriction(String packageName)
             throws Exception {
@@ -2180,9 +2167,6 @@ public class ActivityManagerFgsBgStartTest {
      * Some cases we want to grant this permission to allow activity start to bring the app up to
      * TOP state.
      * Some cases we want to revoke this permission to test other BG-FGS-launch exemptions.
-     * @param packageName
-     * @param allow
-     * @throws Exception
      */
     private void allowBgActivityStart(String packageName, boolean allow) throws Exception {
         if (allow) {
