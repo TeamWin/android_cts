@@ -27,6 +27,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
+import android.app.compat.CompatChanges;
 import android.content.Context;
 import android.net.IpConfiguration;
 import android.net.LinkAddress;
@@ -91,6 +92,7 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
     public static final int EXPECTED_LEGACY_STATIC_PROXY_PORT = 8000;
     public static final String EXPECTED_LEGACY_STATIC_PROXY_EXCLUSION_LIST = "";
     public static final String EXPECTED_LEGACY_PAC_PROXY_LOCATION = "http://";
+    private static final long NOT_OVERRIDE_EXISTING_NETWORKS_ON_RESTORE = 234793325L;
 
     private Context mContext;
     private WifiManager mWifiManager;
@@ -201,12 +203,10 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
                 Log.e(TAG, "Need a non-enterprise and non-Passpoint network created by an app "
                         + "holding OVERRIDE_WIFI_CONFIG permission to fully evaluate the "
                         + "functionality");
-            }
+            } else {
 
-            // Retrieve backup data.
-            byte[] backupData = mWifiManager.retrieveBackupData();
-
-            if (origNetwork != null) {
+                // Retrieve backup data.
+                byte[] backupData = mWifiManager.retrieveBackupData();
                 // Modify the metered bit.
                 final String origNetworkSsid = origNetwork.SSID;
                 WifiConfiguration modNetwork = new WifiConfiguration(origNetwork);
@@ -219,19 +219,26 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
                         .findAny()
                         .get().meteredOverride)
                         .isNotEqualTo(origNetwork.meteredOverride);
-            }
 
-            // Restore the original backup data & ensure that the metered bit is back to orig.
-            mWifiManager.restoreBackupData(backupData);
+                // Restore the original backup data & ensure that the metered bit is back to orig.
+                mWifiManager.restoreBackupData(backupData);
 
-            if (origNetwork != null) {
-                final String origNetworkSsid = origNetwork.SSID;
-                assertThat(mWifiManager.getConfiguredNetworks()
-                        .stream()
-                        .filter(n -> n.SSID.equals(origNetworkSsid))
-                        .findAny()
-                        .get().meteredOverride)
-                        .isEqualTo(origNetwork.meteredOverride);
+                if (CompatChanges.isChangeEnabled(NOT_OVERRIDE_EXISTING_NETWORKS_ON_RESTORE)) {
+                    assertThat(mWifiManager.getConfiguredNetworks()
+                            .stream()
+                            .filter(n -> n.SSID.equals(origNetworkSsid))
+                            .findAny()
+                            .get().meteredOverride)
+                            .isNotEqualTo(origNetwork.meteredOverride);
+
+                } else {
+                    assertThat(mWifiManager.getConfiguredNetworks()
+                            .stream()
+                            .filter(n -> n.SSID.equals(origNetworkSsid))
+                            .findAny()
+                            .get().meteredOverride)
+                            .isEqualTo(origNetwork.meteredOverride);
+                }
             }
         } finally {
             // Restore the orig network

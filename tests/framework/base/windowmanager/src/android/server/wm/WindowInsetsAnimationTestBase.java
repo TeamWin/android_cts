@@ -49,7 +49,11 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
+import com.android.compatibility.common.util.OverrideAnimationScaleRule;
+
 import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
 import org.mockito.InOrder;
 
 import java.util.ArrayList;
@@ -62,6 +66,10 @@ import java.util.function.Predicate;
  * Base class for tests in {@link WindowInsetsAnimation} and {@link WindowInsetsAnimation.Callback}.
  */
 public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
+
+    @Rule
+    public final OverrideAnimationScaleRule mOverrideAnimationScaleRule =
+            new OverrideAnimationScaleRule(1.0f);
 
     protected TestActivity mActivity;
     protected View mRootView;

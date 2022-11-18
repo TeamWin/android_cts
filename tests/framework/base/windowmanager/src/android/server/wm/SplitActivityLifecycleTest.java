@@ -18,6 +18,7 @@ package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
+import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.SplitActivityLifecycleTest.ActivityB.EXTRA_SHOW_WHEN_LOCKED;
@@ -491,6 +492,39 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
         mOwnerActivity.startActivity(mIntent);
         waitAndAssertActivityState(mActivityA, STATE_STOPPED, "Activity A must be stopped");
         waitAndAssertActivityState(mActivityC, STATE_STOPPED, "Activity C must be stopped");
+    }
+
+    /**
+     * Verifies the Activity in primary TaskFragment is no longer focused after clear adjacent
+     * TaskFragments.
+     */
+    @Test
+    public void testResetFocusedAppAfterClearAdjacentTaskFragment() {
+        // TODO(b/232476698) Remove the assume in the next release.
+        assumeExtensionVersionAtLeast2();
+
+        // Initialize test environment by launching Activity A and B side-by-side.
+        initializeSplitActivities(false /* verifyEmbeddedTask */);
+
+        // Request the focus on the primary TaskFragment
+        WindowContainerTransaction wct = new WindowContainerTransaction()
+                .requestFocusOnTaskFragment(mTaskFragA.getTaskFragToken());
+        mTaskFragmentOrganizer.applyTransaction(wct);
+        waitForActivityFocused(5000, mActivityA);
+        assertThat(mWmState.getFocusedApp()).isEqualTo(mActivityA.flattenToShortString());
+
+        // Expand top TaskFragment and clear the adjacent TaskFragments to have the two
+        // TaskFragment stacked.
+        wct = new WindowContainerTransaction()
+                .setBounds(mTaskFragB.getToken(), new Rect())
+                .setWindowingMode(mTaskFragB.getToken(), WINDOWING_MODE_UNDEFINED)
+                .setAdjacentTaskFragments(mTaskFragA.getTaskFragToken(), null, null);
+        mTaskFragmentOrganizer.applyTransaction(wct);
+
+        // Ensure the Activity on primary TaskFragment is stopped and no longer focused.
+        waitAndAssertActivityState(mActivityA, STATE_STOPPED, "Activity A must be stopped");
+        assertThat(mWmState.getFocusedApp()).isNotEqualTo(mActivityA.flattenToShortString());
+        assertThat(mWmState.getFocusedWindow()).isEqualTo(mActivityB.flattenToShortString());
     }
 
     /**

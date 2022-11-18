@@ -27,7 +27,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.RectF;
@@ -35,13 +34,11 @@ import android.graphics.Typeface;
 import android.graphics.text.LineBreakConfig;
 import android.os.LocaleList;
 import android.os.Parcel;
-import android.text.InputFilter;
 import android.text.TextUtils;
 import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.CursorAnchorInfo.Builder;
 import android.view.inputmethod.EditorBoundsInfo;
 import android.view.inputmethod.TextAppearanceInfo;
-import android.widget.EditText;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
@@ -151,8 +148,7 @@ public class CursorAnchorInfoTest {
                 new EditorBoundsInfo.Builder().setEditorBounds(MANY_BOUNDS[0])
                         .setHandwritingBounds(MANY_BOUNDS[1]).build();
 
-        final EditText editText = createEditTextWithAppearance();
-        final TextAppearanceInfo textAppearanceInfo = new TextAppearanceInfo(editText);
+        final TextAppearanceInfo textAppearanceInfo = createTextAppearanceInfoBuilder().build();
 
         final Builder builder = new Builder();
         builder.setSelectionRange(selectionStart, selectionEnd)
@@ -477,14 +473,14 @@ public class CursorAnchorInfoTest {
             assertNotEquals(builder1.build(), builder2.build());
         }
         {
-            EditText editText1 = createEditTextWithAppearance();
-            EditText editText2 = createEditTextWithAppearance();
-            EditText editText3 = createEditTextWithAppearance();
-            editText3.setTextColor(Color.GRAY);
+            TextAppearanceInfo.Builder appearanceBuilder1 = createTextAppearanceInfoBuilder();
+            TextAppearanceInfo.Builder appearanceBuilder2 = createTextAppearanceInfoBuilder();
+            TextAppearanceInfo.Builder appearanceBuilder3 = createTextAppearanceInfoBuilder();
+            appearanceBuilder3.setTextSize(30f);
 
-            TextAppearanceInfo textAppearanceInfo1 = new TextAppearanceInfo(editText1);
-            TextAppearanceInfo textAppearanceInfo2 = new TextAppearanceInfo(editText2);
-            TextAppearanceInfo textAppearanceInfo3 = new TextAppearanceInfo(editText3);
+            TextAppearanceInfo textAppearanceInfo1 = appearanceBuilder1.build();
+            TextAppearanceInfo textAppearanceInfo2 = appearanceBuilder2.build();
+            TextAppearanceInfo textAppearanceInfo3 = appearanceBuilder3.build();
 
             assertEquals(new Builder().setTextAppearanceInfo(textAppearanceInfo1).build(),
                     new Builder().setTextAppearanceInfo(textAppearanceInfo1).build());
@@ -645,8 +641,7 @@ public class CursorAnchorInfoTest {
     @ApiTest(apis = {"android.view.inputmethod.CursorAnchorInfo#getTextAppearanceInfo",
             "android.view.inputmethod.CursorAnchorInfo.Builder#setTextAppearanceInfo"})
     public void testTextAppearanceInfoWithEmptyEditText() {
-        EditText emptyEditText = new EditText(mContext);
-        TextAppearanceInfo textAppearanceInfo = new TextAppearanceInfo(emptyEditText);
+        TextAppearanceInfo textAppearanceInfo = new TextAppearanceInfo.Builder().build();
         CursorAnchorInfo.Builder builder = new Builder().setTextAppearanceInfo(textAppearanceInfo);
         CursorAnchorInfo info1 = builder.build();
         CursorAnchorInfo info2 = builder.build();
@@ -670,40 +665,44 @@ public class CursorAnchorInfoTest {
         }
     }
 
-    private EditText createEditTextWithAppearance() {
-        EditText editText = new EditText(mContext);
-        editText.getPaint().setTextSize(16.5f);
-        editText.setTextLocales(LocaleList.forLanguageTags("en,ja"));
-        editText.setTypeface(Typeface.create(Typeface.SANS_SERIF, 10, true));
-        editText.setAllCaps(true);
-        editText.setShadowLayer(2.0f, 2.0f, 2.0f, Color.GRAY);
-        editText.setElegantTextHeight(true);
-        editText.setFallbackLineSpacing(true);
-        editText.setLetterSpacing(5.0f);
-        editText.setFontFeatureSettings("smcp");
-        editText.setFontVariationSettings("'wdth' 1.0");
-        editText.setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_LOOSE);
-        editText.setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE);
-        editText.setText("hello, world");
-        editText.setTextScaleX(1.5f);
-        editText.setHighlightColor(Color.YELLOW);
-        editText.setTextColor(Color.RED);
-        editText.setHintTextColor(Color.GREEN);
-        editText.setLinkTextColor(ColorStateList.valueOf(Color.BLUE));
-        editText.setFilters(new InputFilter[] { new InputFilter.LengthFilter(25) });
-        return editText;
+    private TextAppearanceInfo.Builder createTextAppearanceInfoBuilder() {
+        TextAppearanceInfo.Builder builder = new TextAppearanceInfo.Builder()
+                .setTextSize(16.5f)
+                .setTextLocales(LocaleList.forLanguageTags("en,ja"))
+                .setSystemFontFamilyName("sans-serif")
+                .setTextFontWeight(10)
+                .setTextStyle(Typeface.ITALIC)
+                .setAllCaps(true)
+                .setShadowDx(2.0f)
+                .setShadowDy(2.0f)
+                .setShadowRadius(2.0f)
+                .setShadowColor(Color.GRAY)
+                .setElegantTextHeight(true)
+                .setFallbackLineSpacing(true)
+                .setLetterSpacing(5.0f)
+                .setFontFeatureSettings("smcp")
+                .setFontVariationSettings("'wdth' 1.0")
+                .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_LOOSE)
+                .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE)
+                .setTextScaleX(1.5f)
+                .setHighlightTextColor(Color.YELLOW)
+                .setTextColor(Color.RED)
+                .setHintTextColor(Color.GREEN)
+                .setLinkTextColor(Color.BLUE);
+        return builder;
     }
 
     private void assertTextAppearanceInfoContentsEqual(TextAppearanceInfo textAppearanceInfo) {
         assertEquals(textAppearanceInfo.getTextSize(), 16.5f, EPSILON);
         assertEquals(textAppearanceInfo.getTextLocales(), LocaleList.forLanguageTags("en,ja"));
-        assertEquals(textAppearanceInfo.getFontFamilyName(), "sans-serif");
+        assertEquals(textAppearanceInfo.getSystemFontFamilyName(), "sans-serif");
         assertEquals(textAppearanceInfo.getTextFontWeight(), 10);
         assertEquals(textAppearanceInfo.getTextStyle(), Typeface.ITALIC);
         assertTrue(textAppearanceInfo.isAllCaps());
         assertEquals(textAppearanceInfo.getShadowRadius(), 2.0f, EPSILON);
         assertEquals(textAppearanceInfo.getShadowDx(), 2.0f, EPSILON);
         assertEquals(textAppearanceInfo.getShadowDy(), 2.0f, EPSILON);
+        assertEquals(textAppearanceInfo.getShadowColor(), Color.GRAY);
         assertTrue(textAppearanceInfo.isElegantTextHeight());
         assertTrue(textAppearanceInfo.isFallbackLineSpacing());
         assertEquals(textAppearanceInfo.getLetterSpacing(), 5.0f, EPSILON);
@@ -714,12 +713,9 @@ public class CursorAnchorInfoTest {
         assertEquals(textAppearanceInfo.getLineBreakWordStyle(),
                 LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE);
         assertEquals(textAppearanceInfo.getTextScaleX(), 1.5f, EPSILON);
-        assertEquals(textAppearanceInfo.getTextColorHighlight(), Color.YELLOW);
+        assertEquals(textAppearanceInfo.getHighlightTextColor(), Color.YELLOW);
         assertEquals(textAppearanceInfo.getTextColor(), Color.RED);
-        assertEquals(textAppearanceInfo.getTextColorHint(), Color.GREEN);
-        assertEquals(textAppearanceInfo.getTextColorLink().getDefaultColor(),
-                ColorStateList.valueOf(Color.BLUE).getDefaultColor());
-        assertEquals(textAppearanceInfo.getMaxLength(), 25);
-
+        assertEquals(textAppearanceInfo.getHintTextColor(), Color.GREEN);
+        assertEquals(textAppearanceInfo.getLinkTextColor(), Color.BLUE);
     }
 }

@@ -26,10 +26,10 @@ import android.os.Build;
 
 import com.google.common.base.Preconditions;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import org.junit.rules.TestName;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -44,7 +44,7 @@ public class PerformanceClassEvaluator {
 
     public PerformanceClassEvaluator(TestName testName) {
         Preconditions.checkNotNull(testName);
-        this.mTestName = testName.getMethodName();
+        this.mTestName = testName.getMethodName().replace("{", "(").replace("}", ")");
         this.mRequirements = new HashSet<Requirement>();
     }
 

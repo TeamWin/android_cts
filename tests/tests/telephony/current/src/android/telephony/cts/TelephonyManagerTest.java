@@ -30,6 +30,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -3485,6 +3486,46 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    public void testSetAllowedNetworkTypesForReason_carrierPrivileges() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
+        try {
+            CarrierPrivilegeUtils.withCarrierPrivileges(getContext(),
+                    SubscriptionManager.getDefaultSubscriptionId(),
+                    () -> {
+                        mTelephonyManager.setAllowedNetworkTypesForReason(
+                                TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER,
+                                TelephonyManager.NETWORK_TYPE_BITMASK_NR);
+                    }
+            );
+
+        } catch (Exception e) {
+            fail("setAllowedNetworkTypesForReason: SecurityException not expected");
+        }
+
+        assertThrows(SecurityException.class, () -> {
+            CarrierPrivilegeUtils.withCarrierPrivileges(getContext(),
+                    SubscriptionManager.getDefaultSubscriptionId(),
+                    () -> {
+                        mTelephonyManager.setAllowedNetworkTypesForReason(
+                                TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_ENABLE_2G,
+                                TelephonyManager.NETWORK_TYPE_BITMASK_NR);
+                    }
+            );
+        });
+
+        assertThrows(SecurityException.class, () -> {
+            CarrierPrivilegeUtils.withCarrierPrivileges(getContext(),
+                    SubscriptionManager.getDefaultSubscriptionId(),
+                    () -> {
+                        mTelephonyManager.setAllowedNetworkTypesForReason(
+                                TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER_RESTRICTIONS,
+                                TelephonyManager.NETWORK_TYPE_BITMASK_NR);
+                    }
+            );
+        });
+    }
+
+    @Test
     public void testSetAllowedNetworkTypesForReason_moreReason() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
 
@@ -3504,46 +3545,56 @@ public class TelephonyManagerTest {
                     mTelephonyManager,
                     (tm) -> tm.setAllowedNetworkTypesForReason(
                             TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER,
-                            allowedNetworkTypes1));
+                            allowedNetworkTypes1),
+                    "android.permission.MODIFY_PHONE_STATE");
 
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                     mTelephonyManager,
                     (tm) -> tm.setAllowedNetworkTypesForReason(
                             TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
-                            allowedNetworkTypes2));
+                            allowedNetworkTypes2),
+                    "android.permission.MODIFY_PHONE_STATE");
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                     mTelephonyManager,
                     (tm) -> tm.setAllowedNetworkTypesForReason(
                             TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER,
-                            allowedNetworkTypes3));
+                            allowedNetworkTypes3),
+                    "android.permission.MODIFY_PHONE_STATE");
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                     mTelephonyManager,
                     (tm) -> tm.setAllowedNetworkTypesForReason(
                             TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_ENABLE_2G,
-                            allowedNetworkTypes4));
+                            allowedNetworkTypes4),
+                    "android.permission.MODIFY_PHONE_STATE");
             long deviceAllowedNetworkTypes1 = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                    mTelephonyManager, (tm) -> {
+                    mTelephonyManager,
+                    (tm) -> {
                         return tm.getAllowedNetworkTypesForReason(
                                 TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER);
-                    }
+                    },
+                    "android.permission.READ_PRIVILEGED_PHONE_STATE"
             );
             long deviceAllowedNetworkTypes2 = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                    mTelephonyManager, (tm) -> {
+                    mTelephonyManager,
+                    (tm) -> {
                         return tm.getAllowedNetworkTypesForReason(
                                 TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
-                    }
+                    },
+                    "android.permission.READ_PRIVILEGED_PHONE_STATE"
             );
             long deviceAllowedNetworkTypes3 = ShellIdentityUtils.invokeMethodWithShellPermissions(
                     mTelephonyManager, (tm) -> {
                         return tm.getAllowedNetworkTypesForReason(
                                 TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER);
-                    }
+                    },
+                    "android.permission.READ_PRIVILEGED_PHONE_STATE"
             );
             long deviceAllowedNetworkTypes4 = ShellIdentityUtils.invokeMethodWithShellPermissions(
                     mTelephonyManager, (tm) -> {
                         return tm.getAllowedNetworkTypesForReason(
                                 TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_ENABLE_2G);
-                    }
+                    },
+                    "android.permission.READ_PRIVILEGED_PHONE_STATE"
             );
             assertEquals(allowedNetworkTypes1, deviceAllowedNetworkTypes1);
             assertEquals(allowedNetworkTypes2, deviceAllowedNetworkTypes2);

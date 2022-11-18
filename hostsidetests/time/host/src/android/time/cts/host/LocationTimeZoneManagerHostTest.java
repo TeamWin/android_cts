@@ -33,10 +33,11 @@ import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.PROV
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import android.app.time.ControllerStateEnum;
+import android.app.time.DetectionAlgorithmStatusEnum;
 import android.app.time.LocationTimeZoneManagerServiceStateProto;
+import android.app.time.LocationTimeZoneProviderEventProto;
 import android.app.time.TimeZoneProviderStateEnum;
 import android.app.time.TimeZoneProviderStateProto;
 import android.app.time.cts.shell.DeviceConfigShellHelper;
@@ -187,7 +188,6 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
                     ControllerStateEnum.CONTROLLER_STATE_PROVIDERS_INITIALIZING,
                     ControllerStateEnum.CONTROLLER_STATE_STOPPED,
                     ControllerStateEnum.CONTROLLER_STATE_INITIALIZING);
-            assertNoLastSuggestion(serviceState);
             assertProviderStates(serviceState.getPrimaryProviderStatesList(),
                     TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_DISABLED,
                     TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING);
@@ -204,7 +204,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
             LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
             assertControllerStateHistory(serviceState,
                     ControllerStateEnum.CONTROLLER_STATE_CERTAIN);
-            assertLastSuggestion(serviceState, "Europe/London");
+            assertLastEventWithSuggestion(serviceState, "Europe/London");
             assertProviderStates(serviceState.getPrimaryProviderStatesList(),
                     TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_CERTAIN);
             mPrimaryFakeTimeZoneProviderShellHelper.assertCurrentState(PROVIDER_STATE_CERTAIN);
@@ -383,7 +383,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
                     ControllerStateEnum.CONTROLLER_STATE_PROVIDERS_INITIALIZING,
                     ControllerStateEnum.CONTROLLER_STATE_STOPPED,
                     ControllerStateEnum.CONTROLLER_STATE_INITIALIZING);
-            assertNoLastSuggestion(serviceState);
+            assertLastEventWithoutSuggestion(serviceState);
             assertProviderStates(serviceState.getPrimaryProviderStatesList(),
                     TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_DISABLED,
                     TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING,
@@ -401,7 +401,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
             LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
             assertControllerStateHistory(serviceState,
                     ControllerStateEnum.CONTROLLER_STATE_CERTAIN);
-            assertLastSuggestion(serviceState, "Europe/London");
+            assertLastEventWithSuggestion(serviceState, "Europe/London");
             assertProviderStates(serviceState.getPrimaryProviderStatesList());
 
             assertProviderStates(serviceState.getSecondaryProviderStatesList(),
@@ -441,7 +441,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
                     ControllerStateEnum.CONTROLLER_STATE_PROVIDERS_INITIALIZING,
                     ControllerStateEnum.CONTROLLER_STATE_STOPPED,
                     ControllerStateEnum.CONTROLLER_STATE_INITIALIZING);
-            assertNoLastSuggestion(serviceState);
+            assertLastEventWithoutSuggestion(serviceState);
             assertProviderStates(serviceState.getPrimaryProviderStatesList(),
                     TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_DISABLED,
                     TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING);
@@ -459,7 +459,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         {
             LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
             assertControllerStateHistory(serviceState);
-            assertNoLastSuggestion(serviceState);
+            assertLastEventWithoutSuggestion(serviceState);
             assertProviderStates(serviceState.getPrimaryProviderStatesList(),
                     TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_UNCERTAIN);
             mPrimaryFakeTimeZoneProviderShellHelper.assertCurrentState(PROVIDER_STATE_UNCERTAIN);
@@ -478,7 +478,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
             LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
             assertControllerStateHistory(serviceState,
                     ControllerStateEnum.CONTROLLER_STATE_CERTAIN);
-            assertLastSuggestion(serviceState, "Europe/London");
+            assertLastEventWithSuggestion(serviceState, "Europe/London");
             assertProviderStates(serviceState.getPrimaryProviderStatesList());
             mPrimaryFakeTimeZoneProviderShellHelper.assertCurrentState(PROVIDER_STATE_UNCERTAIN);
 
@@ -494,7 +494,7 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         {
             LocationTimeZoneManagerServiceStateProto serviceState = dumpServiceState();
             assertControllerStateHistory(serviceState);
-            assertLastSuggestion(serviceState, "Europe/Paris");
+            assertLastEventWithSuggestion(serviceState, "Europe/Paris");
             assertProviderStates(serviceState.getPrimaryProviderStatesList(),
                     TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_CERTAIN);
             mPrimaryFakeTimeZoneProviderShellHelper.assertCurrentState(PROVIDER_STATE_CERTAIN);
@@ -513,19 +513,29 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
         assertEquals(expectedStatesList, actualStates);
     }
 
-    private static void assertNoLastSuggestion(
-            LocationTimeZoneManagerServiceStateProto serviceState) {
-        if (serviceState.hasLastSuggestion()) {
-            fail("Expected no last suggestion, but found:" + serviceState.getLastSuggestion());
-        }
+    private static void assertLastEventWithoutSuggestion(
+            LocationTimeZoneManagerServiceStateProto actualServiceState) {
+        assertTrue(actualServiceState.hasLastEvent());
+        assertFalse(actualServiceState.getLastEvent().hasSuggestion());
+
+        LocationTimeZoneProviderEventProto lastEvent = actualServiceState.getLastEvent();
+        assertEquals(DetectionAlgorithmStatusEnum.DETECTION_ALGORITHM_STATUS_RUNNING,
+                lastEvent.getAlgorithmStatus().getStatus());
     }
 
-    private static void assertLastSuggestion(LocationTimeZoneManagerServiceStateProto serviceState,
+    private static void assertLastEventWithSuggestion(
+            LocationTimeZoneManagerServiceStateProto actualServiceState,
             String... expectedTimeZones) {
         assertFalse(expectedTimeZones == null || expectedTimeZones.length == 0);
-        assertTrue(serviceState.hasLastSuggestion());
+
+        assertTrue(actualServiceState.hasLastEvent());
+        LocationTimeZoneProviderEventProto lastEvent = actualServiceState.getLastEvent();
+
+        assertEquals(DetectionAlgorithmStatusEnum.DETECTION_ALGORITHM_STATUS_RUNNING,
+                lastEvent.getAlgorithmStatus().getStatus());
+
         List<String> expectedTimeZonesList = Arrays.asList(expectedTimeZones);
-        List<String> actualTimeZonesList = serviceState.getLastSuggestion().getZoneIdsList();
+        List<String> actualTimeZonesList = lastEvent.getSuggestion().getZoneIdsList();
         assertEquals(expectedTimeZonesList, actualTimeZonesList);
     }
 

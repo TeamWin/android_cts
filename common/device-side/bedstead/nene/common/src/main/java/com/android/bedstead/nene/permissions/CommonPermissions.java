@@ -1847,4 +1847,7 @@ public class CommonPermissions {
             "android.permission.SEND_SAFETY_CENTER_UPDATE";
     /** See {@code Manifest#TRIGGER_LOST_MODE} */
     public static final String TRIGGER_LOST_MODE = "android.permission.TRIGGER_LOST_MODE";
+    /** See {@code Manifest#MANAGE_DEVICE_POLICY_APP_EXEMPTIONS} */
+    public static final String MANAGE_DEVICE_POLICY_APP_EXEMPTIONS =
+            "android.permission.MANAGE_DEVICE_POLICY_APP_EXEMPTIONS";
 }

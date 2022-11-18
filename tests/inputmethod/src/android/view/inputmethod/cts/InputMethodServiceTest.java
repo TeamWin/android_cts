@@ -554,7 +554,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                     .setMatrix(new Matrix())
                     .setEditorBoundsInfo(builder.build())
                     .addVisibleLineBounds(1f, 2f, 3f, 5f)
-                    .setTextAppearanceInfo(new TextAppearanceInfo(editText))
+                    .setTextAppearanceInfo(new TextAppearanceInfo.Builder().build())
                     .build();
 
             runOnMainSync(() -> editText.getContext().getSystemService(InputMethodManager.class)
@@ -577,7 +577,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                     .setMatrix(new Matrix())
                     .setEditorBoundsInfo(builder.build())
                     .addVisibleLineBounds(1f, 2f, 3f, 4f)
-                    .setTextAppearanceInfo(new TextAppearanceInfo(editText))
+                    .setTextAppearanceInfo(new TextAppearanceInfo.Builder().build())
                     .build();
             assertTrue(expectCommand(stream,
                     imeSession.callRequestCursorUpdates(

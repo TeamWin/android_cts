@@ -30,6 +30,7 @@ import android.server.biometrics.SensorStates;
 import android.server.biometrics.Utils;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -42,6 +43,7 @@ import org.junit.runner.RunWith;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RunWith(AndroidJUnit4.class)
 public class BiometricsAtomsHostSideTests {
@@ -60,9 +62,30 @@ public class BiometricsAtomsHostSideTests {
 
         mUserId = mInstrumentation.getContext().getUserId();
         mBiometricManager = mInstrumentation.getContext().getSystemService(BiometricManager.class);
-        mSensorProperties = mBiometricManager.getSensorProperties();
+        // ignore the legacy HIDL interface for all tests
+        mSensorProperties = filterSensorProperties(mBiometricManager.getSensorProperties());
 
         assumeTrue(!mSensorProperties.isEmpty());
+    }
+
+    private static List<SensorProperties> filterSensorProperties(
+            @NonNull List<SensorProperties> properties) {
+        final int aidlFpSensorId = Utils.getAidlFingerprintSensorId();
+        final int aidlFaceSensorId = Utils.getAidlFaceSensorId();
+
+        return properties.stream().filter(p -> {
+            final int id = p.getSensorId();
+            try {
+                if (isFingerprint(id) && aidlFpSensorId != -1) {
+                    return id == aidlFpSensorId;
+                } else if (isFace(id) && aidlFaceSensorId != -1) {
+                    return id == aidlFaceSensorId;
+                }
+            } catch (Throwable t) {
+                throw new IllegalStateException("Failed to check modality", t);
+            }
+            return true;
+        }).collect(Collectors.toList());
     }
 
     @After

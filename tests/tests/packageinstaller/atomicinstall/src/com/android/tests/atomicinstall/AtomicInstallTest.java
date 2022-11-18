@@ -381,22 +381,6 @@ public class AtomicInstallTest {
         }
     }
 
-    @Test
-    public void testInvalidStateScenario_DoubleCommit() throws Exception {
-        int sessionId = Install.multi(TestApp.A1).setStaged().createSession();
-        try (var session = openPackageInstallerSession(sessionId)) {
-            var sender = new LocalIntentSender();
-            session.commit(sender.getIntentSender());
-            try {
-                session.commit(sender.getIntentSender());
-                sender.getResult(); // Wait for session to complete its operation
-                fail("Should not be able to commit twice!");
-            } catch (IllegalStateException e) {
-                // ignore
-            }
-        }
-    }
-
     private static void assertInconsistentStagedSettings(Install install) {
         assertInconsistentSettings("inconsistent staged settings", install);
     }

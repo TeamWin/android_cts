@@ -21,8 +21,6 @@ import static android.media.MediaDrm.SECURITY_LEVEL_HW_SECURE_ALL;
 
 import static org.junit.Assert.assertTrue;
 
-import android.app.ActivityManager;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -31,9 +29,7 @@ import android.media.MediaFormat;
 import android.media.UnsupportedSchemeException;
 import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.mediapc.cts.common.Utils;
-import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.WindowManager;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -167,16 +163,9 @@ public class PerformanceClassTest {
         "2.2.7.3/7.1.1.3/H-1-1",
         "2.2.7.3/7.1.1.3/H-2-1",})
     public void testMinimumResolutionAndDensity() {
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-
-        // Verify display DPI. We only seem to be able to get the primary display.
-        DisplayMetrics metrics = new DisplayMetrics();
-        WindowManager windowManager =
-            (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-        windowManager.getDefaultDisplay().getMetrics(metrics);
-        int density = metrics.densityDpi;
-        int longPix = Math.max(metrics.widthPixels, metrics.heightPixels);
-        int shortPix = Math.min(metrics.widthPixels, metrics.heightPixels);
+        int density = Utils.DISPLAY_DPI;
+        int longPix = Utils.DISPLAY_LONG_PIXELS;
+        int shortPix = Utils.DISPLAY_SHORT_PIXELS;
 
         Log.i(TAG, String.format("dpi=%d size=%dx%dpix", density, longPix, shortPix));
 
@@ -203,11 +192,7 @@ public class PerformanceClassTest {
         "2.2.7.3/7.6.1/H-1-1",
         "2.2.7.3/7.6.1/H-2-1",})
     public void testMinimumMemory() {
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-
-        // Verify minimum memory
-        ActivityManager activityManager = context.getSystemService(ActivityManager.class);
-        long totalMemoryMb = getTotalMemory(activityManager) / 1024 / 1024;
+        long totalMemoryMb = Utils.TOTAL_MEMORY_MB;
 
         Log.i(TAG, String.format("Total device memory = %,d MB", totalMemoryMb));
 
@@ -219,15 +204,5 @@ public class PerformanceClassTest {
         r7_6_1_h_2_1.setPhysicalMemory(totalMemoryMb);
 
         pce.submitAndCheck();
-    }
-
-    /**
-     * @return the total memory accessible by the kernel as defined by
-     * {@code ActivityManager.MemoryInfo}.
-     */
-    private long getTotalMemory(ActivityManager activityManager) {
-        ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
-        activityManager.getMemoryInfo(memoryInfo);
-        return memoryInfo.totalMem;
     }
 }

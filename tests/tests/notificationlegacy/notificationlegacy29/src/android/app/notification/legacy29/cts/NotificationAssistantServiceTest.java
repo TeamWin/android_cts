@@ -668,6 +668,7 @@ public class NotificationAssistantServiceTest {
         if (isTelevision()) {
             return;
         }
+        assumeFalse("Status bar service not supported", isWatch());
 
         setUpListeners();
         turnScreenOn();
@@ -689,11 +690,12 @@ public class NotificationAssistantServiceTest {
 
         mStatusBarManager.collapsePanels();
         mUi.dropShellPermissionIdentity();
-
     }
 
     @Test
     public void testOnNotificationFeedbackReceived() throws Exception {
+        assumeFalse("Status bar service not supported", isWatch());
+
         setUpListeners(); // also enables assistant
         mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE", "android.permission.EXPAND_STATUS_BAR");
 
