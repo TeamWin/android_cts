@@ -123,7 +123,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
-public class WebViewTest {
+public class WebViewTest extends SharedWebViewTest {
     private static final int INITIAL_PROGRESS = 100;
     private static final String X_REQUESTED_WITH = "X-Requested-With";
     private static final String PRINTER_TEST_FILE = "print.pdf";
@@ -156,15 +156,21 @@ public class WebViewTest {
     public ActivityScenarioRule mActivityScenarioRule =
             new ActivityScenarioRule(WebViewCtsActivity.class);
 
+    // TODO(bewise): Get rid of all of these member variables
+    // once all these tests are referencing the test environment.
     private ActivityScenario mScenario;
     private WebViewCtsActivity mActivity;
-    private WebView mWebView;
     private CtsTestServer mWebServer;
-    private WebViewOnUiThread mOnUiThread;
     private WebIconDatabase mIconDb;
 
+    // TODO(bewise): These should come from the test environment
+    // once the SdkSandboxTestScenarioRunner is able to execute
+    // before and after annotations.
+    private WebView mWebView;
+    private WebViewOnUiThread mOnUiThread;
+
     @Before
-    public void setUp() throws Exception {
+    public void setUpActivity() throws Exception {
         mScenario = mActivityScenarioRule.getScenario();
         mScenario.onActivity(
                 activity -> {
@@ -189,7 +195,7 @@ public class WebViewTest {
     }
 
     @After
-    public void cleanup() throws Exception {
+    public void cleanupActivity() throws Exception {
         if (mOnUiThread != null) {
             mOnUiThread.cleanUp();
         }
@@ -202,6 +208,16 @@ public class WebViewTest {
             mIconDb = null;
         }
         mActivity = null;
+    }
+
+    @Override
+    protected SharedWebViewTestEnvironment createTestEnvironment() {
+        return new SharedWebViewTestEnvironment.Builder()
+                .setContext(mActivity)
+                .setWebView(mWebView)
+                .setWebViewOnUiThread(mOnUiThread)
+                .setHostAppInvoker(SharedWebViewTestEnvironment.createHostAppInvoker())
+                .build();
     }
 
     private void startWebServer(boolean secure) throws Exception {
@@ -310,14 +326,16 @@ public class WebViewTest {
 
     @Test
     public void testScrollBarOverlay() throws Throwable {
+        WebView webView = getTestEnvironment().getWebView();
+
         WebkitUtils.onMainThreadSync(
                 () -> {
                     // These functions have no effect; just verify they don't crash
-                    mWebView.setHorizontalScrollbarOverlay(true);
-                    mWebView.setVerticalScrollbarOverlay(false);
+                    webView.setHorizontalScrollbarOverlay(true);
+                    webView.setVerticalScrollbarOverlay(false);
 
-                    assertTrue(mWebView.overlayHorizontalScrollbar());
-                    assertFalse(mWebView.overlayVerticalScrollbar());
+                    assertTrue(webView.overlayHorizontalScrollbar());
+                    assertFalse(webView.overlayVerticalScrollbar());
                 });
     }
 
@@ -1687,7 +1705,9 @@ public class WebViewTest {
 
     @Test
     public void testFlingScroll() throws Throwable {
-        DisplayMetrics metrics = mOnUiThread.getDisplayMetrics();
+        WebViewOnUiThread onUiThread = getTestEnvironment().getWebViewOnUiThread();
+
+        DisplayMetrics metrics = onUiThread.getDisplayMetrics();
         final int dimension = 10 * Math.max(metrics.widthPixels, metrics.heightPixels);
         String p =
                 "<p style=\"height:"
@@ -1696,26 +1716,27 @@ public class WebViewTest {
                         + "width:"
                         + dimension
                         + "px\">Test fling scroll.</p>";
-        mOnUiThread.loadDataAndWaitForCompletion(
+        onUiThread.loadDataAndWaitForCompletion(
                 "<html><body>" + p + "</body></html>", "text/html", null);
         new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
-                return mOnUiThread.getContentHeight() >= dimension;
+                return onUiThread.getContentHeight() >= dimension;
             }
         }.run();
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 
-        final int previousScrollX = mOnUiThread.getScrollX();
-        final int previousScrollY = mOnUiThread.getScrollY();
+        getTestEnvironment().waitForIdleSync();
 
-        mOnUiThread.flingScroll(10000, 10000);
+        final int previousScrollX = onUiThread.getScrollX();
+        final int previousScrollY = onUiThread.getScrollY();
+
+        onUiThread.flingScroll(10000, 10000);
 
         new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
-                return mOnUiThread.getScrollX() > previousScrollX
-                        && mOnUiThread.getScrollY() > previousScrollY;
+                return onUiThread.getScrollX() > previousScrollX
+                        && onUiThread.getScrollY() > previousScrollY;
             }
         }.run();
     }

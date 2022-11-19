@@ -61,6 +61,31 @@ class InstallSourceInfoTest : PackageInstallerTestBase() {
     }
 
     @Test
+    fun installViaAdbValidInstallerName() {
+        val packageInstallerPackageName = getPackageInstallerPackageName()
+        uiDevice.executeShellCommand(
+                "pm install -i $packageInstallerPackageName $TEST_APK_LOCATION/$TEST_APK_NAME")
+
+        val info = pm.getInstallSourceInfo(TEST_APK_PACKAGE_NAME)
+        assertThat(info.installingPackageName).isEqualTo(packageInstallerPackageName)
+        assertThat(info.initiatingPackageName).isNull()
+        assertThat(info.originatingPackageName).isNull()
+    }
+
+    @Test
+    fun installViaAdbInvalidInstallerName() {
+        val invalidInstallerPackageName = "invalid"
+        uiDevice.executeShellCommand(
+                "pm install -i $invalidInstallerPackageName $TEST_APK_LOCATION/$TEST_APK_NAME")
+
+        val info = pm.getInstallSourceInfo(TEST_APK_PACKAGE_NAME)
+        // Invalid installerPackageName should have been cleared
+        assertThat(info.installingPackageName).isNull()
+        assertThat(info.initiatingPackageName).isNull()
+        assertThat(info.originatingPackageName).isNull()
+    }
+
+    @Test
     fun installViaSessionByStore() {
         installViaSession(PackageInstaller.PACKAGE_SOURCE_STORE)
     }

@@ -16,6 +16,7 @@
 
 package android.permission3.cts
 
+import android.Manifest
 import android.app.Activity
 import android.app.Instrumentation
 import android.content.ComponentName
@@ -23,6 +24,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.Process
+import android.provider.DeviceConfig
 import android.provider.Settings
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
@@ -32,6 +35,7 @@ import android.support.test.uiautomator.UiSelector
 import android.text.Spanned
 import android.text.style.ClickableSpan
 import android.view.View
+import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.modules.utils.build.SdkLevel
 import java.util.concurrent.TimeUnit
@@ -70,11 +74,19 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             "$APK_DIRECTORY/CtsCreateNotificationChannelsApp33.apk"
         const val APP_APK_PATH_MEDIA_PERMISSION_33_WITH_STORAGE =
             "$APK_DIRECTORY/CtsMediaPermissionApp33WithStorage.apk"
+        const val APP_APK_PATH_IMPLICIT_USER_SELECT_STORAGE =
+            "$APK_DIRECTORY/CtsUsePermissionAppImplicitUserSelectStorage.apk"
         const val APP_APK_PATH_OTHER_APP =
             "$APK_DIRECTORY/CtsDifferentPkgNameApp.apk"
         const val APP_PACKAGE_NAME = "android.permission3.cts.usepermission"
         const val OTHER_APP_PACKAGE_NAME = "android.permission3.cts.usepermissionother"
 
+        const val ALLOW_ALL_PHOTOS_BUTTON =
+            "com.android.permissioncontroller:id/permission_allow_all_photos_button"
+        const val SELECT_PHOTOS_BUTTON =
+            "com.android.permissioncontroller:id/permission_allow_selected_photos_button"
+        const val SELECT_MORE_PHOTOS_BUTTON =
+            "com.android.permissioncontroller:id/permission_allow_more_selected_photos_button"
         const val ALLOW_BUTTON =
                 "com.android.permissioncontroller:id/permission_allow_button"
         const val ALLOW_FOREGROUND_BUTTON =
@@ -95,6 +107,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                 "com.android.permissioncontroller:id/allow_foreground_only_radio_button"
         const val ASK_RADIO_BUTTON = "com.android.permissioncontroller:id/ask_radio_button"
         const val DENY_RADIO_BUTTON = "com.android.permissioncontroller:id/deny_radio_button"
+        const val SELECT_PHOTOS_RADIO_BUTTON =
+            "com.android.permissioncontroller:id/select_photos_radio_button"
 
         const val NOTIF_TEXT = "permgrouprequest_notifications"
         const val ALLOW_BUTTON_TEXT = "grant_dialog_button_allow"
@@ -119,15 +133,27 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             android.Manifest.permission.ACCESS_MEDIA_LOCATION,
             android.Manifest.permission.READ_MEDIA_AUDIO,
             android.Manifest.permission.READ_MEDIA_IMAGES,
-            android.Manifest.permission.READ_MEDIA_VIDEO
+            android.Manifest.permission.READ_MEDIA_VIDEO,
+            android.Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
         )
 
         val MEDIA_PERMISSIONS = setOf(
             android.Manifest.permission.ACCESS_MEDIA_LOCATION,
             android.Manifest.permission.READ_MEDIA_AUDIO,
             android.Manifest.permission.READ_MEDIA_IMAGES,
-            android.Manifest.permission.READ_MEDIA_VIDEO
+            android.Manifest.permission.READ_MEDIA_VIDEO,
+            android.Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
         )
+
+        @JvmStatic
+        protected val PICKER_ENABLED_SETTING = "photo_picker_prompt_enabled"
+
+        @JvmStatic
+        protected fun isPhotoPickerPermissionPromptEnabled(): Boolean {
+            return SystemUtil.callWithShellPermissionIdentity { DeviceConfig.getBoolean(
+                DeviceConfig.NAMESPACE_PRIVACY, PICKER_ENABLED_SETTING, false)
+            }
+        }
     }
 
     enum class PermissionState {
@@ -357,6 +383,10 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         }
     }
 
+    protected fun clickPermissionRequestAllowAllPhotosButton(timeoutMillis: Long = 20000) {
+        click(By.res(ALLOW_ALL_PHOTOS_BUTTON), timeoutMillis)
+    }
+
     /**
      * Only for use in tests that are not testing the notification permission popup, on T devices
      */
@@ -485,12 +515,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                 isLegacyApp = isLegacyApp, targetSdk = targetSdk)
     }
 
-    private fun setAppPermissionState(
-        vararg permissions: String,
-        state: PermissionState,
-        isLegacyApp: Boolean,
-        targetSdk: Int
-    ) {
+    private fun navigateToAppPermissionSettings() {
         if (isTv) {
             // Dismiss DeprecatedTargetSdkVersionDialog, if present
             if (waitFindObjectOrNull(By.text(APP_PACKAGE_NAME), 1000L) != null) {
@@ -508,12 +533,12 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             try {
                 // Open the app details settings
                 context.startActivity(
-                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                            data = Uri.fromParts("package", APP_PACKAGE_NAME, null)
-                            addCategory(Intent.CATEGORY_DEFAULT)
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                        }
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.fromParts("package", APP_PACKAGE_NAME, null)
+                        addCategory(Intent.CATEGORY_DEFAULT)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    }
                 )
                 // Open the permissions UI
                 click(byTextRes(R.string.permissions).enabled(true))
@@ -522,6 +547,25 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                 throw e
             }
         }, TIMEOUT_MILLIS)
+    }
+
+    protected fun navigateToIndividualPermissionSetting(permission: String) {
+        navigateToAppPermissionSettings()
+        val permissionLabel = getPermissionLabel(permission)
+        if (isWatch) {
+            click(By.text(permissionLabel), 40_000)
+        } else {
+            clickPermissionControllerUi(By.text(permissionLabel))
+        }
+    }
+
+    private fun setAppPermissionState(
+        vararg permissions: String,
+        state: PermissionState,
+        isLegacyApp: Boolean,
+        targetSdk: Int
+    ) {
+        navigateToAppPermissionSettings()
 
         for (permission in permissions) {
             // Find the permission screen
@@ -557,9 +601,12 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                             if (showsForegroundOnlyButton(permission)) {
                                 By.text(getPermissionControllerString(
                                         "app_permission_button_allow_foreground"))
+                            } else if (showsAllowPhotosButton(permission)) {
+                                By.text(getPermissionControllerString(
+                                        "app_permission_button_allow_all_photos"))
                             } else {
                                 By.text(getPermissionControllerString(
-                                        "app_permission_button_allow"))
+                                    "app_permission_button_allow"))
                             }
                         PermissionState.DENIED -> By.text(
                                 getPermissionControllerString("app_permission_button_deny"))
@@ -662,6 +709,17 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             android.Manifest.permission.ACCESS_BACKGROUND_LOCATION -> true
             else -> false
         }
+    private fun showsAllowPhotosButton(permission: String): Boolean {
+        if (!isPhotoPickerPermissionPromptEnabled()) {
+            return false
+        }
+        return when (permission) {
+            Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
+            Manifest.permission.READ_MEDIA_IMAGES,
+            Manifest.permission.READ_MEDIA_VIDEO -> true
+            else -> false
+        }
+    }
 
     private fun showsForegroundOnlyButton(permission: String): Boolean =
         when (permission) {
@@ -729,5 +787,32 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             expectAccess,
             result.resultData!!.getBooleanExtra("$APP_PACKAGE_NAME.HAS_ACCESS", false)
         )
+    }
+
+    protected fun assertPermissionFlags(permName: String, vararg flags: Pair<Int, Boolean>) {
+        val user = Process.myUserHandle()
+        SystemUtil.runWithShellPermissionIdentity {
+            val currFlags =
+                packageManager.getPermissionFlags(permName, APP_PACKAGE_NAME, user)
+            for ((flag, set) in flags) {
+                assertEquals("flag $flag: ", set, currFlags and flag != 0)
+            }
+        }
+    }
+
+    protected fun findView(selector: BySelector, expected: Boolean) {
+        val timeoutMs = if (expected) {
+            10000L
+        } else {
+            1000L
+        }
+
+        val exception = try {
+            waitFindObject(selector, timeoutMs)
+            null
+        } catch (e: Exception) {
+            e
+        }
+        assertTrue("Expected to find view: $expected", (exception == null) == expected)
     }
 }

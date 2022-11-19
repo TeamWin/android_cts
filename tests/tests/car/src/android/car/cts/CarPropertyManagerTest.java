@@ -1261,6 +1261,34 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void testMirrorAutoFoldEnabledIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.MIRROR_AUTO_FOLD_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class)
+                .addReadPermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
+                .addWritePermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testMirrorAutoTiltEnabledIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.MIRROR_AUTO_TILT_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_MIRROR,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class)
+                .addReadPermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
+                .addWritePermission(Car.PERMISSION_CONTROL_CAR_MIRRORS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
     @ApiTest(
             apis = {
                 "android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
@@ -3141,6 +3169,35 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void testSeatEasyAccessEnabledIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.SEAT_EASY_ACCESS_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class)
+                .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
+                .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testSeatCushionSideSupportPosIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.SEAT_CUSHION_SIDE_SUPPORT_POS,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .requireMinMaxValues()
+                .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
+                .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
     @ApiTest(
             apis = {
                 "android.car.hardware.property.CarPropertyManager#getCarPropertyConfig",
@@ -3298,23 +3355,25 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                                                 powerDependentProperty))
                                         .that(powerDependentCarPropertyConfig.getAreaType())
                                         .isEqualTo(VehicleAreaType.VEHICLE_AREA_TYPE_SEAT);
-                                assertWithMessage(
-                                                "HVAC_POWER_ON's area IDs must match the area IDs"
+
+                                for (int powerDependentAreaId :
+                                        powerDependentCarPropertyConfig.getAreaIds()) {
+                                    boolean powerDependentAreaIdIsContained = false;
+                                    for (int hvacPowerOnAreaId :
+                                            hvacPowerOnCarPropertyConfig.getAreaIds()) {
+                                        if ((powerDependentAreaId & hvacPowerOnAreaId)
+                                                == powerDependentAreaId) {
+                                            powerDependentAreaIdIsContained = true;
+                                            break;
+                                        }
+                                    }
+                                    assertWithMessage(
+                                            "HVAC_POWER_ON's area IDs must contain the area IDs"
                                                     + " of power dependent property: "
-                                                        + VehiclePropertyIds.toString(
-                                                                powerDependentProperty))
-                                        .that(
-                                                Arrays.stream(
-                                                                powerDependentCarPropertyConfig
-                                                                        .getAreaIds())
-                                                        .boxed()
-                                                        .collect(Collectors.toList()))
-                                        .containsExactlyElementsIn(
-                                                Arrays.stream(
-                                                                hvacPowerOnCarPropertyConfig
-                                                                        .getAreaIds())
-                                                        .boxed()
-                                                        .collect(Collectors.toList()));
+                                                    + VehiclePropertyIds.toString(
+                                                    powerDependentProperty)).that(
+                                            powerDependentAreaIdIsContained).isTrue();
+                                }
                             }
                         })
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)

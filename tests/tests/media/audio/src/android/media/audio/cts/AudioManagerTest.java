@@ -278,6 +278,9 @@ public class AudioManagerTest extends InstrumentationTestCase {
         if (isAutomotive()) {
             return;
         }
+        if (!hasBuiltinSpeaker()) {
+            return;
+        }
         final MyBlockingIntentReceiver receiver = new MyBlockingIntentReceiver(
                 AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED);
         final boolean initialSpeakerphoneState = mAudioManager.isSpeakerphoneOn();
@@ -298,6 +301,18 @@ public class AudioManagerTest extends InstrumentationTestCase {
             mContext.unregisterReceiver(receiver);
             mAudioManager.setSpeakerphoneOn(initialSpeakerphoneState);
         }
+    }
+
+    private boolean hasBuiltinSpeaker() {
+        AudioDeviceInfo[] devices = mAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+        for (AudioDeviceInfo device : devices) {
+            final int type = device.getType();
+            if (type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+                    || type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static final class MyBlockingIntentReceiver extends BroadcastReceiver {

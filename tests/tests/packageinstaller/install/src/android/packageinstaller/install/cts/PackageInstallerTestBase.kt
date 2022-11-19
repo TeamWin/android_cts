@@ -280,15 +280,21 @@ open class PackageInstallerTestBase {
     }
 
     /**
-     * Start an installation via a session
+     * Start an installation via an Intent
      */
-    protected fun startInstallationViaIntent(): CompletableFuture<Int> {
+    protected fun startInstallationViaIntent(
+            intent: Intent = getInstallationIntent()
+    ): CompletableFuture<Int> {
+        return installDialogStarter.activity.startActivityForResult(intent)
+    }
+
+    protected fun getInstallationIntent(): Intent {
         val intent = Intent(Intent.ACTION_INSTALL_PACKAGE)
         intent.data = FileProvider.getUriForFile(context, CONTENT_AUTHORITY, apkFile)
-        intent.putExtra(Intent.EXTRA_RETURN_RESULT, true)
         intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+        intent.putExtra(Intent.EXTRA_RETURN_RESULT, true)
 
-        return installDialogStarter.activity.startActivityForResult(intent)
+        return intent
     }
 
     protected fun startInstallationViaPreapprovalSession(session: Session) {

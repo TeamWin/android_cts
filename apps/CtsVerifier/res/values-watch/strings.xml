@@ -16,6 +16,7 @@
 <resources>
     <!-- Don't test these features on watches. -->
     <string-array name="disabled_tests">
+        <item>com.android.cts.verifier.telecom.CtsVerifierInCallUi</item>
         <item>com.android.cts.verifier.notifications.NotificationAttentionManagementVerifierActivity</item>
         <item>com.android.cts.verifier.notifications.NotificationListenerVerifierActivity</item>
     </string-array>

@@ -812,6 +812,30 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     }
 
     @Override
+    public void isN1ModeEnabled(int serial) {
+        Log.d(TAG, "isN1ModeEnabled");
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioNetworkResponse.isN1ModeEnabledResponse(rsp, false);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to isN1ModeEnabled from AIDL. Exception " + ex);
+        }
+    }
+
+    @Override
+    public void setN1ModeEnabled(int serial, boolean enable) {
+        Log.d(TAG, "setN1ModeEnabled");
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioNetworkResponse.setN1ModeEnabledResponse(rsp);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to setN1ModeEnabled from AIDL. Exception " + ex);
+        }
+    }
+
+    @Override
     public String getInterfaceHash() {
         return IRadioNetwork.HASH;
     }

@@ -613,6 +613,38 @@ public class BluetoothAdapterTest extends AndroidTestCase {
                 BluetoothProfile.getProfileName(BluetoothProfile.LE_AUDIO_BROADCAST_ASSISTANT));
     }
 
+    public void test_getSetBluetoothHciSnoopLoggingMode() {
+        if (!mHasBluetooth) {
+            return;
+        }
+
+        assertThrows(SecurityException.class, () -> mAdapter
+                .setBluetoothHciSnoopLoggingMode(BluetoothAdapter.BT_SNOOP_LOG_MODE_FULL));
+        assertThrows(SecurityException.class, () -> mAdapter
+                .getBluetoothHciSnoopLoggingMode());
+
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_PRIVILEGED);
+
+        assertThrows(IllegalArgumentException.class, () -> mAdapter
+                .setBluetoothHciSnoopLoggingMode(-1));
+
+        assertEquals(BluetoothStatusCodes.SUCCESS, mAdapter
+                .setBluetoothHciSnoopLoggingMode(BluetoothAdapter.BT_SNOOP_LOG_MODE_FULL));
+        assertEquals(mAdapter.getBluetoothHciSnoopLoggingMode(),
+                BluetoothAdapter.BT_SNOOP_LOG_MODE_FULL);
+
+        assertEquals(BluetoothStatusCodes.SUCCESS, mAdapter
+                .setBluetoothHciSnoopLoggingMode(BluetoothAdapter.BT_SNOOP_LOG_MODE_FILTERED));
+        assertEquals(mAdapter.getBluetoothHciSnoopLoggingMode(),
+                BluetoothAdapter.BT_SNOOP_LOG_MODE_FILTERED);
+
+        assertEquals(BluetoothStatusCodes.SUCCESS, mAdapter
+                .setBluetoothHciSnoopLoggingMode(BluetoothAdapter.BT_SNOOP_LOG_MODE_DISABLED));
+        assertEquals(mAdapter.getBluetoothHciSnoopLoggingMode(),
+                BluetoothAdapter.BT_SNOOP_LOG_MODE_DISABLED);
+
+    }
+
     private static void sleep(long t) {
         try {
             Thread.sleep(t);

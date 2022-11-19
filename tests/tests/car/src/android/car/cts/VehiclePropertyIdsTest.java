@@ -234,6 +234,10 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("MIRROR_Z_MOVE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.MIRROR_Z_POS))
                 .isEqualTo("MIRROR_Z_POS");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.MIRROR_AUTO_FOLD_ENABLED))
+                .isEqualTo("MIRROR_AUTO_FOLD_ENABLED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.MIRROR_AUTO_TILT_ENABLED))
+                .isEqualTo("MIRROR_AUTO_TILT_ENABLED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_BACKREST_ANGLE_1_MOVE))
                 .isEqualTo("SEAT_BACKREST_ANGLE_1_MOVE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_BACKREST_ANGLE_1_POS))
@@ -290,6 +294,10 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("SEAT_TILT_MOVE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_TILT_POS))
                 .isEqualTo("SEAT_TILT_POS");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_EASY_ACCESS_ENABLED))
+                .isEqualTo("SEAT_EASY_ACCESS_ENABLED");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_CUSHION_SIDE_SUPPORT_POS))
+                .isEqualTo("SEAT_CUSHION_SIDE_SUPPORT_POS");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.WINDOW_LOCK))
                 .isEqualTo("WINDOW_LOCK");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.WINDOW_MOVE))

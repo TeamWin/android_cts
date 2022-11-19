@@ -25,6 +25,7 @@ android_test {
     min_sdk_version: "30",
     srcs: [
         "src/**/*.kt",
+        ":CtsProviderTestUtils",
     ],
     static_libs: [
         "kotlin-stdlib",
@@ -61,6 +62,7 @@ android_test {
         ":CtsCreateNotificationChannelsApp33",
         ":CtsMediaPermissionApp33WithStorage",
         ":CtsDifferentPkgNameApp",
+        ":CtsUsePermissionAppImplicitUserSelectStorage",
     ],
     test_suites: [
         "cts",

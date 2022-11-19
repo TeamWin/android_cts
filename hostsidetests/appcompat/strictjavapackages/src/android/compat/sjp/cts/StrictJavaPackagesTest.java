@@ -1045,7 +1045,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                         final Multimap<String, String> bcpOnlyDuplicates =
                                 Multimaps.filterKeys(filteredDuplicates,
                                     sBootclasspathJars::contains);
-                        if (!filteredDuplicates.isEmpty()) {
+                        if (!bcpOnlyDuplicates.isEmpty()) {
                             synchronized (perApkClasspathDuplicates) {
                                 perApkClasspathDuplicates.put(apk, bcpOnlyDuplicates);
                             }

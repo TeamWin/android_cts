@@ -41,11 +41,6 @@ import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.NonMainlineTest;
 
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.HttpCookie;
-import java.net.Socket;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.http.impl.DefaultHttpServerConnection;
 import org.apache.http.impl.io.SocketOutputBuffer;
 import org.apache.http.io.SessionOutputBuffer;
@@ -55,9 +50,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.net.HttpCookie;
+import java.net.Socket;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Tests of MediaPlayer streaming capabilities.
@@ -70,18 +70,6 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
     private static final String TAG = "StreamingMediaPlayerTest";
     static final String mInpPrefix = WorkDir.getMediaDirString() + "assets/";
 
-    private static final String HTTP_H263_AMR_VIDEO_1_KEY =
-            "streaming_media_player_test_http_h263_amr_video1";
-    private static final String HTTP_H263_AMR_VIDEO_2_KEY =
-            "streaming_media_player_test_http_h263_amr_video2";
-    private static final String HTTP_H264_BASE_AAC_VIDEO_1_KEY =
-            "streaming_media_player_test_http_h264_base_aac_video1";
-    private static final String HTTP_H264_BASE_AAC_VIDEO_2_KEY =
-            "streaming_media_player_test_http_h264_base_aac_video2";
-    private static final String HTTP_MPEG4_SP_AAC_VIDEO_1_KEY =
-            "streaming_media_player_test_http_mpeg4_sp_aac_video1";
-    private static final String HTTP_MPEG4_SP_AAC_VIDEO_2_KEY =
-            "streaming_media_player_test_http_mpeg4_sp_aac_video2";
     private static final String MODULE_NAME = "CtsMediaPlayerTestCases";
 
     private static final int LOCAL_HLS_BITS_PER_MS = 100 * 1000;
@@ -150,15 +138,14 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
                 + "&fmt=18&user=android-device-test", 480, 270);
     }
 */
-    // Streaming HTTP video from YouTube
+
     @Test
     public void testHTTP_H263_AMR_Video1() throws Exception {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_H263, MediaFormat.MIMETYPE_AUDIO_AMR_NB)) {
             return; // skip
         }
 
-        String urlString = dynamicConfig.getValue(HTTP_H263_AMR_VIDEO_1_KEY);
-        playVideoTest(urlString, 176, 144);
+        localStreamingTest("streaming_media_player_test_http_h263_amr_video1.mp4", 176, 144);
     }
 
     @Test
@@ -167,8 +154,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
             return; // skip
         }
 
-        String urlString = dynamicConfig.getValue(HTTP_H263_AMR_VIDEO_2_KEY);
-        playVideoTest(urlString, 176, 144);
+        localStreamingTest("streaming_media_player_test_http_h263_amr_video2.mp4", 176, 144);
     }
 
     @Test
@@ -177,8 +163,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
             return; // skip
         }
 
-        String urlString = dynamicConfig.getValue(HTTP_MPEG4_SP_AAC_VIDEO_1_KEY);
-        playVideoTest(urlString, 176, 144);
+        localStreamingTest("streaming_media_player_test_http_mpeg4_sp_aac_video1.mp4", 176, 144);
     }
 
     @Test
@@ -187,8 +172,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
             return; // skip
         }
 
-        String urlString = dynamicConfig.getValue(HTTP_MPEG4_SP_AAC_VIDEO_2_KEY);
-        playVideoTest(urlString, 176, 144);
+        localStreamingTest("streaming_media_player_test_http_mpeg4_sp_aac_video2.mp4", 176, 144);
     }
 
     @Test
@@ -197,8 +181,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
             return; // skip
         }
 
-        String urlString = dynamicConfig.getValue(HTTP_H264_BASE_AAC_VIDEO_1_KEY);
-        playVideoTest(urlString, 640, 360);
+        localStreamingTest("streaming_media_player_test_http_h264_base_aac_video1.mp4", 640, 360);
     }
 
     @Test
@@ -207,8 +190,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
             return; // skip
         }
 
-        String urlString = dynamicConfig.getValue(HTTP_H264_BASE_AAC_VIDEO_2_KEY);
-        playVideoTest(urlString, 640, 360);
+        localStreamingTest("streaming_media_player_test_http_h264_base_aac_video2.mp4", 640, 360);
     }
 
     // Streaming HLS video downloaded from YouTube
@@ -626,6 +608,17 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         // give the worker a bit of time to start processing the message before shutting it down
         Thread.sleep(5000);
         worker.quit();
+    }
+
+    private void localStreamingTest(String name, int width, int height) throws Exception {
+        mServer = new CtsTestServer(mContext);
+        Preconditions.assertTestFileExists(mInpPrefix + name);
+        try {
+            String streamUrl = mServer.getAssetUrl(mInpPrefix + name);
+            playVideoTest(streamUrl, width, height);
+        } finally {
+            mServer.shutdown();
+        }
     }
 
     private void localHlsTest(final String name, boolean appendQueryString,

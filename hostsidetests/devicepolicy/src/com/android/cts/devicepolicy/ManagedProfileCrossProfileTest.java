@@ -242,6 +242,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                     + " --package " + WIDGET_PROVIDER_PKG);
             setIdleAllowlist(WIDGET_PROVIDER_PKG, true);
             startWidgetHostService();
+            Thread.sleep(500);
 
             String commandOutput = changeCrossProfileWidgetForUser(WIDGET_PROVIDER_PKG,
                     "add-cross-profile-widget", mProfileUserId);

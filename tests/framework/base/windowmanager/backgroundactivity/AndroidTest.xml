@@ -33,6 +33,7 @@
         <!-- TODO(b/129909356): Rename to CtsWindowManagerDeviceTestCases.apk -->
         <option name="test-file-name" value="CtsActivityManagerBackgroundActivityTestCases.apk" />
         <option name="test-file-name" value="CtsBackgroundActivityAppB.apk" />
+        <option name="test-file-name" value="CtsBackgroundActivityAppB33.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">
         <option name="package" value="android.server.wm.backgroundactivity.cts" />

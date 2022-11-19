@@ -28,6 +28,8 @@ android_test_helper_app {
         "CtsSdkSandboxTestRunner",
         "compatibility-device-util-axt",
         "ctsdeviceutillegacy-axt",
+        "ctswebkitsharedenv",
+        "CtsWebkitTestCasesSharedWithSdk",
     ],
     libs: [
         "android.test.base",

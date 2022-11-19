@@ -83,6 +83,7 @@
             android:showWhenLocked="true"
             android:turnScreenOn="true"
             android:keepScreenOn="true"
+            android:exported="true"
             android:taskAffinity=".Camera2Activity">
         </activity>
 

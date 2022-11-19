@@ -18,8 +18,10 @@ package android.sdksandbox.webkit.cts;
 
 import android.app.sdksandbox.testutils.testscenario.KeepSdkSandboxAliveRule;
 import android.app.sdksandbox.testutils.testscenario.SdkSandboxScenarioRule;
+import android.webkit.cts.SharedWebViewTestEnvironment;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.MediumTest;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -30,15 +32,24 @@ import org.junit.runner.RunWith;
 public class WebViewSandboxTest {
 
     @ClassRule
-    public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup = new KeepSdkSandboxAliveRule(
-            "com.android.emptysdkprovider");
+    public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
+            new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
 
     @Rule
-    public final SdkSandboxScenarioRule sdkTester = new SdkSandboxScenarioRule(
-            "com.android.cts.sdksidetests.webviewsandboxtest");
+    public final SdkSandboxScenarioRule sdkTester =
+            new SdkSandboxScenarioRule(
+                    "com.android.cts.sdksidetests.webviewsandboxtest",
+                    SharedWebViewTestEnvironment.createHostAppInvoker());
 
     @Test
+    @MediumTest
     public void testScrollBarOverlay() throws Exception {
         sdkTester.assertSdkTestRunPasses("testScrollBarOverlay");
+    }
+
+    @Test
+    @MediumTest
+    public void testFlingScroll() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testFlingScroll");
     }
 }

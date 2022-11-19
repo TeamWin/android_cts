@@ -18,7 +18,6 @@ package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.server.wm.CliIntentExtra.extraString;
-import static android.server.wm.DeprecatedTargetSdkTest.DEPRECATED_TARGET_SDK_VERSION_DIALOG;
 import static android.server.wm.UiDeviceUtils.dragPointer;
 import static android.server.wm.dndsourceapp.Components.DRAG_SOURCE;
 import static android.server.wm.dndtargetapp.Components.DROP_TARGET;
@@ -232,9 +231,7 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
             moveActivitiesToSplitScreen(sourceComponentName, targetComponentName);
         }
         if (DROP_TARGET_SDK23.equals(targetComponentName)) {
-            mWmState.waitForWindowSurfaceShown(DEPRECATED_TARGET_SDK_VERSION_DIALOG, true);
-            closeSystemDialogs();
-            mWmState.waitForWindowSurfaceDisappeared(DEPRECATED_TARGET_SDK_VERSION_DIALOG);
+            DeprecatedTargetSdkTest.waitAndDismissDeprecatedTargetSdkDialog(mWmState);
         }
 
         Point p1 = getWindowCenter(sourceComponentName);

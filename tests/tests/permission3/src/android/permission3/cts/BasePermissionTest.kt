@@ -37,13 +37,13 @@ import com.android.compatibility.common.util.FreezeRotationRule
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.UiAutomatorUtils
+import java.util.concurrent.CompletableFuture
+import java.util.regex.Pattern
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Before
 import org.junit.Rule
-import java.util.concurrent.CompletableFuture
-import java.util.regex.Pattern
 
 abstract class BasePermissionTest {
     companion object {
@@ -52,19 +52,30 @@ abstract class BasePermissionTest {
         const val IDLE_TIMEOUT_MILLIS: Long = 1000
         const val UNEXPECTED_TIMEOUT_MILLIS = 1000
         const val TIMEOUT_MILLIS: Long = 20000
-    }
 
-    protected val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
-    protected val context: Context = instrumentation.context
-    protected val uiAutomation: UiAutomation = instrumentation.uiAutomation
-    protected val uiDevice: UiDevice = UiDevice.getInstance(instrumentation)
-    protected val packageManager: PackageManager = context.packageManager
-    private val mPermissionControllerResources: Resources = context.createPackageContext(
+        @JvmStatic
+        protected val instrumentation: Instrumentation =
+            InstrumentationRegistry.getInstrumentation()
+        @JvmStatic
+        protected val context: Context = instrumentation.context
+        @JvmStatic
+        protected val uiAutomation: UiAutomation = instrumentation.uiAutomation
+        @JvmStatic
+        protected val uiDevice: UiDevice = UiDevice.getInstance(instrumentation)
+        @JvmStatic
+        protected val packageManager: PackageManager = context.packageManager
+        @JvmStatic
+        private val mPermissionControllerResources: Resources = context.createPackageContext(
             context.packageManager.permissionControllerPackageName, 0).resources
 
-    protected val isTv = packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
-    protected val isWatch = packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
-    protected val isAutomotive = packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+        @JvmStatic
+        protected val isTv = packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+        @JvmStatic
+        protected val isWatch = packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
+        @JvmStatic
+        protected val isAutomotive =
+            packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+    }
 
     @get:Rule
     val disableAnimationRule = DisableAnimationRule()
@@ -225,5 +236,7 @@ abstract class BasePermissionTest {
     protected fun startActivityForFuture(
         intent: Intent
     ): CompletableFuture<Instrumentation.ActivityResult> =
-        activityRule.launchActivity(null).startActivityForFuture(intent)
+        CompletableFuture<Instrumentation.ActivityResult>().also {
+            activityRule.launchActivity(null).startActivityForFuture(intent, it)
+        }
 }

@@ -128,5 +128,7 @@ public final class CommonFlags {
     public static final class DevicePolicyManager {
         public static final String DISABLE_RESOURCES_UPDATABILITY_FLAG =
                 "disable_resources_updatability";
+        public static final String DEPRECATE_USERMANAGERINTERNAL_DEVICEPOLICY_FLAG =
+                "deprecate_usermanagerinternal_devicepolicy";
     }
 }

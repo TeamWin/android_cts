@@ -945,6 +945,30 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         }
     }
 
+    /**
+     * Test settings override controls.
+     */
+    @Test
+    public void testSettingsOverrides() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                if (!staticInfo.isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
+                    continue;
+                }
+                if (!staticInfo.isZoomSettingsOverrideSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support zoom overrides, skipping");
+                    continue;
+                }
+                openDevice(id);
+                settingsOverrideTestByCamera();
+            } finally {
+                closeDevice();
+            }
+        }
+    }
+
     // TODO: add 3A state machine test.
 
     /**
@@ -3108,6 +3132,35 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         Size maxPreviewSz = mOrderedPreviewSizes.get(0); // Max preview size.
         startPreview(requestBuilder, maxPreviewSz, listener);
         stopPreview();
+    }
+
+    private void settingsOverrideTestByCamera() throws Exception {
+        // Verify that settings override is OFF by default
+        Size maxPreviewSize = mOrderedPreviewSizes.get(0);
+        CaptureRequest.Builder requestBuilder =
+                mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        SimpleCaptureCallback listener = new SimpleCaptureCallback();
+        startPreview(requestBuilder, maxPreviewSize, listener);
+        waitForSettingsApplied(listener, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
+        verifyCaptureResultForKey(CaptureResult.CONTROL_SETTINGS_OVERRIDE,
+                CameraMetadata.CONTROL_SETTINGS_OVERRIDE_OFF, listener, NUM_FRAMES_VERIFIED);
+
+        // Turn settings override to ZOOM, and make sure it's reflected in result
+        requestBuilder.set(CaptureRequest.CONTROL_SETTINGS_OVERRIDE,
+                CameraMetadata.CONTROL_SETTINGS_OVERRIDE_ZOOM);
+        SimpleCaptureCallback listenerZoom = new SimpleCaptureCallback();
+        mSession.setRepeatingRequest(requestBuilder.build(), listenerZoom, mHandler);
+        waitForSettingsApplied(listenerZoom, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
+        verifyCaptureResultForKey(CaptureResult.CONTROL_SETTINGS_OVERRIDE,
+                CameraMetadata.CONTROL_SETTINGS_OVERRIDE_ZOOM, listenerZoom, NUM_FRAMES_VERIFIED);
+
+        // Verify that settings override result is ON if turned on from the beginning
+        listenerZoom = new SimpleCaptureCallback();
+        stopPreviewAndDrain();
+        startPreview(requestBuilder, maxPreviewSize, listenerZoom);
+        waitForSettingsApplied(listenerZoom, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
+        verifyCaptureResultForKey(CaptureResult.CONTROL_SETTINGS_OVERRIDE,
+                CameraMetadata.CONTROL_SETTINGS_OVERRIDE_ZOOM, listenerZoom, NUM_FRAMES_VERIFIED);
     }
 
     //----------------------------------------------------------------

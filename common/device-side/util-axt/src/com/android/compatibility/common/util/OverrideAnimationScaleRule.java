@@ -18,6 +18,7 @@ package com.android.compatibility.common.util;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
+import android.animation.ValueAnimator;
 import androidx.annotation.NonNull;
 
 import org.junit.runner.Description;
@@ -48,6 +49,10 @@ public class OverrideAnimationScaleRule extends BeforeAfterRule {
         mWindowAnimationScaleSetting.put(value);
         mTransitionAnimationScaleSetting.put(value);
         mAnimatorDurationScaleSetting.put(value);
+        if (mAnimationScale > 0) {
+            PollingCheck.waitFor(() ->
+                    Math.abs(ValueAnimator.getDurationScale() - mAnimationScale) < 0.001);
+        }
     }
 
     @Override

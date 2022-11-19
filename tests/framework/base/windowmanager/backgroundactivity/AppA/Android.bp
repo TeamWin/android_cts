@@ -16,7 +16,7 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
+android_test_helper_app {
     name: "CtsBackgroundActivityAppA",
     defaults: ["cts_support_defaults"],
 
@@ -27,11 +27,10 @@ android_test {
 
     srcs: ["src/**/*.java"],
 
-    sdk_version: "test_current",
+    target_sdk_version: "test_current",
 
     test_suites: [
         "cts",
         "general-tests",
     ],
-
 }

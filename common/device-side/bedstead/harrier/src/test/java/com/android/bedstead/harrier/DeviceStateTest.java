@@ -108,6 +108,7 @@ import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
+import com.android.bedstead.harrier.annotations.RunWithFeatureFlagEnabledAndDisabled;
 import com.android.bedstead.harrier.annotations.TestTag;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
@@ -1200,5 +1201,11 @@ public class DeviceStateTest {
     @Test
     public void ensureFeatureFlagValueAnnotation_featureFlagIsSetToValue() {
         assertThat(TestApis.flags().get(NAMESPACE, KEY)).isEqualTo(VALUE);
+    }
+
+    @RunWithFeatureFlagEnabledAndDisabled(namespace = NAMESPACE, key = KEY)
+    @Test
+    public void runWithFeatureFlagEnabledAndDisabledAnnotation_runs() {
+        assertThat(TestApis.flags().get(NAMESPACE, KEY)).isNotNull();
     }
 }

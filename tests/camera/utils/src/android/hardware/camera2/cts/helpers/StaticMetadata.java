@@ -2173,6 +2173,27 @@ public class StaticMetadata {
     }
 
     /**
+     * Get the available settings overrides and do validity check.
+     *
+     * @Return reported available settings overrides, empty array if the value is unavailable.
+     */
+    private int[] getAvailableSettingsOverridesChecked() {
+        Key<int[]> key = CameraCharacteristics.CONTROL_AVAILABLE_SETTINGS_OVERRIDES;
+        int[] availableOverrides = mCharacteristics.get(key);
+        if (availableOverrides == null) {
+            return new int[0];
+        }
+
+        List<Integer> overridesList = Arrays.asList(CameraTestUtils.toObject(availableOverrides));
+        // OFF must be included.
+        checkTrueForKey(key, " OFF must be included",
+                overridesList.contains(CameraMetadata.CONTROL_SETTINGS_OVERRIDE_OFF));
+        checkTrueForKey(key, " must be included in CameraCharacteristics keys",
+                areKeysAvailable(key));
+        return availableOverrides;
+    }
+
+    /**
      * Determine whether the current device supports a capability or not.
      *
      * @param capability (non-negative)
@@ -2796,7 +2817,17 @@ public class StaticMetadata {
      * Check if settings override is supported
      */
     public boolean isSettingsOverrideSupported() {
-        return areKeysAvailable(CaptureRequest.CONTROL_SETTINGS_OVERRIDE);
+        int[] settingsOverrides = getAvailableSettingsOverridesChecked();
+        return settingsOverrides.length > 0;
+    }
+
+    /**
+     * Check if zoom settings override is supported
+     */
+    public boolean isZoomSettingsOverrideSupported() {
+        int[] settingsOverrides = getAvailableSettingsOverridesChecked();
+        return CameraTestUtils.contains(settingsOverrides,
+                CameraMetadata.CONTROL_SETTINGS_OVERRIDE_ZOOM);
     }
 
     /**

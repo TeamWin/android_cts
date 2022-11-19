@@ -192,12 +192,14 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
             "androidx.window.extensions.area.WindowAreaComponent#startRearDisplaySession",
             "androidx.window.extensions.area.WindowAreaComponent#endRearDisplaySession"})
     @Test
-    public void testStartAndEndRearDisplaySession() {
+    public void testStartAndEndRearDisplaySession() throws Throwable {
         assumeTrue(mWindowAreaStatus == WindowAreaComponent.STATUS_AVAILABLE);
         assumeTrue(mCurrentDeviceState != mRearDisplayState);
 
         mActivity.mConfigurationChanged = false;
-        mWindowAreaComponent.startRearDisplaySession(mActivity, mSessionStateListener);
+        // Running with CONTROL_DEVICE_STATE permission to bypass educational overlay
+        DeviceStateUtils.runWithControlDeviceStatePermission(() ->
+                mWindowAreaComponent.startRearDisplaySession(mActivity, mSessionStateListener));
         waitAndAssert(() -> mActivity.mConfigurationChanged);
         assertTrue(mWindowAreaSessionState != null
                         && mWindowAreaSessionState == WindowAreaComponent.SESSION_STATE_ACTIVE);

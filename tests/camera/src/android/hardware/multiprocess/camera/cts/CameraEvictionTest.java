@@ -36,6 +36,7 @@ import android.hardware.camera2.cts.CameraTestUtils.HandlerExecutor;
 import android.hardware.cts.CameraCtsActivity;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.server.wm.NestedShellPermission;
 import android.server.wm.TestTaskOrganizer;
 import android.server.wm.WindowManagerStateHelper;
@@ -373,6 +374,7 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
     /**
      * Test camera availability access callback in split window mode.
      */
+    @AppModeFull(reason = "TestTaskOrganizer.putTaskInSplitPrimary, .putTaskInSplitSecondary")
     public void testCamera2AccessCallbackInSplitMode() throws Throwable {
         if (!ActivityTaskManager.supportsSplitScreenMultiWindow(getActivity())) {
             return;
@@ -702,6 +704,7 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
 
         // Start activity in a new top foreground process
         if (splitScreen) {
+            // Requires @AppModeFull.
             mTaskOrganizer.putTaskInSplitPrimary(a.getTaskId());
             ComponentName primaryActivityComponent = new ComponentName(
                     a.getPackageName(), a.getClass().getName());
@@ -709,6 +712,8 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
 
             // startActivity(intent) doesn't work with TestTaskOrganizer's split screen,
             // have to go through shell command.
+            // Also, android:exported must be true for this to work, see:
+            // https://developer.android.com/guide/topics/manifest/activity-element#exported
             runShellCommand("am start %s/%s", a.getPackageName(), klass.getName());
             ComponentName secondActivityComponent = new ComponentName(
                     a.getPackageName(), klass.getName());

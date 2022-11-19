@@ -873,7 +873,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                 .setTargetActivity(SDK_27_TEST_ACTIVITY).setNewTask(true)
                 .setDisplayId(newDisplay.mId).execute();
         // Dismiss DeprecatedTargetSdkVersionDialog to avoid it disturbing tapOnTaskCenter.
-        closeSystemDialogs();
+        DeprecatedTargetSdkTest.waitAndDismissDeprecatedTargetSdkDialog(mWmState);
         waitAndAssertTopResumedActivity(SDK_27_TEST_ACTIVITY, newDisplay.mId,
                 "Activity launched on secondary display must be resumed and focused");
 

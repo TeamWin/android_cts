@@ -22,15 +22,20 @@ import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.cts.utils.ActivityLaunchUtils;
 import android.accessibilityservice.cts.utils.AsyncUtils;
 import android.accessibilityservice.cts.utils.DisplayUtils;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.hardware.display.DisplayManager;
+import android.os.Binder;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.text.TextUtils;
 import android.util.SparseArray;
 import android.view.Display;
+import android.view.SurfaceControl;
+import android.view.SurfaceControlViewHost;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.Button;
@@ -130,14 +135,66 @@ public class AccessibilityOverlayTest {
         }
     }
 
+    @Test
+    public void testA11yServiceShowsOverlayUsingSurfaceControl_shouldAppearAndDisappear()
+            throws Exception {
+        final String overlayTitle = "Overlay title";
+        final Button button = new Button(mService);
+        button.setText("Button");
+        final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+        params.width = 1;
+        params.height = 1;
+        params.flags =
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR;
+        params.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
+        params.setTitle(overlayTitle);
+        Display display =
+                mService.getSystemService(DisplayManager.class).getDisplay(Display.DEFAULT_DISPLAY);
+        Context context = mService.createDisplayContext(display);
+        SurfaceControl sc;
+        SurfaceControlViewHost viewHost =
+                mService.getOnService(
+                        () -> {
+                            return new SurfaceControlViewHost(context, display, new Binder());
+                        });
+        sc = viewHost.getSurfacePackage().getSurfaceControl();
+        SurfaceControl.Transaction t = new SurfaceControl.Transaction();
+        t.setVisibility(sc, true).setLayer(sc, 1).apply();
+        sUiAutomation.executeAndWaitForEvent(
+                () ->
+                        mService.runOnServiceSync(
+                                () -> {
+                                    viewHost.setView(button, params);
+                                    mService.attachAccessibilityOverlayToDisplay(
+                                            Display.DEFAULT_DISPLAY, sc);
+                                }),
+                (event) ->
+                        ActivityLaunchUtils.findWindowByTitle(sUiAutomation, overlayTitle) != null,
+                AsyncUtils.DEFAULT_TIMEOUT_MS);
+        // Remove the overlay.
+        sUiAutomation.executeAndWaitForEvent(
+                () ->
+                        mService.runOnServiceSync(
+                                () -> {
+                                    t.reparent(sc, null).apply();
+                                    t.close();
+                                    sc.release();
+                                }),
+                (event) ->
+                        ActivityLaunchUtils.findWindowByTitle(sUiAutomation, overlayTitle) == null,
+                AsyncUtils.DEFAULT_TIMEOUT_MS);
+    }
+
     private void addOverlayWindow(Context context, String overlayTitle) {
         final Button button = new Button(context);
         button.setText("Button");
         final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
         params.width = WindowManager.LayoutParams.MATCH_PARENT;
         params.height = WindowManager.LayoutParams.MATCH_PARENT;
-        params.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR;
+        params.flags =
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR;
         params.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
         params.setTitle(overlayTitle);
         context.getSystemService(WindowManager.class).addView(button, params);

@@ -82,7 +82,7 @@ static const std::string kWebViewPlatSupportLib = "libwebviewchromium_plat_suppo
 
 static bool not_accessible(const std::string& err) {
   return err.find("dlopen failed: library \"") == 0 &&
-         err.find("is not accessible for the namespace \"classloader-namespace\"") != std::string::npos;
+         err.find("is not accessible for the namespace \"") != std::string::npos;
 }
 
 static bool not_found(const std::string& err) {

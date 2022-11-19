@@ -138,10 +138,13 @@ class MediaPermissionTest : BaseUsePermissionTest() {
         installPackage(APP_APK_PATH_LATEST)
         requestAppPermissions(
             android.Manifest.permission.READ_MEDIA_VIDEO,
-            android.Manifest.permission.READ_MEDIA_IMAGES
-        ) {
-            clickPermissionRequestAllowButton()
-        }
+            android.Manifest.permission.READ_MEDIA_IMAGES) {
+                if (isPhotoPickerPermissionPromptEnabled()) {
+                    clickPermissionRequestAllowAllPhotosButton()
+                } else {
+                    clickPermissionRequestAllowButton()
+                }
+            }
         assertAppHasPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE, false)
         assertAppHasPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, false)
         assertAppHasPermission(android.Manifest.permission.READ_MEDIA_AUDIO, false)

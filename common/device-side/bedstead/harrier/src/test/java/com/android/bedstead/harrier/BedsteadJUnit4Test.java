@@ -18,6 +18,8 @@ package com.android.bedstead.harrier;
 
 import static com.android.bedstead.harrier.UserType.INITIAL_USER;
 import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.DISABLE_RESOURCES_UPDATABILITY_FLAG;
+import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_PROFILES;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS_FULL;
@@ -32,6 +34,7 @@ import com.android.bedstead.harrier.annotations.EnumTestParameter;
 import com.android.bedstead.harrier.annotations.IntTestParameter;
 import com.android.bedstead.harrier.annotations.PermissionTest;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
+import com.android.bedstead.harrier.annotations.RunWithFeatureFlagEnabledAndDisabled;
 import com.android.bedstead.harrier.annotations.StringTestParameter;
 import com.android.bedstead.harrier.annotations.UserPair;
 import com.android.bedstead.harrier.annotations.UserTest;
@@ -72,6 +75,10 @@ public class BedsteadJUnit4Test {
     private static int sIndirectParameterizedCalls = 0;
     private static int sIntParameterizedCalls = 0;
     private static int sEnumParameterizedCalls = 0;
+    private static int sFeatureFlagTestCalls = 0;
+
+    private static final String NAMESPACE = NAMESPACE_DEVICE_POLICY_MANAGER;
+    private static final String KEY = DISABLE_RESOURCES_UPDATABILITY_FLAG;
 
     @AfterClass
     public static void afterClass() {
@@ -82,6 +89,7 @@ public class BedsteadJUnit4Test {
         assertThat(sIndirectParameterizedCalls).isEqualTo(2);
         assertThat(sIntParameterizedCalls).isEqualTo(2);
         assertThat(sEnumParameterizedCalls).isEqualTo(3);
+        assertThat(sFeatureFlagTestCalls).isEqualTo(2);
     }
 
     @BeforeClass
@@ -208,5 +216,11 @@ public class BedsteadJUnit4Test {
     @Test
     public void requireRunOnInitialUser_runsOnInitialUser() {
         assertThat(TestApis.users().instrumented()).isEqualTo(TestApis.users().initial());
+    }
+
+    @RunWithFeatureFlagEnabledAndDisabled(namespace = NAMESPACE, key = KEY)
+    @Test
+    public void runWithFeatureFlagEnabledAndDisabledAnnotation_runs() {
+        sFeatureFlagTestCalls += 1;
     }
 }

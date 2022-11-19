@@ -34,7 +34,7 @@ import org.junit.Test;
 public class DeprecatedTargetSdkTest extends ActivityManagerTestBase {
 
     /** @see com.android.server.wm.DeprecatedTargetSdkVersionDialog */
-    public static final String DEPRECATED_TARGET_SDK_VERSION_DIALOG =
+    private static final String DEPRECATED_TARGET_SDK_VERSION_DIALOG =
             "DeprecatedTargetSdkVersionDialog";
 
     @After
@@ -57,5 +57,11 @@ public class DeprecatedTargetSdkTest extends ActivityManagerTestBase {
         // resume rather than starting from scratch (as far as ActivityStack is concerned) and it
         // won't invoke the warning dialog.
         pressBackButton();
+    }
+
+    public static void waitAndDismissDeprecatedTargetSdkDialog(WindowManagerStateHelper state) {
+        state.waitForWindowSurfaceShown(DEPRECATED_TARGET_SDK_VERSION_DIALOG, true);
+        closeSystemDialogs();
+        state.waitForWindowSurfaceDisappeared(DEPRECATED_TARGET_SDK_VERSION_DIALOG);
     }
 }

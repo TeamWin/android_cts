@@ -61,7 +61,6 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AmUtils;
-import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.ShellUtils;
 
@@ -110,6 +109,8 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
     /* Receiver to listen to the response from the ime app's activity. */
     private BlockingBroadcastReceiver mImeAppCreationInfoProvider;
 
+    private BlockingBroadcastReceiver mImeChangedBroadcastReceiver;
+
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(10);
 
     @BeforeClass
@@ -146,6 +147,8 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         mTestAppConfigChangedInfoProvider = new BlockingBroadcastReceiver();
         mInstallerAppCreationInfoProvider = new BlockingBroadcastReceiver();
         mImeAppCreationInfoProvider = new BlockingBroadcastReceiver();
+        mImeChangedBroadcastReceiver = new BlockingBroadcastReceiver();
+
 
         sContext.registerReceiver(mCallingAppBroadcastReceiver,
                 new IntentFilter(Intent.ACTION_LOCALE_CHANGED));
@@ -167,6 +170,8 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         sContext.registerReceiver(mImeAppCreationInfoProvider,
                 new IntentFilter(IME_APP_CREATION_INFO_PROVIDER_ACTION),
                 Context.RECEIVER_EXPORTED_UNAUDITED);
+        sContext.registerReceiver(mImeChangedBroadcastReceiver,
+                new IntentFilter(Intent.ACTION_INPUT_METHOD_CHANGED));
 
         setInstallerForPackage(CALLING_PACKAGE);
         setInstallerForPackage(TEST_APP_PACKAGE);
@@ -185,6 +190,7 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         unRegisterReceiver(mTestAppCreationInfoProvider);
         unRegisterReceiver(mInstallerAppCreationInfoProvider);
         unRegisterReceiver(mImeAppCreationInfoProvider);
+        unRegisterReceiver(mImeChangedBroadcastReceiver);
     }
 
     private void unRegisterReceiver(BlockingBroadcastReceiver receiver) {
@@ -249,6 +255,7 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         mTestAppConfigChangedInfoProvider.reset();
         mInstallerAppCreationInfoProvider.reset();
         mImeAppCreationInfoProvider.reset();
+        mImeChangedBroadcastReceiver.reset();
     }
 
     @Test
@@ -487,6 +494,7 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
 
         // Make sure that locales were set for the app.
         assertLocalesCorrectlySetForCallingApp(DEFAULT_APP_LOCALES);
+
         // Tell the IME app to fetch locales for the test app.
         launchActivity(IME_APP_MAIN_ACTIVITY,
                 extraString(EXTRA_QUERY_LOCALES, CALLING_PACKAGE));
@@ -508,10 +516,8 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         String testIme = imeComponentName.flattenToShortString();
         ShellUtils.runShellCommand("ime enable " + testIme);
         ShellUtils.runShellCommand("ime set " + testIme);
-        PollingCheck.check("Make sure that TestIme becomes available", TIMEOUT,
-                () -> testIme.equals(Settings.Secure.getString(
-                        sContext.getContentResolver(),
-                        Settings.Secure.DEFAULT_INPUT_METHOD)));
+        mImeChangedBroadcastReceiver.await();
+        assertEquals(testIme, mImeChangedBroadcastReceiver.getInputMethodId());
 
         // Invoke the app by launching an activity.
         launchActivity(TEST_APP_MAIN_ACTIVITY);
@@ -523,7 +529,6 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         runWithShellPermissionIdentity(() ->
                         sLocaleManager.setApplicationLocales(TEST_APP_PACKAGE, DEFAULT_APP_LOCALES),
                 Manifest.permission.CHANGE_CONFIGURATION);
-
         // Tell the IME app to fetch locales for the background app.
         launchActivity(IME_APP_MAIN_ACTIVITY,
                 extraString(EXTRA_QUERY_LOCALES, TEST_APP_PACKAGE));
@@ -535,10 +540,8 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         //After the test is completed, restore the original active IME to the current active IME
         ShellUtils.runShellCommand("ime enable " + currentIme);
         ShellUtils.runShellCommand("ime set " + currentIme);
-        PollingCheck.check("Make sure that original active Ime becomes available", TIMEOUT,
-                () -> currentIme.equals(Settings.Secure.getString(
-                        sContext.getContentResolver(),
-                        Settings.Secure.DEFAULT_INPUT_METHOD)));
+        mImeChangedBroadcastReceiver.await();
+        assertEquals(currentIme, mImeChangedBroadcastReceiver.getInputMethodId());
     }
 
     @Test
@@ -553,10 +556,8 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         String testIme = imeComponentName.flattenToShortString();
         ShellUtils.runShellCommand("ime enable " + testIme);
         ShellUtils.runShellCommand("ime set " + testIme);
-        PollingCheck.check("Make sure that TestIme becomes available", TIMEOUT,
-                () -> testIme.equals(Settings.Secure.getString(
-                        sContext.getContentResolver(),
-                        Settings.Secure.DEFAULT_INPUT_METHOD)));
+        mImeChangedBroadcastReceiver.await();
+        assertEquals(testIme, mImeChangedBroadcastReceiver.getInputMethodId());
 
         //Set app locales
         sLocaleManager.setApplicationLocales(DEFAULT_APP_LOCALES);
@@ -571,10 +572,8 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         //After the test is completed, restore the original active IME to the current active IME
         ShellUtils.runShellCommand("ime enable " + currentIme);
         ShellUtils.runShellCommand("ime set " + currentIme);
-        PollingCheck.check("Make sure that original active Ime becomes available", TIMEOUT,
-                () -> currentIme.equals(Settings.Secure.getString(
-                        sContext.getContentResolver(),
-                        Settings.Secure.DEFAULT_INPUT_METHOD)));
+        mImeChangedBroadcastReceiver.await();
+        assertEquals(currentIme, mImeChangedBroadcastReceiver.getInputMethodId());
     }
 
     @Test(expected = SecurityException.class)

@@ -16,33 +16,41 @@
 
 package com.android.cts.sdksidetests.webviewsandboxtest;
 
-
-import static com.google.common.truth.Truth.assertThat;
-
 import android.app.sdksandbox.testutils.testscenario.SdkSandboxTestScenarioRunner;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
 import android.webkit.WebView;
-
-import org.junit.Test;
-
+import android.webkit.cts.IHostAppInvoker;
+import android.webkit.cts.SharedWebViewTestEnvironment;
+import android.webkit.cts.WebViewOnUiThread;
+import android.webkit.cts.WebViewTest;
 
 public class WebViewSandboxTestSdk extends SdkSandboxTestScenarioRunner {
+    private WebViewTest mTestInstance = new WebViewTest();
     private WebView mWebView;
+    private WebViewOnUiThread mOnUiThread;
+
+    @Override
+    public Object getTestInstance() {
+        return mTestInstance;
+    }
 
     @Override
     public View beforeEachTest(Context windowContext, Bundle params, int width, int height) {
         mWebView = new WebView(windowContext);
+        mOnUiThread = new WebViewOnUiThread(mWebView);
+
+        SharedWebViewTestEnvironment testEnvironment =
+                new SharedWebViewTestEnvironment.Builder()
+                        .setContext(getContext())
+                        .setWebView(mWebView)
+                        .setWebViewOnUiThread(mOnUiThread)
+                        .setHostAppInvoker(IHostAppInvoker.Stub.asInterface(getCustomInterface()))
+                        .build();
+
+        mTestInstance.setTestEnvironment(testEnvironment);
+
         return mWebView;
-    }
-
-    @Test
-    public void testScrollBarOverlay() {
-        mWebView.setHorizontalScrollbarOverlay(true);
-        mWebView.setVerticalScrollbarOverlay(false);
-
-        assertThat(mWebView.overlayHorizontalScrollbar()).isTrue();
-        assertThat(mWebView.overlayVerticalScrollbar()).isFalse();
     }
 }

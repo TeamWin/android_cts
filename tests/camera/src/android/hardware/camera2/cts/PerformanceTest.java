@@ -18,8 +18,6 @@ package android.hardware.camera2.cts;
 
 import static android.hardware.camera2.cts.CameraTestUtils.REPORT_LOG_NAME;
 
-import static com.android.ex.camera2.blocking.BlockingSessionCallback.SESSION_CLOSED;
-
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -32,6 +30,7 @@ import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCaptureSession.CaptureCallback;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
@@ -96,6 +95,7 @@ public class PerformanceTest {
     private static final int NUM_RESULTS_WAIT_TIMEOUT = 100;
     private static final int NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY = 8;
     private static final long FRAME_DURATION_NS_30FPS = 33333333L;
+    private static final int NUM_ZOOM_STEPS = 10;
 
     private DeviceReportLog mReportLog;
 
@@ -862,6 +862,201 @@ public class PerformanceTest {
         }
     }
 
+    // Direction of zoom: in or out
+    private enum ZoomDirection {
+        ZOOM_IN,
+        ZOOM_OUT;
+    }
+
+    // Range of zoom: >= 1.0x, <= 1.0x, or full range.
+    private enum ZoomRange {
+        RATIO_1_OR_LARGER,
+        RATIO_1_OR_SMALLER,
+        RATIO_FULL_RANGE;
+    }
+
+    /**
+     * Testing Zoom settings override performance for zoom in from 1.0x
+     *
+     * The range of zoomRatio being tested is [1.0x, maxZoomRatio]
+     */
+    @Test
+    public void testZoomSettingsOverrideLatencyInFrom1x() throws Exception {
+        testZoomSettingsOverrideLatency("zoom_in_from_1x",
+                ZoomDirection.ZOOM_IN, ZoomRange.RATIO_1_OR_LARGER);
+    }
+
+    /**
+     * Testing Zoom settings override performance for zoom out to 1.0x
+     *
+     * The range of zoomRatio being tested is [maxZoomRatio, 1.0x]
+     */
+    @Test
+    public void testZoomSettingsOverrideLatencyOutTo1x() throws Exception {
+        testZoomSettingsOverrideLatency("zoom_out_to_1x",
+                ZoomDirection.ZOOM_OUT, ZoomRange.RATIO_1_OR_LARGER);
+    }
+
+    /**
+     * Testing Zoom settings override performance for zoom out from 1.0x
+     *
+     * The range of zoomRatios being tested is [1.0x, minZoomRatio].
+     * The test is skipped if minZoomRatio == 1.0x.
+     */
+    @Test
+    public void testZoomSettingsOverrideLatencyOutFrom1x() throws Exception {
+        testZoomSettingsOverrideLatency("zoom_out_from_1x",
+                ZoomDirection.ZOOM_OUT, ZoomRange.RATIO_1_OR_SMALLER);
+    }
+
+    /**
+     * Testing Zoom settings override performance for zoom in on a camera with ultrawide lens
+     *
+     * The range of zoomRatios being tested is [minZoomRatio, maxZoomRatio].
+     * The test is skipped if minZoomRatio == 1.0x.
+     */
+    @Test
+    public void testZoomSettingsOverrideLatencyInWithUltraWide() throws Exception {
+        testZoomSettingsOverrideLatency("zoom_in_from_ultrawide",
+                ZoomDirection.ZOOM_IN, ZoomRange.RATIO_FULL_RANGE);
+    }
+
+    /**
+     * Testing Zoom settings override performance for zoom out on a camera with ultrawide lens
+     *
+     * The range of zoomRatios being tested is [maxZoomRatio, minZoomRatio].
+     * The test is skipped if minZoomRatio == 1.0x.
+     */
+    @Test
+    public void testZoomSettingsOverrideLatencyOutWithUltraWide() throws Exception {
+        testZoomSettingsOverrideLatency("zoom_out_to_ultrawide",
+                ZoomDirection.ZOOM_OUT, ZoomRange.RATIO_FULL_RANGE);
+    }
+
+    /**
+     * This test measures the zoom latency improvement for devices supporting zoom settings
+     * override.
+     */
+    private void testZoomSettingsOverrideLatency(String testCase,
+            ZoomDirection direction, ZoomRange range) throws Exception {
+        final int ZOOM_STEPS = 5;
+        final float ZOOM_ERROR_MARGIN = 0.05f;
+        final int ZOOM_IN_MIN_IMPROVEMENT_IN_FRAMES = 2;
+        for (String id : mTestRule.getCameraIdsUnderTest()) {
+            StaticMetadata staticMetadata = mTestRule.getAllStaticInfo().get(id);
+            CameraCharacteristics ch = staticMetadata.getCharacteristics();
+
+            if (!staticMetadata.isColorOutputSupported()) {
+                continue;
+            }
+
+            if (!staticMetadata.isZoomSettingsOverrideSupported()) {
+                continue;
+            }
+
+            // Figure out start and end zoom ratio
+            Range<Float> zoomRatioRange = staticMetadata.getZoomRatioRangeChecked();
+            float startRatio = zoomRatioRange.getLower();
+            float endRatio = zoomRatioRange.getUpper();
+            if (startRatio >= 1.0f && (range == ZoomRange.RATIO_FULL_RANGE
+                    || range == ZoomRange.RATIO_1_OR_SMALLER)) {
+                continue;
+            }
+            if (range == ZoomRange.RATIO_1_OR_LARGER) {
+                startRatio = 1.0f;
+            } else if (range == ZoomRange.RATIO_1_OR_SMALLER) {
+                endRatio = 1.0f;
+            }
+            if (direction == ZoomDirection.ZOOM_OUT) {
+                float temp = startRatio;
+                startRatio = endRatio;
+                endRatio = temp;
+            }
+
+            int[] overrideImprovements = new int[NUM_ZOOM_STEPS];
+            float[] zoomRatios = new float[NUM_ZOOM_STEPS];
+
+            String streamName = "test_camera_zoom_override_latency";
+            mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+            mReportLog.addValue("camera_id", id, ResultType.NEUTRAL, ResultUnit.NONE);
+            mReportLog.addValue("zoom_test_case", testCase, ResultType.NEUTRAL, ResultUnit.NONE);
+
+            try {
+                mTestRule.openDevice(id);
+                mPreviewSize = mTestRule.getOrderedPreviewSizes().get(0);
+                updatePreviewSurface(mPreviewSize);
+
+                // Start viewfinder with settings override unset and smallest zoom ratio,
+                // and wait for some number of frames.
+                CaptureRequest.Builder previewBuilder = configurePreviewOutputs(id);
+                SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
+                int sequenceId = mTestRule.getCameraSession().setRepeatingRequest(
+                        previewBuilder.build(), resultListener, mTestRule.getHandler());
+                CaptureResult result = CameraTestUtils.waitForNumResults(
+                        resultListener, NUM_RESULTS_WAIT, WAIT_FOR_RESULT_TIMEOUT_MS);
+
+                // zoom in with setting override set to TRUE
+                previewBuilder.set(CaptureRequest.CONTROL_SETTINGS_OVERRIDE,
+                        CameraMetadata.CONTROL_SETTINGS_OVERRIDE_ZOOM);
+
+                for (int j = 0; j < NUM_ZOOM_STEPS; j++) {
+                    float zoomFactor = startRatio + (endRatio - startRatio)
+                             * (j + 1) / NUM_ZOOM_STEPS;
+                    previewBuilder.set(CaptureRequest.CONTROL_ZOOM_RATIO, zoomFactor);
+                    int newSequenceId = mTestRule.getCameraSession().setRepeatingRequest(
+                            previewBuilder.build(), resultListener, mTestRule.getHandler());
+                    long lastFrameNumberForRequest =
+                            resultListener.getCaptureSequenceLastFrameNumber(sequenceId,
+                                    WAIT_FOR_RESULT_TIMEOUT_MS);
+
+                    int improvement = 0;
+                    long lastFrameNumber = -1;
+                    Log.v(TAG, "LastFrameNumber for sequence " + sequenceId + ": "
+                            + lastFrameNumberForRequest);
+                    while (lastFrameNumber < lastFrameNumberForRequest + 1) {
+                        TotalCaptureResult zoomResult = resultListener.getTotalCaptureResult(
+                                WAIT_FOR_RESULT_TIMEOUT_MS);
+                        lastFrameNumber = zoomResult.getFrameNumber();
+                        float resultZoomFactor = zoomResult.get(CaptureResult.CONTROL_ZOOM_RATIO);
+                        Log.v(TAG, "lastFrame " + lastFrameNumber + " zoom: " + resultZoomFactor);
+                        if (Math.abs(resultZoomFactor - zoomFactor) < ZOOM_ERROR_MARGIN) {
+                            improvement = (int) (lastFrameNumberForRequest + 1 - lastFrameNumber);
+                            break;
+                        }
+                    }
+                    // Zoom in from 1.0x must have at least 2 frames latency improvement.
+                    if (direction == ZoomDirection.ZOOM_IN
+                            && range == ZoomRange.RATIO_1_OR_LARGER
+                            && staticMetadata.isPerFrameControlSupported()) {
+                        mTestRule.getCollector().expectTrue(
+                                "Zoom-in latency improvement (" + improvement
+                                + ") must be at least " + ZOOM_IN_MIN_IMPROVEMENT_IN_FRAMES,
+                                improvement >= ZOOM_IN_MIN_IMPROVEMENT_IN_FRAMES);
+                    }
+                    zoomRatios[j] = zoomFactor;
+                    overrideImprovements[j] = improvement;
+
+                    sequenceId = newSequenceId;
+                }
+
+                mReportLog.addValues("Camera zoom ratios", zoomRatios, ResultType.NEUTRAL,
+                        ResultUnit.NONE);
+                mReportLog.addValues("Latency improvements", overrideImprovements,
+                        ResultType.HIGHER_BETTER, ResultUnit.FRAMES);
+            } finally {
+                mTestRule.closeDefaultImageReader();
+                closePreviewSurface();
+            }
+            mReportLog.submit(mInstrumentation);
+
+            if (VERBOSE) {
+                Log.v(TAG, "Camera " + id + " zoom settings: " + Arrays.toString(zoomRatios));
+                Log.v(TAG, "Camera " + id + " zoom settings override latency improvements "
+                        + "(in frames): " + Arrays.toString(overrideImprovements));
+            }
+        }
+    }
+
     private void reprocessingCaptureStallTestByCamera(int reprocessInputFormat) throws Exception {
         prepareReprocessCapture(reprocessInputFormat);
 
@@ -1446,6 +1641,46 @@ public class PerformanceTest {
         configureAndSetCameraSession(outputSurfaces, useSessionKeys, previewRequest);
 
         return previewRequest;
+    }
+
+    /**
+     * Configure preview outputs and wait until done.
+     *
+     * @return The preview capture request builder
+     */
+    private CaptureRequest.Builder configurePreviewOutputs(String id)
+            throws Exception {
+        if (mPreviewSurface == null) {
+            throw new IllegalStateException("preview surface must be initialized first");
+        }
+
+        // Create previewBuilder
+        CaptureRequest.Builder previewBuilder =
+                mTestRule.getCamera().createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        previewBuilder.addTarget(mPreviewSurface);
+
+        // Figure out constant target FPS range no larger than 30fps
+        CameraCharacteristics ch = mTestRule.getStaticInfo().getCharacteristics();
+        StreamConfigurationMap config =
+                ch.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        long minFrameDuration = Math.max(FRAME_DURATION_NS_30FPS,
+                config.getOutputMinFrameDuration(SurfaceTexture.class, mPreviewSize));
+
+        List<Surface> outputSurfaces = new ArrayList<>();
+        outputSurfaces.add(mPreviewSurface);
+
+        Range<Integer> targetRange =
+                CameraTestUtils.getSuitableFpsRangeForDuration(id,
+                        minFrameDuration, mTestRule.getStaticInfo());
+        previewBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, targetRange);
+
+        // Create capture session
+        boolean useSessionKeys = isFpsRangeASessionKey(ch);
+        CaptureRequest previewRequest = previewBuilder.build();
+        mTestRule.setCameraSessionListener(new BlockingSessionCallback());
+        configureAndSetCameraSession(outputSurfaces, useSessionKeys, previewRequest);
+
+        return previewBuilder;
     }
 
     /**

@@ -18,6 +18,8 @@ package android.telephony.cts;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
+import static com.android.internal.telephony.SmsConstants.ENCODING_8BIT;
+
 import static junit.framework.Assert.assertNotNull;
 
 import static org.junit.Assert.assertEquals;
@@ -425,7 +427,7 @@ public class VisualVoicemailServiceTest {
     /**
      * Setup the SMS filter with only the {@code clientPrefix}, and sends {@code text} to the
      * device. The SMS sent should not be written to the SMS provider. <p> If {@code expectVvmSms}
-     * is {@code true}, the SMS should be be caught by the SMS filter. The user should not receive
+     * is {@code true}, the SMS should be caught by the SMS filter. The user should not receive
      * the text, and the parsed result will be returned.* <p> If {@code expectVvmSms} is {@code
      * false}, the SMS should pass through the SMS filter. The user should receive the text, and
      * {@code null} be returned.
@@ -461,7 +463,7 @@ public class VisualVoicemailServiceTest {
                     future.get(EVENT_NOT_RECEIVED_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
                     throw new RuntimeException("Unexpected visual voicemail SMS received");
                 } catch (TimeoutException e) {
-                    // expected
+                    Log.i(TAG, "Expected TimeoutException" + e);
                     return null;
                 } catch (ExecutionException | InterruptedException e) {
                     throw new RuntimeException(e);
@@ -473,7 +475,6 @@ public class VisualVoicemailServiceTest {
     @Nullable
     private VisualVoicemailSms getSmsFromData(VisualVoicemailSmsFilterSettings settings, short port,
             String text, boolean expectVvmSms) {
-
         mTelephonyManager.setVisualVoicemailSmsFilterSettings(settings);
 
         CompletableFuture<VisualVoicemailSms> future = new CompletableFuture<>();
@@ -497,7 +498,7 @@ public class VisualVoicemailServiceTest {
                 future.get(EVENT_NOT_RECEIVED_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
                 throw new RuntimeException("Unexpected visual voicemail SMS received");
             } catch (TimeoutException e) {
-                // expected
+                Log.i(TAG, "Expected TimeoutException!" + e);
                 return null;
             } catch (ExecutionException | InterruptedException e) {
                 throw new RuntimeException(e);
@@ -529,15 +530,26 @@ public class VisualVoicemailServiceTest {
             StringBuilder messageBody = new StringBuilder();
             CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
             for (SmsMessage message : messages) {
-                if (message.getMessageBody() != null) {
-                    messageBody.append(message.getMessageBody());
-                } else if (message.getUserData() != null) {
+                String body = message.getMessageBody();
+
+                if ((body == null || message.getReceivedEncodingType() == ENCODING_8BIT)
+                        && message.getUserData() != null) {
+                    Log.d(TAG, "onReceive decode using UTF-8");
+                    // Attempt to interpret the user data as UTF-8. UTF-8 string over data SMS using
+                    // 8BIT data coding scheme is our recommended way to send VVM SMS and is used in
+                    // CTS Tests. The OMTP visual voicemail specification does not specify the SMS
+                    // type and encoding.
                     ByteBuffer byteBuffer = ByteBuffer.wrap(message.getUserData());
                     try {
-                        messageBody.append(decoder.decode(byteBuffer).toString());
+                        body = decoder.decode(byteBuffer).toString();
                     } catch (CharacterCodingException e) {
+                        Log.e(TAG, "onReceive: got CharacterCodingException"
+                                + " when decoding with UTF-8, e = " + e);
                         return;
                     }
+                }
+                if (body != null) {
+                    messageBody.append(body);
                 }
             }
             if (!TextUtils.equals(mText, messageBody.toString())) {

@@ -76,6 +76,8 @@ public final class BedsteadFrameworkMethod extends FrameworkMethod {
 
         BedsteadJUnit4.parseUserAnnotations(annotations);
 
+        BedsteadJUnit4.parseFlagAnnotations(annotations);
+
         mBedsteadJUnit4.resolveRecursiveAnnotations(annotations, mParameterizedAnnotation);
 
         boolean hasRequireRunOnAnnotation = false;

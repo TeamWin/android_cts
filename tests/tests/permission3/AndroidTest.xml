@@ -68,6 +68,7 @@
         <option name="push" value="CtsCreateNotificationChannelsApp33.apk->/data/local/tmp/cts/permission3/CtsCreateNotificationChannelsApp33.apk" />
         <option name="push" value="CtsDifferentPkgNameApp.apk->/data/local/tmp/cts/permission3/CtsDifferentPkgNameApp.apk" />
         <option name="push" value="CtsMediaPermissionApp33WithStorage.apk->/data/local/tmp/cts/permission3/CtsMediaPermissionApp33WithStorage.apk" />
+        <option name="push" value="CtsUsePermissionAppImplicitUserSelectStorage.apk->/data/local/tmp/cts/permission3/CtsUsePermissionAppImplicitUserSelectStorage.apk" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
