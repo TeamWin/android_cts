@@ -19,11 +19,14 @@ package android.net.wifi.cts;
 import static android.net.wifi.WifiConfiguration.METERED_OVERRIDE_NONE;
 
 import android.net.Uri;
+import android.net.wifi.WifiEnterpriseConfig;
 import android.net.wifi.hotspot2.OsuProvider;
 import android.net.wifi.hotspot2.PasspointConfiguration;
 import android.net.wifi.hotspot2.pps.Credential;
 import android.net.wifi.hotspot2.pps.HomeSp;
 import android.text.TextUtils;
+
+import androidx.test.filters.SdkSuppress;
 
 import java.lang.reflect.Constructor;
 import java.security.MessageDigest;
@@ -487,4 +490,18 @@ public class WifiHotspot2Test extends WifiJUnit3TestBase {
         assertEquals(TEST_SERVER_URI, osuProvider.getServerUri());
     }
 
+    // TODO(b/160819609): Wait for U SDK finalization before changing
+    // to `@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)`
+    @SdkSuppress(minSdkVersion = 34)
+    public void testSetMinimumTlsVersion() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        Credential credential = new Credential();
+        // The default value should be v1.0 to be compatible with all server-supported TLS version.
+        assertEquals(WifiEnterpriseConfig.TLS_V1_0, credential.getMinimumTlsVersion());
+        credential.setMinimumTlsVersion(WifiEnterpriseConfig.TLS_V1_3);
+        assertEquals(WifiEnterpriseConfig.TLS_V1_3, credential.getMinimumTlsVersion());
+    }
 }

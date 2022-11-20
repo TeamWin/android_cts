@@ -744,7 +744,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 "Lcom/android/sdksandbox/ISdkSandboxService;",
                 "Lcom/android/sdksandbox/SandboxLatencyInfo-IA;",
                 "Lcom/android/sdksandbox/SandboxLatencyInfo;",
-                "Lcom/android/sdksandbox/IUnloadSdkCallback;"
+                "Lcom/android/sdksandbox/IUnloadSdkCallback;",
+                "Lcom/android/sdksandbox/IComputeSdkStorageCallback;"
             );
 
     private static final ImmutableMap<String, ImmutableSet<String>> FULL_APK_IN_APEX_BURNDOWN =

@@ -113,6 +113,82 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         mJobScheduler.schedule(ji);
     }
 
+    public void testDataTransfer() {
+        // Assert the default value is false
+        JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent).build();
+        assertFalse(ji.isDataTransfer());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setDataTransfer(true)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .build();
+        assertTrue(ji.isDataTransfer());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setDataTransfer(false)
+                .build();
+        assertFalse(ji.isDataTransfer());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setDataTransfer(true)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setExpedited(true)
+                .build();
+        assertTrue(ji.isDataTransfer());
+        assertTrue(ji.isExpedited());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        final NetworkRequest nr = new NetworkRequest.Builder()
+                .addCapability(NET_CAPABILITY_INTERNET)
+                .build();
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setDataTransfer(true)
+                .setRequiredNetwork(nr)
+                .setExpedited(true)
+                .build();
+        assertTrue(ji.isDataTransfer());
+        assertTrue(ji.isExpedited());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        // setDataTransfer() with a BACKOFF_POLICY_LINEAR should throw an exception.
+        assertBuildFails(
+                "Successfully built a data transfer job with linear backoff specified",
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setDataTransfer(true)
+                        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                        .setBackoffCriteria(0, JobInfo.BACKOFF_POLICY_LINEAR));
+
+        // setDataTransfer() with setOverrideDeadline() should throw an exception.
+        assertBuildFails(
+                "Successfully built a data transfer job with a deadline",
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setDataTransfer(true)
+                        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                        .setOverrideDeadline(0));
+
+        // setDataTransfer() with a setPrefetch() should throw an exception.
+        assertBuildFails(
+                "Successfully built a data transfer + prefetch job",
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setDataTransfer(true)
+                        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                        .setPrefetch(true));
+
+        // setDataTransfer() without setRequiredNetworkType() should throw an exception.
+        assertBuildFails(
+                "Successfully built a data transfer job without specifying a network type",
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setDataTransfer(true));
+    }
+
     public void testDeviceIdle() {
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setRequiresDeviceIdle(true)

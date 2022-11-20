@@ -1198,6 +1198,74 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
         }
     }
 
+    /**
+     * Test case for Bug 254624767.
+     *
+     * <p>This test ensures that when the app requests to show/hide IME according to the IME insets
+     * visibility with {@link WindowInsets#isVisible(int)} during switching apps, verify the system
+     * dispatches the IME insets visibility to the app correctly during that time. </p>
+     */
+    @Test
+    public void testImeInsetsInvisibleAfterBackingFromImeHiddenActivity() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            final String marker = getTestMarker();
+
+            // Launch the first activity
+            final EditText editText = launchTestActivity(marker);
+            AtomicReference<CountDownLatch> imeInsetsHiddenLatchRef = new AtomicReference<>();
+            expectEvent(stream, editorMatcher("onStartInput", marker), START_INPUT_TIMEOUT);
+            notExpectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectImeInvisible(TIMEOUT);
+
+            TestUtils.runOnMainSync(() -> {
+                        // Show IME with WindowInsets API and register onApplyWindowInsetsListener
+                        editText.getRootView().setOnApplyWindowInsetsListener(
+                                (v, insets) -> {
+                                    if (!insets.isVisible(WindowInsets.Type.ime())) {
+                                        if (imeInsetsHiddenLatchRef.get() != null) {
+                                            imeInsetsHiddenLatchRef.get().countDown();
+                                        }
+                                        editText.getWindowInsetsController().hide(ime());
+                                        editText.clearFocus();
+                                    } else if (insets.isVisible(WindowInsets.Type.ime())) {
+                                        editText.getWindowInsetsController().show(ime());
+                                    }
+                                    return v.onApplyWindowInsets(insets);
+                                });
+                        editText.getWindowInsetsController().show(ime());
+                    }
+            );
+            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectImeVisible(TIMEOUT);
+
+            // Launch the second test activity with expecting to hide the IME.
+            final TestActivity secondActivity = new TestActivity.Starter()
+                    .asNewTask().startSync(activity -> {
+                        activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+                        return new LinearLayout(activity);
+                    });
+            expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
+            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                    View.GONE, TIMEOUT);
+            expectImeInvisible(TIMEOUT);
+
+            // Back to first activity
+            imeInsetsHiddenLatchRef.set(new CountDownLatch(1));
+            runOnMainSync(secondActivity::onBackPressed);
+
+            // Verify the visibility of IME insets should be hidden in onApplyWindowInsets and
+            // expect the first activity will hide the IME according to the received IME insets
+            // visibility when backing to the first activity.
+            imeInsetsHiddenLatchRef.get().await(5, TimeUnit.SECONDS);
+            notExpectEvent(stream, editorMatcher("onStartInputView", marker), NOT_EXPECT_TIMEOUT);
+            expectImeInvisible(TIMEOUT);
+        }
+    }
+
     private static ImeSettings.Builder getFloatingImeSettings(@ColorInt int navigationBarColor) {
         final ImeSettings.Builder builder = new ImeSettings.Builder();
         builder.setWindowFlags(0, FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
