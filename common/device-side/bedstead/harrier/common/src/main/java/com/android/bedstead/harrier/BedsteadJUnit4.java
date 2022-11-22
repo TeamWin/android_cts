@@ -962,7 +962,8 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
                         (HarrierRule)
                                 Class.forName("com.android.bedstead.harrier.DeviceState")
                                         .newInstance();
-
+                rules = new ArrayList<>(rules);
+                rules.add(mHarrierRule);
             } catch (ClassNotFoundException e) {
                 // Must be running on the host - for now we don't add anything
             } catch (InstantiationException | IllegalAccessException e) {

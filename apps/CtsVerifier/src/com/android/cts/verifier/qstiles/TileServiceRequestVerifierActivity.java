@@ -107,7 +107,6 @@ public class TileServiceRequestVerifierActivity extends InteractiveVerifierActiv
         list.add(new InstallPackageVerify());
         list.add(new TileNotPresent());
         list.add(new RequestAddTileDismiss());
-        list.add(new RequestAddTileAnswerNo());
         list.add(new RequestAddTileCorrectInfo());
         list.add(new RequestAddTileAnswerYes());
         list.add(new TilePresentAfterRequest());
@@ -244,39 +243,6 @@ public class TileServiceRequestVerifierActivity extends InteractiveVerifierActiv
         @Override
         protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.tiles_request_dismissed);
-        }
-
-        @Override
-        protected boolean showRequestAction() {
-            return true;
-        }
-
-        @Override
-        protected void requestAction() {
-            registerForResult(
-                    integer -> {
-                        if (integer.equals(
-                                StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_NOT_ADDED)) {
-                            status = PASS;
-                        } else {
-                            setFailed("Request called back with result: " + integer);
-                        }
-                        next();
-                    }
-            );
-        }
-
-        @Override
-        protected void test() {
-            status = WAIT_FOR_USER;
-            next();
-        }
-    }
-
-    private class RequestAddTileAnswerNo extends InteractiveTestCase {
-        @Override
-        protected View inflate(ViewGroup parent) {
-            return createAutoItem(parent, R.string.tiles_request_answer_no);
         }
 
         @Override

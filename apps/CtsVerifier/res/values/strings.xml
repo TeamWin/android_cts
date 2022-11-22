@@ -2497,9 +2497,6 @@
     <string name="tiles_request_dismissed">After pressing \"Start request\", a dialog will appear
         requesting to add a quick settings tile. When it appears, dismiss it by tapping outside of
         it, or going back.</string>
-    <string name="tiles_request_answer_no">After pressing \"Start request\", a dialog will appear
-        requesting to add a quick settings tile. When it appears, tap the option in the dialog to
-        not add the tile.</string>
     <string name="tiles_request_correct_info">After pressing \"Start request\", a dialog will appear
         requesting to add a quick settings tile. When it appears, verify the following information
         in the dialog:\n

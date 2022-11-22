@@ -100,18 +100,9 @@ public class ImsCallingTest extends ImsCallingBase {
             fail("This test requires that there is a SIM in the device!");
         }
         // Correctness check: ensure that the subscription hasn't changed between tests.
-        int[] subs = SubscriptionManager.getSubId(sTestSlot);
-
-        if (subs == null) {
-            fail("This test requires there is an active subscription in slot " + sTestSlot);
-        }
-        boolean isFound = false;
-        for (int sub : subs) {
-            isFound |= (sTestSub == sub);
-        }
-        if (!isFound) {
-            fail("Invalid state found: the test subscription in slot " + sTestSlot + " changed "
-                    + "during this test.");
+        int subId = SubscriptionManager.getSubscriptionId(sTestSlot);
+        if (subId != sTestSub) {
+            fail("The found subId " + subId + " does not match the test sub id " + sTestSub);
         }
     }
 

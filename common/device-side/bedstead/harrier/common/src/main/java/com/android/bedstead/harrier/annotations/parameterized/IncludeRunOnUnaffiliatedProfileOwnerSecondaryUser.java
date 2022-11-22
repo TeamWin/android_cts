@@ -20,6 +20,7 @@ import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.E
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
@@ -36,7 +37,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
-@RequireRunOnAdditionalUser
+@RequireRunOnSecondaryUser
 @EnsureHasDeviceOwner(affiliationIds = "affiliated")
 @EnsureHasProfileOwner(affiliationIds = "not-affiliated", isPrimary = true)
 public @interface IncludeRunOnUnaffiliatedProfileOwnerSecondaryUser {

@@ -183,8 +183,6 @@ public class LocationTimeZoneManagerStatsTest extends BaseHostJUnit4Test {
         // States.
         Set<Integer> primaryProviderCreated = singletonStateId(PRIMARY_PROVIDER_INDEX,
                 LocationTimeZoneProviderStateChanged.State.STOPPED);
-        Set<Integer> primaryProviderStarted = singletonStateId(PRIMARY_PROVIDER_INDEX,
-                LocationTimeZoneProviderStateChanged.State.INITIALIZING);
         Set<Integer> primaryProviderFailed = singletonStateId(PRIMARY_PROVIDER_INDEX,
                 LocationTimeZoneProviderStateChanged.State.PERM_FAILED);
         Set<Integer> secondaryProviderCreated = singletonStateId(SECONDARY_PROVIDER_INDEX,
@@ -203,8 +201,8 @@ public class LocationTimeZoneManagerStatsTest extends BaseHostJUnit4Test {
         // Assert that the events happened in the expected order. This does not check "wait" (the
         // time between events).
         List<Set<Integer>> stateSets = Arrays.asList(
-                primaryProviderCreated, secondaryProviderCreated,
-                primaryProviderStarted, primaryProviderFailed,
+                primaryProviderCreated, primaryProviderFailed,
+                secondaryProviderCreated,
                 secondaryProviderStarted, secondaryProviderStopped,
                 secondaryProviderStarted, secondaryProviderStopped);
         AtomTestUtils.assertStatesOccurredInOrder(stateSets, data,

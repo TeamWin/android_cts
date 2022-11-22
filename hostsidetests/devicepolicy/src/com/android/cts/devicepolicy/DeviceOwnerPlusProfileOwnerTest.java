@@ -82,21 +82,21 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
         super.setUp();
 
         // Set device owner.
-        installAppAsUser(COMP_DPC_APK, mPrimaryUserId);
-        if (!setDeviceOwner(COMP_DPC_ADMIN, mPrimaryUserId, /*expectFailure*/ false)) {
-            removeAdmin(COMP_DPC_ADMIN, mPrimaryUserId);
+        installAppAsUser(COMP_DPC_APK, mDeviceOwnerUserId);
+        if (!setDeviceOwner(COMP_DPC_ADMIN, mDeviceOwnerUserId, /*expectFailure*/ false)) {
+            removeAdmin(COMP_DPC_ADMIN, mDeviceOwnerUserId);
             fail("Failed to set device owner");
         }
         runDeviceTestsAsUser(
                 COMP_DPC_PKG,
                 MANAGEMENT_TEST,
                 "testIsDeviceOwner",
-                mPrimaryUserId);
+                mDeviceOwnerUserId);
     }
 
     @Override
     public void tearDown() throws Exception {
-        assertTrue("Failed to remove device owner.", removeAdmin(COMP_DPC_ADMIN, mPrimaryUserId));
+        assertTrue("Failed to remove device owner.", removeAdmin(COMP_DPC_ADMIN, mDeviceOwnerUserId));
 
         super.tearDown();
     }
@@ -145,7 +145,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
 
         int secondaryUserId = setupManagedSecondaryUser();
 
-        installAppAsUser(COMP_DPC_APK2, mPrimaryUserId);
+        installAppAsUser(COMP_DPC_APK2, mDeviceOwnerUserId);
         installAppAsUser(COMP_DPC_APK2, secondaryUserId);
 
         // Shouldn't be possible to bind to each other, as they are not affiliated.
@@ -207,6 +207,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    // Does not work emulated on headless as initial secondary user isn't affiliated
     public void testNetworkAndSecurityLoggingAvailableIfAffiliated() throws Exception {
         assumeCanCreateAdditionalUsers(2);
 
@@ -218,14 +219,14 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
                 COMP_DPC_PKG,
                 DEVICE_WIDE_LOGGING_TEST,
                 "testEnablingNetworkAndSecurityLogging",
-                mPrimaryUserId);
+                mDeviceOwnerUserId);
         try {
             // No affiliation ids have been set on the profile, the features shouldn't be available.
             runDeviceTestsAsUser(
                     COMP_DPC_PKG,
                     DEVICE_WIDE_LOGGING_TEST,
                     "testRetrievingLogsThrowsSecurityException",
-                    mPrimaryUserId);
+                    mDeviceOwnerUserId);
 
             // Affiliate the DO and the secondary user.
             setSameAffiliationId(secondaryUserId);
@@ -233,26 +234,29 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
                     COMP_DPC_PKG,
                     DEVICE_WIDE_LOGGING_TEST,
                     "testRetrievingLogsDoesNotThrowException",
-                    mPrimaryUserId);
+                    mDeviceOwnerUserId);
 
             setDifferentAffiliationId(secondaryUserId);
             runDeviceTestsAsUser(
                     COMP_DPC_PKG,
                     DEVICE_WIDE_LOGGING_TEST,
                     "testRetrievingLogsThrowsSecurityException",
-                    mPrimaryUserId);
+                    mDeviceOwnerUserId);
         } finally {
             runDeviceTestsAsUser(
                 COMP_DPC_PKG,
                 DEVICE_WIDE_LOGGING_TEST,
-                "testDisablingNetworkAndSecurityLogging",
-                mPrimaryUserId);
+                    "testDisablingNetworkAndSecurityLogging",
+                    mDeviceOwnerUserId);
         }
     }
 
     @FlakyTest
     @Test
+    // Does not work emulated on headless as initial secondary user isn't affiliated
     public void testRequestBugreportAvailableIfAffiliated() throws Exception {
+        // This is a test that the DO can only take a bug report if all secondary users are
+        // affiliated
         assumeCanCreateAdditionalUsers(2);
 
         final int secondaryUserId = setupManagedSecondaryUser();
@@ -263,7 +267,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
                 COMP_DPC_PKG,
                 DEVICE_WIDE_LOGGING_TEST,
                 "testRequestBugreportThrowsSecurityException",
-                mPrimaryUserId);
+                mDeviceOwnerUserId);
 
         // Affiliate the DO and the secondary user.
         setSameAffiliationId(secondaryUserId);
@@ -271,14 +275,14 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
                 COMP_DPC_PKG,
                 DEVICE_WIDE_LOGGING_TEST,
                 "testRequestBugreportDoesNotThrowException",
-                mPrimaryUserId);
+                mDeviceOwnerUserId);
 
         setDifferentAffiliationId(secondaryUserId, COMP_DPC_PKG);
         runDeviceTestsAsUser(
                 COMP_DPC_PKG,
                 DEVICE_WIDE_LOGGING_TEST,
                 "testRequestBugreportThrowsSecurityException",
-                mPrimaryUserId);
+                mDeviceOwnerUserId);
     }
 
     private void verifyBindDeviceAdminServiceAsUser(int profileOwnerUserId) throws Exception {
@@ -321,7 +325,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
                 COMP_DPC_PKG,
                 AFFILIATION_TEST,
                 "testSetAffiliationId1",
-                mPrimaryUserId);
+                mDeviceOwnerUserId);
         runDeviceTestsAsUser(
                 profileOwnerPackage,
                 AFFILIATION_TEST,
@@ -382,7 +386,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
                 COMP_DPC_PKG,
                 MANAGEMENT_TEST,
                 "testCreateSecondaryUser",
-                mPrimaryUserId);
+                mDeviceOwnerUserId);
         List<Integer> newUsers = getUsersCreatedByTests();
         assertEquals(1, newUsers.size());
         int secondaryUserId = newUsers.get(0);
@@ -408,7 +412,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
                 COMP_DPC_PKG,
                 USER_RESTRICTION_TEST,
                 "testAddDisallowRemoveUserRestriction",
-                mPrimaryUserId);
+                mDeviceOwnerUserId);
     }
 
     /**
@@ -419,7 +423,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
                 COMP_DPC_PKG,
                 USER_RESTRICTION_TEST,
                 "testClearDisallowRemoveUserRestriction",
-                mPrimaryUserId);
+                mDeviceOwnerUserId);
     }
 
     private void assertOtherProfilesEqualsBindTargetUsers(int otherProfileUserId) throws Exception {

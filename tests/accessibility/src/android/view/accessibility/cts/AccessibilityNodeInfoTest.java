@@ -398,6 +398,7 @@ public class AccessibilityNodeInfoTest {
         info.setHeading(true);
         info.setTextEntryKey(true);
         info.setTextSelectable(true);
+        info.setRequestInitialAccessibilityFocus(true);
     }
 
     /**
@@ -643,6 +644,9 @@ public class AccessibilityNodeInfoTest {
                 expectedInfo.isTextEntryKey(), receivedInfo.isTextEntryKey());
         assertSame("isTexSelectable has incorrect value",
                 expectedInfo.isTextSelectable(), receivedInfo.isTextSelectable());
+        assertSame("hasRequestInitialAccessibilityFocus has incorrect value",
+                expectedInfo.hasRequestInitialAccessibilityFocus(),
+                receivedInfo.hasRequestInitialAccessibilityFocus());
     }
 
     /**
@@ -739,6 +743,8 @@ public class AccessibilityNodeInfoTest {
         assertFalse("isHeading not properly reset", info.isHeading());
         assertFalse("isTextEntryKey not properly reset", info.isTextEntryKey());
         assertFalse("isTextSelectable not properly reset", info.isTextSelectable());
+        assertFalse("hasRequestInitialAccessibilityFocus not properly reset",
+                info.hasRequestInitialAccessibilityFocus());
 
     }
 

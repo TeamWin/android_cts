@@ -61,8 +61,6 @@ import java.util.stream.Collectors;
 public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     private static final String TAG = "CreateAndManageUserTest";
 
-    private static final int BROADCAST_TIMEOUT = 300_000;
-
     private static final String AFFILIATION_ID = "affiliation.id";
     private static final String EXTRA_AFFILIATION_ID = "affiliationIdExtra";
     private static final String EXTRA_CURRENT_USER_PACKAGES = "currentUserPackages";

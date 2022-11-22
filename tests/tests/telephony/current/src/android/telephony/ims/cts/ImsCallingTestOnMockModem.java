@@ -122,13 +122,9 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
 
         sTestSub = ImsUtils.getPreferredActiveSubId();
 
-        int[] subs = SubscriptionManager.getSubId(sTestSlot);
-        for (int sub : subs) {
-            if (SubscriptionManager.isValidSubscriptionId(sub)) {
-                sTestSub = sub;
-                break;
-            }
-        }
+        int subId = SubscriptionManager.getSubscriptionId(sTestSlot);
+        assertTrue(SubscriptionManager.isValidSubscriptionId(subId));
+        sTestSub = subId;
 
         assertTrue(sMockModemManager.changeNetworkService(sTestSlot, 310260, true));
 

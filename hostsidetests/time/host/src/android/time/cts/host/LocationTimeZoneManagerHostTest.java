@@ -194,7 +194,8 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
             mPrimaryFakeTimeZoneProviderShellHelper.assertCurrentState(PROVIDER_STATE_INITIALIZING);
 
             assertProviderStates(serviceState.getSecondaryProviderStatesList(),
-                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_DISABLED);
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_DISABLED,
+                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_PERM_FAILED);
         }
         mLocationTimeZoneManagerShellHelper.clearRecordedProviderStates();
 
@@ -386,7 +387,6 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
             assertLastEventWithoutSuggestion(serviceState);
             assertProviderStates(serviceState.getPrimaryProviderStatesList(),
                     TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_DISABLED,
-                    TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_INITIALIZING,
                     TimeZoneProviderStateEnum.TIME_ZONE_PROVIDER_STATE_PERM_FAILED);
 
             assertProviderStates(serviceState.getSecondaryProviderStatesList(),

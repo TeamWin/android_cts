@@ -61,9 +61,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String TEST_IME_COMPONENT = TEST_IME_PKG + "/.TestIme";
     private static final String SIMPLE_SMS_APP_PKG = "android.telephony.cts.sms.simplesmsapp";
     private static final String SIMPLE_SMS_APP_APK = "SimpleSmsApp.apk";
-    private static final String TEST_LAUNCHER_APK = "TestLauncher.apk";
-    private static final String TEST_LAUNCHER_COMPONENT =
-            "com.android.cts.testlauncher/android.app.Activity";
     public static final String SUSPENSION_CHECKER_CLASS =
             "com.android.cts.suspensionchecker.ActivityLaunchTest";
 

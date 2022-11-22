@@ -156,15 +156,9 @@ public class MmTelFeatureTestOnMockModem {
 
         sTestSub = ImsUtils.getPreferredActiveSubId();
 
-        int[] subs = SubscriptionManager.getSubId(sTestSlot);
-        for (int sub : subs) {
-            if (VDBG) Log.i(LOG_TAG, "beforeAllTests sub=" + sub);
-            if (SubscriptionManager.isValidSubscriptionId(sub)) {
-                sTestSub = sub;
-                break;
-            }
-        }
-        if (VDBG) Log.i(LOG_TAG, "sTestSub=" + sTestSub);
+        int subId = SubscriptionManager.getSubscriptionId(sTestSlot);
+        assertTrue(SubscriptionManager.isValidSubscriptionId(subId));
+        sTestSub = subId;
 
         sServiceConnector = new ImsServiceConnector(InstrumentationRegistry.getInstrumentation());
 

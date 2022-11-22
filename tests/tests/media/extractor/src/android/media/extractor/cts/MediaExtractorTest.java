@@ -376,10 +376,7 @@ public class MediaExtractorTest {
     //MPEG-H 3D Audio single stream (mha1)
     @Test
     public void testMpegh3dAudioMediaExtractorMha1() throws Exception {
-        // TODO(b/186267251) move file to cloud storage.
-        AssetFileDescriptor afd = getContext().getResources()
-            .openRawResourceFd(R.raw.sample_mpegh_mha1);
-        mExtractor.setDataSource(afd);
+        TestMediaDataSource dataSource = setDataSource("sample_mpegh_mha1.mp4");
         assertEquals(1, mExtractor.getTrackCount());
 
         // The following values below require API Build.VERSION_CODES.S
@@ -399,10 +396,7 @@ public class MediaExtractorTest {
     //MPEG-H 3D Audio single stream encapsulated in MHAS (mhm1)
     @Test
     public void testMpegh3dAudioMediaExtractorMhm1() throws Exception {
-        // TODO(b/186267251) move file to cloud storage.
-        AssetFileDescriptor afd = getContext().getResources()
-            .openRawResourceFd(R.raw.sample_mpegh_mhm1);
-        mExtractor.setDataSource(afd);
+        TestMediaDataSource dataSource = setDataSource("sample_mpegh_mhm1.mp4");
         assertEquals(1, mExtractor.getTrackCount());
 
         // The following values below require API Build.VERSION_CODES.S

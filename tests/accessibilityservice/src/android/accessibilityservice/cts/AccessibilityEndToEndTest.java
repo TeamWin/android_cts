@@ -1459,6 +1459,19 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
                .isEqualTo(AccessibilityNodeInfo.UNDEFINED_MIN_MILLIS_BETWEEN_CONTENT_CHANGES);
     }
 
+    @Test
+    @ApiTest(apis = {
+            "android.view.accessibility.AccessibilityNodeInfo"
+                    + "#setRequestInitialAccessibilityFocus",
+            "android.view.accessibility.AccessibilityNodeInfo"
+                    + "#hasRequestInitialAccessibilityFocus"})
+    public void testSetRequestInitialAccessibilityFocus() {
+        final View testView = mActivity.findViewById(R.id.buttonLayout);
+        final AccessibilityNodeInfo nodeInfo = testView.createAccessibilityNodeInfo();
+        nodeInfo.setRequestInitialAccessibilityFocus(true);
+        assertThat(nodeInfo.hasRequestInitialAccessibilityFocus()).isTrue();
+    }
+
 
     @AsbSecurityTest(cveBugId = {243378132})
     @Test

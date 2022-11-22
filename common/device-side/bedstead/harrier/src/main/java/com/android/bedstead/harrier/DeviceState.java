@@ -86,6 +86,7 @@ import com.android.bedstead.harrier.annotations.RequireNotLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequireNotMultipleUsersOnMultipleDisplays;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
+import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireTargetSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
@@ -448,6 +449,14 @@ public final class DeviceState extends HarrierRule {
 
             if (annotation instanceof EnsureHasNoAdditionalUser) {
                 ensureHasNoAdditionalUser();
+                continue;
+            }
+
+            if (annotation instanceof RequireRunOnAdditionalUser) {
+                RequireRunOnAdditionalUser requireRunOnAdditionalUserAnnotation =
+                        (RequireRunOnAdditionalUser) annotation;
+                requireRunOnAdditionalUser(
+                        requireRunOnAdditionalUserAnnotation.switchedToUser());
                 continue;
             }
 
@@ -1170,6 +1179,17 @@ public final class DeviceState extends HarrierRule {
                 method.invokeExplosively(testClass.getJavaClass());
             } catch (InvocationTargetException e) {
                 throw e.getCause();
+            }
+        }
+    }
+
+    private void requireRunOnAdditionalUser(OptionalBoolean switchedToUser) {
+        requireRunOnUser(new String[]{SECONDARY_USER_TYPE_NAME}, switchedToUser);
+
+        if (TestApis.users().isHeadlessSystemUserMode()) {
+            if (TestApis.users().instrumented().equals(TestApis.users().initial())) {
+                throw new AssumptionViolatedException(
+                        "This test requires running on an additional secondary user");
             }
         }
     }

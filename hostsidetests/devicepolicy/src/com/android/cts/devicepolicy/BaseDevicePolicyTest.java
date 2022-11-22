@@ -53,7 +53,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -166,7 +165,6 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     protected CompatibilityBuildHelper mBuildHelper;
     private String mPackageVerifier;
-    private HashSet<String> mAvailableFeatures;
 
     /** Packages installed as part of the tests */
     private Set<String> mFixedPackages;
@@ -742,6 +740,8 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     }
 
     protected final void assumeSupportsMultiUser() throws DeviceNotAvailableException {
+        // setup isn't always called before this method
+        mSupportsMultiUser = getMaxNumberOfUsersSupported() > 1;
         assumeTrue("device doesn't support multiple users", mSupportsMultiUser);
     }
 
@@ -1222,9 +1222,8 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     // TODO (b/174775905) remove after exposing the check from ITestDevice.
     public static boolean isHeadlessSystemUserMode(ITestDevice device)
             throws DeviceNotAvailableException {
-        final String result = device
-                .executeShellCommand("getprop ro.fw.mu.headless_system_user").trim();
-        return "true".equalsIgnoreCase(result);
+        String result = device.executeShellCommand("dumpsys user");
+        return result.contains("headless-system mode: true");
     }
 
     protected void assumeHeadlessSystemUserMode(String reason)

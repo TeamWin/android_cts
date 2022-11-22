@@ -139,7 +139,7 @@ public final class AlertDialog_BuilderTest extends AlertDialog_BuilderTestBase {
     public void testSetPositiveButtonWithParamInt() {
         mActivityRule.getScenario().onActivity(activity -> {
             mBuilder = new AlertDialog.Builder(activity);
-            mBuilder.setPositiveButton(android.R.string.yes, mOnClickListener);
+            mBuilder.setPositiveButton(android.R.string.ok, mOnClickListener);
             mBuilder.setOnDismissListener(mOnDismissListener);
             mDialog = mBuilder.show();
             mButton = mDialog.getButton(DialogInterface.BUTTON_POSITIVE);
@@ -147,7 +147,7 @@ public final class AlertDialog_BuilderTest extends AlertDialog_BuilderTestBase {
         });
         mInstrumentation.waitForIdleSync();
 
-        assertEquals(mDialogActivity.getText(android.R.string.yes), mButton.getText());
+        assertEquals(mDialogActivity.getText(android.R.string.ok), mButton.getText());
         verify(mOnClickListener, times(1)).onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
         verifyNoMoreInteractions(mOnClickListener);
         // Button click should also dismiss the dialog and notify the listener
@@ -159,14 +159,14 @@ public final class AlertDialog_BuilderTest extends AlertDialog_BuilderTestBase {
     public void testSetPositiveButtonWithParamCharSequence() {
         mActivityRule.getScenario().onActivity(activity -> {
             mBuilder = new AlertDialog.Builder(activity);
-            mBuilder.setPositiveButton(android.R.string.yes, mOnClickListener);
+            mBuilder.setPositiveButton(android.R.string.ok, mOnClickListener);
             mBuilder.setOnDismissListener(mOnDismissListener);
             mDialog = mBuilder.show();
             mButton = mDialog.getButton(DialogInterface.BUTTON_POSITIVE);
             mButton.performClick();
         });
         mInstrumentation.waitForIdleSync();
-        assertEquals(mDialogActivity.getText(android.R.string.yes), mButton.getText());
+        assertEquals(mDialogActivity.getText(android.R.string.ok), mButton.getText());
         verify(mOnClickListener, times(1)).onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
         verifyNoMoreInteractions(mOnClickListener);
         // Button click should also dismiss the dialog and notify the listener

@@ -240,7 +240,8 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.STEERING_WHEEL_HEIGHT_POS,
                             VehiclePropertyIds.STEERING_WHEEL_HEIGHT_MOVE,
                             VehiclePropertyIds.STEERING_WHEEL_THEFT_LOCK_ENABLED,
-                            VehiclePropertyIds.STEERING_WHEEL_LOCKED)
+                            VehiclePropertyIds.STEERING_WHEEL_LOCKED,
+                            VehiclePropertyIds.STEERING_WHEEL_EASY_ACCESS_ENABLED)
                     .build();
 
     /** contains property Ids for the properties required by CDD */
@@ -1441,6 +1442,20 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     public void testSteeringWheelLockedIfSupported() {
         VehiclePropertyVerifier.newBuilder(
                         VehiclePropertyIds.STEERING_WHEEL_LOCKED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class)
+                .addReadPermission(Car.PERMISSION_CONTROL_STEERING_WHEEL)
+                .addWritePermission(Car.PERMISSION_CONTROL_STEERING_WHEEL)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testSteeringWheelEasyAccessEnabledIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.STEERING_WHEEL_EASY_ACCESS_ENABLED,
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,

@@ -42,6 +42,9 @@ class CurrentUserState:
     def get_user(self):
         return self.current_user
 
+    def all_supported_annotations(self):
+        return self.include_annotations()
+
 class SystemUserState:
     def __init__(self, args):
         self.args = args
@@ -65,6 +68,9 @@ class SystemUserState:
     def get_user(self):
         return 0
 
+    def all_supported_annotations(self):
+        return self.include_annotations()
+
 class SecondaryUserState:
     def __init__(self, args):
         self.args = args
@@ -73,7 +79,13 @@ class SecondaryUserState:
         return "RUN_ON_SECONDARY_USER"
 
     def is_active(self, device_state):
-        return is_secondary_user(device_state["users"][device_state["current_user"]])
+        if not is_secondary_user(device_state["users"][device_state["current_user"]]):
+            return False
+        if not self.args.headless:
+            return True
+
+        secondary_user_id = get_or_create_secondary_user(self.args)
+        return device_state["current_user"] == secondary_user_id
 
     def include_annotations(self):
         return ["com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser"]
@@ -94,6 +106,43 @@ class SecondaryUserState:
 
     def get_user(self):
         return self.user_id
+
+    def all_supported_annotations(self):
+        return self.include_annotations()
+
+class AdditionalUserState:
+    """ This state is only useful for headless devices. """
+    def __init__(self, args):
+        self.args = args
+
+    def name(self):
+        return "RUN_ON_ADDITIONAL_USER"
+
+    def is_active(self, device_state):
+        return is_additional_user(device_state, device_state["users"][device_state["current_user"]])
+
+    def include_annotations(self):
+        return ["com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser"]
+
+    def initialise(self, device_state):
+        self.user_id = device_state["current_user"]
+
+    def enter(self):
+        debug(self.args, "[Test] Entering state " + self.name())
+
+        self.user_id = get_or_create_additional_user(self.args)
+        execute_shell_command("Test", self.args, ["adb", "shell", "am", "switch-user", str(self.user_id)])
+        execute_shell_command("Test", self.args, ["adb", "shell", "pm", "install-existing", "--user", str(self.user_id), supported_modules[self.args.module][PACKAGE_NAME]])
+
+        for additional_app in supported_modules[self.args.module].get(ADDITIONAL_APPS, []):
+            command = ["adb", "install-existing", "--user", str(self.user_id), additional_app[PACKAGE_NAME]]
+            execute_shell_command("Test", self.args, command, shell=True, executable="/bin/bash")
+
+    def get_user(self):
+        return self.user_id
+
+    def all_supported_annotations(self):
+        return self.include_annotations() + ["com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser"]
 
 class WorkProfileState:
     def __init__(self, args):
@@ -149,16 +198,21 @@ class WorkProfileState:
     def _is_work_profile(self, user):
         return user["type"] == "profile.MANAGED"
 
+    def all_supported_annotations(self):
+        return self.include_annotations()
+
 RUN_ON_CURRENT_USER = CurrentUserState
 RUN_ON_SYSTEM_USER = SystemUserState
 RUN_ON_SECONDARY_USER = SecondaryUserState
 RUN_ON_WORK_PROFILE = WorkProfileState
+RUN_ON_ADDITIONAL_USER = AdditionalUserState
 
 STATE_CODES = {
     "c": RUN_ON_CURRENT_USER,
     "s": RUN_ON_SYSTEM_USER,
     "y": RUN_ON_SECONDARY_USER,
-    "w": RUN_ON_WORK_PROFILE
+    "w": RUN_ON_WORK_PROFILE,
+    "a": RUN_ON_ADDITIONAL_USER
 }
 
 SHORT_PACKAGE_PREFIXES = {
@@ -173,44 +227,44 @@ supported_modules = {
     "CtsDevicePolicyTestCases": {
         "package": "android.devicepolicy.cts",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER]
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
     },
     "CtsMultiUserTestCases": {
         "package": "android.multiuser.cts",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER]
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
     },
 
     # Bedstead
     "ActivityContextTest": {
         "package": "com.android.activitycontext.test",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER]
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
     },
 
     "DeviceAdminAppTest": {
         "package": "com.android.bedstead.deviceadminapp.test",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER]
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
     },
     "EventLibTest": {
         "package": "com.android.eventlib.test",
         "path": "com.android.eventlib",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER],
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER],
         "additional_apps": [{"target": "EventLibTestApp", "package": "com.android.eventlib.tests.testapp"}]
     },
     "HarrierTest": {
         "package": "com.android.bedstead.harrier.test",
         "path": "com.android.bedstead.harrier",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER]
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
     },
     "NeneTest": {
         "package": "com.android.bedstead.nene.test",
         "path": "com.android.bedstead.nene",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER],
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER],
         "additional_targets": ["NeneTestApp1"],
         "files": [{"from": "NeneTestApp1.apk", "to": "/data/local/tmp/NeneTestApp1.apk"}]
     },
@@ -218,19 +272,19 @@ supported_modules = {
         "package": "com.android.queryable.test",
         "path": "com.android.queryable",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER]
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
     },
     "RemoteDPCTest": {
         "package": "com.android.bedstead.remotedpc.test",
         "path": "com.android.bedstead.remotedpc",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER]
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
     },
     "TestAppTest": {
         "package": "com.android.bedstead.testapp.test",
         "path": "com.android.bedstead.testapp",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
-        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER]
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
     },
 }
 
@@ -287,7 +341,7 @@ def get_args():
     parser.add_argument("-i", "--install", action='store_true', help="Builds test targets. (default)")
     parser.add_argument("-t", "--test", action='store_true', help="Builds test targets. (default)")
     parser.add_argument("-d", "--debug", action="store_true", help="Include debug output.")
-    parser.add_argument("-s", "--states", help="Specify states which should be included. Options are (c)urrent (s)ystem secondar(y), (w)ork profile. Defaults to all states.")
+    parser.add_argument("-s", "--states", help="Specify states which should be included. Options are (c)urrent (s)ystem secondar(y), (w)ork profile, (a)dditional. Defaults to all states.")
     parser.add_argument("-n", "--interactive", action='store', nargs='?', default="disabled", help="Run interactive tests. This will exclude non-interactive tests and will enable manual testing")
     args = parser.parse_args()
     if not args.build and not args.install and not args.test:
@@ -296,9 +350,9 @@ def get_args():
         args.test = True
 
     if not args.states:
-        args.states = "csyw"
+        args.states = "csywa"
     args.states = set(args.states)
-    valid_states = ["c", "s", "y", "w"]
+    valid_states = ["c", "s", "y", "w", "a"]
     for state in args.states:
         if not state in valid_states:
             print("State " + state + " is invalid, must be one of " + str(valid_states))
@@ -618,13 +672,29 @@ def execute_shell_command(stage, args, command, **extra_args):
 
     return output, r.stderr
 
+def get_or_create_additional_user(args):
+    users = get_users(args)
+    secondary_users = sorted([u for u in users.keys() if is_secondary_user(users[u])])
+    if (len(secondary_users) == 0):
+        create_user(args)
+    if len(secondary_users) < 2:
+        return create_user(args)
+
+    return secondary_users[1]
+
 def get_or_create_secondary_user(args):
     users = get_users(args)
-    for user in users.values():
-        if is_secondary_user(user):
-            return user["id"]
-
+    secondary_users = sorted([u for u in users.keys() if is_secondary_user(users[u])])
+    if len(secondary_users) > 0:
+        return secondary_users[0]
     return create_user(args)
+
+def is_additional_user(device_state, user):
+    if not is_secondary_user(user):
+        return False
+
+    secondary_users = sorted([u for u in device_state["users"].keys() if is_secondary_user(device_state["users"][u])])
+    return user["id"] != secondary_users[0]
 
 def is_secondary_user(user):
     return user["type"] == "full.SECONDARY"
@@ -693,6 +763,8 @@ def main():
         # Construct modules with args
         states = [m(args) for m in supported_modules[args.module][STATES]]
 
+        if not args.headless:
+            states.remove(RUN_ON_ADDITIONAL_USER)
 
         if RUN_ON_CURRENT_USER in args.states and len(args.states) > 1:
             for state in states:
@@ -731,7 +803,7 @@ def main():
                 if needs_to_enter_state:
                     state.enter()
                 include_annotations = state.include_annotations()
-                exclude_annotations = [x for x in all_include_annotations if not x in include_annotations]
+                exclude_annotations = [x for x in all_include_annotations if not x in state.all_supported_annotations()]
                 test = Test(args, state, btest_run, total_test_count, next_test, include_annotations, exclude_annotations, (i < len(states) - 1))
                 test.run()
                 total_test_count = test.total_test_count

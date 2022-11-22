@@ -72,7 +72,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
         sendDeviceToSleep();
 
         // Turn device on
-        wakeUpDevice();
+        wakeUpDeviceWithoutWait();
 
         String reportPowerStatus = hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST,
                 CecOperand.REPORT_POWER_STATUS);
@@ -103,7 +103,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
             wakeUpDevice();
 
             // Move device to standby
-            sendDeviceToSleep();
+            sendDeviceToSleepWithoutWait();
 
             String reportPowerStatus =
                     hdmiCecClient.checkExpectedOutput(
