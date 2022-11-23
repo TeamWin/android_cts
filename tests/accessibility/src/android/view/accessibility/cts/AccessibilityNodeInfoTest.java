@@ -45,7 +45,6 @@ import android.text.style.ImageSpan;
 import android.text.style.ReplacementSpan;
 import android.util.ArrayMap;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 import android.view.accessibility.AccessibilityNodeInfo.CollectionInfo;
@@ -291,13 +290,6 @@ public class AccessibilityNodeInfoTest {
         final CollectionItemInfo nonHeadingItemInfo = CollectionItemInfo.obtain(0, 1, 0, 1, false);
         info.setCollectionItemInfo(nonHeadingItemInfo);
         assertFalse(info.isHeading());
-    }
-
-    @SmallTest
-    @Test
-    public void testMinMillisBetweenContentChangesConstantInSyncWithViewConfigurationConstant() {
-        assertThat(AccessibilityNodeInfo.MINIMUM_MIN_MILLIS_BETWEEN_CONTENT_CHANGES)
-                .isEqualTo((int) ViewConfiguration.getSendRecurringAccessibilityEventsInterval());
     }
 
     /**

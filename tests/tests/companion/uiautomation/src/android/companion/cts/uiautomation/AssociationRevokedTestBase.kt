@@ -34,8 +34,8 @@ open class AssociationRevokedTestBase : TestBase() {
         context.getSystemService(RoleManager::class.java)!!
     }
 
-    private val uiDevice: UiDevice by lazy { UiDevice.getInstance(instrumentation) }
-    protected val confirmationUi by lazy { CompanionDeviceManagerUi(uiDevice) }
+    val uiDevice: UiDevice = UiDevice.getInstance(instrumentation)
+    protected val confirmationUi = CompanionDeviceManagerUi(uiDevice)
     protected val appContext: Context = instrumentation.targetContext
     protected val associationApp = AppHelper(
         instrumentation, userId, ASSOCIATION_REVOKE_APP_NAME, ASSOCIATION_REVOKE_APP_APK_PATH

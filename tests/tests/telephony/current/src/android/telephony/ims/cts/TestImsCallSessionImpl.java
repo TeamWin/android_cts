@@ -32,17 +32,14 @@ import android.telephony.ims.ImsStreamMediaProfile;
 import android.telephony.ims.stub.ImsCallSessionImplBase;
 import android.util.Log;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 
 public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
 
     private static final String LOG_TAG = "CtsTestImsCallSessionImpl";
-    private static final int LATCH_WAIT = 0;
-    private static final int LATCH_MAX = 1;
-    private static final int WAIT_FOR_STATE_CHANGE = 1500;
-    private static final int WAIT_FOR_ESTABLISHING = 2000;
+
+    // The timeout to wait in current state in milliseconds
+    protected static final int WAIT_IN_CURRENT_STATE = 200;
 
     private final String mCallId = String.valueOf(this.hashCode());
     private final Object mLock = new Object();
@@ -54,12 +51,6 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
 
     private final MessageExecutor mCallExecutor = new MessageExecutor("CallExecutor");
     private final MessageExecutor mCallBackExecutor = new MessageExecutor("CallBackExecutor");
-    private static final CountDownLatch[] sLatches = new CountDownLatch[LATCH_MAX];
-    static {
-        for (int i = 0; i < LATCH_MAX; i++) {
-            sLatches[i] = new CountDownLatch(1);
-        }
-    }
 
     public static final int TEST_TYPE_NONE = 0;
     public static final int TEST_TYPE_MO_ANSWER = 1 << 0;
@@ -76,29 +67,6 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
     private ImsCallProfile mConfCallProfile = null;
     private ConferenceHelper mConferenceHelper = null;
     private String mCallee = null;
-
-    public boolean imsCallSessionLatchCountdown(int latchIndex, int waitMs) {
-        boolean complete = false;
-        try {
-            CountDownLatch latch;
-            synchronized (mLock) {
-                latch = sLatches[latchIndex];
-            }
-            complete = latch.await(waitMs, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-             //complete == false
-        }
-        synchronized (mLock) {
-            sLatches[latchIndex] = new CountDownLatch(1);
-        }
-        return complete;
-    }
-
-    public void countDownLatch(int latchIndex) {
-        synchronized (mLock) {
-            sLatches[latchIndex].countDown();
-        }
-    }
 
     public TestImsCallSessionImpl(ImsCallProfile profile) {
         mCallProfile = profile;
@@ -154,7 +122,8 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
         }
 
         mCallExecutor.execute(() -> {
-            imsCallSessionLatchCountdown(LATCH_WAIT, 500);
+            ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
+
             if (isTestType(TEST_TYPE_MO_FAILED)) {
                 startFailed();
             } else {
@@ -164,7 +133,6 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
     }
 
     void startInternal() {
-        imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_STATE_CHANGE);
         postAndRunTask(() -> {
             try {
                 if (mListener == null) {
@@ -193,7 +161,6 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
                 ImsCallProfile.CALL_TYPE_VOICE, new Bundle(), mediaProfile);
         mCallProfile.updateMediaProfile(profile);
 
-        imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_STATE_CHANGE);
         postAndRunTask(() -> {
             try {
                 if (mListener == null) {
@@ -211,8 +178,8 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
         });
         setState(ImsCallSessionImplBase.State.ESTABLISHING);
 
-        imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_ESTABLISHING);
         postAndRunTask(() -> {
+            ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
             try {
                 if (mListener == null) {
                     return;
@@ -231,8 +198,8 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
     }
 
     void startFailed() {
-        imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_STATE_CHANGE);
         postAndRunTask(() -> {
+            ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
             try {
                 if (mListener == null) {
                     return;
@@ -321,6 +288,7 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
     // End the Incoming Call
     public void terminateIncomingCall() {
         postAndRunTask(() -> {
+            ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
             try {
                 if (mListener == null) {
                     return;
@@ -383,7 +351,7 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
             setState(ImsCallSessionImplBase.State.RENEGOTIATING);
 
             postAndRunTask(() -> {
-                imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_ESTABLISHING);
+                ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
                 try {
                     if (mListener == null) {
                         return;
@@ -407,7 +375,7 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
         int audioDirection = profile.getAudioDirection();
         if (audioDirection == ImsStreamMediaProfile.DIRECTION_SEND) {
             postAndRunTask(() -> {
-                imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_ESTABLISHING);
+                ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
                 try {
                     if (mListener == null) {
                         return;
@@ -431,7 +399,7 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
         int audioDirection = profile.getAudioDirection();
         if (audioDirection == ImsStreamMediaProfile.DIRECTION_SEND_RECEIVE) {
             postAndRunTask(() -> {
-                imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_ESTABLISHING);
+                ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
                 try {
                     if (mListener == null) {
                         return;
@@ -457,10 +425,10 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
             mergeFailed();
         } else {
             createConferenceSession();
-            imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_ESTABLISHING);
             mConfSession.setState(ImsCallSessionImplBase.State.ESTABLISHED);
 
             postAndRunTask(() -> {
+                ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
                 try {
                     if (mListener == null) {
                         return;
@@ -496,7 +464,6 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
 
     private void mergeFailed() {
         createConferenceSession();
-        imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_ESTABLISHING);
 
         postAndRunTask(() -> {
             try {
@@ -506,7 +473,7 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
 
                 Log.d(LOG_TAG, "invokeCallSessionMergeStarted");
                 mListener.callSessionMergeStarted(mConfSession, mConfCallProfile);
-                imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_STATE_CHANGE);
+                ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
                 Log.d(LOG_TAG, "invokeCallSessionMergeFailed");
                 mListener.callSessionMergeFailed(getReasonInfo(
                         ImsReasonInfo.CODE_REJECT_ONGOING_CONFERENCE_CALL,
@@ -558,7 +525,7 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
                     ("tel:" + String.valueOf(++counter)), (String.valueOf(++counter)), state, 200));
         }
 
-        imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_STATE_CHANGE);
+        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
         Log.d(LOG_TAG, "invokeCallSessionConferenceStateUpdated");
         mListener.callSessionConferenceStateUpdated(confState);
     }
@@ -568,7 +535,6 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
      */
     public void sendHoldResponse() {
         postAndRunTask(() -> {
-            imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_ESTABLISHING);
             try {
                 if (mListener == null) {
                     return;

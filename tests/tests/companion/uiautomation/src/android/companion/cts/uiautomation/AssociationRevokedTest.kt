@@ -39,6 +39,8 @@ class AssociationRevokedTest : AssociationRevokedTestBase() {
     fun test_disassociate_app_should_not_crash() = with(associationApp) {
         // Launch the test app with the user consent dialog.
         launchAppAndConfirmationUi()
+        // Scroll to the Bottom.
+        confirmationUi.scrollToBottom()
         // Press the `Allow` button.
         confirmationUi.waitUntilPositiveButtonIsEnabledAndClick()
         // Check the association until the CDM UI is gone.
@@ -75,6 +77,8 @@ class AssociationRevokedTest : AssociationRevokedTestBase() {
     fun test_disassociate_role_revoked_after_app_is_killed() = with(associationApp) {
         // Launch the test app with the user consent dialog.
         launchAppAndConfirmationUi()
+        // Scroll to the Bottom
+        confirmationUi.scrollToBottom()
         // Press the `Allow` button.
         confirmationUi.waitUntilPositiveButtonIsEnabledAndClick()
         // Check the association until the CDM UI is gone.

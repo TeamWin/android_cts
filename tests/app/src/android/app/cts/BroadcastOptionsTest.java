@@ -25,14 +25,17 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 
 import android.app.BroadcastOptions;
 import android.app.Instrumentation;
 import android.app.cts.android.app.cts.tools.WaitForBroadcast;
 import android.app.stubs.CommandReceiver;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.os.PowerExemptionManager;
 
 import androidx.test.InstrumentationRegistry;
@@ -262,5 +265,58 @@ public class BroadcastOptionsTest {
         final BroadcastOptions options = BroadcastOptions.makeBasic();
         options.setRequireCompatChange(BroadcastOptions.CHANGE_ALWAYS_ENABLED, false);
         assertBroadcastFailure(options);
+    }
+
+    @Test
+    public void testSetGetDeliveryGroupPolicy() {
+        final BroadcastOptions options = BroadcastOptions.makeBasic();
+        final int defaultPolicy = options.getDeliveryGroupPolicy();
+
+        options.setDeliveryGroupPolicy(BroadcastOptions.DELIVERY_GROUP_POLICY_MOST_RECENT);
+        assertEquals(BroadcastOptions.DELIVERY_GROUP_POLICY_MOST_RECENT,
+                options.getDeliveryGroupPolicy());
+
+        final BroadcastOptions options2 = new BroadcastOptions(options.toBundle());
+        assertEquals(BroadcastOptions.DELIVERY_GROUP_POLICY_MOST_RECENT,
+                options2.getDeliveryGroupPolicy());
+
+        options.clearDeliveryGroupPolicy();
+        assertEquals(defaultPolicy, options.getDeliveryGroupPolicy());
+
+        // TODO(249160234): Verify the behavior of the set policy.
+    }
+
+    @Test
+    public void testSetGetDeliveryGroupMatchingKey() {
+        final BroadcastOptions options = BroadcastOptions.makeBasic();
+
+        final String namespace = "test_namespace";
+        final String key = "test_key";
+        options.setDeliveryGroupMatchingKey(namespace, key);
+        assertEquals(String.join("/", namespace, key),
+                options.getDeliveryGroupMatchingKey());
+
+        final BroadcastOptions options2 = new BroadcastOptions(options.toBundle());
+        assertEquals(String.join("/", namespace, key),
+                options2.getDeliveryGroupMatchingKey());
+
+        options.clearDeliveryGroupMatchingKey();
+        assertNull(options.getDeliveryGroupMatchingKey());
+    }
+
+    @Test
+    public void testSetGetDeliveryGroupMatchingFilter() {
+        final BroadcastOptions options = BroadcastOptions.makeBasic();
+
+        final IntentFilter filter = new IntentFilter("test_action");
+        filter.addCategory("test_category");
+        final PersistableBundle extras = new PersistableBundle();
+        extras.putInt("extra_int", 34);
+        filter.setExtras(extras);
+        options.setDeliveryGroupMatchingFilter(filter);
+        assertEquals(filter, options.getDeliveryGroupMatchingFilter());
+
+        options.clearDeliveryGroupMatchingFilter();
+        assertNull(options.getDeliveryGroupMatchingFilter());
     }
 }

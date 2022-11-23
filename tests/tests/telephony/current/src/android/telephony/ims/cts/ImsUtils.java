@@ -36,6 +36,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -232,5 +233,13 @@ public class ImsUtils {
         } catch (IOException e) {
         }
         return out;
+    }
+
+    public static  void waitInCurrentState(long ms) {
+        try {
+            TimeUnit.MILLISECONDS.sleep(ms);
+        } catch (Exception e) {
+            Log.d(TAG, "InterruptedException");
+        }
     }
 }

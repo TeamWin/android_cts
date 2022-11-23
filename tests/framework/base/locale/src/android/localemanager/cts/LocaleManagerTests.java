@@ -518,6 +518,7 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         ShellUtils.runShellCommand("ime set " + testIme);
         mImeChangedBroadcastReceiver.await();
         assertEquals(testIme, mImeChangedBroadcastReceiver.getInputMethodId());
+        mImeChangedBroadcastReceiver.reset();
 
         // Invoke the app by launching an activity.
         launchActivity(TEST_APP_MAIN_ACTIVITY);
@@ -558,6 +559,7 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         ShellUtils.runShellCommand("ime set " + testIme);
         mImeChangedBroadcastReceiver.await();
         assertEquals(testIme, mImeChangedBroadcastReceiver.getInputMethodId());
+        mImeChangedBroadcastReceiver.reset();
 
         //Set app locales
         sLocaleManager.setApplicationLocales(DEFAULT_APP_LOCALES);

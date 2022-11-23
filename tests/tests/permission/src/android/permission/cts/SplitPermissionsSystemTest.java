@@ -32,6 +32,7 @@ import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.READ_MEDIA_AUDIO;
 import static android.Manifest.permission.READ_MEDIA_IMAGES;
 import static android.Manifest.permission.READ_MEDIA_VIDEO;
+import static android.Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED;
 import static android.Manifest.permission.READ_PHONE_STATE;
 import static android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE;
 import static android.Manifest.permission.WRITE_CALL_LOG;
@@ -151,14 +152,23 @@ public class SplitPermissionsSystemTest {
                 case BODY_SENSORS:
                     assertSplit(split, Build.VERSION_CODES.TIRAMISU, BODY_SENSORS_BACKGROUND);
                     break;
+                case ACCESS_MEDIA_LOCATION:
+                case READ_MEDIA_IMAGES:
+                case READ_MEDIA_VIDEO:
+                    assertSplit(split, READ_MEDIA_VISUAL_USER_SELECTED);
+                    break;
             }
         }
 
-        assertEquals(21, seenSplits.size());
+        assertEquals(24, seenSplits.size());
     }
 
     private void assertSplit(SplitPermissionInfo split, int targetSdk, String... permission) {
         assertThat(split.getNewPermissions()).containsExactlyElementsIn(permission);
         assertThat(split.getTargetSdk()).isEqualTo(targetSdk);
+    }
+
+    private void assertSplit(SplitPermissionInfo split, String... permission) {
+        assertThat(split.getNewPermissions()).containsExactlyElementsIn(permission);
     }
 }

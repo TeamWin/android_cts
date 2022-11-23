@@ -32,6 +32,8 @@ import java.util.List;
 
 public class PackageInstallationSessionReportedStatsTests extends PackageManagerStatsTestsBase{
     private static final String TEST_INSTALL_APK = "CtsStatsdAtomEmptyApp.apk";
+    private static final String TEST_INSTALL_APK_V2 = "CtsStatsdAtomEmptyAppV2.apk";
+
     private static final String TEST_INSTALL_PACKAGE =
             "com.android.cts.packagemanager.stats.emptyapp";
 
@@ -41,13 +43,14 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
         super.tearDown();
     }
 
-    public void testPackageInstallationSessionReportedForApkSuccess() throws Exception {
+    public void testPackageInstallationSessionReportedForApkSuccessWithReplace() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.PACKAGE_INSTALLATION_SESSION_REPORTED_FIELD_NUMBER);
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         DeviceUtils.installTestApp(getDevice(), TEST_INSTALL_APK, TEST_INSTALL_PACKAGE, mCtsBuild);
         assertThat(getDevice().isPackageInstalled(TEST_INSTALL_PACKAGE,
                 String.valueOf(getDevice().getCurrentUser()))).isTrue();
+        installPackageUsingIncremental(new String[]{TEST_INSTALL_APK_V2});
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         List<AtomsProto.PackageInstallationSessionReported> reports = new ArrayList<>();
         for (StatsLog.EventMetricData data : ReportUtils.getEventMetricDataList(getDevice())) {
@@ -55,29 +58,47 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
                 reports.add(data.getAtom().getPackageInstallationSessionReported());
             }
         }
-        assertThat(reports.size()).isEqualTo(1);
-        AtomsProto.PackageInstallationSessionReported report = reports.get(0);
+        assertThat(reports.size()).isEqualTo(2);
         final int expectedUid = getAppUid(TEST_INSTALL_PACKAGE);
         final int expectedUser = getDevice().getCurrentUser();
         final long expectedApksSizeBytes = getTestFileSize(TEST_INSTALL_APK);
         // TODO(b/249294752): check installflags, installer, userTypes and versionCode in report
-        checkReportResult(report, expectedUid, Collections.singletonList(expectedUser),
+        checkReportResult(reports.get(0), expectedUid, Collections.singletonList(expectedUser),
                 Collections.emptyList(), 1 /* success */,
-                expectedApksSizeBytes, 0 /* dataLoaderType */, false,
+                1 /* versionCode */, expectedApksSizeBytes, 0 /* dataLoaderType */,
+                0 /* expectedUserActionRequiredType */, false,
                 false, false, false, false, false, false);
+
+        checkReportResult(reports.get(1), expectedUid, Collections.singletonList(expectedUser),
+                Collections.singletonList(expectedUser), 1 /* success */, 2 /* versionCode */,
+                getTestFileSize(TEST_INSTALL_APK_V2), 2 /* dataLoaderType */,
+                0 /* expectedUserActionRequiredType */, false,
+                true, false, false, false, false, false);
+
+        // No uninstall log from app update
+        List<AtomsProto.PackageUninstallationReported> uninstallReports = new ArrayList<>();
+        for (StatsLog.EventMetricData data : ReportUtils.getEventMetricDataList(getDevice())) {
+            if (data.getAtom().hasPackageUninstallationReported()) {
+                uninstallReports.add(data.getAtom().getPackageUninstallationReported());
+            }
+        }
+        assertThat(uninstallReports).isEmpty();
     }
 
     private void checkReportResult(AtomsProto.PackageInstallationSessionReported report,
             int expectedUid, List<Integer> expectedUserIds,
             List<Integer> expectedOriginalUserIds, int expectedPublicReturnCode,
-            long expectedApksSizeBytes, int expectedDataLoaderType,
+            long expectedVersionCode, long expectedApksSizeBytes, int expectedDataLoaderType,
+            int expectedUserActionRequiredType,
             boolean expectedIsInstant, boolean expectedIsReplace, boolean expectedIsSystem,
             boolean expectedIsInherit, boolean expectedInstallingExistingAsUser,
             boolean expectedIsMoveInstall, boolean expectedIsStaged) {
+        assertThat(report.getSessionId()).isNotEqualTo(-1);
         assertThat(report.getUid()).isEqualTo(expectedUid);
         assertThat(report.getUserIdsList()).isEqualTo(expectedUserIds);
         assertThat(report.getOriginalUserIdsList()).isEqualTo(expectedOriginalUserIds);
         assertThat(report.getPublicReturnCode()).isEqualTo(expectedPublicReturnCode);
+        assertThat(report.getVersionCode()).isEqualTo(expectedVersionCode);
         assertThat(report.getApksSizeBytes()).isEqualTo(expectedApksSizeBytes);
         final long totalDuration = report.getTotalDurationMillis();
         assertThat(totalDuration).isGreaterThan(0);
@@ -91,6 +112,7 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
         assertThat(sumStepDurations).isLessThan(totalDuration);
         assertThat(report.getOriginalInstallerPackageUid()).isEqualTo(-1);
         assertThat(report.getDataLoaderType()).isEqualTo(expectedDataLoaderType);
+        assertThat(report.getUserActionRequiredType()).isEqualTo(expectedUserActionRequiredType);
         assertThat(report.getIsInstant()).isEqualTo(expectedIsInstant);
         assertThat(report.getIsReplace()).isEqualTo(expectedIsReplace);
         assertThat(report.getIsSystem()).isEqualTo(expectedIsSystem);

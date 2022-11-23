@@ -21,7 +21,6 @@ import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import android.app.Activity;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -60,8 +59,8 @@ import java.util.concurrent.TimeUnit;
 @RunWith(Parameterized.class)
 public class AnimatedVectorDrawableParameterizedTest {
     @Rule
-    public ActivityTestRule<DrawableStubActivity> mActivityRule =
-            new ActivityTestRule<>(DrawableStubActivity.class);
+    public ActivityTestRule<AVDActivity> mActivityRule =
+            new ActivityTestRule<>(AVDActivity.class);
 
     private static final int IMAGE_WIDTH = 64;
     private static final int IMAGE_HEIGHT = 64;
@@ -69,7 +68,7 @@ public class AnimatedVectorDrawableParameterizedTest {
 
     private static float sTransitionScaleBefore = Float.NaN;
 
-    private Activity mActivity = null;
+    private AVDActivity mActivity = null;
     private Resources mResources = null;
     private final int mLayerType;
 
@@ -123,42 +122,62 @@ public class AnimatedVectorDrawableParameterizedTest {
         // Can't simply use final here, b/c it needs to be initialized and referred later in UI
         // thread.
         final ImageView[] imageView = new ImageView[1];
+        Log.d("AVDPTest#testAnimationOnLayer", "about to run on UI thread");
         mActivityRule.runOnUiThread(() -> {
+            Log.d("AVDPTest#testAnimationOnLayer", "setting content view");
             mActivity.setContentView(R.layout.fixed_sized_imageview);
+            Log.d("AVDPTest#testAnimationOnLayer", "finding view by ID");
             imageView[0] = (ImageView) mActivity.findViewById(R.id.imageview);
         });
+        Log.d("AVDPTest#testAnimationOnLayer", "about to runOnMainAndSync");
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, imageView[0],
                 (Runnable) () -> {
+                    Log.d("AVDPTest#testAnimationOnLayer", "setting image drawable");
                     imageView[0].setImageDrawable(
                             mResources.getDrawable(R.drawable.animated_vector_favorite));
+                    Log.d("AVDPTest#testAnimationOnLayer", "setting layer type");
                     imageView[0].setLayerType(mLayerType, null);
+                    Log.d("AVDPTest#testAnimationOnLayer", "getting drawable");
                     AnimatedVectorDrawable avd =
                             (AnimatedVectorDrawable) imageView[0].getDrawable();
+                    Log.d("AVDPTest#testAnimationOnLayer", "registering callback");
                     avd.registerAnimationCallback(callback);
+                    Log.d("AVDPTest#testAnimationOnLayer", "starting AVD");
                     avd.start();
+                    Log.d("AVDPTest#testAnimationOnLayer", "started AVD");
                 });
+        Log.d("AVDPTest#testAnimationOnLayer", "waiting for start");
         callback.waitForStart();
+        Log.d("AVDPTest#testAnimationOnLayer", "about to wait pumping frames");
         waitWhilePumpingFrames(5, imageView[0], 200);
+        Log.d("AVDPTest#testAnimationOnLayer", "done pumping frames");
 
         Bitmap lastScreenShot = null;
         final Rect srcRect = new Rect();
+        Log.d("AVDPTest#testAnimationOnLayer", "running on UI thread");
         mActivityRule.runOnUiThread(() -> {
+            Log.d("AVDPTest#testAnimationOnLayer", "getting global vis rect");
             imageView[0].getGlobalVisibleRect(srcRect);
         });
+        Log.d("AVDPTest#testAnimationOnLayer", "entering while loop");
 
         int counter = 0;
         while (!callback.endIsCalled()) {
             // Take a screen shot every 50ms, and compare with previous screenshot for the ImageView
             // content, to make sure the AVD is animating when set on HW layer.
+            Log.d("AVDPTest#testAnimationOnLayer", "taking screenshot");
             Bitmap screenShot = takeScreenshot(srcRect);
+            Log.d("AVDPTest#testAnimationOnLayer", "checking endIsCalled");
             if (callback.endIsCalled()) {
                 // Animation already ended, the screenshot may not contain valid animation content,
                 // skip the comparison.
                 break;
             }
             counter++;
+            Log.d("AVDPTest#testAnimationOnLayer", "checking isAlmostIdentical");
             boolean isIdentical = isAlmostIdenticalInRect(screenShot, lastScreenShot);
             if (isIdentical) {
+                Log.d("AVDPTest#testAnimationOnLayer", "saving identical screenshots");
                 String outputFolder = mActivity.getExternalFilesDir(null).getAbsolutePath();
                 DrawableTestUtils.saveVectorDrawableIntoPNG(screenShot, outputFolder,
                         "screenshot_" + counter);
@@ -171,17 +190,23 @@ public class AnimatedVectorDrawableParameterizedTest {
 
             // Wait 50ms before the next screen shot. If animation ended during the wait, exit the
             // loop.
+            Log.d("AVDPTest#testAnimationOnLayer", "waiting for end");
             if (callback.waitForEnd(50)) {
                 break;
             }
         }
         // In this test, we want to make sure that we at least have 5 screenshots.
+        Log.d("AVDPTest#testAnimationOnLayer", "asserting counter>=5");
         assertTrue(counter >= 5);
 
+        Log.d("AVDPTest#testAnimationOnLayer", "running UI thread to stop avd");
         mActivityRule.runOnUiThread(() -> {
+            Log.d("AVDPTest#testAnimationOnLayer", "getting drawable");
             AnimatedVectorDrawable avd = (AnimatedVectorDrawable) imageView[0].getDrawable();
+            Log.d("AVDPTest#testAnimationOnLayer", "stopping avd");
             avd.stop();
         });
+        Log.d("AVDPTest#testAnimationOnLayer", "done");
     }
 
     // Pump frames by repeatedly invalidating the given view. Return true if successfully pumped
@@ -285,34 +310,53 @@ public class AnimatedVectorDrawableParameterizedTest {
         // Can't simply use final here, b/c it needs to be initialized and referred later in UI
         // thread.
         final ImageView[] imageView = new ImageView[1];
+        Log.d("AVDPTest", "About to run on UI thread to set content view");
         mActivityRule.runOnUiThread(() -> {
+            Log.d("AVDPTest", "About to set content view");
             mActivity.setContentView(R.layout.fixed_sized_imageview);
+            Log.d("AVDPTest", "About to find view by id");
             imageView[0] = (ImageView) mActivity.findViewById(R.id.imageview);
         });
+        Log.d("AVDPTest", "About to start avd");
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, imageView[0],
                 (Runnable) () -> {
+                    Log.d("AVDPTest", "Setting image drawable");
                     imageView[0].setImageDrawable(mResources.getDrawable(R.drawable.infinite_avd));
+                    Log.d("AVDPTest", "Setting layer type");
                     imageView[0].setLayerType(mLayerType, null);
+                    Log.d("AVDPTest", "Getting AVD");
                     AnimatedVectorDrawable avd = (AnimatedVectorDrawable) imageView[0].getDrawable();
+                    Log.d("AVDPTest", "registering callback");
                     avd.registerAnimationCallback(callback);
 
+                    Log.d("AVDPTest", "Starting AVD");
                     avd.start();
+                    Log.d("AVDPTest", "Started AVD");
                 });
 
+        Log.d("AVDPTest", "waiting for start");
         callback.waitForStart();
+        Log.d("AVDPTest", "wait while pumping frames");
         waitWhilePumpingFrames(5, imageView[0], 200);
+        Log.d("AVDPTest", "done pumping");
         Bitmap lastScreenShot = null;
         final Rect srcRect = new Rect();
+        Log.d("AVDPTest", "About to find global rect");
         mActivityRule.runOnUiThread(() -> {
             mActivity.findViewById(R.id.imageview).getGlobalVisibleRect(srcRect);
         });
 
+        Log.d("AVDPTest", "entering loop");
         for (int counter = 0; counter < 10; counter++) {
+            Log.d("AVDPTest", "Iteration " + counter + " paused = " + mActivity.mPaused);
             // Take a screen shot every 100ms, and compare with previous screenshot for the ImageView
             // content, to make sure the AVD is animating when set on HW layer.
+            Log.d("AVDPTest", "About to take screenshot");
             Bitmap screenShot = takeScreenshot(srcRect);
+            Log.d("AVDPTest", "About to check screenshots");
             boolean isIdentical = isAlmostIdenticalInRect(screenShot, lastScreenShot);
             if (isIdentical) {
+                Log.d("AVDPTest", "Identical screenshots, saving files and failing");
                 String outputFolder = mActivity.getExternalFilesDir(null).getAbsolutePath();
                 DrawableTestUtils.saveVectorDrawableIntoPNG(screenShot, outputFolder,
                         "inf_avd_screenshot_" + mLayerType + "_" + counter);
@@ -326,15 +370,19 @@ public class AnimatedVectorDrawableParameterizedTest {
 
             // Wait 100ms before the next screen shot. If animation ended during the wait, fail the
             // test, as the infinite avd should not end until we call stop().
+            Log.d("AVDPTest", "About to wait 100");
             if (callback.waitForEnd(100)) {
+                Log.d("AVDPTest", "waited 100, testing paused " + mActivity.mPaused);
                 fail("Infinite AnimatedVectorDrawable should not end on its own.");
             }
         }
+        Log.d("AVDPTest", "done with loop, asserting no end");
         Assert.assertFalse(callback.endIsCalled());
         mActivityRule.runOnUiThread(() -> {
             AnimatedVectorDrawable avd = (AnimatedVectorDrawable) imageView[0].getDrawable();
             avd.stop();
         });
+        Log.d("AVDPTest", "done with test");
     }
 
     // Copy the source rectangle from the screen into the returned bitmap.

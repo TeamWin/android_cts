@@ -60,6 +60,7 @@ import static android.os.Process.INVALID_UID;
 import static android.os.Process.ROOT_UID;
 
 import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AppOpsManager;
@@ -426,6 +427,8 @@ public class TestActivity extends Activity {
                 final InputMethodInfo info = intent.getBundleExtra(EXTRA_DATA)
                         .getParcelable(EXTRA_INPUT_METHOD_INFO, InputMethodInfo.class);
                 sendGetEnabledInputMethodSubtypeList(remoteCallback, info);
+            } else if (Constants.ACTION_ACCOUNT_MANAGER_GET_AUTHENTICATOR_TYPES.equals(action)) {
+                sendAccountManagerGetAuthenticatorTypes(remoteCallback);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -1124,6 +1127,14 @@ public class TestActivity extends Activity {
                 inputMethodManager.getEnabledInputMethodSubtypeList(targetImi, true));
         final Bundle result = new Bundle();
         result.putParcelableArrayList(EXTRA_RETURN_RESULT, infos);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendAccountManagerGetAuthenticatorTypes(RemoteCallback remoteCallback) {
+        final AccountManager accountManager = AccountManager.get(this);
+        final Bundle result = new Bundle();
+        result.putParcelableArray(EXTRA_RETURN_RESULT, accountManager.getAuthenticatorTypes());
         remoteCallback.sendResult(result);
         finish();
     }

@@ -41,8 +41,7 @@ class AssociationEndToEndTest(
     override fun setUp() {
         super.setUp()
 
-        // TODO(b/211590680): Add support for APP_STREAMING, AUTOMOTIVE_PROJECTION and COMPUTER
-        // in the confirmation UI (the "multiple devices" flow variant).
+        // Self_managed profiles are not supported for multiple_devices association flow.
         assumeFalse(profile == DEVICE_PROFILE_COMPUTER)
         assumeFalse(profile == DEVICE_PROFILE_APP_STREAMING)
         assumeFalse(profile == DEVICE_PROFILE_AUTOMOTIVE_PROJECTION)

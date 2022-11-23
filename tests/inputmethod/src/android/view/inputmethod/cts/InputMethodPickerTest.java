@@ -126,6 +126,8 @@ public class InputMethodPickerTest extends MultiDisplayTestBase {
 
     @Test
     public void testShowImePickerOnExternalDisplay() throws Exception {
+        assumeTrue(supportsMultiDisplay());
+
         try (MultiDisplayTestBase.VirtualDisplaySession session =
                 new MultiDisplayTestBase.VirtualDisplaySession()) {
             // Setup a simulated display.

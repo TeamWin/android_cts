@@ -1452,11 +1452,6 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
         final AccessibilityNodeInfo nodeInfo = testView.createAccessibilityNodeInfo();
         nodeInfo.setMinMillisBetweenContentChanges(200);
         assertThat(nodeInfo.getMinMillisBetweenContentChanges()).isEqualTo(200);
-
-        nodeInfo.setMinMillisBetweenContentChanges(
-                AccessibilityNodeInfo.MINIMUM_MIN_MILLIS_BETWEEN_CONTENT_CHANGES - 1);
-        assertThat(nodeInfo.getMinMillisBetweenContentChanges())
-               .isEqualTo(AccessibilityNodeInfo.UNDEFINED_MIN_MILLIS_BETWEEN_CONTENT_CHANGES);
     }
 
     @Test

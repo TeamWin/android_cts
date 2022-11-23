@@ -53,8 +53,12 @@
         </activity>
 
         <activity android:name="android.graphics.drawable.cts.DrawableStubActivity"
-             android:theme="@style/WhiteBackgroundNoWindowAnimation"
-             android:screenOrientation="locked"/>
+                  android:theme="@style/WhiteBackgroundNoWindowAnimation"
+                  android:screenOrientation="locked"/>
+
+        <activity android:name="android.graphics.drawable.cts.AVDActivity"
+                  android:theme="@style/WhiteBackgroundNoWindowAnimation"
+                  android:screenOrientation="locked"/>
 
         <activity android:name="android.graphics.cts.EmptyActivity"
                   android:label="Empty Activity"

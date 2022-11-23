@@ -47,6 +47,7 @@ import com.android.compatibility.common.util.RequiredServiceRule;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,8 +61,8 @@ import org.junit.runner.RunWith;
 @AppModeFull(reason = "No real use case for instant mode hotword detection service")
 public final class HotwordDetectionServiceProximityTest
         extends AbstractVoiceInteractionBasicTestCase {
-    @Rule
-    public final RequiredServiceRule mAttentionServiceRule =
+    @ClassRule
+    public static final RequiredServiceRule ATTENTION_SERVICE_RULE =
             new RequiredServiceRule(ATTENTION_SERVICE);
 
     @Rule

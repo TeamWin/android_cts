@@ -25,10 +25,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.content.pm.PackageManager.FLAG_PERMISSION_REVIEW_REQUIRED
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.os.Build
-import android.os.Process
 import android.os.UserHandle
 import android.provider.Settings
 import android.support.test.uiautomator.By
@@ -38,9 +36,9 @@ import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionI
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import org.junit.After
 import org.junit.Assert
+import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Test
-import org.junit.Assume.assumeFalse
 import java.util.concurrent.CountDownLatch
 
 const val EXTRA_DELETE_CHANNELS_ON_CLOSE = "extra_delete_channels_on_close"
@@ -285,27 +283,6 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
         countDown.await()
         // Result should contain only the microphone request
         Assert.assertEquals(listOf(RECORD_AUDIO), allowedGroups)
-    }
-
-    // Enable this test once droidfood code is removed
-    @Test
-    fun newlyInstalledLegacyAppsDontHaveReviewRequired() {
-        installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
-        runWithShellPermissionIdentity {
-            Assert.assertEquals("expect REVIEW_REQUIRED to not be set", 0, context.packageManager
-                .getPermissionFlags(POST_NOTIFICATIONS, APP_PACKAGE_NAME, Process.myUserHandle())
-                and FLAG_PERMISSION_REVIEW_REQUIRED)
-        }
-    }
-
-    @Test
-    fun newlyInstalledTAppsDontHaveReviewRequired() {
-        installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_33, expectSuccess = true)
-        runWithShellPermissionIdentity {
-            Assert.assertEquals("expect REVIEW_REQUIRED to not be set", 0, context.packageManager
-                .getPermissionFlags(POST_NOTIFICATIONS, APP_PACKAGE_NAME, Process.myUserHandle())
-                and FLAG_PERMISSION_REVIEW_REQUIRED)
-        }
     }
 
     @Test

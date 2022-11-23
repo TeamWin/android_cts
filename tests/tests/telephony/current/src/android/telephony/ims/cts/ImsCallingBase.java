@@ -65,15 +65,13 @@ public class ImsCallingBase {
     protected static final String COMMAND_SET_DEFAULT_DIALER = "telecom set-default-dialer ";
     protected static final String COMMAND_GET_DEFAULT_DIALER = "telecom get-default-dialer";
 
+    // The timeout to wait in current state in milliseconds
+    protected static final int WAIT_IN_CURRENT_STATE = 100;
+
     public static final int WAIT_FOR_SERVICE_TO_UNBOUND = 40000;
     public static final int WAIT_FOR_CONDITION = 3000;
     public static final int WAIT_FOR_CALL_STATE = 10000;
-    public static final int WAIT_FOR_CALL_DISCONNECT = 1000;
-    public static final int WAIT_FOR_CALL_CONNECT = 5000;
-    public static final int WAIT_FOR_CALL_STATE_HOLD = 1000;
-    public static final int WAIT_FOR_CALL_STATE_RESUME = 1000;
     public static final int WAIT_FOR_CALL_STATE_ACTIVE = 15000;
-    public static final int LATCH_WAIT = 0;
     public static final int LATCH_INCALL_SERVICE_BOUND = 1;
     public static final int LATCH_INCALL_SERVICE_UNBOUND = 2;
     public static final int LATCH_IS_ON_CALL_ADDED = 3;

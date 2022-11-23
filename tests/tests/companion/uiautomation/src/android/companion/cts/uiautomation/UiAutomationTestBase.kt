@@ -68,8 +68,8 @@ open class UiAutomationTestBase(
         context.getSystemService(RoleManager::class.java)!!
     }
 
-    val uiDevice: UiDevice by lazy { UiDevice.getInstance(instrumentation) }
-    protected val confirmationUi by lazy { CompanionDeviceManagerUi(uiDevice) }
+    val uiDevice: UiDevice = UiDevice.getInstance(instrumentation)
+    protected val confirmationUi = CompanionDeviceManagerUi(uiDevice)
     protected val callback by lazy { RecordingCallback() }
 
     @CallSuper
@@ -150,6 +150,10 @@ open class UiAutomationTestBase(
             // time to wait until the dialog appeared.
             sleep(3.seconds.inWholeMilliseconds)
         }
+
+        if ((singleDevice || selfManaged) && profile != null) {
+            confirmationUi.scrollToBottom()
+        }
         // Test can stop here since there's no device found after discovery timeout.
         assumeFalse(callback.invocations.contains(OnFailure(REASON_DISCOVERY_TIMEOUT)))
         // Check callback invocations: There should be 0 invocation before any actions are made.
@@ -213,6 +217,10 @@ open class UiAutomationTestBase(
         confirmationAction: () -> Unit
     ) {
         sendRequestAndLaunchConfirmation(singleDevice = singleDevice)
+
+        if (singleDevice && profile != null) {
+            confirmationUi.scrollToBottom()
+        }
 
         callback.assertInvokedByActions {
             confirmationAction()

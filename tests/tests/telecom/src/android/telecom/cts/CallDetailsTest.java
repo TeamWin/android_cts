@@ -19,13 +19,11 @@ package android.telecom.cts;
 import static android.telecom.Connection.PROPERTY_HIGH_DEF_AUDIO;
 import static android.telecom.Connection.PROPERTY_WIFI;
 import static android.telecom.cts.TestUtils.*;
-
-import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
-
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 
+import android.content.ContentProviderOperation;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.drawable.Icon;
@@ -35,6 +33,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelUuid;
 import android.provider.CallLog;
+import android.provider.ContactsContract;
+import android.provider.ContactsContract.PhoneLookup;
 import android.telecom.Call;
 import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
@@ -46,7 +46,9 @@ import android.telecom.StatusHints;
 import android.telecom.TelecomManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
-
+import com.android.compatibility.common.util.FileUtils;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -56,7 +58,7 @@ import java.util.concurrent.TimeUnit;
  * Suites of tests that verifies the various Call details.
  */
 public class CallDetailsTest extends BaseTelecomTestWithMockServices {
-
+    public static final int WAIT_FOR_PHOTO_URI_TIMEOUT = 10000;
     public static final int CONNECTION_PROPERTIES =  PROPERTY_HIGH_DEF_AUDIO | PROPERTY_WIFI;
     public static final int CONNECTION_CAPABILITIES =
             Connection.CAPABILITY_HOLD | Connection.CAPABILITY_MUTE;
@@ -81,6 +83,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
     private static final int ASYNC_TIMEOUT = 10000;
     private StatusHints mStatusHints;
     private Bundle mExtras = new Bundle();
+    private Uri mContactUri;
 
     private MockInCallService mInCallService;
     private Call mCall;
@@ -124,10 +127,21 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
             TestUtils.enablePhoneAccount(
                     getInstrumentation(), TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2);
 
+            // Add photo URI to calling number
+            ContentResolver resolver = getInstrumentation().getTargetContext().getContentResolver();
+            try {
+                mContactUri = insertContactWithPhoto(
+                        resolver, getTestNumber().toString());
+            } catch (Exception e) {
+                assertTrue("Failed to insert test contact into ContactsProvider", false);
+            }
+
             /** Place a call as a part of the setup before we test the various
              *  Call details.
              */
-            placeAndVerifyCall();
+            Bundle bundle = new Bundle();
+            bundle.putParcelable(TestUtils.EXTRA_PHONE_NUMBER, getTestNumber());
+            placeAndVerifyCall(bundle);
             verifyConnectionForOutgoingCall();
 
             mInCallService = mInCallCallbacks.getService();
@@ -135,6 +149,16 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
 
             assertCallState(mCall, Call.STATE_DIALING);
         }
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        ContentResolver resolver = getInstrumentation().getTargetContext().getContentResolver();
+        TestUtils.deleteContact(resolver, mContactUri);
     }
 
     /**
@@ -311,6 +335,103 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
 
         assertThat(mCall.getDetails().getCallerDisplayName(), instanceOf(String.class));
         assertEquals(CALLER_DISPLAY_NAME, mCall.getDetails().getCallerDisplayName());
+    }
+
+    /**
+     * We need to use actual photo data as any non photo information used would fails to be inserted
+     * into the contacts provider database per validity checks performed prior to inserting.
+     */
+    public static byte[] getTestPhotoData(Context context) {
+        InputStream input = context.getResources().openRawResource(R.drawable.ic_phone_24dp);
+        return FileUtils.readInputStreamFully(input);
+    }
+
+    /**
+     * This function is similar to {@link TestUtils#insertContact with the exception that it
+     * inserts a photo with the contact.
+     */
+    public Uri insertContactWithPhoto(ContentResolver contentResolver, String phoneNumber)
+            throws Exception {
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+        ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
+                        .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, "test_type")
+                        .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, "test_name")
+                        .build());
+        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                        .withValue(ContactsContract.Data.MIMETYPE,
+                                ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+                        .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME,
+                                "test")
+                        .build());
+        // Create another row for the Photo URI content as it uses a different MIME type, reference
+        // same raw contact id
+        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                        .withValue(ContactsContract.Data.MIMETYPE,
+                                ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE)
+                        .withValue(
+                                ContactsContract.Contacts.Photo.PHOTO, getTestPhotoData(mContext))
+                        .withYieldAllowed(true)
+                        .build());
+        // Create another row for the Phone number as it uses a different MIME type, reference same
+        // raw contact id
+        ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                        .withValue(ContactsContract.Data.MIMETYPE,
+                                ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
+                        .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, phoneNumber)
+                        .withValue(ContactsContract.CommonDataKinds.Phone.TYPE,
+                                ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE)
+                        .withYieldAllowed(true)
+                        .build());
+        return contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)[0].uri;
+    }
+
+    /**
+     * Tests whether the getCallerPhotoUri() getter returns the correct object.
+     */
+    public void testContactPhotoUri() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        String phoneNumber = getTestNumber().toString();
+
+        Uri contactRef = PhoneLookup.ENTERPRISE_CONTENT_FILTER_URI.buildUpon()
+                                 .appendPath(phoneNumber)
+                                 .build();
+
+        Cursor cursor = getInstrumentation().getContext().getContentResolver().query(
+                contactRef, null, null, null, null, null);
+
+        cursor.moveToFirst();
+        int columnIndex = cursor.getColumnIndex(PhoneLookup.PHOTO_URI);
+        assertTrue("photoURI should exist",
+                (columnIndex != -1) && (cursor.getString(columnIndex) != null));
+        Uri photoUri = Uri.parse(cursor.getString(columnIndex));
+
+        // The photo URI is set until the CallerInfo query is done, at that time the photo URI
+        // should exist, so wait until the value before testing that the value matches the
+        // photo URI from contacts provider.
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return mCall.getDetails() != null
+                                && mCall.getDetails().getContactPhotoUri() != null
+                                && mCall.getDetails().getContactPhotoUri().toString().equals(
+                                        photoUri.toString());
+                    }
+                },
+                WAIT_FOR_PHOTO_URI_TIMEOUT,
+                // If test flakes on this line, consider increasing the timeout as it may
+                // not have had enough time to perform the query for the photo uri.
+                "Photo URI should match between Contacts Provider and call details");
     }
 
     /**

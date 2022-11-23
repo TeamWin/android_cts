@@ -26,9 +26,7 @@ class AssociationEndToEndSingleDeviceTest(
     override fun setUp() {
         super.setUp()
 
-        // TODO(b/211722613): Add support for DEVICE_PROFILE_APP_STREAMING
-        // DEVICE_PROFILE_COMPUTER and DEVICE_PROFILE_AUTOMOTIVE_PROJECTION
-        // profiles in the confirmation UI (the "single_device" flow variant).
+        // Self_managed profiles are not supported for single_device association flow.
         assumeFalse(profile == DEVICE_PROFILE_COMPUTER)
         assumeFalse(profile == DEVICE_PROFILE_APP_STREAMING)
         assumeFalse(profile == DEVICE_PROFILE_AUTOMOTIVE_PROJECTION)

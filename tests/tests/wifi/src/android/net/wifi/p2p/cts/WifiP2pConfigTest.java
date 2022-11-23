@@ -16,9 +16,13 @@
 
 package android.net.wifi.p2p.cts;
 
+import static android.net.wifi.p2p.WifiP2pConfig.GROUP_CLIENT_IP_PROVISIONING_MODE_IPV4_DHCP;
+import static android.net.wifi.p2p.WifiP2pConfig.GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL;
+import static android.net.wifi.p2p.WifiP2pGroup.NETWORK_ID_PERSISTENT;
+import static android.net.wifi.p2p.WifiP2pGroup.NETWORK_ID_TEMPORARY;
+
 import android.net.MacAddress;
 import android.net.wifi.p2p.WifiP2pConfig;
-import android.net.wifi.p2p.WifiP2pGroup;
 import android.test.AndroidTestCase;
 
 public class WifiP2pConfigTest extends AndroidTestCase {
@@ -35,15 +39,14 @@ public class WifiP2pConfigTest extends AndroidTestCase {
                 .setGroupOperatingBand(TEST_OWNER_BAND)
                 .setDeviceAddress(MacAddress.fromString(TEST_DEVICE_ADDRESS))
                 .enablePersistentMode(true)
+                .setGroupClientIpProvisioningMode(GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL)
                 .build();
 
         WifiP2pConfig copiedConfig = new WifiP2pConfig(config);
 
-        assertEquals(copiedConfig.deviceAddress, TEST_DEVICE_ADDRESS);
-        assertEquals(copiedConfig.getNetworkName(), TEST_NETWORK_NAME);
-        assertEquals(copiedConfig.getPassphrase(), TEST_PASSPHRASE);
-        assertEquals(copiedConfig.getGroupOwnerBand(), TEST_OWNER_BAND);
-        assertEquals(copiedConfig.getNetworkId(), WifiP2pGroup.NETWORK_ID_PERSISTENT);
+        assertWifiP2pConfigHasFields(copiedConfig, TEST_NETWORK_NAME, TEST_PASSPHRASE,
+                TEST_OWNER_BAND, TEST_DEVICE_ADDRESS, NETWORK_ID_PERSISTENT,
+                GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL);
     }
 
     public void testWifiP2pConfigBuilderForPersist() {
@@ -55,11 +58,9 @@ public class WifiP2pConfigTest extends AndroidTestCase {
                 .enablePersistentMode(true)
                 .build();
 
-        assertEquals(config.deviceAddress, TEST_DEVICE_ADDRESS);
-        assertEquals(config.getNetworkName(), TEST_NETWORK_NAME);
-        assertEquals(config.getPassphrase(), TEST_PASSPHRASE);
-        assertEquals(config.getGroupOwnerBand(), TEST_OWNER_BAND);
-        assertEquals(config.getNetworkId(), WifiP2pGroup.NETWORK_ID_PERSISTENT);
+        assertWifiP2pConfigHasFields(config, TEST_NETWORK_NAME, TEST_PASSPHRASE,
+                TEST_OWNER_BAND, TEST_DEVICE_ADDRESS, NETWORK_ID_PERSISTENT,
+                GROUP_CLIENT_IP_PROVISIONING_MODE_IPV4_DHCP);
     }
 
     public void testWifiP2pConfigBuilderForNonPersist() {
@@ -71,10 +72,60 @@ public class WifiP2pConfigTest extends AndroidTestCase {
                 .enablePersistentMode(false)
                 .build();
 
-        assertEquals(config.deviceAddress, TEST_DEVICE_ADDRESS);
-        assertEquals(config.getNetworkName(), TEST_NETWORK_NAME);
-        assertEquals(config.getPassphrase(), TEST_PASSPHRASE);
-        assertEquals(config.getGroupOwnerBand(), TEST_OWNER_FREQ);
-        assertEquals(config.getNetworkId(), WifiP2pGroup.NETWORK_ID_TEMPORARY);
+        assertWifiP2pConfigHasFields(config, TEST_NETWORK_NAME, TEST_PASSPHRASE,
+                TEST_OWNER_FREQ, TEST_DEVICE_ADDRESS, NETWORK_ID_TEMPORARY,
+                GROUP_CLIENT_IP_PROVISIONING_MODE_IPV4_DHCP);
+    }
+
+    public void testWifiP2pConfigBuilderForGroupClientIpProvisioningModeDefault() {
+        WifiP2pConfig config = new WifiP2pConfig.Builder()
+                .setNetworkName(TEST_NETWORK_NAME)
+                .setPassphrase(TEST_PASSPHRASE)
+                .setGroupOperatingFrequency(TEST_OWNER_FREQ)
+                .setDeviceAddress(MacAddress.fromString(TEST_DEVICE_ADDRESS))
+                .build();
+
+        assertWifiP2pConfigHasFields(config, TEST_NETWORK_NAME, TEST_PASSPHRASE,
+                TEST_OWNER_FREQ, TEST_DEVICE_ADDRESS, NETWORK_ID_TEMPORARY,
+                GROUP_CLIENT_IP_PROVISIONING_MODE_IPV4_DHCP);
+    }
+
+    public void testWifiP2pConfigBuilderForGroupClientIpProvisioningModeIpv4Dhcp() {
+        WifiP2pConfig config = new WifiP2pConfig.Builder()
+                .setNetworkName(TEST_NETWORK_NAME)
+                .setPassphrase(TEST_PASSPHRASE)
+                .setGroupOperatingFrequency(TEST_OWNER_FREQ)
+                .setDeviceAddress(MacAddress.fromString(TEST_DEVICE_ADDRESS))
+                .setGroupClientIpProvisioningMode(GROUP_CLIENT_IP_PROVISIONING_MODE_IPV4_DHCP)
+                .build();
+
+        assertWifiP2pConfigHasFields(config, TEST_NETWORK_NAME, TEST_PASSPHRASE,
+                TEST_OWNER_FREQ, TEST_DEVICE_ADDRESS, NETWORK_ID_TEMPORARY,
+                GROUP_CLIENT_IP_PROVISIONING_MODE_IPV4_DHCP);
+    }
+
+    public void testWifiP2pConfigBuilderForGroupClientIpProvisioningModeIpv6LinkLocal() {
+        WifiP2pConfig config = new WifiP2pConfig.Builder()
+                .setNetworkName(TEST_NETWORK_NAME)
+                .setPassphrase(TEST_PASSPHRASE)
+                .setGroupOperatingFrequency(TEST_OWNER_FREQ)
+                .setDeviceAddress(MacAddress.fromString(TEST_DEVICE_ADDRESS))
+                .setGroupClientIpProvisioningMode(GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL)
+                .build();
+
+        assertWifiP2pConfigHasFields(config, TEST_NETWORK_NAME, TEST_PASSPHRASE,
+                TEST_OWNER_FREQ, TEST_DEVICE_ADDRESS, NETWORK_ID_TEMPORARY,
+                GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL);
+    }
+
+    private static void assertWifiP2pConfigHasFields(WifiP2pConfig config,
+            String networkName, String passphrase, int groupOwnerFrequency, String deviceAddress,
+            int networkId, int groupClientIpProvisioningMode) {
+        assertEquals(config.getNetworkName(), networkName);
+        assertEquals(config.getPassphrase(), passphrase);
+        assertEquals(config.getGroupOwnerBand(), groupOwnerFrequency);
+        assertEquals(config.deviceAddress, deviceAddress);
+        assertEquals(config.getNetworkId(), networkId);
+        assertEquals(config.getGroupClientIpProvisioningMode(), groupClientIpProvisioningMode);
     }
 }

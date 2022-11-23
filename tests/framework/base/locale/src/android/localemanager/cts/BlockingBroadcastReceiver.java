@@ -80,6 +80,7 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver {
         mCalls = 0;
         mPackageName = null;
         mLocales = null;
+        mInputMethodId = null;
     }
 
     /**

@@ -16,6 +16,11 @@
 package android.service.dreams.cts;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_DREAM;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
+import static android.server.wm.CliIntentExtra.extraString;
+import static android.server.wm.app.Components.PIP_ACTIVITY;
+import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_PAUSE;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -165,5 +170,27 @@ public class DreamServiceTest extends ActivityManagerTestBase {
 
         assertFalse("DreamService is still dreaming", mDreamCoordinator.isDreaming());
         mDreamCoordinator.stopDream();
+    }
+
+    @Test
+    public void testDreamDoesNotForcePictureInPicture() {
+        // Launch a PIP activity
+        launchActivity(PIP_ACTIVITY, extraString(EXTRA_ENTER_PIP_ON_PAUSE, "true"));
+
+        // Asserts that the pinned stack does not exist.
+        mWmState.assertDoesNotContainStack("Must not contain pinned stack.",
+                WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
+
+        final ComponentName dreamService =
+                ComponentName.unflattenFromString(DREAM_SERVICE_COMPONENT);
+        final ComponentName dreamActivity = mDreamCoordinator.setActiveDream(dreamService);
+        mDreamCoordinator.startDream();
+        waitAndAssertTopResumedActivity(dreamActivity, Display.DEFAULT_DISPLAY,
+                "Dream activity should be the top resumed activity");
+        mDreamCoordinator.stopDream();
+
+        // Asserts that the pinned stack does not exist.
+        mWmState.assertDoesNotContainStack("Must not contain pinned stack.",
+                WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
     }
 }

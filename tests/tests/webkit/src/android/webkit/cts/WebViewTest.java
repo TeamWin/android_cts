@@ -78,7 +78,6 @@ import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
 import android.widget.LinearLayout;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -156,46 +155,23 @@ public class WebViewTest extends SharedWebViewTest {
     public ActivityScenarioRule mActivityScenarioRule =
             new ActivityScenarioRule(WebViewCtsActivity.class);
 
+    private WebView mWebView;
+    private WebViewOnUiThread mOnUiThread;
+
     // TODO(bewise): Get rid of all of these member variables
     // once all these tests are referencing the test environment.
-    private ActivityScenario mScenario;
     private WebViewCtsActivity mActivity;
     private CtsTestServer mWebServer;
     private WebIconDatabase mIconDb;
 
-    // TODO(bewise): These should come from the test environment
-    // once the SdkSandboxTestScenarioRunner is able to execute
-    // before and after annotations.
-    private WebView mWebView;
-    private WebViewOnUiThread mOnUiThread;
-
     @Before
-    public void setUpActivity() throws Exception {
-        mScenario = mActivityScenarioRule.getScenario();
-        mScenario.onActivity(
-                activity -> {
-                    mActivity = (WebViewCtsActivity) activity;
-                    mWebView = mActivity.getWebView();
-                });
-        if (mWebView != null) {
-            new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
-                @Override
-                protected boolean check() {
-                    return mActivity.hasWindowFocus();
-                }
-            }.run();
-            File f = mActivity.getFileStreamPath("snapshot");
-            if (f.exists()) {
-                f.delete();
-            }
-
-            mOnUiThread = new WebViewOnUiThread(mWebView);
-        }
-        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
+    public void setUp() throws Exception {
+        mWebView = getTestEnvironment().getWebView();
+        mOnUiThread = getTestEnvironment().getWebViewOnUiThread();
     }
 
     @After
-    public void cleanupActivity() throws Exception {
+    public void cleanup() throws Exception {
         if (mOnUiThread != null) {
             mOnUiThread.cleanUp();
         }
@@ -212,12 +188,42 @@ public class WebViewTest extends SharedWebViewTest {
 
     @Override
     protected SharedWebViewTestEnvironment createTestEnvironment() {
-        return new SharedWebViewTestEnvironment.Builder()
-                .setContext(mActivity)
-                .setWebView(mWebView)
-                .setWebViewOnUiThread(mOnUiThread)
-                .setHostAppInvoker(SharedWebViewTestEnvironment.createHostAppInvoker())
-                .build();
+        Assume.assumeTrue("WebView is not available", NullWebViewUtils.isWebViewAvailable());
+
+        SharedWebViewTestEnvironment.Builder builder = new SharedWebViewTestEnvironment.Builder()
+                .setHostAppInvoker(SharedWebViewTestEnvironment.createHostAppInvoker());
+
+        mActivityScenarioRule.getScenario().onActivity(activity -> {
+            mActivity = (WebViewCtsActivity) activity;
+            builder.setContext(mActivity);
+
+            WebView webView = mActivity.getWebView();
+            builder.setWebView(webView);
+
+            if (webView != null) {
+                WebViewOnUiThread onUi = new WebViewOnUiThread(webView);
+                builder.setWebViewOnUiThread(onUi);
+            }
+        });
+
+        SharedWebViewTestEnvironment environment = builder.build();
+
+        // Wait for window focus and clean up the snapshot before
+        // returning the test environment.
+        if (environment.getWebView() != null) {
+            new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
+                @Override
+                protected boolean check() {
+                    return mActivity.hasWindowFocus();
+                }
+            }.run();
+            File f = mActivity.getFileStreamPath("snapshot");
+            if (f.exists()) {
+                f.delete();
+            }
+        }
+
+        return environment;
     }
 
     private void startWebServer(boolean secure) throws Exception {
@@ -326,16 +332,14 @@ public class WebViewTest extends SharedWebViewTest {
 
     @Test
     public void testScrollBarOverlay() throws Throwable {
-        WebView webView = getTestEnvironment().getWebView();
-
         WebkitUtils.onMainThreadSync(
                 () -> {
                     // These functions have no effect; just verify they don't crash
-                    webView.setHorizontalScrollbarOverlay(true);
-                    webView.setVerticalScrollbarOverlay(false);
+                    mWebView.setHorizontalScrollbarOverlay(true);
+                    mWebView.setVerticalScrollbarOverlay(false);
 
-                    assertTrue(webView.overlayHorizontalScrollbar());
-                    assertFalse(webView.overlayVerticalScrollbar());
+                    assertTrue(mWebView.overlayHorizontalScrollbar());
+                    assertFalse(mWebView.overlayVerticalScrollbar());
                 });
     }
 
@@ -1705,9 +1709,7 @@ public class WebViewTest extends SharedWebViewTest {
 
     @Test
     public void testFlingScroll() throws Throwable {
-        WebViewOnUiThread onUiThread = getTestEnvironment().getWebViewOnUiThread();
-
-        DisplayMetrics metrics = onUiThread.getDisplayMetrics();
+        DisplayMetrics metrics = mOnUiThread.getDisplayMetrics();
         final int dimension = 10 * Math.max(metrics.widthPixels, metrics.heightPixels);
         String p =
                 "<p style=\"height:"
@@ -1716,27 +1718,27 @@ public class WebViewTest extends SharedWebViewTest {
                         + "width:"
                         + dimension
                         + "px\">Test fling scroll.</p>";
-        onUiThread.loadDataAndWaitForCompletion(
+        mOnUiThread.loadDataAndWaitForCompletion(
                 "<html><body>" + p + "</body></html>", "text/html", null);
         new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
-                return onUiThread.getContentHeight() >= dimension;
+                return mOnUiThread.getContentHeight() >= dimension;
             }
         }.run();
 
         getTestEnvironment().waitForIdleSync();
 
-        final int previousScrollX = onUiThread.getScrollX();
-        final int previousScrollY = onUiThread.getScrollY();
+        final int previousScrollX = mOnUiThread.getScrollX();
+        final int previousScrollY = mOnUiThread.getScrollY();
 
-        onUiThread.flingScroll(10000, 10000);
+        mOnUiThread.flingScroll(10000, 10000);
 
         new PollingCheck(WebkitUtils.TEST_TIMEOUT_MS) {
             @Override
             protected boolean check() {
-                return onUiThread.getScrollX() > previousScrollX
-                        && onUiThread.getScrollY() > previousScrollY;
+                return mOnUiThread.getScrollX() > previousScrollX
+                        && mOnUiThread.getScrollY() > previousScrollY;
             }
         }.run();
     }

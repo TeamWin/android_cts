@@ -18,8 +18,13 @@ package android.appenumeration.cts;
 
 import static android.appenumeration.cts.Constants.ACCOUNT_NAME;
 import static android.appenumeration.cts.Constants.ACCOUNT_TYPE;
+import static android.appenumeration.cts.Constants.ACTION_ACCOUNT_MANAGER_GET_AUTHENTICATOR_TYPES;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING;
+import static android.appenumeration.cts.Constants.QUERIES_PACKAGE;
 import static android.appenumeration.cts.Constants.TARGET_STUB;
+import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER;
 import static android.appenumeration.cts.Constants.TARGET_WEB;
+import static android.content.Intent.EXTRA_RETURN_RESULT;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
@@ -29,7 +34,9 @@ import static org.junit.Assert.assertThrows;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.accounts.AuthenticatorDescription;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -38,6 +45,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -107,5 +115,28 @@ public class AccountManagerEnumerationTest extends AppEnumerationTestsBase {
                 ACCOUNT, null /* password */, null /* userdata */), is(true));
         assertThat(mAccountManager.setAccountVisibility(
                 ACCOUNT, TARGET_NOT_VISIBLE, AccountManager.VISIBILITY_VISIBLE), is(false));
+    }
+
+    @Test
+    public void queriesPackage_getAuthenticatorTypes_canSeeSyncAdapterTarget()
+            throws Exception {
+        assertVisible(QUERIES_PACKAGE, TARGET_SYNCADAPTER, this::getAuthenticatorTypes);
+    }
+
+    @Test
+    public void queriesNothing_getAuthenticatorTypes_cannotSeeSyncAdapterTarget()
+            throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER, this::getAuthenticatorTypes);
+    }
+
+    private String[] getAuthenticatorTypes(String sourcePackageName) throws Exception {
+        final Bundle response = sendCommandBlocking(sourcePackageName, null /* targetPackageName */,
+                /* intentExtra */ null, ACTION_ACCOUNT_MANAGER_GET_AUTHENTICATOR_TYPES);
+        final AuthenticatorDescription[] types =
+                response.getParcelableArray(EXTRA_RETURN_RESULT, AuthenticatorDescription.class);
+        return Arrays.stream(types)
+                .map(type -> type.packageName)
+                .distinct()
+                .toArray(String[]::new);
     }
 }

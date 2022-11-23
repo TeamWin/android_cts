@@ -225,7 +225,7 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
         profiles.clear();
         effectiveProfiles.clear();
 
-        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_DISCONNECT);
+        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
         call.disconnect();
 
         assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
@@ -252,7 +252,7 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
 
         Call call = getCall(mCurrentCallId);
         if (call.getDetails().getState() == call.STATE_RINGING) {
-            callingTestLatchCountdown(LATCH_WAIT, 5000);
+            TimeUnit.MILLISECONDS.sleep(5000);
 
             TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService()
                     .getMmTelFeature().getImsCallsession();
@@ -295,7 +295,7 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
 
         isCallActive(call, callSession);
 
-        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_DISCONNECT);
+        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
         callSession.terminateIncomingCall();
 
         isCallDisconnected(call, callSession);
@@ -362,7 +362,7 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
 
         isCallActive(call, callSession);
 
-        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_STATE_HOLD);
+        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
         // Put on hold
         call.hold();
         assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_HOLDING, WAIT_FOR_CALL_STATE));
@@ -397,7 +397,7 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
         profiles.clear();
         effectiveProfiles.clear();
 
-        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_DISCONNECT);
+        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
         call.disconnect();
 
         assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));

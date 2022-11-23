@@ -20,7 +20,10 @@ java_test_host {
     name: "CtsGpuProfilingDataTestCases",
     srcs: ["src/**/*.java"],
     // tag this module as a cts test artifact
-    test_suites: ["cts", "general-tests"],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
     libs: [
         "cts-tradefed",
         "tradefed",
@@ -28,6 +31,7 @@ java_test_host {
     ],
     static_libs: [
         "perfetto_config-full",
+        "perfetto_trace-full",
         "platform-test-annotations-host",
     ],
     data: [

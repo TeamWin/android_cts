@@ -23,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 import android.graphics.drawable.Animatable2;
 import android.graphics.drawable.Drawable;
 import android.os.Looper;
+import android.util.Log;
 
 // Now this class can not only listen to the events, but also synchronize the key events,
 // logging the event timestamp, and centralize some assertions.
@@ -73,10 +74,12 @@ public class Animatable2Callback extends Animatable2.AnimationCallback {
             mStarted = true;
             mStartLock.notify();
         }
+        Log.d("Animatable2Callback", "animation started");
     }
 
     @Override
     public void onAnimationEnd(Drawable drawable) {
+        Log.d("Animatable2Callback", "animation ending");
         mEndNs = System.nanoTime();
         mEndThread = Thread.currentThread();
         synchronized (mEndLock) {

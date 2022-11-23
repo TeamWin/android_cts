@@ -21,6 +21,8 @@ import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.SearchCondition
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
+import androidx.test.uiautomator.UiScrollable
+import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -67,6 +69,21 @@ open class CompanionDeviceManagerUi(private val ui: UiDevice) {
     fun waitUntilAppAppeared() = ui.wait(Until.hasObject(ASSOCIATION_REVOKE_APP_UI),
         "The test app has not appeared.")
 
+    fun waitUntilPositiveButtonAppeared() = ui.waitLongAndFind(
+        Until.findObject(POSITIVE_BUTTON), "Positive button")
+
+    fun scrollToBottom() {
+        if (SCROLLABLE_PERMISSION_LIST.waitForExists(2.seconds.inWholeMilliseconds)) {
+            SCROLLABLE_PERMISSION_LIST.scrollToEnd(MAX_SWIPE)
+            val positiveButton = waitUntilPositiveButtonAppeared()
+            val isEnabled = positiveButton.wait(
+                Until.enabled(positiveButton.isEnabled), 5.seconds.inWholeMilliseconds)
+            if (!isEnabled) {
+                error("Positive button is not enabled")
+            }
+        }
+    }
+
     protected fun click(selector: BySelector, description: String) = ui.waitShortAndFind(
             Until.findObject(selector), "$description is not found")
             .click()
@@ -75,6 +92,8 @@ open class CompanionDeviceManagerUi(private val ui: UiDevice) {
         private const val PACKAGE_NAME = "com.android.companiondevicemanager"
         private const val NOTIFICATION_PACKAGE_NAME = "com.android.settings"
         private const val NOTIFICATION_PACKAGE_NAME_AUTO = "com.android.car.settings"
+
+        private const val MAX_SWIPE = 10
 
         private val CONFIRMATION_UI = By.pkg(PACKAGE_NAME)
                 .res(PACKAGE_NAME, "activity_confirmation")
@@ -98,6 +117,9 @@ open class CompanionDeviceManagerUi(private val ui: UiDevice) {
                 .res(PACKAGE_NAME, "list_item_device")
         private val DEVICE_LIST_WITH_ITEMS = By.copy(DEVICE_LIST)
                 .hasChild(DEVICE_LIST_ITEM)
+
+        private val SCROLLABLE_PERMISSION_LIST = UiScrollable(
+            UiSelector().className("androidx.recyclerview.widget.RecyclerView"))
 
         private val SYSTEM_DATA_TRANSFER_CONFIRMATION_UI = By.pkg(PACKAGE_NAME)
                 .res(PACKAGE_NAME, "data_transfer_confirmation")
