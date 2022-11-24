@@ -122,11 +122,10 @@ class AppHibernationIntegrationTest {
             context.getSystemService(PermissionControllerManager::class.java)!!
 
         // Collapse notifications
-        if (!hasFeatureWatch()) {
-            assertThat(
-                runShellCommandOrThrow("cmd statusbar collapse"),
-                CoreMatchers.equalTo(""))
-        }
+        assertThat(
+            runShellCommandOrThrow("cmd statusbar collapse"),
+            CoreMatchers.equalTo(""))
+
         // Wake up the device
         runShellCommandOrThrow("input keyevent KEYCODE_WAKEUP")
         runShellCommandOrThrow("input keyevent 82")

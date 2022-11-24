@@ -17,6 +17,7 @@
 package com.android.cts.verifier;
 
 import com.android.interactive.annotations.Interactive;
+import com.android.interactive.annotations.SupportMultiDisplayMode;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -27,6 +28,7 @@ public final class SensorsTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void AccelerometerMeasurementTest() throws Exception {
         excludeFeatures("android.hardware.type.automotive");
@@ -37,6 +39,7 @@ public final class SensorsTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void GyroscopeMeasurementTest() throws Exception {
         excludeFeatures("android.hardware.type.automotive");
@@ -47,6 +50,7 @@ public final class SensorsTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void HeartRateMonitorTest() throws Exception {
         requireFeatures("android.hardware.sensor.heartrate");
@@ -56,6 +60,7 @@ public final class SensorsTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void MagneticFieldMeasurementTest() throws Exception {
         requireFeatures("android.hardware.sensor.compass");
@@ -74,8 +79,10 @@ public final class SensorsTest extends CtsVerifierTest {
     @Test
     // SingleDisplayMode
     public void RVCVXCheckTest() throws Exception {
-        requireFeatures("android.hardware.sensor.accelerometer",
-                "android.hardware.sensor.gyroscope", "android.hardware.sensor.compass",
+        requireFeatures(
+                "android.hardware.sensor.accelerometer",
+                "android.hardware.sensor.gyroscope",
+                "android.hardware.sensor.compass",
                 "android.hardware.camera");
 
         runTest(".sensors.RVCVXCheckTestActivity");
@@ -85,8 +92,10 @@ public final class SensorsTest extends CtsVerifierTest {
     @Test
     // SingleDisplayMode
     public void BatchingTest() throws Exception {
-        applicableFeatures("android.hardware.sensor.stepcounter",
-                "android.hardware.sensor.stepdetector", "android.hardware.sensor.proximity",
+        applicableFeatures(
+                "android.hardware.sensor.stepcounter",
+                "android.hardware.sensor.stepdetector",
+                "android.hardware.sensor.proximity",
                 "android.hardware.sensor.light");
 
         runTest(".sensors.BatchingTestActivity");
@@ -105,8 +114,8 @@ public final class SensorsTest extends CtsVerifierTest {
     @Test
     // SingleDisplayMode
     public void StepSensorPermissionTest() throws Exception {
-        requireFeatures("android.hardware.sensor.stepcounter",
-                "android.hardware.sensor.stepdetector");
+        requireFeatures(
+                "android.hardware.sensor.stepcounter", "android.hardware.sensor.stepdetector");
 
         runTest(".sensors.StepSensorPermissionTestActivity");
     }
@@ -115,7 +124,9 @@ public final class SensorsTest extends CtsVerifierTest {
     @Test
     // SingleDisplayMode
     public void DeviceSuspendTest() throws Exception {
-        excludeFeatures("android.hardware.type.television", "android.software.leanback",
+        excludeFeatures(
+                "android.hardware.type.television",
+                "android.software.leanback",
                 "android.hardware.type.automotive");
 
         runTest(".sensors.DeviceSuspendTestActivity");
@@ -135,8 +146,8 @@ public final class SensorsTest extends CtsVerifierTest {
     // SingleDisplayMode
     public void EventSanitizationTest() throws Exception {
         // This te requires the device be tethered
-        requireFeatures("android.hardware.sensor.proximity",
-                "android.hardware.sensor.accelerometer");
+        requireFeatures(
+                "android.hardware.sensor.proximity", "android.hardware.sensor.accelerometer");
 
         runTest(".sensors.EventSanitizationTestActivity");
     }
@@ -152,6 +163,7 @@ public final class SensorsTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void SixdofTest() throws Exception {
         runTest(".sensors.sixdof.Activities.StartActivity");

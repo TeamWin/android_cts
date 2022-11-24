@@ -103,7 +103,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     private final SupportClass mSupportRequirements;
 
     static {
-        System.loadLibrary("ctsmediav2codec_jni");
+        System.loadLibrary("ctsmediav2codecdec_jni");
     }
 
     public CodecDecoderTest(String decoder, String mime, String testFile, String refFile,

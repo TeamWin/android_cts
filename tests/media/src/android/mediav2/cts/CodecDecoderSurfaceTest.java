@@ -74,7 +74,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     private final SupportClass mSupportRequirements;
 
     static {
-        System.loadLibrary("ctsmediav2codec_jni");
+        System.loadLibrary("ctsmediav2codecdecsurface_jni");
     }
 
     public CodecDecoderSurfaceTest(String decoder, String mime, String testFile,

@@ -58,6 +58,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 @NonMediaMainlineTest
 @AppModeFull(reason = "Instant apps cannot access the SD card")
@@ -542,8 +543,10 @@ public class ExifInterfaceTest {
         exifInterface.saveAttributes();
         exifInterface = new ExifInterface(imageFile.getAbsolutePath());
         compareWithExpectedValue(exifInterface, expectedValue, verboseTag, false);
+        assertBitmapsEquivalent(srcFile, imageFile);
 
         // Test for modifying one attribute.
+        exifInterface = new ExifInterface(imageFile.getAbsolutePath());
         String backupValue = exifInterface.getAttribute(ExifInterface.TAG_MAKE);
         exifInterface.setAttribute(ExifInterface.TAG_MAKE, "abc");
         exifInterface.saveAttributes();
@@ -551,7 +554,6 @@ public class ExifInterfaceTest {
         if (expectedValue.hasThumbnail) {
             testThumbnail(expectedValue, exifInterface);
         }
-        exifInterface = new ExifInterface(imageFile.getAbsolutePath());
         assertEquals("abc", exifInterface.getAttribute(ExifInterface.TAG_MAKE));
         // Check if thumbnail bytes can be retrieved from the new thumbnail range.
         if (expectedValue.hasThumbnail) {
@@ -618,12 +620,14 @@ public class ExifInterfaceTest {
     private void writeToFilesWithoutExif(String fileName) throws IOException {
         // Test for reading from external data storage.
         Preconditions.assertTestFileExists(mInpPrefix + fileName);
-        File imageFile = clone(new File(mInpPrefix, fileName));
+        File srcFile = new File(mInpPrefix, fileName);
+        File imageFile = clone(srcFile);
 
         ExifInterface exifInterface = new ExifInterface(imageFile.getAbsolutePath());
         exifInterface.setAttribute(ExifInterface.TAG_MAKE, "abc");
         exifInterface.saveAttributes();
 
+        assertBitmapsEquivalent(srcFile, imageFile);
         exifInterface = new ExifInterface(imageFile.getAbsolutePath());
         String make = exifInterface.getAttribute(ExifInterface.TAG_MAKE);
         assertEquals("abc", make);
@@ -1000,5 +1004,38 @@ public class ExifInterfaceTest {
             throw new EOFException();
         }
         return (short) ((ch1 << 8) + (ch2));
+    }
+
+    /**
+     * Asserts that {@code expectedImageFile} and {@code actualImageFile} can be decoded by
+     * {@link BitmapFactory} and the results have the same width, height and MIME type.
+     *
+     * <p>This does not check the image itself for similarity/equality.
+     */
+    private void assertBitmapsEquivalent(File expectedImageFile, File actualImageFile) {
+        BitmapFactory.Options expectedOptions = new BitmapFactory.Options();
+        Bitmap expectedBitmap = Objects.requireNonNull(
+                decodeBitmap(expectedImageFile, expectedOptions));
+        BitmapFactory.Options actualOptions = new BitmapFactory.Options();
+        Bitmap actualBitmap = Objects.requireNonNull(decodeBitmap(actualImageFile, actualOptions));
+
+        assertEquals(expectedOptions.outWidth, actualOptions.outWidth);
+        assertEquals(expectedOptions.outHeight, actualOptions.outHeight);
+        assertEquals(expectedOptions.outMimeType, actualOptions.outMimeType);
+        assertEquals(expectedBitmap.getWidth(), actualBitmap.getWidth());
+        assertEquals(expectedBitmap.getHeight(), actualBitmap.getHeight());
+    }
+
+    /**
+     * Equivalent to {@link BitmapFactory#decodeFile(String, BitmapFactory.Options)} but uses a
+     * {@link BufferedInputStream} to avoid violating
+     * {@link StrictMode.ThreadPolicy.Builder#detectUnbufferedIo()}.
+     */
+    private static Bitmap decodeBitmap(File file, BitmapFactory.Options options) {
+        try (BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(file))) {
+            return BitmapFactory.decodeStream(inputStream, /* outPadding= */ null, options);
+        } catch (IOException e) {
+            return null;
+        }
     }
 }

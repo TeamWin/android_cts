@@ -18,6 +18,7 @@ package com.android.cts.verifier;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.interactive.annotations.Interactive;
+import com.android.interactive.annotations.SupportMultiDisplayMode;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -28,15 +29,18 @@ public final class DeskClockTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
-    @ApiTest(apis = {
-            "android.provider.AlarmClock#ACTION_SHOW_ALARMS",
-            "android.provider.AlarmClock#ACTION_SET_ALARM",
-            "android.provider.AlarmClock#ACTION_SET_TIMER"
-    })
+    @ApiTest(
+            apis = {
+                "android.provider.AlarmClock#ACTION_SHOW_ALARMS",
+                "android.provider.AlarmClock#ACTION_SET_ALARM",
+                "android.provider.AlarmClock#ACTION_SET_TIMER"
+            })
     public void DeskClockTest() throws Exception {
         // This has 7 subtests with no common setup - we should split them out
-        excludeFeatures("android.hardware.type.television",
+        excludeFeatures(
+                "android.hardware.type.television",
                 "android.software.leanback",
                 "android.hardware.type.automotive");
 

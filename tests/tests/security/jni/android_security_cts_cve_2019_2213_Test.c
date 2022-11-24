@@ -447,6 +447,7 @@ void recv_txn(int fd, txn_t *t) {
             u32 cmd = parse_u32(p);
             void *dat = (void *)parser_get(p, _IOC_SIZE(cmd));
             if (dat == NULL) {
+                free_parser(p);
                 return;
             }
             handle_cmd(fd, cmd, dat);
@@ -1682,11 +1683,15 @@ void handle_sig() {
 void rw_thread(u64 idx) {
     handle_sig();
     sync_wait(rw_thread_sync);
-    void *dat = malloc(0x2000);
-    dbg("starting blocked write");
-    if (write(uaf_pipe, dat, 0x2000) != 0x1000) {
-        fail("expected blocking write=0x1000");
-        return;
+    {
+        void *dat = malloc(0x2000);
+        dbg("starting blocked write");
+        if (write(uaf_pipe, dat, 0x2000) != 0x1000) {
+            fail("expected blocking write=0x1000");
+            free(dat);
+            return;
+        }
+        free(dat);
     }
     dbg("write unblocked");
     sync_done(rw_thread_sync);

@@ -26,34 +26,24 @@ import android.media.TimedMetaData;
 import android.media.cts.MediaPlayerTestBase;
 import android.media.cts.Preconditions;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.test.InstrumentationTestRunner;
 import android.util.Log;
 import android.webkit.cts.CtsTestServer;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.NonMainlineTest;
 
-import org.apache.http.impl.DefaultHttpServerConnection;
-import org.apache.http.impl.io.SocketOutputBuffer;
-import org.apache.http.io.SessionOutputBuffer;
-import org.apache.http.params.HttpParams;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.net.HttpCookie;
-import java.net.Socket;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,39 +62,19 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
 
     private static final String MODULE_NAME = "CtsMediaPlayerTestCases";
 
-    private static final int LOCAL_HLS_BITS_PER_MS = 100 * 1000;
-
-    private DynamicConfigDeviceSide dynamicConfig;
-
     private CtsTestServer mServer;
-
-    private String mInputUrl;
 
     @Before
     @Override
     public void setUp() throws Throwable {
-        // if launched with InstrumentationTestRunner to pass a command line argument
-        // TODO(b/194655325#comment3): Replace the following code snippet with non-deprecated
-        // components.
-        if (getInstrumentation() instanceof InstrumentationTestRunner) {
-            InstrumentationTestRunner testRunner =
-                    (InstrumentationTestRunner)getInstrumentation();
-
-            Bundle arguments = testRunner.getArguments();
-            mInputUrl = arguments.getString("url");
-            Log.v(TAG, "setUp: arguments: " + arguments);
-            if (mInputUrl != null) {
-                Log.v(TAG, "setUp: arguments[url] " + mInputUrl);
-            }
-        }
-
         super.setUp();
-        dynamicConfig = new DynamicConfigDeviceSide(MODULE_NAME);
+        mServer = new CtsTestServer(mContext);
     }
 
     @After
     @Override
     public void tearDown() {
+        mServer.shutdown();
         super.tearDown();
     }
 
@@ -201,8 +171,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         }
 
         // Play stream for 60 seconds
-        // limit rate to workaround multiplication overflow in framework
-        localHlsTest("hls_variant/index.m3u8", 60 * 1000, LOCAL_HLS_BITS_PER_MS, false /*isAudioOnly*/);
+        localHlsTest("hls_variant/index.m3u8", 60 * 1000, false /*isAudioOnly*/);
     }
 
     @Test
@@ -230,8 +199,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         cookies.add(cookie);
 
         // Play stream for 60 seconds
-        // limit rate to workaround multiplication overflow in framework
-        localHlsTest("hls_variant/index.m3u8", 60 * 1000, LOCAL_HLS_BITS_PER_MS, false /*isAudioOnly*/);
+        localHlsTest("hls_variant/index.m3u8", 60 * 1000, false /*isAudioOnly*/);
     }
 
     @Test
@@ -239,15 +207,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
             return; // skip
         }
-
-        // Play stream for 60 seconds
-        if (mInputUrl != null) {
-            // if url override provided
-            playLiveAudioOnlyTest(mInputUrl, 60 * 1000);
-        } else {
-            localHlsTest("audio_only/index.m3u8", 60 * 1000, -1, true /*isAudioOnly*/);
-        }
-
+        localHlsTest("audio_only/index.m3u8", 60 * 1000, true /*isAudioOnly*/);
     }
 
     @Test
@@ -262,7 +222,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
             MediaUtils.skipTest("No decoders for " + format);
         } else {
             // Play stream for 60 seconds
-            localHlsTest("unmuxed_1500k/index.m3u8", 60 * 1000, -1, false /*isAudioOnly*/);
+            localHlsTest("unmuxed_1500k/index.m3u8", 60 * 1000, false /*isAudioOnly*/);
         }
     }
 
@@ -303,75 +263,70 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
 
     private void localHttpAudioStreamTest(final String name, boolean redirect, boolean nolength)
             throws Throwable {
-        mServer = new CtsTestServer(mContext);
         Preconditions.assertTestFileExists(mInpPrefix + name);
-        try {
-            String stream_url = null;
-            if (redirect) {
-                // Stagefright doesn't have a limit, but we can't test support of infinite redirects
-                // Up to 4 redirects seems reasonable though.
-                stream_url = mServer.getRedirectingAssetUrl(mInpPrefix + name, 4);
-            } else {
-                stream_url = mServer.getAssetUrl(mInpPrefix + name);
-            }
-            if (nolength) {
-                stream_url = stream_url + "?" + CtsTestServer.NOLENGTH_POSTFIX;
-            }
-
-            if (!MediaUtils.checkCodecsForPath(mContext, stream_url)) {
-                return; // skip
-            }
-
-            mMediaPlayer.setDataSource(stream_url);
-
-            mMediaPlayer.setDisplay(getActivity().getSurfaceHolder());
-            mMediaPlayer.setScreenOnWhilePlaying(true);
-
-            mOnBufferingUpdateCalled.reset();
-            mMediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
-                @Override
-                public void onBufferingUpdate(MediaPlayer mp, int percent) {
-                    mOnBufferingUpdateCalled.signal();
-                }
-            });
-            mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-                @Override
-                public boolean onError(MediaPlayer mp, int what, int extra) {
-                    fail("Media player had error " + what + " playing " + name);
-                    return true;
-                }
-            });
-
-            assertFalse(mOnBufferingUpdateCalled.isSignalled());
-            mMediaPlayer.prepare();
-
-            if (nolength) {
-                mMediaPlayer.start();
-                Thread.sleep(LONG_SLEEP_TIME);
-                assertFalse(mMediaPlayer.isPlaying());
-            } else {
-                mOnBufferingUpdateCalled.waitForSignal();
-                mMediaPlayer.start();
-                Thread.sleep(SLEEP_TIME);
-            }
-            mMediaPlayer.stop();
-            mMediaPlayer.reset();
-        } finally {
-            mServer.shutdown();
+        String stream_url = null;
+        if (redirect) {
+            // Stagefright doesn't have a limit, but we can't test support of infinite redirects
+            // Up to 4 redirects seems reasonable though.
+            stream_url = mServer.getRedirectingAssetUrl(mInpPrefix + name, 4);
+        } else {
+            stream_url = mServer.getAssetUrl(mInpPrefix + name);
         }
+        if (nolength) {
+            stream_url = stream_url + "?" + CtsTestServer.NOLENGTH_POSTFIX;
+        }
+
+        if (!MediaUtils.checkCodecsForPath(mContext, stream_url)) {
+            return; // skip
+        }
+
+        mMediaPlayer.setDataSource(stream_url);
+
+        mMediaPlayer.setDisplay(getActivity().getSurfaceHolder());
+        mMediaPlayer.setScreenOnWhilePlaying(true);
+
+        mOnBufferingUpdateCalled.reset();
+        mMediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
+            @Override
+            public void onBufferingUpdate(MediaPlayer mp, int percent) {
+                mOnBufferingUpdateCalled.signal();
+            }
+        });
+        mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                fail("Media player had error " + what + " playing " + name);
+                return true;
+            }
+        });
+
+        assertFalse(mOnBufferingUpdateCalled.isSignalled());
+        mMediaPlayer.prepare();
+
+        if (nolength) {
+            mMediaPlayer.start();
+            Thread.sleep(LONG_SLEEP_TIME);
+            assertFalse(mMediaPlayer.isPlaying());
+        } else {
+            mOnBufferingUpdateCalled.waitForSignal();
+            mMediaPlayer.start();
+            Thread.sleep(SLEEP_TIME);
+        }
+        mMediaPlayer.stop();
+        mMediaPlayer.reset();
     }
     private void localHttpsAudioStreamTest(final String name, boolean redirect, boolean nolength)
             throws Throwable {
-        mServer = new CtsTestServer(mContext, true);
         Preconditions.assertTestFileExists(mInpPrefix + name);
+        CtsTestServer server = new CtsTestServer(mContext, /* ssl */ true);
         try {
             String stream_url = null;
             if (redirect) {
                 // Stagefright doesn't have a limit, but we can't test support of infinite redirects
                 // Up to 4 redirects seems reasonable though.
-                stream_url = mServer.getRedirectingAssetUrl(mInpPrefix + name, 4);
+                stream_url = server.getRedirectingAssetUrl(mInpPrefix + name, 4);
             } else {
-                stream_url = mServer.getAssetUrl(mInpPrefix + name);
+                stream_url = server.getAssetUrl(mInpPrefix + name);
             }
             if (nolength) {
                 stream_url = stream_url + "?" + CtsTestServer.NOLENGTH_POSTFIX;
@@ -398,7 +353,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
             }
             fail("https playback should have failed");
         } finally {
-            mServer.shutdown();
+            server.shutdown();
         }
     }
 
@@ -432,93 +387,89 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
             Log.d(TAG, "Device doesn't have video codec, skipping test");
             return;
         }
-
-        mServer = new CtsTestServer(mContext);
         Preconditions.assertTestFileExists(mInpPrefix + "prog_index.m3u8");
-        try {
-            // counter must be final if we want to access it inside onTimedMetaData;
-            // use AtomicInteger so we can have a final counter object with mutable integer value.
-            final AtomicInteger counter = new AtomicInteger();
-            String stream_url = mServer.getAssetUrl(mInpPrefix + "prog_index.m3u8");
-            mMediaPlayer.setDataSource(stream_url);
-            mMediaPlayer.setDisplay(getActivity().getSurfaceHolder());
-            mMediaPlayer.setScreenOnWhilePlaying(true);
-            mMediaPlayer.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
-            mMediaPlayer.setOnTimedMetaDataAvailableListener(new MediaPlayer.OnTimedMetaDataAvailableListener() {
-                @Override
-                public void onTimedMetaDataAvailable(MediaPlayer mp, TimedMetaData md) {
-                    counter.incrementAndGet();
-                    int pos = mp.getCurrentPosition();
-                    long timeUs = md.getTimestamp();
-                    byte[] rawData = md.getMetaData();
-                    // Raw data contains an id3 tag holding the decimal string representation of
-                    // the associated time stamp rounded to the closest half second.
 
-                    int offset = 0;
-                    offset += 3; // "ID3"
-                    offset += 2; // version
-                    offset += 1; // flags
-                    offset += 4; // size
-                    offset += 4; // "TXXX"
-                    offset += 4; // frame size
-                    offset += 2; // frame flags
-                    offset += 1; // "\x03" : UTF-8 encoded Unicode
-                    offset += 1; // "\x00" : null-terminated empty description
+        // counter must be final if we want to access it inside onTimedMetaData;
+        // use AtomicInteger so we can have a final counter object with mutable integer value.
+        final AtomicInteger counter = new AtomicInteger();
+        String stream_url = mServer.getAssetUrl(mInpPrefix + "prog_index.m3u8");
+        mMediaPlayer.setDataSource(stream_url);
+        mMediaPlayer.setDisplay(getActivity().getSurfaceHolder());
+        mMediaPlayer.setScreenOnWhilePlaying(true);
+        mMediaPlayer.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+        mMediaPlayer.setOnTimedMetaDataAvailableListener(
+                new MediaPlayer.OnTimedMetaDataAvailableListener() {
+                    @Override
+                    public void onTimedMetaDataAvailable(MediaPlayer mp, TimedMetaData md) {
+                        counter.incrementAndGet();
+                        int pos = mp.getCurrentPosition();
+                        long timeUs = md.getTimestamp();
+                        byte[] rawData = md.getMetaData();
+                        // Raw data contains an id3 tag holding the decimal string representation of
+                        // the associated time stamp rounded to the closest half second.
 
-                    int length = rawData.length;
-                    length -= offset;
-                    length -= 1; // "\x00" : terminating null
+                        int offset = 0;
+                        offset += 3; // "ID3"
+                        offset += 2; // version
+                        offset += 1; // flags
+                        offset += 4; // size
+                        offset += 4; // "TXXX"
+                        offset += 4; // frame size
+                        offset += 2; // frame flags
+                        offset += 1; // "\x03" : UTF-8 encoded Unicode
+                        offset += 1; // "\x00" : null-terminated empty description
 
-                    String data = new String(rawData, offset, length);
-                    int dataTimeUs = Integer.parseInt(data);
-                    assertTrue("Timed ID3 timestamp does not match content",
-                            Math.abs(dataTimeUs - timeUs) < 500000);
-                    assertTrue("Timed ID3 arrives after timestamp", pos * 1000 < timeUs);
-                }
-            });
+                        int length = rawData.length;
+                        length -= offset;
+                        length -= 1; // "\x00" : terminating null
 
-            final Object completion = new Object();
-            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                int run;
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    if (run++ == 0) {
-                        mMediaPlayer.seekTo(0);
-                        mMediaPlayer.start();
-                    } else {
-                        mMediaPlayer.stop();
-                        synchronized (completion) {
-                            completion.notify();
-                        }
+                        String data = new String(rawData, offset, length);
+                        int dataTimeUs = Integer.parseInt(data);
+                        assertTrue("Timed ID3 timestamp does not match content",
+                                Math.abs(dataTimeUs - timeUs) < 500000);
+                        assertTrue("Timed ID3 arrives after timestamp", pos * 1000 < timeUs);
+                    }
+                });
+
+        final Object completion = new Object();
+        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            int mRun;
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                if (mRun++ == 0) {
+                    mMediaPlayer.seekTo(0);
+                    mMediaPlayer.start();
+                } else {
+                    mMediaPlayer.stop();
+                    synchronized (completion) {
+                        completion.notify();
                     }
                 }
-            });
-
-            mMediaPlayer.prepare();
-            mMediaPlayer.start();
-            assertTrue("MediaPlayer not playing", mMediaPlayer.isPlaying());
-
-            int i = -1;
-            TrackInfo[] trackInfos = mMediaPlayer.getTrackInfo();
-            for (i = 0; i < trackInfos.length; i++) {
-                TrackInfo trackInfo = trackInfos[i];
-                if (trackInfo.getTrackType() == TrackInfo.MEDIA_TRACK_TYPE_METADATA) {
-                    break;
-                }
             }
-            assertTrue("Stream has no timed ID3 track", i >= 0);
-            mMediaPlayer.selectTrack(i);
+        });
 
-            synchronized (completion) {
-                completion.wait();
+        mMediaPlayer.prepare();
+        mMediaPlayer.start();
+        assertTrue("MediaPlayer not playing", mMediaPlayer.isPlaying());
+
+        int i = -1;
+        TrackInfo[] trackInfos = mMediaPlayer.getTrackInfo();
+        for (i = 0; i < trackInfos.length; i++) {
+            TrackInfo trackInfo = trackInfos[i];
+            if (trackInfo.getTrackType() == TrackInfo.MEDIA_TRACK_TYPE_METADATA) {
+                break;
             }
-
-            // There are a total of 19 metadata access units in the test stream; every one of them
-            // should be received twice: once before the seek and once after.
-            assertTrue("Incorrect number of timed ID3s recieved", counter.get() == 38);
-        } finally {
-            mServer.shutdown();
         }
+        assertTrue("Stream has no timed ID3 track", i >= 0);
+        mMediaPlayer.selectTrack(i);
+
+        synchronized (completion) {
+            completion.wait();
+        }
+
+        // There are a total of 19 metadata access units in the test stream; every one of them
+        // should be received twice: once before the seek and once after.
+        assertTrue("Incorrect number of timed ID3s received", counter.get() == 38);
     }
 
     private static class WorkerWithPlayer implements Runnable {
@@ -568,42 +519,25 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
 
     @Test
     public void testBlockingReadRelease() throws Throwable {
-
-        mServer = new CtsTestServer(mContext);
-
         WorkerWithPlayer worker = new WorkerWithPlayer("player");
         final MediaPlayer mp = worker.getPlayer();
 
         Preconditions.assertTestFileExists(mInpPrefix + "noiseandchirps.ogg");
-        try {
-            String path = mServer.getDelayedAssetUrl(mInpPrefix + "noiseandchirps.ogg", 15000);
-            mp.setDataSource(path);
-            mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(MediaPlayer mp) {
-                    fail("prepare should not succeed");
-                }
-            });
-            mp.prepareAsync();
-            Thread.sleep(1000);
-            long start = SystemClock.elapsedRealtime();
-            mp.release();
-            long end = SystemClock.elapsedRealtime();
-            long releaseDuration = (end - start);
-            assertTrue("release took too long: " + releaseDuration, releaseDuration < 1000);
-        } catch (IllegalArgumentException e) {
-            fail(e.getMessage());
-        } catch (SecurityException e) {
-            fail(e.getMessage());
-        } catch (IllegalStateException e) {
-            fail(e.getMessage());
-        } catch (IOException e) {
-            fail(e.getMessage());
-        } catch (InterruptedException e) {
-            fail(e.getMessage());
-        } finally {
-            mServer.shutdown();
-        }
+        String path = mServer.getDelayedAssetUrl(mInpPrefix + "noiseandchirps.ogg", 15000);
+        mp.setDataSource(path);
+        mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                fail("prepare should not succeed");
+            }
+        });
+        mp.prepareAsync();
+        Thread.sleep(1000);
+        long start = SystemClock.elapsedRealtime();
+        mp.release();
+        long end = SystemClock.elapsedRealtime();
+        long releaseDuration = (end - start);
+        assertTrue("release took too long: " + releaseDuration, releaseDuration < 1000);
 
         // give the worker a bit of time to start processing the message before shutting it down
         Thread.sleep(5000);
@@ -611,111 +545,38 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
     }
 
     private void localStreamingTest(String name, int width, int height) throws Exception {
-        mServer = new CtsTestServer(mContext);
         Preconditions.assertTestFileExists(mInpPrefix + name);
-        try {
-            String streamUrl = mServer.getAssetUrl(mInpPrefix + name);
-            playVideoTest(streamUrl, width, height);
-        } finally {
-            mServer.shutdown();
-        }
+        String streamUrl = mServer.getAssetUrl(mInpPrefix + name);
+        playVideoTest(streamUrl, width, height);
     }
 
     private void localHlsTest(final String name, boolean appendQueryString,
             boolean redirect, boolean isAudioOnly) throws Exception {
-        localHlsTest(name, null, null, appendQueryString, redirect, 10, -1, isAudioOnly);
+        localHlsTest(name, null, null, appendQueryString, redirect, 10, isAudioOnly);
     }
 
-    private void localHlsTest(final String name, int playTime, int bitsPerMs, boolean isAudioOnly)
+    private void localHlsTest(final String name, int playTime, boolean isAudioOnly)
             throws Exception {
-        localHlsTest(name, null, null, false, false, playTime, bitsPerMs, isAudioOnly);
+        localHlsTest(name, null, null, false, false, playTime, isAudioOnly);
     }
 
     private void localHlsTest(String name, Map<String, String> headers, List<HttpCookie> cookies,
-            boolean appendQueryString, boolean redirect, int playTime, int bitsPerMs,
-            boolean isAudioOnly) throws Exception {
-        if (bitsPerMs >= 0) {
-            mServer = new CtsTestServer(mContext) {
-                @Override
-                protected DefaultHttpServerConnection createHttpServerConnection() {
-                    return new RateLimitHttpServerConnection(bitsPerMs);
-                }
-            };
-        } else {
-            mServer = new CtsTestServer(mContext);
-        }
+            boolean appendQueryString, boolean redirect, int playTime, boolean isAudioOnly)
+            throws Exception {
         Preconditions.assertTestFileExists(mInpPrefix + name);
-        try {
-            String stream_url = null;
-            if (redirect) {
-                stream_url = mServer.getQueryRedirectingAssetUrl(mInpPrefix + name);
-            } else {
-                stream_url = mServer.getAssetUrl(mInpPrefix + name);
-            }
-            if (appendQueryString) {
-                stream_url += "?foo=bar/baz";
-            }
-            if (isAudioOnly) {
-                playLiveAudioOnlyTest(Uri.parse(stream_url), headers, cookies, playTime);
-            } else {
-                playLiveVideoTest(Uri.parse(stream_url), headers, cookies, playTime);
-            }
-        } finally {
-            mServer.shutdown();
+        String stream_url = null;
+        if (redirect) {
+            stream_url = mServer.getQueryRedirectingAssetUrl(mInpPrefix + name);
+        } else {
+            stream_url = mServer.getAssetUrl(mInpPrefix + name);
+        }
+        if (appendQueryString) {
+            stream_url += "?foo=bar/baz";
+        }
+        if (isAudioOnly) {
+            playLiveAudioOnlyTest(Uri.parse(stream_url), headers, cookies, playTime);
+        } else {
+            playLiveVideoTest(Uri.parse(stream_url), headers, cookies, playTime);
         }
     }
-
-    private static final class RateLimitHttpServerConnection extends DefaultHttpServerConnection {
-
-        private final int mBytesPerMs;
-        private int mBytesWritten;
-
-        public RateLimitHttpServerConnection(int bitsPerMs) {
-            mBytesPerMs = bitsPerMs / 8;
-        }
-
-        @Override
-        protected SessionOutputBuffer createHttpDataTransmitter(
-                Socket socket, int buffersize, HttpParams params) throws IOException {
-            return createSessionOutputBuffer(socket, buffersize, params);
-        }
-
-        SessionOutputBuffer createSessionOutputBuffer(
-                Socket socket, int buffersize, HttpParams params) throws IOException {
-            return new SocketOutputBuffer(socket, buffersize, params) {
-                @Override
-                public void write(int b) throws IOException {
-                    write(new byte[] {(byte)b});
-                }
-
-                @Override
-                public void write(byte[] b) throws IOException {
-                    write(b, 0, b.length);
-                }
-
-                @Override
-                public synchronized void write(byte[] b, int off, int len) throws IOException {
-                    mBytesWritten += len;
-                    if (mBytesWritten >= mBytesPerMs * 10) {
-                        int r = mBytesWritten % mBytesPerMs;
-                        int nano = 999999 * r / mBytesPerMs;
-                        delay(mBytesWritten / mBytesPerMs, nano);
-                        mBytesWritten = 0;
-                    }
-                    super.write(b, off, len);
-                }
-
-                private void delay(long millis, int nanos) throws IOException {
-                    try {
-                        Thread.sleep(millis, nanos);
-                        flush();
-                    } catch (InterruptedException e) {
-                        throw new InterruptedIOException();
-                    }
-                }
-
-            };
-        }
-    }
-
 }

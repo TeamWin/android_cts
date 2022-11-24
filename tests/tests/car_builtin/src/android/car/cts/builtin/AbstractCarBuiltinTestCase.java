@@ -17,6 +17,7 @@
 package android.car.cts.builtin;
 
 import android.app.Instrumentation;
+import android.car.test.AbstractExpectableTestCase;
 import android.car.test.ApiCheckerRule;
 import android.content.Context;
 
@@ -27,7 +28,7 @@ import org.junit.Rule;
 /**
  * Base class for all tests, provides most common functionalities.
  */
-public abstract class AbstractCarBuiltinTestCase {
+public abstract class AbstractCarBuiltinTestCase extends AbstractExpectableTestCase {
 
     @Rule
     public final ApiCheckerRule mApiCheckerRule = new ApiCheckerRule.Builder()

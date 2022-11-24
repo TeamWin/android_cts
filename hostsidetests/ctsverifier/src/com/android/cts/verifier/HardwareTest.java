@@ -19,6 +19,7 @@ package com.android.cts.verifier;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 import com.android.interactive.annotations.Interactive;
+import com.android.interactive.annotations.SupportMultiDisplayMode;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -29,6 +30,8 @@ public final class HardwareTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
+    // MultiDisplayMode
     public void NfcTestActivity() throws Exception {
         requireFeatures("android.hardware.nfc");
 
@@ -37,6 +40,7 @@ public final class HardwareTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @CddTest(requirements = "7.7.1/H-1-1")
     public void UsbAccessoryTest() throws Exception {
@@ -48,10 +52,14 @@ public final class HardwareTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @CddTest(requirements = "7.7.2/C-1-1")
-    @ApiTest(apis = {"android.hardware.usb.UsbDeviceConnection#controlTransfer",
-            "android.hardware.usb.UsbDeviceConnection#bulkTransfer"})
+    @ApiTest(
+            apis = {
+                "android.hardware.usb.UsbDeviceConnection#controlTransfer",
+                "android.hardware.usb.UsbDeviceConnection#bulkTransfer"
+            })
     public void UsbDeviceTest() throws Exception {
         requireFeatures("android.hardware.usb.host");
         excludeFeatures("android.hardware.type.watch");
@@ -61,6 +69,7 @@ public final class HardwareTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @CddTest(requirements = "7.7.2/C-3-1")
     public void MtpHostTest() throws Exception {

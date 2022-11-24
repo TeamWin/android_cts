@@ -19,6 +19,7 @@ package com.android.cts.verifier;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 import com.android.interactive.annotations.Interactive;
+import com.android.interactive.annotations.SupportMultiDisplayMode;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -29,25 +30,31 @@ public final class TilesTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @CddTest(requirements = {"3.13/C-1-1", "C-1-2", "C-1-3"})
     public void TileServiceTest() throws Exception {
-        excludeFeatures("android.hardware.type.television", "android.software.leanback",
-                "android.hardware.type.watch", "android.hardware.type.automotive");
+        excludeFeatures(
+                "android.hardware.type.television",
+                "android.software.leanback",
+                "android.hardware.type.watch",
+                "android.hardware.type.automotive");
 
-        runTest(".qstiles.TileServiceVerifierActivity",
-                "config_quick_settings_supported");
+        runTest(".qstiles.TileServiceVerifierActivity", "config_quick_settings_supported");
     }
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @ApiTest(apis = "android.app.StatusBarManager#requestAddTileService")
     public void TileServiceRequestTest() throws Exception {
-        excludeFeatures("android.hardware.type.television", "android.software.leanback",
-                "android.hardware.type.watch", "android.hardware.type.automotive");
+        excludeFeatures(
+                "android.hardware.type.television",
+                "android.software.leanback",
+                "android.hardware.type.watch",
+                "android.hardware.type.automotive");
 
-        runTest(".qstiles.TileServiceRequestVerifierActivity",
-                "config_quick_settings_supported");
+        runTest(".qstiles.TileServiceRequestVerifierActivity", "config_quick_settings_supported");
     }
 }

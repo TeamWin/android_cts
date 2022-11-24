@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package android.gamemanager.cts.app;
+package android.gamemanager.cts.app.notgametestapp;
 
 import android.app.Activity;
 import android.app.GameManager;
 import android.content.Context;
 import android.os.Bundle;
 
-public class GameTestAppMainActivity extends Activity {
+public class NotGameTestAppMainActivity extends Activity {
 
-    private static final String TAG = "GameTestAppMainActivity";
+    private static final String TAG = "NotGameTestAppMainActivity";
 
     Context mContext;
     GameManager mGameManager;

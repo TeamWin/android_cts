@@ -33,6 +33,8 @@ import android.os.Parcel;
 import android.os.Process;
 import android.os.RemoteException;
 
+import static org.testng.Assert.assertThrows;
+
 public class BinderTest extends ActivityTestsBase {
     private static final String DESCRIPTOR_GOOGLE = "google";
     private static final String DESCRIPTOR_ANDROID = "android";
@@ -381,6 +383,88 @@ public class BinderTest extends ActivityTestsBase {
         long token = Binder.clearCallingIdentity();
         assertTrue(token > 0);
         Binder.restoreCallingIdentity(token);
+    }
+
+    public void testGetCallingUidOrThrow_throws() throws Exception {
+        assertThrows(IllegalStateException.class, () -> Binder.getCallingUidOrThrow());
+    }
+
+    public void testGetCallingUidOrThrow_insideClearRestoreCallingIdentity_doesNotThrow()
+            throws Exception {
+        long token = Binder.clearCallingIdentity();
+        try {
+            Binder.getCallingUidOrThrow();
+        } finally {
+            Binder.restoreCallingIdentity(token);
+        }
+    }
+
+    public void testGetCallingUidOrThrow_afterClearRestoreCallingIdentity_throws()
+            throws Exception {
+        long token = Binder.clearCallingIdentity();
+        try {
+            Binder.getCallingUidOrThrow();
+        } finally {
+            Binder.restoreCallingIdentity(token);
+        }
+        // if a token is properly cleared and restored, a subsequent call should throw
+        assertThrows(IllegalStateException.class, () -> Binder.getCallingUidOrThrow());
+    }
+
+    public void testGetCallingUidOrThrow_multipleClearsAreRestoredCorrectly_throws()
+            throws Exception {
+        long outerToken = Binder.clearCallingIdentity();
+        long innerToken = Binder.clearCallingIdentity();
+        try {
+            Binder.getCallingUidOrThrow();
+        } finally {
+            Binder.restoreCallingIdentity(innerToken);
+            Binder.restoreCallingIdentity(outerToken);
+        }
+        // if multiple tokens are cleared and restored in the proper order,
+        // a subsequent call should throw
+        assertThrows(IllegalStateException.class, () -> Binder.getCallingUidOrThrow());
+    }
+
+    public void testGetCallingUidOrThrow_onlyOutermostClearIsRestored_throws() throws Exception {
+        long outerToken = Binder.clearCallingIdentity();
+        long innerToken = Binder.clearCallingIdentity();
+        try {
+            Binder.getCallingUidOrThrow();
+        } finally {
+            Binder.restoreCallingIdentity(outerToken);
+        }
+        // if multiple tokens are cleared, and only the outermost token is restored,
+        // a subsequent call should throw
+        assertThrows(IllegalStateException.class, () -> Binder.getCallingUidOrThrow());
+    }
+
+    public void testGetCallingUidOrThrow_multipleClearsAreRestoredIncorrectly_doesNotThrow()
+            throws Exception {
+        long outerToken = Binder.clearCallingIdentity();
+        long innerToken = Binder.clearCallingIdentity();
+        try {
+            Binder.getCallingUidOrThrow();
+        } finally {
+            Binder.restoreCallingIdentity(outerToken);
+            Binder.restoreCallingIdentity(innerToken);
+        }
+        // if multiple tokens are restored incorrectly,
+        // a subsequent call will not throw
+        Binder.getCallingUidOrThrow();
+    }
+
+    public void testGetCallingUidOrThrow_duplicateClearsAreStoredInSameVariable_doesNotThrow()
+            throws Exception {
+        long token = Binder.clearCallingIdentity();
+        token = Binder.clearCallingIdentity();
+        try {
+            Binder.getCallingUidOrThrow();
+        } finally {
+            Binder.restoreCallingIdentity(token);
+        }
+        // if the same variable is used for multiple clears, a subsequent call will not throw
+        Binder.getCallingUidOrThrow();
     }
 
     public void testClearCallingWorkSource() {

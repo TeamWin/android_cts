@@ -75,6 +75,13 @@ public class GameManagerTest {
     private static final String GAME_TEST_APP_WITH_PERFORMANCE_PACKAGE_NAME =
             "android.gamemanager.cts.app.gametestapp.performance";
 
+    private static final String GAME_TEST_APP_WITH_TIRAMISU_TARGET_APK_PATH =
+            APK_DIRECTORY + "CtsGameTestAppWithTiramisuTarget.apk";
+    private static final String GAME_TEST_APP_WITH_TIRAMISU_TARGET_PACKAGE_NAME =
+            "android.gamemanager.cts.app.gametestapp.tiramisu";
+
+    private static final String GAME_TEST_APP_ACTIVITY_NAME = ".GameTestAppMainActivity";
+
     private static final int TEST_LABEL = 1;
     private static final int TEST_QUALITY = 2;
 
@@ -93,6 +100,7 @@ public class GameManagerTest {
         TestUtil.uninstallPackage(GAME_TEST_APP_PACKAGE_NAME);
         TestUtil.uninstallPackage(GAME_TEST_APP_WITH_BATTERY_PACKAGE_NAME);
         TestUtil.uninstallPackage(GAME_TEST_APP_WITH_PERFORMANCE_PACKAGE_NAME);
+        TestUtil.uninstallPackage(GAME_TEST_APP_WITH_TIRAMISU_TARGET_PACKAGE_NAME);
 
         mActivityRule.getScenario().onActivity(activity -> {
             mActivity = activity;
@@ -110,12 +118,13 @@ public class GameManagerTest {
         TestUtil.uninstallPackage(GAME_TEST_APP_PACKAGE_NAME);
         TestUtil.uninstallPackage(GAME_TEST_APP_WITH_BATTERY_PACKAGE_NAME);
         TestUtil.uninstallPackage(GAME_TEST_APP_WITH_PERFORMANCE_PACKAGE_NAME);
+        TestUtil.uninstallPackage(GAME_TEST_APP_WITH_TIRAMISU_TARGET_PACKAGE_NAME);
     }
 
     @Test
     public void testIsAngleEnabled() throws Exception {
         final String packageName = GAME_TEST_APP_WITH_PERFORMANCE_PACKAGE_NAME;
-        assertTrue(TestUtil.installPackage(GAME_TEST_APP_WITH_PERFORMANCE_APK_PATH));
+        TestUtil.installPackage(GAME_TEST_APP_WITH_PERFORMANCE_APK_PATH);
         Thread.sleep(500);
 
         // enable Angle for BATTERY mode.
@@ -144,7 +153,7 @@ public class GameManagerTest {
      */
     @Test
     public void testGetGameModeUnsupportedOnNotGame() throws InterruptedException {
-        assertTrue(TestUtil.installPackage(NOT_GAME_TEST_APP_APK_PATH));
+        TestUtil.installPackage(NOT_GAME_TEST_APP_APK_PATH);
         Thread.sleep(500);
 
         int gameMode =
@@ -316,7 +325,7 @@ public class GameManagerTest {
      */
     @Test
     public void testGetGameModeInfoWithTwoGameModes() throws InterruptedException {
-        assertTrue(TestUtil.installPackage(GAME_TEST_APP_APK_PATH));
+        TestUtil.installPackage(GAME_TEST_APP_APK_PATH);
         // When an app is installed, some propagation work for the configuration will
         // be set up asynchronously, hence wait for 500ms here.
         Thread.sleep(500);
@@ -376,7 +385,7 @@ public class GameManagerTest {
     @Test
     public void testGetGameModeInfoWithBatteryMode() throws InterruptedException {
         final String packageName = GAME_TEST_APP_WITH_BATTERY_PACKAGE_NAME;
-        assertTrue(TestUtil.installPackage(GAME_TEST_APP_WITH_BATTERY_APK_PATH));
+        TestUtil.installPackage(GAME_TEST_APP_WITH_BATTERY_APK_PATH);
         // When an app is installed, some propagation work for the configuration will
         // be set up asynchronously, hence wait for 500ms here.
         Thread.sleep(500);
@@ -403,5 +412,47 @@ public class GameManagerTest {
                 GameManager.GAME_MODE_BATTERY, gameModeInfo.getActiveGameMode());
 
         TestUtil.uninstallPackage(packageName);
+    }
+
+    @Test
+    public void testCustomGameMode() throws InterruptedException {
+        final String packageName = GAME_TEST_APP_PACKAGE_NAME;
+        TestUtil.installPackage(GAME_TEST_APP_APK_PATH);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
+                (gameManager) -> gameManager.setGameMode(packageName,
+                        GameManager.GAME_MODE_CUSTOM));
+
+        final int gameMode = ShellIdentityUtils.invokeMethodWithShellPermissions(mGameManager,
+                (gameManager) -> gameManager.getGameMode(packageName),
+                "android.permission.MANAGE_GAME_MODE");
+        assertEquals("Game Manager returned incorrect value.",
+                GameManager.GAME_MODE_CUSTOM, gameMode);
+
+        runShellCommand("am start -n " + GAME_TEST_APP_PACKAGE_NAME
+                + "/" + GAME_TEST_APP_ACTIVITY_NAME);
+        Thread.sleep(2000);
+        assertEquals(GameManager.GAME_MODE_CUSTOM,
+                mActivity.getLastReceivedGameMode(GAME_TEST_APP_PACKAGE_NAME));
+    }
+
+    @Test
+    public void testCustomGameModeBackwardCompatibility() throws InterruptedException {
+        final String packageName = GAME_TEST_APP_WITH_TIRAMISU_TARGET_PACKAGE_NAME;
+        TestUtil.installPackage(GAME_TEST_APP_WITH_TIRAMISU_TARGET_APK_PATH);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
+                (gameManager) -> gameManager.setGameMode(packageName,
+                        GameManager.GAME_MODE_CUSTOM));
+
+        final int gameMode = ShellIdentityUtils.invokeMethodWithShellPermissions(mGameManager,
+                (gameManager) -> gameManager.getGameMode(packageName),
+                "android.permission.MANAGE_GAME_MODE");
+        assertEquals("Game Manager returned incorrect value.",
+                GameManager.GAME_MODE_STANDARD, gameMode);
+
+        runShellCommand("am start -n " + GAME_TEST_APP_WITH_TIRAMISU_TARGET_PACKAGE_NAME
+                + "/" + GAME_TEST_APP_ACTIVITY_NAME);
+        Thread.sleep(2000);
+        assertEquals(GameManager.GAME_MODE_STANDARD,
+                mActivity.getLastReceivedGameMode(GAME_TEST_APP_WITH_TIRAMISU_TARGET_PACKAGE_NAME));
     }
 }

@@ -35,7 +35,11 @@ android_test {
     jni_libs: [
         "libctsmediav2muxer_jni",
         "libctsmediav2extractor_jni",
-        "libctsmediav2codec_jni",
+        "libctsmediav2codecdec_jni",
+        "libctsmediav2codecdecsurface_jni",
+        "libctsmediav2codecenc_jni",
+        "libctsmediav2codecencsurface_jni",
+        "libctsmediav2codecapiunit_jni",
         "libctsmediav2utils_jni",
     ],
     srcs: ["src/**/*.java"],

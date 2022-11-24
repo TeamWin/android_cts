@@ -50,7 +50,7 @@ static void checkAttributes(aaudio_performance_mode_t perfMode,
     else if (direction == AAUDIO_DIRECTION_OUTPUT
             && !deviceSupportsFeature(FEATURE_PLAYBACK)) return;
 
-    float *buffer = new float[kNumFrames * kChannelCount];
+    std::unique_ptr<float[]> buffer(new float[kNumFrames * kChannelCount]);
 
     AAudioStreamBuilder *aaudioBuilder = nullptr;
     AAudioStream *aaudioStream = nullptr;
@@ -146,16 +146,15 @@ static void checkAttributes(aaudio_performance_mode_t perfMode,
 
     if (direction == AAUDIO_DIRECTION_INPUT) {
         EXPECT_EQ(kNumFrames,
-                  AAudioStream_read(aaudioStream, buffer, kNumFrames, kNanosPerSecond));
+                  AAudioStream_read(aaudioStream, buffer.get(), kNumFrames, kNanosPerSecond));
     } else {
         EXPECT_EQ(kNumFrames,
-                  AAudioStream_write(aaudioStream, buffer, kNumFrames, kNanosPerSecond));
+                  AAudioStream_write(aaudioStream, buffer.get(), kNumFrames, kNanosPerSecond));
     }
 
     EXPECT_EQ(AAUDIO_OK, AAudioStream_requestStop(aaudioStream));
 
     EXPECT_EQ(AAUDIO_OK, AAudioStream_close(aaudioStream));
-    delete[] buffer;
 }
 
 static const aaudio_usage_t sUsages[] = {

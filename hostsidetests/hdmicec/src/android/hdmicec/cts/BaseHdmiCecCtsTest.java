@@ -453,11 +453,12 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
             throws Exception {
         ITestDevice device = getDevice();
         WakeLockHelper.acquirePartialWakeLock(device);
+        LogicalAddress cecClientDevice = hdmiCecClient.getSelfDevice();
         if (directlyAddressed) {
-            hdmiCecClient.sendCecMessage(LogicalAddress.TV, CecOperand.STANDBY);
+            hdmiCecClient.sendCecMessage(cecClientDevice, CecOperand.STANDBY);
         } else {
             hdmiCecClient.sendCecMessage(
-                    LogicalAddress.TV, LogicalAddress.BROADCAST, CecOperand.STANDBY);
+                    cecClientDevice, LogicalAddress.BROADCAST, CecOperand.STANDBY);
         }
         waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
     }

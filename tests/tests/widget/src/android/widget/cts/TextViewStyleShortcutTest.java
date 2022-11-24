@@ -188,11 +188,13 @@ public class TextViewStyleShortcutTest {
 
         // By calling setStyleShortcutEnabled true, the style shortcut should work.
         et.setStyleShortcutsEnabled(true);
+        assertThat(et.isStyleShortcutEnabled()).isTrue();
         sendCtrlB(et);
         assertBoldRegion(et, new Range(1, 9));
 
         // By calling setStyleShortcutEnabled false, the style shortcut should stop working.
         et.setStyleShortcutsEnabled(false);
+        assertThat(et.isStyleShortcutEnabled()).isFalse();
         sendCtrlB(et);
         assertBoldRegion(et, new Range(1, 9));
     }

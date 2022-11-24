@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.gamemanager.cts.app;
+package android.gamemanager.cts.app.gametestapp.battery;
 
 import android.app.Activity;
 import android.app.GameManager;

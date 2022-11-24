@@ -663,10 +663,6 @@
     <protected-broadcast android:name="android.media.tv.action.CHANNEL_BROWSABLE_REQUESTED" />
     <protected-broadcast android:name="com.android.server.inputmethod.InputMethodManagerService.SHOW_INPUT_METHOD_PICKER" />
 
-    <!-- Time zone rules update intents fired by the system server -->
-    <protected-broadcast android:name="com.android.intent.action.timezone.RULES_UPDATE_OPERATION" />
-    <protected-broadcast android:name="com.android.intent.action.timezone.TRIGGER_RULES_UPDATE_CHECK" />
-
     <!-- Made protected in P (was introduced in JB-MR2) -->
     <protected-broadcast android:name="android.intent.action.GET_RESTRICTION_ENTRIES" />
     <protected-broadcast android:name="android.telephony.euicc.action.OTA_STATUS_CHANGED" />
@@ -3723,13 +3719,6 @@
          @SystemApi @hide -->
     <permission android:name="android.permission.UPDATE_TIME_ZONE_RULES"
         android:protectionLevel="signature|privileged" />
-
-    <!-- Must be required by a time zone rule updater application,
-         to ensure that only the system can trigger it.
-         @hide -->
-    <permission android:name="android.permission.TRIGGER_TIME_ZONE_RULES_CHECK"
-        android:protectionLevel="signature" />
-    <uses-permission android:name="android.permission.TRIGGER_TIME_ZONE_RULES_CHECK"/>
 
     <!-- Allows the system to reset throttling in shortcut manager.
          @hide -->

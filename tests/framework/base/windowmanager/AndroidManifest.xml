@@ -596,8 +596,14 @@
                   android:exported="true" />
         <activity android:name="android.server.wm.BackGestureInvokedTest$BackInvokedActivity"
                   android:label="BackInvokedActivity"
-                  android:exported="true">
-        </activity>
+                  android:exported="true" />
+        <activity android:name="android.server.wm.BackGestureInvokedTest$NewTaskActivity"
+                  android:exported="true" />
+        <activity android:name="android.server.wm.BackGestureInvokedTest$SecondActivity"
+                  android:exported="true" />
+        <activity android:name="android.server.wm.BackGestureInvokedTest$ImeTestActivity"
+                  android:exported="true"
+                  android:windowSoftInputMode="stateVisible"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

@@ -1476,15 +1476,23 @@ public class TelephonyCallbackTest {
                             TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
                 });
         assertFalse(mOnAllowedNetworkTypesChangedCalled);
-
+        long supportedNetworkTypes =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> {
+                        return tm.getSupportedRadioAccessFamily();
+                    });
         mHandler.post(() -> {
             mAllowedNetworkTypesCallback = new AllowedNetworkTypesListener();
             registerTelephonyCallbackWithPermission(mAllowedNetworkTypesCallback);
+            long networkTypesToBeTested =
+                    (supportedNetworkTypes & TelephonyManager.NETWORK_TYPE_BITMASK_NR) == 0
+                            ? TelephonyManager.NETWORK_TYPE_BITMASK_LTE
+                            : TelephonyManager.NETWORK_TYPE_BITMASK_NR;
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                     mTelephonyManager,
                     (tm) -> tm.setAllowedNetworkTypesForReason(
                             TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
-                            TelephonyManager.NETWORK_TYPE_BITMASK_NR));
+                            networkTypesToBeTested));
         });
 
         synchronized (mLock) {

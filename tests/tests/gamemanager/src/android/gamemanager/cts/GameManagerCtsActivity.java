@@ -18,8 +18,15 @@ package android.gamemanager.cts;
 
 import android.app.Activity;
 import android.app.GameManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.ArrayMap;
+import android.util.Log;
+
+import java.util.Map;
 
 public class GameManagerCtsActivity extends Activity {
 
@@ -27,16 +34,48 @@ public class GameManagerCtsActivity extends Activity {
 
     Context mContext;
     GameManager mGameManager;
+    GameModeReceiver mGameModeReceiver;
+    Map<String, Integer> mReceivedGameModes = new ArrayMap<>();
+
+    public class GameModeReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final int gameMode = intent.getIntExtra("game-mode", -1);
+            Log.d(TAG, "Received game mode intent " + intent);
+            final String senderPackage = intent.getStringExtra("sender-package");
+            if (senderPackage == null) {
+                Log.w(TAG, "Received game mode broadcast without sender package");
+                return;
+            }
+            mReceivedGameModes.put(senderPackage, gameMode);
+        }
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = getApplicationContext();
         mGameManager = mContext.getSystemService(GameManager.class);
+
+        IntentFilter intentFilter = new IntentFilter("android.gamemanager.cts.GAME_MODE");
+        mGameModeReceiver = new GameModeReceiver();
+        registerReceiver(mGameModeReceiver, intentFilter);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mGameModeReceiver != null) {
+            unregisterReceiver(mGameModeReceiver);
+        }
     }
 
     public String getPackageName() {
         return mContext.getPackageName();
+    }
+
+    public int getLastReceivedGameMode(String packageName) {
+        return mReceivedGameModes.getOrDefault(packageName, -1);
     }
 
     public int getGameMode() {

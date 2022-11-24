@@ -32,7 +32,7 @@ constexpr int kChannelCount = 2;
 static void checkSessionIdNone(aaudio_performance_mode_t perfMode) {
     if (!deviceSupportsFeature(FEATURE_PLAYBACK)) return;
 
-    float *buffer = new float[kNumFrames * kChannelCount];
+    std::unique_ptr<float[]> buffer(new float[kNumFrames * kChannelCount]);
 
     AAudioStreamBuilder *aaudioBuilder = nullptr;
 
@@ -54,12 +54,11 @@ static void checkSessionIdNone(aaudio_performance_mode_t perfMode) {
 
     ASSERT_EQ(AAUDIO_OK, AAudioStream_requestStart(aaudioStream1));
 
-    ASSERT_EQ(kNumFrames, AAudioStream_write(aaudioStream1, buffer, kNumFrames, NANOS_PER_SECOND));
+    ASSERT_EQ(kNumFrames, AAudioStream_write(aaudioStream1, buffer.get(), kNumFrames, NANOS_PER_SECOND));
 
     EXPECT_EQ(AAUDIO_OK, AAudioStream_requestStop(aaudioStream1));
 
     EXPECT_EQ(AAUDIO_OK, AAudioStream_close(aaudioStream1));
-    delete[] buffer;
     AAudioStreamBuilder_delete(aaudioBuilder);
 }
 
@@ -81,7 +80,7 @@ static void checkSessionIdAllocate(aaudio_performance_mode_t perfMode,
     if (!deviceSupportsFeature(FEATURE_RECORDING)
             || !deviceSupportsFeature(FEATURE_PLAYBACK)) return;
 
-    float *buffer = new float[kNumFrames * kChannelCount];
+    std::unique_ptr<float[]> buffer(new float[kNumFrames * kChannelCount]);
 
     AAudioStreamBuilder *aaudioBuilder = nullptr;
 
@@ -115,10 +114,10 @@ static void checkSessionIdAllocate(aaudio_performance_mode_t perfMode,
 
     if (direction == AAUDIO_DIRECTION_INPUT) {
         ASSERT_EQ(kNumFrames, AAudioStream_read(aaudioStream1,
-                                                buffer, kNumFrames, NANOS_PER_SECOND));
+                                                buffer.get(), kNumFrames, NANOS_PER_SECOND));
     } else {
         ASSERT_EQ(kNumFrames, AAudioStream_write(aaudioStream1,
-                                         buffer, kNumFrames, NANOS_PER_SECOND));
+                                         buffer.get(), kNumFrames, NANOS_PER_SECOND));
     }
 
     EXPECT_EQ(AAUDIO_OK, AAudioStream_requestStop(aaudioStream1));
@@ -144,10 +143,10 @@ static void checkSessionIdAllocate(aaudio_performance_mode_t perfMode,
 
     if (otherDirection == AAUDIO_DIRECTION_INPUT) {
         ASSERT_EQ(kNumFrames, AAudioStream_read(aaudioStream2,
-                                                 buffer, kNumFrames, NANOS_PER_SECOND));
+                                                 buffer.get(), kNumFrames, NANOS_PER_SECOND));
     } else {
         ASSERT_EQ(kNumFrames, AAudioStream_write(aaudioStream2,
-                                                 buffer, kNumFrames, NANOS_PER_SECOND));
+                                                 buffer.get(), kNumFrames, NANOS_PER_SECOND));
     }
 
     EXPECT_EQ(AAUDIO_OK, AAudioStream_requestStop(aaudioStream2));
@@ -156,7 +155,6 @@ static void checkSessionIdAllocate(aaudio_performance_mode_t perfMode,
 
 
     EXPECT_EQ(AAUDIO_OK, AAudioStream_close(aaudioStream1));
-    delete[] buffer;
     AAudioStreamBuilder_delete(aaudioBuilder);
 }
 

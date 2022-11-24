@@ -43,6 +43,7 @@ import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -1002,6 +1003,152 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         assertTrue("Expected onCreateIncomingConnectionFailed callback",
                 CtsSelfManagedConnectionService.getConnectionService().waitForUpdate(
                         CtsSelfManagedConnectionService.CREATE_INCOMING_CONNECTION_FAILED_LOCK));
+    }
+
+    /**
+     * Verifies the DUT can successfully place a self-managed call when the default outgoing account
+     * handle has the capability {@link PhoneAccount.CAPABILITY_SIM_SUBSCRIPTION} (aka sim based
+     * phoneAccount).
+     *
+     * @throws Exception; should not throw exception.
+     */
+    public void testSelfManagedCallWithSimBasedPhoneAccountAsDefault() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        // temp save the DUT default
+        PhoneAccountHandle DUT_default_out = mTelecomManager.getUserSelectedOutgoingPhoneAccount();
+
+        try {
+            // register test sim account
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelecomManager,
+                    tm -> tm.registerPhoneAccount(TestUtils.TEST_SIM_PHONE_ACCOUNT),
+                    "android.permission.REGISTER_SIM_SUBSCRIPTION");
+
+            // verify sim and self-managed test accounts are registered
+            verifyAccountRegistration(TestUtils.TEST_SIM_PHONE_ACCOUNT_HANDLE,
+                    TestUtils.TEST_SIM_PHONE_ACCOUNT);
+
+            verifyAccountRegistration(TestUtils.TEST_SELF_MANAGED_HANDLE_1,
+                    TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_1);
+
+            // set the default as the sim account
+            setDefaultOutgoingPhoneAccountAndVerify(TestUtils.TEST_SIM_PHONE_ACCOUNT_HANDLE);
+
+            // verify the DUT can still place self-managed calls
+            assertIsOutgoingCallPermitted(true, TestUtils.TEST_SELF_MANAGED_HANDLE_1);
+            placeAndVerifyOutgoingCall(TestUtils.TEST_SELF_MANAGED_HANDLE_1, TEST_ADDRESS_1);
+
+        } finally {
+            restoreDefaultOutgoingAccount(DUT_default_out);
+        }
+    }
+
+    /**
+     * Verifies the DUT can successfully place a self-managed call when the default outgoing account
+     * handle is null (meaning there is no call preference and the user will be prompted to select
+     * an account when placing a call).
+     *
+     * @throws Exception; should not throw exception.
+     */
+    public void testSelfManagedCallWithNoCallPreferenceAsDefault() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        // temp save the DUT default
+        PhoneAccountHandle DUT_default_out = mTelecomManager.getUserSelectedOutgoingPhoneAccount();
+
+        try {
+            registerTestSimAccountsAndVerify();
+
+            verifyAccountRegistration(TestUtils.TEST_SELF_MANAGED_HANDLE_1,
+                    TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_1);
+
+            setDefaultOutgoingPhoneAccountAndVerify(null);
+
+            placeAndVerifyOutgoingCall(TEST_SELF_MANAGED_HANDLE_1, getTestNumber());
+        } finally {
+            restoreDefaultOutgoingAccount(DUT_default_out);
+        }
+    }
+
+    /**
+     * Verifies the DUT can place a self-managed call when the default outgoing phoneAccount is
+     * a sim based account and there are multiple sim based accounts registered and enabled.
+     *
+     * @throws Exception; should not throw exception.
+     */
+    public void testSelfManagedCallWithMultipleSimBasedAccountsActiveAndAsDefault()
+            throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        // temp save the DUT default
+        PhoneAccountHandle DUT_default_out = mTelecomManager.getUserSelectedOutgoingPhoneAccount();
+
+        try {
+            registerTestSimAccountsAndVerify();
+
+            verifyAccountRegistration(TestUtils.TEST_SELF_MANAGED_HANDLE_1,
+                    TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_1);
+
+            setDefaultOutgoingPhoneAccountAndVerify(TestUtils.TEST_SIM_PHONE_ACCOUNT_HANDLE);
+
+            placeAndVerifyOutgoingCall(TEST_SELF_MANAGED_HANDLE_1, getTestNumber());
+        } finally {
+            restoreDefaultOutgoingAccount(DUT_default_out);
+        }
+    }
+
+    /**
+     * register sim accounts and verify they were successfully registered. Note, registering a
+     * sim based phoneAccount requires the android.permission.REGISTER_SIM_SUBSCRIPTION.
+     */
+    private void registerTestSimAccountsAndVerify() {
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelecomManager,
+                tm -> tm.registerPhoneAccount(TestUtils.TEST_SIM_PHONE_ACCOUNT),
+                "android.permission.REGISTER_SIM_SUBSCRIPTION");
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelecomManager,
+                tm -> tm.registerPhoneAccount(TestUtils.TEST_SIM_PHONE_ACCOUNT_2),
+                "android.permission.REGISTER_SIM_SUBSCRIPTION");
+
+        verifyAccountRegistration(TestUtils.TEST_SIM_PHONE_ACCOUNT.getAccountHandle(),
+                TestUtils.TEST_SIM_PHONE_ACCOUNT);
+
+        verifyAccountRegistration(TestUtils.TEST_SIM_PHONE_ACCOUNT_2.getAccountHandle(),
+                TestUtils.TEST_SIM_PHONE_ACCOUNT_2);
+    }
+
+    /**
+     * helper to restore the default outgoing handle and unregister sim based accounts
+     *
+     * @param handle that will be the new default.
+     * @throws Exception; should not throw
+     */
+    private void restoreDefaultOutgoingAccount(PhoneAccountHandle handle)
+            throws Exception {
+        // Restore the default outgoing phone account.
+        setDefaultOutgoingPhoneAccountAndVerify(handle);
+
+        // unregister the call capable account
+        mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_SIM_PHONE_ACCOUNT_HANDLE);
+        mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_SIM_PHONE_ACCOUNT_HANDLE_2);
+    }
+
+    /**
+     * helper method to set the default outgoing account handle and verify it was successfully set
+     *
+     * @param handle that will be the new default.
+     * @throws Exception; should not throw.
+     */
+    private void setDefaultOutgoingPhoneAccountAndVerify(PhoneAccountHandle handle)
+            throws Exception {
+        // set the default outgoing as a self-managed account
+        TestUtils.setDefaultOutgoingPhoneAccount(getInstrumentation(), handle);
+
+        // assert the self-managed is returned
+        assertEquals(handle, mTelecomManager.getUserSelectedOutgoingPhoneAccount());
     }
 
     /**

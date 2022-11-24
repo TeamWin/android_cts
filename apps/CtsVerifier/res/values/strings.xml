@@ -311,7 +311,7 @@
     </string>
     <string name="clipboard_preview_test_instructions">
         Press the \'Copy\' button to copy the secret code to the clipboard.
-        \nDo not press any other buttons after you press the \'Copy\' button.
+        \n\nDo not press any other buttons or tap the clipboard UI after you press the \'Copy\' button.
         \n\n If nothing happens, press Fail.
         \n\n If you see the word "FAIL" appear on screen, press Fail.
         \n\n If you see a confirmation that content has been copied to the clipboard, press Pass.

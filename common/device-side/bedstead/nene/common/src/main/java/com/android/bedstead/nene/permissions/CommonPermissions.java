@@ -832,14 +832,6 @@ public class CommonPermissions {
     public static final String BIND_JOB_SERVICE = "android.permission.BIND_JOB_SERVICE";
     /** See {@code Manifest#UPDATE_CONFIG} */
     public static final String UPDATE_CONFIG = "android.permission.UPDATE_CONFIG";
-    /** See {@code Manifest#QUERY_TIME_ZONE_RULES} */
-    public static final String QUERY_TIME_ZONE_RULES = "android.permission.QUERY_TIME_ZONE_RULES";
-    /** See {@code Manifest#UPDATE_TIME_ZONE_RULES} */
-    public static final String UPDATE_TIME_ZONE_RULES = "android.permission"
-            + ".UPDATE_TIME_ZONE_RULES";
-    /** See {@code Manifest#TRIGGER_TIME_ZONE_RULES_CHECK} */
-    public static final String TRIGGER_TIME_ZONE_RULES_CHECK = "android.permission"
-            + ".TRIGGER_TIME_ZONE_RULES_CHECK";
     /** See {@code Manifest#RESET_SHORTCUT_MANAGER_THROTTLING} */
     public static final String RESET_SHORTCUT_MANAGER_THROTTLING =
             "android.permission.RESET_SHORTCUT_MANAGER_THROTTLING";

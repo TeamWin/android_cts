@@ -17,6 +17,7 @@
 package com.android.cts.verifier;
 
 import com.android.interactive.annotations.Interactive;
+import com.android.interactive.annotations.SupportMultiDisplayMode;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -27,6 +28,7 @@ public final class TunnelTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void VolumeLevelChangesTest() throws Exception {
         requireFeatures("android.software.leanback");

@@ -2085,7 +2085,7 @@ public class CodecUnitTest {
         public Timeout timeout = new Timeout(PER_TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
 
         static {
-            System.loadLibrary("ctsmediav2codec_jni");
+            System.loadLibrary("ctsmediav2codecapiunit_jni");
         }
 
         @ApiTest(apis = "AMediaCodec_createCodecByName")

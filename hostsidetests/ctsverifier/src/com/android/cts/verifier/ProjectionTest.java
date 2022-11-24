@@ -17,6 +17,7 @@
 package com.android.cts.verifier;
 
 import com.android.interactive.annotations.Interactive;
+import com.android.interactive.annotations.SupportMultiDisplayMode;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -27,6 +28,7 @@ public final class ProjectionTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void ProjectionCubeTest() throws Exception {
         requireFeatures("android.hardware.faketouch");
@@ -36,6 +38,7 @@ public final class ProjectionTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void ProjectionWidgetTest() throws Exception {
         requireFeatures("android.hardware.faketouch");
@@ -45,6 +48,7 @@ public final class ProjectionTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void ProjectionListTest() throws Exception {
         excludeFeatures("android.hardware.type.television", "android.software.leanback");
@@ -54,6 +58,7 @@ public final class ProjectionTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void ProjectionVideoTest() throws Exception {
         excludeFeatures("android.hardware.type.watch");
@@ -63,6 +68,7 @@ public final class ProjectionTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void ProjectionTouchTest() throws Exception {
         requireFeatures("android.hardware.faketouch", "android.hardware.touchscreen.multitouch");
@@ -72,10 +78,13 @@ public final class ProjectionTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void ProjectionOffscreenTest() throws Exception {
-        excludeFeatures("android.hardware.type.television",
-                "android.software.leanback", "android.hardware.type.automotive");
+        excludeFeatures(
+                "android.hardware.type.television",
+                "android.software.leanback",
+                "android.hardware.type.automotive");
 
         runTest(".projection.offscreen.ProjectionOffscreenActivity");
     }

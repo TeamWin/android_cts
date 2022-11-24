@@ -190,16 +190,13 @@ public class WindowInsetsBehaviorTests {
         mConfiguredInSettings = false;
     }
 
-    @Rule
-    public ScreenshotTestRule mScreenshotTestRule =
+    private ScreenshotTestRule mScreenshotTestRule =
             new ScreenshotTestRule(DEF_SCREENSHOT_BASE_PATH);
 
     @Rule
-    public ActivityTestRule<WindowInsetsActivity> mActivityRule = new ActivityTestRule<>(
-            WindowInsetsActivity.class, true, false);
-
-    @Rule
-    public RuleChain mRuleChain = RuleChain.outerRule(mActivityRule)
+    public RuleChain mRuleChain = RuleChain
+            .outerRule(new ActivityTestRule<>(
+                    WindowInsetsActivity.class, true, false))
             .around(mScreenshotTestRule);
 
     private WindowInsetsActivity mActivity;

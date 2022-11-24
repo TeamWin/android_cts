@@ -57,6 +57,7 @@ import androidx.annotation.Nullable;
 
 import com.android.server.wm.nano.ActivityRecordProto;
 import com.android.server.wm.nano.AppTransitionProto;
+import com.android.server.wm.nano.BackNavigationProto;
 import com.android.server.wm.nano.ConfigurationContainerProto;
 import com.android.server.wm.nano.DisplayAreaProto;
 import com.android.server.wm.nano.DisplayContentProto;
@@ -161,6 +162,7 @@ public class WindowManagerState {
     private boolean mDisplayFrozen;
     private boolean mSanityCheckFocusedWindow = true;
     private boolean mWindowFramesValid;
+    private BackNavigationState mBackNavigationState;
 
     static String appStateToString(int appState) {
         switch (appState) {
@@ -453,6 +455,8 @@ public class WindowManagerState {
         }
         mDisplayFrozen = state.displayFrozen;
         mWindowFramesValid = state.windowFramesValid;
+
+        mBackNavigationState = new BackNavigationState(state.backNavigation);
     }
 
     private void reset() {
@@ -621,6 +625,10 @@ public class WindowManagerState {
 
     public KeyguardServiceDelegateState getKeyguardServiceDelegateState() {
         return mKeyguardServiceDelegateState;
+    }
+
+    public BackNavigationState getBackNavigationState() {
+        return mBackNavigationState;
     }
 
     public boolean containsRootTasks(int windowingMode, int activityType) {
@@ -2241,6 +2249,32 @@ public class WindowManagerState {
         public String toLongString() {
             return toString() + " f=" + mFrame + " crop=" + mCrop + " isSurfaceShown="
                     + isSurfaceShown();
+        }
+    }
+
+    static class BackNavigationState {
+        private boolean mAnimationInProgress;
+        private int mLastBackType;
+        private boolean mShowWallpaper;
+
+        BackNavigationState(BackNavigationProto proto) {
+            if (proto != null) {
+                mAnimationInProgress = proto.animationInProgress;
+                mLastBackType = proto.lastBackType;
+                mShowWallpaper = proto.showWallpaper;
+            }
+        }
+
+        boolean isAnimationInProgress() {
+            return mAnimationInProgress;
+        }
+
+        int getLastBackType() {
+            return mLastBackType;
+        }
+
+        boolean isShowWallpaper() {
+            return mShowWallpaper;
         }
     }
 

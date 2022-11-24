@@ -19,6 +19,7 @@ package com.android.cts.verifier;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 import com.android.interactive.annotations.Interactive;
+import com.android.interactive.annotations.SupportMultiDisplayMode;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -29,9 +30,11 @@ public final class CarTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void CarDockTest() throws Exception {
-        excludeFeatures("android.hardware.type.television",
+        excludeFeatures(
+                "android.hardware.type.television",
                 "android.software.leanback",
                 "android.hardware.type.watch",
                 "android.hardware.type.automotive");
@@ -41,6 +44,7 @@ public final class CarTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void PowerPolicyTest() throws Exception {
         requireFeatures("android.hardware.type.automotive");
@@ -50,6 +54,7 @@ public final class CarTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void GearSelectionTest() throws Exception {
         requireFeatures("android.hardware.type.automotive");
@@ -59,6 +64,7 @@ public final class CarTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void ParkingBrakeOnTest() throws Exception {
         requireFeatures("android.hardware.type.automotive");
@@ -68,8 +74,12 @@ public final class CarTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
-    @ApiTest(apis = "android.car.settings.CarSettings.Secure#KEY_PACKAGES_DISABLED_ON_RESOURCE_OVERUSE")
+    @ApiTest(
+            apis =
+                    "android.car.settings.CarSettings.Secure#"
+                            + "KEY_PACKAGES_DISABLED_ON_RESOURCE_OVERUSE")
     public void CarLauncherTest() throws Exception {
         requireFeatures("android.hardware.type.automotive");
 
@@ -78,6 +88,7 @@ public final class CarTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @CddTest(requirements = "8.3/A-1-3|8.3/A-1-4")
     public void GarageModeTest() throws Exception {

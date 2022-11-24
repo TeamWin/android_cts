@@ -61,7 +61,8 @@ public final class DeviceAdminTest extends CtsVerifierTest {
     // SingleDisplayMode
     public void ScreenLockTest() throws Exception {
         requireFeatures("android.software.device_admin");
-        excludeFeatures("android.hardware.type.automotive",
+        excludeFeatures(
+                "android.hardware.type.automotive",
                 "android.hardware.type.television",
                 "android.software.lockscreen_disabled");
 

@@ -19,9 +19,9 @@ package com.android.cts.verifier;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 import com.android.interactive.annotations.Interactive;
+import com.android.interactive.annotations.SupportMultiDisplayMode;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -31,19 +31,22 @@ public final class CameraTest extends CtsVerifierTest {
     @Interactive
     @Test
     // SingleDisplayMode
-    @ApiTest(apis = {"android.hardware.Camera#getParameters",
-            "android.hardware.Camera#setParameters",
-            "android.hardware.Camera#setDisplayOrientation",
-            "android.hardware.Camera#setPreviewCallback",
-            "android.hardware.Camera#stopPreview",
-            "android.hardware.Camera#release",
-            "android.hardware.Camera#setPreviewTexture",
-            "android.hardware.Camera#startPreview",
-            "android.hardware.Camera.Parameters#setPreviewFormat",
-            "android.hardware.Camera.Parameters#setPreviewSize",
-            "android.hardware.Camera.Parameters#getSupportedPreviewFormats",
-            "android.hardware.Camera.Parameters#getSupportedPreviewSizes",
-            "android.hardware.Camera.PreviewCallback#onPreviewFrame"})
+    @ApiTest(
+            apis = {
+                "android.hardware.Camera#getParameters",
+                "android.hardware.Camera#setParameters",
+                "android.hardware.Camera#setDisplayOrientation",
+                "android.hardware.Camera#setPreviewCallback",
+                "android.hardware.Camera#stopPreview",
+                "android.hardware.Camera#release",
+                "android.hardware.Camera#setPreviewTexture",
+                "android.hardware.Camera#startPreview",
+                "android.hardware.Camera.Parameters#setPreviewFormat",
+                "android.hardware.Camera.Parameters#setPreviewSize",
+                "android.hardware.Camera.Parameters#getSupportedPreviewFormats",
+                "android.hardware.Camera.Parameters#getSupportedPreviewSizes",
+                "android.hardware.Camera.PreviewCallback#onPreviewFrame"
+            })
     public void CameraFormatsTest() throws Exception {
         requireFeatures("android.hardware.camera.any");
         excludeFeatures("android.hardware.type.automotive");
@@ -54,12 +57,17 @@ public final class CameraTest extends CtsVerifierTest {
     @Interactive
     @Test
     // SingleDisplayMode
-    @ApiTest(apis = {"android.hardware.Camera#ACTION_NEW_PICTURE",
-            "android.hardware.Camera#ACTION_NEW_VIDEO"})
+    @ApiTest(
+            apis = {
+                "android.hardware.Camera#ACTION_NEW_PICTURE",
+                "android.hardware.Camera#ACTION_NEW_VIDEO"
+            })
     public void CameraIntentsTest() throws Exception {
         requireFeatures("android.hardware.camera.any");
-        excludeFeatures("android.hardware.type.automotive",
-                "android.hardware.type.television", "android.software.leanback");
+        excludeFeatures(
+                "android.hardware.type.automotive",
+                "android.hardware.type.television",
+                "android.software.leanback");
 
         runTest(".camera.intents.CameraIntentsActivity");
     }
@@ -67,12 +75,15 @@ public final class CameraTest extends CtsVerifierTest {
     @Interactive
     @Test
     // SingleDisplayMode
-    @ApiTest(apis = {"android.hardware.Camera#getNumberOfCameras",
-            "android.hardware.Camera#setPreviewDisplay",
-            "android.hardware.Camera.Parameters#setPictureFormat",
-            "android.hardware.Camera.Parameters#setPictureSize",
-            "android.hardware.Camera#setDisplayOrientation",
-            "android.hardware.Camera#takePicture"})
+    @ApiTest(
+            apis = {
+                "android.hardware.Camera#getNumberOfCameras",
+                "android.hardware.Camera#setPreviewDisplay",
+                "android.hardware.Camera.Parameters#setPictureFormat",
+                "android.hardware.Camera.Parameters#setPictureSize",
+                "android.hardware.Camera#setDisplayOrientation",
+                "android.hardware.Camera#takePicture"
+            })
     public void CameraOrientationTest() throws Exception {
         requireFeatures("android.hardware.camera.any");
         excludeFeatures("android.hardware.type.automotive");
@@ -112,11 +123,15 @@ public final class CameraTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
-    @ApiTest(apis = {"android.hardware.camera2.CameraCharacteristics#FLASH_INFO_AVAILABLE",
-            "android.hardware.camera2.CameraManager#setTorchMode",
-            "android.hardware.camera2.CameraManager#registerTorchCallback",
-            "android.hardware.camera2.CameraManager.TorchCallback#onTorchModeChanged"})
+    @ApiTest(
+            apis = {
+                "android.hardware.camera2.CameraCharacteristics#FLASH_INFO_AVAILABLE",
+                "android.hardware.camera2.CameraManager#setTorchMode",
+                "android.hardware.camera2.CameraManager#registerTorchCallback",
+                "android.hardware.camera2.CameraManager.TorchCallback#onTorchModeChanged"
+            })
     public void CameraFlashlightTest() throws Exception {
         requireFeatures("android.hardware.camera.flash");
         excludeFeatures("android.hardware.type.automotive");
@@ -136,13 +151,17 @@ public final class CameraTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
-    @ApiTest(apis = {
-            "android.hardware.camera2.CameraMetadata#controlExtendedSceneModeBokehStillCapture",
-            "android.hardware.camera2.CameraMetadata#controlExtendedSceneModeBokehContinuous",
-            "android.hardware.camera2.CameraCharacteristics#controlAvailableExtendedSceneModeCapabilities",
-            "android.hardware.camera2.CameraCharacteristics#scalerStreamConfigurationMap",
-            "android.hardware.camera2.CaptureRequest#controlExtendedSceneMode"})
+    @ApiTest(
+            apis = {
+                "android.hardware.camera2.CameraMetadata#controlExtendedSceneModeBokehStillCapture",
+                "android.hardware.camera2.CameraMetadata#controlExtendedSceneModeBokehContinuous",
+                "android.hardware.camera2.CameraCharacteristics#"
+                        + "controlAvailableExtendedSceneModeCapabilities",
+                "android.hardware.camera2.CameraCharacteristics#scalerStreamConfigurationMap",
+                "android.hardware.camera2.CaptureRequest#controlExtendedSceneMode"
+            })
     public void CameraBokehTest() throws Exception {
         requireFeatures("android.hardware.camera.any");
         excludeFeatures("android.hardware.type.automotive");
@@ -158,7 +177,6 @@ public final class CameraTest extends CtsVerifierTest {
         requireFeatures("android.hardware.camera.any");
         excludeFeatures("android.hardware.type.automotive");
 
-        runTest(".camera.its.CameraMuteToggleActivity",
-                "config_has_camera_toggle");
+        runTest(".camera.its.CameraMuteToggleActivity", "config_has_camera_toggle");
     }
 }

@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.notifications;
 
-import static android.app.Notification.VISIBILITY_PRIVATE;
 import static android.app.NotificationManager.IMPORTANCE_LOW;
 import static android.app.NotificationManager.IMPORTANCE_MAX;
 import static android.app.NotificationManager.IMPORTANCE_NONE;
@@ -52,7 +51,6 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.provider.Settings.Secure;
-import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.ArraySet;
 import android.util.Log;
@@ -64,6 +62,7 @@ import android.widget.RemoteViews;
 import androidx.core.app.NotificationCompat;
 
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.TestListActivity;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -116,9 +115,20 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
     // Test Setup
 
     @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        String displayMode = getIntent().getStringExtra("DISPLAY_MODE");
+        if (displayMode != null) {
+            // Update the display mode for NotificationListenerVerifierActivity due to b/255265824.
+            Log.i(TAG, "onCreate with displayMode=" + displayMode);
+            TestListActivity.sCurrentDisplayMode = displayMode;
+        }
+    }
+
+    @Override
     protected List<InteractiveTestCase> createTestItems() {
-        boolean isAutomotive = getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_AUTOMOTIVE);
+        boolean isAutomotive =
+                getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
         List<InteractiveTestCase> tests = new ArrayList<>(17);
         tests.add(new IsEnabledTest());
         tests.add(new ServiceStartedTest());
@@ -161,11 +171,15 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
     }
 
     private void createChannels() {
-        NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
-                NOTIFICATION_CHANNEL_ID, IMPORTANCE_LOW);
-        NotificationChannel noisyChannel = new NotificationChannel(NOISY_NOTIFICATION_CHANNEL_ID,
-                NOISY_NOTIFICATION_CHANNEL_ID, IMPORTANCE_MAX);
-        noisyChannel.setVibrationPattern(new long[]{100, 0, 100});
+        NotificationChannel channel =
+                new NotificationChannel(
+                        NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_ID, IMPORTANCE_LOW);
+        NotificationChannel noisyChannel =
+                new NotificationChannel(
+                        NOISY_NOTIFICATION_CHANNEL_ID,
+                        NOISY_NOTIFICATION_CHANNEL_ID,
+                        IMPORTANCE_MAX);
+        noisyChannel.setVibrationPattern(new long[] {100, 0, 100});
         mNm.createNotificationChannel(channel);
         mNm.createNotificationChannel(noisyChannel);
     }
@@ -198,37 +212,40 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         mPackageString = "com.android.cts.verifier";
 
-        Notification n1 = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setContentTitle("ClearTest 1")
-                .setContentText(mTag1)
-                .setSmallIcon(mIcon1)
-                .setWhen(mWhen1)
-                .setDeleteIntent(makeIntent(1, mTag1))
-                .setOnlyAlertOnce(true)
-                .build();
+        Notification n1 =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setContentTitle("ClearTest 1")
+                        .setContentText(mTag1)
+                        .setSmallIcon(mIcon1)
+                        .setWhen(mWhen1)
+                        .setDeleteIntent(makeIntent(1, mTag1))
+                        .setOnlyAlertOnce(true)
+                        .build();
         mNm.notify(mTag1, mId1, n1);
         mFlag1 = Notification.FLAG_ONLY_ALERT_ONCE;
 
-        Notification n2 = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setContentTitle("ClearTest 2")
-                .setContentText(mTag2)
-                .setSmallIcon(mIcon2)
-                .setWhen(mWhen2)
-                .setDeleteIntent(makeIntent(2, mTag2))
-                .setAutoCancel(true)
-                .build();
+        Notification n2 =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setContentTitle("ClearTest 2")
+                        .setContentText(mTag2)
+                        .setSmallIcon(mIcon2)
+                        .setWhen(mWhen2)
+                        .setDeleteIntent(makeIntent(2, mTag2))
+                        .setAutoCancel(true)
+                        .build();
         mNm.notify(mTag2, mId2, n2);
         mFlag2 = Notification.FLAG_AUTO_CANCEL;
 
-        Notification n3 = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setContentTitle("ClearTest 3")
-                .setContentText(mTag3)
-                .setSmallIcon(mIcon3)
-                .setWhen(mWhen3)
-                .setDeleteIntent(makeIntent(3, mTag3))
-                .setAutoCancel(true)
-                .setOnlyAlertOnce(true)
-                .build();
+        Notification n3 =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setContentTitle("ClearTest 3")
+                        .setContentText(mTag3)
+                        .setSmallIcon(mIcon3)
+                        .setWhen(mWhen3)
+                        .setDeleteIntent(makeIntent(3, mTag3))
+                        .setAutoCancel(true)
+                        .setOnlyAlertOnce(true)
+                        .build();
         mNm.notify(mTag3, mId3, n3);
         mFlag3 = Notification.FLAG_ONLY_ALERT_ONCE | Notification.FLAG_AUTO_CANCEL;
     }
@@ -242,14 +259,15 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         mId4 = NOTIFICATION_ID + 4;
         mPackageString = "com.android.cts.verifier";
 
-        Notification n1 = new Notification.Builder(mContext, NOISY_NOTIFICATION_CHANNEL_ID)
-                .setContentTitle("NoisyTest 1")
-                .setContentText(mTag4)
-                .setSmallIcon(mIcon4)
-                .setWhen(mWhen4)
-                .setDeleteIntent(makeIntent(4, mTag4))
-                .setCategory(Notification.CATEGORY_REMINDER)
-                .build();
+        Notification n1 =
+                new Notification.Builder(mContext, NOISY_NOTIFICATION_CHANNEL_ID)
+                        .setContentTitle("NoisyTest 1")
+                        .setContentText(mTag4)
+                        .setSmallIcon(mIcon4)
+                        .setWhen(mWhen4)
+                        .setDeleteIntent(makeIntent(4, mTag4))
+                        .setCategory(Notification.CATEGORY_REMINDER)
+                        .build();
         mNm.notify(mTag4, mId4, n1);
     }
 
@@ -258,7 +276,6 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.nls_note_received);
-
         }
 
         @Override
@@ -288,6 +305,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
     private class LongMessageTest extends InteractiveTestCase {
         private ViewGroup mParent;
+
         @Override
         protected View inflate(ViewGroup parent) {
             mParent = createAutoItem(parent, R.string.nls_anr);
@@ -301,18 +319,18 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
             for (int i = 0; i < 20000; i++) {
                 sb.append("\u2009\u200a" + "\u200E\u200F" + "stuff");
             }
-            Notification.Builder builder = new Notification.Builder(
-                    mContext, NOTIFICATION_CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_stat_alice)
-                    .setContentTitle("This is an long notification")
-                    .setContentText("Innocuous content")
-                    .setStyle(new Notification.MessagingStyle("Fake person")
-                            .addMessage("hey how is it goin", 0, "Person 1")
-                            .addMessage("hey", 0, "Person 1")
-                            .addMessage("u there", 0, "Person 1")
-                            .addMessage("how you like tHIS", 0, "Person 1")
-                            .addMessage(sb.toString(), 0, "Person 1")
-                    );
+            Notification.Builder builder =
+                    new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                            .setSmallIcon(R.drawable.ic_stat_alice)
+                            .setContentTitle("This is an long notification")
+                            .setContentText("Innocuous content")
+                            .setStyle(
+                                    new Notification.MessagingStyle("Fake person")
+                                            .addMessage("hey how is it goin", 0, "Person 1")
+                                            .addMessage("hey", 0, "Person 1")
+                                            .addMessage("u there", 0, "Person 1")
+                                            .addMessage("how you like tHIS", 0, "Person 1")
+                                            .addMessage(sb.toString(), 0, "Person 1"));
             mTag1 = UUID.randomUUID().toString();
             mId1 = NOTIFICATION_ID + 1;
             mPackageString = "com.android.cts.verifier";
@@ -336,9 +354,9 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
             } else {
                 ViewGroup parent = mParent.findViewById(R.id.feedback);
                 parent.setVisibility(View.VISIBLE);
-                final Notification.Builder recoveredBuilder = Notification.Builder.recoverBuilder(
-                        NotificationListenerVerifierActivity.this,
-                        sbn.getNotification());
+                final Notification.Builder recoveredBuilder =
+                        Notification.Builder.recoverBuilder(
+                                NotificationListenerVerifierActivity.this, sbn.getNotification());
                 RemoteViews rv = recoveredBuilder.createContentView();
                 View v = rv.apply(NotificationListenerVerifierActivity.this, parent);
                 parent.addView(v);
@@ -353,14 +371,15 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
     }
 
     /**
-     * Creates a notification channel. Sends the user to settings to block the channel. Waits
-     * to receive the broadcast that the channel was blocked, and confirms that the broadcast
-     * contains the correct extras.
+     * Creates a notification channel. Sends the user to settings to block the channel. Waits to
+     * receive the broadcast that the channel was blocked, and confirms that the broadcast contains
+     * the correct extras.
      */
     protected class ReceiveChannelBlockNoticeTest extends InteractiveTestCase {
         private String mChannelId;
         private int mRetries = 2;
         private View mView;
+
         @Override
         protected View inflate(ViewGroup parent) {
             mView = createNlsSettingsItem(parent, R.string.nls_block_channel);
@@ -372,8 +391,9 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected void setUp() {
             mChannelId = UUID.randomUUID().toString();
-            NotificationChannel channel = new NotificationChannel(
-                    mChannelId, "ReceiveChannelBlockNoticeTest", IMPORTANCE_LOW);
+            NotificationChannel channel =
+                    new NotificationChannel(
+                            mChannelId, "ReceiveChannelBlockNoticeTest", IMPORTANCE_LOW);
             mNm.createNotificationChannel(channel);
             status = READY;
             Button button = mView.findViewById(R.id.nls_action_button);
@@ -388,8 +408,9 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected void test() {
             NotificationChannel channel = mNm.getNotificationChannel(mChannelId);
-            SharedPreferences prefs = mContext.getSharedPreferences(
-                    NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
+            SharedPreferences prefs =
+                    mContext.getSharedPreferences(
+                            NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
 
             if (channel.getImportance() == IMPORTANCE_NONE) {
                 if (prefs.contains(mChannelId) && prefs.getBoolean(mChannelId, false)) {
@@ -413,29 +434,31 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         protected void tearDown() {
             MockListener.getInstance().resetData();
             mNm.deleteNotificationChannel(mChannelId);
-            SharedPreferences prefs = mContext.getSharedPreferences(
-                    NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
+            SharedPreferences prefs =
+                    mContext.getSharedPreferences(
+                            NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
             editor.remove(mChannelId);
         }
 
         @Override
         protected Intent getIntent() {
-         return new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
-                 .putExtra(EXTRA_APP_PACKAGE, mContext.getPackageName())
-                 .putExtra(EXTRA_CHANNEL_ID, mChannelId);
+            return new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                    .putExtra(EXTRA_APP_PACKAGE, mContext.getPackageName())
+                    .putExtra(EXTRA_CHANNEL_ID, mChannelId);
         }
     }
 
     /**
-     * Creates a notification channel group. Sends the user to settings to block the group. Waits
-     * to receive the broadcast that the group was blocked, and confirms that the broadcast contains
+     * Creates a notification channel group. Sends the user to settings to block the group. Waits to
+     * receive the broadcast that the group was blocked, and confirms that the broadcast contains
      * the correct extras.
      */
     protected class ReceiveGroupBlockNoticeTest extends InteractiveTestCase {
         private String mGroupId;
         private int mRetries = 2;
         private View mView;
+
         @Override
         protected View inflate(ViewGroup parent) {
             mView = createNlsSettingsItem(parent, R.string.nls_block_group);
@@ -447,11 +470,12 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected void setUp() {
             mGroupId = UUID.randomUUID().toString();
-            NotificationChannelGroup group
-                    = new NotificationChannelGroup(mGroupId, "ReceiveChannelGroupBlockNoticeTest");
+            NotificationChannelGroup group =
+                    new NotificationChannelGroup(mGroupId, "ReceiveChannelGroupBlockNoticeTest");
             mNm.createNotificationChannelGroup(group);
-            NotificationChannel channel = new NotificationChannel(
-                    mGroupId, "ReceiveChannelBlockNoticeTest", IMPORTANCE_LOW);
+            NotificationChannel channel =
+                    new NotificationChannel(
+                            mGroupId, "ReceiveChannelBlockNoticeTest", IMPORTANCE_LOW);
             channel.setGroup(mGroupId);
             mNm.createNotificationChannel(channel);
             status = READY;
@@ -467,8 +491,9 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected void test() {
             NotificationChannelGroup group = mNm.getNotificationChannelGroup(mGroupId);
-            SharedPreferences prefs = mContext.getSharedPreferences(
-                    NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
+            SharedPreferences prefs =
+                    mContext.getSharedPreferences(
+                            NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
 
             if (group.isBlocked()) {
                 if (prefs.contains(mGroupId) && prefs.getBoolean(mGroupId, false)) {
@@ -492,8 +517,9 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         protected void tearDown() {
             MockListener.getInstance().resetData();
             mNm.deleteNotificationChannelGroup(mGroupId);
-            SharedPreferences prefs = mContext.getSharedPreferences(
-                    NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
+            SharedPreferences prefs =
+                    mContext.getSharedPreferences(
+                            NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
             editor.remove(mGroupId);
         }
@@ -513,6 +539,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
     protected class ReceiveAppBlockNoticeTest extends InteractiveTestCase {
         private int mRetries = 2;
         private View mView;
+
         @Override
         protected View inflate(ViewGroup parent) {
             mView = createNlsSettingsItem(parent, R.string.nls_block_app);
@@ -535,13 +562,16 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         @Override
         protected void test() {
-            SharedPreferences prefs = mContext.getSharedPreferences(
-                    NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
+            SharedPreferences prefs =
+                    mContext.getSharedPreferences(
+                            NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
 
             if (!mNm.areNotificationsEnabled()) {
                 Log.d(TAG, "Got broadcast " + prefs.contains(mContext.getPackageName()));
-                Log.d(TAG, "Broadcast contains correct data? " +
-                        prefs.getBoolean(mContext.getPackageName(), false));
+                Log.d(
+                        TAG,
+                        "Broadcast contains correct data? "
+                                + prefs.getBoolean(mContext.getPackageName(), false));
                 if (prefs.contains(mContext.getPackageName())
                         && prefs.getBoolean(mContext.getPackageName(), false)) {
                     status = PASS;
@@ -564,8 +594,9 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         protected void tearDown() {
             MockListener.getInstance().resetData();
-            SharedPreferences prefs = mContext.getSharedPreferences(
-                    NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
+            SharedPreferences prefs =
+                    mContext.getSharedPreferences(
+                            NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
             editor.remove(mContext.getPackageName());
         }
@@ -585,6 +616,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
     protected class ReceiveAppUnblockNoticeTest extends InteractiveTestCase {
         private int mRetries = 2;
         private View mView;
+
         @Override
         protected View inflate(ViewGroup parent) {
             mView = createNlsSettingsItem(parent, R.string.nls_unblock_app);
@@ -607,8 +639,9 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         @Override
         protected void test() {
-            SharedPreferences prefs = mContext.getSharedPreferences(
-                    NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
+            SharedPreferences prefs =
+                    mContext.getSharedPreferences(
+                            NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
 
             if (mNm.areNotificationsEnabled()) {
                 if (prefs.contains(mContext.getPackageName())
@@ -632,8 +665,9 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         protected void tearDown() {
             MockListener.getInstance().resetData();
-            SharedPreferences prefs = mContext.getSharedPreferences(
-                    NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
+            SharedPreferences prefs =
+                    mContext.getSharedPreferences(
+                            NotificationListenerVerifierActivity.PREFS, Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
             editor.remove(mContext.getPackageName());
         }
@@ -671,40 +705,78 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
             boolean pass = true;
             for (JSONObject payload : result) {
                 try {
-                    pass &= checkEquals(mPackageString,
-                            payload.getString(JSON_PACKAGE),
-                            "data integrity test: notification package (%s, %s)");
+                    pass &=
+                            checkEquals(
+                                    mPackageString,
+                                    payload.getString(JSON_PACKAGE),
+                                    "data integrity test: notification package (%s, %s)");
                     String tag = payload.getString(JSON_TAG);
                     if (mTag1.equals(tag)) {
                         found.add(mTag1);
-                        pass &= checkEquals(mIcon1, payload.getInt(JSON_ICON),
-                                "data integrity test: notification icon (%d, %d)");
-                        pass &= checkFlagSet(mFlag1, payload.getInt(JSON_FLAGS),
-                                "data integrity test: notification flags (%d, %d)");
-                        pass &= checkEquals(mId1, payload.getInt(JSON_ID),
-                                "data integrity test: notification ID (%d, %d)");
-                        pass &= checkEquals(mWhen1, payload.getLong(JSON_WHEN),
-                                "data integrity test: notification when (%d, %d)");
+                        pass &=
+                                checkEquals(
+                                        mIcon1,
+                                        payload.getInt(JSON_ICON),
+                                        "data integrity test: notification icon (%d, %d)");
+                        pass &=
+                                checkFlagSet(
+                                        mFlag1,
+                                        payload.getInt(JSON_FLAGS),
+                                        "data integrity test: notification flags (%d, %d)");
+                        pass &=
+                                checkEquals(
+                                        mId1,
+                                        payload.getInt(JSON_ID),
+                                        "data integrity test: notification ID (%d, %d)");
+                        pass &=
+                                checkEquals(
+                                        mWhen1,
+                                        payload.getLong(JSON_WHEN),
+                                        "data integrity test: notification when (%d, %d)");
                     } else if (mTag2.equals(tag)) {
                         found.add(mTag2);
-                        pass &= checkEquals(mIcon2, payload.getInt(JSON_ICON),
-                                "data integrity test: notification icon (%d, %d)");
-                        pass &= checkFlagSet(mFlag2, payload.getInt(JSON_FLAGS),
-                                "data integrity test: notification flags (%d, %d)");
-                        pass &= checkEquals(mId2, payload.getInt(JSON_ID),
-                                "data integrity test: notification ID (%d, %d)");
-                        pass &= checkEquals(mWhen2, payload.getLong(JSON_WHEN),
-                                "data integrity test: notification when (%d, %d)");
+                        pass &=
+                                checkEquals(
+                                        mIcon2,
+                                        payload.getInt(JSON_ICON),
+                                        "data integrity test: notification icon (%d, %d)");
+                        pass &=
+                                checkFlagSet(
+                                        mFlag2,
+                                        payload.getInt(JSON_FLAGS),
+                                        "data integrity test: notification flags (%d, %d)");
+                        pass &=
+                                checkEquals(
+                                        mId2,
+                                        payload.getInt(JSON_ID),
+                                        "data integrity test: notification ID (%d, %d)");
+                        pass &=
+                                checkEquals(
+                                        mWhen2,
+                                        payload.getLong(JSON_WHEN),
+                                        "data integrity test: notification when (%d, %d)");
                     } else if (mTag3.equals(tag)) {
                         found.add(mTag3);
-                        pass &= checkEquals(mIcon3, payload.getInt(JSON_ICON),
-                                "data integrity test: notification icon (%d, %d)");
-                        pass &= checkFlagSet(mFlag3, payload.getInt(JSON_FLAGS),
-                                "data integrity test: notification flags (%d, %d)");
-                        pass &= checkEquals(mId3, payload.getInt(JSON_ID),
-                                "data integrity test: notification ID (%d, %d)");
-                        pass &= checkEquals(mWhen3, payload.getLong(JSON_WHEN),
-                                "data integrity test: notification when (%d, %d)");
+                        pass &=
+                                checkEquals(
+                                        mIcon3,
+                                        payload.getInt(JSON_ICON),
+                                        "data integrity test: notification icon (%d, %d)");
+                        pass &=
+                                checkFlagSet(
+                                        mFlag3,
+                                        payload.getInt(JSON_FLAGS),
+                                        "data integrity test: notification flags (%d, %d)");
+                        pass &=
+                                checkEquals(
+                                        mId3,
+                                        payload.getInt(JSON_ID),
+                                        "data integrity test: notification ID (%d, %d)");
+                        pass &=
+                                checkEquals(
+                                        mWhen3,
+                                        payload.getLong(JSON_WHEN),
+                                        "data integrity test: notification when (%d, %d)");
                     }
                 } catch (JSONException e) {
                     pass = false;
@@ -753,8 +825,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                     String tag = payload.getString(JSON_TAG);
                     if (mTag4.equals(tag)) {
                         found.add(mTag4);
-                        boolean lastAudiblyAlertedSet
-                                = payload.getLong(JSON_LAST_AUDIBLY_ALERTED) > -1;
+                        boolean lastAudiblyAlertedSet =
+                                payload.getLong(JSON_LAST_AUDIBLY_ALERTED) > -1;
                         if (!lastAudiblyAlertedSet) {
                             logWithStack(
                                     "noisy notification test: getLastAudiblyAlertedMillis not set");
@@ -762,8 +834,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                         pass &= lastAudiblyAlertedSet;
                     } else if (payload.getString(JSON_PACKAGE).equals(mPackageString)) {
                         found.add(tag);
-                        boolean lastAudiblyAlertedSet
-                                = payload.getLong(JSON_LAST_AUDIBLY_ALERTED) > 0;
+                        boolean lastAudiblyAlertedSet =
+                                payload.getLong(JSON_LAST_AUDIBLY_ALERTED) > 0;
                         if (lastAudiblyAlertedSet) {
                             logWithStack(
                                     "noisy notification test: getLastAudiblyAlertedMillis set "
@@ -805,8 +877,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected void test() {
             if (status == READY) {
-                MockListener.getInstance().cancelNotification(
-                        MockListener.getInstance().getKeyForTag(mTag1));
+                MockListener.getInstance()
+                        .cancelNotification(MockListener.getInstance().getKeyForTag(mTag1));
                 status = RETEST;
             } else {
                 List<String> result = new ArrayList<>(MockListener.getInstance().mRemoved);
@@ -848,8 +920,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected void test() {
             if (status == READY) {
-                MockListener.getInstance().cancelNotification(
-                        MockListener.getInstance().getKeyForTag(mTag1));
+                MockListener.getInstance()
+                        .cancelNotification(MockListener.getInstance().getKeyForTag(mTag1));
                 status = RETEST;
             } else {
                 List<JSONObject> result =
@@ -857,13 +929,16 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                 boolean pass = false;
                 for (JSONObject payload : result) {
                     try {
-                        pass |= (checkEquals(mTag1,
-                                payload.getString(JSON_TAG),
-                                "data dismissal test: notification tag (%s, %s)")
-                                && checkEquals(REASON_LISTENER_CANCEL,
-                                payload.getInt(JSON_REASON),
-                                "data dismissal test: reason (%d, %d)"));
-                        if(pass) {
+                        pass |=
+                                (checkEquals(
+                                                mTag1,
+                                                payload.getString(JSON_TAG),
+                                                "data dismissal test: notification tag (%s, %s)")
+                                        && checkEquals(
+                                                REASON_LISTENER_CANCEL,
+                                                payload.getInt(JSON_REASON),
+                                                "data dismissal test: reason (%d, %d)"));
+                        if (pass) {
                             break;
                         }
                     } catch (JSONException e) {
@@ -909,8 +984,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected void test() {
             if (status == READY) {
-                MockListener.getInstance().cancelNotification(
-                        MockListener.getInstance().getKeyForTag(mTag1));
+                MockListener.getInstance()
+                        .cancelNotification(MockListener.getInstance().getKeyForTag(mTag1));
                 status = RETEST;
             } else {
                 List<JSONObject> result =
@@ -999,8 +1074,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         @Override
         protected void test() {
-            String listeners = Secure.getString(getContentResolver(),
-                    ENABLED_NOTIFICATION_LISTENERS);
+            String listeners =
+                    Secure.getString(getContentResolver(), ENABLED_NOTIFICATION_LISTENERS);
             if (listeners == null || !listeners.contains(LISTENER_PATH)) {
                 status = PASS;
             } else {
@@ -1021,6 +1096,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
     private class ServiceStoppedTest extends InteractiveTestCase {
         int mRetries = 3;
+
         @Override
         protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.nls_service_stopped);
@@ -1028,8 +1104,9 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         @Override
         protected void test() {
-            if (mNm.getEffectsSuppressor() == null && (MockListener.getInstance() == null
-                    || !MockListener.getInstance().isConnected)) {
+            if (mNm.getEffectsSuppressor() == null
+                    && (MockListener.getInstance() == null
+                            || !MockListener.getInstance().isConnected)) {
                 status = PASS;
             } else {
                 if (--mRetries > 0) {
@@ -1051,7 +1128,6 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.nls_note_missed);
-
         }
 
         @Override
@@ -1092,14 +1168,13 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.nls_snooze);
-
         }
 
         @Override
         protected void setUp() {
             status = READY;
-            MockListener.getInstance().requestListenerHints(
-                    MockListener.HINT_HOST_DISABLE_CALL_EFFECTS);
+            MockListener.getInstance()
+                    .requestListenerHints(MockListener.HINT_HOST_DISABLE_CALL_EFFECTS);
         }
 
         @Override
@@ -1129,7 +1204,6 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.nls_unsnooze);
-
         }
 
         @Override
@@ -1158,14 +1232,13 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.nls_hints);
-
         }
 
         @Override
         protected void test() {
             if (status == READY) {
-                MockListener.getInstance().requestListenerHints(
-                        MockListener.HINT_HOST_DISABLE_CALL_EFFECTS);
+                MockListener.getInstance()
+                        .requestListenerHints(MockListener.HINT_HOST_DISABLE_CALL_EFFECTS);
                 status = RETEST;
             } else {
                 int result = MockListener.getInstance().getCurrentListenerHints();
@@ -1182,9 +1255,9 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
     }
 
     private class SnoozeNotificationForTimeTest extends InteractiveTestCase {
-        final static int READY_TO_SNOOZE = 0;
-        final static int SNOOZED = 1;
-        final static int READY_TO_CHECK_FOR_UNSNOOZE = 2;
+        static final int READY_TO_SNOOZE = 0;
+        static final int SNOOZED = 1;
+        static final int READY_TO_CHECK_FOR_UNSNOOZE = 2;
         int state = -1;
         long snoozeTime = 3000;
 
@@ -1206,8 +1279,9 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         protected void test() {
             status = RETEST;
             if (state == READY_TO_SNOOZE) {
-                MockListener.getInstance().snoozeNotification(
-                        MockListener.getInstance().getKeyForTag(mTag1), snoozeTime);
+                MockListener.getInstance()
+                        .snoozeNotification(
+                                MockListener.getInstance().getKeyForTag(mTag1), snoozeTime);
                 state = SNOOZED;
             } else if (state == SNOOZED) {
                 List<JSONObject> result =
@@ -1215,12 +1289,15 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                 boolean pass = false;
                 for (JSONObject payload : result) {
                     try {
-                        pass |= (checkEquals(mTag1,
-                                payload.getString(JSON_TAG),
-                                "data dismissal test: notification tag (%s, %s)")
-                                && checkEquals(MockListener.REASON_SNOOZED,
-                                payload.getInt(JSON_REASON),
-                                "data dismissal test: reason (%d, %d)"));
+                        pass |=
+                                (checkEquals(
+                                                mTag1,
+                                                payload.getString(JSON_TAG),
+                                                "data dismissal test: notification tag (%s, %s)")
+                                        && checkEquals(
+                                                MockListener.REASON_SNOOZED,
+                                                payload.getInt(JSON_REASON),
+                                                "data dismissal test: reason (%d, %d)"));
                         if (pass) {
                             break;
                         }
@@ -1261,9 +1338,9 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
      */
     private class SnoozeNotificationForTimeCancelTest extends InteractiveTestCase {
 
-        final static int READY_TO_SNOOZE = 0;
-        final static int SNOOZED = 1;
-        final static int READY_TO_CHECK_FOR_SNOOZE = 2;
+        static final int READY_TO_SNOOZE = 0;
+        static final int SNOOZED = 1;
+        static final int READY_TO_CHECK_FOR_SNOOZE = 2;
         int state = -1;
         long snoozeTime = 10000;
         private String tag;
@@ -1287,13 +1364,13 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         protected void test() {
             status = RETEST;
             if (state == READY_TO_SNOOZE) {
-                MockListener.getInstance().snoozeNotification(
-                        MockListener.getInstance().getKeyForTag(tag), snoozeTime);
+                MockListener.getInstance()
+                        .snoozeNotification(
+                                MockListener.getInstance().getKeyForTag(tag), snoozeTime);
                 state = SNOOZED;
             } else if (state == SNOOZED) {
                 List<String> result = getSnoozed();
-                if (result.size() >= 1
-                        && result.contains(tag)) {
+                if (result.size() >= 1 && result.contains(tag)) {
                     // cancel and repost
                     sendNotifications();
                     state = READY_TO_CHECK_FOR_SNOOZE;
@@ -1303,8 +1380,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                 }
             } else {
                 List<String> result = getSnoozed();
-                if (result.size() >= 1
-                        && result.contains(tag)) {
+                if (result.size() >= 1 && result.contains(tag)) {
                     status = PASS;
                 } else {
                     logFail();
@@ -1331,9 +1407,9 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
     }
 
     private class GetSnoozedNotificationTest extends InteractiveTestCase {
-        final static int READY_TO_SNOOZE = 0;
-        final static int SNOOZED = 1;
-        final static int READY_TO_CHECK_FOR_GET_SNOOZE = 2;
+        static final int READY_TO_SNOOZE = 0;
+        static final int SNOOZED = 1;
+        static final int READY_TO_CHECK_FOR_GET_SNOOZE = 2;
         int state = -1;
         long snoozeTime = 30000;
 
@@ -1354,10 +1430,12 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         protected void test() {
             status = RETEST;
             if (state == READY_TO_SNOOZE) {
-                MockListener.getInstance().snoozeNotification(
-                        MockListener.getInstance().getKeyForTag(mTag1), snoozeTime);
-                MockListener.getInstance().snoozeNotification(
-                        MockListener.getInstance().getKeyForTag(mTag2), snoozeTime);
+                MockListener.getInstance()
+                        .snoozeNotification(
+                                MockListener.getInstance().getKeyForTag(mTag1), snoozeTime);
+                MockListener.getInstance()
+                        .snoozeNotification(
+                                MockListener.getInstance().getKeyForTag(mTag2), snoozeTime);
                 state = SNOOZED;
             } else if (state == SNOOZED) {
                 List<JSONObject> result =
@@ -1369,12 +1447,15 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                 boolean pass = false;
                 for (JSONObject payload : result) {
                     try {
-                        pass |= (checkEquals(mTag1,
-                                payload.getString(JSON_TAG),
-                                "data dismissal test: notification tag (%s, %s)")
-                                && checkEquals(MockListener.REASON_SNOOZED,
-                                payload.getInt(JSON_REASON),
-                                "data dismissal test: reason (%d, %d)"));
+                        pass |=
+                                (checkEquals(
+                                                mTag1,
+                                                payload.getString(JSON_TAG),
+                                                "data dismissal test: notification tag (%s, %s)")
+                                        && checkEquals(
+                                                MockListener.REASON_SNOOZED,
+                                                payload.getInt(JSON_REASON),
+                                                "data dismissal test: reason (%d, %d)"));
                         if (pass) {
                             break;
                         }
@@ -1395,9 +1476,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                 for (StatusBarNotification sbn : snoozed) {
                     result.add(sbn.getTag());
                 }
-                if (result.size() >= 2
-                        && result.contains(mTag1)
-                        && result.contains(mTag2)) {
+                if (result.size() >= 2 && result.contains(mTag1) && result.contains(mTag2)) {
                     status = PASS;
                 } else {
                     logFail();
@@ -1460,16 +1539,17 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
             style.addMessage(msg1);
             style.addMessage(msg2);
 
-            Notification n1 = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                    .setContentTitle("ClearTest 1")
-                    .setContentText(mTag1.toString())
-                    .setPriority(Notification.PRIORITY_LOW)
-                    .setSmallIcon(mIcon1)
-                    .setWhen(mWhen1)
-                    .setDeleteIntent(makeIntent(1, mTag1))
-                    .setOnlyAlertOnce(true)
-                    .setStyle(style)
-                    .build();
+            Notification n1 =
+                    new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                            .setContentTitle("ClearTest 1")
+                            .setContentText(mTag1.toString())
+                            .setPriority(Notification.PRIORITY_LOW)
+                            .setSmallIcon(mIcon1)
+                            .setWhen(mWhen1)
+                            .setDeleteIntent(makeIntent(1, mTag1))
+                            .setOnlyAlertOnce(true)
+                            .setStyle(style)
+                            .build();
             mNm.notify(mTag1, mId1, n1);
             mFlag1 = Notification.FLAG_ONLY_ALERT_ONCE;
         }
@@ -1496,9 +1576,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
             }
             // Can only read in MessagingStyle using the compat class.
             NotificationCompat.MessagingStyle readStyle =
-                    NotificationCompat.MessagingStyle
-                            .extractMessagingStyleFromNotification(
-                                    result.get(0));
+                    NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(
+                            result.get(0));
             if (readStyle == null || readStyle.getMessages().size() != 2) {
                 status = FAIL;
                 logFail();
@@ -1506,10 +1585,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                 return;
             }
 
-            if (!verifyMessage(readStyle.getMessages().get(0), extrasKey1,
-                    extrasValue1)
-                    || !verifyMessage(
-                    readStyle.getMessages().get(1), extrasKey2, extrasValue2)) {
+            if (!verifyMessage(readStyle.getMessages().get(0), extrasKey1, extrasValue1)
+                    || !verifyMessage(readStyle.getMessages().get(1), extrasKey2, extrasValue2)) {
                 status = FAIL;
                 logFail();
                 next();
@@ -1550,27 +1627,28 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         }
 
         private void createDynamicShortcut() {
-            Person person = new Person.Builder()
-                    .setBot(false)
-                    .setIcon(Icon.createWithResource(mContext, R.drawable.ic_stat_alice))
-                    .setName("Person A")
-                    .setImportant(true)
-                    .build();
+            Person person =
+                    new Person.Builder()
+                            .setBot(false)
+                            .setIcon(Icon.createWithResource(mContext, R.drawable.ic_stat_alice))
+                            .setName("Person A")
+                            .setImportant(true)
+                            .build();
 
             Set<String> categorySet = new ArraySet<>();
             categorySet.add(SHORTCUT_CATEGORY);
-            Intent shortcutIntent =
-                    new Intent(mContext, BubbleActivity.class);
+            Intent shortcutIntent = new Intent(mContext, BubbleActivity.class);
             shortcutIntent.setAction(Intent.ACTION_VIEW);
 
-            ShortcutInfo shortcut = new ShortcutInfo.Builder(mContext, SHARE_SHORTCUT_ID)
-                    .setShortLabel(SHARE_SHORTCUT_ID)
-                    .setIcon(Icon.createWithResource(mContext, R.drawable.ic_stat_alice))
-                    .setIntent(shortcutIntent)
-                    .setPerson(person)
-                    .setCategories(categorySet)
-                    .setLongLived(true)
-                    .build();
+            ShortcutInfo shortcut =
+                    new ShortcutInfo.Builder(mContext, SHARE_SHORTCUT_ID)
+                            .setShortLabel(SHARE_SHORTCUT_ID)
+                            .setIcon(Icon.createWithResource(mContext, R.drawable.ic_stat_alice))
+                            .setIntent(shortcutIntent)
+                            .setPerson(person)
+                            .setCategories(categorySet)
+                            .setLongLived(true)
+                            .build();
 
             ShortcutManager scManager =
                     (ShortcutManager) mContext.getSystemService(Context.SHORTCUT_SERVICE);
@@ -1581,34 +1659,38 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
             mTag1 = UUID.randomUUID().toString();
             mId1 = NOTIFICATION_ID + 1;
 
-            Person person = new Person.Builder()
-                    .setName("Person A")
-                    .build();
+            Person person = new Person.Builder().setName("Person A").build();
 
-            Notification n1 = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                    .setContentTitle("ConversationOrderingTest")
-                    .setContentText(mTag1)
-                    .setSmallIcon(R.drawable.ic_stat_alice)
-                    .setGroup("conversations")
-                    .setShortcutId(SHARE_SHORTCUT_ID)
-                    .setStyle(new Notification.MessagingStyle(person)
-                            .setConversationTitle("Bubble Chat")
-                            .addMessage("Hello?",
-                                    SystemClock.currentThreadTimeMillis() - 300000, person)
-                            .addMessage("Is it me you're looking for?",
-                                    SystemClock.currentThreadTimeMillis(), person)
-                    )
-                    .build();
+            Notification n1 =
+                    new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                            .setContentTitle("ConversationOrderingTest")
+                            .setContentText(mTag1)
+                            .setSmallIcon(R.drawable.ic_stat_alice)
+                            .setGroup("conversations")
+                            .setShortcutId(SHARE_SHORTCUT_ID)
+                            .setStyle(
+                                    new Notification.MessagingStyle(person)
+                                            .setConversationTitle("Bubble Chat")
+                                            .addMessage(
+                                                    "Hello?",
+                                                    SystemClock.currentThreadTimeMillis() - 300000,
+                                                    person)
+                                            .addMessage(
+                                                    "Is it me you're looking for?",
+                                                    SystemClock.currentThreadTimeMillis(),
+                                                    person))
+                            .build();
             mNm.notify(mTag1, mId1, n1);
 
             mTag2 = UUID.randomUUID().toString();
             mId2 = mId1 + 1;
-            Notification n2 = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                    .setContentTitle("Non-Person Notification")
-                    .setContentText(mTag1)
-                    .setSmallIcon(R.drawable.ic_stat_alice)
-                    .setGroup("non-conversation")
-                    .build();
+            Notification n2 =
+                    new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                            .setContentTitle("Non-Person Notification")
+                            .setContentText(mTag1)
+                            .setSmallIcon(R.drawable.ic_stat_alice)
+                            .setGroup("non-conversation")
+                            .build();
             mNm.notify(mTag2, mId2, n2);
         }
 
@@ -1625,8 +1707,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
     }
 
     /**
-     * Tests that heads-up notifications appear with the view, resources, and actions provided
-     * in Notification.Builder.
+     * Tests that heads-up notifications appear with the view, resources, and actions provided in
+     * Notification.Builder.
      */
     private class HunDisplayTest extends InteractiveTestCase {
 
@@ -1653,24 +1735,31 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
             mTag1 = UUID.randomUUID().toString();
             mId1 = NOTIFICATION_ID + 1;
 
-            Notification n1 = new Notification.Builder(mContext, NOISY_NOTIFICATION_CHANNEL_ID)
-                    .setContentTitle("HunDisplayTest")
-                    .setContentText(mTag1)
-                    .setSmallIcon(R.drawable.ic_stat_alice)
-                    .setLargeIcon(Icon.createWithResource(mContext, R.drawable.test_pass_gradient))
-                    .addAction(generateAction(1))
-                    .addAction(generateAction(2))
-                    .build();
+            Notification n1 =
+                    new Notification.Builder(mContext, NOISY_NOTIFICATION_CHANNEL_ID)
+                            .setContentTitle("HunDisplayTest")
+                            .setContentText(mTag1)
+                            .setSmallIcon(R.drawable.ic_stat_alice)
+                            .setLargeIcon(
+                                    Icon.createWithResource(
+                                            mContext, R.drawable.test_pass_gradient))
+                            .addAction(generateAction(1))
+                            .addAction(generateAction(2))
+                            .build();
             mNm.notify(mTag1, mId1, n1);
         }
 
         private Notification.Action generateAction(int num) {
-            PendingIntent pi = PendingIntent.getActivity(mContext, num,
-                    new Intent(Settings.ACTION_ALL_APPS_NOTIFICATION_SETTINGS),
-                    PendingIntent.FLAG_IMMUTABLE);
+            PendingIntent pi =
+                    PendingIntent.getActivity(
+                            mContext,
+                            num,
+                            new Intent(Settings.ACTION_ALL_APPS_NOTIFICATION_SETTINGS),
+                            PendingIntent.FLAG_IMMUTABLE);
             return new Notification.Action.Builder(
-                    Icon.createWithResource(mContext, R.drawable.ic_android),
-                    mContext.getString(R.string.action, num), pi)
+                            Icon.createWithResource(mContext, R.drawable.ic_android),
+                            mContext.getString(R.string.action, num),
+                            pi)
                     .build();
         }
 
@@ -1692,10 +1781,10 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
      */
     private class NotificationTypeFilterTest extends InteractiveTestCase {
         int mRetries = 3;
+
         @Override
         protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.nls_filter_test);
-
         }
 
         @Override
@@ -1736,7 +1825,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected View inflate(ViewGroup parent) {
             return createUserItem(
-                    parent, R.string.cp_start_settings,  R.string.nls_change_type_filter);
+                    parent, R.string.cp_start_settings, R.string.nls_change_type_filter);
         }
 
         @Override
@@ -1777,7 +1866,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected Intent getIntent() {
             Intent intent = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS);
-            intent.putExtra(Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME,
+            intent.putExtra(
+                    Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME,
                     MockListener.COMPONENT_NAME.flattenToString());
             return intent;
         }
@@ -1787,7 +1877,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected View inflate(ViewGroup parent) {
             return createUserItem(
-                    parent, R.string.cp_start_settings,  R.string.nls_reset_type_filter);
+                    parent, R.string.cp_start_settings, R.string.nls_reset_type_filter);
         }
     }
 

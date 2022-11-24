@@ -18,6 +18,7 @@ package com.android.cts.verifier;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.interactive.annotations.Interactive;
+import com.android.interactive.annotations.SupportMultiDisplayMode;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -28,10 +29,12 @@ public final class FeaturesTest extends CtsVerifierTest {
 
     @Test
     @Interactive
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void ClipboardPreviewTest() throws Exception {
         // I really like this test - it's clever!
-        excludeFeatures("android.hardware.type.watch",
+        excludeFeatures(
+                "android.hardware.type.watch",
                 "android.software.leanback",
                 "android.hardware.type.automotive");
 
@@ -40,6 +43,7 @@ public final class FeaturesTest extends CtsVerifierTest {
 
     @Test
     @Interactive
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @ApiTest(apis = "android.companion.CompanionDeviceManager#associate")
     public void CompanionDeviceTest() throws Exception {
@@ -50,13 +54,16 @@ public final class FeaturesTest extends CtsVerifierTest {
 
     @Test
     @Interactive
+    @SupportMultiDisplayMode
     // MultiDisplayMode
-    @ApiTest(apis = {"android.companion.CompanionDeviceManager#startObservingDevicePresence",
-            "android.companion.CompanionDeviceManager#stopObservingDevicePresence"})
+    @ApiTest(
+            apis = {
+                "android.companion.CompanionDeviceManager#startObservingDevicePresence",
+                "android.companion.CompanionDeviceManager#stopObservingDevicePresence"
+            })
     public void CompanionDeviceServiceTest() throws Exception {
         requireFeatures("android.software.companion_device_setup");
 
         runTest(".companion.CompanionDeviceServiceTestActivity");
-
     }
 }

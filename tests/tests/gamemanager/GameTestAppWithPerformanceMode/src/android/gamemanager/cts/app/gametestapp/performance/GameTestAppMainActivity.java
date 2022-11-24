@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package android.gamemanager.cts.app;
+package android.gamemanager.cts.app.gametestapp.performance;
 
 import android.app.Activity;
 import android.app.GameManager;
 import android.content.Context;
 import android.os.Bundle;
 
-public class LegacyGameTestAppMainActivity extends Activity {
+public class GameTestAppMainActivity extends Activity {
 
-    private static final String TAG = "LegacyGameTestAppMainActivity";
+    private static final String TAG = "GameTestAppMainActivity";
 
     Context mContext;
     GameManager mGameManager;
@@ -42,5 +42,4 @@ public class LegacyGameTestAppMainActivity extends Activity {
     public int getGameMode() {
         return mGameManager.getGameMode();
     }
-
 }

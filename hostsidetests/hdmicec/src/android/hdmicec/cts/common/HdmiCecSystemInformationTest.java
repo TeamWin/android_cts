@@ -243,7 +243,8 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
                 CecOperand.VENDOR_COMMAND_WITH_ID.toString()
                         + String.format("%02d", HdmiCecConstants.ABORT_UNRECOGNIZED_MODE);
 
-        hdmiCecClient.sendCecMessage(LogicalAddress.TV, CecOperand.GIVE_DEVICE_VENDOR_ID);
+        hdmiCecClient.sendCecMessage(
+                hdmiCecClient.getSelfDevice(), CecOperand.GIVE_DEVICE_VENDOR_ID);
 
         String message =
                 hdmiCecClient.checkExpectedOutput(
@@ -252,15 +253,15 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
             // Device has the same vendor ID used in test, change it.
             vendorId += 1;
         }
-
+        LogicalAddress cecClientDevice = hdmiCecClient.getSelfDevice();
         hdmiCecClient.sendCecMessage(
-                LogicalAddress.TV,
+                cecClientDevice,
                 LogicalAddress.BROADCAST,
                 CecOperand.DEVICE_VENDOR_ID,
                 CecMessage.formatParams(vendorId, 6));
         hdmiCecClient.sendCecMessage(
-                LogicalAddress.TV, CecOperand.VENDOR_COMMAND_WITH_ID, vendorCommandParams);
-        message = hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.FEATURE_ABORT);
+                cecClientDevice, CecOperand.VENDOR_COMMAND_WITH_ID, vendorCommandParams);
+        message = hdmiCecClient.checkExpectedOutput(cecClientDevice, CecOperand.FEATURE_ABORT);
         if (!CecMessage.getParamsAsString(message).equals(featureAbortRefused)
                 && !CecMessage.getParamsAsString(message).equals(featureAbortUnrecognised)) {
             throw new Exception("Feature Abort reason is not REFUSED(0x04) or UNRECOGNIZED(0x00)");

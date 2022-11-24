@@ -16,18 +16,28 @@
 
 package android.server.wm;
 
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
+import static android.window.BackNavigationInfo.TYPE_CALLBACK;
+import static android.window.BackNavigationInfo.TYPE_CROSS_ACTIVITY;
+import static android.window.BackNavigationInfo.TYPE_CROSS_TASK;
+import static android.window.BackNavigationInfo.TYPE_RETURN_TO_HOME;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.view.Gravity;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 
 import androidx.annotation.Nullable;
@@ -44,21 +54,26 @@ import org.junit.Test;
 @Presubmit
 @android.server.wm.annotation.Group1
 public class BackGestureInvokedTest extends ActivityManagerTestBase {
+    private TestActivitySession<BackInvokedActivity> mActivitySession;
+    private BackInvokedActivity mActivity;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
         enableAndAssumeGestureNavigationMode();
+
+        mActivitySession = createManagedTestActivitySession();
+        mActivitySession.launchTestActivityOnDisplaySync(
+                BackInvokedActivity.class, DEFAULT_DISPLAY);
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+        mActivity = mActivitySession.getActivity();
+        mWmState.waitForActivityState(mActivity.getComponentName(), STATE_RESUMED);
+        mWmState.assertVisibility(mActivity.getComponentName(), true);
     }
 
     @Test
     public void popupWindowDismissedOnBackGesture() {
-        final TestActivitySession<BackInvokedActivity> activitySession =
-                createManagedTestActivitySession();
-        activitySession.launchTestActivityOnDisplaySync(BackInvokedActivity.class, DEFAULT_DISPLAY);
-        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
-        final BackInvokedActivity activity = activitySession.getActivity();
-        activitySession.runOnMainSyncAndWait(activity::addPopupWindow);
+        mActivitySession.runOnMainSyncAndWait(mActivity::addPopupWindow);
         mWmState.waitAndAssertWindowShown(TYPE_APPLICATION_PANEL, true);
         triggerBackEventByGesture(DEFAULT_DISPLAY);
 
@@ -69,10 +84,75 @@ public class BackGestureInvokedTest extends ActivityManagerTestBase {
 
         // activity remain focused
         mWmState.assertFocusedActivity("Top activity must be focused",
-                activity.getComponentName());
-        final String windowName = ComponentNameUtils.getWindowName(activity.getComponentName());
+                mActivity.getComponentName());
+        final String windowName = ComponentNameUtils.getWindowName(mActivity.getComponentName());
         mWmState.assertFocusedWindow(
                 "Top activity window must be focused window.", windowName);
+    }
+
+    @Test
+    public void testBackToHome() {
+        triggerBackEventByGesture(DEFAULT_DISPLAY);
+        mWmState.waitAndAssertActivityRemoved(mActivity.getComponentName());
+
+        assertEquals(TYPE_RETURN_TO_HOME, mWmState.getBackNavigationState().getLastBackType());
+    }
+
+    @Test
+    public void testBackToTask() {
+        final ComponentName
+                componentName = new ComponentName(mContext, NewTaskActivity.class);
+        launchActivityInNewTask(componentName);
+        mWmState.waitForActivityState(componentName, STATE_RESUMED);
+        mWmState.assertVisibility(componentName, true);
+        mWmState.waitForFocusedActivity("Wait for launched activity to be in front.",
+                componentName);
+        triggerBackEventByGesture(DEFAULT_DISPLAY);
+
+        assertEquals(TYPE_CROSS_TASK, mWmState.getBackNavigationState().getLastBackType());
+    }
+
+    @Test
+    public void testBackToActivity() {
+        final ComponentName componentName = new ComponentName(mContext, SecondActivity.class);
+        launchActivity(componentName);
+        mWmState.waitForActivityState(componentName, STATE_RESUMED);
+        mWmState.assertVisibility(componentName, true);
+        mWmState.waitForFocusedActivity("Wait for launched activity to be in front.",
+                componentName);
+        triggerBackEventByGesture(DEFAULT_DISPLAY);
+
+        assertEquals(TYPE_CROSS_ACTIVITY, mWmState.getBackNavigationState().getLastBackType());
+    }
+
+    @Test
+    public void testDialogDismissed() {
+        mInstrumentation.runOnMainSync(() -> {
+            new AlertDialog.Builder(mActivity)
+                    .setTitle("Dialog")
+                    .show();
+        });
+        mInstrumentation.waitForIdleSync();
+
+        triggerBackEventByGesture(DEFAULT_DISPLAY);
+
+        // activity remain focused
+        mWmState.assertFocusedActivity("Top activity must be focused",
+                mActivity.getComponentName());
+
+        assertEquals(TYPE_CALLBACK, mWmState.getBackNavigationState().getLastBackType());
+    }
+
+    @Test
+    public void testImeDismissed() {
+        ComponentName componentName = new ComponentName(mContext, ImeTestActivity.class);
+        launchActivity(componentName);
+        mWmState.waitForActivityState(componentName, STATE_RESUMED);
+        mWmState.assertVisibility(componentName, true);
+
+        triggerBackEventByGesture(DEFAULT_DISPLAY);
+
+        assertEquals(TYPE_CALLBACK, mWmState.getBackNavigationState().getLastBackType());
     }
 
     public static class BackInvokedActivity extends Activity {
@@ -100,6 +180,45 @@ public class BackGestureInvokedTest extends ActivityManagerTestBase {
             popup.setFocusable(true);
             contentView.setFocusable(true);
             popup.showAtLocation(getContentView(), Gravity.FILL, 0, 0);
+        }
+    }
+
+    public static class NewTaskActivity extends Activity {
+        private FrameLayout mContentView;
+
+        @Override
+        protected void onCreate(@Nullable Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            mContentView = new FrameLayout(this);
+            mContentView.setBackgroundColor(Color.GREEN);
+            setContentView(mContentView);
+        }
+    }
+
+    public static class SecondActivity extends Activity {
+        private FrameLayout mContentView;
+
+        @Override
+        protected void onCreate(@Nullable Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            mContentView = new FrameLayout(this);
+            mContentView.setBackgroundColor(Color.BLUE);
+            setContentView(mContentView);
+        }
+    }
+
+    public static class ImeTestActivity extends Activity {
+        EditText mEditText;
+
+        @Override
+        protected void onCreate(Bundle icicle) {
+            super.onCreate(icicle);
+            mEditText = new EditText(this);
+            final LinearLayout layout = new LinearLayout(this);
+            layout.setOrientation(LinearLayout.VERTICAL);
+            layout.addView(mEditText);
+            mEditText.requestFocus();
+            setContentView(layout);
         }
     }
 }

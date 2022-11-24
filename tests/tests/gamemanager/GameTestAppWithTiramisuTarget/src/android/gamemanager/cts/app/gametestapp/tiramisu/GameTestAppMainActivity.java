@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package android.gamemanager.cts.app;
+package android.gamemanager.cts.app.gametestapp.tiramisu;
 
 import android.app.Activity;
 import android.app.GameManager;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 
 public class GameTestAppMainActivity extends Activity {
@@ -33,6 +34,12 @@ public class GameTestAppMainActivity extends Activity {
         super.onCreate(savedInstanceState);
         mContext = getApplicationContext();
         mGameManager = mContext.getSystemService(GameManager.class);
+
+        final Intent intent = new Intent();
+        intent.setAction("android.gamemanager.cts.GAME_MODE");
+        intent.putExtra("game-mode", mGameManager.getGameMode());
+        intent.putExtra("sender-package", mContext.getPackageName());
+        sendBroadcast(intent);
     }
 
     public String getPackageName() {

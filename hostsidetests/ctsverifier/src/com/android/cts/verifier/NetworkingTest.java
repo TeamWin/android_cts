@@ -18,6 +18,7 @@ package com.android.cts.verifier;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.interactive.annotations.Interactive;
+import com.android.interactive.annotations.SupportMultiDisplayMode;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -38,6 +39,7 @@ public final class NetworkingTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void BluetoothTest() throws Exception {
         // Has a bunch of subtests but all require a second device so probably best to not split
@@ -48,6 +50,7 @@ public final class NetworkingTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void ConnectivityBackgroundTest() throws Exception {
         requireFeatures("android.hardware.wifi");
@@ -57,11 +60,14 @@ public final class NetworkingTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void MultiNetworkConnectivityTest() throws Exception {
         requireFeatures("android.hardware.wifi:android.hardware.telephony");
-        excludeFeatures("android.hardware.type.television",
-                "android.software.leanback", "android.hardware.type.watch");
+        excludeFeatures(
+                "android.hardware.type.television",
+                "android.software.leanback",
+                "android.hardware.type.watch");
 
         runTest(".net.MultiNetworkConnectivityTestActivity");
     }

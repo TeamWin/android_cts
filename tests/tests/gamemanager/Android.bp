@@ -30,6 +30,7 @@ android_test {
         ":CtsGameTestApp",
         ":CtsGameTestAppWithBatteryMode",
         ":CtsGameTestAppWithPerformanceMode",
+        ":CtsGameTestAppWithTiramisuTarget",
         ":CtsLegacyGameTestApp",
         ":CtsNotGameTestApp",
     ],

@@ -17,6 +17,7 @@
 package android.view.cts.util;
 
 import android.app.UiAutomation;
+import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
@@ -35,11 +36,18 @@ public class DisableFixedToUserRotationRule implements TestRule {
     private static final String COMMAND = "cmd window fixed-to-user-rotation ";
 
     private final UiAutomation mUiAutomation;
+    private final boolean mSupportsRotation;
 
     private String mOriginalValue;
 
     public DisableFixedToUserRotationRule() {
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        PackageManager pm = InstrumentationRegistry
+                .getInstrumentation()
+                .getContext()
+                .getPackageManager();
+        mSupportsRotation = pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE)
+                && pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT);
     }
 
     @Override
@@ -47,12 +55,16 @@ public class DisableFixedToUserRotationRule implements TestRule {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                mOriginalValue = executeShellCommand(COMMAND);
-                executeShellCommandAndPrint(COMMAND + "disabled");
+                if (mSupportsRotation) {
+                    mOriginalValue = executeShellCommand(COMMAND);
+                    executeShellCommandAndPrint(COMMAND + "disabled");
+                }
                 try {
                     base.evaluate();
                 } finally {
-                    executeShellCommandAndPrint(COMMAND + mOriginalValue);
+                    if (mSupportsRotation) {
+                        executeShellCommandAndPrint(COMMAND + mOriginalValue);
+                    }
                 }
             }
         };

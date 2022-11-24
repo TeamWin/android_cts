@@ -4097,6 +4097,7 @@ initializeAvailabilityCallbacksNative(
 
     auto rc = ctx->initialize();
     if (rc != ACAMERA_OK) {
+        delete ctx;
         LOG_ERROR(errorString, "Availability context initialization failed: %d", rc);
         return 0;
     }

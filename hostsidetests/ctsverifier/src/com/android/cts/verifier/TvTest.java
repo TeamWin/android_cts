@@ -19,6 +19,7 @@ package com.android.cts.verifier;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 import com.android.interactive.annotations.Interactive;
+import com.android.interactive.annotations.SupportMultiDisplayMode;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -29,6 +30,7 @@ public final class TvTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void TvInputDiscoveryTest() throws Exception {
         requireFeatures("android.software.live_tv");
@@ -38,6 +40,7 @@ public final class TvTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void ParentalControlTest() throws Exception {
         requireFeatures("android.software.live_tv");
@@ -47,6 +50,7 @@ public final class TvTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void MultipleTracksTest() throws Exception {
         requireFeatures("android.software.live_tv");
@@ -56,6 +60,7 @@ public final class TvTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void TimeShiftTest() throws Exception {
         requireFeatures("android.software.live_tv");
@@ -65,6 +70,7 @@ public final class TvTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @CddTest(requirements = "3.12/C-1-2")
     public void AppLinkTest() throws Exception {
@@ -75,6 +81,7 @@ public final class TvTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void MicrophoneDeviceTest() throws Exception {
         requireFeatures("android.software.leanback", "android.hardware.microphone");
@@ -84,28 +91,29 @@ public final class TvTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @ApiTest(apis = "android.media.AudioTrack#isDirectPlaybackSupported")
     public void AudioCapabilitiesTest() throws Exception {
         requireFeatures("android.software.leanback");
 
-        runTest(".tv.audio.AudioCapabilitiesTestActivity",
-                "config_hdmi_source");
+        runTest(".tv.audio.AudioCapabilitiesTestActivity", "config_hdmi_source");
     }
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @ApiTest(apis = "android.hardware.display.DisplayManager.DisplayListener#onDisplayChanged")
     public void HotplugTest() throws Exception {
         requireFeatures("android.software.leanback");
 
-        runTest(".tv.display.HotplugTestActivity",
-                "config_hdmi_source");
+        runTest(".tv.display.HotplugTestActivity", "config_hdmi_source");
     }
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @ApiTest(apis = "android.view.WindowManager.LayoutParams#preferredDisplayModeId")
     public void ModeSwitchingTest() throws Exception {
@@ -113,5 +121,4 @@ public final class TvTest extends CtsVerifierTest {
 
         runTest(".tv.display.ModeSwitchingTestActivity");
     }
-
 }

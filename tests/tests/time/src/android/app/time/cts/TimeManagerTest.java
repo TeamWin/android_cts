@@ -124,18 +124,15 @@ public class TimeManagerTest {
      */
     @Test
     public void testManageTimeZoneConfiguration() throws Exception {
-        int expectedListenerTriggerCount = 0;
         AtomicInteger listenerTriggerCount = new AtomicInteger(0);
         TimeManager.TimeZoneDetectorListener listener = listenerTriggerCount::incrementAndGet;
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
             mTimeManager.addTimeZoneDetectorListener(executor, listener);
-            waitForListenerCallbackCount(expectedListenerTriggerCount, listenerTriggerCount);
 
             TimeZoneCapabilitiesAndConfig capabilitiesAndConfig =
                     mTimeManager.getTimeZoneCapabilitiesAndConfig();
-            waitForListenerCallbackCount(expectedListenerTriggerCount, listenerTriggerCount);
 
             TimeZoneCapabilities capabilities = capabilitiesAndConfig.getCapabilities();
             TimeZoneConfiguration originalConfig = capabilitiesAndConfig.getConfiguration();
@@ -149,22 +146,25 @@ public class TimeManagerTest {
                         .build();
                 if (capabilities.getConfigureAutoDetectionEnabledCapability()
                         >= CAPABILITY_NOT_APPLICABLE) {
+
+                    int expectedListenerTriggerCount = listenerTriggerCount.get() + 1;
                     assertTrue(mTimeManager.updateTimeZoneConfiguration(configUpdate));
-                    expectedListenerTriggerCount++;
-                    waitForListenerCallbackCount(
+                    waitForListenerCallbackCountAtLeast(
                             expectedListenerTriggerCount, listenerTriggerCount);
 
                     // Reset the config to what it was when the test started.
                     TimeZoneConfiguration resetConfigUpdate = new TimeZoneConfiguration.Builder()
                             .setAutoDetectionEnabled(!newAutoDetectionEnabledValue)
                             .build();
+
+                    expectedListenerTriggerCount = listenerTriggerCount.get() + 1;
                     assertTrue(mTimeManager.updateTimeZoneConfiguration(resetConfigUpdate));
-                    expectedListenerTriggerCount++;
+                    waitForListenerCallbackCountAtLeast(
+                            expectedListenerTriggerCount, listenerTriggerCount);
                 } else {
                     assertFalse(mTimeManager.updateTimeZoneConfiguration(configUpdate));
                 }
             }
-            waitForListenerCallbackCount(expectedListenerTriggerCount, listenerTriggerCount);
 
             // Toggle the geo-detection enabled if capabilities allow or try (but expect to fail)
             // if not.
@@ -175,22 +175,24 @@ public class TimeManagerTest {
                         .build();
                 if (capabilities.getConfigureGeoDetectionEnabledCapability()
                         >= CAPABILITY_NOT_APPLICABLE) {
+
+                    int expectedListenerTriggerCount = listenerTriggerCount.get() + 1;
                     assertTrue(mTimeManager.updateTimeZoneConfiguration(configUpdate));
-                    expectedListenerTriggerCount++;
-                    waitForListenerCallbackCount(
+                    waitForListenerCallbackCountAtLeast(
                             expectedListenerTriggerCount, listenerTriggerCount);
 
                     // Reset the config to what it was when the test started.
                     TimeZoneConfiguration resetConfigUpdate = new TimeZoneConfiguration.Builder()
                             .setGeoDetectionEnabled(!newGeoDetectionEnabledValue)
                             .build();
+                    expectedListenerTriggerCount = listenerTriggerCount.get() + 1;
                     assertTrue(mTimeManager.updateTimeZoneConfiguration(resetConfigUpdate));
-                    expectedListenerTriggerCount++;
+                    waitForListenerCallbackCountAtLeast(
+                            expectedListenerTriggerCount, listenerTriggerCount);
                 } else {
                     assertFalse(mTimeManager.updateTimeZoneConfiguration(configUpdate));
                 }
             }
-            waitForListenerCallbackCount(expectedListenerTriggerCount, listenerTriggerCount);
         } finally {
             // Remove the listener. Required otherwise the fuzzy equality rules of lambdas causes
             // problems for later tests.
@@ -586,19 +588,24 @@ public class TimeManagerTest {
                 assertFalse(timeZoneState.getUserShouldConfirmId());
             }
 
-            // Now turn on automatic detection.
-            boolean success = setAutoTimeZoneDetectionEnabledAndSleep(true);
-            assertTrue("Test requires being able to turn on auto detection", success);
+            // This part of the test is optional: What happens to setManualTimeZone() when automatic
+            // detection is ON can only be tested if the device supports automatic time zone
+            // detection.
+            if (capabilities.getConfigureAutoDetectionEnabledCapability() == CAPABILITY_POSSESSED) {
+                // Turn on automatic detection.
+                boolean success = setAutoTimeZoneDetectionEnabledAndSleep(true);
+                assertTrue("Test requires being able to turn on auto detection", success);
 
-            // Try to set the time zone again.
-            String testTimeZone2 = "Europe/Paris";
-            assertFalse(mTimeManager.setManualTimeZone(testTimeZone2));
+                // Try to set the time zone again.
+                String testTimeZone2 = "Europe/Paris";
+                assertFalse(mTimeManager.setManualTimeZone(testTimeZone2));
 
-            // Confirm the call failed completely and time zone state has stayed the same.
-            {
-                TimeZoneState timeZoneState = mTimeManager.getTimeZoneState();
-                assertEquals(testTimeZone1, timeZoneState.getId());
-                assertFalse(timeZoneState.getUserShouldConfirmId());
+                // Confirm the call failed completely and time zone state has stayed the same.
+                {
+                    TimeZoneState timeZoneState = mTimeManager.getTimeZoneState();
+                    assertEquals(testTimeZone1, timeZoneState.getId());
+                    assertFalse(timeZoneState.getUserShouldConfirmId());
+                }
             }
         } finally {
             // Try to return the device to its original time and config state.
@@ -645,16 +652,35 @@ public class TimeManagerTest {
                 absUnixEpochMillisDifference < 200);
     }
 
-    private static void waitForListenerCallbackCount(
-            int expectedValue, AtomicInteger actualValue) throws Exception {
-        // Busy waits up to 30 seconds for the count to reach the expected value.
+    /**
+     * The platform provides an "at least once" listener callback contract for time manager
+     * callbacks. Callbacks are provided to support UI refreshes when something the UI is displaying
+     * may have changed. Because the time / time zone detectors are "real" during tests, there can
+     * be callbacks happening during tests for multiple reasons related to the normal operation of
+     * the time zone detector, e.g. side effects of changing the config or even just the detectors
+     * getting real signals. For example, after changing config to turn on/off a detector, there
+     * will be a callback that the config has just changed. Additionally, the detector status will
+     * likely change, e.g. after being enabled the detector may actually detect the time zone,
+     * causing more callbacks to trigger.
+     *
+     * <p>This method delays until a minimum value has been hit (and then a bit more), meaning it
+     * guards against no callback being generated in a certain time when one is expected. It cannot
+     * tell between an expected notification and an unexpected one, and cannot detect there being
+     * too many, meaning it is a very loose check.
+     */
+    private static void waitForListenerCallbackCountAtLeast(
+            int minValue, AtomicInteger actualValue) throws Exception {
+        // Busy waits up to 30 seconds for the count to reach minValue.
         final long busyWaitMillis = 30000;
         long targetTimeMillis = System.currentTimeMillis() + busyWaitMillis;
-        while (expectedValue != actualValue.get()
+        while (actualValue.get() < minValue
                 && System.currentTimeMillis() < targetTimeMillis) {
             Thread.sleep(250);
         }
-        assertEquals(expectedValue, actualValue.get());
+        assertTrue(actualValue.get() >= minValue);
+
+        // Give the system another couple of seconds to settle.
+        sleepForAsyncOperation();
     }
 
     /**

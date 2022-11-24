@@ -315,15 +315,68 @@ public class AudioManagerTest extends InstrumentationTestCase {
         return false;
     }
 
+    public void testVolumeChangedIntent() throws Exception {
+        final MyBlockingIntentReceiver receiver =
+                new MyBlockingIntentReceiver(AudioManager.ACTION_VOLUME_CHANGED);
+        if (mAudioManager.isVolumeFixed()) {
+            return;
+        }
+        try {
+            mContext.registerReceiver(receiver,
+                    new IntentFilter(AudioManager.ACTION_VOLUME_CHANGED));
+            // only listen for the STREAM_MUSIC volume changes
+            receiver.setWaitForIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, STREAM_MUSIC);
+            int mediaVol = mAudioManager.getStreamVolume(STREAM_MUSIC);
+            final int origVol = mediaVol;
+            final int maxMediaVol = mAudioManager.getStreamMaxVolume(STREAM_MUSIC);
+            // change media volume from current value
+            mAudioManager.setStreamVolume(STREAM_MUSIC,
+                    mediaVol == maxMediaVol ? --mediaVol : ++mediaVol,
+                    0 /*flags*/);
+            // verify a change was reported
+            final boolean intentFired = receiver.waitForExpectedAction(500/*ms*/);
+            assertTrue("VOLUME_CHANGED_ACTION wasn't fired for change from "
+                    + origVol + " to " + mediaVol, intentFired);
+            // verify the new value is in the extras
+            final Intent intent = receiver.getIntent();
+            assertEquals("Not an intent for STREAM_MUSIC", STREAM_MUSIC,
+                    intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1));
+            assertEquals("New STREAM_MUSIC volume not as expected", mediaVol,
+                    intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_VALUE, -1));
+            assertEquals("Previous STREAM_MUSIC volume not as expected", origVol,
+                    intent.getIntExtra(AudioManager.EXTRA_PREV_VOLUME_STREAM_VALUE, -1));
+        } finally {
+            mContext.unregisterReceiver(receiver);
+        }
+    }
+
     private static final class MyBlockingIntentReceiver extends BroadcastReceiver {
         private final SafeWaitObject mLock = new SafeWaitObject();
         // the action for the intent to check
         private final String mAction;
+        private String mWaitForExtra;
+        private int mWaitForExtraInt = Integer.MAX_VALUE;
         @GuardedBy("mLock")
         private boolean mIntentReceived = false;
+        @GuardedBy("mLock")
+        private Intent mIntent;
 
         MyBlockingIntentReceiver(String action) {
             mAction = action;
+            mIntent = null;
+            mWaitForExtra = null;
+        }
+
+        /**
+         * Sets an optional extra along with an expected value that need to match for the received
+         * intent to be considered as valid for {@link #waitForExpectedAction(long)}.
+         * When querying the intent for the extra int value, the default is Integer.MIN_VALUE.
+         * @param extra
+         * @param expectedInt
+         */
+        public void setWaitForIntExtra(String extra, int expectedInt) {
+            mWaitForExtra = extra;
+            mWaitForExtraInt = expectedInt;
         }
 
         @Override
@@ -332,8 +385,13 @@ public class AudioManagerTest extends InstrumentationTestCase {
                 // move along, this is not the action we're looking for
                 return;
             }
+            if ((mWaitForExtra != null)
+                    && (intent.getIntExtra(mWaitForExtra, Integer.MIN_VALUE) != mWaitForExtraInt)) {
+                return;
+            }
             synchronized (mLock) {
                 mIntentReceived = true;
+                mIntent = intent;
                 mLock.notify();
             }
         }
@@ -344,6 +402,12 @@ public class AudioManagerTest extends InstrumentationTestCase {
                     mLock.waitFor(timeOutMs, () -> mIntentReceived);
                 } catch (InterruptedException e) { }
                 return mIntentReceived;
+            }
+        }
+
+        public Intent getIntent() {
+            synchronized (mLock) {
+                return mIntent;
             }
         }
     }

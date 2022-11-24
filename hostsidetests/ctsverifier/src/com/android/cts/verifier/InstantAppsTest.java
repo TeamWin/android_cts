@@ -18,6 +18,7 @@ package com.android.cts.verifier;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.interactive.annotations.Interactive;
+import com.android.interactive.annotations.SupportMultiDisplayMode;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -28,21 +29,27 @@ public final class InstantAppsTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @CddTest(requirements = "3.15/C-0-6")
     public void NotificationTest() throws Exception {
-        excludeFeatures("android.hardware.type.television", "android.software.leanback",
-                "android.hardware.type.automotive", "android.hardware.type.watch");
+        excludeFeatures(
+                "android.hardware.type.television",
+                "android.software.leanback",
+                "android.hardware.type.automotive",
+                "android.hardware.type.watch");
 
         runTest(".instantapps.NotificationTestActivity");
     }
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @CddTest(requirements = "3.15/C-0-7")
     public void RecentAppsTest() throws Exception {
-        excludeFeatures("android.hardware.type.television",
+        excludeFeatures(
+                "android.hardware.type.television",
                 "android.software.leanback",
                 "android.hardware.type.automotive",
                 "android.hardware.type.watch");
@@ -52,11 +59,14 @@ public final class InstantAppsTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @CddTest(requirements = "3.15/C-0-5")
     public void AppInfoTest() throws Exception {
-        excludeFeatures("android.hardware.type.television",
-                "android.software.leanback", "android.hardware.type.automotive",
+        excludeFeatures(
+                "android.hardware.type.television",
+                "android.software.leanback",
+                "android.hardware.type.automotive",
                 "android.hardware.type.watch");
 
         runTest(".instantapps.AppInfoTestActivity");

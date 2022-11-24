@@ -18,6 +18,7 @@ package com.android.cts.verifier;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.interactive.annotations.Interactive;
+import com.android.interactive.annotations.SupportMultiDisplayMode;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -28,6 +29,7 @@ public final class TelephonyTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @ApiTest(apis = "android.telephony.TelephonyManager#ACTION_SHOW_VOICEMAIL_NOTIFICATION")
     public void VoicemailBroadcastTest() throws Exception {
@@ -38,6 +40,7 @@ public final class TelephonyTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @ApiTest(apis = "android.telephony.TelephonyManager#ACTION_SHOW_VOICEMAIL_NOTIFICATION")
     public void VisualVoicemailServiceTest() throws Exception {
@@ -48,6 +51,7 @@ public final class TelephonyTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void DialerIncomingCallTest() throws Exception { // Needs to receive a call
         requireFeatures("android.hardware.telephony");
@@ -57,6 +61,7 @@ public final class TelephonyTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void DialerShowsHunOnIncomingCallTest() throws Exception {
         requireFeatures("android.hardware.telephony");
@@ -66,6 +71,7 @@ public final class TelephonyTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @ApiTest(apis = "android.telephony.TelephonyManager#METADATA_HIDE_VOICEMAIL_SETTINGS_MENU")
     public void CallSettingsCheckTest() throws Exception {
@@ -76,6 +82,7 @@ public final class TelephonyTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @ApiTest(apis = "android.telephony.TelephonyManager#EXTRA_HIDE_PUBLIC_SETTINGS")
     public void VoicemailSettingsCheckTest() throws Exception {
@@ -86,6 +93,7 @@ public final class TelephonyTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void DialerImplementsTelecomIntentsTest() throws Exception {
         requireFeatures("android.hardware.telephony");

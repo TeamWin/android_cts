@@ -19,6 +19,7 @@ package com.android.cts.verifier;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 import com.android.interactive.annotations.Interactive;
+import com.android.interactive.annotations.SupportMultiDisplayMode;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -29,6 +30,7 @@ public final class OtherTest extends CtsVerifierTest {
 
     @Test
     @Interactive
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @CddTest(requirements = {"2.2.4/8.3/H-1-1", "2.3.4/8.3/T-1-1", "2.4.4/8.3/W-SR", "8.3/C-SR"})
     @ApiTest(apis = "android.os.PowerManager#isPowerSaveMode")
@@ -40,12 +42,16 @@ public final class OtherTest extends CtsVerifierTest {
 
     @Test
     @Interactive
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     @CddTest(requirements = "8.3/C-1-6")
-    @ApiTest(apis = {"android.os.PowerManager#isIgnoringBatteryOptimizations",
-            "android.app.usage.UsageStatsManager#getAppStandbyBucket",
-            "android.provider.Settings#ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS",
-            "android.provider.Settings#ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"})
+    @ApiTest(
+            apis = {
+                "android.os.PowerManager#isIgnoringBatteryOptimizations",
+                "android.app.usage.UsageStatsManager#getAppStandbyBucket",
+                "android.provider.Settings#ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS",
+                "android.provider.Settings#ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
+            })
     public void IgnoreBatteryOptimizationsTest() throws Exception {
         excludeFeatures("android.hardware.type.automotive", "android.hardware.type.watch");
 
@@ -54,6 +60,7 @@ public final class OtherTest extends CtsVerifierTest {
 
     @Test
     @Interactive
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     // (no category)
     public void RecentTaskRemovalTest() throws Exception {
@@ -64,6 +71,7 @@ public final class OtherTest extends CtsVerifierTest {
 
     @Test
     @Interactive
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void WidgetTest() throws Exception {
         // This test should probably be migrated because as is it's unclear
@@ -75,17 +83,21 @@ public final class OtherTest extends CtsVerifierTest {
 
     @Test
     @Interactive
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void ScreenPinningTest() throws Exception {
-        excludeFeatures("android.hardware.type.television",
+        excludeFeatures(
+                "android.hardware.type.television",
                 "android.software.leanback",
-                "android.hardware.type.watch", "android.hardware.type.automotive");
+                "android.hardware.type.watch",
+                "android.hardware.type.automotive");
 
         runTest(".screenpinning.ScreenPinningTestActivity");
     }
 
     @Test
     @Interactive
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void TtsTest() throws Exception {
         excludeFeatures("android.hardware.type.watch");

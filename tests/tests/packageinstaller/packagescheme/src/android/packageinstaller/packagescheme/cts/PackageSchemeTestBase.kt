@@ -18,7 +18,6 @@ package android.packageinstaller.packagescheme.cts
 
 import android.Manifest
 import android.app.Activity
-import android.app.Instrumentation
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -40,21 +39,22 @@ import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 import org.junit.After
+import org.junit.Assert.fail
 import org.junit.Before
 
 open class PackageSchemeTestBase {
-    val TARGET_APP_PKG_NAME: String = "android.packageinstaller.emptytestapp.cts"
-    val TARGET_APP_APK: String = "CtsEmptyTestApp.apk"
-    val RECEIVER_ACTION: String = "android.packageinstaller.emptytestapp.cts.action"
+    val TARGET_APP_PKG_NAME = "android.packageinstaller.emptytestapp.cts"
+    val TARGET_APP_APK = "CtsEmptyTestApp.apk"
+    val RECEIVER_ACTION = "android.packageinstaller.emptytestapp.cts.action"
     val REQUEST_CODE = 1
-    val PKG_FOUND_DIALOG_TEXT = "Do you want to update this app?"
-    val PKG_NOT_FOUND_DIALOG_TEXT = "There was a problem parsing the package."
-    val DEFAULT_TIMEOUT: Long = 5000
+    val POSITIVE_BTN_ID = "button1"
+    val NEGATIVE_BTN_ID = "button2"
+    val SYSTEM_PACKAGE_NAME = "android"
+    val DEFAULT_TIMEOUT = 5000L
 
     var mScenario: ActivityScenario<TestActivity>? = null
-    val mInstrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
-    val mUiDevice: UiDevice = UiDevice.getInstance(mInstrumentation)
-    var mDialog: UiObject2? = null
+    val mInstrumentation = InstrumentationRegistry.getInstrumentation()
+    val mUiDevice = UiDevice.getInstance(mInstrumentation)
     var mButton: UiObject2? = null
     val mContext: Context = mInstrumentation.context
     val mInstaller: PackageInstaller = mContext.packageManager.packageInstaller
@@ -142,19 +142,16 @@ open class PackageSchemeTestBase {
 
         mScenario = ActivityScenario.launchActivityForResult(intent)
         mScenario!!.onActivity {
-            if (packageHasVisibility && needTargetApp) {
-                mUiDevice.wait(Until.findObject(By.text(PKG_FOUND_DIALOG_TEXT)),
-                                                DEFAULT_TIMEOUT)
-                mDialog = mUiDevice.findObject(By.text(PKG_FOUND_DIALOG_TEXT))
-                mButton = mUiDevice.findObject(By.text("Cancel"))
-            } else {
-                mUiDevice.wait(Until.findObject(By.text(PKG_NOT_FOUND_DIALOG_TEXT)),
-                                                DEFAULT_TIMEOUT)
-                mDialog = mUiDevice.findObject(By.text(PKG_NOT_FOUND_DIALOG_TEXT))
-                mButton = mUiDevice.findObject(By.text("OK"))
-            }
-            if (mDialog != null && mButton != null && mButton!!.isEnabled) {
-                mButton!!.click()
+            try {
+                if (packageHasVisibility && needTargetApp) {
+                    mUiDevice.wait(Until.findObject(By.res(SYSTEM_PACKAGE_NAME, NEGATIVE_BTN_ID)),
+                            DEFAULT_TIMEOUT).click()
+                } else {
+                    mUiDevice.wait(Until.findObject(By.res(SYSTEM_PACKAGE_NAME, POSITIVE_BTN_ID)),
+                            DEFAULT_TIMEOUT).click()
+                }
+            } catch (e: NullPointerException) {
+                fail("Button not found.: " + e.message)
             }
         }
 

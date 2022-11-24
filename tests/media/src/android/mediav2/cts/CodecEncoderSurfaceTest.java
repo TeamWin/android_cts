@@ -133,7 +133,7 @@ public class CodecEncoderSurfaceTest {
     private int mTrackID = -1;
 
     static {
-        System.loadLibrary("ctsmediav2codec_jni");
+        System.loadLibrary("ctsmediav2codecencsurface_jni");
 
         android.os.Bundle args = InstrumentationRegistry.getArguments();
         CodecTestBase.mimeSelKeys = args.getString(CodecTestBase.MIME_SEL_KEY);

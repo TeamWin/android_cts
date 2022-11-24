@@ -143,7 +143,8 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
             keycodes.add(HdmiCecConstants.CEC_KEYCODE_POWER_OFF_FUNCTION);
 
             // Send a <UCP>[Power On] immediately followed by a <UCP>[Power Off]
-            hdmiCecClient.sendMultipleUserControlPressAndRelease(LogicalAddress.TV, keycodes);
+            hdmiCecClient.sendMultipleUserControlPressAndRelease(
+                    hdmiCecClient.getSelfDevice(), keycodes);
 
             String reportPowerStatus =
                     hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_POWER_STATUS);
@@ -202,7 +203,8 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
             keycodes.add(HdmiCecConstants.CEC_KEYCODE_POWER_ON_FUNCTION);
 
             // Send a <UCP>[Power Off] immediately followed by a <UCP>[Power On]
-            hdmiCecClient.sendMultipleUserControlPressAndRelease(LogicalAddress.TV, keycodes);
+            hdmiCecClient.sendMultipleUserControlPressAndRelease(
+                    hdmiCecClient.getSelfDevice(), keycodes);
 
             String reportPowerStatus =
                     hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_POWER_STATUS);
@@ -420,8 +422,8 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
         // Acquire the wakelock.
         WakeLockHelper.acquirePartialWakeLock(device);
         try {
-            // All <UCP> commands will be sent from TV.
-            LogicalAddress source = LogicalAddress.TV;
+            // All <UCP> commands will be sent from cec client device.
+            LogicalAddress source = hdmiCecClient.getSelfDevice();
             hdmiCecClient.sendUserControlPressAndRelease(
                     source, HdmiCecConstants.CEC_KEYCODE_POWER_TOGGLE_FUNCTION, false);
             waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);

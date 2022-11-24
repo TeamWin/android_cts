@@ -77,7 +77,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     private ArrayList<Integer> mSyncFramesPos;
 
     static {
-        System.loadLibrary("ctsmediav2codec_jni");
+        System.loadLibrary("ctsmediav2codecenc_jni");
 
         sAdaptiveBitrateMimeList.add(MediaFormat.MIMETYPE_VIDEO_AVC);
         sAdaptiveBitrateMimeList.add(MediaFormat.MIMETYPE_VIDEO_HEVC);

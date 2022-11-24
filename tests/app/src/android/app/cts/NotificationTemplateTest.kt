@@ -424,7 +424,9 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
             return
         }
         val picture = createBitmap(40, 30)
-        val bigIcon = createBitmap(rightIconSize(), rightIconSize() * 3 / 4)
+        val inputWidth = 400
+        val inputHeight = 300
+        val bigIcon = createBitmap(inputWidth, inputHeight)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -433,6 +435,10 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
                         .bigLargeIcon(bigIcon)
                         .showBigPictureWhenCollapsed(true)
                 )
+
+        val expectedIconWidth = minOf(rightIconSize(), inputWidth)
+        val expectedIconHeight = minOf(rightIconSize() * inputHeight / inputWidth, inputHeight)
+
         checkIconView(builder.createContentView()) { iconView ->
             assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
             assertThat(iconView.width.toFloat())
@@ -446,8 +452,8 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
             assertThat(iconView.width.toFloat())
                     .isWithin(1f)
                     .of((iconView.height * 4 / 3).toFloat())
-            assertThat(iconView.drawable.intrinsicWidth).isEqualTo(rightIconSize())
-            assertThat(iconView.drawable.intrinsicHeight).isEqualTo(rightIconSize() * 3 / 4)
+            assertThat(iconView.drawable.intrinsicWidth).isEqualTo(expectedIconWidth)
+            assertThat(iconView.drawable.intrinsicHeight).isEqualTo(expectedIconHeight)
         }
         assertThat(builder.build().extras.getParcelable<Bitmap>(Notification.EXTRA_PICTURE)
                 !!.sameAs(picture)).isTrue()

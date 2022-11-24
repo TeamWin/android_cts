@@ -17,12 +17,10 @@
 package com.android.cts.verifier;
 
 import com.android.compatibility.common.util.ApiTest;
-import com.android.ddmlib.Log;
 import com.android.interactive.annotations.Interactive;
-import com.android.tradefed.log.LogUtil;
+import com.android.interactive.annotations.SupportMultiDisplayMode;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-import org.junit.AssumptionViolatedException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -31,6 +29,7 @@ public final class NotificationsTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void NotificationListenerTest() throws Exception {
         runTest(".notifications.NotificationListenerVerifierActivity");
@@ -38,6 +37,7 @@ public final class NotificationsTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void NotificationPrivacyTest() throws Exception {
         requireFeatures("android.software.secure_lock_screen");
@@ -46,12 +46,13 @@ public final class NotificationsTest extends CtsVerifierTest {
         runTest(".notifications.NotificationPrivacyVerifierActivity");
     }
 
-
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void ConditionProviderTest() throws Exception {
-        excludeFeatures("android.hardware.type.automotive",
+        excludeFeatures(
+                "android.hardware.type.automotive",
                 "android.hardware.type.television",
                 "android.software.leanback",
                 "android.hardware.type.watch");
@@ -61,6 +62,7 @@ public final class NotificationsTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void AttentionManagementTest() throws Exception {
         excludeFeatures("android.hardware.type.watch", "android.software.leanback");
@@ -70,6 +72,7 @@ public final class NotificationsTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void ToastTest() throws Exception {
         runTest(".notifications.ToastVerifierActivity");
@@ -77,30 +80,39 @@ public final class NotificationsTest extends CtsVerifierTest {
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void BubblesTest() throws Exception {
-        excludeFeatures("android.hardware.type.watch",
-                "android.software.leanback", "android.hardware.type.automotive");
+        excludeFeatures(
+                "android.hardware.type.watch",
+                "android.software.leanback",
+                "android.hardware.type.automotive");
 
         runTest(".notifications.BubblesVerifierActivity");
     }
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void MediaPlayerTest() throws Exception {
-        excludeFeatures("android.hardware.type.watch",
-                "android.software.leanback", "android.hardware.type.automotive");
+        excludeFeatures(
+                "android.hardware.type.watch",
+                "android.software.leanback",
+                "android.hardware.type.automotive");
 
         runTest(".notifications.MediaPlayerVerifierActivity");
     }
 
     @Interactive
     @Test
+    @SupportMultiDisplayMode
     // MultiDisplayMode
     public void ShortcutThrottlingResetTest() throws Exception {
-        excludeFeatures("android.hardware.type.watch",
-                "android.software.leanback", "android.hardware.type.automotive");
+        excludeFeatures(
+                "android.hardware.type.watch",
+                "android.software.leanback",
+                "android.hardware.type.automotive");
 
         runTest(".notifications.ShortcutThrottlingResetActivity");
     }
@@ -108,13 +120,16 @@ public final class NotificationsTest extends CtsVerifierTest {
     @Interactive
     @Test
     // SingleDisplayMode
-    @ApiTest(apis = {
-            "android.provider.Settings#ACTION_SECURITY_SETTINGS",
-            "android.provider.Settings#ACTION_TRUSTED_CREDENTIALS_USER"
-    })
+    @ApiTest(
+            apis = {
+                "android.provider.Settings#ACTION_SECURITY_SETTINGS",
+                "android.provider.Settings#ACTION_TRUSTED_CREDENTIALS_USER"
+            })
     public void CAInstallNotificationTest() throws Exception {
-        excludeFeatures("android.hardware.type.watch",
-                "android.hardware.type.television", "android.software.leanback");
+        excludeFeatures(
+                "android.hardware.type.watch",
+                "android.hardware.type.television",
+                "android.software.leanback");
         requireFeatures("android.software.device_admin");
         requireActions("com.android.settings.TRUSTED_CREDENTIALS_USER");
 
@@ -124,17 +139,19 @@ public final class NotificationsTest extends CtsVerifierTest {
     @Interactive
     @Test
     // SingleDisplayMode
-    @ApiTest(apis = {
-            "android.provider.Settings#ACTION_SECURITY_SETTINGS",
-            "android.provider.Settings#ACTION_TRUSTED_CREDENTIALS_USER"
-    })
+    @ApiTest(
+            apis = {
+                "android.provider.Settings#ACTION_SECURITY_SETTINGS",
+                "android.provider.Settings#ACTION_TRUSTED_CREDENTIALS_USER"
+            })
     public void CANotifyOnBootTest() throws Exception {
-        excludeFeatures("android.hardware.type.watch",
-                "android.hardware.type.television", "android.software.leanback");
+        excludeFeatures(
+                "android.hardware.type.watch",
+                "android.hardware.type.television",
+                "android.software.leanback");
         requireFeatures("android.software.device_admin");
         requireActions("com.android.settings.TRUSTED_CREDENTIALS_USER");
 
         runTest(".security.CANotifyOnBootActivity");
     }
-
 }

@@ -34,6 +34,7 @@ import android.widget.Toast;
 
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.TestListActivity;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -61,10 +62,16 @@ public class USBRestrictRecordAActivity extends PassFailButtons.Activity {
     // System USB stuff
     private UsbManager mUsbManager;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        String displayMode = getIntent().getStringExtra("DISPLAY_MODE");
+        if (displayMode != null) {
+            // Update the display mode for USBRestrictRecordAActivity due to b/256545013.
+            Log.i(TAG, "onCreate with displayMode=" + displayMode);
+            TestListActivity.sCurrentDisplayMode = displayMode;
+        }
 
         setContentView(R.layout.usb_restrictrecord);
 
@@ -72,12 +79,14 @@ public class USBRestrictRecordAActivity extends PassFailButtons.Activity {
 
         mContext = this;
 
-        mUsbManager = (UsbManager)getSystemService(Context.USB_SERVICE);
+        mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
 
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
-        setInfoResources(R.string.audio_usb_restrict_record_test,
-                R.string.audio_usb_restrict_record_entry, -1);
+        setInfoResources(
+                R.string.audio_usb_restrict_record_test,
+                R.string.audio_usb_restrict_record_entry,
+                -1);
 
         mHasRecordPermission = hasRecordPermission();
 
@@ -91,8 +100,9 @@ public class USBRestrictRecordAActivity extends PassFailButtons.Activity {
     private boolean hasRecordPermission() {
         try {
             PackageManager pm = getPackageManager();
-            PackageInfo packageInfo = pm.getPackageInfo(
-                    getApplicationInfo().packageName, PackageManager.GET_PERMISSIONS);
+            PackageInfo packageInfo =
+                    pm.getPackageInfo(
+                            getApplicationInfo().packageName, PackageManager.GET_PERMISSIONS);
 
             if (packageInfo.requestedPermissions != null) {
                 for (String permission : packageInfo.requestedPermissions) {
@@ -120,6 +130,7 @@ public class USBRestrictRecordAActivity extends PassFailButtons.Activity {
 
     private class ConnectDeviceBroadcastReceiver extends BroadcastReceiver {
         private final String TAG = "ConnectDeviceBroadcastReceiver";
+
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -130,8 +141,7 @@ public class USBRestrictRecordAActivity extends PassFailButtons.Activity {
                     // These messages don't really matter
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                         Toast.makeText(mContext, "Permission Granted.", Toast.LENGTH_SHORT).show();
-                    }
-                    else {
+                    } else {
                         Toast.makeText(mContext, "Permission Denied.", Toast.LENGTH_SHORT).show();
                     }
                 }
@@ -149,11 +159,14 @@ public class USBRestrictRecordAActivity extends PassFailButtons.Activity {
             UsbDevice theDevice = (UsbDevice) devices[0];
 
             PendingIntent permissionIntent =
-                    PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_MUTABLE_UNAUDITED);
+                    PendingIntent.getBroadcast(
+                            context,
+                            0,
+                            new Intent(ACTION_USB_PERMISSION),
+                            PendingIntent.FLAG_MUTABLE_UNAUDITED);
 
             IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
-            ConnectDeviceBroadcastReceiver usbReceiver =
-                    new ConnectDeviceBroadcastReceiver();
+            ConnectDeviceBroadcastReceiver usbReceiver = new ConnectDeviceBroadcastReceiver();
             context.registerReceiver(usbReceiver, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
 
             mUsbManager.requestPermission(theDevice, permissionIntent);

@@ -16,11 +16,13 @@
 
 package android.telecom.cts;
 
+import android.content.ComponentName;
 import android.content.Intent;
 import android.telecom.Conference;
 import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
 import android.telecom.ConnectionService;
+import android.telecom.DisconnectCause;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.RemoteConference;
 import android.telecom.RemoteConnection;
@@ -59,7 +61,7 @@ public class CtsConnectionService extends ConnectionService {
     @Override
     public void onBindClient(Intent intent) {
         sTelecomConnectionService = this;
-        Log.i("TelecomCTS", "CS bound");
+        Log.i(LOG_TAG, "onBindClient: " + (intent != null ? intent.toString() : ""));
         sIsBound = true;
     }
 
@@ -75,9 +77,12 @@ public class CtsConnectionService extends ConnectionService {
     }
 
     public static void tearDown() {
-        synchronized(sLock) {
+        synchronized (sLock) {
             sConnectionService = null;
             sTelecomConnectionService = null;
+            if (sIsBound) {
+                requestUnbindFromConnectionService();
+            }
         }
     }
 
@@ -336,6 +341,7 @@ public class CtsConnectionService extends ConnectionService {
 
     @Override
     public boolean onUnbind(Intent intent) {
+        Log.i(LOG_TAG, "onUnbind: " + (intent != null ? intent.toString() : ""));
         synchronized (sLock) {
             Log.i(LOG_TAG, "Service has been unbound");
             sIsBound = false;
@@ -356,5 +362,35 @@ public class CtsConnectionService extends ConnectionService {
 
     public static boolean waitForUnBinding() {
         return TestUtils.waitForLatchCountDown(sServiceUnBoundLatch);
+    }
+
+
+    public static void requestUnbindFromConnectionService() {
+        if (sTelecomConnectionService != null && sIsBound) {
+            Log.i(LOG_TAG, "requestUnbindFromConnectionService: "
+                    + "found a bound ConnectionService, creating intent to unbind");
+            // Destroy all connections from this ConnectionService before unbinding
+            Collection<Connection> connections = getAllConnectionsFromTelecom();
+            if (connections != null && connections.size() > 0) {
+                for (Connection connection : connections) {
+                    connection.setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
+                    connection.destroy();
+                }
+                connections.clear();
+            }
+
+            Intent serviceIntent = new Intent();
+            serviceIntent.setAction(android.telecom.ConnectionService.class.getSimpleName());
+            serviceIntent.setComponent(new ComponentName(sTelecomConnectionService.getPackageName(),
+                    "." + sTelecomConnectionService.getClass().getSimpleName()));
+
+            // finally, call the unbind function
+            sTelecomConnectionService.onUnbind(serviceIntent);
+
+        } else {
+            Log.i(LOG_TAG,
+                    "requestUnbindFromConnectionService:"
+                            + " did not find a bound ConnectionService");
+        }
     }
 }

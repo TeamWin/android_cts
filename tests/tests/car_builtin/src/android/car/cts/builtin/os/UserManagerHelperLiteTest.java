@@ -18,8 +18,6 @@ package android.car.cts.builtin.os;
 
 import static android.Manifest.permission.CREATE_USERS;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assert.assertThrows;
 
 import android.car.builtin.os.UserManagerHelper;
@@ -68,21 +66,28 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
     public void testMultiplePropertiesForCurrentUser() {
         // Current user should not be ephemeral or guest because test runs as secondary user.
         UserHandle currentUser = TestApis.users().current().userHandle();
-        assertThat(UserManagerHelper.isEphemeralUser(mUserManager, currentUser)).isFalse();
-        assertThat(UserManagerHelper.isFullUser(mUserManager, currentUser)).isTrue();
-        assertThat(UserManagerHelper.isGuestUser(mUserManager, currentUser)).isFalse();
+
+        expectWithMessage("User %s isEphemeralUser", currentUser).that(
+                UserManagerHelper.isEphemeralUser(mUserManager, currentUser)).isFalse();
+        expectWithMessage("User %s isFullUser", currentUser).that(
+                UserManagerHelper.isFullUser(mUserManager, currentUser)).isTrue();
+        expectWithMessage("User %s isGuestUser", currentUser).that(
+                UserManagerHelper.isGuestUser(mUserManager, currentUser)).isFalse();
 
         // Current user should be enabled.
-        assertThat(UserManagerHelper.isEnabledUser(mUserManager, currentUser)).isTrue();
+        expectWithMessage("User %s isEnabledUser", currentUser).that(
+                UserManagerHelper.isEnabledUser(mUserManager, currentUser)).isTrue();
 
         // Current user should not be preCreated
-        assertThat(UserManagerHelper.isPreCreatedUser(mUserManager, currentUser)).isFalse();
+        expectWithMessage("User %s isPreCreatedUser", currentUser).that(
+                UserManagerHelper.isPreCreatedUser(mUserManager, currentUser)).isFalse();
 
         // Current should be initialized, otherwise test would be running
-        assertThat(UserManagerHelper.isInitializedUser(mUserManager, currentUser)).isTrue();
+        expectWithMessage("User %s isInitializedUser", currentUser).that(
+                UserManagerHelper.isInitializedUser(mUserManager, currentUser)).isTrue();
 
         // Current should be part of getUserHandles
-        assertGetUserHandlesHasUser(currentUser);
+        expectGetUserHandlesHasUser(currentUser);
     }
 
     @Test
@@ -99,13 +104,19 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
     public void testMultiplePropertiesForFullSystemUser() {
         UserHandle systemUser = UserHandle.SYSTEM;
 
-        assertThat(UserManagerHelper.isEphemeralUser(mUserManager, systemUser)).isFalse();
-        assertThat(UserManagerHelper.isFullUser(mUserManager, systemUser)).isTrue();
-        assertThat(UserManagerHelper.isGuestUser(mUserManager, systemUser)).isFalse();
-        assertThat(UserManagerHelper.isEnabledUser(mUserManager, systemUser)).isTrue();
-        assertThat(UserManagerHelper.isPreCreatedUser(mUserManager, systemUser)).isFalse();
-        assertThat(UserManagerHelper.isInitializedUser(mUserManager, systemUser)).isTrue();
-        assertGetUserHandlesHasUser(systemUser);
+        expectWithMessage("System user isEphemeralUser").that(
+                UserManagerHelper.isEphemeralUser(mUserManager, systemUser)).isFalse();
+        expectWithMessage("System user isFullUser").that(
+                UserManagerHelper.isFullUser(mUserManager, systemUser)).isTrue();
+        expectWithMessage("System user isGuestUser").that(
+                UserManagerHelper.isGuestUser(mUserManager, systemUser)).isFalse();
+        expectWithMessage("System user isEnabledUser").that(
+                UserManagerHelper.isEnabledUser(mUserManager, systemUser)).isTrue();
+        expectWithMessage("System user isPreCreatedUser").that(
+                UserManagerHelper.isPreCreatedUser(mUserManager, systemUser)).isFalse();
+        expectWithMessage("System user isInitializedUser").that(
+                UserManagerHelper.isInitializedUser(mUserManager, systemUser)).isTrue();
+        expectGetUserHandlesHasUser(systemUser);
     }
 
     @Test
@@ -122,13 +133,19 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
     public void testMultiplePropertiesForHeadlessSystemUser() {
         UserHandle systemUser = UserHandle.SYSTEM;
 
-        assertThat(UserManagerHelper.isEphemeralUser(mUserManager, systemUser)).isFalse();
-        assertThat(UserManagerHelper.isFullUser(mUserManager, systemUser)).isFalse();
-        assertThat(UserManagerHelper.isGuestUser(mUserManager, systemUser)).isFalse();
-        assertThat(UserManagerHelper.isEnabledUser(mUserManager, systemUser)).isTrue();
-        assertThat(UserManagerHelper.isPreCreatedUser(mUserManager, systemUser)).isFalse();
-        assertThat(UserManagerHelper.isInitializedUser(mUserManager, systemUser)).isTrue();
-        assertGetUserHandlesHasUser(systemUser);
+        expectWithMessage("System user isEphemeralUser").that(
+                UserManagerHelper.isEphemeralUser(mUserManager, systemUser)).isFalse();
+        expectWithMessage("System user isFullUser").that(
+                UserManagerHelper.isFullUser(mUserManager, systemUser)).isFalse();
+        expectWithMessage("System user isGuestUser").that(
+                UserManagerHelper.isGuestUser(mUserManager, systemUser)).isFalse();
+        expectWithMessage("System user isEnabledUser").that(
+                UserManagerHelper.isEnabledUser(mUserManager, systemUser)).isTrue();
+        expectWithMessage("System user isPreCreatedUser").that(
+                UserManagerHelper.isPreCreatedUser(mUserManager, systemUser)).isFalse();
+        expectWithMessage("System user isInitializedUser").that(
+                UserManagerHelper.isInitializedUser(mUserManager, systemUser)).isTrue();
+        expectGetUserHandlesHasUser(systemUser);
     }
 
     @Test
@@ -137,15 +154,16 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
     })
     public void testGetDefaultUserTypeForUserInfoFlags() {
         // Simple example.
-        assertThat(UserManagerHelper
-                .getDefaultUserTypeForUserInfoFlags(UserManagerHelper.FLAG_MANAGED_PROFILE))
-                        .isEqualTo(UserManager.USER_TYPE_PROFILE_MANAGED);
+        expectWithMessage("Default user type for FLAG_MANAGED_PROFILE").that(
+                UserManagerHelper.getDefaultUserTypeForUserInfoFlags(
+                        UserManagerHelper.FLAG_MANAGED_PROFILE)).isEqualTo(
+                UserManager.USER_TYPE_PROFILE_MANAGED);
 
         // Type plus a non-type flag.
-        assertThat(UserManagerHelper
-                .getDefaultUserTypeForUserInfoFlags(
-                        UserManagerHelper.FLAG_GUEST | UserManagerHelper.FLAG_EPHEMERAL))
-                                .isEqualTo(UserManager.USER_TYPE_FULL_GUEST);
+        expectWithMessage("Default user type for FLAG_GUEST | FLAG_EPHEMERAL").that(
+                UserManagerHelper.getDefaultUserTypeForUserInfoFlags(
+                        UserManagerHelper.FLAG_GUEST | UserManagerHelper.FLAG_EPHEMERAL)).isEqualTo(
+                UserManager.USER_TYPE_FULL_GUEST);
 
         // Two types, which is illegal.
         assertThrows(IllegalArgumentException.class, () -> UserManagerHelper
@@ -153,28 +171,32 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
                         UserManagerHelper.FLAG_MANAGED_PROFILE | UserManagerHelper.FLAG_GUEST));
 
         // No type, which defaults to {@link UserManager#USER_TYPE_FULL_SECONDARY}.
-        assertThat(UserManagerHelper
-                .getDefaultUserTypeForUserInfoFlags(UserManagerHelper.FLAG_EPHEMERAL))
-                        .isEqualTo(UserManager.USER_TYPE_FULL_SECONDARY);
+        expectWithMessage("Default user type for FLAG_EPHEMERAL").that(
+                UserManagerHelper.getDefaultUserTypeForUserInfoFlags(
+                        UserManagerHelper.FLAG_EPHEMERAL)).isEqualTo(
+                UserManager.USER_TYPE_FULL_SECONDARY);
     }
 
     @Test
     @ApiTest(apis = {"android.car.builtin.os.UserManagerHelper#getDefaultUserName(Context)"})
     public void testGetDefaultUserName() {
-        assertThat(UserManagerHelper.getDefaultUserName(mContext)).isNotNull();
+        expectWithMessage("Default user name").that(
+                UserManagerHelper.getDefaultUserName(mContext)).isNotNull();
     }
 
     @Test
     @ApiTest(apis = {"android.car.builtin.os.UserManagerHelper#getMaxRunningUsers(Context)"})
     public void testGetMaxRunningUsers() {
-        assertThat(UserManagerHelper.getMaxRunningUsers(mContext)).isGreaterThan(0);
+        expectWithMessage("Max running users").that(
+                UserManagerHelper.getMaxRunningUsers(mContext)).isGreaterThan(0);
     }
 
     @Test
     @ApiTest(apis = {"android.car.builtin.os.UserManagerHelper#getUserId(int)"})
     public void testGetUserId() {
-        assertThat(UserManagerHelper.getUserId(Binder.getCallingUid()))
-                .isEqualTo(Binder.getCallingUserHandle().getIdentifier());
+        expectWithMessage("User id").that(
+                UserManagerHelper.getUserId(Binder.getCallingUid())).isEqualTo(
+                Binder.getCallingUserHandle().getIdentifier());
     }
 
     @Test
@@ -182,7 +204,8 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
             + "isUsersOnSecondaryDisplaysSupported(UserManager)"})
     @RequireMultipleUsersOnMultipleDisplays(reason = "Because test is testing exactly that")
     public void test_isUsersOnSecondaryDisplaysSupported() {
-        assertThat(UserManagerHelper.isUsersOnSecondaryDisplaysSupported(mUserManager)).isTrue();
+        expectWithMessage("Users on secondary displays supported").that(
+                UserManagerHelper.isUsersOnSecondaryDisplaysSupported(mUserManager)).isTrue();
     }
 
     @Test
@@ -190,13 +213,14 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
             + "isUsersOnSecondaryDisplaysSupported(UserManager)"})
     @RequireNotMultipleUsersOnMultipleDisplays(reason = "Because test is testing exactly that")
     public void test_isUsersOnSecondaryDisplaysSupported_not() {
-        assertThat(UserManagerHelper.isUsersOnSecondaryDisplaysSupported(mUserManager)).isFalse();
+        expectWithMessage("Users on secondary displays supported").that(
+                UserManagerHelper.isUsersOnSecondaryDisplaysSupported(mUserManager)).isFalse();
     }
 
-    private void assertGetUserHandlesHasUser(UserHandle user) {
+    private void expectGetUserHandlesHasUser(UserHandle user) {
         List<UserHandle> allUsersHandles = UserManagerHelper.getUserHandles(mUserManager,
                 /* excludePartial= */ false, /* excludeDying= */ false,
                 /* excludePreCreated= */ false);
-        assertThat(allUsersHandles).contains(user);
+        expectWithMessage("allUsersHandles").that(allUsersHandles).contains(user);
     }
 }
