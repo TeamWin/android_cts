@@ -116,7 +116,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
                 .addFile(SPLIT_APK)
                 .addFile(SPLIT_APK_DM)
                 .run();
-        verifyFsverityInstall(incremental, BASE_APK, BASE_APK_DM, SPLIT_APK, SPLIT_APK_DM);
+        verifyFsverityInstall(incremental, BASE_APK, SPLIT_APK);
     }
 
     @CddTest(requirement = "9.10/C-0-3,C-0-5")

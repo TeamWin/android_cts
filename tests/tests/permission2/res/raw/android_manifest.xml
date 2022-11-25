@@ -4208,6 +4208,21 @@
     <permission android:name="android.permission.BIND_AMBIENT_CONTEXT_DETECTION_SERVICE"
         android:protectionLevel="signature"/>
 
+    <!-- @SystemApi Required by a WearableSensingService to
+          ensure that only the caller with this permission can bind to it.
+          <p> Protection level: signature
+     @hide
+    -->
+    <permission android:name="android.permission.BIND_WEARABLE_SENSING_SERVICE"
+                android:protectionLevel="signature" />
+
+    <!-- @SystemApi Allows an app to manage the wearable sensing service.
+             <p>Protection level: signature|privileged
+             @hide
+    -->
+    <permission android:name="android.permission.MANAGE_WEARABLE_SENSING_SERVICE"
+                android:protectionLevel="signature|privileged" />
+
     <!-- Must be required by a {@link android.net.VpnService},
          to ensure that only the system can bind to it.
          <p>Protection level: signature

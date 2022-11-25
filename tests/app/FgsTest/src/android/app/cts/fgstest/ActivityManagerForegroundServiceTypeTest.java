@@ -16,9 +16,10 @@
 
 package android.app.cts.fgstest;
 
+import static android.app.fgstesthelper.LocalForegroundServiceBase.RESULT_INVALID_TYPE_EXCEPTION;
+import static android.app.fgstesthelper.LocalForegroundServiceBase.RESULT_MISSING_TYPE_EXCEPTION;
 import static android.app.fgstesthelper.LocalForegroundServiceBase.RESULT_OK;
 import static android.app.fgstesthelper.LocalForegroundServiceBase.RESULT_SECURITY_EXCEPTION;
-import static android.app.fgstesthelper.LocalForegroundServiceBase.RESULT_TYPE_EXCEPTION;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -120,13 +121,24 @@ public final class ActivityManagerForegroundServiceTypeTest {
     }
 
     @Test
+    public void testForegroundServiceTypeMissing() throws Exception {
+        try {
+            enablePermissionEnforcement(false, TEST_PKG_NAME_CURRENT);
+            enablePermissionEnforcement(false, TEST_PKG_NAME_API33);
+            testForegroundServiceTypeDisabledCommon(ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST,
+                    RESULT_MISSING_TYPE_EXCEPTION,
+                    TEST_COMP_API33_FGS_NO_TYPE, TEST_COMP_CURRENT_FGS_NO_TYPE);
+        } finally {
+            clearPermissionEnforcement(TEST_PKG_NAME_CURRENT);
+            clearPermissionEnforcement(TEST_PKG_NAME_API33);
+        }
+    }
+    @Test
     public void testForegroundServiceTypeNone() throws Exception {
         try {
             enablePermissionEnforcement(false, TEST_PKG_NAME_CURRENT);
             enablePermissionEnforcement(false, TEST_PKG_NAME_API33);
             testForegroundServiceTypeDisabledCommon(ServiceInfo.FOREGROUND_SERVICE_TYPE_NONE,
-                    TEST_COMP_API33_FGS_NO_TYPE, TEST_COMP_CURRENT_FGS_NO_TYPE);
-            testForegroundServiceTypeDisabledCommon(ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST,
                     TEST_COMP_API33_FGS_NO_TYPE, TEST_COMP_CURRENT_FGS_NO_TYPE);
         } finally {
             clearPermissionEnforcement(TEST_PKG_NAME_CURRENT);
@@ -227,6 +239,12 @@ public final class ActivityManagerForegroundServiceTypeTest {
 
     private void testForegroundServiceTypeDisabledCommon(int type,
             ComponentName api33Comp, ComponentName apiCurComp) throws Exception {
+        testForegroundServiceTypeDisabledCommon(type, RESULT_INVALID_TYPE_EXCEPTION,
+                api33Comp, apiCurComp);
+    }
+
+    private void testForegroundServiceTypeDisabledCommon(int type, int exceptionType,
+            ComponentName api33Comp, ComponentName apiCurComp) throws Exception {
         final ApplicationInfo appCurInfo = mTargetContext.getPackageManager().getApplicationInfo(
                 TEST_PKG_NAME_CURRENT, 0);
         final ApplicationInfo app33Info = mTargetContext.getPackageManager().getApplicationInfo(
@@ -251,7 +269,7 @@ public final class ActivityManagerForegroundServiceTypeTest {
                 info.setTypeDisabledForTest(true, TEST_PKG_NAME_CURRENT);
             });
 
-            assertEquals(RESULT_TYPE_EXCEPTION, startForegroundServiceWithType(apiCurComp, type));
+            assertEquals(exceptionType, startForegroundServiceWithType(apiCurComp, type));
 
             stopService(apiCurComp, null);
             startAndStopFgsType(api33Comp, type, uid33Watcher);

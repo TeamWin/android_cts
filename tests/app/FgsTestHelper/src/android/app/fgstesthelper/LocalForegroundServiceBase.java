@@ -17,7 +17,8 @@
 package android.app.fgstesthelper;
 
 import android.app.ForegroundServiceStartNotAllowedException;
-import android.app.ForegroundServiceTypeNotAllowedException;
+import android.app.InvalidForegroundServiceTypeException;
+import android.app.MissingForegroundServiceTypeException;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -48,8 +49,9 @@ public abstract class LocalForegroundServiceBase extends Service {
 
     public static final int RESULT_OK = 0;
     public static final int RESULT_START_EXCEPTION = 1;
-    public static final int RESULT_TYPE_EXCEPTION = 2;
-    public static final int RESULT_SECURITY_EXCEPTION = 3;
+    public static final int RESULT_INVALID_TYPE_EXCEPTION = 2;
+    public static final int RESULT_MISSING_TYPE_EXCEPTION = 3;
+    public static final int RESULT_SECURITY_EXCEPTION = 4;
 
     private int mNotificationId = 0;
 
@@ -137,13 +139,17 @@ public abstract class LocalForegroundServiceBase extends Service {
             Log.d(getTag(), "startForeground gets an "
                     + " ForegroundServiceStartNotAllowedException", e);
             return RESULT_START_EXCEPTION;
-        } catch (ForegroundServiceTypeNotAllowedException e) {
+        } catch (InvalidForegroundServiceTypeException e) {
             Log.d(getTag(), "startForeground gets an "
-                    + " ForegroundServiceTypeNotAllowedException" + e);
-            return RESULT_TYPE_EXCEPTION;
+                    + " InvalidForegroundServiceTypeException " + e);
+            return RESULT_INVALID_TYPE_EXCEPTION;
+        } catch (MissingForegroundServiceTypeException e) {
+            Log.d(getTag(), "startForeground gets an "
+                    + " MissingForegroundServiceTypeException " + e);
+            return RESULT_MISSING_TYPE_EXCEPTION;
         } catch (SecurityException e) {
             Log.d(getTag(), "startForeground gets an "
-                    + " SecurityException" + e);
+                    + " SecurityException " + e);
             return RESULT_SECURITY_EXCEPTION;
         }
         return RESULT_OK;

@@ -26,9 +26,11 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.hdmi.HdmiControlManager;
+import android.hardware.hdmi.HdmiControlServiceWrapper;
 import android.hardware.hdmi.HdmiDeviceInfo;
 import android.hardware.hdmi.HdmiHotplugEvent;
 import android.hardware.hdmi.HdmiPlaybackClient;
+import android.hardware.hdmi.HdmiPortInfo;
 import android.hardware.hdmi.HdmiSwitchClient;
 import android.hardware.hdmi.HdmiTvClient;
 import android.os.SystemProperties;
@@ -130,6 +132,26 @@ public class HdmiControlManagerTest {
             assertThat(mHdmiControlManager.getSwitchClient()).isInstanceOf(HdmiSwitchClient.class);
             assertThat(mHdmiControlManager.getClient(6)).isInstanceOf(HdmiSwitchClient.class);
         }
+    }
+
+    @Test
+    public void testGetPortInfo() {
+        HdmiControlServiceWrapper mService = new HdmiControlServiceWrapper();
+        mHdmiControlManager = mService.createHdmiControlManager();
+        assertThat(mHdmiControlManager).isNotNull();
+        List<HdmiPortInfo> mExpectedInfo = new ArrayList();
+        final int id = 0;
+        final int address = 0x1000;
+        final boolean cec = true;
+        final boolean mhl = false;
+        final boolean arc = true;
+        final HdmiPortInfo info =
+                new HdmiPortInfo(id, HdmiPortInfo.PORT_INPUT, address, cec, mhl, arc);
+        mExpectedInfo.add(info);
+        mService.setPortInfo(mExpectedInfo);
+
+        final List<HdmiPortInfo> portInfo = mHdmiControlManager.getPortInfo();
+        assertThat(portInfo).isEqualTo(mExpectedInfo);
     }
 
     @Test
@@ -548,6 +570,27 @@ public class HdmiControlManagerTest {
                 assertThat(mHdmiControlManager.getSadPresenceInQuery(setting)).isEqualTo(
                         originalValues.get(setting));
             }
+        }
+    }
+
+    @Test
+    public void testHdmiCecConfig_EarcEnabled() throws Exception {
+        // Save original value
+        int originalValue = mHdmiControlManager.getEarcEnabled();
+        if (!mHdmiControlManager.getUserCecSettings().contains(
+                HdmiControlManager.SETTING_NAME_EARC_ENABLED)) {
+            return;
+        }
+        try {
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.SETTING_NAME_EARC_ENABLED)) {
+                mHdmiControlManager.setEarcEnabled(value);
+                assertThat(mHdmiControlManager.getEarcEnabled()).isEqualTo(value);
+            }
+        } finally {
+            // Restore original value
+            mHdmiControlManager.setEarcEnabled(originalValue);
+            assertThat(mHdmiControlManager.getEarcEnabled()).isEqualTo(originalValue);
         }
     }
 }

@@ -36,6 +36,7 @@ import android.os.Looper;
 import android.telephony.Annotation.RadioPowerState;
 import android.telephony.Annotation.SimActivationState;
 import android.telephony.BarringInfo;
+import android.telephony.CallState;
 import android.telephony.CellIdentity;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
@@ -88,6 +89,7 @@ public class TelephonyCallbackTest {
     private boolean mOnCellInfoChangedCalled;
     private boolean mOnServiceStateChangedCalled;
     private boolean mOnPreciseCallStateChangedCalled;
+    private boolean mOnCallStatesChangedCalled;
     private boolean mOnCallDisconnectCauseChangedCalled;
     private boolean mOnImsCallDisconnectCauseChangedCalled;
     private EmergencyNumber mOnOutgoingSmsEmergencyNumberChanged;
@@ -112,6 +114,7 @@ public class TelephonyCallbackTest {
     private BarringInfo mBarringInfo;
     private PreciseDataConnectionState mPreciseDataConnectionState;
     private PreciseCallState mPreciseCallState;
+    private List<CallState> mCallStateList;
     private SignalStrength mSignalStrength;
     private TelephonyManager mTelephonyManager;
     private final Object mLock = new Object();
@@ -138,6 +141,26 @@ public class TelephonyCallbackTest {
             PreciseCallState.PRECISE_CALL_STATE_INCOMING,
             PreciseCallState.PRECISE_CALL_STATE_NOT_VALID,
             PreciseCallState.PRECISE_CALL_STATE_WAITING
+    );
+
+    private static final List<Integer> NETWORK_TYPES = Arrays.asList(
+            TelephonyManager.NETWORK_TYPE_UNKNOWN,
+            TelephonyManager.NETWORK_TYPE_GPRS,
+            TelephonyManager.NETWORK_TYPE_EDGE,
+            TelephonyManager.NETWORK_TYPE_UMTS,
+            TelephonyManager.NETWORK_TYPE_CDMA,
+            TelephonyManager.NETWORK_TYPE_EVDO_0,
+            TelephonyManager.NETWORK_TYPE_EVDO_A,
+            TelephonyManager.NETWORK_TYPE_1xRTT,
+            TelephonyManager.NETWORK_TYPE_HSDPA,
+            TelephonyManager.NETWORK_TYPE_HSUPA,
+            TelephonyManager.NETWORK_TYPE_HSPA,
+            TelephonyManager.NETWORK_TYPE_HSPAP,
+            TelephonyManager.NETWORK_TYPE_LTE,
+            TelephonyManager.NETWORK_TYPE_EHRPD,
+            TelephonyManager.NETWORK_TYPE_GSM,
+            TelephonyManager.NETWORK_TYPE_IWLAN,
+            TelephonyManager.NETWORK_TYPE_NR
     );
 
     private final Executor mSimpleExecutor = Runnable::run;
@@ -519,6 +542,52 @@ public class TelephonyCallbackTest {
         // Test unregister
         unRegisterTelephonyCallback(mOnPreciseCallStateChangedCalled,
                 mPreciseCallStateCallback);
+    }
+
+    private CallAttributesListener mCallAttributesListener;
+
+    private class CallAttributesListener extends TelephonyCallback
+            implements TelephonyCallback.CallAttributesListener {
+        @Override
+        public void onCallStatesChanged(List<CallState> callStateList) {
+            synchronized (mLock) {
+                mOnCallStatesChangedCalled = true;
+                mCallStateList = callStateList;
+                mLock.notify();
+            }
+        }
+    }
+
+    @Test
+    public void testOnCallStatesChangedByRegisterTelephonyCallback() throws Throwable {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+            return;
+        }
+        assertThat(mOnCallStatesChangedCalled).isFalse();
+
+        mHandler.post(() -> {
+            mCallAttributesListener = new CallAttributesListener();
+            registerTelephonyCallbackWithPermission(mCallAttributesListener);
+        });
+        synchronized (mLock) {
+            if (!mOnCallStatesChangedCalled) {
+                mLock.wait(WAIT_TIME);
+            }
+        }
+        Log.d(TAG, "testOnCallStatesChangedByRegisterTelephonyCallback: "
+                + mOnCallStatesChangedCalled);
+
+        assertThat(mOnCallStatesChangedCalled).isTrue();
+        assertNotNull(mCallStateList);
+        if (mCallStateList.size() > 0) {
+            assertThat(mCallStateList.get(0).getCallState()).isIn(PRECISE_CALL_STATE);
+            assertThat(mCallStateList.get(0).getNetworkType()).isIn(NETWORK_TYPES);
+        }
+
+        // Test unregister
+        unRegisterTelephonyCallback(mOnCallStatesChangedCalled,
+                mCallAttributesListener);
     }
 
     private CallDisconnectCauseListener mCallDisconnectCauseCallback;

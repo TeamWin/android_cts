@@ -49,118 +49,142 @@ public class AlwaysOnHotwordDetectorSystemApiTest extends CompatChangeGatingTest
     public void testStartRecognitionThrowCheckedExceptionEnabled()
             throws DeviceNotAvailableException {
         setCompatConfig(
-                /*enabledChanges*/ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
-                /*disabledChanges*/ ImmutableSet.of(),
+                /* enabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* disabledChanges */ ImmutableSet.of(),
                 VOICE_INTERACTION_SERVICES_PACKAGE_NAME);
 
-        runDeviceCompatTest(TEST_APP_PACKAGE_NAME,
+        runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
                 ".AlwaysOnHotwordDetectorChangesTest",
                 "testChangeThrowCheckedException_verifyChangeEnabled",
-                /*enabledChanges*/ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
-                /*disabledChanges*/ ImmutableSet.of());
+                /* enabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* disabledChanges */ ImmutableSet.of(),
+                /* reportedEnabledChanges */ ImmutableSet.of(),
+                /* reportedDisabledChanges */ ImmutableSet.of());
 
-        runDeviceCompatTest(TEST_APP_PACKAGE_NAME,
+        runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
                 ".AlwaysOnHotwordDetectorChangesTest",
                 "startRecognitionThrowCheckedExceptionEnabled_verifyCheckedThrown",
-                /*enabledChanges*/ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
-                /*disabledChanges*/ ImmutableSet.of());
+                /* enabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* disabledChanges */ ImmutableSet.of(),
+                /* reportedEnabledChanges */ ImmutableSet.of(),
+                /* reportedDisabledChanges */ ImmutableSet.of());
     }
 
     public void testStopRecognitionThrowCheckedExceptionEnabled()
             throws DeviceNotAvailableException {
         setCompatConfig(
-                /*enabledChanges*/ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
-                /*disabledChanges*/ ImmutableSet.of(),
+                /* enabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* disabledChanges */ ImmutableSet.of(),
                 VOICE_INTERACTION_SERVICES_PACKAGE_NAME);
 
-        runDeviceCompatTest(TEST_APP_PACKAGE_NAME,
+        runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
                 ".AlwaysOnHotwordDetectorChangesTest",
                 "testChangeThrowCheckedException_verifyChangeEnabled",
-                /*enabledChanges*/ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
-                /*disabledChanges*/ ImmutableSet.of());
+                /* enabledChanges */ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* disabledChanges */ ImmutableSet.of(),
+                /* reportedEnabledChanges */ ImmutableSet.of(),
+                /* reportedDisabledChanges */ ImmutableSet.of());
 
-        runDeviceCompatTest(TEST_APP_PACKAGE_NAME,
+        runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
                 ".AlwaysOnHotwordDetectorChangesTest",
                 "stopRecognitionThrowCheckedExceptionEnabled_verifyCheckedThrown",
-                /*enabledChanges*/ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
-                /*disabledChanges*/ ImmutableSet.of());
+                /* enabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* disabledChanges */ ImmutableSet.of(),
+                /* reportedEnabledChanges */ ImmutableSet.of(),
+                /* reportedDisabledChanges */ ImmutableSet.of());
     }
 
     public void testUpdateStateThrowCheckedExceptionEnabled() throws DeviceNotAvailableException {
         setCompatConfig(
-                /*enabledChanges*/ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
-                /*disabledChanges*/ ImmutableSet.of(),
+                /* enabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* disabledChanges */ ImmutableSet.of(),
                 VOICE_INTERACTION_SERVICES_PACKAGE_NAME);
 
-        runDeviceCompatTest(TEST_APP_PACKAGE_NAME,
+        runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
                 ".AlwaysOnHotwordDetectorChangesTest",
                 "testChangeThrowCheckedException_verifyChangeEnabled",
-                /*enabledChanges*/ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
-                /*disabledChanges*/ ImmutableSet.of());
+                /* enabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* disabledChanges */ ImmutableSet.of(),
+                /* reportedEnabledChanges */ ImmutableSet.of(),
+                /* reportedDisabledChanges */ ImmutableSet.of());
 
-        runDeviceCompatTest(TEST_APP_PACKAGE_NAME,
+        runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
                 ".AlwaysOnHotwordDetectorChangesTest",
                 "updateStateThrowCheckedExceptionEnabled_verifyCheckedThrown",
-                /*enabledChanges*/ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
-                /*disabledChanges*/ ImmutableSet.of());
+                /* enabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* disabledChanges */ ImmutableSet.of(),
+                /* reportedEnabledChanges */ ImmutableSet.of(),
+                /* reportedDisabledChanges */ ImmutableSet.of());
     }
 
     public void testStartRecognitionThrowCheckedExceptionDisabled()
             throws DeviceNotAvailableException {
         setCompatConfig(
-                /*enabledChanges*/ImmutableSet.of(),
-                /*disabledChanges*/ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* enabledChanges */ ImmutableSet.of(),
+                /* disabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
                 VOICE_INTERACTION_SERVICES_PACKAGE_NAME);
 
-        runDeviceCompatTest(TEST_APP_PACKAGE_NAME,
+        runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
                 ".AlwaysOnHotwordDetectorChangesTest",
                 "testChangeThrowCheckedException_verifyChangeDisabled",
-                /*enabledChanges*/ ImmutableSet.of(),
-                /*disabledChanges*/ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION));
+                /* enabledChanges */ ImmutableSet.of(),
+                /* disabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* reportedEnabledChanges */ ImmutableSet.of(),
+                /* reportedDisabledChanges */ ImmutableSet.of());
 
-        runDeviceCompatTest(TEST_APP_PACKAGE_NAME,
+        runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
                 ".AlwaysOnHotwordDetectorChangesTest",
                 "startRecognitionThrowCheckedExceptionDisabled_verifyRuntimeThrown",
-                /*enabledChanges*/ ImmutableSet.of(),
-                /*disabledChanges*/ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION));
+                /* enabledChanges */ ImmutableSet.of(),
+                /* disabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* reportedEnabledChanges */ ImmutableSet.of(),
+                /* reportedDisabledChanges */ ImmutableSet.of());
     }
 
     public void testStopRecognitionThrowCheckedExceptionDisabled()
             throws DeviceNotAvailableException {
         setCompatConfig(
-                /*enabledChanges*/ImmutableSet.of(),
-                /*disabledChanges*/ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* enabledChanges */ ImmutableSet.of(),
+                /* disabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
                 VOICE_INTERACTION_SERVICES_PACKAGE_NAME);
 
-        runDeviceCompatTest(TEST_APP_PACKAGE_NAME,
+        runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
                 ".AlwaysOnHotwordDetectorChangesTest",
                 "testChangeThrowCheckedException_verifyChangeDisabled",
-                /*enabledChanges*/ ImmutableSet.of(),
-                /*disabledChanges*/ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION));
+                /* enabledChanges */ ImmutableSet.of(),
+                /* disabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* reportedEnabledChanges */ ImmutableSet.of(),
+                /* reportedDisabledChanges */ ImmutableSet.of());
 
-        runDeviceCompatTest(TEST_APP_PACKAGE_NAME,
+        runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
                 ".AlwaysOnHotwordDetectorChangesTest",
                 "stopRecognitionThrowCheckedExceptionDisabled_verifyRuntimeThrown",
-                /*enabledChanges*/ ImmutableSet.of(),
-                /*disabledChanges*/ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION));
+                /* enabledChanges */ ImmutableSet.of(),
+                /* disabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* reportedEnabledChanges */ ImmutableSet.of(),
+                /* reportedDisabledChanges */ ImmutableSet.of());
     }
 
     public void testUpdateStateThrowCheckedExceptionDisabled() throws DeviceNotAvailableException {
         setCompatConfig(
-                /*enabledChanges*/ImmutableSet.of(),
-                /*disabledChanges*/ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* enabledChanges */ ImmutableSet.of(),
+                /* disabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
                 VOICE_INTERACTION_SERVICES_PACKAGE_NAME);
 
-        runDeviceCompatTest(TEST_APP_PACKAGE_NAME,
+        runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
                 ".AlwaysOnHotwordDetectorChangesTest",
                 "testChangeThrowCheckedException_verifyChangeDisabled",
-                /*enabledChanges*/ ImmutableSet.of(),
-                /*disabledChanges*/ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION));
+                /* enabledChanges */ ImmutableSet.of(),
+                /* disabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* reportedEnabledChanges */ ImmutableSet.of(),
+                /* reportedDisabledChanges */ ImmutableSet.of());
 
-        runDeviceCompatTest(TEST_APP_PACKAGE_NAME,
+        runDeviceCompatTestReported(TEST_APP_PACKAGE_NAME,
                 ".AlwaysOnHotwordDetectorChangesTest",
                 "updateStateThrowCheckedExceptionDisabled_verifyRuntimeThrown",
-                /*disabledChanges*/ ImmutableSet.of(),
-                /*enabledChanges*/ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION));
+                /* disabledChanges */ ImmutableSet.of(),
+                /* enabledChanges */ ImmutableSet.of(START_RECOGNITION_THROW_EXECUTION_EXCEPTION),
+                /* reportedEnabledChanges */ ImmutableSet.of(),
+                /* reportedDisabledChanges */ ImmutableSet.of());
     }
 }

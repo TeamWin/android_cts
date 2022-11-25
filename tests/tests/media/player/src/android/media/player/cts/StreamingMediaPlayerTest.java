@@ -61,7 +61,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
     static final String mInpPrefix = WorkDir.getMediaDirString() + "assets/";
 
     private static final String MODULE_NAME = "CtsMediaPlayerTestCases";
-
+    private static final int HLS_PLAYBACK_TIME_MS = 20 * 1000;
     private CtsTestServer mServer;
 
     @Before
@@ -170,8 +170,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
             return; // skip
         }
 
-        // Play stream for 60 seconds
-        localHlsTest("hls_variant/index.m3u8", 60 * 1000, false /*isAudioOnly*/);
+        localHlsTest("hls_variant/index.m3u8", false /*isAudioOnly*/);
     }
 
     @Test
@@ -198,8 +197,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         java.util.Vector<HttpCookie> cookies = new java.util.Vector<HttpCookie>();
         cookies.add(cookie);
 
-        // Play stream for 60 seconds
-        localHlsTest("hls_variant/index.m3u8", 60 * 1000, false /*isAudioOnly*/);
+        localHlsTest("hls_variant/index.m3u8", false /*isAudioOnly*/);
     }
 
     @Test
@@ -207,7 +205,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
             return; // skip
         }
-        localHlsTest("audio_only/index.m3u8", 60 * 1000, true /*isAudioOnly*/);
+        localHlsTest("audio_only/index.m3u8", true /*isAudioOnly*/);
     }
 
     @Test
@@ -221,8 +219,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
         if (decoderNames.length == 0) {
             MediaUtils.skipTest("No decoders for " + format);
         } else {
-            // Play stream for 60 seconds
-            localHlsTest("unmuxed_1500k/index.m3u8", 60 * 1000, false /*isAudioOnly*/);
+            localHlsTest("unmuxed_1500k/index.m3u8", false /*isAudioOnly*/);
         }
     }
 
@@ -552,18 +549,19 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
 
     private void localHlsTest(final String name, boolean appendQueryString,
             boolean redirect, boolean isAudioOnly) throws Exception {
-        localHlsTest(name, null, null, appendQueryString, redirect, 10, isAudioOnly);
+        localHlsTest(name, null, null, appendQueryString, redirect, isAudioOnly);
     }
 
-    private void localHlsTest(final String name, int playTime, boolean isAudioOnly)
+    private void localHlsTest(final String name, boolean isAudioOnly)
             throws Exception {
-        localHlsTest(name, null, null, false, false, playTime, isAudioOnly);
+        localHlsTest(name, null, null, false, false, isAudioOnly);
     }
 
     private void localHlsTest(String name, Map<String, String> headers, List<HttpCookie> cookies,
-            boolean appendQueryString, boolean redirect, int playTime, boolean isAudioOnly)
+            boolean appendQueryString, boolean redirect, boolean isAudioOnly)
             throws Exception {
         Preconditions.assertTestFileExists(mInpPrefix + name);
+
         String stream_url = null;
         if (redirect) {
             stream_url = mServer.getQueryRedirectingAssetUrl(mInpPrefix + name);
@@ -574,9 +572,9 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
             stream_url += "?foo=bar/baz";
         }
         if (isAudioOnly) {
-            playLiveAudioOnlyTest(Uri.parse(stream_url), headers, cookies, playTime);
+            playLiveAudioOnlyTest(Uri.parse(stream_url), headers, cookies, HLS_PLAYBACK_TIME_MS);
         } else {
-            playLiveVideoTest(Uri.parse(stream_url), headers, cookies, playTime);
+            playLiveVideoTest(Uri.parse(stream_url), headers, cookies, HLS_PLAYBACK_TIME_MS);
         }
     }
 }
