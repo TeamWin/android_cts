@@ -47,6 +47,8 @@ public class TestAppHelper {
             "android.virtualdevice.streamedtestapp.CannotDisplayOnRemoteActivity";
     static final String STREAMED_APP_SERVICE =
             "android.virtualdevice.streamedtestapp.StreamedAppService";
+    static final String RESTRICT_ACTIVITY =
+            "android.virtualdevice.streamedtestapp.RestrictToDisplayCategoryActivity";
 
     /** @see android.virtualdevice.streamedtestapp.MainActivity */
     static final String ACTION_TEST_CAMERA =
@@ -106,6 +108,13 @@ public class TestAppHelper {
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
         }
         return intent;
+    }
+
+    public static Intent createRestrictActivityIntent(ResultReceiver resultReceiver) {
+        return new Intent(ACTION_CALL_RESULT_RECEIVER)
+                .setComponent(
+                        new ComponentName(PACKAGE_NAME, RESTRICT_ACTIVITY))
+                .putExtra(EXTRA_ACTIVITY_LAUNCHED_RECEIVER, resultReceiver);
     }
 
     public static Intent createActivityLaunchedReceiverIntent(ResultReceiver resultReceiver) {

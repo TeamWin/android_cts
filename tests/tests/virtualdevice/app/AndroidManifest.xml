@@ -37,6 +37,10 @@
 
         <activity android:name=".ReporterActivityB"
             android:exported="true" />
+        <activity android:name=".RestrictToDisplayCategoryActivity"
+            android:allowEmbedded="true"
+            android:exported="true"
+            android:targetDisplayCategory="automotive"/>
 
         <service android:name=".StreamedAppService"
             android:exported="true" />

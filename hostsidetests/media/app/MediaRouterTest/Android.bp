@@ -27,11 +27,11 @@ android_test_helper_app {
         "src/**/*.java",
         ":CtsMediaBetterTogetherHostSideTestCommon",
     ],
+    platform_apis: true, // This test uses private APIs.
     static_libs: [
         "androidx.test.core",
         "androidx.test.ext.junit",
         "androidx.test.rules",
         "compatibility-device-util-axt",
     ],
-    sdk_version: "test_current",
 }

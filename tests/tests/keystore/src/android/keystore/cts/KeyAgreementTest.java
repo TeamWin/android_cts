@@ -224,11 +224,20 @@ public class KeyAgreementTest {
 
         KeyPair kp = kpg.generateKeyPair();
         KeyAgreement ka = getKeyStoreKeyAgreement();
-        ka.init(kp.getPrivate());
-        assertThrows("Calling KeyAgreement.doPhase with XEC private key and EC public key should"
+        /* TODO This case is temporary commented, because OpenSSL implementation does not implement
+         * OpenSSLX25519PublicKey from XECKey interface (b/214203951). This case has to execute
+         * once conscrypt implements OpenSSLX25519PublicKey from XECKey interface.
+         * ka.init(kp.getPrivate());
+         * assertThrows("Calling KeyAgreement.doPhase with XEC private key and EC public key should"
+         *       + " throw an InvalidKeyException.", InvalidKeyException.class, () -> {
+         *       ka.doPhase(generateEphemeralAndroidKeyPair(
+         *               new ECGenParameterSpec("secp224r1")).getPublic(), true);
+         *   });*/
+        ka.init(generateEphemeralAndroidKeyPair(
+                new ECGenParameterSpec("secp224r1")).getPrivate());
+        assertThrows("Calling KeyAgreement.doPhase with EC private key and XEC public key should"
                 + " throw an InvalidKeyException.", InvalidKeyException.class, () -> {
-                ka.doPhase(generateEphemeralAndroidKeyPair(
-                        new ECGenParameterSpec("secp224r1")).getPublic(), true);
+                ka.doPhase(kp.getPublic(), true);
             });
     }
 
