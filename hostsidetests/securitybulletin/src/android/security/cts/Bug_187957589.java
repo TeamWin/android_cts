@@ -21,6 +21,7 @@ import static org.junit.Assume.assumeFalse;
 import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
+import com.android.sts.common.util.TombstoneUtils;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -36,9 +37,11 @@ public class Bug_187957589 extends NonRootSecurityTestCase {
     @AsbSecurityTest(cveBugId = 187957589)
     public void testPocBug_187957589() throws Exception {
         assumeFalse(moduleIsPlayManaged("com.google.android.os.statsd"));
-        AdbUtils.runPoc("Bug-187957589", getDevice());
-        // Sleep to ensure statsd was able to process the injected event.
-        Thread.sleep(5_000);
-        AdbUtils.assertNoCrashes(getDevice(), "statsd");
+        TombstoneUtils.Config config = new TombstoneUtils.Config().setProcessPatterns("statsd");
+        try (AutoCloseable a = TombstoneUtils.withAssertNoSecurityCrashes(getDevice(), config)) {
+            AdbUtils.runPoc("Bug-187957589", getDevice());
+            // Sleep to ensure statsd was able to process the injected event.
+            Thread.sleep(5_000);
+        }
     }
 }

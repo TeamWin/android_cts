@@ -18,8 +18,8 @@ package android.security.cts;
 
 import android.platform.test.annotations.AsbSecurityTest;
 
-import com.android.compatibility.common.util.CrashUtils;
 import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
+import com.android.sts.common.util.TombstoneUtils;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -36,9 +36,9 @@ public class CVE_2019_2027 extends NonRootSecurityTestCase {
     @Test
     public void testPocCVE_2019_2027() throws Exception {
         String binaryName = "CVE-2019-2027";
-        String signals[] = {CrashUtils.SIGABRT};
+        String signals[] = {TombstoneUtils.Signals.SIGABRT};
         AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
-        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config = new TombstoneUtils.Config().setProcessPatterns(binaryName);
         testConfig.config.setSignals(signals);
         testConfig.config
                 .setAbortMessageIncludes(AdbUtils.escapeRegexSpecialChars("ubsan: mul-overflow"));

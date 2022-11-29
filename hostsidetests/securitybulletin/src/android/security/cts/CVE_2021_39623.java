@@ -18,9 +18,9 @@ package android.security.cts;
 
 import android.platform.test.annotations.AsbSecurityTest;
 
-import com.android.compatibility.common.util.CrashUtils;
-import com.android.compatibility.common.util.CrashUtils.Config.BacktraceFilterPattern;
 import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
+import com.android.sts.common.util.TombstoneUtils;
+import com.android.sts.common.util.TombstoneUtils.Config.BacktraceFilterPattern;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -42,10 +42,10 @@ public class CVE_2021_39623 extends NonRootSecurityTestCase {
     public void testPocCVE_2021_39623() throws Exception {
         String binaryName = "CVE-2021-39623";
         AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
-        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName)
+        testConfig.config = new TombstoneUtils.Config().setProcessPatterns(binaryName)
                 .setBacktraceIncludes(new BacktraceFilterPattern("libstagefright",
                         "android::SimpleDecodingSource::doRead"));
-        String signals[] = {CrashUtils.SIGSEGV};
+        String signals[] = {TombstoneUtils.Signals.SIGSEGV};
         testConfig.config.setSignals(signals);
         testConfig.inputFilesDestination = AdbUtils.TMP_PATH;
         String inputFiles[] = {"cve_2021_39623.ogg"};

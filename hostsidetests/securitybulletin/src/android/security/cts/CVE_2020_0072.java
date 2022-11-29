@@ -38,7 +38,6 @@ public class CVE_2020_0072 extends NonRootSecurityTestCase {
         assumeIsSupportedNfcDevice(getDevice());
         pocPusher.only64();
         AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig("CVE-2020-0072", getDevice());
-        testConfig.checkCrash = false;
         AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
     }
 }

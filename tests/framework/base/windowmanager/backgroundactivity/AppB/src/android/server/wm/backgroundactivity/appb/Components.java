@@ -30,7 +30,14 @@ public class Components extends ComponentsBase {
 
     /** Extra key constants for {@link #APP_B_START_PENDING_INTENT_ACTIVITY} */
     public static class StartPendingIntentActivity {
+        /**
+         * If present starts the pending intent with a bundle created from ActivityOptions where
+         * setBackgroundActivityLaunchAllowed() was set to this value.
+         */
         public static final String ALLOW_BAL_EXTRA = "ALLOW_BAL_EXTRA";
+
+        /** Start the pending intent with a `null` bundle if no options are set. */
+        public static final String USE_NULL_BUNDLE = "USE_NULL_BUNDLE";
     }
 
     /** Extra key constants for {@link #APP_B_START_PENDING_INTENT_RECEIVER} */

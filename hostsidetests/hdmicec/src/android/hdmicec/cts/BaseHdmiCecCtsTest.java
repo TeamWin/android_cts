@@ -43,7 +43,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /** Base class for all HDMI CEC CTS tests. */
-@OptionClass(alias="hdmi-cec-client-cts-test")
+@OptionClass(alias = "hdmi-cec-client-cts-test")
 public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
 
     public static final String PROPERTY_LOCALE = "persist.sys.locale";
@@ -52,6 +52,9 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
             "power_state_change_on_active_source_lost";
     private static final String SET_MENU_LANGUAGE = "set_menu_language";
     private static final String SET_MENU_LANGUAGE_ENABLED = "1";
+
+    private static final String SOUNDBAR_MODE = "soundbar_mode";
+    private static final String SETTING_VOLUME_CONTROL_ENABLED = "volume_control_enabled";
 
     /** Enum contains the list of possible address types. */
     private enum AddressType {
@@ -85,7 +88,7 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
      *
      * @param clientParams Extra parameters to use when launching cec-client
      */
-    public BaseHdmiCecCtsTest(String ...clientParams) {
+    public BaseHdmiCecCtsTest(String... clientParams) {
         this(HdmiCecConstants.CEC_DEVICE_TYPE_UNKNOWN, clientParams);
     }
 
@@ -93,8 +96,8 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
      * Constructor for BaseHdmiCecCtsTest.
      *
      * @param testDeviceType The primary test device type. This is used to determine to which
-     *     logical address of the DUT messages should be sent.
-     * @param clientParams Extra parameters to use when launching cec-client
+     *                       logical address of the DUT messages should be sent.
+     * @param clientParams   Extra parameters to use when launching cec-client
      */
     public BaseHdmiCecCtsTest(@CecDeviceType int testDeviceType, String... clientParams) {
         this.hdmiCecClient = new HdmiCecClientWrapper(clientParams);
@@ -124,25 +127,31 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
 
         public static TestRule requiresDeviceType(
                 BaseHostJUnit4Test testPointer, @CecDeviceType int dutDeviceType) {
+            return RequiredDeviceTypeRule.requiredDeviceType(
+                    testPointer,
+                    dutDeviceType);
+        }
+
+        public static TestRule requiresArcSupport(
+                BaseHostJUnit4Test testPointer, boolean arcSupport) {
             return RequiredPropertyRule.asCsvContainsValue(
                     testPointer,
-                    HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY,
-                    Integer.toString(dutDeviceType));
+                    HdmiCecConstants.PROPERTY_ARC_SUPPORT,
+                    Boolean.toString(arcSupport));
         }
 
         /** This rule will skip the test if the DUT belongs to the HDMI device type deviceType. */
         public static TestRule skipDeviceType(
                 BaseHostJUnit4Test testPointer, @CecDeviceType int deviceType) {
-            return RequiredPropertyRule.asCsvDoesNotContainsValue(
+            return RequiredDeviceTypeRule.invalidDeviceType(
                     testPointer,
-                    HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY,
-                    Integer.toString(deviceType));
+                    deviceType);
         }
     }
 
     @Option(name = HdmiCecConstants.PHYSICAL_ADDRESS_NAME,
-        description = "HDMI CEC physical address of the DUT",
-        mandatory = false)
+            description = "HDMI CEC physical address of the DUT",
+            mandatory = false)
     public static int dutPhysicalAddress = HdmiCecConstants.DEFAULT_PHYSICAL_ADDRESS;
 
     /** Gets the physical address of the DUT by parsing the dumpsys hdmi_control. */
@@ -231,16 +240,17 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
     }
 
     /** Gets the given device's logical address to which messages should be sent */
-    public static LogicalAddress getTargetLogicalAddress(ITestDevice device) throws DumpsysParseException {
+    public static LogicalAddress getTargetLogicalAddress(ITestDevice device)
+            throws DumpsysParseException {
         return getTargetLogicalAddress(device, HdmiCecConstants.CEC_DEVICE_TYPE_UNKNOWN);
     }
 
-    /** Gets the given device's logical address to which messages should be sent, based on the test
+    /**
+     * Gets the given device's logical address to which messages should be sent, based on the test
      * device type.
      *
      * When the test doesn't specify a device type, or the device doesn't have a logical address
      * that matches the specified device type, use the first logical address.
-     *
      */
     public static LogicalAddress getTargetLogicalAddress(ITestDevice device, int testDeviceType)
             throws DumpsysParseException {
@@ -401,6 +411,11 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
                 "dumpsys hdmi_control | sed -n '/mDeviceInfos/,/mCecController/{//!p;}'");
     }
 
+    public String getLocalDevicesList() throws Exception {
+        return getDevice().executeShellCommand(
+                "dumpsys hdmi_control | sed -n '/HdmiCecLocalDevice /p'\n");
+    }
+
     public void sendDeviceToSleepAndValidate() throws Exception {
         sendDeviceToSleep();
         assertDeviceWakefulness(HdmiCecConstants.WAKEFULNESS_ASLEEP);
@@ -533,8 +548,20 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         return setSettingsValue(POWER_CONTROL_MODE, valToSet);
     }
 
+    public String setVolumeControlMode(String valToSet) throws Exception {
+        return setSettingsValue(SETTING_VOLUME_CONTROL_ENABLED, valToSet);
+    }
+
     public String setPowerStateChangeOnActiveSourceLost(String valToSet) throws Exception {
         return setSettingsValue(POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST, valToSet);
+    }
+
+    public String setSoundbarMode(String valToSet) throws Exception {
+        return setSettingsValue(SOUNDBAR_MODE, valToSet);
+    }
+
+    public String getSoundbarMode() throws Exception {
+        return getSettingsValue(SOUNDBAR_MODE);
     }
 
     public boolean isDeviceActiveSource(ITestDevice device) throws DumpsysParseException {

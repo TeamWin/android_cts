@@ -17,6 +17,7 @@
 package android.server.wm.backgroundactivity.appb;
 
 import static android.server.wm.backgroundactivity.appb.Components.StartPendingIntentActivity.ALLOW_BAL_EXTRA;
+import static android.server.wm.backgroundactivity.appb.Components.StartPendingIntentActivity.USE_NULL_BUNDLE;
 import static android.server.wm.backgroundactivity.appb.Components.StartPendingIntentReceiver.PENDING_INTENT_EXTRA;
 
 import android.app.Activity;
@@ -24,23 +25,34 @@ import android.app.ActivityOptions;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 
 /**
  * Receive pending intent from AppA and launch it
  */
 public class StartPendingIntentActivity extends Activity {
 
+    public static final String TAG = "StartPendingIntentActivity";
+
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         Intent intent = getIntent();
         final PendingIntent pendingIntent = intent.getParcelableExtra(PENDING_INTENT_EXTRA);
-        final boolean allowBal = intent.getBooleanExtra(ALLOW_BAL_EXTRA, false);
 
         try {
-            ActivityOptions options = ActivityOptions.makeBasic();
-            options.setPendingIntentBackgroundActivityLaunchAllowed(allowBal);
-            Bundle bundle = options.toBundle();
+            final Bundle bundle;
+            if (intent.hasExtra(ALLOW_BAL_EXTRA)) {
+                ActivityOptions options = ActivityOptions.makeBasic();
+                final boolean allowBal = intent.getBooleanExtra(ALLOW_BAL_EXTRA, false);
+                options.setPendingIntentBackgroundActivityLaunchAllowed(allowBal);
+                bundle = options.toBundle();
+            } else if (intent.getBooleanExtra(USE_NULL_BUNDLE, false)) {
+                bundle = null;
+            } else {
+                bundle = ActivityOptions.makeBasic().toBundle();
+            }
+            Log.i(TAG, "pendingIntent.send with bundle: " + bundle);
             pendingIntent.send(/* context */ null, /* code */0, /* intent */
                     null, /* onFinished */null, /* handler */
                     null, /* requiredPermission */ null, bundle);

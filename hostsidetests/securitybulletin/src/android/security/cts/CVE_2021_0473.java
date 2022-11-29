@@ -37,7 +37,6 @@ public class CVE_2021_0473 extends NonRootSecurityTestCase {
         AdbUtils.assumeHasNfc(getDevice());
         pocPusher.only64();
         AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig("CVE-2021-0473", getDevice());
-        testConfig.checkCrash = false;
         AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
     }
 }

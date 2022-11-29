@@ -367,6 +367,27 @@ public class HdmiControlManagerTest {
     }
 
     @Test
+    public void testHdmiCecConfig_SoundbarMode() throws Exception {
+        // Save original value
+        int originalValue = mHdmiControlManager.getSoundbarMode();
+        if (!mHdmiControlManager.getUserCecSettings().contains(
+                HdmiControlManager.CEC_SETTING_NAME_SOUNDBAR_MODE)) {
+            return;
+        }
+        try {
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.CEC_SETTING_NAME_SOUNDBAR_MODE)) {
+                mHdmiControlManager.setSoundbarMode(value);
+                assertThat(mHdmiControlManager.getSoundbarMode()).isEqualTo(value);
+            }
+        } finally {
+            // Restore original value
+            mHdmiControlManager.setSoundbarMode(originalValue);
+            assertThat(mHdmiControlManager.getSoundbarMode()).isEqualTo(originalValue);
+        }
+    }
+
+    @Test
     public void testHdmiCecConfig_HdmiCecVolumeControlEnabled() throws Exception {
         // Save original value
         int originalValue = mHdmiControlManager.getHdmiCecVolumeControlEnabled();

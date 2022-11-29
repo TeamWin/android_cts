@@ -153,11 +153,13 @@ public final class HdmiCecConstants {
 
     // CEC Settings
     public static final String SETTING_VOLUME_CONTROL_ENABLED = "volume_control_enabled";
+    public static final String SETTING_SOUNDBAR_MODE_ENABLED = "soundbar_mode";
 
     // CEC Settings Values
     public static final String VOLUME_CONTROL_ENABLED = "1";
     public static final String VOLUME_CONTROL_DISABLED = "0";
-
+    public static final String SOUNDBAR_MODE_ENABLED = "1";
+    public static final String SOUNDBAR_MODE_DISABLED = "0";
     // Power Control Modes for source devices
     public static final String POWER_CONTROL_MODE_BROADCAST = "broadcast";
     public static final String POWER_CONTROL_MODE_NONE = "none";

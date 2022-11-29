@@ -18,8 +18,8 @@ package android.security.cts;
 
 import android.platform.test.annotations.AsbSecurityTest;
 
-import com.android.compatibility.common.util.CrashUtils;
 import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
+import com.android.sts.common.util.TombstoneUtils;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -36,8 +36,8 @@ public class CVE_2020_0243 extends NonRootSecurityTestCase {
     @AsbSecurityTest(cveBugId = 151644303)
     public void testPocCVE_2020_0243() throws Exception {
         AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig("CVE-2020-0243", getDevice());
-        testConfig.config = new CrashUtils.Config().setProcessPatterns("mediaserver");
-        testConfig.config.checkMinAddress(false);
+        testConfig.config = new TombstoneUtils.Config().setProcessPatterns("mediaserver");
+        testConfig.config.setIgnoreLowFaultAddress(false);
         AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
     }
 }

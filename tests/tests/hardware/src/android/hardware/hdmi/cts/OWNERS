@@ -1,3 +1,2 @@
 # Bug component: 826094
-marvinramin@google.com
-nchalko@google.com
+include platform/frameworks/base:/core/java/android/hardware/hdmi/OWNERS

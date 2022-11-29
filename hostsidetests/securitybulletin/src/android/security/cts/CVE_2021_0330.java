@@ -18,8 +18,8 @@ package android.security.cts;
 
 import android.platform.test.annotations.AsbSecurityTest;
 
-import com.android.compatibility.common.util.CrashUtils;
 import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
+import com.android.sts.common.util.TombstoneUtils;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -36,8 +36,8 @@ public class CVE_2021_0330 extends NonRootSecurityTestCase {
     @AsbSecurityTest(cveBugId = 170732441)
     public void testPocCVE_2021_0330() throws Exception {
         AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig("CVE-2021-0330", getDevice());
-        testConfig.config = new CrashUtils.Config().setProcessPatterns("storaged");
-        testConfig.config.checkMinAddress(false);
+        testConfig.config = new TombstoneUtils.Config().setProcessPatterns("storaged");
+        testConfig.config.setIgnoreLowFaultAddress(false);
         AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
     }
 }
