@@ -2231,6 +2231,8 @@ public final class DeviceState extends HarrierRule {
             }
         }
         mOriginalFlagValues.clear();
+
+        TestApis.activities().clearAllActivities();
     }
 
     private UserReference createProfile(

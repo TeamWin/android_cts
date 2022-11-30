@@ -16,8 +16,6 @@
 
 package android.devicepolicy.cts;
 
-import static android.content.pm.ApplicationInfo.FLAG_STOPPED;
-
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
 import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
 
@@ -28,10 +26,7 @@ import static org.testng.Assert.assertThrows;
 
 import android.Manifest.permission;
 import android.app.ActivityManager;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.stats.devicepolicy.EventId;
-import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -48,7 +43,6 @@ import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.queryable.queries.StringQuery;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -89,8 +83,7 @@ public final class UserControlDisabledPackagesTest {
                     .whereType().isEqualTo(EventId.SET_USER_CONTROL_DISABLED_PACKAGES_VALUE)
                     .whereAdminPackageName().isEqualTo(
                             sDeviceState.dpc().componentName().getPackageName())
-                    .whereStrings().contains(
-                            StringQuery.string().isEqualTo(PACKAGE_NAME))).wasLogged();
+                    .whereStrings().contains(PACKAGE_NAME)).wasLogged();
         } finally {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
                     DPC_COMPONENT_NAME,

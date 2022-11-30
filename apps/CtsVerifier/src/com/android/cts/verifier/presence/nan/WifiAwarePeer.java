@@ -35,7 +35,6 @@ import android.util.Log;
 
 import com.android.cts.verifier.presence.nan.RttRanger.NanResultListener;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -59,6 +58,7 @@ public class WifiAwarePeer {
     private NanResultListener nanResultListener;
     private PublishDiscoverySession currentPublishDiscoverySession = null;
     private SubscribeDiscoverySession currentSubscribeDiscoverySession = null;
+    private String serviceNameForSession = null;
 
     public WifiAwarePeer(Context context, Handler handler) {
         this.handler = handler;
@@ -66,7 +66,8 @@ public class WifiAwarePeer {
         this.rttRanger = new RttRanger(context, handler::post);
     }
 
-    public void publish() {
+    public void publish(byte serviceId) {
+        this.serviceNameForSession = CTS_V_SERVICE_NAME + serviceId;
         attach(/*isPublisher=*/ true);
     }
 
@@ -83,7 +84,9 @@ public class WifiAwarePeer {
     }
 
     public void subscribe(
-            WifiAwarePeerListener wifiAwarePeerListener, NanResultListener nanResultListener) {
+            WifiAwarePeerListener wifiAwarePeerListener, NanResultListener nanResultListener,
+            String serviceId) {
+        this.serviceNameForSession = CTS_V_SERVICE_NAME + serviceId;
         attach(/*isPublisher=*/ false);
         this.wifiAwarePeerListener = wifiAwarePeerListener;
         this.nanResultListener = nanResultListener;
@@ -95,7 +98,8 @@ public class WifiAwarePeer {
             return;
         }
 
-        wifiAwareManager.attach(new AwareAttachCallback(isPublisher), handler);
+        wifiAwareManager.attach(new AwareAttachCallback(isPublisher),
+                handler);
     }
 
     public void stop() {
@@ -115,15 +119,14 @@ public class WifiAwarePeer {
         private final PublishConfig publishConfig =
                 new PublishConfig.Builder()
                         .setMatchFilter(MATCH_FILTER)
-                        .setServiceName(CTS_V_SERVICE_NAME)
+                        .setServiceName(serviceNameForSession)
                         .setRangingEnabled(true)
                         .build();
-
         private final SubscribeConfig subscribeConfig =
                 new SubscribeConfig.Builder()
                         .setMatchFilter(MATCH_FILTER)
-                        .setServiceName(CTS_V_SERVICE_NAME)
-                        .setMaxDistanceMm(30 * 100 * 100) // 30m
+                        .setServiceName(serviceNameForSession)
+                        .setMaxDistanceMm(30 * 100 * 100)
                         .setMinDistanceMm(0)
                         .build();
 

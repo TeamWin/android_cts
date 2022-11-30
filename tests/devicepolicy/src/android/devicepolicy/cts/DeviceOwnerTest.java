@@ -64,7 +64,7 @@ public final class DeviceOwnerTest {
             // TODO(b/198417584): Support Querying XML resources in TestApp.
             // TODO(b/198590265) Filter for the correct account type.
             .whereServices().contains(
-                    service().serviceClass().className()
+                    service().where().serviceClass().className()
                             .isEqualTo("com.android.bedstead.testapp.AccountManagementApp"
                                     + ".TestAppAccountAuthenticatorService"))
             .get();

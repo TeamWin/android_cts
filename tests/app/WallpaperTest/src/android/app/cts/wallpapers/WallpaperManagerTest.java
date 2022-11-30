@@ -48,6 +48,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorSpace;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -787,6 +788,115 @@ public class WallpaperManagerTest {
         });
 
         runWithShellPermissionIdentity(() -> mWallpaperManager.clearWallpaper());
+    }
+
+    @Test
+    public void peekWallpaperCaching_cachesWallpaper() throws IOException {
+        mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
+
+        // Get the current bitmap, and check that the second call returns the cached bitmap
+        Bitmap bitmap1 = mWallpaperManager.getBitmapAsUser(mContext.getUserId(),
+                false /* hardware */, FLAG_SYSTEM);
+        assertThat(bitmap1).isNotNull();
+        assertThat(mWallpaperManager.getBitmapAsUser(mContext.getUserId(), false /* hardware */,
+                FLAG_SYSTEM)).isSameInstanceAs(bitmap1);
+
+        // Change the wallpaper to invalidate the cached bitmap
+        mWallpaperManager.setResource(R.drawable.icon_red, FLAG_SYSTEM);
+
+        // Get the new bitmap, and check that the second call returns the newly cached bitmap
+        Bitmap bitmap2 = mWallpaperManager.getBitmapAsUser(mContext.getUserId(),
+                false /* hardware */, FLAG_SYSTEM);
+        assertThat(bitmap2).isNotSameInstanceAs(bitmap1);
+        assertThat(mWallpaperManager.getBitmapAsUser(mContext.getUserId(), false /* hardware */,
+                FLAG_SYSTEM)).isSameInstanceAs(bitmap2);
+    }
+
+    @Test
+    public void peekWallpaperCaching_differentWhich_doesNotReturnCached() throws IOException {
+        mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
+        mWallpaperManager.setResource(R.drawable.icon_red, FLAG_LOCK);
+
+        Bitmap bitmapSystem = mWallpaperManager.getBitmapAsUser(mContext.getUserId(),
+                false /* hardware */, FLAG_SYSTEM);
+        Bitmap bitmapLock = mWallpaperManager.getBitmapAsUser(mContext.getUserId(),
+                false /* hardware */, FLAG_LOCK);
+        assertThat(bitmapLock).isNotSameInstanceAs(bitmapSystem);
+
+    }
+
+    @Test
+    public void peekWallpaperCaching_bitmapRecycled_doesNotReturnCached() throws IOException {
+        mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
+
+        Bitmap bitmap = mWallpaperManager.getBitmapAsUser(mContext.getUserId(),
+                false /* hardware */, FLAG_SYSTEM);
+        assertThat(bitmap).isNotNull();
+        bitmap.recycle();
+        assertThat(mWallpaperManager.getBitmapAsUser(mContext.getUserId(), false /* hardware */,
+                FLAG_SYSTEM)).isNotSameInstanceAs(bitmap);
+    }
+
+    @Test
+    public void peekWallpaperCaching_differentUser_doesNotReturnCached() throws IOException {
+        final int bogusUserId = -1;
+        mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
+
+        Bitmap bitmap = mWallpaperManager.getBitmapAsUser(mContext.getUserId(),
+                false /* hardware */, FLAG_SYSTEM);
+        assertThat(bitmap).isNotNull();
+
+        // If the cached bitmap was determined to be invalid, this leads to a call to
+        // WallpaperManager.Globals#getCurrentWallpaperLocked() for a different user, which
+        // generates a security exception: the exception indicates that the cached bitmap was
+        // invalid, which is the desired result.
+        assertThrows(SecurityException.class,
+                () -> mWallpaperManager.getBitmapAsUser(bogusUserId, false /* hardware */,
+                        FLAG_SYSTEM));
+    }
+
+    @Test
+    public void peekWallpaperDimensions_homeScreen_succeeds() throws IOException {
+        final int width = 100;
+        final int height = 200;
+        final Rect expectedSize = new Rect(0, 0, width, height);
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        canvas.drawColor(Color.RED);
+        mWallpaperManager.setBitmap(bitmap);
+
+        Rect actualSize = mWallpaperManager.peekBitmapDimensions();
+
+        assertThat(actualSize).isEqualTo(expectedSize);
+    }
+
+    @Test
+    public void peekWallpaperDimensions_lockScreenUnset_succeeds() {
+        Rect actualSize = mWallpaperManager.peekBitmapDimensions(FLAG_LOCK);
+
+        assertThat(actualSize).isNull();
+    }
+
+    @Test
+    public void peekWallpaperDimensions_lockScreenSet_succeeds() throws IOException {
+        Bitmap homeBitmap = Bitmap.createBitmap(150 /* width */, 150 /* width */,
+                Bitmap.Config.ARGB_8888);
+        Canvas homeCanvas = new Canvas(homeBitmap);
+        homeCanvas.drawColor(Color.RED);
+        mWallpaperManager.setBitmap(homeBitmap, /* visibleCropHint */ null, /* allowBackup */true,
+                FLAG_SYSTEM);
+        final int width = 100;
+        final int height = 200;
+        final Rect expectedSize = new Rect(0, 0, width, height);
+        Bitmap lockBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas lockCanvas = new Canvas(lockBitmap);
+        lockCanvas.drawColor(Color.RED);
+        mWallpaperManager.setBitmap(lockBitmap, /* visibleCropHint */ null, /* allowBackup */true,
+                FLAG_LOCK);
+
+        Rect actualSize = mWallpaperManager.peekBitmapDimensions(FLAG_LOCK);
+
+        assertThat(actualSize).isEqualTo(expectedSize);
     }
 
     private void assertBitmapDimensions(Bitmap bitmap) {

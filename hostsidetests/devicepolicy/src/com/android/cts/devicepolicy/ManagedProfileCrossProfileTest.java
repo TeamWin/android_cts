@@ -16,7 +16,6 @@
 
 package com.android.cts.devicepolicy;
 
-import static android.stats.devicepolicy.EventId.ADD_CROSS_PROFILE_INTENT_FILTER_VALUE;
 import static android.stats.devicepolicy.EventId.ADD_CROSS_PROFILE_WIDGET_PROVIDER_VALUE;
 import static android.stats.devicepolicy.EventId.REMOVE_CROSS_PROFILE_WIDGET_PROVIDER_VALUE;
 import static android.stats.devicepolicy.EventId.SET_CROSS_PROFILE_CALENDAR_PACKAGES_VALUE;
@@ -31,7 +30,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.FlakyTest;
-import android.platform.test.annotations.LargeTest;
 
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -82,37 +80,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                     TEST_APP_1_PKG,
                     TEST_APP_2_PKG,
                     TEST_APP_3_PKG);
-
-    @LargeTest
-    @Test
-    public void testCrossProfileIntentFilters() throws Exception {
-        // Set up activities: ManagedProfileActivity will only be enabled in the managed profile and
-        // PrimaryUserActivity only in the primary one
-        disableActivityForUser("ManagedProfileActivity", mParentUserId);
-        disableActivityForUser("PrimaryUserActivity", mProfileUserId);
-
-        runDeviceTestsAsUser(MANAGED_PROFILE_PKG,
-                MANAGED_PROFILE_PKG + ".CrossProfileIntentFilterTest", mProfileUserId);
-
-        assertMetricsLogged(getDevice(), () -> {
-            runDeviceTestsAsUser(
-                    MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".CrossProfileIntentFilterTest",
-                    "testAddCrossProfileIntentFilter_all", mProfileUserId);
-        }, new DevicePolicyEventWrapper.Builder(ADD_CROSS_PROFILE_INTENT_FILTER_VALUE)
-                .setAdminPackageName(MANAGED_PROFILE_PKG)
-                .setInt(1)
-                .setStrings("com.android.cts.managedprofile.ACTION_TEST_ALL_ACTIVITY")
-                .build());
-
-        // Set up filters from primary to managed profile
-        String command = "am start -W --user " + mProfileUserId + " " + MANAGED_PROFILE_PKG
-                + "/.PrimaryUserFilterSetterActivity";
-        LogUtil.CLog.d("Output for command " + command + ": "
-                + getDevice().executeShellCommand(command));
-        runDeviceTestsAsUser(
-                MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".PrimaryUserTest", mParentUserId);
-        // TODO: Test with startActivity
-    }
 
     @FlakyTest
     @Test

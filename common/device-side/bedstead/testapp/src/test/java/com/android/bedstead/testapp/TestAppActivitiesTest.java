@@ -46,9 +46,9 @@ public class TestAppActivitiesTest {
 
     private static final TestApp sTestApp = sDeviceState.testApps().query()
             .whereActivities().contains(
-                    activity().activityClass().className().isEqualTo(EXISTING_ACTIVITY)
+                    activity().where().activityClass().className().isEqualTo(EXISTING_ACTIVITY)
             ).whereActivities().doesNotContain(
-                    activity().activityClass().className().isEqualTo(NON_EXISTING_ACTIVITY)
+                    activity().where().activityClass().className().isEqualTo(NON_EXISTING_ACTIVITY)
             )
             .get();
     private static TestAppInstance sTestAppInstance;

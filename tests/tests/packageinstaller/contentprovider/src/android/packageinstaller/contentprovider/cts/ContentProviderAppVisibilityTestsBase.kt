@@ -22,6 +22,7 @@ import android.content.ComponentName
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager.MATCH_DEFAULT_ONLY
 import android.net.Uri
 import android.os.Bundle
 import androidx.test.core.app.ActivityScenario
@@ -46,7 +47,7 @@ open class ContentProviderAppVisibilityTestsBase {
     val EXPORTED_CONTENT_PROVIDER_AUTH = "android.packageinstaller.exportedcontentprovider"
     val UNPROTECTED_CONTENT_PROVIDER_AUTH = "android.packageinstaller.unprotectedcontentprovider"
 
-    val PACKAGE_INSTALLER = "com.google.android.packageinstaller"
+    val PACKAGE_INSTALLER = getPackageInstallerPackageName()
     val INSTALL_START_CLASS = "com.android.packageinstaller.InstallStart"
 
     private val INSTALL_FAIL_DIALOG_TEXT = "There was a problem parsing the package."
@@ -69,6 +70,14 @@ open class ContentProviderAppVisibilityTestsBase {
             setResult(resultCode, data)
             finish()
         }
+    }
+
+    private fun getPackageInstallerPackageName(): String {
+        val installerIntent = Intent(Intent.ACTION_INSTALL_PACKAGE)
+        installerIntent.setDataAndType(Uri.parse("content://com.example/"),
+                "application/vnd.android.package-archive")
+        return installerIntent.resolveActivityInfo(mContext.packageManager, MATCH_DEFAULT_ONLY)
+                .packageName
     }
 
     fun runTest(contentProviderType: Int){

@@ -67,7 +67,8 @@ import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.compatibility.common.util.CddTest;
 import com.android.eventlib.truth.EventLogsSubject;
-import com.android.queryable.queries.ActivityQuery;
+import com.android.queryable.info.ActivityInfo;
+import com.android.queryable.queries.Query;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -96,24 +97,24 @@ public class DevicePolicyManagementRoleHolderTest {
 
     private static final DevicePolicyManager sDevicePolicyManager =
             sContext.getSystemService(DevicePolicyManager.class);
-    private static final ActivityQuery<?> sQueryForRoleHolderTrustedSourceAction =
-            (ActivityQuery<?>)
-            activity().intentFilters().contains(
-                intentFilter().actions().contains(
-                        ACTION_ROLE_HOLDER_PROVISION_MANAGED_DEVICE_FROM_TRUSTED_SOURCE))
-                    .permission().isEqualTo(LAUNCH_DEVICE_MANAGER_SETUP);
-    private static final ActivityQuery<?> sQueryForRoleHolderManagedProfileAction =
-            (ActivityQuery<?>)
-            activity().intentFilters().contains(
-                intentFilter().actions().contains(
-                        ACTION_ROLE_HOLDER_PROVISION_MANAGED_PROFILE))
-                    .permission().isEqualTo(LAUNCH_DEVICE_MANAGER_SETUP);
-    private static final ActivityQuery<?> sQueryForRoleHolderFinalizationAction =
-            (ActivityQuery<?>)
-            activity().intentFilters().contains(
-                intentFilter().actions().contains(
-                        ACTION_ROLE_HOLDER_PROVISION_FINALIZATION))
-                    .permission().isEqualTo(LAUNCH_DEVICE_MANAGER_SETUP);
+    private static final Query<ActivityInfo> sQueryForRoleHolderTrustedSourceAction =
+            activity()
+                    .where().intentFilters().contains(
+                            intentFilter().where().actions().contains(
+                                    ACTION_ROLE_HOLDER_PROVISION_MANAGED_DEVICE_FROM_TRUSTED_SOURCE)
+                    ).where().permission().isEqualTo(LAUNCH_DEVICE_MANAGER_SETUP);
+    private static final Query<ActivityInfo> sQueryForRoleHolderManagedProfileAction =
+            activity()
+                    .where().intentFilters().contains(
+                            intentFilter().where().actions().contains(
+                                    ACTION_ROLE_HOLDER_PROVISION_MANAGED_PROFILE)
+                    ).where().permission().isEqualTo(LAUNCH_DEVICE_MANAGER_SETUP);
+    private static final Query<ActivityInfo> sQueryForRoleHolderFinalizationAction =
+            activity()
+                    .where().intentFilters().contains(
+                            intentFilter().where().actions().contains(
+                                    ACTION_ROLE_HOLDER_PROVISION_FINALIZATION)
+                    ).where().permission().isEqualTo(LAUNCH_DEVICE_MANAGER_SETUP);
     private static final TestApp sRoleHolderApp = sDeviceState.testApps()
             .query()
             .whereActivities()
@@ -129,7 +130,7 @@ public class DevicePolicyManagementRoleHolderTest {
             // TODO(b/198417584): Support Querying XML resources in TestApp.
             // TODO(b/198590265) Filter for the correct account type.
             .whereServices().contains(
-                    service().serviceClass().className()
+                    service().where().serviceClass().className()
                             .isEqualTo("com.android.bedstead.testapp.AccountManagementApp"
                                     + ".TestAppAccountAuthenticatorService"))
             .get();

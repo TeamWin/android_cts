@@ -29,6 +29,9 @@ import com.android.queryable.queries.StringQueryHelper;
 import java.time.Duration;
 import java.time.Instant;
 
+/**
+ * {@link Queryable} for querying logged metrics.
+ */
 public class MetricQueryBuilder implements Queryable {
     private final EnterpriseMetricsRecorder mRecorder;
     private boolean hasStartedFetchingResults = false;
@@ -41,7 +44,7 @@ public class MetricQueryBuilder implements Queryable {
             new StringQueryHelper<>(this);
     private final BooleanQueryHelper<MetricQueryBuilder> mBooleanQuery =
             new BooleanQueryHelper<>(this);
-    private final ListQueryHelper<MetricQueryBuilder, String, StringQuery<?>> mStringsQuery =
+    private final ListQueryHelper<MetricQueryBuilder, String> mStringsQuery =
             new ListQueryHelper<>(this);
     private final IntegerQueryHelper<MetricQueryBuilder> mIntegerQuery =
             new IntegerQueryHelper<>(this);
@@ -82,7 +85,7 @@ public class MetricQueryBuilder implements Queryable {
         return mIntegerQuery;
     }
 
-    public ListQueryHelper<MetricQueryBuilder, String, StringQuery<?>> whereStrings() {
+    public ListQueryHelper<MetricQueryBuilder, String> whereStrings() {
         if (hasStartedFetchingResults) {
             throw new IllegalStateException("Cannot modify query after fetching results");
         }

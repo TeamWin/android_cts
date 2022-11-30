@@ -59,6 +59,10 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
     public static final int TEST_TYPE_RESUME_FAILED = 1 << 3;
     public static final int TEST_TYPE_CONFERENCE_FAILED = 1 << 4;
     public static final int TEST_TYPE_HOLD_NO_RESPONSE = 1 << 5;
+    public static final int TEST_TYPE_CONFERENCE_FAILED_REMOTE_TERMINATED = 1 << 6;
+    public static final int TEST_TYPE_JOIN_EXIST_CONFERENCE = 1 << 7;
+    public static final int TEST_TYPE_JOIN_EXIST_CONFERENCE_AFTER_SWAP = 1 << 8;
+    public static final int TEST_TYPE_JOIN_EXIST_CONFERENCE_FAILED_AFTER_SWAP = 1 << 9;
 
     private int mTestType = TEST_TYPE_NONE;
     private boolean mIsOnHold = false;
@@ -186,6 +190,7 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
                 }
                 Log.d(LOG_TAG, "invokeStarted mCallId = " + mCallId);
                 mListener.callSessionInitiated(mCallProfile);
+                setState(ImsCallSessionImplBase.State.ESTABLISHED);
             } catch (Throwable t) {
                 Throwable cause = t.getCause();
                 if (t instanceof DeadObjectException
@@ -194,7 +199,6 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
                 }
             }
         });
-        setState(ImsCallSessionImplBase.State.ESTABLISHED);
     }
 
     void startFailed() {
@@ -241,31 +245,27 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
 
     @Override
     public void reject(int reason) {
-        int state = getState();
-        if (state == ImsCallSessionImplBase.State.ESTABLISHED) {
-            postAndRunTask(() -> {
-                try {
-                    if (mListener == null) {
-                        return;
-                    }
-                    Log.d(LOG_TAG, "invokeTerminated mCallId = " + mCallId);
-                    mListener.callSessionTerminated(getReasonInfo(
-                            ImsReasonInfo.CODE_USER_TERMINATED, ImsReasonInfo.CODE_UNSPECIFIED));
-                } catch (Throwable t) {
-                    Throwable cause = t.getCause();
-                    if (t instanceof DeadObjectException
-                            || (cause != null && cause instanceof DeadObjectException)) {
-                        fail("starting cause Throwable to be thrown: " + t);
-                    }
+        postAndRunTask(() -> {
+            try {
+                if (mListener == null) {
+                    return;
                 }
-            });
-            setState(ImsCallSessionImplBase.State.TERMINATED);
-        }
+                Log.d(LOG_TAG, "invokeTerminated mCallId = " + mCallId);
+                mListener.callSessionTerminated(getReasonInfo(
+                        ImsReasonInfo.CODE_LOCAL_CALL_DECLINE, ImsReasonInfo.CODE_UNSPECIFIED));
+            } catch (Throwable t) {
+                Throwable cause = t.getCause();
+                if (t instanceof DeadObjectException
+                        || (cause != null && cause instanceof DeadObjectException)) {
+                    fail("starting cause Throwable to be thrown: " + t);
+                }
+            }
+        });
+        setState(ImsCallSessionImplBase.State.TERMINATED);
     }
 
     @Override
     public void terminate(int reason) {
-        int state = getState();
         postAndRunTask(() -> {
             try {
                 if (mListener == null) {
@@ -421,8 +421,13 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
 
     @Override
     public void merge() {
-        if (isTestType(TEST_TYPE_CONFERENCE_FAILED)) {
+        if (isTestType(TEST_TYPE_CONFERENCE_FAILED)
+                || isTestType(TEST_TYPE_JOIN_EXIST_CONFERENCE_FAILED_AFTER_SWAP)
+                || isTestType(TEST_TYPE_CONFERENCE_FAILED_REMOTE_TERMINATED)) {
             mergeFailed();
+        } else if (isTestType(TEST_TYPE_JOIN_EXIST_CONFERENCE)
+                || isTestType(TEST_TYPE_JOIN_EXIST_CONFERENCE_AFTER_SWAP)) {
+            mergeExistConference();
         } else {
             createConferenceSession();
             mConfSession.setState(ImsCallSessionImplBase.State.ESTABLISHED);
@@ -450,7 +455,8 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
                     if (mListener == null) {
                         return;
                     }
-                    mConfSession.sendConferenceStateUpdatd("connected");
+                    // after the conference call setup, the participant is two.
+                    mConfSession.sendConferenceStateUpdated("connected", 2);
                 } catch (Throwable t) {
                     Throwable cause = t.getCause();
                     if (t instanceof DeadObjectException
@@ -463,7 +469,11 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
     }
 
     private void mergeFailed() {
-        createConferenceSession();
+        if (isTestType(TEST_TYPE_JOIN_EXIST_CONFERENCE_FAILED_AFTER_SWAP)) {
+            addExistConferenceSession();
+        } else {
+            createConferenceSession();
+        }
 
         postAndRunTask(() -> {
             try {
@@ -474,10 +484,61 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
                 Log.d(LOG_TAG, "invokeCallSessionMergeStarted");
                 mListener.callSessionMergeStarted(mConfSession, mConfCallProfile);
                 ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
+                if (isTestType(TEST_TYPE_CONFERENCE_FAILED_REMOTE_TERMINATED)) {
+                    return;
+                }
                 Log.d(LOG_TAG, "invokeCallSessionMergeFailed");
                 mListener.callSessionMergeFailed(getReasonInfo(
                         ImsReasonInfo.CODE_REJECT_ONGOING_CONFERENCE_CALL,
                         ImsReasonInfo.CODE_UNSPECIFIED));
+            } catch (Throwable t) {
+                Throwable cause = t.getCause();
+                if (t instanceof DeadObjectException
+                        || (cause != null && cause instanceof DeadObjectException)) {
+                    fail("starting cause Throwable to be thrown: " + t);
+                }
+            }
+        });
+    }
+
+    private void mergeExistConference() {
+        addExistConferenceSession();
+        mConfSession.setState(ImsCallSessionImplBase.State.ESTABLISHED);
+
+        postAndRunTask(() -> {
+            ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
+            try {
+                if (mListener == null) {
+                    return;
+                }
+
+                if (isTestType(TEST_TYPE_JOIN_EXIST_CONFERENCE_AFTER_SWAP)) {
+                    mConferenceHelper.getBackGroundSession().setState(State.TERMINATED);
+                    mConferenceHelper.getBackGroundSession().invokeTerminatedByRemote();
+                } else {
+                    mConferenceHelper.getForeGroundSession().setState(State.TERMINATED);
+                    mConferenceHelper.getForeGroundSession().invokeTerminatedByRemote();
+                }
+
+                Log.d(LOG_TAG, "invokeMergeComplete into an existing conference call");
+                TestImsCallSessionImpl newSession = null;
+                mListener.callSessionMergeComplete(newSession);
+            } catch (Throwable t) {
+                Throwable cause = t.getCause();
+                if (t instanceof DeadObjectException
+                        || (cause != null && cause instanceof DeadObjectException)) {
+                    fail("starting cause Throwable to be thrown: " + t);
+                }
+            }
+        });
+
+        postAndRunTask(() -> {
+            try {
+                if (mListener == null) {
+                    return;
+                }
+                // after joining an existing conference call, the participants are three.
+                mConfSession.sendConferenceStateUpdated("connected", 3);
             } catch (Throwable t) {
                 Throwable cause = t.getCause();
                 if (t instanceof DeadObjectException
@@ -509,6 +570,20 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
         mConferenceHelper.setConferenceSession(mConfSession);
     }
 
+    private void addExistConferenceSession() {
+        mConferenceHelper.setForeGroundSession(this);
+        mConferenceHelper.setBackGroundSession(mConferenceHelper.getHoldSession());
+
+        if (isTestType(TEST_TYPE_JOIN_EXIST_CONFERENCE_AFTER_SWAP)
+                || isTestType(TEST_TYPE_JOIN_EXIST_CONFERENCE_FAILED_AFTER_SWAP)) {
+            mConfSession = this;
+        } else {
+            mConfSession = mConferenceHelper.getHoldSession();
+        }
+
+        mConferenceHelper.setConferenceSession(mConfSession);
+    }
+
     private void invokeSessionTerminated() {
         Log.d(LOG_TAG, "invokeCallSessionTerminated");
         mListener.callSessionTerminated(getReasonInfo(
@@ -516,10 +591,17 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
                 ImsReasonInfo.CODE_UNSPECIFIED));
     }
 
-    public void sendConferenceStateUpdatd(String state) {
+    private void invokeTerminatedByRemote() {
+        Log.d(LOG_TAG, "invokeCallSessionTerminated by remote");
+        mListener.callSessionTerminated(getReasonInfo(
+                ImsReasonInfo.CODE_USER_TERMINATED_BY_REMOTE,
+                ImsReasonInfo.CODE_UNSPECIFIED));
+    }
+
+    private void sendConferenceStateUpdated(String state, int count) {
         ImsConferenceState confState = new ImsConferenceState();
         int counter = 5553639;
-        for (int i = 0; i < 2; ++i) {
+        for (int i = 0; i < count; ++i) {
             confState.mParticipants.put((String.valueOf(++counter)),
                     createConferenceParticipant(("tel:" + String.valueOf(++counter)),
                     ("tel:" + String.valueOf(++counter)), (String.valueOf(++counter)), state, 200));
@@ -542,6 +624,104 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
                 Log.d(LOG_TAG, "invokeHeld mCallId = " + mCallId);
                 mListener.callSessionHeld(mCallProfile);
                 mIsOnHold = true;
+            } catch (Throwable t) {
+                Throwable cause = t.getCause();
+                if (t instanceof DeadObjectException
+                        || (cause != null && cause instanceof DeadObjectException)) {
+                    fail("starting cause Throwable to be thrown: " + t);
+                }
+            }
+        });
+        setState(ImsCallSessionImplBase.State.ESTABLISHED);
+    }
+
+    public void sendHoldFailRemoteTerminated() {
+        postAndRunTask(() -> {
+            try {
+                if (mListener == null) {
+                    return;
+                }
+                Log.d(LOG_TAG, "invokeHoldFailed mCallId = " + mCallId);
+                mListener.callSessionHoldFailed(getReasonInfo(ImsReasonInfo.CODE_UNSPECIFIED,
+                        ImsReasonInfo.CODE_UNSPECIFIED));
+            } catch (Throwable t) {
+                Throwable cause = t.getCause();
+                if (t instanceof DeadObjectException
+                        || (cause != null && cause instanceof DeadObjectException)) {
+                    fail("starting cause Throwable to be thrown: " + t);
+                }
+            }
+        });
+        setState(ImsCallSessionImplBase.State.ESTABLISHED);
+
+        sendTerminatedByRemote();
+    }
+
+    public void sendTerminatedByRemote() {
+        postAndRunTask(() -> {
+            try {
+                if (mListener == null) {
+                    return;
+                }
+                invokeTerminatedByRemote();
+                setState(ImsCallSessionImplBase.State.TERMINATED);
+            } catch (Throwable t) {
+                Throwable cause = t.getCause();
+                if (t instanceof DeadObjectException
+                        || (cause != null && cause instanceof DeadObjectException)) {
+                    fail("starting cause Throwable to be thrown: " + t);
+                }
+            }
+        });
+    }
+
+    public void sendMergedFailed() {
+        postAndRunTask(() -> {
+            try {
+                if (mListener == null) {
+                    return;
+                }
+                Log.d(LOG_TAG, "invokeMergedFailed mCallId = " + mCallId);
+                mListener.callSessionMergeFailed(getReasonInfo(
+                        ImsReasonInfo.CODE_REJECT_ONGOING_CONFERENCE_CALL,
+                        ImsReasonInfo.CODE_UNSPECIFIED));
+            } catch (Throwable t) {
+                Throwable cause = t.getCause();
+                if (t instanceof DeadObjectException
+                        || (cause != null && cause instanceof DeadObjectException)) {
+                    fail("starting cause Throwable to be thrown: " + t);
+                }
+            }
+        });
+    }
+
+    public void sendHoldReceived() {
+        postAndRunTask(() -> {
+            try {
+                if (mListener == null) {
+                    return;
+                }
+                Log.d(LOG_TAG, "invokeHoldReceived mCallId = " + mCallId);
+                mListener.callSessionHoldReceived(mCallProfile);
+            } catch (Throwable t) {
+                Throwable cause = t.getCause();
+                if (t instanceof DeadObjectException
+                        || (cause != null && cause instanceof DeadObjectException)) {
+                    fail("starting cause Throwable to be thrown: " + t);
+                }
+            }
+        });
+        setState(ImsCallSessionImplBase.State.ESTABLISHED);
+    }
+
+    public void sendResumeReceived() {
+        postAndRunTask(() -> {
+            try {
+                if (mListener == null) {
+                    return;
+                }
+                Log.d(LOG_TAG, "invokeResumeReceived mCallId = " + mCallId);
+                mListener.callSessionResumeReceived(mCallProfile);
             } catch (Throwable t) {
                 Throwable cause = t.getCause();
                 if (t instanceof DeadObjectException

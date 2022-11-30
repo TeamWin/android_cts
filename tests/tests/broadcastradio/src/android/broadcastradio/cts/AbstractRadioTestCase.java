@@ -23,6 +23,7 @@ import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -36,6 +37,8 @@ import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SafeCleanerRule;
 
+import com.google.common.truth.Expect;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.mockito.Mock;
@@ -47,6 +50,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 abstract class AbstractRadioTestCase {
+
+    protected static final int HANDLER_CALLBACK_MS = 100;
+    protected static final int CANCEL_TIMEOUT_MS = 1_000;
+    protected static final int TUNE_CALLBACK_TIMEOUT_MS = 30_000;
+    protected static final int PROGRAM_LIST_COMPLETE_TIMEOUT_MS = 60_000;
 
     private final Context mContext = InstrumentationRegistry.getContext();
 
@@ -62,6 +70,8 @@ abstract class AbstractRadioTestCase {
     @Rule
     public MockitoRule mMockitoRule = MockitoJUnit.rule();
     @Rule
+    public final Expect mExpect = Expect.create();
+    @Rule
     public SafeCleanerRule mSafeCleanerRule = new SafeCleanerRule()
             .run(() -> {
                 if (mRadioTuner != null) {
@@ -72,14 +82,12 @@ abstract class AbstractRadioTestCase {
 
     @Before
     public void setup() {
-        // check if radio is supported and skip the test if it's not
         PackageManager packageManager = mContext.getPackageManager();
         boolean isRadioSupported = packageManager.hasSystemFeature(
                 PackageManager.FEATURE_BROADCAST_RADIO);
 
         assumeTrue("Radio supported", isRadioSupported);
 
-        // Check radio access permission
         int res = mContext.checkCallingOrSelfPermission(Manifest.permission.ACCESS_BROADCAST_RADIO);
 
         assertWithMessage("ACCESS_BROADCAST_RADIO permission granted")
@@ -95,6 +103,28 @@ abstract class AbstractRadioTestCase {
         verify(mCallback, never()).onTuneFailed(anyInt(), any());
         verify(mCallback, never()).onControlChanged(anyBoolean());
         Mockito.reset(mCallback);
+    }
+
+    protected void openAmFmTuner() {
+        openAmFmTuner(/* withAudio= */ true);
+    }
+
+    protected void openAmFmTuner(boolean withAudio) {
+        setAmFmConfig();
+
+        assume().withMessage("AM/FM radio module exists").that(mModule).isNotNull();
+
+        mRadioTuner = mRadioManager.openTuner(mModule.getId(), mFmBandConfig, withAudio, mCallback,
+                /* handler= */ null);
+
+        if (!withAudio) {
+            assume().withMessage("Non-audio radio tuner").that(mRadioTuner).isNotNull();
+        }
+
+        assertWithMessage("Radio tuner opened").that(mRadioTuner).isNotNull();
+        verify(mCallback, after(HANDLER_CALLBACK_MS).atMost(1)).onProgramInfoChanged(any());
+
+        resetCallback();
     }
 
     protected void setAmFmConfig() {

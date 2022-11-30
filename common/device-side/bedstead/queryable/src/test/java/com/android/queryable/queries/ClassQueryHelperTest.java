@@ -30,7 +30,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class ClassQueryHelperTest {
+public final class ClassQueryHelperTest {
     private final Queryable mQuery = null;
 
     private static final Class<?> CLASS_1 = Activity.class;
@@ -115,5 +115,12 @@ public class ClassQueryHelperTest {
         classQueryHelper.simpleName().isEqualTo(CLASS_1_SIMPLE_NAME);
 
         assertParcelsCorrectly(ClassQueryHelper.class, classQueryHelper);
+    }
+
+    @Test
+    public void classQueryHelper_queries() {
+        assertThat(
+                ClassQuery.Class().where().simpleName().isEqualTo(CLASS_1_SIMPLE_NAME)
+                        .matches(CLASS_1_CLASS_INFO)).isTrue();
     }
 }

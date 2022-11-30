@@ -42,6 +42,7 @@ import kotlinx.coroutines.launch
 private const val USE_CAMERA = "use_camera"
 private const val USE_MICROPHONE = "use_microphone"
 private const val USE_HOTWORD = "use_hotword"
+private const val FINISH_EARLY = "finish_early"
 private const val USE_DURATION_MS = 10000L
 private const val SAMPLE_RATE_HZ = 44100
 
@@ -62,12 +63,14 @@ class AccessCameraOrMicActivity : Activity() {
     private var runMic = false
     private var hotwordFinished = false
     private var runHotword = false
+    private var finishEarly = false
 
     override fun onStart() {
         super.onStart()
         runCamera = intent.getBooleanExtra(USE_CAMERA, false)
         runMic = intent.getBooleanExtra(USE_MICROPHONE, false)
         runHotword = intent.getBooleanExtra(USE_HOTWORD, false)
+        finishEarly = intent.getBooleanExtra(FINISH_EARLY, false)
 
         if (runMic) {
             useMic()
@@ -193,6 +196,11 @@ class AccessCameraOrMicActivity : Activity() {
             AudioRecord.getMinBufferSize(SAMPLE_RATE_HZ, CHANNEL_IN_MONO, ENCODING_PCM_16BIT)
         recorder = AudioRecord(MIC, SAMPLE_RATE_HZ, CHANNEL_IN_MONO, ENCODING_PCM_16BIT, minSize)
         recorder?.startRecording()
+        if (finishEarly) {
+            appOpsManager = getSystemService(AppOpsManager::class.java)
+            appOpsManager?.finishOp(AppOpsManager.OPSTR_RECORD_AUDIO, Process.myUid(), packageName)
+            return
+        }
         GlobalScope.launch {
             delay(USE_DURATION_MS)
             micFinished = true

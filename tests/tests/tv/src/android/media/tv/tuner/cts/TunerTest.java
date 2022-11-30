@@ -334,10 +334,35 @@ public class TunerTest {
         FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
         int res = mTuner.tune(createFrontendSettings(info));
         assertEquals(Tuner.RESULT_SUCCESS, res);
-        res = mTuner.setLnaEnabled(false);
-        assertTrue((res == Tuner.RESULT_SUCCESS) || (res == Tuner.RESULT_UNAVAILABLE));
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_3_0)) {
+            if (mTuner.isLnaSupported()) {
+                res = mTuner.setLnaEnabled(false);
+                assertEquals(Tuner.RESULT_SUCCESS, res);
+            } else {
+                res = mTuner.setLnaEnabled(false);
+                assertEquals(Tuner.RESULT_UNAVAILABLE, res);
+            }
+        } else {
+            res = mTuner.setLnaEnabled(false);
+            assertTrue((res == Tuner.RESULT_SUCCESS) || (res == Tuner.RESULT_UNAVAILABLE));
+        }
         res = mTuner.cancelTuning();
         assertEquals(Tuner.RESULT_SUCCESS, res);
+    }
+
+    @Test
+    public void testIsLnaSupported() throws Exception {
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_3_0)) {
+            mTuner.isLnaSupported();
+            // no exception thrown
+        } else {
+            try {
+                mTuner.isLnaSupported();
+                fail("Is LNA Supported should throw UnsupportedOperationException.");
+            } catch (UnsupportedOperationException uoe) {
+                // pass
+            }
+        }
     }
 
     @Test

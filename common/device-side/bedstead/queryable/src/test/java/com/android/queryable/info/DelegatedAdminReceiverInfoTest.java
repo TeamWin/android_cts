@@ -27,7 +27,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class DelegatedAdminReceiverInfoTest {
+public final class DelegatedAdminReceiverInfoTest {
 
     private static final Class<? extends DelegatedAdminReceiver> TEST_DEVICE_ADMIN_RECEIVER_CLASS =
             DelegatedAdminReceiver.class;

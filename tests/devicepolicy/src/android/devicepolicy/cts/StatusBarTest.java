@@ -47,8 +47,9 @@ public final class StatusBarTest {
 
     private static final TestApp sTestApp = sDeviceState.testApps().query()
             .whereActivities().contains(
-                    activity().exported().isTrue()
-                            .intentFilters().isEmpty()
+                    activity()
+                            .where().exported().isTrue()
+                            .where().intentFilters().isEmpty()
             )
             .get();
 

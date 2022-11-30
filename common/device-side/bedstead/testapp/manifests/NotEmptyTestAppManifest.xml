@@ -21,6 +21,14 @@
 
     <application android:label="NotEmptyTestApp">
         <meta-data android:name="test-metadata-key" android:value="test-metadata-value" />
+
+        <!--This should only be included in a single TestApp-->
+        <activity android:name="android.testapp.UniqueActivity" android:exported="true">
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="com.android.testapp.UNIQUE_ACTIVITY_ACTION" />
+            </intent-filter>
+        </activity>
     </application>
     <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="29"/>
 </manifest>

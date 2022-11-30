@@ -22,6 +22,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.android.queryable.Queryable;
+import com.android.queryable.QueryableBaseWithMatch;
 import com.android.queryable.util.ParcelableUtils;
 
 import java.io.Serializable;
@@ -41,8 +42,27 @@ public final class StringQueryHelper<E extends Queryable>
     private String mEqualsValue;
     private Set<String> mNotEqualsValues = new HashSet<>();
 
-    StringQueryHelper() {
-        mQuery = (E) this;
+    public static final class StringQueryBase extends
+            QueryableBaseWithMatch<String, StringQueryHelper<StringQueryBase>> {
+        StringQueryBase() {
+            super();
+            setQuery(new StringQueryHelper<>(this));
+        }
+
+        StringQueryBase(Parcel in) {
+            super(in);
+        }
+
+        public static final Parcelable.Creator<StringQueryHelper.StringQueryBase> CREATOR =
+                new Parcelable.Creator<>() {
+                    public StringQueryHelper.StringQueryBase createFromParcel(Parcel in) {
+                        return new StringQueryHelper.StringQueryBase(in);
+                    }
+
+                    public StringQueryHelper.StringQueryBase[] newArray(int size) {
+                        return new StringQueryHelper.StringQueryBase[size];
+                    }
+                };
     }
 
     public StringQueryHelper(E query) {

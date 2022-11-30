@@ -74,6 +74,10 @@ public class GameManagerCtsActivity extends Activity {
         return mContext.getPackageName();
     }
 
+    public boolean hasReceivedGameMode(String packageName) {
+        return mReceivedGameModes.containsKey(packageName);
+    }
+
     public int getLastReceivedGameMode(String packageName) {
         return mReceivedGameModes.getOrDefault(packageName, -1);
     }

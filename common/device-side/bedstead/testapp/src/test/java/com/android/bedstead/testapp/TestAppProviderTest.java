@@ -233,7 +233,7 @@ public class TestAppProviderTest {
     public void query_withExistingActivity_returnsMatching() {
         TestApp testApp = mTestAppProvider.query()
                 .whereActivities().contains(
-                        activity().activityClass()
+                        activity().where().activityClass()
                             .className().isEqualTo(KNOWN_EXISTING_TESTAPP_ACTIVITY_CLASSNAME)
                 )
                 .get();

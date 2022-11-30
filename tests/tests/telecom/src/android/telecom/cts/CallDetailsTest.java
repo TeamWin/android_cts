@@ -18,7 +18,11 @@ package android.telecom.cts;
 
 import static android.telecom.Connection.PROPERTY_HIGH_DEF_AUDIO;
 import static android.telecom.Connection.PROPERTY_WIFI;
-import static android.telecom.cts.TestUtils.*;
+import static android.telecom.cts.TestUtils.InvokeCounter;
+import static android.telecom.cts.TestUtils.TEST_PHONE_ACCOUNT_HANDLE;
+import static android.telecom.cts.TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2;
+import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
+
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertThat;
 
@@ -45,8 +49,9 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.StatusHints;
 import android.telecom.TelecomManager;
 import android.telephony.TelephonyManager;
-import android.text.TextUtils;
+
 import com.android.compatibility.common.util.FileUtils;
+
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -362,7 +367,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
                         .withValue(ContactsContract.Data.MIMETYPE,
                                 ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
                         .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME,
-                                "test")
+                                CALLER_DISPLAY_NAME)
                         .build());
         // Create another row for the Photo URI content as it uses a different MIME type, reference
         // same raw contact id
@@ -447,15 +452,14 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
     }
 
     /**
-     * Test the contacts display name. We don't have anything set up in contacts, so expect it to
-     * be null
+     * Test the contacts display name.
      */
     public void testContactDisplayName() {
         if (!mShouldTestTelecom) {
             return;
         }
 
-        assertTrue(TextUtils.isEmpty(mCall.getDetails().getContactDisplayName()));
+        assertEquals(CALLER_DISPLAY_NAME, mCall.getDetails().getContactDisplayName());
     }
 
     /**

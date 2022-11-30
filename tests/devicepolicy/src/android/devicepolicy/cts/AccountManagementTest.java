@@ -65,8 +65,8 @@ public final class AccountManagementTest {
             .query()
             // TODO(b/198590265) Filter for the correct account type.
             .whereServices().contains(
-                    service().intentFilters().contains(
-                            intentFilter().actions().contains(
+                    service().where().intentFilters().contains(
+                            intentFilter().where().actions().contains(
                                     "android.accounts.AccountAuthenticator"))
                     )
             .get();

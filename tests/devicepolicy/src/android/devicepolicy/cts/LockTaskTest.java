@@ -34,7 +34,6 @@ import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
 import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
 import static com.android.eventlib.truth.EventLogsSubject.assertThat;
-import static com.android.queryable.queries.StringQuery.string;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -165,9 +164,8 @@ public final class LockTaskTest {
                         .whereType().isEqualTo(EventId.SET_LOCKTASK_MODE_ENABLED_VALUE)
                         .whereAdminPackageName().isEqualTo(DPC_COMPONENT_NAME.getPackageName())
                         .whereBoolean().isTrue()
-                        .whereStrings().contains(
-                                string().isEqualTo(sTestApp.packageName())
-                        )).wasLogged();
+                        .whereStrings().contains(sTestApp.packageName())
+                ).wasLogged();
             } finally {
                 activity.stopLockTask();
             }

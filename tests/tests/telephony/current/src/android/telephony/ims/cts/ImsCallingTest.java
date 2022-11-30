@@ -56,8 +56,12 @@ public class ImsCallingTest extends ImsCallingBase {
 
     private Call mCall1 = null;
     private Call mCall2 = null;
+    private Call mCall3 = null;
+    private Call mConferenceCall = null;
     private TestImsCallSessionImpl mCallSession1 = null;
     private TestImsCallSessionImpl mCallSession2 = null;
+    private TestImsCallSessionImpl mCallSession3 = null;
+    private TestImsCallSessionImpl mConfCallSession = null;
 
     static {
         initializeLatches();
@@ -111,6 +115,8 @@ public class ImsCallingTest extends ImsCallingBase {
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
+
+        resetCallSessionObjects();
 
         if (!mCalls.isEmpty() && (mCurrentCallId != null)) {
             Call call = mCalls.get(mCurrentCallId);
@@ -236,6 +242,32 @@ public class ImsCallingTest extends ImsCallingBase {
 
         isCallActive(call, callSession);
         callSession.terminateIncomingCall();
+
+        isCallDisconnected(call, callSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        waitForUnboundService();
+    }
+
+    @Test
+    public void testIncomingCallReject() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        bindImsService();
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+
+        Bundle extras = new Bundle();
+        sServiceConnector.getCarrierService().getMmTelFeature().onIncomingCallReceived(extras);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+
+        Call call = getCall(mCurrentCallId);
+        if (call.getDetails().getState() == Call.STATE_RINGING) {
+            call.reject(504);
+        }
+
+        TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService().getMmTelFeature()
+                .getImsCallsession();
 
         isCallDisconnected(call, callSession);
         assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
@@ -413,6 +445,55 @@ public class ImsCallingTest extends ImsCallingBase {
     }
 
     @Test
+    public void testOutGoingCallReceivedHoldResume() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        bindImsService();
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+
+        TelecomManager telecomManager = (TelecomManager) InstrumentationRegistry
+                .getInstrumentation().getContext().getSystemService(Context.TELECOM_SERVICE);
+
+        final Uri imsUri = Uri.fromParts(PhoneAccount.SCHEME_TEL, String.valueOf(++sCounter), null);
+        Bundle extras = new Bundle();
+
+        telecomManager.placeCall(imsUri, extras);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+
+        Call call = getCall(mCurrentCallId);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
+
+        TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService().getMmTelFeature()
+                .getImsCallsession();
+        isCallActive(call, callSession);
+
+        // received hold and checking it is still active and received the connection event
+        // EVENT_CALL_REMOTELY_HELD
+        callSession.sendHoldReceived();
+        assertTrue("Call is not in Active State", (call.getDetails().getState()
+                == Call.STATE_ACTIVE));
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOTELY_HELD, WAIT_FOR_CALL_STATE));
+
+        // received resume and checking it is still active and received the connection event
+        // EVENT_CALL_REMOTELY_UNHELD
+        callSession.sendResumeReceived();
+        assertTrue("Call is not in Active State", (call.getDetails().getState()
+                == Call.STATE_ACTIVE));
+        assertTrue(
+                callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOTELY_UNHELD, WAIT_FOR_CALL_STATE));
+
+        call.disconnect();
+
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(call, callSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        waitForUnboundService();
+    }
+
+    @Test
     public void testOutGoingIncomingMultiCall() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
             return;
@@ -550,6 +631,67 @@ public class ImsCallingTest extends ImsCallingBase {
     }
 
     @Test
+    public void testOutGoingIncomingMultiCallHoldFailedTerminateByRemote() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        bindImsService();
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+
+        TelecomManager telecomManager = (TelecomManager) InstrumentationRegistry
+                .getInstrumentation().getContext().getSystemService(Context.TELECOM_SERVICE);
+
+        final Uri imsUri = Uri.fromParts(PhoneAccount.SCHEME_TEL, String.valueOf(++sCounter), null);
+        Bundle extras = new Bundle();
+
+        telecomManager.placeCall(imsUri, extras);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+
+        Call moCall = getCall(mCurrentCallId);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
+
+        TestImsCallSessionImpl moCallSession = sServiceConnector.getCarrierService()
+                .getMmTelFeature().getImsCallsession();
+        isCallActive(moCall, moCallSession);
+        assertTrue("Call is not in Active State", (moCall.getDetails().getState()
+                == Call.STATE_ACTIVE));
+
+        sServiceConnector.getCarrierService().getMmTelFeature().onIncomingCallReceived(extras);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+        TestImsCallSessionImpl mtCallSession = sServiceConnector.getCarrierService()
+                .getMmTelFeature().getImsCallsession();
+        moCallSession.addTestType(TestImsCallSessionImpl.TEST_TYPE_HOLD_NO_RESPONSE);
+
+        Call mtCall = null;
+        if (mCurrentCallId != null) {
+            mtCall = getCall(mCurrentCallId);
+            if (mtCall.getDetails().getState() == Call.STATE_RINGING) {
+                mtCall.answer(0);
+            }
+        }
+
+        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
+        // received holdFailed because the other party of the outgoing call terminated the call
+        moCallSession.sendHoldFailRemoteTerminated();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(moCall, moCallSession);
+
+        // incoming call accept again
+        mtCall.answer(0);
+        isCallActive(mtCall, mtCallSession);
+        assertTrue("Call is not in Active State", (mtCall.getDetails().getState()
+                == Call.STATE_ACTIVE));
+
+        mtCall.disconnect();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(mtCall, mtCallSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        waitForUnboundService();
+    }
+
+    @Test
     public void testOutGoingCallSwap() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
             return;
@@ -594,8 +736,6 @@ public class ImsCallingTest extends ImsCallingBase {
         assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
         isCallDisconnected(mCall2, mCallSession2);
         assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
-
-        resetCallSessionObjects();
         waitForUnboundService();
     }
 
@@ -646,8 +786,6 @@ public class ImsCallingTest extends ImsCallingBase {
         assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
         isCallDisconnected(mCall1, mCallSession1);
         assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
-
-        resetCallSessionObjects();
         waitForUnboundService();
     }
 
@@ -660,39 +798,16 @@ public class ImsCallingTest extends ImsCallingBase {
         bindImsService();
         mServiceCallBack = new ServiceCallBack();
         InCallServiceStateValidator.setCallbacks(mServiceCallBack);
-        addOutgoingCalls();
-        addConferenceCall(mCall1, mCall2);
 
-        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
-        // Wait to add participants in conference
-        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
-        assertTrue("Conference call is not added", mServiceCallBack.getService()
-                .getConferenceCallCount() > 0);
-
-        Call conferenceCall = mServiceCallBack.getService().getLastConferenceCall();
-        assertNotNull("Unable to add conference call, its null", conferenceCall);
-
-        ConferenceHelper confHelper = sServiceConnector.getCarrierService().getMmTelFeature()
-                .getConferenceHelper();
-
-        TestImsCallSessionImpl confcallSession = confHelper.getConferenceSession();
-        assertTrue("Conference call is not Active", confcallSession.isInCall());
-
-        //Verify mCall1 and mCall2 disconnected after conference Merge success
-        assertParticiapantDisconnected(mCall1);
-        assertParticiapantDisconnected(mCall2);
-
-        //Verify conference participant connections are connected.
-        assertParticiapantAddedToConference(2);
+        makeConferenceCall();
 
         //Disconnect the conference call.
-        conferenceCall.disconnect();
+        mConferenceCall.disconnect();
 
         //Verify conference participant connections are disconnected.
         assertParticiapantAddedToConference(0);
-        isCallDisconnected(conferenceCall, confcallSession);
+        isCallDisconnected(mConferenceCall, mConfCallSession);
         assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
-        resetCallSessionObjects();
         waitForUnboundService();
     }
 
@@ -728,10 +843,176 @@ public class ImsCallingTest extends ImsCallingBase {
         assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
         isCallDisconnected(mCall1, mCallSession1);
         assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
-
-        resetCallSessionObjects();
         waitForUnboundService();
     }
+
+    @Test
+    public void testConferenceCallFailureByRemoteTerminated() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        bindImsService();
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+        addOutgoingCalls();
+        mCallSession2.addTestType(
+                TestImsCallSessionImpl.TEST_TYPE_CONFERENCE_FAILED_REMOTE_TERMINATED);
+        addConferenceCall(mCall1, mCall2);
+        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
+
+        // first call is terminated by remote
+        mCallSession1.sendTerminatedByRemote();
+        // received mergeFailed due to terminated first call
+        mCallSession2.sendMergedFailed();
+
+        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
+        // verify foreground call is in Active state after merge failed.
+        assertTrue("Call is not in Active State", (mCall2.getDetails().getState()
+                == Call.STATE_ACTIVE));
+        // verify background call is in Disconnected state.
+        isCallDisconnected(mCall1, mCallSession1);
+        assertTrue("Call is not in Disconnected State", (mCall1.getDetails().getState()
+                == Call.STATE_DISCONNECTED));
+
+        mCall2.disconnect();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(mCall2, mCallSession2);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        waitForUnboundService();
+    }
+
+    @Test
+    public void testCallJoinExistingConferenceCall() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        bindImsService();
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+
+        makeConferenceCall();
+        // add third outgoing call, third call : active , conference call : hold
+        addThirdOutgoingCall();
+        mCallSession3.addTestType(TestImsCallSessionImpl.TEST_TYPE_JOIN_EXIST_CONFERENCE);
+
+        mCall3.conference(mConferenceCall);
+        isCallActive(mConferenceCall, mConfCallSession);
+
+        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
+        // verify third call disconnected after conference Merge success
+        assertParticiapantDisconnected(mCall3);
+
+        // verify conference participant connections are connected.
+        assertParticiapantAddedToConference(3);
+
+        mConferenceCall.disconnect();
+
+        assertParticiapantAddedToConference(0);
+        isCallDisconnected(mConferenceCall, mConfCallSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        waitForUnboundService();
+    }
+
+    @Test
+    public void testCallJoinExistingConferenceCallAfterCallSwap() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        bindImsService();
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+
+        makeConferenceCall();
+        // add third outgoing call, third call : active , conference call : hold
+        addThirdOutgoingCall();
+
+        // swap the call
+        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
+        mConferenceCall.unhold();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_HOLDING, WAIT_FOR_CALL_STATE));
+        assertTrue("Call is not in Hold State", (mCall3.getDetails().getState()
+                == Call.STATE_HOLDING));
+        isCallActive(mConferenceCall, mConfCallSession);
+
+        mConfCallSession.addTestType(
+                TestImsCallSessionImpl.TEST_TYPE_JOIN_EXIST_CONFERENCE_AFTER_SWAP);
+
+        // merge call
+        mConferenceCall.conference(mCall3);
+        isCallActive(mConferenceCall, mConfCallSession);
+
+        // verify third call disconnected after conference Merge success
+        assertParticiapantDisconnected(mCall3);
+
+        // verify conference participant connections are connected.
+        assertParticiapantAddedToConference(3);
+
+        // disconnect the conference call.
+        mConferenceCall.disconnect();
+
+        // verify conference participant connections are disconnected.
+        assertParticiapantAddedToConference(0);
+        isCallDisconnected(mConferenceCall, mConfCallSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        waitForUnboundService();
+    }
+
+    @Test
+    public void testCallJoinExistingConferenceCallAfterCallSwapFail() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        bindImsService();
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+
+        makeConferenceCall();
+        // add third outgoing call, third call : active , conference call : hold
+        addThirdOutgoingCall();
+
+        // swap the call
+        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
+        mConferenceCall.unhold();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_HOLDING, WAIT_FOR_CALL_STATE));
+        assertTrue("Call is not in Hold State", (mCall3.getDetails().getState()
+                == Call.STATE_HOLDING));
+        isCallActive(mConferenceCall, mConfCallSession);
+
+        // fail to merge
+        mConfCallSession.addTestType(
+                TestImsCallSessionImpl.TEST_TYPE_JOIN_EXIST_CONFERENCE_FAILED_AFTER_SWAP);
+
+        mConferenceCall.conference(mCall3);
+        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
+
+        // verify foreground call is in Active state after merge failed.
+        assertTrue("Call is not in Active State", (mConferenceCall.getDetails().getState()
+                == Call.STATE_ACTIVE));
+        // verify background call is in Hold state after merge failed.
+        assertTrue("Call is not in Holding State", (mCall3.getDetails().getState()
+                == Call.STATE_HOLDING));
+
+        // disconnect the conference call.
+        mConferenceCall.disconnect();
+
+        // verify conference participant connections are disconnected.
+        assertParticiapantAddedToConference(0);
+        isCallDisconnected(mConferenceCall, mConfCallSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+
+        // verify third call is active
+        isCallActive(mCall3, mCallSession3);
+        mCall3.disconnect();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(mCall3, mCallSession3);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        waitForUnboundService();
+    }
+
 
     void addConferenceCall(Call call1, Call call2) {
         InCallServiceStateValidator inCallService = mServiceCallBack.getService();
@@ -850,9 +1131,86 @@ public class ImsCallingTest extends ImsCallingBase {
                 == Call.STATE_ACTIVE));
     }
 
+    private void addThirdOutgoingCall() {
+        // add a third outgoing call when a conference call already exists.
+        TelecomManager telecomManager = (TelecomManager) InstrumentationRegistry
+                .getInstrumentation().getContext().getSystemService(Context.TELECOM_SERVICE);
+        final Uri imsUri3 = Uri.fromParts(PhoneAccount.SCHEME_TEL, String.valueOf(++sCounter),
+                null);
+        Bundle extras3 = new Bundle();
+
+        telecomManager.placeCall(imsUri3, extras3);
+        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
+        callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE);
+
+        mCall3 = getCall(mCurrentCallId);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_HOLDING, WAIT_FOR_CALL_STATE));
+        assertTrue("Call is not in Hold State", (mConferenceCall.getDetails().getState()
+                == Call.STATE_HOLDING));
+
+        waitNewCallCreated(mCallSession2);
+        mCallSession3 =
+                sServiceConnector.getCarrierService().getMmTelFeature().getImsCallsession();
+
+        isCallActive(mCall3, mCallSession3);
+        assertTrue("Call is not in Active State", (mCall3.getDetails().getState()
+                == Call.STATE_ACTIVE));
+    }
+
+    private void waitNewCallCreated(TestImsCallSessionImpl previousCallSession) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        TestMmTelFeature mmtelfeatue = sServiceConnector.getCarrierService()
+                                .getMmTelFeature();
+                        return (mmtelfeatue.getImsCallsession() != previousCallSession) ? true
+                                : false;
+                    }
+                }, WAIT_FOR_CONDITION, "CallSession Created");
+    }
+
+    private void makeConferenceCall() throws Exception {
+        addOutgoingCalls();
+        addConferenceCall(mCall1, mCall2);
+
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+        // Wait to add participants in conference
+        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
+        assertTrue("Conference call is not added", mServiceCallBack.getService()
+                .getConferenceCallCount() > 0);
+
+        mConferenceCall = mServiceCallBack.getService().getLastConferenceCall();
+        assertNotNull("Unable to add conference call, its null", mConferenceCall);
+
+        ConferenceHelper confHelper = sServiceConnector.getCarrierService().getMmTelFeature()
+                .getConferenceHelper();
+
+        mConfCallSession = confHelper.getConferenceSession();
+        isCallActive(mConferenceCall, mConfCallSession);
+        assertTrue("Conference call is not Active", mConfCallSession.isInCall());
+
+        //Verify mCall1 and mCall2 disconnected after conference Merge success
+        assertParticiapantDisconnected(mCall1);
+        assertParticiapantDisconnected(mCall2);
+
+        //Verify conference participant connections are connected.
+        assertParticiapantAddedToConference(2);
+
+        // Since the conference call has been made, remove session1&2 from the confHelper session.
+        confHelper.removeSession(mCallSession1);
+        confHelper.removeSession(mCallSession2);
+    }
+
     private void resetCallSessionObjects() {
-        mCall1 = mCall2 = null;
-        mCallSession1 = mCallSession2 = null;
+        mCall1 = mCall2 = mCall3 = mConferenceCall = null;
+        mCallSession1 = mCallSession2 = mCallSession3 = mConfCallSession = null;
         ConferenceHelper confHelper = sServiceConnector.getCarrierService().getMmTelFeature()
                 .getConferenceHelper();
         if (confHelper != null) {

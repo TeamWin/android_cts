@@ -25,7 +25,9 @@ import com.android.queryable.Queryable;
  */
 public interface StringQuery<E extends Queryable> extends NullableQuery<E, String> {
 
-    static StringQuery<StringQuery<?>> string() {
-        return new StringQueryHelper<>();
+    /** Queries a {@link String}. */
+    static StringQueryHelper.StringQueryBase string() {
+        return new StringQueryHelper.StringQueryBase();
     }
+
 }

@@ -87,6 +87,12 @@
                         android:text="@string/distance_5m_presence"/>
                 </RadioGroup>
 
+                <LinearLayout
+                    android:id="@+id/start_stop_layout"
+                    android:orientation="horizontal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
                 <Button
                     android:id="@+id/start_test"
                     android:layout_width="wrap_content"
@@ -98,6 +104,14 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/stop_test_presence"/>
+                </LinearLayout>
+
+                <EditText
+                    android:id="@+id/service_id_input"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal|numberSigned"
+                    android:hint="@string/service_id_input_presence"/>
 
                 <TextView
                     android:id="@+id/device_found_info"
@@ -128,6 +142,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/stop_publishing_presence"/>
+
+                <TextView
+                    android:id="@+id/service_id_info"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/service_id_info_presence"/>
             </LinearLayout>
 
             <include

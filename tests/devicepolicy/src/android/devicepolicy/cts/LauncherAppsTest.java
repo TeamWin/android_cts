@@ -17,6 +17,8 @@
 package android.devicepolicy.cts;
 
 import static com.android.bedstead.nene.permissions.CommonPermissions.CHANGE_COMPONENT_ENABLED_STATE;
+import static com.android.queryable.queries.ActivityQuery.activity;
+import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -43,8 +45,8 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivityReference;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.queryable.queries.ActivityQuery;
-import com.android.queryable.queries.IntentFilterQuery;
+import com.android.queryable.info.ActivityInfo;
+import com.android.queryable.queries.Query;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -65,13 +67,14 @@ public final class LauncherAppsTest {
     public static DeviceState sDeviceState = new DeviceState();
 
 
-    private static final ActivityQuery<?> MAIN_ACTIVITY_QUERY = ActivityQuery.activity()
-            .exported().isTrue()
-            .intentFilters().contains(
-                    IntentFilterQuery.intentFilter()
-                            .actions().contains(Intent.ACTION_MAIN)
-                            .categories().contains(Intent.CATEGORY_LAUNCHER)
-            );
+    private static final Query<ActivityInfo> MAIN_ACTIVITY_QUERY =
+            activity()
+                    .where().exported().isTrue()
+                    .where().intentFilters().contains(
+                            intentFilter()
+                                    .where().actions().contains(Intent.ACTION_MAIN)
+                                    .where().categories().contains(Intent.CATEGORY_LAUNCHER)
+                    );
 
     private static final TestApp sTestApp = sDeviceState.testApps().query()
             .whereActivities().contains(MAIN_ACTIVITY_QUERY).get();
@@ -201,9 +204,9 @@ public final class LauncherAppsTest {
         TestAppActivityReference activity = testApp.activities().query()
                 .whereActivity().exported().isTrue()
                 .whereActivity().intentFilters().contains(
-                        IntentFilterQuery.intentFilter()
-                                .actions().contains(Intent.ACTION_MAIN)
-                                .categories().contains(Intent.CATEGORY_LAUNCHER)
+                        intentFilter()
+                                .where().actions().contains(Intent.ACTION_MAIN)
+                                .where().categories().contains(Intent.CATEGORY_LAUNCHER)
                 ).get();
         activity.component().disable();
     }

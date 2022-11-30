@@ -430,7 +430,10 @@ public class GameManagerTest {
 
         runShellCommand("am start -n " + GAME_TEST_APP_PACKAGE_NAME
                 + "/" + GAME_TEST_APP_ACTIVITY_NAME);
-        Thread.sleep(2000);
+        Thread.sleep(5000);
+        assertTrue("No game mode broadcast received from package "
+                        + GAME_TEST_APP_PACKAGE_NAME,
+                mActivity.hasReceivedGameMode(GAME_TEST_APP_PACKAGE_NAME));
         assertEquals(GameManager.GAME_MODE_CUSTOM,
                 mActivity.getLastReceivedGameMode(GAME_TEST_APP_PACKAGE_NAME));
     }
@@ -451,7 +454,10 @@ public class GameManagerTest {
 
         runShellCommand("am start -n " + GAME_TEST_APP_WITH_TIRAMISU_TARGET_PACKAGE_NAME
                 + "/" + GAME_TEST_APP_ACTIVITY_NAME);
-        Thread.sleep(2000);
+        Thread.sleep(5000);
+        assertTrue("No game mode broadcast received from package "
+                        + GAME_TEST_APP_WITH_TIRAMISU_TARGET_PACKAGE_NAME,
+                mActivity.hasReceivedGameMode(GAME_TEST_APP_WITH_TIRAMISU_TARGET_PACKAGE_NAME));
         assertEquals(GameManager.GAME_MODE_STANDARD,
                 mActivity.getLastReceivedGameMode(GAME_TEST_APP_WITH_TIRAMISU_TARGET_PACKAGE_NAME));
     }

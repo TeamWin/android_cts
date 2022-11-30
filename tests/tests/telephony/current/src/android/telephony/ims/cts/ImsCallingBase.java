@@ -27,6 +27,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.telecom.Call;
 import android.telephony.CarrierConfigManager;
@@ -82,7 +83,9 @@ public class ImsCallingBase {
     public static final int LATCH_IS_CALL_DISCONNECTED = 8;
     public static final int LATCH_IS_CALL_RINGING = 9;
     public static final int LATCH_IS_CALL_HOLDING = 10;
-    public static final int LATCH_MAX = 11;
+    public static final int LATCH_IS_ON_CALL_REMOTELY_HELD = 11;
+    public static final int LATCH_IS_ON_CALL_REMOTELY_UNHELD = 12;
+    public static final int LATCH_MAX = 13;
 
     protected static boolean sIsBound = false;
     protected static int sCounter = 5553639;
@@ -328,7 +331,9 @@ public class ImsCallingBase {
 
                     @Override
                     public Object actual() {
-                        return (callsession.isInCall()) ? true : false;
+                        return (callsession.isInCall()
+                                && call.getDetails().getState() == Call.STATE_ACTIVE) ? true
+                                : false;
                     }
                 }, WAIT_FOR_CONDITION, "Call Active");
     }
@@ -346,7 +351,9 @@ public class ImsCallingBase {
 
                     @Override
                     public Object actual() {
-                        return (callsession.isInTerminated()) ? true : false;
+                        return (callsession.isInTerminated()
+                                && call.getDetails().getState() == Call.STATE_DISCONNECTED) ? true
+                                : false;
                     }
                 }, WAIT_FOR_CONDITION, "Call Disconnected");
     }
@@ -457,7 +464,18 @@ public class ImsCallingBase {
         @Override
         public void onChildrenChanged(Call call, List<Call> children) {
             if (call.getDetails().hasProperty(Call.Details.PROPERTY_CONFERENCE)) {
+                Log.i(LOG_TAG, "onChildrenChanged, Call: " + call + " , size "  + children.size());
                 mParticipantCount = children.size();
+            }
+        }
+
+        @Override
+        public void onConnectionEvent(Call call, String event, Bundle extras) {
+            Log.i(LOG_TAG, "onConnectionEvent, Call: " + call + " , event " + event);
+            if (event.equals(android.telecom.Connection.EVENT_CALL_REMOTELY_HELD)) {
+                countDownLatch(LATCH_IS_ON_CALL_REMOTELY_HELD);
+            } else if (event.equals(android.telecom.Connection.EVENT_CALL_REMOTELY_UNHELD)) {
+                countDownLatch(LATCH_IS_ON_CALL_REMOTELY_UNHELD);
             }
         }
     }

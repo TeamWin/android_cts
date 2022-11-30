@@ -6648,7 +6648,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="nan_accuracy_test_instructions">
         Place the device under test (DUT) at the test distance (either 10cm, 1m, 3m, or 5m) away from the reference device, in a line of sight environment. On the reference device, ensure that the "Is reference device" checkbox is checked, then click "Start Publishing"
         \n\nDUT instructions
-        \n1. Ensure that the reference device is already publishing the NAN service.
+        \n1. Ensure that the reference device is already publishing the NAN service. Enter the service ID displayed.
         \n2. Make sure that the toggle for the right test distance is checked.
         \n3. Click "Start Test". The display would be updated to show status "IN_PROGRESS" for the corresponding test distance.
         \n4. When all the required data is collected at the test distance, the display would be updated to show the status of the test, either PASSED or FAILED.
@@ -6664,6 +6664,8 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="distance_1m_presence">1m</string>
     <string name="distance_3m_presence">3m</string>
     <string name="distance_5m_presence">5m</string>
+    <string name="service_id_info_presence">Your unique service ID is: %1$d</string>
+    <string name="service_id_input_presence">Enter the service ID displayed on the publishing device</string>
 
     <!-- Strings for AudioMicrophoneMuteToggleActivity -->
     <string name="audio_mic_toggle_test">Audio Microphone Hardware Toggle Mute Test</string>

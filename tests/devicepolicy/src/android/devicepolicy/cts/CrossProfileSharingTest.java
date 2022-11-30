@@ -23,7 +23,6 @@ import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAG
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.os.UserManager.DISALLOW_SHARE_INTO_MANAGED_PROFILE;
 
-import static com.android.bedstead.harrier.UserType.PRIMARY_USER;
 import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
 import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
 import static com.android.queryable.queries.ActivityQuery.activity;
@@ -65,10 +64,10 @@ public final class CrossProfileSharingTest {
 
     private static final TestApp sTestApp = sDeviceState.testApps().query()
             .whereActivities().contains(
-                    activity().intentFilters().contains(
-                            intentFilter().actions().contains("com.android.testapp.SOME_ACTION"),
-                            intentFilter().actions().contains("android.intent.action.PICK"),
-                            intentFilter().actions().contains("android.intent.action.SEND_MULTIPLE")
+                    activity().where().intentFilters().contains(
+                            intentFilter().where().actions().contains("com.android.testapp.SOME_ACTION"),
+                            intentFilter().where().actions().contains("android.intent.action.PICK"),
+                            intentFilter().where().actions().contains("android.intent.action.SEND_MULTIPLE")
                     )).get();
 
     // Known action that is handled in the opposite profile, used to query forwarder activity.

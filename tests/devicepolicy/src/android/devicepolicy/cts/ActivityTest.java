@@ -36,7 +36,6 @@ import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.PermissionTest;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
-import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.testapp.BaseTestAppActivity;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivityReference;
@@ -60,7 +59,7 @@ public class ActivityTest {
 
     private static final TestApp sTestApp = sDeviceState.testApps().query()
             .whereActivities()
-            .contains(activity().exported().isTrue())
+            .contains(activity().where().exported().isTrue())
             .get();
 
     @RequireRunOnInitialUser

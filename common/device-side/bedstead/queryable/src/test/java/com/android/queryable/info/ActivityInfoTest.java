@@ -32,7 +32,7 @@ import org.junit.runners.JUnit4;
 import java.util.Set;
 
 @RunWith(JUnit4.class)
-public class ActivityInfoTest {
+public final class ActivityInfoTest {
 
     private static final Class<? extends Activity> TEST_CLASS = ActivityContext.class;
     private static final String TEST_CLASS_NAME = ActivityContext.class.getName();

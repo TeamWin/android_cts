@@ -44,8 +44,8 @@ public final class BundleKeyQueryHelper<E extends Queryable> implements BundleKe
     private BooleanQueryHelper<E> mBooleanQuery = null;
     private SerializableQueryHelper<E> mSerializableQuery;
     private BundleQueryHelper<E> mBundleQuery;
-    private ListQueryHelper<E, String, StringQuery<E>> mStringListQuery;
-    private ListQueryHelper<E, Integer, IntegerQuery<E>> mIntegerListQuery;
+    private ListQueryHelper<E, String> mStringListQuery;
+    private ListQueryHelper<E, Integer> mIntegerListQuery;
 
     public BundleKeyQueryHelper(E query) {
         mQuery = query;
@@ -139,7 +139,7 @@ public final class BundleKeyQueryHelper<E extends Queryable> implements BundleKe
     }
 
     @Override
-    public ListQuery<E, String, StringQuery<E>> stringListValue() {
+    public ListQuery<E, String> stringListValue() {
         if (mStringListQuery == null) {
             checkUntyped();
             mStringListQuery = new ListQueryHelper<>(mQuery);
@@ -148,7 +148,7 @@ public final class BundleKeyQueryHelper<E extends Queryable> implements BundleKe
     }
 
     @Override
-    public ListQuery<E, Integer, IntegerQuery<E>> integerListValue() {
+    public ListQuery<E, Integer> integerListValue() {
         if (mIntegerListQuery == null) {
             checkUntyped();
             mIntegerListQuery = new ListQueryHelper<>(mQuery);

@@ -17,6 +17,7 @@
 package com.android.queryable.queries;
 
 import static com.android.bedstead.nene.utils.ParcelTest.assertParcelsCorrectly;
+import static com.android.queryable.queries.PersistableBundleQuery.persistableBundle;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -29,7 +30,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class PersistableBundleQueryHelperTest {
+public final class PersistableBundleQueryHelperTest {
     private static final String KEY = "Key";
     private static final String KEY2 = "Key2";
     private static final String STRING_VALUE = "value";
@@ -100,5 +101,14 @@ public class PersistableBundleQueryHelperTest {
 
         assertParcelsCorrectly(PersistableBundleQueryHelper.class,
                 persistableBundleQueryHelper);
+    }
+
+    @Test
+    public void persistableBundleQueryHelper_queries() {
+        mPersistableBundle.putString(KEY, STRING_VALUE);
+
+        assertThat(persistableBundle()
+                .where().key(KEY).stringValue().isEqualTo(STRING_VALUE)
+                .matches(mPersistableBundle)).isTrue();
     }
 }

@@ -19,14 +19,12 @@ package com.android.bedstead.testapp;
 import com.android.queryable.Queryable;
 import com.android.queryable.info.ActivityInfo;
 import com.android.queryable.info.ServiceInfo;
-import com.android.queryable.queries.ActivityQuery;
 import com.android.queryable.queries.BooleanQuery;
 import com.android.queryable.queries.BooleanQueryHelper;
 import com.android.queryable.queries.BundleQuery;
 import com.android.queryable.queries.BundleQueryHelper;
 import com.android.queryable.queries.IntegerQuery;
 import com.android.queryable.queries.IntegerQueryHelper;
-import com.android.queryable.queries.ServiceQuery;
 import com.android.queryable.queries.SetQuery;
 import com.android.queryable.queries.SetQueryHelper;
 import com.android.queryable.queries.StringQuery;
@@ -42,12 +40,12 @@ public final class TestAppQueryBuilder implements Queryable {
     IntegerQueryHelper<TestAppQueryBuilder> mMinSdkVersion = new IntegerQueryHelper<>(this);
     IntegerQueryHelper<TestAppQueryBuilder> mMaxSdkVersion = new IntegerQueryHelper<>(this);
     IntegerQueryHelper<TestAppQueryBuilder> mTargetSdkVersion = new IntegerQueryHelper<>(this);
-    SetQueryHelper<TestAppQueryBuilder, String, StringQuery<?>> mPermissions =
+    SetQueryHelper<TestAppQueryBuilder, String> mPermissions =
             new SetQueryHelper<>(this);
     BooleanQueryHelper<TestAppQueryBuilder> mTestOnly = new BooleanQueryHelper<>(this);
-    SetQueryHelper<TestAppQueryBuilder, ActivityInfo, ActivityQuery<?>> mActivities =
+    SetQueryHelper<TestAppQueryBuilder, ActivityInfo> mActivities =
             new SetQueryHelper<>(this);
-    SetQueryHelper<TestAppQueryBuilder, ServiceInfo, ServiceQuery<?>> mServices =
+    SetQueryHelper<TestAppQueryBuilder, ServiceInfo> mServices =
             new SetQueryHelper<>(this);
     BooleanQueryHelper<TestAppQueryBuilder> mIsDeviceAdmin = new BooleanQueryHelper<>(this);
     StringQueryHelper<TestAppQueryBuilder> mSharedUserId = new StringQueryHelper<>(this);
@@ -108,7 +106,7 @@ public final class TestAppQueryBuilder implements Queryable {
     /**
      * Query for a {@link TestApp} by declared permissions.
      */
-    public SetQuery<TestAppQueryBuilder, String, StringQuery<?>> wherePermissions() {
+    public SetQuery<TestAppQueryBuilder, String> wherePermissions() {
         return mPermissions;
     }
 
@@ -136,14 +134,14 @@ public final class TestAppQueryBuilder implements Queryable {
     /**
      * Query for a {@link TestApp} by its activities.
      */
-    public SetQuery<TestAppQueryBuilder, ActivityInfo, ActivityQuery<?>> whereActivities() {
+    public SetQuery<TestAppQueryBuilder, ActivityInfo> whereActivities() {
         return mActivities;
     }
 
     /**
      * Query for a {@link TestApp} by its services.
      */
-    public SetQuery<TestAppQueryBuilder, ServiceInfo, ServiceQuery<?>> whereServices() {
+    public SetQuery<TestAppQueryBuilder, ServiceInfo> whereServices() {
         return mServices;
     }
 

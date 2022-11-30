@@ -351,9 +351,10 @@ public final class ActivityManagerForegroundServiceTypeTest {
                     type, ServiceInfo.FOREGROUND_SERVICE_TYPE_NONE);
             assertEquals(type, info.getForegroundServiceType());
             allOfPermissions = triagePermissions(
-                    info.getRequiredAllOfPermissionsForTest().orElse(null));
+                    info.getRequiredAllOfPermissionsForTest(mTargetContext).orElse(null));
             anyOfPermissions = ArrayUtils.concat(TestPermissionInfo.class,
-                    triagePermissions(info.getRequiredAnyOfPermissionsForTest().orElse(null)),
+                    triagePermissions(info.getRequiredAnyOfPermissionsForTest(
+                            mTargetContext).orElse(null)),
                     triagePermissions(specialOps));
 
             // If we grant all of the permissions, the foreground service start will succeed.

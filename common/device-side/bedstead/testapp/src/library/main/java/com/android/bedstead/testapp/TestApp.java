@@ -30,6 +30,7 @@ import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.users.Users;
 import com.android.bedstead.testapp.processor.annotations.TestAppSender;
+import com.android.queryable.collections.QueryableActivityInfoHashSet;
 import com.android.queryable.info.ActivityInfo;
 
 import java.io.File;
@@ -205,8 +206,8 @@ public final class TestApp {
     }
 
     /** The activities which exist in the test app. */
-    public Set<ActivityInfo> activities() {
-        return mDetails.mActivities;
+    public QueryableActivityInfoHashSet activities() {
+        return new QueryableActivityInfoHashSet(mDetails.mActivities);
     }
 
     /**

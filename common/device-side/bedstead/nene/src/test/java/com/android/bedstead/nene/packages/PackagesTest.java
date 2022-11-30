@@ -72,7 +72,7 @@ public class PackagesTest {
     private static final byte[] TEST_APP_BYTES = loadBytes(TEST_APP_APK_FILE);
     private static final TestApp sTestApp = sDeviceState.testApps().query()
             .whereActivities().contains(
-                    activity().exported().isTrue()
+                    activity().where().exported().isTrue()
             ).get();
     private final UserReference mUser = TestApis.users().instrumented();
     private final Package mExistingPackage =

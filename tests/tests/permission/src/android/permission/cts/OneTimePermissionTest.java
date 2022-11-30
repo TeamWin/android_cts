@@ -16,6 +16,7 @@
 
 package android.permission.cts;
 
+import static org.junit.Assume.assumeFalse;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.CAMERA;
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED;
@@ -23,6 +24,7 @@ import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREG
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
+import com.android.compatibility.common.util.FeatureUtil;
 import static com.android.compatibility.common.util.SystemUtil.eventually;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
@@ -326,6 +328,11 @@ public class OneTimePermissionTest {
      * Start the app. The app will request the permissions.
      */
     private void startApp() {
+        // One time permission is not applicable for Wear OS.
+        // The only permissions available are Allow or Deny
+        assumeFalse(
+                "Skipping test: One time permission is not supported in Wear OS",
+                FeatureUtil.isWatch());
         Intent startApp = new Intent();
         startApp.setComponent(new ComponentName(APP_PKG_NAME, APP_PKG_NAME + ".RequestPermission"));
         startApp.setFlags(FLAG_ACTIVITY_NEW_TASK);

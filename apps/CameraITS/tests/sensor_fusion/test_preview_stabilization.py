@@ -24,6 +24,7 @@ import its_base_test
 import camera_properties_utils
 import image_processing_utils
 import its_session_utils
+import opencv_processing_utils
 import sensor_fusion_utils
 import video_processing_utils
 
@@ -128,7 +129,10 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
           'Preview Stabilization not supported',
       )
 
-      # Get ffmpeg version being used.
+      # Calculate camera FoV and convert from string to float
+      camera_fov = float(cam.calc_camera_fov(props))
+
+      # Get ffmpeg version being used
       ffmpeg_version = video_processing_utils.get_ffmpeg_version()
       logging.debug('ffmpeg_version: %s', ffmpeg_version)
 
@@ -146,8 +150,12 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
             f'You must use the arduino controller for {_NAME}.')
 
       # List of video resolutions to test
+      if camera_fov > opencv_processing_utils.FOV_THRESH_WFOV:
+        low_resolution_sizes = video_processing_utils.LOW_RESOLUTION_SIZES['UW']
+      else:
+        low_resolution_sizes = video_processing_utils.LOW_RESOLUTION_SIZES['W']
       supported_preview_sizes = cam.get_supported_preview_sizes(self.camera_id)
-      for size in video_processing_utils.LOW_RESOLUTION_SIZES:
+      for size in low_resolution_sizes:
         if size in supported_preview_sizes:
           supported_preview_sizes.remove(size)
       logging.debug('Supported preview resolutions: %s',

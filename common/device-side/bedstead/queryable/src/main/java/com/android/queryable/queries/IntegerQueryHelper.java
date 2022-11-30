@@ -23,6 +23,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.android.queryable.Queryable;
+import com.android.queryable.QueryableBaseWithMatch;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -43,8 +44,27 @@ public final class IntegerQueryHelper<E extends Queryable> implements IntegerQue
 
     private final transient E mQuery;
 
-    IntegerQueryHelper() {
-        mQuery = (E) this;
+    public static final class IntegerQueryBase extends
+            QueryableBaseWithMatch<Integer, IntegerQueryHelper<IntegerQueryBase>> {
+        IntegerQueryBase() {
+            super();
+            setQuery(new IntegerQueryHelper<>(this));
+        }
+
+        IntegerQueryBase(Parcel in) {
+            super(in);
+        }
+
+        public static final Parcelable.Creator<IntegerQueryHelper.IntegerQueryBase> CREATOR =
+                new Parcelable.Creator<>() {
+                    public IntegerQueryHelper.IntegerQueryBase createFromParcel(Parcel in) {
+                        return new IntegerQueryHelper.IntegerQueryBase(in);
+                    }
+
+                    public IntegerQueryHelper.IntegerQueryBase[] newArray(int size) {
+                        return new IntegerQueryHelper.IntegerQueryBase[size];
+                    }
+                };
     }
 
     public IntegerQueryHelper(E query) {

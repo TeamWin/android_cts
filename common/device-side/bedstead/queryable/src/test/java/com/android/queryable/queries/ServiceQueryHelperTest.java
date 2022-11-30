@@ -34,7 +34,7 @@ import org.junit.runners.JUnit4;
 import java.util.Set;
 
 @RunWith(JUnit4.class)
-public class ServiceQueryHelperTest {
+public final class ServiceQueryHelperTest {
 
     private final Queryable mQuery = null;
 
@@ -97,7 +97,7 @@ public class ServiceQueryHelperTest {
         ServiceQueryHelper<Queryable> serviceQueryHelper = new ServiceQueryHelper<>(mQuery);
 
         serviceQueryHelper.intentFilters().contains(
-                intentFilter().actions().contains("action")
+                intentFilter().where().actions().contains("action")
         );
 
         assertThat(serviceQueryHelper.matches(INTENT_FILTER_SERVICE_INFO)).isTrue();
@@ -108,7 +108,7 @@ public class ServiceQueryHelperTest {
         ServiceQueryHelper<Queryable> serviceQueryHelper = new ServiceQueryHelper<>(mQuery);
 
         serviceQueryHelper.intentFilters().contains(
-                intentFilter().actions().doesNotContain("action")
+                intentFilter().where().actions().doesNotContain("action")
         );
 
         assertThat(serviceQueryHelper.matches(INTENT_FILTER_SERVICE_INFO)).isFalse();
@@ -120,9 +120,16 @@ public class ServiceQueryHelperTest {
 
         serviceQueryHelper.serviceClass().className().isEqualTo("");
         serviceQueryHelper.intentFilters().contains(
-                intentFilter().actions().doesNotContain("action")
+                intentFilter().where().actions().doesNotContain("action")
         );
 
         assertParcelsCorrectly(ServiceQueryHelper.class, serviceQueryHelper);
+    }
+
+    @Test
+    public void serviceQueryHelper_queries() {
+        assertThat(ServiceQuery.service()
+                .where().serviceClass().isSameClassAs(CLASS_1)
+                .matches(CLASS_1_SERVICE_INFO)).isTrue();
     }
 }

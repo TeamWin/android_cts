@@ -24,9 +24,10 @@ import android.content.pm.PackageManager;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.uiautomator.UiDevice;
 
+import com.android.bedstead.harrier.annotations.BeforeClass;
+
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.BeforeClass;
 
 /**
  * Photo Picker Base class for Photo Picker tests. This includes common setup methods

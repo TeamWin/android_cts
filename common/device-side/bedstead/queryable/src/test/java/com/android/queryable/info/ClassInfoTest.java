@@ -25,7 +25,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class ClassInfoTest {
+public final class ClassInfoTest {
 
     private static final Class<?> TEST_CLASS = ClassInfoTest.class;
     private static final String TEST_CLASS_NAME = ClassInfoTest.class.getName();

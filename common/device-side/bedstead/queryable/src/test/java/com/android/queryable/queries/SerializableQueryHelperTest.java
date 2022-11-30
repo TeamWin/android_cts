@@ -17,6 +17,7 @@
 package com.android.queryable.queries;
 
 import static com.android.bedstead.nene.utils.ParcelTest.assertParcelsCorrectly;
+import static com.android.queryable.queries.SerializableQuery.serializable;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -29,7 +30,7 @@ import org.junit.runners.JUnit4;
 import java.io.Serializable;
 
 @RunWith(JUnit4.class)
-public class SerializableQueryHelperTest {
+public final class SerializableQueryHelperTest {
 
     private final Queryable mQuery = null;
     private final Serializable mSerializable = "SerializableString";
@@ -71,5 +72,12 @@ public class SerializableQueryHelperTest {
         serializableQueryHelper.isEqualTo(mDifferentSerializable);
 
         assertParcelsCorrectly(SerializableQueryHelper.class, serializableQueryHelper);
+    }
+
+    @Test
+    public void serializableQueryHelper_queries() {
+        assertThat(serializable()
+                .where().isEqualTo(mSerializable)
+                .matches(mSerializable)).isTrue();
     }
 }

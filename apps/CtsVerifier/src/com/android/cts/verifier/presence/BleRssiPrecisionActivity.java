@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.presence;
 
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -72,9 +73,6 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
         setContentView(R.layout.ble_rssi_precision);
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
-        mBleAdvertiser = new BleAdvertiser();
-        mBleScanner = new BleScanner();
-        mRssiResultMap = new HashMap<>();
         mStartTestButton = findViewById(R.id.start_test);
         mStopTestButton = findViewById(R.id.stop_test);
         mStartAdvertisingButton = findViewById(R.id.start_advertising);
@@ -82,13 +80,18 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
         mDeviceIdInfoTextView = findViewById(R.id.device_id_info);
         mDeviceFoundTextView = findViewById(R.id.device_found_info);
         mReferenceDeviceIdInput = findViewById(R.id.ref_device_id_input);
+        CheckBox isReferenceDeviceCheckbox = findViewById(R.id.is_reference_device);
+        mDutModeLayout = findViewById(R.id.dut_mode_layout);
+        mRefModeLayout = findViewById(R.id.ref_mode_layout);
+        DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
+                PackageManager.FEATURE_BLUETOOTH_LE);
+        mBleAdvertiser = new BleAdvertiser();
+        mBleScanner = new BleScanner();
+        mRssiResultMap = new HashMap<>();
         mStopTestButton.setEnabled(false);
         mStopAdvertisingButton.setEnabled(false);
         mDeviceIdInfoTextView.setVisibility(View.GONE);
         mDeviceFoundTextView.setVisibility(View.GONE);
-        CheckBox isReferenceDeviceCheckbox = findViewById(R.id.is_reference_device);
-        mDutModeLayout = findViewById(R.id.dut_mode_layout);
-        mRefModeLayout = findViewById(R.id.ref_mode_layout);
         isReferenceDevice = isReferenceDeviceCheckbox.isChecked();
         checkUiMode();
         isReferenceDeviceCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {

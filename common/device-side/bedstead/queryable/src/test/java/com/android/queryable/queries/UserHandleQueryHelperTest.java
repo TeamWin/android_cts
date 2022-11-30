@@ -29,7 +29,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class UserHandleQueryHelperTest {
+public final class UserHandleQueryHelperTest {
 
     private final Queryable mQuery = null;
     private static final int USER_HANDLE_ID = 1;
@@ -93,5 +93,13 @@ public class UserHandleQueryHelperTest {
         userHandleQueryHelper.isEqualTo(USER_HANDLE);
 
         assertParcelsCorrectly(UserHandleQueryHelper.class, userHandleQueryHelper);
+    }
+
+    @Test
+    public void userHandleQueryHelper_queries() {
+        assertThat(
+                UserHandleQuery.userHandle()
+                        .where().id().isEqualTo(USER_HANDLE_ID)
+                        .matches(USER_HANDLE)).isTrue();
     }
 }

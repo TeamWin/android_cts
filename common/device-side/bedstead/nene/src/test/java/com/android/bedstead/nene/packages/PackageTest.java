@@ -38,7 +38,6 @@ import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.queryable.queries.StringQuery;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -75,9 +74,9 @@ public class PackageTest {
     private static final String USER_SPECIFIC_PERMISSION = "android.permission.READ_CONTACTS";
     private static final TestApp sTestApp = sDeviceState.testApps().query()
             .wherePermissions().contains(
-                    StringQuery.string().isEqualTo(USER_SPECIFIC_PERMISSION),
-                    StringQuery.string().isEqualTo(DECLARED_RUNTIME_PERMISSION),
-                    StringQuery.string().isEqualTo(INSTALL_PERMISSION)
+                    USER_SPECIFIC_PERMISSION,
+                    DECLARED_RUNTIME_PERMISSION,
+                    INSTALL_PERMISSION
             ).get();
     private static final File sTestAppApkFile = new File(
             Environment.getExternalStorageDirectory(), "testApp.apk");

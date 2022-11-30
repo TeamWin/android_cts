@@ -28,6 +28,8 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_A
 import static com.android.bedstead.nene.permissions.CommonPermissions.START_CROSS_PROFILE_ACTIVITIES;
 import static com.android.bedstead.nene.types.OptionalBoolean.TRUE;
 import static com.android.eventlib.truth.EventLogsSubject.assertThat;
+import static com.android.queryable.queries.ActivityQuery.activity;
+import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -69,8 +71,6 @@ import com.android.bedstead.testapp.TestAppActivityReference;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.eventlib.events.activities.ActivityCreatedEvent;
 import com.android.eventlib.events.activities.ActivityEvents;
-import com.android.queryable.queries.ActivityQuery;
-import com.android.queryable.queries.IntentFilterQuery;
 
 import org.junit.After;
 import org.junit.Before;
@@ -99,8 +99,8 @@ public final class CrossProfileAppsTest {
             .wherePermissions().doesNotContain("android.permission.INTERACT_ACROSS_PROFILES").get();
     private static final TestApp sTestAppWithMainActivity = sDeviceState.testApps().query()
             .whereActivities().contains(
-                    ActivityQuery.activity().intentFilters().contains(
-                            IntentFilterQuery.intentFilter().actions().contains(Intent.ACTION_MAIN))
+                    activity().where().intentFilters().contains(
+                            intentFilter().where().actions().contains(Intent.ACTION_MAIN))
             ).get();
     private static final TestApp sTestAppWithActivity = sTestAppWithMainActivity;
 
@@ -246,7 +246,7 @@ public final class CrossProfileAppsTest {
             TestAppActivityReference activity = instance.activities().query()
                             .whereActivity().exported().isTrue()
                             .whereActivity().intentFilters().contains(
-                                    IntentFilterQuery.intentFilter().actions().contains(
+                                    intentFilter().where().actions().contains(
                                             Intent.ACTION_MAIN
                                     )
                             )

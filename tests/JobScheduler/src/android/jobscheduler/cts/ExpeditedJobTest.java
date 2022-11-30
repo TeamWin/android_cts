@@ -80,7 +80,7 @@ public class ExpeditedJobTest {
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));
         mTestAppInterface.assertJobUidState(ActivityManager.PROCESS_STATE_TRANSIENT_BACKGROUND,
                 ActivityManager.PROCESS_CAPABILITY_NETWORK,
-                225 /* ProcessList.PERCEPTIBLE_MEDIUM_APP_ADJ */);
+                227 /* ProcessList.PERCEPTIBLE_MEDIUM_APP_ADJ + 2 */);
     }
 
     /** Test that EJs for the TOP app start immediately and there is no limit on the number. */

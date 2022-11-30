@@ -17,6 +17,7 @@
 package com.android.queryable.queries;
 
 import static com.android.bedstead.nene.utils.ParcelTest.assertParcelsCorrectly;
+import static com.android.queryable.queries.StringQuery.string;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -27,7 +28,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class StringQueryHelperTest {
+public final class StringQueryHelperTest {
 
     private final Queryable mQuery = null;
     private static final String STRING_VALUE = "String";
@@ -120,5 +121,13 @@ public class StringQueryHelperTest {
         stringQueryHelper.isNotEqualTo("");
 
         assertParcelsCorrectly(StringQueryHelper.class, stringQueryHelper);
+    }
+
+    @Test
+    public void stringQueryHelper_queries() {
+        assertThat(
+                string()
+                        .where().isEqualTo(STRING_VALUE)
+                        .matches(STRING_VALUE)).isTrue();
     }
 }

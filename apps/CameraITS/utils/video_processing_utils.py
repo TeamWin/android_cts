@@ -39,11 +39,10 @@ ITS_SUPPORTED_QUALITIES = (
     'VGA'
 )
 
-LOW_RESOLUTION_SIZES = (
-    '176x144',
-    '192x144',
-)
-
+LOW_RESOLUTION_SIZES = {
+    'W': ('176x144', '192x144'),
+    'UW': ('176x144', '192x144', '352x288', '384x288', '320x240'),
+}
 
 def get_ffmpeg_version():
   """Returns the ffmpeg version being used."""

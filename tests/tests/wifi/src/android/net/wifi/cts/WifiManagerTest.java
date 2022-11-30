@@ -1192,9 +1192,18 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             return;
         }
         WifiNetworkSelectionConfig nsConfig = new WifiNetworkSelectionConfig.Builder()
-                .setSufficiencyCheckEnabledWhenScreenOff(true)
-                .setUserConnectChoiceOverrideEnabled(true).build();
-        assertTrue(nsConfig.isUserConnectChoiceOverrideEnabled());
+                .setAssociatedNetworkSelectionOverride(
+                        WifiNetworkSelectionConfig.ASSOCIATED_NETWORK_SELECTION_OVERRIDE_ENABLED)
+                .setSufficiencyCheckEnabledWhenScreenOff(false)
+                .setSufficiencyCheckEnabledWhenScreenOn(false)
+                .setUserConnectChoiceOverrideEnabled(false)
+                .setLastSelectionWeightEnabled(false).build();
+        assertTrue(nsConfig.getAssociatedNetworkSelectionOverride()
+                == WifiNetworkSelectionConfig.ASSOCIATED_NETWORK_SELECTION_OVERRIDE_ENABLED);
+        assertFalse(nsConfig.isSufficiencyCheckEnabledWhenScreenOff());
+        assertFalse(nsConfig.isSufficiencyCheckEnabledWhenScreenOn());
+        assertFalse(nsConfig.isUserConnectChoiceOverrideEnabled());
+        assertFalse(nsConfig.isLastSelectionWeightEnabled());
         assertThrows(SecurityException.class,
                 () -> mWifiManager.setNetworkSelectionConfig(nsConfig));
         ShellIdentityUtils.invokeWithShellPermissions(

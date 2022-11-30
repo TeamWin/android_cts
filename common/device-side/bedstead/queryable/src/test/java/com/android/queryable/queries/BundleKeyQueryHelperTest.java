@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 @RunWith(JUnit4.class)
-public class BundleKeyQueryHelperTest {
+public final class BundleKeyQueryHelperTest {
 
     private static final String KEY = "Key";
     private static final String KEY2 = "Key2";

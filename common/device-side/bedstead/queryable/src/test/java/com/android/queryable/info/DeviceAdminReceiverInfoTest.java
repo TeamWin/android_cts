@@ -29,7 +29,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class DeviceAdminReceiverInfoTest {
+public final class DeviceAdminReceiverInfoTest {
 
     private static final Class<? extends DeviceAdminReceiver> TEST_DEVICE_ADMIN_RECEIVER_CLASS =
             DeviceAdminReceiver.class;

@@ -29,7 +29,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class UriQueryHelperTest {
+public final class UriQueryHelperTest {
 
     private static final Queryable QUERY = null;
     private static final String URI_STRING_VALUE = "http://uri";
@@ -88,5 +88,12 @@ public class UriQueryHelperTest {
         uriQueryHelper.stringValue().isEqualTo(DIFFERENT_URI_STRING_VALUE);
 
         assertParcelsCorrectly(UriQueryHelper.class, uriQueryHelper);
+    }
+
+    @Test
+    public void uriQueryHelper_queries() {
+        assertThat(UriQuery.uri()
+                .where().stringValue().isEqualTo(URI_STRING_VALUE)
+                .matches(URI_VALUE)).isTrue();
     }
 }

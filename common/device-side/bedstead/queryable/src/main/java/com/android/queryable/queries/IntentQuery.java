@@ -17,18 +17,19 @@
 package com.android.queryable.queries;
 
 import android.content.Intent;
+import android.content.IntentFilter;
 
 import com.android.queryable.Queryable;
 
 import java.io.Serializable;
 
-/** Query for a {@link Intent}. */
+/** Query for an {@link Intent}. */
 public interface IntentQuery<E extends Queryable> extends Query<Intent> {
 
-    static IntentQuery<IntentQuery<?>> intent() {
-        return new IntentQueryHelper<>();
+    /** Queries an {@link Intent}*/
+    static IntentQueryHelper.IntentQueryBase intent() {
+        return new IntentQueryHelper.IntentQueryBase();
     }
-
     /** Query the {@link Intent#getAction}. */
     StringQuery<E> action();
 

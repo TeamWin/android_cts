@@ -23,7 +23,12 @@ import static android.net.wifi.p2p.WifiP2pGroup.NETWORK_ID_TEMPORARY;
 
 import android.net.MacAddress;
 import android.net.wifi.p2p.WifiP2pConfig;
+import android.os.Build;
 import android.test.AndroidTestCase;
+
+import androidx.test.filters.SdkSuppress;
+
+import com.android.compatibility.common.util.ApiLevelUtil;
 
 public class WifiP2pConfigTest extends AndroidTestCase {
     private static final String TEST_NETWORK_NAME = "DIRECT-xy-Hello";
@@ -33,20 +38,24 @@ public class WifiP2pConfigTest extends AndroidTestCase {
     private static final String TEST_DEVICE_ADDRESS = "aa:bb:cc:dd:ee:ff";
 
     public void testWifiP2pConfigCopyConstructor() {
-        WifiP2pConfig config = new WifiP2pConfig.Builder()
+        WifiP2pConfig.Builder builder = new WifiP2pConfig.Builder()
                 .setNetworkName(TEST_NETWORK_NAME)
                 .setPassphrase(TEST_PASSPHRASE)
                 .setGroupOperatingBand(TEST_OWNER_BAND)
                 .setDeviceAddress(MacAddress.fromString(TEST_DEVICE_ADDRESS))
-                .enablePersistentMode(true)
-                .setGroupClientIpProvisioningMode(GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL)
-                .build();
+                .enablePersistentMode(true);
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+            builder.setGroupClientIpProvisioningMode(
+                    GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL);
+        }
 
-        WifiP2pConfig copiedConfig = new WifiP2pConfig(config);
+        WifiP2pConfig copiedConfig = new WifiP2pConfig(builder.build());
 
         assertWifiP2pConfigHasFields(copiedConfig, TEST_NETWORK_NAME, TEST_PASSPHRASE,
                 TEST_OWNER_BAND, TEST_DEVICE_ADDRESS, NETWORK_ID_PERSISTENT,
-                GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL);
+                ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                        ? GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL
+                        : GROUP_CLIENT_IP_PROVISIONING_MODE_IPV4_DHCP);
     }
 
     public void testWifiP2pConfigBuilderForPersist() {
@@ -90,6 +99,7 @@ public class WifiP2pConfigTest extends AndroidTestCase {
                 GROUP_CLIENT_IP_PROVISIONING_MODE_IPV4_DHCP);
     }
 
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     public void testWifiP2pConfigBuilderForGroupClientIpProvisioningModeIpv4Dhcp() {
         WifiP2pConfig config = new WifiP2pConfig.Builder()
                 .setNetworkName(TEST_NETWORK_NAME)
@@ -104,6 +114,7 @@ public class WifiP2pConfigTest extends AndroidTestCase {
                 GROUP_CLIENT_IP_PROVISIONING_MODE_IPV4_DHCP);
     }
 
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     public void testWifiP2pConfigBuilderForGroupClientIpProvisioningModeIpv6LinkLocal() {
         WifiP2pConfig config = new WifiP2pConfig.Builder()
                 .setNetworkName(TEST_NETWORK_NAME)
