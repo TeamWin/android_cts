@@ -175,9 +175,7 @@ abstract class SensorPrivacyBaseTest(
             intent.putExtra(DELAYED_ACTIVITY_EXTRA, delayedActivity)
             intent.putExtra(DELAYED_ACTIVITY_NEW_TASK_EXTRA, delayedActivityNewTask)
             context.startActivity(intent)
-            if (delayedActivity || delayedActivityNewTask) {
-                Thread.sleep(3000)
-            }
+            Thread.sleep(3000)
             unblockSensorWithDialogAndAssert()
         } finally {
             runShellCommandOrThrow("am broadcast" +

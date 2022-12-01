@@ -579,6 +579,10 @@ public class UsageStatsTest {
         Map<String,UsageStats> events = mUsageStatsManager.queryAndAggregateUsageStats(
                 startTime, endTime);
         UsageStats stats = events.get(mTargetPackage);
+        if (stats == null) {
+            fail("Querying UsageStats for " + mTargetPackage + " returned empty; list of packages "
+                 + "with events: " + Arrays.toString(events.keySet().toArray(new String[0])));
+        }
         int startingCount = stats.getAppLaunchCount();
         // Launch count is updated by UsageStatsService depending on last background package.
         // When running this test on single screen device (where tasks are launched in the same

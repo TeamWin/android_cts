@@ -24,6 +24,7 @@ import static android.companion.virtual.VirtualDeviceManager.INVALID_DEVICE_ID;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAULT;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_SENSORS;
+import static android.hardware.Sensor.TYPE_ACCELEROMETER;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
@@ -35,7 +36,10 @@ import android.annotation.Nullable;
 import android.companion.virtual.VirtualDevice;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceParams;
+import android.companion.virtual.sensor.VirtualSensor;
+import android.companion.virtual.sensor.VirtualSensorConfig;
 import android.content.Context;
+import android.hardware.Sensor;
 import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.util.FakeAssociationRule;
 
@@ -58,6 +62,7 @@ import java.util.List;
 public class VirtualDeviceManagerBasicTest {
 
     private static final String VIRTUAL_DEVICE_NAME = "VirtualDeviceName";
+    private static final String SENSOR_NAME = "VirtualSensorName";
 
     private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =
             new VirtualDeviceParams.Builder().build();
@@ -264,6 +269,38 @@ public class VirtualDeviceManagerBasicTest {
                 mVirtualDeviceManager.getDevicePolicy(mVirtualDevice.getDeviceId(),
                         POLICY_TYPE_SENSORS))
                 .isEqualTo(DEVICE_POLICY_DEFAULT);
+    }
+
+    @Test
+    public void getSensor_noSensorsConfigured_shouldReturnNull() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        new VirtualDeviceParams.Builder().build());
+
+        assertThat(mVirtualDevice.getVirtualSensor(TYPE_ACCELEROMETER, SENSOR_NAME)).isNull();
+    }
+
+    @Test
+    public void getSensor_withConfiguredSensor() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        new VirtualDeviceParams.Builder()
+                                .addDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                                .addVirtualSensorConfig(
+                                        new VirtualSensorConfig.Builder(
+                                                TYPE_ACCELEROMETER, SENSOR_NAME)
+                                                .build())
+                                .build());
+
+        assertThat(mVirtualDevice.getVirtualSensor(Sensor.TYPE_GYROSCOPE, SENSOR_NAME)).isNull();
+        assertThat(mVirtualDevice.getVirtualSensor(TYPE_ACCELEROMETER, "non existent")).isNull();
+
+        VirtualSensor sensor = mVirtualDevice.getVirtualSensor(TYPE_ACCELEROMETER, SENSOR_NAME);
+        assertThat(sensor).isNotNull();
+        assertThat(sensor.getType()).isEqualTo(TYPE_ACCELEROMETER);
+        assertThat(sensor.getName()).isEqualTo(SENSOR_NAME);
     }
 }
 

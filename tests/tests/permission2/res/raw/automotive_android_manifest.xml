@@ -64,6 +64,10 @@
          android:protectionLevel="signature|privileged"
          android:label="@string/car_permission_label_control_car_seats"
          android:description="@string/car_permission_desc_control_car_seats"/>
+    <permission android:name="android.car.permission.CONTROL_CAR_AIRBAGS"
+         android:protectionLevel="signature|privileged"
+         android:label="@string/car_permission_label_control_car_airbags"
+         android:description="@string/car_permission_desc_control_car_airbags"/>
     <permission android:name="android.car.permission.CAR_MILEAGE"
          android:protectionLevel="signature|privileged"
          android:label="@string/car_permission_label_mileage"

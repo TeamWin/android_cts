@@ -71,7 +71,6 @@ import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
-import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
@@ -88,6 +87,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -754,20 +754,34 @@ public final class UserManagerTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#isMainUser"})
-    @RequireRunOnInitialUser
-    @EnsureHasPermission({QUERY_USERS})
-    public void testIsMainUser_initialUser() throws Exception {
-        assertWithMessage("isMainUser() for initial user")
-                .that(mUserManager.isMainUser()).isTrue();
+    @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
+    @EnsureHasAdditionalUser(installInstrumentedApp = TRUE)
+    @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
+    public void testIsMainUser_trueForAtMostOneUser() {
+        final List<UserHandle> userHandles = mUserManager.getUserHandles(false);
+        final List<UserHandle> mainUsers = new ArrayList<>();
+        for (UserHandle user : userHandles) {
+            final Context userContext = getContextForUser(user.getIdentifier());
+            final UserManager userManager = userContext.getSystemService(UserManager.class);
+            if (userManager.isMainUser()) {
+                mainUsers.add(user);
+            }
+        }
+        assertWithMessage("main users (%s)", mainUsers).that(mainUsers.size()).isLessThan(2);
     }
 
     @Test
-    @ApiTest(apis = {"android.os.UserManager#isFirstFullUser"})
-    @RequireRunOnAdditionalUser
-    @EnsureHasPermission({QUERY_USERS})
-    public void testIsMainUser_additionalUser() throws Exception {
-        assertWithMessage("isMainUser() for additional user")
-                .that(mUserManager.isMainUser()).isFalse();
+    @ApiTest(apis = {"android.os.UserManager#getMainUser", "android.os.UserManager#isMainUser"})
+    @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
+    @EnsureHasAdditionalUser(installInstrumentedApp = TRUE)
+    @EnsureHasPermission({QUERY_USERS, INTERACT_ACROSS_USERS})
+    public void testGetMainUser_returnsMainUser() {
+        final UserHandle mainUser = mUserManager.getMainUser();
+        if (mainUser != null) {
+            final Context mainUserContext = getContextForUser(mainUser.getIdentifier());
+            final UserManager mainUserManager = mainUserContext.getSystemService(UserManager.class);
+            assertThat(mainUserManager.isMainUser()).isTrue();
+        }
     }
 
     private Function<Intent, Boolean> userIsEqual(UserHandle userHandle) {

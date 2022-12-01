@@ -17,25 +17,32 @@
 package android.photopicker.cts;
 
 import static android.os.SystemProperties.getBoolean;
+import static android.photopicker.cts.util.PhotoPickerUiUtils.isPhotoPickerVisible;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.verifyActionBarExists;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.verifySettingsActivityIsVisible;
 
 import android.content.Intent;
+import android.os.Build;
 import android.photopicker.cts.util.PhotoPickerUiUtils;
 import android.provider.MediaStore;
 
+import androidx.test.filters.SdkSuppress;
 import androidx.test.uiautomator.UiObject;
 
 import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
+
+import java.io.IOException;
 
 /**
  * Photo Picker tests for settings page launched from the overflow menu in PhotoPickerActivity or
  * the Settings app.
  */
+// TODO(b/195009187): Enabling settings page requires setting allowed_cloud_providers device config.
+//  We currently can't do this in R.
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
 
     private static final String NAMESPACE_STORAGE_NATIVE_BOOT = "storage_native_boot";
@@ -48,14 +55,13 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         // Store current allowed cloud providers for reset at the end of tests.
-        sPreviouslyAllowedCloudProviders = sDevice.executeShellCommand(
-                String.format("device_config get %s %s", NAMESPACE_STORAGE_NATIVE_BOOT,
-                        ALLOWED_CLOUD_PROVIDERS_KEY));
+        sPreviouslyAllowedCloudProviders = getAllowedProvidersDeviceConfig();
 
         // Enable Settings menu item in PhotoPickerActivity's overflow menu.
         sDevice.executeShellCommand(
                 String.format("device_config put %s %s not_empty", NAMESPACE_STORAGE_NATIVE_BOOT,
                         ALLOWED_CLOUD_PROVIDERS_KEY));
+        Assume.assumeTrue(!getAllowedProvidersDeviceConfig().isBlank());
         sDevice.executeShellCommand(String.format("setprop %s true", SETTINGS_SYS_PROP));
         Assume.assumeTrue(getBoolean(SETTINGS_SYS_PROP, false));
     }
@@ -77,15 +83,15 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
 
         // Disable Settings menu item in PhotoPickerActivity's overflow menu.
         sDevice.executeShellCommand(String.format("setprop %s false", SETTINGS_SYS_PROP));
-        Assume.assumeFalse(getBoolean(SETTINGS_SYS_PROP, true));
     }
 
     @Test
-    @Ignore("TODO(b/195009187): Enable this test once fixed and settings activity is enabled.")
     public void testSettingsLaunchFromOverflowMenu() throws Exception {
         // Launch PhotoPickerActivity.
         final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
         mActivity.startActivityForResult(intent, REQUEST_CODE);
+        sDevice.waitForIdle();
+        Assume.assumeTrue("Assume photo picker activity is visible", isPhotoPickerVisible());
 
         // Click on the Settings menu item in the overflow menu.
         final UiObject settingsMenuItem = PhotoPickerUiUtils.findSettingsOverflowMenuItem(sDevice);
@@ -93,6 +99,12 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
 
         // Verify PhotoPickerSettingsActivity is launched and visible.
         verifySettingsActivityIsVisible(sDevice);
-        verifyActionBarExists(sDevice);
+        verifyActionBarExists();
+    }
+
+    private static String getAllowedProvidersDeviceConfig() throws IOException {
+        return sDevice.executeShellCommand(
+                String.format("device_config get %s %s", NAMESPACE_STORAGE_NATIVE_BOOT,
+                        ALLOWED_CLOUD_PROVIDERS_KEY));
     }
 }

@@ -31,6 +31,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.fail;
 
 import android.Manifest;
+import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -38,6 +39,8 @@ import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
+import android.content.pm.PackageInstaller.InstallConstraints;
+import android.content.pm.PackageInstaller.InstallConstraintsResult;
 import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -45,6 +48,7 @@ import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
@@ -78,6 +82,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -183,6 +188,7 @@ public class StagedInstallTest {
                 .getInstrumentation()
                 .getUiAutomation()
                 .adoptShellPermissionIdentity(
+                        Manifest.permission.PACKAGE_USAGE_STATS,
                         Manifest.permission.INSTALL_PACKAGES,
                         Manifest.permission.DELETE_PACKAGES);
     }
@@ -1415,6 +1421,111 @@ public class StagedInstallTest {
             }
             foundPackages.add(pi.packageName);
         }
+    }
+
+    @Test
+    public void testCheckInstallConstraints_AppIsInteracting() throws Exception {
+        Install.single(TestApp.A1).commit();
+        // The app will have audio focus and be considered interactive with the user
+        InstallUtils.requestAudioFocus(TestApp.A);
+
+        var pi = InstallUtils.getPackageInstaller();
+        var constraints = new InstallConstraints.Builder().requireAppNotInteracting().build();
+        var future = new CompletableFuture<InstallConstraintsResult>();
+        pi.checkInstallConstraints(
+                Arrays.asList(TestApp.A),
+                constraints,
+                result -> future.complete(result));
+        assertThat(future.join().isAllConstraintsSatisfied()).isFalse();
+    }
+
+    @Test
+    public void testCheckInstallConstraints_AppNotInstalled() throws Exception {
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        var pi = InstallUtils.getPackageInstaller();
+        try {
+            pi.checkInstallConstraints(
+                    Arrays.asList(TestApp.A),
+                    InstallConstraints.GENTLE_UPDATE,
+                    result -> {
+                    });
+            fail();
+        } catch (SecurityException e) {
+            assertThat(e.getMessage()).contains("has no access to package");
+        }
+    }
+
+    @Test
+    public void testCheckInstallConstraints_AppIsTopVisible() throws Exception {
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.B1).commit();
+        // We will have a top-visible app
+        startActivity(TestApp.A);
+
+        var pi = InstallUtils.getPackageInstaller();
+        var f1 = new CompletableFuture<InstallConstraintsResult>();
+        var constraints = new InstallConstraints.Builder().requireAppNotTopVisible().build();
+        pi.checkInstallConstraints(
+                Arrays.asList(TestApp.A),
+                constraints,
+                result -> f1.complete(result));
+        assertThat(f1.join().isAllConstraintsSatisfied()).isFalse();
+
+        // Test app A is no longer top-visible
+        startActivity(TestApp.B);
+        PollingCheck.waitFor(() -> {
+            var importance = getPackageImportance(TestApp.A);
+            return importance > ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
+        });
+        var f2 = new CompletableFuture<InstallConstraintsResult>();
+        pi.checkInstallConstraints(
+                Arrays.asList(TestApp.A),
+                constraints,
+                result -> f2.complete(result));
+        assertThat(f2.join().isAllConstraintsSatisfied()).isTrue();
+    }
+
+    @Test
+    public void testCheckInstallConstraints_AppIsForeground() throws Exception {
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.B1).commit();
+        // We will have a foreground app
+        startActivity(TestApp.A);
+
+        var pi = InstallUtils.getPackageInstaller();
+        var f1 = new CompletableFuture<InstallConstraintsResult>();
+        var constraints = new InstallConstraints.Builder().requireAppNotForeground().build();
+        pi.checkInstallConstraints(
+                Arrays.asList(TestApp.A),
+                constraints,
+                result -> f1.complete(result));
+        assertThat(f1.join().isAllConstraintsSatisfied()).isFalse();
+
+        // Test app A is no longer foreground
+        startActivity(TestApp.B);
+        PollingCheck.waitFor(() -> {
+            var importance = getPackageImportance(TestApp.A);
+            return importance > ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
+        });
+        var f2 = new CompletableFuture<InstallConstraintsResult>();
+        pi.checkInstallConstraints(
+                Arrays.asList(TestApp.A),
+                constraints,
+                result -> f2.complete(result));
+        assertThat(f2.join().isAllConstraintsSatisfied()).isTrue();
+    }
+
+    private static void startActivity(String packageName) {
+        // The -W option waits for the activity launch to complete
+        SystemUtil.runShellCommand(
+                String.format("am start-activity -W -n %s/%s", packageName,
+                        "com.android.cts.install.lib.testapp.MainActivity"));
+    }
+
+    private int getPackageImportance(String packageName) {
+        var context = InstrumentationRegistry.getInstrumentation().getContext();
+        var am = context.getSystemService(ActivityManager.class);
+        return am.getPackageImportance(packageName);
     }
 
     // It becomes harder to maintain this variety of install-related helper methods.

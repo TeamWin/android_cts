@@ -404,6 +404,26 @@ public class PackageManagerShellCommandTest {
     }
 
     @Test
+    public void testAppUpdateSkipEnable() throws Exception {
+        installPackage(TEST_HW5);
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        assertEquals(PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
+                getPackageManager().getApplicationEnabledSetting(TEST_APP_PACKAGE));
+        disablePackage(TEST_APP_PACKAGE);
+        assertEquals(PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                getPackageManager().getApplicationEnabledSetting(TEST_APP_PACKAGE));
+        updatePackage(TEST_APP_PACKAGE, TEST_HW5);
+        assertEquals(PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
+                getPackageManager().getApplicationEnabledSetting(TEST_APP_PACKAGE));
+        disablePackage(TEST_APP_PACKAGE);
+        assertEquals(PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                getPackageManager().getApplicationEnabledSetting(TEST_APP_PACKAGE));
+        updatePackageSkipEnable(TEST_APP_PACKAGE, TEST_HW5);
+        assertEquals(PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                getPackageManager().getApplicationEnabledSetting(TEST_APP_PACKAGE));
+    }
+
+    @Test
     public void testSplitsInstall() throws Exception {
         installSplits(new String[]{TEST_HW5, TEST_HW5_SPLIT0, TEST_HW5_SPLIT1, TEST_HW5_SPLIT2,
                 TEST_HW5_SPLIT3, TEST_HW5_SPLIT4});
@@ -1919,6 +1939,13 @@ public class PackageManagerShellCommandTest {
         File file = new File(createApkPath(baseName));
         assertEquals("Success\n", executeShellCommand(
                 "pm " + mInstall + " -t -p " + packageName + " -g " + file.getPath()));
+    }
+
+    private void updatePackageSkipEnable(String packageName, String baseName) throws IOException {
+        File file = new File(createApkPath(baseName));
+        assertEquals("Success\n", executeShellCommand(
+                "pm " + mInstall + " --skip-enable -t -p " + packageName + " -g " + file.getPath()
+        ));
     }
 
     private void installPackageStdIn(String baseName) throws IOException {

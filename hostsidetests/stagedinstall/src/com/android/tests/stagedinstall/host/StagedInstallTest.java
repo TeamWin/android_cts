@@ -924,6 +924,26 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testGetInactiveApexFactoryPackagesAfterApexInstall_containsNoDuplicates");
     }
 
+    @Test
+    public void testCheckInstallConstraints_AppIsInteracting() throws Exception {
+        runPhase("testCheckInstallConstraints_AppIsInteracting");
+    }
+
+    @Test
+    public void testCheckInstallConstraints_AppNotInstalled() throws Exception {
+        runPhase("testCheckInstallConstraints_AppNotInstalled");
+    }
+
+    @Test
+    public void testCheckInstallConstraints_AppIsTopVisible() throws Exception {
+        runPhase("testCheckInstallConstraints_AppIsTopVisible");
+    }
+
+    @Test
+    public void testCheckInstallConstraints_AppIsForeground() throws Exception {
+        runPhase("testCheckInstallConstraints_AppIsForeground");
+    }
+
     private List<ApexInfo> readApexInfoList() throws Exception {
         File file = getDevice().pullFile("/apex/apex-info-list.xml");
         try (FileInputStream stream = new FileInputStream(file)) {

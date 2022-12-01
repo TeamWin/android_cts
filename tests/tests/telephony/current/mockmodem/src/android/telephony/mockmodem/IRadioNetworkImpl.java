@@ -192,8 +192,9 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
             android.hardware.radio.sim.AppStatus rilAppStatus = cardStatus.applications[i];
             if (rilAppStatus.appState == android.hardware.radio.sim.AppStatus.APP_STATE_READY) {
                 Log.i(mTag, "SIM is ready");
-                simPlmn = mMockModemConfigInterface.getSimInfo(mSubId,
-                        SimInfoChangedResult.SIM_INFO_TYPE_MCC_MNC, mTag);
+                simPlmn =
+                        mMockModemConfigInterface.getSimInfo(
+                                mSubId, SimInfoChangedResult.SIM_INFO_TYPE_MCC_MNC, mTag);
                 mServiceState.updateSimPlmn(simPlmn);
                 return true;
             }
@@ -763,8 +764,8 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     }
 
     @Override
-    public void triggerEmergencyNetworkScan(int serial,
-            android.hardware.radio.network.EmergencyNetworkScanTrigger request) {
+    public void triggerEmergencyNetworkScan(
+            int serial, android.hardware.radio.network.EmergencyNetworkScanTrigger request) {
         Log.d(TAG, "triggerEmergencyNetworkScan");
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
@@ -832,6 +833,30 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
             mRadioNetworkResponse.setN1ModeEnabledResponse(rsp);
         } catch (RemoteException ex) {
             Log.e(TAG, "Failed to setN1ModeEnabled from AIDL. Exception " + ex);
+        }
+    }
+
+    @Override
+    public void setLocationPrivacySetting(int serial, boolean shareLocation) {
+        Log.d(TAG, "setLocationPrivacySetting");
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioNetworkResponse.setLocationPrivacySettingResponse(rsp);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to setLocationPrivacySetting from AIDL. Exception" + ex);
+        }
+    }
+
+    @Override
+    public void getLocationPrivacySetting(int serial) {
+        Log.d(TAG, "getLocationPrivacySetting");
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioNetworkResponse.getLocationPrivacySettingResponse(rsp, false);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to getLocationPrivacySetting from AIDL. Exception " + ex);
         }
     }
 
@@ -926,9 +951,31 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
                 mRadioNetworkIndication.emergencyNetworkScanResult(
                         RadioIndicationType.UNSOLICITED, result);
             } catch (RemoteException ex) {
-                Log.e(TAG,
+                Log.e(
+                        TAG,
                         "Failed to invoke emergencyNetworkScanResult change from AIDL. Exception"
-                        + ex);
+                                + ex);
+            }
+        } else {
+            Log.e(TAG, "null mRadioNetworkIndication");
+        }
+    }
+
+    public void unsolOnNetworkInitiatedLocationResult() {
+        Log.d(TAG, "unsolOnNetworkInitiatedLocationResult");
+
+        if (mRadioNetworkIndication != null) {
+            int result = 0;
+
+            try {
+                mRadioNetworkIndication.onNetworkInitiatedLocationResult(
+                        RadioIndicationType.UNSOLICITED, result);
+            } catch (RemoteException ex) {
+                Log.e(
+                        TAG,
+                        "Failed to invoke onNetworkInitiatedLocationResult change from AIDL."
+                                + " Exception"
+                                + ex);
             }
         } else {
             Log.e(TAG, "null mRadioNetworkIndication");

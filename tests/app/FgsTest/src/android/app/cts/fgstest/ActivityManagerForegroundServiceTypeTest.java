@@ -381,6 +381,24 @@ public final class ActivityManagerForegroundServiceTypeTest {
                             testPackageName);
                     startAndStopFgsType(TEST_COMP_TARGET_FGS_ALL_TYPE, type, null);
                     resetPermissions(anyOfPermissions, testPackageName);
+
+                    if (!perm.mIsAppOps && perm.mSpecialOp == null) {
+                        // However, if this is a permission backed by an app op,
+                        // revoking the app op will make it fail.
+                        final int opCode = AppOpsManager.permissionToOpCode(perm.mName);
+                        if (opCode != AppOpsManager.OP_NONE) {
+                            grantPermissions(ArrayUtils.concat(TestPermissionInfo.class,
+                                    allOfPermissions, new TestPermissionInfo[] {perm}),
+                                    testPackageName);
+                            // Because we're adopting the shell identity,
+                            // we have to set the appop to shell here
+                            executeShellCommand("appops set --uid " + SHELL_PKG_NAME + " "
+                                    + AppOpsManager.opToPublicName(opCode) + " deny");
+                            assertEquals(RESULT_SECURITY_EXCEPTION, startForegroundServiceWithType(
+                                    TEST_COMP_TARGET_FGS_ALL_TYPE, type));
+                            resetPermissions(anyOfPermissions, testPackageName);
+                        }
+                    }
                 }
             }
 

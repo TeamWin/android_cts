@@ -213,7 +213,9 @@ public class ScanResultTest extends WifiJUnit3TestBase {
                     ScanResult.WIFI_STANDARD_LEGACY,
                     ScanResult.WIFI_STANDARD_11N,
                     ScanResult.WIFI_STANDARD_11AC,
-                    ScanResult.WIFI_STANDARD_11AX
+                    ScanResult.WIFI_STANDARD_11AX,
+                    ScanResult.WIFI_STANDARD_11AD,
+                    ScanResult.WIFI_STANDARD_11BE
             );
 
             scanResult.isPasspointNetwork();

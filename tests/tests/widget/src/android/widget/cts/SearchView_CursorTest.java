@@ -31,6 +31,8 @@ import android.app.Instrumentation;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.provider.BaseColumns;
+import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.UiDevice;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
@@ -212,7 +214,10 @@ public class SearchView_CursorTest {
         assertEquals(mSuggestionsAdapter, mSearchView.getSuggestionsAdapter());
 
         mActivityRule.runOnUiThread(() -> mSearchView.setQuery("Di", false));
-        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(() -> {
+            UiDevice uiDevice = UiDevice.getInstance(mInstrumentation);
+            return uiDevice.findObject(By.text("Dido")) != null;
+        });
         verify(mockQueryTextListener, times(1)).onQueryTextChange("Di");
 
         // Emulate click on the first suggestion - which should be Dido

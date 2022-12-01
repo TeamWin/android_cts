@@ -21,14 +21,13 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.PixelFormat;
-import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.ImageReader;
 import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.view.Display;
-import android.view.Window;
+import android.view.WindowInsets;
 
 import com.android.compatibility.common.util.TestUtils;
 
@@ -39,10 +38,8 @@ public class DisplayUtils {
     private static final int DISPLAY_ADDED_TIMEOUT_MS = 5000;
 
     public static int getStatusBarHeight(Activity activity) {
-        final Rect rect = new Rect();
-        Window window = activity.getWindow();
-        window.getDecorView().getWindowVisibleDisplayFrame(rect);
-        return rect.top;
+        return activity.getWindow().getDecorView().getRootWindowInsets()
+                .getInsets(WindowInsets.Type.statusBars()).top;
     }
 
     public static class VirtualDisplaySession implements AutoCloseable {

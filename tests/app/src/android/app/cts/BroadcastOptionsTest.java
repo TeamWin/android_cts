@@ -293,11 +293,11 @@ public class BroadcastOptionsTest {
         final String namespace = "test_namespace";
         final String key = "test_key";
         options.setDeliveryGroupMatchingKey(namespace, key);
-        assertEquals(String.join("/", namespace, key),
+        assertEquals(String.join(":", namespace, key),
                 options.getDeliveryGroupMatchingKey());
 
         final BroadcastOptions options2 = new BroadcastOptions(options.toBundle());
-        assertEquals(String.join("/", namespace, key),
+        assertEquals(String.join(":", namespace, key),
                 options2.getDeliveryGroupMatchingKey());
 
         options.clearDeliveryGroupMatchingKey();

@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -303,26 +304,39 @@ public class InstallUtils {
         return noResponse;
     }
 
+    private static void sendBroadcastAndWait(Intent intent) throws Exception {
+        var handlerThread = new HandlerThread("TestHandlerThread");
+        handlerThread.start();
+
+        var latch = new CountDownLatch(1);
+        var context = InstrumentationRegistry.getTargetContext();
+        context.sendOrderedBroadcast(intent, null, new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                latch.countDown();
+            }
+        }, new Handler(handlerThread.getLooper()), 0, null, null);
+        latch.await();
+    }
+
     /**
      * Tells the app to request audio focus.
      */
-    public static void requestAudioFocus(String packageName) {
+    public static void requestAudioFocus(String packageName) throws Exception {
         Intent intent = new Intent();
         intent.setComponent(new ComponentName(packageName, CLASS_NAME_PROCESS_BROADCAST));
         intent.setAction("REQUEST_AUDIO_FOCUS");
-        Context context = InstrumentationRegistry.getTargetContext();
-        context.sendBroadcast(intent);
+        sendBroadcastAndWait(intent);
     }
 
     /**
      * Tells the app to abandon audio focus.
      */
-    public static void abandonAudioFocus(String packageName) {
+    public static void abandonAudioFocus(String packageName) throws Exception {
         Intent intent = new Intent();
         intent.setComponent(new ComponentName(packageName, CLASS_NAME_PROCESS_BROADCAST));
         intent.setAction("ABANDON_AUDIO_FOCUS");
-        Context context = InstrumentationRegistry.getTargetContext();
-        context.sendBroadcast(intent);
+        sendBroadcastAndWait(intent);
     }
 
     /**

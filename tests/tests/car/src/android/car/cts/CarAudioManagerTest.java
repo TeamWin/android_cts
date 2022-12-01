@@ -20,6 +20,7 @@ import static android.car.Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME;
 import static android.car.media.CarAudioManager.AUDIO_FEATURE_DYNAMIC_ROUTING;
 import static android.car.media.CarAudioManager.AUDIO_FEATURE_VOLUME_GROUP_MUTING;
 import static android.car.media.CarAudioManager.CarVolumeCallback;
+import static android.car.media.CarAudioManager.PRIMARY_AUDIO_ZONE;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -31,7 +32,10 @@ import static org.junit.Assume.assumeTrue;
 import android.app.UiAutomation;
 import android.car.Car;
 import android.car.media.CarAudioManager;
+import android.car.media.CarVolumeGroupInfo;
 import android.car.test.ApiCheckerRule.Builder;
+import android.car.test.PermissionsCheckerRule;
+import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -40,13 +44,16 @@ import android.view.KeyEvent;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.ShellUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -59,6 +66,9 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     private static final String TAG = CarAudioManagerTest.class.getSimpleName();
 
     private static long WAIT_TIMEOUT_SECS = 5;
+
+    @Rule
+    public final PermissionsCheckerRule mPermissionsCheckerRule = new PermissionsCheckerRule();
 
     private static final UiAutomation UI_AUTOMATION =
             InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -130,12 +140,12 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     public void registerCarVolumeCallback_onGroupVolumeChanged() throws Exception {
         assumeDynamicRoutingIsEnabled();
         mCallback = new SyncCarVolumeCallback();
 
-        runWithCarControlAudioVolumePermission(
-                () -> mCarAudioManager.registerCarVolumeCallback(mCallback));
+        mCarAudioManager.registerCarVolumeCallback(mCallback);
 
         injectVolumeDownKeyEvent();
         assertWithMessage("CarVolumeCallback#onGroupVolumeChanged should be called")
@@ -144,13 +154,13 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     public void registerCarVolumeCallback_onMasterMuteChanged() throws Exception {
         assumeDynamicRoutingIsEnabled();
         assumeVolumeGroupMutingIsDisabled();
         mCallback = new SyncCarVolumeCallback();
 
-        runWithCarControlAudioVolumePermission(
-            () -> mCarAudioManager.registerCarVolumeCallback(mCallback));
+        mCarAudioManager.registerCarVolumeCallback(mCallback);
 
         injectVolumeMuteKeyEvent();
         try {
@@ -163,18 +173,16 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     public void registerCarVolumeCallback_onGroupMuteChanged() throws Exception {
         assumeDynamicRoutingIsEnabled();
         assumeVolumeGroupMutingIsEnabled();
         mCallback = new SyncCarVolumeCallback();
 
-        runWithCarControlAudioVolumePermission(
-            () -> {
-                readFirstZoneAndVolumeGroup();
-                mCarAudioManager.registerCarVolumeCallback(mCallback);
-                setVolumeGroupMute(mZoneId, mVolumeGroupId, true);
-                setVolumeGroupMute(mZoneId, mVolumeGroupId, false);
-            });
+        readFirstZoneAndVolumeGroup();
+        mCarAudioManager.registerCarVolumeCallback(mCallback);
+        setVolumeGroupMute(mZoneId, mVolumeGroupId, /* mute= */ true);
+        setVolumeGroupMute(mZoneId, mVolumeGroupId, /* mute= */ false);
 
         assertWithMessage("CarVolumeCallback#onGroupMuteChanged should be called")
             .that(mCallback.receivedGroupMuteChanged()).isTrue();
@@ -231,19 +239,75 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     public void unregisterCarVolumeCallback_noLongerReceivesCallback() throws Exception {
         assumeDynamicRoutingIsEnabled();
         SyncCarVolumeCallback callback = new SyncCarVolumeCallback();
-        runWithCarControlAudioVolumePermission(() -> {
-            mCarAudioManager.registerCarVolumeCallback(callback);
-            mCarAudioManager.unregisterCarVolumeCallback(callback);
-        });
+        mCarAudioManager.registerCarVolumeCallback(callback);
+        mCarAudioManager.unregisterCarVolumeCallback(callback);
 
         injectVolumeDownKeyEvent();
 
         assertWithMessage("CarVolumeCallback#onGroupVolumeChanged should not be called")
                 .that(callback.receivedGroupVolumeChanged())
                 .isFalse();
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupInfo(int, int)"})
+    public void getVolumeGroupInfo() {
+        assumeDynamicRoutingIsEnabled();
+        int groupCount = mCarAudioManager.getVolumeGroupCount(PRIMARY_AUDIO_ZONE);
+
+        for (int index = 0; index < groupCount; index++) {
+            CarVolumeGroupInfo info =
+                    mCarAudioManager.getVolumeGroupInfo(PRIMARY_AUDIO_ZONE, index);
+            expectWithMessage("Car volume group id for info %s and group %s", info, index)
+                    .that(info.getId()).isEqualTo(index);
+            expectWithMessage("Car volume group info zone for info %s and group %s",
+                    info, index).that(info.getZoneId()).isEqualTo(PRIMARY_AUDIO_ZONE);
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupInfo(int, int)"})
+    public void getVolumeGroupInfo_withoutPermission() {
+        Exception exception = assertThrows(SecurityException.class,
+                () -> mCarAudioManager.getVolumeGroupInfo(PRIMARY_AUDIO_ZONE, /* groupId= */ 0));
+
+        assertWithMessage("Car volume group info without permission exception")
+                .that(exception).hasMessageThat().contains(PERMISSION_CAR_CONTROL_AUDIO_VOLUME);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupInfosForZone(int)"})
+    public void getVolumeGroupInfosForZone() {
+        assumeDynamicRoutingIsEnabled();
+        int groupCount = mCarAudioManager.getVolumeGroupCount(PRIMARY_AUDIO_ZONE);
+
+        List<CarVolumeGroupInfo> infos =
+                mCarAudioManager.getVolumeGroupInfosForZone(PRIMARY_AUDIO_ZONE);
+
+        expectWithMessage("Car volume group infos for primary zone")
+                .that(infos).hasSize(groupCount);
+        for (int index = 0; index < groupCount; index++) {
+            CarVolumeGroupInfo info =
+                    mCarAudioManager.getVolumeGroupInfo(PRIMARY_AUDIO_ZONE, index);
+            expectWithMessage("Car volume group infos for info %s and group %s", info, index)
+                    .that(infos).contains(info);
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupInfosForZone(int)"})
+    public void getVolumeGroupInfosForZone_withoutPermission() {
+        Exception exception = assertThrows(SecurityException.class,
+                () -> mCarAudioManager.getVolumeGroupInfosForZone(PRIMARY_AUDIO_ZONE));
+
+        assertWithMessage("Car volume groups info without permission exception")
+                .that(exception).hasMessageThat().contains(PERMISSION_CAR_CONTROL_AUDIO_VOLUME);
     }
 
     private void assumeDynamicRoutingIsEnabled() {

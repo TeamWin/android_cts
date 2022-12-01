@@ -64,6 +64,7 @@ public class VideoCodecTestBase {
     protected static final String VP9_MIME = MediaFormat.MIMETYPE_VIDEO_VP9;
     protected static final String AVC_MIME = MediaFormat.MIMETYPE_VIDEO_AVC;
     protected static final String HEVC_MIME = MediaFormat.MIMETYPE_VIDEO_HEVC;
+    protected static final String AV1_MIME = MediaFormat.MIMETYPE_VIDEO_AV1;
     protected static final String SDCARD_DIR =
             Environment.getExternalStorageDirectory().getAbsolutePath();
     static final String mInpPrefix = WorkDir.getMediaDirString();

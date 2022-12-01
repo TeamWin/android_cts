@@ -81,6 +81,7 @@ public class ProcessBroadcast extends BroadcastReceiver {
         final AudioFocusRequest afr =
                 new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN).build();
         audioManager.requestAudioFocus(afr);
+        setResultCode(0);
     }
 
     private void abandonAudioFocus(Context context) {
@@ -88,6 +89,7 @@ public class ProcessBroadcast extends BroadcastReceiver {
         final AudioFocusRequest afr =
                 new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN).build();
         audioManager.abandonAudioFocusRequest(afr);
+        setResultCode(0);
     }
 
     /**

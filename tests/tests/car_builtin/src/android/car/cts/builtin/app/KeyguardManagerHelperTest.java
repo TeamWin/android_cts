@@ -43,18 +43,12 @@ public final class KeyguardManagerHelperTest extends ActivityManagerTestBase {
 
     @Test
     public void testIsKeyguardLocked() throws Exception {
+        assertThat(KeyguardManagerHelper.isKeyguardLocked()).isFalse();
         try (LockScreenSession lockScreenSession = createManagedLockScreenSession()) {
             lockScreenSession.setLockCredential().gotoKeyguard();
             assertThat(KeyguardManagerHelper.isKeyguardLocked()).isTrue();
-
-            boolean isKeyguardLocked = true;
-            // enterAndConfirmLockCredential() is a little unstable, so try 3 timmes to make sure.
-            for (int i = 0; i < 3 && isKeyguardLocked; ++i) {
-                lockScreenSession.enterAndConfirmLockCredential();
-                mWmState.waitAndAssertKeyguardGone();
-                isKeyguardLocked = KeyguardManagerHelper.isKeyguardLocked();
-            }
-            assertThat(isKeyguardLocked).isFalse();
         }
+        // When LockScreenSession is closed, it'll unlock the keyguard automatically.
+        assertThat(KeyguardManagerHelper.isKeyguardLocked()).isFalse();
     }
 }

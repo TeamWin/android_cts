@@ -17,7 +17,9 @@
 package android.server.wm;
 
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
+import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_FOCUS;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
+import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
 import static android.view.KeyEvent.ACTION_DOWN;
@@ -60,6 +62,8 @@ import android.view.View;
 import android.view.WindowManager.LayoutParams;
 
 import androidx.annotation.NonNull;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Test;
 
@@ -171,11 +175,57 @@ public class WindowFocusTests extends WindowManagerTestBase {
         if (!perDisplayFocusEnabled) {
             secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_6, FLAG_CANCELED);
         }
-        assertEquals(secondaryActivity.getLogTag() + " must only receive expected events.",
+        assertEquals(secondaryActivity.getLogTag() + " must only receive expected events",
                 0 /* expected event count */, secondaryActivity.getKeyEventCount());
 
         // Assert primary activity become top focused after tapping on default display.
         sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_8, INVALID_DISPLAY);
+    }
+
+    @Test
+    public void testKeyReceiving_displayWithOwnFocus() {
+        assumeTrue(supportsMultiDisplay());
+
+        final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
+                DEFAULT_DISPLAY);
+
+        final VirtualDisplayWithOwnFocusSession session =
+                createManagedVirtualDisplayWithOwnFocusSession();
+        final int secondaryDisplayId = session.getDisplayId();
+        final SecondaryActivity secondaryActivity = session.startActivityAndFocus();
+
+        // The secondary display and activity gained focus; the default display lost focus.
+        primaryActivity.waitAndAssertWindowFocusState(/* hasFocus= */ false);
+
+        sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_2, INVALID_DISPLAY);
+        sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_3, secondaryDisplayId);
+
+        // Press display-unspecified keys and a display-specified key but not release them.
+        sendKey(ACTION_DOWN, KEYCODE_5, INVALID_DISPLAY);
+        sendKey(ACTION_DOWN, KEYCODE_6, secondaryDisplayId);
+        sendKey(ACTION_DOWN, KEYCODE_7, INVALID_DISPLAY);
+        secondaryActivity.assertAndConsumeKeyEvent(ACTION_DOWN, KEYCODE_5, 0 /* flags */);
+        secondaryActivity.assertAndConsumeKeyEvent(ACTION_DOWN, KEYCODE_6, 0 /* flags */);
+        secondaryActivity.assertAndConsumeKeyEvent(ACTION_DOWN, KEYCODE_7, 0 /* flags */);
+
+        // Give focus to the primary activity on the default display; the secondary ones did not
+        // lose focus.
+        tapOn(primaryActivity);
+        primaryActivity.waitAndAssertWindowFocusState(/* hasFocus= */ true);
+        secondaryActivity.assertWindowFocusState(/* hasFocus= */ true);
+
+        // Assert only display-unspecified key would be cancelled after secondary activity is
+        // not top focused if per-display focus is enabled.
+        secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_5, FLAG_CANCELED);
+        secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_7, FLAG_CANCELED);
+
+        assertEquals(secondaryActivity.getLogTag() + " must only receive expected events",
+                0 /* expected event count */, secondaryActivity.getKeyEventCount());
+
+        // Assert primary activity become top focused after tapping on default display.
+        sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_8, INVALID_DISPLAY);
+
+        secondaryActivity.assertWindowFocusState(/* hasFocus= */ true);
     }
 
     /**
@@ -539,6 +589,58 @@ public class WindowFocusTests extends WindowManagerTestBase {
 
         SecondaryActivity startActivityAndFocus() {
             return WindowFocusTests.startActivityAndFocus(getDisplayId(), false /* hasFocus */);
+        }
+
+        @Override
+        public void close() {
+            if (mVirtualDisplay != null) {
+                mVirtualDisplay.release();
+            }
+            if (mReader != null) {
+                mReader.close();
+            }
+        }
+    }
+
+    private VirtualDisplayWithOwnFocusSession createManagedVirtualDisplayWithOwnFocusSession() {
+        return mObjectTracker.manage(
+                new VirtualDisplayWithOwnFocusSession(getInstrumentation().getTargetContext()));
+    }
+
+    /** A trusted virtual display that has its own focus and touch mode states. */
+    private static class VirtualDisplayWithOwnFocusSession implements AutoCloseable {
+        private static final int WIDTH = 800;
+        private static final int HEIGHT = 480;
+        private static final int DENSITY = 160;
+
+        private VirtualDisplay mVirtualDisplay;
+        private final ImageReader mReader;
+        private final Display mDisplay;
+
+        VirtualDisplayWithOwnFocusSession(Context context) {
+            mReader = ImageReader.newInstance(WIDTH, HEIGHT, PixelFormat.RGBA_8888,
+                    /* maxImages= */ 2);
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                mVirtualDisplay = context.getSystemService(DisplayManager.class)
+                        .createVirtualDisplay(WindowFocusTests.class.getSimpleName(), WIDTH, HEIGHT,
+                                DENSITY, mReader.getSurface(), getVirtualDisplayFlags());
+            });
+            mDisplay = mVirtualDisplay.getDisplay();
+        }
+
+        int getVirtualDisplayFlags() {
+            return VIRTUAL_DISPLAY_FLAG_PUBLIC
+                    | VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY
+                    | VIRTUAL_DISPLAY_FLAG_TRUSTED
+                    | VIRTUAL_DISPLAY_FLAG_OWN_FOCUS;
+        }
+
+        int getDisplayId() {
+            return mDisplay.getDisplayId();
+        }
+
+        SecondaryActivity startActivityAndFocus() {
+            return WindowFocusTests.startActivityAndFocus(getDisplayId(), /* hasFocus= */ true);
         }
 
         @Override

@@ -16,6 +16,9 @@
 
 package android.content.om.cts;
 
+import static android.content.Context.OVERLAY_SERVICE;
+
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -31,11 +34,15 @@ import android.os.UserHandle;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.google.common.truth.Expect;
+
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
 
 /**
  * This only tests the client API implementation of the OverlayManager
@@ -43,10 +50,11 @@ import org.mockito.MockitoAnnotations;
  */
 @RunWith(AndroidJUnit4.class)
 public class OverlayManagerTest {
-
     private OverlayManager mManager;
     @Mock
     private IOverlayManager mMockService;
+
+    @Rule public Expect expect = Expect.create();
 
     @Before
     public void setUp() throws Exception {
@@ -87,5 +95,25 @@ public class OverlayManagerTest {
         verify(mMockService, times(0)).getOverlayInfosForTarget(targetPackageName, userId);
         mManager.getOverlayInfosForTarget(targetPackageName, user);
         verify(mMockService, times(1)).getOverlayInfosForTarget(targetPackageName, userId);
+    }
+
+    @Test
+    public void getOverlayManager_byClass_shouldSucceed() {
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+
+        final Object overlayManager = context.getSystemService(OverlayManager.class);
+
+        expect.that(overlayManager).isNotNull();
+        expect.that(overlayManager).isInstanceOf(OverlayManager.class);
+    }
+
+    @Test
+    public void getOverlayManager_ByServiceName_shouldSucceed() {
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+
+        final Object overlayManager = context.getSystemService(OVERLAY_SERVICE);
+
+        expect.that(overlayManager).isNotNull();
+        expect.that(overlayManager).isInstanceOf(OverlayManager.class);
     }
 }

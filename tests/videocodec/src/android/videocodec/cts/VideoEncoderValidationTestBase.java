@@ -87,10 +87,16 @@ public class VideoEncoderValidationTestBase extends CodecEncoderTestBase {
 
     static void decodeStreamsToYuv(ArrayList<CompressedResource> resources,
             HashMap<String, RawResource> streamYuvMap) {
+        decodeStreamsToYuv(resources, streamYuvMap, Integer.MAX_VALUE);
+    }
+
+    static void decodeStreamsToYuv(ArrayList<CompressedResource> resources,
+            HashMap<String, RawResource> streamYuvMap, int frameLimit) {
         for (CompressedResource res : resources) {
             if (!(streamYuvMap.containsKey(res.uniqueLabel()))) {
                 try {
-                    DecodeStreamToYuv yuv = new DecodeStreamToYuv(res.mMediaType, res.mResFile);
+                    DecodeStreamToYuv yuv =
+                            new DecodeStreamToYuv(res.mMediaType, res.mResFile, frameLimit);
                     streamYuvMap.put(res.uniqueLabel(), yuv.getDecodedYuv());
                 } catch (Exception e) {
                     streamYuvMap.put(res.uniqueLabel(), null);

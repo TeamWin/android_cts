@@ -19,12 +19,14 @@ package android.virtualdevice.cts;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAULT;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_SENSORS;
+import static android.hardware.Sensor.TYPE_ACCELEROMETER;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 
 import android.companion.virtual.VirtualDeviceParams;
+import android.companion.virtual.sensor.VirtualSensorConfig;
 import android.content.ComponentName;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
@@ -35,6 +37,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.List;
 import java.util.Set;
 
 @RunWith(AndroidJUnit4.class)
@@ -42,6 +45,7 @@ import java.util.Set;
 public class VirtualDeviceParamsTest {
 
     private static final String VIRTUAL_DEVICE_NAME = "VirtualDeviceName";
+    private static final String SENSOR_NAME = "VirtualSensorName";
 
     @Test
     public void setAllowedAndBlockedCrossTaskNavigations_shouldThrowException() {
@@ -191,6 +195,49 @@ public class VirtualDeviceParamsTest {
                 .build();
 
         assertThat(params.getDevicePolicy(POLICY_TYPE_SENSORS)).isEqualTo(DEVICE_POLICY_CUSTOM);
+    }
+
+    @Test
+    public void virtualSensorConfigs_withoutCustomPolicy_throwsException() {
+        assertThrows(
+                IllegalArgumentException.class, () -> new VirtualDeviceParams.Builder()
+                        .addVirtualSensorConfig(new VirtualSensorConfig.Builder(
+                                TYPE_ACCELEROMETER, SENSOR_NAME)
+                                .build())
+                        .build());
+    }
+
+    @Test
+    public void virtualSensorConfigs_duplicateNamePerType_throwsException() {
+        assertThrows(
+                IllegalArgumentException.class, () -> new VirtualDeviceParams.Builder()
+                        .addDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                        .addVirtualSensorConfig(
+                                new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, SENSOR_NAME)
+                                        .build())
+                        .addVirtualSensorConfig(
+                                new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, SENSOR_NAME)
+                                        .build())
+                        .build());
+    }
+
+    @Test
+    public void virtualSensorConfigs_multipleSensorsPerType_succeeds() {
+        final String secondSensorName = SENSOR_NAME + "2";
+        VirtualDeviceParams params = new VirtualDeviceParams.Builder()
+                .addDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                .addVirtualSensorConfig(
+                        new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, SENSOR_NAME).build())
+                .addVirtualSensorConfig(
+                        new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, secondSensorName)
+                                .build())
+                .build();
+
+        List<VirtualSensorConfig> virtualSensorConfigs = params.getVirtualSensorConfigs();
+        assertThat(virtualSensorConfigs).hasSize(2);
+        for (int i = 0; i < virtualSensorConfigs.size(); ++i) {
+            assertThat(virtualSensorConfigs.get(i).getType()).isEqualTo(TYPE_ACCELEROMETER);
+        }
     }
 }
 

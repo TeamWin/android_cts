@@ -31,6 +31,8 @@ import android.hardware.usb.UsbManager;
 import android.hardware.usb.UsbPort;
 import android.util.Log;
 
+import android.os.Build;
+
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -91,7 +93,7 @@ public class UsbPortApiTest {
         // Adopt MANAGE_USB permission.
         mUiAutomation.adoptShellPermissionIdentity(MANAGE_USB);
 
-        mMockUsbPort = new UsbPort(mUsbManagerMock, "1", 0, 0, true, true);
+        mMockUsbPort = new UsbPort(mUsbManagerMock, "1", 0, 0, true, true, true);
         boolean result = true;
 
         mConsumer = new Consumer<Integer>(){
@@ -200,5 +202,56 @@ public class UsbPortApiTest {
             Log.i(TAG,
                 "SecurityException expected on enableLimitPowerTransfer when MANAGE_USB is not acquired.");
         }
+    }
+
+    /**
+     * Verify that SecurityException is thrown when MANAGE_USB is not
+     * held and not thrown when MANAGE_USB is held.
+     */
+    @Test
+    public void test_UsbApiForGetStatus() throws Exception {
+        // Adopt MANAGE_USB permission.
+        mUiAutomation.adoptShellPermissionIdentity(MANAGE_USB);
+
+        // Should pass with permission.
+        try {
+            mUsbPort.getStatus();
+        } catch (SecurityException secEx) {
+            Assert.fail("Unexpected SecurityException on getStatus.");
+        }
+
+        // Drop MANAGE_USB permission.
+        mUiAutomation.dropShellPermissionIdentity();
+
+        try {
+            mUsbPort.getStatus();
+            Assert.fail(
+                    "SecurityException not thrown for getStatus when MANAGE_USB is not acquired.");
+        } catch (SecurityException secEx) {
+            Log.i(TAG,
+                    "SecurityException expected on getStatus when MANAGE_USB is not acquired.");
+        }
+    }
+
+    /**
+     * Verify that supportsComplianceWarnings is defaulted to false on
+     * older version of UsbPort constructors.
+     */
+    @Test
+    public void test_UsbApiForSupportsComplianceWarnings() throws Exception {
+        // Adopt MANAGE_USB permission.
+        mUiAutomation.adoptShellPermissionIdentity(MANAGE_USB);
+
+        // Check to see that build version is valid
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            try {
+                Assert.assertFalse(mUsbPort.supportsComplianceWarnings());
+            } catch (Exception e) {
+                Assert.fail("Unexpected Exception on supportsNonCompliantIdentification");
+            }
+        }
+
+        // Drop MANAGE_USB permission.
+        mUiAutomation.dropShellPermissionIdentity();
     }
 }

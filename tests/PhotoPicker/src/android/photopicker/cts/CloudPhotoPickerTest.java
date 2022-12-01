@@ -16,7 +16,6 @@
 
 package android.photopicker.cts;
 
-import static android.os.SystemProperties.getBoolean;
 import static android.photopicker.cts.PhotoPickerCloudUtils.addImage;
 import static android.photopicker.cts.PhotoPickerCloudUtils.containsExcept;
 import static android.photopicker.cts.PhotoPickerCloudUtils.extractMediaIds;
@@ -50,7 +49,6 @@ import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -94,8 +92,6 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
         mCloudSecondaryMediaGenerator.setMediaCollectionId(COLLECTION_1);
 
         setCloudProvider(mContext, null);
-
-        Assume.assumeTrue(getBoolean("sys.photopicker.pickerdb.enabled", true));
     }
 
     @After

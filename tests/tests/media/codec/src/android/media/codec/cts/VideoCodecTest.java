@@ -136,6 +136,8 @@ public class VideoCodecTest extends VideoCodecTestBase {
                 {AVC_MIME, VIDEO_ControlRateVariable},
                 {HEVC_MIME, VIDEO_ControlRateConstant},
                 {HEVC_MIME, VIDEO_ControlRateVariable},
+                {AV1_MIME, VIDEO_ControlRateConstant},
+                {AV1_MIME, VIDEO_ControlRateVariable},
         });
         return prepareParamList(exhaustiveArgsList);
     }

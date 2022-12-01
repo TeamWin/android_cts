@@ -114,7 +114,12 @@ public class PhotoPickerUiUtils {
         return new UiObject(new UiSelector().description("More options"));
     }
 
-    public static void verifyActionBarExists(UiDevice uiDevice) {
+    public static boolean isPhotoPickerVisible() {
+        return new UiObject(new UiSelector().resourceIdMatches(
+                PhotoPickerUiUtils.REGEX_PACKAGE_NAME + ":id/bottom_sheet")).waitForExists(TIMEOUT);
+    }
+
+    public static void verifyActionBarExists() {
         assertWithMessage("Timed out waiting for action bar to appear")
                 .that(new UiObject(new UiSelector()
                         .resourceIdMatches(REGEX_PACKAGE_NAME + ":id/action_bar"))
