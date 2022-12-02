@@ -198,7 +198,8 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
      * triggered with a value equal to the requested state.
      */
     @Test
-    public void testRequestStateSucceedsAsTopApp_ifStateDefinedAsAvailableForAppsToRequest() {
+    public void testRequestStateSucceedsAsTopApp_ifStateDefinedAsAvailableForAppsToRequest()
+            throws Throwable {
         final DeviceStateManager manager = getDeviceStateManager();
         final int[] supportedStates = manager.getSupportedStates();
 
@@ -231,7 +232,7 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
         // checks that we were able to find a valid state to request.
         assumeTrue(nextState != INVALID_DEVICE_STATE);
 
-        activity.requestDeviceStateChange(nextState);
+        runWithControlDeviceStatePermission(() -> activity.requestDeviceStateChange(nextState));
 
         PollingCheck.waitFor(TIMEOUT, () -> callback.mCurrentState == nextState);
 
@@ -291,7 +292,7 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
      * in a registered callback being triggered with a value equal to the base state.
      */
     @Test
-    public void testCancelStateRequestFromNewActivity() throws IllegalArgumentException {
+    public void testCancelStateRequestFromNewActivity() throws Throwable {
         final DeviceStateManager manager = getDeviceStateManager();
         final int[] supportedStates = manager.getSupportedStates();
         // We want to verify that the app can change device state
@@ -314,7 +315,7 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
                 DEFAULT_DISPLAY
         );
 
-        DeviceStateTestActivity activity = activitySession.getActivity();
+        final DeviceStateTestActivity activity = activitySession.getActivity();
 
         int originalState = callback.mCurrentState;
 
@@ -325,7 +326,7 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
         // checks that we were able to find a valid state to request.
         assumeTrue(nextState != INVALID_DEVICE_STATE);
 
-        activity.requestDeviceStateChange(nextState);
+        runWithControlDeviceStatePermission(() -> activity.requestDeviceStateChange(nextState));
 
         PollingCheck.waitFor(TIMEOUT, () -> callback.mCurrentState == nextState);
 
@@ -344,8 +345,8 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
         // and launching the second activity.
         assertEquals(nextState, callback.mCurrentState);
 
-        activity = secondActivitySession.getActivity();
-        activity.cancelOverriddenState();
+        final DeviceStateTestActivity activity2 = secondActivitySession.getActivity();
+        activity2.cancelOverriddenState();
 
         PollingCheck.waitFor(TIMEOUT, () -> callback.mCurrentState == originalState);
 

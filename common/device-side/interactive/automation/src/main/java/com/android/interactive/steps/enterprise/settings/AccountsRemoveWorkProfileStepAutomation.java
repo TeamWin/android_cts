@@ -31,7 +31,7 @@ import com.android.interactive.annotations.AutomationFor;
 @AutomationFor("com.android.interactive.steps.enterprise.settings.AccountsRemoveWorkProfileStep")
 public final class AccountsRemoveWorkProfileStepAutomation implements Automation<Nothing> {
     @Override
-    public Nothing automate() throws Throwable {
+    public Nothing automate() throws Exception {
         // Move to "Work" tab
         TestApis.ui().device().findObject(new UiSelector().text("Work").className(
                 TextView.class)).click();

@@ -22,7 +22,7 @@ import com.android.interactive.annotations.AutomationFor;
 @AutomationFor("com.android.interactive.steps.enterprise.settings.IsRemoteDPCBadgedStep")
 public final class IsRemoteDPCBadgedStepAutomation implements Automation<Boolean> {
     @Override
-    public Boolean automate() throws Throwable {
+    public Boolean automate() throws Exception {
         // TODO: We need a way of comparing the icon to check for the badge
         return true;
     }

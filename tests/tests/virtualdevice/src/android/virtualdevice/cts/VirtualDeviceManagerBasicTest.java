@@ -246,7 +246,7 @@ public class VirtualDeviceManagerBasicTest {
                 mVirtualDeviceManager.createVirtualDevice(
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         new VirtualDeviceParams.Builder()
-                                .addDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                                .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
                                 .build());
 
         assertThat(
@@ -261,7 +261,7 @@ public class VirtualDeviceManagerBasicTest {
                 mVirtualDeviceManager.createVirtualDevice(
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         new VirtualDeviceParams.Builder()
-                                .addDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                                .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
                                 .build());
         mVirtualDevice.close();
 
@@ -287,7 +287,7 @@ public class VirtualDeviceManagerBasicTest {
                 mVirtualDeviceManager.createVirtualDevice(
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         new VirtualDeviceParams.Builder()
-                                .addDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                                .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
                                 .addVirtualSensorConfig(
                                         new VirtualSensorConfig.Builder(
                                                 TYPE_ACCELEROMETER, SENSOR_NAME)

@@ -191,7 +191,7 @@ public class TelephonyStatsTests extends DeviceTestCase implements IBuildReceive
         Thread.sleep(1_200);
         turnOffAirplaneMode();
         // wait long enough for airplane mode events to propagate.
-        Thread.sleep(1_200);
+        Thread.sleep(3_200);
 
         // Verify that we have at least one atom for enablement and one for disablement.
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());

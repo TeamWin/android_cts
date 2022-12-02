@@ -291,7 +291,8 @@ public final class CrossProfileIntentFiltersTest {
     @EnsureHasWorkProfile(dpcIsPrimary = true)
     @Interactive
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#addCrossProfileIntentFilter")
-    public void startActivity_intentFilterIsSet_appIsInBothUsers_requiresDisambiguation() {
+    public void startActivity_intentFilterIsSet_appIsInBothUsers_requiresDisambiguation()
+            throws Exception {
         sTestApp.uninstallFromAllUsers();
         try (TestAppInstance testApp = sTestApp.install();
              TestAppInstance otherTestApp = sTestApp.install(sDeviceState.otherUser())) {

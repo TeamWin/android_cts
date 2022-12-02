@@ -22,7 +22,7 @@ import com.android.interactive.annotations.AutomationFor;
 @AutomationFor("com.google.android.interactive.steps.enterprise.launcher.DoesDefaultLauncherHaveAllAppsTrayStep")
 public final class DoesDefaultLauncherHaveAllAppsTrayStepAutomation implements Automation<Boolean> {
     @Override
-    public Boolean automate() throws Throwable {
+    public Boolean automate() throws Exception {
         return true;
     }
 }

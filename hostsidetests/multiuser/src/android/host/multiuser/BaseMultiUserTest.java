@@ -56,6 +56,9 @@ public abstract class BaseMultiUserTest extends BaseHostJUnit4Test {
      */
     private static final String FEATURE_AUTOMOTIVE = "feature:android.hardware.type.automotive";
 
+    protected static final String TEST_APP_PKG_NAME = "com.android.cts.multiuser";
+    protected static final String TEST_APP_PKG_APK = "CtsMultiuserApp.apk";
+
     protected static final long LOGCAT_POLL_INTERVAL_MS = 1000;
     protected static final long USER_SWITCH_COMPLETE_TIMEOUT_MS = 480_000;
 

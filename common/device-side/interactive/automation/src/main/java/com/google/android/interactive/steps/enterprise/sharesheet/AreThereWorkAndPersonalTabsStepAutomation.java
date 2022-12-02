@@ -29,7 +29,7 @@ import com.android.interactive.annotations.AutomationFor;
 public final class AreThereWorkAndPersonalTabsStepAutomation implements Automation<Boolean> {
 
     @Override
-    public Boolean automate() throws Throwable {
+    public Boolean automate() throws Exception {
         boolean personalTabExists = TestApis.ui().device().findObject(
                 new UiSelector().text("Personal").className(Button.class)).exists();
         boolean workTabExists = TestApis.ui().device().findObject(

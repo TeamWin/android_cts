@@ -30,7 +30,7 @@ import com.android.interactive.annotations.AutomationFor;
 @AutomationFor("com.google.android.interactive.steps.enterprise.sharesheet.SelectWorkTabStep")
 public class SelectWorkTabStepAutomation implements Automation<Nothing> {
     @Override
-    public Nothing automate() throws Throwable {
+    public Nothing automate() throws Exception {
         TestApis.ui().device().findObject(new UiSelector().text("Work")
                 .className(Button.class)).click();
 

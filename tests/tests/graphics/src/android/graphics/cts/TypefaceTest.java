@@ -901,12 +901,18 @@ public class TypefaceTest {
         assertNotNull(shm);
 
         Map<String, Typeface> reversedMap = new ArrayMap<>();
-        Typeface.deserializeFontMap(shm.mapReadOnly(), reversedMap);
+        try {
+            Typeface.deserializeFontMap(shm.mapReadOnly(), reversedMap);
 
-        // Typeface equality doesn't work here since the backing native object is different.
-        assertEquals(3, reversedMap.size());
-        assertTrue(reversedMap.containsKey("sans-serif"));
-        assertTrue(reversedMap.containsKey("serif"));
-        assertTrue(reversedMap.containsKey("monospace"));
+            // Typeface equality doesn't work here since the backing native object is different.
+            assertEquals(3, reversedMap.size());
+            assertTrue(reversedMap.containsKey("sans-serif"));
+            assertTrue(reversedMap.containsKey("serif"));
+            assertTrue(reversedMap.containsKey("monospace"));
+        } finally {
+            for (Typeface typeface : reversedMap.values()) {
+                typeface.releaseNativeObjectForTest();
+            }
+        }
     }
 }

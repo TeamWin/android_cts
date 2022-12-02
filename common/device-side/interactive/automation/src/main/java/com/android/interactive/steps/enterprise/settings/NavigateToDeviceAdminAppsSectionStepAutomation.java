@@ -29,7 +29,7 @@ import com.android.interactive.annotations.AutomationFor;
 @AutomationFor("com.android.interactive.steps.enterprise.settings.NavigateToDeviceAdminAppsSectionStep")
 public class NavigateToDeviceAdminAppsSectionStepAutomation implements Automation<Nothing> {
     @Override
-    public Nothing automate() throws Throwable {
+    public Nothing automate() throws Exception {
         TestApis.ui().device(); // Initialise UiAutomation
 
         // Move to "Advanced Settings"

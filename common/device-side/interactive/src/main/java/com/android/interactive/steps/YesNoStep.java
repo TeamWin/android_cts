@@ -23,7 +23,7 @@ import com.android.interactive.Step;
  *
  * <p>This will present "Yes" and "No" buttons.
  */
-public class YesNoStep extends Step<Boolean> {
+public abstract class YesNoStep extends Step<Boolean> {
 
     private final String mInstruction;
 

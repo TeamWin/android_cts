@@ -66,6 +66,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
+import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
@@ -782,6 +783,45 @@ public final class UserManagerTest {
             final UserManager mainUserManager = mainUserContext.getSystemService(UserManager.class);
             assertThat(mainUserManager.isMainUser()).isTrue();
         }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#getPreviousForegroundUser"})
+    @RequireRunOnInitialUser
+    @EnsureHasNoAdditionalUser
+    @EnsureHasPermission({QUERY_USERS})
+    public void testGetPreviousForegroundUser_noAdditionalUser() {
+        assertWithMessage("getPreviousUser() with no additional user")
+                .that(mUserManager.getPreviousForegroundUser()).isNull();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#getPreviousForegroundUser"})
+    @RequireRunOnInitialUser
+    @EnsureHasNoAdditionalUser
+    @EnsureHasWorkProfile
+    @EnsureHasPermission({QUERY_USERS})
+    public void testGetPreviousForegroundUser_withWorkProfileButNoAdditionalUser() {
+        assertWithMessage("getPreviousForegroundUser() with work profile but no additional user")
+                .that(mUserManager.getPreviousForegroundUser()).isNull();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.UserManager#getPreviousForegroundUser"})
+    @EnsureHasAdditionalUser
+    @EnsureHasPermission({QUERY_USERS})
+    public void testGetPreviousForegroundUser_switchingBetweenInitialAndAdditional() {
+        UserReference initialUser = sDeviceState.initialUser();
+        UserReference additionalUser = sDeviceState.additionalUser();
+
+        if (TestApis.users().current() != initialUser) {
+            initialUser.switchTo();
+        }
+
+        additionalUser.switchTo();
+        assertThat(mUserManager.getPreviousForegroundUser()).isEqualTo(initialUser.userHandle());
+        initialUser.switchTo();
+        assertThat(mUserManager.getPreviousForegroundUser()).isEqualTo(additionalUser.userHandle());
     }
 
     private Function<Intent, Boolean> userIsEqual(UserHandle userHandle) {

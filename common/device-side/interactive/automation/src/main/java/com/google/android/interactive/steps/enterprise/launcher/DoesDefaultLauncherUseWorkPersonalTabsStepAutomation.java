@@ -22,7 +22,7 @@ import com.android.interactive.annotations.AutomationFor;
 @AutomationFor("com.google.android.interactive.steps.enterprise.launcher.DoesDefaultLauncherUseWorkPersonalTabsStep")
 public final class DoesDefaultLauncherUseWorkPersonalTabsStepAutomation implements Automation<Boolean> {
     @Override
-    public Boolean automate() throws Throwable {
+    public Boolean automate() throws Exception {
         return true;
     }
 }

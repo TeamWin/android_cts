@@ -19,13 +19,10 @@ package com.google.android.interactive.steps.enterprise.launcher;
 
 import android.util.Log;
 
-import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.Direction;
-import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject;
 import androidx.test.uiautomator.UiObject2;
-import androidx.test.uiautomator.UiScrollable;
 import androidx.test.uiautomator.UiSelector;
 
 import com.android.bedstead.nene.TestApis;
@@ -40,14 +37,14 @@ public abstract class IsAppShownInWorkAppsStepAutomation implements Automation<B
     }
 
     @Override
-    public Boolean automate() throws Throwable {
+    public Boolean automate() throws Exception {
         // This works but is flaky - we need a way of scrolling to the top again without dismissing
         // launcher
         UiObject2 appList = TestApis.ui().device()
                 .findObject(By.res("com.google.android.apps.nexuslauncher:id/apps_list_view_work"));
 
         while (!TestApis.ui().device().hasObject(By.text(mAppLabel)) && appList.scroll(
-                Direction.DOWN, 1f)) {
+                Direction.DOWN, 0.1f)) {
             // Continue until app found or bottom of list reached.
         }
 

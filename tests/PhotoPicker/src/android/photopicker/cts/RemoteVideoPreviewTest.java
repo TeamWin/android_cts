@@ -52,6 +52,7 @@ import androidx.test.uiautomator.UiSelector;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InOrder;
@@ -111,6 +112,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Re-enable once b/223224727 is fixed")
     public void testBasicVideoPreview() throws Exception {
         initCloudProviderWithVideo(Arrays.asList(Pair.create(null, CLOUD_ID1)));
 
@@ -143,6 +145,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Re-enable once b/223224727 is fixed")
     public void testSwipeAdjacentVideoPreview() throws Exception {
         initCloudProviderWithVideo(
                 Arrays.asList(Pair.create(null, CLOUD_ID1), Pair.create(null, CLOUD_ID2)));
@@ -176,6 +179,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Re-enable once b/223224727 is fixed")
     public void testSwipeImageVideoPreview() throws Exception {
         initCloudProviderWithImage(Arrays.asList(Pair.create(null, CLOUD_ID1)));
         initCloudProviderWithVideo(Arrays.asList(Pair.create(null, CLOUD_ID2)));

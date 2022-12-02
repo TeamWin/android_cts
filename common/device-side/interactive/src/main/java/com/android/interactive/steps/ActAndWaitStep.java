@@ -26,7 +26,7 @@ import java.util.function.Supplier;
  * A {@link Step} where the user is asked to perform some action and the test will poll for it
  * to be complete.
  */
-public class ActAndWaitStep extends Step<Nothing> {
+public abstract class ActAndWaitStep extends Step<Nothing> {
 
     private final String mInstruction;
     private final Supplier<Boolean> mChecker;

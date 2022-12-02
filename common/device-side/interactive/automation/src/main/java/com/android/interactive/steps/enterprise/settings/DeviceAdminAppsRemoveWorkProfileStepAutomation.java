@@ -32,7 +32,7 @@ import com.android.interactive.annotations.AutomationFor;
 public final class DeviceAdminAppsRemoveWorkProfileStepAutomation implements Automation<Nothing> {
 
     @Override
-    public Nothing automate() throws Throwable {
+    public Nothing automate() throws Exception {
         UiScrollable settingsItem = new UiScrollable(new UiSelector()
                 .className("androidx.recyclerview.widget.RecyclerView"));
         settingsItem.getChildByText(new UiSelector()

@@ -115,7 +115,7 @@ public class VirtualSensorTest {
 
     private VirtualSensor setUpVirtualSensor(VirtualSensorConfig sensorConfig) {
         VirtualDeviceParams.Builder builder = new VirtualDeviceParams.Builder()
-                .addDevicePolicy(VirtualDeviceParams.POLICY_TYPE_SENSORS,
+                .setDevicePolicy(VirtualDeviceParams.POLICY_TYPE_SENSORS,
                         VirtualDeviceParams.DEVICE_POLICY_CUSTOM);
         if (sensorConfig != null) {
             builder = builder.addVirtualSensorConfig(sensorConfig);

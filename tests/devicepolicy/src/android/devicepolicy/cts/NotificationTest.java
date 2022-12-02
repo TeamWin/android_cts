@@ -64,7 +64,7 @@ public final class NotificationTest {
     @RequireRunOnPrimaryUser
     @CddTest(requirements = "3.9.2/C-1-3")
     @NotFullyAutomated(reason = "DoesTheNotificationTitledNotificationHaveAWorkBadgeStep")
-    public void notification_fromPersonalProfile_isNotBadged() {
+    public void notification_fromPersonalProfile_isNotBadged() throws Exception {
         try (TestAppInstance primaryUserApp = sTestApp.install(sDeviceState.primaryUser());
              PermissionContext p = primaryUserApp.permissions().withPermission(POST_NOTIFICATIONS)) {
             showNotificationWithTitleNotification(primaryUserApp);

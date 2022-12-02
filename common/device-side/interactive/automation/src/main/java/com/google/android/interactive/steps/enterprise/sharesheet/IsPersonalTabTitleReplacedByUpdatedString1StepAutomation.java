@@ -28,7 +28,7 @@ import com.android.interactive.annotations.AutomationFor;
 
 public class IsPersonalTabTitleReplacedByUpdatedString1StepAutomation implements Automation<Boolean> {
     @Override
-    public Boolean automate() throws Throwable {
+    public Boolean automate() throws Exception {
         return TestApis.ui().device().findObject(
                 new UiSelector().description("Personal view")
                         .className(Button.class)).getText().equals("UPDATED STRING1");

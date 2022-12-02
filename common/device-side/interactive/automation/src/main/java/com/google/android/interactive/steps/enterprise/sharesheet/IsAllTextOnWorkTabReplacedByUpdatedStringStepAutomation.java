@@ -28,7 +28,7 @@ import com.android.interactive.annotations.AutomationFor;
 @AutomationFor("com.google.android.interactive.steps.enterprise.sharesheet.IsAllTextOnWorkTabReplacedByUpdatedStringStep")
 public class IsAllTextOnWorkTabReplacedByUpdatedStringStepAutomation implements Automation<Boolean> {
     @Override
-    public Boolean automate() throws Throwable {
+    public Boolean automate() throws Exception {
         String emptyStateTitle = TestApis.ui().device().findObject(
                 new UiSelector().resourceId("android:id/resolver_empty_state_title")
                         .className(TextView.class)).getText();

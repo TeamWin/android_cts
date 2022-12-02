@@ -54,7 +54,7 @@ public final class SettingsAppTest {
     @EnsureHasWorkProfile
     @Interactive
     @CddTest(requirements = {"3.9.2/C-1-7"})
-    public void accountSettings_hasWorkAndPersonalCategories() {
+    public void accountSettings_hasWorkAndPersonalCategories() throws Exception {
         // TODO: Add an account and verify that account is listed in the personal category - and
         //   that one added on the work profile is not listed in the personal category
         // Launch personal settings app (or combined app) + navigate to accounts page
@@ -69,7 +69,7 @@ public final class SettingsAppTest {
     @EnsureHasWorkProfile
     @Interactive
     // TODO(b/221134166): Annotate correct Cdd requirement
-    public void accountSettings_removeWorkProfile() {
+    public void accountSettings_removeWorkProfile() throws Exception {
         // Launch work settings app (or combined app) + navigate to the accounts page
         Step.execute(NavigateToWorkAccountSettingsStep.class);
 
@@ -79,12 +79,13 @@ public final class SettingsAppTest {
 
     @Test
     @EnsureHasNoDeviceOwner
-    @EnsureHasWorkProfile
+    @EnsureHasWorkProfile(dpcIsPrimary = true)
     @Interactive
     // TODO(b/221134166): Annotate correct Cdd requirement
     // Available Device Admin not in the managed profile
     @EnsureTestAppInstalled(packageName = "com.android.bedstead.testapp.DeviceAdminTestApp")
-    public void deviceAdminSettings_correctlyListsManagedProfileAndNonManagedProfileAdmins() {
+    public void deviceAdminSettings_correctlyListsManagedProfileAndNonManagedProfileAdmins()
+            throws Exception {
         // Remove RemoteDPC from the primary user so only one entry is listed
         sDeviceState.dpc().testApp().pkg().uninstall(sDeviceState.primaryUser());
 

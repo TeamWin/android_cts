@@ -33,7 +33,7 @@ import com.android.interactive.annotations.AutomationFor;
 @AutomationFor("com.android.interactive.steps.enterprise.settings.IsRemoteDPCActivatedStep")
 public final class IsRemoteDPCActivatedStepAutomation implements Automation<Boolean> {
     @Override
-    public Boolean automate() throws Throwable {
+    public Boolean automate() throws Exception {
         UiScrollable settingsItem = new UiScrollable(new UiSelector()
                 .className("androidx.recyclerview.widget.RecyclerView"));
         UiObject remoteDpcText = settingsItem.getChildByText(new UiSelector()

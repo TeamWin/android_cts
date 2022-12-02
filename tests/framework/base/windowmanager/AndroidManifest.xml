@@ -604,6 +604,9 @@
         <activity android:name="android.server.wm.BackGestureInvokedTest$ImeTestActivity"
                   android:exported="true"
                   android:windowSoftInputMode="stateVisible"/>
+        <activity android:name="android.server.wm.DisplayShapeTests$TestActivity"
+                  android:theme="@android:style/Theme.Dialog"
+                  android:exported="true"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

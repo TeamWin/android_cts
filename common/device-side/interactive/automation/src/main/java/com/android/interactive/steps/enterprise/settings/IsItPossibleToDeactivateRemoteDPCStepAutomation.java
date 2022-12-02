@@ -43,9 +43,9 @@ public final class IsItPossibleToDeactivateRemoteDPCStepAutomation implements Au
     private static final long WAIT_TIMEOUT = 10000;
 
     @Override
-    public Boolean automate() throws Throwable {
+    public Boolean automate() throws Exception {
         UiScrollable settingsItem = new UiScrollable(new UiSelector()
-                .className("androidx.recyclerview.widget.RecyclerView"));
+                .className("androidx.recyclerview.widget.RecyclerView2"));
         UiObject remoteDpcText = settingsItem.getChildByText(new UiSelector()
                 .className(TextView.class), "RemoteDPC");
         assertThat(remoteDpcText.exists()).isTrue();

@@ -28,7 +28,7 @@ import com.android.interactive.annotations.AutomationFor;
 
 public class IsPersonalTabTitleReplacedWithUpdatedString1StepAutomation implements Automation<Boolean> {
     @Override
-    public Boolean automate() throws Throwable {
+    public Boolean automate() throws Exception {
         return TestApis.ui().device().findObject
                 (new UiSelector().resourceId(
                         "com.google.android.apps.nexuslauncher:id/tab_personal")

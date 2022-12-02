@@ -28,6 +28,13 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.FileUtil;
+
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -38,16 +45,9 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.zip.Inflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * Verifies that dex metadata files are installed and updated successfully.
@@ -325,8 +325,6 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
 
     @Test
     public void testProfileSnapshotAfterInstall() throws Exception {
-        assumeProfilesAreEnabled();
-
         // Determine which profile to use.
         boolean useProfileForS = ApiLevelUtil.isAtLeast(getDevice(), "S");
 
@@ -432,14 +430,6 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
                 .addApk(mApkFeatureAFile).addDm(mDmFeatureAFile, null)
                 .runExpectingFailure();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
-    }
-
-    /** Verify that the use of profiles is enabled on the device. */
-    private void assumeProfilesAreEnabled() throws Exception {
-        String useProfiles = getDevice().executeShellCommand(
-            "getprop dalvik.vm.usejitprofiles").replace("\n", "");
-        Assume.assumeTrue("Skip profile snapshot test: "
-            + "dalvik.vm.usejitprofiles != true", "true".equals(useProfiles));
     }
 
     /** Extracts the profile bytes for the snapshot captured with 'cmd package snapshot-profile' */

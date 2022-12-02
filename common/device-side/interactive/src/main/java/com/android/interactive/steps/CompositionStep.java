@@ -28,7 +28,7 @@ import java.util.Optional;
  * <p>This can be useful if it's easier to automate the composite step, but several steps are
  * appropriate for manual interaction.
  */
-public class CompositionStep extends Step<Nothing> {
+public abstract class CompositionStep extends Step<Nothing> {
 
     private final List<Class<? extends Step<Nothing>>> mSteps;
     private boolean mPassed = false;
@@ -50,7 +50,15 @@ public class CompositionStep extends Step<Nothing> {
     @Override
     public void interact() {
         for (Class<? extends Step<Nothing>> step : mSteps) {
-            Step.execute(step);
+            try {
+                Step.execute(step);
+            } catch (RuntimeException e) {
+                throw(e);
+            } catch (Exception e) {
+                throw new RuntimeException(
+                        "Error while executing " + step.getCanonicalName()
+                                + " as part of composition", e);
+            }
         }
         mPassed = true;
     }

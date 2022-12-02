@@ -40,6 +40,7 @@ import android.graphics.Insets;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 import android.view.DisplayCutout;
+import android.view.DisplayShape;
 import android.view.RoundedCorner;
 import android.view.WindowInsets;
 import android.view.WindowInsets.Type;
@@ -78,6 +79,8 @@ public class WindowInsetsTest {
     private static final int INSET_TOP = 2;
     private static final int INSET_RIGHT = 3;
     private static final int INSET_BOTTOM = 4;
+    private static final DisplayShape DISPLAY_SHAPE =
+            DisplayShape.fromSpecString("M0,0 h100 v200 h-100 z", 1f, 100, 200);
 
     @Test
     public void testBuilder() {
@@ -92,6 +95,7 @@ public class WindowInsetsTest {
                 .setRoundedCorner(RoundedCorner.POSITION_TOP_RIGHT, ROUNDED_CORNER_TOP_RIGHT)
                 .setRoundedCorner(RoundedCorner.POSITION_BOTTOM_RIGHT, ROUNDED_CORNER_BOTTOM_RIGHT)
                 .setRoundedCorner(RoundedCorner.POSITION_BOTTOM_LEFT, ROUNDED_CORNER_BOTTOM_LEFT)
+                .setDisplayShape(DISPLAY_SHAPE)
                 .build();
 
         assertEquals(Insets.of(1, 2, 3, 4), insets.getSystemWindowInsets());
@@ -109,6 +113,7 @@ public class WindowInsetsTest {
                 insets.getRoundedCorner(RoundedCorner.POSITION_BOTTOM_RIGHT));
         assertEquals(ROUNDED_CORNER_BOTTOM_LEFT,
                 insets.getRoundedCorner(RoundedCorner.POSITION_BOTTOM_LEFT));
+        assertEquals(DISPLAY_SHAPE, insets.getDisplayShape());
     }
 
     @Test
@@ -124,6 +129,7 @@ public class WindowInsetsTest {
                 .setRoundedCorner(RoundedCorner.POSITION_TOP_RIGHT, ROUNDED_CORNER_TOP_RIGHT)
                 .setRoundedCorner(RoundedCorner.POSITION_BOTTOM_RIGHT, ROUNDED_CORNER_BOTTOM_RIGHT)
                 .setRoundedCorner(RoundedCorner.POSITION_BOTTOM_LEFT, ROUNDED_CORNER_BOTTOM_LEFT)
+                .setDisplayShape(DISPLAY_SHAPE)
                 .build();
         final WindowInsets copy = new WindowInsets.Builder(insets).build();
 

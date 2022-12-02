@@ -27,7 +27,7 @@ import com.android.interactive.annotations.AutomationFor;
 @AutomationFor("com.google.android.interactive.steps.enterprise.sharesheet.DoesTheSelectedTabContainAMessageSayingPersonalAppsStep")
 public class DoesTheSelectedTabContainAMessageSayingPersonalAppsStepAutomation implements Automation<Boolean> {
     @Override
-    public Boolean automate() throws Throwable {
+    public Boolean automate() throws Exception {
         return TestApis.ui().device().findObject(
                 new UiSelector().text("No personal apps").className(TextView.class)).exists();
     }

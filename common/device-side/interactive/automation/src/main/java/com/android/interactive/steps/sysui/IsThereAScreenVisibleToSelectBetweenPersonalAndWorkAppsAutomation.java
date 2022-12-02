@@ -31,7 +31,7 @@ public class IsThereAScreenVisibleToSelectBetweenPersonalAndWorkAppsAutomation i
     private static final long WAIT_TIMEOUT = 10000;
 
     @Override
-    public Boolean automate() throws Throwable {
+    public Boolean automate() throws Exception {
         return TestApis.ui().device().findObject(
                 new UiSelector().className(TabHost.class).resourceId("android:id/profile_tabhost"))
                 .waitForExists(WAIT_TIMEOUT);

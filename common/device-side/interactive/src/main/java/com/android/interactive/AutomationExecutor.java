@@ -35,11 +35,12 @@ public class AutomationExecutor<E> implements Automation<E> {
     /**
      * Call the {@link Automation#automate()} method on the wrapped {@link Automation}.
      */
-    public E automate() throws Throwable {
+    public E automate() throws Exception {
         try {
             return (E) mObject.getClass().getMethod("automate").invoke(mObject);
         } catch (InvocationTargetException e) {
-            throw e.getCause();
+            // This can only be an exception because "automate" throws Exception
+            throw (Exception) e.getCause();
         } catch (IllegalAccessException | NoSuchMethodException e) {
             throw new RuntimeException(e);
         }

@@ -16,23 +16,36 @@
 
 package com.android.interactive;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.Manifest.permission.MANAGE_EXTERNAL_STORAGE;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 
+import static com.android.bedstead.nene.appops.CommonAppOps.OPSTR_MANAGE_EXTERNAL_STORAGE;
+
 import android.content.Context;
+import android.net.Uri;
+import android.os.CancellationSignal;
+import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.appops.AppOpsMode;
+import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.users.UserReference;
 import com.android.interactive.annotations.AutomationFor;
 
 import dalvik.system.DexClassLoader;
 import dalvik.system.DexFile;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Enumeration;
@@ -51,11 +64,62 @@ public final class Automator {
     private boolean mHasInitialised = false;
     private Map<String, Automation<?>> mAutomationClasses = new HashMap<>();
 
+    public static final String AUTOMATION_FILE = "/sdcard/InteractiveAutomation.apk";
+
     /**
      * Create an {@link Automator} for the given automation APK.
      */
     public Automator(String automationFile) {
         mAutomationFile = automationFile;
+    }
+
+    /**
+     * If we're not on the system user, we try to fetch the automation file from the system user.
+     */
+    private void ensureAutomationFileExists() {
+        try (PermissionContext p = TestApis.permissions()
+                .withPermission(READ_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE,
+                        INTERACT_ACROSS_USERS_FULL)) {
+            UserReference systemUser = TestApis.users().system();
+
+            if (TestApis.users().instrumented().equals(systemUser)) {
+                // Already on the system user so nothing else to do
+                return;
+            }
+
+            Package pkg = TestApis.packages().instrumented();
+            // Otherwise, let's try to fetch the file from the system user
+            boolean mustBeUninstalled = false;
+            try {
+                mustBeUninstalled = pkg.installedOnUser(systemUser);
+
+                if (mustBeUninstalled) {
+                    pkg.installExisting(systemUser);
+                }
+
+                pkg.appOps().set(systemUser, OPSTR_MANAGE_EXTERNAL_STORAGE, AppOpsMode.ALLOWED);
+                try (ParcelFileDescriptor remoteFile = mContext.createContextAsUser(
+                        systemUser.userHandle(), /* flags= */0)
+                        .getContentResolver()
+                        .openFile(Uri.parse("content://com.android.interactive.automation"), "r",
+                        new CancellationSignal());
+                     InputStream fileStream = new FileInputStream(remoteFile.getFileDescriptor());
+                     OutputStream outputStream = new FileOutputStream(mAutomationFile)) {
+
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    while ((length = fileStream.read(buffer)) > 0) {
+                        outputStream.write(buffer, 0, length);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } finally {
+                if (mustBeUninstalled) {
+                    pkg.uninstall(systemUser);
+                }
+            }
+        }
     }
 
     private void init() {
@@ -67,7 +131,11 @@ public final class Automator {
 
         try (PermissionContext p = TestApis.permissions()
                 .withPermission(READ_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE)) {
+
+            ensureAutomationFileExists();
+
             if (!new File(mAutomationFile).exists()) {
+                Log.e(LOG_TAG, "Automation file does not exist");
                 return;
             }
 
@@ -143,7 +211,7 @@ public final class Automator {
      *
      * <p>{@link #canAutomate(Step)} should be returning true before calling this.
      */
-    public <E> E automate(Step<E> step) throws Throwable {
+    public <E> E automate(Step<E> step) throws Exception {
         // Unchecked cast is okay as we've verified the types when inserting into the map
         return ((Automation<E>)mAutomationClasses.get(step.getClass().getCanonicalName()))
                 .automate();

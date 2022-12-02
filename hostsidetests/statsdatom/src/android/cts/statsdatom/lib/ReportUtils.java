@@ -19,8 +19,6 @@ package android.cts.statsdatom.lib;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import com.android.os.StatsLog;
-
 import com.android.os.AtomsProto.Atom;
 import com.android.os.StatsLog;
 import com.android.os.StatsLog.ConfigMetricsReport;

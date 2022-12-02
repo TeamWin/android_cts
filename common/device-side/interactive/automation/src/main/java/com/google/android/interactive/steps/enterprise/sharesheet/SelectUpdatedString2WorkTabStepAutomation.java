@@ -30,7 +30,7 @@ import com.android.interactive.annotations.AutomationFor;
 @AutomationFor("com.google.android.interactive.steps.enterprise.sharesheet.SelectUpdatedString2WorkTabStep")
 public class SelectUpdatedString2WorkTabStepAutomation implements Automation<Nothing> {
     @Override
-    public Nothing automate() throws Throwable {
+    public Nothing automate() throws Exception {
         TestApis.ui().device().findObject(
                 new UiSelector().text("UPDATED STRING2").className(Button.class)).click();
 

@@ -313,7 +313,9 @@ AVAILABLE_PARAMETER_COLOUR_CODES = [
     '\33[44m',
     '\33[45m',
     '\33[46m',
-    '\33[47m'
+    '\33[101m',
+    '\33[104m',
+    '\33[105m',
 ]
 
 def find_module_for_class_method(class_method):
@@ -342,7 +344,7 @@ def get_args():
     parser.add_argument("-t", "--test", action='store_true', help="Builds test targets. (default)")
     parser.add_argument("-d", "--debug", action="store_true", help="Include debug output.")
     parser.add_argument("-s", "--states", help="Specify states which should be included. Options are (c)urrent (s)ystem secondar(y), (w)ork profile, (a)dditional. Defaults to all states.")
-    parser.add_argument("-n", "--interactive", action='store', nargs='?', default="disabled", help="Run interactive tests. This will exclude non-interactive tests and will enable manual testing")
+    parser.add_argument("-n", "--interactive", action='store', nargs='?', default="disabled", help="Run interactive tests. This will exclude non-interactive tests and will enable manual testing. Pass 'bi' to build and install automations, 't' to use automations (default) and m to enable manual interaction (default)")
     args = parser.parse_args()
     if not args.build and not args.install and not args.test:
         args.build = True
@@ -361,22 +363,31 @@ def get_args():
 
     args.build_interactive = False
     args.install_interactive = False
+    args.manual_interactive = False
+    args.automate_interactive = False
     if not args.interactive:
+        args.build_interactive = True
+        args.install_interactive = True
+        args.manual_interactive = True
+        args.automate_interactive = True
         args.interactive = "enabled"
 
     if args.interactive == "disabled":
         args.interactive = False
     elif args.interactive != "enabled":
-        valid_instructions = ["b", "i"]
+        valid_instructions = ["b", "i", "t", "m"]
         for instruction in args.interactive:
             if instruction == "b":
                 args.build_interactive = True
-            elif instruction =="i":
+            elif instruction == "i":
                 args.install_interactive = True
+            elif instruction == "t":
+                args.automate_interactive = True
+            elif instruction == "m":
+                args.manual_interactive = True
             else:
                 print("Instruction " + instruction + " is invalid, must be one of " + str(valid_instructions))
                 sys.exit(1)
-
 
     load_module_and_class_method(args)
 
@@ -418,10 +429,12 @@ def build_module(args):
         command += " && m InteractiveAutomation"
 
     debug(args, "[Build] Executing '" + command + "'")
-    subprocess.run(command, text=True, shell=True, executable="/bin/bash")
 
-
-
+    # TODO: We should also stream the output
+    output, err = execute_shell_command("BUILD", args, [command], shell=True, executable="/bin/bash")
+    print(output)
+    if "failed to build some targets" in output:
+        sys.exit(1)
 
 
 def install(args):
@@ -479,7 +492,14 @@ class Test:
             command += " -e notAnnotation " + ",".join(self.exclude_annotations)
 
         if self.args.interactive:
-            command += " -e ENABLE_MANUAL true"
+            if self.args.manual_interactive:
+                command += " -e ENABLE_MANUAL true"
+            else:
+                command += " -e ENABLE_MANUAL false"
+            if self.args.automate_interactive:
+                command += " -e ENABLE_AUTOMATION true"
+            else:
+                command += " -e ENABLE_AUTOMATION false"
 
         if self.args.class_method:
             if self.args.class_method.endswith("*"):
@@ -626,21 +646,25 @@ class Test:
         return self.parameter_colour_codes[parameter]
 
     def print_result(self, test_result):
-        if test_result["result"] == 0:
-            self.btest_run.passed_tests.append(test_result)
-            print(" ✅  " + PASSED_CODE + "PASSED" + RESET_CODE + " (" + format_nanos(test_result["runTime"]) + ")", flush=True)
-        elif test_result["result"] == 1:
-            self.btest_run.failed_tests.append(test_result)
-            print(" ❌  " + FAILED_CODE + "FAILED (" + test_result["message"] + ")" + RESET_CODE + " (" + format_nanos(test_result["runTime"]) + ")\n\n" + test_result["stackTrace"] + "\n", flush=True)
-        elif test_result["result"]  == 2:
-            self.btest_run.ignored_tests.append(test_result)
-            print(" " + IGNORED_CODE + "// IGNORED" + RESET_CODE + " (" + format_nanos(test_result["runTime"]) + ")", flush=True)
-        elif test_result["result"] == 3:
-            self.btest_run.assumption_failed_tests.append(test_result)
-            print(" " + IGNORED_CODE + "// ASSUMPTION FAILED (" + test_result["message"] + ")" + RESET_CODE + " (" + format_nanos(test_result["runTime"]) + ")", flush=True)
-        else:
-            print("ERROR PARSING TEST RESULT " + test_result, flush=True)
-            sys.exit(1)
+        try:
+            if test_result["result"] == 0:
+                self.btest_run.passed_tests.append(test_result)
+                print(" ✅  " + PASSED_CODE + "PASSED" + RESET_CODE + " (" + format_nanos(test_result["runTime"]) + ")", flush=True)
+            elif test_result["result"] == 1:
+                self.btest_run.failed_tests.append(test_result)
+                print(" ❌  " + FAILED_CODE + "FAILED (" + test_result["message"] + ")" + RESET_CODE + " (" + format_nanos(test_result["runTime"]) + ")\n\n" + test_result["stackTrace"] + "\n", flush=True)
+            elif test_result["result"]  == 2:
+                self.btest_run.ignored_tests.append(test_result)
+                print(" " + IGNORED_CODE + "// IGNORED" + RESET_CODE + " (" + format_nanos(test_result["runTime"]) + ")", flush=True)
+            elif test_result["result"] == 3:
+                self.btest_run.assumption_failed_tests.append(test_result)
+                print(" " + IGNORED_CODE + "// ASSUMPTION FAILED (" + test_result["message"] + ")" + RESET_CODE + " (" + format_nanos(test_result["runTime"]) + ")", flush=True)
+            return
+        except:
+            pass
+        print("ERROR PARSING TEST RESULT " + str(test_result), flush=True)
+        self.dump_output()
+        sys.exit(1)
 
 def format_nanos(nanos):
     ms = int(nanos) / 1000000
@@ -764,7 +788,7 @@ def main():
         states = [m(args) for m in supported_modules[args.module][STATES]]
 
         if not args.headless:
-            states.remove(RUN_ON_ADDITIONAL_USER)
+            states = [t for t in states if not t.name() == "RUN_ON_ADDITIONAL_USER"]
 
         if RUN_ON_CURRENT_USER in args.states and len(args.states) > 1:
             for state in states:

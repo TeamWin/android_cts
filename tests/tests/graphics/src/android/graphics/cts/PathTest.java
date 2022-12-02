@@ -402,6 +402,39 @@ public class PathTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.graphics.Path#getPathIterator", "android.graphics.PathIterator#next",
+            "android.graphics.PathIterator.Segment#getVerb",
+            "android.graphics.PathIterator.Segment#getPoints",
+            "android.graphics.PathIterator.Segment#getConicWeight",
+            "android.graphics.Path#isEmpty", "android.graphics.Path#conicTo"})
+    public void testConicTo() {
+        Path path = new Path();
+        assertTrue(path.isEmpty());
+        path.conicTo(10.0f, 10.0f, 20.0f, 20.0f, 2f);
+        assertFalse(path.isEmpty());
+        int verbIndex = 0;
+        for (PathIterator it = path.getPathIterator(); it.hasNext(); ) {
+            PathIterator.Segment segment = it.next();
+            int verb = segment.getVerb();
+            float[] points = segment.getPoints();
+            float weight = segment.getConicWeight();
+            switch (verb) {
+                case PathIterator.VERB_CONIC:
+                    assertEquals(0f, points[0], 0f);
+                    assertEquals(0f, points[1], 0f);
+                    assertEquals(10f, points[2], 0f);
+                    assertEquals(10f, points[3], 0f);
+                    assertEquals(20f, points[4], 0f);
+                    assertEquals(20f, points[5], 0f);
+                    assertEquals(2f, weight, 0f);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    @Test
     public void testReset() {
         Path path = new Path();
         assertTrue(path.isEmpty());
@@ -451,6 +484,44 @@ public class PathTest {
         assertTrue(path.isEmpty());
         path.rCubicTo(10.0f, 10.0f, 11.0f, 11.0f, 12.0f, 12.0f);
         assertFalse(path.isEmpty());
+    }
+
+    @Test
+    @ApiTest(apis = {"android.graphics.Path#getPathIterator", "android.graphics.PathIterator#next",
+            "android.graphics.PathIterator.Segment#getVerb",
+            "android.graphics.PathIterator.Segment#getPoints",
+            "android.graphics.PathIterator.Segment#getConicWeight",
+            "android.graphics.Path#isEmpty", "android.graphics.Path#rConicTo"})
+    public void testRConicTo() {
+        Path path = new Path();
+        assertTrue(path.isEmpty());
+        path.moveTo(5f, 15f);
+        path.rConicTo(10.0f, 10.0f, 20.0f, 20.0f, 2f);
+        assertFalse(path.isEmpty());
+        int verbIndex = 0;
+        for (PathIterator it = path.getPathIterator(); it.hasNext(); ) {
+            PathIterator.Segment segment = it.next();
+            int verb = segment.getVerb();
+            float[] points = segment.getPoints();
+            float weight = segment.getConicWeight();
+            switch (verb) {
+                case PathIterator.VERB_MOVE:
+                    assertEquals(5f, points[0], 0f);
+                    assertEquals(15f, points[1], 0f);
+                    break;
+                case PathIterator.VERB_CONIC:
+                    assertEquals(5f, points[0], 0f);
+                    assertEquals(15f, points[1], 0f);
+                    assertEquals(15f, points[2], 0f);
+                    assertEquals(25f, points[3], 0f);
+                    assertEquals(25f, points[4], 0f);
+                    assertEquals(35f, points[5], 0f);
+                    assertEquals(2f, weight, 0f);
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     @Test

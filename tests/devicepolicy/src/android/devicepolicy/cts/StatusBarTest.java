@@ -59,7 +59,8 @@ public final class StatusBarTest {
     @EnsureHasWorkProfile
     @CddTest(requirements = "3.9.2/C-1-4")
     @NotFullyAutomated(reason = "DoesTheStatusBarContainWorkIconStep")
-    public void statusBar_personalActivityIsInForeground_doesNotIncludeWorkBadge() {
+    public void statusBar_personalActivityIsInForeground_doesNotIncludeWorkBadge()
+            throws Exception {
         try (TestAppInstance testApp = sTestApp.install()) {
             testApp.activities().query()
                     .whereActivity().exported().isTrue()
@@ -95,5 +96,4 @@ public final class StatusBarTest {
                     .isTrue();
         }
     }
-
 }

@@ -33,5 +33,5 @@ public interface Automation<E> {
      * <p>If the step can be completed successfully and no exception is thrown, then the test will
      * continue as if the step had been completed manually.
      */
-    E automate() throws Throwable;
+    E automate() throws Exception;
 }

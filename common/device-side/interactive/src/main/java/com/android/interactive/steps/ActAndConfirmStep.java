@@ -22,7 +22,7 @@ import com.android.interactive.Step;
 /**
  * A {@link Step} where the user is asked to perform some action and confirm that it has been done.
  */
-public class ActAndConfirmStep extends Step<Nothing> {
+public abstract class ActAndConfirmStep extends Step<Nothing> {
 
     private final String mInstruction;
 

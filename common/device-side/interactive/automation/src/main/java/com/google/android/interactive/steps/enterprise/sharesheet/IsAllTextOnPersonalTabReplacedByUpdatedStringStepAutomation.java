@@ -27,7 +27,7 @@ import com.android.interactive.annotations.AutomationFor;
 @AutomationFor("com.google.android.interactive.steps.enterprise.sharesheet.IsAllTextOnPersonalTabReplacedByUpdatedStringStep")
 public class IsAllTextOnPersonalTabReplacedByUpdatedStringStepAutomation implements Automation<Boolean> {
     @Override
-    public Boolean automate() throws Throwable {
+    public Boolean automate() throws Exception {
         return TestApis.ui().device().findObject(
                 new UiSelector().resourceId("android:id/resolver_empty_state_title")
                         .className(TextView.class)).getText().equals("UPDATED STRING");

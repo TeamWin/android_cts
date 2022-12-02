@@ -191,7 +191,7 @@ public class VirtualDeviceParamsTest {
     public void getDevicePolicy_shouldReturnConfiguredValue() {
         VirtualDeviceParams params = new VirtualDeviceParams.Builder()
                 .setName(VIRTUAL_DEVICE_NAME)
-                .addDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
                 .build();
 
         assertThat(params.getDevicePolicy(POLICY_TYPE_SENSORS)).isEqualTo(DEVICE_POLICY_CUSTOM);
@@ -211,7 +211,7 @@ public class VirtualDeviceParamsTest {
     public void virtualSensorConfigs_duplicateNamePerType_throwsException() {
         assertThrows(
                 IllegalArgumentException.class, () -> new VirtualDeviceParams.Builder()
-                        .addDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                        .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
                         .addVirtualSensorConfig(
                                 new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, SENSOR_NAME)
                                         .build())
@@ -225,7 +225,7 @@ public class VirtualDeviceParamsTest {
     public void virtualSensorConfigs_multipleSensorsPerType_succeeds() {
         final String secondSensorName = SENSOR_NAME + "2";
         VirtualDeviceParams params = new VirtualDeviceParams.Builder()
-                .addDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
                 .addVirtualSensorConfig(
                         new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, SENSOR_NAME).build())
                 .addVirtualSensorConfig(

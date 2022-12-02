@@ -20,12 +20,15 @@ import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertNotNull;
+
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
 import android.app.AppOpsManager;
 import android.app.GameManager;
+import android.app.GameModeConfiguration;
 import android.app.GameState;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
@@ -1212,5 +1215,37 @@ public class AtomTests {
         Context context = InstrumentationRegistry.getContext();
         GameManager gameManager = context.getSystemService(GameManager.class);
         gameManager.setGameState(new GameState(true, GameState.MODE_CONTENT, 1, 2));
+    }
+
+    @Test
+    public void testSetGameMode() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        GameManager gameManager = context.getSystemService(GameManager.class);
+        assertNotNull(gameManager);
+        assertNotNull(context.getPackageName());
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(gameManager,
+                (gm) -> gm.setGameMode(context.getPackageName(),
+                        GameManager.GAME_MODE_PERFORMANCE), "android.permission.MANAGE_GAME_MODE");
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(gameManager,
+                (gm) -> gm.setGameMode(context.getPackageName(),
+                        GameManager.GAME_MODE_BATTERY), "android.permission.MANAGE_GAME_MODE");
+    }
+
+    @Test
+    public void testUpdateCustomGameModeConfiguration() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        GameManager gameManager = context.getSystemService(GameManager.class);
+        assertNotNull(gameManager);
+        assertNotNull(context.getPackageName());
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(gameManager,
+                (gm) -> gm.updateCustomGameModeConfiguration(context.getPackageName(),
+                        new GameModeConfiguration.Builder()
+                                .setScalingFactor(0.5f)
+                                .setFpsOverride(30).build()));
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(gameManager,
+                (gm) -> gm.updateCustomGameModeConfiguration(context.getPackageName(),
+                        new GameModeConfiguration.Builder()
+                                .setScalingFactor(0.9f)
+                                .setFpsOverride(60).build()));
     }
 }

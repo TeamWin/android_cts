@@ -1202,13 +1202,13 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             TestUtils.injectStylusDownEvent(editText, startX, startY);
             TestUtils.injectStylusMoveEvents(editText, startX, startY,
                     endX, endY, number);
-            TestUtils.injectStylusUpEvent(editText, endX, endY);
-
-            // Handwriting should start
+            // Ensure stylus handwriting session start before it is finished with ACTION_UP. This
+            // ensures system had enough time to initialize Ink window.
             expectEvent(
                     stream,
                     editorMatcher("onStartStylusHandwriting", marker),
                     TIMEOUT);
+            TestUtils.injectStylusUpEvent(editText, endX, endY);
 
             verifyStylusHandwritingWindowIsShown(stream, imeSession);
 

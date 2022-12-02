@@ -88,6 +88,8 @@ import java.util.stream.Stream;
  */
 public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
 
+    private static final Set<TestLifecycleListener> sLifecycleListeners = new HashSet<>();
+
     private static final String LOG_TAG = "BedsteadJUnit4";
 
     private static final String BEDSTEAD_PACKAGE_NAME = "com.android.bedstead";
@@ -1009,6 +1011,20 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         // We do allow arguments - they will fail validation later on if not properly annotated
     }
 
+    /**
+     * Add a listener to be informed of test lifecycle events.
+     */
+    public static void addLifecycleListener(TestLifecycleListener listener) {
+        sLifecycleListeners.add(listener);
+    }
+
+    /**
+     * Remove a listener being informed of test lifecycle events.
+     */
+    public static void removeLifecycleListener(TestLifecycleListener listener) {
+        sLifecycleListeners.remove(listener);
+    }
+
     @Override
     protected void runChild(final FrameworkMethod method, RunNotifier notifier) {
         Description description = describeChild(method);
@@ -1018,11 +1034,15 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
             Statement statement = new Statement() {
                 @Override
                 public void evaluate() throws Throwable {
+                    sLifecycleListeners.forEach(l -> l.testStarted(method.getName()));
                     while (true) {
                         try {
                             methodBlock(method).evaluate();
+                            sLifecycleListeners.forEach(l -> l.testFinished(method.getName()));
                             return;
                         } catch (RestartTestException e) {
+                            sLifecycleListeners.forEach(
+                                    l -> l.testRestarted(method.getName(), e.getMessage()));
                             System.out.println(LOG_TAG + ": Restarting test(" + e.toString() + ")");
                         }
                     }

@@ -30,7 +30,7 @@ import com.android.interactive.annotations.AutomationFor;
 @AutomationFor("com.google.android.interactive.steps.enterprise.launcher.SelectPersonalTabOrSectionStep")
 public final class SelectPersonalTabOrSectionStepAutomation implements Automation<Nothing> {
     @Override
-    public Nothing automate() throws Throwable {
+    public Nothing automate() throws Exception {
         TestApis.ui().device().findObject(
                 new UiSelector().text("Personal").className(Button.class)).click();
 

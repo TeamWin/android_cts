@@ -25,7 +25,7 @@ import java.util.List;
  *
  * <p>Each option is presented as a button
  */
-public class MultipleChoiceStep extends Step<String> {
+public abstract class MultipleChoiceStep extends Step<String> {
 
     private final String mInstruction;
     private final List<String> mChoices;

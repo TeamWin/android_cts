@@ -66,8 +66,7 @@ import java.util.zip.ZipOutputStream;
  * configurations:
  * <ul>
  *     <li>On a 'user' build</li>
- *     <li>On a 'userdebug' build with system property 'dalvik.vm.usejitprofiles' set to false</li>
- *     <li>On a 'userdebug' build with system property 'dalvik.vm.usejitprofiles' set to true</li>
+ *     <li>On a 'userdebug' build</li>
  * </ul>
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
@@ -291,10 +290,6 @@ public class AdbRootDependentCompilationTest extends BaseHostJUnit4Test {
      */
     private void compileWithProfilesAndCheckFilter(boolean expectOdexChange,
             Set<ProfileLocation> profileLocations) throws Exception {
-        if (!profileLocations.isEmpty()) {
-            checkProfileSupport();
-        }
-
         resetProfileState(APPLICATION_PACKAGE);
 
         executeCompile(APPLICATION_PACKAGE, "-m", "speed-profile", "-f");
@@ -519,17 +514,6 @@ public class AdbRootDependentCompilationTest extends BaseHostJUnit4Test {
         String result = assertCommandOutputsLines(1, "find", apkDir, "-name", "base.odex")[0];
         assertTrue("odex file not found: " + result, mDevice.doesFileExist(result));
         return result;
-    }
-
-    /**
-     * Skips the test if it does not use JIT profiles.
-     */
-    private void checkProfileSupport() throws Exception {
-        assumeTrue("The device does not use JIT profiles", isUseJitProfiles());
-    }
-
-    private boolean isUseJitProfiles() throws Exception {
-        return Boolean.parseBoolean(assertCommandSucceeds("getprop", "dalvik.vm.usejitprofiles"));
     }
 
     private String[] assertCommandOutputsLines(int numLinesOutputExpected, String... command)
