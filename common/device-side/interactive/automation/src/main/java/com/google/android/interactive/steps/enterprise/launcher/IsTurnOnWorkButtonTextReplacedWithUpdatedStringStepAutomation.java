@@ -31,7 +31,7 @@ public class IsTurnOnWorkButtonTextReplacedWithUpdatedStringStepAutomation imple
     public Boolean automate() throws Exception {
         return TestApis.ui().device().findObject(
                 new UiSelector().resourceId(
-                        "com.google.android.apps.nexuslauncher:id/work_mode_toggle")
+                        "com.google.android.apps.nexuslauncher:id/enable_work_apps")
                         .className(Button.class)).getText().equals("UPDATED STRING");
     }
 }

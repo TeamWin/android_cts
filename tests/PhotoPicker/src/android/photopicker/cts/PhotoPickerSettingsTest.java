@@ -16,7 +16,6 @@
 
 package android.photopicker.cts;
 
-import static android.os.SystemProperties.getBoolean;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.isPhotoPickerVisible;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.verifyActionBarExists;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.verifySettingsActivityIsVisible;
@@ -47,8 +46,6 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
 
     private static final String NAMESPACE_STORAGE_NATIVE_BOOT = "storage_native_boot";
     private static final String ALLOWED_CLOUD_PROVIDERS_KEY = "allowed_cloud_providers";
-    private static final String SETTINGS_SYS_PROP =
-            "debug.photopicker.enable_settings_screen";
 
     private static String sPreviouslyAllowedCloudProviders;
 
@@ -62,8 +59,6 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
                 String.format("device_config put %s %s not_empty", NAMESPACE_STORAGE_NATIVE_BOOT,
                         ALLOWED_CLOUD_PROVIDERS_KEY));
         Assume.assumeTrue(!getAllowedProvidersDeviceConfig().isBlank());
-        sDevice.executeShellCommand(String.format("setprop %s true", SETTINGS_SYS_PROP));
-        Assume.assumeTrue(getBoolean(SETTINGS_SYS_PROP, false));
     }
 
     @AfterClass
@@ -80,9 +75,6 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
                     String.format("device_config put %s %s %s", NAMESPACE_STORAGE_NATIVE_BOOT,
                             ALLOWED_CLOUD_PROVIDERS_KEY, sPreviouslyAllowedCloudProviders));
         }
-
-        // Disable Settings menu item in PhotoPickerActivity's overflow menu.
-        sDevice.executeShellCommand(String.format("setprop %s false", SETTINGS_SYS_PROP));
     }
 
     @Test

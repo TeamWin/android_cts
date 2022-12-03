@@ -32,6 +32,8 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -419,15 +421,23 @@ public class FrameRateOverrideTestActivity extends Activity {
         }
     }
 
-    interface FrameRateOverrideBehavior{
-        void testFrameRateOverrideBehavior(FrameRateObserver frameRateObserver,
+    interface TestScenario {
+        void test(FrameRateObserver frameRateObserver,
                 float initialRefreshRate) throws InterruptedException, IOException;
     }
 
-    class SurfaceFrameRateOverrideBehavior implements FrameRateOverrideBehavior {
+    class SurfaceSetFrameRateTest implements TestScenario {
+        private void setPreferredRefreshRate(float refreshRate) {
+            mHandler.post(() -> {
+                Window window = getWindow();
+                WindowManager.LayoutParams params = window.getAttributes();
+                params.preferredRefreshRate = refreshRate;
+                window.setAttributes(params);
+            });
+        }
 
         @Override
-        public void testFrameRateOverrideBehavior(FrameRateObserver frameRateObserver,
+        public void test(FrameRateObserver frameRateObserver,
                 float initialRefreshRate) throws InterruptedException {
             Log.i(TAG, "Staring testFrameRateOverride");
             float halfFrameRate = initialRefreshRate / 2;
@@ -455,16 +465,27 @@ public class FrameRateOverrideTestActivity extends Activity {
                     Surface.CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS);
             waitForRefreshRateChange(initialRefreshRate);
             frameRateObserver.observe(initialRefreshRate, initialRefreshRate, "Reset");
+
+            Log.i(TAG, String.format("Setting preferredRefreshRate to %.2f", halfFrameRate));
+            setPreferredRefreshRate(halfFrameRate);
+            waitForRefreshRateChange(halfFrameRate);
+            frameRateObserver.observe(initialRefreshRate, halfFrameRate, "preferredRefreshRate");
+
+            Log.i(TAG, String.format("Resetting preferredRefreshRate setting"));
+            setPreferredRefreshRate(0);
+            waitForRefreshRateChange(initialRefreshRate);
+            frameRateObserver.observe(initialRefreshRate, initialRefreshRate,
+                    "preferredRefreshRate reset");
         }
     }
 
-    class GameModeFrameRateOverrideBehavior implements FrameRateOverrideBehavior {
+    class GameModeTest implements TestScenario {
         private UiDevice mUiDevice;
-        GameModeFrameRateOverrideBehavior(UiDevice uiDevice) {
+        GameModeTest(UiDevice uiDevice) {
             mUiDevice = uiDevice;
         }
         @Override
-        public void testFrameRateOverrideBehavior(FrameRateObserver frameRateObserver,
+        public void test(FrameRateObserver frameRateObserver,
                 float initialRefreshRate) throws InterruptedException, IOException {
             Log.i(TAG, "Starting testGameModeFrameRateOverride");
 
@@ -488,9 +509,40 @@ public class FrameRateOverrideTestActivity extends Activity {
         }
     }
 
+    class PreferredRefreshRateFrameTest implements TestScenario {
+        private void setPreferredRefreshRate(float refreshRate) {
+            mHandler.post(() -> {
+                Window window = getWindow();
+                WindowManager.LayoutParams params = window.getAttributes();
+
+                // Use preferred[Min|Max]DisplayRefreshRate instead of preferredRefreshRate for SF
+                // to switch the frame rate based on DM policy
+                params.preferredMinDisplayRefreshRate = refreshRate;
+                params.preferredMaxDisplayRefreshRate = refreshRate;
+                window.setAttributes(params);
+            });
+        }
+
+        @Override
+        public void test(FrameRateObserver frameRateObserver,
+                float initialRefreshRate) throws InterruptedException {
+            Log.i(TAG, "Staring testFrameRateOverride");
+            float halfFrameRate = initialRefreshRate / 2;
+
+            waitForRefreshRateChange(initialRefreshRate);
+            frameRateObserver.observe(initialRefreshRate, initialRefreshRate, "Initial");
+
+            Log.i(TAG, String.format("Setting preferredRefreshRateFrame to %.2f", halfFrameRate));
+            setPreferredRefreshRate(halfFrameRate);
+            waitForRefreshRateChange(halfFrameRate);
+            frameRateObserver.observe(initialRefreshRate, halfFrameRate,
+                    "preferredRefreshRateFrame");
+        }
+    }
+
     // The activity being intermittently paused/resumed has been observed to
     // cause test failures in practice, so we run the test with retry logic.
-    public void testFrameRateOverride(FrameRateOverrideBehavior frameRateOverrideBehavior,
+    public void testFrameRateOverride(TestScenario frameRateOverrideBehavior,
             FrameRateObserver frameRateObserver, float initialRefreshRate)
             throws InterruptedException, IOException {
         synchronized (mLock) {
@@ -502,7 +554,7 @@ public class FrameRateOverrideTestActivity extends Activity {
                 while (!testPassed) {
                     waitForPreconditions();
                     try {
-                        frameRateOverrideBehavior.testFrameRateOverrideBehavior(frameRateObserver,
+                        frameRateOverrideBehavior.test(frameRateObserver,
                                 initialRefreshRate);
                         testPassed = true;
                     } catch (PreconditionViolatedException exc) {
@@ -535,12 +587,10 @@ public class FrameRateOverrideTestActivity extends Activity {
                     }
                 }
             } finally {
-                String passFailMessage = String.format(
-                        "%s", testPassed ? "Passed" : "Failed");
                 if (testPassed) {
-                    Log.i(TAG, passFailMessage);
+                    Log.i(TAG, "**** PASS ****");
                 } else {
-                    Log.e(TAG, passFailMessage);
+                    Log.i(TAG, "**** FAIL ****");
                 }
             }
 

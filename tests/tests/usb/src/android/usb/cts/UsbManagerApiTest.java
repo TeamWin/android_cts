@@ -105,7 +105,9 @@ public class UsbManagerApiTest {
         // Should pass with permission.
         int version = mUsbManagerSys.getGadgetHalVersion();
         int usbBandwidth = mUsbManagerSys.getUsbBandwidthMbps();
-        if (version > UsbManager.GADGET_HAL_V1_1) {
+        if (version > UsbManager.GADGET_HAL_V1_2) {
+            Assert.assertTrue(usbBandwidth >= UsbManager.USB_DATA_TRANSFER_RATE_UNKNOWN);
+        } else if (version > UsbManager.GADGET_HAL_V1_1) {
             Assert.assertTrue(usbBandwidth > UsbManager.USB_DATA_TRANSFER_RATE_UNKNOWN);
         } else {
             Assert.assertEquals(usbBandwidth, UsbManager.USB_DATA_TRANSFER_RATE_UNKNOWN);

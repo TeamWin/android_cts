@@ -76,8 +76,8 @@ public class ActivityEmbeddingIntegrationTests extends ActivityEmbeddingTestBase
      */
     @Test
     public void testDisplayFeaturesWithEmbedding() throws Exception {
-        TestConfigChangeHandlingActivity primaryActivity = (TestConfigChangeHandlingActivity)
-                startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        TestConfigChangeHandlingActivity primaryActivity = startActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
         WindowLayoutInfo windowLayoutInfo = getExtensionWindowLayoutInfo(primaryActivity);
         assumeHasDisplayFeatures(windowLayoutInfo);
 
@@ -124,8 +124,8 @@ public class ActivityEmbeddingIntegrationTests extends ActivityEmbeddingTestBase
     public void testClearSplitInfoCallback() throws Exception {
         assumeVendorApiLevelAtLeast(2); // TODO(b/244450254): harden the requirement in U.
         mActivityEmbeddingComponent.clearSplitInfoCallback();
-        TestConfigChangeHandlingActivity primaryActivity = (TestConfigChangeHandlingActivity)
-                startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        TestConfigChangeHandlingActivity primaryActivity = startActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
 
         // Launch a second activity in a split. Use a very small split ratio, so that the secondary
         // activity occupies most of the screen.
@@ -152,8 +152,8 @@ public class ActivityEmbeddingIntegrationTests extends ActivityEmbeddingTestBase
     @Test
     public void testDisplayFeaturesWithEmbedding_differentPackage() throws Exception {
         // Start an activity to collect the window layout info.
-        TestConfigChangeHandlingActivity initialActivity = (TestConfigChangeHandlingActivity)
-                startActivityNewTask(TestConfigChangeHandlingActivity.class);
+        TestConfigChangeHandlingActivity initialActivity = startActivityNewTask(
+                TestConfigChangeHandlingActivity.class);
         WindowLayoutInfo windowLayoutInfo = getExtensionWindowLayoutInfo(initialActivity);
         assumeHasDisplayFeatures(windowLayoutInfo);
 

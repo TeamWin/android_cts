@@ -79,6 +79,12 @@ public class SettingsMultiPaneDeepLinkTest {
                         && InstrumentationRegistry.getInstrumentation().getContext()
                                 .getPackageManager()
                                 .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+
+        assumeFalse("Skipping test: not supported on television yet",
+                mDeepLinkIntentResolveInfo == null
+                        && InstrumentationRegistry.getInstrumentation().getContext()
+                                .getPackageManager()
+                                .hasSystemFeature(PackageManager.FEATURE_LEANBACK));
     }
 
     @CddTest(requirement = "3.2.3.5/C-17-1")

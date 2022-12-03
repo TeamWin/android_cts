@@ -18,11 +18,12 @@ package android.bluetooth.cts;
 
 import static android.bluetooth.cts.TestUtils.assertArrayEquals;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.bluetooth.OobData;
 import android.content.pm.PackageManager;
 import android.test.AndroidTestCase;
 
-import java.util.Arrays;
 
 public class OobDataTest extends AndroidTestCase {
 
@@ -176,5 +177,60 @@ public class OobDataTest extends AndroidTestCase {
         assertArrayEquals(randomizerHash, leData.getRandomizerHash());
         assertArrayEquals(leTemporaryKey, leData.getLeTemporaryKey());
         assertEquals(OobData.LE_FLAG_BREDR_NOT_SUPPORTED, leData.getLeFlags());
+    }
+
+    public void testToString() {
+        byte[] confirmationHash = new byte[]{0x52, 0x70, 0x49, 0x41, 0x1A, (byte) 0xB3, 0x3F, 0x5C,
+                (byte) 0xE0, (byte) 0x99, 0x37, 0x29, 0x21, 0x52, 0x65, 0x49};
+        byte[] address = new byte[]{0x12, 0x34, 0x56, 0x78, (byte) 0x8A, (byte) 0xBC, 0x0};
+
+        OobData.LeBuilder leBuilder = new OobData.LeBuilder(confirmationHash, address,
+                OobData.LE_DEVICE_ROLE_PERIPHERAL_ONLY);
+
+        String deviceNameString = "Test Device Name";
+        byte[] deviceName = deviceNameString.getBytes();
+        byte[] randomizerHash = new byte[]{(byte) 0x9E, 0x43, 0x51, 0x10, 0x70, 0x33, 0x01,
+                (byte) 0xDE, 0x00, 0x02, 0x03, 0x05, 0x09, 0x10, 0x40, 0x07};
+        byte[] leTemporaryKey = new byte[]{0x01, 0x12, 0x34, 0x56, 0x78, (byte) 0x9A, (byte) 0xBC,
+                (byte) 0xDE, (byte) 0xF0, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77};
+
+        leBuilder
+                .setDeviceName(deviceName)
+                .setRandomizerHash(randomizerHash)
+                .setLeTemporaryKey(leTemporaryKey)
+                .setLeFlags(OobData.LE_FLAG_BREDR_NOT_SUPPORTED);
+        OobData leData = leBuilder.build();
+
+        String expected = "OobData: \n\t"
+                + "Device Address With Type: "
+                + toHexString(leData.getDeviceAddressWithType()) + "\n\t"
+                + "Confirmation: " + toHexString(leData.getConfirmationHash()) + "\n\t"
+                + "Randomizer: " + toHexString(leData.getRandomizerHash()) + "\n\t"
+                + "Device Name: " + toHexString(leData.getDeviceName()) + "\n\t"
+                + "OobData Length: " + toHexString(leData.getClassicLength()) + "\n\t"
+                + "Class of Device: " + toHexString(leData.getClassOfDevice()) + "\n\t"
+                + "LE Device Role: " + toHexString(leData.getLeDeviceRole()) + "\n\t"
+                + "LE Temporary Key: " + toHexString(leData.getLeTemporaryKey()) + "\n\t"
+                + "LE Appearance: " + toHexString(leData.getLeAppearance()) + "\n\t"
+                + "LE Flags: " + toHexString(leData.getLeFlags()) + "\n\t";
+        String toString = leData.toString();
+
+        assertThat(toString).isEqualTo(expected);
+
+        int describeContents = 0;
+        assertThat(leData.describeContents()).isEqualTo(describeContents);
+    }
+
+    private String toHexString(int b) {
+        return toHexString(new byte[]{(byte) b});
+    }
+
+    private String toHexString(byte[] array) {
+        if (array == null) return "null";
+        StringBuilder builder = new StringBuilder(array.length * 2);
+        for (byte b : array) {
+            builder.append(String.format("%02x", b));
+        }
+        return builder.toString();
     }
 }

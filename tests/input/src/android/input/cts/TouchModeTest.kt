@@ -16,23 +16,38 @@
 
 package android.input.cts
 
+import android.Manifest
 import android.app.Activity
+import android.app.ActivityOptions
 import android.app.Instrumentation
+import android.content.Context
+import android.hardware.display.DisplayManager
 import android.os.SystemClock
 import android.support.test.uiautomator.UiDevice
+import android.view.Display
+import android.view.InputDevice
+import android.view.MotionEvent
+import android.view.MotionEvent.ACTION_DOWN
 import android.view.View
 import android.view.ViewTreeObserver
+import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.PollingCheck
+import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.WindowUtil
+import java.util.Arrays
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
+import org.junit.Assume.assumeFalse
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -49,14 +64,27 @@ class TouchModeTest {
     @get:Rule
     val activityRule = ActivityScenarioRule<Activity>(Activity::class.java)
     private lateinit var activity: Activity
+    private lateinit var targetContext: Context
+    private lateinit var displayManager: DisplayManager
+    private var secondScenario: ActivityScenario<Activity>? = null
 
     @Before
     fun setUp() {
+        targetContext = instrumentation.targetContext
+        displayManager = targetContext.getSystemService(DisplayManager::class.java)
         activityRule.scenario.onActivity {
             activity = it
         }
         WindowUtil.waitForFocus(activity)
         instrumentation.setInTouchMode(false)
+    }
+
+    @After
+    fun tearDown() {
+        val scenario = secondScenario
+        if (scenario != null) {
+            scenario.close()
+        }
     }
 
     fun isInTouchMode(): Boolean {
@@ -82,6 +110,7 @@ class TouchModeTest {
             assertTrue(touchModeChangeListener.countDownLatch.await(
                     TOUCH_MODE_PROPAGATION_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS))
         } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
             throw RuntimeException(e)
         }
 
@@ -123,5 +152,109 @@ class TouchModeTest {
 
         // Detached view (view with mAttachInfo null) will just return the default touch mode value
         assertEquals(defaultInTouchMode, detachedView.isInTouchMode())
+    }
+
+    /**
+     * When per-display focus is disabled ({@code config_perDisplayFocusEnabled} is set to false),
+     * touch mode changes affect all displays.
+     *
+     * In this test, we tap the main display, and ensure that touch mode becomes
+     * true on both the main display and the secondary display
+     */
+    @Test
+    fun testTouchModeUpdate_PerDisplayFocusDisabled() {
+        assumeFalse("This test requires config_perDisplayFocusEnabled to be false",
+                targetContext.resources.getBoolean(targetContext.resources.getIdentifier(
+                        "config_perDisplayFocusEnabled", "bool", "android")))
+
+        // TODO(b/252813475): Start and use a virtual display if no external display is available.
+        val displayManager =
+                instrumentation.targetContext.getSystemService(DisplayManager::class.java)
+        assumeTrue("This test requires a device with 2 or more displays",
+                displayManager.displays.size > 1)
+
+        injectMotionEventOnMainDisplay()
+
+        assertTrue(isInTouchMode())
+        assertSecondaryDisplayTouchModeState(/* inTouch= */ true)
+    }
+
+    /**
+     * When per-display focus is enabled ({@code config_perDisplayFocusEnabled} is set to true),
+     * touch mode changes affect all displays.
+     *
+     * In this test, we tap the main display, and ensure that touch mode becomes
+     * true on main display only. Touch mode on secondary display must remain false.
+     */
+    @Test
+    fun testTouchModeUpdate_PerDisplayFocusEnabled() {
+        assumeTrue("This test requires config_perDisplayFocusEnabled to be true",
+                targetContext.resources.getBoolean(targetContext.resources.getIdentifier(
+                        "config_perDisplayFocusEnabled", "bool", "android")))
+
+        // TODO(b/252813475): Start and use a virtual display if no external display is available.
+        val displayManager =
+                instrumentation.targetContext.getSystemService(DisplayManager::class.java)
+        assumeTrue("This test requires a device with 2 or more displays",
+                displayManager.displays.size > 1)
+
+        injectMotionEventOnMainDisplay()
+
+        assertTrue(isInTouchMode())
+        assertSecondaryDisplayTouchModeState(/* isInTouch= */ false,
+                /* delayBeforeChecking= */ true)
+    }
+
+    private fun assertSecondaryDisplayTouchModeState(
+            isInTouch: Boolean,
+            delayBeforeChecking: Boolean = false
+    ) {
+        if (delayBeforeChecking) {
+            SystemClock.sleep(TOUCH_MODE_PROPAGATION_TIMEOUT_MILLIS)
+        }
+        PollingCheck.waitFor(TOUCH_MODE_PROPAGATION_TIMEOUT_MILLIS) {
+            isSecondaryDisplayInTouchMode() == isInTouch
+        }
+        assertEquals(isInTouch, isSecondaryDisplayInTouchMode())
+    }
+
+    private fun isSecondaryDisplayInTouchMode(): Boolean {
+        if (secondScenario == null) {
+            launchsecondScenarioActivity()
+        }
+        val scenario = secondScenario
+        var inTouch: Boolean? = null
+        if (scenario != null) {
+            scenario.onActivity {
+                inTouch = it.window.decorView.isInTouchMode
+            }
+        } else {
+            fail("Fail to launch secondScenario")
+        }
+        return inTouch == true
+    }
+
+    private fun launchsecondScenarioActivity() {
+        // Pick a random external display
+        val externalDisplay = Arrays.stream(displayManager.displays).filter { d ->
+            d.displayId != Display.DEFAULT_DISPLAY && d.type == Display.TYPE_EXTERNAL
+        }.findFirst()
+        assumeTrue("Device with no external display attached", externalDisplay.isPresent())
+
+        // Launch activity on the picked display
+        val bundle = ActivityOptions.makeBasic().setLaunchDisplayId(
+                externalDisplay.get().displayId).toBundle()
+        SystemUtil.runWithShellPermissionIdentity({
+            secondScenario = ActivityScenario.launch(Activity::class.java, bundle)
+        }, Manifest.permission.INTERNAL_SYSTEM_WINDOW)
+    }
+
+    private fun injectMotionEventOnMainDisplay() {
+        val downTime = SystemClock.uptimeMillis()
+        val eventTime = downTime
+        val event = MotionEvent.obtain(downTime, eventTime, ACTION_DOWN,
+                /* x= */ 100f, /* y= */ 100f, /* metaState= */ 0)
+        event.source = InputDevice.SOURCE_TOUCHSCREEN
+        instrumentation.uiAutomation.injectInputEvent(event, /* sync= */ true)
     }
 }

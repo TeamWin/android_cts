@@ -20,13 +20,13 @@ import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.os.Build.VERSION.SDK_INT;
 
+import static com.android.bedstead.harrier.AnnotationExecutorUtil.checkFailOrSkip;
+import static com.android.bedstead.harrier.AnnotationExecutorUtil.failOrSkip;
 import static com.android.bedstead.harrier.Defaults.DEFAULT_PASSWORD;
 import static com.android.bedstead.harrier.annotations.EnsureTestAppInstalled.DEFAULT_TEST_APP_KEY;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.utils.Versions.meetsSdkVersionRequirements;
-
-import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeFalse;
@@ -91,6 +91,7 @@ import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireTargetSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.TestTag;
+import com.android.bedstead.harrier.annotations.UsesAnnotationExecutor;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDelegate;
@@ -977,6 +978,15 @@ public final class DeviceState extends HarrierRule {
                         ensureFeatureFlagValueAnnotation.value());
                 continue;
             }
+
+            UsesAnnotationExecutor usesAnnotationExecutorAnnotation =
+                    annotationType.getAnnotation(UsesAnnotationExecutor.class);
+            if (usesAnnotationExecutorAnnotation != null) {
+                AnnotationExecutor executor =
+                        getAnnotationExecutor(usesAnnotationExecutorAnnotation.value());
+                executor.applyAnnotation(annotation);
+                continue;
+            }
         }
 
         requireSdkVersion(/* min= */ mMinSdkVersionCurrentTest,
@@ -1332,27 +1342,6 @@ public final class DeviceState extends HarrierRule {
                 resolvedUserType != null, failureMode);
 
         return resolvedUserType;
-    }
-
-    private void checkFailOrSkip(String message, boolean value, FailureMode failureMode) {
-        if (failureMode.equals(FailureMode.FAIL)) {
-            assertWithMessage(message).that(value).isTrue();
-        } else if (failureMode.equals(FailureMode.SKIP)) {
-            assumeTrue(message, value);
-        } else {
-            throw new IllegalStateException("Unknown failure mode: " + failureMode);
-        }
-    }
-
-    private void failOrSkip(String message, FailureMode failureMode) {
-        switch (failureMode) {
-            case FAIL:
-                throw new AssertionError(message);
-            case SKIP:
-                throw new AssumptionViolatedException(message);
-            default:
-                throw new IllegalStateException("Unknown failure mode: " + failureMode);
-        }
     }
 
     private static final String LOG_TAG = "DeviceState";
@@ -2098,6 +2087,8 @@ public final class DeviceState extends HarrierRule {
             mPermissionContext.close();
             mPermissionContext = null;
         }
+
+        mAnnotationExecutors.values().forEach(AnnotationExecutor::teardownNonShareableState);
     }
 
     private Set<TestAppInstance> mInstalledTestApps = new HashSet<>();
@@ -2233,6 +2224,7 @@ public final class DeviceState extends HarrierRule {
         mOriginalFlagValues.clear();
 
         TestApis.activities().clearAllActivities();
+        mAnnotationExecutors.values().forEach(AnnotationExecutor::teardownShareableState);
     }
 
     private UserReference createProfile(
@@ -3107,5 +3099,19 @@ public final class DeviceState extends HarrierRule {
     @Override
     boolean isHeadlessSystemUserMode() {
         return TestApis.users().isHeadlessSystemUserMode();
+    }
+
+    private final Map<Class<? extends AnnotationExecutor>, AnnotationExecutor> mAnnotationExecutors = new HashMap<>();
+
+    private AnnotationExecutor getAnnotationExecutor(Class<? extends AnnotationExecutor> annotationExecutorClass) {
+        if (!mAnnotationExecutors.containsKey(annotationExecutorClass)) {
+            try {
+                mAnnotationExecutors.put(
+                        annotationExecutorClass, annotationExecutorClass.newInstance());
+            } catch (Exception e) {
+                throw new RuntimeException("Error creating annotation executor", e);
+            }
+        }
+        return mAnnotationExecutors.get(annotationExecutorClass);
     }
 }

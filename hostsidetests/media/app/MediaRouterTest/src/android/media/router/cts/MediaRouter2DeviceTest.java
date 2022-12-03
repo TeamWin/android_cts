@@ -141,22 +141,39 @@ public class MediaRouter2DeviceTest {
     public void setRouteListingPreference_propagatesToManager() {
         List<RouteListingPreference.Item> items =
                 List.of(
-                        new RouteListingPreference.Item(ROUTE_ID_APP_1_ROUTE_1),
-                        new RouteListingPreference.Item(ROUTE_ID_APP_2_ROUTE_2),
-                        new RouteListingPreference.Item(ROUTE_ID_APP_3_ROUTE_3));
+                        new RouteListingPreference.Item(
+                                ROUTE_ID_APP_1_ROUTE_1,
+                                /* flags= */ RouteListingPreference.Item.FLAG_ONGOING_SESSION,
+                                /* disableReason= */ RouteListingPreference.Item
+                                        .DISABLE_REASON_NONE),
+                        new RouteListingPreference.Item(
+                                ROUTE_ID_APP_2_ROUTE_2,
+                                /* flags= */ 0,
+                                RouteListingPreference.Item.DISABLE_REASON_NONE),
+                        new RouteListingPreference.Item(
+                                ROUTE_ID_APP_3_ROUTE_3,
+                                /* flags= */ 0,
+                                RouteListingPreference.Item.DISABLE_REASON_SUBSCRIPTION_REQUIRED));
         RouteListingPreference routeListingPreference = new RouteListingPreference(items);
         MediaRouter2ManagerCallbackImpl mediaRouter2ManagerCallback =
                 new MediaRouter2ManagerCallbackImpl();
         mRouter2Manager.registerCallback(Runnable::run, mediaRouter2ManagerCallback);
         mRouter2.setRouteListingPreference(routeListingPreference);
         mediaRouter2ManagerCallback.mConditionVariable.block();
-        Truth.assertThat(mediaRouter2ManagerCallback.mRouteListingPreference)
-                .isEqualTo(routeListingPreference);
-        Truth.assertThat(mediaRouter2ManagerCallback.mRouteListingPreference)
+        RouteListingPreference receivedRouteListingPreference =
+                mediaRouter2ManagerCallback.mRouteListingPreference;
+        Truth.assertThat(receivedRouteListingPreference).isEqualTo(routeListingPreference);
+        Truth.assertThat(receivedRouteListingPreference)
                 .isNotSameInstanceAs(routeListingPreference);
-        Truth.assertThat(mediaRouter2ManagerCallback.mRouteListingPreference)
+        Truth.assertThat(receivedRouteListingPreference)
                 .isSameInstanceAs(
                         mRouter2Manager.getRouteListingPreference(mContext.getPackageName()));
+        Truth.assertThat(receivedRouteListingPreference.getItems().get(0).getFlags())
+                .isEqualTo(RouteListingPreference.Item.FLAG_ONGOING_SESSION);
+        Truth.assertThat(receivedRouteListingPreference.getItems().get(1).getDisableReason())
+                .isEqualTo(RouteListingPreference.Item.DISABLE_REASON_NONE);
+        Truth.assertThat(receivedRouteListingPreference.getItems().get(2).getDisableReason())
+                .isEqualTo(RouteListingPreference.Item.DISABLE_REASON_SUBSCRIPTION_REQUIRED);
     }
 
     /**

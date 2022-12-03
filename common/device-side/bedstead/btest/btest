@@ -217,15 +217,21 @@ STATE_CODES = {
 
 SHORT_PACKAGE_PREFIXES = {
     "a.d.c" : "android.devicepolicy.cts",
+    "a.d.g" : "android.devicepolicy.gts",
     "a.m.c": "android.multiuser.cts"
 }
 
 # We hardcode supported modules so we can optimise for
 # development of those modules. It is not our intention to support all tests.
 supported_modules = {
-    # CTS
+    # XTS
     "CtsDevicePolicyTestCases": {
         "package": "android.devicepolicy.cts",
+        "runner": "androidx.test.runner.AndroidJUnitRunner",
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
+    },
+    "GtsDevicePolicyTestCases": {
+        "package": "android.devicepolicy.gts",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
         "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
     },

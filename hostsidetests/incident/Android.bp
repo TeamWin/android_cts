@@ -31,4 +31,7 @@ java_test_host {
         "platformprotos",
         "truth-prebuilt",
     ],
+    data: [
+        ":CtsErrorsApp",
+    ],
 }

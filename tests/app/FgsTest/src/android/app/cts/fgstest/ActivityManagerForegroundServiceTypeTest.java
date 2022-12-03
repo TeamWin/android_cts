@@ -382,22 +382,20 @@ public final class ActivityManagerForegroundServiceTypeTest {
                     startAndStopFgsType(TEST_COMP_TARGET_FGS_ALL_TYPE, type, null);
                     resetPermissions(anyOfPermissions, testPackageName);
 
-                    if (!perm.mIsAppOps && perm.mSpecialOp == null) {
-                        // However, if this is a permission backed by an app op,
-                        // revoking the app op will make it fail.
-                        final int opCode = AppOpsManager.permissionToOpCode(perm.mName);
-                        if (opCode != AppOpsManager.OP_NONE) {
-                            grantPermissions(ArrayUtils.concat(TestPermissionInfo.class,
-                                    allOfPermissions, new TestPermissionInfo[] {perm}),
-                                    testPackageName);
-                            // Because we're adopting the shell identity,
-                            // we have to set the appop to shell here
-                            executeShellCommand("appops set --uid " + SHELL_PKG_NAME + " "
-                                    + AppOpsManager.opToPublicName(opCode) + " deny");
-                            assertEquals(RESULT_SECURITY_EXCEPTION, startForegroundServiceWithType(
-                                    TEST_COMP_TARGET_FGS_ALL_TYPE, type));
-                            resetPermissions(anyOfPermissions, testPackageName);
-                        }
+                    // However, if this is a permission backed by an app op,
+                    // revoking the app op will make it fail.
+                    final int opCode = regularPermissionToAppOpIfPossible(perm);
+                    if (opCode != AppOpsManager.OP_NONE) {
+                        grantPermissions(ArrayUtils.concat(TestPermissionInfo.class,
+                                allOfPermissions, new TestPermissionInfo[] {perm}),
+                                testPackageName);
+                        // Because we're adopting the shell identity,
+                        // we have to set the appop to shell here
+                        executeShellCommand("appops set --uid " + SHELL_PKG_NAME + " "
+                                + AppOpsManager.opToPublicName(opCode) + " deny");
+                        assertEquals(RESULT_SECURITY_EXCEPTION, startForegroundServiceWithType(
+                                TEST_COMP_TARGET_FGS_ALL_TYPE, type));
+                        resetPermissions(anyOfPermissions, testPackageName);
                     }
                 }
             }
@@ -418,6 +416,12 @@ public final class ActivityManagerForegroundServiceTypeTest {
             resetPermissions(anyOfPermissions, testPackageName);
             enablePermissionEnforcement(false, testPackageName);
         }
+    }
+
+    private static int regularPermissionToAppOpIfPossible(TestPermissionInfo perm) {
+        return !perm.mIsAppOps && perm.mSpecialOp == null
+                ? AppOpsManager.permissionToOpCode(perm.mName)
+                : AppOpsManager.OP_NONE;
     }
 
     private TestPermissionInfo[] getListExceptIndex(TestPermissionInfo[] list, int exceptIndex) {
@@ -520,10 +524,14 @@ public final class ActivityManagerForegroundServiceTypeTest {
                 .filter(p -> !p.mIsAppOps && p.mSpecialOp == null)
                 .map(p -> p.mName)
                 .toArray(String[]::new);
-        final String[] appops = Arrays.stream(permissions)
+        final String[] appops = ArrayUtils.concat(String.class, Arrays.stream(permissions)
                 .filter(p -> p.mIsAppOps && p.mSpecialOp == null)
                 .map(p -> p.mName)
-                .toArray(String[]::new);
+                .toArray(String[]::new),
+                Arrays.stream(permissions)
+                .filter(p -> regularPermissionToAppOpIfPossible(p) != AppOpsManager.OP_NONE)
+                .map(p-> AppOpsManager.opToPublicName(regularPermissionToAppOpIfPossible(p)))
+                .toArray(String[]::new));
         final SpecialPermissionOp[] specialOps = Arrays.stream(permissions)
                 .filter(p-> p.mSpecialOp != null)
                 .map(p -> p.mSpecialOp)

@@ -22,6 +22,7 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.verifyFillsT
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertFinishing;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertNotResumed;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
+import static android.server.wm.jetpack.utils.TestActivityLauncher.KEY_ACTIVITY_ID;
 
 import static androidx.window.extensions.embedding.SplitRule.FINISH_NEVER;
 
@@ -319,7 +320,7 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
         public SplitPlaceholderRule build() {
             // Create placeholder activity intent
             Intent placeholderIntent = new Intent(mContext, TestActivityWithId.class);
-            placeholderIntent.putExtra(ACTIVITY_ID_LABEL, mPlaceholderActivityId);
+            placeholderIntent.putExtra(KEY_ACTIVITY_ID, mPlaceholderActivityId);
 
             // Create {@link SplitPlaceholderRule} that launches the placeholder in a split with the
             // target primary activity.
@@ -329,7 +330,8 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
                                     && mPrimaryActivityId.equals(((TestActivityWithId) activity)
                                     .getId()) /* activityPredicate */,
                             intent -> mPrimaryActivityId.equals(
-                                    intent.getStringExtra(ACTIVITY_ID_LABEL)) /* intentPredicate */,
+                                    intent.getStringExtra(KEY_ACTIVITY_ID)
+                            )/* intentPredicate */,
                     mParentWindowMetricsPredicate)
                     .setSplitRatio(DEFAULT_SPLIT_RATIO);
 

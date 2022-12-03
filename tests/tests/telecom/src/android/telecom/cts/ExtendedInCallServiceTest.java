@@ -17,18 +17,18 @@
 package android.telecom.cts;
 
 import static android.telecom.cts.TestUtils.*;
+
 import static com.android.compatibility.common.util.BlockedNumberUtil.deleteBlockedNumber;
 import static com.android.compatibility.common.util.BlockedNumberUtil.insertBlockedNumber;
 
 import android.app.UiModeManager;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
-import android.telecom.CallAudioState;
 import android.telecom.Call;
+import android.telecom.CallAudioState;
 import android.telecom.CallScreeningService;
 import android.telecom.Connection;
 import android.telecom.ConnectionService;
@@ -627,6 +627,28 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
 
         assertCanAddCall(inCallService, true,
                 "Should be able to add call with only one active call");
+    }
+
+    public void testCanAddCall_CanAddForExistingActiveCallWithoutHoldCapability() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        placeAndVerifyCall();
+        final MockConnection connection = verifyConnectionForOutgoingCall();
+        final int capabilities = connection.getConnectionCapabilities();
+        connection.setConnectionCapabilities(capabilities & ~Connection.CAPABILITY_SUPPORT_HOLD);
+        connection.setConnectionCapabilities(capabilities & ~Connection.CAPABILITY_HOLD);
+
+        final MockInCallService inCallService = mInCallCallbacks.getService();
+
+        final Call call = inCallService.getLastCall();
+        assertCallState(call, Call.STATE_DIALING);
+        connection.setActive();
+        assertCallState(call, Call.STATE_ACTIVE);
+
+        assertCanAddCall(inCallService, true,
+                "Should be able to add call with only one active call without hold capability");
     }
 
     public void testCanAddCall_CannotAddIfTooManyCalls() {

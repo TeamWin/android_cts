@@ -118,7 +118,7 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
         mDeviceStateManager.registerCallback(Runnable::run, this);
         mWindowAreaComponent.addRearDisplayStatusListener(mStatusListener);
         unlockDeviceIfNeeded();
-        mActivity = (TestRearDisplayActivity) startActivityNewTask(TestRearDisplayActivity.class);
+        mActivity = startActivityNewTask(TestRearDisplayActivity.class);
         waitAndAssert(() -> mWindowAreaStatus != null);
     }
 

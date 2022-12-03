@@ -206,4 +206,17 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
         // Notify as missed instead of rejected, since the user did not explicitly reject.
         verifyCallLogging(normalIncomingCallNumber, CallLog.Calls.MISSED_TYPE);
     }
+
+    public void testEmergencyCallAndNoAdditionalCallPermitted() throws Exception {
+        if (!mShouldTestTelecom) return;
+
+        Connection eConnection = placeAndVerifyEmergencyCall(true);
+        Call eCall = getInCallService().getLastCall();
+        assertCallState(eCall, Call.STATE_DIALING);
+        eConnection.setActive();
+        assertCallState(eCall, Call.STATE_ACTIVE);
+
+        assertIsOutgoingCallPermitted(false, TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
+        assertIsIncomingCallPermitted(false, TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
+    }
 }

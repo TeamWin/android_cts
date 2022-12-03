@@ -2,3 +2,4 @@ per-file *Companion* = file:platform/frameworks/base:/core/java/android/permissi
 per-file *Vibrat* = file:platform/frameworks/base:/services/core/java/com/android/server/vibrator/OWNERS
 per-file *AndroidManifest.xml = file:platform/frameworks/base:/core/java/android/permission/OWNERS
 per-file *CtsOsTestCases.xml = file:platform/frameworks/base:/core/java/android/permission/OWNERS
+per-file *Sntp* = file:platform/frameworks/base:/services/core/java/com/android/server/timezonedetector/OWNERS

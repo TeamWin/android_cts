@@ -21,6 +21,7 @@ import com.android.bedstead.nene.accounts.Accounts;
 import com.android.bedstead.nene.activities.Activities;
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.bluetooth.Bluetooth;
+import com.android.bedstead.nene.broadcasts.Broadcasts;
 import com.android.bedstead.nene.context.Context;
 import com.android.bedstead.nene.device.Device;
 import com.android.bedstead.nene.devicepolicy.DevicePolicy;
@@ -140,9 +141,14 @@ public final class TestApis {
         return Ui.sInstance;
     }
 
-    /** Access Tet APIs related to flags. */
+    /** Access Test APIs related to flags. */
     public static Flags flags() {
         return Flags.sInstance;
+    }
+
+    /** Access Test APIs related to broadcasts. */
+    public static Broadcasts broadcasts() {
+        return Broadcasts.sInstance;
     }
 
     /** @deprecated Use statically */

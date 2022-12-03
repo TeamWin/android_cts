@@ -16,7 +16,7 @@
 
 package com.google.android.interactive.steps.enterprise.launcher;
 
-import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.test.uiautomator.UiSelector;
 
@@ -29,9 +29,16 @@ import com.android.interactive.annotations.AutomationFor;
 public class IsTurnedOffWorkProfileTextReplacedWithUpdatedStringStepAutomation implements Automation<Boolean> {
     @Override
     public Boolean automate() throws Exception {
-        return TestApis.ui().device().findObject(
+        boolean titleIsReplaced = TestApis.ui().device().findObject(
                 new UiSelector().resourceId(
-                        "com.google.android.apps.nexuslauncher:id/work_mode_toggle")
-                        .className(Button.class)).getText().equals("UPDATED STRING");
+                        "com.google.android.apps.nexuslauncher:id/work_apps_paused_title")
+                        .className(TextView.class)).getText().equals("UPDATED STRING");
+
+        boolean contentIsReplaced = TestApis.ui().device().findObject(
+                new UiSelector().resourceId(
+                                "com.google.android.apps.nexuslauncher:id/work_apps_paused_content")
+                        .className(TextView.class)).getText().equals("UPDATED STRING");
+
+        return titleIsReplaced && contentIsReplaced;
     }
 }

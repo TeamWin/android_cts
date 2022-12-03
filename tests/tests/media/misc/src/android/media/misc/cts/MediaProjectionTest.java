@@ -22,7 +22,6 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
 import android.content.Context;
-import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.MediaProjectionActivity;
 import android.media.projection.MediaProjection;
 import android.os.Handler;
@@ -33,7 +32,7 @@ import android.provider.Settings;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
-import com.android.compatibility.common.util.ShellUtils;
+import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -55,7 +54,7 @@ import java.util.concurrent.TimeUnit;
  * Note that there are other tests verifying that screen capturing actually works correctly in
  * CtsWindowManagerDeviceTestCases.
  */
-@NonMediaMainlineTest
+@NonMainlineTest
 public class MediaProjectionTest {
     @Rule
     public ActivityTestRule<MediaProjectionActivity> mActivityRule =

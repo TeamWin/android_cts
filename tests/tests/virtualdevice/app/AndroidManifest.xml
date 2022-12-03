@@ -40,7 +40,7 @@
         <activity android:name=".RestrictToDisplayCategoryActivity"
             android:allowEmbedded="true"
             android:exported="true"
-            android:targetDisplayCategory="automotive"/>
+            android:requiredDisplayCategory="automotive"/>
 
         <service android:name=".StreamedAppService"
             android:exported="true" />

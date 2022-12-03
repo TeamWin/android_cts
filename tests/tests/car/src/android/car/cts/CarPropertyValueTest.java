@@ -20,9 +20,11 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.car.Car;
 import android.car.VehicleAreaType;
+import android.car.cts.utils.ShellPermissionUtils;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
 import android.car.hardware.property.CarPropertyManager;
+import android.car.hardware.property.PropertyNotAvailableException;
 import android.car.test.ApiCheckerRule.Builder;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
@@ -50,7 +52,6 @@ public final class CarPropertyValueTest extends AbstractCarTestCase {
 
     private static final String TAG = CarPropertyValueTest.class.getSimpleName();
 
-    private CarPropertyManager mCarPropertyManager;
     private final List<CarPropertyValue> mCarPropertyValues = new ArrayList<>();
     private final SparseArray<CarPropertyConfig> mPropIdToConfig = new SparseArray<>();
 
@@ -63,8 +64,47 @@ public final class CarPropertyValueTest extends AbstractCarTestCase {
 
     @Before
     public void setUp() throws Exception {
-        mCarPropertyManager = (CarPropertyManager) getCar().getCarManager(Car.PROPERTY_SERVICE);
-        getCarPropertyValues();
+        CarPropertyManager carPropertyManager = (CarPropertyManager) getCar().getCarManager(
+                Car.PROPERTY_SERVICE);
+        ShellPermissionUtils.runWithShellPermissionIdentity(() -> {
+            List<CarPropertyConfig> configs = carPropertyManager.getPropertyList();
+            for (CarPropertyConfig cfg : configs) {
+                mPropIdToConfig.put(cfg.getPropertyId(), cfg);
+                if (cfg.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ
+                        || cfg.getAccess()
+                        == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE) {
+                    if (cfg.isGlobalProperty()) {
+                        CarPropertyValue value = getCarPropertyValue(carPropertyManager,
+                                cfg, /*areaId=*/0);
+                        if (value != null) {
+                            Assert.assertEquals(value.getPropertyId(), cfg.getPropertyId());
+                            mCarPropertyValues.add(value);
+                        }
+                    } else {
+                        for (int areaId : cfg.getAreaIds()) {
+                            CarPropertyValue value = getCarPropertyValue(carPropertyManager, cfg,
+                                    areaId);
+                            if (value != null) {
+                                Assert.assertEquals(value.getPropertyId(), cfg.getPropertyId());
+                                mCarPropertyValues.add(value);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        assertThat(mPropIdToConfig.size()).isAtLeast(4);
+        assertThat(mCarPropertyValues.size()).isAtLeast(4);
+    }
+
+    private CarPropertyValue<?> getCarPropertyValue(CarPropertyManager carPropertyManager,
+            CarPropertyConfig<?> carPropertyConfig, int areaId) {
+        try {
+            return carPropertyManager.getProperty(carPropertyConfig.getPropertyType(),
+                    carPropertyConfig.getPropertyId(), areaId);
+        } catch (PropertyNotAvailableException e) {
+            return null;
+        }
     }
 
     @Test
@@ -116,32 +156,6 @@ public final class CarPropertyValueTest extends AbstractCarTestCase {
     public void testGetValue() {
         for (CarPropertyValue propertyValue : mCarPropertyValues) {
             Assert.assertNotNull(propertyValue.getValue());
-        }
-    }
-
-    private void getCarPropertyValues() {
-        List<CarPropertyConfig> configs = mCarPropertyManager.getPropertyList();
-        for (CarPropertyConfig cfg : configs) {
-            mPropIdToConfig.put(cfg.getPropertyId(), cfg);
-            if (cfg.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ) {
-                if (cfg.isGlobalProperty()) {
-                    CarPropertyValue value = mCarPropertyManager.getProperty(
-                            cfg.getPropertyType(), cfg.getPropertyId(), 0);
-                    if (value != null) {
-                        Assert.assertEquals(value.getPropertyId(), cfg.getPropertyId());
-                        mCarPropertyValues.add(value);
-                    }
-                } else {
-                    for (int areaId : cfg.getAreaIds()) {
-                        CarPropertyValue value = mCarPropertyManager.getProperty(
-                            cfg.getPropertyType(), cfg.getPropertyId(), areaId);
-                        if (value != null) {
-                            Assert.assertEquals(value.getPropertyId(), cfg.getPropertyId());
-                            mCarPropertyValues.add(value);
-                        }
-                    }
-                }
-            }
         }
     }
 }

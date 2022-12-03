@@ -40,6 +40,7 @@ public class TestImsSmsImpl extends ImsSmsImplBase {
     private int mToken;
     private int mMessageRef;
     private int mResult;
+    public byte[] ackPdu;
 
     @Override
     public void sendSms(int token, int messageRef, String format, String smsc, boolean isRetry,
@@ -84,6 +85,19 @@ public class TestImsSmsImpl extends ImsSmsImplBase {
         mAckDeliveryLatch.countDown();
     }
 
+    @Override
+    public void acknowledgeSms(int token, int messageRef, int result, byte[] pdu) {
+        Log.d(TAG, "acknowledgeSms");
+        mToken = token;
+        mMessageRef = messageRef;
+        mResult = result;
+        ackPdu = pdu;
+        mSmsAckLatch.countDown();
+    }
+
+    public int getMessageRef() {
+        return mMessageRef;
+    }
     public void receiveSmsWaitForAcknowledge(int token, String format, byte[] pdu) {
         onSmsReceived(token, format, pdu);
         boolean complete = false;

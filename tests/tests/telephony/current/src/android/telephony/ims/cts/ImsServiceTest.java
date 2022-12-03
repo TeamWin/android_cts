@@ -32,6 +32,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
+import android.os.Build;
 import android.os.PersistableBundle;
 import android.telecom.PhoneAccount;
 import android.telephony.AccessNetworkConstants;
@@ -134,6 +135,8 @@ public class ImsServiceTest {
     private static final String SUPPORT_PROVISION_STATUS_FOR_CAPABILITY_STRING =
             "SUPPORT_PROVISION_STATUS_FOR_CAPABILITY";
 
+    private static final boolean DEBUG = !"user".equals(Build.TYPE);
+    private static final String ALLOW_MOCK_MODEM_PROPERTY = "persist.radio.allow_mock_modem";
     private static final String MSG_CONTENTS = "hi";
     private static final String EXPECTED_RECEIVED_MESSAGE = "foo5";
     private static final String DEST_NUMBER = "5555554567";
@@ -143,7 +146,9 @@ public class ImsServiceTest {
     private static final String RECEIVED_MESSAGE = "B5EhYBMDIPgEC5FhBWKFkPEAAEGQQlGDUooE5ve7Bg==";
     private static final byte[] STATUS_REPORT_PDU =
             hexStringToByteArray("0006000681214365919061800000639190618000006300");
-
+    private static final byte[] CLASS2SMPP_PDU =
+            hexStringToByteArray("07914151551512f221110A8178563412107FF20666B2996C2603");
+    private static final int EXPECTED_MESSAGEREF = 0x11;
     private static int sTestSlot = 0;
     private static int sTestSub = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
     private static boolean sDeviceUceEnabled;
@@ -310,11 +315,11 @@ public class ImsServiceTest {
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
-
         TelephonyManager tm = (TelephonyManager) getContext()
                 .getSystemService(Context.TELEPHONY_SERVICE);
         sTestSub = ImsUtils.getPreferredActiveSubId();
         sTestSlot = SubscriptionManager.getSlotIndex(sTestSub);
+
         if (tm.getSimState(sTestSlot) != TelephonyManager.SIM_STATE_READY) {
             return;
         }
@@ -948,6 +953,24 @@ public class ImsServiceTest {
         String receivedMessage = AsyncSmsMessageListener.getInstance()
                 .waitForSmsMessage(ImsUtils.TEST_TIMEOUT_MS);
         assertEquals(EXPECTED_RECEIVED_MESSAGE, receivedMessage);
+    }
+
+    @Test
+    public void testMmTelReceiveSMPPClass2Sms() throws Exception {
+        if (!ImsUtils.shouldRunSmsImsTests(sTestSub)) {
+            return;
+        }
+
+        setupImsServiceForSms();
+
+        // Message received
+        sServiceConnector.getCarrierService().getMmTelFeature().getSmsImplementation()
+                .receiveSmsWaitForAcknowledge(123456789, SmsMessage.FORMAT_3GPP,
+                        CLASS2SMPP_PDU);
+
+        assertEquals(EXPECTED_MESSAGEREF, sServiceConnector.getCarrierService().getMmTelFeature()
+                .getSmsImplementation().getMessageRef());
+
     }
 
     @Test

@@ -205,6 +205,20 @@ public class IRadioModemImpl extends IRadioModem.Stub {
     }
 
     @Override
+    public void getImei(int serial) {
+        Log.d(mTag, "getImei");
+
+        android.hardware.radio.modem.ImeiInfo imeiInfo =
+                new android.hardware.radio.modem.ImeiInfo();
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioModemResponse.getImeiResponse(rsp, imeiInfo);
+        } catch (RemoteException ex) {
+            Log.e(mTag, "Failed to getImeiResponse from AIDL. Exception" + ex);
+        }
+    }
+
+    @Override
     public void getHardwareConfig(int serial) {
         Log.d(mTag, "getHardwareConfig");
 

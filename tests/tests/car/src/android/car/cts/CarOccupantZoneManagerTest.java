@@ -376,6 +376,44 @@ public final class CarOccupantZoneManagerTest extends AbstractCarTestCase {
         }
     }
 
+    @Test
+    @ApiTest(apis = {"android.car.CarOccupantZoneManager#getOccupantZoneForUser"})
+    public void testGetOccupantZoneForInvalidUser() {
+        UserHandle invalidUser = UserHandle.of(UserHandle.USER_NULL);
+
+        assertWithMessage("Occupant Zone for a invalid user(%s)", invalidUser)
+                .that(mCarOccupantZoneManager.getOccupantZoneForUser(invalidUser))
+                .isNull();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.CarOccupantZoneManager#getOccupantZoneForUser"})
+    public void testGetOccupantZoneForNullUser() {
+        NullPointerException thrown = assertThrows(NullPointerException.class,
+                () -> mCarOccupantZoneManager.getOccupantZoneForUser(null));
+
+        assertWithMessage("Occupant Zone for null user")
+                .that(thrown).hasMessageThat()
+                .contains("User cannot be null");
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.CarOccupantZoneManager#getOccupantZoneForUser"})
+    public void testGetOccupantZoneForAllUsers() {
+        for (OccupantZoneInfo info : mAllZones) {
+            int userId = mCarOccupantZoneManager.getUserForOccupant(info);
+            OccupantZoneInfo result =
+                    mCarOccupantZoneManager.getOccupantZoneForUser(UserHandle.of(userId));
+            if (userId == UserHandle.USER_NULL) {
+                expectWithMessage("Occupant zone for user: %s", userId)
+                        .that(result).isNull();
+                continue;
+            }
+            expectWithMessage("Occupant zone for user: %s", userId)
+                    .that(result).isEqualTo(info);
+        }
+    }
+
     void assumeDriverZone() {
         assumeTrue("No driver zone", mCarOccupantZoneManager.hasDriverZone());
     }

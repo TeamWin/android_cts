@@ -29,6 +29,6 @@ public final class IsWorkTabSelectedStepAutomation implements Automation<Boolean
     @Override
     public Boolean automate() throws Exception {
         return TestApis.ui().device().findObject(
-                new UiSelector().text("Personal").className(Button.class)).isSelected();
+                new UiSelector().text("Work").className(Button.class)).isSelected();
     }
 }

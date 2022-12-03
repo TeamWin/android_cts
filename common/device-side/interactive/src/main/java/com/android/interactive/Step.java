@@ -131,6 +131,8 @@ public abstract class Step<E> {
                         } else if (value == AutomatingFailedStep.CONTINUE_MANUALLY) {
                             // Do nothing - we will fall through to the manual resolution
                         } else if (value == AutomatingFailedStep.RETRY) {
+                            return Step.execute(stepClass);
+                        } else if (value == AutomatingFailedStep.RESTART) {
                             throw new RestartTestException("Retrying after automatic failure");
                         } else if (value == AutomatingFailedStep.RESTART_MANUALLY) {
                             sForceManual.set(true);

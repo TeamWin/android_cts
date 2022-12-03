@@ -609,6 +609,14 @@ public abstract class CodecTestBase {
                 }
                 paramStr.delete(paramStr.length() - 2, paramStr.length())
                         .append(length == map.size() ? "}, " : ", ... }, ");
+            } else if (o instanceof EncoderConfigParams[]) {
+                int length = Math.min(((EncoderConfigParams[]) o).length, 3);
+                paramStr.append("{");
+                for (int i = 0; i < ((EncoderConfigParams[]) o).length; i++) {
+                    paramStr.append(((EncoderConfigParams[]) o)[i]).append(", ");
+                }
+                paramStr.delete(paramStr.length() - 2, paramStr.length())
+                        .append(length == ((EncoderConfigParams[]) o).length ? "}, " : ", ... }, ");
             } else paramStr.append(o).append(", ");
         }
         paramStr.delete(paramStr.length() - 2, paramStr.length()).append("  ]");
