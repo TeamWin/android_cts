@@ -26,6 +26,7 @@ import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 
+import org.junit.After;
 import org.junit.Assume;
 
 import java.io.File;
@@ -51,6 +52,14 @@ public class HDREncoderTestBase extends CodecEncoderTestBase {
             int height, RawResource rawResoure, String allTestParams) {
         super(encoderName, mediaType, new int[]{bitrate}, new int[]{width}, new int[]{height},
                 rawResoure, allTestParams);
+    }
+
+    @After
+    public void tearDownHdrEncoderTestBase() {
+        if (mMuxer != null) {
+            mMuxer.release();
+            mMuxer = null;
+        }
     }
 
     protected void enqueueInput(int bufferIndex) {

@@ -34,6 +34,7 @@ import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.ApiTest;
 
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -190,6 +191,15 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
             }
         } else {
             mColorBars = COLOR_BARS_YUV;
+        }
+    }
+
+    @After
+    public void tearDown() {
+        mSurface = null;
+        if (mEGLWindowOutSurface != null) {
+            mEGLWindowOutSurface.release();
+            mEGLWindowOutSurface = null;
         }
     }
 
@@ -396,7 +406,7 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
         validateColorAspects(mCodec.getOutputFormat(), mRange, mStandard, mTransferCurve);
         mCodec.stop();
         mCodec.release();
-        mEGLWindowOutSurface.release();
+        tearDown();
 
         assertEquals("color difference exceeds allowed tolerance in " + mBadFrames + " out of "
                 + mOutputCount + " frames \n" + mTestConfig + mTestEnv, 0, mBadFrames);

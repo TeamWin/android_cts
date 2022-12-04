@@ -49,6 +49,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.Preconditions;
 
+import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
@@ -209,6 +210,30 @@ public class CodecEncoderSurfaceTest {
         }
 
         mEncoderFormat = setUpEncoderFormat(mDecoderFormat);
+    }
+
+    @After
+    public void tearDown() {
+        if (mDecoder != null) {
+            mDecoder.release();
+            mDecoder = null;
+        }
+        if (mSurface != null) {
+            mSurface.release();
+            mSurface = null;
+        }
+        if (mEncoder != null) {
+            mEncoder.release();
+            mEncoder = null;
+        }
+        if (mExtractor != null) {
+            mExtractor.release();
+            mExtractor = null;
+        }
+        if (mMuxer != null) {
+            mMuxer.release();
+            mMuxer = null;
+        }
     }
 
     @Parameterized.Parameters(name = "{index}({0}_{1}_{5})")

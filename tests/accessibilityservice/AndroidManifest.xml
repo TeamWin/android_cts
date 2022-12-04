@@ -256,6 +256,17 @@
             <meta-data android:name="android.accessibilityservice"
                 android:resource="@xml/stub_non_ime_accessibility_service"/>
         </service>
+
+        <service android:name=".StubMotionInterceptingAccessibilityService"
+             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService"/>
+            </intent-filter>
+
+            <meta-data android:name="android.accessibilityservice"
+                 android:resource="@xml/stub_motion_intercepting_accessibility_service"/>
+        </service>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

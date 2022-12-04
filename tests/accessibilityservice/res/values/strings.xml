@@ -168,6 +168,8 @@
 
     <string name="stub_take_screenshot_service_description">com.android.accessibilityservice.cts.StubTakeScreenshotService</string>
 
+    <string name="stub_motion_intercepting_accessibility_service_description">com.android.accessibilityservice.cts.StubMotionInterceptingAccessibilityService</string>
+
     <string name="android_wiki_paragraphs">
         \n\nAndroid is a\n\n It is developed\n The
         unveiling\n\n</string>

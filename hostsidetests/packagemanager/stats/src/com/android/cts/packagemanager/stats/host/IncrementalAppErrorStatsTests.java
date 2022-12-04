@@ -50,7 +50,6 @@ import java.util.concurrent.TimeUnit;
 public final class IncrementalAppErrorStatsTests extends DeviceTestCase implements IBuildReceiver {
     private static final String TEST_REMOTE_DIR = "/data/local/tmp/appErrorTest";
     private static final String HELPER_PACKAGE = "com.android.cts.packagemanager.stats.device";
-    private static final String HELPER_APK = "IncrementalAppErrorStatsTestsHelper.apk";
     private static final String HELPER_CLASS = ".IncrementalAppErrorStatsTestsHelper";
     private static final String HELPER_METHOD = "getPageIndexToBlock";
     private static final String HELPER_ARG = "remoteApkPath";
@@ -74,9 +73,6 @@ public final class IncrementalAppErrorStatsTests extends DeviceTestCase implemen
         super.setUp();
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
-
-        DeviceUtils.installTestApp(getDevice(), HELPER_APK, HELPER_PACKAGE, mCtsBuild);
-        assertTrue(getDevice().isPackageInstalled(HELPER_PACKAGE));
 
         String remoteApkPath = Utils.pushApkToRemote(
                 DeviceUtils.STATSD_ATOM_TEST_APK, TEST_REMOTE_DIR, mCtsBuild, getDevice());

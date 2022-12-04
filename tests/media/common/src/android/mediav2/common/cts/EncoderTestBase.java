@@ -16,21 +16,30 @@
 
 package android.mediav2.common.cts;
 
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
+import static android.media.MediaMuxer.OutputFormat.MUXER_OUTPUT_FIRST;
+import static android.media.MediaMuxer.OutputFormat.MUXER_OUTPUT_LAST;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.graphics.ImageFormat;
+import android.media.AudioFormat;
 import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
+import android.media.MediaMuxer;
 import android.os.PersistableBundle;
 import android.util.Log;
 
 import com.android.compatibility.common.util.Preconditions;
 
+import org.junit.After;
 import org.junit.Before;
 
 import java.io.File;
@@ -38,18 +47,57 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Wrapper class for trying and testing encoder components.
- * @deprecated This class is marked for future removal. Use {@link EncoderTestBase} instead.
- * {@link EncoderTestBase} offers same functionality as the current class. Besides that, it has
- * utility functions for muxing, offers better control over configuration params, utility
- * functions for better test labelling.
- * TODO (b/260533828) remove this once all encoders are update to use {@link EncoderConfigParams}
  */
-@Deprecated(forRemoval = true)
-public class CodecEncoderTestBase extends CodecTestBase {
-    private static final String LOG_TAG = CodecEncoderTestBase.class.getSimpleName();
+public class EncoderTestBase extends CodecTestBase {
+    private static final String LOG_TAG = EncoderTestBase.class.getSimpleName();
+
+    protected final EncoderConfigParams[] mEncCfgParams;
+
+    protected EncoderConfigParams mActiveEncCfg;
+    protected RawResource mActiveRawRes;
+    protected boolean mIsLoopBack;
+    protected int mLoopBackFrameLimit;
+
+    protected byte[] mInputData;
+    protected int mInputBufferReadOffset;
+    protected int mNumBytesSubmitted;
+    protected long mInputOffsetPts;
+
+    protected ArrayList<MediaCodec.BufferInfo> mInfoList = new ArrayList<>();
+
+    protected boolean mMuxOutput;
+    protected String mMuxedOutputFile;
+    protected MediaMuxer mMuxer;
+    protected int mTrackID = -1;
+
+    public EncoderTestBase(String encoder, String mime, EncoderConfigParams[] encCfgParams,
+            String allTestParams) {
+        super(encoder, mime, allTestParams);
+        mEncCfgParams = encCfgParams;
+    }
+
+    private static final List<String> MEDIATYPE_LIST_FOR_TYPE_MP4 =
+            Arrays.asList(MediaFormat.MIMETYPE_VIDEO_MPEG4, MediaFormat.MIMETYPE_VIDEO_H263,
+                    MediaFormat.MIMETYPE_VIDEO_AVC, MediaFormat.MIMETYPE_VIDEO_HEVC,
+                    MediaFormat.MIMETYPE_AUDIO_AAC);
+    private static final List<String> MEDIATYPE_LIST_FOR_TYPE_WEBM =
+            Arrays.asList(MediaFormat.MIMETYPE_VIDEO_VP8, MediaFormat.MIMETYPE_VIDEO_VP9,
+                    MediaFormat.MIMETYPE_AUDIO_VORBIS, MediaFormat.MIMETYPE_AUDIO_OPUS);
+    private static final List<String> MEDIATYPE_LIST_FOR_TYPE_3GP =
+            Arrays.asList(MediaFormat.MIMETYPE_VIDEO_MPEG4, MediaFormat.MIMETYPE_VIDEO_H263,
+                    MediaFormat.MIMETYPE_VIDEO_AVC, MediaFormat.MIMETYPE_AUDIO_AAC,
+                    MediaFormat.MIMETYPE_AUDIO_AMR_NB, MediaFormat.MIMETYPE_AUDIO_AMR_WB);
+    private static final List<String> MEDIATYPE_LIST_FOR_TYPE_OGG =
+            Collections.singletonList(MediaFormat.MIMETYPE_AUDIO_OPUS);
+
+    public static final float ACCEPTABLE_WIRELESS_TX_QUALITY = 20.0f;  // psnr in dB
+    public static final float ACCEPTABLE_AV_SYNC_ERROR = 22.0f; // duration in ms
 
     /**
      * Selects encoder input color format in byte buffer mode. As of now ndk tests support only
@@ -72,50 +120,48 @@ public class CodecEncoderTestBase extends CodecTestBase {
         return colorFormat;
     }
 
-    protected final int[] mBitrates;
-    protected final int[] mEncParamList1;
-    protected final int[] mEncParamList2;
-
-    protected RawResource mActiveRawRes;
-    protected byte[] mInputData;
-    protected int mInputBufferReadOffset;
-    protected int mNumBytesSubmitted;
-    protected long mInputOffsetPts;
-
-    protected ArrayList<MediaFormat> mFormats;
-    protected ArrayList<MediaCodec.BufferInfo> mInfoList;
-
-    protected int mWidth, mHeight;
-    protected int mBytesPerSample;
-    protected int mFrameRate;
-    protected int mMaxBFrames;
-    protected int mChannels;
-    protected int mSampleRate;
-    protected int mLoopBackFrameLimit;
-    protected boolean mIsLoopBack;
-
-    public CodecEncoderTestBase(String encoder, String mime, int[] bitrates, int[] encoderInfo1,
-            int[] encoderInfo2, RawResource rawResource, String allTestParams) {
-        super(encoder, mime, allTestParams);
-        mBitrates = bitrates;
-        mEncParamList1 = encoderInfo1;
-        mEncParamList2 = encoderInfo2;
-        mFormats = new ArrayList<>();
-        mInfoList = new ArrayList<>();
-        mWidth = 0;
-        mHeight = 0;
-        if (mime.equals(MediaFormat.MIMETYPE_VIDEO_MPEG4)) {
-            mFrameRate = 12;
-        } else if (mime.equals(MediaFormat.MIMETYPE_VIDEO_H263)) {
-            mFrameRate = 12;
-        } else {
-            mFrameRate = 30;
+    public static void muxOutput(String filePath, int muxerFormat, MediaFormat format,
+            ByteBuffer buffer, ArrayList<MediaCodec.BufferInfo> infos) throws IOException {
+        MediaMuxer muxer = null;
+        try {
+            muxer = new MediaMuxer(filePath, muxerFormat);
+            int trackID = muxer.addTrack(format);
+            muxer.start();
+            for (MediaCodec.BufferInfo info : infos) {
+                muxer.writeSampleData(trackID, buffer, info);
+            }
+            muxer.stop();
+        } finally {
+            if (muxer != null) muxer.release();
         }
-        mMaxBFrames = 0;
-        mChannels = 0;
-        mSampleRate = 0;
-        mActiveRawRes = rawResource;
-        mBytesPerSample = mActiveRawRes.mBytesPerSample;
+    }
+
+    public static boolean isMediaTypeContainerPairValid(String mime, int format) {
+        boolean result = false;
+        if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4) {
+            result = MEDIATYPE_LIST_FOR_TYPE_MP4.contains(mime) || mime.startsWith("application/");
+        } else if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM) {
+            result = MEDIATYPE_LIST_FOR_TYPE_WEBM.contains(mime);
+        } else if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP) {
+            result = MEDIATYPE_LIST_FOR_TYPE_3GP.contains(mime);
+        } else if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_OGG) {
+            result = MEDIATYPE_LIST_FOR_TYPE_OGG.contains(mime);
+        }
+        return result;
+    }
+
+    public static int getMuxerFormatForMediaType(String mediaType) {
+        for (int muxFormat = MUXER_OUTPUT_FIRST; muxFormat <= MUXER_OUTPUT_LAST; muxFormat++) {
+            if (isMediaTypeContainerPairValid(mediaType, muxFormat)) {
+                return muxFormat;
+            }
+        }
+        fail("no configured muxer support for " + mediaType);
+        return MUXER_OUTPUT_LAST;
+    }
+
+    public static String getTempFilePath(String infix) throws IOException {
+        return File.createTempFile("tmp" + infix, ".bin").getAbsolutePath();
     }
 
     public static String bitRateModeToString(int mode) {
@@ -133,22 +179,96 @@ public class CodecEncoderTestBase extends CodecTestBase {
         }
     }
 
+    public static String rangeToString(int range) {
+        switch (range) {
+            case UNSPECIFIED:
+                return "unspecified";
+            case MediaFormat.COLOR_RANGE_FULL:
+                return "full";
+            case MediaFormat.COLOR_RANGE_LIMITED:
+                return "limited";
+            default:
+                return "unknown";
+        }
+    }
+
+    public static String colorStandardToString(int standard) {
+        switch (standard) {
+            case UNSPECIFIED:
+                return "unspecified";
+            case MediaFormat.COLOR_STANDARD_BT709:
+                return "bt709";
+            case MediaFormat.COLOR_STANDARD_BT601_PAL:
+                return "bt601pal";
+            case MediaFormat.COLOR_STANDARD_BT601_NTSC:
+                return "bt601ntsc";
+            case MediaFormat.COLOR_STANDARD_BT2020:
+                return "bt2020";
+            default:
+                return "unknown";
+        }
+    }
+
+    public static String colorTransferToString(int transfer) {
+        switch (transfer) {
+            case UNSPECIFIED:
+                return "unspecified";
+            case MediaFormat.COLOR_TRANSFER_LINEAR:
+                return "linear";
+            case MediaFormat.COLOR_TRANSFER_SDR_VIDEO:
+                return "sdr";
+            case MediaFormat.COLOR_TRANSFER_HLG:
+                return "hlg";
+            case MediaFormat.COLOR_TRANSFER_ST2084:
+                return "st2084";
+            default:
+                return "unknown";
+        }
+    }
+
+    public static String colorFormatToString(int colorFormat, int bitDepth) {
+        switch (colorFormat) {
+            case COLOR_FormatYUV420Flexible:
+                return "yuv420flexible";
+            case COLOR_FormatYUVP010:
+                return "yuvp010";
+            case COLOR_FormatSurface:
+                if (bitDepth == 8) {
+                    return "surfacergb888";
+                } else if (bitDepth == 10) {
+                    return "surfaceabgr2101010";
+                } else {
+                    return "unknown";
+                }
+            default:
+                return "unknown";
+        }
+    }
+
+    public static String audioEncodingToString(int enc) {
+        switch (enc) {
+            case AudioFormat.ENCODING_INVALID:
+                return "invalid";
+            case AudioFormat.ENCODING_PCM_16BIT:
+                return "pcm16";
+            case AudioFormat.ENCODING_PCM_FLOAT:
+                return "pcmfloat";
+            default:
+                return "unknown";
+        }
+    }
+
     @Before
     public void setUpCodecEncoderTestBase() {
         assertTrue("Testing a mime that is neither audio nor video is not supported \n"
                 + mTestConfig, mIsAudio || mIsVideo);
     }
 
-    @Override
-    protected void configureCodec(MediaFormat format, boolean isAsync,
-            boolean signalEOSWithLastFrame, boolean isEncoder) {
-        super.configureCodec(format, isAsync, signalEOSWithLastFrame, isEncoder);
-        if (mIsAudio) {
-            mSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
-            mChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
-        } else {
-            mWidth = format.getInteger(MediaFormat.KEY_WIDTH);
-            mHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
+    @After
+    public void tearDown() {
+        if (mMuxer != null) {
+            mMuxer.release();
+            mMuxer = null;
         }
     }
 
@@ -158,6 +278,7 @@ public class CodecEncoderTestBase extends CodecTestBase {
         mInputBufferReadOffset = 0;
         mNumBytesSubmitted = 0;
         mInputOffsetPts = 0;
+        mInfoList.clear();
     }
 
     protected void setUpSource(String inpPath) throws IOException {
@@ -175,7 +296,7 @@ public class CodecEncoderTestBase extends CodecTestBase {
                 format == ImageFormat.YUV_420_888 || format == ImageFormat.YCBCR_P010);
         int bytesPerSample = (ImageFormat.getBitsPerPixel(format) * 2) / (8 * 3);  // YUV420
         assertEquals("Invalid bytes per sample \n" + mTestConfig + mTestEnv, bytesPerSample,
-                mBytesPerSample);
+                mActiveRawRes.mBytesPerSample);
 
         int imageWidth = image.getWidth();
         int imageHeight = image.getHeight();
@@ -237,13 +358,13 @@ public class CodecEncoderTestBase extends CodecTestBase {
     void fillByteBuffer(ByteBuffer inputBuffer) {
         int offset = 0, frmOffset = mInputBufferReadOffset;
         for (int plane = 0; plane < 3; plane++) {
-            int width = mWidth;
-            int height = mHeight;
+            int width = mActiveEncCfg.mWidth;
+            int height = mActiveEncCfg.mHeight;
             int tileWidth = mActiveRawRes.mWidth;
             int tileHeight = mActiveRawRes.mHeight;
             if (plane != 0) {
-                width = mWidth / 2;
-                height = mHeight / 2;
+                width = mActiveEncCfg.mWidth / 2;
+                height = mActiveEncCfg.mHeight / 2;
                 tileWidth = mActiveRawRes.mWidth / 2;
                 tileHeight = mActiveRawRes.mHeight / 2;
             }
@@ -253,14 +374,16 @@ public class CodecEncoderTestBase extends CodecTestBase {
                     for (int i = 0; i < width; i += tileWidth) {
                         int colsToCopy = Math.min(width - i, tileWidth);
                         inputBuffer.position(
-                                offset + (k + j) * width * mBytesPerSample + i * mBytesPerSample);
-                        inputBuffer.put(mInputData, frmOffset + j * tileWidth * mBytesPerSample,
-                                colsToCopy * mBytesPerSample);
+                                offset + (k + j) * width * mActiveRawRes.mBytesPerSample
+                                        + i * mActiveRawRes.mBytesPerSample);
+                        inputBuffer.put(mInputData,
+                                frmOffset + j * tileWidth * mActiveRawRes.mBytesPerSample,
+                                colsToCopy * mActiveRawRes.mBytesPerSample);
                     }
                 }
             }
-            offset += width * height * mBytesPerSample;
-            frmOffset += tileWidth * tileHeight * mBytesPerSample;
+            offset += width * height * mActiveRawRes.mBytesPerSample;
+            frmOffset += tileWidth * tileHeight * mActiveRawRes.mBytesPerSample;
         }
     }
 
@@ -276,10 +399,11 @@ public class CodecEncoderTestBase extends CodecTestBase {
             int flags = 0;
             long pts = mInputOffsetPts;
             if (mIsAudio) {
-                pts += mNumBytesSubmitted * 1000000L / ((long) mBytesPerSample * mChannels
-                        * mSampleRate);
+                pts += mNumBytesSubmitted * 1000000L / ((long) mActiveRawRes.mBytesPerSample
+                        * mActiveEncCfg.mChannelCount * mActiveEncCfg.mSampleRate);
                 size = Math.min(inputBuffer.capacity(), mInputData.length - mInputBufferReadOffset);
-                assertEquals(0, size % ((long) mBytesPerSample * mChannels));
+                assertEquals(0, size % ((long) mActiveRawRes.mBytesPerSample
+                        * mActiveEncCfg.mChannelCount));
                 inputBuffer.put(mInputData, mInputBufferReadOffset, size);
                 if (mSignalEOSWithLastFrame) {
                     if (mIsLoopBack ? (mInputCount + 1 >= mLoopBackFrameLimit) :
@@ -290,8 +414,9 @@ public class CodecEncoderTestBase extends CodecTestBase {
                 }
                 mInputBufferReadOffset += size;
             } else {
-                pts += mInputCount * 1000000L / mFrameRate;
-                size = mBytesPerSample * mWidth * mHeight * 3 / 2;
+                pts += mInputCount * 1000000L / mActiveEncCfg.mFrameRate;
+                size = mActiveRawRes.mBytesPerSample * mActiveEncCfg.mWidth * mActiveEncCfg.mHeight
+                        * 3 / 2;
                 int frmSize = mActiveRawRes.mBytesPerSample * mActiveRawRes.mWidth
                         * mActiveRawRes.mHeight * 3 / 2;
                 if (mInputBufferReadOffset + frmSize > mInputData.length) {
@@ -331,18 +456,25 @@ public class CodecEncoderTestBase extends CodecTestBase {
             mSawOutputEOS = true;
         }
         if (info.size > 0) {
+            ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
             if (mSaveToMem) {
                 MediaCodec.BufferInfo copy = new MediaCodec.BufferInfo();
                 copy.set(mOutputBuff.getOutStreamSize(), info.size, info.presentationTimeUs,
                         info.flags);
                 mInfoList.add(copy);
 
-                ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
                 mOutputBuff.saveToMemory(buf, info);
             }
             if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
                 mOutputBuff.saveOutPTS(info.presentationTimeUs);
                 mOutputCount++;
+            }
+            if (mMuxer != null) {
+                if (mTrackID == -1) {
+                    mTrackID = mMuxer.addTrack(mCodec.getOutputFormat());
+                    mMuxer.start();
+                }
+                mMuxer.writeSampleData(mTrackID, buf, info);
             }
         }
         mCodec.releaseOutputBuffer(bufferIndex, false);
@@ -351,7 +483,27 @@ public class CodecEncoderTestBase extends CodecTestBase {
     @Override
     protected void doWork(int frameLimit) throws IOException, InterruptedException {
         mLoopBackFrameLimit = frameLimit;
+        if (mMuxOutput) {
+            int muxerFormat = getMuxerFormatForMediaType(mMime);
+            mMuxedOutputFile = getTempFilePath((mActiveEncCfg.mInputBitDepth == 10) ? "10bit" : "");
+            mMuxer = new MediaMuxer(mMuxedOutputFile, muxerFormat);
+        }
         super.doWork(frameLimit);
+    }
+
+    @Override
+    public void waitForAllOutputs() throws InterruptedException {
+        super.waitForAllOutputs();
+        if (mMuxOutput) {
+            if (mTrackID != -1) {
+                mMuxer.stop();
+                mTrackID = -1;
+            }
+            if (mMuxer != null) {
+                mMuxer.release();
+                mMuxer = null;
+            }
+        }
     }
 
     @Override
@@ -364,74 +516,39 @@ public class CodecEncoderTestBase extends CodecTestBase {
         return metrics;
     }
 
-    protected void setUpParams(int limit) {
-        int count = 0;
-        for (int bitrate : mBitrates) {
-            if (mIsAudio) {
-                for (int rate : mEncParamList1) {
-                    for (int channels : mEncParamList2) {
-                        MediaFormat format = new MediaFormat();
-                        format.setString(MediaFormat.KEY_MIME, mMime);
-                        if (mMime.equals(MediaFormat.MIMETYPE_AUDIO_FLAC)) {
-                            format.setInteger(MediaFormat.KEY_FLAC_COMPRESSION_LEVEL, bitrate);
-                        } else {
-                            format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
-                        }
-                        format.setInteger(MediaFormat.KEY_SAMPLE_RATE, rate);
-                        format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, channels);
-                        mFormats.add(format);
-                        count++;
-                        if (count >= limit) return;
-                    }
-                }
-            } else {
-                assertEquals("Wrong number of height, width parameters \n" + mTestConfig + mTestEnv,
-                        mEncParamList1.length, mEncParamList2.length);
-                for (int i = 0; i < mEncParamList1.length; i++) {
-                    MediaFormat format = new MediaFormat();
-                    format.setString(MediaFormat.KEY_MIME, mMime);
-                    format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
-                    format.setInteger(MediaFormat.KEY_WIDTH, mEncParamList1[i]);
-                    format.setInteger(MediaFormat.KEY_HEIGHT, mEncParamList2[i]);
-                    format.setInteger(MediaFormat.KEY_FRAME_RATE, mFrameRate);
-                    format.setInteger(MediaFormat.KEY_MAX_B_FRAMES, mMaxBFrames);
-                    format.setFloat(MediaFormat.KEY_I_FRAME_INTERVAL, 1.0f);
-                    format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
-                            MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
-                    mFormats.add(format);
-                    count++;
-                    if (count >= limit) return;
-                }
-            }
-        }
-    }
-
-    public void encodeToMemory(String file, String encoder, int frameLimit, MediaFormat format,
-            boolean saveToMem) throws IOException, InterruptedException {
+    public void encodeToMemory(String encoder, EncoderConfigParams cfg, RawResource res,
+            int frameLimit, boolean saveToMem, boolean muxOutput)
+            throws IOException, InterruptedException {
         mSaveToMem = saveToMem;
+        mMuxOutput = muxOutput;
         mOutputBuff = new OutputManager();
         mInfoList.clear();
+        mActiveEncCfg = cfg;
+        mActiveRawRes = res;
         mCodec = MediaCodec.createByCodecName(encoder);
-        setUpSource(file);
-        configureCodec(format, false, true, true);
+        setUpSource(mActiveRawRes.mFileName);
+        configureCodec(mActiveEncCfg.getFormat(), false, true, true);
         mCodec.start();
         doWork(frameLimit);
         queueEOS();
         waitForAllOutputs();
         mCodec.stop();
         mCodec.release();
+        mActiveRawRes = null;
+        mActiveEncCfg = null;
         mSaveToMem = false;
+        mMuxOutput = false;
     }
 
     void validateTestState() {
         super.validateTestState();
-        if ((mIsAudio || (mIsVideo && mMaxBFrames == 0))
+        if ((mIsAudio || (mIsVideo && mActiveEncCfg.mMaxBFrames == 0))
                 && !mOutputBuff.isPtsStrictlyIncreasing(mPrevOutputPts)) {
             fail("Output timestamps are not strictly increasing \n" + mTestConfig + mTestEnv
                     + mOutputBuff.getErrMsg());
         }
         if (mIsVideo) {
-            if (!mOutputBuff.isOutPtsListIdenticalToInpPtsList((mMaxBFrames != 0))) {
+            if (!mOutputBuff.isOutPtsListIdenticalToInpPtsList((mActiveEncCfg.mMaxBFrames != 0))) {
                 fail("Input pts list and Output pts list are not identical \n" + mTestConfig
                         + mTestEnv + mOutputBuff.getErrMsg());
             }

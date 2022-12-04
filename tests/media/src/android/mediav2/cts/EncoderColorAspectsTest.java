@@ -43,6 +43,7 @@ import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.MediaUtils;
 
+import org.junit.After;
 import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -95,6 +96,14 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
     private ArrayList<String> mCheckESList = new ArrayList<>();
 
     private static boolean sIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
+
+    @After
+    public void tearDown() {
+        if (mMuxer != null) {
+            mMuxer.release();
+            mMuxer = null;
+        }
+    }
 
     public EncoderColorAspectsTest(String encoderName, String mime, int width, int height,
             int range, int standard, int transferCurve, boolean useHighBitDepth,

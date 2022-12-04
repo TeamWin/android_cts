@@ -63,7 +63,8 @@ import java.util.List;
  */
 @RunWith(Parameterized.class)
 public class VideoEncoderPsnrTest extends VideoEncoderValidationTestBase {
-    private static final float ACCEPTABLE_WIRED_TX_QUALITY = 30.0f;  // dB
+    private static final float MIN_ACCEPTABLE_QUALITY = 30.0f;  // dB
+    private static final float AVG_ACCEPTABLE_QUALITY = 35.0f;  // dB
     private static final int KEY_FRAME_INTERVAL = 1;
     private static final int FRAME_LIMIT = 300;
     private static final List<Object[]> exhaustiveArgsList = new ArrayList<>();
@@ -179,13 +180,21 @@ public class VideoEncoderPsnrTest extends VideoEncoderValidationTestBase {
             for (int j = 0; j < framesPSNR.size(); j++) {
                 double[] framePSNR = framesPSNR.get(j);
                 for (double v : framePSNR) {
-                    if (v < ACCEPTABLE_WIRED_TX_QUALITY) {
+                    if (v < MIN_ACCEPTABLE_QUALITY) {
                         msg.append(String.format("Frame %d - PSNR Y: %f, PSNR U: %f, PSNR V: %f \n",
                                 j, framePSNR[0], framePSNR[1], framePSNR[2]));
                         isOk = false;
                         break;
                     }
                 }
+            }
+            final double[] avgPSNR = cs.getAvgPSNR();
+            // weighted avg for yuv420
+            final double weightedAvgPSNR = (4 * avgPSNR[0] + avgPSNR[1] + avgPSNR[2]) / 6;
+            if (weightedAvgPSNR < AVG_ACCEPTABLE_QUALITY) {
+                msg.append(String.format("Average PSNR of the sequence: %f is < threshold : %f\n",
+                        weightedAvgPSNR, AVG_ACCEPTABLE_QUALITY));
+                isOk = false;
             }
         } finally {
             if (cs != null) cs.cleanUp();
@@ -194,6 +203,6 @@ public class VideoEncoderPsnrTest extends VideoEncoderValidationTestBase {
         assertEquals("encoder did not encode the requested number of frames \n"
                 + mTestConfig + mTestEnv, FRAME_LIMIT, mOutputCount);
         assertTrue("Encountered frames with PSNR less than configured threshold "
-                + ACCEPTABLE_WIRED_TX_QUALITY + "dB \n" + msg + mTestConfig + mTestEnv, isOk);
+                + MIN_ACCEPTABLE_QUALITY + "dB \n" + msg + mTestConfig + mTestEnv, isOk);
     }
 }

@@ -43,6 +43,7 @@ import androidx.test.filters.LargeTest;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.MediaUtils;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -132,6 +133,31 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
     private final boolean mMuxOutput = false;
     private MediaMuxer mMuxer;
     private int mTrackID = -1;
+
+    @After
+    public void tearDown() {
+        if (mMuxer != null) {
+            mMuxer.release();
+            mMuxer = null;
+        }
+        if (mEGLWindowInpSurface != null) {
+            mEGLWindowInpSurface.release();
+            mEGLWindowInpSurface = null;
+        }
+        if (mInpSurface != null) {
+            mInpSurface.release();
+            mInpSurface = null;
+        }
+        if (mEncoder != null) {
+            mEncoder.release();
+            mEncoder = null;
+        }
+        mSurface = null;
+        if (mEGLWindowOutSurface != null) {
+            mEGLWindowOutSurface.release();
+            mEGLWindowOutSurface = null;
+        }
+    }
 
     public EncodeDecodeAccuracyTest(String encoder, String mime, int width, int height,
             int frameRate, int bitrate, int range, int standard, int transfer,
@@ -501,7 +527,9 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
             mCodec.stop();
             mCodec.release();
         }
+        mSurface = null;
         mEGLWindowOutSurface.release();
+        mEGLWindowOutSurface = null;
     }
 
     /**
@@ -561,6 +589,7 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
                 outputFormat.removeKey(MediaFormat.KEY_COLOR_TRANSFER);
             }
             mEGLWindowInpSurface.release();
+            mEGLWindowInpSurface = null;
             mInpSurface.release();
             mInpSurface = null;
             mEncoder.reset();

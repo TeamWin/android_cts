@@ -16,6 +16,8 @@
 
 package android.mediav2.cts;
 
+import static android.mediav2.common.cts.EncoderTestBase.isMediaTypeContainerPairValid;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -365,20 +367,6 @@ public class MuxerTest {
     private static boolean[] muxSelector = new boolean[MUXER_OUTPUT_LAST + 1];
     private static HashMap<Integer, String> formatStringPair = new HashMap<>();
 
-    static final List<String> CODECLIST_FOR_TYPE_MP4 =
-            Arrays.asList(MediaFormat.MIMETYPE_VIDEO_MPEG4, MediaFormat.MIMETYPE_VIDEO_H263,
-                    MediaFormat.MIMETYPE_VIDEO_AVC, MediaFormat.MIMETYPE_VIDEO_HEVC,
-                    MediaFormat.MIMETYPE_AUDIO_AAC);
-    static final List<String> CODECLIST_FOR_TYPE_WEBM =
-            Arrays.asList(MediaFormat.MIMETYPE_VIDEO_VP8, MediaFormat.MIMETYPE_VIDEO_VP9,
-                    MediaFormat.MIMETYPE_AUDIO_VORBIS, MediaFormat.MIMETYPE_AUDIO_OPUS);
-    static final List<String> CODECLIST_FOR_TYPE_3GP =
-            Arrays.asList(MediaFormat.MIMETYPE_VIDEO_MPEG4, MediaFormat.MIMETYPE_VIDEO_H263,
-                    MediaFormat.MIMETYPE_VIDEO_AVC, MediaFormat.MIMETYPE_AUDIO_AAC,
-                    MediaFormat.MIMETYPE_AUDIO_AMR_NB, MediaFormat.MIMETYPE_AUDIO_AMR_WB);
-    static final List<String> CODECLIST_FOR_TYPE_OGG =
-            Arrays.asList(MediaFormat.MIMETYPE_AUDIO_OPUS);
-
     static {
         android.os.Bundle args = InstrumentationRegistry.getArguments();
         final String defSel = "mp4;webm;3gp;ogg";
@@ -400,20 +388,6 @@ public class MuxerTest {
 
     static private boolean shouldRunTest(int format) {
         return muxSelector[format];
-    }
-
-    static boolean isCodecContainerPairValid(String mime, int format) {
-        boolean result = false;
-        if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
-            result = CODECLIST_FOR_TYPE_MP4.contains(mime) || mime.startsWith("application/");
-        else if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM) {
-            return CODECLIST_FOR_TYPE_WEBM.contains(mime);
-        } else if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP) {
-            result = CODECLIST_FOR_TYPE_3GP.contains(mime);
-        } else if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_OGG) {
-            result = CODECLIST_FOR_TYPE_OGG.contains(mime);
-        }
-        return result;
     }
 
     /**
@@ -1175,7 +1149,7 @@ public class MuxerTest {
                         fail(msg + "error! output != clone(input)");
                     }
                 } catch (Exception e) {
-                    if (isCodecContainerPairValid(mMime, format)) {
+                    if (isMediaTypeContainerPairValid(mMime, format)) {
                         fail(msg + "error! incompatible mime and output format");
                     }
                 } finally {

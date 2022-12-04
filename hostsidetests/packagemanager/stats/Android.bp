@@ -40,7 +40,7 @@ java_test_host {
         ":CtsStatsdAtomEmptyApp2",
         ":CtsStatsdAtomEmptySplitApp",
         ":CtsStatsdAtomApp",
-        ":IncrementalAppErrorStatsTestsHelper",
+        ":PackageManagerStatsTestsHelper",
     ],
     java_resource_dirs: ["res"],
 }

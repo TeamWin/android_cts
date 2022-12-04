@@ -269,6 +269,9 @@ public abstract class CodecTestBase {
 
     protected MediaCodec mCodec;
     protected Surface mSurface;
+    // NOTE: mSurface is a place holder of current Surface used by the CodecTestBase.
+    // This doesn't own the handle. The ownership with instances that manage
+    // SurfaceView or TextureView, ... They hold the responsibility of calling release().
     protected CodecTestActivity mActivity;
 
     private static final MediaCodecList MEDIA_CODEC_LIST_ALL;
@@ -908,6 +911,19 @@ public abstract class CodecTestBase {
         }
     }
 
+    @After
+    public void tearDownCodecTestBase() {
+        mSurface = null;
+        if (mActivity != null) {
+            mActivity.finish();
+            mActivity = null;
+        }
+        if (mCodec != null) {
+            mCodec.release();
+            mCodec = null;
+        }
+    }
+
     protected void configureCodec(MediaFormat format, boolean isAsync,
             boolean signalEOSWithLastFrame, boolean isEncoder) {
         resetContext(isAsync, signalEOSWithLastFrame);
@@ -1199,20 +1215,5 @@ public abstract class CodecTestBase {
         mSurface = activity.getSurface();
         assertNotNull("Surface created is null \n" + mTestConfig + mTestEnv, mSurface);
         assertTrue("Surface created is invalid \n" + mTestConfig + mTestEnv, mSurface.isValid());
-    }
-
-    protected void tearDownSurface() {
-        if (mSurface != null) {
-            mSurface.release();
-            mSurface = null;
-        }
-    }
-
-    @After
-    public void tearDown() {
-        if (mCodec != null) {
-            mCodec.release();
-            mCodec = null;
-        }
     }
 }

@@ -18,7 +18,19 @@ package android.widget.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.util.TypedValue;
@@ -32,6 +44,7 @@ import android.view.inputmethod.HandwritingGesture;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InsertGesture;
 import android.view.inputmethod.JoinOrSplitGesture;
+import android.view.inputmethod.PreviewableHandwritingGesture;
 import android.view.inputmethod.RemoveSpaceGesture;
 import android.view.inputmethod.SelectGesture;
 import android.view.inputmethod.SelectRangeGesture;
@@ -42,13 +55,16 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.internal.graphics.ColorUtils;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.IntConsumer;
 
 @RunWith(AndroidJUnit4.class)
@@ -132,6 +148,21 @@ public class TextViewHandwritingGestureTest {
     }
 
     @Test
+    @ApiTest(apis = "android.widget.TextView#onCreateInputConnection")
+    public void onCreateInputConnection_reportsSupportedGesturePreviews() {
+        EditorInfo editorInfo = new EditorInfo();
+        mEditText.onCreateInputConnection(editorInfo);
+
+        Set<Class<? extends PreviewableHandwritingGesture>> gestures =
+                editorInfo.getSupportedHandwritingGesturePreviews();
+        assertThat(gestures).containsAtLeast(
+                SelectGesture.class,
+                SelectRangeGesture.class,
+                DeleteGesture.class,
+                DeleteRangeGesture.class);
+    }
+
+    @Test
     @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
     public void performSelectGesture_character() {
         float char1HorizontalCenter = 1.5f * CHAR_WIDTH_PX;
@@ -146,6 +177,23 @@ public class TextViewHandwritingGestureTest {
         performSelectGesture(area, HandwritingGesture.GRANULARITY_CHARACTER);
 
         assertGestureSelectedRange(1, 3);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#previewHandwritingGesture")
+    public void previewSelectGesture_character() {
+        float char1HorizontalCenter = 1.5f * CHAR_WIDTH_PX;
+        float char2HorizontalCenter = 2.5f * CHAR_WIDTH_PX;
+        // Horizontal range [char1HorizontalCenter - 1f, char2HorizontalCenter + 1f] covers the
+        // centers of characters 1 and 2.
+        RectF area = new RectF(
+                char1HorizontalCenter - 1f,
+                mEditText.getLayout().getLineTop(0),
+                char2HorizontalCenter + 1f,
+                mEditText.getLayout().getLineBottom(0));
+        previewSelectGesture(area, HandwritingGesture.GRANULARITY_CHARACTER);
+
+        assertSelectGesturePreviewHighlightRange(1, 3);
     }
 
     @Test
@@ -165,6 +213,25 @@ public class TextViewHandwritingGestureTest {
         performSelectGesture(area, HandwritingGesture.GRANULARITY_WORD);
 
         assertGestureSelectedRange(4, 9);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#previewHandwritingGesture")
+    public void previewSelectGesture_word() {
+        // Word 1 spans from offset 4 to offset 5
+        float word1HorizontalCenter = (4 + 5) / 2f * CHAR_WIDTH_PX;
+        // Word 2 spans from offset 6 to offset 9
+        float word2HorizontalCenter = (6 + 9) / 2f * CHAR_WIDTH_PX;
+        // Horizontal range [word1HorizontalCenter - 1f, word2HorizontalCenter + 1f] covers the
+        // centers of words 1 and 2.
+        RectF area = new RectF(
+                word1HorizontalCenter - 1f,
+                mEditText.getLayout().getLineTop(0),
+                word2HorizontalCenter + 1f,
+                mEditText.getLayout().getLineBottom(0));
+        previewSelectGesture(area, HandwritingGesture.GRANULARITY_WORD);
+
+        assertSelectGesturePreviewHighlightRange(4, 9);
     }
 
     @Test
@@ -211,6 +278,29 @@ public class TextViewHandwritingGestureTest {
     }
 
     @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#previewHandwritingGesture")
+    public void previewSelectGesture_betweenWords_shouldFail() {
+        mEditText.setSelection(2);
+
+        // Word 1 spans from offset 4 to offset 5
+        float word1HorizontalCenter = (4 + 5) / 2f * CHAR_WIDTH_PX;
+        // Word 2 spans from offset 6 to offset 9
+        float word2HorizontalCenter = (6 + 9) / 2f * CHAR_WIDTH_PX;
+        // Horizontal range [word1HorizontalCenter + 1f, word2HorizontalCenter - 1f] does not cover
+        // the centers of any words since it is between the centers of these consecutive words.
+        RectF area = new RectF(
+                word1HorizontalCenter + 1f,
+                mEditText.getLayout().getLineTop(0),
+                word2HorizontalCenter - 1f,
+                mEditText.getLayout().getLineBottom(0));
+        previewSelectGesture(area, HandwritingGesture.GRANULARITY_WORD);
+
+        // Fallback text is not used for preview.
+        assertNoChange(/* initialCursorPosition= */ 2);
+        assertNoHighlight();
+    }
+
+    @Test
     @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
     public void performSelectRangeGesture_character() {
         float char5HorizontalCenter = 5.5f * CHAR_WIDTH_PX;
@@ -238,6 +328,33 @@ public class TextViewHandwritingGestureTest {
     }
 
     @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#previewHandwritingGesture")
+    public void previewSelectRangeGesture_character() {
+        float char5HorizontalCenter = 5.5f * CHAR_WIDTH_PX;
+        float char7HorizontalCenter = 7.5f * CHAR_WIDTH_PX;
+        // Horizontal range [char5HorizontalCenter - 1f, char7HorizontalCenter + 1f] covers the
+        // centers of characters 5, 6, 7.
+        RectF startArea = new RectF(
+                char5HorizontalCenter - 1f,
+                mEditText.getLayout().getLineTop(0),
+                char7HorizontalCenter + 1f,
+                mEditText.getLayout().getLineBottom(0));
+        // Line 1 starts from offset 10.
+        float char11HorizontalCenter = 1.5f * CHAR_WIDTH_PX;
+        float char12HorizontalCenter = 2.5f * CHAR_WIDTH_PX;
+        // Horizontal range [char11HorizontalCenter - 1f, char12HorizontalCenter + 1f] covers the
+        // centers of characters 11 and 12.
+        RectF endArea = new RectF(
+                char11HorizontalCenter - 1f,
+                mEditText.getLayout().getLineTop(1),
+                char12HorizontalCenter + 1f,
+                mEditText.getLayout().getLineBottom(1));
+        previewSelectRangeGesture(startArea, endArea, HandwritingGesture.GRANULARITY_CHARACTER);
+
+        assertSelectGesturePreviewHighlightRange(5, 13);
+    }
+
+    @Test
     @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
     public void performSelectRangeGesture_word() {
         // Word 2 on line 0 spans from offset 6 to offset 9
@@ -253,7 +370,7 @@ public class TextViewHandwritingGestureTest {
         // Word 3 on line 1 spans from offset 10 to offset 12
         float word3HorizontalCenter = (0 + 2) / 2f * CHAR_WIDTH_PX;
         // Horizontal range [word3HorizontalCenter - 1f, word3HorizontalCenter + 1f] covers the
-        // centers of word  2.
+        // centers of word 2.
         RectF endArea = new RectF(
                 word3HorizontalCenter - 1f,
                 mEditText.getLayout().getLineTop(1),
@@ -262,6 +379,33 @@ public class TextViewHandwritingGestureTest {
         performSelectRangeGesture(startArea, endArea, HandwritingGesture.GRANULARITY_WORD);
 
         assertGestureSelectedRange(6, 12);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#previewHandwritingGesture")
+    public void previewSelectRangeGesture_word() {
+        // Word 2 on line 0 spans from offset 6 to offset 9
+        float word2HorizontalCenter = (6 + 9) / 2f * CHAR_WIDTH_PX;
+        // Horizontal range [word2HorizontalCenter - 1f, word2HorizontalCenter + 1f] covers the
+        // centers of word  2.
+        RectF startArea = new RectF(
+                word2HorizontalCenter - 1f,
+                mEditText.getLayout().getLineTop(0),
+                word2HorizontalCenter + 1f,
+                mEditText.getLayout().getLineBottom(0));
+        // Line 1 starts from offset 10.
+        // Word 3 on line 1 spans from offset 10 to offset 12
+        float word3HorizontalCenter = (0 + 2) / 2f * CHAR_WIDTH_PX;
+        // Horizontal range [word3HorizontalCenter - 1f, word3HorizontalCenter + 1f] covers the
+        // centers of word 2.
+        RectF endArea = new RectF(
+                word3HorizontalCenter - 1f,
+                mEditText.getLayout().getLineTop(1),
+                word3HorizontalCenter + 1f,
+                mEditText.getLayout().getLineBottom(1));
+        previewSelectRangeGesture(startArea, endArea, HandwritingGesture.GRANULARITY_WORD);
+
+        assertSelectGesturePreviewHighlightRange(6, 12);
     }
 
     @Test
@@ -279,6 +423,23 @@ public class TextViewHandwritingGestureTest {
         performDeleteGesture(area, HandwritingGesture.GRANULARITY_CHARACTER);
 
         assertGestureDeletedRange(1, 3);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#previewHandwritingGesture")
+    public void previewDeleteGesture_character() {
+        float char1HorizontalCenter = 1.5f * CHAR_WIDTH_PX;
+        float char2HorizontalCenter = 2.5f * CHAR_WIDTH_PX;
+        // Horizontal range [char1HorizontalCenter - 1f, char2HorizontalCenter + 1f] covers
+        // characters 1 and 2.
+        RectF area = new RectF(
+                char1HorizontalCenter - 1f,
+                mEditText.getLayout().getLineTop(0),
+                char2HorizontalCenter + 1f,
+                mEditText.getLayout().getLineBottom(0));
+        previewDeleteGesture(area, HandwritingGesture.GRANULARITY_CHARACTER);
+
+        assertDeleteGesturePreviewHighlightRange(1, 3);
     }
 
     @Test
@@ -300,6 +461,23 @@ public class TextViewHandwritingGestureTest {
         // deleted to avoid a double space.
         // Deleted range: "XXX [X] XXX\n" -> "XXX[ X] XXX\n"
         assertGestureDeletedRange(3, 5);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#previewHandwritingGesture")
+    public void previewDeleteGesture_word() {
+        // Word 1 spans from offset 4 to offset 5
+        float word1HorizontalCenter = (4 + 5) / 2f * CHAR_WIDTH_PX;
+        // Horizontal range [word1HorizontalCenter - 1f, word1HorizontalCenter + 1f] covers the
+        // center of word 1.
+        RectF area = new RectF(
+                word1HorizontalCenter - 1f,
+                mEditText.getLayout().getLineTop(0),
+                word1HorizontalCenter + 1f,
+                mEditText.getLayout().getLineBottom(0));
+        previewDeleteGesture(area, HandwritingGesture.GRANULARITY_WORD);
+
+        assertDeleteGesturePreviewHighlightRange(4, 5);
     }
 
     @Test
@@ -434,6 +612,29 @@ public class TextViewHandwritingGestureTest {
     }
 
     @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#previewHandwritingGesture")
+    public void previewDeleteGesture_betweenWords_shouldFail() {
+        mEditText.setSelection(2);
+
+        // Word 1 spans from offset 4 to offset 5
+        float word1HorizontalCenter = (4 + 5) / 2f * CHAR_WIDTH_PX;
+        // Word 2 spans from offset 6 to offset 9
+        float word2HorizontalCenter = (6 + 9) / 2f * CHAR_WIDTH_PX;
+        // Horizontal range [word1HorizontalCenter + 1f, word2HorizontalCenter - 1f] does not cover
+        // the centers of any words since it is between the centers of these consecutive words.
+        RectF area = new RectF(
+                word1HorizontalCenter + 1f,
+                mEditText.getLayout().getLineTop(0),
+                word2HorizontalCenter - 1f,
+                mEditText.getLayout().getLineBottom(0));
+        previewDeleteGesture(area, HandwritingGesture.GRANULARITY_WORD);
+
+        // Fallback text is not used for preview.
+        assertNoChange(/* initialCursorPosition= */ 2);
+        assertNoHighlight();
+    }
+
+    @Test
     @ApiTest(apis = "android.view.inputmethod.InputConnection#performHandwritingGesture")
     public void performDeleteRangeGesture_character() {
         float char5HorizontalCenter = 5.5f * CHAR_WIDTH_PX;
@@ -458,6 +659,33 @@ public class TextViewHandwritingGestureTest {
         performDeleteRangeGesture(startArea, endArea, HandwritingGesture.GRANULARITY_CHARACTER);
 
         assertGestureDeletedRange(5, 13);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#previewHandwritingGesture")
+    public void previewDeleteRangeGesture_character() {
+        float char5HorizontalCenter = 5.5f * CHAR_WIDTH_PX;
+        float char7HorizontalCenter = 7.5f * CHAR_WIDTH_PX;
+        // Horizontal range [char5HorizontalCenter - 1f, char7HorizontalCenter + 1f] covers the
+        // centers of characters 5, 6, 7.
+        RectF startArea = new RectF(
+                char5HorizontalCenter - 1f,
+                mEditText.getLayout().getLineTop(0),
+                char7HorizontalCenter + 1f,
+                mEditText.getLayout().getLineBottom(0));
+        // Line 1 starts from offset 10.
+        float char11HorizontalCenter = 1.5f * CHAR_WIDTH_PX;
+        float char12HorizontalCenter = 2.5f * CHAR_WIDTH_PX;
+        // Horizontal range [char11HorizontalCenter - 1f, char12HorizontalCenter + 1f] covers the
+        // centers of characters 11 and 12.
+        RectF endArea = new RectF(
+                char11HorizontalCenter - 1f,
+                mEditText.getLayout().getLineTop(1),
+                char12HorizontalCenter + 1f,
+                mEditText.getLayout().getLineBottom(1));
+        previewDeleteRangeGesture(startArea, endArea, HandwritingGesture.GRANULARITY_CHARACTER);
+
+        assertDeleteGesturePreviewHighlightRange(5, 13);
     }
 
     @Test
@@ -489,6 +717,34 @@ public class TextViewHandwritingGestureTest {
         // deleted to avoid a double space.
         // Deleted range: "XXX X [XXX\nXX] X   XX  X. .X " -> "XXX X[ XXX\nXX] X   XX  X. .X "
         assertGestureDeletedRange(5, 12);
+    }
+
+    @Test
+    @ApiTest(apis = "android.view.inputmethod.InputConnection#previewHandwritingGesture")
+    public void previewDeleteRangeGesture_word() {
+        // Word 2 on line 0 spans from offset 6 to offset 9
+        float word2HorizontalCenter = (6 + 9) / 2f * CHAR_WIDTH_PX;
+        // Horizontal range [word2HorizontalCenter - 1f, word2HorizontalCenter + 1f] covers the
+        // centers of word  2.
+        RectF startArea = new RectF(
+                word2HorizontalCenter - 1f,
+                mEditText.getLayout().getLineTop(0),
+                word2HorizontalCenter + 1f,
+                mEditText.getLayout().getLineBottom(0));
+        // Line 1 starts from offset 10.
+        // Word 3 on line 1 spans from offset 10 to offset 12
+        float word3HorizontalCenter = (0 + 2) / 2f * CHAR_WIDTH_PX;
+        // Horizontal range [word3HorizontalCenter - 1f, word3HorizontalCenter + 1f] covers the
+        // centers of word  2.
+        RectF endArea = new RectF(
+                word3HorizontalCenter - 1f,
+                mEditText.getLayout().getLineTop(1),
+                word3HorizontalCenter + 1f,
+                mEditText.getLayout().getLineBottom(1));
+        previewDeleteRangeGesture(startArea, endArea, HandwritingGesture.GRANULARITY_WORD);
+
+        // Word 2 (offset 6 to 9) and word 3 (offset 10 to 12) are deleted
+        assertDeleteGesturePreviewHighlightRange(6, 12);
     }
 
     @Test
@@ -970,6 +1226,16 @@ public class TextViewHandwritingGestureTest {
         inputConnection.performHandwritingGesture(gesture, Runnable::run, mResultConsumer);
     }
 
+    private void previewSelectGesture(RectF area, int granularity) {
+        area.offset(mLocationOnScreen[0], mLocationOnScreen[1]);
+        SelectGesture gesture = new SelectGesture.Builder()
+                .setSelectionArea(area)
+                .setGranularity(granularity)
+                .build();
+        InputConnection inputConnection = mEditText.onCreateInputConnection(new EditorInfo());
+        inputConnection.previewHandwritingGesture(gesture, null);
+    }
+
     private void performSelectRangeGesture(RectF startArea, RectF endArea, int granularity) {
         startArea.offset(mLocationOnScreen[0], mLocationOnScreen[1]);
         endArea.offset(mLocationOnScreen[0], mLocationOnScreen[1]);
@@ -981,6 +1247,19 @@ public class TextViewHandwritingGestureTest {
                 .build();
         InputConnection inputConnection = mEditText.onCreateInputConnection(new EditorInfo());
         inputConnection.performHandwritingGesture(gesture, Runnable::run, mResultConsumer);
+    }
+
+    private void previewSelectRangeGesture(RectF startArea, RectF endArea, int granularity) {
+        startArea.offset(mLocationOnScreen[0], mLocationOnScreen[1]);
+        endArea.offset(mLocationOnScreen[0], mLocationOnScreen[1]);
+        SelectRangeGesture gesture = new SelectRangeGesture.Builder()
+                .setSelectionStartArea(startArea)
+                .setSelectionEndArea(endArea)
+                .setGranularity(granularity)
+                .setFallbackText(FALLBACK_TEXT) // fallback text should be ignored for preview
+                .build();
+        InputConnection inputConnection = mEditText.onCreateInputConnection(new EditorInfo());
+        inputConnection.previewHandwritingGesture(gesture, null);
     }
 
     private void performDeleteGesture(RectF area, int granularity) {
@@ -998,6 +1277,16 @@ public class TextViewHandwritingGestureTest {
         inputConnection.performHandwritingGesture(gesture, Runnable::run, mResultConsumer);
     }
 
+    private void previewDeleteGesture(RectF area, int granularity) {
+        area.offset(mLocationOnScreen[0], mLocationOnScreen[1]);
+        DeleteGesture gesture = new DeleteGesture.Builder()
+                .setDeletionArea(area)
+                .setGranularity(granularity)
+                .build();
+        InputConnection inputConnection = mEditText.onCreateInputConnection(new EditorInfo());
+        inputConnection.previewHandwritingGesture(gesture, null);
+    }
+
     private void performDeleteRangeGesture(RectF startArea, RectF endArea, int granularity) {
         startArea.offset(mLocationOnScreen[0], mLocationOnScreen[1]);
         endArea.offset(mLocationOnScreen[0], mLocationOnScreen[1]);
@@ -1009,6 +1298,19 @@ public class TextViewHandwritingGestureTest {
                 .build();
         InputConnection inputConnection = mEditText.onCreateInputConnection(new EditorInfo());
         inputConnection.performHandwritingGesture(gesture, Runnable::run, mResultConsumer);
+    }
+
+    private void previewDeleteRangeGesture(RectF startArea, RectF endArea, int granularity) {
+        startArea.offset(mLocationOnScreen[0], mLocationOnScreen[1]);
+        endArea.offset(mLocationOnScreen[0], mLocationOnScreen[1]);
+        DeleteRangeGesture gesture = new DeleteRangeGesture.Builder()
+                .setDeletionStartArea(startArea)
+                .setDeletionEndArea(endArea)
+                .setGranularity(granularity)
+                .setFallbackText(FALLBACK_TEXT) // fallback text should be ignored for preview
+                .build();
+        InputConnection inputConnection = mEditText.onCreateInputConnection(new EditorInfo());
+        inputConnection.previewHandwritingGesture(gesture, null);
     }
 
     private void performInsertGesture(PointF point) {
@@ -1094,8 +1396,77 @@ public class TextViewHandwritingGestureTest {
 
     private void assertGestureFailure(int initialCursorPosition) {
         assertThat(mResult).isEqualTo(InputConnection.HANDWRITING_GESTURE_RESULT_FAILED);
+        assertNoChange(initialCursorPosition);
+    }
+
+    private void assertNoChange(int initialCursorPosition) {
         assertThat(mEditText.getText().toString()).isEqualTo(DEFAULT_TEXT);
         assertThat(mEditText.getSelectionStart()).isEqualTo(initialCursorPosition);
         assertThat(mEditText.getSelectionEnd()).isEqualTo(initialCursorPosition);
+    }
+
+    private void assertSelectGesturePreviewHighlightRange(int start, int end) {
+        // Selection preview highlight color is the same as selection highlight color.
+        assertGesturePreviewHighlightRange(start, end, mEditText.getHighlightColor());
+    }
+
+    private void assertDeleteGesturePreviewHighlightRange(int start, int end) {
+        // Deletion preview highlight color is 20% opacity of the default text color.
+        int color = mEditText.getTextColors().getDefaultColor();
+        color = ColorUtils.setAlphaComponent(color, (int) (0.2f * Color.alpha(color)));
+        assertGesturePreviewHighlightRange(start, end, color);
+    }
+
+    private void assertGesturePreviewHighlightRange(int start, int end, int color) {
+        Canvas canvas = prepareMockCanvas();
+        mEditText.draw(canvas);
+
+        ArgumentCaptor<Path> pathCaptor = ArgumentCaptor.forClass(Path.class);
+        ArgumentCaptor<Paint> paintCaptor = ArgumentCaptor.forClass(Paint.class);
+        verify(canvas).drawPath(pathCaptor.capture(), paintCaptor.capture());
+
+        Path expectedPath = new Path();
+        mEditText.getLayout().getSelectionPath(start, end, expectedPath);
+        assertPathEquals(expectedPath, pathCaptor.getValue());
+        assertThat(paintCaptor.getValue().getColor()).isEqualTo(color);
+    }
+
+    private void assertNoHighlight() {
+        Canvas canvas = prepareMockCanvas();
+        mEditText.draw(canvas);
+        verify(canvas, never()).drawPath(any(), any());
+    }
+
+    private Canvas prepareMockCanvas() {
+        Canvas canvas = mock(Canvas.class);
+        when(canvas.getClipBounds(any())).thenAnswer(invocation -> {
+            Rect outRect = invocation.getArgument(0);
+            outRect.top = 0;
+            outRect.left = 0;
+            outRect.right = mEditText.getMeasuredWidth();
+            outRect.bottom = mEditText.getMeasuredHeight();
+            return true;
+        });
+        return canvas;
+    }
+
+    private void assertPathEquals(Path expected, Path actual) {
+        Bitmap expectedBitmap = drawToBitmap(expected);
+        Bitmap actualBitmap = drawToBitmap(actual);
+        assertThat(expectedBitmap.sameAs(actualBitmap)).isTrue();
+    }
+
+    private Bitmap drawToBitmap(Path path) {
+        RectF boundsRectF = new RectF();
+        path.computeBounds(boundsRectF, true);
+        Rect boundsRect = new Rect();
+        boundsRectF.round(boundsRect);
+        Bitmap bitmap = Bitmap.createBitmap(
+                boundsRect.width(), boundsRect.height(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint();
+        paint.setColor(Color.BLACK);
+        canvas.drawPath(path, paint);
+        return bitmap;
     }
 }

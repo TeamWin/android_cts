@@ -51,6 +51,7 @@ import static org.mockito.Mockito.verify;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
+import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibility.cts.common.ShellCommandBuilder;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity;
@@ -124,6 +125,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class performs end-to-end testing of the accessibility feature by
@@ -145,6 +147,8 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
 
     private static final String APP_WIDGET_PROVIDER_PACKAGE = "foo.bar.baz";
 
+    private static final int TIMEOUT_FOR_MOTION_EVENT_INTERCEPTION_MS = 1000;
+
     private static Instrumentation sInstrumentation;
     private static UiAutomation sUiAutomation;
 
@@ -156,9 +160,15 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
     private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
 
+    private final InstrumentedAccessibilityServiceTestRule<
+            StubMotionInterceptingAccessibilityService>
+            mMotionInterceptingServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
+            StubMotionInterceptingAccessibilityService.class, false);
+
     @Rule
     public final RuleChain mRuleChain = RuleChain
             .outerRule(mActivityRule)
+            .around(mMotionInterceptingServiceRule)
             .around(mDumpOnFailureRule);
 
     @BeforeClass
@@ -1529,6 +1539,133 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
 
         nodeInfo.setContainerTitle(null);
         assertEquals(null, nodeInfo.getContainerTitle());
+    }
+
+    @Test
+    @ApiTest(apis = {"android.accessibilityservice.AccessibilityService#onMotionEvent"})
+    public void testOnMotionEvent_interceptsEventFromRequestedSource_SetAndUnset() {
+        final int requestedSource = InputDevice.SOURCE_JOYSTICK;
+        final StubMotionInterceptingAccessibilityService service =
+                mMotionInterceptingServiceRule.enableService();
+        service.setMotionEventSources(requestedSource);
+        final Object waitObject = new Object();
+        final AtomicInteger eventCount = new AtomicInteger(0);
+        service.setOnMotionEventListener(motionEvent -> {
+            synchronized (waitObject) {
+                if (motionEvent.getSource() == requestedSource) {
+                    eventCount.incrementAndGet();
+                }
+                waitObject.notifyAll();
+            }
+        });
+
+        // Inject 2 events to the input filter.
+        sUiAutomation.injectInputEventToInputFilter(createMotionEvent(requestedSource));
+        sUiAutomation.injectInputEventToInputFilter(createMotionEvent(requestedSource));
+        // We should find 2 events.
+        TestUtils.waitOn(waitObject, () -> eventCount.get() == 2,
+                TIMEOUT_FOR_MOTION_EVENT_INTERCEPTION_MS,
+                "Service did not receive MotionEvent");
+
+        // Stop listening to events for this source, then inject 1 more event to the input filter.
+        service.setMotionEventSources(0 /* no sources */);
+        sUiAutomation.injectInputEventToInputFilter(createMotionEvent(requestedSource));
+        // Assert we only received the original 2.
+        try {
+            TestUtils.waitOn(waitObject, () -> eventCount.get() == 3,
+                    TIMEOUT_FOR_MOTION_EVENT_INTERCEPTION_MS,
+                    "(expected)");
+        } catch (AssertionError e) {
+            // expected
+        }
+        assertThat(eventCount.get()).isEqualTo(2);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.accessibilityservice.AccessibilityService#onMotionEvent"})
+    public void testOnMotionEvent_ignoresEventFromDifferentSource() {
+        final int requestedSource = InputDevice.SOURCE_JOYSTICK;
+        final int actualSource = InputDevice.SOURCE_ROTARY_ENCODER;
+        final StubMotionInterceptingAccessibilityService service =
+                mMotionInterceptingServiceRule.enableService();
+        service.setMotionEventSources(requestedSource);
+        final Object waitObject = new Object();
+        final AtomicBoolean foundEvent = new AtomicBoolean(false);
+        service.setOnMotionEventListener(motionEvent -> {
+            synchronized (waitObject) {
+                if (motionEvent.getSource() == requestedSource) {
+                    foundEvent.set(true);
+                }
+                waitObject.notifyAll();
+            }
+        });
+
+        sUiAutomation.injectInputEventToInputFilter(createMotionEvent(actualSource));
+
+        try {
+            TestUtils.waitOn(waitObject, foundEvent::get, TIMEOUT_FOR_MOTION_EVENT_INTERCEPTION_MS,
+                    "(expected)");
+        } catch (AssertionError e) {
+            // expected
+        }
+        assertThat(foundEvent.get()).isFalse();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.accessibilityservice.AccessibilityService#onMotionEvent"})
+    public void testOnMotionEvent_ignoresTouchscreenEventWhenTouchExplorationEnabled() {
+        final int requestedSource = InputDevice.SOURCE_TOUCHSCREEN;
+        final StubMotionInterceptingAccessibilityService motionInterceptingService =
+                mMotionInterceptingServiceRule.enableService();
+        TouchExplorationStubAccessibilityService touchExplorationService =
+                enableService(TouchExplorationStubAccessibilityService.class);
+        try {
+            motionInterceptingService.setMotionEventSources(requestedSource);
+            final Object waitObject = new Object();
+            final AtomicBoolean foundEvent = new AtomicBoolean(false);
+            motionInterceptingService.setOnMotionEventListener(motionEvent -> {
+                synchronized (waitObject) {
+                    if (motionEvent.getSource() == requestedSource) {
+                        foundEvent.set(true);
+                    }
+                    waitObject.notifyAll();
+                }
+            });
+
+            sUiAutomation.injectInputEventToInputFilter(createMotionEvent(requestedSource));
+
+            try {
+                TestUtils.waitOn(waitObject, foundEvent::get,
+                        TIMEOUT_FOR_MOTION_EVENT_INTERCEPTION_MS,
+                        "(expected)");
+            } catch (AssertionError e) {
+                // expected
+            }
+            assertThat(foundEvent.get()).isFalse();
+        } finally {
+            touchExplorationService.disableSelfAndRemove();
+        }
+    }
+
+    private MotionEvent createMotionEvent(int source) {
+        // Only source is used by these tests, so set other properties to valid defaults.
+        final long eventTime = SystemClock.uptimeMillis();
+        final MotionEvent.PointerProperties props = new MotionEvent.PointerProperties();
+        props.id = 0;
+        return MotionEvent.obtain(eventTime,
+                eventTime,
+                MotionEvent.ACTION_MOVE,
+                1 /* pointerCount */,
+                new MotionEvent.PointerProperties[]{props},
+                new MotionEvent.PointerCoords[]{new MotionEvent.PointerCoords()},
+                0 /* metaState */,
+                0 /* buttonState */,
+                0 /* xPrecision */,
+                0 /* yPrecision */,
+                1 /* deviceId */,
+                0 /* edgeFlags */,
+                source,
+                0 /* flags */);
     }
 
     private List<AccessibilityServiceInfo> getEnabledServices() {

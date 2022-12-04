@@ -37,6 +37,7 @@ import android.util.Pair;
 
 import com.android.compatibility.common.util.Preconditions;
 
+import org.junit.After;
 import org.junit.Before;
 
 import java.io.IOException;
@@ -71,6 +72,14 @@ public class CodecDecoderTestBase extends CodecTestBase {
     public void setUpCodecDecoderTestBase() {
         assertTrue("Testing a mime that is neither audio nor video is not supported \n"
                 + mTestConfig, mIsAudio || mIsVideo);
+    }
+
+    @After
+    public void tearDownCodecDecoderTestBase() {
+        if (mExtractor != null) {
+            mExtractor.release();
+            mExtractor = null;
+        }
     }
 
     protected MediaFormat setUpSource(String srcFile) throws IOException {

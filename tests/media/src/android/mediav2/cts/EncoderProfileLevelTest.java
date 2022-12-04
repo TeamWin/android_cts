@@ -18,6 +18,7 @@ package android.mediav2.cts;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
 import static android.media.MediaCodecInfo.CodecProfileLevel.*;
+import static android.mediav2.common.cts.EncoderTestBase.isMediaTypeContainerPairValid;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -38,6 +39,7 @@ import android.util.Pair;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 
+import org.junit.After;
 import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -78,6 +80,14 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
     private final MediaFormat mConfigFormat;
 
     private MediaMuxer mMuxer;
+
+    @After
+    public void tearDown() {
+        if (mMuxer != null) {
+            mMuxer.release();
+            mMuxer = null;
+        }
+    }
 
     public EncoderProfileLevelTest(String encoder, String mime, int bitrate, int encoderInfo1,
             int encoderInfo2, int frameRate, boolean useHighBitDepth, String allTestParams) {
@@ -830,7 +840,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
 
                 for (int muxerFormat = MediaMuxer.OutputFormat.MUXER_OUTPUT_FIRST;
                      muxerFormat <= MediaMuxer.OutputFormat.MUXER_OUTPUT_LAST; muxerFormat++) {
-                    if (!MuxerTest.isCodecContainerPairValid(mMime, muxerFormat)) continue;
+                    if (!isMediaTypeContainerPairValid(mMime, muxerFormat)) continue;
                     ByteBuffer mBuff = mOutputBuff.getBuffer();
                     mMuxer = new MediaMuxer(tempMuxedFile, muxerFormat);
                     try {

@@ -32,7 +32,6 @@ import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.ApiTest;
 
-import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
@@ -80,11 +79,6 @@ public class AdaptivePlaybackTest extends CodecDecoderTestBase {
     public void setUp() throws IOException, InterruptedException {
         mActivityRule.getScenario().onActivity(activity -> mActivity = activity);
         setUpSurface(mActivity);
-    }
-
-    @After
-    public void tearDown() {
-        tearDownSurface();
     }
 
     @Parameterized.Parameters(name = "{index}({0}_{1})")

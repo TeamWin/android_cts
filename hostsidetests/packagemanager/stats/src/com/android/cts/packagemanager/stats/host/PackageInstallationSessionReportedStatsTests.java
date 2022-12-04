@@ -23,19 +23,29 @@ import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
 
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.os.AtomsProto;
 import com.android.os.StatsLog;
+import com.android.tradefed.device.DeviceNotAvailableException;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class PackageInstallationSessionReportedStatsTests extends PackageManagerStatsTestsBase{
     private static final String TEST_INSTALL_APK = "CtsStatsdAtomEmptyApp.apk";
     private static final String TEST_INSTALL_APK_V2 = "CtsStatsdAtomEmptyAppV2.apk";
-
     private static final String TEST_INSTALL_PACKAGE =
             "com.android.cts.packagemanager.stats.emptyapp";
+    private static final String HELPER_PACKAGE = "com.android.cts.packagemanager.stats.device";
+    private static final String HELPER_CLASS =
+            ".PackageInstallationSessionReportedStatsTestsHelper";
+    private static final String GET_USER_TYPES_HELPER_METHOD = "getUserTypeIntegers";
+    private static final String GET_USER_TYPES_HELPER_ARG_USER_IDS = "userIds";
+    private static final String GET_USER_TYPES_HELPER_ARG_USER_TYPES = "userTypes";
 
     @Override
     protected void tearDown() throws Exception {
@@ -62,18 +72,20 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
         final int expectedUid = getAppUid(TEST_INSTALL_PACKAGE);
         final int expectedUser = getDevice().getCurrentUser();
         final long expectedApksSizeBytes = getTestFileSize(TEST_INSTALL_APK);
-        // TODO(b/249294752): check installflags, installer, userTypes and versionCode in report
+        // TODO(b/249294752): check installer in the report
         checkReportResult(reports.get(0), expectedUid, Collections.singletonList(expectedUser),
                 Collections.emptyList(), 1 /* success */,
                 1 /* versionCode */, expectedApksSizeBytes, 0 /* dataLoaderType */,
                 0 /* expectedUserActionRequiredType */, false,
                 false, false, false, false, false, false);
+        checkDurationResult(reports.get(0));
 
         checkReportResult(reports.get(1), expectedUid, Collections.singletonList(expectedUser),
                 Collections.singletonList(expectedUser), 1 /* success */, 2 /* versionCode */,
                 getTestFileSize(TEST_INSTALL_APK_V2), 2 /* dataLoaderType */,
                 0 /* expectedUserActionRequiredType */, false,
                 true, false, false, false, false, false);
+        checkDurationResult(reports.get(1));
 
         // No uninstall log from app update
         List<AtomsProto.PackageUninstallationReported> uninstallReports = new ArrayList<>();
@@ -85,21 +97,7 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
         assertThat(uninstallReports).isEmpty();
     }
 
-    private void checkReportResult(AtomsProto.PackageInstallationSessionReported report,
-            int expectedUid, List<Integer> expectedUserIds,
-            List<Integer> expectedOriginalUserIds, int expectedPublicReturnCode,
-            long expectedVersionCode, long expectedApksSizeBytes, int expectedDataLoaderType,
-            int expectedUserActionRequiredType,
-            boolean expectedIsInstant, boolean expectedIsReplace, boolean expectedIsSystem,
-            boolean expectedIsInherit, boolean expectedInstallingExistingAsUser,
-            boolean expectedIsMoveInstall, boolean expectedIsStaged) {
-        assertThat(report.getSessionId()).isNotEqualTo(-1);
-        assertThat(report.getUid()).isEqualTo(expectedUid);
-        assertThat(report.getUserIdsList()).isEqualTo(expectedUserIds);
-        assertThat(report.getOriginalUserIdsList()).isEqualTo(expectedOriginalUserIds);
-        assertThat(report.getPublicReturnCode()).isEqualTo(expectedPublicReturnCode);
-        assertThat(report.getVersionCode()).isEqualTo(expectedVersionCode);
-        assertThat(report.getApksSizeBytes()).isEqualTo(expectedApksSizeBytes);
+    private void checkDurationResult(AtomsProto.PackageInstallationSessionReported report) {
         final long totalDuration = report.getTotalDurationMillis();
         assertThat(totalDuration).isGreaterThan(0);
         assertThat(report.getInstallStepsCount()).isEqualTo(4);
@@ -110,6 +108,25 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
         }
         assertThat(sumStepDurations).isGreaterThan(0);
         assertThat(sumStepDurations).isLessThan(totalDuration);
+    }
+
+    private void checkReportResult(AtomsProto.PackageInstallationSessionReported report,
+            int expectedUid, List<Integer> expectedUserIds,
+            List<Integer> expectedOriginalUserIds, int expectedPublicReturnCode,
+            long expectedVersionCode, long expectedApksSizeBytes, int expectedDataLoaderType,
+            int expectedUserActionRequiredType,
+            boolean expectedIsInstant, boolean expectedIsReplace, boolean expectedIsSystem,
+            boolean expectedIsInherit, boolean expectedInstallingExistingAsUser,
+            boolean expectedIsMoveInstall, boolean expectedIsStaged)
+            throws DeviceNotAvailableException {
+        assertThat(report.getSessionId()).isNotEqualTo(-1);
+        assertThat(report.getUid()).isEqualTo(expectedUid);
+        assertThat(report.getUserIdsList()).isEqualTo(expectedUserIds);
+        checkUserTypes(expectedUserIds, report.getUserTypesList());
+        assertThat(report.getOriginalUserIdsList()).isEqualTo(expectedOriginalUserIds);
+        assertThat(report.getPublicReturnCode()).isEqualTo(expectedPublicReturnCode);
+        assertThat(report.getVersionCode()).isEqualTo(expectedVersionCode);
+        assertThat(report.getApksSizeBytes()).isEqualTo(expectedApksSizeBytes);
         assertThat(report.getOriginalInstallerPackageUid()).isEqualTo(-1);
         assertThat(report.getDataLoaderType()).isEqualTo(expectedDataLoaderType);
         assertThat(report.getUserActionRequiredType()).isEqualTo(expectedUserActionRequiredType);
@@ -121,6 +138,29 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
                 expectedInstallingExistingAsUser);
         assertThat(report.getIsMoveInstall()).isEqualTo(expectedIsMoveInstall);
         assertThat(report.getIsStaged()).isEqualTo(expectedIsStaged);
+        // assert that package name is not set if install comes from adb
+        if ((report.getInstallFlags() & 0x00000020 /* INSTALL_FROM_ADB */) != 0) {
+            assertThat(report.getPackageName()).isEmpty();
+        }
+    }
+
+    private void checkUserTypes(List<Integer> userIds, List<Integer> reportedUserTypes)
+            throws DeviceNotAvailableException {
+        if (userIds == null || userIds.isEmpty()) {
+            return;
+        }
+        final HashMap<String, String> testArgs = new HashMap<>();
+        testArgs.put(GET_USER_TYPES_HELPER_ARG_USER_IDS,
+                userIds.stream().map(Object::toString).collect(Collectors.joining(","))
+        );
+        Map<String, String> testResult = Utils.runDeviceTests(getDevice(), HELPER_PACKAGE,
+                HELPER_CLASS, GET_USER_TYPES_HELPER_METHOD, testArgs);
+        assertNotNull(testResult);
+        assertEquals(1, testResult.size());
+        String userTypesString = testResult.get(GET_USER_TYPES_HELPER_ARG_USER_TYPES);
+        String reportedUserTypesString = reportedUserTypes.stream().map(Object::toString)
+                .collect(Collectors.joining(","));
+        assertThat(reportedUserTypesString).isEqualTo(userTypesString);
     }
 
     public void testPackageUninstalledReported() throws Exception {
@@ -151,5 +191,42 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
         assertThat(report.getReturnCode()).isEqualTo(1);
         assertThat(report.getIsSystem()).isFalse();
         assertThat(report.getIsUninstallForUsers()).isFalse();
+    }
+
+    public void testPackageInstallationFailedVersionDowngradeReported() throws Exception {
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                AtomsProto.Atom.PACKAGE_INSTALLATION_SESSION_REPORTED_FIELD_NUMBER);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        DeviceUtils.installTestApp(getDevice(), TEST_INSTALL_APK_V2, TEST_INSTALL_PACKAGE,
+                mCtsBuild);
+        assertThat(getDevice().isPackageInstalled(TEST_INSTALL_PACKAGE,
+                String.valueOf(getDevice().getCurrentUser()))).isTrue();
+        // Second install should fail because of version downgrade
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
+        final String result = getDevice().installPackage(buildHelper.getTestFile(TEST_INSTALL_APK),
+                /*reinstall=*/true, /*grantPermissions=*/true);
+        assertThat(result).isNotNull();
+
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        List<AtomsProto.PackageInstallationSessionReported> reports = new ArrayList<>();
+        for (StatsLog.EventMetricData data : ReportUtils.getEventMetricDataList(getDevice())) {
+            if (data.getAtom().hasPackageInstallationSessionReported()) {
+                reports.add(data.getAtom().getPackageInstallationSessionReported());
+            }
+        }
+        assertThat(reports.size()).isEqualTo(2);
+        final int expectedUid = getAppUid(TEST_INSTALL_PACKAGE);
+        final int expectedUser = getDevice().getCurrentUser();
+        checkReportResult(reports.get(0), expectedUid, Collections.singletonList(expectedUser),
+                Collections.emptyList(), 1 /* success */,
+                2 /* versionCode */, getTestFileSize(TEST_INSTALL_APK_V2), 0 /* dataLoaderType */,
+                0 /* expectedUserActionRequiredType */, false,
+                false, false, false, false, false, false);
+        checkDurationResult(reports.get(0));
+        checkReportResult(reports.get(1), -1 /* uid */, new ArrayList<>(), new ArrayList<>(),
+                -25 /* INSTALL_FAILED_VERSION_DOWNGRADE */, 0 /* versionCode */,
+                0, 0 /* dataLoaderType */,
+                0 /* expectedUserActionRequiredType */, false,
+                false, false, false, false, false, false);
     }
 }
