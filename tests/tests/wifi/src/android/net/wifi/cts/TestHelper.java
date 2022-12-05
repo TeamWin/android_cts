@@ -264,7 +264,7 @@ public class TestHelper {
                             WifiInfo.sanitizeSsid(network.SSID))
                             && TextUtils.equals(scanResult.BSSID, network.BSSID)).findAny();
             matchedResult.ifPresent(
-                    scanResult -> specifierBuilder.setPreferredChannelsFrequencyInMhz(
+                    scanResult -> specifierBuilder.setPreferredChannelsFrequenciesMhz(
                             new int[]{scanResult.frequency}));
         }
         return specifierBuilder;

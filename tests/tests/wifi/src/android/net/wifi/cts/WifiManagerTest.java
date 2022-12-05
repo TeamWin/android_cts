@@ -5776,4 +5776,15 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
         mWifiManager.isEasyConnectDppAkmSupported();
     }
+
+    /**
+     * Tests {@link WifiManager#getMaxNumberOfChannelsPerNetworkSpecifierRequest)} works
+     */
+    public void testGetMaxNumberOfChannelsPerNetworkSpecifierRequest() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        assertTrue(mWifiManager.getMaxNumberOfChannelsPerNetworkSpecifierRequest() > 0);
+    }
 }
