@@ -27,6 +27,7 @@ android_test {
     static_libs: [
         "androidx.test.rules",
         "compatibility-device-util-axt",
+        "platformprotosnano",
     ],
     srcs: [
         "src/**/*.java",

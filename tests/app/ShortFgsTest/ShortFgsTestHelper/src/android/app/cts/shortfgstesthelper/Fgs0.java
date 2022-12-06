@@ -16,9 +16,4 @@
 package android.app.cts.shortfgstesthelper;
 
 public class Fgs0 extends FgsBase {
-    public static Fgs0 sLastInstance;
-
-    public Fgs0() {
-        sLastInstance = this;
-    }
 }

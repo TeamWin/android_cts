@@ -23,6 +23,10 @@ import android.os.SystemClock;
 
 import com.android.internal.util.DataClass;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 /**
  * Message class used in this test.
  *
@@ -41,8 +45,12 @@ public class ShortFgsMessage implements Parcelable {
 
     final private long mTimestamp;
 
+    // if set, it's an "ack" messasge.
+    private boolean ack;
+
     @Nullable
-    private String mFailureMessage;
+    private String mFailureString;
+
     private boolean mSetForeground;
     private int mFgsType;
     private int mStartCommandResult;
@@ -52,6 +60,29 @@ public class ShortFgsMessage implements Parcelable {
 
     @Nullable
     private String mMethodName;
+
+    /** If this is set, the receiver will call Service.startForeground() on mComponentName. */
+    private boolean mDoCallStartForeground;
+
+    /** If this is set, the receiver will call Service.stopForeground() on mComponentName. */
+    private boolean mDoCallStopForeground;
+
+    /** If this is set, the receiver will call Service.stopSelf() on mComponentName. */
+    private boolean mDoCallStopSelf;
+
+    /** If this is set, the helper process will kill itself. */
+    private boolean mDoKillProcess;
+
+    public void setException(Throwable e) {
+        try (StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);) {
+            e.printStackTrace(pw);
+
+            mFailureString = "Exception detected: \n" + sw.toString();
+        } catch (IOException ex) {
+            throw new RuntimeException("Unexpected exception", ex);
+        }
+    }
 
 
 
@@ -74,8 +105,13 @@ public class ShortFgsMessage implements Parcelable {
     }
 
     @DataClass.Generated.Member
-    public @Nullable String getFailureMessage() {
-        return mFailureMessage;
+    public boolean isAck() {
+        return ack;
+    }
+
+    @DataClass.Generated.Member
+    public @Nullable String getFailureString() {
+        return mFailureString;
     }
 
     @DataClass.Generated.Member
@@ -108,9 +144,47 @@ public class ShortFgsMessage implements Parcelable {
         return mMethodName;
     }
 
+    /**
+     * If this is set, the receiver will call Service.startForeground() on mComponentName.
+     */
     @DataClass.Generated.Member
-    public @android.annotation.NonNull ShortFgsMessage setFailureMessage(@android.annotation.NonNull String value) {
-        mFailureMessage = value;
+    public boolean isDoCallStartForeground() {
+        return mDoCallStartForeground;
+    }
+
+    /**
+     * If this is set, the receiver will call Service.stopForeground() on mComponentName.
+     */
+    @DataClass.Generated.Member
+    public boolean isDoCallStopForeground() {
+        return mDoCallStopForeground;
+    }
+
+    /**
+     * If this is set, the receiver will call Service.stopSelf() on mComponentName.
+     */
+    @DataClass.Generated.Member
+    public boolean isDoCallStopSelf() {
+        return mDoCallStopSelf;
+    }
+
+    /**
+     * If this is set, the helper process will kill itself.
+     */
+    @DataClass.Generated.Member
+    public boolean isDoKillProcess() {
+        return mDoKillProcess;
+    }
+
+    @DataClass.Generated.Member
+    public @android.annotation.NonNull ShortFgsMessage setAck( boolean value) {
+        ack = value;
+        return this;
+    }
+
+    @DataClass.Generated.Member
+    public @android.annotation.NonNull ShortFgsMessage setFailureString(@android.annotation.NonNull String value) {
+        mFailureString = value;
         return this;
     }
 
@@ -150,6 +224,42 @@ public class ShortFgsMessage implements Parcelable {
         return this;
     }
 
+    /**
+     * If this is set, the receiver will call Service.startForeground() on mComponentName.
+     */
+    @DataClass.Generated.Member
+    public @android.annotation.NonNull ShortFgsMessage setDoCallStartForeground( boolean value) {
+        mDoCallStartForeground = value;
+        return this;
+    }
+
+    /**
+     * If this is set, the receiver will call Service.stopForeground() on mComponentName.
+     */
+    @DataClass.Generated.Member
+    public @android.annotation.NonNull ShortFgsMessage setDoCallStopForeground( boolean value) {
+        mDoCallStopForeground = value;
+        return this;
+    }
+
+    /**
+     * If this is set, the receiver will call Service.stopSelf() on mComponentName.
+     */
+    @DataClass.Generated.Member
+    public @android.annotation.NonNull ShortFgsMessage setDoCallStopSelf( boolean value) {
+        mDoCallStopSelf = value;
+        return this;
+    }
+
+    /**
+     * If this is set, the helper process will kill itself.
+     */
+    @DataClass.Generated.Member
+    public @android.annotation.NonNull ShortFgsMessage setDoKillProcess( boolean value) {
+        mDoKillProcess = value;
+        return this;
+    }
+
     @Override
     @DataClass.Generated.Member
     public String toString() {
@@ -158,13 +268,18 @@ public class ShortFgsMessage implements Parcelable {
 
         return "ShortFgsMessage { " +
                 "timestamp = " + mTimestamp + ", " +
-                "failureMessage = " + mFailureMessage + ", " +
+                "ack = " + ack + ", " +
+                "failureString = " + mFailureString + ", " +
                 "setForeground = " + mSetForeground + ", " +
                 "fgsType = " + mFgsType + ", " +
                 "startCommandResult = " + mStartCommandResult + ", " +
                 "serviceStartId = " + mServiceStartId + ", " +
                 "componentName = " + mComponentName + ", " +
-                "methodName = " + mMethodName +
+                "methodName = " + mMethodName + ", " +
+                "doCallStartForeground = " + mDoCallStartForeground + ", " +
+                "doCallStopForeground = " + mDoCallStopForeground + ", " +
+                "doCallStopSelf = " + mDoCallStopSelf + ", " +
+                "doKillProcess = " + mDoKillProcess +
         " }";
     }
 
@@ -175,13 +290,18 @@ public class ShortFgsMessage implements Parcelable {
         // void parcelFieldName(Parcel dest, int flags) { ... }
 
         int flg = 0;
-        if (mSetForeground) flg |= 0x4;
-        if (mFailureMessage != null) flg |= 0x2;
-        if (mComponentName != null) flg |= 0x40;
-        if (mMethodName != null) flg |= 0x80;
+        if (ack) flg |= 0x2;
+        if (mSetForeground) flg |= 0x8;
+        if (mDoCallStartForeground) flg |= 0x200;
+        if (mDoCallStopForeground) flg |= 0x400;
+        if (mDoCallStopSelf) flg |= 0x800;
+        if (mDoKillProcess) flg |= 0x1000;
+        if (mFailureString != null) flg |= 0x4;
+        if (mComponentName != null) flg |= 0x80;
+        if (mMethodName != null) flg |= 0x100;
         dest.writeInt(flg);
         dest.writeLong(mTimestamp);
-        if (mFailureMessage != null) dest.writeString(mFailureMessage);
+        if (mFailureString != null) dest.writeString(mFailureString);
         dest.writeInt(mFgsType);
         dest.writeInt(mStartCommandResult);
         dest.writeInt(mServiceStartId);
@@ -201,23 +321,33 @@ public class ShortFgsMessage implements Parcelable {
         // static FieldType unparcelFieldName(Parcel in) { ... }
 
         int flg = in.readInt();
-        boolean setForeground = (flg & 0x4) != 0;
+        boolean _ack = (flg & 0x2) != 0;
+        boolean setForeground = (flg & 0x8) != 0;
+        boolean doCallStartForeground = (flg & 0x200) != 0;
+        boolean doCallStopForeground = (flg & 0x400) != 0;
+        boolean doCallStopSelf = (flg & 0x800) != 0;
+        boolean doKillProcess = (flg & 0x1000) != 0;
         long timestamp = in.readLong();
-        String failureMessage = (flg & 0x2) == 0 ? null : in.readString();
+        String failureString = (flg & 0x4) == 0 ? null : in.readString();
         int fgsType = in.readInt();
         int startCommandResult = in.readInt();
         int serviceStartId = in.readInt();
-        ComponentName componentName = (flg & 0x40) == 0 ? null : (ComponentName) in.readTypedObject(ComponentName.CREATOR);
-        String methodName = (flg & 0x80) == 0 ? null : in.readString();
+        ComponentName componentName = (flg & 0x80) == 0 ? null : (ComponentName) in.readTypedObject(ComponentName.CREATOR);
+        String methodName = (flg & 0x100) == 0 ? null : in.readString();
 
         this.mTimestamp = timestamp;
-        this.mFailureMessage = failureMessage;
+        this.ack = _ack;
+        this.mFailureString = failureString;
         this.mSetForeground = setForeground;
         this.mFgsType = fgsType;
         this.mStartCommandResult = startCommandResult;
         this.mServiceStartId = serviceStartId;
         this.mComponentName = componentName;
         this.mMethodName = methodName;
+        this.mDoCallStartForeground = doCallStartForeground;
+        this.mDoCallStopForeground = doCallStopForeground;
+        this.mDoCallStopSelf = doCallStopSelf;
+        this.mDoKillProcess = doKillProcess;
 
         // onConstructed(); // You can define this method to get a callback
     }
@@ -237,10 +367,10 @@ public class ShortFgsMessage implements Parcelable {
     };
 
     @DataClass.Generated(
-            time = 1669760723754L,
+            time = 1670018200235L,
             codegenVersion = "1.0.23",
             sourceFile = "cts/tests/app/ShortFgsTest/ShortFgsTestHelper/src/android/app/cts/shortfgstesthelper/ShortFgsMessage.java",
-            inputSignatures = "final private  long mTimestamp\nprivate @android.annotation.Nullable java.lang.String mFailureMessage\nprivate  boolean mSetForeground\nprivate  int mFgsType\nprivate  int mStartCommandResult\nprivate  int mServiceStartId\nprivate @android.annotation.Nullable android.content.ComponentName mComponentName\nprivate @android.annotation.Nullable java.lang.String mMethodName\nclass ShortFgsMessage extends java.lang.Object implements [android.os.Parcelable]\n@com.android.internal.util.DataClass(genConstructor=false, genSetters=true, genToString=true, genAidl=false)")
+            inputSignatures = "final private  long mTimestamp\nprivate  boolean ack\nprivate @android.annotation.Nullable java.lang.String mFailureString\nprivate  boolean mSetForeground\nprivate  int mFgsType\nprivate  int mStartCommandResult\nprivate  int mServiceStartId\nprivate @android.annotation.Nullable android.content.ComponentName mComponentName\nprivate @android.annotation.Nullable java.lang.String mMethodName\nprivate  boolean mDoCallStartForeground\nprivate  boolean mDoCallStopForeground\nprivate  boolean mDoCallStopSelf\nprivate  boolean mDoKillProcess\npublic  void setException(java.lang.Throwable)\nclass ShortFgsMessage extends java.lang.Object implements [android.os.Parcelable]\n@com.android.internal.util.DataClass(genConstructor=false, genSetters=true, genToString=true, genAidl=false)")
     @Deprecated
     private void __metadata() {}
 

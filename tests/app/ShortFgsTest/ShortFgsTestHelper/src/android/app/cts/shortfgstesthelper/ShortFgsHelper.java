@@ -89,6 +89,15 @@ public class ShortFgsHelper {
     }
 
     /**
+     * Sends an "ack" message back to the main test package.
+     */
+    public static void sendBackAckMessage() {
+        ShortFgsMessage m = new ShortFgsMessage();
+        m.setAck(true);
+        BroadcastMessenger.send(sContext, TAG, m);
+    }
+
+    /**
      * Sends a class name and a method name back to the main test package.
      */
     public static void sendBackMethodName(Class<?> clazz, String methodName,

@@ -23,8 +23,7 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.DISPLAY_IME_POLICY_LOCAL;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
-import static android.view.inputmethod.cts.util.ConstantsUtils.ACTION_ON_CREATE;
-import static android.view.inputmethod.cts.util.ConstantsUtils.EXTRA_LINKAGE_ERROR_RESULT;
+import static android.view.inputmethod.cts.util.ConstantsUtils.DISAPPROVE_IME_PACKAGE_NAME;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeInvisible;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeVisible;
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
@@ -47,10 +46,8 @@ import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.inputmethodservice.InputMethodService;
@@ -69,6 +66,7 @@ import android.view.inputmethod.InputConnectionWrapper;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.TextAppearanceInfo;
+import android.view.inputmethod.cts.disapproveime.DisapproveInputMethodService;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.SimulatedVirtualDisplaySession;
 import android.view.inputmethod.cts.util.TestActivity;
@@ -83,6 +81,7 @@ import android.widget.LinearLayout;
 import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.rule.ServiceTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -122,12 +121,10 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
     // 1.2 is an arbitrary value.
     private static final String PUT_FONT_SCALE_CMD = "settings put system font_scale 1.2";
 
-    private static final String DISAPPROVE_IME_PACKAGE = "com.android.cts.disapproveime";
-    private static final String DISAPPROVE_IME_ID =
-            "com.android.cts.disapproveime/.DisapproveInputMethodService";
-
     @Rule
     public final UnlockScreenRule mUnlockScreenRule = new UnlockScreenRule();
+    @Rule
+    public final ServiceTestRule mServiceRule = new ServiceTestRule();
 
     private Instrumentation mInstrumentation;
 
@@ -881,28 +878,24 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
     @Test
     public void testImeOverrideSessionInterface_throwLinkageError() {
         SystemUtil.runCommandAndPrintOnLogcat(TAG, "am compat enable "
-                + DISALLOW_INPUT_METHOD_INTERFACE_OVERRIDE + " " + DISAPPROVE_IME_PACKAGE);
+                + DISALLOW_INPUT_METHOD_INTERFACE_OVERRIDE + " " + DISAPPROVE_IME_PACKAGE_NAME);
 
         final Context context = mInstrumentation.getContext();
         final CountDownLatch serviceCreateLatch = new CountDownLatch(1);
-        final BroadcastReceiver receiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (intent != null && intent.getAction().equals(ACTION_ON_CREATE)) {
-                    if (!intent.getBooleanExtra(EXTRA_LINKAGE_ERROR_RESULT, false)) {
-                        fail("Should throw a LinkageError");
+        final DisapproveInputMethodService.DisapproveImeCallback disapproveImeCallback =
+                hasLinkageError -> {
+                    if (!hasLinkageError) {
+                        fail("Should throw a LinkageError.");
                     }
                     serviceCreateLatch.countDown();
-                }
-            }
-        };
-        context.registerReceiver(receiver, new IntentFilter(ACTION_ON_CREATE),
-                Context.RECEIVER_EXPORTED);
+                };
 
-        SystemUtil.runCommandAndPrintOnLogcat(TAG, "ime reset");
-        SystemUtil.runCommandAndPrintOnLogcat(TAG, "ime enable " + DISAPPROVE_IME_ID);
-        SystemUtil.runCommandAndPrintOnLogcat(TAG, "ime set " + DISAPPROVE_IME_ID);
-        createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        try {
+            DisapproveInputMethodService.setCallback(disapproveImeCallback);
+            mServiceRule.bindService(new Intent(context, DisapproveInputMethodService.class));
+        } catch (TimeoutException e) {
+            fail("DisapproveInputMethodService binding timeout.");
+        }
 
         boolean result = false;
         try {
@@ -912,10 +905,8 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             }
         } catch (InterruptedException ignored) {
         } finally {
-            context.unregisterReceiver(receiver);
-            SystemUtil.runCommandAndPrintOnLogcat(TAG, "ime reset");
             SystemUtil.runCommandAndPrintOnLogcat(TAG, "am compat reset "
-                    + DISALLOW_INPUT_METHOD_INTERFACE_OVERRIDE + " " + DISAPPROVE_IME_PACKAGE);
+                    + DISALLOW_INPUT_METHOD_INTERFACE_OVERRIDE + " " + DISAPPROVE_IME_PACKAGE_NAME);
         }
     }
 

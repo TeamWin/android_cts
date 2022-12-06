@@ -35,6 +35,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
@@ -60,6 +61,7 @@ import org.junit.Before;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 /** Base class for all tests in the module. */
 public class WindowManagerJetpackTestBase {
@@ -121,6 +123,13 @@ public class WindowManagerJetpackTestBase {
             @Nullable String activityId) {
         return launcherForActivityNewTask(activityClass, activityId, true/* isFullScreen */)
                 .launch(mInstrumentation);
+    }
+
+    public static void waitForOrFail(String message, BooleanSupplier condition) {
+        Condition.waitFor(new Condition<>(message, condition)
+                .setRetryIntervalMs(500)
+                .setRetryLimit(5)
+                .setOnFailure(unusedResult -> fail("FAILED because unsatisfied: " + message)));
     }
 
     private <T extends Activity> TestActivityLauncher<T> launcherForActivityNewTask(
@@ -232,9 +241,8 @@ public class WindowManagerJetpackTestBase {
         activity.setRequestedOrientation(orientation == ORIENTATION_PORTRAIT
                 ? SCREEN_ORIENTATION_PORTRAIT : SCREEN_ORIENTATION_LANDSCAPE);
         // Wait for the activity to layout, which will happen after the orientation change
-        assertTrue(activity.waitForLayout());
-        // Check that orientation matches
-        assertEquals(orientation, activity.getResources().getConfiguration().orientation);
+        waitForOrFail("Activity orientation must be updated",
+                () -> activity.getResources().getConfiguration().orientation == orientation);
     }
 
     public static void enterPipActivityHandlesConfigChanges(TestActivity activity) {

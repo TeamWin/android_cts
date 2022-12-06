@@ -19,6 +19,7 @@
      package="android.app.cts.shortfgstesthelper">
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
 
     <application
         android:name="android.app.cts.shortfgstesthelper.MyApplication">

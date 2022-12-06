@@ -22,12 +22,17 @@ import static android.car.builtin.content.pm.PackageManagerHelper.PROPERTY_CAR_S
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.app.ActivityManager;
 import android.car.builtin.content.pm.PackageManagerHelper;
 import android.car.cts.builtin.R;
 import android.car.test.PermissionsCheckerRule;
 import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
+import android.car.test.mocks.JavaMockitoHelper;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
@@ -42,11 +47,17 @@ import android.util.Log;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.AmUtils;
+import com.android.compatibility.common.util.SystemUtil;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 
 @RunWith(AndroidJUnit4.class)
@@ -61,6 +72,8 @@ public final class PackageManagerHelperTest {
         "android.car.cts.builtin.os.SharedMemoryTestService",
         "android.car.cts.builtin.os.ServiceManagerTestService"
     };
+    private static final String CAR_SIMPLE_APP_PKG = "android.car.cts.builtin.apps.simple";
+    private static final String CAR_SIMPLE_APP_ACTIVITY = CAR_SIMPLE_APP_PKG + ".SimpleActivity";
 
     @Rule
     public final PermissionsCheckerRule mPermissionsCheckerRule = new PermissionsCheckerRule();
@@ -70,7 +83,6 @@ public final class PackageManagerHelperTest {
 
     @Test
     public void testGetPackageInfoAsUser() throws Exception {
-        String expectedActivityName = "android.car.cts.builtin.activity.SimpleActivity";
         int flags = PackageManager.GET_ACTIVITIES | PackageManager.GET_INSTRUMENTATION
                 | PackageManager.GET_SERVICES;
         int curUser = UserHandle.myUserId();
@@ -84,7 +96,7 @@ public final class PackageManagerHelperTest {
         assertThat(appInfo).isNotNull();
         assertThat(appInfo.descriptionRes).isEqualTo(R.string.app_description);
         assertThat(activities).isNotNull();
-        assertThat(hasActivity(expectedActivityName, activities)).isTrue();
+        assertThat(hasActivity(CAR_SIMPLE_APP_ACTIVITY, activities)).isTrue();
         assertThat(services).isNotNull();
     }
 
@@ -210,6 +222,41 @@ public final class PackageManagerHelperTest {
         assertThat(systemuiComponent).isNotNull();
     }
 
+    @Test
+    public void testForceStopPackageAsUser() throws Exception {
+        ActivityManager am = mContext.getSystemService(ActivityManager.class);
+        // Start SimpleActivity
+        ActivityReceiverFilter appStartedReceiver = new ActivityReceiverFilter(
+                CAR_SIMPLE_APP_ACTIVITY + ".LAUNCHED_ACTION");
+        Intent intent = new Intent().setClassName(CAR_SIMPLE_APP_PKG,
+                CAR_SIMPLE_APP_ACTIVITY).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+        // Wait for activity to launch
+        try {
+            appStartedReceiver.waitForActivity();
+        } finally {
+            appStartedReceiver.close();
+        }
+
+        Predicate<ActivityManager.RunningAppProcessInfo> processNamePredicate =
+                runningApp -> CAR_SIMPLE_APP_PKG.equals(runningApp.processName);
+        List<ActivityManager.RunningAppProcessInfo> runningApps =
+                SystemUtil.callWithShellPermissionIdentity(() -> am.getRunningAppProcesses());
+        assertWithMessage(
+                "Process %s should be found in running process list", CAR_SIMPLE_APP_PKG).that(
+                runningApps.stream().anyMatch(processNamePredicate)).isTrue();
+
+        runningApps = SystemUtil.callWithShellPermissionIdentity(() -> {
+            PackageManagerHelper.forceStopPackageAsUser(mContext, CAR_SIMPLE_APP_PKG,
+                    ActivityManager.getCurrentUser());
+            return am.getRunningAppProcesses();
+        });
+
+        assertWithMessage(
+                "Process %s should not be alive after force-stop", CAR_SIMPLE_APP_PKG).that(
+                runningApps.stream().anyMatch(processNamePredicate)).isFalse();
+    }
+
     private boolean hasActivity(String activityName, ActivityInfo[] activities) {
         return Arrays.stream(activities).anyMatch(a -> activityName.equals(a.name));
     }
@@ -225,5 +272,38 @@ public final class PackageManagerHelperTest {
             return uid;
         };
         return Arrays.stream(packageNames).mapToInt(packageNameToUid).toArray();
+    }
+
+    private final class ActivityReceiverFilter extends BroadcastReceiver {
+        private static final int TIMEOUT_IN_MS = 5000;
+
+        // The activity to be filtered for.
+        private final String mActivityToFilter;
+        private final CountDownLatch mReceiverLatch = new CountDownLatch(1);
+
+        // Create the filter with the intent to look for.
+        ActivityReceiverFilter(String activityToFilter) {
+            mActivityToFilter = activityToFilter;
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(mActivityToFilter);
+            mContext.registerReceiver(this, filter);
+        }
+
+        // Turn off the filter.
+        void close() {
+            mContext.unregisterReceiver(this);
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(mActivityToFilter)) {
+                mReceiverLatch.countDown();
+            }
+        }
+
+        void waitForActivity() throws Exception {
+            AmUtils.waitForBroadcastBarrier();
+            JavaMockitoHelper.await(mReceiverLatch, TIMEOUT_IN_MS);
+        }
     }
 }

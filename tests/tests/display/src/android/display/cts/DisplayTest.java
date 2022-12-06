@@ -142,10 +142,12 @@ public class DisplayTest {
         public final int mHeight;
         public final int mWidth;
         public final float mRefreshRate;
+        public final int[] mSupportedHdrTypes;
 
         DisplayModeState(Display display) {
             mHeight = display.getMode().getPhysicalHeight();
             mWidth = display.getMode().getPhysicalWidth();
+            mSupportedHdrTypes = display.getMode().getSupportedHdrTypes();
 
             // Starting Android S the, the platform might throttle down
             // applications frame rate to a divisor of the refresh rate instead if changing the
@@ -167,7 +169,8 @@ public class DisplayTest {
             DisplayModeState other = (DisplayModeState) obj;
             return mHeight == other.mHeight
                 && mWidth == other.mWidth
-                && mRefreshRate == other.mRefreshRate;
+                && mRefreshRate == other.mRefreshRate
+                && Arrays.equals(mSupportedHdrTypes, other.mSupportedHdrTypes);
         }
 
         @Override
@@ -176,6 +179,7 @@ public class DisplayTest {
                     .append("width=").append(mWidth)
                     .append(", height=").append(mHeight)
                     .append(", fps=").append(mRefreshRate)
+                    .append(", supportedHdrTypes=").append(Arrays.toString(mSupportedHdrTypes))
                     .append("}")
                     .toString();
         }
@@ -224,7 +228,6 @@ public class DisplayTest {
         mDefaultDisplay = mDisplayManager.getDisplay(DEFAULT_DISPLAY);
         mSupportedWideGamuts = mDefaultDisplay.getSupportedWideColorGamut();
         mOriginalHdrSettings = new HdrSettings();
-        cacheAndClearOriginalHdrSettings();
     }
 
     @After
@@ -303,6 +306,18 @@ public class DisplayTest {
     }
 
     /**
+     * Verify that the supported HDR types for each mode match the display's supported HDR types
+     */
+    @Test
+    public void testModeHdrTypesMatchDisplayHdrTypes() {
+        int[] supportedHdrTypes = mDefaultDisplay.getHdrCapabilities().getSupportedHdrTypes();
+
+        for (Display.Mode mode : mDefaultDisplay.getSupportedModes()) {
+            assertArrayEquals(supportedHdrTypes, mode.getSupportedHdrTypes());
+        }
+    }
+
+    /**
      * Verify that the WindowManager returns the default display.
      */
     @Presubmit
@@ -341,6 +356,7 @@ public class DisplayTest {
     public void
             testGetHdrCapabilitiesWhenUserDisabledFormatsAreNotAllowedReturnsFilteredHdrTypes()
                     throws Exception {
+        cacheAndClearOriginalHdrSettings();
         waitUntil(
                 mDefaultDisplay,
                 mDefaultDisplay ->
@@ -381,6 +397,7 @@ public class DisplayTest {
     public void
             testGetHdrCapabilitiesWhenUserDisabledFormatsAreAllowedReturnsNonFilteredHdrTypes()
                     throws Exception {
+        cacheAndClearOriginalHdrSettings();
         waitUntil(
                 mDefaultDisplay,
                 mDefaultDisplay ->
@@ -409,6 +426,7 @@ public class DisplayTest {
      */
     @Test
     public void testSetUserDisabledHdrTypesStoresDisabledFormatsInSettings() throws Exception {
+        cacheAndClearOriginalHdrSettings();
         waitUntil(
                 mDefaultDisplay,
                 mDefaultDisplay ->
@@ -725,6 +743,7 @@ public class DisplayTest {
         assertEquals(targetMode.getPhysicalHeight(), currentMode.mHeight);
         assertEquals(targetMode.getPhysicalWidth(), currentMode.mWidth);
         assertEquals(targetMode.getRefreshRate(), currentMode.mRefreshRate, REFRESH_RATE_TOLERANCE);
+        assertArrayEquals(targetMode.getSupportedHdrTypes(), currentMode.mSupportedHdrTypes);
 
 
         boolean isResolutionSwitch = initialMode.mHeight != targetMode.getPhysicalHeight()

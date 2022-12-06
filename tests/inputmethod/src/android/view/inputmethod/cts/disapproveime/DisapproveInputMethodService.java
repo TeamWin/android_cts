@@ -14,13 +14,8 @@
  * limitations under the License.
  */
 
-package com.android.cts.disapproveime;
+package android.view.inputmethod.cts.disapproveime;
 
-import static android.content.Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS;
-import static android.view.inputmethod.cts.util.ConstantsUtils.ACTION_ON_CREATE;
-import static android.view.inputmethod.cts.util.ConstantsUtils.EXTRA_LINKAGE_ERROR_RESULT;
-
-import android.content.Intent;
 import android.inputmethodservice.InputMethodService;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -30,6 +25,11 @@ import android.widget.LinearLayout;
  */
 public final class DisapproveInputMethodService extends InputMethodService {
 
+    /**
+     * The callback for {@link DisapproveInputMethodService} test verification.
+     */
+    public static DisapproveImeCallback mDisapproveImeCallback;
+
     @Override
     public View onCreateInputView() {
         return new LinearLayout(this);
@@ -38,9 +38,6 @@ public final class DisapproveInputMethodService extends InputMethodService {
     @Override
     public void onCreate() {
         boolean hasLinkageError = false;
-        final Intent intent = new Intent();
-        intent.setAction(ACTION_ON_CREATE);
-        intent.addFlags(FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS);
         try {
             super.onCreate();
         } catch (Throwable e) {
@@ -48,8 +45,14 @@ public final class DisapproveInputMethodService extends InputMethodService {
                 hasLinkageError = true;
             }
         }
-        intent.putExtra(EXTRA_LINKAGE_ERROR_RESULT, hasLinkageError);
-        sendBroadcast(intent);
+        if (mDisapproveImeCallback != null) {
+            mDisapproveImeCallback.onCreate(hasLinkageError);
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        // no-op
     }
 
     /**
@@ -63,5 +66,19 @@ public final class DisapproveInputMethodService extends InputMethodService {
 
     private class MockInputMethodSessionImpl extends InputMethodSessionImpl {
         // no-op
+    }
+
+    /**
+     * Set {@link DisapproveImeCallback} callback.
+     */
+    public static void setCallback(DisapproveImeCallback callback) {
+        mDisapproveImeCallback = callback;
+    }
+
+    /**
+     * Defines a callback for {@link DisapproveInputMethodService} test.
+     */
+    public interface DisapproveImeCallback {
+        void onCreate(boolean hasLinkageError);
     }
 }

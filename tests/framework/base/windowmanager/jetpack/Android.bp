@@ -49,7 +49,7 @@ java_library {
 java_library {
     name: "cts_window_jetpack_utils",
     srcs: [
-        "src/android/server/wm/jetpack/utils/**/*.java"
+        "src/android/server/wm/jetpack/utils/**/*.java",
     ],
     static_libs: [
         "compatibility-device-util-axt",
@@ -67,8 +67,8 @@ android_test {
         "androidx.test.ext.junit",
         "androidx.test.rules",
         "compatibility-device-util-axt",
-        "cts-wm-util",
         "platform-test-annotations",
+        "cts-wm-util",
         "cts_window-sidecar",
         "cts_window-extensions",
     ],

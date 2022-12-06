@@ -179,38 +179,79 @@ public class TouchHelper {
         final Rect bounds = mWmState.getDisplay(displayId).getDisplayRect();
         int midHeight = bounds.top + bounds.height() / 2;
         int midWidth = bounds.left + bounds.width() / 2;
-        quickSwipe(displayId, 0, midHeight, midWidth, midHeight, 10, sync, waitForAnimations);
+        final SwipeSession session = new SwipeSession(displayId, sync, waitForAnimations);
+        session.quickSwipe(0, midHeight, midWidth, midHeight, 10);
         mWmState.waitForAppTransitionIdleOnDisplay(displayId);
     }
 
     /**
-     * Injecting a sequence of motion event to simulate a gesture swipe.
+     * Helper class for injecting a sequence of motion event to simulate a gesture swipe.
      */
-    private void quickSwipe(int displayId, int startX, int startY, int endX, int endY, int steps,
-            boolean sync, boolean waitForAnimations) {
-        if (steps <= 0) {
-            steps = 1;
-        }
-        final long startDownTime = SystemClock.uptimeMillis();
-        injectMotion(startDownTime, startDownTime, MotionEvent.ACTION_DOWN, startX, startY,
-                displayId, sync, waitForAnimations);
+    static class SwipeSession {
+        private static final int INJECT_INPUT_DELAY_MILLIS = 5;
+        private final int mDisplayId;
+        private final boolean mSync;
+        private final boolean mWaitForAnimations;
+        private int mStartX;
+        private int mStartY;
+        private int mEndX;
+        private int mEndY;
+        private long mStartDownTime = -1;
+        private long mNextEventTime = -1;
 
-        // inject in every 5 ms.
-        final int delayMillis = 5;
-        long nextEventTime = startDownTime + delayMillis;
-        final int stepGapX = (endX - startX) / steps;
-        final int stepGapY = (endY - startY) / steps;
-        for (int i = 0; i < steps; i++) {
-            SystemClock.sleep(delayMillis);
-            final int nextX = startX + stepGapX * i;
-            final int nextY = startY + stepGapY * i;
-            injectMotion(startDownTime, nextEventTime,
-                    MotionEvent.ACTION_MOVE, nextX, nextY, displayId, sync, waitForAnimations);
-            nextEventTime += delayMillis;
+        SwipeSession(int displayId,
+                boolean sync, boolean waitForAnimations) {
+            mDisplayId = displayId;
+            mSync = sync;
+            mWaitForAnimations = waitForAnimations;
         }
 
-        SystemClock.sleep(delayMillis);
-        injectMotion(startDownTime, nextEventTime,
-                MotionEvent.ACTION_UP, endX, endY, displayId, sync, waitForAnimations);
+        long beginSwipe(int startX, int startY) {
+            mStartX = startX;
+            mStartY = startY;
+            mStartDownTime = SystemClock.uptimeMillis();
+            injectMotion(mStartDownTime, mStartDownTime, MotionEvent.ACTION_DOWN, mStartX, mStartY,
+                    mDisplayId, mSync, mWaitForAnimations);
+            return mStartDownTime;
+        }
+
+        void continueSwipe(int endX, int endY, int steps) {
+            if (steps <= 0) {
+                steps = 1;
+            }
+            mEndX = endX;
+            mEndY = endY;
+            // inject in every INJECT_INPUT_DELAY_MILLIS ms.
+            final int delayMillis = INJECT_INPUT_DELAY_MILLIS;
+            mNextEventTime = mStartDownTime + delayMillis;
+            final int stepGapX = (mEndX - mStartX) / steps;
+            final int stepGapY = (mEndY - mStartY) / steps;
+            for (int i = 0; i < steps; i++) {
+                SystemClock.sleep(delayMillis);
+                final int nextX = mStartX + stepGapX * i;
+                final int nextY = mStartY + stepGapY * i;
+                injectMotion(mStartDownTime, mNextEventTime,
+                        MotionEvent.ACTION_MOVE, nextX, nextY,
+                        mDisplayId, mSync, mWaitForAnimations);
+                mNextEventTime += delayMillis;
+            }
+        }
+
+        void finishSwipe() {
+            injectMotion(mStartDownTime, mNextEventTime, MotionEvent.ACTION_UP, mEndX, mEndY,
+                    mDisplayId, mSync, mWaitForAnimations);
+        }
+
+        void cancelSwipe() {
+            injectMotion(mStartDownTime, mNextEventTime, MotionEvent.ACTION_CANCEL, mEndX, mEndY,
+                    mDisplayId, mSync, mWaitForAnimations);
+        }
+
+        void quickSwipe(int startX, int startY, int endX, int endY, int steps) {
+            beginSwipe(startX, startY);
+            continueSwipe(endX, endY, steps);
+            SystemClock.sleep(INJECT_INPUT_DELAY_MILLIS);
+            finishSwipe();
+        }
     }
 }

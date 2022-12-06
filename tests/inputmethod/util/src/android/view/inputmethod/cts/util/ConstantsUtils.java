@@ -22,15 +22,8 @@ package android.view.inputmethod.cts.util;
 public class ConstantsUtils {
 
     /**
-     * Defines {@link android.content.BroadcastReceiver} action name for {@code onCreate}
-     * of {@code DisapproveInputMethodService}.
+     * Indicates the {@code DisapproveInputMethodService} package name.
      */
-    public static final String ACTION_ON_CREATE = "com.android.cts.disapproveime.ON_CREATE";
-
-    /**
-     * Indicates the {@link LinkageError} happened result during {@code onCreate} of
-     * {@code DisapproveInputMethodService}.
-     */
-    public static final String EXTRA_LINKAGE_ERROR_RESULT =
-            "com.android.cts.disapproveime.extra.RESULT";
+    public static final String DISAPPROVE_IME_PACKAGE_NAME =
+            "android.view.inputmethod.cts.disapproveime";
 }

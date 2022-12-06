@@ -20,6 +20,7 @@
 
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
+    <uses-permission android:name="android.permission.FORCE_STOP_PACKAGES" />
 
     <application android:description="@string/app_description">
         <uses-library android:name="android.test.runner" />

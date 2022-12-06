@@ -140,14 +140,14 @@ public class VirtualSensorTest {
     }
 
     @Test
-    public void getSensorsList_noVirtualSensors_returnsEmptyList() {
+    public void getSensorList_noVirtualSensors_returnsEmptyList() {
         mVirtualSensor = setUpVirtualSensor(/* sensorConfig= */ null);
         assertThat(mVirtualSensor).isNull();
         assertThat(mVirtualDeviceSensorManager.getSensorList(TYPE_ACCELEROMETER)).isEmpty();
     }
 
     @Test
-    public void getSensorsList_returnsVirtualSensor() {
+    public void getSensorList_returnsVirtualSensor() {
         mVirtualSensor = setUpVirtualSensor(
                 new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME)
                         .setVendor(VIRTUAL_SENSOR_VENDOR)
@@ -167,6 +167,20 @@ public class VirtualSensorTest {
         assertThat(sensor.getVendor()).isEqualTo(VIRTUAL_SENSOR_VENDOR);
         assertThat(sensor.getType()).isEqualTo(TYPE_ACCELEROMETER);
         assertThat(sensor.isDynamicSensor()).isFalse();
+    }
+
+    @Test
+    public void getSensorList_isCached() {
+        mVirtualSensor = setUpVirtualSensor(
+                new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME).build());
+
+        final List<Sensor> allSensors = mVirtualDeviceSensorManager.getSensorList(Sensor.TYPE_ALL);
+        assertThat(allSensors).isSameInstanceAs(
+                mVirtualDeviceSensorManager.getSensorList(Sensor.TYPE_ALL));
+
+        final List<Sensor> sensors = mVirtualDeviceSensorManager.getSensorList(TYPE_ACCELEROMETER);
+        assertThat(sensors).isSameInstanceAs(
+                mVirtualDeviceSensorManager.getSensorList(TYPE_ACCELEROMETER));
     }
 
     @Test

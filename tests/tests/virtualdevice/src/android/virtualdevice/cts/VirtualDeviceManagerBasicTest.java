@@ -228,6 +228,32 @@ public class VirtualDeviceManagerBasicTest {
     }
 
     @Test
+    public void createContext_returnsCorrectContext() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+        Context deviceContext = mVirtualDevice.createContext();
+        assertThat(deviceContext.getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
+    }
+
+    @Test
+    public void createContext_multipleDevices_returnCorrectContexts() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo(0).getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+        mAnotherVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo(1).getId(),
+                        NAMED_VIRTUAL_DEVICE_PARAMS);
+        assertThat(mVirtualDevice.createContext().getDeviceId()).isEqualTo(
+                mVirtualDevice.getDeviceId());
+        assertThat(mAnotherVirtualDevice.createContext().getDeviceId()).isEqualTo(
+                mAnotherVirtualDevice.getDeviceId());
+    }
+
+    @Test
     public void getDevicePolicy_noPolicySpecified_shouldReturnDefault() {
         mVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(

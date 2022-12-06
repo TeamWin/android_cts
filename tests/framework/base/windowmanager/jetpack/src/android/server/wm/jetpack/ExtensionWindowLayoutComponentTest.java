@@ -95,7 +95,6 @@ import java.util.stream.Collectors;
 @RunWith(AndroidJUnit4.class)
 public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTestBase {
 
-    private TestActivity mActivity;
     private WindowLayoutComponent mWindowLayoutComponent;
     private WindowLayoutInfo mWindowLayoutInfo;
 
@@ -110,14 +109,13 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
         mWindowLayoutComponent =
                 (WindowLayoutComponent) mWindowExtensionTestRule.getExtensionComponent();
         assumeNotNull(mWindowLayoutComponent);
-        mActivity = startActivityNewTask(TestActivity.class);
     }
 
     private Context createContextWithNonActivityWindow() {
         Display defaultDisplay = mContext.getSystemService(DisplayManager.class).getDisplay(
                 DEFAULT_DISPLAY);
         Context windowContext = mContext.createWindowContext(defaultDisplay,
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null);
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null /* options */);
 
         mInstrumentation.runOnMainSync(() -> {
             final View view = new View(windowContext);
@@ -141,8 +139,9 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
     @ApiTest(apis = {
             "androidx.window.extensions.layout.WindowLayoutComponent#addWindowLayoutInfoListener"})
     public void testWindowLayoutComponent_onWindowLayoutChangeListener() throws Exception {
+        TestActivity activity = (TestActivity) startActivityNewTask(TestActivity.class);
         // Set activity to portrait
-        setActivityOrientationActivityDoesNotHandleOrientationChanges(mActivity,
+        setActivityOrientationActivityDoesNotHandleOrientationChanges(activity,
                 ORIENTATION_PORTRAIT);
 
         // Create the callback, onWindowLayoutChanged should only be called twice in this
@@ -153,13 +152,13 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
         windowLayoutInfoConsumer.setCount(1);
 
         // Add window layout listener for mWindowToken - onWindowLayoutChanged should be called
-        mWindowLayoutComponent.addWindowLayoutInfoListener(mActivity, windowLayoutInfoConsumer);
+        mWindowLayoutComponent.addWindowLayoutInfoListener(activity, windowLayoutInfoConsumer);
         // Initial registration invokes a consumer callback synchronously, clear the queue to
         // make sure there's no residual value or from the first orientation change.
         windowLayoutInfoConsumer.clearQueue();
 
         // Change the activity orientation - onWindowLayoutChanged should be called
-        setActivityOrientationActivityDoesNotHandleOrientationChanges(mActivity,
+        setActivityOrientationActivityDoesNotHandleOrientationChanges(activity,
                 ORIENTATION_LANDSCAPE);
 
         // Check we have received exactly one layout update.
@@ -170,7 +169,7 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
         windowLayoutInfoConsumer.clearQueue();
 
         // Change the activity orientation - onWindowLayoutChanged should NOT be called
-        setActivityOrientationActivityDoesNotHandleOrientationChanges(mActivity,
+        setActivityOrientationActivityDoesNotHandleOrientationChanges(activity,
                 ORIENTATION_PORTRAIT);
         WindowLayoutInfo lastValue = windowLayoutInfoConsumer.waitAndGet();
         assertNull(lastValue);
@@ -180,10 +179,11 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
     @ApiTest(apis = {
             "androidx.window.extensions.layout.WindowLayoutComponent#addWindowLayoutInfoListener"})
     public void testWindowLayoutComponent_windowLayoutInfoListener() {
+        TestActivity activity = (TestActivity) startActivityNewTask(TestActivity.class);
         TestValueCountConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
                 new TestValueCountConsumer<>();
         // Test that adding and removing callback succeeds
-        mWindowLayoutComponent.addWindowLayoutInfoListener(mActivity, windowLayoutInfoConsumer);
+        mWindowLayoutComponent.addWindowLayoutInfoListener(activity, windowLayoutInfoConsumer);
         mWindowLayoutComponent.removeWindowLayoutInfoListener(windowLayoutInfoConsumer);
     }
 
@@ -191,7 +191,8 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
     @Test
     public void testWindowLayoutComponent_providesWindowLayoutFromActivity()
             throws ExecutionException, InterruptedException, TimeoutException {
-        mWindowLayoutInfo = getExtensionWindowLayoutInfo(mActivity);
+        TestActivity activity = (TestActivity) startActivityNewTask(TestActivity.class);
+        mWindowLayoutInfo = getExtensionWindowLayoutInfo(activity);
         assumeHasDisplayFeatures(mWindowLayoutInfo);
         for (DisplayFeature displayFeature : mWindowLayoutInfo.getDisplayFeatures()) {
             // Check that the feature bounds are valid
@@ -201,7 +202,7 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
             // The feature cannot have zero area
             assertNotBothDimensionsZero(featureRect);
             // The feature cannot be outside the activity bounds
-            assertTrue(getActivityBounds(mActivity).contains(featureRect));
+            assertTrue(getActivityBounds(activity).contains(featureRect));
 
             if (displayFeature instanceof FoldingFeature) {
                 // Check that the folding feature has a valid type and state
@@ -247,14 +248,13 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
     public void testWindowLayoutComponent_windowLayoutMatchesBetweenActivityAndWindowContext()
             throws ExecutionException, InterruptedException, TimeoutException {
         assumeExtensionVersionSupportsWindowContextLayout();
+        TestConfigChangeHandlingActivity activity =
+                (TestConfigChangeHandlingActivity) startFullScreenActivityNewTask(
+                        TestConfigChangeHandlingActivity.class, null /* activityId */);
         Context windowContext = createContextWithNonActivityWindow();
 
         WindowLayoutInfo windowLayoutInfoFromContext = getExtensionWindowLayoutInfo(windowContext);
-
-        TestConfigChangeHandlingActivity configHandlingActivity = startFullScreenActivityNewTask(
-                        TestConfigChangeHandlingActivity.class, null);
-        WindowLayoutInfo windowLayoutInfoFromActivity = getExtensionWindowLayoutInfo(
-                configHandlingActivity);
+        WindowLayoutInfo windowLayoutInfoFromActivity = getExtensionWindowLayoutInfo(activity);
 
         assertEquals(windowLayoutInfoFromContext, windowLayoutInfoFromActivity);
     }
@@ -264,25 +264,26 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
     public void testGetWindowLayoutInfo_configChanged_windowLayoutUpdates()
             throws ExecutionException, InterruptedException, TimeoutException {
         assumeSupportsRotation();
-        mWindowLayoutInfo = getExtensionWindowLayoutInfo(mActivity);
+
+        TestConfigChangeHandlingActivity activity =
+                (TestConfigChangeHandlingActivity) startFullScreenActivityNewTask(
+                        TestConfigChangeHandlingActivity.class, null /* activityId */);
+        mWindowLayoutInfo = getExtensionWindowLayoutInfo(activity);
         assumeHasDisplayFeatures(mWindowLayoutInfo);
 
-        TestConfigChangeHandlingActivity configHandlingActivity = startFullScreenActivityNewTask(
-                        TestConfigChangeHandlingActivity.class, null);
-
-        setActivityOrientationActivityHandlesOrientationChanges(configHandlingActivity,
+        setActivityOrientationActivityHandlesOrientationChanges(activity,
                 ORIENTATION_PORTRAIT);
         final WindowLayoutInfo portraitWindowLayoutInfo = getExtensionWindowLayoutInfo(
-                configHandlingActivity);
-        final Rect portraitBounds = getActivityBounds(configHandlingActivity);
-        final Rect portraitMaximumBounds = getMaximumActivityBounds(configHandlingActivity);
+                activity);
+        final Rect portraitBounds = getActivityBounds(activity);
+        final Rect portraitMaximumBounds = getMaximumActivityBounds(activity);
 
-        setActivityOrientationActivityHandlesOrientationChanges(configHandlingActivity,
+        setActivityOrientationActivityHandlesOrientationChanges(activity,
                 ORIENTATION_LANDSCAPE);
         final WindowLayoutInfo landscapeWindowLayoutInfo = getExtensionWindowLayoutInfo(
-                configHandlingActivity);
-        final Rect landscapeBounds = getActivityBounds(configHandlingActivity);
-        final Rect landscapeMaximumBounds = getMaximumActivityBounds(configHandlingActivity);
+                activity);
+        final Rect landscapeBounds = getActivityBounds(activity);
+        final Rect landscapeMaximumBounds = getMaximumActivityBounds(activity);
 
         final boolean doesDisplayRotateForOrientation = doesDisplayRotateForOrientation(
                 portraitMaximumBounds, landscapeMaximumBounds);
@@ -294,11 +295,10 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
     @Test
     public void testGetWindowLayoutInfo_enterExitPip_windowLayoutInfoMatches()
             throws InterruptedException {
-        mWindowLayoutInfo = getExtensionWindowLayoutInfo(mActivity);
-        assumeHasDisplayFeatures(mWindowLayoutInfo);
-
         TestConfigChangeHandlingActivity configHandlingActivity = startActivityNewTask(
                         TestConfigChangeHandlingActivity.class, null);
+        mWindowLayoutInfo = getExtensionWindowLayoutInfo(configHandlingActivity);
+        assumeHasDisplayFeatures(mWindowLayoutInfo);
 
         final WindowLayoutInfo initialInfo = getExtensionWindowLayoutInfo(
                 configHandlingActivity);
@@ -314,8 +314,8 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
 
     /*
      * Similar to #testGetWindowLayoutInfo_configChanged_windowLayoutUpdates, here we trigger
-     * rotations with a full screen activity on one Display Area, verify that WindowLayoutInfo
-     * are updated with callbacks.
+     * a rotation with a full screen activity on one Display Area, verify that WindowLayoutInfo
+     * from both Activity and WindowContext are updated with callbacks.
      */
     @FlakyTest(bugId = 254056760)
     @Test
@@ -328,28 +328,54 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
         assumeExtensionVersionSupportsWindowContextLayout();
         assumeSupportsRotation();
 
-        Context windowContext = createContextWithNonActivityWindow();
+        TestConfigChangeHandlingActivity activity =
+                (TestConfigChangeHandlingActivity) startFullScreenActivityNewTask(
+                        TestConfigChangeHandlingActivity.class, null /* activityId */);
 
-        TestConfigChangeHandlingActivity configHandlingActivity = startFullScreenActivityNewTask(
-                        TestConfigChangeHandlingActivity.class, null);
-
-        setActivityOrientationActivityHandlesOrientationChanges(configHandlingActivity,
+        // Fix the device orientation before the test begins.
+        setActivityOrientationActivityHandlesOrientationChanges(activity,
                 ORIENTATION_PORTRAIT);
 
-        WindowLayoutInfo firstWindowLayout = getExtensionWindowLayoutInfo(configHandlingActivity);
-        final Rect firstBounds = getActivityBounds(configHandlingActivity);
-        final Rect firstMaximumBounds = getMaximumActivityBounds(configHandlingActivity);
+        // Here we make an assumption that the full-screen activity and the APPLICATION_OVERLAY
+        // Window are located in the same area on Display.
+        Context windowContext = createContextWithNonActivityWindow();
+        WindowLayoutInfo firstWindowLayoutContext = getExtensionWindowLayoutInfo(windowContext);
+        Rect windowContextBounds = windowContext.getSystemService(
+                        WindowManager.class).getCurrentWindowMetrics()
+                .getBounds();
 
-        setActivityOrientationActivityHandlesOrientationChanges(configHandlingActivity,
+        final Rect firstBounds = getActivityBounds(activity);
+        final Rect firstMaximumBounds = getMaximumActivityBounds(activity);
+        WindowLayoutInfo firstWindowLayoutActivity = getExtensionWindowLayoutInfo(
+                activity);
+        boolean doesDisplayRotateForOrientation = doesDisplayRotateForOrientation(
+                firstMaximumBounds, windowContextBounds);
+        assertEqualWindowLayoutInfo(firstWindowLayoutActivity, firstWindowLayoutContext,
+                firstBounds, windowContextBounds, doesDisplayRotateForOrientation);
+
+        // Trigger a rotation to the Display via Activity orientation request.
+        setActivityOrientationActivityHandlesOrientationChanges(activity,
                 ORIENTATION_LANDSCAPE);
 
-        WindowLayoutInfo secondWindowLayout = getExtensionWindowLayoutInfo(configHandlingActivity);
-        final Rect secondBounds = getActivityBounds(configHandlingActivity);
-        final Rect secondMaximumBounds = getMaximumActivityBounds(configHandlingActivity);
+        WindowLayoutInfo secondWindowLayoutActivity = getExtensionWindowLayoutInfo(
+                activity);
+        final Rect secondBounds = getActivityBounds(activity);
+        final Rect secondMaximumBounds = getMaximumActivityBounds(activity);
 
-        final boolean doesDisplayRotateForOrientation = doesDisplayRotateForOrientation(
+        // We assume after rotation both the Activity and the OVERLAY window are still located in
+        // the same area, so their Display Features are still the same.
+        WindowLayoutInfo secondWindowLayoutContext = getExtensionWindowLayoutInfo(windowContext);
+        Rect secondWindowContextBounds = windowContext.getSystemService(
+                        WindowManager.class).getCurrentWindowMetrics()
+                .getBounds();
+        assertEqualWindowLayoutInfo(secondWindowLayoutActivity, secondWindowLayoutContext,
+                secondBounds, secondWindowContextBounds,
+                doesDisplayRotateForOrientation(secondMaximumBounds, secondWindowContextBounds));
+
+        // Verify Activity Display Feature is consistent regardless of rotation.
+        doesDisplayRotateForOrientation = doesDisplayRotateForOrientation(
                 firstMaximumBounds, secondMaximumBounds);
-        assertEqualWindowLayoutInfo(firstWindowLayout, secondWindowLayout,
+        assertEqualWindowLayoutInfo(firstWindowLayoutActivity, secondWindowLayoutActivity,
                 firstBounds, secondBounds, doesDisplayRotateForOrientation);
     }
 
@@ -359,20 +385,21 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
     public void testGetWindowLayoutInfo_windowRecreated_windowLayoutUpdates()
             throws ExecutionException, InterruptedException, TimeoutException {
         assumeSupportsRotation();
-        mWindowLayoutInfo = getExtensionWindowLayoutInfo(mActivity);
+        TestActivity activity = (TestActivity) startActivityNewTask(TestActivity.class);
+        mWindowLayoutInfo = getExtensionWindowLayoutInfo(activity);
         assumeHasDisplayFeatures(mWindowLayoutInfo);
 
-        setActivityOrientationActivityDoesNotHandleOrientationChanges(mActivity,
+        setActivityOrientationActivityDoesNotHandleOrientationChanges(activity,
                 ORIENTATION_PORTRAIT);
-        final WindowLayoutInfo portraitWindowLayoutInfo = getExtensionWindowLayoutInfo(mActivity);
-        final Rect portraitBounds = getActivityBounds(mActivity);
-        final Rect portraitMaximumBounds = getMaximumActivityBounds(mActivity);
+        final WindowLayoutInfo portraitWindowLayoutInfo = getExtensionWindowLayoutInfo(activity);
+        final Rect portraitBounds = getActivityBounds(activity);
+        final Rect portraitMaximumBounds = getMaximumActivityBounds(activity);
 
-        setActivityOrientationActivityDoesNotHandleOrientationChanges(mActivity,
+        setActivityOrientationActivityDoesNotHandleOrientationChanges(activity,
                 ORIENTATION_LANDSCAPE);
-        final WindowLayoutInfo landscapeWindowLayoutInfo = getExtensionWindowLayoutInfo(mActivity);
-        final Rect landscapeBounds = getActivityBounds(mActivity);
-        final Rect landscapeMaximumBounds = getMaximumActivityBounds(mActivity);
+        final WindowLayoutInfo landscapeWindowLayoutInfo = getExtensionWindowLayoutInfo(activity);
+        final Rect landscapeBounds = getActivityBounds(activity);
+        final Rect landscapeMaximumBounds = getMaximumActivityBounds(activity);
 
         final boolean doesDisplayRotateForOrientation = doesDisplayRotateForOrientation(
                 portraitMaximumBounds, landscapeMaximumBounds);
@@ -387,8 +414,9 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
     @Test
     public void testSidecarHasSameDisplayFeatures()
             throws ExecutionException, InterruptedException, TimeoutException {
-        assumeSidecarSupportedDevice(mActivity);
-        mWindowLayoutInfo = getExtensionWindowLayoutInfo(mActivity);
+        TestActivity activity = (TestActivity) startActivityNewTask(TestActivity.class);
+        assumeSidecarSupportedDevice(activity);
+        mWindowLayoutInfo = getExtensionWindowLayoutInfo(activity);
         assumeHasDisplayFeatures(mWindowLayoutInfo);
 
         // Retrieve and sort the extension folding features
@@ -401,9 +429,9 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
 
         // Retrieve and sort the sidecar display features in the same order as the extension
         // display features
-        final SidecarInterface sidecarInterface = getSidecarInterface(mActivity);
+        final SidecarInterface sidecarInterface = getSidecarInterface(activity);
         final List<SidecarDisplayFeature> sidecarDisplayFeatures = sidecarInterface
-                .getWindowLayoutInfo(getActivityWindowToken(mActivity)).displayFeatures;
+                .getWindowLayoutInfo(getActivityWindowToken(activity)).displayFeatures;
 
         // Check that the display features are the same
         assertEquals(extensionFoldingFeatures.size(), sidecarDisplayFeatures.size());

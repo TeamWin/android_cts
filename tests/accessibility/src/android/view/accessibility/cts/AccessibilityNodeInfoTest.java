@@ -59,6 +59,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -352,7 +353,7 @@ public class AccessibilityNodeInfoTest {
         info.setLeashedParent(new MockBinder(), 1); // Populates 2 fields
         info.setTraversalBefore(new View(getContext()));
         info.setTraversalAfter(new View(getContext()));
-        info.setMinMillisBetweenContentChanges(200);
+        info.setMinDurationBetweenContentChanges(Duration.ofMillis(200));
 
         // Populate 3 fields
         info.setLabeledBy(new View(getContext()));
@@ -475,9 +476,9 @@ public class AccessibilityNodeInfoTest {
                 receivedInfo.getMovementGranularities());
         assertEquals("viewId has incorrect value", expectedInfo.getViewIdResourceName(),
                 receivedInfo.getViewIdResourceName());
-        assertEquals("MinMillisBetweenContentChanges has incorrect value",
-                expectedInfo.getMinMillisBetweenContentChanges(),
-                receivedInfo.getMinMillisBetweenContentChanges());
+        assertEquals("MinDurationBetweenContentChanges has incorrect value",
+                expectedInfo.getMinDurationBetweenContentChanges().toMillis(),
+                receivedInfo.getMinDurationBetweenContentChanges().toMillis());
         assertEquals("Unique id has incorrect value", expectedInfo.getUniqueId(),
             receivedInfo.getUniqueId());
         assertEquals("Container title has incorrect value", expectedInfo.getContainerTitle(),
@@ -660,8 +661,8 @@ public class AccessibilityNodeInfoTest {
         assertNull("packageName not properly recycled", info.getPackageName());
         assertNull("text not properly recycled", info.getText());
         assertNull("Hint text not properly recycled", info.getHintText());
-        assertNull("minMillisBetweenContentChanges not properly recycled",
-                info.getMinMillisBetweenContentChanges());
+        assertNull("minDurationBetweenContentChanges not properly recycled",
+                info.getMinDurationBetweenContentChanges().toMillis());
         assertEquals("Children list not properly recycled", 0, info.getChildCount());
         // Actions are in one field
         assertSame("actions not properly recycled", 0, info.getActions());

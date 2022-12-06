@@ -20,9 +20,35 @@ import static android.app.cts.shortfgstesthelper.ShortFgsHelper.createNotificati
 
 import android.app.Service;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.IBinder;
 
-public class FgsBase extends Service {
+import com.android.internal.annotations.GuardedBy;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public abstract class FgsBase extends Service {
+    /** Class name -> instance map */
+    @GuardedBy("sInstances")
+    private static Map<String, FgsBase> sInstances = new HashMap<>();
+
+    public FgsBase() {
+        synchronized (sInstances) {
+            sInstances.put(this.getClass().getName(), this);
+        }
+    }
+
+    public static FgsBase getInstanceForClass(String className) {
+        synchronized (sInstances) {
+            FgsBase result = sInstances.get(className);
+            if (result == null) {
+                throw new RuntimeException("Service " + className + " isn't created yet");
+            }
+            return result;
+        }
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // Handle the incoming intent.
@@ -48,7 +74,8 @@ public class FgsBase extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        // We don't actually use the returned object, so just return a random binder object...
+        return new Binder();
     }
 
     @Override

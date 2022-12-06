@@ -119,6 +119,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
+import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
@@ -1454,14 +1455,14 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
     @Test
     @ApiTest(apis = {
             "android.view.accessibility.AccessibilityNodeInfo"
-                    + "#setMinMillisBetweenContentChanges",
+                    + "#setMinDurationBetweenContentChanges",
             "android.view.accessibility.AccessibilityNodeInfo"
-                    + "#getMinMillisBetweenContentChanges"})
-    public void testSetMinMillisBetweenContentChanges() {
+                    + "#getMinDurationBetweenContentChanges"})
+    public void testSetMinDurationBetweenContentChanges() {
         final View testView = mActivity.findViewById(R.id.buttonLayout);
         final AccessibilityNodeInfo nodeInfo = testView.createAccessibilityNodeInfo();
-        nodeInfo.setMinMillisBetweenContentChanges(200);
-        assertThat(nodeInfo.getMinMillisBetweenContentChanges()).isEqualTo(200);
+        nodeInfo.setMinDurationBetweenContentChanges(Duration.ofMillis(200));
+        assertThat(nodeInfo.getMinDurationBetweenContentChanges().toMillis()).isEqualTo(200);
     }
 
     @Test

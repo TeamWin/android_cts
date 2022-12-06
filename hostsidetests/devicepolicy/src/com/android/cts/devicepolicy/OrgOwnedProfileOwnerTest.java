@@ -467,45 +467,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                 canStart ? "testCanStartActivity" : "testCannotStartActivity", mPrimaryUserId);
     }
 
-    @Test
-    public void testScreenCaptureDisabled() throws Exception {
-        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
-        setPoAsUser(mPrimaryUserId);
-
-        try {
-            setScreenCaptureDisabled(true);
-        } finally {
-            setScreenCaptureDisabled(false);
-        }
-    }
-
-    private void takeScreenCaptureAsUser(int userId, String testMethodName) throws Exception {
-        installAppAsUser(TEST_APP_APK, /* grantPermissions */ true, /* dontKillApp */ true, userId);
-        startActivityAsUser(userId, TEST_APP_PKG, TEST_APP_PKG + ".SimpleActivity");
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ScreenCaptureDisabledTest",
-                testMethodName, userId);
-        forceStopPackageForUser(TEST_APP_PKG, userId);
-    }
-
-    private void setScreenCaptureDisabled(boolean disabled) throws Exception {
-        String testMethodName = disabled
-                ? "testSetScreenCaptureDisabledOnParent_true"
-                : "testSetScreenCaptureDisabledOnParent_false";
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ScreenCaptureDisabledTest",
-                testMethodName, mUserId);
-
-        testMethodName = disabled
-                ? "testScreenCaptureImpossible"
-                : "testScreenCapturePossible";
-
-        // Test personal profile
-        takeScreenCaptureAsUser(mPrimaryUserId, testMethodName);
-
-        // Test managed profile. This should not be disabled when screen capture is disabled on
-        // the parent by the profile owner of an organization-owned device.
-        takeScreenCaptureAsUser(mUserId, testMethodName);
-    }
-
     private void assertHasNoUser(int userId) throws DeviceNotAvailableException {
         int numWaits = 0;
         final int MAX_NUM_WAITS = 15;
