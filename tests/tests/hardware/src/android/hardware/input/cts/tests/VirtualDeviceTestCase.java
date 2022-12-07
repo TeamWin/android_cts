@@ -57,6 +57,8 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
 
     private static final int ARBITRARY_SURFACE_TEX_ID = 1;
 
+    protected static final int PRODUCT_ID = 1;
+    protected static final int VENDOR_ID = 1;
     protected static final int DISPLAY_WIDTH = 100;
     protected static final int DISPLAY_HEIGHT = 100;
 

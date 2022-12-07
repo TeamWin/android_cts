@@ -28,7 +28,8 @@
 #include "utils.h"
 
 constexpr int kExtremelyHighCallbackPeriodMillis = 200;
-constexpr int kMinCallbacksPerSecond = MILLIS_PER_SECOND / kExtremelyHighCallbackPeriodMillis;
+constexpr int kExpectedCallbackCount = 5;
+constexpr int kPollTimeMillis = 5;
 
 static int32_t measureLatency(AAudioStream *stream) {
     int64_t presentationTime = 0;
@@ -141,6 +142,18 @@ class AAudioStreamCallbackTest : public AAudioCtsBase,
             minLatency = std::min(minLatency, latency);
             maxLatency = std::max(maxLatency, latency);
         }
+        bool waitForNCallbacks(int32_t n) {
+            int32_t timeTakenMillis = 0;
+            // Expect each callback to take less than kExtremelyHighCallbackPeriodMillis
+            while (timeTakenMillis < kExtremelyHighCallbackPeriodMillis * n) {
+                if (callbackCount >= n) {
+                    return true;
+                }
+                usleep(kPollTimeMillis * MICROS_PER_MILLISECOND);
+                timeTakenMillis += kPollTimeMillis;
+            }
+            return false;
+        }
     };
 
     void createAndVerifyHonoringMMap() {
@@ -234,9 +247,6 @@ TEST_P(AAudioInputStreamCallbackTest, testRecording) {
         ASSERT_EQ(framesPerDataCallback, streamFramesPerDataCallback);
     }
 
-    constexpr int kSleepSeconds = 2;
-    constexpr int kMinExpectedCallbacks = kMinCallbacksPerSecond * kSleepSeconds;
-
     // Try both methods of stopping a stream.
     const int kNumMethods = 2;
 
@@ -249,10 +259,10 @@ TEST_P(AAudioInputStreamCallbackTest, testRecording) {
         // See b/62090113. For legacy path, the device is only known after
         // the stream has been started.
         EXPECT_NE(AAUDIO_UNSPECIFIED, AAudioStream_getDeviceId(stream()));
-        sleep(kSleepSeconds); // let the stream run
+        EXPECT_TRUE(mCbData->waitForNCallbacks(kExpectedCallbackCount));
 
         ASSERT_EQ(AAUDIO_OK, mCbData->callbackError);
-        ASSERT_GT(mCbData->callbackCount, kMinExpectedCallbacks);
+        ASSERT_GE(mCbData->callbackCount, kExpectedCallbackCount);
 
         switch (loopIndex % kNumMethods) {
             case 0:
@@ -265,8 +275,8 @@ TEST_P(AAudioInputStreamCallbackTest, testRecording) {
         }
 
         int32_t oldCallbackCount = mCbData->callbackCount;
-        EXPECT_GT(oldCallbackCount, kMinExpectedCallbacks);
-        sleep(1);
+        EXPECT_GE(oldCallbackCount, kExpectedCallbackCount);
+        usleep(kExtremelyHighCallbackPeriodMillis * MICROS_PER_MILLISECOND);
         EXPECT_EQ(oldCallbackCount, mCbData->callbackCount); // expect not advancing
 
         if (streamFramesPerDataCallback != AAUDIO_UNSPECIFIED) {
@@ -386,9 +396,6 @@ TEST_P(AAudioOutputStreamCallbackTest, testPlayback) {
         ASSERT_EQ(framesPerDataCallback, streamFramesPerDataCallback);
     }
 
-    constexpr int kSleepSeconds = 2;
-    constexpr int kMinExpectedCallbacks = kMinCallbacksPerSecond * kSleepSeconds;
-
     // Try all 3 methods of stopping/pausing a stream.
     constexpr int kNumMethods = 3;
 
@@ -401,10 +408,10 @@ TEST_P(AAudioOutputStreamCallbackTest, testPlayback) {
         // See b/62090113. For legacy path, the device is only known after
         // the stream has been started.
         EXPECT_NE(AAUDIO_UNSPECIFIED, AAudioStream_getDeviceId(stream()));
-        sleep(kSleepSeconds); // let the stream run
+        EXPECT_TRUE(mCbData->waitForNCallbacks(kExpectedCallbackCount));
 
         ASSERT_EQ(AAUDIO_OK, mCbData->callbackError);
-        ASSERT_GT(mCbData->callbackCount, kMinExpectedCallbacks);
+        ASSERT_GE(mCbData->callbackCount, kExpectedCallbackCount);
 
         switch (loopIndex % kNumMethods) {
             case 0:
@@ -420,8 +427,8 @@ TEST_P(AAudioOutputStreamCallbackTest, testPlayback) {
         }
 
         int32_t oldCallbackCount = mCbData->callbackCount;
-        EXPECT_GT(oldCallbackCount, kMinExpectedCallbacks);
-        sleep(1);
+        EXPECT_GE(oldCallbackCount, kExpectedCallbackCount);
+        usleep(kExtremelyHighCallbackPeriodMillis * MICROS_PER_MILLISECOND);
         EXPECT_EQ(oldCallbackCount, mCbData->callbackCount); // expect not advancing
 
         if (streamFramesPerDataCallback != AAUDIO_UNSPECIFIED) {

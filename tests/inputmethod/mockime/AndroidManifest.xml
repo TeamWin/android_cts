@@ -41,6 +41,7 @@
              android:exported="true"
              android:visibleToInstantApps="true">
         </provider>
-
+        <uses-library android:name="androidx.window.extensions"
+                      android:required="false" />
     </application>
 </manifest>

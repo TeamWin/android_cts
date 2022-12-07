@@ -47,6 +47,7 @@ import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.junit.Assert;
 
@@ -62,6 +63,8 @@ public class TestTaskOrganizer extends TaskOrganizer {
     private boolean mRegistered;
     private ActivityManager.RunningTaskInfo mRootPrimary;
     private ActivityManager.RunningTaskInfo mRootSecondary;
+    @Nullable private ActivityManager.RunningTaskInfo mPrePrimarySplitTaskInfo;
+    @Nullable private ActivityManager.RunningTaskInfo mPreSecondarySplitTaskInfo;
     private IBinder mPrimaryCookie;
     private IBinder mSecondaryCookie;
     private final HashMap<Integer, ActivityManager.RunningTaskInfo> mKnownTasks = new HashMap<>();
@@ -186,6 +189,8 @@ public class TestTaskOrganizer extends TaskOrganizer {
                 mRootSecondary = null;
                 mSecondaryCookie = null;
                 mSecondaryChildrenTaskIds.clear();
+                mPrePrimarySplitTaskInfo = null;
+                mPreSecondarySplitTaskInfo = null;
 
                 super.unregisterOrganizer();
             });
@@ -204,6 +209,7 @@ public class TestTaskOrganizer extends TaskOrganizer {
                         .reparent(taskInfo.getToken(), mRootPrimary.getToken(), true /* onTop */)
                         .reorder(mRootPrimary.getToken(), true /* onTop */);
                 applyTransaction(t);
+                mPrePrimarySplitTaskInfo = taskInfo;
 
                 waitForAndAssert(
                         o -> mPrimaryChildrenTaskIds.contains(taskId),
@@ -226,6 +232,7 @@ public class TestTaskOrganizer extends TaskOrganizer {
                         .reparent(taskInfo.getToken(), mRootSecondary.getToken(), true /* onTop */)
                         .reorder(mRootSecondary.getToken(), true /* onTop */);
                 applyTransaction(t);
+                mPreSecondarySplitTaskInfo = taskInfo;
 
                 waitForAndAssert(
                         o -> mSecondaryChildrenTaskIds.contains(taskId),
@@ -275,8 +282,26 @@ public class TestTaskOrganizer extends TaskOrganizer {
                                 CONTROLLED_WINDOWING_MODES,
                                 CONTROLLED_ACTIVITY_TYPES,
                                 true /* onTop */);
+                applyPreSplitTaskInfo(t, mPrePrimarySplitTaskInfo);
+                applyPreSplitTaskInfo(t, mPreSecondarySplitTaskInfo);
                 applyTransaction(t);
             });
+        }
+    }
+
+    private void applyPreSplitTaskInfo(WindowContainerTransaction t,
+                                       @Nullable ActivityManager.RunningTaskInfo preSplitTaskInfo) {
+        if (preSplitTaskInfo == null) {
+            return;
+        }
+        final int restoreWindowingMode =
+                preSplitTaskInfo.getConfiguration().windowConfiguration.getWindowingMode();
+        // TODO(b/215556258): We should also consider restoring WINDOWING_MODE_FREEFORM and its
+        //  bounds. For now, restoring freeform when dismissing split seems to mess up activity
+        //  lifecycle especially with shell transitions enabled.
+        if (restoreWindowingMode == WINDOWING_MODE_FULLSCREEN) {
+            t.setWindowingMode(preSplitTaskInfo.getToken(), restoreWindowingMode);
+            t.setBounds(preSplitTaskInfo.getToken(), null);
         }
     }
 

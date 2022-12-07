@@ -212,8 +212,6 @@ public final class BroadcastMessenger {
          * Call it before {@link #close()}.
          */
         public void ensureNoMoreMessages() {
-            AmUtils.waitForBroadcastBarrier();
-
             // If there's a message already in mMessages, then we know it'll fail, so we don't
             // need to send a ping.
             // OTOH, even if there's no message enqueued, there may be broadcasts already enqueued,

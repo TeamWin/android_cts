@@ -47,6 +47,7 @@ import android.util.Pair;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -127,7 +128,9 @@ public class ActionUserSelectImagesForAppTest extends PhotoPickerBaseTest {
         UiAssertionUtils.assertThatShowsPickerUi();
     }
 
+    @Ignore("ACTION_USER_SELECT_IMAGES_FOR_APP no longer returns Uri grants.")
     @Test
+    // TODO(b/261390126): Enable CtsPhotoPickerTests#testNoCloudContent for ACTION_USER_SELECT
     public void testNoCloudContent() throws Exception {
         final List<Uri> uriList = new ArrayList<>();
         final String cloudId = "cloud_id1";

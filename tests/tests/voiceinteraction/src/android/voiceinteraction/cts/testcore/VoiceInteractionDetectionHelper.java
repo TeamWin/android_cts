@@ -23,7 +23,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.voiceinteraction.common.Utils;
-import android.voiceinteraction.cts.TestVoiceInteractionServiceActivity;
+import android.voiceinteraction.cts.activities.TestVoiceInteractionServiceActivity;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;

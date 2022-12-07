@@ -16,6 +16,8 @@
 
 package android.jobscheduler.cts;
 
+import static android.text.format.DateUtils.HOUR_IN_MILLIS;
+
 import android.annotation.TargetApi;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
@@ -42,7 +44,6 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
     public void tearDown() throws Exception {
         mJobScheduler.cancel(JOB_ID);
         SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler reset-schedule-quota");
-        SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler monitor-battery off");
         BatteryUtils.runDumpsysBatteryReset();
 
         // The super method should be called at the end.
@@ -138,8 +139,6 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
     }
 
     public void testHigherPriorityJobRunsFirst() throws Exception {
-        SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler monitor-battery on");
-
         setStorageStateLow(true);
         final int higherPriorityJobId = JOB_ID;
         final int numMinPriorityJobs = 2 * MAX_JOB_CONTEXTS_COUNT;
@@ -176,5 +175,151 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
         assertTrue(
                 "Higher priority job (" + higherPriorityJobId + ") didn't run in first batch: "
                         + executedEvents, higherExecutedFirst);
+    }
+
+    public void testPendingJobReason_noJob() {
+        assertEquals(JobScheduler.PENDING_JOB_REASON_INVALID_JOB_ID,
+                mJobScheduler.getPendingJobReason(JOB_ID));
+    }
+
+    public void testPendingJobReason_alreadyRunning() throws Exception {
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setExpedited(true)
+                .build();
+
+        kTestEnvironment.setExpectedExecutions(1);
+        kTestEnvironment.setContinueAfterStart();
+        mJobScheduler.schedule(jobInfo);
+        assertTrue("Job didn't start", kTestEnvironment.awaitExecution());
+
+        assertEquals(JobScheduler.PENDING_JOB_REASON_EXECUTING,
+                mJobScheduler.getPendingJobReason(JOB_ID));
+    }
+
+    public void testPendingJobReason_batteryNotLow() throws Exception {
+        setBatteryState(false, 5);
+
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setRequiresBatteryNotLow(true)
+                .build();
+
+        mJobScheduler.schedule(jobInfo);
+
+        assertEquals(JobScheduler.PENDING_JOB_REASON_CONSTRAINT_BATTERY_NOT_LOW,
+                mJobScheduler.getPendingJobReason(JOB_ID));
+    }
+
+    public void testPendingJobReason_charging() throws Exception {
+        setBatteryState(false, 100);
+
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setRequiresCharging(true)
+                .build();
+
+        mJobScheduler.schedule(jobInfo);
+
+        assertEquals(JobScheduler.PENDING_JOB_REASON_CONSTRAINT_CHARGING,
+                mJobScheduler.getPendingJobReason(JOB_ID));
+    }
+
+    public void testPendingJobReason_connectivity() throws Exception {
+        final NetworkingHelper networkingHelper =
+                new NetworkingHelper(getInstrumentation(), getContext());
+        if (networkingHelper.hasEthernetConnection()) {
+            // Can't test while there's an active ethernet connection.
+            return;
+        }
+
+        try {
+            networkingHelper.setAirplaneMode(true);
+            JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                    .build();
+
+            mJobScheduler.schedule(jobInfo);
+
+            assertEquals(JobScheduler.PENDING_JOB_REASON_CONSTRAINT_CONNECTIVITY,
+                    mJobScheduler.getPendingJobReason(JOB_ID));
+        } finally {
+            networkingHelper.tearDown();
+        }
+    }
+
+    public void testPendingJobReason_contentTrigger() {
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .addTriggerContentUri(new JobInfo.TriggerContentUri(
+                        TriggerContentTest.MEDIA_URI,
+                        JobInfo.TriggerContentUri.FLAG_NOTIFY_FOR_DESCENDANTS))
+                .build();
+
+        mJobScheduler.schedule(jobInfo);
+
+        assertEquals(JobScheduler.PENDING_JOB_REASON_CONSTRAINT_CONTENT_TRIGGER,
+                mJobScheduler.getPendingJobReason(JOB_ID));
+    }
+
+    public void testPendingJobReason_minimumLatency() {
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setMinimumLatency(HOUR_IN_MILLIS)
+                .build();
+
+        mJobScheduler.schedule(jobInfo);
+
+        assertEquals(JobScheduler.PENDING_JOB_REASON_CONSTRAINT_MINIMUM_LATENCY,
+                mJobScheduler.getPendingJobReason(JOB_ID));
+    }
+
+    public void testPendingJobReason_storageNotLow() throws Exception {
+        setStorageStateLow(true);
+
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setRequiresStorageNotLow(true)
+                .build();
+
+        mJobScheduler.schedule(jobInfo);
+
+        assertEquals(JobScheduler.PENDING_JOB_REASON_CONSTRAINT_STORAGE_NOT_LOW,
+                mJobScheduler.getPendingJobReason(JOB_ID));
+    }
+
+    /** Verify that any caching isn't JobScheduler doesn't result in returning invalid reasons. */
+    public void testPendingJobReason_reasonCanChange() throws Exception {
+        assertEquals(JobScheduler.PENDING_JOB_REASON_INVALID_JOB_ID,
+                mJobScheduler.getPendingJobReason(JOB_ID));
+
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setMinimumLatency(HOUR_IN_MILLIS)
+                .build();
+
+        mJobScheduler.schedule(jobInfo);
+
+        assertEquals(JobScheduler.PENDING_JOB_REASON_CONSTRAINT_MINIMUM_LATENCY,
+                mJobScheduler.getPendingJobReason(JOB_ID));
+
+        jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setExpedited(true)
+                .build();
+
+        kTestEnvironment.setExpectedExecutions(1);
+        kTestEnvironment.setContinueAfterStart();
+        mJobScheduler.schedule(jobInfo);
+        assertTrue("Job didn't start", kTestEnvironment.awaitExecution());
+
+        assertEquals(JobScheduler.PENDING_JOB_REASON_EXECUTING,
+                mJobScheduler.getPendingJobReason(JOB_ID));
+
+        mJobScheduler.cancel(JOB_ID);
+        assertEquals(JobScheduler.PENDING_JOB_REASON_INVALID_JOB_ID,
+                mJobScheduler.getPendingJobReason(JOB_ID));
+
+        setStorageStateLow(true);
+        jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setRequiresStorageNotLow(true)
+                .build();
+
+        mJobScheduler.schedule(jobInfo);
+
+        assertEquals(JobScheduler.PENDING_JOB_REASON_CONSTRAINT_STORAGE_NOT_LOW,
+                mJobScheduler.getPendingJobReason(JOB_ID));
     }
 }

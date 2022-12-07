@@ -475,13 +475,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @Override
     @Test
     @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't launch activities")
-    public void testPermissionMixedPolicies() throws Exception {
-        super.testPermissionMixedPolicies();
-    }
-
-    @Override
-    @Test
-    @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't launch activities")
     public void testPermissionPolicy() throws Exception {
         super.testPermissionPolicy();
     }

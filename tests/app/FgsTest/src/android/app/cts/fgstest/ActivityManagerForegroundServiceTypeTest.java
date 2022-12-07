@@ -40,6 +40,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 import android.content.pm.ServiceInfo;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.uiautomator.UiDevice;
 import android.util.ArrayMap;
 
@@ -60,6 +61,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
+@Presubmit
 public final class ActivityManagerForegroundServiceTypeTest {
     private static final String TAG = ActivityManagerForegroundServiceTypeTest.class.getName();
 
@@ -213,6 +215,11 @@ public final class ActivityManagerForegroundServiceTypeTest {
     public void testForegroundServiceTypeSystemExemptedPermission() throws Exception {
         testPermissionEnforcementCommon(ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED,
                 new String[] {SPECIAL_PERMISSION_OP_ALLOWLISTED});
+    }
+
+    @Test
+    public void testForegroundServiceTypeFileManagementPermission() throws Exception {
+        testPermissionEnforcementCommon(ServiceInfo.FOREGROUND_SERVICE_TYPE_FILE_MANAGEMENT);
     }
 
     @Test

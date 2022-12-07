@@ -90,10 +90,12 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
     }
 
     public EncoderProfileLevelTest(String encoder, String mime, int bitrate, int encoderInfo1,
-            int encoderInfo2, int frameRate, boolean useHighBitDepth, String allTestParams) {
+            int encoderInfo2, int frameRate, boolean useHighBitDepth, int maxBFrames,
+            String allTestParams) {
         super(encoder, mime, new int[]{bitrate}, new int[]{encoderInfo1}, new int[]{encoderInfo2},
                 EncoderInput.getRawResource(mime, useHighBitDepth), allTestParams);
         mUseHighBitDepth = useHighBitDepth;
+        mMaxBFrames = maxBFrames;
         if (mIsAudio) {
             mSampleRate = encoderInfo1;
             mChannels = encoderInfo2;
@@ -106,7 +108,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
         mConfigFormat = mFormats.get(0);
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{2}_{3}_{4}_{6})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{2}_{3}_{4}_{6}_{7})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = true;
@@ -222,20 +224,31 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                 {MediaFormat.MIMETYPE_VIDEO_VP8, 512000, 480, 360, 20},
         });
         final List<Object[]> argsList = new ArrayList<>();
+        final int[] maxBFrames = {0, 2};
         for (Object[] arg : exhaustiveArgsList) {
-            int argLength = exhaustiveArgsList.get(0).length;
-            Object[] testArgs = new Object[argLength + 1];
-            System.arraycopy(arg, 0, testArgs, 0, argLength);
-            testArgs[argLength] = false;
-            argsList.add(testArgs);
-            // P010 support was added in Android T, hence limit the following tests to Android T and
-            // above
-            if (IS_AT_LEAST_T) {
-                if (PROFILE_HDR_MAP.get(arg[0]) != null) {
-                    Object[] testArgsHighBitDepth = new Object[argLength + 1];
-                    System.arraycopy(arg, 0, testArgsHighBitDepth, 0, argLength);
-                    testArgsHighBitDepth[argLength] = true;
-                    argsList.add(testArgsHighBitDepth);
+            int argLength = arg.length;
+            for (int maxBFrame : maxBFrames) {
+                String mediaType = arg[0].toString();
+                if (!mediaType.equals(MediaFormat.MIMETYPE_VIDEO_AVC)
+                        && !mediaType.equals((MediaFormat.MIMETYPE_VIDEO_HEVC))
+                        && maxBFrame != 0) {
+                    continue;
+                }
+                Object[] testArgs = new Object[argLength + 2];
+                System.arraycopy(arg, 0, testArgs, 0, argLength);
+                testArgs[argLength] = false;
+                testArgs[argLength + 1] = maxBFrame;
+                argsList.add(testArgs);
+                // P010 support was added in Android T, hence limit the following tests to Android
+                // T and above
+                if (IS_AT_LEAST_T) {
+                    if (PROFILE_HDR_MAP.get(arg[0]) != null) {
+                        Object[] testArgsHighBitDepth = new Object[argLength + 2];
+                        System.arraycopy(arg, 0, testArgsHighBitDepth, 0, argLength);
+                        testArgsHighBitDepth[argLength] = true;
+                        testArgsHighBitDepth[argLength + 1] = maxBFrame;
+                        argsList.add(testArgsHighBitDepth);
+                    }
                 }
             }
         }

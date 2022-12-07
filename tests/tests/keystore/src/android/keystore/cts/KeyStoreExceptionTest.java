@@ -137,4 +137,18 @@ public class KeyStoreExceptionTest {
                 KeyStoreException.RETRY_NEVER,
                 ex.getRetryPolicy());
     }
+
+    @Test
+    public void testRkpFailureDeviceContainPotentiallyVulnerableSoftware() {
+        KeyStoreException ex = new KeyStoreException(23, "RKP failure",
+                4 /* server refused issuance */);
+        assertEquals("Error must indicate key exhaustion",
+                KeyStoreException.ERROR_DEVICE_REQUIRES_UPGRADE_FOR_ATTESTATION,
+                ex.getNumericErrorCode());
+        assertTrue("Must indicate a system issue", ex.isSystemError());
+        assertTrue("Must indicate a non permanent failure", ex.isTransientFailure());
+        assertEquals("Retry policy must be next reboot",
+                KeyStoreException.RETRY_AFTER_NEXT_REBOOT,
+                ex.getRetryPolicy());
+    }
 }

@@ -39,6 +39,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.platform.test.annotations.Presubmit;
 import android.view.Display;
 import android.view.accessibility.AccessibilityDisplayProxy;
 import android.view.accessibility.AccessibilityEvent;
@@ -74,6 +75,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * gives access to a suite of helpful utils for testing service-like behavior.
  */
 @RunWith(AndroidJUnit4.class)
+@Presubmit
 public class AccessibilityDisplayProxyTest {
     private static final int TIMEOUT_MS = 5000;
     private static final int INVALID_DISPLAY_ID = 10000;

@@ -500,9 +500,6 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
      */
     @Test
     public void testResetFocusedAppAfterClearAdjacentTaskFragment() {
-        // TODO(b/232476698) Remove the assume in the next release.
-        assumeExtensionVersionAtLeast2();
-
         // Initialize test environment by launching Activity A and B side-by-side.
         initializeSplitActivities(false /* verifyEmbeddedTask */);
 

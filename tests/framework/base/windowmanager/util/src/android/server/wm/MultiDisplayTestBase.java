@@ -18,7 +18,6 @@ package android.server.wm;
 
 import static android.content.pm.ActivityInfo.CONFIG_SCREEN_SIZE;
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
-import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 import static android.provider.Settings.Secure.IMMERSIVE_MODE_CONFIRMATIONS;
 import static android.server.wm.UiDeviceUtils.pressSleepButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
@@ -169,74 +168,6 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
 
         return result;
-    }
-
-    public static class DisplayMetricsSession implements AutoCloseable {
-        private final ReportedDisplayMetrics mInitialDisplayMetrics;
-        private final int mDisplayId;
-
-        DisplayMetricsSession(int displayId) {
-            mDisplayId = displayId;
-            mInitialDisplayMetrics = ReportedDisplayMetrics.getDisplayMetrics(mDisplayId);
-        }
-
-        ReportedDisplayMetrics getInitialDisplayMetrics() {
-            return mInitialDisplayMetrics;
-        }
-
-        ReportedDisplayMetrics getDisplayMetrics() {
-            return ReportedDisplayMetrics.getDisplayMetrics(mDisplayId);
-        }
-
-        void changeAspectRatio(double aspectRatio, int orientation) {
-            final Size originalSize = mInitialDisplayMetrics.physicalSize;
-            final int smaller = Math.min(originalSize.getWidth(), originalSize.getHeight());
-            final int larger = (int) (smaller * aspectRatio);
-            Size overrideSize;
-            if (orientation == ORIENTATION_LANDSCAPE) {
-                overrideSize = new Size(larger, smaller);
-            }
-            else {
-                overrideSize = new Size(smaller, larger);
-            }
-            overrideDisplayMetrics(overrideSize, mInitialDisplayMetrics.physicalDensity);
-        }
-
-        void changeDisplayMetrics(double sizeRatio, double densityRatio) {
-            // Given a display may already have an override applied before the test is begun,
-            // resize based upon the override.
-            final Size originalSize;
-            final int density;
-            if (mInitialDisplayMetrics.overrideSize != null) {
-                originalSize = mInitialDisplayMetrics.overrideSize;
-            } else {
-                originalSize = mInitialDisplayMetrics.physicalSize;
-            }
-
-            if (mInitialDisplayMetrics.overrideDensity != null) {
-                density = mInitialDisplayMetrics.overrideDensity;
-            } else {
-                density = mInitialDisplayMetrics.physicalDensity;
-            }
-
-            final Size overrideSize = new Size((int)(originalSize.getWidth() * sizeRatio),
-                    (int)(originalSize.getHeight() * sizeRatio));
-            final int overrideDensity = (int)(density * densityRatio);
-            overrideDisplayMetrics(overrideSize, overrideDensity);
-        }
-
-        void overrideDisplayMetrics(final Size size, final int density) {
-            mInitialDisplayMetrics.setDisplayMetrics(size, density);
-        }
-
-        void restoreDisplayMetrics() {
-            mInitialDisplayMetrics.restoreDisplayMetrics();
-        }
-
-        @Override
-        public void close() {
-            restoreDisplayMetrics();
-        }
     }
 
     /** @see ObjectTracker#manage(AutoCloseable) */

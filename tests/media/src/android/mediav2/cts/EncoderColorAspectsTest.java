@@ -107,7 +107,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
 
     public EncoderColorAspectsTest(String encoderName, String mime, int width, int height,
             int range, int standard, int transferCurve, boolean useHighBitDepth,
-            boolean surfaceMode, String allTestParams) {
+            boolean surfaceMode, int maxBFrames, String allTestParams) {
         super(encoderName, mime, new int[]{64000}, new int[]{width}, new int[]{height},
                 EncoderInput.getRawResource(mime, useHighBitDepth), allTestParams);
         mRange = range;
@@ -115,6 +115,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
         mTransferCurve = transferCurve;
         mUseHighBitDepth = useHighBitDepth;
         mSurfaceMode = surfaceMode;
+        mMaxBFrames = maxBFrames;
         mWidth = width;
         mHeight = height;
         setUpParams(1);
@@ -149,20 +150,29 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
             int[] transfers, boolean useHighBitDepth) {
         // Assuming all combinations are supported by the standard which is true for AVC, HEVC, AV1,
         // VP8 and VP9.
+        int[] maxBFrames = {0, 2};
         for (String mediaType : mediaTypes) {
             for (int range : ranges) {
                 for (int standard : standards) {
                     for (int transfer : transfers) {
-                        String currentObject =
-                                mediaType + "_" + range + "_" + standard + "_" + transfer;
-                        if (!stringArgsList.contains(currentObject)) {
-                            exhaustiveArgsList
-                                    .add(new Object[]{mediaType, 176, 144, range, standard,
-                                            transfer, useHighBitDepth, false});
-                            exhaustiveArgsList
-                                    .add(new Object[]{mediaType, 176, 144, range, standard,
-                                            transfer, useHighBitDepth, true});
-                            stringArgsList.add(currentObject);
+                        for (int maxBFrame : maxBFrames) {
+                            if (!mediaType.equals(MediaFormat.MIMETYPE_VIDEO_AVC)
+                                    && !mediaType.equals((MediaFormat.MIMETYPE_VIDEO_HEVC))
+                                    && maxBFrame != 0) {
+                                continue;
+                            }
+                            String currentObject =
+                                    mediaType + "_" + range + "_" + standard + "_" + transfer
+                                            + "_" + maxBFrame;
+                            if (!stringArgsList.contains(currentObject)) {
+                                exhaustiveArgsList
+                                        .add(new Object[]{mediaType, 176, 144, range, standard,
+                                                transfer, useHighBitDepth, false, maxBFrame});
+                                exhaustiveArgsList
+                                        .add(new Object[]{mediaType, 176, 144, range, standard,
+                                                transfer, useHighBitDepth, true, maxBFrame});
+                                stringArgsList.add(currentObject);
+                            }
                         }
                     }
                 }
@@ -170,7 +180,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{4}_{5}_{6}_{7}_{8})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{4}_{5}_{6}_{7}_{8}_{9})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = false;

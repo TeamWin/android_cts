@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.voiceinteraction.cts;
+package android.voiceinteraction.cts.activities;
 
 import android.app.Activity;
 import android.content.ComponentName;

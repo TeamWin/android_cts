@@ -121,36 +121,6 @@ public class PermissionsTest extends BaseDeviceAdminTest {
         assertCannotRequestPermissionFromActivity(READ_CONTACTS);
     }
 
-    public void testPermissionGrantStateDenied_mixedPolicies() throws Exception {
-        int grantState = mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
-                PERMISSION_APP_PACKAGE_NAME, READ_CONTACTS);
-        int permissionPolicy = mDevicePolicyManager.getPermissionPolicy(ADMIN_RECEIVER_COMPONENT);
-        try {
-            setPermissionGrantState(READ_CONTACTS, PERMISSION_GRANT_STATE_DENIED);
-
-            // Check no permission by launching an activity and requesting the permission
-            // Should stay denied if grant state is denied
-            setPermissionPolicy(PERMISSION_POLICY_AUTO_GRANT);
-
-            assertPermissionPolicy(PERMISSION_POLICY_AUTO_GRANT);
-            assertCannotRequestPermissionFromActivity(READ_CONTACTS);
-
-            setPermissionPolicy(PERMISSION_POLICY_AUTO_DENY);
-
-            assertPermissionPolicy(PERMISSION_POLICY_AUTO_DENY);
-            assertCannotRequestPermissionFromActivity(READ_CONTACTS);
-
-            setPermissionPolicy(PERMISSION_POLICY_PROMPT);
-
-            assertPermissionPolicy(PERMISSION_POLICY_PROMPT);
-            assertCannotRequestPermissionFromActivity(READ_CONTACTS);
-        } finally {
-            // Restore original state
-            setPermissionGrantState(READ_CONTACTS, grantState);
-            setPermissionPolicy(permissionPolicy);
-        }
-    }
-
     public void testPermissionGrantStateDenied_otherPermissionIsGranted() throws Exception {
         int grantStateA = mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
                 PERMISSION_APP_PACKAGE_NAME, CUSTOM_PERM_A_NAME);
@@ -183,35 +153,6 @@ public class PermissionsTest extends BaseDeviceAdminTest {
 
         assertPermissionGrantState(READ_CONTACTS, PERMISSION_GRANT_STATE_GRANTED);
         assertCanRequestPermissionFromActivity(READ_CONTACTS);
-    }
-
-    public void testPermissionGrantStateGranted_mixedPolicies() throws Exception {
-        int grantState = mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
-                PERMISSION_APP_PACKAGE_NAME, READ_CONTACTS);
-        int permissionPolicy = mDevicePolicyManager.getPermissionPolicy(ADMIN_RECEIVER_COMPONENT);
-        try {
-            setPermissionGrantState(READ_CONTACTS, PERMISSION_GRANT_STATE_GRANTED);
-
-            // Check permission by launching an activity and requesting the permission
-            setPermissionPolicy(PERMISSION_POLICY_AUTO_GRANT);
-
-            assertPermissionPolicy(PERMISSION_POLICY_AUTO_GRANT);
-            assertCanRequestPermissionFromActivity(READ_CONTACTS);
-
-            setPermissionPolicy(PERMISSION_POLICY_AUTO_DENY);
-
-            assertPermissionPolicy(PERMISSION_POLICY_AUTO_DENY);
-            assertCanRequestPermissionFromActivity(READ_CONTACTS);
-
-            setPermissionPolicy(PERMISSION_POLICY_PROMPT);
-
-            assertPermissionPolicy(PERMISSION_POLICY_PROMPT);
-            assertCanRequestPermissionFromActivity(READ_CONTACTS);
-        } finally {
-            // Restore original state
-            setPermissionGrantState(READ_CONTACTS, grantState);
-            setPermissionPolicy(permissionPolicy);
-        }
     }
 
     public void testPermissionGrantState_preMApp_preQDeviceAdmin() throws Exception {

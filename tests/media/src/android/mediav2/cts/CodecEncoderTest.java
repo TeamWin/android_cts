@@ -86,9 +86,10 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     }
 
     public CodecEncoderTest(String encoder, String mime, int[] bitrates, int[] encoderInfo1,
-            int[] encoderInfo2, String allTestParams) {
+            int[] encoderInfo2, int maxBFrames, String allTestParams) {
         super(encoder, mime, bitrates, encoderInfo1, encoderInfo2,
                 EncoderInput.getRawResource(mime, /* isHighBitDepth */ false), allTestParams);
+        mMaxBFrames = maxBFrames;
         mSyncFramesPos = new ArrayList<>();
     }
 
@@ -125,12 +126,13 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         mCodec.setParameters(bitrateUpdate);
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{5})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = true;
         final boolean needVideo = true;
-        final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
+        final List<Object[]> exhaustiveArgsList = new ArrayList<>();
+        final List<Object[]> args = new ArrayList<>(Arrays.asList(new Object[][]{
                 // Audio - CodecMime, arrays of bit-rates, sample rates, channel counts
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new int[]{128000}, new int[]{8000, 48000},
                         new int[]{1, 2}},
@@ -158,7 +160,25 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                         new int[]{144, 288}},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, new int[]{512000}, new int[]{176, 352},
                         new int[]{144, 288}},
-        });
+        }));
+
+        int[] maxBFrames = {0, 2};
+        int argLength = args.get(0).length;
+        for (Object[] arg : args) {
+            for (int maxBFrame : maxBFrames) {
+                String mediaType = arg[0].toString();
+                if (!mediaType.equals(MediaFormat.MIMETYPE_VIDEO_AVC)
+                        && !mediaType.equals(MediaFormat.MIMETYPE_VIDEO_HEVC)
+                        && maxBFrame != 0) {
+                    continue;
+                }
+                Object[] argUpdate = new Object[argLength + 1];
+                System.arraycopy(arg, 0, argUpdate, 0, argLength);
+                argUpdate[argLength] = maxBFrame;
+                exhaustiveArgsList.add(argUpdate);
+            }
+        }
+
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, true);
     }
 

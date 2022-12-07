@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import android.graphics.PointF;
 import android.hardware.input.VirtualMouse;
 import android.hardware.input.VirtualMouseButtonEvent;
+import android.hardware.input.VirtualMouseConfig;
 import android.hardware.input.VirtualMouseRelativeEvent;
 import android.hardware.input.VirtualMouseScrollEvent;
 import android.view.InputDevice;
@@ -46,8 +47,14 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
 
     @Override
     void onSetUpVirtualInputDevice() {
-        mVirtualMouse = mVirtualDevice.createVirtualMouse(mVirtualDisplay, DEVICE_NAME,
-                /* vendorId= */ 1, /* productId= */ 1);
+        final VirtualMouseConfig mouseConfig =
+                new VirtualMouseConfig.Builder()
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setInputDeviceName(DEVICE_NAME)
+                        .setAssociatedDisplayId(mVirtualDisplay.getDisplay().getDisplayId())
+                        .build();
+        mVirtualMouse = mVirtualDevice.createVirtualMouse(mouseConfig);
     }
 
     @Override

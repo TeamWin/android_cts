@@ -29,6 +29,7 @@ import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
+import android.voiceinteraction.cts.activities.TestStartActivity;
 
 import androidx.test.rule.ActivityTestRule;
 

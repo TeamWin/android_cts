@@ -39,6 +39,7 @@ _PLOT_ALPHA = 0.5
 _PLOT_MARKER_SIZE = 8
 _PLOT_LEGEND_CIRCLE_SIZE = 10
 _PLOT_LEGEND_TRIANGLE_SIZE = 6
+_USE_CASE_STILL_CAPTURE = 2
 
 
 def do_capture_and_extract_rgb_means(
@@ -59,6 +60,9 @@ def do_capture_and_extract_rgb_means(
     center patch RGB means
   """
   out_surface = {'width': size[0], 'height': size[1], 'format': img_type}
+  if camera_properties_utils.stream_use_case(props):
+    out_surface['useCase'] = _USE_CASE_STILL_CAPTURE
+  logging.debug('output surface: %s', str(out_surface))
   if debug and camera_properties_utils.raw(props):
     out_surfaces = [{'format': 'raw'}, out_surface]
     cap_raw, cap = cam.do_capture(req, out_surfaces)

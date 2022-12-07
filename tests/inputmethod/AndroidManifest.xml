@@ -47,7 +47,7 @@
             <meta-data android:name="android.view.im" android:resource="@xml/inprocime"/>
         </service>
 
-        <service android:name="android.view.inputmethod.cts.disapproveime.DisapproveInputMethodService"
+       <service android:name="android.view.inputmethod.cts.disapproveime.DisapproveInputMethodService"
                  android:label="Disapprove IME"
                  android:permission="android.permission.BIND_INPUT_METHOD"
                  android:exported="true">
@@ -57,6 +57,8 @@
             <meta-data android:name="android.view.im" android:resource="@xml/disapproveime"/>
         </service>
 
+        <uses-library android:name="androidx.window.extensions"
+                      android:required="false" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

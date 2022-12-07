@@ -20,6 +20,7 @@ import static org.junit.Assert.assertThrows;
 
 import android.hardware.input.VirtualKeyEvent;
 import android.hardware.input.VirtualKeyboard;
+import android.hardware.input.VirtualKeyboardConfig;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 
@@ -40,9 +41,14 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
 
     @Override
     void onSetUpVirtualInputDevice() {
-        mVirtualKeyboard =
-                mVirtualDevice.createVirtualKeyboard(
-                        mVirtualDisplay, DEVICE_NAME, /* vendorId= */ 1, /* productId= */ 1);
+        final VirtualKeyboardConfig keyboardConfig =
+                new VirtualKeyboardConfig.Builder()
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setInputDeviceName(DEVICE_NAME)
+                        .setAssociatedDisplayId(mVirtualDisplay.getDisplay().getDisplayId())
+                        .build();
+        mVirtualKeyboard = mVirtualDevice.createVirtualKeyboard(keyboardConfig);
     }
 
     @Override

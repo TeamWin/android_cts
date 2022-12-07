@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import android.wifi.mockwifi.nl80211.WifiNL80211ManagerImp;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -37,10 +38,17 @@ public class MockWifiModemService extends Service {
     public static final int LATCH_WIFI_INTERFACES_READY = 1;
     public static final int LATCH_MAX = 2;
 
+    private static final int NUM_MOCKED_INTERFACES = 1; // The number of HAL, now only support
+                                                        // nl80211 HAL
+
+    public static final String NL80211_INTERFACE_NAME = "android.wifi.mockwifimodem.nl80211";
+
     private static CountDownLatch[] sLatches;
     private Object mLock = new Object();;
     private static Context sContext;
     private LocalBinder mBinder;
+
+    private static WifiNL80211ManagerImp sWifiNL80211ManagerImp;
 
     // For local access to this Service.
     class LocalBinder extends Binder {
@@ -55,13 +63,24 @@ public class MockWifiModemService extends Service {
         sContext = InstrumentationRegistry.getInstrumentation().getContext();
         sLatches = new CountDownLatch[LATCH_MAX];
         for (int i = 0; i < LATCH_MAX; i++) {
-            sLatches[i] = new CountDownLatch(1);
+            if (i == LATCH_WIFI_INTERFACES_READY) {
+                sLatches[i] = new CountDownLatch(NUM_MOCKED_INTERFACES); // make sure all HAL
+                                                                         // simulation is ready
+            } else {
+                sLatches[i] = new CountDownLatch(1);
+            }
         }
         mBinder = new LocalBinder();
+        sWifiNL80211ManagerImp = new WifiNL80211ManagerImp(sContext);
     }
 
     @Override
     public IBinder onBind(Intent intent) {
+        if (NL80211_INTERFACE_NAME.equals(intent.getAction())) {
+            Log.i(TAG, "onBind-NL80211");
+            countDownLatch(LATCH_WIFI_INTERFACES_READY);
+            return sWifiNL80211ManagerImp;
+        }
         countDownLatch(LATCH_MOCK_WIFI_MODEM_SERVICE_READY);
         Log.i(TAG, "onBind-Local");
         return mBinder;

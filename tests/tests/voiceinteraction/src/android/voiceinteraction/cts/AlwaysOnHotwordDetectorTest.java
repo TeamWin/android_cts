@@ -16,54 +16,115 @@
 
 package android.voiceinteraction.cts;
 
+import static android.Manifest.permission.MANAGE_HOTWORD_DETECTION;
 import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
-import static android.voiceinteraction.cts.testcore.VoiceInteractionDetectionHelper.testHotwordDetection;
+import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
+import static com.google.common.truth.Truth.assertThat;
+
+import android.content.Context;
 import android.platform.test.annotations.AppModeFull;
 import android.service.voice.AlwaysOnHotwordDetector;
-import android.voiceinteraction.common.Utils;
+import android.service.voice.HotwordDetectionService;
+import android.util.Log;
+import android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService;
+import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Objects;
+
+/**
+ * Tests for {@link AlwaysOnHotwordDetector} APIs.
+ */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "No real use case for instant mode hotword detector")
-public class AlwaysOnHotwordDetectorTest extends AbstractVoiceInteractionBasicTestCase {
-    static final String TAG = "HotwordDetectionServiceBasicTest";
+public class AlwaysOnHotwordDetectorTest {
+
+    private static final String TAG = "AlwaysOnHotwordDetectorTest";
+    // The VoiceInteractionService used by this test
+    private static final String SERVICE_COMPONENT =
+            "android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService";
+    protected final Context mContext = getInstrumentation().getTargetContext();
+
+    private CtsBasicVoiceInteractionService mService;
 
     @Rule
     public RequiredFeatureRule REQUIRES_MIC_RULE = new RequiredFeatureRule(FEATURE_MICROPHONE);
 
-    @Override
-    public String getVoiceInteractionService() {
-        return "android.voiceinteraction.cts/"
-                + "android.voiceinteraction.service.BasicVoiceInteractionService";
+    @Rule
+    public VoiceInteractionServiceConnectedRule mConnectedRule =
+            new VoiceInteractionServiceConnectedRule(mContext, getTestVoiceInteractionService());
+
+    public String getTestVoiceInteractionService() {
+        Log.d(TAG, "getTestVoiceInteractionService()");
+        return CTS_SERVICE_PACKAGE + "/" + SERVICE_COMPONENT;
+    }
+
+    @Before
+    public void setup() {
+        // VoiceInteractionServiceConnectedRule handles the service connected, we should be
+        // able to get service
+        mService = (CtsBasicVoiceInteractionService) CtsBasicVoiceInteractionService.getService();
+        // Check we can get the service, we need service object to call the service provided method
+        Objects.requireNonNull(mService);
+    }
+
+    @After
+    public void tearDown() {
+        mService = null;
     }
 
     @Test
-    public void testAlwaysOnHotwordDetector_startRecognitionWithData() {
-        // creates detector
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
-                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
+    public void testAlwaysOnHotwordDetector_startRecognitionWithData() throws Exception {
+        // Create alwaysOnHotwordDetector and wait onHotwordDetectionServiceInitialized() callback
+        mService.createAlwaysOnHotwordDetector();
 
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.DSP_DETECTOR_ENROLL_FAKE_DSP_MODEL,
-                Utils.DSP_DETECTOR_AVAILABILITY_RESULT_INTENT,
-                AlwaysOnHotwordDetector.STATE_KEYPHRASE_ENROLLED,
-                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
+        // verify callback result
+        mService.waitHotwordDetectionServiceInitializedResult();
+        assertThat(mService.getHotwordDetectionServiceInitializedResult()).isEqualTo(
+                HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS);
 
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.DSP_DETECTOR_START_RECOGNITION_WITH_DATA_TEST,
-                Utils.DSP_DETECTOR_START_RECOGNITION_RESULT_INTENT,
-                Utils.DSP_DETECTOR_START_RECOGNITION_RESULT_SUCCESS,
-                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
+        // The AlwaysOnHotwordDetector should be created correctly
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector = mService.getAlwaysOnHotwordDetector();
+        Objects.requireNonNull(alwaysOnHotwordDetector);
+
+        // override availability and wait onAvailabilityChanged() callback called
+        mService.initAvailabilityChangeLatch();
+        alwaysOnHotwordDetector.overrideAvailability(
+                AlwaysOnHotwordDetector.STATE_KEYPHRASE_ENROLLED);
+
+        // verify callback result
+        mService.waitAvailabilityChangedCalled();
+        assertThat(mService.getHotwordDetectionServiceAvailabilityResult()).isEqualTo(
+                AlwaysOnHotwordDetector.STATE_KEYPHRASE_ENROLLED);
+
+        // Start recognition
+        runWithShellPermissionIdentity(() -> {
+            boolean startRecognitionThrowException = true;
+            try {
+                alwaysOnHotwordDetector.startRecognition(0,
+                        new byte[]{1, 2, 3, 4, 5});
+                startRecognitionThrowException = false;
+            } catch (UnsupportedOperationException | IllegalStateException e) {
+                startRecognitionThrowException = true;
+            } finally {
+                alwaysOnHotwordDetector.destroy();
+            }
+            // verify recognition result
+            assertThat(startRecognitionThrowException).isFalse();
+        }, MANAGE_HOTWORD_DETECTION);
     }
 }

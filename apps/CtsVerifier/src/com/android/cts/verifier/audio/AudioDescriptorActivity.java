@@ -21,6 +21,7 @@ import android.content.DialogInterface;
 import android.media.AudioDescriptor;
 import android.media.AudioDeviceCallback;
 import android.media.AudioDeviceInfo;
+import android.media.AudioHalVersionInfo;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -37,8 +38,6 @@ import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -58,10 +57,6 @@ public class AudioDescriptorActivity extends PassFailButtons.Activity {
     private static final String KEY_HAL_VERSION = "audio_hal_version";
     private static final String KEY_AUDIO_DESCRIPTOR = "audio_descriptor";
 
-    // Audio HAL type
-    private static final int HAL_TYPE_UNKNOWN = 0;
-    private static final int HAL_TYPE_HIDL = 1;
-
     private static final int EXTENSION_FORMAT_CODE = 15;
 
     // Description of not used format extended codes can be found at
@@ -71,23 +66,26 @@ public class AudioDescriptorActivity extends PassFailButtons.Activity {
     // Description of short audio descriptor can be found at
     // https://en.wikipedia.org/wiki/Extended_Display_Identification_Data.
     // The collection is sorted decreasingly by HAL version.
-    private static final SortedMap<HalVersion, HalFormats> ALL_HAL_FORMATS =
+    private static final SortedMap<AudioHalVersionInfo, HalFormats> ALL_HAL_FORMATS =
             new TreeMap<>(Collections.reverseOrder());
+
     static {
         // Formats defined by audio HAL v7.0 can be found at
         // hardware/interfaces/audio/7.0/config/audio_policy_configuration.xsd
-        ALL_HAL_FORMATS.put(new HalVersion(HAL_TYPE_HIDL, 7 /*majorVersion*/, 0 /*minorVersion*/),
-                new HalFormats(Map.of(
-                        2, "AC-3",
-                        4, "MP3",
-                        6, "AAC-LC",
-                        11, "DTS-HD",
-                        12, "Dolby TrueHD"),
-                Map.of(
-                        7, "DRA",
-                        // put(11, "MPEG-H"); MPEG-H is defined by Android but its capability
-                        // can only be reported by short audio descriptor.
-                        12, "AC-4")));
+        ALL_HAL_FORMATS.put(
+                AudioHalVersionInfo.HIDL_7_0,
+                new HalFormats(
+                        Map.of(
+                                2, "AC-3",
+                                4, "MP3",
+                                6, "AAC-LC",
+                                11, "DTS-HD",
+                                12, "Dolby TrueHD"),
+                        Map.of(
+                                7, "DRA",
+                                // put(11, "MPEG-H"); MPEG-H is defined by Android but its
+                                // capability can only be reported by short audio descriptor.
+                                12, "AC-4")));
     }
 
     private AudioManager mAudioManager;
@@ -155,14 +153,18 @@ public class AudioDescriptorActivity extends PassFailButtons.Activity {
 
     private void detectHalVersion() {
         try {
-            mHalVersionStr = mAudioManager.getHalVersion();
-            HalVersion halVersion = new HalVersion(mHalVersionStr);
-            if (!halVersion.isValid()) {
+            AudioHalVersionInfo halVersion = mAudioManager.getHalVersion();
+            if (halVersion == null) {
                 mIsValidHal = false;
-                mInvalidHalErrorMsg = getResources().getString(
-                        R.string.audio_descriptor_invalid_hal_version, mHalVersionStr);
+                mHalVersionStr = "InvalidHalVersion";
+                mInvalidHalErrorMsg =
+                        getResources()
+                                .getString(
+                                        R.string.audio_descriptor_invalid_hal_version,
+                                        mHalVersionStr);
                 return;
             }
+            mHalVersionStr = halVersion.toString();
             mHalFormats = getHalFormats(halVersion);
             mIsValidHal = true;
             mInvalidHalErrorMsg = "";
@@ -320,72 +322,8 @@ public class AudioDescriptorActivity extends PassFailButtons.Activity {
         return new Pair<>(true, getResources().getString(R.string.audio_descriptor_pass));
     }
 
-    static class HalVersion implements Comparable<HalVersion> {
-        private final int mHalType;
-        private final int mMajorVersion;
-        private final int mMinorVersion;
-
-        HalVersion(int halType, int majorVersion, int minorVersion) {
-            mHalType = halType;
-            mMajorVersion = majorVersion;
-            mMinorVersion = minorVersion;
-        }
-
-        HalVersion(String halVersion) {
-            int halType = HAL_TYPE_UNKNOWN;
-            int majorVersion = -1;
-            int minorVersion = -1;
-            if (halVersion != null) {
-                String[] versions = halVersion.split("\\.");
-                if (versions.length == 2) {
-                    try {
-                        majorVersion = Integer.parseInt(versions[0]);
-                        minorVersion = Integer.parseInt(versions[1]);
-                        halType = HAL_TYPE_HIDL;
-                    } catch (NumberFormatException e) {
-                        Log.e(TAG, "Unable to parse hal version: " + halVersion);
-                    }
-                }
-            }
-            mHalType = halType;
-            mMajorVersion = majorVersion;
-            mMinorVersion = minorVersion;
-        }
-
-        boolean isValid() {
-            return mHalType != HAL_TYPE_UNKNOWN;
-        }
-
-        /**
-         * Compare two HAL versions.
-         * @return 0 if the HAL version is the same as the other HAL version. Positive if the HAL
-         *         version is newer than the other HAL version. Negative if the HAL version is
-         *         older than the other version.
-         */
-        @Override
-        public int compareTo(HalVersion that) {
-            // Note that currently only HIDL hal here. New HAL type may be added in the future.
-            if (mMajorVersion > that.mMajorVersion) {
-                return 1;
-            } else if (mMajorVersion < that.mMajorVersion) {
-                return -1;
-            }
-            // Major version is the same one. Compare minor version.
-            return mMinorVersion > that.mMinorVersion ? 1
-                    : mMinorVersion < that.mMinorVersion ? -1 : 0;
-        }
-
-        @Override
-        public boolean equals(Object that) {
-            if (that == null) return false;
-            if (that == this) return true;
-            if (!(that instanceof HalVersion)) return false;
-            return this.compareTo((HalVersion) that) == 0;
-        }
-    }
-
-    private HalFormats getHalFormats(HalVersion halVersion) {
-        for (Map.Entry<HalVersion, HalFormats> entry : ALL_HAL_FORMATS.entrySet()) {
+    private HalFormats getHalFormats(AudioHalVersionInfo halVersion) {
+        for (Map.Entry<AudioHalVersionInfo, HalFormats> entry : ALL_HAL_FORMATS.entrySet()) {
             if (halVersion.compareTo(entry.getKey()) >= 0) {
                 return entry.getValue();
             }

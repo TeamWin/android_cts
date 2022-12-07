@@ -22,7 +22,6 @@ import static android.os.Build.VERSION_CODES.CUR_DEVELOPMENT;
 import android.os.Build;
 import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.RestrictedBuildTest;
 
 import junit.framework.TestCase;
 
@@ -156,51 +155,6 @@ public class BuildTest extends TestCase {
             }
         }
         return line;
-    }
-    /**
-     * @param message shown when the test fails
-     * @param property name passed to getprop
-     * @param expected value of the property
-     */
-    private void assertProperty(String message, String property, String expected)
-            throws IOException {
-        Process process = new ProcessBuilder("getprop", property).start();
-        Scanner scanner = null;
-        try {
-            scanner = new Scanner(process.getInputStream());
-            String line = scanner.nextLine();
-            assertEquals(message + " Value found: " + line , expected, line);
-            assertFalse(scanner.hasNext());
-        } finally {
-            if (scanner != null) {
-                scanner.close();
-            }
-        }
-    }
-
-    /**
-     * Check that a property is not set by scanning through the list of properties returned by
-     * getprop, since calling getprop on an property set to "" and on a non-existent property
-     * yields the same output.
-     *
-     * @param message shown when the test fails
-     * @param property name passed to getprop
-     */
-    private void assertNoPropertySet(String message, String property) throws IOException {
-        Process process = new ProcessBuilder("getprop").start();
-        Scanner scanner = null;
-        try {
-            scanner = new Scanner(process.getInputStream());
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                assertFalse(message + "Property found: " + line,
-                        line.startsWith("[" + property + "]"));
-            }
-        } finally {
-            if (scanner != null) {
-                scanner.close();
-            }
-        }
     }
 
     private static void assertValueIsAllowed(Set<String> allowedValues, String actualValue) {
@@ -388,23 +342,6 @@ public class BuildTest extends TestCase {
                         + " is invalid; must be at most VERSION.SDK_INT",
                 // we use RESOURCES_SDK_INT to account for active development versions
                 Build.VERSION.MEDIA_PERFORMANCE_CLASS <= Build.VERSION.RESOURCES_SDK_INT);
-    }
-
-    /**
-     * Assert that the device is a secure, not debuggable user build.
-     *
-     * Debuggable devices allow adb root and have the su command, allowing
-     * escalations to root and unauthorized access to application data.
-     *
-     * Note: This test will fail on userdebug / eng devices, but should pass
-     * on production (user) builds.
-     */
-    @RestrictedBuildTest
-    @AppModeFull(reason = "Instant apps cannot access APIs")
-    public void testIsSecureUserBuild() {
-        assertEquals("Must be a user build", "user", Build.TYPE);
-        assertFalse("Must be a non-debuggable build", Build.isDebuggable());
-        assertTrue("Must be a secure build", Build.isSecure());
     }
 
     private void assertNotEmpty(String value) {

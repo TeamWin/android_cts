@@ -27,7 +27,6 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
-import com.android.compatibility.common.util.SystemUtil;
 
 public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
     private static final String TAG = "FlexibilityConstraintTest";
@@ -77,7 +76,6 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         mInitialDisplayTimeout = mUiDevice.executeShellCommand(
                 "settings get system screen_off_timeout");
         mUiDevice.executeShellCommand("settings put system screen_off_timeout 300000");
-        SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler monitor-battery on");
 
         // Satisfy no constraints by default.
         satisfySystemWideConstraints(false, false, false);
@@ -93,7 +91,6 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
                 "settings put system screen_off_timeout " + mInitialDisplayTimeout);
         Settings.Global.putString(getContext().getContentResolver(),
                 Settings.Global.LOW_POWER_MODE_TRIGGER_LEVEL, mPreviousLowPowerTriggerLevel);
-        SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler monitor-battery off");
 
         super.tearDown();
     }

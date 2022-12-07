@@ -30,6 +30,8 @@ java_test_helper_library {
         "androidx.annotation_annotation",
         "androidx.autofill_autofill",
         "compatibility-device-util-axt",
+        "cts_window_jetpack_utils",
+        "cts_window-extensions",
     ],
 }
 

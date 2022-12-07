@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.voiceinteraction.cts;
+package android.voiceinteraction.cts.services;
 
 import android.media.AudioFormat;
 import android.os.ParcelFileDescriptor;

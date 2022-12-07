@@ -16,8 +16,10 @@
 
 package android.hardware.input.cts.tests;
 
+import android.graphics.Point;
 import android.hardware.input.VirtualTouchEvent;
 import android.hardware.input.VirtualTouchscreen;
+import android.hardware.input.VirtualTouchscreenConfig;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 
@@ -39,8 +41,18 @@ public class VirtualTouchscreenTest extends VirtualDeviceTestCase {
 
     @Override
     void onSetUpVirtualInputDevice() {
-        mVirtualTouchscreen = mVirtualDevice.createVirtualTouchscreen(mVirtualDisplay, DEVICE_NAME,
-                /* vendorId= */ 1, /* productId= */ 1);
+        final Point size = new Point();
+        mVirtualDisplay.getDisplay().getSize(size);
+        final VirtualTouchscreenConfig touchscreenConfig =
+                new VirtualTouchscreenConfig.Builder()
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setInputDeviceName(DEVICE_NAME)
+                        .setAssociatedDisplayId(mVirtualDisplay.getDisplay().getDisplayId())
+                        .setWidthInPixels(size.x)
+                        .setHeightInPixels(size.y)
+                        .build();
+        mVirtualTouchscreen = mVirtualDevice.createVirtualTouchscreen(touchscreenConfig);
     }
 
     @Override

@@ -23,6 +23,9 @@
              android:directBootAware="true"
              android:persistent="true"
              android:exported="true">
+            <intent-filter>
+              <action android:name="android.wifi.mockwifimodem.nl80211"/>
+            </intent-filter>
         </service>
     </application>
 </manifest>

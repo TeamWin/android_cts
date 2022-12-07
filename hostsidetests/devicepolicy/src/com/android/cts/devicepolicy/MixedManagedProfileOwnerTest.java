@@ -241,13 +241,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         super.testPackageInstallUserRestrictions();
     }
 
-    @Override
-    @PermissionsTest
-    @Test
-    public void testPermissionMixedPolicies() throws Exception {
-        super.testPermissionMixedPolicies();
-    }
-
     @FlakyTest
     @Override
     @Test

@@ -59,13 +59,13 @@ import android.media.AudioDescriptor;
 import android.media.AudioDeviceAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
+import android.media.AudioHalVersionInfo;
 import android.media.AudioManager;
 import android.media.AudioProfile;
 import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.media.MicrophoneInfo;
-import android.media.audio.cts.R;
 import android.media.audiopolicy.AudioProductStrategy;
 import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.Utils;
@@ -2107,7 +2107,13 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testGetHalVersion() {
-        assertNotEquals(null, AudioManager.getHalVersion());
+        AudioHalVersionInfo halVersion = AudioManager.getHalVersion();
+        assertNotEquals(null, halVersion);
+        assertTrue(
+                AudioHalVersionInfo.AUDIO_HAL_TYPE_AIDL == halVersion.getHalType()
+                        || AudioHalVersionInfo.AUDIO_HAL_TYPE_HIDL == halVersion.getHalType());
+        assertTrue(halVersion.getMajorVersion() > 0);
+        assertTrue(halVersion.getMinorVersion() >= 0);
     }
 
     private void assertStreamVolumeEquals(int stream, int expectedVolume) throws Exception {

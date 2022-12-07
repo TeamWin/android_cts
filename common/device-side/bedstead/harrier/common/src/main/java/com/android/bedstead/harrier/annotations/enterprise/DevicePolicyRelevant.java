@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
 /**
  * Mark that a test is relevant to enforcing device policy.
  */
-@Target(ElementType.TYPE)
+@Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DevicePolicyRelevant {
     String reason() default "";

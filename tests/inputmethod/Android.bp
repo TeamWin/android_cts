@@ -31,7 +31,6 @@ android_test {
         "androidx.test.rules",
         "androidx.test.uiautomator_uiautomator",
         "compatibility-device-util-axt",
-        "cts-wm-util",
         "cts-inputmethod-util",
         "cts-mock-a11y-ime-client",
         "ctstestrunner-axt",
@@ -41,6 +40,7 @@ android_test {
         "testng",
         "kotlin-test",
         "cts-wm-util",
+        "cts_window-extensions",
     ],
     srcs: [
         "src/**/*.java",

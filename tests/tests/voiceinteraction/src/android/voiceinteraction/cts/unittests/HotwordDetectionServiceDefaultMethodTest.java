@@ -23,7 +23,7 @@ import android.media.AudioFormat;
 import android.os.ParcelFileDescriptor;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetectionService;
-import android.voiceinteraction.cts.NoOpHotwordDetectionService;
+import android.voiceinteraction.cts.services.NoOpHotwordDetectionService;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 

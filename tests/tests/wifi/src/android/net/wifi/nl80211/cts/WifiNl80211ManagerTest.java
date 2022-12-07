@@ -21,6 +21,7 @@ import static android.net.wifi.nl80211.WifiNl80211Manager.OemSecurityType;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
@@ -29,7 +30,9 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.net.wifi.cts.WifiFeature;
 import android.net.wifi.nl80211.WifiNl80211Manager;
+import android.os.Binder;
 import android.os.Build;
+import android.os.IBinder;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -178,5 +181,13 @@ public class WifiNl80211ManagerTest {
             fail("notifyCountryCodeChanged doesn't throws RuntimeException");
         } catch (RuntimeException re) {
         }
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @Test
+    public void testWifiNl80211ManagerConstructor() {
+        IBinder testBinder = new Binder();
+        WifiNl80211Manager manager = new WifiNl80211Manager(mContext, testBinder);
+        assertNotNull(manager);
     }
 }

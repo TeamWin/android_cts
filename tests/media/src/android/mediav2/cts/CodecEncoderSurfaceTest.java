@@ -141,7 +141,8 @@ public class CodecEncoderSurfaceTest {
     }
 
     public CodecEncoderSurfaceTest(String encoder, String mime, String testFile, int bitrate,
-            int frameRate, boolean testToneMap, int colorFormat, String allTestParams) {
+            int frameRate, boolean testToneMap, int colorFormat, int maxBFrames,
+            String allTestParams) {
         mCompName = encoder;
         mMime = mime;
         mTestFile = MEDIA_DIR + testFile;
@@ -150,7 +151,7 @@ public class CodecEncoderSurfaceTest {
         mTestToneMap = testToneMap;
         mColorFormat = colorFormat;
         mTestArgs = allTestParams;
-        mMaxBFrames = 0;
+        mMaxBFrames = maxBFrames;
         mLatency = mMaxBFrames;
         mReviseLatency = false;
         mAsyncHandleDecoder = new CodecAsyncHandler();
@@ -236,7 +237,7 @@ public class CodecEncoderSurfaceTest {
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{5})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{5}_{7})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = false;
@@ -279,13 +280,23 @@ public class CodecEncoderSurfaceTest {
         }));
 
         int[] argsColorFormats = {COLOR_FormatSurface, COLOR_FormatYUV420Flexible};
+        int[] maxBFrames = {0, 2};
         int argLength = args.get(0).length;
-        for (int colorFormat : argsColorFormats) {
-            for (Object[] arg : args) {
-                Object[] argUpdate = new Object[argLength + 1];
-                System.arraycopy(arg, 0, argUpdate, 0, argLength);
-                argUpdate[argLength] = colorFormat;
-                exhaustiveArgsList.add(argUpdate);
+        for (Object[] arg : args) {
+            for (int colorFormat : argsColorFormats) {
+                for (int maxBFrame : maxBFrames) {
+                    String mediaType = arg[0].toString();
+                    if (!mediaType.equals(MediaFormat.MIMETYPE_VIDEO_AVC)
+                            && !mediaType.equals(MediaFormat.MIMETYPE_VIDEO_HEVC)
+                            && maxBFrame != 0) {
+                        continue;
+                    }
+                    Object[] argUpdate = new Object[argLength + 2];
+                    System.arraycopy(arg, 0, argUpdate, 0, argLength);
+                    argUpdate[argLength] = colorFormat;
+                    argUpdate[argLength + 1] = maxBFrame;
+                    exhaustiveArgsList.add(argUpdate);
+                }
             }
         }
         // P010 support was added in Android T, hence limit the following tests to Android T and
@@ -293,12 +304,21 @@ public class CodecEncoderSurfaceTest {
         if (CodecTestBase.IS_AT_LEAST_T) {
             int[] argsHighBitDepthColorFormats = {COLOR_FormatSurface, COLOR_FormatYUVP010};
             int argsHighBitDepthLength = argsHighBitDepth.get(0).length;
-            for (int colorFormat : argsHighBitDepthColorFormats) {
-                for (Object[] arg : argsHighBitDepth) {
-                    Object[] argUpdate = new Object[argsHighBitDepthLength + 1];
-                    System.arraycopy(arg, 0, argUpdate, 0, argsHighBitDepthLength);
-                    argUpdate[argsHighBitDepthLength] = colorFormat;
-                    exhaustiveArgsList.add(argUpdate);
+            for (Object[] arg : argsHighBitDepth) {
+                for (int colorFormat : argsHighBitDepthColorFormats) {
+                    for (int maxBFrame : maxBFrames) {
+                        String mediaType = arg[0].toString();
+                        if (!mediaType.equals(MediaFormat.MIMETYPE_VIDEO_AVC)
+                                && !mediaType.equals(MediaFormat.MIMETYPE_VIDEO_HEVC)
+                                && maxBFrame != 0) {
+                            continue;
+                        }
+                        Object[] argUpdate = new Object[argsHighBitDepthLength + 2];
+                        System.arraycopy(arg, 0, argUpdate, 0, argsHighBitDepthLength);
+                        argUpdate[argsHighBitDepthLength] = colorFormat;
+                        argUpdate[argsHighBitDepthLength + 1] = maxBFrame;
+                        exhaustiveArgsList.add(argUpdate);
+                    }
                 }
             }
         }

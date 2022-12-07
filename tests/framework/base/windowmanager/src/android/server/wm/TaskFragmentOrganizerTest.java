@@ -210,9 +210,6 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
             "android.window.TaskFragmentOrganizer#applyTransaction",
             "android.window.WindowContainerTransaction#finishActivity"})
     public void testFinishActivity() {
-        // TODO(b/232476698) The TestApi is new. Remove the assume in the next release.
-        assumeExtensionVersionAtLeast2();
-
         final Activity activity = startNewActivity();
         final WindowContainerTransaction wct = new WindowContainerTransaction()
                 .finishActivity(getActivityToken(activity));

@@ -56,31 +56,38 @@ public class EncoderHDRInfoTest extends HDREncoderTestBase {
 
     public EncoderHDRInfoTest(String encoderName, String mediaType, int bitrate,
             int width, int height, String hdrStaticInfo, Map<Integer, String> hdrDynamicInfo,
-            String allTestParams) {
+            int maxBFrames, String allTestParams) {
         super(encoderName, mediaType, bitrate, width, height,
                 EncoderInput.getRawResource(mediaType, /* isHighBitDepth */ true), allTestParams);
         mHDRStaticInfo = hdrStaticInfo;
         mHDRDynamicInfo = hdrDynamicInfo;
+        mMaxBFrames = maxBFrames;
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{7})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = false;
         final boolean needVideo = true;
-        final String[] mediaTypes = new String[]{
+        final String[] HDRMediaTypes = new String[]{
                 MediaFormat.MIMETYPE_VIDEO_AV1,
                 MediaFormat.MIMETYPE_VIDEO_HEVC,
                 MediaFormat.MIMETYPE_VIDEO_VP9
         };
+        final int[] maxBFrames = {0, 2};
 
         final List<Object[]> exhaustiveArgsList = new ArrayList<>();
-        for (String mediaType : mediaTypes) {
-            // mediaType, bitrate, width, height, hdrStaticInfo, hdrDynamicInfo
-            exhaustiveArgsList.add(new Object[]{mediaType, 512000, 352, 288, HDR_STATIC_INFO,
-                    null});
-            exhaustiveArgsList.add(new Object[]{mediaType, 512000, 352, 288, null,
-                    HDR_DYNAMIC_INFO});
+        for (String mediaType : HDRMediaTypes) {
+            for (int maxBFrame : maxBFrames) {
+                // mediaType, bitrate, width, height, hdrStaticInfo, hdrDynamicInfo, maxBFrames
+                if (!mediaType.equals(MediaFormat.MIMETYPE_VIDEO_HEVC) && maxBFrame != 0) {
+                    continue;
+                }
+                exhaustiveArgsList.add(new Object[]{mediaType, 512000, 352, 288, HDR_STATIC_INFO,
+                        null, maxBFrame});
+                exhaustiveArgsList.add(new Object[]{mediaType, 512000, 352, 288, null,
+                        HDR_DYNAMIC_INFO, maxBFrame});
+            }
         }
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
     }

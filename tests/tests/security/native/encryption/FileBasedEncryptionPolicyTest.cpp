@@ -29,9 +29,6 @@
 
 #include "utils.h"
 
-// This can be removed once this macro is available in <linux/fscrypt.h>
-#define FSCRYPT_MODE_AES_256_HCTR2 10
-
 // Non-upstream encryption modes that are used on some devices.
 #define FSCRYPT_MODE_AES_256_HEH 126
 #define FSCRYPT_MODE_PRIVATE 127

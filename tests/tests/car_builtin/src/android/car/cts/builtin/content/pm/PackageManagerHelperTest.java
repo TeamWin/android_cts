@@ -72,8 +72,6 @@ public final class PackageManagerHelperTest {
         "android.car.cts.builtin.os.SharedMemoryTestService",
         "android.car.cts.builtin.os.ServiceManagerTestService"
     };
-    private static final String CAR_SIMPLE_APP_PKG = "android.car.cts.builtin.apps.simple";
-    private static final String CAR_SIMPLE_APP_ACTIVITY = CAR_SIMPLE_APP_PKG + ".SimpleActivity";
 
     @Rule
     public final PermissionsCheckerRule mPermissionsCheckerRule = new PermissionsCheckerRule();
@@ -83,6 +81,7 @@ public final class PackageManagerHelperTest {
 
     @Test
     public void testGetPackageInfoAsUser() throws Exception {
+        String expectedActivityName = CAR_BUILTIN_CTS_PKG + ".activity.SimpleActivity";
         int flags = PackageManager.GET_ACTIVITIES | PackageManager.GET_INSTRUMENTATION
                 | PackageManager.GET_SERVICES;
         int curUser = UserHandle.myUserId();
@@ -96,7 +95,7 @@ public final class PackageManagerHelperTest {
         assertThat(appInfo).isNotNull();
         assertThat(appInfo.descriptionRes).isEqualTo(R.string.app_description);
         assertThat(activities).isNotNull();
-        assertThat(hasActivity(CAR_SIMPLE_APP_ACTIVITY, activities)).isTrue();
+        assertThat(hasActivity(expectedActivityName, activities)).isTrue();
         assertThat(services).isNotNull();
     }
 
@@ -224,12 +223,16 @@ public final class PackageManagerHelperTest {
 
     @Test
     public void testForceStopPackageAsUser() throws Exception {
+        String testPackage = CAR_BUILTIN_CTS_PKG + ".apps.simple";
+        String testActivity = testPackage + ".SimpleActivity";
+        String testActivityLaunchAction = testActivity + ".LAUNCHED_ACTION";
         ActivityManager am = mContext.getSystemService(ActivityManager.class);
         // Start SimpleActivity
-        ActivityReceiverFilter appStartedReceiver = new ActivityReceiverFilter(
-                CAR_SIMPLE_APP_ACTIVITY + ".LAUNCHED_ACTION");
-        Intent intent = new Intent().setClassName(CAR_SIMPLE_APP_PKG,
-                CAR_SIMPLE_APP_ACTIVITY).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        ActivityReceiverFilter appStartedReceiver =
+                new ActivityReceiverFilter(testActivityLaunchAction);
+        Intent intent = new Intent()
+                .setClassName(testPackage, testActivity)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
         // Wait for activity to launch
         try {
@@ -239,21 +242,21 @@ public final class PackageManagerHelperTest {
         }
 
         Predicate<ActivityManager.RunningAppProcessInfo> processNamePredicate =
-                runningApp -> CAR_SIMPLE_APP_PKG.equals(runningApp.processName);
+                runningApp -> testPackage.equals(runningApp.processName);
         List<ActivityManager.RunningAppProcessInfo> runningApps =
                 SystemUtil.callWithShellPermissionIdentity(() -> am.getRunningAppProcesses());
         assertWithMessage(
-                "Process %s should be found in running process list", CAR_SIMPLE_APP_PKG).that(
+                "Process %s should be found in running process list", testPackage).that(
                 runningApps.stream().anyMatch(processNamePredicate)).isTrue();
 
         runningApps = SystemUtil.callWithShellPermissionIdentity(() -> {
-            PackageManagerHelper.forceStopPackageAsUser(mContext, CAR_SIMPLE_APP_PKG,
+            PackageManagerHelper.forceStopPackageAsUser(mContext, testPackage,
                     ActivityManager.getCurrentUser());
             return am.getRunningAppProcesses();
         });
 
         assertWithMessage(
-                "Process %s should not be alive after force-stop", CAR_SIMPLE_APP_PKG).that(
+                "Process %s should not be alive after force-stop", testPackage).that(
                 runningApps.stream().anyMatch(processNamePredicate)).isFalse();
     }
 

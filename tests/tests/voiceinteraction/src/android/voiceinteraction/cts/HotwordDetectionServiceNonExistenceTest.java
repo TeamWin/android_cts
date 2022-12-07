@@ -16,52 +16,58 @@
 
 package android.voiceinteraction.cts;
 
+import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
+
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static com.google.common.truth.Truth.assertThat;
 
-import android.content.Intent;
 import android.platform.test.annotations.AppModeFull;
-import android.voiceinteraction.common.Utils;
+import android.util.Log;
+import android.voiceinteraction.cts.services.CtsMainVoiceInteractionService;
+import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-import com.android.compatibility.common.util.BlockingBroadcastReceiver;
-
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import java.util.Objects;
 
 /**
  * Tests for using the VoiceInteractionService without a basic HotwordDetectionService.
  */
-@RunWith(AndroidJUnit4.class)
-@AppModeFull(reason = "No real use case for instant mode hotword detection service")
-public final class HotwordDetectionServiceNonExistenceTest
-        extends AbstractVoiceInteractionBasicTestCase {
-    static final String TAG = "HotwordDetectionServiceNonExistenceTest";
+@AppModeFull(reason = "No real ue case for instant mode hotword detection service")
+public final class HotwordDetectionServiceNonExistenceTest {
+    private static final String TAG = "HotwordDetectionServiceNonExistenceTest";
+    private static final String SERVICE_COMPONENT =
+            "android.voiceinteraction.cts.services.CtsMainVoiceInteractionService";
+
+    @Rule
+    public VoiceInteractionServiceConnectedRule mConnectedRule =
+            new VoiceInteractionServiceConnectedRule(getInstrumentation().getTargetContext(),
+                    getTestVoiceInteractionService());
+
+
+    public String getTestVoiceInteractionService() {
+        Log.d(TAG, "getTestVoiceInteractionService()");
+        return CTS_SERVICE_PACKAGE + "/" + SERVICE_COMPONENT;
+    }
 
     @Test
     public void testHotwordDetectionService_noHotwordDetectionComponentName_triggerFailure()
             throws Throwable {
-        final BlockingBroadcastReceiver receiver = new BlockingBroadcastReceiver(mContext,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT);
-        receiver.register();
+        // VoiceInteractionServiceConnectedRule handles the service connected, we should be able
+        // to get service.
+        CtsMainVoiceInteractionService service =
+                (CtsMainVoiceInteractionService) CtsMainVoiceInteractionService.getService();
+        // Check we can get the service, we need service object to call the service provided method
+        Objects.requireNonNull(service);
 
-        mActivityTestRule.getScenario().onActivity(activity -> {
-            activity.triggerHotwordDetectionServiceTest(
-                    Utils.HOTWORD_DETECTION_SERVICE_NONE,
-                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST);
-        });
+        // Create alwaysOnHotwordDetector
+        service.createAlwaysOnHotwordDetector();
 
-        final Intent intent = receiver.awaitForBroadcast(TEST_RESULT_AWAIT_TIMEOUT_MS);
-        assertThat(intent).isNotNull();
-        assertThat(intent.getIntExtra(Utils.KEY_TEST_RESULT, -1)).isEqualTo(
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION);
-
-        receiver.unregisterQuietly();
-    }
-
-    @Override
-    public String getVoiceInteractionService() {
-        return "android.voiceinteraction.cts/"
-                + "android.voiceinteraction.service.MainInteractionService";
+        // Wait the result and verify expected result
+        service.waitHotwordDetectionServiceInitializedResult();
+        // Verify IllegalStateException throws
+        assertThat(service.isCreateDetectorIllegalStateExceptionThrow()).isTrue();
     }
 }

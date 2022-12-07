@@ -1709,6 +1709,11 @@ public class MockImeSession implements AutoCloseable {
     }
 
     @NonNull
+    public ImeCommand callGetWindowLayoutInfo() {
+        return callCommandInternal("getWindowLayoutInfo", new Bundle());
+    }
+
+    @NonNull
     public ImeCommand callHasStylusHandwritingWindow() {
         return callCommandInternal("hasStylusHandwritingWindow", new Bundle());
     }

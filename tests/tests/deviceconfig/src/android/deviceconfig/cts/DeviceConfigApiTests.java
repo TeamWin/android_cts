@@ -16,8 +16,6 @@
 
 package android.deviceconfig.cts;
 
-import static android.provider.Settings.RESET_MODE_PACKAGE_DEFAULTS;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -42,6 +40,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -74,6 +73,9 @@ public final class DeviceConfigApiTests {
     private static final float DEFAULT_FLOAT = 123.456f;
     private static final float VALID_FLOAT = 456.789f;
     private static final String INVALID_FLOAT = "34343et";
+
+    private static final int RESET_MODE_PACKAGE_DEFAULTS = 1;
+    private static final int SYNC_DISABLED_MODE_NONE = 0;
 
     private static final Context CONTEXT = InstrumentationRegistry.getContext();
 
@@ -132,6 +134,7 @@ public final class DeviceConfigApiTests {
         nullifyProperty(NAMESPACE2, KEY1);
         nullifyProperty(NAMESPACE1, KEY2);
         nullifyProperty(NAMESPACE2, KEY2);
+        DeviceConfig.setSyncDisabledMode(SYNC_DISABLED_MODE_NONE);
     }
 
     /**
@@ -1114,6 +1117,29 @@ public final class DeviceConfigApiTests {
         DeviceConfig.resetToDefaults(RESET_MODE_PACKAGE_DEFAULTS, NAMESPACE1);
 
         assertEquals(DeviceConfig.getProperty(NAMESPACE1, KEY1), VALUE1);
+    }
+
+    /**
+     * Test updating syncDisabledMode.
+     */
+    @Test
+    public void testSetSyncDisabledMode() {
+        assertEquals(SYNC_DISABLED_MODE_NONE, DeviceConfig.getSyncDisabledMode());
+        DeviceConfig.setSyncDisabledMode(RESET_MODE_PACKAGE_DEFAULTS);
+        assertEquals(RESET_MODE_PACKAGE_DEFAULTS, DeviceConfig.getSyncDisabledMode());
+    }
+
+
+    /**
+     * Test getting public name spaces.
+     */
+    @Test
+    public void testGetPublicNameSpace() {
+        List<String> publicNameSpaces = Arrays.asList("textclassifier", "runtime", "statsd_java",
+                "statsd_java_boot", "selection_toolbar", "autofill",
+                "device_policy_manager", "content_capture");
+
+        assertTrue(DeviceConfig.getPublicNamespaces().containsAll(publicNameSpaces));
     }
 
     private OnPropertiesChangedListener createOnPropertiesChangedListener(

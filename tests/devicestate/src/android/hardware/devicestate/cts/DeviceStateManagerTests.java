@@ -106,7 +106,6 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
 
     @Test
     public void testRequestBaseState() throws Throwable {
-        assumeExtensionVersionAtLeast2();
         final ArgumentCaptor<Integer> intAgumentCaptor = ArgumentCaptor.forClass(Integer.class);
         final DeviceStateManager.DeviceStateCallback callback =
                 mock(DeviceStateManager.DeviceStateCallback.class);
@@ -517,12 +516,6 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
             final int state = supportedStates[i];
             assertValidState(state);
         }
-    }
-
-    /** For API changes that are introduced together with WM Extensions version 2. */
-    private static void assumeExtensionVersionAtLeast2() {
-        // TODO(b/232476698) Remove in the next Android release.
-        assumeTrue(WM_EXTENSION_VERSION.getMajor() >= 2);
     }
 
     private class StateTrackingCallback implements  DeviceStateManager.DeviceStateCallback {

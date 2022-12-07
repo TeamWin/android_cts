@@ -19,6 +19,7 @@ package android.hardware.input.cts.tests;
 import static org.junit.Assert.assertThrows;
 
 import android.hardware.input.VirtualDpad;
+import android.hardware.input.VirtualDpadConfig;
 import android.hardware.input.VirtualKeyEvent;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -40,9 +41,14 @@ public class VirtualDpadTest extends VirtualDeviceTestCase {
 
     @Override
     void onSetUpVirtualInputDevice() {
-        mVirtualDpad =
-                mVirtualDevice.createVirtualDpad(
-                        mVirtualDisplay, DEVICE_NAME, /* vendorId= */ 1, /* productId= */ 1);
+        final VirtualDpadConfig dpadConfig =
+                new VirtualDpadConfig.Builder()
+                        .setVendorId(VENDOR_ID)
+                        .setProductId(PRODUCT_ID)
+                        .setInputDeviceName(DEVICE_NAME)
+                        .setAssociatedDisplayId(mVirtualDisplay.getDisplay().getDisplayId())
+                        .build();
+        mVirtualDpad = mVirtualDevice.createVirtualDpad(dpadConfig);
     }
 
     @Override

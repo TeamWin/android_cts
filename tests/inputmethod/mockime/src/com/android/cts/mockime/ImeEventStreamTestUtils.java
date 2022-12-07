@@ -16,6 +16,9 @@
 
 package com.android.cts.mockime;
 
+import android.graphics.Rect;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Pair;
@@ -23,7 +26,13 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputBinding;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.window.extensions.layout.DisplayFeature;
+import androidx.window.extensions.layout.FoldingFeature;
+import androidx.window.extensions.layout.WindowLayoutInfo;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
@@ -442,5 +451,85 @@ public final class ImeEventStreamTestUtils {
             stream.skip(1);
         }
         return stream.copy();
+    }
+
+    /**
+     *  A copy of {@link WindowLayoutInfo} class just for the purpose of testing with MockIME
+     *  test setup.
+     *  This is because only in this setup we will pass {@link WindowLayoutInfo} through
+     *  different processes.
+     */
+    public static class WindowLayoutInfoParcelable implements Parcelable {
+        private List<DisplayFeature> mDisplayFeatures = new ArrayList<DisplayFeature>();
+
+        public WindowLayoutInfoParcelable(WindowLayoutInfo windowLayoutInfo) {
+            this.mDisplayFeatures = windowLayoutInfo.getDisplayFeatures();
+        }
+        public WindowLayoutInfoParcelable(Parcel in) {
+            while (in.dataAvail() > 0) {
+                Rect bounds;
+                int type = -1, state = -1;
+                bounds = in.readParcelable(Rect.class.getClassLoader(), Rect.class);
+                type = in.readInt();
+                state = in.readInt();
+                mDisplayFeatures.add(new FoldingFeature(bounds, type, state));
+            }
+        }
+
+        @Override
+        public boolean equals(@Nullable Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof WindowLayoutInfoParcelable)) {
+                return false;
+            }
+
+            List<androidx.window.extensions.layout.DisplayFeature> listA =
+                    this.getDisplayFeatures();
+            List<DisplayFeature> listB = ((WindowLayoutInfoParcelable) o).getDisplayFeatures();
+            if (listA.size() != listB.size()) return false;
+            for (int i = 0; i < listA.size(); ++i) {
+                if (!listA.get(i).equals(listB.get(i))) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            // The actual implementation is FoldingFeature, DisplayFeature is an abstract class.
+            mDisplayFeatures.forEach(feature -> {
+                        dest.writeParcelable(feature.getBounds(), flags);
+                        dest.writeInt(((FoldingFeature) feature).getType());
+                        dest.writeInt(((FoldingFeature) feature).getState());
+                    }
+            );
+        }
+
+        public List<DisplayFeature> getDisplayFeatures() {
+            return mDisplayFeatures;
+        }
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        public static final Parcelable.Creator<WindowLayoutInfoParcelable> CREATOR =
+                new Parcelable.Creator<WindowLayoutInfoParcelable>() {
+
+                    @Override
+                    public WindowLayoutInfoParcelable createFromParcel(Parcel in) {
+                        return new WindowLayoutInfoParcelable(in);
+                    }
+
+                    @Override
+                    public WindowLayoutInfoParcelable[] newArray(int size) {
+                        return new WindowLayoutInfoParcelable[size];
+                    }
+                };
     }
 }

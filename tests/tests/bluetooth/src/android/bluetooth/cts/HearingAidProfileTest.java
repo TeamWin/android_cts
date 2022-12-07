@@ -61,6 +61,7 @@ public class HearingAidProfileTest extends AndroidTestCase {
     // ADAPTER_DISABLE_TIMEOUT_MS = AdapterState.BLE_STOP_TIMEOUT_DELAY +
     //                                  AdapterState.BREDR_STOP_TIMEOUT_DELAY
     private static final int ADAPTER_DISABLE_TIMEOUT_MS = 5000;
+    private static final String FAKE_REMOTE_ADDRESS = "00:11:22:AA:BB:CC";
 
     private boolean mIsHearingAidSupported;
     private boolean mIsBleSupported;
@@ -151,7 +152,7 @@ public class HearingAidProfileTest extends AndroidTestCase {
         assertNotNull(mService);
 
         // Create a fake device
-        BluetoothDevice device = mBluetoothAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+        BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(FAKE_REMOTE_ADDRESS);
         assertNotNull(device);
 
         int connectionState = mService.getConnectionState(device);
@@ -177,6 +178,49 @@ public class HearingAidProfileTest extends AndroidTestCase {
         assertThrows(SecurityException.class, () -> mService.setVolume(42));
     }
 
+    /**
+     * Basic test case to make sure that a fictional device is unknown side.
+     */
+    @MediumTest
+    public void test_getDeviceSide() {
+        if (!(mIsBleSupported && mIsHearingAidSupported)) {
+            return;
+        }
+
+        waitForProfileConnect();
+        assertTrue(mIsProfileReady);
+        assertNotNull(mService);
+
+        // Create a fake device
+        final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(FAKE_REMOTE_ADDRESS);
+        assertNotNull(device);
+
+        final int side = mService.getDeviceSide(device);
+        // Fake device should be no value, unknown side
+        assertEquals(BluetoothHearingAid.SIDE_UNKNOWN, side);
+    }
+
+    /**
+     * Basic test case to make sure that a fictional device is unknown mode.
+     */
+    @MediumTest
+    public void test_getDeviceMode() {
+        if (!(mIsBleSupported && mIsHearingAidSupported)) {
+            return;
+        }
+
+        waitForProfileConnect();
+        assertTrue(mIsProfileReady);
+        assertNotNull(mService);
+
+        // Create a fake device
+        final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(FAKE_REMOTE_ADDRESS);
+        assertNotNull(device);
+
+        final int mode = mService.getDeviceMode(device);
+        // Fake device should be no value, unknown mode
+        assertEquals(BluetoothHearingAid.MODE_UNKNOWN, mode);
+    }
 
     /**
      * Basic test case to get the list of connected Hearing Aid devices.

@@ -130,6 +130,7 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
     @CallSuper
     @Override
     public void tearDown() throws Exception {
+        SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler monitor-battery off");
         SystemUtil.runShellCommand(getInstrumentation(), "cmd battery reset");
         Settings.Global.putString(mContext.getContentResolver(),
                 Settings.Global.BATTERY_STATS_CONSTANTS, mInitialBatteryStatsConstants);
@@ -232,6 +233,7 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
     }
 
     void setBatteryState(boolean plugged, int level) throws Exception {
+        SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler monitor-battery on");
         if (plugged) {
             SystemUtil.runShellCommand(getInstrumentation(), "cmd battery set ac 1");
             final int curLevel = Integer.parseInt(SystemUtil.runShellCommand(getInstrumentation(),

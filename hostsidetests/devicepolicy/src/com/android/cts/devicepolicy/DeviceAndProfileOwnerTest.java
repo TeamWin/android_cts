@@ -386,15 +386,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testPermissionMixedPolicies() throws Exception {
-        installAppPermissionAppAsUser();
-        executeDeviceTestMethod(".PermissionsTest",
-                "testPermissionGrantStateDenied_mixedPolicies");
-        executeDeviceTestMethod(".PermissionsTest",
-                "testPermissionGrantStateGranted_mixedPolicies");
-    }
-
-    @Test
     public void testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted()
             throws Exception {
         installAppPermissionAppAsUser();

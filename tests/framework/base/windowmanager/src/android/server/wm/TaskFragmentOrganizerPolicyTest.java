@@ -20,7 +20,6 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.TaskFragmentOrganizerTestBase.assertEmptyTaskFragment;
-import static android.server.wm.TaskFragmentOrganizerTestBase.assumeExtensionVersionAtLeast2;
 import static android.server.wm.TaskFragmentOrganizerTestBase.getActivityToken;
 import static android.server.wm.TaskFragmentOrganizerTestBase.startNewActivity;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
@@ -108,8 +107,6 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
             "android.window.TaskFragmentOrganizer#applyTransaction",
             "android.window.WindowContainerTransaction#createTaskFragment"})
     public void testCreateTaskFragment_duplicatedFragmentToken_reportError() {
-        // TODO(b/232476698) The enforcement is new. Remove the assume in the next release.
-        assumeExtensionVersionAtLeast2();
         final Activity activity = startNewActivity();
         final TaskFragmentInfo taskFragmentInfo = createOrganizedTaskFragment(
                 mTaskFragmentOrganizer, activity);
@@ -199,8 +196,6 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
             "android.window.TaskFragmentOrganizer#applyTransaction",
             "android.window.WindowContainerTransaction#setAdjacentRoots"})
     public void testSetAdjacentRoots_nonTaskFragmentWindow_throwException() {
-        // TODO(b/232476698) The TestApi is changed. Remove the assume in the next release.
-        assumeExtensionVersionAtLeast2();
         final WindowContainerToken taskToken = getFirstTaskToken();
         final WindowContainerTransaction wct = new WindowContainerTransaction()
                 .setAdjacentRoots(taskToken, taskToken);
@@ -217,8 +212,6 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
             "android.window.TaskFragmentOrganizer#applyTransaction",
             "android.window.WindowContainerTransaction#setAdjacentRoots"})
     public void testSetAdjacentRoots_nonOrganizedTaskFragment_throwException() {
-        // TODO(b/232476698) The TestApi is changed. Remove the assume in the next release.
-        assumeExtensionVersionAtLeast2();
         final Activity activity = startNewActivity();
         final TaskFragmentInfo taskFragmentInfo0 = createOrganizedTaskFragment(
                 mTaskFragmentOrganizer, activity);
@@ -244,8 +237,6 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
             "android.window.TaskFragmentOrganizer#applyTransaction",
             "android.window.WindowContainerTransaction#setAdjacentRoots"})
     public void testSetAdjacentRoots_organizedTaskFragment() {
-        // TODO(b/232476698) The TestApi is changed. Remove the assume in the next release.
-        assumeExtensionVersionAtLeast2();
         final Activity activity = startNewActivity();
         final TaskFragmentInfo taskFragmentInfo0 = createOrganizedTaskFragment(
                 mTaskFragmentOrganizer, activity);
@@ -327,8 +318,6 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
             "android.window.TaskFragmentOrganizer#applyTransaction",
             "android.window.WindowContainerTransaction#startActivityInTaskFragment"})
     public void testStartActivityInTaskFragment_nonOrganizedTaskFragment_throwException() {
-        // TODO(b/232476698) The enforcement is new. Remove the assume in the next release.
-        assumeExtensionVersionAtLeast2();
         final Activity activity = startNewActivity();
         final TaskFragmentInfo taskFragmentInfo = createOrganizedTaskFragment(
                 mTaskFragmentOrganizer, activity);
@@ -377,8 +366,6 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
             "android.window.TaskFragmentOrganizer#applyTransaction",
             "android.window.WindowContainerTransaction#requestFocusOnTaskFragment"})
     public void testRequestFocusOnTaskFragment_nonOrganizedTaskFragment_throwException() {
-        // TODO(b/232476698) The TestApi is new. Remove the assume in the next release.
-        assumeExtensionVersionAtLeast2();
         final Activity activity = startNewActivity();
         final TaskFragmentInfo taskFragmentInfo = createOrganizedTaskFragment(
                 mTaskFragmentOrganizer, activity);
@@ -401,8 +388,6 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
             "android.window.TaskFragmentOrganizer#applyTransaction",
             "android.window.WindowContainerTransaction#requestFocusOnTaskFragment"})
     public void testRequestFocusOnTaskFragment_organizedTaskFragment() {
-        // TODO(b/232476698) The TestApi is new. Remove the assume in the next release.
-        assumeExtensionVersionAtLeast2();
         final Activity activity = startNewActivity();
         final TaskFragmentInfo taskFragmentInfo = createOrganizedTaskFragment(
                 mTaskFragmentOrganizer, activity);
@@ -423,8 +408,6 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
             "android.window.TaskFragmentOrganizer#applyTransaction",
             "android.window.WindowContainerTransaction#reparentActivityToTaskFragment"})
     public void testReparentActivityToTaskFragment_nonOrganizedTaskFragment_throwException() {
-        // TODO(b/232476698) The enforcement is new. Remove the assume in the next release.
-        assumeExtensionVersionAtLeast2();
         final Activity activity = startNewActivity();
         final TaskFragmentInfo taskFragmentInfo = createOrganizedTaskFragment(
                 mTaskFragmentOrganizer, activity);
@@ -469,8 +452,6 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
             "android.window.TaskFragmentOrganizer#applyTransaction",
             "android.window.WindowContainerTransaction#setAdjacentTaskFragments"})
     public void testSetAdjacentTaskFragments_nonOrganizedTaskFragment_throwException() {
-        // TODO(b/232476698) The enforcement is new. Remove the assume in the next release.
-        assumeExtensionVersionAtLeast2();
         final Activity activity = startNewActivity();
         final TaskFragmentInfo taskFragmentInfo0 = createOrganizedTaskFragment(
                 mTaskFragmentOrganizer, activity);
@@ -599,8 +580,6 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
             "android.window.TaskFragmentOrganizer#applyTransaction",
             "android.window.WindowContainerTransaction#reorder"})
     public void testDisallowOperation_reorder() {
-        // TODO(b/232476698) The enforcement is new. Remove the assume in the next release.
-        assumeExtensionVersionAtLeast2();
         final Activity activity = startNewActivity();
         final TaskFragmentInfo taskFragmentInfo = createOrganizedTaskFragment(
                 mTaskFragmentOrganizer, activity);

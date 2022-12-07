@@ -22,6 +22,7 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import android.content.Context;
 import android.provider.Settings;
+import android.voiceinteraction.cts.activities.TestVoiceInteractionServiceActivity;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;

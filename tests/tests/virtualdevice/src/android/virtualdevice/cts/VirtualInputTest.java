@@ -35,6 +35,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
+import android.hardware.input.VirtualKeyboardConfig;
 import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.util.FakeAssociationRule;
 
@@ -57,6 +58,17 @@ public class VirtualInputTest {
     private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =
             new VirtualDeviceParams.Builder().build();
 
+    private static final String DEVICE_NAME = "device name";
+    private static final int DISPLAY_ID = 2;
+    private static final int PRODUCT_ID = 10;
+    private static final int VENDOR_ID = 5;
+    private static final VirtualKeyboardConfig KEYBOARD_CONFIG =
+            new VirtualKeyboardConfig.Builder()
+                    .setVendorId(VENDOR_ID)
+                    .setProductId(PRODUCT_ID)
+                    .setInputDeviceName(DEVICE_NAME)
+                    .setAssociatedDisplayId(DISPLAY_ID)
+                    .build();
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
             InstrumentationRegistry.getInstrumentation().getUiAutomation(),
@@ -114,6 +126,8 @@ public class VirtualInputTest {
                         "testVirtualKeyboard",
                         /* vendorId= */ 0,
                         /* productId= */ 0));
+        assertThrows(SecurityException.class,
+                () -> mVirtualDevice.createVirtualKeyboard(KEYBOARD_CONFIG));
     }
 }
 

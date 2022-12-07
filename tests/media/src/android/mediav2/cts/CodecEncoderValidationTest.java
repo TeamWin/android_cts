@@ -80,11 +80,13 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
     }
 
     public CodecEncoderValidationTest(String encoder, String mediaType, int bitrate,
-            int encoderInfo1, int encoderInfo2, boolean useHBD, String allTestParams) {
+            int encoderInfo1, int encoderInfo2, boolean useHBD, int maxBFrames,
+            String allTestParams) {
         super(encoder, mediaType, new int[]{bitrate}, new int[]{encoderInfo1},
                 new int[]{encoderInfo2}, EncoderInput.getRawResource(mediaType, useHBD),
                 allTestParams);
         mUseHBD = useHBD;
+        mMaxBFrames = maxBFrames;
     }
 
     private static List<Object[]> flattenParams(List<Object[]> params) {
@@ -95,10 +97,14 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
             int[] infoList1 = (int[]) param[2];
             int[] infoList2 = (int[]) param[3];
             boolean useHBD = (boolean) param[4];
+            int[] maxBFrames = (int[]) param[5];
             for (int bitrate : bitRates) {
                 for (int info1 : infoList1) {
                     for (int info2 : infoList2) {
-                        argsList.add(new Object[]{mediaType, bitrate, info1, info2, useHBD});
+                        for (int maxBFrame : maxBFrames) {
+                            argsList.add(new Object[]{mediaType, bitrate, info1, info2, useHBD,
+                                    maxBFrame});
+                        }
                     }
                 }
             }
@@ -106,58 +112,60 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
         return argsList;
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{2}_{3}_{4}_{5})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{2}_{3}_{4}_{5}_{6})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = true;
         final boolean needVideo = true;
         List<Object[]> defArgsList = new ArrayList<>(Arrays.asList(new Object[][]{
                 // Audio tests covering cdd sec 5.1.3
-                // mediaType, arrays of bit-rates, sample rates, channel counts, useHBD
+                // mediaType, arrays of bit-rates, sample rates, channel counts, useHBD, maxBFrames
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new int[]{64000, 128000}, new int[]{8000, 12000,
-                        16000, 22050, 24000, 32000, 44100, 48000}, new int[]{1, 2}, false},
-                {MediaFormat.MIMETYPE_AUDIO_OPUS, new int[]{64000, 128000}, new int[]{8000, 12000
-                        , 16000, 24000, 48000}, new int[]{1, 2}, false},
+                        16000, 22050, 24000, 32000, 44100, 48000}, new int[]{1, 2}, false,
+                        new int[]{0}},
+                {MediaFormat.MIMETYPE_AUDIO_OPUS, new int[]{64000, 128000}, new int[]{8000, 12000,
+                        16000, 24000, 48000}, new int[]{1, 2}, false, new int[]{0}},
                 {MediaFormat.MIMETYPE_AUDIO_AMR_NB, new int[]{4750, 5150, 5900, 6700, 7400, 7950,
-                        10200, 12200}, new int[]{8000}, new int[]{1}, false},
+                        10200, 12200}, new int[]{8000}, new int[]{1}, false, new int[]{0}},
                 {MediaFormat.MIMETYPE_AUDIO_AMR_WB, new int[]{6600, 8850, 12650, 14250, 15850,
-                        18250, 19850, 23050, 23850}, new int[]{16000}, new int[]{1}, false},
+                        18250, 19850, 23050, 23850}, new int[]{16000}, new int[]{1}, false,
+                        new int[]{0}},
                 /* TODO(169310292) */
                 {MediaFormat.MIMETYPE_AUDIO_FLAC, new int[]{/* 0, 1, 2, */ 3, 4, 5, 6, 7, 8},
                         new int[]{8000, 16000, 32000, 48000, 96000, 192000}, new int[]{1, 2},
-                        false},
+                        false, new int[]{0}},
                 {MediaFormat.MIMETYPE_AUDIO_FLAC, new int[]{/* 0, 1, 2, */ 3, 4, 5, 6, 7, 8},
                         new int[]{8000, 16000, 32000, 48000, 96000, 192000}, new int[]{1, 2},
-                        true},
+                        true, new int[]{0}},
 
-                // mediaType, arrays of bit-rates, width, height, useHBD
+                // mediaType, arrays of bit-rates, width, height, useHBD, maxBFrames
                 {MediaFormat.MIMETYPE_VIDEO_H263, new int[]{32000, 64000}, new int[]{176},
-                        new int[]{144}, false},
+                        new int[]{144}, false, new int[]{0, 2}},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG4, new int[]{32000, 64000}, new int[]{176},
-                        new int[]{144}, false},
+                        new int[]{144}, false, new int[]{0, 2}},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, new int[]{256000}, new int[]{352, 480},
-                        new int[]{240, 360}, false},
+                        new int[]{240, 360}, false, new int[]{0, 2}},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, new int[]{256000}, new int[]{352, 480},
-                        new int[]{240, 360}, false},
+                        new int[]{240, 360}, false, new int[]{0, 2}},
                 {MediaFormat.MIMETYPE_VIDEO_VP8, new int[]{256000}, new int[]{352, 480},
-                        new int[]{240, 360}, false},
+                        new int[]{240, 360}, false, new int[]{0}},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, new int[]{256000}, new int[]{352, 480},
-                        new int[]{240, 360}, false},
+                        new int[]{240, 360}, false, new int[]{0}},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, new int[]{256000}, new int[]{352, 480},
-                        new int[]{240, 360}, false},
+                        new int[]{240, 360}, false, new int[]{0}},
         }));
         // P010 support was added in Android T, hence limit the following tests to Android T and
         // above
         if (IS_AT_LEAST_T) {
             defArgsList.addAll(Arrays.asList(new Object[][]{
                     {MediaFormat.MIMETYPE_VIDEO_AVC, new int[]{256000}, new int[]{352, 480},
-                            new int[]{240, 360}, true},
+                            new int[]{240, 360}, true, new int[]{0, 2}},
                     {MediaFormat.MIMETYPE_VIDEO_HEVC, new int[]{256000}, new int[]{352, 480},
-                            new int[]{240, 360}, true},
+                            new int[]{240, 360}, true, new int[]{0, 2}},
                     {MediaFormat.MIMETYPE_VIDEO_VP9, new int[]{256000}, new int[]{352, 480},
-                            new int[]{240, 360}, true},
+                            new int[]{240, 360}, true, new int[]{0}},
                     {MediaFormat.MIMETYPE_VIDEO_AV1, new int[]{256000}, new int[]{352, 480},
-                            new int[]{240, 360}, true},
+                            new int[]{240, 360}, true, new int[]{0}},
             }));
         }
         List<Object[]> argsList = flattenParams(defArgsList);
