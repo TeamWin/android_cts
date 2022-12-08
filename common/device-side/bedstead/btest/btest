@@ -578,7 +578,8 @@ class Test:
                     if not self.tests_are_running():
                         break
 
-                self.print_result(result)
+                if result:
+                    self.print_result(result)
 
             debug(self.args, "Waiting for tests to stop running...")
             while self.tests_are_running():

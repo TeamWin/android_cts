@@ -94,6 +94,7 @@ import com.android.bedstead.harrier.annotations.TestTag;
 import com.android.bedstead.harrier.annotations.UsesAnnotationExecutor;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDevicePolicyManagerRoleHolder;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
@@ -125,6 +126,7 @@ import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.Tags;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.bedstead.remotedpc.RemoteDelegate;
+import com.android.bedstead.remotedpc.RemoteDevicePolicyManagerRoleHolder;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.remotedpc.RemoteDpcUsingParentInstance;
 import com.android.bedstead.remotedpc.RemotePolicyManager;
@@ -557,6 +559,14 @@ public final class DeviceState extends HarrierRule {
                         Arrays.asList(ensureHasDelegateAnnotation.scopes()),
                         ensureHasDelegateAnnotation.isPrimary());
                 continue;
+            }
+
+            if (annotation instanceof EnsureHasDevicePolicyManagerRoleHolder) {
+                EnsureHasDevicePolicyManagerRoleHolder ensureHasDevicePolicyManagerRoleHolder =
+                        (EnsureHasDevicePolicyManagerRoleHolder) annotation;
+                ensureHasDevicePolicyManagerRoleHolder(
+                        ensureHasDevicePolicyManagerRoleHolder.onUser(),
+                        ensureHasDevicePolicyManagerRoleHolder.isPrimary());
             }
 
 
@@ -1356,6 +1366,7 @@ public final class DeviceState extends HarrierRule {
     private Map<UserReference, DevicePolicyController> mProfileOwners = new HashMap<>();
     private RemotePolicyManager mDelegateDpc;
     private RemotePolicyManager mPrimaryPolicyManager;
+    private RemoteDevicePolicyManagerRoleHolder mDevicePolicyManagerRoleHolder;
     private UserType mOtherUserType;
 
     private PermissionContextImpl mPermissionContext = null;
@@ -2148,6 +2159,12 @@ public final class DeviceState extends HarrierRule {
             }
         }
         mChangedProfileOwners.clear();
+        if (mDevicePolicyManagerRoleHolder != null) {
+            TestApis.devicePolicy().unsetDevicePolicyManagementRoleHolder(
+                    mDevicePolicyManagerRoleHolder.testApp().pkg(),
+                    mDevicePolicyManagerRoleHolder.user());
+            mDevicePolicyManagerRoleHolder = null;
+        }
 
         for (UserReference user : mUsersSetPasswords) {
             if (mCreatedUsers.contains(user)) {
@@ -2264,6 +2281,32 @@ public final class DeviceState extends HarrierRule {
                                     .trim()));
         } catch (AdbException e) {
             throw new IllegalStateException("Invalid command output", e);
+        }
+    }
+
+    private void ensureHasDevicePolicyManagerRoleHolder(UserType onUser, boolean isPrimary) {
+        UserReference user = resolveUserTypeToUser(onUser);
+
+        if (!user.equals(TestApis.users().instrumented())) {
+            // INTERACT_ACROSS_USERS_FULL is required for RemoteDPC
+            ensureCanGetPermission(INTERACT_ACROSS_USERS_FULL);
+        }
+
+        ensureTestAppInstalled(RemoteDevicePolicyManagerRoleHolder.sTestApp, user);
+        TestApis.devicePolicy().setDevicePolicyManagementRoleHolder(
+                RemoteDevicePolicyManagerRoleHolder.sTestApp.pkg(), user);
+
+        mDevicePolicyManagerRoleHolder =
+                new RemoteDevicePolicyManagerRoleHolder(
+                        RemoteDevicePolicyManagerRoleHolder.sTestApp, user);
+
+        if (isPrimary) {
+            // We will override the existing primary
+            if (mPrimaryPolicyManager != null) {
+                Log.i(LOG_TAG, "Overriding primary policy manager "
+                        + mPrimaryPolicyManager + " with " + mDevicePolicyManagerRoleHolder);
+            }
+            mPrimaryPolicyManager = mDevicePolicyManagerRoleHolder;
         }
     }
 
@@ -2775,6 +2818,19 @@ public final class DeviceState extends HarrierRule {
         }
 
         throw new IllegalStateException("No Harrier-managed profile owner or device owner.");
+    }
+
+
+    /**
+     * Get the Device Policy Management Role Holder.
+     */
+    public RemoteDevicePolicyManagerRoleHolder dpmRoleHolder() {
+        if (mDevicePolicyManagerRoleHolder == null) {
+            throw new IllegalStateException(
+                    "No Harrier-managed device policy manager role holder.");
+        }
+
+        return mDevicePolicyManagerRoleHolder;
     }
 
     /**

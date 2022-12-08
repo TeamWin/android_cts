@@ -91,7 +91,7 @@ public final class Helper {
         final int userId = getCurrentUserId();
         Log.d(TAG, "Setting service for user " + userId + " to " + service);
         // TODO(b/123540602): use @TestingAPI to get max duration constant
-        runShellCommand("cmd content_capture set temporary-service %d %s 12000", userId, service);
+        runShellCommand("cmd content_capture set temporary-service %d %s 30000", userId, service);
     }
 
     /**

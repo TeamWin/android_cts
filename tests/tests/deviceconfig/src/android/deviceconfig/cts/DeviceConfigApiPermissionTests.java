@@ -71,7 +71,6 @@ public final class DeviceConfigApiPermissionTests {
         // getters without read permission
         tryGetPropertyWithoutReadPermission(violations);
         tryGetPropertiesWithoutReadPermission(violations);
-        tryAddOnPropertiesChangedListenerWithoutReadPermission(violations);
 
         // Bail if we found any violations
         if (violations.length() > 0) {
@@ -98,7 +97,6 @@ public final class DeviceConfigApiPermissionTests {
         // getters without read permission
         tryGetPropertyWithoutReadPermission(violations);
         tryGetPropertiesWithoutReadPermission(violations);
-        tryAddOnPropertiesChangedListenerWithoutReadPermission(violations);
 
         // Bail if we found any violations
         if (violations.length() > 0) {
@@ -303,16 +301,6 @@ public final class DeviceConfigApiPermissionTests {
             DeviceConfig.getProperties(NAMESPACE2);
             violations.append("DeviceConfig.getProperties() must not be accessible without "
                     + "READ_DEVICE_CONFIG permission.\n");
-        } catch (SecurityException e) {
-        }
-    }
-
-    private void tryAddOnPropertiesChangedListenerWithoutReadPermission(StringBuilder violations) {
-        try {
-            DeviceConfig.addOnPropertiesChangedListener(
-                    NAMESPACE, EXECUTOR, new TestOnPropertiesListener());
-            violations.append("DeviceConfig.addOnPropertiesChangedListener() must not be accessible"
-                    + " without READ_DEVICE_CONFIG permission.\n");
         } catch (SecurityException e) {
         }
     }

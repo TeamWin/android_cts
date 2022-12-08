@@ -18,10 +18,15 @@ package android.telecom.cts;
 
 import static android.telecom.Call.STATE_SELECT_PHONE_ACCOUNT;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.ContentProviderOperation;
+import android.content.ContentResolver;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Contacts;
+import android.provider.ContactsContract;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
 import android.telecom.Connection;
@@ -33,6 +38,7 @@ import android.telephony.emergency.EmergencyNumber;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -48,18 +54,53 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
 
     private static final String TEST_EMERGENCY_NUMBER = "9998887776655443210";
 
+    Uri mPersonRecord = null;
+    Uri mPhoneRecord = null;
+    private final static String TEST_PHONE_NUMBER = "+18005552871";
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         NewOutgoingCallBroadcastReceiver.reset();
         if (mShouldTestTelecom) {
-            setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
+            setupConnectionService(null,
+                    FLAG_REGISTER | FLAG_ENABLE | FLAG_PHONE_ACCOUNT_HANDLES_CONTENT_SCHEME);
+
+            try {
+                // Add a test contact
+                ContentResolver cr = getInstrumentation().getTargetContext().getContentResolver();
+                mPersonRecord = null;
+                mPhoneRecord = null;
+
+                // insert a contact with phone number
+                ContentValues values = new ContentValues();
+                values.put(Contacts.People.NAME, "CTS test contact");
+                mPersonRecord = cr.insert(Contacts.People.CONTENT_URI, values);
+                Uri phoneUri = Uri.withAppendedPath(mPersonRecord,
+                        Contacts.People.Phones.CONTENT_DIRECTORY);
+                values.clear();
+                values.put(Contacts.People.Phones.TYPE, Contacts.People.Phones.TYPE_HOME);
+                values.put(Contacts.People.Phones.NUMBER, TEST_PHONE_NUMBER);
+                mPhoneRecord = cr.insert(phoneUri, values);
+
+            } catch (Exception e) {
+                assertTrue("Failed to insert test contact", false);
+            }
         }
     }
 
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
+        ContentResolver resolver = getInstrumentation().getTargetContext().getContentResolver();
+
+        if (mPersonRecord != null) {
+            resolver.delete(mPersonRecord, null, null);
+        }
+        if(mPhoneRecord != null) {
+            resolver.delete(mPhoneRecord, null, null);
+        }
+
         TestUtils.clearSystemDialerOverride(getInstrumentation());
         TestUtils.removeTestEmergencyNumber(getInstrumentation(), TEST_EMERGENCY_NUMBER);
     }
@@ -71,6 +112,20 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
     /* TODO: Need to figure out a way to mock emergency calls without adb root
     public void testOutgoingCallBroadcast_isSentForAllCalls() {
     } */
+
+    /**
+     * Verifies that providing content URI instead of tel/sip uri does not start a call
+     *
+     */
+    public void testDoNotStartCallWithContentUri() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        final Bundle extras = new Bundle();
+        extras.putParcelable(TestUtils.EXTRA_PHONE_NUMBER, mPhoneRecord);
+        placeAndVerifyNoCall(extras);
+        verifyNoConnectionForOutgoingCall();
+    }
 
     /**
      * Verifies that providing the EXTRA_START_CALL_WITH_SPEAKERPHONE extra starts the call with

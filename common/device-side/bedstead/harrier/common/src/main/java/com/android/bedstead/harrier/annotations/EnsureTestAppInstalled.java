@@ -52,7 +52,7 @@ public @interface EnsureTestAppInstalled {
     UserType onUser() default UserType.INSTRUMENTED_USER;
 
     /**
-     * Whether this testApp should be returned by calls to {@code DeviceState#policyManager()}.
+     * Whether this testApp should be returned by calls to {@code DeviceState#dpc()}.
      *
      * <p>Only one policy manager per test should be marked as primary.
      */

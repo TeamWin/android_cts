@@ -242,7 +242,7 @@ public class VirtualSensorTest {
     }
 
     @Test
-    public void sendSensorEvent_reachesRegisteredListeners() {
+    public void sendEvent_reachesRegisteredListeners() {
         mVirtualSensor = setUpVirtualSensor(
                 new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME).build());
 
@@ -253,13 +253,13 @@ public class VirtualSensorTest {
 
         final VirtualSensorEvent firstEvent =
                 new VirtualSensorEvent.Builder(new float[] {0.1f, 2.3f, 4.5f}).build();
-        mVirtualSensor.sendSensorEvent(firstEvent);
+        mVirtualSensor.sendEvent(firstEvent);
 
         mSensorEventListener.assertReceivedSensorEvent(sensor, firstEvent);
 
         final VirtualSensorEvent secondEvent =
                 new VirtualSensorEvent.Builder(new float[] {6.7f, 8.9f, 0.1f}).build();
-        mVirtualSensor.sendSensorEvent(secondEvent);
+        mVirtualSensor.sendEvent(secondEvent);
 
         mSensorEventListener.assertReceivedSensorEvent(sensor, secondEvent);
 
@@ -267,13 +267,13 @@ public class VirtualSensorTest {
 
         final VirtualSensorEvent thirdEvent =
                 new VirtualSensorEvent.Builder(new float[] {2.3f, 4.5f, 6.7f}).build();
-        mVirtualSensor.sendSensorEvent(thirdEvent);
+        mVirtualSensor.sendEvent(thirdEvent);
 
         mSensorEventListener.assertNoMoreEvents();
     }
 
     @Test
-    public void sendSensorEvent_invalidValues_eventIsDropped() {
+    public void sendEvent_invalidValues_eventIsDropped() {
         mVirtualSensor = setUpVirtualSensor(
                 new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME)
                         .build());
@@ -285,15 +285,15 @@ public class VirtualSensorTest {
 
         final VirtualSensorEvent firstEvent =
                 new VirtualSensorEvent.Builder(new float[] {0.1f}).build();
-        mVirtualSensor.sendSensorEvent(firstEvent);
+        mVirtualSensor.sendEvent(firstEvent);
 
         final VirtualSensorEvent secondEvent =
                 new VirtualSensorEvent.Builder(new float[] {2.3f, 4.5f, 6.7f, 8.9f}).build();
-        mVirtualSensor.sendSensorEvent(secondEvent);
+        mVirtualSensor.sendEvent(secondEvent);
 
         final VirtualSensorEvent thirdEvent =
                 new VirtualSensorEvent.Builder(new float[] {7.7f, 8.8f}).build();
-        mVirtualSensor.sendSensorEvent(thirdEvent);
+        mVirtualSensor.sendEvent(thirdEvent);
 
         mSensorEventListener.assertNoMoreEvents();
 

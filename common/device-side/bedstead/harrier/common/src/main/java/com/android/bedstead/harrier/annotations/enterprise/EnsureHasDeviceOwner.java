@@ -58,8 +58,7 @@ public @interface EnsureHasDeviceOwner {
     FailureMode failureMode() default FailureMode.FAIL;
 
     /**
-     * Whether this DPC should be returned by calls to {@code Devicestate#dpc()} or
-     * {@code Devicestate#policyManager()}}.
+     * Whether this DPC should be returned by calls to {@code Devicestate#dpc()}.
      *
      * <p>Only one policy manager per test should be marked as primary.
      */

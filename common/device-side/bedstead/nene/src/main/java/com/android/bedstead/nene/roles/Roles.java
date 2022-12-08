@@ -26,10 +26,16 @@ import android.os.Build;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
+import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.utils.Versions;
 
-/** Test APIs related to roles. */
+/**
+ * Test APIs related to roles.
+ *
+ * <p>To add or remove a role to or from a specific package, see
+ * {@link Package#setAsRoleHolder(String)} and {@link Package#removeAsRoleHolder(String)}.
+ */
 @TargetApi(Build.VERSION_CODES.TIRAMISU)
 public class Roles {
     public static final Roles sInstance = new Roles();

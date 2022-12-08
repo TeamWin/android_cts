@@ -37,6 +37,7 @@ import android.telecom.CallAudioState;
 import android.telecom.Connection;
 import android.telecom.ConnectionService;
 import android.telecom.DisconnectCause;
+import android.telecom.InCallService;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -326,6 +327,136 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
                 CtsSelfManagedConnectionService.CREATE_OUTGOING_CONNECTION_FAILED_LOCK));
 
         assertIsOutgoingCallPermitted(false, TestUtils.TEST_SELF_MANAGED_HANDLE_1);
+    }
+
+    /**
+     * Tests ensures that Telecom update outgoing self-managed call state disconnected when
+     * remote side call is rejected.
+     */
+    public void testOutgoingCallRejectedByRemoteParty() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        TestUtils.placeOutgoingCall(getInstrumentation(), mTelecomManager,
+                TestUtils.TEST_SELF_MANAGED_HANDLE_2, TEST_ADDRESS_2);
+
+        // Ensure Telecom bound to the self managed CS
+        if (!CtsSelfManagedConnectionService.waitForBinding()) {
+            fail("Could not bind to Self-Managed ConnectionService");
+        }
+
+        SelfManagedConnection connection = TestUtils.waitForAndGetConnection(TEST_ADDRESS_2);
+        assertNotNull("Self-Managed Connection should NOT be null.", connection);
+        assertTrue("Self-Managed Connection should be outgoing.", !connection.isIncomingCall());
+
+        // The self-managed ConnectionService must NOT have been prompted to show its incoming call
+        // UI for an outgoing call.
+        assertEquals(connection.getOnShowIncomingUiInvokeCounter().getInvokeCount(), 0);
+
+        // Expect that the new outgoing call broadcast did not fire for the self-managed calls.
+        assertFalse(NewOutgoingCallBroadcastReceiver.isNewOutgoingCallBroadcastReceived());
+
+        // Setup content observer to notify us when we call log entry is added.
+        CountDownLatch callLogEntryLatch = getCallLogEntryLatch();
+
+        assertConnectionState(connection, Connection.STATE_INITIALIZING);
+        assertCallState(mInCallCallbacks.getService().getLastCall(), Call.STATE_DIALING);
+
+        connection.setDialing();
+        assertConnectionState(connection, Connection.STATE_DIALING);
+
+        connection.setDisconnected(new DisconnectCause(DisconnectCause.REMOTE));
+
+        assertConnectionState(connection, Connection.STATE_DISCONNECTED);
+        assertCallState(mInCallCallbacks.getService().getLastCall(), Call.STATE_DISCONNECTED);
+
+        setDisconnectedAndVerify(connection, isLoggedCall(TestUtils.TEST_SELF_MANAGED_HANDLE_2),
+                callLogEntryLatch);
+    }
+
+    /**
+     * Tests ensures that Telecom update self-managed call mute state when user sets mute option.
+     */
+    public void testSelfManagedCallMuteAndUnmute() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        SelfManagedConnection connection = null;
+
+        try {
+            connection = placeSelfManagedCallAndGetConnection(TestUtils.TEST_SELF_MANAGED_HANDLE_2,
+                    TEST_ADDRESS_2);
+
+            final MockInCallService inCallService = getInCallService();
+            final Call call = inCallService.getLastCall();
+
+            assertMuteState(connection, false);
+
+            // Explicitly call super implementation to enable detection of CTS coverage
+            ((InCallService) inCallService).setMuted(true);
+
+            assertMuteState(connection, true);
+            assertMuteState(inCallService, true);
+
+            inCallService.setMuted(false);
+            assertMuteState(connection, false);
+            assertMuteState(inCallService, false);
+        } finally {
+            if (connection != null) {
+                // disconnect call
+                connection.disconnectAndDestroy();
+                // verify the call was disconnected
+                assertIsInCall(false);
+                assertIsInManagedCall(false);
+            }
+        }
+    }
+
+    /**
+     * Tests ensures that Telecom update outgoing self-managed video call video state to false when
+     * remote side call is picked only for audio.
+     */
+    public void testVideoCallStateDowngradeToAudio() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        TestUtils.placeOutgoingCall(getInstrumentation(), mTelecomManager,
+                TestUtils.TEST_SELF_MANAGED_HANDLE_2, TEST_ADDRESS_2,
+                VideoProfile.STATE_BIDIRECTIONAL);
+
+        // Ensure Telecom bound to the self managed CS
+        if (!CtsSelfManagedConnectionService.waitForBinding()) {
+            fail("Could not bind to Self-Managed ConnectionService");
+        }
+
+        SelfManagedConnection connection = TestUtils.waitForAndGetConnection(TEST_ADDRESS_2);
+        assertNotNull("Self-Managed Connection should NOT be null.", connection);
+        assertTrue("Self-Managed Connection should be outgoing.", !connection.isIncomingCall());
+
+        final MockInCallService inCallService = mInCallCallbacks.getService();
+        final Call call = inCallService.getLastCall();
+
+        // Setup content observer to notify us when we call log entry is added.
+        CountDownLatch callLogEntryLatch = getCallLogEntryLatch();
+
+        connection.setDialing();
+        assertCallState(call, Call.STATE_DIALING);
+
+        assertVideoState(call, VideoProfile.STATE_BIDIRECTIONAL);
+
+        connection.setVideoState(VideoProfile.STATE_AUDIO_ONLY);
+
+        assertEquals(VideoProfile.STATE_AUDIO_ONLY, connection.getVideoState());
+
+        connection.setActive();
+        assertCallState(call, Call.STATE_ACTIVE);
+
+        assertVideoState(call, VideoProfile.STATE_AUDIO_ONLY);
+        setDisconnectedAndVerify(connection, isLoggedCall(TestUtils.TEST_SELF_MANAGED_HANDLE_2),
+                callLogEntryLatch);
     }
 
     /**

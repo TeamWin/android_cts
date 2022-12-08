@@ -40,11 +40,24 @@ public class VolumeInfoTest extends CtsAndroidTestCase {
     @ApiTest(apis = {"android.media.VolumeInfo",
             "android.media.VolumeInfo.Builder"})
     public void testParcelableWriteToParcelCreate() throws Exception {
-        final VolumeInfo srcVI = new VolumeInfo.Builder(AudioManager.STREAM_MUSIC)
+        // test VolumeInfo with stream type, no mute command
+        exerciseParcelableWriteToParcelCreateStreamType(false /*has mute*/, true /*ignored*/);
+        // test VolumeInfo with stream type, mute command set to mute
+        exerciseParcelableWriteToParcelCreateStreamType(true /*has mute*/, true /*mute*/);
+        // test VolumeInfo with stream type, mute command set to unmute
+        exerciseParcelableWriteToParcelCreateStreamType(true /*has mute*/, false /*mute*/);
+    }
+
+    private void exerciseParcelableWriteToParcelCreateStreamType(boolean hasMute, boolean mute)
+            throws Exception {
+        final VolumeInfo.Builder srcVIB = new VolumeInfo.Builder(AudioManager.STREAM_MUSIC)
                 .setMinVolumeIndex(MIN_VOL)
                 .setMaxVolumeIndex(MAX_VOL)
-                .setVolumeIndex(SET_VOL)
-                .build();
+                .setVolumeIndex(SET_VOL);
+        if (hasMute) {
+            srcVIB.setMuted(mute);
+        }
+        final VolumeInfo srcVI = srcVIB.build();
         final Parcel srcParcel = Parcel.obtain();
         final Parcel dstParcel = Parcel.obtain();
         final byte[] mbytes;
@@ -66,6 +79,14 @@ public class VolumeInfoTest extends CtsAndroidTestCase {
                 srcVI.getMaxVolumeIndex(), targetVI.getMaxVolumeIndex());
         assertEquals("Marshalled/restored volume index doesn't match",
                 srcVI.getVolumeIndex(), targetVI.getVolumeIndex());
+        assertEquals("Marshalled/restored has mute command doesn't match",
+                srcVI.hasMuteCommand(), targetVI.hasMuteCommand());
+        if (hasMute) {
+            assertEquals("set source mute command not as retrieved",
+                    mute, srcVI.isMuted());
+            assertEquals("Marshalled/restored mute command doesn't match",
+                    srcVI.isMuted(), targetVI.isMuted());
+        }
 
         // test equality
         assertEquals(srcVI, targetVI);

@@ -23,11 +23,7 @@ import android.telecom.Connection;
 import android.telecom.Connection.VideoProvider;
 import android.telecom.InCallService;
 import android.telecom.VideoProfile;
-import android.util.Log;
 import android.view.Surface;
-import android.view.TextureView;
-
-import static android.telecom.cts.TestUtils.shouldTestTelecom;
 
 /**
  * Suites of tests that use {@link MockVideoProvider} and {@link MockVideoCallCallback} to verify
@@ -601,30 +597,6 @@ public class VideoCallTest extends BaseTelecomTestWithMockServices {
         final Uri pauseImageUri = Uri.fromParts("file", "test.png", "");
         videoCall.setPauseImage(pauseImageUri);
         assertPauseUriChanged(mockVideoProvider, pauseImageUri);
-    }
-
-    /**
-     * Asserts that a call video state is as expected.
-     *
-     * @param call The call.
-     * @param videoState The expected video state.
-     */
-    private void assertVideoState(final Call call, final int videoState) {
-        waitUntilConditionIsTrueOrTimeout(
-                new Condition() {
-                    @Override
-                    public Object expected() {
-                        return videoState;
-                    }
-
-                    @Override
-                    public Object actual() {
-                        return call.getDetails().getVideoState();
-                    }
-                },
-                TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
-                "Call should be in videoState " + videoState
-        );
     }
 
     /**

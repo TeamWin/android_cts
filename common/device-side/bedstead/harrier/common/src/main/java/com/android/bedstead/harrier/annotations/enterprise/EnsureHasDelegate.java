@@ -59,7 +59,7 @@ public @interface EnsureHasDelegate {
     String[] scopes();
 
     /**
-     * Whether this delegate should be returned by calls to {@code Devicestate#policyManager()}.
+     * Whether this delegate should be returned by calls to {@code DeviceState#dpc()}.
      *
      * <p>Only one policy manager per test should be marked as primary.
      */

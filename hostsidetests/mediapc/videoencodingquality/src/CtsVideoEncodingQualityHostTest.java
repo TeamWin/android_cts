@@ -163,7 +163,7 @@ public class CtsVideoEncodingQualityHostTest implements IAbiReceiver, IBuildRece
         Assert.assertTrue(result == 0);
 
         // Execute the script to run the test.
-        String testCommand = "./testit.sh";
+        String testCommand = "./testit.sh --serial " + targetSerial;
         if (mQuickCheck) testCommand += " --enablequickrun YES";
         if (mDisableB) testCommand += " --enableb NO";
         if (earlyTermination) testCommand += " --exitonerror YES";

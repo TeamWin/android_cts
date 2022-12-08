@@ -1435,6 +1435,7 @@ public class StagedInstallTest {
         pi.checkInstallConstraints(
                 Arrays.asList(TestApp.A),
                 constraints,
+                r -> r.run(),
                 result -> future.complete(result));
         assertThat(future.join().isAllConstraintsSatisfied()).isFalse();
     }
@@ -1447,6 +1448,7 @@ public class StagedInstallTest {
             pi.checkInstallConstraints(
                     Arrays.asList(TestApp.A),
                     InstallConstraints.GENTLE_UPDATE,
+                    r -> r.run(),
                     result -> {
                     });
             fail();
@@ -1468,6 +1470,7 @@ public class StagedInstallTest {
         pi.checkInstallConstraints(
                 Arrays.asList(TestApp.A),
                 constraints,
+                r -> r.run(),
                 result -> f1.complete(result));
         assertThat(f1.join().isAllConstraintsSatisfied()).isFalse();
 
@@ -1481,6 +1484,7 @@ public class StagedInstallTest {
         pi.checkInstallConstraints(
                 Arrays.asList(TestApp.A),
                 constraints,
+                r -> r.run(),
                 result -> f2.complete(result));
         assertThat(f2.join().isAllConstraintsSatisfied()).isTrue();
     }
@@ -1498,6 +1502,7 @@ public class StagedInstallTest {
         pi.checkInstallConstraints(
                 Arrays.asList(TestApp.A),
                 constraints,
+                r -> r.run(),
                 result -> f1.complete(result));
         assertThat(f1.join().isAllConstraintsSatisfied()).isFalse();
 
@@ -1511,6 +1516,7 @@ public class StagedInstallTest {
         pi.checkInstallConstraints(
                 Arrays.asList(TestApp.A),
                 constraints,
+                r -> r.run(),
                 result -> f2.complete(result));
         assertThat(f2.join().isAllConstraintsSatisfied()).isTrue();
     }

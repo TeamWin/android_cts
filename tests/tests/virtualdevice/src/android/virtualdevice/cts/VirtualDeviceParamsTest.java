@@ -24,6 +24,7 @@ import static android.hardware.Sensor.TYPE_ACCELEROMETER;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import android.companion.virtual.VirtualDeviceParams;
 import android.companion.virtual.sensor.VirtualSensorConfig;
@@ -33,6 +34,8 @@ import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.util.TestAppHelper;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -238,6 +241,27 @@ public class VirtualDeviceParamsTest {
         for (int i = 0; i < virtualSensorConfigs.size(); ++i) {
             assertThat(virtualSensorConfigs.get(i).getType()).isEqualTo(TYPE_ACCELEROMETER);
         }
+    }
+
+    @ApiTest(apis = {"android.companion.virtual.VirtualDeviceParams#setDefaultRecentsPolicy",
+            "android.companion.virtual.VirtualDeviceParams#getDefaultRecentsPolicy"})
+    public void getRecentsPolicy_setAllowInHostDeviceRecents_shouldReturnConfiguredValue() {
+        VirtualDeviceParams params = new VirtualDeviceParams.Builder()
+                .setDefaultRecentsPolicy(
+                        VirtualDeviceParams.RECENTS_POLICY_ALLOW_IN_HOST_DEVICE_RECENTS)
+                .build();
+
+        assertThat(params.getDefaultRecentsPolicy()).isEqualTo(
+                VirtualDeviceParams.RECENTS_POLICY_ALLOW_IN_HOST_DEVICE_RECENTS);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.companion.virtual.VirtualDeviceParams#getRecentsPolicy"})
+    public void getRecentsPolicy_doesNotSetAllowInHostRecents_shouldNotIncludeFlag() {
+        VirtualDeviceParams params = new VirtualDeviceParams.Builder().build();
+
+        assertTrue((params.getDefaultRecentsPolicy()
+                | VirtualDeviceParams.RECENTS_POLICY_ALLOW_IN_HOST_DEVICE_RECENTS) == 0);
     }
 }
 

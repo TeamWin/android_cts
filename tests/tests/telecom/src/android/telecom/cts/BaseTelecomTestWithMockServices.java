@@ -22,7 +22,6 @@ import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 
 import android.app.AppOpsManager;
@@ -30,8 +29,8 @@ import android.app.UiAutomation;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.media.AudioManager;
@@ -40,8 +39,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.os.RemoteException;
 import android.os.Process;
+import android.os.RemoteException;
 import android.os.UserHandle;
 import android.provider.CallLog;
 import android.telecom.Call;
@@ -56,7 +55,6 @@ import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
 import android.telecom.cts.MockInCallService.InCallServiceCallbacks;
 import android.telecom.cts.carmodetestapp.ICtsCarModeInCallServiceControl;
-import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
 import android.telephony.emergency.EmergencyNumber;
@@ -89,6 +87,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     public static final int FLAG_REGISTER = 0x1;
     public static final int FLAG_ENABLE = 0x2;
     public static final int FLAG_SET_DEFAULT = 0x4;
+    public static final int FLAG_PHONE_ACCOUNT_HANDLES_CONTENT_SCHEME = 0x8;
 
     // Don't accidently use emergency number.
     private static int sCounter = 5553638;
@@ -363,7 +362,12 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         CtsConnectionService.setUp(this.connectionService);
 
         if ((flags & FLAG_REGISTER) != 0) {
-            mTelecomManager.registerPhoneAccount(TestUtils.TEST_PHONE_ACCOUNT);
+            if ((flags & FLAG_PHONE_ACCOUNT_HANDLES_CONTENT_SCHEME) != 0) {
+                mTelecomManager.registerPhoneAccount(
+                        TestUtils.TEST_PHONE_ACCOUNT_THAT_HANDLES_CONTENT_SCHEME);
+            } else {
+                mTelecomManager.registerPhoneAccount(TestUtils.TEST_PHONE_ACCOUNT);
+            }
         }
         if ((flags & FLAG_ENABLE) != 0) {
             TestUtils.enablePhoneAccount(getInstrumentation(), TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
@@ -726,6 +730,29 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     }
 
     /**
+     *  Verifies that a call was not placed
+     */
+    void placeAndVerifyNoCall(Bundle extras) {
+        assertEquals("Lock should have no permits!", 0, mInCallCallbacks.lock.availablePermits());
+        placeNewCallWithPhoneAccount(extras, 0);
+
+        try {
+            if (!mInCallCallbacks.lock.tryAcquire(TestUtils.WAIT_FOR_CALL_ADDED_TIMEOUT_S,
+                    TimeUnit.SECONDS)) {
+            }
+        } catch (InterruptedException e) {
+            Log.i(TAG, "Test interrupted!");
+        }
+
+        // Make sure any procedures to disconnect existing calls (makeRoomForOutgoingCall)
+        // complete successfully
+        TestUtils.waitOnLocalMainLooper(WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+        TestUtils.waitOnAllHandlers(getInstrumentation());
+
+        assertNull("Service should be null since call should not have been placed",
+                mInCallCallbacks.getService());
+    }
+    /**
      *  Puts Telecom in a state where there is an active call provided by the
      *  {@link CtsConnectionService} which can be tested.
      */
@@ -857,6 +884,21 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             }
         }
         return null;
+    }
+
+    void verifyNoConnectionForOutgoingCall() {
+        try {
+            if (!connectionService.lock.tryAcquire(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                    TimeUnit.MILLISECONDS)) {
+                //fail("No outgoing call connection requested by Telecom");
+            }
+        } catch (InterruptedException e) {
+            Log.i(TAG, "Test interrupted!");
+        }
+
+        assertThat("Telecom should not create outgoing connection for outgoing call",
+                connectionService.outgoingConnections.size(), equalTo(0));
+        return;
     }
 
     MockConnection verifyConnectionForIncomingCall() {
@@ -1316,7 +1358,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         );
     }
 
-    void assertMuteState(final MockConnection connection, final boolean isMuted) {
+    void assertMuteState(final Connection connection, final boolean isMuted) {
         waitUntilConditionIsTrueOrTimeout(
                 new Condition() {
                     @Override
@@ -1332,6 +1374,30 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                 },
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
                 "Connection's mute state should be: " + isMuted
+        );
+    }
+
+    /**
+     * Asserts that a call video state is as expected.
+     *
+     * @param call The call.
+     * @param videoState The expected video state.
+     */
+    void assertVideoState(final Call call, final int videoState) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return videoState;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return call.getDetails().getVideoState();
+                    }
+                },
+                TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Call should be in videoState " + videoState
         );
     }
 

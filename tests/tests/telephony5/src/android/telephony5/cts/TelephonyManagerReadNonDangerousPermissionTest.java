@@ -98,6 +98,7 @@ public class TelephonyManagerReadNonDangerousPermissionTest {
         Set<Integer> hardFailures = new HashSet<>();
         hardFailures.add(TelephonyManager.PURCHASE_PREMIUM_CAPABILITY_RESULT_CARRIER_DISABLED);
         hardFailures.add(TelephonyManager.PURCHASE_PREMIUM_CAPABILITY_RESULT_FEATURE_NOT_SUPPORTED);
+        hardFailures.add(TelephonyManager.PURCHASE_PREMIUM_CAPABILITY_RESULT_REQUEST_FAILED);
 
         LinkedBlockingQueue<Integer> purchaseRequests =
                 new LinkedBlockingQueue<>(premiumCapabilities.size());

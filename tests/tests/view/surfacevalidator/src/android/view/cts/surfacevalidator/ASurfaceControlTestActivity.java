@@ -24,7 +24,6 @@ import static org.junit.Assert.assertTrue;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -68,7 +67,6 @@ public class ASurfaceControlTestActivity extends Activity {
     public static final long WAIT_TIMEOUT_S = 5;
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
-    private volatile boolean mOnWatch;
 
     private SurfaceView mSurfaceView;
     private FrameLayout.LayoutParams mLayoutParams;
@@ -90,12 +88,6 @@ public class ASurfaceControlTestActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        final PackageManager packageManager = getPackageManager();
-        mOnWatch = packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH);
-        if (mOnWatch) {
-            // Don't try and set up test/capture infrastructure - they're not supported
-            return;
-        }
 
         final View decorView = getWindow().getDecorView();
         decorView.setWindowInsetsAnimationCallback(mInsetsAnimationCallback);
@@ -155,16 +147,6 @@ public class ASurfaceControlTestActivity extends Activity {
         try {
             mReadyToStart.await(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-        }
-
-        if (mOnWatch) {
-            /**
-             * Watch devices not supported, since they may not support:
-             *    1) displaying unmasked windows
-             *    2) RenderScript
-             *    3) Video playback
-             */
-            return;
         }
 
         mHandler.post(() -> {
@@ -393,9 +375,5 @@ public class ASurfaceControlTestActivity extends Activity {
                 throw new RuntimeException(e);
             }
         }
-    }
-
-    public boolean isOnWatch() {
-        return mOnWatch;
     }
 }

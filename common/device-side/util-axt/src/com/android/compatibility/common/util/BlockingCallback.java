@@ -44,6 +44,15 @@ public abstract class BlockingCallback<E> {
     private final CountDownLatch mLatch = new CountDownLatch(1);
     private AtomicReference<E> mValue = new AtomicReference<>();
 
+    /**
+     * A default {@link BlockingCallback} used when a specific interface is not required.
+     */
+    public static class DefaultBlockingCallback<E> extends BlockingCallback<E> {
+        public void triggerCallback(E e) {
+            callbackTriggered(e);
+        }
+    }
+
     /** Call this method from the callback method to mark the response as received. */
     protected void callbackTriggered(E value) {
         mValue.set(value);

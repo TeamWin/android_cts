@@ -90,11 +90,13 @@ java_test_host {
 java_library_host {
     name: "cts-statsd-atom-host-test-utils",
     srcs: ["src/**/lib/*.java"],
+    static_libs: [
+        "platformprotos",
+    ],
     libs: [
         "compatibility-host-util",
         "cts-tradefed",
         "host-libprotobuf-java-full",
-        "platformprotos",
         "tradefed",
         "truth-prebuilt",
     ],

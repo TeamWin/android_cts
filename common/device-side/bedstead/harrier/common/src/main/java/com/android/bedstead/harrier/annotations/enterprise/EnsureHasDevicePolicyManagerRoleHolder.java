@@ -17,12 +17,10 @@
 package com.android.bedstead.harrier.annotations.enterprise;
 
 import static com.android.bedstead.harrier.UserType.INSTRUMENTED_USER;
-import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner.DO_PO_WEIGHT;
-import static com.android.bedstead.nene.packages.CommonPackages.FEATURE_DEVICE_ADMIN;
+import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.LATE;
 
 import com.android.bedstead.harrier.UserType;
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
-import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
 
 import java.lang.annotation.ElementType;
@@ -31,40 +29,30 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test requires that a profile owner is set.
+ * Mark that a test requires a test Device Policy Manager role holder.
  *
- * <p>You can use {@code Devicestate} to ensure that the device enters
- * the correct state for the method. If using {@code Devicestate}, you can use
- * {@code Devicestate#profileOwner()} to interact with the profile owner.
+ * <p>You should use {@code DeviceState} to ensure that the device enters
+ * the correct state for the method. You can use {@code DeviceState#dpmRoleHolder()} to interact
+ * with the role holder.
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@RequireFeature(FEATURE_DEVICE_ADMIN)
 // TODO(b/206441366): Add instant app support
 @RequireNotInstantApp(reason = "Instant Apps cannot run Enterprise Tests")
-public @interface EnsureHasProfileOwner {
-    /** Which user type the profile owner should be installed on. */
+public @interface EnsureHasDevicePolicyManagerRoleHolder {
+
+    // We want the isPrimary here to take precedence over any other
+    int ENSURE_HAS_DEVICE_POLICY_MANAGER_ROLE_HOLDER_WEIGHT = LATE;
+
+    /** Which user type the device policy manager role holder should be installed on. */
     UserType onUser() default INSTRUMENTED_USER;
 
     /**
-     * Whether this DPC should be returned by calls to {@code Devicestate#dpc()}.
+     * Whether this delegate should be returned by calls to {@code DeviceState#dpc()}.
      *
      * <p>Only one policy manager per test should be marked as primary.
      */
     boolean isPrimary() default false;
-
-    /**
-     * If true, uses the {@code DevicePolicyManager#getParentProfileInstance(ComponentName)}
-     * instance of the dpc when calling to .dpc()
-     *
-     * <p>Only used if {@link #isPrimary()} is true.
-     */
-    boolean useParentInstance() default false;
-
-    /**
-     * Affiliation ids to be set for the profile owner.
-     */
-    String[] affiliationIds() default {};
 
     /**
      * Weight sets the order that annotations will be resolved.
@@ -76,5 +64,5 @@ public @interface EnsureHasProfileOwner {
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default DO_PO_WEIGHT;
+    int weight() default ENSURE_HAS_DEVICE_POLICY_MANAGER_ROLE_HOLDER_WEIGHT;
 }
