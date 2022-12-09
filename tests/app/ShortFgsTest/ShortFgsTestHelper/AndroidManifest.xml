@@ -19,6 +19,8 @@
      package="android.app.cts.shortfgstesthelper">
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
 
     <application
@@ -30,8 +32,18 @@
             </intent-filter>
         </receiver>
         <service android:name=".Fgs0"
-             android:foregroundServiceType="shortService|specialUse"
-             android:exported="true">
+            android:foregroundServiceType="shortService|specialUse"
+            android:exported="true">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="cts" />
+        </service>
+        <service android:name=".Fgs1"
+            android:foregroundServiceType="shortService|specialUse"
+            android:exported="true">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="cts" />
+        </service>
+        <service android:name=".Fgs2"
+            android:foregroundServiceType="shortService|specialUse"
+            android:exported="true">
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="cts" />
         </service>
     </application>

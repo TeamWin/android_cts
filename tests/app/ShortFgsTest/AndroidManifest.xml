@@ -24,6 +24,13 @@
     <application
         android:name="android.app.cts.shortfgstesthelper.MyApplication">
         <uses-library android:name="android.test.runner" />
+
+        <!-- Provider to accept "call" -->
+        <provider android:name=".CallProvider"
+            android:exported="true"
+            android:authorities="android.app.cts.shortfgstest"
+        />
+
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

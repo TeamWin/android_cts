@@ -21,6 +21,7 @@ import static android.app.cts.shortfgstesthelper.ShortFgsHelper.NOTIFICATION_ID;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.TAG;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.createNotification;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.sContext;
+import static android.app.cts.shortfgstesthelper.ShortFgsHelper.setMessage;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -52,28 +53,75 @@ public class ShortFgsMessageReceiver extends BroadcastReceiver {
         Log.i(TAG, "ShortFgsMessageReceiver.sendMessage: intent=" + i + " message=" + m);
     }
 
+    /**
+     * Check the message is sent by the currently running test.
+     *
+     * We get the "currently running test" information from CallProvider.
+     */
+    private static boolean isMessageCurrent(ShortFgsMessage m) {
+        ShortFgsMessage testInfo = ShortFgsHelper.getCurrentTestInfo();
+        if (testInfo.getLastTestEndUptime() > 0) {
+            // No test running.
+            Log.w(TAG, "ShortFgsMessageReceiver: no test running; dropping it.");
+            return false;
+        }
+        if (m.getTimestamp() < testInfo.getLastTestStartUptime()) {
+            // Stale message.
+            Log.w(TAG, "ShortFgsMessageReceiver: Stale message; dropping it.");
+            return false;
+        }
+        return true;
+    }
+
     @Override
     public void onReceive(Context context, Intent i) {
         ShortFgsMessage m = Objects.requireNonNull(
                 i.getParcelableExtra(EXTRA_MESSAGE, ShortFgsMessage.class));
         Log.i(TAG, "ShortFgsMessageReceiver.onReceive: intent=" + i + " message=" + m);
 
+        // Every time we receive a message, we ask the main test when the last test started / ended,
+        // and ignore "stale" messages.
+        if (!isMessageCurrent(m)) {
+            return;
+        }
+
+        Class<?> expectedException = null;
         try {
+            // getExpectedExceptionClass() may throw, so we call it inside the try-cacth.
+            expectedException = m.getExpectedExceptionClass();
+
+            // Call Context.startForegroundService()?
+            if (m.isDoCallStartForegroundService()) {
+                // Call startForegroundService for the component, and also pass along
+                // the message
+                Log.i(TAG, "isDoCallStartForegroundService: " + m);
+                sContext.startForegroundService(
+                        setMessage(new Intent().setComponent(m.getComponentName()), m));
+                ShortFgsHelper.sendBackAckMessage();
+                return;
+            }
+
+            // Call Service.startForeground()?
             if (m.isDoCallStartForeground()) {
+                Log.i(TAG, "isDoCallStartForeground: " + m);
                 FgsBase.getInstanceForClass(m.getComponentName().getClassName())
                         .startForeground(NOTIFICATION_ID, createNotification(), m.getFgsType());
                 ShortFgsHelper.sendBackAckMessage();
                 return;
             }
 
+            // Call Service.stopForeground()?
             if (m.isDoCallStopForeground()) {
+                Log.i(TAG, "isDoCallStopForeground: " + m);
                 FgsBase.getInstanceForClass(m.getComponentName().getClassName())
                         .stopForeground(Service.STOP_FOREGROUND_DETACH);
                 ShortFgsHelper.sendBackAckMessage();
                 return;
             }
 
+            // Call Service.stopSelf()?
             if (m.isDoCallStopSelf()) {
+                Log.i(TAG, "isDoCallStopSelf: " + m);
                 FgsBase.getInstanceForClass(m.getComponentName().getClassName())
                         .stopSelf();
                 ShortFgsHelper.sendBackAckMessage();
@@ -91,9 +139,17 @@ public class ShortFgsMessageReceiver extends BroadcastReceiver {
 
             throw new RuntimeException("Unknown message " + m + " received");
         } catch (Throwable th) {
+            final boolean isExpected = expectedException != null
+                    && expectedException.isAssignableFrom(th.getClass());
+            if (isExpected) {
+                Log.i(TAG, "Expected Exception received: ", th);
+            } else {
+                Log.w(TAG, "Unexpected exception received: ", th);
+            }
             // Send back a failure message...
             ShortFgsMessage reply = new ShortFgsMessage();
             reply.setException(th);
+
             ShortFgsHelper.sendBackMessage(reply);
         }
     }

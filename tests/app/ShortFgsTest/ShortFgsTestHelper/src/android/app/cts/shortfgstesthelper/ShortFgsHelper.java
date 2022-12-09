@@ -22,8 +22,7 @@ import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-
-import com.android.compatibility.common.util.BroadcastMessenger;
+import android.os.Bundle;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -40,6 +39,11 @@ public class ShortFgsHelper {
     public static Context sContext;
 
     /**
+     * Package name of the main test. This is also the authority of CallProvider.
+     */
+    public static final String TEST_PACKAGE = "android.app.cts.shortfgstest";
+
+    /**
      * Package name of this helper app.
      */
     public static final String HELPER_PACKAGE = "android.app.cts.shortfgstesthelper";
@@ -48,7 +52,13 @@ public class ShortFgsHelper {
 
     private static final String NOTIFICATION_CHANNEL_ID = "cts/" + HELPER_PACKAGE;
 
+    /** Component names for the services owned by the helper app. */
     public static ComponentName FGS0 = new ComponentName(HELPER_PACKAGE, Fgs0.class.getName());
+    public static ComponentName FGS1 = new ComponentName(HELPER_PACKAGE, Fgs1.class.getName());
+    public static ComponentName FGS2 = new ComponentName(HELPER_PACKAGE, Fgs2.class.getName());
+
+    /** All the services owned by the helper app. */
+    public static ComponentName[] ALL_SERVICES = {FGS0, FGS1, FGS2};
 
     public static String ensureNotificationChannel() {
         sContext.getSystemService(NotificationManager.class)
@@ -85,7 +95,7 @@ public class ShortFgsHelper {
      * Sends a message back to the main test package.
      */
     public static void sendBackMessage(ShortFgsMessage m) {
-        BroadcastMessenger.send(sContext, TAG, m);
+        sendMessageToMainTest(m);
     }
 
     /**
@@ -94,7 +104,7 @@ public class ShortFgsHelper {
     public static void sendBackAckMessage() {
         ShortFgsMessage m = new ShortFgsMessage();
         m.setAck(true);
-        BroadcastMessenger.send(sContext, TAG, m);
+        sendMessageToMainTest(m);
     }
 
     /**
@@ -116,5 +126,26 @@ public class ShortFgsHelper {
      */
     public static void sendBackMethodName(Class<?> clazz, String methodName) {
         sendBackMethodName(clazz, methodName, null);
+    }
+
+    /**
+     * Send a message to the main test app, via CallProvider.call().
+     */
+    public static ShortFgsMessage sendMessageToMainTest(ShortFgsMessage args) {
+        final Bundle inBundle = new Bundle();
+        inBundle.putParcelable(ShortFgsHelper.EXTRA_MESSAGE, args);
+
+        final Bundle outBundle = sContext.getContentResolver().call(TEST_PACKAGE, "", "", inBundle);
+        outBundle.setClassLoader(ShortFgsMessage.class.getClassLoader());
+
+        return Objects.requireNonNull(
+                outBundle.getParcelable(ShortFgsHelper.EXTRA_MESSAGE, ShortFgsMessage.class));
+    }
+
+    /**
+     * Call CallProvider.call() to get the current test info.
+     */
+    public static ShortFgsMessage getCurrentTestInfo() {
+        return sendMessageToMainTest(new ShortFgsMessage().setCallGetTestInfo(true));
     }
 }

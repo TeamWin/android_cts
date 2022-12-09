@@ -21,17 +21,16 @@ import static android.media.MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR;
 import static android.mediav2.common.cts.CodecTestBase.ComponentClass.HARDWARE;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import android.media.MediaCodec;
 import android.media.MediaFormat;
-import android.media.MediaMuxer;
 import android.mediav2.common.cts.CompareStreams;
+import android.mediav2.common.cts.EncoderConfigParams;
 import android.mediav2.common.cts.RawResource;
 
 import com.android.compatibility.common.util.ApiTest;
 
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.Before;
@@ -42,7 +41,6 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -64,24 +62,17 @@ import java.util.List;
  */
 @RunWith(Parameterized.class)
 public class VideoEncoderMultiResTest extends VideoEncoderValidationTestBase {
-    private static final float ACCEPTABLE_WIRELESS_TX_QUALITY = 20.0f;  // psnr in dB
+    private static final float MIN_ACCEPTABLE_QUALITY = 20.0f;  // psnr in dB
     private static final int FRAME_LIMIT = 30;
     private static final int BIT_RATE = 5000000;
     private static final List<Object[]> exhaustiveArgsList = new ArrayList<>();
     private static final HashMap<String, RawResource> RES_YUV_MAP = new HashMap<>();
 
-    private final int mFps;
-    private final int mBitRateMode;
-    private final int mIntraInterval;
-
-    private MediaMuxer mMuxer;
-    private int mTrackID = -1;
-
     @BeforeClass
     public static void decodeResourcesToYuv() {
         ArrayList<CompressedResource> resources = new ArrayList<>();
         for (Object[] arg : exhaustiveArgsList) {
-            resources.add((CompressedResource) arg[7]);
+            resources.add((CompressedResource) arg[2]);
         }
         decodeStreamsToYuv(resources, RES_YUV_MAP, FRAME_LIMIT);
     }
@@ -91,6 +82,19 @@ public class VideoEncoderMultiResTest extends VideoEncoderValidationTestBase {
         for (RawResource res : RES_YUV_MAP.values()) {
             new File(res.mFileName).delete();
         }
+    }
+
+    private static EncoderConfigParams getVideoEncoderCfgParams(String mediaType, int width,
+            int height, int frameRate, int bitRateMode, int maxBFrames, int intraFrameInterval) {
+        return new EncoderConfigParams.Builder(mediaType)
+                .setBitRate(BIT_RATE)
+                .setKeyFrameInterval(intraFrameInterval)
+                .setFrameRate(frameRate)
+                .setWidth(width)
+                .setHeight(height)
+                .setMaxBFrames(maxBFrames)
+                .setBitRateMode(bitRateMode)
+                .build();
     }
 
     private static void addParams(int width, int height, int frameRate) {
@@ -103,21 +107,21 @@ public class VideoEncoderMultiResTest extends VideoEncoderValidationTestBase {
             for (int maxBFrames : maxBFramesPerSubGop) {
                 for (int bitRateMode : bitRateModes) {
                     for (int intraInterval : intraIntervals) {
-                        // mediaType, wd, ht, frame rate, max b frames, bitrate mode, I-interval,
-                        // res, label
+                        // mediaType, cfg, res, label
                         String label = String.format("%dx%d_%dfps_maxb-%d_%s_i-dist-%d", width,
                                 height, frameRate, maxBFrames, bitRateModeToString(bitRateMode),
                                 intraInterval);
-                        exhaustiveArgsList.add(new Object[]{mediaType, width, height, frameRate,
-                                maxBFrames, bitRateMode, intraInterval, BIRTHDAY_FULLHD_LANDSCAPE,
-                                label});
+                        exhaustiveArgsList.add(new Object[]{mediaType,
+                                getVideoEncoderCfgParams(mediaType, width, height, frameRate,
+                                        bitRateMode, maxBFrames, intraInterval),
+                                BIRTHDAY_FULLHD_LANDSCAPE, label});
                     }
                 }
             }
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{9})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{4})")
     public static Collection<Object[]> input() {
         addParams(1080, 1920, 30);
         addParams(720, 1280, 30);
@@ -154,16 +158,10 @@ public class VideoEncoderMultiResTest extends VideoEncoderValidationTestBase {
         return prepareParamList(exhaustiveArgsList, true, false, true, false, HARDWARE);
     }
 
-    public VideoEncoderMultiResTest(String encoder, String mediaType, int width, int height,
-            int frameRate, int maxBFrames, int bitRateMode, int intraInterval,
-            CompressedResource res, @SuppressWarnings("unused") String testLabel,
-            String allTestParams) {
-        super(encoder, mediaType, BIT_RATE, width, height,
-                RES_YUV_MAP.getOrDefault(res.uniqueLabel(), null), allTestParams);
-        mFps = frameRate;
-        mMaxBFrames = maxBFrames;
-        mBitRateMode = bitRateMode;
-        mIntraInterval = intraInterval;
+    public VideoEncoderMultiResTest(String encoder, String mediaType,
+            EncoderConfigParams cfgParams, CompressedResource res,
+            @SuppressWarnings("unused") String testLabel, String allTestParams) {
+        super(encoder, mediaType, cfgParams, res, allTestParams);
     }
 
     @Before
@@ -171,66 +169,35 @@ public class VideoEncoderMultiResTest extends VideoEncoderValidationTestBase {
         mIsLoopBack = true;
     }
 
-    @After
-    public void tearDown() {
-        if (mMuxer != null) {
-            mMuxer.release();
-            mMuxer = null;
-        }
-    }
-
-    protected void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
-        if (info.size > 0) {
-            ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
-            if (mMuxer != null) {
-                if (mTrackID == -1) {
-                    mTrackID = mMuxer.addTrack(mCodec.getOutputFormat());
-                    mMuxer.start();
-                }
-                mMuxer.writeSampleData(mTrackID, buf, info);
-            }
-        }
-        super.dequeueOutput(bufferIndex, info);
-    }
-
     @ApiTest(apis = {"android.media.MediaFormat#KEY_WIDTH",
             "android.media.MediaFormat#KEY_HEIGHT"})
     @Test
     public void testMultiRes() throws IOException, InterruptedException {
-        setUpParams(1);
-        MediaFormat format = mFormats.get(0);
-        format.setInteger(MediaFormat.KEY_FRAME_RATE, mFps);
-        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, mIntraInterval);
-        format.setInteger(MediaFormat.KEY_BITRATE_MODE, mBitRateMode);
-        Assume.assumeTrue("Encoder: " + mCodecName + " doesn't support format: " + mFormats.get(0),
-                areFormatsSupported(mCodecName, mMime, mFormats));
-        String tmpPath = File.createTempFile("tmp", ".bin").getAbsolutePath();
-        mMuxer = new MediaMuxer(tmpPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-        encodeToMemory(mActiveRawRes.mFileName, mCodecName, FRAME_LIMIT, format, true);
-        if (mTrackID != -1) {
-            mMuxer.stop();
-            mTrackID = -1;
-        }
-        if (mMuxer != null) {
-            mMuxer.release();
-            mMuxer = null;
-        }
+        MediaFormat format = mEncCfgParams[0].getFormat();
+        ArrayList<MediaFormat> formats = new ArrayList<>();
+        formats.add(format);
+        Assume.assumeTrue("Encoder: " + mCodecName + " doesn't support format: " + format,
+                areFormatsSupported(mCodecName, mMime, formats));
+        RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
+        assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
+                + mTestEnv, res);
+        encodeToMemory(mCodecName, mEncCfgParams[0], res, FRAME_LIMIT, false, true);
         assertEquals("Output width is different from configured width \n" + mTestConfig
-                + mTestEnv, mWidth, getWidth(getOutputFormat()));
+                + mTestEnv, mEncCfgParams[0].mWidth, getWidth(getOutputFormat()));
         assertEquals("Output height is different from configured height \n" + mTestConfig
-                + mTestEnv, mHeight, getHeight(getOutputFormat()));
+                + mTestEnv, mEncCfgParams[0].mHeight, getHeight(getOutputFormat()));
         CompareStreams cs = null;
         StringBuilder msg = new StringBuilder();
         boolean isOk = true;
         try {
-            cs = new CompareStreams(mActiveRawRes, mMime, tmpPath, true, mIsLoopBack);
+            cs = new CompareStreams(res, mMime, mMuxedOutputFile, true, mIsLoopBack);
             final double[] minPSNR = cs.getMinimumPSNR();
             for (int i = 0; i < minPSNR.length; i++) {
-                if (minPSNR[i] < ACCEPTABLE_WIRELESS_TX_QUALITY) {
+                if (minPSNR[i] < MIN_ACCEPTABLE_QUALITY) {
                     msg.append(String.format(
                             "For %d plane, minPSNR is less than tolerance threshold, Got %f, "
                                     + "Threshold %f",
-                            i, minPSNR[i], ACCEPTABLE_WIRELESS_TX_QUALITY));
+                            i, minPSNR[i], MIN_ACCEPTABLE_QUALITY));
                     isOk = false;
                     break;
                 }
@@ -238,10 +205,10 @@ public class VideoEncoderMultiResTest extends VideoEncoderValidationTestBase {
         } finally {
             if (cs != null) cs.cleanUp();
         }
-        new File(tmpPath).delete();
+        new File(mMuxedOutputFile).delete();
         assertEquals("encoder did not encode the requested number of frames \n"
                 + mTestConfig + mTestEnv, FRAME_LIMIT, mOutputCount);
         assertTrue("Encountered frames with PSNR less than configured threshold "
-                + ACCEPTABLE_WIRELESS_TX_QUALITY + "dB \n" + msg + mTestConfig + mTestEnv, isOk);
+                + MIN_ACCEPTABLE_QUALITY + "dB \n" + msg + mTestConfig + mTestEnv, isOk);
     }
 }

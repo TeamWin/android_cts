@@ -24,9 +24,11 @@ import static android.media.MediaFormat.PICTURE_TYPE_P;
 import static android.mediav2.common.cts.CodecTestBase.ComponentClass.HARDWARE;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.media.MediaFormat;
+import android.mediav2.common.cts.EncoderConfigParams;
 import android.mediav2.common.cts.RawResource;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -63,17 +65,17 @@ import java.util.Map;
 @RunWith(Parameterized.class)
 public class VideoEncoderIntraFrameIntervalTest extends VideoEncoderValidationTestBase {
     private static final int FRAME_LIMIT = 600;
+    private static final int BIT_RATE = 5000000;
+    private static final int WIDTH = 1920;
+    private static final int HEIGHT = 1080;
     private static final List<Object[]> exhaustiveArgsList = new ArrayList<>();
     private static final HashMap<String, RawResource> RES_YUV_MAP = new HashMap<>();
-
-    private final int mBitRateMode;
-    private final int mIntraInterval;
 
     @BeforeClass
     public static void decodeResourcesToYuv() {
         ArrayList<CompressedResource> resources = new ArrayList<>();
         for (Object[] arg : exhaustiveArgsList) {
-            resources.add((CompressedResource) arg[7]);
+            resources.add((CompressedResource) arg[2]);
         }
         decodeStreamsToYuv(resources, RES_YUV_MAP);
     }
@@ -85,13 +87,22 @@ public class VideoEncoderIntraFrameIntervalTest extends VideoEncoderValidationTe
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{9})")
+    private static EncoderConfigParams getVideoEncoderCfgParams(String mediaType, int bitRateMode,
+            int maxBFrames, int keyFrameInterval) {
+        return new EncoderConfigParams.Builder(mediaType)
+                .setBitRate(BIT_RATE)
+                .setKeyFrameInterval(keyFrameInterval)
+                .setWidth(WIDTH)
+                .setHeight(HEIGHT)
+                .setBitRateMode(bitRateMode)
+                .setMaxBFrames(maxBFrames)
+                .build();
+    }
+
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{4})")
     public static Collection<Object[]> input() {
         final String[] mediaTypes = new String[]{MediaFormat.MIMETYPE_VIDEO_AVC,
                 MediaFormat.MIMETYPE_VIDEO_HEVC};
-        final int bitRate = 5000000;
-        final int width = 1920;
-        final int height = 1080;
         final int[] maxBFramesPerSubGop = new int[]{0, 1, 2, 3};
         final int[] bitRateModes = new int[]{BITRATE_MODE_CBR, BITRATE_MODE_VBR};
         final int[] intraIntervals = new int[]{0, 2};
@@ -99,14 +110,13 @@ public class VideoEncoderIntraFrameIntervalTest extends VideoEncoderValidationTe
             for (int maxBFrames : maxBFramesPerSubGop) {
                 for (int bitRateMode : bitRateModes) {
                     for (int intraInterval : intraIntervals) {
-                        // mediaType, bit-rate, wd, ht, max b frames, bitrate mode, I-interval,
-                        // res, test label
+                        // mediaType, cfg, res, test label
                         String label = String.format("%dkbps_%dx%d_maxb-%d_%s_i-dist-%d",
-                                bitRate / 1000, width, height, maxBFrames,
+                                BIT_RATE / 1000, WIDTH, HEIGHT, maxBFrames,
                                 bitRateModeToString(bitRateMode), intraInterval);
-                        exhaustiveArgsList.add(new Object[]{mediaType, bitRate, width, height,
-                                maxBFrames, bitRateMode, intraInterval, BIRTHDAY_FULLHD_LANDSCAPE,
-                                label});
+                        exhaustiveArgsList.add(new Object[]{mediaType,
+                                getVideoEncoderCfgParams(mediaType, bitRateMode, maxBFrames,
+                                        intraInterval), BIRTHDAY_FULLHD_LANDSCAPE, label});
                     }
                 }
             }
@@ -114,15 +124,10 @@ public class VideoEncoderIntraFrameIntervalTest extends VideoEncoderValidationTe
         return prepareParamList(exhaustiveArgsList, true, false, true, false, HARDWARE);
     }
 
-    public VideoEncoderIntraFrameIntervalTest(String encoder, String mediaType, int bitRate,
-            int width, int height, int maxBFrames, int bitRateMode, int intraInterval,
-            CompressedResource res, @SuppressWarnings("unused") String testLabel,
-            String allTestParams) {
-        super(encoder, mediaType, bitRate, width, height,
-                RES_YUV_MAP.getOrDefault(res.uniqueLabel(), null), allTestParams);
-        mMaxBFrames = maxBFrames;
-        mBitRateMode = bitRateMode;
-        mIntraInterval = intraInterval;
+    public VideoEncoderIntraFrameIntervalTest(String encoder, String mediaType,
+            EncoderConfigParams cfgParams, CompressedResource res,
+            @SuppressWarnings("unused") String testLabel, String allTestParams) {
+        super(encoder, mediaType, cfgParams, res, allTestParams);
     }
 
     @Before
@@ -133,13 +138,15 @@ public class VideoEncoderIntraFrameIntervalTest extends VideoEncoderValidationTe
     @ApiTest(apis = {"android.media.MediaFormat#KEY_I_FRAME_INTERVAL"})
     @Test
     public void testEncoderSyncFrameSupport() throws IOException, InterruptedException {
-        setUpParams(1);
-        MediaFormat format = mFormats.get(0);
-        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, mIntraInterval);
-        format.setInteger(MediaFormat.KEY_BITRATE_MODE, mBitRateMode);
-        Assume.assumeTrue("Encoder: " + mCodecName + " doesn't support format: " + mFormats.get(0),
-                areFormatsSupported(mCodecName, mMime, mFormats));
-        encodeToMemory(mActiveRawRes.mFileName, mCodecName, FRAME_LIMIT, format, true);
+        MediaFormat format = mEncCfgParams[0].getFormat();
+        ArrayList<MediaFormat> formats = new ArrayList<>();
+        formats.add(format);
+        Assume.assumeTrue("Encoder: " + mCodecName + " doesn't support format: " + format,
+                areFormatsSupported(mCodecName, mMime, formats));
+        RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
+        assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
+                + mTestEnv, res);
+        encodeToMemory(mCodecName, mEncCfgParams[0], res, FRAME_LIMIT, true, false);
         assertEquals("encoder did not encode the requested number of frames \n"
                 + mTestConfig + mTestEnv, FRAME_LIMIT, mOutputCount);
         int lastKeyFrameIdx = 0, currFrameIdx = 0, maxKeyFrameDistance = 0;
@@ -154,13 +161,15 @@ public class VideoEncoderIntraFrameIntervalTest extends VideoEncoderValidationTe
             }
             currFrameIdx++;
         }
-        int expDistance = mIntraInterval == 0 ? 1 : (mFrameRate * mIntraInterval);
-        int tolerance = mIntraInterval == 0 ? 0 : mMaxBFrames;
+        int expDistance =
+                mEncCfgParams[0].mKeyFrameInterval == 0 ? 1 :
+                        (int) (mEncCfgParams[0].mFrameRate * mEncCfgParams[0].mKeyFrameInterval);
+        int tolerance = mEncCfgParams[0].mKeyFrameInterval == 0 ? 0 : mEncCfgParams[0].mMaxBFrames;
         String msg = String.format(
                 "Number of frames between 2 Sync frames exceeds configured key frame interval.\n"
                         + " Expected max key frame distance %d.\nGot max key frame distance %d.\n",
                 expDistance, maxKeyFrameDistance);
-        if (mMaxBFrames == 0) {
+        if (mEncCfgParams[0].mMaxBFrames == 0) {
             assertEquals(msg + mTestConfig + mTestEnv, maxKeyFrameDistance - expDistance, 0);
         } else {
             Assume.assumeTrue(msg + mTestConfig + mTestEnv,

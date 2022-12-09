@@ -27,8 +27,9 @@ import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.mediav2.common.cts.BitStreamUtils;
-import android.mediav2.common.cts.CodecEncoderTestBase;
 import android.mediav2.common.cts.DecodeStreamToYuv;
+import android.mediav2.common.cts.EncoderConfigParams;
+import android.mediav2.common.cts.EncoderTestBase;
 import android.mediav2.common.cts.RawResource;
 import android.util.Log;
 
@@ -46,11 +47,13 @@ import java.util.TreeMap;
 /**
  * Wrapper class for handling and testing video encoder components.
  */
-public class VideoEncoderValidationTestBase extends CodecEncoderTestBase {
+public class VideoEncoderValidationTestBase extends EncoderTestBase {
     private static final String LOG_TAG = VideoEncoderValidationTestBase.class.getSimpleName();
     private static final String MEDIA_DIR = WorkDir.getMediaDirString();
 
     static final boolean ENABLE_LOGS = false;
+
+    protected final CompressedResource mCRes;
 
     final TreeMap<Long, Integer> mPtsPicTypeMap = new TreeMap<>();
 
@@ -105,10 +108,10 @@ public class VideoEncoderValidationTestBase extends CodecEncoderTestBase {
         }
     }
 
-    VideoEncoderValidationTestBase(String encoder, String mediaType, int bitRate, int width,
-            int height, RawResource activeRawRes, String allTestParams) {
-        super(encoder, mediaType, new int[]{bitRate}, new int[]{width}, new int[]{height},
-                activeRawRes, allTestParams);
+    VideoEncoderValidationTestBase(String encoder, String mediaType,
+            EncoderConfigParams encCfgParams, CompressedResource res, String allTestParams) {
+        super(encoder, mediaType, new EncoderConfigParams[]{encCfgParams}, allTestParams);
+        mCRes = res;
     }
 
     protected void setUpSource(String inpPath) throws IOException {
@@ -143,9 +146,10 @@ public class VideoEncoderValidationTestBase extends CodecEncoderTestBase {
                     + mTestConfig + mTestEnv, mFileReadOffset, mFileLength);
             enqueueEOS(bufferIndex);
         } else {
-            int size = mBytesPerSample * mWidth * mHeight * 3 / 2;
+            int size = mActiveRawRes.mBytesPerSample * mActiveEncCfg.mWidth
+                    * mActiveEncCfg.mHeight * 3 / 2;
             int flags = 0;
-            long pts = mInputOffsetPts + mInputCount * 1000000L / mFrameRate;
+            long pts = mInputOffsetPts + mInputCount * 1000000L / mActiveEncCfg.mFrameRate;
 
             Image img = mCodec.getInputImage(bufferIndex);
             assertNotNull("CPU-read via ImageReader API is not available \n" + mTestConfig

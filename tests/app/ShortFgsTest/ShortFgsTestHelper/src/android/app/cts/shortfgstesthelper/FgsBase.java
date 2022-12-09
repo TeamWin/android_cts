@@ -16,12 +16,14 @@
 package android.app.cts.shortfgstesthelper;
 
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.NOTIFICATION_ID;
+import static android.app.cts.shortfgstesthelper.ShortFgsHelper.TAG;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.createNotification;
 
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
+import android.util.Log;
 
 import com.android.internal.annotations.GuardedBy;
 
@@ -51,10 +53,12 @@ public abstract class FgsBase extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.i(TAG, "onStartCommand: " + this.getClass().getName() + " startId=" + startId);
+
         // Handle the incoming intent.
         final ShortFgsMessage incoming = ShortFgsHelper.getMessage(intent);
 
-        if (incoming.isSetForeground()) {
+        if (incoming.isDoCallStartForeground()) {
             startForeground(NOTIFICATION_ID, createNotification(), incoming.getFgsType());
         }
 
@@ -68,18 +72,26 @@ public abstract class FgsBase extends Service {
 
     @Override
     public void onDestroy() {
+        Log.i(TAG, "onDestroy: " + this.getClass().getName());
+
         // Send back the called method name.
         ShortFgsHelper.sendBackMethodName(this.getClass(), "onDestroy");
     }
 
     @Override
     public IBinder onBind(Intent intent) {
+        Log.i(TAG, "onBind: " + this.getClass().getName());
+
+        ShortFgsHelper.sendBackMethodName(this.getClass(), "onBind");
+
         // We don't actually use the returned object, so just return a random binder object...
         return new Binder();
     }
 
     @Override
     public void onTimeout(int startId) {
+        Log.i(TAG, "onTimeout: " + this.getClass().getName() + " startId=" + startId);
+
         ShortFgsHelper.sendBackMethodName(this.getClass(), "onTimeout", (m) -> {
             m.setServiceStartId(startId);
         });

@@ -16,10 +16,8 @@
 
 package android.app.cts.wallpapers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.WallpaperInfo;
 import android.content.Context;
@@ -47,8 +45,7 @@ public class WallpaperInfoTest {
         PackageManager pm = context.getPackageManager();
 
         List<ResolveInfo> result = pm.queryIntentServices(intent, PackageManager.GET_META_DATA);
-
-        assertEquals(3, result.size());
+        assertThat(result).hasSize(3);
     }
 
     @Test
@@ -58,29 +55,30 @@ public class WallpaperInfoTest {
 
         WallpaperInfo wallpaperInfo = getInfoForService(TestLiveWallpaper.class);
 
-        assertEquals(context.getString(R.string.wallpaper_title), wallpaperInfo.loadLabel(pm));
-        assertEquals(context.getString(R.string.wallpaper_description),
-                wallpaperInfo.loadDescription(pm));
-        assertEquals(context.getString(R.string.wallpaper_collection),
-                wallpaperInfo.loadAuthor(pm));
-        assertEquals(context.getString(R.string.wallpaper_context),
-                wallpaperInfo.loadContextDescription(pm));
-        assertEquals(context.getString(R.string.wallpaper_context_uri),
-                wallpaperInfo.loadContextUri(pm).toString());
-        assertEquals(context.getString(R.string.wallpaper_slice_uri),
-                wallpaperInfo.getSettingsSliceUri().toString());
-        assertTrue(wallpaperInfo.getShowMetadataInPreview());
-        assertTrue(wallpaperInfo.supportsMultipleDisplays());
-        assertTrue(wallpaperInfo.shouldUseDefaultUnfoldTransition());
-        assertNotNull(wallpaperInfo.loadIcon(pm));
-        assertNotNull(wallpaperInfo.loadThumbnail(pm));
+        assertThat(context.getString(R.string.wallpaper_title))
+                .isEqualTo(wallpaperInfo.loadLabel(pm));
+        assertThat(context.getString(R.string.wallpaper_description))
+                .isEqualTo(wallpaperInfo.loadDescription(pm));
+        assertThat(context.getString(R.string.wallpaper_collection))
+                .isEqualTo(wallpaperInfo.loadAuthor(pm));
+        assertThat(context.getString(R.string.wallpaper_context))
+                .isEqualTo(wallpaperInfo.loadContextDescription(pm));
+        assertThat(context.getString(R.string.wallpaper_context_uri))
+                .isEqualTo(wallpaperInfo.loadContextUri(pm).toString());
+        assertThat(context.getString(R.string.wallpaper_slice_uri))
+                .isEqualTo(wallpaperInfo.getSettingsSliceUri().toString());
+        assertThat(wallpaperInfo.getShowMetadataInPreview()).isTrue();
+        assertThat(wallpaperInfo.supportsMultipleDisplays()).isTrue();
+        assertThat(wallpaperInfo.shouldUseDefaultUnfoldTransition()).isTrue();
+        assertThat(wallpaperInfo.loadIcon(pm)).isNotNull();
+        assertThat(wallpaperInfo.loadThumbnail(pm)).isNotNull();
     }
 
     @Test
     public void test_defaultUnfoldTransitionDisabled() {
         WallpaperInfo wallpaperInfo = getInfoForService(TestLiveWallpaperNoUnfoldTransition.class);
 
-        assertFalse(wallpaperInfo.shouldUseDefaultUnfoldTransition());
+        assertThat(wallpaperInfo.shouldUseDefaultUnfoldTransition()).isFalse();
     }
 
     private <T extends WallpaperService> WallpaperInfo getInfoForService(Class<T> service) {
@@ -99,10 +97,8 @@ public class WallpaperInfoTest {
             }
         }
 
-        if (info == null) {
-            throw new AssertionError(service.getName() + " was not found in the queried "
-                    + "wallpaper services list " + result);
-        }
+        assertWithMessage(service.getName() + " was not found in the queried "
+                + "wallpaper services list " + result).that(info).isNotNull();
 
         try {
             return new WallpaperInfo(context, info);

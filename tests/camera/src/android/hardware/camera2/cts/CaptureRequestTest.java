@@ -3116,22 +3116,71 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         }
     }
 
-    /**
-     * Basic sanity test that just checks if CONTROL_AUTOFRAMING can be set as a part of the
-     * CAPTURE_REQUEST.
-     * TODO: @bkukreja expand the test to cover the correct auto-framing behavior once the
-     *       cuttlefish implementation is complete.
-     */
     private void autoframingTestByCamera() throws Exception {
+        // Verify autoframing state, zoom ratio and video stabilizations controls for autoframing
+        // modes ON and OFF
+        int[] autoframingModes = {CameraMetadata.CONTROL_AUTOFRAMING_OFF,
+                CameraMetadata.CONTROL_AUTOFRAMING_ON};
+        final int zoomSteps = 5;
+        final float zoomErrorMargin = 0.05f;
+        Size maxPreviewSize = mOrderedPreviewSizes.get(0); // Max preview size.
         CaptureRequest.Builder requestBuilder =
                 mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-        requestBuilder.set(CaptureRequest.CONTROL_AUTOFRAMING, CONTROL_AUTOFRAMING_ON);
+        SimpleCaptureCallback listener = new SimpleCaptureCallback();
+        startPreview(requestBuilder, maxPreviewSize, listener);
 
-        SimpleCaptureCallback listener;
-        listener = new SimpleCaptureCallback();
-        Size maxPreviewSz = mOrderedPreviewSizes.get(0); // Max preview size.
-        startPreview(requestBuilder, maxPreviewSz, listener);
-        stopPreview();
+        for (int mode : autoframingModes) {
+            float expectedZoomRatio = 0.0f;
+            final Range<Float> zoomRatioRange = mStaticInfo.getZoomRatioRangeChecked();
+            for (int i = 0; i < zoomSteps; i++) {
+                float testZoomRatio = zoomRatioRange.getLower() + (zoomRatioRange.getUpper()
+                        - zoomRatioRange.getLower()) * i / zoomSteps;
+                // Zoom ratio 1.0f is a special case. The ZoomRatioMapper in framework maintains the
+                // 1.0f ratio in the CaptureResult
+                if (testZoomRatio == 1.0f) {
+                    continue;
+                }
+                requestBuilder.set(CaptureRequest.CONTROL_AUTOFRAMING, mode);
+                requestBuilder.set(CaptureRequest.CONTROL_ZOOM_RATIO, testZoomRatio);
+                listener = new SimpleCaptureCallback();
+                mSession.setRepeatingRequest(requestBuilder.build(), listener, mHandler);
+                waitForSettingsApplied(listener, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
+                CaptureResult result = listener.getCaptureResult(WAIT_FOR_RESULT_TIMEOUT_MS);
+                Float resultZoomRatio = getValueNotNull(result, CaptureResult.CONTROL_ZOOM_RATIO);
+                int autoframingState = getValueNotNull(result,
+                        CaptureResult.CONTROL_AUTOFRAMING_STATE);
+                int videoStabilizationMode = getValueNotNull(result,
+                        CaptureResult.CONTROL_VIDEO_STABILIZATION_MODE);
+
+                if (mode == CameraMetadata.CONTROL_AUTOFRAMING_ON) {
+                    if (expectedZoomRatio == 0.0f) {
+                        expectedZoomRatio = resultZoomRatio;
+                    }
+                    assertTrue("Autoframing state should be FRAMING or CONVERGED when AUTOFRAMING"
+                            + "is ON",
+                            autoframingState == CameraMetadata.CONTROL_AUTOFRAMING_STATE_FRAMING
+                                    || autoframingState
+                                            == CameraMetadata.CONTROL_AUTOFRAMING_STATE_CONVERGED);
+                    assertTrue("Video Stablization should be OFF when AUTOFRAMING is ON",
+                            videoStabilizationMode
+                                    == CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_OFF);
+                } else {
+                    expectedZoomRatio = testZoomRatio;
+                    assertTrue("Autoframing state should be INACTIVE when AUTOFRAMING is OFF",
+                            autoframingState == CameraMetadata.CONTROL_AUTOFRAMING_STATE_INACTIVE);
+                }
+
+                verifyCaptureResultForKey(CaptureResult.CONTROL_AUTOFRAMING, mode, listener,
+                        NUM_FRAMES_VERIFIED);
+
+                mCollector.expectTrue(String.format(
+                                "Zoom Ratio in Capture Request does not match the expected zoom"
+                                        + "ratio in Capture Result (expected = %f, actual = %f)",
+                                expectedZoomRatio, resultZoomRatio),
+                        Math.abs(expectedZoomRatio - resultZoomRatio) / expectedZoomRatio
+                                <= zoomErrorMargin);
+            }
+        }
     }
 
     private void settingsOverrideTestByCamera() throws Exception {

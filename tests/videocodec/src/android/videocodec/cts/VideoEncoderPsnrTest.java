@@ -21,17 +21,16 @@ import static android.media.MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR;
 import static android.mediav2.common.cts.CodecTestBase.ComponentClass.HARDWARE;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import android.media.MediaCodec;
 import android.media.MediaFormat;
-import android.media.MediaMuxer;
 import android.mediav2.common.cts.CompareStreams;
+import android.mediav2.common.cts.EncoderConfigParams;
 import android.mediav2.common.cts.RawResource;
 
 import com.android.compatibility.common.util.ApiTest;
 
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.Before;
@@ -42,7 +41,6 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -70,16 +68,11 @@ public class VideoEncoderPsnrTest extends VideoEncoderValidationTestBase {
     private static final List<Object[]> exhaustiveArgsList = new ArrayList<>();
     private static final HashMap<String, RawResource> RES_YUV_MAP = new HashMap<>();
 
-    private final int mBitRateMode;
-
-    private MediaMuxer mMuxer;
-    private int mTrackID = -1;
-
     @BeforeClass
     public static void decodeResourcesToYuv() {
         ArrayList<CompressedResource> resources = new ArrayList<>();
         for (Object[] arg : exhaustiveArgsList) {
-            resources.add((CompressedResource) arg[5]);
+            resources.add((CompressedResource) arg[2]);
         }
         decodeStreamsToYuv(resources, RES_YUV_MAP);
     }
@@ -91,22 +84,33 @@ public class VideoEncoderPsnrTest extends VideoEncoderValidationTestBase {
         }
     }
 
+    private static EncoderConfigParams getVideoEncoderCfgParams(String mediaType, int width,
+            int height, int bitRate, int bitRateMode) {
+        return new EncoderConfigParams.Builder(mediaType)
+                .setBitRate(bitRate)
+                .setKeyFrameInterval(KEY_FRAME_INTERVAL)
+                .setWidth(width)
+                .setHeight(height)
+                .setBitRateMode(bitRateMode)
+                .build();
+    }
+
     private static void addParams(int bitRate, int width, int height, CompressedResource res) {
         final String[] mediaTypes = new String[]{MediaFormat.MIMETYPE_VIDEO_AVC,
                 MediaFormat.MIMETYPE_VIDEO_HEVC};
         final int[] bitRateModes = new int[]{BITRATE_MODE_CBR, BITRATE_MODE_VBR};
         for (String mediaType : mediaTypes) {
             for (int bitRateMode : bitRateModes) {
-                // mediaType, bit-rate, width, height, bitrate mode, resource file, test label
+                // mediaType, cfg, resource file, test label
                 String label = String.format("%.1fmbps_%dx%d_%s", bitRate / 1000000.f, width,
                         height, bitRateModeToString(bitRateMode));
-                exhaustiveArgsList.add(new Object[]{mediaType, bitRate, width, height, bitRateMode,
-                        res, label});
+                exhaustiveArgsList.add(new Object[]{mediaType, getVideoEncoderCfgParams(mediaType,
+                        width, height, bitRate, bitRateMode), res, label});
             }
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{7})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{4})")
     public static Collection<Object[]> input() {
         addParams(25000000, 1920, 1080, BIRTHDAY_FULLHD_LANDSCAPE);
         addParams(25000000, 1080, 1920, SELFIEGROUP_FULLHD_PORTRAIT);
@@ -115,12 +119,10 @@ public class VideoEncoderPsnrTest extends VideoEncoderValidationTestBase {
         return prepareParamList(exhaustiveArgsList, true, false, true, false, HARDWARE);
     }
 
-    public VideoEncoderPsnrTest(String encoder, String mediaType, int bitRate, int width,
-            int height, int bitRateMode, CompressedResource res,
+    public VideoEncoderPsnrTest(String encoder, String mediaType,
+            EncoderConfigParams cfgParams, CompressedResource res,
             @SuppressWarnings("unused") String testLabel, String allTestParams) {
-        super(encoder, mediaType, bitRate, width, height,
-                RES_YUV_MAP.getOrDefault(res.uniqueLabel(), null), allTestParams);
-        mBitRateMode = bitRateMode;
+        super(encoder, mediaType, cfgParams, res, allTestParams);
     }
 
     @Before
@@ -128,54 +130,24 @@ public class VideoEncoderPsnrTest extends VideoEncoderValidationTestBase {
         mIsLoopBack = true;
     }
 
-    @After
-    public void tearDown() {
-        if (mMuxer != null) {
-            mMuxer.release();
-            mMuxer = null;
-        }
-    }
-
-    protected void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
-        if (info.size > 0) {
-            ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
-            if (mMuxer != null) {
-                if (mTrackID == -1) {
-                    mTrackID = mMuxer.addTrack(mCodec.getOutputFormat());
-                    mMuxer.start();
-                }
-                mMuxer.writeSampleData(mTrackID, buf, info);
-            }
-        }
-        super.dequeueOutput(bufferIndex, info);
-    }
-
     @ApiTest(apis = {"android.media.MediaFormat#KEY_BITRATE_MODE",
             "android.media.MediaFormat#KEY_BIT_RATE"})
     @Test
     public void testPsnr() throws IOException, InterruptedException {
-        setUpParams(1);
-        MediaFormat format = mFormats.get(0);
-        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, KEY_FRAME_INTERVAL);
-        format.setInteger(MediaFormat.KEY_BITRATE_MODE, mBitRateMode);
-        Assume.assumeTrue("Encoder: " + mCodecName + " doesn't support format: " + mFormats.get(0),
-                areFormatsSupported(mCodecName, mMime, mFormats));
-        String tmpPath = File.createTempFile("tmp", ".bin").getAbsolutePath();
-        mMuxer = new MediaMuxer(tmpPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-        encodeToMemory(mActiveRawRes.mFileName, mCodecName, FRAME_LIMIT, format, true);
-        if (mTrackID != -1) {
-            mMuxer.stop();
-            mTrackID = -1;
-        }
-        if (mMuxer != null) {
-            mMuxer.release();
-            mMuxer = null;
-        }
+        MediaFormat format = mEncCfgParams[0].getFormat();
+        ArrayList<MediaFormat> formats = new ArrayList<>();
+        formats.add(format);
+        Assume.assumeTrue("Encoder: " + mCodecName + " doesn't support format: " + format,
+                areFormatsSupported(mCodecName, mMime, formats));
+        RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
+        assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
+                + mTestEnv, res);
+        encodeToMemory(mCodecName, mEncCfgParams[0], res, FRAME_LIMIT, false, true);
         CompareStreams cs = null;
         StringBuilder msg = new StringBuilder();
         boolean isOk = true;
         try {
-            cs = new CompareStreams(mActiveRawRes, mMime, tmpPath, true, mIsLoopBack);
+            cs = new CompareStreams(res, mMime, mMuxedOutputFile, true, mIsLoopBack);
             final ArrayList<double[]> framesPSNR = cs.getFramesPSNR();
             for (int j = 0; j < framesPSNR.size(); j++) {
                 double[] framePSNR = framesPSNR.get(j);
@@ -199,7 +171,7 @@ public class VideoEncoderPsnrTest extends VideoEncoderValidationTestBase {
         } finally {
             if (cs != null) cs.cleanUp();
         }
-        new File(tmpPath).delete();
+        new File(mMuxedOutputFile).delete();
         assertEquals("encoder did not encode the requested number of frames \n"
                 + mTestConfig + mTestEnv, FRAME_LIMIT, mOutputCount);
         assertTrue("Encountered frames with PSNR less than configured threshold "

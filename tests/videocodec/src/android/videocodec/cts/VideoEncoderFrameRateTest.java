@@ -19,10 +19,12 @@ package android.videocodec.cts;
 import static android.mediav2.common.cts.CodecTestBase.ComponentClass.HARDWARE;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.media.MediaFormat;
+import android.mediav2.common.cts.EncoderConfigParams;
 import android.mediav2.common.cts.RawResource;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -61,6 +63,7 @@ public class VideoEncoderFrameRateTest extends VideoEncoderValidationTestBase {
     private static final int KEY_FRAME_INTERVAL = 1;
     private static final int FRAME_LIMIT = 300;
     private static final int BASE_FRAME_RATE = 30;
+    private static final int BIT_RATE = 5000000;
     private static final List<Object[]> exhaustiveArgsList = new ArrayList<>();
     private static final HashMap<String, RawResource> RES_YUV_MAP = new HashMap<>();
 
@@ -68,7 +71,7 @@ public class VideoEncoderFrameRateTest extends VideoEncoderValidationTestBase {
     public static void decodeResourcesToYuv() {
         ArrayList<CompressedResource> resources = new ArrayList<>();
         for (Object[] arg : exhaustiveArgsList) {
-            resources.add((CompressedResource) arg[5]);
+            resources.add((CompressedResource) arg[2]);
         }
         decodeStreamsToYuv(resources, RES_YUV_MAP);
     }
@@ -80,35 +83,44 @@ public class VideoEncoderFrameRateTest extends VideoEncoderValidationTestBase {
         }
     }
 
+    private static EncoderConfigParams getVideoEncoderCfgParams(String mediaType, int width,
+            int height, int maxBFrames) {
+        return new EncoderConfigParams.Builder(mediaType)
+                .setBitRate(BIT_RATE)
+                .setKeyFrameInterval(KEY_FRAME_INTERVAL)
+                .setFrameRate(BASE_FRAME_RATE)
+                .setWidth(width)
+                .setHeight(height)
+                .setMaxBFrames(maxBFrames)
+                .build();
+    }
+
     private static void addParams(int width, int height, CompressedResource res) {
         final String[] mediaTypes = new String[]{MediaFormat.MIMETYPE_VIDEO_AVC,
                 MediaFormat.MIMETYPE_VIDEO_HEVC};
-        final int bitRate = 5000000;
         final int[] maxBFramesPerSubGop = new int[]{0, 1};
         for (String mediaType : mediaTypes) {
             for (int maxBFrames : maxBFramesPerSubGop) {
-                // mediaType, bit-rate, width, height, max b frames, resource file, test label
-                String label = String.format("%dkbps_%dx%d_maxb-%d", bitRate / 1000, width,
+                // mediaType, cfg, resource file, test label
+                String label = String.format("%dkbps_%dx%d_maxb-%d", BIT_RATE / 1000, width,
                         height, maxBFrames);
-                exhaustiveArgsList.add(new Object[]{mediaType, bitRate, width, height, maxBFrames,
-                        res, label});
+                exhaustiveArgsList.add(new Object[]{mediaType, getVideoEncoderCfgParams(mediaType,
+                        width, height, maxBFrames), res, label});
             }
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{7})")
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{4})")
     public static Collection<Object[]> input() {
         addParams(1920, 1080, BIRTHDAY_FULLHD_LANDSCAPE);
         addParams(1080, 1920, SELFIEGROUP_FULLHD_PORTRAIT);
         return prepareParamList(exhaustiveArgsList, true, false, true, false, HARDWARE);
     }
 
-    public VideoEncoderFrameRateTest(String encoder, String mediaType, int bitRate, int width,
-            int height, int maxBFrames, CompressedResource res,
+    public VideoEncoderFrameRateTest(String encoder, String mediaType,
+            EncoderConfigParams cfgParams, CompressedResource res,
             @SuppressWarnings("unused") String testLabel, String allTestParams) {
-        super(encoder, mediaType, bitRate, width, height,
-                RES_YUV_MAP.getOrDefault(res.uniqueLabel(), null), allTestParams);
-        mMaxBFrames = maxBFrames;
+        super(encoder, mediaType, cfgParams, res, allTestParams);
     }
 
     @Before
@@ -118,21 +130,25 @@ public class VideoEncoderFrameRateTest extends VideoEncoderValidationTestBase {
 
     @ApiTest(apis = {"android.media.MediaFormat#KEY_FRAME_RATE"})
     @Test
-    public void testEncoderFrameRateSupport() throws IOException, InterruptedException {
-        setUpParams(1);
+    public void testEncoderFrameRateSupport() throws IOException, InterruptedException,
+            CloneNotSupportedException {
         float[] scaleFactors = new float[]{1.0f, 0.5f};
         float refFactor = -1.0f;
         int refSize = -1;
         boolean testSkipped = false;
+        RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
+        assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
+                + mTestEnv, res);
         for (float scaleFactor : scaleFactors) {
-            MediaFormat format = mFormats.get(0);
-            mFrameRate = (int) (BASE_FRAME_RATE * scaleFactor);
-            format.setInteger(MediaFormat.KEY_FRAME_RATE, mFrameRate);
-            format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, KEY_FRAME_INTERVAL);
-            if (!areFormatsSupported(mCodecName, mMime, mFormats)) {
+            EncoderConfigParams cfg = mEncCfgParams[0].getBuilder()
+                    .setFrameRate((int) (BASE_FRAME_RATE * scaleFactor)).build();
+            MediaFormat format = cfg.getFormat();
+            ArrayList<MediaFormat> formats = new ArrayList<>();
+            formats.add(format);
+            if (!areFormatsSupported(mCodecName, mMime, formats)) {
                 continue;
             }
-            encodeToMemory(mActiveRawRes.mFileName, mCodecName, FRAME_LIMIT, format, true);
+            encodeToMemory(mCodecName, cfg, res, FRAME_LIMIT, true, false);
             assertEquals("encoder did not encode the requested number of frames \n" + mTestConfig
                     + mTestEnv, FRAME_LIMIT, mOutputCount);
             if (refFactor == -1.0) {

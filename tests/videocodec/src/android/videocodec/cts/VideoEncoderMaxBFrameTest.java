@@ -22,9 +22,11 @@ import static android.media.MediaFormat.PICTURE_TYPE_P;
 import static android.mediav2.common.cts.CodecTestBase.ComponentClass.HARDWARE;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.media.MediaFormat;
+import android.mediav2.common.cts.EncoderConfigParams;
 import android.mediav2.common.cts.RawResource;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -60,6 +62,9 @@ import java.util.Map;
 @RunWith(Parameterized.class)
 public class VideoEncoderMaxBFrameTest extends VideoEncoderValidationTestBase {
     private static final int FRAME_LIMIT = 600;
+    private static final int BIT_RATE = 5000000;
+    private static final int WIDTH = 1920;
+    private static final int HEIGHT = 1080;
     private static final List<Object[]> exhaustiveArgsList = new ArrayList<>();
     private static final HashMap<String, RawResource> RES_YUV_MAP = new HashMap<>();
 
@@ -67,7 +72,7 @@ public class VideoEncoderMaxBFrameTest extends VideoEncoderValidationTestBase {
     public static void decodeResourcesToYuv() {
         ArrayList<CompressedResource> resources = new ArrayList<>();
         for (Object[] arg : exhaustiveArgsList) {
-            resources.add((CompressedResource) arg[5]);
+            resources.add((CompressedResource) arg[2]);
         }
         decodeStreamsToYuv(resources, RES_YUV_MAP);
     }
@@ -79,32 +84,36 @@ public class VideoEncoderMaxBFrameTest extends VideoEncoderValidationTestBase {
         }
     }
 
-    @Parameterized.Parameters(name = "{index}({0}_{1}_{7})")
+    private static EncoderConfigParams getVideoEncoderCfgParams(String mediaType, int maxBFrames) {
+        return new EncoderConfigParams.Builder(mediaType)
+                .setBitRate(BIT_RATE)
+                .setWidth(WIDTH)
+                .setHeight(HEIGHT)
+                .setMaxBFrames(maxBFrames)
+                .build();
+    }
+
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{4})")
     public static Collection<Object[]> input() {
         final String[] mediaTypes = new String[]{MediaFormat.MIMETYPE_VIDEO_AVC,
                 MediaFormat.MIMETYPE_VIDEO_HEVC};
-        final int bitRate = 5000000;
-        final int width = 1920;
-        final int height = 1080;
         final int[] maxBFramesPerSubGop = new int[]{0, 1};
         for (String mediaType : mediaTypes) {
-            for (int maxBFramesFound : maxBFramesPerSubGop) {
-                // mediaType, bit-rate, width, height, max b frames, resource file, test label
-                String label = String.format("%dkbps_%dx%d_maxb-%d", bitRate / 1000, width,
-                        height, maxBFramesFound);
-                exhaustiveArgsList.add(new Object[]{mediaType, bitRate, width, height,
-                        maxBFramesFound, BIRTHDAY_FULLHD_LANDSCAPE, label});
+            for (int maxBFrames : maxBFramesPerSubGop) {
+                // mediaType, cfg, resource file, test label
+                String label = String.format("%dkbps_%dx%d_maxb-%d", BIT_RATE / 1000, WIDTH,
+                        HEIGHT, maxBFrames);
+                exhaustiveArgsList.add(new Object[]{mediaType, getVideoEncoderCfgParams(mediaType,
+                        maxBFrames), BIRTHDAY_FULLHD_LANDSCAPE, label});
             }
         }
         return prepareParamList(exhaustiveArgsList, true, false, true, false, HARDWARE);
     }
 
-    public VideoEncoderMaxBFrameTest(String encoder, String mediaType, int bitRate, int width,
-            int height, int maxBFramesFound, CompressedResource res,
-            @SuppressWarnings("unused") String testLabel, String allTestParams) {
-        super(encoder, mediaType, bitRate, width, height,
-                RES_YUV_MAP.getOrDefault(res.uniqueLabel(), null), allTestParams);
-        mMaxBFrames = maxBFramesFound;
+    public VideoEncoderMaxBFrameTest(String encoder, String mediaType, EncoderConfigParams cfg,
+            CompressedResource res, @SuppressWarnings("unused") String testLabel,
+            String allTestParams) {
+        super(encoder, mediaType, cfg, res, allTestParams);
     }
 
     @Before
@@ -115,11 +124,15 @@ public class VideoEncoderMaxBFrameTest extends VideoEncoderValidationTestBase {
     @ApiTest(apis = {"android.media.MediaFormat#KEY_MAX_B_FRAMES"})
     @Test
     public void testMaxBFrameSupport() throws IOException, InterruptedException {
-        setUpParams(1);
-        MediaFormat format = mFormats.get(0);
-        Assume.assumeTrue("Encoder: " + mCodecName + " doesn't support format: " + mFormats.get(0),
-                areFormatsSupported(mCodecName, mMime, mFormats));
-        encodeToMemory(mActiveRawRes.mFileName, mCodecName, FRAME_LIMIT, format, true);
+        MediaFormat format = mEncCfgParams[0].getFormat();
+        ArrayList<MediaFormat> formats = new ArrayList<>();
+        formats.add(format);
+        Assume.assumeTrue("Encoder: " + mCodecName + " doesn't support format: " + format,
+                areFormatsSupported(mCodecName, mMime, formats));
+        RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
+        assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
+                + mTestEnv, res);
+        encodeToMemory(mCodecName, mEncCfgParams[0], res, FRAME_LIMIT, true, false);
         assertEquals("encoder did not encode the requested number of frames \n"
                 + mTestConfig + mTestEnv, FRAME_LIMIT, mOutputCount);
         int bFramesInSubGop = 0, maxBFramesFound = -1;
@@ -137,9 +150,10 @@ public class VideoEncoderMaxBFrameTest extends VideoEncoderValidationTestBase {
         }
         String msg = String.format("Number of BFrames in a SubGOP exceeds maximum number of"
                         + " BFrames configured.\n Configured max BFrames %d. \n Got max"
-                        + " BFrames %d. \n", mMaxBFrames, maxBFramesFound);
-        Assume.assumeTrue(msg + mTestConfig + mTestEnv, maxBFramesFound <= mMaxBFrames);
-        if (mMaxBFrames > 0) {
+                        + " BFrames %d. \n", mEncCfgParams[0].mMaxBFrames, maxBFramesFound);
+        Assume.assumeTrue(msg + mTestConfig + mTestEnv,
+                maxBFramesFound <= mEncCfgParams[0].mMaxBFrames);
+        if (mEncCfgParams[0].mMaxBFrames > 0) {
             assertTrue("maxBFrames are configured to > 0, but no B Frames are seen in sequence \n"
                     + mTestConfig + mTestEnv, maxBFramesFound > 0);
         }

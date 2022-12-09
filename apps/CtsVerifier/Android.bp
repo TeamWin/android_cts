@@ -89,7 +89,15 @@ android_library {
         "MediaPerformanceClassCommon",
     ],
 
-    libs: ["telephony-common"] + ["android.test.runner.stubs"] + ["android.test.base.stubs"] + ["android.test.mock.stubs"] + ["android.car-test-stubs"] + ["voip-common"] + ["truth-prebuilt"],
+    libs: [
+        "telephony-common",
+        "android.test.runner.stubs",
+        "android.test.base.stubs",
+        "android.test.mock.stubs",
+        "android.car-test-stubs",
+        "voip-common",
+        "truth",
+    ],
 
     platform_apis: true,
 
