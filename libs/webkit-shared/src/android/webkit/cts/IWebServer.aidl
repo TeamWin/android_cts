@@ -16,22 +16,24 @@
 
 package android.webkit.cts;
 
-import android.view.MotionEvent;
+import android.webkit.cts.HttpRequest;
 
-import android.webkit.cts.IWebServer;
+interface IWebServer {
+    void start(boolean secure);
 
-/**
- * This shared interface is used to invoke methods
- * that belong to the activity of a test.
- */
-interface IHostAppInvoker {
-    void waitForIdleSync();
+    void shutdown();
 
-    void sendKeyDownUpSync(int keyCode);
+    void resetRequestState();
 
-    void sendPointerSync(in MotionEvent event);
+    String getDelayedAssetUrl(String path);
 
-    byte[] getEncodingBytes(String data, String charset);
+    String getRedirectingAssetUrl(String path);
 
-    IWebServer getWebServer();
+    String getAssetUrl(String path);
+
+    String getBinaryUrl(String mimeType, int contentLength);
+
+    boolean wasResourceRequested(String url);
+
+    HttpRequest getLastRequest(String url);
 }

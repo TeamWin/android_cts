@@ -16,6 +16,9 @@
 
 package android.telephony.mockmodem;
 
+import android.hardware.radio.voice.CdmaSignalInfoRecord;
+import android.hardware.radio.voice.LastCallFailCauseInfo;
+import android.hardware.radio.voice.UusInfo;
 import android.os.Handler;
 
 public interface MockModemConfigInterface {
@@ -48,6 +51,8 @@ public interface MockModemConfigInterface {
     int DEFAULT_LOGICAL_MODEM2_ID = 1;
 
     // ***** Methods
+    void destroy();
+
     Handler getMockModemConfigHandler(int logicalSlotId);
 
     /** Broadcast all notifications */
@@ -85,6 +90,15 @@ public interface MockModemConfigInterface {
 
     void unregisterForRadioStateChanged(int logicalSlotId, Handler h);
 
+    /**
+     * Sets the latest radio power state of modem
+     *
+     * @param logicalSlotId the Id of logical sim slot.
+     * @param state 0 means "unavailable", 1 means "off", 2 means "on".
+     * @param client for tracking calling client
+     */
+    void setRadioState(int logicalSlotId, int state, String client);
+
     // ***** IRadioSim
     /** Register/unregister notification handler for card status changed */
     void registerForCardStatusChanged(int logicalSlotId, Handler h, int what, Object obj);
@@ -107,15 +121,125 @@ public interface MockModemConfigInterface {
 
     void unregisterForServiceStateChanged(int logicalSlotId, Handler h);
 
+    // ***** IRadioVoice
+    /** Register/unregister notification handler for call state changed */
+    void registerForCallStateChanged(int logicalSlotId, Handler h, int what, Object obj);
+
+    void unregisterForCallStateChanged(int logicalSlotId, Handler h);
+
+    /** Register/unregister notification handler for current calls response */
+    void registerForCurrentCallsResponse(int logicalSlotId, Handler h, int what, Object obj);
+
+    void unregisterForCurrentCallsResponse(int logicalSlotId, Handler h);
+
+    /** Register/unregister notification handler for incoming call */
+    void registerForCallIncoming(int logicalSlotId, Handler h, int what, Object obj);
+
+    void unregisterForCallIncoming(int logicalSlotId, Handler h);
+
+    /** Register/unregister notification handler for ringback tone */
+    void registerRingbackTone(int logicalSlotId, Handler h, int what, Object obj);
+
+    void unregisterRingbackTone(int logicalSlotId, Handler h);
+
     /**
-     * Sets the latest radio power state of modem
+     * Request to get current calls.
      *
      * @param logicalSlotId the Id of logical sim slot.
-     * @param state 0 means "unavailable", 1 means "off", 2 means "on".
      * @param client for tracking calling client
+     * @return boolean true if the operation succeeds, otherwise false.
      */
-    void setRadioState(int logicalSlotId, int state, String client);
+    boolean getCurrentCalls(int logicalSlotId, String client);
 
+    /**
+     * Request to dial a voice call.
+     *
+     * @param logicalSlotId the Id of logical sim slot.
+     * @param address the phone number to dial.
+     * @param clir CLIR mode.
+     * @param uusInfo user to user signaling information.
+     * @param client for tracking calling client
+     * @return boolean true if the operation succeeds, otherwise false.
+     */
+    boolean dialVoiceCall(
+            int logicalSlotId, String address, int clir, UusInfo[] uusInfo, String client);
+
+    /**
+     * Request to dial a voice call with a call control info.
+     *
+     * @param logicalSlotId the Id of logical sim slot.
+     * @param address the phone number to dial.
+     * @param clir CLIR mode.
+     * @param uusInfo user to user signaling information.
+     * @param callControlInfo call control configuration
+     * @param client for tracking calling client
+     * @return boolean true if the operation succeeds, otherwise false.
+     */
+    boolean dialVoiceCall(
+            int logicalSlotId,
+            String address,
+            int clir,
+            UusInfo[] uusInfo,
+            MockCallControlInfo callControlInfo,
+            String client);
+
+    /**
+     * Request to hangup a voice call.
+     *
+     * @param logicalSlotId the Id of logical sim slot.
+     * @param index call identify to hangup.
+     * @param client for tracking calling client
+     * @return boolean true if the operation succeeds, otherwise false.
+     */
+    boolean hangupVoiceCall(int logicalSlotId, int index, String client);
+
+    /**
+     * Request to reject an incoming voice call.
+     *
+     * @param logicalSlotId the Id of logical sim slot.
+     * @param client for tracking calling client
+     * @return boolean true if the operation succeeds, otherwise false.
+     */
+    boolean rejectVoiceCall(int logicalSlotId, String client);
+
+    /**
+     * Request to accept an incoming voice call.
+     *
+     * @param logicalSlotId the Id of logical sim slot.
+     * @param client for tracking calling client
+     * @return boolean true if the operation succeeds, otherwise false.
+     */
+    boolean acceptVoiceCall(int logicalSlotId, String client);
+
+    /**
+     * Get last call fail cause.
+     *
+     * @param logicalSlotId the Id of logical sim slot.
+     * @param client for tracking calling client
+     * @return LastCallFailCauseInfo last cause code and vendor cause info.
+     */
+    LastCallFailCauseInfo getLastCallFailCause(int logicalSlotId, String client);
+
+    /**
+     * Get voice mute mode.
+     *
+     * @param logicalSlotId the Id of logical sim slot.
+     * @param client for tracking calling client
+     * @return boolean true if voice is mute, otherwise false.
+     */
+    boolean getVoiceMuteMode(int logicalSlotId, String client);
+
+    /**
+     * Set voice mute mode.
+     *
+     * @param logicalSlotId the Id of logical sim slot.
+     * @param muteMode mute mode for voice call.
+     * @param client for tracking calling client
+     * @return boolean true if the operation succeeds, otherwise false.
+     */
+    boolean setVoiceMuteMode(int logicalSlotId, boolean muteMode, String client);
+
+    // ***** Utility methods
     /**
      * Query whether any SIM cards are present or not.
      *
@@ -131,7 +255,7 @@ public interface MockModemConfigInterface {
      * @param logicalSlotId the Id of logical sim slot.
      * @param simProfileId The target profile to be switched.
      * @param client for tracking calling client
-     * @return boolean true if the operation succeed.
+     * @return boolean true if the operation succeeds.
      */
     boolean changeSimProfile(int logicalSlotId, int simProfileId, String client);
 
@@ -154,4 +278,53 @@ public interface MockModemConfigInterface {
      * @return String the SIM info of the queried type.
      */
     String getSimInfo(int logicalSlotId, int type, String client);
+
+    /**
+     * Request to set call control configuration.
+     *
+     * @param logicalSlotId the Id of logical sim slot.
+     * @param callControlInfo the configuration of call control.
+     * @param client for tracking calling client
+     * @return boolean true if the operation succeeds, otherwise false.
+     */
+    boolean setCallControlInfo(
+            int logicalSlotId, MockCallControlInfo callControlInfo, String client);
+
+    /**
+     * Request to get call control configuration.
+     *
+     * @param logicalSlotId the Id of logical sim slot.
+     * @param client for tracking calling client
+     * @return MockCallControlInfo which was set before.
+     */
+    MockCallControlInfo getCallControlInfo(int logicalSlotId, String client);
+
+    /**
+     * Request to trigger an incoming voice call with a call control info.
+     *
+     * @param logicalSlotId the Id of logical sim slot.
+     * @param address the phone number to dial.
+     * @param uusInfo user to user signaling information.
+     * @param cdmaSignalInfoRecord CDMA Signal Information Record as defined in C.S0005 section
+     *     3.7.5.5, null for GSM case.
+     * @param callControlInfo call control configuration
+     * @param client for tracking calling client
+     * @return boolean true if the operation succeeds, otherwise false.
+     */
+    boolean triggerIncomingVoiceCall(
+            int logicalSlotId,
+            String address,
+            UusInfo[] uusInfo,
+            CdmaSignalInfoRecord cdmaSignalInfoRecord,
+            MockCallControlInfo callControlInfo,
+            String client);
+
+    /**
+     * Get number of voice calls.
+     *
+     * @param logicalSlotId the Id of logical sim slot.
+     * @param client for tracking calling client
+     * @return int number of ongoing calls
+     */
+    int getNumberOfCalls(int logicalSlotId, String client);
 }

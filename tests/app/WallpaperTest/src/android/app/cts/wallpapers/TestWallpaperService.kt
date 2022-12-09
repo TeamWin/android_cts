@@ -20,6 +20,8 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Looper
 import android.service.wallpaper.WallpaperService
+import android.util.Log
+import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.WindowInsets
 import com.google.common.truth.Truth.assertWithMessage
@@ -39,6 +41,8 @@ open class TestWallpaperService : WallpaperService() {
 
     private val mainThread: Thread = Looper.getMainLooper().thread
     companion object {
+        private val TAG = TestWallpaperService::class.java.simpleName
+        private const val DEBUG = true
         private var assertionError: AssertionError? = null
 
         /**
@@ -55,6 +59,7 @@ open class TestWallpaperService : WallpaperService() {
     }
 
     override fun onCreateEngine(): Engine {
+        if (DEBUG) Log.d(TAG, "onCreateEngine")
         assertMainThread()
         return FakeEngine()
     }
@@ -69,7 +74,14 @@ open class TestWallpaperService : WallpaperService() {
             holder.unlockCanvasAndPost(c)
         }
 
+        override fun onAmbientModeChanged(inAmbientMode: Boolean, animationDuration: Long) {
+            if (DEBUG) Log.d(TAG, "onAmbientModeChanged")
+            assertMainThread()
+            super.onAmbientModeChanged(inAmbientMode, animationDuration)
+        }
+
         override fun onApplyWindowInsets(insets: WindowInsets) {
+            if (DEBUG) Log.d(TAG, "onApplyWindowInsets")
             assertMainThread()
             super.onApplyWindowInsets(insets)
         }
@@ -82,16 +94,19 @@ open class TestWallpaperService : WallpaperService() {
             extras: Bundle?,
             resultRequested: Boolean
         ): Bundle? {
+            if (DEBUG) Log.d(TAG, "onCommand")
             assertMainThread()
             return super.onCommand(action, x, y, z, extras, resultRequested)
         }
 
         override fun onComputeColors(): WallpaperColors? {
+            if (DEBUG) Log.d(TAG, "onComputeColors")
             assertMainThread()
             return super.onComputeColors()
         }
 
         override fun onCreate(surfaceHolder: SurfaceHolder) {
+            if (DEBUG) Log.d(TAG, "onCreate")
             assertMainThread()
             assertNotCreated()
             assertSurfaceNotCreated()
@@ -100,6 +115,7 @@ open class TestWallpaperService : WallpaperService() {
         }
 
         override fun onDesiredSizeChanged(desiredWidth: Int, desiredHeight: Int) {
+            if (DEBUG) Log.d(TAG, "onDesiredSizeChanged")
             assertMainThread()
             assertCreated()
             assertSurfaceCreated()
@@ -107,6 +123,7 @@ open class TestWallpaperService : WallpaperService() {
         }
 
         override fun onDestroy() {
+            if (DEBUG) Log.d(TAG, "onDestroy")
             assertMainThread()
             assertCreated()
             mCreated = false
@@ -121,6 +138,7 @@ open class TestWallpaperService : WallpaperService() {
             xPixelOffset: Int,
             yPixelOffset: Int
         ) {
+            if (DEBUG) Log.d(TAG, "onOffsetsChanged")
             assertMainThread()
             super.onOffsetsChanged(xOffset, yOffset, xOffsetStep, yOffsetStep,
                 xPixelOffset, yPixelOffset)
@@ -132,6 +150,7 @@ open class TestWallpaperService : WallpaperService() {
             width: Int,
             height: Int
         ) {
+            if (DEBUG) Log.d(TAG, "onSurfaceChanged")
             assertMainThread()
             assertCreated()
             assertSurfaceCreated()
@@ -139,6 +158,7 @@ open class TestWallpaperService : WallpaperService() {
         }
 
         override fun onSurfaceCreated(holder: SurfaceHolder) {
+            if (DEBUG) Log.d(TAG, "onSurfaceCreated")
             assertMainThread()
             assertCreated()
             assertSurfaceNotCreated()
@@ -147,6 +167,7 @@ open class TestWallpaperService : WallpaperService() {
         }
 
         override fun onSurfaceDestroyed(holder: SurfaceHolder) {
+            if (DEBUG) Log.d(TAG, "onSurfaceDestroyed")
             assertMainThread()
             assertCreated()
             assertSurfaceCreated()
@@ -154,6 +175,7 @@ open class TestWallpaperService : WallpaperService() {
         }
 
         override fun onSurfaceRedrawNeeded(holder: SurfaceHolder) {
+            if (DEBUG) Log.d(TAG, "onSurfaceRedrawNeeded")
             draw(holder)
             assertMainThread()
             assertCreated()
@@ -161,12 +183,20 @@ open class TestWallpaperService : WallpaperService() {
             super.onSurfaceRedrawNeeded(holder)
         }
 
+        override fun onTouchEvent(event: MotionEvent) {
+            if (DEBUG) Log.d(TAG, "onTouchEvent")
+            assertMainThread()
+            super.onTouchEvent(event)
+        }
+
         override fun onVisibilityChanged(visible: Boolean) {
+            if (DEBUG) Log.d(TAG, "onVisibilityChanged")
             assertMainThread()
             super.onVisibilityChanged(visible)
         }
 
         override fun onZoomChanged(zoom: Float) {
+            if (DEBUG) Log.d(TAG, "onZoomChanged")
             assertMainThread()
             super.onZoomChanged(zoom)
         }

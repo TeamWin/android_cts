@@ -454,6 +454,7 @@ void AAudioStreamBuilderChannelMaskTest::testChannelMask(aaudio_channel_mask_t c
         ASSERT_EQ(AAUDIO_OK, result);
         ASSERT_NE(nullptr, aaudioStream);
         ASSERT_NE(0, AAudioStream_getChannelCount(aaudioStream));
+        ASSERT_NE(0, AAudioStream_getHardwareChannelCount(aaudioStream));
         ASSERT_NE(AAUDIO_UNSPECIFIED, AAudioStream_getChannelMask(aaudioStream));
         ASSERT_NE(AAUDIO_CHANNEL_INVALID, AAudioStream_getChannelMask(aaudioStream));
     } else { // NOT_CRASH

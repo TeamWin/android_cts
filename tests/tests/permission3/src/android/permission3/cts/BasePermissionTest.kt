@@ -23,6 +23,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.os.SystemClock
+import android.provider.DeviceConfig
 import android.provider.Settings
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
@@ -115,6 +116,21 @@ abstract class BasePermissionTest {
         }
 
         pressHome()
+    }
+
+    protected fun setDeviceConfigPrivacyProperty(
+        propertyName: String,
+        value: String,
+    ) {
+        runWithShellPermissionIdentity(instrumentation.uiAutomation) {
+            val valueWasSet =
+                DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_PRIVACY,
+                    /* name = */ propertyName,
+                    /* value = */ value,
+                    /* makeDefault = */ false)
+            check(valueWasSet) { "Could not set $propertyName to $value" }
+        }
     }
 
     protected fun getPermissionControllerString(res: String, vararg formatArgs: Any): Pattern {

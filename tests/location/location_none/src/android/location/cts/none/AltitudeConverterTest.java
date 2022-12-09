@@ -39,27 +39,26 @@ import java.io.IOException;
 public class AltitudeConverterTest {
 
     private AltitudeConverter mAltitudeConverter;
-
     private Context mContext;
 
     @Before
     public void setUp() {
         mAltitudeConverter = new AltitudeConverter();
-
         mContext = ApplicationProvider.getApplicationContext();
     }
 
     @Test
-    public void testAddMslAltitude_expectedBehavior() throws IOException {
+    public void testAddMslAltitudeToLocation_expectedBehavior() throws IOException {
         // Interpolates between bffff, 95555, and 00001.
         Location location = new Location("");
         location.setLatitude(-35.246789);
         location.setLongitude(-44.962683);
         location.setAltitude(-1);
         location.setVerticalAccuracyMeters(1);
-        mAltitudeConverter.addMslAltitude(mContext, location);
-        assertThat(location.getMslAltitudeMeters()).isWithin(1e-3).of(5.000);
-        assertThat(location.getMslAltitudeAccuracyMeters()).isWithin(1e-3f).of(1.063f);
+        mAltitudeConverter.addMslAltitudeToLocation(mContext, location);
+        assertThat(location.getMslAltitudeMeters()).isWithin(2).of(5.1076);
+        assertThat(location.getMslAltitudeAccuracyMeters()).isGreaterThan(1f);
+        assertThat(location.getMslAltitudeAccuracyMeters()).isLessThan(1.1f);
 
         // Again interpolates between bffff, 95555, and 00001 - no disk read.
         location = new Location("");
@@ -67,9 +66,10 @@ public class AltitudeConverterTest {
         location.setLongitude(-44.887958);
         location.setAltitude(-1);
         location.setVerticalAccuracyMeters(1);
-        mAltitudeConverter.addMslAltitude(mContext, location);
-        assertThat(location.getMslAltitudeMeters()).isWithin(1e-3).of(5.000);
-        assertThat(location.getMslAltitudeAccuracyMeters()).isWithin(1e-3f).of(1.063f);
+        mAltitudeConverter.addMslAltitudeToLocation(mContext, location);
+        assertThat(location.getMslAltitudeMeters()).isWithin(2).of(5.1076);
+        assertThat(location.getMslAltitudeAccuracyMeters()).isGreaterThan(1f);
+        assertThat(location.getMslAltitudeAccuracyMeters()).isLessThan(1.1f);
 
         // Interpolates between 95555, 00001, 00007, and 95553 - no vertical accuracy.
         location = new Location("");
@@ -77,8 +77,8 @@ public class AltitudeConverterTest {
         location.setLongitude(-44.925335);
         location.setAltitude(-1);
         location.setVerticalAccuracyMeters(-1); // Invalid vertical accuracy
-        mAltitudeConverter.addMslAltitude(mContext, location);
-        assertThat(location.getMslAltitudeMeters()).isWithin(1e-3).of(5.000);
+        mAltitudeConverter.addMslAltitudeToLocation(mContext, location);
+        assertThat(location.getMslAltitudeMeters()).isWithin(2).of(5.1919);
         assertThat(location.hasMslAltitudeAccuracy()).isFalse();
 
         // Interpolates somewhere else more interesting, i.e., Hawaii.
@@ -87,64 +87,65 @@ public class AltitudeConverterTest {
         location.setLongitude(-155.998774);
         location.setAltitude(-1);
         location.setVerticalAccuracyMeters(1);
-        mAltitudeConverter.addMslAltitude(mContext, location);
-        assertThat(location.getMslAltitudeMeters()).isWithin(1e-3).of(-18.938);
-        assertThat(location.getMslAltitudeAccuracyMeters()).isWithin(1e-3f).of(1.063f);
+        mAltitudeConverter.addMslAltitudeToLocation(mContext, location);
+        assertThat(location.getMslAltitudeMeters()).isWithin(2).of(-19.2359);
+        assertThat(location.getMslAltitudeAccuracyMeters()).isGreaterThan(1f);
+        assertThat(location.getMslAltitudeAccuracyMeters()).isLessThan(1.1f);
     }
 
     @Test
-    public void testAddMslAltitude_invalidLatitudeThrows() {
+    public void testAddMslAltitudeToLocation_invalidLatitudeThrows() {
         Location location = new Location("");
         location.setLongitude(-44.962683);
         location.setAltitude(-1);
 
         location.setLatitude(Double.NaN);
         assertThrows(IllegalArgumentException.class,
-                () -> mAltitudeConverter.addMslAltitude(mContext, location));
+                () -> mAltitudeConverter.addMslAltitudeToLocation(mContext, location));
 
         location.setLatitude(91);
         assertThrows(IllegalArgumentException.class,
-                () -> mAltitudeConverter.addMslAltitude(mContext, location));
+                () -> mAltitudeConverter.addMslAltitudeToLocation(mContext, location));
 
         location.setLatitude(-91);
         assertThrows(IllegalArgumentException.class,
-                () -> mAltitudeConverter.addMslAltitude(mContext, location));
+                () -> mAltitudeConverter.addMslAltitudeToLocation(mContext, location));
     }
 
     @Test
-    public void testAddMslAltitude_invalidLongitudeThrows() {
+    public void testAddMslAltitudeToLocation_invalidLongitudeThrows() {
         Location location = new Location("");
         location.setLatitude(-35.246789);
         location.setAltitude(-1);
 
         location.setLongitude(Double.NaN);
         assertThrows(IllegalArgumentException.class,
-                () -> mAltitudeConverter.addMslAltitude(mContext, location));
+                () -> mAltitudeConverter.addMslAltitudeToLocation(mContext, location));
 
         location.setLongitude(181);
         assertThrows(IllegalArgumentException.class,
-                () -> mAltitudeConverter.addMslAltitude(mContext, location));
+                () -> mAltitudeConverter.addMslAltitudeToLocation(mContext, location));
 
         location.setLongitude(-181);
         assertThrows(IllegalArgumentException.class,
-                () -> mAltitudeConverter.addMslAltitude(mContext, location));
+                () -> mAltitudeConverter.addMslAltitudeToLocation(mContext, location));
     }
 
     @Test
-    public void testAddMslAltitude_invalidAltitudeThrows() {
+    public void testAddMslAltitudeToLocation_invalidAltitudeThrows() {
         Location location = new Location("");
         location.setLatitude(-35.246789);
         location.setLongitude(-44.962683);
 
         assertThrows(IllegalArgumentException.class,
-                () -> mAltitudeConverter.addMslAltitude(mContext, location));
+                () -> mAltitudeConverter.addMslAltitudeToLocation(mContext, location));
 
         location.setAltitude(Double.NaN);
         assertThrows(IllegalArgumentException.class,
-                () -> mAltitudeConverter.addMslAltitude(mContext, location));
+                () -> mAltitudeConverter.addMslAltitudeToLocation(mContext, location));
 
         location.setAltitude(Double.POSITIVE_INFINITY);
         assertThrows(IllegalArgumentException.class,
-                () -> mAltitudeConverter.addMslAltitude(mContext, location));
+                () -> mAltitudeConverter.addMslAltitudeToLocation(mContext, location));
     }
 }

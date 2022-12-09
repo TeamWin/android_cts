@@ -30,6 +30,7 @@ java_test_host {
         "compatibility-host-util",
     ],
     static_libs: [
+        "host-libprotobuf-java-full",
         "perfetto_config-full",
         "perfetto_trace-full",
         "platform-test-annotations-host",

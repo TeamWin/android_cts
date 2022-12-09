@@ -92,11 +92,11 @@ java_library_host {
     srcs: ["src/**/lib/*.java"],
     static_libs: [
         "platformprotos",
+        "host-libprotobuf-java-full",
     ],
     libs: [
         "compatibility-host-util",
         "cts-tradefed",
-        "host-libprotobuf-java-full",
         "tradefed",
         "truth-prebuilt",
     ],

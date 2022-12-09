@@ -15,7 +15,10 @@
  */
 package android.telephony.cts;
 
+import static android.telephony.PreciseDisconnectCause.NO_DISCONNECT_CAUSE_AVAILABLE;
+import static android.telephony.PreciseDisconnectCause.TEMPORARY_FAILURE;
 import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_TWN_CHT;
+import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_TWN_FET;
 
 import static com.android.internal.telephony.RILConstants.INTERNAL_ERR;
 import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWER;
@@ -28,13 +31,23 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.hardware.radio.network.Domain;
+import android.hardware.radio.voice.LastCallFailCause;
+import android.hardware.radio.voice.UusInfo;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.SystemProperties;
+import android.telecom.PhoneAccount;
+import android.telecom.TelecomManager;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.ServiceState;
 import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
+import android.telephony.mockmodem.MockCallControlInfo;
 import android.telephony.mockmodem.MockModemManager;
 import android.util.Log;
 
@@ -48,11 +61,13 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /** Test MockModemService interfaces. */
 public class TelephonyManagerTestOnMockModem {
     private static final String TAG = "TelephonyManagerTestOnMockModem";
+    private static final long WAIT_TIME_MS = 5000;
     private static MockModemManager sMockModemManager;
     private static TelephonyManager sTelephonyManager;
     private static final String ALLOW_MOCK_MODEM_PROPERTY = "persist.radio.allow_mock_modem";
@@ -60,6 +75,18 @@ public class TelephonyManagerTestOnMockModem {
     private static final boolean DEBUG = !"user".equals(Build.TYPE);
     private static final String RESOURCE_PACKAGE_NAME = "android";
     private static boolean sIsMultiSimDevice;
+    private static HandlerThread sCallDisconnectCauseCallbackHandlerThread;
+    private static Handler sCallDisconnectCauseCallbackHandler;
+    private static HandlerThread sCallStateChangeCallbackHandlerThread;
+    private static Handler sCallStateChangeCallbackHandler;
+    private static CallDisconnectCauseListener sCallDisconnectCauseCallback;
+    private static CallStateListener sCallStateCallback;
+    private int mPreciseCallDisconnectCause;
+    private int mCallState;
+    private final Object mCallDisconnectCauseLock = new Object();
+    private final Object mCallStateChangeLock = new Object();
+    private final Executor mCallDisconnectCauseExecutor = Runnable::run;
+    private final Executor mCallStateChangeExecutor = Runnable::run;
 
     @BeforeClass
     public static void beforeAllTests() throws Exception {
@@ -78,6 +105,17 @@ public class TelephonyManagerTestOnMockModem {
         sMockModemManager = new MockModemManager();
         assertNotNull(sMockModemManager);
         assertTrue(sMockModemManager.connectMockModemService());
+
+        sCallDisconnectCauseCallbackHandlerThread =
+                new HandlerThread("TelephonyManagerCallbackTest");
+        sCallDisconnectCauseCallbackHandlerThread.start();
+        sCallDisconnectCauseCallbackHandler =
+                new Handler(sCallDisconnectCauseCallbackHandlerThread.getLooper());
+
+        sCallStateChangeCallbackHandlerThread = new HandlerThread("TelephonyManagerCallbackTest");
+        sCallStateChangeCallbackHandlerThread.start();
+        sCallStateChangeCallbackHandler =
+                new Handler(sCallStateChangeCallbackHandlerThread.getLooper());
     }
 
     @AfterClass
@@ -86,6 +124,26 @@ public class TelephonyManagerTestOnMockModem {
 
         if (!hasTelephonyFeature()) {
             return;
+        }
+
+        if (sCallDisconnectCauseCallbackHandlerThread != null) {
+            sCallDisconnectCauseCallbackHandlerThread.quitSafely();
+            sCallDisconnectCauseCallbackHandlerThread = null;
+        }
+
+        if (sCallStateChangeCallbackHandlerThread != null) {
+            sCallStateChangeCallbackHandlerThread.quitSafely();
+            sCallStateChangeCallbackHandlerThread = null;
+        }
+
+        if (sCallDisconnectCauseCallback != null) {
+            sTelephonyManager.unregisterTelephonyCallback(sCallDisconnectCauseCallback);
+            sCallDisconnectCauseCallback = null;
+        }
+
+        if (sCallStateCallback != null) {
+            sTelephonyManager.unregisterTelephonyCallback(sCallStateCallback);
+            sCallStateCallback = null;
         }
 
         // Rebind all interfaces which is binding to MockModemService to default.
@@ -190,6 +248,10 @@ public class TelephonyManagerTestOnMockModem {
         assumeTrue(isSimHotSwapCapable());
 
         int slotId = 0;
+
+        // Remove the SIM for initial state
+        sMockModemManager.removeSimCard(slotId);
+
         int simCardState = sTelephonyManager.getSimCardState();
         Log.d(TAG, "Current SIM card state: " + simCardState);
 
@@ -322,6 +384,10 @@ public class TelephonyManagerTestOnMockModem {
         // Insert a SIM
         sMockModemManager.insertSimCard(slotId, MOCK_SIM_PROFILE_ID_TWN_CHT);
 
+        // Leave Service
+        Log.d(TAG, "testServiceStateChange: Leave Service");
+        sMockModemManager.changeNetworkService(slotId, MOCK_SIM_PROFILE_ID_TWN_CHT, false);
+
         // Expect: Seaching State
         TimeUnit.SECONDS.sleep(2);
         subId = getActiveSubId(slotId);
@@ -348,6 +414,176 @@ public class TelephonyManagerTestOnMockModem {
         assertEquals(
                 getRegState(NetworkRegistrationInfo.DOMAIN_CS, subId),
                 NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_SEARCHING);
+
+        // Remove the SIM
+        sMockModemManager.removeSimCard(slotId);
+    }
+
+    private class CallDisconnectCauseListener extends TelephonyCallback
+            implements TelephonyCallback.CallDisconnectCauseListener {
+        @Override
+        public void onCallDisconnectCauseChanged(int disconnectCause, int preciseDisconnectCause) {
+            synchronized (mCallDisconnectCauseLock) {
+                mPreciseCallDisconnectCause = preciseDisconnectCause;
+                Log.d(TAG, "Callback: call disconnect cause = " + mPreciseCallDisconnectCause);
+                mCallDisconnectCauseLock.notify();
+            }
+        }
+    }
+
+    private class CallStateListener extends TelephonyCallback
+            implements TelephonyCallback.CallStateListener {
+        @Override
+        public void onCallStateChanged(int state) {
+            synchronized (mCallStateChangeLock) {
+                mCallState = state;
+                mCallStateChangeLock.notify();
+            }
+        }
+    }
+
+    @Test
+    public void testVoiceCallState() throws Throwable {
+        Log.d(TAG, "TelephonyManagerTestOnMockModem#testVoiceCallState");
+
+        assumeTrue(isSimHotSwapCapable());
+
+        int slotId = 0;
+        int subId;
+        TelecomManager telecomManager =
+                (TelecomManager) getContext().getSystemService(Context.TELECOM_SERVICE);
+
+        // Insert a SIM
+        Log.d(TAG, "Start to insert a SIM");
+        sMockModemManager.insertSimCard(slotId, MOCK_SIM_PROFILE_ID_TWN_FET);
+        TimeUnit.SECONDS.sleep(1);
+
+        // In service
+        Log.d(TAG, "Start to register CS only network");
+        sMockModemManager.changeNetworkService(
+                slotId, MOCK_SIM_PROFILE_ID_TWN_FET, true, Domain.CS);
+        TimeUnit.SECONDS.sleep(1);
+
+        subId = getActiveSubId(slotId);
+        assertEquals(
+                getRegState(NetworkRegistrationInfo.DOMAIN_PS, subId),
+                NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_SEARCHING);
+
+        assertEquals(
+                getRegState(NetworkRegistrationInfo.DOMAIN_CS, subId),
+                NetworkRegistrationInfo.REGISTRATION_STATE_HOME);
+
+        // Register call state change callback
+        mCallState = TelephonyManager.CALL_STATE_IDLE;
+        sCallStateChangeCallbackHandler.post(
+                () -> {
+                    sCallStateCallback = new CallStateListener();
+                    ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                            sTelephonyManager,
+                            (tm) ->
+                                    tm.registerTelephonyCallback(
+                                            mCallStateChangeExecutor, sCallStateCallback));
+                });
+
+        // Dial a CS voice call
+        Log.d(TAG, "Start dialing call");
+        String phoneNumber = "+886987654321";
+        final Uri address = Uri.fromParts(PhoneAccount.SCHEME_TEL, phoneNumber, null);
+
+        // Place outgoing call
+        telecomManager.placeCall(address, null);
+        TimeUnit.SECONDS.sleep(1);
+
+        // Verify call state
+        synchronized (mCallStateChangeLock) {
+            if (mCallState == TelephonyManager.CALL_STATE_IDLE) {
+                Log.d(TAG, "Wait for call state change to offhook");
+                mCallStateChangeLock.wait(WAIT_TIME_MS);
+            }
+            assertEquals(TelephonyManager.CALL_STATE_OFFHOOK, mCallState);
+        }
+
+        // Verify the call is a CS call
+        assertTrue(sMockModemManager.getNumberOfOngoingCSCalls(slotId) > 0);
+
+        // Hang up the call
+        Log.d(TAG, "Hangup call");
+        telecomManager.endCall();
+        TimeUnit.SECONDS.sleep(1);
+
+        // Verify call state
+        synchronized (mCallStateChangeLock) {
+            if (mCallState == TelephonyManager.CALL_STATE_OFFHOOK) {
+                Log.d(TAG, "Wait for call state change to idle");
+                mCallStateChangeLock.wait(WAIT_TIME_MS);
+            }
+            assertEquals(TelephonyManager.CALL_STATE_IDLE, mCallState);
+        }
+
+        // Register call disconnect cause callback
+        mPreciseCallDisconnectCause = NO_DISCONNECT_CAUSE_AVAILABLE;
+
+        sCallDisconnectCauseCallbackHandler.post(
+                () -> {
+                    sCallDisconnectCauseCallback = new CallDisconnectCauseListener();
+                    ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                            sTelephonyManager,
+                            (tm) ->
+                                    tm.registerTelephonyCallback(
+                                            mCallDisconnectCauseExecutor,
+                                            sCallDisconnectCauseCallback));
+                });
+
+        // Trigger an incoming call
+        Log.d(TAG, "Trigger an incoming call.");
+        UusInfo[] uusInfo = new UusInfo[0];
+        MockCallControlInfo callControlInfo = new MockCallControlInfo();
+        callControlInfo.setActiveDurationInMs(1000);
+        callControlInfo.setCallEndInfo(
+                LastCallFailCause.TEMPORARY_FAILURE, "cts-test-call-failure");
+        sMockModemManager.triggerIncomingVoiceCall(
+                slotId, phoneNumber, uusInfo, null, callControlInfo);
+
+        // Verify call state
+        synchronized (mCallStateChangeLock) {
+            if (mCallState == TelephonyManager.CALL_STATE_IDLE) {
+                Log.d(TAG, "Wait for call state change to ringing");
+                mCallStateChangeLock.wait(WAIT_TIME_MS);
+            }
+            assertEquals(TelephonyManager.CALL_STATE_RINGING, mCallState);
+        }
+
+        Log.d(TAG, "Answer the call");
+        telecomManager.acceptRingingCall();
+
+        // Verify call state
+        synchronized (mCallStateChangeLock) {
+            if (mCallState == TelephonyManager.CALL_STATE_RINGING) {
+                Log.d(TAG, "Wait for call state change to offhook");
+                mCallStateChangeLock.wait(WAIT_TIME_MS);
+            }
+            assertEquals(TelephonyManager.CALL_STATE_OFFHOOK, mCallState);
+        }
+
+        synchronized (mCallDisconnectCauseLock) {
+            if (mPreciseCallDisconnectCause == NO_DISCONNECT_CAUSE_AVAILABLE) {
+                Log.d(TAG, "Wait for disconnect cause to TEMPORARY_FAILURE");
+                mCallDisconnectCauseLock.wait(WAIT_TIME_MS);
+            }
+            assertEquals(TEMPORARY_FAILURE, mPreciseCallDisconnectCause);
+        }
+
+        // Unregister call disconnect cause callback
+        sTelephonyManager.unregisterTelephonyCallback(sCallDisconnectCauseCallback);
+        sCallDisconnectCauseCallback = null;
+
+        // Unregister call state change callback
+        sTelephonyManager.unregisterTelephonyCallback(sCallStateCallback);
+        sCallStateCallback = null;
+
+        // Out of service
+        sMockModemManager.changeNetworkService(
+                slotId, MOCK_SIM_PROFILE_ID_TWN_FET, false, Domain.CS);
 
         // Remove the SIM
         sMockModemManager.removeSimCard(slotId);

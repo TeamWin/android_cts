@@ -9,6 +9,9 @@ android_library {
         "src/main/java/**/*.java",
         "src/main/aidl/**/I*.aidl",
     ],
+    aidl: {
+        local_include_dirs: ["src/main/aidl/"],
+    },
     static_libs: [
         "NeneInternal",
         "Queryable"

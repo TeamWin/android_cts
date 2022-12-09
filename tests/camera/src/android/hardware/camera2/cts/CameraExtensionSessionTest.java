@@ -429,7 +429,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     CameraExtensionSession.ExtensionCaptureCallback captureCallbackMock =
                             mock(CameraExtensionSession.ExtensionCaptureCallback.class);
                     SimpleCaptureCallback simpleCaptureCallback =
-                            new SimpleCaptureCallback(captureCallbackMock,
+                            new SimpleCaptureCallback(extension, captureCallbackMock,
                                     extensionChars.getAvailableCaptureResultKeys(extension),
                                     mCollector);
                     CaptureRequest request = captureBuilder.build();
@@ -558,7 +558,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                         CameraExtensionSession.ExtensionCaptureCallback captureMockCallback =
                                 mock(CameraExtensionSession.ExtensionCaptureCallback.class);
                         SimpleCaptureCallback captureCallback =
-                                new SimpleCaptureCallback(captureMockCallback,
+                                new SimpleCaptureCallback(extension, captureMockCallback,
                                         extensionChars.getAvailableCaptureResultKeys(extension),
                                         mCollector);
 
@@ -818,6 +818,18 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
             List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
             for (Integer extension : supportedExtensions) {
+
+                Set<CaptureRequest.Key> supportedRequestKeys =
+                        extensionChars.getAvailableCaptureRequestKeys(extension);
+                boolean supportsStrengthControl = supportedRequestKeys.contains(
+                        CaptureRequest.EXTENSION_STRENGTH);
+
+                if (supportsStrengthControl) {
+                    Set<CaptureResult.Key> supportedResultKeys =
+                            extensionChars.getAvailableCaptureResultKeys(extension);
+                    assertTrue(supportedResultKeys.contains(CaptureResult.EXTENSION_STRENGTH));
+                }
+
                 int captureFormat = ImageFormat.JPEG;
                 List<Size> captureSizes = extensionChars.getExtensionSupportedSizes(extension,
                         captureFormat);
@@ -890,9 +902,14 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     CameraExtensionSession.ExtensionCaptureCallback repeatingCallbackMock =
                             mock(CameraExtensionSession.ExtensionCaptureCallback.class);
                     SimpleCaptureCallback repeatingCaptureCallback =
-                            new SimpleCaptureCallback(repeatingCallbackMock,
+                            new SimpleCaptureCallback(extension, repeatingCallbackMock,
                                     extensionChars.getAvailableCaptureResultKeys(extension),
                                     mCollector);
+
+                    if (supportsStrengthControl) {
+                        captureBuilder.set(CaptureRequest.EXTENSION_STRENGTH, 100);
+                    }
+
                     CaptureRequest repeatingRequest = captureBuilder.build();
                     int repeatingSequenceId =
                             extensionSession.setRepeatingRequest(repeatingRequest,
@@ -1063,14 +1080,17 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         private final HashSet<CaptureResult.Key> mSupportedResultKeys;
         private final CameraErrorCollector mCollector;
         private final boolean mPerFrameControl;
+        private final int mExtensionType;
 
-        public SimpleCaptureCallback(CameraExtensionSession.ExtensionCaptureCallback proxy,
+        public SimpleCaptureCallback(int extensionType,
+                CameraExtensionSession.ExtensionCaptureCallback proxy,
                 Set<CaptureResult.Key> supportedResultKeys, CameraErrorCollector errorCollector) {
-            this(proxy, supportedResultKeys, errorCollector, null /*afListener*/,
+            this(extensionType, proxy, supportedResultKeys, errorCollector, null /*afListener*/,
                     null /*flashState*/, null /*aeState*/, false /*perFrameControl*/);
         }
 
-        public SimpleCaptureCallback(CameraExtensionSession.ExtensionCaptureCallback proxy,
+        public SimpleCaptureCallback(int extensionType,
+                CameraExtensionSession.ExtensionCaptureCallback proxy,
                 Set<CaptureResult.Key> supportedResultKeys, CameraErrorCollector errorCollector,
                 AutoFocusStateMachine afState, FlashStateListener flashState,
                 AutoExposureStateListener aeState, boolean perFrameControl) {
@@ -1081,6 +1101,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
             mFlashStateListener = flashState;
             mAEStateListener = aeState;
             mPerFrameControl = perFrameControl;
+            mExtensionType = extensionType;
         }
 
         public void resetCaptureProgress() {
@@ -1174,6 +1195,32 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
             assertTrue("Capture result sensor timestamp: " + timeStamp + " must match "
                             + " with the timestamp passed to onCaptureStarted!",
                     mExpectedResultTimestamps.contains(timeStamp));
+
+            Integer currentType = result.get(CaptureResult.EXTENSION_CURRENT_TYPE);
+            if (currentType != null) {
+                mCollector.expectNotEquals("The reported extension type cannot be set to AUTO!",
+                        CameraExtensionCharacteristics.EXTENSION_AUTOMATIC, currentType);
+                if (mExtensionType == CameraExtensionCharacteristics.EXTENSION_AUTOMATIC) {
+                    Integer expectedValues[] = {
+                            CameraExtensionCharacteristics.EXTENSION_BOKEH,
+                            CameraExtensionCharacteristics.EXTENSION_HDR,
+                            CameraExtensionCharacteristics.EXTENSION_NIGHT,
+                            CameraExtensionCharacteristics.EXTENSION_FACE_RETOUCH};
+                    mCollector.expectContains("Unexpected extension type result: "
+                            + currentType, expectedValues, currentType);
+                } else {
+                    mCollector.expectEquals("Unexpected extension type result: " + currentType
+                            + " expected: " + mExtensionType, mExtensionType, currentType);
+                }
+            }
+
+            Integer strength = request.get(CaptureRequest.EXTENSION_STRENGTH);
+            if (strength != null) {
+                Integer resultStrength = result.get(CaptureResult.EXTENSION_STRENGTH);
+                mCollector.expectTrue("Request extension strength: " + strength +
+                                " doesn't match with result: " + resultStrength,
+                        strength.equals(resultStrength));
+            }
 
             Integer jpegOrientation = request.get(CaptureRequest.JPEG_ORIENTATION);
             if (jpegOrientation != null) {
@@ -1452,7 +1499,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     CameraExtensionSession.ExtensionCaptureCallback repeatingCallbackMock =
                             mock(CameraExtensionSession.ExtensionCaptureCallback.class);
                     SimpleCaptureCallback repeatingCaptureCallback =
-                            new SimpleCaptureCallback(repeatingCallbackMock,
+                            new SimpleCaptureCallback(extension, repeatingCallbackMock,
                                     extensionChars.getAvailableCaptureResultKeys(extension),
                                     mCollector, afState, null /*flashState*/,
                                     null /*aeState*/, perFrameControl);
@@ -1484,7 +1531,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     AutoFocusStateMachine activeAFState = new AutoFocusStateMachine(
                             new TestAutoFocusProxy(mockAFListener));
                     CameraExtensionSession.ExtensionCaptureCallback captureCallback =
-                            new SimpleCaptureCallback(callbackMock,
+                            new SimpleCaptureCallback(extension, callbackMock,
                                     extensionChars.getAvailableCaptureResultKeys(extension),
                                     mCollector, activeAFState, null /*flashState*/,
                                     null /*aeState*/, perFrameControl);
@@ -1628,7 +1675,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     CameraExtensionSession.ExtensionCaptureCallback repeatingCallbackMock =
                             mock(CameraExtensionSession.ExtensionCaptureCallback.class);
                     SimpleCaptureCallback repeatingCaptureCallback =
-                            new SimpleCaptureCallback(repeatingCallbackMock,
+                            new SimpleCaptureCallback(extension, repeatingCallbackMock,
                                     extensionChars.getAvailableCaptureResultKeys(extension),
                                     mCollector);
 
@@ -1776,7 +1823,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     CameraExtensionSession.ExtensionCaptureCallback repeatingCallbackMock =
                             mock(CameraExtensionSession.ExtensionCaptureCallback.class);
                     SimpleCaptureCallback repeatingCaptureCallback =
-                            new SimpleCaptureCallback(repeatingCallbackMock,
+                            new SimpleCaptureCallback(extension, repeatingCallbackMock,
                                     extensionChars.getAvailableCaptureResultKeys(extension),
                                     mCollector, null /*afState*/, mockFlashListener,
                                     mockAEStateListener, perFrameControl);
@@ -1841,7 +1888,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                             mock(CameraExtensionSession.ExtensionCaptureCallback.class);
                     reset(mockFlashListener);
                     SimpleCaptureCallback captureCallback =
-                            new SimpleCaptureCallback(mockCaptureCallback,
+                            new SimpleCaptureCallback(extension, mockCaptureCallback,
                                     extensionChars.getAvailableCaptureResultKeys(extension),
                                     mCollector, null /*afState*/, mockFlashListener,
                                     mockAEStateListener, perFrameControl);
@@ -2017,7 +2064,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     CameraExtensionSession.ExtensionCaptureCallback repeatingCallbackMock =
                             mock(CameraExtensionSession.ExtensionCaptureCallback.class);
                     SimpleCaptureCallback repeatingCaptureCallback =
-                            new SimpleCaptureCallback(repeatingCallbackMock,
+                            new SimpleCaptureCallback(extension, repeatingCallbackMock,
                                     extensionChars.getAvailableCaptureResultKeys(extension),
                                     mCollector);
                     CaptureRequest repeatingRequest = captureBuilder.build();

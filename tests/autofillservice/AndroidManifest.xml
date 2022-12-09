@@ -159,6 +159,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".activities.FadeInActivity"/>
+        <activity android:name=".activities.MultipleStepsSignInActivity"/>
         <activity android:name=".activities.FieldsNoPasswordActivity"/>
         <activity android:name=".activities.AugmentedAuthActivity" />
         <activity android:name=".activities.SimpleAfterLoginActivity"/>

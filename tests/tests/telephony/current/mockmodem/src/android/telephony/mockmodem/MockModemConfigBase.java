@@ -19,6 +19,7 @@ package android.telephony.mockmodem;
 import static android.telephony.mockmodem.MockSimService.EF_ICCID;
 import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_DEFAULT;
 import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_MAX;
+import static android.telephony.mockmodem.MockVoiceService.MockCallInfo.CALL_TYPE_VOICE;
 
 import android.content.Context;
 import android.hardware.radio.config.PhoneCapability;
@@ -26,6 +27,9 @@ import android.hardware.radio.config.SimPortInfo;
 import android.hardware.radio.config.SimSlotStatus;
 import android.hardware.radio.config.SlotPortMapping;
 import android.hardware.radio.sim.CardStatus;
+import android.hardware.radio.voice.CdmaSignalInfoRecord;
+import android.hardware.radio.voice.LastCallFailCauseInfo;
+import android.hardware.radio.voice.UusInfo;
 import android.os.AsyncResult;
 import android.os.Bundle;
 import android.os.Handler;
@@ -55,6 +59,10 @@ public class MockModemConfigBase implements MockModemConfigInterface {
     static final int EVENT_CHANGE_SIM_PROFILE = 2;
     static final int EVENT_SERVICE_STATE_CHANGE = 3;
     static final int EVENT_SET_SIM_INFO = 4;
+    static final int EVENT_CALL_STATE_CHANGE = 5;
+    static final int EVENT_CURRENT_CALLS_RESPONSE = 6;
+    static final int EVENT_CALL_INCOMING = 7;
+    static final int EVENT_RINGBACK_TONE = 8;
 
     // ***** Modem config values
     private String mBasebandVersion = MockModemConfigInterface.DEFAULT_BASEBAND_VERSION;
@@ -73,6 +81,10 @@ public class MockModemConfigBase implements MockModemConfigInterface {
     private int[] mFdnStatus;
     private MockSimService[] mSimService;
     private ArrayList<SimAppData>[] mSimAppList;
+
+    // **** Voice config values
+    private MockVoiceService[] mVoiceService;
+    private MockCallControlInfo mCallControlInfo;
 
     // ***** RegistrantLists
     // ***** IRadioConfig RegistrantLists
@@ -93,6 +105,12 @@ public class MockModemConfigBase implements MockModemConfigInterface {
     // ***** IRadioNetwork RegistrantLists
     private RegistrantList[] mServiceStateChangedRegistrants;
 
+    // ***** IRadioVoice RegistrantLists
+    private RegistrantList[] mCallStateChangedRegistrants;
+    private RegistrantList[] mCurrentCallsResponseRegistrants;
+    private RegistrantList[] mCallIncomingRegistrants;
+    private RegistrantList[] mRingbackToneRegistrants;
+
     public MockModemConfigBase(Context context, int numOfSim, int numOfPhone) {
         mContext = context;
         mNumOfSim =
@@ -106,17 +124,28 @@ public class MockModemConfigBase implements MockModemConfigInterface {
         mConfigAccess = new Object[mNumOfPhone];
         mHandler = new MockModemConfigHandler[mNumOfPhone];
 
+        // Registrants initialization
+        // IRadioModem registrants
         mDeviceIdentityChangedRegistrants = new RegistrantList[mNumOfPhone];
+        // IRadioSim registrants
         mCardStatusChangedRegistrants = new RegistrantList[mNumOfPhone];
         mSimAppDataChangedRegistrants = new RegistrantList[mNumOfPhone];
         mSimInfoChangedRegistrants = new RegistrantList[mNumOfPhone];
+        // IRadioNetwork registrants
         mServiceStateChangedRegistrants = new RegistrantList[mNumOfPhone];
+        // IRadioVoice registrants
+        mCallStateChangedRegistrants = new RegistrantList[mNumOfPhone];
+        mCurrentCallsResponseRegistrants = new RegistrantList[mNumOfPhone];
+        mCallIncomingRegistrants = new RegistrantList[mNumOfPhone];
+        mRingbackToneRegistrants = new RegistrantList[mNumOfPhone];
 
+        // IRadioModem caches
         mImei = new String[mNumOfPhone];
         mImeiSv = new String[mNumOfPhone];
         mEsn = new String[mNumOfPhone];
         mMeid = new String[mNumOfPhone];
 
+        // IRadioSim caches
         mCardStatus = new CardStatus[mNumOfSim];
         mSimSlotStatus = new SimSlotStatus[mNumOfSim];
         mLogicalSimIdMap = new int[mNumOfSim];
@@ -124,10 +153,15 @@ public class MockModemConfigBase implements MockModemConfigInterface {
         mSimService = new MockSimService[mNumOfSim];
         mSimAppList = (ArrayList<SimAppData>[]) new ArrayList[mNumOfSim];
 
+        // IRadioVoice caches
+        mVoiceService = new MockVoiceService[mNumOfSim];
+
+        // Caches initializtion
         for (int i = 0; i < mNumOfPhone; i++) {
             if (mConfigAccess != null && mConfigAccess[i] == null) {
                 mConfigAccess[i] = new Object();
             }
+
             if (mHandler != null && mHandler[i] == null) {
                 mHandler[i] = new MockModemConfigHandler(i);
             }
@@ -152,6 +186,23 @@ public class MockModemConfigBase implements MockModemConfigInterface {
             if (mServiceStateChangedRegistrants != null
                     && mServiceStateChangedRegistrants[i] == null) {
                 mServiceStateChangedRegistrants[i] = new RegistrantList();
+            }
+
+            if (mCallStateChangedRegistrants != null && mCallStateChangedRegistrants[i] == null) {
+                mCallStateChangedRegistrants[i] = new RegistrantList();
+            }
+
+            if (mCurrentCallsResponseRegistrants != null
+                    && mCurrentCallsResponseRegistrants[i] == null) {
+                mCurrentCallsResponseRegistrants[i] = new RegistrantList();
+            }
+
+            if (mCallIncomingRegistrants != null && mCallIncomingRegistrants[i] == null) {
+                mCallIncomingRegistrants[i] = new RegistrantList();
+            }
+
+            if (mRingbackToneRegistrants != null && mRingbackToneRegistrants[i] == null) {
+                mRingbackToneRegistrants[i] = new RegistrantList();
             }
 
             if (mImei != null && mImei[i] == null) {
@@ -220,6 +271,10 @@ public class MockModemConfigBase implements MockModemConfigInterface {
 
             if (mCardStatus != null && mCardStatus[i] == null) {
                 mCardStatus[i] = new CardStatus();
+            }
+
+            if (mVoiceService != null && mVoiceService[i] == null) {
+                mVoiceService[i] = new MockVoiceService(mHandler[i]);
             }
         }
 
@@ -376,13 +431,31 @@ public class MockModemConfigBase implements MockModemConfigInterface {
                             }
                         }
                         break;
+                    case EVENT_CALL_STATE_CHANGE:
+                        Log.d(mTAG, "EVENT_CALL_STATE_CHANGE");
+                        mCallStateChangedRegistrants[mLogicalSlotId].notifyRegistrants(
+                                new AsyncResult(null, msg.obj, null));
+                        break;
+
+                    case EVENT_CURRENT_CALLS_RESPONSE:
+                        Log.d(mTAG, "EVENT_CURRENT_CALLS_RESPONSE");
+                        mCurrentCallsResponseRegistrants[mLogicalSlotId].notifyRegistrants(
+                                new AsyncResult(null, msg.obj, null));
+                        break;
+
+                    case EVENT_CALL_INCOMING:
+                        Log.d(mTAG, "EVENT_CALL_INCOMING");
+                        mCallIncomingRegistrants[mLogicalSlotId].notifyRegistrants(
+                                new AsyncResult(null, msg.obj, null));
+                        break;
+                    case EVENT_RINGBACK_TONE:
+                        Log.d(mTAG, "EVENT_RINGBACK_TONE");
+                        mRingbackToneRegistrants[mLogicalSlotId].notifyRegistrants(
+                                new AsyncResult(null, msg.obj, null));
+                        break;
                 }
             }
         }
-    }
-
-    public Handler getMockModemConfigHandler(int logicalSlotId) {
-        return mHandler[logicalSlotId];
     }
 
     private int getSimLogicalSlotId(int physicalSlotId) {
@@ -632,6 +705,22 @@ public class MockModemConfigBase implements MockModemConfigInterface {
 
     // ***** MockModemConfigInterface implementation
     @Override
+    public void destroy() {
+        // Mock Services destroy
+        for (int i = 0; i < mNumOfPhone; i++) {
+            // IRadioVoice
+            if (mVoiceService != null && mVoiceService[i] != null) {
+                mVoiceService[i].destroy();
+            }
+        }
+    }
+
+    @Override
+    public Handler getMockModemConfigHandler(int logicalSlotId) {
+        return mHandler[logicalSlotId];
+    }
+
+    @Override
     public void notifyAllRegistrantNotifications() {
         Log.d(mTAG, "notifyAllRegistrantNotifications");
 
@@ -773,6 +862,48 @@ public class MockModemConfigBase implements MockModemConfigInterface {
         mServiceStateChangedRegistrants[logicalSlotId].remove(h);
     }
 
+    // ***** IRadioVoice notification implementation
+    @Override
+    public void registerForCallStateChanged(int logicalSlotId, Handler h, int what, Object obj) {
+        mCallStateChangedRegistrants[logicalSlotId].addUnique(h, what, obj);
+    }
+
+    @Override
+    public void unregisterForCallStateChanged(int logicalSlotId, Handler h) {
+        mCallStateChangedRegistrants[logicalSlotId].remove(h);
+    }
+
+    @Override
+    public void registerForCurrentCallsResponse(
+            int logicalSlotId, Handler h, int what, Object obj) {
+        mCurrentCallsResponseRegistrants[logicalSlotId].addUnique(h, what, obj);
+    }
+
+    @Override
+    public void unregisterForCurrentCallsResponse(int logicalSlotId, Handler h) {
+        mCurrentCallsResponseRegistrants[logicalSlotId].remove(h);
+    }
+
+    @Override
+    public void registerForCallIncoming(int logicalSlotId, Handler h, int what, Object obj) {
+        mCallIncomingRegistrants[logicalSlotId].addUnique(h, what, obj);
+    }
+
+    @Override
+    public void unregisterForCallIncoming(int logicalSlotId, Handler h) {
+        mCallIncomingRegistrants[logicalSlotId].remove(h);
+    }
+
+    @Override
+    public void registerRingbackTone(int logicalSlotId, Handler h, int what, Object obj) {
+        mRingbackToneRegistrants[logicalSlotId].addUnique(h, what, obj);
+    }
+
+    @Override
+    public void unregisterRingbackTone(int logicalSlotId, Handler h) {
+        mRingbackToneRegistrants[logicalSlotId].remove(h);
+    }
+
     // ***** IRadioConfig set APIs implementation
 
     // ***** IRadioModem set APIs implementation
@@ -790,12 +921,97 @@ public class MockModemConfigBase implements MockModemConfigInterface {
     // ***** IRadioNetwork set APIs implementation
 
     // ***** IRadioVoice set APIs implementation
+    @Override
+    public boolean getCurrentCalls(int logicalSlotId, String client) {
+        Log.d(mTAG, "getCurrentCalls[" + logicalSlotId + "] from: " + client);
+        return mVoiceService[logicalSlotId].getCurrentCalls();
+    }
+
+    @Override
+    public boolean dialVoiceCall(
+            int logicalSlotId, String address, int clir, UusInfo[] uusInfo, String client) {
+        return dialVoiceCall(logicalSlotId, address, clir, uusInfo, mCallControlInfo, client);
+    }
+
+    @Override
+    public boolean dialVoiceCall(
+            int logicalSlotId,
+            String address,
+            int clir,
+            UusInfo[] uusInfo,
+            MockCallControlInfo callControlInfo,
+            String client) {
+        Log.d(
+                mTAG,
+                "dialVoiceCall["
+                        + logicalSlotId
+                        + "]: address = "
+                        + address
+                        + " clir = "
+                        + clir
+                        + " from: "
+                        + client);
+        if (uusInfo == null) {
+            Log.e(mTAG, "ussInfo == null!");
+            return false;
+        }
+
+        int callType = CALL_TYPE_VOICE;
+        return mVoiceService[logicalSlotId].dialVoiceCall(
+                address, clir, uusInfo, callType, callControlInfo);
+    }
+
+    @Override
+    public boolean hangupVoiceCall(int logicalSlotId, int index, String client) {
+        Log.d(
+                mTAG,
+                "hangupVoiceCall[" + logicalSlotId + "]: index = " + index + " from: " + client);
+        return mVoiceService[logicalSlotId].hangupVoiceCall(index);
+    }
+
+    @Override
+    public boolean rejectVoiceCall(int logicalSlotId, String client) {
+        Log.d(mTAG, "rejectVoiceCall[" + logicalSlotId + "] from: " + client);
+        return mVoiceService[logicalSlotId].rejectVoiceCall();
+    }
+
+    @Override
+    public boolean acceptVoiceCall(int logicalSlotId, String client) {
+        Log.d(mTAG, "acceptVoiceCall[" + logicalSlotId + "] from: " + client);
+        return mVoiceService[logicalSlotId].acceptVoiceCall();
+    }
+
+    @Override
+    public LastCallFailCauseInfo getLastCallFailCause(int logicalSlotId, String client) {
+        Log.d(mTAG, "getLastCallFailCause[" + logicalSlotId + "] from: " + client);
+        return mVoiceService[logicalSlotId].getLastCallEndInfo();
+    }
+
+    @Override
+    public boolean getVoiceMuteMode(int logicalSlotId, String client) {
+        Log.d(mTAG, "getVoiceMuteMode[" + logicalSlotId + "] from " + client);
+        return mVoiceService[logicalSlotId].getMuteMode();
+    }
+
+    @Override
+    public boolean setVoiceMuteMode(int logicalSlotId, boolean muteMode, String client) {
+        Log.d(
+                mTAG,
+                "setVoiceMuteMode["
+                        + logicalSlotId
+                        + "]: muteMode = "
+                        + muteMode
+                        + " from: "
+                        + client);
+        mVoiceService[logicalSlotId].setMuteMode(muteMode);
+        return true;
+    }
 
     // ***** IRadioData set APIs implementation
 
     // ***** IRadioMessaging set APIs implementation
 
-    // ***** Helper APIs implementation
+    // ***** Utility methods implementation
     @Override
     public boolean isSimCardPresent(int logicalSlotId, String client) {
         Log.d(mTAG, "isSimCardPresent[" + logicalSlotId + "] from: " + client);
@@ -870,5 +1086,52 @@ public class MockModemConfigBase implements MockModemConfigInterface {
         }
 
         return result;
+    }
+
+    @Override
+    public boolean setCallControlInfo(
+            int logicalSlotId, MockCallControlInfo callControlInfo, String client) {
+        Log.d(mTAG, "setCallControlInfo[" + logicalSlotId + " from: " + client);
+        mCallControlInfo = callControlInfo;
+
+        return true;
+    }
+
+    @Override
+    public MockCallControlInfo getCallControlInfo(int logicalSlotId, String client) {
+        Log.d(mTAG, "getCallControlInfo[" + logicalSlotId + " from: " + client);
+        return mCallControlInfo;
+    }
+
+    @Override
+    public boolean triggerIncomingVoiceCall(
+            int logicalSlotId,
+            String address,
+            UusInfo[] uusInfo,
+            CdmaSignalInfoRecord cdmaSignalInfoRecord,
+            MockCallControlInfo callControlInfo,
+            String client) {
+        Log.d(
+                mTAG,
+                "triggerIncomingVoiceCall["
+                        + logicalSlotId
+                        + "]: address = "
+                        + address
+                        + " from: "
+                        + client);
+        if (uusInfo == null) {
+            Log.e(mTAG, "ussInfo == null!");
+            return false;
+        }
+
+        int callType = CALL_TYPE_VOICE;
+        return mVoiceService[logicalSlotId].triggerIncomingVoiceCall(
+                address, uusInfo, callType, cdmaSignalInfoRecord, callControlInfo);
+    }
+
+    @Override
+    public int getNumberOfCalls(int logicalSlotId, String client) {
+        Log.d(mTAG, "getNumberOfCalls[" + logicalSlotId + "] from: " + client);
+        return mVoiceService[logicalSlotId].getNumberOfCalls();
     }
 }

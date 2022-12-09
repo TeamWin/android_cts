@@ -24,10 +24,7 @@ import android.provider.DeviceConfig
 import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
-import com.android.compatibility.common.util.SystemUtil
 import com.android.modules.utils.build.SdkLevel
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Rule
@@ -57,25 +54,6 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
             PRIVACY_PLACEHOLDER_SAFETY_LABEL_DATA_ENABLED,
             true.toString())
 
-    private fun setDeviceConfigPrivacyProperty(
-        propertyName: String,
-        value: String,
-    ) {
-        SystemUtil.runWithShellPermissionIdentity(instrumentation.uiAutomation) {
-            val valueWasSet =
-                DeviceConfig.setProperty(
-                    DeviceConfig.NAMESPACE_PRIVACY,
-                    /* name = */ propertyName,
-                    /* value = */ value,
-                    /* makeDefault = */ false)
-            check(valueWasSet) { "Could not set $propertyName to $value" }
-        }
-    }
-
-    private fun permissionRationaleIsVisible(): Boolean {
-        return waitFindObjectOrNull(By.res(PERMISSION_RATIONALE_CONTAINER_VIEW), 1000L) != null
-    }
-
     @Before
     fun setup() {
         Assume.assumeTrue("Permission rationale is only available on U+", SdkLevel.isAtLeastU())
@@ -92,9 +70,8 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
-        requestAppPermissions(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
-            assertFalse(permissionRationaleIsVisible())
-            return
+        requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
+            assertPermissionRationaleOnGrantDialogIsVisible(false)
         }
     }
 
@@ -108,9 +85,8 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
-        requestAppPermissions(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
-            assertFalse(permissionRationaleIsVisible())
-            return
+        requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
+            assertPermissionRationaleOnGrantDialogIsVisible(false)
         }
     }
 
@@ -120,9 +96,8 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
 
         assertAppHasPermission(CAMERA, false)
 
-        requestAppPermissions(CAMERA) {
-            assertFalse(permissionRationaleIsVisible())
-            return
+        requestAppPermissionsForNoResult(CAMERA) {
+            assertPermissionRationaleOnGrantDialogIsVisible(false)
         }
     }
 
@@ -132,9 +107,8 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
 
         assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
 
-        requestAppPermissions(ACCESS_COARSE_LOCATION) {
-            assertTrue(permissionRationaleIsVisible())
-            return
+        requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION) {
+            assertPermissionRationaleOnGrantDialogIsVisible(true)
         }
     }
 
@@ -144,10 +118,47 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
 
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
-        requestAppPermissions(ACCESS_FINE_LOCATION) {
-            assertTrue(permissionRationaleIsVisible())
-            return
+        requestAppPermissionsForNoResult(ACCESS_FINE_LOCATION) {
+            assertPermissionRationaleOnGrantDialogIsVisible(true)
         }
+    }
+
+    @Test
+    fun startsPermissionRationaleActivity() {
+        installPackage(APP_APK_PATH_31)
+
+        assertAppHasPermission(ACCESS_FINE_LOCATION, false)
+
+        requestAppPermissionsForNoResult(ACCESS_FINE_LOCATION) {
+            clickPermissionRationaleViewInGrantDialog()
+            assertPermissionRationaleActivityTitleIsVisible(true)
+            assertPermissionRationaleOnGrantDialogIsVisible(false)
+        }
+    }
+
+    @Test
+    fun startsPermissionRationaleActivityAndComesBack() {
+        installPackage(APP_APK_PATH_31)
+
+        assertAppHasPermission(ACCESS_FINE_LOCATION, false)
+
+        requestAppPermissionsForNoResult(ACCESS_FINE_LOCATION) {
+            clickPermissionRationaleViewInGrantDialog()
+            waitForIdle()
+            assertPermissionRationaleActivityTitleIsVisible(true)
+            pressBack()
+            waitForIdle()
+            assertPermissionRationaleActivityTitleIsVisible(false)
+            assertPermissionRationaleOnGrantDialogIsVisible(true)
+        }
+    }
+
+    private fun assertPermissionRationaleOnGrantDialogIsVisible(expected: Boolean) {
+        findView(By.res(GRANT_DIALOG_PERMISSION_RATIONALE_CONTAINER_VIEW), expected = expected)
+    }
+
+    private fun assertPermissionRationaleActivityTitleIsVisible(expected: Boolean) {
+        findView(By.res(PERMISSION_RATIONALE_ACTIVITY_TITLE_VIEW), expected = expected)
     }
 
     companion object {
@@ -157,8 +168,5 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         // TODO(b/257293222): Remove when hooking up PackageManager APIs
         private const val PRIVACY_PLACEHOLDER_SAFETY_LABEL_DATA_ENABLED =
             "privacy_placeholder_safety_label_data_enabled"
-
-        private const val PERMISSION_RATIONALE_CONTAINER_VIEW =
-            "com.android.permissioncontroller:id/permission_rationale_container"
     }
 }

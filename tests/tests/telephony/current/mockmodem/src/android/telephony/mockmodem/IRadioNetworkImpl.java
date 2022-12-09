@@ -42,7 +42,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     private IRadioNetworkResponse mRadioNetworkResponse;
     private IRadioNetworkIndication mRadioNetworkIndication;
     private MockModemConfigInterface mMockModemConfigInterface;
-    private Object mCacheUpdateMutex;
+    private final Object mCacheUpdateMutex;
     private final Handler mHandler;
     private int mSubId;
     private String mTag;
@@ -174,6 +174,29 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         unsolCellInfoList();
     }
 
+    private void updateNetworkStatus(int domainBitmask) {
+        if (mRadioState != MockModemConfigInterface.RADIO_STATE_ON) {
+            // Update to OOS state
+            mServiceState.updateServiceState(RegState.NOT_REG_MT_NOT_SEARCHING_OP, domainBitmask);
+        } else if (!mSimReady) {
+            // Update to Searching state
+            mServiceState.updateServiceState(RegState.NOT_REG_MT_SEARCHING_OP, domainBitmask);
+        } else if (mServiceState.isHomeCellExisted() && mServiceState.getIsHomeCamping()) {
+            // Update to Home state
+            mServiceState.updateServiceState(RegState.REG_HOME, domainBitmask);
+        } else if (mServiceState.isRoamingCellExisted() && mServiceState.getIsRoamingCamping()) {
+            // Update to Roaming state
+            mServiceState.updateServiceState(RegState.REG_ROAMING, domainBitmask);
+        } else {
+            // Update to Searching state
+            mServiceState.updateServiceState(RegState.NOT_REG_MT_SEARCHING_OP, domainBitmask);
+        }
+
+        unsolNetworkStateChanged();
+        unsolCurrentSignalStrength();
+        unsolCellInfoList();
+    }
+
     private boolean updateSimReady(AsyncResult ar) {
         String simPlmn = "";
         CardStatus cardStatus = new CardStatus();
@@ -211,6 +234,25 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
             // TODO: compare carrierId and sim to decide home or roming
             mServiceState.setServiceStatus(false, registration);
             updateNetworkStatus();
+        }
+
+        return true;
+    }
+
+    public boolean changeNetworkService(int carrierId, boolean registration, int domainBitmask) {
+        Log.d(
+                mTag,
+                "changeNetworkService: carrier id("
+                        + carrierId
+                        + "): "
+                        + registration
+                        + " with domainBitmask = "
+                        + domainBitmask);
+
+        synchronized (mCacheUpdateMutex) {
+            // TODO: compare carrierId and sim to decide home or roming
+            mServiceState.setServiceStatus(false, registration);
+            updateNetworkStatus(domainBitmask);
         }
 
         return true;

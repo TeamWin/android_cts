@@ -178,6 +178,10 @@
          android:protectionLevel="normal"
          android:label="@string/car_permission_label_car_powertrain"
          android:description="@string/car_permission_desc_car_powertrain"/>
+    <permission android:name="android.car.permission.CONTROL_CAR_POWERTRAIN"
+         android:protectionLevel="signature|privileged"
+         android:label="@string/car_permission_label_control_car_powertrain"
+         android:description="@string/car_permission_desc_control_car_powertrain"/>
     <permission android:name="android.car.permission.CAR_NAVIGATION_MANAGER"
          android:protectionLevel="signature|privileged"
          android:label="@string/car_permission_car_navigation_manager"

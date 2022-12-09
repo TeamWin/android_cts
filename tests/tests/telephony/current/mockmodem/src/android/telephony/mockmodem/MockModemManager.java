@@ -21,6 +21,8 @@ import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_DEF
 import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWER;
 
 import android.content.Context;
+import android.hardware.radio.voice.CdmaSignalInfoRecord;
+import android.hardware.radio.voice.UusInfo;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -303,8 +305,42 @@ public class MockModemManager {
                         + registration);
 
         boolean result;
-        // TODO: support DSDS for slotId
-        result = mMockModemService.getIRadioNetwork().changeNetworkService(carrierId, registration);
+        result =
+                mMockModemService
+                        .getIRadioNetwork((byte) slotId)
+                        .changeNetworkService(carrierId, registration);
+
+        waitForTelephonyFrameworkDone(1);
+        return result;
+    }
+
+    /**
+     * Make the modem is in service or not for CS or PS registration
+     *
+     * @param slotId which SIM slot is under the carrierId network.
+     * @param carrierId which carrier network is used.
+     * @param registration boolean true if the modem is in service, otherwise false.
+     * @param domainBitmask int specify domains (CS only, PS only, or both).
+     * @return boolean true if the operation is successful, otherwise false.
+     */
+    public boolean changeNetworkService(
+            int slotId, int carrierId, boolean registration, int domainBitmask) throws Exception {
+        Log.d(
+                TAG,
+                "changeNetworkService["
+                        + slotId
+                        + "] in carrier ("
+                        + carrierId
+                        + ") "
+                        + registration
+                        + " with domainBitmask = "
+                        + domainBitmask);
+
+        boolean result;
+        result =
+                mMockModemService
+                        .getIRadioNetwork((byte) slotId)
+                        .changeNetworkService(carrierId, registration, domainBitmask);
 
         waitForTelephonyFrameworkDone(1);
         return result;
@@ -385,10 +421,97 @@ public class MockModemManager {
         return mMockModemService.getIRadioIms().waitForLatchCountdown(latchIndex, waitMs);
     }
 
-    /**
-     * Resets the CountDownLatches of IMS state.
-     */
+    /** Resets the CountDownLatches of IMS state. */
     public void resetImsAllLatchCountdown() {
         mMockModemService.getIRadioIms().resetAllLatchCountdown();
+    }
+
+    /**
+     * Set/override default call control configuration.
+     *
+     * @param slotId the Id of logical sim slot.
+     * @param callControlInfo the configuration of call control would like to override.
+     * @return boolean true if the operation succeeds, otherwise false.
+     */
+    public boolean setCallControlInfo(int slotId, MockCallControlInfo callControlInfo) {
+        Log.d(TAG, "setCallControlInfo[" + slotId + "]");
+        return mMockModemService
+                .getMockModemConfigInterface()
+                .setCallControlInfo(slotId, callControlInfo, TAG);
+    }
+
+    /**
+     * Get call control configuration.
+     *
+     * @param slotId the Id of logical sim slot.
+     * @return MockCallControlInfo which was set/overridden before.
+     */
+    public MockCallControlInfo getCallControlInfo(int slotId) {
+        Log.d(TAG, "getCallControlInfo[" + slotId + "]");
+        return mMockModemService.getMockModemConfigInterface().getCallControlInfo(slotId, TAG);
+    }
+
+    /**
+     * Trigger an incoming voice call.
+     *
+     * @param slotId the Id of logical sim slot.
+     * @param address phone number of the incoming call
+     * @param uusInfo user to user signaling information.
+     * @param cdmaSignalInfoRecord CDMA Signal Information Record.
+     * @return boolean true if the operation succeeds, otherwise false.
+     */
+    public boolean triggerIncomingVoiceCall(
+            int slotId,
+            String address,
+            UusInfo[] uusInfo,
+            CdmaSignalInfoRecord cdmaSignalInfoRecord)
+            throws Exception {
+        return triggerIncomingVoiceCall(slotId, address, uusInfo, cdmaSignalInfoRecord, null);
+    }
+
+    /**
+     * Trigger an incoming voice call with a call control configuration.
+     *
+     * @param slotId the Id of logical sim slot.
+     * @param address phone number of the incoming call
+     * @param uusInfo user to user signaling information.
+     * @param cdmaSignalInfoRecord CDMA Signal Information Record.
+     * @param callControlInfo the configuration of call control would like to override.
+     * @return boolean true if the operation succeeds, otherwise false.
+     */
+    public boolean triggerIncomingVoiceCall(
+            int slotId,
+            String address,
+            UusInfo[] uusInfo,
+            CdmaSignalInfoRecord cdmaSignalInfoRecord,
+            MockCallControlInfo callControlInfo)
+            throws Exception {
+        Log.d(TAG, "triggerIncomingVoiceCall[" + slotId + "] address: " + address);
+        boolean result;
+
+        result =
+                mMockModemService
+                        .getMockModemConfigInterface()
+                        .triggerIncomingVoiceCall(
+                                slotId,
+                                address,
+                                uusInfo,
+                                cdmaSignalInfoRecord,
+                                callControlInfo,
+                                TAG);
+
+        waitForTelephonyFrameworkDone(1);
+        return result;
+    }
+
+    /**
+     * Get number of on going CS calls.
+     *
+     * @param slotId the Id of logical sim slot.
+     * @return int the number of CS calls.
+     */
+    public int getNumberOfOngoingCSCalls(int slotId) {
+        Log.d(TAG, "getNumberOfOngoingCSCalls[" + slotId + "]");
+        return mMockModemService.getMockModemConfigInterface().getNumberOfCalls(slotId, TAG);
     }
 }

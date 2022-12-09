@@ -48,7 +48,7 @@ public class WallpaperInfoTest {
 
         List<ResolveInfo> result = pm.queryIntentServices(intent, PackageManager.GET_META_DATA);
 
-        assertEquals(2, result.size());
+        assertEquals(3, result.size());
     }
 
     @Test

@@ -52,6 +52,20 @@
             </meta-data>
         </service>
 
+        <service android:name="android.app.cts.wallpapers.TestLiveWallpaperSupportingAmbientMode"
+                 android:icon="@drawable/robot"
+                 android:label="@string/wallpaper_title"
+                 android:permission="android.permission.BIND_WALLPAPER"
+                 android:exported="false">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService">
+                </action>
+            </intent-filter>
+            <meta-data android:name="android.service.wallpaper"
+                       android:resource="@xml/wallpaper_supporting_ambient_mode">
+            </meta-data>
+        </service>
+
         <activity android:name=".WallpaperTestActivity"
                   android:theme="@style/Theme.Transparent">
         </activity>

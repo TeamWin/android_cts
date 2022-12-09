@@ -158,9 +158,10 @@ public class GameManagerStatsTests extends DeviceTestCase implements IBuildRecei
         assertThat(reportedAvailableModes).isEqualTo(expectedAvailableGameModes);
 
 
-        Set<GameMode> reportedOptedInModes = Set.copyOf(gameModeInfo.getOptedInGameModesList());
-        Set<GameMode> expectedOptedInGameModes = Set.of(GameMode.GAME_MODE_BATTERY);
-        assertThat(reportedOptedInModes).isEqualTo(expectedOptedInGameModes);
+        Set<GameMode> reportedOverriddenModes = Set.copyOf(
+                gameModeInfo.getOverriddenGameModesList());
+        Set<GameMode> expectedOverriddenGameModes = Set.of(GameMode.GAME_MODE_BATTERY);
+        assertThat(reportedOverriddenModes).isEqualTo(expectedOverriddenGameModes);
     }
 
     public void testGameModeConfigurationIsPulled() throws Exception {

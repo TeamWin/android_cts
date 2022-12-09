@@ -20,6 +20,7 @@ import android.content.Context;
 import android.hardware.radio.network.CellConnectionStatus;
 import android.hardware.radio.network.CellInfo;
 import android.hardware.radio.network.CellInfoRatSpecificInfo;
+import android.hardware.radio.network.Domain;
 import android.hardware.radio.network.RegState;
 import android.telephony.RadioAccessFamily;
 import android.telephony.ServiceState;
@@ -552,6 +553,51 @@ public class MockNetworkService {
         // TODO: mCsRegState and mPsReState may be changed by the registration denied reason set by
         // TestCase
 
+        updateCellRegistration();
+    }
+
+    public void updateServiceState(int reg, int domainBitmask) {
+        Log.d(TAG, "Cell ID: updateServiceState " + reg + " with domainBitmask = " + domainBitmask);
+        switch (reg) {
+            case RegState.NOT_REG_MT_SEARCHING_OP:
+                if ((domainBitmask & Domain.CS) != 0) {
+                    mCsRegState = RegState.NOT_REG_MT_SEARCHING_OP;
+                }
+                if ((domainBitmask & Domain.PS) != 0) {
+                    mPsRegState = RegState.NOT_REG_MT_SEARCHING_OP;
+                }
+                break;
+            case RegState.REG_HOME:
+                if ((domainBitmask & Domain.CS) != 0) {
+                    mCsRegState = RegState.REG_HOME;
+                }
+                if ((domainBitmask & Domain.PS) != 0) {
+                    mPsRegState = RegState.REG_HOME;
+                }
+                break;
+            case RegState.REG_ROAMING:
+                if ((domainBitmask & Domain.CS) != 0) {
+                    mCsRegState = RegState.REG_ROAMING;
+                }
+                if ((domainBitmask & Domain.PS) != 0) {
+                    mPsRegState = RegState.REG_ROAMING;
+                }
+                break;
+            case RegState.NOT_REG_MT_NOT_SEARCHING_OP:
+            default:
+                if ((domainBitmask & Domain.CS) != 0) {
+                    mCsRegState = RegState.NOT_REG_MT_NOT_SEARCHING_OP;
+                }
+                if ((domainBitmask & Domain.PS) != 0) {
+                    mPsRegState = RegState.NOT_REG_MT_NOT_SEARCHING_OP;
+                }
+                break;
+        }
+
+        updateCellRegistration();
+    }
+
+    void updateCellRegistration() {
         for (MockModemCell mmc : mCellList) {
             boolean registered;
             if ((mCsRegState == RegState.REG_HOME || mPsRegState == RegState.REG_HOME)

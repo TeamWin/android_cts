@@ -41,9 +41,12 @@ public class MainActivity extends Activity {
         if (intent != null && intent.hasExtra(EXTRA_QUERY_LOCALES)) {
             LocaleManager localeManager = getSystemService(LocaleManager.class);
             String packageName = intent.getStringExtra(EXTRA_QUERY_LOCALES);
-            LocaleList locales = localeManager.getApplicationLocales(packageName);
-            sendBroadcast(constructResultIntent(IME_APP_CREATION_INFO_PROVIDER_ACTION,
-                    packageName, locales));
+            try {
+                LocaleList locales = localeManager.getApplicationLocales(packageName);
+                sendBroadcast(constructResultIntent(IME_APP_CREATION_INFO_PROVIDER_ACTION,
+                        packageName, locales));
+            } catch (SecurityException e) {
+            }
             finish();
         }
     }

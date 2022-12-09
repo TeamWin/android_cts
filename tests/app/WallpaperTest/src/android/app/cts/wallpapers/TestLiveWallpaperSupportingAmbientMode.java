@@ -14,24 +14,6 @@
  * limitations under the License.
  */
 
-package android.webkit.cts;
+package android.app.cts.wallpapers;
 
-import android.view.MotionEvent;
-
-import android.webkit.cts.IWebServer;
-
-/**
- * This shared interface is used to invoke methods
- * that belong to the activity of a test.
- */
-interface IHostAppInvoker {
-    void waitForIdleSync();
-
-    void sendKeyDownUpSync(int keyCode);
-
-    void sendPointerSync(in MotionEvent event);
-
-    byte[] getEncodingBytes(String data, String charset);
-
-    IWebServer getWebServer();
-}
+public class TestLiveWallpaperSupportingAmbientMode extends TestWallpaperService { }

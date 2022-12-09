@@ -84,6 +84,9 @@ class YuvPlusJpegTest(its_base_test.ItsBaseTest):
       logging.debug('JPEG size: %s', max_jpeg_size)
       fmt_yuv = {'format': 'yuv', 'width': w, 'height': h}
       fmt_jpg = {'format': 'jpeg'}
+      if camera_properties_utils.stream_use_case(props):
+        fmt_yuv['useCase'] = camera_properties_utils.USE_CASE_STILL_CAPTURE
+        fmt_jpg['useCase'] = camera_properties_utils.USE_CASE_STILL_CAPTURE
 
       # Use an auto_capture_request with linear tonemap so that the YUV and JPEG
       # should look the same (once converted by the image_processing_utils).

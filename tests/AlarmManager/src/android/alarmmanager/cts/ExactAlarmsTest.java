@@ -37,7 +37,6 @@ import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.AppOpsManager;
 import android.app.PendingIntent;
-import android.app.compat.CompatChanges;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -160,6 +159,8 @@ public class ExactAlarmsTest {
     public void enableChanges() {
         Utils.enableChangeForSelf(AlarmManager.REQUIRE_EXACT_ALARM_PERMISSION);
         Utils.enableChangeForSelf(AlarmManager.ENABLE_USE_EXACT_ALARM);
+        Utils.enableChange(AlarmManager.SCHEDULE_EXACT_ALARM_DENIED_BY_DEFAULT, TEST_APP_PACKAGE,
+                sContext.getUserId());
     }
 
     @After
@@ -251,25 +252,7 @@ public class ExactAlarmsTest {
     }
 
     @Test
-    public void scheduleExactAlarmChangeDisabled() {
-        assertFalse(CompatChanges.isChangeEnabled(
-                AlarmManager.SCHEDULE_EXACT_ALARM_DENIED_BY_DEFAULT));
-    }
-
-    @Test
-    public void defaultBehaviorWhenChangeDisabled() throws Exception {
-        setAppOp(TEST_APP_PACKAGE, AppOpsManager.MODE_DEFAULT);
-        assertTrue(getCanScheduleExactAlarmFromTestApp(TEST_APP_PACKAGE));
-
-        mDeviceConfigHelper.with("exact_alarm_deny_list", TEST_APP_PACKAGE)
-                .commitAndAwaitPropagation();
-        assertFalse(getCanScheduleExactAlarmFromTestApp(TEST_APP_PACKAGE));
-    }
-
-    @Test
-    public void defaultBehaviorWhenChangeEnabled() throws Exception {
-        Utils.enableChange(AlarmManager.SCHEDULE_EXACT_ALARM_DENIED_BY_DEFAULT, TEST_APP_PACKAGE,
-                sContext.getUserId());
+    public void noPermissionByDefault() throws Exception {
         setAppOp(TEST_APP_PACKAGE, AppOpsManager.MODE_DEFAULT);
         assertFalse(getCanScheduleExactAlarmFromTestApp(TEST_APP_PACKAGE));
     }

@@ -42,6 +42,7 @@ import static com.android.compatibility.common.util.SystemUtil.callWithShellPerm
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -82,6 +83,8 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(AndroidJUnit4.class)
 public class LocaleManagerTests extends ActivityManagerTestBase {
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(10);
+
     private static Context sContext;
     private static LocaleManager sLocaleManager;
 
@@ -109,9 +112,12 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
     /* Receiver to listen to the response from the ime app's activity. */
     private BlockingBroadcastReceiver mImeAppCreationInfoProvider;
 
+    /* Receiver to listen to the response of the active IME's change. */
     private BlockingBroadcastReceiver mImeChangedBroadcastReceiver;
 
-    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(10);
+    private boolean mNeedsImeReset = false;
+    private String mTestIme = new ComponentName(IME_APP_PACKAGE,
+            IME_APP_PACKAGE + ".TestIme").flattenToShortString();
 
     @BeforeClass
     public static void setUpClass() {
@@ -191,6 +197,7 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         unRegisterReceiver(mInstallerAppCreationInfoProvider);
         unRegisterReceiver(mImeAppCreationInfoProvider);
         unRegisterReceiver(mImeChangedBroadcastReceiver);
+        resetImes();
     }
 
     private void unRegisterReceiver(BlockingBroadcastReceiver receiver) {
@@ -507,18 +514,8 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
     @Test
     public void testGetApplicationLocales_currentImeGetNonForegroundAppLocales_noBroadcastReceived()
             throws Exception {
-        // Record the original active IME and set test IME as the current active IME
-        String currentIme = Settings.Secure.getString(
-                sContext.getContentResolver(),
-                Settings.Secure.DEFAULT_INPUT_METHOD);
-        ComponentName imeComponentName = new ComponentName(IME_APP_PACKAGE,
-                IME_APP_PACKAGE + ".TestIme");
-        String testIme = imeComponentName.flattenToShortString();
-        ShellUtils.runShellCommand("ime enable " + testIme);
-        ShellUtils.runShellCommand("ime set " + testIme);
-        mImeChangedBroadcastReceiver.await();
-        assertEquals(testIme, mImeChangedBroadcastReceiver.getInputMethodId());
-        mImeChangedBroadcastReceiver.reset();
+        //Set the IME app as the active IME.
+        setTestImeAsActive();
 
         // Invoke the app by launching an activity.
         launchActivity(TEST_APP_MAIN_ACTIVITY);
@@ -537,29 +534,13 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         // Since it is not allowed for the current IME app to get locales of non-foreground app, no
         // broadcast was sent by test IME
         mImeAppCreationInfoProvider.assertNoBroadcastReceived();
-
-        //After the test is completed, restore the original active IME to the current active IME
-        ShellUtils.runShellCommand("ime enable " + currentIme);
-        ShellUtils.runShellCommand("ime set " + currentIme);
-        mImeChangedBroadcastReceiver.await();
-        assertEquals(currentIme, mImeChangedBroadcastReceiver.getInputMethodId());
     }
 
     @Test
     public void testGetApplicationLocales_currentImeGetForegroundAppLocales_returnsLocales()
             throws Exception {
-        // Record the original active IME and set test IME as the current active IME
-        String currentIme = Settings.Secure.getString(
-                sContext.getContentResolver(),
-                Settings.Secure.DEFAULT_INPUT_METHOD);
-        ComponentName imeComponentName = new ComponentName(IME_APP_PACKAGE,
-                IME_APP_PACKAGE + ".TestIme");
-        String testIme = imeComponentName.flattenToShortString();
-        ShellUtils.runShellCommand("ime enable " + testIme);
-        ShellUtils.runShellCommand("ime set " + testIme);
-        mImeChangedBroadcastReceiver.await();
-        assertEquals(testIme, mImeChangedBroadcastReceiver.getInputMethodId());
-        mImeChangedBroadcastReceiver.reset();
+        //Set the IME app as the active IME.
+        setTestImeAsActive();
 
         //Set app locales
         sLocaleManager.setApplicationLocales(DEFAULT_APP_LOCALES);
@@ -570,12 +551,6 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         mImeAppCreationInfoProvider.await();
         assertReceivedBroadcastContains(mImeAppCreationInfoProvider, CALLING_PACKAGE,
                 DEFAULT_APP_LOCALES);
-
-        //After the test is completed, restore the original active IME to the current active IME
-        ShellUtils.runShellCommand("ime enable " + currentIme);
-        ShellUtils.runShellCommand("ime set " + currentIme);
-        mImeChangedBroadcastReceiver.await();
-        assertEquals(currentIme, mImeChangedBroadcastReceiver.getInputMethodId());
     }
 
     @Test(expected = SecurityException.class)
@@ -699,5 +674,27 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
                         sLocaleManager.setApplicationLocales(TEST_APP_PACKAGE,
                                 LocaleList.getEmptyLocaleList()),
                 Manifest.permission.CHANGE_CONFIGURATION);
+    }
+
+    private void resetImes() throws Exception {
+        if (mNeedsImeReset) {
+            ShellUtils.runShellCommand("ime reset");
+            mNeedsImeReset = false;
+        }
+
+        mImeChangedBroadcastReceiver.await();
+        assertNotEquals("Should be reset to the default IME", mTestIme,
+                mImeChangedBroadcastReceiver.getInputMethodId());
+        mImeChangedBroadcastReceiver.reset();
+    }
+
+    private void setTestImeAsActive() throws Exception {
+        ShellUtils.runShellCommand("ime enable " + mTestIme);
+        ShellUtils.runShellCommand("ime set " + mTestIme);
+        mNeedsImeReset = true;
+
+        mImeChangedBroadcastReceiver.await();
+        assertEquals(mTestIme, mImeChangedBroadcastReceiver.getInputMethodId());
+        mImeChangedBroadcastReceiver.reset();
     }
 }

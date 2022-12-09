@@ -91,6 +91,10 @@ const std::map<aaudio_performance_mode_t, int64_t> StreamBuilderHelper::sMaxFram
   { AAUDIO_PERFORMANCE_MODE_POWER_SAVING, 30 * 1000 },
   { AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, 40 } };
 
+const std::unordered_set<aaudio_format_t> StreamBuilderHelper::sValidStreamFormats =
+        {AAUDIO_FORMAT_PCM_I16, AAUDIO_FORMAT_PCM_FLOAT, AAUDIO_FORMAT_PCM_I24_PACKED,
+         AAUDIO_FORMAT_PCM_I32, AAUDIO_FORMAT_IEC61937};
+
 StreamBuilderHelper::StreamBuilderHelper(
         aaudio_direction_t direction, int32_t sampleRate,
         int32_t channelCount, aaudio_format_t dataFormat,
@@ -147,17 +151,28 @@ void StreamBuilderHelper::createAndVerifyStream(bool *success) {
 
     // Check to see what kind of stream we actually got.
     mActual.sampleRate = AAudioStream_getSampleRate(mStream);
-    ASSERT_GE(mActual.sampleRate, 44100);
-    ASSERT_LE(mActual.sampleRate, 96000); // TODO what is min/max?
+    ASSERT_GE(mActual.sampleRate, kMinValidSampleRate);
+    ASSERT_LE(mActual.sampleRate, kMaxValidSampleRate);
+
+    ASSERT_GE(AAudioStream_getHardwareSampleRate(mStream), kMinValidSampleRate);
+    ASSERT_LE(AAudioStream_getHardwareSampleRate(mStream), kMaxValidSampleRate);
 
     mActual.channelCount = AAudioStream_getChannelCount(mStream);
-    ASSERT_GE(mActual.channelCount, 1);
-    ASSERT_LE(mActual.channelCount, 16); // TODO what is min/max?
+    ASSERT_GE(mActual.channelCount, kMinValidChannelCount);
+    ASSERT_LE(mActual.channelCount, kMaxValidChannelCount);
+
+    ASSERT_GE(AAudioStream_getHardwareChannelCount(mStream), kMinValidChannelCount);
+    ASSERT_LE(AAudioStream_getHardwareChannelCount(mStream), kMaxValidChannelCount);
 
     mActual.dataFormat = AAudioStream_getFormat(mStream);
     if (mRequested.dataFormat != AAUDIO_FORMAT_UNSPECIFIED) {
         ASSERT_EQ(mRequested.dataFormat, mActual.dataFormat);
     }
+
+    ASSERT_NE(AAudioStream_getHardwareFormat(mStream), AAUDIO_FORMAT_UNSPECIFIED);
+    ASSERT_NE(AAudioStream_getHardwareFormat(mStream), AAUDIO_FORMAT_INVALID);
+    ASSERT_TRUE(sValidStreamFormats.find(AAudioStream_getHardwareFormat(mStream)) !=
+            sValidStreamFormats.end());
 
     mActual.perfMode = AAudioStream_getPerformanceMode(mStream);
     if (mRequested.perfMode != AAUDIO_PERFORMANCE_MODE_NONE

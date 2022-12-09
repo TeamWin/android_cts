@@ -39,7 +39,7 @@ import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.app.assist.AssistStructure.WindowNode;
 import android.autofillservice.cts.R;
-import android.autofillservice.cts.activities.LoginActivity;
+import android.autofillservice.cts.activities.AbstractAutoFillActivity;
 import android.content.AutofillOptions;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -1685,7 +1685,7 @@ public final class Helper {
     /**
      * Asserts whether mock IME is showing
      */
-    public static void assertMockImeStatus(LoginActivity activity,
+    public static void assertMockImeStatus(AbstractAutoFillActivity activity,
             boolean expectedImeShow) throws Exception {
         Timeouts.MOCK_IME_TIMEOUT.run("assertMockImeStatus(" + expectedImeShow + ")",
                 () -> {

@@ -24,11 +24,14 @@ java_test_host {
         "cts",
         "general-tests",
     ],
+    static_libs: [
+        "platformprotos",
+        "host-libprotobuf-java-full",
+    ],
     libs: [
         "cts-tradefed",
         "tradefed",
         "compatibility-host-util",
-        "platformprotos",
         "truth-prebuilt",
     ],
     data: [

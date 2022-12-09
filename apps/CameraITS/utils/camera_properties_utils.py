@@ -33,6 +33,7 @@ NUM_POSE_TRANSLATION_PARAMS = 3  # number of terms in poseTranslation
 SKIP_RET_MSG = 'Test skipped'
 SOLID_COLOR_TEST_PATTERN = 1
 COLOR_BARS_TEST_PATTERN = 2
+USE_CASE_STILL_CAPTURE = 2
 
 
 def legacy(props):

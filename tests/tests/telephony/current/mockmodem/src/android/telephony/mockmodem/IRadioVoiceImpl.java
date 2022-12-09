@@ -22,8 +22,17 @@ import android.hardware.radio.RadioResponseInfo;
 import android.hardware.radio.voice.IRadioVoice;
 import android.hardware.radio.voice.IRadioVoiceIndication;
 import android.hardware.radio.voice.IRadioVoiceResponse;
+import android.hardware.radio.voice.LastCallFailCauseInfo;
+import android.os.AsyncResult;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
+import android.os.Message;
 import android.os.RemoteException;
+import android.telephony.mockmodem.MockVoiceService.MockCallInfo;
 import android.util.Log;
+
+import java.util.ArrayList;
 
 public class IRadioVoiceImpl extends IRadioVoice.Stub {
     private static final String TAG = "MRVOICE";
@@ -32,8 +41,21 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
     private IRadioVoiceResponse mRadioVoiceResponse;
     private IRadioVoiceIndication mRadioVoiceIndication;
     private MockModemConfigInterface mMockModemConfigInterface;
+    private final Object mCacheUpdateMutex;
+    private final HandlerThread mHandlerThread;
+    private final Handler mHandler;
     private int mSubId;
     private String mTag;
+
+    // ***** Events
+    static final int EVENT_CALL_STATE_CHANGED = 1;
+    static final int EVENT_CURRENT_CALLS_RESPONSE = 2;
+    static final int EVENT_CALL_INCOMING = 3;
+    static final int EVENT_RINGBACK_TONE = 4;
+
+    // ***** Cache of modem attributes/status
+    private ArrayList<MockCallInfo> mCallList;
+    private ArrayList<Integer> mGetCurrentCallReqList;
 
     public IRadioVoiceImpl(
             MockModemService service, MockModemConfigInterface configInterface, int instanceId) {
@@ -43,6 +65,189 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
         this.mService = service;
         mMockModemConfigInterface = configInterface;
         mSubId = instanceId;
+        mCacheUpdateMutex = new Object();
+        mHandlerThread = new HandlerThread(mTag);
+        mHandlerThread.start();
+        mHandler = new IRadioVoiceHandler(mHandlerThread.getLooper());
+        mGetCurrentCallReqList = new ArrayList<Integer>();
+
+        // Register events
+        mMockModemConfigInterface.registerForCallStateChanged(
+                mSubId, mHandler, EVENT_CALL_STATE_CHANGED, null);
+        mMockModemConfigInterface.registerForCurrentCallsResponse(
+                mSubId, mHandler, EVENT_CURRENT_CALLS_RESPONSE, null);
+        mMockModemConfigInterface.registerForCallIncoming(
+                mSubId, mHandler, EVENT_CALL_INCOMING, null);
+        mMockModemConfigInterface.registerRingbackTone(mSubId, mHandler, EVENT_RINGBACK_TONE, null);
+    }
+
+    /** Handler class to handle callbacks */
+    private final class IRadioVoiceHandler extends Handler {
+        IRadioVoiceHandler(Looper looper) {
+            super(looper);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            AsyncResult ar;
+            synchronized (mCacheUpdateMutex) {
+                switch (msg.what) {
+                    case EVENT_CALL_STATE_CHANGED:
+                        Log.d(mTag, "Received EVENT_CALL_STATE_CHANGED");
+                        ar = (AsyncResult) msg.obj;
+                        if (ar != null && ar.exception == null) {
+                            mCallList = (ArrayList<MockCallInfo>) ar.result;
+                            Log.i(mTag, "num of calls: " + mCallList.size());
+                            callStateChanged();
+                        } else {
+                            Log.e(mTag, msg.what + " failure. Exception: " + ar.exception);
+                        }
+                        break;
+                    case EVENT_CURRENT_CALLS_RESPONSE:
+                        Log.d(mTag, "Received EVENT_CURRENT_CALLS_RESPONSE");
+                        ar = (AsyncResult) msg.obj;
+                        if (ar != null && ar.exception == null) {
+                            mCallList = (ArrayList<MockCallInfo>) ar.result;
+                            Log.i(
+                                    mTag,
+                                    "num of calls: "
+                                            + mCallList.size()
+                                            + ", num of getCurrentCalls requests: "
+                                            + mGetCurrentCallReqList.size());
+                            for (int i = 0; i < mGetCurrentCallReqList.size(); i++) {
+                                getCurrentCallsRespnose(mGetCurrentCallReqList.get(i).intValue());
+                            }
+                            mGetCurrentCallReqList.clear();
+                        } else {
+                            Log.e(mTag, msg.what + " failure. Exception: " + ar.exception);
+                        }
+                        break;
+                    case EVENT_CALL_INCOMING:
+                        Log.d(mTag, "Received EVENT_CALL_INCOMING");
+                        ar = (AsyncResult) msg.obj;
+                        if (ar != null && ar.exception == null) {
+                            MockCallInfo callInfo = (MockCallInfo) ar.result;
+                            Log.i(mTag, "Incoming call id = " + callInfo.getCallId());
+                            boolean hasCdmaSignalInfoRecord =
+                                    (callInfo.getCdmaSignalInfoRecord() != null) ? true : false;
+                            callRing(!hasCdmaSignalInfoRecord, callInfo.getCdmaSignalInfoRecord());
+                        } else {
+                            Log.e(mTag, msg.what + " failure. Exception: " + ar.exception);
+                        }
+                        break;
+                    case EVENT_RINGBACK_TONE:
+                        Log.d(mTag, "Received EVENT_RINGBACK_TONE");
+                        ar = (AsyncResult) msg.obj;
+                        if (ar != null && ar.exception == null) {
+                            boolean ringbackToneState = (boolean) ar.result;
+                            Log.i(mTag, "ringbackToneState = " + ringbackToneState);
+                            indicateRingbackTone(ringbackToneState);
+                        } else {
+                            Log.e(mTag, msg.what + " failure. Exception: " + ar.exception);
+                        }
+                        break;
+                }
+            }
+        }
+    }
+
+    private int convertCallState(int callstate) {
+        int state = -1;
+
+        switch (callstate) {
+            case MockCallInfo.CALL_STATE_ACTIVE:
+                state = android.hardware.radio.voice.Call.STATE_ACTIVE;
+                break;
+
+            case MockCallInfo.CALL_STATE_HOLDING:
+                state = android.hardware.radio.voice.Call.STATE_HOLDING;
+                break;
+
+            case MockCallInfo.CALL_STATE_DIALING:
+                state = android.hardware.radio.voice.Call.STATE_DIALING;
+                break;
+
+            case MockCallInfo.CALL_STATE_ALERTING:
+                state = android.hardware.radio.voice.Call.STATE_ALERTING;
+                break;
+
+            case MockCallInfo.CALL_STATE_INCOMING:
+                state = android.hardware.radio.voice.Call.STATE_INCOMING;
+                break;
+
+            case MockCallInfo.CALL_STATE_WAITING:
+                state = android.hardware.radio.voice.Call.STATE_WAITING;
+                break;
+
+            default:
+                Log.e(mTag, "Unknown call state = " + callstate);
+                break;
+        }
+
+        return state;
+    }
+
+    private android.hardware.radio.voice.Call[] fillUpCurrentCallsRespnose() {
+        int numOfCalls = 0;
+        android.hardware.radio.voice.Call[] calls = null;
+
+        if (mCallList != null) {
+            numOfCalls = mCallList.size();
+        }
+
+        if (mMockModemConfigInterface != null
+                && mMockModemConfigInterface.getNumberOfCalls(mSubId, mTag) == numOfCalls) {
+            calls = new android.hardware.radio.voice.Call[numOfCalls];
+
+            if (calls != null) {
+                for (int i = 0; i < numOfCalls; i++) {
+                    calls[i] = new android.hardware.radio.voice.Call();
+                    if (calls[i] != null) {
+                        calls[i].state = convertCallState(mCallList.get(i).getCallState());
+                        calls[i].index = mCallList.get(i).getCallId();
+                        calls[i].toa = mCallList.get(i).getCallToa();
+                        calls[i].isMpty = mCallList.get(i).isMpty();
+                        calls[i].isMT = mCallList.get(i).isMT();
+                        calls[i].als = mCallList.get(i).getCallAls();
+                        calls[i].isVoice = mCallList.get(i).isVoice();
+                        calls[i].isVoicePrivacy = mCallList.get(i).isVoicePrivacy();
+                        calls[i].number = mCallList.get(i).getNumber();
+                        calls[i].numberPresentation = mCallList.get(i).getNumberPresentation();
+                        calls[i].uusInfo = mCallList.get(i).getUusInfo();
+                        calls[i].audioQuality = mCallList.get(i).getAudioQuality();
+                        calls[i].forwardedNumber = mCallList.get(i).getForwardedNumber();
+                    } else {
+                        Log.e(
+                                mTag,
+                                "Failed to allocate memory for call " + i + "/" + numOfCalls + ".");
+                        break;
+                    }
+                }
+            } else {
+                Log.e(mTag, "Failed to allocate memory for calls.");
+            }
+        } else {
+            Log.e(mTag, "mMockModemConfigInterface != null or num of calls isn't matched.");
+        }
+
+        return calls;
+    }
+
+    private void getCurrentCallsRespnose(int serial) {
+        int responseError = RadioError.NONE;
+        android.hardware.radio.voice.Call[] calls = fillUpCurrentCallsRespnose();
+
+        if (calls == null) {
+            responseError = RadioError.INTERNAL_ERR;
+            Log.e(mTag, "calls == null!!");
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, responseError);
+        try {
+            mRadioVoiceResponse.getCurrentCallsResponse(rsp, calls);
+        } catch (RemoteException ex) {
+            Log.e(mTag, "Failed to getCurrentCalls from AIDL. Exception" + ex);
+        }
     }
 
     // Implementation of IRadioVoice functions
@@ -58,8 +263,21 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
     @Override
     public void acceptCall(int serial) {
         Log.d(mTag, "acceptCall");
+        int responseError = RadioError.NONE;
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        if (mMockModemConfigInterface != null) {
+            boolean ret = mMockModemConfigInterface.acceptVoiceCall(mSubId, mTag);
+
+            if (!ret) {
+                Log.e(mTag, "Failed: accept request failed");
+                responseError = RadioError.INTERNAL_ERR;
+            }
+        } else {
+            Log.e(mTag, "Failed: mMockModemConfigInterface == null");
+            responseError = RadioError.INTERNAL_ERR;
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, responseError);
         try {
             mRadioVoiceResponse.acceptCallResponse(rsp);
         } catch (RemoteException ex) {
@@ -94,8 +312,23 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
     @Override
     public void dial(int serial, android.hardware.radio.voice.Dial dialInfo) {
         Log.d(mTag, "dial");
+        int responseError = RadioError.NONE;
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        if (mMockModemConfigInterface != null) {
+            boolean ret =
+                    mMockModemConfigInterface.dialVoiceCall(
+                            mSubId, dialInfo.address, dialInfo.clir, dialInfo.uusInfo, mTag);
+
+            if (!ret) {
+                Log.e(mTag, "Failed: dial request failed");
+                responseError = RadioError.INTERNAL_ERR;
+            }
+        } else {
+            Log.e(mTag, "Failed: mMockModemConfigInterface == null");
+            responseError = RadioError.INTERNAL_ERR;
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, responseError);
         try {
             mRadioVoiceResponse.dialResponse(rsp);
         } catch (RemoteException ex) {
@@ -206,24 +439,66 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
     public void getCurrentCalls(int serial) {
         Log.d(mTag, "getCurrentCalls");
 
-        android.hardware.radio.voice.Call[] calls = new android.hardware.radio.voice.Call[0];
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
-        try {
-            mRadioVoiceResponse.getCurrentCallsResponse(rsp, calls);
-        } catch (RemoteException ex) {
-            Log.e(mTag, "Failed to getCurrentCalls from AIDL. Exception" + ex);
+        int responseError = RadioError.NONE;
+
+        if (mMockModemConfigInterface != null) {
+            Integer request = Integer.valueOf(serial);
+
+            synchronized (mCacheUpdateMutex) {
+                if (mGetCurrentCallReqList != null && request != null) {
+                    mGetCurrentCallReqList.add(request);
+                    Log.d(mTag, "Add GetCurrentCallReq");
+                } else {
+                    Log.e(mTag, "Failed: mGetCurrentCallReqList == null or request == null");
+                    responseError = RadioError.INTERNAL_ERR;
+                }
+            }
+
+            if (responseError == RadioError.NONE) {
+                boolean ret = mMockModemConfigInterface.getCurrentCalls(mSubId, mTag);
+
+                if (!ret) {
+                    Log.e(mTag, "Failed: getCurrentCalls request failed");
+                    responseError = RadioError.INTERNAL_ERR;
+                }
+            }
+        } else {
+            Log.e(mTag, "Failed: mMockModemConfigInterface == null");
+            responseError = RadioError.INTERNAL_ERR;
+        }
+
+        if (responseError != RadioError.NONE) {
+            android.hardware.radio.voice.Call[] calls = new android.hardware.radio.voice.Call[0];
+            RadioResponseInfo rsp = mService.makeSolRsp(serial, responseError);
+            try {
+                mRadioVoiceResponse.getCurrentCallsResponse(rsp, calls);
+            } catch (RemoteException ex) {
+                Log.e(mTag, "Failed to getCurrentCalls from AIDL. Exception" + ex);
+            }
         }
     }
 
     @Override
     public void getLastCallFailCause(int serial) {
         Log.d(mTag, "getLastCallFailCause");
+        LastCallFailCauseInfo failCauseInfo = null;
+        int responseError = RadioError.NONE;
 
-        android.hardware.radio.voice.LastCallFailCauseInfo failCauseinfo =
-                new android.hardware.radio.voice.LastCallFailCauseInfo();
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        if (mMockModemConfigInterface != null) {
+            failCauseInfo = mMockModemConfigInterface.getLastCallFailCause(mSubId, mTag);
+
+            if (failCauseInfo == null) {
+                Log.e(mTag, "Failed: get last call fail cause request failed");
+                responseError = RadioError.INTERNAL_ERR;
+            }
+        } else {
+            Log.e(mTag, "Failed: mMockModemConfigInterface == null");
+            responseError = RadioError.INTERNAL_ERR;
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, responseError);
         try {
-            mRadioVoiceResponse.getLastCallFailCauseResponse(rsp, failCauseinfo);
+            mRadioVoiceResponse.getLastCallFailCauseResponse(rsp, failCauseInfo);
         } catch (RemoteException ex) {
             Log.e(mTag, "Failed to getLastCallFailCause from AIDL. Exception" + ex);
         }
@@ -232,11 +507,19 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
     @Override
     public void getMute(int serial) {
         Log.d(mTag, "getMute");
+        int responseError = RadioError.NONE;
+        boolean muteMode = false;
 
-        boolean enable = false;
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        if (mMockModemConfigInterface != null) {
+            muteMode = mMockModemConfigInterface.getVoiceMuteMode(mSubId, mTag);
+        } else {
+            Log.e(mTag, "Failed: mMockModemConfigInterface == null");
+            responseError = RadioError.INTERNAL_ERR;
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, responseError);
         try {
-            mRadioVoiceResponse.getMuteResponse(rsp, enable);
+            mRadioVoiceResponse.getMuteResponse(rsp, muteMode);
         } catch (RemoteException ex) {
             Log.e(mTag, "Failed to getMute from AIDL. Exception" + ex);
         }
@@ -283,10 +566,23 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
     @Override
     public void hangup(int serial, int gsmIndex) {
         Log.d(mTag, "hangup");
+        int responseError = RadioError.NONE;
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        if (mMockModemConfigInterface != null) {
+            boolean ret = mMockModemConfigInterface.hangupVoiceCall(mSubId, gsmIndex, mTag);
+
+            if (!ret) {
+                Log.e(mTag, "Failed: hangup request failed");
+                responseError = RadioError.INTERNAL_ERR;
+            }
+        } else {
+            Log.e(mTag, "Failed: mMockModemConfigInterface == null");
+            responseError = RadioError.INTERNAL_ERR;
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, responseError);
         try {
-            mRadioVoiceResponse.hangupConnectionResponse(rsp); // TODO: no hangupResponse
+            mRadioVoiceResponse.hangupConnectionResponse(rsp);
         } catch (RemoteException ex) {
             Log.e(mTag, "Failed to hangup from AIDL. Exception" + ex);
         }
@@ -332,8 +628,21 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
     @Override
     public void rejectCall(int serial) {
         Log.d(mTag, "rejectCall");
+        int responseError = RadioError.NONE;
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        if (mMockModemConfigInterface != null) {
+            boolean ret = mMockModemConfigInterface.rejectVoiceCall(mSubId, mTag);
+
+            if (!ret) {
+                Log.e(mTag, "Failed: reject request failed");
+                responseError = RadioError.INTERNAL_ERR;
+            }
+        } else {
+            Log.e(mTag, "Failed: mMockModemConfigInterface == null");
+            responseError = RadioError.INTERNAL_ERR;
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, responseError);
         try {
             mRadioVoiceResponse.rejectCallResponse(rsp);
         } catch (RemoteException ex) {
@@ -446,8 +755,21 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
     @Override
     public void setMute(int serial, boolean enable) {
         Log.d(mTag, "setMute");
+        int responseError = RadioError.NONE;
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        if (mMockModemConfigInterface != null) {
+            boolean ret = mMockModemConfigInterface.setVoiceMuteMode(mSubId, enable, mTag);
+
+            if (!ret) {
+                Log.e(mTag, "Failed: setMute request failed");
+                responseError = RadioError.INTERNAL_ERR;
+            }
+        } else {
+            Log.e(mTag, "Failed: mMockModemConfigInterface == null");
+            responseError = RadioError.INTERNAL_ERR;
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, responseError);
         try {
             mRadioVoiceResponse.setMuteResponse(rsp);
         } catch (RemoteException ex) {

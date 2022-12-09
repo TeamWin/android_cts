@@ -167,6 +167,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     .add(
                             VehiclePropertyIds.FUEL_LEVEL,
                             VehiclePropertyIds.EV_BATTERY_LEVEL,
+                            VehiclePropertyIds.EV_CURRENT_BATTERY_CAPACITY,
                             VehiclePropertyIds.EV_BATTERY_INSTANTANEOUS_CHARGE_RATE,
                             VehiclePropertyIds.RANGE_REMAINING,
                             VehiclePropertyIds.FUEL_LEVEL_LOW,
@@ -214,7 +215,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.CURRENT_GEAR,
                             VehiclePropertyIds.PARKING_BRAKE_ON,
                             VehiclePropertyIds.PARKING_BRAKE_AUTO_APPLY,
-                            VehiclePropertyIds.IGNITION_STATE)
+                            VehiclePropertyIds.IGNITION_STATE,
+                            VehiclePropertyIds.EV_BRAKE_REGENERATION_LEVEL)
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_CAR_POWERTRAIN_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add(
+                            VehiclePropertyIds.EV_BRAKE_REGENERATION_LEVEL)
                     .build();
     private static final ImmutableList<Integer> PERMISSION_CAR_SPEED_PROPERTIES =
             ImmutableList.<Integer>builder()
@@ -1031,6 +1038,21 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void testEvBrakeRegenerationLevelIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.EV_BRAKE_REGENERATION_LEVEL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .requireMinMaxValues()
+                .requireMinValuesToBeZero()
+                .addReadPermission(Car.PERMISSION_POWERTRAIN)
+                .addWritePermission(Car.PERMISSION_CONTROL_POWERTRAIN)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+    @Test
     public void testAbsActiveIfSupported() {
         VehiclePropertyVerifier.newBuilder(
                         VehiclePropertyIds.ABS_ACTIVE,
@@ -1706,6 +1728,45 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             assertWithMessage(
                                             "EV_BATTERY_LEVEL Float value must not exceed "
                                                     + "INFO_EV_BATTERY_CAPACITY Float "
+                                                    + "value")
+                                    .that((Float) carPropertyValue.getValue())
+                                    .isAtMost((Float) infoEvBatteryCapacityValue.getValue());
+                        })
+                .addReadPermission(Car.PERMISSION_ENERGY)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testEvCurrentBatteryCapacityIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.EV_CURRENT_BATTERY_CAPACITY,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Float.class)
+                .setCarPropertyValueVerifier(
+                        (carPropertyConfig, carPropertyValue) -> {
+                            assertWithMessage(
+                                            "EV_CURRENT_BATTERY_CAPACITY Float value must be"
+                                                    + "greater than or equal 0")
+                                    .that((Float) carPropertyValue.getValue())
+                                    .isAtLeast(0);
+
+                            if (mCarPropertyManager.getCarPropertyConfig(
+                                            VehiclePropertyIds.INFO_EV_BATTERY_CAPACITY)
+                                    == null) {
+                                return;
+                            }
+
+                            CarPropertyValue<?> infoEvBatteryCapacityValue =
+                                    mCarPropertyManager.getProperty(
+                                            VehiclePropertyIds.INFO_EV_BATTERY_CAPACITY,
+                                            /*areaId=*/0);
+
+                            assertWithMessage(
+                                            "EV_CURRENT_BATTERY_CAPACITY Float value must not"
+                                                    + "exceed INFO_EV_BATTERY_CAPACITY Float "
                                                     + "value")
                                     .that((Float) carPropertyValue.getValue())
                                     .isAtMost((Float) infoEvBatteryCapacityValue.getValue());
@@ -4567,6 +4628,23 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     }
                 },
                 Car.PERMISSION_POWERTRAIN);
+    }
+
+    @Test
+    public void testPermissionControlCarPowertrainGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                        "%s",
+                                        VehiclePropertyIds.toString(
+                                                carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CONTROL_CAR_POWERTRAIN_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CONTROL_POWERTRAIN);
     }
 
     @Test

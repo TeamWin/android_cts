@@ -151,6 +151,15 @@ public class MockModemService extends Service {
     }
 
     @Override
+    public void onDestroy() {
+        Log.d(TAG, "Mock Modem Service on distory");
+        if (sMockModemConfigInterface != null) {
+            sMockModemConfigInterface.destroy();
+        }
+        super.onDestroy();
+    }
+
+    @Override
     public IBinder onBind(Intent intent) {
 
         String action = intent.getAction();

@@ -35,6 +35,7 @@ import android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
@@ -88,6 +89,7 @@ public class AlwaysOnHotwordDetectorTest {
     }
 
     @Test
+    @FlakyTest(bugId = 261677776)
     public void testAlwaysOnHotwordDetector_startRecognitionWithData() throws Exception {
         // Create alwaysOnHotwordDetector and wait onHotwordDetectionServiceInitialized() callback
         mService.createAlwaysOnHotwordDetector();

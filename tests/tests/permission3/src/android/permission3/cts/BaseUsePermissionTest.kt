@@ -125,6 +125,11 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val ALERT_DIALOG_MESSAGE = "android:id/message"
         const val ALERT_DIALOG_OK_BUTTON = "android:id/button1"
 
+        const val GRANT_DIALOG_PERMISSION_RATIONALE_CONTAINER_VIEW =
+            "com.android.permissioncontroller:id/permission_rationale_container"
+        const val PERMISSION_RATIONALE_ACTIVITY_TITLE_VIEW =
+            "com.android.permissioncontroller:id/permission_rationale_title"
+
         const val REQUEST_LOCATION_MESSAGE = "permgrouprequest_location"
 
         val STORAGE_AND_MEDIA_PERMISSIONS = setOf(
@@ -499,6 +504,11 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         } else {
             click(By.res(NO_UPGRADE_AND_DONT_ASK_AGAIN_BUTTON))
         }
+    }
+
+    protected fun clickPermissionRationaleViewInGrantDialog() {
+        waitForIdle()
+        click(By.res(GRANT_DIALOG_PERMISSION_RATIONALE_CONTAINER_VIEW))
     }
 
     protected fun grantAppPermissions(vararg permissions: String, targetSdk: Int = 30) {

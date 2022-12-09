@@ -36,6 +36,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 import android.Manifest.permission;
+import android.app.Activity;
 import android.app.WallpaperColors;
 import android.app.WallpaperManager;
 import android.content.BroadcastReceiver;
@@ -59,11 +60,14 @@ import android.view.Window;
 import android.view.WindowManager;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.core.app.ActivityScenario;
+import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.CtsTouchUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
@@ -88,6 +92,12 @@ public class WallpaperManagerTest {
     private BroadcastReceiver mBroadcastReceiver;
     private CountDownLatch mCountDownLatch;
     private boolean mEnableWcg;
+
+    @Rule
+    public ActivityTestRule<WallpaperTestActivity> mActivityTestRule = new ActivityTestRule<>(
+            WallpaperTestActivity.class,
+            false /* initialTouchMode */,
+            false /* launchActivity */);
 
     @Before
     public void setUp() throws Exception {
@@ -766,27 +776,34 @@ public class WallpaperManagerTest {
     @Test
     public void wallpaperCallbackMainThreadTest() {
 
+        // use a wallpaper supporting ambient mode, to trigger Engine.onAmbientModeChanged
         ComponentName componentName = new ComponentName(
-                TestLiveWallpaper.class.getPackageName(), TestLiveWallpaper.class.getName());
+                TestLiveWallpaperSupportingAmbientMode.class.getPackageName(),
+                TestLiveWallpaperSupportingAmbientMode.class.getName());
         runWithShellPermissionIdentity(() ->
                 mWallpaperManager.setWallpaperComponent(componentName));
 
-        // triggers Engine.onDesiredDimensionsChanged
+        // trigger Engine.onDesiredDimensionsChanged
         mWallpaperManager.suggestDesiredDimensions(1000, 1000);
-        ActivityScenario<WallpaperTestActivity> scenario =
-                ActivityScenario.launch(WallpaperTestActivity.class);
-        scenario.onActivity(activity -> {
-            Window window = activity.getWindow();
-            IBinder windowToken = window.getDecorView().getWindowToken();
 
-            // send some command to trigger Engine.onCommand
-            mWallpaperManager.sendWallpaperCommand(
-                    windowToken, WallpaperManager.COMMAND_TAP, 50, 50, 0, null);
+        Activity activity = mActivityTestRule.launchActivity(null);
 
-            // trigger Engine.onZoomChanged
-            mWallpaperManager.setWallpaperZoomOut(windowToken, 0.5f);
-        });
+        Window window = activity.getWindow();
+        IBinder windowToken = window.getDecorView().getWindowToken();
 
+        // send some command to trigger Engine.onCommand
+        mWallpaperManager.sendWallpaperCommand(
+                windowToken, WallpaperManager.COMMAND_TAP, 50, 50, 0, null);
+
+        // trigger Engine.onZoomChanged
+        mWallpaperManager.setWallpaperZoomOut(windowToken, 0.5f);
+
+        // trigger Engine.onTouchEvent
+        CtsTouchUtils.emulateTapOnViewCenter(
+                InstrumentationRegistry.getInstrumentation(), null,
+                activity.findViewById(android.R.id.content));
+
+        mActivityTestRule.finishActivity();
         runWithShellPermissionIdentity(() -> mWallpaperManager.clearWallpaper());
     }
 
