@@ -23,6 +23,7 @@ import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.Manifest.permission.MODIFY_AUDIO_ROUTING;
 import static android.Manifest.permission.REAL_GET_TASKS;
 import static android.Manifest.permission.WAKE_LOCK;
+import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED;
 import static android.media.AudioFormat.CHANNEL_IN_MONO;
 import static android.media.AudioFormat.ENCODING_PCM_16BIT;
@@ -157,6 +158,9 @@ public class VirtualAudioTest {
         assumeTrue(packageManager.hasSystemFeature(
                 PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         assumeFalse("Skipping test: not supported on automotive", isAutomotive());
+        // TODO(b/261155110): Re-enable tests once freeform mode is supported in Virtual Display.
+        assumeFalse("Skipping test: VirtualDisplay window policy doesn't support freeform.",
+                packageManager.hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT));
 
         VirtualDeviceManager vdm = context.getSystemService(VirtualDeviceManager.class);
         mVirtualDevice = vdm.createVirtualDevice(

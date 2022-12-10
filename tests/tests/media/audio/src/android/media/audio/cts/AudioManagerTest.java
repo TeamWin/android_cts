@@ -61,6 +61,7 @@ import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioHalVersionInfo;
 import android.media.AudioManager;
+import android.media.AudioMixerAttributes;
 import android.media.AudioProfile;
 import android.media.AudioTrack;
 import android.media.MediaPlayer;
@@ -98,6 +99,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -112,6 +114,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     private static final int MP3_TO_PLAY = R.raw.testmp3; // ~ 5 second mp3
     private static final long POLL_TIME_PLAY_MUSIC = 2000;
     private static final long TIME_TO_PLAY = 2000;
+    private static final long TIME_TO_WAIT_CALLBACK_MS = 1000;
     private static final String APPOPS_OP_STR = "android:write_settings";
     private static final Set<Integer> ALL_KNOWN_ENCAPSULATION_TYPES = Set.of(
             AudioProfile.AUDIO_ENCAPSULATION_TYPE_IEC61937);
@@ -2114,6 +2117,86 @@ public class AudioManagerTest extends InstrumentationTestCase {
                         || AudioHalVersionInfo.AUDIO_HAL_TYPE_HIDL == halVersion.getHalType());
         assertTrue(halVersion.getMajorVersion() > 0);
         assertTrue(halVersion.getMinorVersion() >= 0);
+    }
+
+    public void testPreferredMixerAttributes() {
+        final AudioAttributes attr = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA).build();
+        final AudioMixerAttributes defaultMixerAttributes = new AudioMixerAttributes.Builder(
+                new AudioFormat.Builder()
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                        .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+                        .setSampleRate(48000)
+                        .build())
+                .setMixerBehavior(AudioMixerAttributes.MIXER_BEHAVIOR_DEFAULT)
+                .build();
+        for (AudioDeviceInfo device : mAudioManager.getDevices(AudioManager.GET_DEVICES_ALL)) {
+            MyPreferredMixerAttrListener listener =
+                    new MyPreferredMixerAttrListener(attr, device.getId());
+            mAudioManager.addOnPreferredMixerAttributesChangedListener(
+                    Executors.newSingleThreadExecutor(), listener);
+            List<AudioMixerAttributes> supportedMixerAttributes =
+                    mAudioManager.getSupportedMixerAttributes(device);
+            if (supportedMixerAttributes.isEmpty()) {
+                // Setting preferred mixer attributes is not supported
+                assertFalse(mAudioManager.setPreferredMixerAttributes(
+                        attr, device, defaultMixerAttributes));
+            } else {
+                for (AudioMixerAttributes mixerAttr : supportedMixerAttributes) {
+                    listener.reset();
+                    assertTrue(mAudioManager.setPreferredMixerAttributes(attr, device, mixerAttr));
+                    try {
+                        // Wait a while for callback to be called.
+                        Thread.sleep(TIME_TO_WAIT_CALLBACK_MS);
+                    } catch (InterruptedException e) {
+                    }
+                    assertTrue(listener.isPreferredMixerAttributesChanged());
+                    final AudioMixerAttributes mixerAttrFromQuery =
+                            mAudioManager.getPreferredMixerAttributes(attr, device);
+                    assertEquals(mixerAttr, mixerAttrFromQuery);
+                    listener.reset();
+                    assertTrue(mAudioManager.clearPreferredMixerAttributes(attr, device));
+                    try {
+                        // Wait a while for callback to be called.
+                        Thread.sleep(TIME_TO_WAIT_CALLBACK_MS);
+                    } catch (InterruptedException e) {
+                    }
+                    assertTrue(listener.isPreferredMixerAttributesChanged());
+                    assertNull(mAudioManager.getPreferredMixerAttributes(attr, device));
+                }
+            }
+            mAudioManager.removeOnPreferredMixerAttributesChangedListener(listener);
+        }
+    }
+
+    private final class MyPreferredMixerAttrListener
+            implements AudioManager.OnPreferredMixerAttributesChangedListener {
+        private final AudioAttributes mAttr;
+        private final int mDeviceId;
+
+        private AtomicBoolean mIsCalled = new AtomicBoolean();
+
+        MyPreferredMixerAttrListener(AudioAttributes attr, int deviceId) {
+            mAttr = attr;
+            mDeviceId = deviceId;
+        }
+
+        @Override
+        public void onPreferredMixerAttributesChanged(AudioAttributes attributes,
+                                                      AudioDeviceInfo device,
+                                                      AudioMixerAttributes mixerAttr) {
+            if (device.getId() == mDeviceId && mAttr.equals(attributes)) {
+                mIsCalled.set(true);
+            }
+        }
+
+        public void reset() {
+            mIsCalled.set(false);
+        }
+
+        public boolean isPreferredMixerAttributesChanged() {
+            return mIsCalled.get();
+        }
     }
 
     private void assertStreamVolumeEquals(int stream, int expectedVolume) throws Exception {

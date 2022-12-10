@@ -24,6 +24,7 @@ import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGES_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGE_INFO;
 import static android.appenumeration.cts.Constants.ACTION_HAS_SIGNING_CERTIFICATE;
 import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
+import static android.appenumeration.cts.Constants.ACTION_MEDIA_SESSION_MANAGER_IS_TRUSTED_FOR_MEDIA_CONTROL;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_ACTIVITIES;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_PROVIDERS;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_SERVICES;
@@ -89,6 +90,7 @@ import android.content.pm.PackageManager.PackageInfoFlags;
 import android.content.pm.PackageManager.ResolveInfoFlags;
 import android.content.pm.SharedLibraryInfo;
 import android.database.Cursor;
+import android.media.session.MediaSessionManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -429,6 +431,10 @@ public class TestActivity extends Activity {
                 sendGetEnabledInputMethodSubtypeList(remoteCallback, info);
             } else if (Constants.ACTION_ACCOUNT_MANAGER_GET_AUTHENTICATOR_TYPES.equals(action)) {
                 sendAccountManagerGetAuthenticatorTypes(remoteCallback);
+            } else if (ACTION_MEDIA_SESSION_MANAGER_IS_TRUSTED_FOR_MEDIA_CONTROL.equals(action)) {
+                final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                final int uid = intent.getIntExtra(EXTRA_UID, INVALID_UID);
+                sendMediaSessionManagerIsTrustedForMediaControl(remoteCallback, packageName, uid);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -1135,6 +1141,19 @@ public class TestActivity extends Activity {
         final AccountManager accountManager = AccountManager.get(this);
         final Bundle result = new Bundle();
         result.putParcelableArray(EXTRA_RETURN_RESULT, accountManager.getAuthenticatorTypes());
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendMediaSessionManagerIsTrustedForMediaControl(RemoteCallback remoteCallback,
+            String packageName, int uid) {
+        final MediaSessionManager mediaSessionManager =
+                getSystemService(MediaSessionManager.class);
+        final MediaSessionManager.RemoteUserInfo userInfo =
+                new MediaSessionManager.RemoteUserInfo(packageName, 0 /* pid */, uid);
+        final boolean isTrusted = mediaSessionManager.isTrustedForMediaControl(userInfo);
+        final Bundle result = new Bundle();
+        result.putBoolean(EXTRA_RETURN_RESULT, isTrusted);
         remoteCallback.sendResult(result);
         finish();
     }

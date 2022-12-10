@@ -540,6 +540,13 @@ public class MediaMetricsAtomHostSideTests {
     @Test
     public native void testAAudioLegacyInputStream();
 
+    @Test
+    public void testMidiMetrics() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        MidiTestHelper midiTestHelper = new MidiTestHelper(context);
+        midiTestHelper.testEchoVariableMessage(9 /* 9 bytes */);
+    }
+
     private void writeSessionIdToFile(String stringId) throws IOException {
         // TODO(b/259258249): Name session id after the test.
         Context context = InstrumentationRegistry.getInstrumentation().getContext();

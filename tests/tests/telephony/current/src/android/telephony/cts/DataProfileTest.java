@@ -316,7 +316,7 @@ public class DataProfileTest {
         assertEquals(null, profile.getUserName());
         assertEquals(null, profile.getPassword());
         assertEquals(0, profile.getProfileId());
-        assertEquals(ApnSetting.PROTOCOL_IP, profile.getProtocolType());
+        assertEquals(ApnSetting.PROTOCOL_IPV4V6, profile.getProtocolType());
         assertEquals(ApnSetting.PROTOCOL_IP, profile.getRoamingProtocolType());
         assertEquals(ApnSetting.TYPE_NONE, profile.getSupportedApnTypesBitmask());
         assertEquals(DataProfile.TYPE_COMMON, profile.getType());

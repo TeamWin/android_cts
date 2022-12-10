@@ -102,7 +102,8 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_EMBEDDED_SUBSCRIPTIONS" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-    <uses-permission android:name="android.permission.REQUEST_PASSWORD_COMPLEXITY" />
+    <!-- Disabled as we need to test delegates which lack this permission -->
+<!--    <uses-permission android:name="android.permission.REQUEST_PASSWORD_COMPLEXITY" />-->
     <uses-permission android:name="android.permission.GET_TASKS" />
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
     <uses-permission android:name="android.permission.ACCESS_BLOBS_ACROSS_USERS" />

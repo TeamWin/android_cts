@@ -63,15 +63,13 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
-        // Ensure that the previously running media session test helper app doesn't exist.
-        getDevice().uninstallPackage(MEDIA_SESSION_TEST_HELPER_PKG);
         mNotificationListeners.clear();
     }
 
     @Override
     public void tearDown() throws Exception {
-        // Cleanup
+        getDevice().uninstallPackage(MEDIA_SESSION_TEST_HELPER_PKG);
+        getDevice().uninstallPackage(DEVICE_SIDE_TEST_PKG);
         for (int userId : mNotificationListeners) {
             setAllowGetActiveSessionForTest(false, userId);
         }
@@ -100,10 +98,11 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
         int primaryUserId = getDevice().getPrimaryUserId();
 
         setAllowGetActiveSessionForTest(true, primaryUserId);
-        installAppAsUser(DEVICE_SIDE_TEST_APK, primaryUserId, instant);
+        installAppAsUser(DEVICE_SIDE_TEST_APK, DEVICE_SIDE_TEST_PKG, primaryUserId, instant);
         runTest("testGetActiveSessions_noMediaSessionFromMediaSessionTestHelper");
 
-        installAppAsUser(MEDIA_SESSION_TEST_HELPER_APK, primaryUserId, false);
+        installAppAsUser(
+                MEDIA_SESSION_TEST_HELPER_APK, MEDIA_SESSION_TEST_HELPER_PKG, primaryUserId, false);
         sendControlCommand(primaryUserId, FLAG_CREATE_MEDIA_SESSION);
         runTest("testGetActiveSessions_noMediaSessionFromMediaSessionTestHelper");
 
@@ -138,7 +137,7 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
 
         // Test if another user can get the session.
         int newUser = createAndStartUser();
-        installAppAsUser(DEVICE_SIDE_TEST_APK, newUser, instant);
+        installAppAsUser(DEVICE_SIDE_TEST_APK, DEVICE_SIDE_TEST_PKG, newUser, instant);
         setAllowGetActiveSessionForTest(true, newUser);
         runTestAsUser("testGetActiveSessions_noMediaSession", newUser);
         removeUser(newUser);
@@ -173,7 +172,7 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
         // Test if another restricted profile can get the session.
         // Remove the created user first not to exceed system's user number limit.
         int newUser = createAndStartRestrictedProfile(getDevice().getPrimaryUserId());
-        installAppAsUser(DEVICE_SIDE_TEST_APK, newUser, instant);
+        installAppAsUser(DEVICE_SIDE_TEST_APK, DEVICE_SIDE_TEST_PKG, newUser, instant);
         setAllowGetActiveSessionForTest(true, newUser);
         runTestAsUser("testGetActiveSessions_noMediaSession", newUser);
         removeUser(newUser);
@@ -208,7 +207,7 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
         // Test if another managed profile can get the session.
         // Remove the created user first not to exceed system's user number limit.
         int newUser = createAndStartManagedProfile(getDevice().getPrimaryUserId());
-        installAppAsUser(DEVICE_SIDE_TEST_APK, newUser, instant);
+        installAppAsUser(DEVICE_SIDE_TEST_APK, DEVICE_SIDE_TEST_PKG, newUser, instant);
         setAllowGetActiveSessionForTest(true, newUser);
         runTestAsUser("testGetActiveSessions_noMediaSession", newUser);
         removeUser(newUser);
@@ -220,10 +219,11 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
         int primaryUserId = getDevice().getPrimaryUserId();
 
         setAllowGetActiveSessionForTest(true, primaryUserId);
-        installAppAsUser(DEVICE_SIDE_TEST_APK, primaryUserId, false);
+        installAppAsUser(DEVICE_SIDE_TEST_APK, DEVICE_SIDE_TEST_PKG, primaryUserId, false);
         runTest("testGetActiveSessions_noMediaSessionFromMediaSessionTestHelper");
 
-        installAppAsUser(MEDIA_SESSION_TEST_HELPER_APK, primaryUserId, false);
+        installAppAsUser(
+                MEDIA_SESSION_TEST_HELPER_APK, MEDIA_SESSION_TEST_HELPER_PKG, primaryUserId, false);
         sendControlCommand(primaryUserId, FLAG_CREATE_MEDIA_SESSION2);
 
         // Wait for a second for framework to recognize media session2.
@@ -237,10 +237,11 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
         int primaryUserId = getDevice().getPrimaryUserId();
 
         setAllowGetActiveSessionForTest(true, primaryUserId);
-        installAppAsUser(DEVICE_SIDE_TEST_APK, primaryUserId, false);
+        installAppAsUser(DEVICE_SIDE_TEST_APK, DEVICE_SIDE_TEST_PKG, primaryUserId, false);
         runTest("testGetActiveSessions_noMediaSessionFromMediaSessionTestHelper");
 
-        installAppAsUser(MEDIA_SESSION_TEST_HELPER_APK, primaryUserId, false);
+        installAppAsUser(
+                MEDIA_SESSION_TEST_HELPER_APK, MEDIA_SESSION_TEST_HELPER_PKG, primaryUserId, false);
         sendControlCommand(primaryUserId,
                 FLAG_CREATE_MEDIA_SESSION | FLAG_CREATE_MEDIA_SESSION2
                         | FLAG_SET_MEDIA_SESSION_ACTIVE);
@@ -257,7 +258,7 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
         int primaryUserId = getDevice().getPrimaryUserId();
 
         setAllowGetActiveSessionForTest(true, primaryUserId);
-        installAppAsUser(DEVICE_SIDE_TEST_APK, primaryUserId, false);
+        installAppAsUser(DEVICE_SIDE_TEST_APK, DEVICE_SIDE_TEST_PKG, primaryUserId, false);
         runTest("testOnMediaKeyEventSessionChangedListener");
     }
 
@@ -267,15 +268,13 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
         int primaryUserId = getDevice().getPrimaryUserId();
 
         setAllowGetActiveSessionForTest(true, primaryUserId);
-        installAppAsUser(DEVICE_SIDE_TEST_APK, primaryUserId, false);
+        installAppAsUser(DEVICE_SIDE_TEST_APK, DEVICE_SIDE_TEST_PKG, primaryUserId, false);
         runTest("testOnMediaKeyEventSessionChangedListener_whenSessionIsReleased");
     }
 
     @AppModeFull
     @RequiresDevice
-    // Ignored due to b/171012388.
-    public void ignored_testIsTrusted_withEnabledNotificationListener_returnsTrue()
-            throws Exception {
+    public void testIsTrusted_withEnabledNotificationListener_returnsTrue() throws Exception {
         if (!canCreateAdditionalUsers(1)) {
             CLog.logAndDisplay(LogLevel.INFO,
                     "Cannot create a new user. Skipping multi-user test cases.");
@@ -284,7 +283,7 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
 
         int newUserId = createAndStartUser();
         setAllowGetActiveSessionForTest(true, newUserId);
-        installAppAsUser(DEVICE_SIDE_TEST_APK, newUserId, false);
+        installAppAsUser(DEVICE_SIDE_TEST_APK, DEVICE_SIDE_TEST_PKG, newUserId, false);
         runTestAsUser("testIsTrusted_returnsTrue", newUserId);
     }
 
@@ -300,7 +299,7 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
 
         int newUserId = createAndStartUser();
         setAllowGetActiveSessionForTest(false, newUserId);
-        installAppAsUser(DEVICE_SIDE_TEST_APK, newUserId, false);
+        installAppAsUser(DEVICE_SIDE_TEST_APK, DEVICE_SIDE_TEST_PKG, newUserId, false);
         runTestAsUser("testIsTrusted_returnsFalse", newUserId);
     }
 

@@ -21,10 +21,12 @@ import static android.Manifest.permission.ADD_ALWAYS_UNLOCKED_DISPLAY;
 import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.Manifest.permission.WAKE_LOCK;
+import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.virtualdevice.cts.util.VirtualDeviceTestUtils.createActivityOptions;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -114,9 +116,12 @@ public class ActivityManagementTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         Context context = getApplicationContext();
-        assumeTrue(
-                context.getPackageManager()
-                        .hasSystemFeature(PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
+        final PackageManager packageManager = context.getPackageManager();
+        assumeTrue(packageManager
+                .hasSystemFeature(PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
+        // TODO(b/261155110): Re-enable tests once freeform mode is supported in Virtual Display.
+        assumeFalse("Skipping test: VirtualDisplay window policy doesn't support freeform.",
+                packageManager.hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT));
         mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
         mResultReceiver = VirtualDeviceTestUtils.createResultReceiver(mOnReceiveResultListener);
     }

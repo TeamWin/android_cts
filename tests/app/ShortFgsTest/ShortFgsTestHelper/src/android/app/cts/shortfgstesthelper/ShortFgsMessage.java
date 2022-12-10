@@ -76,6 +76,12 @@ public class ShortFgsMessage implements Parcelable {
     /** If this is set, the helper process will kill itself. */
     private boolean mDoKillProcess;
 
+    /** If this is set, the receiver will start MyActivity. */
+    private boolean mDoStartActivity;
+
+    /** If this is set, the receiver will finish MyActivity. */
+    private boolean mDoFinishActivity;
+
     /**
      * Send by the helper app to the main test package, via CallProvider, to get the
      * currently running test information.
@@ -219,6 +225,22 @@ public class ShortFgsMessage implements Parcelable {
     }
 
     /**
+     * If this is set, the receiver will start MyActivity.
+     */
+    @DataClass.Generated.Member
+    public boolean isDoStartActivity() {
+        return mDoStartActivity;
+    }
+
+    /**
+     * If this is set, the receiver will finish MyActivity.
+     */
+    @DataClass.Generated.Member
+    public boolean isDoFinishActivity() {
+        return mDoFinishActivity;
+    }
+
+    /**
      * Send by the helper app to the main test package, via CallProvider, to get the
      * currently running test information.
      */
@@ -335,6 +357,24 @@ public class ShortFgsMessage implements Parcelable {
     }
 
     /**
+     * If this is set, the receiver will start MyActivity.
+     */
+    @DataClass.Generated.Member
+    public @NonNull ShortFgsMessage setDoStartActivity( boolean value) {
+        mDoStartActivity = value;
+        return this;
+    }
+
+    /**
+     * If this is set, the receiver will finish MyActivity.
+     */
+    @DataClass.Generated.Member
+    public @NonNull ShortFgsMessage setDoFinishActivity( boolean value) {
+        mDoFinishActivity = value;
+        return this;
+    }
+
+    /**
      * Send by the helper app to the main test package, via CallProvider, to get the
      * currently running test information.
      */
@@ -397,6 +437,8 @@ public class ShortFgsMessage implements Parcelable {
                 "doCallStopForeground = " + mDoCallStopForeground + ", " +
                 "doCallStopSelf = " + mDoCallStopSelf + ", " +
                 "doKillProcess = " + mDoKillProcess + ", " +
+                "doStartActivity = " + mDoStartActivity + ", " +
+                "doFinishActivity = " + mDoFinishActivity + ", " +
                 "callGetTestInfo = " + mCallGetTestInfo + ", " +
                 "expectedExceptionClass = " + mExpectedExceptionClass + ", " +
                 "actualExceptionClasss = " + mActualExceptionClasss + ", " +
@@ -419,13 +461,15 @@ public class ShortFgsMessage implements Parcelable {
         if (mDoCallStopForeground) flg |= 0x400;
         if (mDoCallStopSelf) flg |= 0x800;
         if (mDoKillProcess) flg |= 0x1000;
-        if (mCallGetTestInfo) flg |= 0x2000;
+        if (mDoStartActivity) flg |= 0x2000;
+        if (mDoFinishActivity) flg |= 0x4000;
+        if (mCallGetTestInfo) flg |= 0x8000;
         if (mFailureString != null) flg |= 0x4;
         if (mComponentName != null) flg |= 0x40;
         if (mMethodName != null) flg |= 0x80;
-        if (mExpectedExceptionClass != null) flg |= 0x4000;
-        if (mActualExceptionClasss != null) flg |= 0x8000;
-        if (mActualExceptionMessage != null) flg |= 0x10000;
+        if (mExpectedExceptionClass != null) flg |= 0x10000;
+        if (mActualExceptionClasss != null) flg |= 0x20000;
+        if (mActualExceptionMessage != null) flg |= 0x40000;
         dest.writeLong(flg);
         dest.writeLong(mTimestamp);
         if (mFailureString != null) dest.writeString(mFailureString);
@@ -459,7 +503,9 @@ public class ShortFgsMessage implements Parcelable {
         boolean doCallStopForeground = (flg & 0x400) != 0;
         boolean doCallStopSelf = (flg & 0x800) != 0;
         boolean doKillProcess = (flg & 0x1000) != 0;
-        boolean callGetTestInfo = (flg & 0x2000) != 0;
+        boolean doStartActivity = (flg & 0x2000) != 0;
+        boolean doFinishActivity = (flg & 0x4000) != 0;
+        boolean callGetTestInfo = (flg & 0x8000) != 0;
         long timestamp = in.readLong();
         String failureString = (flg & 0x4) == 0 ? null : in.readString();
         int fgsType = in.readInt();
@@ -467,9 +513,9 @@ public class ShortFgsMessage implements Parcelable {
         int serviceStartId = in.readInt();
         ComponentName componentName = (flg & 0x40) == 0 ? null : (ComponentName) in.readTypedObject(ComponentName.CREATOR);
         String methodName = (flg & 0x80) == 0 ? null : in.readString();
-        String expectedExceptionClass = (flg & 0x4000) == 0 ? null : in.readString();
-        String actualExceptionClasss = (flg & 0x8000) == 0 ? null : in.readString();
-        String actualExceptionMessage = (flg & 0x10000) == 0 ? null : in.readString();
+        String expectedExceptionClass = (flg & 0x10000) == 0 ? null : in.readString();
+        String actualExceptionClasss = (flg & 0x20000) == 0 ? null : in.readString();
+        String actualExceptionMessage = (flg & 0x40000) == 0 ? null : in.readString();
         long lastTestStartUptime = in.readLong();
         long lastTestEndUptime = in.readLong();
 
@@ -486,6 +532,8 @@ public class ShortFgsMessage implements Parcelable {
         this.mDoCallStopForeground = doCallStopForeground;
         this.mDoCallStopSelf = doCallStopSelf;
         this.mDoKillProcess = doKillProcess;
+        this.mDoStartActivity = doStartActivity;
+        this.mDoFinishActivity = doFinishActivity;
         this.mCallGetTestInfo = callGetTestInfo;
         this.mExpectedExceptionClass = expectedExceptionClass;
         this.mActualExceptionClasss = actualExceptionClasss;
@@ -511,10 +559,10 @@ public class ShortFgsMessage implements Parcelable {
     };
 
     @DataClass.Generated(
-            time = 1670443977250L,
+            time = 1670538953028L,
             codegenVersion = "1.0.23",
             sourceFile = "cts/tests/app/ShortFgsTest/ShortFgsTestHelper/src/android/app/cts/shortfgstesthelper/ShortFgsMessage.java",
-            inputSignatures = "final private  long mTimestamp\nprivate  boolean ack\nprivate @android.annotation.Nullable java.lang.String mFailureString\nprivate  int mFgsType\nprivate  int mStartCommandResult\nprivate  int mServiceStartId\nprivate @android.annotation.Nullable android.content.ComponentName mComponentName\nprivate @android.annotation.Nullable java.lang.String mMethodName\nprivate  boolean mDoCallStartForegroundService\nprivate  boolean mDoCallStartForeground\nprivate  boolean mDoCallStopForeground\nprivate  boolean mDoCallStopSelf\nprivate  boolean mDoKillProcess\nprivate  boolean mCallGetTestInfo\nprivate @android.annotation.Nullable java.lang.String mExpectedExceptionClass\nprivate @android.annotation.Nullable java.lang.String mActualExceptionClasss\nprivate @android.annotation.Nullable java.lang.String mActualExceptionMessage\nprivate  long mLastTestStartUptime\nprivate  long mLastTestEndUptime\npublic @android.annotation.NonNull android.app.cts.shortfgstesthelper.ShortFgsMessage setExpectedExceptionClass(java.lang.Class<?>)\npublic @android.annotation.Nullable java.lang.Class<?> getExpectedExceptionClass()\npublic  void setException(java.lang.Throwable)\nclass ShortFgsMessage extends java.lang.Object implements [android.os.Parcelable]\n@com.android.internal.util.DataClass(genConstructor=false, genSetters=true, genToString=true, genAidl=false)")
+            inputSignatures = "final private  long mTimestamp\nprivate  boolean ack\nprivate @android.annotation.Nullable java.lang.String mFailureString\nprivate  int mFgsType\nprivate  int mStartCommandResult\nprivate  int mServiceStartId\nprivate @android.annotation.Nullable android.content.ComponentName mComponentName\nprivate @android.annotation.Nullable java.lang.String mMethodName\nprivate  boolean mDoCallStartForegroundService\nprivate  boolean mDoCallStartForeground\nprivate  boolean mDoCallStopForeground\nprivate  boolean mDoCallStopSelf\nprivate  boolean mDoKillProcess\nprivate  boolean mDoStartActivity\nprivate  boolean mDoFinishActivity\nprivate  boolean mCallGetTestInfo\nprivate @android.annotation.Nullable java.lang.String mExpectedExceptionClass\nprivate @android.annotation.Nullable java.lang.String mActualExceptionClasss\nprivate @android.annotation.Nullable java.lang.String mActualExceptionMessage\nprivate  long mLastTestStartUptime\nprivate  long mLastTestEndUptime\npublic @android.annotation.NonNull android.app.cts.shortfgstesthelper.ShortFgsMessage setExpectedExceptionClass(java.lang.Class<?>)\npublic @android.annotation.Nullable java.lang.Class<?> getExpectedExceptionClass()\npublic  void setException(java.lang.Throwable)\nclass ShortFgsMessage extends java.lang.Object implements [android.os.Parcelable]\n@com.android.internal.util.DataClass(genConstructor=false, genSetters=true, genToString=true, genAidl=false)")
     @Deprecated
     private void __metadata() {}
 

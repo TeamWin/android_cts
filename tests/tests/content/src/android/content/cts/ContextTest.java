@@ -1237,9 +1237,9 @@ public class ContextTest extends AndroidTestCase {
 
         waitForReceiveBroadCast(resultReceiver);
 
-        assertEquals(intent.getAction(), mContext.registerReceiver(stickyReceiver,
-                new IntentFilter(MOCK_STICKY_ACTION)).getAction(),
-                Context.RECEIVER_EXPORTED_UNAUDITED);
+        assertEquals(intent.getAction(),
+                mContext.registerReceiver(stickyReceiver, new IntentFilter(MOCK_STICKY_ACTION),
+                        Context.RECEIVER_EXPORTED).getAction());
 
         synchronized (mLockObj) {
             mLockObj.wait(BROADCAST_TIMEOUT);

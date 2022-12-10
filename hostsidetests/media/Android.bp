@@ -46,6 +46,8 @@ java_test_host {
         ":CtsMediaRouterHostSideTestProviderApp1",
         ":CtsMediaRouterHostSideTestProviderApp2",
         ":CtsMediaRouterHostSideTestProviderApp3",
+        ":CtsMediaSessionHostTestApp",
+        ":CtsMediaSessionTestHelper",
     ],
 }
 

@@ -319,6 +319,8 @@ public class Constants {
             PKG_BASE + "cts.action.GET_ENABLED_INPUT_METHOD_SUBTYPE_LIST";
     public static final String ACTION_ACCOUNT_MANAGER_GET_AUTHENTICATOR_TYPES =
             PKG_BASE + "cts.action.ACCOUNT_MANAGER_GET_AUTHENTICATOR_TYPES";
+    public static final String ACTION_MEDIA_SESSION_MANAGER_IS_TRUSTED_FOR_MEDIA_CONTROL =
+            PKG_BASE + "cts.action.MEDIA_SESSION_MANAGER_IS_TRUSTED_FOR_MEDIA_CONTROL";
 
     public static final String ACCOUNT_NAME = "CtsAppEnumerationTests";
     public static final String ACCOUNT_TYPE = "android.appenumeration.account.type";

@@ -4095,7 +4095,7 @@ public class TelephonyManagerTest {
                         TelephonyManager.MOBILE_DATA_POLICY_AUTO_DATA_SWITCH,
                         !autoDatSwitchAllowed));
 
-        waitForMs(500);
+        waitForMs(1000);
         assertNotEquals(autoDatSwitchAllowed,
                 ShellIdentityUtils.invokeMethodWithShellPermissions(
                         mTelephonyManager, getPolicyHelper));
@@ -4105,7 +4105,7 @@ public class TelephonyManagerTest {
                         TelephonyManager.MOBILE_DATA_POLICY_AUTO_DATA_SWITCH,
                         autoDatSwitchAllowed));
 
-        waitForMs(500);
+        waitForMs(1000);
         assertEquals(autoDatSwitchAllowed,
                 ShellIdentityUtils.invokeMethodWithShellPermissions(
                         mTelephonyManager, getPolicyHelper));

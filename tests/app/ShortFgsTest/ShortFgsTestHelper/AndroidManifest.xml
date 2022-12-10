@@ -25,6 +25,9 @@
 
     <application
         android:name="android.app.cts.shortfgstesthelper.MyApplication">
+        <activity android:name=".MyActivity"
+            android:exported="true">
+        </activity>
         <receiver android:name=".ShortFgsMessageReceiver"
             android:exported="true">
             <intent-filter>

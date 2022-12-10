@@ -18,24 +18,16 @@ package android.media.cts;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
-import com.android.ddmlib.testrunner.TestResult.TestStatus;
-import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.CollectingTestListener;
-import com.android.tradefed.result.TestDescription;
-import com.android.tradefed.result.TestResult;
 import com.android.tradefed.result.TestRunResult;
-import com.android.tradefed.testtype.DeviceTestCase;
-import com.android.tradefed.testtype.IBuildReceiver;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -123,10 +115,16 @@ public class BaseMultiUserTest extends BaseMediaHostSideTest {
      * Installs the app as if the user of the ID {@param userId} has installed the app.
      *
      * @param appFileName file name of the app.
+     * @param packageName the app's package name.
      * @param userId user ID to install the app against.
+     * @param asInstantApp whether to install the app as an instant app.
      */
-    protected void installAppAsUser(String appFileName, int userId, boolean asInstantApp)
+    protected void installAppAsUser(
+            String appFileName, String packageName, int userId, boolean asInstantApp)
             throws FileNotFoundException, DeviceNotAvailableException {
+        // Installation may fail if the package already exists.
+        getDevice().uninstallPackage(packageName);
+
         CLog.d("Installing app " + appFileName + " for user " + userId);
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         String result = getDevice().installPackageForUser(

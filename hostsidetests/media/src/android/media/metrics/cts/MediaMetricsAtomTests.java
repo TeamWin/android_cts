@@ -46,6 +46,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
     public static final String TEST_PKG = "android.media.metrics.cts";
     private static final String FEATURE_AUDIO_OUTPUT = "android.hardware.audio.output";
     private static final String FEATURE_MICROPHONE = "android.hardware.microphone";
+    private static final String FEATURE_MIDI = "android.software.midi";
     private static final int MAX_BUFFER_CAPACITY = 30 * 1024 * 1024; // 30M
     private IBuildInfo mCtsBuild;
 
@@ -648,6 +649,48 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         runAAudioTestAndValidate(FEATURE_AUDIO_OUTPUT,
                 AtomsProto.MediametricsAAudioStreamReported.Direction.DIRECTION_OUTPUT_VALUE,
                 "testAAudioLegacyOutputStream");
+    }
+
+    /**
+     * The test try to create and then close a midi stream via media metrics
+     * atom host side test app on the DUT.
+     * After that, the event metric data for MediametricsMidiDeviceCloseReported is pushed to verify
+     * the data is collected correctly.
+     */
+    public void testMidiMetrics() throws Exception {
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_MIDI)) {
+            return;
+        }
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                AtomsProto.Atom.MEDIAMETRICS_MIDI_DEVICE_CLOSE_REPORTED_FIELD_NUMBER);
+
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG,
+                "android.media.metrics.cts.MediaMetricsAtomHostSideTests", "testMidiMetrics");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        List<AtomsProto.MediametricsMidiDeviceCloseReported> eventList = toMyAtoms(data,
+                AtomsProto.Atom::getMediametricsMidiDeviceCloseReported);
+
+        assertThat(eventList).isNotEmpty();
+
+        int appUid = DeviceUtils.getAppUid(getDevice(), TEST_PKG);
+        AtomsProto.MediametricsMidiDeviceCloseReported result = eventList.get(0);
+
+        assertThat(result.getUid()).isEqualTo(appUid);
+        assertThat(result.getMidiDeviceId()).isGreaterThan(0);
+        assertThat(result.getInputPortCount()).isEqualTo(1);
+        assertThat(result.getOutputPortCount()).isEqualTo(1);
+        assertThat(result.getDeviceType().toString()).isEqualTo("MIDI_DEVICE_INFO_TYPE_VIRTUAL");
+        assertThat(result.getIsShared()).isTrue();
+        assertThat(result.getSupportsUmp()).isFalse();
+        assertThat(result.getUsingAlsa()).isFalse();
+        assertThat(result.getDurationNs()).isGreaterThan(0);
+        assertThat(result.getOpenedCount()).isGreaterThan(0);
+        assertThat(result.getClosedCount()).isGreaterThan(0);
+        assertThat(result.getDeviceDisconnected()).isFalse();
+        assertThat(result.getTotalInputBytes()).isGreaterThan(0);
+        assertThat(result.getTotalOutputBytes()).isGreaterThan(0);
     }
 
     private String getLogSessionId() throws DeviceNotAvailableException {

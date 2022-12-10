@@ -16,7 +16,10 @@
 
 package android.hardware.input.cts.tests;
 
+import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
+
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityOptions;
@@ -100,6 +103,9 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
         // Virtual input devices only operate on virtual displays
         assumeTrue(packageManager.hasSystemFeature(
                 PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
+        // TODO(b/261155110): Re-enable tests once freeform mode is supported in Virtual Display.
+        assumeFalse("Skipping test: VirtualDisplay window policy doesn't support freeform.",
+                packageManager.hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT));
 
         final String packageName = context.getPackageName();
         associateCompanionDevice(packageName);

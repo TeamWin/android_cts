@@ -631,6 +631,7 @@ public class CellInfoTest {
         int ssRsrp = nr.getSsRsrp();
         int ssRsrq = nr.getSsRsrq();
         int ssSinr = nr.getSsSinr();
+        int timingAdvance = nr.getTimingAdvanceMicros();
 
         assertTrue("getCsiRsrp() out of range [-140, -44] | Integer.MAX_INTEGER, csiRsrp = "
                         + csiRsrp, -140 <= csiRsrp && csiRsrp <= -44
@@ -644,9 +645,8 @@ public class CellInfoTest {
                         || (csiCqiTableIndex >= CQI_TABLE_INDEX_MIN_NR
                                 && csiCqiTableIndex <= CQI_TABLE_INDEX_MAX_NR));
         assertTrue("cqi in getCsiCqiReport() out of range | CellInfo.UNAVAILABLE, csiCqiReport="
-                + csiCqiReport, csiCqiReport.stream()
-                        .allMatch(cqi -> cqi.intValue() == CellInfo.UNAVAILABLE
-                                || (cqi.intValue() >= MIN_CQI && cqi.intValue() <= MAX_CQI)));
+                + csiCqiReport, csiCqiReport.stream().allMatch(
+                        cqi -> cqi == CellInfo.UNAVAILABLE || (cqi >= MIN_CQI && cqi <= MAX_CQI)));
         assertTrue("getSsRsrp() out of range [-140, -44] | Integer.MAX_INTEGER, ssRsrp = "
                         + ssRsrp, -140 <= ssRsrp && ssRsrp <= -44
                 || ssRsrp == CellInfo.UNAVAILABLE);
@@ -654,6 +654,9 @@ public class CellInfoTest {
                 + ssRsrq, -20 <= ssRsrq && ssRsrq <= -3 || ssRsrq == CellInfo.UNAVAILABLE);
         assertTrue("getSsSinr() out of range [-23, 40] | Integer.MAX_INTEGER, ssSinr = "
                 + ssSinr, -23 <= ssSinr && ssSinr <= 40 || ssSinr == CellInfo.UNAVAILABLE);
+        assertTrue("getTimingAdvanceMicros() out of range [0, 1282] | Integer.MAX_INTEGER, "
+                + "timingAdvance = " + timingAdvance, 0 <= timingAdvance && timingAdvance <= 1282
+                || timingAdvance == CellInfo.UNAVAILABLE);
     }
 
     private void verifyCellIdentityNrBands(int[] nrBands) {

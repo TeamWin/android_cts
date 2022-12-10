@@ -60,6 +60,10 @@ public class ShortFgsHelper {
     /** All the services owned by the helper app. */
     public static ComponentName[] ALL_SERVICES = {FGS0, FGS1, FGS2};
 
+    /** Component names of {@link MyActivity}. */
+    public static ComponentName ACTIVITY =
+            new ComponentName(HELPER_PACKAGE, MyActivity.class.getName());
+
     public static String ensureNotificationChannel() {
         sContext.getSystemService(NotificationManager.class)
                 .createNotificationChannel(

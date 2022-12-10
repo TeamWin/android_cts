@@ -60,7 +60,7 @@ public class CtsVideoEncodingQualityHostTest implements IAbiReceiver, IBuildRece
     private boolean mDisableB = false;
 
     @Option(name = "reset", description = "Start with a fresh directory.")
-    private boolean mReset = false;
+    private boolean mReset = true;
 
     @Option(name = "quick-check", description = "Run a quick check.")
     private boolean mQuickCheck = false;

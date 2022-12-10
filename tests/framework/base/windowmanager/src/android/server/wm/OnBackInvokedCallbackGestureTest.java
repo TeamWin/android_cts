@@ -18,6 +18,8 @@ package android.server.wm;
 
 import static android.view.Display.DEFAULT_DISPLAY;
 
+import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+
 import static junit.framework.Assert.fail;
 
 import static org.junit.Assert.assertTrue;
@@ -30,6 +32,7 @@ import android.window.OnBackAnimationCallback;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -70,6 +73,7 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
             mTracker.trackBackProgressed(e);
         }
     };
+    private String mInitialBackAnimationSetting;
 
     @Before
     public void setup() throws Exception {
@@ -88,6 +92,13 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         mActivity = activitySession.getActivity();
         registerBackCallback(mActivity);
+
+        enableBackAnimation();
+    }
+
+    @After
+    public void tearDown() {
+        restoreBackAnimation();
     }
 
     @Test
@@ -194,5 +205,16 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
         private void trackBackInvoked() {
             mInvokeLatch.countDown();
         }
+    }
+
+    private void enableBackAnimation() {
+        mInitialBackAnimationSetting =
+                runShellCommand("settings get global enable_back_animation");
+        runShellCommand("settings put global enable_back_animation 1");
+    }
+
+    private void restoreBackAnimation() {
+        runShellCommand("settings put global enable_back_animation "
+                + mInitialBackAnimationSetting);
     }
 }

@@ -114,7 +114,7 @@ class CameraMicIndicatorsPermissionTest {
 
     private val safetyCenterEnabled = callWithShellPermissionIdentity {
         DeviceConfig.getString(DeviceConfig.NAMESPACE_PRIVACY,
-            SAFETY_CENTER_ENABLED, false.toString())
+            SAFETY_CENTER_ENABLED, false.toString())!!
     }
 
     @Before

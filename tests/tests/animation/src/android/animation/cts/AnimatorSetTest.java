@@ -755,7 +755,6 @@ public class AnimatorSetTest {
                 assertEquals(150f, (Float) a1.getAnimatedValue(), EPSILON);
                 assertEquals(250f, (Float) a2.getAnimatedValue(), EPSILON);
                 assertEquals(300f, (Float) a3.getAnimatedValue(), EPSILON);
-
             }
         };
         AnimatorListenerAdapter mockListener = mock(AnimatorListenerAdapter.class);
@@ -945,7 +944,385 @@ public class AnimatorSetTest {
             assertTrue(a1.mStartCalled);
             assertTrue(a2.mStartCalled);
         });
+    }
 
+    @Test
+    public void seekSequentially() {
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.setStartDelay(10);
+        ValueAnimator animator1 = ValueAnimator.ofFloat(0f, 1f);
+        animator1.setInterpolator(null);
+        animator1.setStartDelay(5);
+        ValueAnimator animator2 = ValueAnimator.ofFloat(0f, 1f);
+        animator2.setInterpolator(null);
+        animator2.setStartDelay(5);
+        animatorSet.playSequentially(animator1, animator2);
+        animatorSet.setCurrentPlayTime(1);
+        assertEquals(1L, animatorSet.getCurrentPlayTime());
+        assertEquals(0f, (float) animator1.getAnimatedValue(), EPSILON);
+        assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+        animatorSet.setCurrentPlayTime(15);
+        assertEquals(15L, animatorSet.getCurrentPlayTime());
+        assertEquals(0f, (float) animator1.getAnimatedValue(), EPSILON);
+        assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+        animatorSet.setCurrentPlayTime(17);
+        assertEquals(17L, animatorSet.getCurrentPlayTime());
+        assertEquals(2f / 300f, (float) animator1.getAnimatedValue(), EPSILON);
+        assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+        animatorSet.setCurrentPlayTime(316);
+        assertEquals(316, animatorSet.getCurrentPlayTime());
+        assertEquals(1f, (float) animator1.getAnimatedValue(), EPSILON);
+        assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+        animatorSet.setCurrentPlayTime(320);
+        assertEquals(320, animatorSet.getCurrentPlayTime());
+        assertEquals(1f, (float) animator1.getAnimatedValue(), EPSILON);
+        assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+        animatorSet.setCurrentPlayTime(321);
+        assertEquals(321, animatorSet.getCurrentPlayTime());
+        assertEquals(1f, (float) animator1.getAnimatedValue(), EPSILON);
+        assertEquals(1f / 300f, (float) animator2.getAnimatedValue(), EPSILON);
+        animatorSet.setCurrentPlayTime(320);
+        assertEquals(320, animatorSet.getCurrentPlayTime());
+        assertEquals(1f, (float) animator1.getAnimatedValue(), EPSILON);
+        assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+        animatorSet.setCurrentPlayTime(314);
+        assertEquals(314, animatorSet.getCurrentPlayTime());
+        assertEquals(299f / 300f, (float) animator1.getAnimatedValue(), EPSILON);
+        assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+    }
+
+    @Test
+    public void seekSequentiallyWithRepeats() {
+        AnimatorSet animatorSet = new AnimatorSet();
+        ValueAnimator animator1 = ValueAnimator.ofFloat(0f, 1f);
+        animator1.setInterpolator(null);
+        animator1.setRepeatCount(1);
+        ValueAnimator animator2 = ValueAnimator.ofFloat(0f, 1f);
+        animator2.setInterpolator(null);
+        animator2.setRepeatCount(ValueAnimator.INFINITE);
+        animatorSet.playSequentially(animator1, animator2);
+        animatorSet.setCurrentPlayTime(1);
+        assertEquals(1L, animatorSet.getCurrentPlayTime());
+        assertEquals(1f / 300f, (float) animator1.getAnimatedValue(), EPSILON);
+        assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+        animatorSet.setCurrentPlayTime(301);
+        assertEquals(301, animatorSet.getCurrentPlayTime());
+        assertEquals(1f / 300f, (float) animator1.getAnimatedValue(), EPSILON);
+        assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+        animatorSet.setCurrentPlayTime(699);
+        assertEquals(699, animatorSet.getCurrentPlayTime());
+        assertEquals(99f / 300f, (float) animator2.getAnimatedValue(), EPSILON);
+        animatorSet.setCurrentPlayTime(601);
+        assertEquals(601, animatorSet.getCurrentPlayTime());
+        assertEquals(1f / 300f, (float) animator2.getAnimatedValue(), EPSILON);
+        animatorSet.setCurrentPlayTime(599);
+        assertEquals(599, animatorSet.getCurrentPlayTime());
+        assertEquals(299f / 300f, (float) animator1.getAnimatedValue(), EPSILON);
+        assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+    }
+
+    @Test
+    public void seekReverse() throws Throwable {
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.setStartDelay(10);
+        ValueAnimator animator1 = ValueAnimator.ofFloat(0f, 1f);
+        animator1.setInterpolator(null);
+        animator1.setStartDelay(5);
+        ValueAnimator animator2 = ValueAnimator.ofFloat(0f, 1f);
+        animator2.setInterpolator(null);
+        animator2.setStartDelay(5);
+        animatorSet.playSequentially(animator1, animator2);
+        mActivityRule.runOnUiThread(() -> {
+            animatorSet.reverse();
+            animatorSet.pause();
+            assertEquals(1f, (float) animator1.getAnimatedValue(), EPSILON);
+            assertEquals(1f, (float) animator2.getAnimatedValue(), EPSILON);
+            animatorSet.setCurrentPlayTime(1);
+            assertEquals(1f, (float) animator1.getAnimatedValue(), EPSILON);
+            assertEquals(299f / 300f, (float) animator2.getAnimatedValue(), EPSILON);
+            animatorSet.setCurrentPlayTime(300);
+            assertEquals(1f, (float) animator1.getAnimatedValue(), EPSILON);
+            assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+            animatorSet.setCurrentPlayTime(305);
+            assertEquals(1f, (float) animator1.getAnimatedValue(), EPSILON);
+            assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+            animatorSet.setCurrentPlayTime(306);
+            assertEquals(299f / 300f, (float) animator1.getAnimatedValue(), EPSILON);
+            assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+            animatorSet.setCurrentPlayTime(604);
+            assertEquals(1f / 300f, (float) animator1.getAnimatedValue(), EPSILON);
+            assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+            animatorSet.setCurrentPlayTime(610);
+            assertEquals(0f, (float) animator1.getAnimatedValue(), EPSILON);
+            assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+            animatorSet.setCurrentPlayTime(604);
+            assertEquals(1f / 300f, (float) animator1.getAnimatedValue(), EPSILON);
+            assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+            animatorSet.setCurrentPlayTime(305);
+            assertEquals(1f, (float) animator1.getAnimatedValue(), EPSILON);
+            assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+        });
+    }
+
+    @Test
+    public void seekForwardOrder() {
+        TargetObj target = new TargetObj();
+        target.setVal(20f);
+        ObjectAnimator animator1 = ObjectAnimator.ofFloat(target, "val", 0f, 100f);
+        animator1.setInterpolator(null);
+        ObjectAnimator animator2 = ObjectAnimator.ofFloat(target, "val", 100f, 0f);
+        animator2.setInterpolator(null);
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.playSequentially(animator1, animator2);
+
+        animatorSet.setCurrentPlayTime(0);
+        assertEquals(0f, target.value, EPSILON);
+
+        animatorSet.setCurrentPlayTime(200);
+        assertEquals(100f * 200f / 300f, target.value, EPSILON);
+
+        animatorSet.setCurrentPlayTime(300);
+        assertEquals(100f, target.value, EPSILON);
+
+        animatorSet.setCurrentPlayTime(350);
+        assertEquals(100f * 250f / 300f, target.value, EPSILON);
+
+        animatorSet.setCurrentPlayTime(600);
+        assertEquals(0f, target.value, EPSILON);
+
+        animatorSet.setCurrentPlayTime(250);
+        assertEquals(100f * 250f / 300f, target.value, EPSILON);
+
+        animatorSet.setCurrentPlayTime(0);
+        assertEquals(0f, target.value, EPSILON);
+    }
+
+    @Test
+    public void seekBackwardOrder() throws Throwable {
+        TargetObj target = new TargetObj();
+        target.setVal(20f);
+        ObjectAnimator animator1 = ObjectAnimator.ofFloat(target, "val", 0f, 100f);
+        animator1.setInterpolator(null);
+        ObjectAnimator animator2 = ObjectAnimator.ofFloat(target, "val", 100f, 0f);
+        animator2.setInterpolator(null);
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.playSequentially(animator1, animator2);
+
+        mActivityRule.runOnUiThread(() -> {
+            animatorSet.reverse();
+            animatorSet.pause();
+
+            animatorSet.setCurrentPlayTime(0);
+            assertEquals(0f, target.value, EPSILON);
+
+            animatorSet.setCurrentPlayTime(200);
+            assertEquals(100f * 200f / 300f, target.value, EPSILON);
+
+            animatorSet.setCurrentPlayTime(300);
+            assertEquals(100f, target.value, EPSILON);
+
+            animatorSet.setCurrentPlayTime(350);
+            assertEquals(100f * 250f / 300f, target.value, EPSILON);
+
+            animatorSet.setCurrentPlayTime(600);
+            assertEquals(0f, target.value, EPSILON);
+
+            animatorSet.setCurrentPlayTime(250);
+            assertEquals(100f * 250f / 300f, target.value, EPSILON);
+
+            animatorSet.setCurrentPlayTime(0);
+            assertEquals(0f, target.value, EPSILON);
+        });
+    }
+
+    @Test
+    public void seekNestedSets() {
+        TargetObj target = new TargetObj();
+        target.setVal(20f);
+        ObjectAnimator animator1 = ObjectAnimator.ofFloat(target, "val", 0f, 100f);
+        animator1.setInterpolator(null);
+        ObjectAnimator animator2 = ObjectAnimator.ofFloat(target, "val", 100f, 0f);
+        animator2.setInterpolator(null);
+        AnimatorSet animatorSet1 = new AnimatorSet();
+        animatorSet1.playSequentially(animator1, animator2);
+        ValueAnimator animator3 = ValueAnimator.ofFloat(0f, 1f);
+        animator3.setInterpolator(null);
+        animator3.setStartDelay(100);
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.playTogether(animatorSet1, animator3);
+
+        animatorSet.setCurrentPlayTime(0);
+        assertEquals(0f, target.value, EPSILON);
+        assertEquals(0f, (float) animator3.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(200);
+        assertEquals(100f * 200f / 300f, target.value, EPSILON);
+        assertEquals(100f / 300f, (float) animator3.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(300);
+        assertEquals(100f, target.value, EPSILON);
+        assertEquals(200f / 300f, (float) animator3.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(350);
+        assertEquals(100f * 250f / 300f, target.value, EPSILON);
+        assertEquals(250f / 300f, (float) animator3.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(600);
+        assertEquals(0f, target.value, EPSILON);
+        assertEquals(1f, (float) animator3.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(250);
+        assertEquals(100f * 250f / 300f, target.value, EPSILON);
+        assertEquals(150f / 300f, (float) animator3.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(100);
+        assertEquals(100f * 100f / 300f, target.value, EPSILON);
+        assertEquals(0f, (float) animator3.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(0);
+        assertEquals(0f, target.value, EPSILON);
+        assertEquals(0f, (float) animator3.getAnimatedValue(), EPSILON);
+    }
+
+    @Test
+    public void seekWithNestedAnimatorSetsAndDelays() {
+        AnimatorSet animatorSet1 = new AnimatorSet();
+        animatorSet1.setStartDelay(100);
+        ValueAnimator animator1 = ValueAnimator.ofFloat(0f, 100f);
+        animator1.setInterpolator(null);
+        animator1.setStartDelay(200);
+        animatorSet1.play(animator1);
+        AnimatorSet animatorSet2 = new AnimatorSet();
+        animatorSet2.setStartDelay(400);
+        animatorSet2.play(animatorSet1);
+        AnimatorSet animatorSet3 = new AnimatorSet();
+        animatorSet3.play(animatorSet2);
+
+        animatorSet3.setCurrentPlayTime(0);
+        assertEquals(0f, (float) animator1.getAnimatedValue(), EPSILON);
+        animatorSet3.setCurrentPlayTime(400);
+        assertEquals(0f, (float) animator1.getAnimatedValue(), EPSILON);
+        animatorSet3.setCurrentPlayTime(500);
+        assertEquals(0f, (float) animator1.getAnimatedValue(), EPSILON);
+        animatorSet3.setCurrentPlayTime(700);
+        assertEquals(0f, (float) animator1.getAnimatedValue(), EPSILON);
+        animatorSet3.setCurrentPlayTime(850);
+        assertEquals(50f, (float) animator1.getAnimatedValue(), EPSILON);
+        animatorSet3.setCurrentPlayTime(1000);
+        assertEquals(100f, (float) animator1.getAnimatedValue(), EPSILON);
+    }
+
+    @Test
+    public void seekReversedWithNestedAnimatorSetsAndDelays() throws Throwable {
+        AnimatorSet animatorSet1 = new AnimatorSet();
+        animatorSet1.setStartDelay(100);
+        ValueAnimator animator1 = ValueAnimator.ofFloat(0f, 100f);
+        animator1.setInterpolator(null);
+        animator1.setStartDelay(200);
+        animatorSet1.play(animator1);
+        AnimatorSet animatorSet2 = new AnimatorSet();
+        animatorSet2.setStartDelay(400);
+        animatorSet2.play(animatorSet1);
+        AnimatorSet animatorSet3 = new AnimatorSet();
+        animatorSet3.play(animatorSet2);
+
+        mActivityRule.runOnUiThread(() -> {
+            animatorSet3.reverse();
+            animatorSet3.pause();
+            animatorSet3.setCurrentPlayTime(0);
+            assertEquals(100f, (float) animator1.getAnimatedValue(), EPSILON);
+            animatorSet3.setCurrentPlayTime(150);
+            assertEquals(50f, (float) animator1.getAnimatedValue(), EPSILON);
+            animatorSet3.setCurrentPlayTime(300);
+            assertEquals(0f, (float) animator1.getAnimatedValue(), EPSILON);
+            animatorSet3.setCurrentPlayTime(500);
+            assertEquals(0f, (float) animator1.getAnimatedValue(), EPSILON);
+            animatorSet3.setCurrentPlayTime(600);
+            assertEquals(0f, (float) animator1.getAnimatedValue(), EPSILON);
+            animatorSet3.setCurrentPlayTime(1000);
+            assertEquals(0f, (float) animator1.getAnimatedValue(), EPSILON);
+        });
+    }
+
+    @Test
+    public void seekWithUninitializedValues() {
+        TargetObj target = new TargetObj();
+        target.setVal(10f);
+        ObjectAnimator animator1 = ObjectAnimator.ofFloat(target, "val", 20f);
+        animator1.setInterpolator(null);
+        ValueAnimator animator2 = ValueAnimator.ofFloat(0f, 100f);
+        animator2.setInterpolator(null);
+        animator2.setDuration(500);
+        ObjectAnimator animator3 = ObjectAnimator.ofFloat(target, "val", 40f);
+        animator3.setInterpolator(null);
+        AnimatorSet animatorSet1 = new AnimatorSet();
+        animatorSet1.playSequentially(animator1, animator2, animator3);
+
+        ObjectAnimator animator4 = ObjectAnimator.ofFloat(target, "val", 30f);
+        animator4.setInterpolator(null);
+        animator4.setStartDelay(200);
+        AnimatorSet animatorSet2 = new AnimatorSet();
+        animatorSet2.setStartDelay(200);
+        animatorSet2.play(animator4);
+
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.playTogether(animatorSet1, animatorSet2);
+
+        // animator1 (10->20) -> animator2 (value)      -> animator3 (30->40)
+        // 300 ms             -> 500 ms                 -> 300 ms
+        // delay ----------------> animator4 (20->30)
+        // 200 + 200 = 400      -> 300 ms
+        animatorSet.setCurrentPlayTime(0);
+        assertEquals(10f, target.value, EPSILON);
+        assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(150);
+        assertEquals(15f, target.value, EPSILON);
+        assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(300);
+        assertEquals(20f, target.value, EPSILON);
+        assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(400);
+        assertEquals(20f, target.value, EPSILON);
+        assertEquals(100f / 5f, (float) animator2.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(550);
+        assertEquals(25f, target.value, EPSILON);
+        assertEquals(250f / 5f, (float) animator2.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(700);
+        assertEquals(30f, target.value, EPSILON);
+        assertEquals(400f / 5f, (float) animator2.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(800);
+        assertEquals(30f, target.value, EPSILON);
+        assertEquals(100f, (float) animator2.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(900);
+        assertEquals(30f + (10f / 3f), target.value, EPSILON);
+        assertEquals(100f, (float) animator2.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(1000);
+        assertEquals(30f + (20f / 3f), target.value, EPSILON);
+        assertEquals(100f, (float) animator2.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(1100);
+        assertEquals(40f, target.value, EPSILON);
+        assertEquals(100f, (float) animator2.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(800);
+        assertEquals(30f, target.value, EPSILON);
+        assertEquals(100f, (float) animator2.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(300);
+        assertEquals(20f, target.value, EPSILON);
+        assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
+
+        animatorSet.setCurrentPlayTime(0);
+        assertEquals(10f, target.value, EPSILON);
+        assertEquals(0f, (float) animator2.getAnimatedValue(), EPSILON);
     }
 
     /**
@@ -978,6 +1355,10 @@ public class AnimatorSetTest {
 
         public void setVal(float value) {
             this.value = value;
+        }
+
+        public float getVal() {
+            return value;
         }
     }
 

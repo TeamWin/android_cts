@@ -16,14 +16,19 @@
 
 package android.devicepolicy.cts;
 
+import static android.app.admin.DevicePolicyManager.ACTION_SET_NEW_PASSWORD;
 import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_HIGH;
 import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_LOW;
 import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_MEDIUM;
 import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_NONE;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeFalse;
 import static org.testng.Assert.assertThrows;
+
+import android.content.Intent;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -31,9 +36,21 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.policies.PasswordComplexity;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.utils.IgnoreExceptions;
+import com.android.compatibility.common.util.ApiTest;
+import com.android.interactive.Step;
+import com.android.interactive.annotations.Interactive;
+import com.android.interactive.steps.settings.password.IsItPossibleToSetNoScreenLockOrPasswordStep;
+import com.android.interactive.steps.settings.password.IsItPossibleToSetPin1591Step;
+import com.android.interactive.steps.settings.password.IsItPossibleToSetPin4444Step;
+import com.android.interactive.steps.settings.password.SetNoScreenLockOrPasswordStep;
+import com.android.interactive.steps.settings.password.SetPin15911591Step;
+import com.android.interactive.steps.settings.password.SetPin1591Step;
+import com.android.interactive.steps.settings.password.SetPin4444Step;
 
+import org.junit.Assume;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
@@ -43,8 +60,6 @@ public final class PasswordComplexityTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    // TODO(b/251079550): remove @ignore when bug is fixed.
-    @Ignore
     @CannotSetPolicyTest(policy = PasswordComplexity.class)
     @Postsubmit(reason = "new test")
     public void getPasswordComplexity_noPermission_throwsSecurityException() {
@@ -212,6 +227,166 @@ public final class PasswordComplexityTest {
                     .isEqualTo(PASSWORD_COMPLEXITY_HIGH);
         } finally {
             sDeviceState.dpc().user().clearPassword();
+        }
+    }
+
+    private static final Intent sSetPasswordIntent =
+            new Intent(ACTION_SET_NEW_PASSWORD)
+                    .addFlags(FLAG_ACTIVITY_NEW_TASK);
+
+
+    @CanSetPolicyTest(policy = PasswordComplexity.class)
+    @Interactive
+    @ApiTest(apis = "android.app.admin#setPasswordQuality")
+    public void setRequiredPasswordComplexity_none_canSetNone() throws Exception {
+        assumeFalse("NONE is not supported on profiles",
+                TestApis.users().instrumented().isProfile());
+        sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
+                PASSWORD_COMPLEXITY_NONE);
+
+        // We trampoline via a dpc activity as some DPCs cannot start activities from
+        // the background
+        // TODO(scottjonathan): Consider here if we can use lock task to stop the tester from
+        // just closing the activity
+        sDeviceState.dpc().activities().any().start().startActivity(sSetPasswordIntent);
+
+        Step.execute(SetNoScreenLockOrPasswordStep.class);
+        assertThat(sDeviceState.dpc().devicePolicyManager().getPasswordComplexity())
+                .isEqualTo(PASSWORD_COMPLEXITY_NONE);
+    }
+
+    @CanSetPolicyTest(policy = PasswordComplexity.class)
+    @Interactive
+    @ApiTest(apis = "android.app.admin#setPasswordQuality")
+    public void setRequiredPasswordComplexity_low_cannotSetNone() throws Exception {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
+                    PASSWORD_COMPLEXITY_LOW);
+
+            // We trampoline via a dpc activity as some DPCs cannot start activities from
+            // the background
+            sDeviceState.dpc().activities().any().start().startActivity(sSetPasswordIntent);
+
+            assertThat(Step.execute(IsItPossibleToSetNoScreenLockOrPasswordStep.class)).isFalse();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
+                    PASSWORD_COMPLEXITY_NONE);
+        }
+    }
+
+    @CanSetPolicyTest(policy = PasswordComplexity.class)
+    @Interactive
+    @ApiTest(apis = "android.app.admin#setPasswordQuality")
+    public void setRequiredPasswordComplexity_low_canSetLowComplexity() throws Exception {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
+                    PASSWORD_COMPLEXITY_LOW);
+            // We trampoline via a dpc activity as some DPCs cannot start activities from
+            // the background
+            sDeviceState.dpc().activities().any().start().startActivity(sSetPasswordIntent);
+
+            Step.execute(SetPin4444Step.class);
+
+            assertThat(sDeviceState.dpc().devicePolicyManager().getPasswordComplexity())
+                    .isEqualTo(PASSWORD_COMPLEXITY_LOW);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
+                    PASSWORD_COMPLEXITY_NONE);
+            IgnoreExceptions.run(() -> {
+                sDeviceState.dpc().user().clearPin("4444");
+            });
+        }
+    }
+
+    @CanSetPolicyTest(policy = PasswordComplexity.class)
+    @Interactive
+    @ApiTest(apis = "android.app.admin#setPasswordQuality")
+    public void setRequiredPasswordComplexity_medium_cannotSetLowComplexity() throws Exception {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
+                    PASSWORD_COMPLEXITY_MEDIUM);
+
+            // We trampoline via a dpc activity as some DPCs cannot start activities from
+            // the background
+            sDeviceState.dpc().activities().any().start().startActivity(sSetPasswordIntent);
+
+            assertThat(Step.execute(IsItPossibleToSetPin4444Step.class)).isFalse();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
+                    PASSWORD_COMPLEXITY_NONE);
+            IgnoreExceptions.run(() -> {
+                sDeviceState.dpc().user().clearPin("4444");
+            });
+        }
+    }
+
+    @CanSetPolicyTest(policy = PasswordComplexity.class)
+    @Interactive
+    @ApiTest(apis = "android.app.admin#setPasswordQuality")
+    public void setRequiredPasswordComplexity_medium_canSetMediumComplexity() throws Exception {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
+                    PASSWORD_COMPLEXITY_MEDIUM);
+            // We trampoline via a dpc activity as some DPCs cannot start activities from
+            // the background
+            sDeviceState.dpc().activities().any().start().startActivity(sSetPasswordIntent);
+
+            Step.execute(SetPin1591Step.class);
+
+            assertThat(sDeviceState.dpc().devicePolicyManager().getPasswordComplexity())
+                    .isEqualTo(PASSWORD_COMPLEXITY_MEDIUM);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
+                    PASSWORD_COMPLEXITY_NONE);
+            IgnoreExceptions.run(() -> {
+                sDeviceState.dpc().user().clearPin("1591");
+            });
+        }
+    }
+
+    @CanSetPolicyTest(policy = PasswordComplexity.class)
+    @Interactive
+    @ApiTest(apis = "android.app.admin#setPasswordQuality")
+    public void setRequiredPasswordComplexity_high_cannotSetMediumComplexity() throws Exception {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
+                    PASSWORD_COMPLEXITY_HIGH);
+
+            // We trampoline via a dpc activity as some DPCs cannot start activities from
+            // the background
+            sDeviceState.dpc().activities().any().start().startActivity(sSetPasswordIntent);
+
+            assertThat(Step.execute(IsItPossibleToSetPin1591Step.class)).isFalse();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
+                    PASSWORD_COMPLEXITY_NONE);
+            IgnoreExceptions.run(() -> {
+                sDeviceState.dpc().user().clearPin("1591");
+            });
+        }
+    }
+
+    @CanSetPolicyTest(policy = PasswordComplexity.class)
+    @Interactive
+    @ApiTest(apis = "android.app.admin#setPasswordQuality")
+    public void setRequiredPasswordComplexity_high_canSetHighComplexity() throws Exception {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
+                    PASSWORD_COMPLEXITY_HIGH);
+            // We trampoline via a dpc activity as some DPCs cannot start activities from
+            // the background
+            sDeviceState.dpc().activities().any().start().startActivity(sSetPasswordIntent);
+
+            Step.execute(SetPin15911591Step.class);
+
+            assertThat(sDeviceState.dpc().devicePolicyManager().getPasswordComplexity())
+                    .isEqualTo(PASSWORD_COMPLEXITY_HIGH);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
+                    PASSWORD_COMPLEXITY_NONE);
+            IgnoreExceptions.run(() -> {
+                sDeviceState.dpc().user().clearPin("15911591");
+            });
         }
     }
 }

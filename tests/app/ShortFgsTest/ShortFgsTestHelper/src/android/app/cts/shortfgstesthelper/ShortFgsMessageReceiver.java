@@ -137,6 +137,16 @@ public class ShortFgsMessageReceiver extends BroadcastReceiver {
                 return;
             }
 
+            // Finish the activity?
+            if (m.isDoFinishActivity()) {
+                MyActivity myActivity = MyActivity.getInstance();
+                if (myActivity != null) {
+                    myActivity.finish();
+                }
+                ShortFgsHelper.sendBackAckMessage();
+                return;
+            }
+
             throw new RuntimeException("Unknown message " + m + " received");
         } catch (Throwable th) {
             final boolean isExpected = expectedException != null

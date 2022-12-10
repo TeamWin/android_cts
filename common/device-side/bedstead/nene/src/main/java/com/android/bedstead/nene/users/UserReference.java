@@ -362,6 +362,14 @@ public final class UserReference implements AutoCloseable {
     }
 
     /**
+     * {@code true} if this user is a profile of another user.
+     */
+    @Experimental
+    public boolean isProfile() {
+        return parent() != null;
+    }
+
+    /**
      * Return the parent of this profile.
      *
      * <p>Returns {@code null} if this user is not a profile.

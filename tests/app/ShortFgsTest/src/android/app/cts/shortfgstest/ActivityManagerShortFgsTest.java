@@ -15,6 +15,7 @@
  */
 package android.app.cts.shortfgstest;
 
+import static android.app.cts.shortfgstesthelper.ShortFgsHelper.ACTIVITY;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.ALL_SERVICES;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.FGS0;
 import static android.app.cts.shortfgstesthelper.ShortFgsHelper.FGS1;
@@ -24,6 +25,7 @@ import static android.app.cts.shortfgstesthelper.ShortFgsHelper.TAG;
 import static android.app.nano.AppProtoEnums.PROCESS_STATE_FOREGROUND_SERVICE;
 import static android.app.nano.AppProtoEnums.PROCESS_STATE_IMPORTANT_FOREGROUND;
 import static android.app.nano.AppProtoEnums.PROCESS_STATE_LAST_ACTIVITY;
+import static android.app.nano.AppProtoEnums.PROCESS_STATE_TOP;
 import static android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SHORT_SERVICE;
 import static android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE;
 
@@ -100,6 +102,11 @@ public class ActivityManagerShortFgsTest {
      */
     public static final long SHORTENED_START_SERVICE_TIMEOUT = 5_000;
 
+    /***
+     * TOP-started FGS will get oom-adjustment boosted within this period.
+     */
+    public static final long TOP_TO_FGS_GRACE_PERIOD = 5_000;
+
     private static volatile long sLastTestStartUptime;
     private static volatile long sLastTestEndUptime;
 
@@ -125,6 +132,9 @@ public class ActivityManagerShortFgsTest {
         sLastTestEndUptime = 0;
 
         Log.d(TAG, "setUp() started");
+
+        updateDeviceConfig("top_to_fgs_grace_duration", TOP_TO_FGS_GRACE_PERIOD,
+                /* verify= */ true);
 
         updateDeviceConfig("short_fgs_timeout_duration", SHORTENED_TIMEOUT, /* verify= */ false);
         updateDeviceConfig("short_fgs_proc_state_extra_wait_duration",
@@ -191,6 +201,7 @@ public class ActivityManagerShortFgsTest {
             });
         }
     }
+
     /**
      * Send a "kill self" command to the helper, and wait for the process to go away.
      */
@@ -805,7 +816,7 @@ public class ActivityManagerShortFgsTest {
 
         // Here, we want the SHORT_SERVICE timeout to be significantly larger than the
         // startForeground() timeout, because we want to check the state between them.
-        updateDeviceConfig("short_fgs_timeout_duration", SHORTENED_START_SERVICE_TIMEOUT + 30_000);
+        updateDeviceConfig("short_fgs_timeout_duration", SHORTENED_START_SERVICE_TIMEOUT + 60_000);
 
         // Start FGS0.
         startForegroundService(FGS0, FOREGROUND_SERVICE_TYPE_SHORT_SERVICE);
@@ -837,10 +848,53 @@ public class ActivityManagerShortFgsTest {
         // FGS2 should now be running too.
         waitForMethodCall(FGS2, "onStartCommand");
         assertServiceRunning(FGS2);
+    }
 
-        // Stop the service.
-        stopAllServices();
+    /**
+     * Make sure, when a short service is started from UI, the OOM-adjustment is boosted.
+     */
+    @Test
+    public void testTopStartedShortService() throws Exception {
 
-        // Ignore remaining messages.
+        // Here, we want the SHORT_SERVICE timeout to be significantly larger than
+        // the TOP-TO-FGS grace period.
+        updateDeviceConfig("short_fgs_timeout_duration", (TOP_TO_FGS_GRACE_PERIOD + 60_000));
+
+        // Start an activity. Procstate should be TOP.
+        sContext.startActivity(
+                new Intent()
+                        .setComponent(ACTIVITY)
+                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        waitForMethodCall(ACTIVITY, "onCreate");
+
+        // Wait until the procstate becomes TOP.
+        waitUntil("Procstate is not TOP",
+                () -> DumpProtoUtils.getProcessProcState(HELPER_PACKAGE).mProcState
+                        == PROCESS_STATE_TOP);
+        assertHelperPackageProcState(PROCESS_STATE_TOP, 0);
+
+        // Start a short-fgs. Procstate should still be TOP.
+        startForegroundService(FGS0, FOREGROUND_SERVICE_TYPE_SHORT_SERVICE);
+        waitForMethodCall(FGS0, "onStartCommand");
+        assertServiceRunning(FGS0);
+
+        assertHelperPackageProcState(PROCESS_STATE_TOP, 0);
+
+        // Close the activity.
+        ShortFgsMessageReceiver.sendMessage(newMessage().setDoFinishActivity(true));
+        waitForAckMessage();
+
+        waitForMethodCall(ACTIVITY, "onDestroy");
+
+        // The service is still running, and the procstate should now be IMP_FG, but
+        // the OOM-adjustment should be boosted.
+        assertServiceRunning(FGS0);
+        assertHelperPackageProcState(PROCESS_STATE_IMPORTANT_FOREGROUND, 51);
+
+        // TODO(short-service) We don't run an oomj after TOP_TO_FGS_GRACE_PERIOD, so this part
+        // won't pass.
+//        // Wait until the grace period finishes. Now, the oom-adjustment should be lower.
+//        Thread.sleep(TOP_TO_FGS_GRACE_PERIOD);
+//        assertHelperPackageProcState(PROCESS_STATE_IMPORTANT_FOREGROUND, 220 + 1);
     }
 }
