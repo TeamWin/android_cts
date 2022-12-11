@@ -19,11 +19,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.Dialog;
 import android.app.Instrumentation;
 import android.os.RemoteException;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.uiautomator.UiDevice;
 import android.view.KeyEvent;
+import android.window.OnBackInvokedDispatcher;
 
 import androidx.lifecycle.Lifecycle;
 import androidx.test.core.app.ActivityScenario;
@@ -83,6 +85,20 @@ public class BackNavigationTests {
         mScenario.moveToState(Lifecycle.State.RESUMED);
         CountDownLatch latch = registerBackCallback();
         invokeBackAndAssertCallbackIsCalled(latch);
+    }
+
+    @Test
+    public void registerCallback_dialog() {
+        CountDownLatch backInvokedLatch = new CountDownLatch(1);
+        mScenario.onActivity(activity -> {
+            Dialog dialog = new Dialog(activity, 0);
+            dialog.getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    OnBackInvokedDispatcher.PRIORITY_DEFAULT, () -> {
+                        backInvokedLatch.countDown();
+                    });
+            dialog.show();
+        });
+        invokeBackAndAssertCallbackIsCalled(backInvokedLatch);
     }
 
     @Test

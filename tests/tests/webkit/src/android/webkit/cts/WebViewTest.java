@@ -75,7 +75,6 @@ import android.webkit.cts.WebViewSyncLoader.WaitForLoadedClient;
 import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
 import android.widget.LinearLayout;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -235,11 +234,11 @@ public class WebViewTest extends SharedWebViewTest {
     public void testConstructor() {
         WebkitUtils.onMainThreadSync(
                 () -> {
-                    WebView webView = new WebView(mActivity);
+                    WebView webView = new WebView(mContext);
                     webView.destroy();
-                    webView = new WebView(mActivity, null);
+                    webView = new WebView(mContext, null);
                     webView.destroy();
-                    webView = new WebView(mActivity, null, 0);
+                    webView = new WebView(mContext, null, 0);
                     webView.destroy();
                 });
     }
@@ -248,8 +247,7 @@ public class WebViewTest extends SharedWebViewTest {
     public void testCreatingWebViewWithDeviceEncrpytionFails() {
         WebkitUtils.onMainThreadSync(
                 () -> {
-                    Context deviceEncryptedContext =
-                            mActivity.createDeviceProtectedStorageContext();
+                    Context deviceEncryptedContext = mContext.createDeviceProtectedStorageContext();
                     try {
                         new WebView(deviceEncryptedContext);
                         fail(
@@ -267,9 +265,8 @@ public class WebViewTest extends SharedWebViewTest {
                     // Credential encryption is the default. Create one here for the sake of
                     // clarity.
                     Context credentialEncryptedContext =
-                            mActivity.createCredentialProtectedStorageContext();
-                    Context deviceEncryptedContext =
-                            mActivity.createDeviceProtectedStorageContext();
+                            mContext.createCredentialProtectedStorageContext();
+                    Context deviceEncryptedContext = mContext.createDeviceProtectedStorageContext();
 
                     // No exception should be thrown with credential encryption context.
                     WebView webView = new WebView(credentialEncryptedContext);
@@ -289,7 +286,7 @@ public class WebViewTest extends SharedWebViewTest {
     public void testCreatingWebViewCreatesCookieSyncManager() throws Exception {
         WebkitUtils.onMainThreadSync(
                 () -> {
-                    WebView webView = new WebView(mActivity);
+                    WebView webView = new WebView(mContext);
                     assertNotNull(CookieSyncManager.getInstance());
                     webView.destroy();
                 });
@@ -970,7 +967,7 @@ public class WebViewTest extends SharedWebViewTest {
         WebkitUtils.onMainThreadSync(
                 () -> {
                     try {
-                        WebViewDatabase.getInstance(mActivity).clearHttpAuthUsernamePassword();
+                        WebViewDatabase.getInstance(mContext).clearHttpAuthUsernamePassword();
 
                         String host = "http://localhost:8080";
                         String realm = "testrealm";
@@ -1025,7 +1022,7 @@ public class WebViewTest extends SharedWebViewTest {
                         assertEquals(newUserName, result[0]);
                         assertEquals(newPassword, result[1]);
                     } finally {
-                        WebViewDatabase.getInstance(mActivity).clearHttpAuthUsernamePassword();
+                        WebViewDatabase.getInstance(mContext).clearHttpAuthUsernamePassword();
                     }
                 });
     }
@@ -1034,7 +1031,7 @@ public class WebViewTest extends SharedWebViewTest {
     public void testWebViewDatabaseAccessHttpAuthUsernamePassword() {
         WebkitUtils.onMainThreadSync(
                 () -> {
-                    WebViewDatabase webViewDb = WebViewDatabase.getInstance(mActivity);
+                    WebViewDatabase webViewDb = WebViewDatabase.getInstance(mContext);
                     try {
                         webViewDb.clearHttpAuthUsernamePassword();
 
@@ -1279,7 +1276,7 @@ public class WebViewTest extends SharedWebViewTest {
     public void testSaveWebArchive() throws Throwable {
         final String testPage = "testSaveWebArchive test page";
 
-        File dir = mActivity.getFilesDir();
+        File dir = mContext.getFilesDir();
         String dirStr = dir.toString();
 
         File test = new File(dir, "test.mht");
@@ -1446,7 +1443,7 @@ public class WebViewTest extends SharedWebViewTest {
 
         // clear the result
         mOnUiThread.clearMatches();
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        getTestEnvironment().waitForIdleSync();
 
         // can not scroll any more
         mOnUiThread.findNext(false);
@@ -1683,7 +1680,7 @@ public class WebViewTest extends SharedWebViewTest {
                 () -> {
                     // Create a new WebView, since we cannot call destroy() on a view in the
                     // hierarchy
-                    WebView localWebView = new WebView(mActivity);
+                    WebView localWebView = new WebView(mContext);
                     localWebView.destroy();
                 });
     }
@@ -1907,7 +1904,7 @@ public class WebViewTest extends SharedWebViewTest {
                 "text/html",
                 "UTF-8",
                 null);
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        getTestEnvironment().waitForIdleSync();
 
         // anchor
         moveFocusDown();
@@ -1955,7 +1952,7 @@ public class WebViewTest extends SharedWebViewTest {
     @Test
     public void testSetInitialScale() throws Throwable {
         final String p = "<p style=\"height:1000px;width:1000px\">Test setInitialScale.</p>";
-        final float defaultScale = mActivity.getResources().getDisplayMetrics().density;
+        final float defaultScale = mContext.getResources().getDisplayMetrics().density;
 
         mOnUiThread.loadDataAndWaitForCompletion(
                 "<html><body>" + p + "</body></html>", "text/html", null);
@@ -2359,8 +2356,7 @@ public class WebViewTest extends SharedWebViewTest {
                         .setResolution(new PrintAttributes.Resolution("foo", "bar", 300, 300))
                         .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
                         .build();
-        final WebViewCtsActivity activity = mActivity;
-        final File file = activity.getFileStreamPath(PRINTER_TEST_FILE);
+        final File file = mContext.getFileStreamPath(PRINTER_TEST_FILE);
         final ParcelFileDescriptor descriptor =
                 ParcelFileDescriptor.open(file, ParcelFileDescriptor.parseMode("w"));
         final SettableFuture<Void> result = SettableFuture.create();
@@ -2408,8 +2404,7 @@ public class WebViewTest extends SharedWebViewTest {
                         .setResolution(new PrintAttributes.Resolution("foo", "bar", 300, 300))
                         .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
                         .build();
-        final WebViewCtsActivity activity = mActivity;
-        final File file = activity.getFileStreamPath(PRINTER_TEST_FILE);
+        final File file = mContext.getFileStreamPath(PRINTER_TEST_FILE);
         final ParcelFileDescriptor descriptor =
                 ParcelFileDescriptor.open(file, ParcelFileDescriptor.parseMode("w"));
         final SettableFuture<Void> result = SettableFuture.create();
@@ -2539,7 +2534,7 @@ public class WebViewTest extends SharedWebViewTest {
                 () -> {
                     // getWebViewClient should return a default WebViewClient if it hasn't been set
                     // yet
-                    WebView webView = new WebView(mActivity);
+                    WebView webView = new WebView(mContext);
                     WebViewClient client = webView.getWebViewClient();
                     assertNotNull(client);
                     assertTrue(client instanceof WebViewClient);
@@ -2563,7 +2558,7 @@ public class WebViewTest extends SharedWebViewTest {
         WebkitUtils.onMainThreadSync(
                 () -> {
                     // getWebChromeClient should return null if the client hasn't been set yet
-                    WebView webView = new WebView(mActivity);
+                    WebView webView = new WebView(mContext);
                     WebChromeClient client = webView.getWebChromeClient();
                     assertNull(client);
 
@@ -2595,7 +2590,7 @@ public class WebViewTest extends SharedWebViewTest {
         WebkitUtils.onMainThreadSync(
                 () -> {
                     TextClassifier classifier = new CustomTextClassifier();
-                    WebView webView = new WebView(mActivity);
+                    WebView webView = new WebView(mContext);
                     webView.setTextClassifier(classifier);
                     assertSame(webView.getTextClassifier(), classifier);
                     webView.destroy();
@@ -2751,7 +2746,7 @@ public class WebViewTest extends SharedWebViewTest {
 
     private void moveFocusDown() throws Throwable {
         // send down key and wait for idle
-        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_TAB);
+        getTestEnvironment().sendKeyDownUpSync(KeyEvent.KEYCODE_TAB);
         // waiting for idle isn't always sufficient for the key to be fully processed
         Thread.sleep(500);
     }

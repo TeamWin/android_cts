@@ -22,7 +22,9 @@ import android.hardware.radio.RadioResponseInfo;
 import android.hardware.radio.ims.IRadioIms;
 import android.hardware.radio.ims.IRadioImsIndication;
 import android.hardware.radio.ims.IRadioImsResponse;
+import android.hardware.radio.ims.ImsDeregistrationReason;
 import android.os.RemoteException;
+import android.telephony.ims.stub.ImsRegistrationImplBase;
 import android.util.Log;
 
 import java.util.List;
@@ -168,13 +170,27 @@ public class IRadioImsImpl extends IRadioIms.Stub {
         }
     }
 
-    public void triggerImsDeregistration(int reason) {
+    public void triggerImsDeregistration(
+            @ImsRegistrationImplBase.ImsDeregistrationReason int reason) {
         Log.d(mTag, "triggerImsDeregistration");
+
+        int halReason;
+        switch (reason) {
+            case ImsRegistrationImplBase.REASON_SIM_REFRESH:
+                halReason = ImsDeregistrationReason.REASON_SIM_REFRESH;
+                break;
+            case ImsRegistrationImplBase.REASON_ALLOWED_NETWORK_TYPES_CHANGED:
+                halReason = ImsDeregistrationReason.REASON_ALLOWED_NETWORK_TYPES_CHANGED;
+                break;
+            default:
+                halReason = ImsDeregistrationReason.REASON_SIM_REMOVED;
+                break;
+        }
 
         if (mRadioImsIndication != null) {
             try {
                 mRadioImsIndication.triggerImsDeregistration(
-                        RadioIndicationType.UNSOLICITED, reason);
+                        RadioIndicationType.UNSOLICITED, halReason);
             } catch (RemoteException ex) {
                 Log.e(mTag, "Failed to triggerImsDeregistration indication from AIDL. Exception"
                         + ex);

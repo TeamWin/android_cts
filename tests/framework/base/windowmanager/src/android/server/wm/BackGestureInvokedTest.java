@@ -22,6 +22,7 @@ import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
 import static android.window.BackNavigationInfo.TYPE_CALLBACK;
 import static android.window.BackNavigationInfo.TYPE_CROSS_ACTIVITY;
 import static android.window.BackNavigationInfo.TYPE_CROSS_TASK;
+import static android.window.BackNavigationInfo.TYPE_DIALOG_CLOSE;
 import static android.window.BackNavigationInfo.TYPE_RETURN_TO_HOME;
 
 import static org.junit.Assert.assertEquals;
@@ -140,7 +141,7 @@ public class BackGestureInvokedTest extends ActivityManagerTestBase {
         mWmState.assertFocusedActivity("Top activity must be focused",
                 mActivity.getComponentName());
 
-        assertEquals(TYPE_CALLBACK, mWmState.getBackNavigationState().getLastBackType());
+        assertEquals(TYPE_DIALOG_CLOSE, mWmState.getBackNavigationState().getLastBackType());
     }
 
     @Test

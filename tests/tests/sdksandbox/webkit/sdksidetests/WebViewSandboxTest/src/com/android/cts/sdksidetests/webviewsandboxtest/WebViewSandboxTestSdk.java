@@ -20,11 +20,13 @@ import android.app.sdksandbox.testutils.testscenario.SdkSandboxTestScenarioRunne
 import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup.LayoutParams;
 import android.webkit.WebView;
 import android.webkit.cts.IHostAppInvoker;
 import android.webkit.cts.SharedWebViewTestEnvironment;
 import android.webkit.cts.WebViewOnUiThread;
 import android.webkit.cts.WebViewTest;
+import android.widget.LinearLayout;
 
 public class WebViewSandboxTestSdk extends SdkSandboxTestScenarioRunner {
     private WebViewTest mTestInstance = new WebViewTest();
@@ -38,7 +40,7 @@ public class WebViewSandboxTestSdk extends SdkSandboxTestScenarioRunner {
 
     @Override
     public View beforeEachTest(Context windowContext, Bundle params, int width, int height) {
-        mWebView = new WebView(windowContext);
+        mWebView = new WebView(getContext());
         mOnUiThread = new WebViewOnUiThread(mWebView);
 
         SharedWebViewTestEnvironment testEnvironment =
@@ -51,6 +53,20 @@ public class WebViewSandboxTestSdk extends SdkSandboxTestScenarioRunner {
 
         mTestInstance.setTestEnvironment(testEnvironment);
 
-        return mWebView;
+        // Some tests expect the WebView to have a parent so making the parent
+        // a linear layout the same as the regular webkit tests.
+        LinearLayout parent = new LinearLayout(getContext());
+        parent.setLayoutParams(
+                new LinearLayout.LayoutParams(
+                        LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+        parent.setOrientation(LinearLayout.VERTICAL);
+
+        parent.addView(mWebView);
+
+        mWebView.setLayoutParams(
+                new LinearLayout.LayoutParams(
+                        LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+
+        return parent;
     }
 }

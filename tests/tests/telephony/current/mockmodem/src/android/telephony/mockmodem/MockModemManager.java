@@ -23,6 +23,7 @@ import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWE
 import android.content.Context;
 import android.hardware.radio.voice.CdmaSignalInfoRecord;
 import android.hardware.radio.voice.UusInfo;
+import android.telephony.ims.stub.ImsRegistrationImplBase;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -409,6 +410,28 @@ public class MockModemManager {
         IRadioImsImpl radioIms = mMockModemService.getIRadioIms((byte) slotId);
         if (radioIms == null) return null;
         return radioIms.getSrvccCalls();
+    }
+
+    /**
+     * Triggers IMS deregistration.
+     *
+     * @param slotId which slot would insert.
+     * @param reason the reason why the deregistration is triggered.
+     * @return {@code true} if the operation is successful, otherwise {@code false}.
+     */
+    public boolean triggerImsDeregistration(int slotId,
+            @ImsRegistrationImplBase.ImsDeregistrationReason int reason) {
+        Log.d(TAG, "triggerImsDeregistration[" + slotId + "] reason=" + reason);
+
+        boolean result = false;
+        try {
+            mMockModemService.getIRadioIms().triggerImsDeregistration(reason);
+
+            waitForTelephonyFrameworkDone(1);
+            result = true;
+        } catch (Exception e) {
+        }
+        return result;
     }
 
     /**
