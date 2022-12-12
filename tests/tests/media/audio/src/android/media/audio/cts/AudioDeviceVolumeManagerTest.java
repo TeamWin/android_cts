@@ -18,6 +18,7 @@ package android.media.audio.cts;
 
 import static org.junit.Assert.assertThrows;
 
+import android.Manifest;
 import android.content.Context;
 import android.media.AudioDeviceAttributes;
 import android.media.AudioDeviceInfo;
@@ -47,8 +48,15 @@ public class AudioDeviceVolumeManagerTest extends CtsAndroidTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.MODIFY_AUDIO_ROUTING);
         mADVmgr = (AudioDeviceVolumeManager) getContext().getSystemService(
                 Context.AUDIO_DEVICE_VOLUME_SERVICE);
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 
     /**
