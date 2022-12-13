@@ -126,12 +126,12 @@ public class GameManagerTest {
     public void testIsAngleEnabled() throws Exception {
         final String packageName = GAME_TEST_APP_WITH_PERFORMANCE_PACKAGE_NAME;
         TestUtil.installPackage(GAME_TEST_APP_WITH_PERFORMANCE_APK_PATH);
-        Thread.sleep(500);
+        Thread.sleep(1000);
 
         // enable Angle for BATTERY mode.
         runShellCommand("device_config put game_overlay " + packageName
                 + " mode=3,useAngle=true");
-        Thread.sleep(500);
+        Thread.sleep(1000);
 
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
                 (gameManager) -> gameManager.setGameMode(packageName,
@@ -155,7 +155,7 @@ public class GameManagerTest {
     @Test
     public void testGetGameModeUnsupportedOnNotGame() throws InterruptedException {
         TestUtil.installPackage(NOT_GAME_TEST_APP_APK_PATH);
-        Thread.sleep(500);
+        Thread.sleep(1000);
 
         int gameMode =
                 ShellIdentityUtils.invokeMethodWithShellPermissions(mGameManager,
@@ -283,7 +283,7 @@ public class GameManagerTest {
                 GameManager.GAME_MODE_STANDARD));
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager, (gameManager) ->
                 gameManager.setGameState(new GameState(true, GameState.MODE_NONE)));
-        Thread.sleep(500);  // Wait for change to take effect.
+        Thread.sleep(1000);  // Wait for change to take effect.
         assertEquals(gameLoadingCountBefore, getGameLoadingCount());
     }
 
@@ -299,7 +299,7 @@ public class GameManagerTest {
                 GameManager.GAME_MODE_PERFORMANCE));
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager, (gameManager) ->
                 gameManager.setGameState(new GameState(true, GameState.MODE_NONE)));
-        Thread.sleep(500);  // Wait for change to take effect.
+        Thread.sleep(1000);  // Wait for change to take effect.
         assertEquals(gameLoadingCountBefore + 1, getGameLoadingCount());
     }
 
@@ -317,7 +317,7 @@ public class GameManagerTest {
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager, (gameManager) ->
                 gameManager.setGameState(
                         new GameState(true, GameState.MODE_NONE, TEST_LABEL, TEST_QUALITY)));
-        Thread.sleep(500);  // Wait for change to take effect.
+        Thread.sleep(1000);  // Wait for change to take effect.
         assertEquals(gameLoadingCountBefore + 1, getGameLoadingCount());
     }
 
@@ -328,8 +328,8 @@ public class GameManagerTest {
     public void testGetGameModeInfoWithTwoGameModes() throws InterruptedException {
         TestUtil.installPackage(GAME_TEST_APP_APK_PATH);
         // When an app is installed, some propagation work for the configuration will
-        // be set up asynchronously, hence wait for 500ms here.
-        Thread.sleep(500);
+        // be set up asynchronously, hence wait for 1000ms here.
+        Thread.sleep(1000);
 
         GameModeInfo gameModeInfo =
                 ShellIdentityUtils.invokeMethodWithShellPermissions(mGameManager,
@@ -388,8 +388,8 @@ public class GameManagerTest {
         final String packageName = GAME_TEST_APP_WITH_BATTERY_PACKAGE_NAME;
         TestUtil.installPackage(GAME_TEST_APP_WITH_BATTERY_APK_PATH);
         // When an app is installed, some propagation work for the configuration will
-        // be set up asynchronously, hence wait for 500ms here.
-        Thread.sleep(500);
+        // be set up asynchronously, hence wait for 1000ms here.
+        Thread.sleep(1000);
 
         GameModeInfo gameModeInfo =
                 ShellIdentityUtils.invokeMethodWithShellPermissions(mGameManager,

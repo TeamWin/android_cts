@@ -113,13 +113,6 @@ public class CreateVirtualDisplayTest {
                 Runnable::run,
                 mVirtualDisplayCallback);
         assertThat(virtualDisplay).isNotNull();
-        int displayFlags = virtualDisplay.getDisplay().getFlags();
-        assertWithMessage(
-                String.format(
-                        "Virtual display flags (0x%x) should contain FLAG_OWN_DISPLAY_GROUP",
-                        displayFlags))
-                .that(displayFlags & Display.FLAG_OWN_DISPLAY_GROUP)
-                .isNotEqualTo(0);
     }
 
     @Test

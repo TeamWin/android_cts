@@ -68,6 +68,12 @@ public class CtsInteractiveActivity extends Activity {
                     editor.putString("DISPLAY_MODE", displayMode);
                     // Update the public share mode value to be accessed by the test activity.
                     TestListActivity.sCurrentDisplayMode = displayMode;
+                } else {
+                    // Reset the global display mode if no specific display mode is specified. In
+                    // case the existing CTS-V APP on the device is set as FOLD mode (it will cause
+                    // CtsVerifierWrappedTestCases hanging there for the result).
+                    TestListActivity.sCurrentDisplayMode =
+                            TestListActivity.DisplayMode.UNFOLDED.toString();
                 }
                 editor.apply();
 
@@ -109,6 +115,9 @@ public class CtsInteractiveActivity extends Activity {
             String displayMode = preferences.getString("DISPLAY_MODE", null);
             if (displayMode != null) {
                 TestListActivity.sCurrentDisplayMode = displayMode;
+            } else {
+                TestListActivity.sCurrentDisplayMode =
+                        TestListActivity.DisplayMode.UNFOLDED.toString();
             }
             startActivityForResult(getTestIntent(activityName, displayMode), 0);
         }
@@ -123,6 +132,8 @@ public class CtsInteractiveActivity extends Activity {
             // Start some activities with extra display mode data, more background is b/255265824
             // and b/256545013.
             intent.putExtra("DISPLAY_MODE", displayMode);
+        } else if (displayMode == null) {
+            intent.putExtra("AVOID_RESTORE_DISPLAY_MODE", true);
         }
         return intent;
     }

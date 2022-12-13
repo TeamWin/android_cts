@@ -50,6 +50,7 @@ import android.graphics.Color;
 import android.graphics.ColorSpace;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -916,6 +917,166 @@ public class WallpaperManagerTest {
         assertThat(actualSize).isEqualTo(expectedSize);
     }
 
+    @Test
+    public void getDrawable_homeScreen_succeeds() throws IOException {
+        Drawable expected = mContext.getDrawable(R.drawable.robot);
+        mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
+
+        Drawable actual = mWallpaperManager.getDrawable(FLAG_SYSTEM);
+
+        assertWithMessage("Drawables must represent the same image").that(
+                isSameImage(actual, expected)).isTrue();
+    }
+
+    @Test
+    public void getDrawable_lockScreenUnset_returnsNull() {
+        Drawable actual = mWallpaperManager.getDrawable(FLAG_LOCK);
+
+        assertThat(actual).isNull();
+    }
+
+    @Test
+    public void getDrawable_lockScreenSet_succeeds() throws IOException {
+        Drawable expected = mContext.getDrawable(R.drawable.robot);
+        mWallpaperManager.setResource(R.drawable.robot, FLAG_LOCK);
+
+        Drawable actual = mWallpaperManager.getDrawable(FLAG_LOCK);
+
+        assertWithMessage("Drawables must represent the same image").that(
+                isSameImage(actual, expected)).isTrue();
+    }
+
+    @Test
+    public void getDrawable_default_sameAsHome() throws IOException {
+        Drawable expected = mContext.getDrawable(R.drawable.robot);
+        mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
+
+        Drawable actual = mWallpaperManager.getDrawable();
+
+        assertWithMessage("Drawables must represent the same image").that(
+                isSameImage(actual, expected)).isTrue();
+    }
+
+    @Test
+    public void getFastDrawable_homeScreen_succeeds() throws IOException {
+        Drawable expected = mContext.getDrawable(R.drawable.robot);
+        mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
+
+        Drawable actual = mWallpaperManager.getFastDrawable(FLAG_SYSTEM);
+
+        assertWithMessage("Drawables must represent the same image").that(
+                isSameImage(actual, expected)).isTrue();
+    }
+
+    @Test
+    public void getFastDrawable_lockScreenUnset_returnsNull() {
+        Drawable actual = mWallpaperManager.getFastDrawable(FLAG_LOCK);
+
+        assertThat(actual).isNull();
+    }
+
+    @Test
+    public void getFastDrawable_lockScreenSet_succeeds() throws IOException {
+        Drawable expected = mContext.getDrawable(R.drawable.robot);
+        mWallpaperManager.setResource(R.drawable.robot, FLAG_LOCK);
+
+        Drawable actual = mWallpaperManager.getFastDrawable(FLAG_LOCK);
+
+        assertWithMessage("Drawables must represent the same image").that(
+                isSameImage(actual, expected)).isTrue();
+    }
+
+    @Test
+    public void getFastDrawable_default_sameAsHome() throws IOException {
+        Drawable expected = mContext.getDrawable(R.drawable.robot);
+        mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
+
+        Drawable actual = mWallpaperManager.getFastDrawable();
+
+        assertWithMessage("Drawables must represent the same image").that(
+                isSameImage(actual, expected)).isTrue();
+    }
+
+    @Test
+    public void peekDrawable_homeScreen_succeeds() throws IOException {
+        Drawable expected = mContext.getDrawable(R.drawable.robot);
+        mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
+
+        Drawable actual = mWallpaperManager.peekDrawable(FLAG_SYSTEM);
+
+        assertWithMessage("Drawables must represent the same image").that(
+                isSameImage(actual, expected)).isTrue();
+    }
+
+    @Test
+    public void peekDrawable_lockScreenUnset_returnsNull() {
+        Drawable actual = mWallpaperManager.peekDrawable(FLAG_LOCK);
+
+        assertThat(actual).isNull();
+    }
+
+    @Test
+    public void peekDrawable_lockScreenSet_succeeds() throws IOException {
+        Drawable expected = mContext.getDrawable(R.drawable.robot);
+        mWallpaperManager.setResource(R.drawable.robot, FLAG_LOCK);
+
+        Drawable actual = mWallpaperManager.peekDrawable(FLAG_LOCK);
+
+        assertWithMessage("Drawables must represent the same image").that(
+                isSameImage(actual, expected)).isTrue();
+    }
+
+    @Test
+    public void peekDrawable_default_sameAsHome() throws IOException {
+        Drawable expected = mContext.getDrawable(R.drawable.robot);
+        mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
+
+        Drawable actual = mWallpaperManager.peekDrawable();
+
+        assertWithMessage("Drawables must represent the same image").that(
+                isSameImage(actual, expected)).isTrue();
+    }
+
+    @Test
+    public void peekFastDrawable_homeScreen_succeeds() throws IOException {
+        Drawable expected = mContext.getDrawable(R.drawable.robot);
+        mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
+
+        Drawable actual = mWallpaperManager.peekFastDrawable(FLAG_SYSTEM);
+
+        assertWithMessage("Drawables must represent the same image").that(
+                isSameImage(actual, expected)).isTrue();
+    }
+
+    @Test
+    public void peekFastDrawable_lockScreenUnset_returnsNull() {
+        Drawable actual = mWallpaperManager.peekFastDrawable(FLAG_LOCK);
+
+        assertThat(actual).isNull();
+    }
+
+    @Test
+    public void peekFastDrawable_lockScreenSet_succeeds() throws IOException {
+        Drawable expected = mContext.getDrawable(R.drawable.robot);
+        mWallpaperManager.setResource(R.drawable.robot, FLAG_LOCK);
+
+        Drawable actual = mWallpaperManager.peekFastDrawable(FLAG_LOCK);
+
+        assertWithMessage("Drawables must represent the same image").that(
+                isSameImage(actual, expected)).isTrue();
+    }
+
+    @Test
+    public void peekFastDrawable_default_sameAsHome() throws IOException {
+        Drawable expected = mContext.getDrawable(R.drawable.robot);
+        mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
+
+        Drawable actual = mWallpaperManager.peekFastDrawable();
+
+        assertWithMessage("Drawables must represent the same image").that(
+                isSameImage(actual, expected)).isTrue();
+    }
+
     private void assertBitmapDimensions(Bitmap bitmap) {
         int maxSize = getMaxTextureSize();
         boolean safe = false;
@@ -1082,6 +1243,30 @@ public class WallpaperManagerTest {
     public WallpaperManager.OnColorsChangedListener getTestableListener() {
         // Unfortunately mockito cannot mock anonymous classes or lambdas.
         return spy(new TestableColorListener());
+    }
+
+    private static boolean isSameImage(Drawable d1, Drawable d2) {
+        Drawable.ConstantState c1 = d1.getConstantState();
+        Drawable.ConstantState c2 = d2.getConstantState();
+        return (c1 != null && c1.equals(c2)) || getBitmap(d1).sameAs(getBitmap(d2));
+    }
+
+    private static Bitmap getBitmap(Drawable drawable) {
+        int width = drawable.getIntrinsicWidth();
+        int height = drawable.getIntrinsicHeight();
+        // Some drawables have no intrinsic width - e.g. solid colours.
+        if (width <= 0) {
+            width = 1;
+        }
+        if (height <= 0) {
+            height = 1;
+        }
+
+        Bitmap result = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(result);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+        return result;
     }
 
     public static class TestableColorListener implements WallpaperManager.OnColorsChangedListener {

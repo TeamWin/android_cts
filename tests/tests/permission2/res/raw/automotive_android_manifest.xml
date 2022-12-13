@@ -498,4 +498,12 @@
         android:protectionLevel="signature|privileged"
         android:label="@string/car_permission_label_control_steering_wheel"
         android:description="@string/car_permission_desc_control_steering_wheel"/>
+     <permission android:name="android.car.permission.USE_REMOTE_ACCESS"
+        android:protectionLevel="normal"
+        android:label="@string/car_permission_label_use_remote_access"
+        android:description="@string/car_permission_desc_use_remote_access"/>
+     <permission android:name="android.car.permission.CONTROL_REMOTE_ACCESS"
+        android:protectionLevel="signature|privileged"
+        android:label="@string/car_permission_label_control_remote_access"
+        android:description="@string/car_permission_desc_control_remote_access"/>
 </manifest>

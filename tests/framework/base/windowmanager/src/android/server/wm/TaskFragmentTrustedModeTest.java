@@ -19,6 +19,8 @@ package android.server.wm;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.jetpack.second.Components.SECOND_UNTRUSTED_EMBEDDING_ACTIVITY;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.assumeActivityEmbeddingSupportedDevice;
+import static android.window.TaskFragmentOrganizer.TASK_FRAGMENT_TRANSIT_CHANGE;
+import static android.window.TaskFragmentOrganizer.TASK_FRAGMENT_TRANSIT_OPEN;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -105,7 +107,8 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
                 .startActivityInTaskFragment(taskFragmentInfo.getFragmentToken(), mOwnerToken,
                         new Intent().setComponent(mTranslucentActivity),
                         null /* activityOptions */);
-        mTaskFragmentOrganizer.applyTransaction(wct);
+        mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_OPEN,
+                false /* shouldApplyIndependently */);
         waitAndAssertResumedActivity(mTranslucentActivity, "Translucent activity must be resumed.");
 
         // Some activities in the task fragment must be made invisible when there is an overlay.
@@ -138,7 +141,8 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
         final WindowContainerTransaction wct = new WindowContainerTransaction()
                 .reparentActivityToTaskFragment(taskFragmentInfo.getFragmentToken(),
                         embeddedActivityToken);
-        mTaskFragmentOrganizer.applyTransaction(wct);
+        mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_CHANGE,
+                false /* shouldApplyIndependently */);
         waitAndAssertResumedActivity(mTranslucentActivity, "Translucent activity must be resumed.");
 
         // Some activities in the task fragment must be made invisible when there is an overlay.
@@ -180,7 +184,8 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
                 .setBounds(info.getToken(), taskFragBounds);
 
         // It is disallowed to set TaskFragment bounds to outside of its parent bounds.
-        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct));
+        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct,
+                TASK_FRAGMENT_TRANSIT_CHANGE, false /* shouldApplyIndependently */));
     }
 
     /**
@@ -203,7 +208,8 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
                 .setAppBounds(info.getToken(), taskFragAppBounds);
 
         // It is disallowed to set TaskFragment app bounds to outside of its parent app bounds.
-        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct));
+        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct,
+                TASK_FRAGMENT_TRANSIT_CHANGE, false /* shouldApplyIndependently */));
     }
 
     /**
@@ -225,7 +231,8 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
                 .setScreenSizeDp(info.getToken(), screenWidthDp + 1, screenHeightDp);
 
         // It is disallowed to set TaskFragment screenWidthDp to be greater than parent's.
-        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct0));
+        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct0,
+                TASK_FRAGMENT_TRANSIT_CHANGE, false /* shouldApplyIndependently */));
 
         // Try to set screenHeightDp greater than parent's.
         mTaskFragmentOrganizer.resetLatch();
@@ -233,7 +240,8 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
                 .setScreenSizeDp(info.getToken(), screenWidthDp, screenHeightDp + 1);
 
         // It is disallowed to set TaskFragment screenHeightDp to be greater than parent's.
-        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct1));
+        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct1,
+                TASK_FRAGMENT_TRANSIT_CHANGE, false /* shouldApplyIndependently */));
 
         // Try to set smallestScreenWidthDp greater than parent's.
         mTaskFragmentOrganizer.resetLatch();
@@ -241,7 +249,8 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
                 .setSmallestScreenWidthDp(info.getToken(), smallestScreenWidthDp + 1);
 
         // It is disallowed to set TaskFragment smallestScreenWidthDp to be greater than parent's.
-        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct2));
+        assertThrows(SecurityException.class, () -> mTaskFragmentOrganizer.applyTransaction(wct2,
+                TASK_FRAGMENT_TRANSIT_CHANGE, false /* shouldApplyIndependently */));
     }
 
     /**
@@ -284,7 +293,8 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
         final WindowContainerTransaction wct1 = new WindowContainerTransaction()
                 .createTaskFragment(params1)
                 .reparentActivityToTaskFragment(taskFragToken, mOwnerToken);
-        mTaskFragmentOrganizer.applyTransaction(wct1);
+        mTaskFragmentOrganizer.applyTransaction(wct1, TASK_FRAGMENT_TRANSIT_CHANGE,
+                false /* shouldApplyIndependently */);
         mTaskFragmentOrganizer.waitForTaskFragmentCreated();
         final TaskFragmentInfo info1 = mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken);
 
@@ -302,7 +312,8 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
         final WindowContainerTransaction wct2 = new WindowContainerTransaction()
                 .setErrorCallbackToken(errorCallbackToken)
                 .reparentChildren(info2.getToken(), info1.getToken());
-        mTaskFragmentOrganizer.applyTransaction(wct2);
+        mTaskFragmentOrganizer.applyTransaction(wct2, TASK_FRAGMENT_TRANSIT_CHANGE,
+                false /* shouldApplyIndependently */);
 
         // It is disallowed to reparent children to TaskFragment with bounds outside of its parent
         // in untrusted mode.

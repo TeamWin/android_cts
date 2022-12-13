@@ -14,13 +14,15 @@
   See the License for the specific language governing permissions and
   limitations under the License.
   -->
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-    <View
-        android:id="@+id/drawableview"
-        android:layout_width="match_parent"
-        android:layout_height="300dp" />
-</LinearLayout>
+
+<resources>
+    <!-- CVE-2021-0642 -->
+    <string name="cve_2021_0642_action">CVE_2021_0642_ACTION</string>
+    <string name="cve_2021_0642_pkgPhone">com.android.phone</string>
+    <string name="cve_2021_0642_failMsg">Device is vulnerable to b/185126149 !!</string>
+    <string name="cve_2021_0642_msgResolveErrorVoicemail">The intent with action
+    ACTION_CONFIGURE_VOICEMAIL should resolve to either ResolverActivity or
+    VoicemailSettingsActivity</string>
+    <string name="cve_2021_0642_msgResolveErrorPocAction">The intent with action
+    CVE_2021_0642_ACTION should not be resolved to test package</string>
+</resources>

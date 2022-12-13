@@ -804,8 +804,7 @@ public class WindowInputTests {
     }
 
     private void waitForWindow(String name) {
-        mWmState.waitForWithAmState(state -> state.isWindowSurfaceShown(name),
-                name + "'s surface is appeared");
+        mWmState.waitAndAssertWindowSurfaceShown(name, true);
     }
 
     public static class TestActivity extends Activity {

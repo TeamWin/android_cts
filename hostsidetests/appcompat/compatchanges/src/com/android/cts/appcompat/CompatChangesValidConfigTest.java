@@ -72,6 +72,7 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
             "OVERRIDE_CAMERA_ROTATE_AND_CROP_DEFAULTS",
             "OVERRIDE_CAMERA_RESIZABLE_AND_SDK_CHECK",
             "OVERRIDE_CAMERA_ROTATE_AND_CROP",
+            "OVERRIDE_FRONT_CAMERA_APP_COMPAT",
             "IGNORE_ALLOW_BACKUP_IN_D2D",
             "IGNORE_FULL_BACKUP_CONTENT_IN_D2D",
             "NEVER_SANDBOX_DISPLAY_APIS",

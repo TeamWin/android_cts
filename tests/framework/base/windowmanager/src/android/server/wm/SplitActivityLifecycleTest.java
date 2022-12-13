@@ -25,6 +25,8 @@ import static android.server.wm.SplitActivityLifecycleTest.ActivityB.EXTRA_SHOW_
 import static android.server.wm.WindowManagerState.STATE_STARTED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.window.TaskFragmentOrganizer.TASK_FRAGMENT_TRANSIT_CHANGE;
+import static android.window.TaskFragmentOrganizer.TASK_FRAGMENT_TRANSIT_OPEN;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -120,7 +122,8 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
                 null /* activityOptions */);
 
         mTaskFragmentOrganizer.setAppearedCount(2);
-        mTaskFragmentOrganizer.applyTransaction(wct);
+        mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_CHANGE,
+                false /* shouldApplyIndependently */);
         mTaskFragmentOrganizer.waitForTaskFragmentCreated();
 
         final TaskFragmentInfo infoA = mTaskFragmentOrganizer.getTaskFragmentInfo(
@@ -165,7 +168,8 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
                 .startActivityInTaskFragment(taskFragTokenA, mOwnerToken, mIntent,
                         null /* activityOptions */);
 
-        mTaskFragmentOrganizer.applyTransaction(wct);
+        mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_OPEN,
+                false /* shouldApplyIndependently */);
 
         final TaskFragmentInfo infoA = mTaskFragmentOrganizer.waitForAndGetTaskFragmentInfo(
                 taskFragTokenA, info -> info.getActivities().size() == 2,
@@ -203,7 +207,8 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
                 .startActivityInTaskFragment(taskFragTokenB, mOwnerToken, mIntent,
                         null /* activityOptions */);
 
-        mTaskFragmentOrganizer.applyTransaction(wct);
+        mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_OPEN,
+                false /* shouldApplyIndependently */);
 
         final TaskFragmentInfo infoB = mTaskFragmentOrganizer.waitForAndGetTaskFragmentInfo(
                 taskFragTokenB, info -> info.getActivities().size() == 2,
@@ -280,7 +285,8 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
                         null /* activityOptions */)
                 .setAdjacentTaskFragments(taskFragTokenA, taskFragTokenC, null /* options */);
 
-        mTaskFragmentOrganizer.applyTransaction(wct);
+        mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_OPEN,
+                false /* shouldApplyIndependently */);
         // Wait for the TaskFragment of Activity C to be created.
         mTaskFragmentOrganizer.waitForTaskFragmentCreated();
 
@@ -314,7 +320,8 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
                         null /* activityOptions */)
                 .setAdjacentTaskFragments(taskFragTokenA, taskFragTokenC, null /* options */);
 
-        mTaskFragmentOrganizer.applyTransaction(wct);
+        mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_OPEN,
+                false /* shouldApplyIndependently */);
         // Wait for the TaskFragment of Activity C to be created.
         mTaskFragmentOrganizer.waitForTaskFragmentCreated();
 
@@ -354,7 +361,8 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
                         null /* activityOptions */)
                 .setAdjacentTaskFragments(taskFragTokenB, taskFragTokenC, null /* options */);
 
-        mTaskFragmentOrganizer.applyTransaction(wct);
+        mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_CHANGE,
+                false /* shouldApplyIndependently */);
         // Wait for the TaskFragment of Activity C to be created.
         mTaskFragmentOrganizer.waitForTaskFragmentCreated();
         // Wait for the TaskFragment of Activity B to be changed.
@@ -406,7 +414,8 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
                 .startActivityInTaskFragment(taskFragTokenC, mOwnerToken, mIntent,
                         null /* activityOptions */);
 
-        mTaskFragmentOrganizer.applyTransaction(wct);
+        mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_OPEN,
+                false /* shouldApplyIndependently */);
 
         mTaskFragmentOrganizer.waitForTaskFragmentCreated();
 
@@ -506,7 +515,8 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
         // Request the focus on the primary TaskFragment
         WindowContainerTransaction wct = new WindowContainerTransaction()
                 .requestFocusOnTaskFragment(mTaskFragA.getTaskFragToken());
-        mTaskFragmentOrganizer.applyTransaction(wct);
+        mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_CHANGE,
+                false /* shouldApplyIndependently */);
         waitForActivityFocused(5000, mActivityA);
         assertThat(mWmState.getFocusedApp()).isEqualTo(mActivityA.flattenToShortString());
 
@@ -516,7 +526,8 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
                 .setBounds(mTaskFragB.getToken(), new Rect())
                 .setWindowingMode(mTaskFragB.getToken(), WINDOWING_MODE_UNDEFINED)
                 .setAdjacentTaskFragments(mTaskFragA.getTaskFragToken(), null, null);
-        mTaskFragmentOrganizer.applyTransaction(wct);
+        mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_CHANGE,
+                false /* shouldApplyIndependently */);
 
         // Ensure the Activity on primary TaskFragment is stopped and no longer focused.
         waitAndAssertActivityState(mActivityA, STATE_STOPPED, "Activity A must be stopped");
@@ -557,7 +568,8 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
                 .setAdjacentTaskFragments(primaryToken, secondaryToken, null /* params */)
                 .startActivityInTaskFragment(secondaryToken, mOwnerToken, intent,
                         null /* activityOptions */);
-        mTaskFragmentOrganizer.applyTransaction(wct);
+        mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_CHANGE,
+                false /* shouldApplyIndependently */);
 
         waitAndAssertResumedActivity(translucentActivity, "TranslucentActivity must be resumed.");
         waitAndAssertResumedActivity(mActivityB, "Activity B must be resumed.");

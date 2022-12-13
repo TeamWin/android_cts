@@ -71,11 +71,14 @@ public class TestUtils {
     // Non-final to allow modification by tests not in this package (e.g. permission-related
     // tests in the Telecom2 test package.
     public static String PACKAGE = "android.telecom.cts";
+    public static String SELF_MANAGED_PACKAGE = "android.telecom.cts.selfmanagedcstestappone";
     public static final String TEST_URI_SCHEME = "foobuzz";
     public static final String COMPONENT = "android.telecom.cts.CtsConnectionService";
     public static final String INCALL_COMPONENT = "android.telecom.cts/.MockInCallService";
     public static final String SELF_MANAGED_COMPONENT =
             "android.telecom.cts.CtsSelfManagedConnectionService";
+    public static final String SELF_MANAGED_COMPONENT_1 =
+            "android.telecom.cts.selfmanagedcstestappone.CtsSelfManagedConnectionServiceOne";
     public static final String REMOTE_COMPONENT = "android.telecom.cts.CtsRemoteConnectionService";
     public static final String ACCOUNT_ID_1 = "xtstest_CALL_PROVIDER_ID_1";
     public static final String ACCOUNT_ID_2 = "xtstest_CALL_PROVIDER_ID_2";
@@ -120,6 +123,11 @@ public class TestUtils {
     public static final PhoneAccountHandle TEST_SELF_MANAGED_HANDLE_4 =
             new PhoneAccountHandle(new ComponentName(PACKAGE, SELF_MANAGED_COMPONENT),
                     SELF_MANAGED_ACCOUNT_ID_4);
+    public static final String SELF_MANAGED_CS_1_ACCOUNT_ID_1 = "ctstest_SELF_MANAGED_CS_1_ID_1";
+    public static final PhoneAccountHandle TEST_SELF_MANAGED_CS_1_HANDLE_1 =
+            new PhoneAccountHandle(
+                    new ComponentName(SELF_MANAGED_PACKAGE, SELF_MANAGED_COMPONENT_1),
+                    SELF_MANAGED_CS_1_ACCOUNT_ID_1);
 
     public static final String ACCOUNT_LABEL = "CTSConnectionService";
     public static final String SIM_ACCOUNT_LABEL = "CTSConnectionServiceSim";
@@ -257,6 +265,12 @@ public class TestUtils {
         SELF_MANAGED_ACCOUNT_4_EXTRAS.putBoolean(
                 PhoneAccount.EXTRA_ADD_SELF_MANAGED_CALLS_TO_INCALLSERVICE, true);
     }
+    public static final Bundle SELF_MANAGED_CS_1_ACCOUNT_1_EXTRAS;
+    static {
+        SELF_MANAGED_CS_1_ACCOUNT_1_EXTRAS = new Bundle();
+        SELF_MANAGED_CS_1_ACCOUNT_1_EXTRAS.putBoolean(
+                PhoneAccount.EXTRA_ADD_SELF_MANAGED_CALLS_TO_INCALLSERVICE, true);
+    }
 
     public static final PhoneAccount TEST_SELF_MANAGED_PHONE_ACCOUNT_2 = PhoneAccount.builder(
             TEST_SELF_MANAGED_HANDLE_2, SELF_MANAGED_ACCOUNT_LABEL)
@@ -296,6 +310,30 @@ public class TestUtils {
             .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_SIP)
             .setExtras(SELF_MANAGED_ACCOUNT_4_EXTRAS)
+            .build();
+    public static final PhoneAccount TEST_SELF_MANAGED_CS_1_PHONE_ACCOUNT_1 = PhoneAccount.builder(
+            TEST_SELF_MANAGED_CS_1_HANDLE_1, SELF_MANAGED_ACCOUNT_LABEL)
+            .setAddress(Uri.parse("sip:test@test.com"))
+            .setSubscriptionAddress(Uri.parse("sip:test@test.com"))
+            .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED
+                    | PhoneAccount.CAPABILITY_SUPPORTS_VIDEO_CALLING
+                    | PhoneAccount.CAPABILITY_VIDEO_CALLING)
+            .setHighlightColor(Color.BLUE)
+            .setShortDescription(SELF_MANAGED_ACCOUNT_LABEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_SIP)
+            .setExtras(SELF_MANAGED_CS_1_ACCOUNT_1_EXTRAS)
+            .build();
+    public static final PhoneAccount TEST_SELF_MANAGED_CS_1_PHONE_ACCOUNT_2 = PhoneAccount.builder(
+            TEST_SELF_MANAGED_CS_1_HANDLE_1, SELF_MANAGED_ACCOUNT_LABEL)
+            .setAddress(Uri.parse("sip:test@test.com"))
+            .setSubscriptionAddress(Uri.parse("sip:test@test.com"))
+            .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
+            .setHighlightColor(Color.BLUE)
+            .setShortDescription(SELF_MANAGED_ACCOUNT_LABEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_SIP)
+            .setExtras(SELF_MANAGED_CS_1_ACCOUNT_1_EXTRAS)
             .build();
 
     /**
@@ -599,8 +637,12 @@ public class TestUtils {
         }
     }
     public static boolean hasBluetoothFeature() {
-        return InstrumentationRegistry.getContext().getPackageManager().
-                hasSystemFeature(PackageManager.FEATURE_BLUETOOTH);
+        try {
+            return InstrumentationRegistry.getContext().getPackageManager()
+                    .hasSystemFeature(PackageManager.FEATURE_BLUETOOTH);
+        } catch (Exception e) {
+            return false;
+        }
     }
     public static BluetoothDevice makeBluetoothDevice(String address) {
         if (!HAS_BLUETOOTH) return null;

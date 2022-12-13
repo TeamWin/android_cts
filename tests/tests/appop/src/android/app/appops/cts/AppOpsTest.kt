@@ -16,26 +16,12 @@ package android.app.appops.cts
  * limitations under the License.
  */
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertSame
-import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
-import org.junit.Assume.assumeTrue
-
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.timeout
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.verifyZeroInteractions
-
 import android.Manifest.permission
 import android.app.AppOpsManager
 import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.AppOpsManager.MODE_DEFAULT
 import android.app.AppOpsManager.MODE_ERRORED
 import android.app.AppOpsManager.MODE_IGNORED
-import android.app.AppOpsManager.OnOpChangedListener
 import android.app.AppOpsManager.OPSTR_ACCESS_RESTRICTED_SETTINGS
 import android.app.AppOpsManager.OPSTR_FINE_LOCATION
 import android.app.AppOpsManager.OPSTR_PHONE_CALL_CAMERA
@@ -45,26 +31,36 @@ import android.app.AppOpsManager.OPSTR_READ_CALENDAR
 import android.app.AppOpsManager.OPSTR_RECORD_AUDIO
 import android.app.AppOpsManager.OPSTR_WIFI_SCAN
 import android.app.AppOpsManager.OPSTR_WRITE_CALENDAR
+import android.app.AppOpsManager.OnOpChangedListener
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Process
 import android.os.UserHandle
 import android.platform.test.annotations.AppModeFull
-import androidx.test.runner.AndroidJUnit4
 import androidx.test.InstrumentationRegistry
-import org.junit.Assert
-
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.mockito.Mockito
-
+import androidx.test.runner.AndroidJUnit4
 import java.util.HashMap
 import java.util.HashSet
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
+import org.junit.Assert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
+import org.junit.Assume.assumeTrue
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.mockito.Mockito
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.timeout
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyZeroInteractions
 
 @RunWith(AndroidJUnit4::class)
 class AppOpsTest {
@@ -442,6 +438,47 @@ class AppOpsTest {
         } finally {
             // Clean up registered watcher.
             mAppOps.stopWatchingMode(watcher)
+        }
+    }
+
+    @Test
+    fun testOnOpNotedListener() {
+        val watcher = mock(AppOpsManager.OnOpNotedListener::class.java)
+        try {
+            mAppOps.startWatchingNoted(arrayOf<String>(OPSTR_FINE_LOCATION), watcher)
+
+            mAppOps.noteOp(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName, "testAttribution", null)
+
+            verify(watcher, timeout(TIMEOUT_MS))
+                    .onOpNoted(
+                            OPSTR_FINE_LOCATION,
+                            mMyUid,
+                            mOpPackageName,
+                            "testAttribution",
+                            AppOpsManager.OP_FLAG_SELF,
+                            MODE_ALLOWED)
+
+            Mockito.reset(watcher)
+
+            mAppOps.noteOp(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName, null, null)
+
+            verify(watcher, timeout(TIMEOUT_MS))
+                    .onOpNoted(
+                            OPSTR_FINE_LOCATION,
+                            mMyUid,
+                            mOpPackageName,
+                            null,
+                            AppOpsManager.OP_FLAG_SELF,
+                            MODE_ALLOWED)
+
+            mAppOps.stopWatchingNoted(watcher)
+            Mockito.reset(watcher)
+
+            mAppOps.noteOp(OPSTR_FINE_LOCATION, mMyUid, mOpPackageName, "testAttribution", null)
+
+            verifyZeroInteractions(watcher)
+        } finally {
+            mAppOps.stopWatchingNoted(watcher)
         }
     }
 

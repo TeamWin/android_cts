@@ -29,6 +29,7 @@
         <option name="test-file-name" value="ThirdPtyInCallServiceTestApp.apk" />
         <option name="test-file-name" value="Api29InCallServiceTestApp.apk" />
         <option name="test-file-name" value="CallScreeningServiceTestApp.apk" />
+        <option name="test-file-name" value="SelfManagedCSTestAppOne.apk" />
         <option name="test-file-name" value="CarModeTestApp.apk" />
         <option name="test-file-name" value="CarModeTestAppTwo.apk" />
         <option name="test-file-name" value="CarModeTestAppSelfManaged.apk" />

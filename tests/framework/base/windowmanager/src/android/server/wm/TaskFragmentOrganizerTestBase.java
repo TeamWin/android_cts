@@ -19,6 +19,7 @@ package android.server.wm;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
+import static android.window.TaskFragmentOrganizer.TASK_FRAGMENT_TRANSIT_OPEN;
 import static android.window.TaskFragmentTransaction.TYPE_ACTIVITY_REPARENTED_TO_TASK;
 import static android.window.TaskFragmentTransaction.TYPE_TASK_FRAGMENT_APPEARED;
 import static android.window.TaskFragmentTransaction.TYPE_TASK_FRAGMENT_ERROR;
@@ -192,7 +193,8 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
             wct.startActivityInTaskFragment(taskFragToken, mOwnerToken,
                     new Intent().setComponent(componentName), null /* activityOptions */);
         }
-        mTaskFragmentOrganizer.applyTransaction(wct);
+        mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_OPEN,
+                false /* shouldApplyIndependently */);
         mTaskFragmentOrganizer.waitForTaskFragmentCreated();
 
         if (componentName != null) {
@@ -356,7 +358,8 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
             for (TaskFragmentInfo info : mInfos.values()) {
                 wct.deleteTaskFragment(info.getToken());
             }
-            applyTransaction(wct);
+            applyTransaction(wct, TASK_FRAGMENT_TRANSIT_CLOSE,
+                    false /* shouldApplyIndependently */);
         }
 
         @Override
@@ -408,8 +411,9 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
                         Log.w(TAG, "Unknown TaskFragmentEvent=" + change.getType());
                 }
             }
-
-            super.onTransactionReady(transaction);
+            onTransactionHandled(transaction.getTransactionToken(),
+                    new WindowContainerTransaction(), TASK_FRAGMENT_TRANSIT_NONE,
+                    false /* shouldApplyIndependently */);
         }
 
         private void onTaskFragmentAppeared(@NonNull TaskFragmentInfo taskFragmentInfo) {

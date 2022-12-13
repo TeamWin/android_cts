@@ -27,12 +27,14 @@ import android.hardware.SensorManager;
 import android.hardware.cts.accessories.VirtualHeadTracker;
 import android.hardware.cts.helpers.SensorTestStateNotSupportedException;
 import android.hardware.sensor.cts.R;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.IOException;
@@ -58,6 +60,10 @@ public class SensorHeadTrackerTest extends SensorTestCase {
 
     @Override
     protected void setUp() throws InterruptedException {
+        if (PropertyUtil.getVsrApiLevel() < Build.VERSION_CODES.TIRAMISU) {
+            throw new SensorTestStateNotSupportedException(
+                    "Test only applies for HAL version T or later, skip.");
+        }
         configureHtSensorAccess(true);
         mSensorManager = (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
         mHasSensorDynamicHeadTracker =
@@ -94,7 +100,7 @@ public class SensorHeadTrackerTest extends SensorTestCase {
         if (!mHasSensorDynamicHeadTracker && mSensorManager.isDynamicSensorDiscoverySupported()) {
             assertFalse(
                     "Discovered head tracker sensor but feature flag is not set.",
-                    mCallback.waitForConnection(null));
+                    mCallback.waitForConnection(VIRTUAL_HEAD_TRACKER_PRIMARY));
         }
     }
 
@@ -102,7 +108,8 @@ public class SensorHeadTrackerTest extends SensorTestCase {
     public void testIsDynamicSensorDiscoverySupported() {
         featureSupportedOrSkip();
 
-        assertTrue("Cannot detect sensor connection.", mCallback.waitForConnection(null));
+        assertTrue("Cannot detect sensor connection.",
+                mCallback.waitForConnection(VIRTUAL_HEAD_TRACKER_PRIMARY));
 
         assertTrue(
                 "Dynamic sensor discovery is not supported.",
@@ -123,7 +130,8 @@ public class SensorHeadTrackerTest extends SensorTestCase {
 
         mVirtualHeadTracker.registerDevice(R.raw.head_tracker_main);
 
-        assertTrue("Cannot detect sensor connection.", mCallback.waitForConnection(null));
+        assertTrue("Cannot detect sensor connection.",
+                mCallback.waitForConnection(VIRTUAL_HEAD_TRACKER_PRIMARY));
 
         assertTrue(
                 String.format(
@@ -160,7 +168,8 @@ public class SensorHeadTrackerTest extends SensorTestCase {
     public void testArrayOfSixFloats() {
         featureSupportedOrSkip();
 
-        assertTrue("Cannot detect sensor connection.", mCallback.waitForConnection(null));
+        assertTrue("Cannot detect sensor connection.",
+                mCallback.waitForConnection(VIRTUAL_HEAD_TRACKER_PRIMARY));
 
         mCallback.headTrackerData();
     }
@@ -169,7 +178,8 @@ public class SensorHeadTrackerTest extends SensorTestCase {
     public void testDiscontinuity() {
         featureSupportedOrSkip();
 
-        assertTrue("Cannot detect sensor connection.", mCallback.waitForConnection(null));
+        assertTrue("Cannot detect sensor connection.",
+                mCallback.waitForConnection(VIRTUAL_HEAD_TRACKER_PRIMARY));
 
         mVirtualHeadTracker.incDiscontinuityCount();
 
@@ -181,7 +191,8 @@ public class SensorHeadTrackerTest extends SensorTestCase {
     public void testSensorManagerFlush() {
         featureSupportedOrSkip();
 
-        assertTrue("Cannot detect sensor connection.", mCallback.waitForConnection(null));
+        assertTrue("Cannot detect sensor connection.",
+                mCallback.waitForConnection(VIRTUAL_HEAD_TRACKER_PRIMARY));
 
         assertTrue("Flush was not completed within five seconds.", mCallback.waitForFlush());
     }
@@ -190,7 +201,8 @@ public class SensorHeadTrackerTest extends SensorTestCase {
     public void testDisconnectionReconnection() {
         featureSupportedOrSkip();
 
-        assertTrue("Cannot detect sensor connection.", mCallback.waitForConnection(null));
+        assertTrue("Cannot detect sensor connection.",
+                mCallback.waitForConnection(VIRTUAL_HEAD_TRACKER_PRIMARY));
 
         mSensorId = mCallback.getSensorId();
 
@@ -200,7 +212,8 @@ public class SensorHeadTrackerTest extends SensorTestCase {
 
         mVirtualHeadTracker.registerDevice(R.raw.head_tracker_main);
 
-        assertTrue("Cannot detect sensor reconnection.", mCallback.waitForConnection(null));
+        assertTrue("Cannot detect sensor reconnection.",
+                mCallback.waitForConnection(VIRTUAL_HEAD_TRACKER_PRIMARY));
 
         Integer sensorId = mCallback.getSensorId();
         boolean match =

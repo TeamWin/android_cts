@@ -32,6 +32,25 @@ filegroup {
     ],
     path: "aidl/",
 }
+
+filegroup {
+    name: "self-managed-cs-app-srcs",
+    srcs: [
+        "src/android/telecom/cts/selfmanagedcstestapp/ConnectionServiceCallController.java",
+        "src/android/telecom/cts/CtsSelfManagedConnectionService.java",
+        "src/android/telecom/cts/selfmanagedcstestapp/CtsSelfManagedConnectionServiceControl.java",
+    ],
+    path: "src/",
+}
+
+filegroup {
+    name: "self-managed-cs-app-aidl",
+    srcs: [
+        "aidl/android/telecom/cts/selfmanagedcstestapp/ICtsSelfManagedConnectionServiceControl.aidl",
+    ],
+    path: "aidl/",
+}
+
 filegroup {
     name: "third-pty-dialer-app-srcs",
     srcs: [
@@ -41,6 +60,7 @@ filegroup {
     ],
     path: "ThirdPtyInCallServiceTestApp/",
 }
+
 filegroup {
     name: "third-pty-dialer-app-aidl",
     srcs: [
@@ -78,6 +98,7 @@ android_test {
         "ThirdPtyDialerTestAppTwo/**/*.java",
         "CarModeTestAppSelfManaged/**/*.java",
         "CarModeTestAppTwo/**/*.java",
+        "SelfManagedCSTestAppOne/**/*.java",
     ],
     exclude_srcs: [
         "src/android/telecom/cts/SelfManagedConnection.java",
@@ -102,6 +123,7 @@ android_test {
     data: [
         ":ThirdPtyInCallServiceTestApp",
         ":CarModeTestAppTwo",
+        ":SelfManagedCSTestAppOne",
         ":Api29InCallServiceTestApp",
         ":CallRedirectionServiceTestApp",
         ":ThirdPtyDialerTestAppTwo",

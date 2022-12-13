@@ -36,6 +36,8 @@ import androidx.test.filters.RequiresDevice;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -53,6 +55,8 @@ import java.util.function.IntConsumer;
 @RequiresDevice
 public class AttachedSurfaceControlTest {
     private static final String TAG = "AttachedSurfaceControlTest";
+    private static final String FIXED_TO_USER_ROTATION_COMMAND =
+            "cmd window fixed-to-user-rotation";
     private IgnoreOrientationRequestSession mOrientationSession;
     private WindowManagerStateHelper mWmState;
 
@@ -90,7 +94,9 @@ public class AttachedSurfaceControlTest {
                 InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
         boolean supportsRotation = pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)
                 && pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE);
-        Assume.assumeTrue(supportsRotation);
+        final boolean isFixedToUserRotation =
+                "enabled".equals(SystemUtil.runShellCommand(FIXED_TO_USER_ROTATION_COMMAND).trim());
+        Assume.assumeTrue(supportsRotation && !isFixedToUserRotation);
         mOrientationSession = new IgnoreOrientationRequestSession(false /* enable */);
         mWmState = new WindowManagerStateHelper();
     }

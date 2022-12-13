@@ -34,7 +34,9 @@ public class SelfManagedConnection extends Connection {
             "onShowIncomingUiInvokeCounter");
     InvokeCounter mCallEventCounter = new InvokeCounter("onCallEvent");
     InvokeCounter mHandoverCompleteCounter = new InvokeCounter("handoverCompleteCounter");
+    CountDownLatch mOnAnswerLatch = new CountDownLatch(1);
     CountDownLatch mOnHoldLatch = new CountDownLatch(1);
+    CountDownLatch mOnUnHoldLatch = new CountDownLatch(1);
     CountDownLatch mInCallServiceTrackingLatch = new CountDownLatch(1);
     boolean mIsTracked = false;
     boolean mIsAlternativeUiShowing = false;
@@ -59,6 +61,18 @@ public class SelfManagedConnection extends Connection {
         setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
         destroy();
         mListener.onDestroyed(this);
+    }
+
+    @Override
+    public void onAnswer(int videoState) {
+        this.setActive();
+        mOnAnswerLatch.countDown();
+    }
+
+    @Override
+    public void onAnswer() {
+        this.setActive();
+        mOnAnswerLatch.countDown();
     }
 
     @Override
@@ -96,6 +110,12 @@ public class SelfManagedConnection extends Connection {
     }
 
     @Override
+    public void onUnhold() {
+        this.setActive();
+        mOnUnHoldLatch.countDown();
+    }
+
+    @Override
     public void onCallEvent(String event, Bundle extras) {
         mCallEventCounter.invoke(event, extras);
     }
@@ -121,9 +141,19 @@ public class SelfManagedConnection extends Connection {
         return mHandoverCompleteCounter;
     }
 
+    public boolean waitOnAnswer() {
+        mOnAnswerLatch = TestUtils.waitForLock(mOnAnswerLatch);
+        return mOnAnswerLatch != null;
+    }
+
     public boolean waitOnHold() {
         mOnHoldLatch = TestUtils.waitForLock(mOnHoldLatch);
         return mOnHoldLatch != null;
+    }
+
+    public boolean waitOnUnHold() {
+        mOnUnHoldLatch = TestUtils.waitForLock(mOnUnHoldLatch);
+        return mOnUnHoldLatch != null;
     }
 
     public boolean waitOnInCallServiceTrackingChanged() {

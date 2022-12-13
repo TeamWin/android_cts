@@ -19,8 +19,8 @@ package android.virtualdevice.cts;
 import static android.Manifest.permission.ACTIVITY_EMBEDDING;
 import static android.Manifest.permission.ADD_ALWAYS_UNLOCKED_DISPLAY;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
-import static android.companion.virtual.VirtualDeviceManager.DEFAULT_DEVICE_ID;
-import static android.companion.virtual.VirtualDeviceManager.INVALID_DEVICE_ID;
+import static android.companion.virtual.VirtualDeviceManager.DEVICE_ID_DEFAULT;
+import static android.companion.virtual.VirtualDeviceManager.DEVICE_ID_INVALID;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAULT;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_SENSORS;
@@ -112,7 +112,7 @@ public class VirtualDeviceManagerBasicTest {
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         assertThat(mVirtualDevice).isNotNull();
-        assertThat(mVirtualDevice.getDeviceId()).isGreaterThan(DEFAULT_DEVICE_ID);
+        assertThat(mVirtualDevice.getDeviceId()).isGreaterThan(DEVICE_ID_DEFAULT);
     }
 
     @Test
@@ -185,7 +185,7 @@ public class VirtualDeviceManagerBasicTest {
 
         assertThrows(
                 IllegalArgumentException.class,
-                () -> context.createDeviceContext(INVALID_DEVICE_ID));
+                () -> context.createDeviceContext(DEVICE_ID_INVALID));
     }
 
     @Test
@@ -204,9 +204,9 @@ public class VirtualDeviceManagerBasicTest {
     @Test
     public void createDeviceContext_defaultDeviceId() {
         Context context = getApplicationContext();
-        Context defaultDeviceContext = context.createDeviceContext(DEFAULT_DEVICE_ID);
+        Context defaultDeviceContext = context.createDeviceContext(DEVICE_ID_DEFAULT);
 
-        assertThat(defaultDeviceContext.getDeviceId()).isEqualTo(DEFAULT_DEVICE_ID);
+        assertThat(defaultDeviceContext.getDeviceId()).isEqualTo(DEVICE_ID_DEFAULT);
     }
 
     @Test
@@ -222,9 +222,9 @@ public class VirtualDeviceManagerBasicTest {
         assertThat(virtualDeviceContext.getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
 
         // The default device context should be available from the virtual device one.
-        Context defaultDeviceContext = virtualDeviceContext.createDeviceContext(DEFAULT_DEVICE_ID);
+        Context defaultDeviceContext = virtualDeviceContext.createDeviceContext(DEVICE_ID_DEFAULT);
 
-        assertThat(defaultDeviceContext.getDeviceId()).isEqualTo(DEFAULT_DEVICE_ID);
+        assertThat(defaultDeviceContext.getDeviceId()).isEqualTo(DEVICE_ID_DEFAULT);
     }
 
     @Test

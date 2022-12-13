@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.security.cts.cve_2021_0642;
+package android.security.cts.CVE_2021_0642;
 
 import android.app.Activity;
 
-public class PocActivity extends Activity {
+public class SecondActivity extends Activity {
 }
