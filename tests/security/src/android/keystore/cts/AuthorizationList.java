@@ -137,6 +137,7 @@ public class AuthorizationList {
     private static final int KM_TAG_ATTESTATION_ID_MODEL = KM_BYTES | 717;
     private static final int KM_TAG_VENDOR_PATCHLEVEL = KM_UINT | 718;
     private static final int KM_TAG_BOOT_PATCHLEVEL = KM_UINT | 719;
+    private static final int KM_TAG_ATTESTATION_ID_SECOND_IMEI = KM_BYTES | 723;
 
     // Map for converting padding values to strings
     private static final ImmutableMap<Integer, String> paddingMap = ImmutableMap
@@ -207,6 +208,7 @@ public class AuthorizationList {
     private String model;
     private boolean userPresenceRequired;
     private boolean confirmationRequired;
+    private String mSecondImei;
 
     public AuthorizationList(ASN1Encodable sequence) throws CertificateParsingException {
         this(sequence, true);
@@ -337,6 +339,9 @@ public class AuthorizationList {
                     break;
                 case KM_TAG_TRUSTED_CONFIRMATION_REQUIRED & KEYMASTER_TAG_TYPE_MASK:
                     confirmationRequired = true;
+                    break;
+                case KM_TAG_ATTESTATION_ID_SECOND_IMEI & KEYMASTER_TAG_TYPE_MASK:
+                    mSecondImei = getStringFromAsn1Value(value);
                     break;
             }
         }
@@ -749,6 +754,10 @@ public class AuthorizationList {
     public boolean isConfirmationRequired() {
         return confirmationRequired;
     }
+
+    public String getSecondImei() {
+        return mSecondImei;
+    };
 
     static int eatSecurityLevelToKeymasterSecurityLevel(int eatSecurityLevel) {
         switch(eatSecurityLevel) {

@@ -475,7 +475,8 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     }
 
     private native boolean nativeTestSimpleDecode(String decoder, Surface surface, String mime,
-            String testFile, String refFile, int colorFormat, float rmsError, long checksum);
+            String testFile, String refFile, int colorFormat, float rmsError, long checksum,
+            StringBuilder retMsg);
 
     /**
      * Tests is similar to {@link #testSimpleDecodeToSurface()} but uses ndk api
@@ -487,12 +488,14 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         MediaFormat format = setUpSource(mTestFile);
         mExtractor.release();
         mActivity.setScreenParams(getWidth(format), getHeight(format), false);
-        assertTrue(nativeTestSimpleDecode(mCodecName, mSurface, mMime, mTestFile, mReconfigFile,
-                format.getInteger(MediaFormat.KEY_COLOR_FORMAT), -1.0f, 0L));
+        boolean isPass = nativeTestSimpleDecode(mCodecName, mSurface, mMime, mTestFile,
+                mReconfigFile, format.getInteger(MediaFormat.KEY_COLOR_FORMAT), -1.0f, 0L,
+                mTestConfig);
+        assertTrue(mTestConfig.toString(), isPass);
     }
 
     private native boolean nativeTestFlush(String decoder, Surface surface, String mime,
-            String testFile, int colorFormat);
+            String testFile, int colorFormat, StringBuilder retMsg);
 
     /**
      * Test is similar to {@link #testFlush()} but uses ndk api
@@ -504,7 +507,8 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         MediaFormat format = setUpSource(mTestFile);
         mExtractor.release();
         mActivity.setScreenParams(getWidth(format), getHeight(format), true);
-        assertTrue(nativeTestFlush(mCodecName, mSurface, mMime, mTestFile,
-                format.getInteger(MediaFormat.KEY_COLOR_FORMAT)));
+        boolean isPass = nativeTestFlush(mCodecName, mSurface, mMime, mTestFile,
+                format.getInteger(MediaFormat.KEY_COLOR_FORMAT), mTestConfig);
+        assertTrue(mTestConfig.toString(), isPass);
     }
 }

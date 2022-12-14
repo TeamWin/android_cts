@@ -261,8 +261,8 @@ public abstract class CodecTestBase {
     protected boolean mSignalledOutFormatChanged;
     protected MediaFormat mOutFormat;
 
-    protected String mTestConfig;
-    protected String mTestEnv;
+    protected StringBuilder mTestConfig = new StringBuilder();
+    protected StringBuilder mTestEnv = new StringBuilder();
 
     protected boolean mSaveToMem;
     protected OutputManager mOutputBuff;
@@ -903,9 +903,10 @@ public abstract class CodecTestBase {
 
     @Before
     public void setUpCodecTestBase() {
-        mTestConfig = "###################        Test Details         #####################\n";
-        mTestConfig += "Test Name :- " + mTestName.getMethodName() + "\n";
-        mTestConfig += "Test Parameters :- " + mAllTestParams + "\n";
+        mTestConfig.setLength(0);
+        mTestConfig.append("\n##################       Test Details        ####################\n");
+        mTestConfig.append("Test Name :- ").append(mTestName.getMethodName()).append("\n");
+        mTestConfig.append("Test Parameters :- ").append(mAllTestParams).append("\n");
         if (mCodecName != null && mCodecName.startsWith(INVALID_CODEC)) {
             fail("no valid component available for current test \n" + mTestConfig);
         }
@@ -937,13 +938,14 @@ public abstract class CodecTestBase {
             mCodec.configure(format, mSurface, isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0,
                     null);
         }
-        mTestEnv = "###################      Test Environment       #####################\n";
-        mTestEnv += String.format("Component under test :- %s \n", mCodecName);
-        mTestEnv += "Format under test :- " + format + "\n";
-        mTestEnv += String.format("Component operating in :- %s mode \n",
-                (isAsync ? "asynchronous" : "synchronous"));
-        mTestEnv += String.format("Component received input eos :- %s \n",
-                (signalEOSWithLastFrame ? "with full buffer" : "with empty buffer"));
+        mTestEnv.setLength(0);
+        mTestEnv.append("###################      Test Environment       #####################\n");
+        mTestEnv.append(String.format("Component under test :- %s \n", mCodecName));
+        mTestEnv.append("Format under test :- ").append(format).append("\n");
+        mTestEnv.append(String.format("Component operating in :- %s mode \n",
+                (isAsync ? "asynchronous" : "synchronous")));
+        mTestEnv.append(String.format("Component received input eos :- %s \n",
+                (signalEOSWithLastFrame ? "with full buffer" : "with empty buffer")));
         if (ENABLE_LOGS) {
             Log.v(LOG_TAG, "codec configured");
         }

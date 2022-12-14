@@ -122,8 +122,8 @@ public class CodecEncoderSurfaceTest {
     private int mEncOutputCount;
 
     private String mTestArgs;
-    private String mTestConfig;
-    private String mTestEnv;
+    private StringBuilder mTestConfig = new StringBuilder();
+    private StringBuilder mTestEnv = new StringBuilder();
 
     private boolean mSaveToMem;
     private OutputManager mOutputBuff;
@@ -163,9 +163,10 @@ public class CodecEncoderSurfaceTest {
 
     @Before
     public void setUp() throws IOException {
-        mTestConfig = "###################        Test Details         #####################\n";
-        mTestConfig += "Test Name :- " + mTestName.getMethodName() + "\n";
-        mTestConfig += "Test Parameters :- " + mTestArgs + "\n";
+        mTestConfig.setLength(0);
+        mTestConfig.append("\n##################       Test Details        ####################\n");
+        mTestConfig.append("Test Name :- ").append(mTestName.getMethodName()).append("\n");
+        mTestConfig.append("Test Parameters :- ").append(mTestArgs).append("\n");
         if (mCompName.startsWith(CodecTestBase.INVALID_CODEC)) {
             fail("no valid component available for current test. \n" + mTestConfig);
         }
@@ -376,15 +377,16 @@ public class CodecEncoderSurfaceTest {
         assertTrue("Surface is not valid", mSurface.isValid());
         mAsyncHandleDecoder.setCallBack(mDecoder, isAsync);
         mDecoder.configure(decFormat, mSurface, null, 0);
-        mTestEnv = "###################      Test Environment       #####################\n";
-        mTestEnv += String.format("Encoder under test :- %s \n", mCompName);
-        mTestEnv += String.format("Format under test :- %s \n", encFormat);
-        mTestEnv += String.format("Encoder is fed with output of :- %s \n", mDecoderName);
-        mTestEnv += String.format("Format of Decoder Input :- %s", decFormat);
-        mTestEnv += String.format("Encoder and Decoder are operating in :- %s mode \n",
-                (isAsync ? "asynchronous" : "synchronous"));
-        mTestEnv += String.format("Components received input eos :- %s \n",
-                (signalEOSWithLastFrame ? "with full buffer" : "with empty buffer"));
+        mTestEnv.setLength(0);
+        mTestEnv.append("###################      Test Environment       #####################\n");
+        mTestEnv.append(String.format("Encoder under test :- %s \n", mCompName));
+        mTestEnv.append(String.format("Format under test :- %s \n", encFormat));
+        mTestEnv.append(String.format("Encoder is fed with output of :- %s \n", mDecoderName));
+        mTestEnv.append(String.format("Format of Decoder Input :- %s", decFormat));
+        mTestEnv.append(String.format("Encoder and Decoder are operating in :- %s mode \n",
+                (isAsync ? "asynchronous" : "synchronous")));
+        mTestEnv.append(String.format("Components received input eos :- %s \n",
+                (signalEOSWithLastFrame ? "with full buffer" : "with empty buffer")));
         if (ENABLE_LOGS) {
             Log.v(LOG_TAG, "codec configured");
         }
@@ -788,7 +790,8 @@ public class CodecEncoderSurfaceTest {
     }
 
     private native boolean nativeTestSimpleEncode(String encoder, String decoder, String mime,
-            String testFile, String muxFile, int bitrate, int framerate, int colorFormat);
+            String testFile, String muxFile, int bitrate, int framerate, int colorFormat,
+            StringBuilder retMsg);
 
     /**
      * Test is similar to {@link #testSimpleEncodeFromSurface()} but uses ndk api
@@ -807,8 +810,9 @@ public class CodecEncoderSurfaceTest {
                 tmpPath = File.createTempFile("tmp", ".mp4").getAbsolutePath();
             }
             int colorFormat = mDecoderFormat.getInteger(MediaFormat.KEY_COLOR_FORMAT, -1);
-            assertTrue(nativeTestSimpleEncode(mCompName, mDecoderName, mMime, mTestFile,
-                    tmpPath, mBitrate, mFrameRate, colorFormat));
+            boolean isPass = nativeTestSimpleEncode(mCompName, mDecoderName, mMime, mTestFile,
+                    tmpPath, mBitrate, mFrameRate, colorFormat, mTestConfig);
+            assertTrue(mTestConfig.toString(), isPass);
         }
     }
 }

@@ -268,6 +268,16 @@ public final class AutoFillServiceTestCase {
                     return sReplier.getExceptions();
                 });
 
+        /**
+         * Disable animation for UiAutomator because animation will cause the UiAutomator
+         * got a wrong position and then tests failed due to click on the wrong position.
+         *
+         * This is annotated as @ClassRule instead of @Rule, to save time of disabling and
+         * re-enabling animation for each test method.
+         */
+        @ClassRule
+        public static DisableAnimationRule sDisableAnimationRule = new DisableAnimationRule();
+
         @Rule
         public final RuleChain mLookAllTheseRules = RuleChain
                 //
@@ -277,10 +287,6 @@ public final class AutoFillServiceTestCase {
                 // mTestWatcher should always be one the first rules, as it defines the name of the
                 // test being ran and finishes dangling activities at the end
                 .around(mTestWatcher)
-                //
-                // Disable animation for UiAutomator because animation will cause the UiAutomator
-                // got a wrong position and then tests failed due to click on the wrong position.
-                .around(new DisableAnimationRule())
                 //
                 // sMockImeSessionRule make sure MockImeSession.create() is used to launch mock IME
                 .around(sMockImeSessionRule)

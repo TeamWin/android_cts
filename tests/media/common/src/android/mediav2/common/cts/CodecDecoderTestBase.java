@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.graphics.ImageFormat;
 import android.media.Image;
@@ -100,6 +101,16 @@ public class CodecDecoderTestBase extends CodecTestBase {
                     if (selectHBD && (format.getInteger(MediaFormat.KEY_COLOR_FORMAT)
                             != COLOR_FormatYUVP010)) {
                         mSkipChecksumVerification = true;
+                    }
+
+                    if ((format.getInteger(MediaFormat.KEY_COLOR_FORMAT) != COLOR_FormatYUVP010)
+                            && selectHBD && mSurface == null) {
+                        // Codecs that do not advertise P010 on devices with VNDK version < T, do
+                        // not support decoding high bit depth clips when color format is set to
+                        // COLOR_FormatYUV420Flexible in byte buffer mode. Since byte buffer mode
+                        // for high bit depth decoding wasn't tested prior to Android T, skip this
+                        // when device is older
+                        assumeTrue("Skipping High Bit Depth tests on VNDK < T", VNDK_IS_AT_LEAST_T);
                     }
                 }
                 // TODO: determine this from the extractor format when it becomes exposed.

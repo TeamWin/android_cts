@@ -1620,7 +1620,10 @@ def load_scene(cam, props, scene, tablet, chart_distance, lighting_check=True,
   # Calculate camera_fov which will determine the image to load on tablet.
   camera_fov = cam.calc_camera_fov(props)
   file_name = cam.get_file_name_to_load(chart_distance, camera_fov, scene)
+  if 'scene' not in file_name:
+    file_name = f'scene{file_name}'
   logging.debug('Displaying %s on the tablet', file_name)
+
   # Display the scene on the tablet depending on camera_fov
   tablet.adb.shell(
       'am start -a android.intent.action.VIEW -t image/png '

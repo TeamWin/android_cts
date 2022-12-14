@@ -345,7 +345,8 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     }
 
     private native boolean nativeTestSimpleDecode(String decoder, Surface surface, String mime,
-            String testFile, String refFile, int colorFormat, float rmsError, long checksum);
+            String testFile, String refFile, int colorFormat, float rmsError, long checksum,
+            StringBuilder retMsg);
 
     /**
      * Verifies if the component under test can decode the test file correctly. The decoding
@@ -412,14 +413,15 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
             mCodec.release();
             mExtractor.release();
             int colorFormat = mIsAudio ? 0 : format.getInteger(MediaFormat.KEY_COLOR_FORMAT);
-            assertTrue(nativeTestSimpleDecode(mCodecName, null, mMime, mTestFile, mRefFile,
-                    colorFormat, mRmsError, ref.getCheckSumBuffer()));
+            boolean isPass = nativeTestSimpleDecode(mCodecName, null, mMime, mTestFile, mRefFile,
+                    colorFormat, mRmsError, ref.getCheckSumBuffer(), mTestConfig);
+            assertTrue(mTestConfig.toString(), isPass);
             if (mSaveToMem) {
                 int audioEncoding = mIsAudio ? format.getInteger(MediaFormat.KEY_PCM_ENCODING,
                         AudioFormat.ENCODING_PCM_16BIT) : AudioFormat.ENCODING_INVALID;
                 Assume.assumeFalse("skip checksum due to tone mapping", mSkipChecksumVerification);
                 verify(mOutputBuff, mRefFile, mRmsError, audioEncoding, mRefCRC,
-                        mTestConfig + mTestEnv);
+                        mTestConfig.toString() + mTestEnv.toString());
             }
         }
     }
@@ -542,7 +544,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     }
 
     private native boolean nativeTestFlush(String decoder, Surface surface, String mime,
-            String testFile, int colorFormat);
+            String testFile, int colorFormat, StringBuilder retMsg);
 
     /**
      * Test is similar to {@link #testFlush()} but uses ndk api
@@ -557,7 +559,9 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
             mExtractor.release();
             colorFormat = format.getInteger(MediaFormat.KEY_COLOR_FORMAT);
         }
-        assertTrue(nativeTestFlush(mCodecName, null, mMime, mTestFile, colorFormat));
+        boolean isPass = nativeTestFlush(mCodecName, null, mMime, mTestFile, colorFormat,
+                mTestConfig);
+        assertTrue(mTestConfig.toString(), isPass);
     }
 
     /**
@@ -748,7 +752,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     }
 
     private native boolean nativeTestOnlyEos(String decoder, String mime, String testFile,
-            int colorFormat);
+            int colorFormat, StringBuilder retMsg);
 
     /**
      * Test is similar to {@link #testOnlyEos()} but uses ndk api
@@ -763,7 +767,8 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
             mExtractor.release();
             colorFormat = format.getInteger(MediaFormat.KEY_COLOR_FORMAT);
         }
-        assertTrue(nativeTestOnlyEos(mCodecName, mMime, mTestFile, colorFormat));
+        boolean isPass = nativeTestOnlyEos(mCodecName, mMime, mTestFile, colorFormat, mTestConfig);
+        assertTrue(mTestConfig.toString(), isPass);
     }
 
     /**
@@ -838,7 +843,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     }
 
     private native boolean nativeTestSimpleDecodeQueueCSD(String decoder, String mime,
-            String testFile, int colorFormat);
+            String testFile, int colorFormat, StringBuilder retMsg);
 
     /**
      * Test is similar to {@link #testSimpleDecodeQueueCSD()} but uses ndk api
@@ -854,7 +859,9 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         }
         mExtractor.release();
         int colorFormat = mIsAudio ? 0 : format.getInteger(MediaFormat.KEY_COLOR_FORMAT);
-        assertTrue(nativeTestSimpleDecodeQueueCSD(mCodecName, mMime, mTestFile, colorFormat));
+        boolean isPass = nativeTestSimpleDecodeQueueCSD(mCodecName, mMime, mTestFile, colorFormat,
+                mTestConfig);
+        assertTrue(mTestConfig.toString(), isPass);
     }
 
     /**

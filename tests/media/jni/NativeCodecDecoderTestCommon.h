@@ -21,15 +21,18 @@
 
 extern jboolean nativeTestSimpleDecode(JNIEnv* env, jobject, jstring jDecoder, jobject surface,
                                        jstring jMime, jstring jtestFile, jstring jrefFile,
-                                       jint jColorFormat, jfloat jrmsError, jlong jChecksum);
+                                       jint jColorFormat, jfloat jrmsError, jlong jChecksum,
+                                       jobject jRetMsg);
 
 extern jboolean nativeTestOnlyEos(JNIEnv* env, jobject, jstring jDecoder, jstring jMime,
-                                  jstring jtestFile, jint jColorFormat);
+                                  jstring jtestFile, jint jColorFormat, jobject jRetMsg);
 
 extern jboolean nativeTestFlush(JNIEnv* env, jobject, jstring jDecoder, jobject surface,
-                                jstring jMime, jstring jtestFile, jint jColorFormat);
+                                jstring jMime, jstring jtestFile, jint jColorFormat,
+                                jobject jRetMsg);
 
 extern jboolean nativeTestSimpleDecodeQueueCSD(JNIEnv* env, jobject, jstring jDecoder,
-                                               jstring jMime, jstring jtestFile, jint jColorFormat);
+                                               jstring jMime, jstring jtestFile, jint jColorFormat,
+                                               jobject jRetMsg);
 
 #endif // MEDIACTSNATIVE_NATIVE_CODEC_DECODER_TEST_COMMON_H

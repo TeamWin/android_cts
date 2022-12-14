@@ -61,6 +61,7 @@ import android.media.ExifInterface;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.SystemClock;
+import android.util.Pair;
 import android.util.Range;
 import android.util.Size;
 
@@ -807,6 +808,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
     // Verify still frame output.
     @Test
     public void testRepeatingAndCaptureCombined() throws Exception {
+        final double LATENCY_MARGIN = .1f; // Account for system load, capture call duration etc.
         for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
@@ -938,16 +940,39 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     CameraExtensionSession.ExtensionCaptureCallback captureCallback =
                             mock(CameraExtensionSession.ExtensionCaptureCallback.class);
 
+                    Pair<Long, Long> stillCaptureLatency =
+                            extensionSession.getRealtimeStillCaptureLatency();
                     CaptureRequest captureRequest = captureBuilder.build();
+                    long startTimeMs = SystemClock.elapsedRealtime();
                     int captureSequenceId = extensionSession.capture(captureRequest,
                             new HandlerExecutor(mTestRule.getHandler()), captureCallback);
 
                     Image img =
                             imageListener.getImage(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS);
+                    long captureTime = SystemClock.elapsedRealtime() - startTimeMs;
                     validateImage(img, captureMaxSize.getWidth(),
                             captureMaxSize.getHeight(), captureFormat, null);
                     Long imgTs = img.getTimestamp();
                     img.close();
+
+                    if (stillCaptureLatency != null) {
+                        assertTrue("Still capture frame latency must be positive!",
+                                stillCaptureLatency.first > 0);
+                        assertTrue("Processing capture latency must be non-negative!",
+                                stillCaptureLatency.second >= 0);
+                        long estimatedTotalLatency = stillCaptureLatency.first +
+                                stillCaptureLatency.second;
+                        long estimatedTotalLatencyMin =
+                                (long) (estimatedTotalLatency * (1.f - LATENCY_MARGIN));
+                        long estimatedTotalLatencyMax =
+                                (long) (estimatedTotalLatency * (1.f + LATENCY_MARGIN));
+                        assertTrue(String.format("Camera %s: Measured still capture latency " +
+                                                "doesn't match: %d ms, expected [%d,%d]ms.", id,
+                                        captureTime, estimatedTotalLatencyMin,
+                                        estimatedTotalLatencyMax),
+                                (captureTime <= estimatedTotalLatencyMax) &&
+                                        (captureTime >= estimatedTotalLatencyMin));
+                    }
 
                     verify(captureCallback, times(1))
                             .onCaptureStarted(eq(extensionSession), eq(captureRequest), eq(imgTs));

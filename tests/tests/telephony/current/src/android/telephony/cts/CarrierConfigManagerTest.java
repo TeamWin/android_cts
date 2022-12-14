@@ -30,6 +30,8 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.compatibility.common.util.AppOpsUtils.setOpMode;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -61,11 +63,19 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
+// TODO(b/221323753): replace remain junit asserts with Truth assert
 public class CarrierConfigManagerTest {
 
     private static final String CARRIER_NAME_OVERRIDE = "carrier_a";
@@ -211,10 +221,125 @@ public class CarrierConfigManagerTest {
                                 CarrierConfigManager.Gps.KEY_PREFIX));
     }
 
+    private void checkConfigSubset(PersistableBundle configSubset, PersistableBundle allConfigs,
+            String key) {
+        assertThat(configSubset).isNotNull();
+        assertThat(allConfigs).isNotNull();
+
+        // KEY_CARRIER_CONFIG_VERSION_STRING and KEY_CARRIER_CONFIG_APPLIED_BOOL should always
+        // be included
+        assertThat(configSubset.containsKey(
+                CarrierConfigManager.KEY_CARRIER_CONFIG_VERSION_STRING)).isTrue();
+        assertThat(configSubset.containsKey(
+                CarrierConfigManager.KEY_CARRIER_CONFIG_APPLIED_BOOL)).isTrue();
+
+        Object value = allConfigs.get(key);
+        if (value instanceof PersistableBundle) {
+            assertThat(isEqual((PersistableBundle) configSubset.get(key),
+                    (PersistableBundle) value)).isTrue();
+        } else {
+            // value may be array types, compare with value equality instead of object equality
+            assertThat(configSubset.get(key)).isEqualTo(value);
+        }
+    }
+
+    // Checks for PersistableBundle equality
+    // Copied from com.android.server.vcn.util.PersistableBundleUtils
+    // TODO: move to a CTS common lib if other CTS cases also need PersistableBundle equality check
+    private static boolean isEqual(PersistableBundle left, PersistableBundle right) {
+        // Check for pointer equality & null equality
+        if (Objects.equals(left, right)) {
+            return true;
+        }
+
+        // If only one of the two is null, but not the other, not equal by definition.
+        if (Objects.isNull(left) != Objects.isNull(right)) {
+            return false;
+        }
+
+        if (!left.keySet().equals(right.keySet())) {
+            return false;
+        }
+
+        for (String key : left.keySet()) {
+            Object leftVal = left.get(key);
+            Object rightVal = right.get(key);
+
+            // Check for equality
+            if (Objects.equals(leftVal, rightVal)) {
+                continue;
+            } else if (Objects.isNull(leftVal) != Objects.isNull(rightVal)) {
+                // If only one of the two is null, but not the other, not equal by definition.
+                return false;
+            } else if (!Objects.equals(leftVal.getClass(), rightVal.getClass())) {
+                // If classes are different, not equal by definition.
+                return false;
+            }
+            if (leftVal instanceof PersistableBundle) {
+                if (!isEqual((PersistableBundle) leftVal, (PersistableBundle) rightVal)) {
+                    return false;
+                }
+            } else if (leftVal.getClass().isArray()) {
+                if (leftVal instanceof boolean[]) {
+                    if (!Arrays.equals((boolean[]) leftVal, (boolean[]) rightVal)) {
+                        return false;
+                    }
+                } else if (leftVal instanceof double[]) {
+                    if (!Arrays.equals((double[]) leftVal, (double[]) rightVal)) {
+                        return false;
+                    }
+                } else if (leftVal instanceof int[]) {
+                    if (!Arrays.equals((int[]) leftVal, (int[]) rightVal)) {
+                        return false;
+                    }
+                } else if (leftVal instanceof long[]) {
+                    if (!Arrays.equals((long[]) leftVal, (long[]) rightVal)) {
+                        return false;
+                    }
+                } else if (!Arrays.equals((Object[]) leftVal, (Object[]) rightVal)) {
+                    return false;
+                }
+            } else {
+                if (!Objects.equals(leftVal, rightVal)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     @Test
     public void testGetConfig() {
         PersistableBundle config = mConfigManager.getConfig();
         checkConfig(config);
+    }
+
+    @Test
+    public void testGetConfig_withNullKeys() {
+        try {
+            mConfigManager.getConfig(null);
+            fail("getConfig with null keys should throw NullPointerException");
+        } catch (NullPointerException expected) {
+        }
+
+        try {
+            mConfigManager.getConfig(CarrierConfigManager.KEY_CARRIER_CONFIG_VERSION_STRING, null);
+            fail("getConfig with null keys should throw NullPointerException");
+        } catch (NullPointerException expected) {
+        }
+    }
+
+    @Test
+    public void testGetConfig_withValidKeys() {
+        PersistableBundle allConfigs = mConfigManager.getConfig();
+        Set<String> allKeys = allConfigs.keySet();
+        assertThat(allKeys).isNotNull();
+
+        for (String key : allKeys) {
+            PersistableBundle configSubset = mConfigManager.getConfig(key);
+            checkConfigSubset(configSubset, allConfigs, key);
+        }
     }
 
     @Test
@@ -246,6 +371,64 @@ public class CarrierConfigManagerTest {
         PersistableBundle config =
                 mConfigManager.getConfigForSubId(SubscriptionManager.getDefaultSubscriptionId());
         checkConfig(config);
+    }
+
+    @Test
+    public void testGetConfigForSubId_withNullKeys() {
+        try {
+            mConfigManager.getConfigForSubId(SubscriptionManager.getDefaultSubscriptionId(), null);
+            fail("getConfigForSubId with null keys should throw NullPointerException");
+        } catch (NullPointerException expected) {
+        }
+
+        try {
+            mConfigManager.getConfigForSubId(SubscriptionManager.getDefaultSubscriptionId(),
+                    CarrierConfigManager.KEY_CARRIER_CONFIG_VERSION_STRING, null);
+            fail("getConfigForSubId with null keys should throw NullPointerException");
+        } catch (NullPointerException expected) {
+        }
+    }
+
+    @Test
+    public void testGetConfigForSubId_withValidSingleKey() {
+        final int defaultSubId = SubscriptionManager.getDefaultSubscriptionId();
+        PersistableBundle allConfigs = mConfigManager.getConfigForSubId(defaultSubId);
+        Set<String> allKeys = allConfigs.keySet();
+        assertThat(allKeys).isNotNull();
+
+        for (String key : allKeys) {
+            PersistableBundle configSubset = mConfigManager.getConfigForSubId(defaultSubId, key);
+            checkConfigSubset(configSubset, allConfigs, key);
+        }
+    }
+
+    @Test
+    public void testGetConfigForSubId_withValidMultipleKeys() {
+        final int defaultSubId = SubscriptionManager.getDefaultSubscriptionId();
+        PersistableBundle allConfigs = mConfigManager.getConfigForSubId(defaultSubId);
+        Set<String> allKeys = allConfigs.keySet();
+        assertThat(allKeys).isNotNull();
+
+        // Just cover size in 2..10 to cover majority of cases while keeping this case quick
+        for (int size = 2; size <= 10; size++) {
+            Collection<List<String>> subsets = partitionSetWithSize(allKeys, size);
+            for (List<String> subset : subsets) {
+                String[] keyArray = new String[subset.size()];
+                keyArray = subset.toArray(keyArray);
+
+                PersistableBundle configSubset = mConfigManager.getConfigForSubId(defaultSubId,
+                        keyArray);
+                for (String key : keyArray) {
+                    checkConfigSubset(configSubset, allConfigs, key);
+                }
+            }
+        }
+    }
+
+    private Collection<List<String>> partitionSetWithSize(Set<String> keySet, int size) {
+        final AtomicInteger counter = new AtomicInteger(0);
+        return keySet.stream().collect(Collectors.groupingBy(s -> counter.getAndIncrement()))
+                .values();
     }
 
     /**

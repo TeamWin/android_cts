@@ -16,12 +16,14 @@
 
 package android.telephony.ims.cts;
 
+import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.fail;
 
 import android.content.Context;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.telecom.Call;
@@ -30,6 +32,7 @@ import android.telecom.TelecomManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.InCallServiceStateValidator;
+import android.telephony.ims.feature.MmTelFeature;
 import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -45,6 +48,7 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * CTS tests for ImsCall .
@@ -62,6 +66,9 @@ public class ImsCallingTest extends ImsCallingBase {
     private TestImsCallSessionImpl mCallSession2 = null;
     private TestImsCallSessionImpl mCallSession3 = null;
     private TestImsCallSessionImpl mConfCallSession = null;
+
+    // the timeout to wait result in milliseconds
+    private static final int WAIT_UPDATE_TIMEOUT_MS = 2000;
 
     static {
         initializeLatches();
@@ -1013,6 +1020,57 @@ public class ImsCallingTest extends ImsCallingBase {
         waitForUnboundService();
     }
 
+    @Test
+    public void testSetCallAudioHandler() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        bindImsService();
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+
+        TelecomManager telecomManager = (TelecomManager) InstrumentationRegistry
+                .getInstrumentation().getContext().getSystemService(Context.TELECOM_SERVICE);
+        AudioManager mAudioManager = (AudioManager) InstrumentationRegistry
+                .getInstrumentation().getContext().getSystemService(Context.AUDIO_SERVICE);
+
+        final Uri imsUri = Uri.fromParts(PhoneAccount.SCHEME_TEL, String.valueOf(++sCounter), null);
+        Bundle extras = new Bundle();
+
+        // Place outgoing call
+        telecomManager.placeCall(imsUri, extras);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+
+        Call call = getCall(mCurrentCallId);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
+
+        TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService().getMmTelFeature()
+                .getImsCallsession();
+
+        isCallActive(call, callSession);
+
+        sServiceConnector.getCarrierService().getMmTelFeature()
+                .setCallAudioHandler(MmTelFeature.AUDIO_HANDLER_ANDROID);
+        sServiceConnector.getCarrierService().getMmTelFeature()
+                .getTerminalBasedCallWaitingLatch().await(WAIT_UPDATE_TIMEOUT_MS,
+                        TimeUnit.MILLISECONDS);
+        assertEquals(AudioManager.MODE_IN_COMMUNICATION, mAudioManager.getMode());
+
+        sServiceConnector.getCarrierService().getMmTelFeature()
+                .setCallAudioHandler(MmTelFeature.AUDIO_HANDLER_BASEBAND);
+        sServiceConnector.getCarrierService().getMmTelFeature()
+                .getTerminalBasedCallWaitingLatch().await(WAIT_UPDATE_TIMEOUT_MS,
+                        TimeUnit.MILLISECONDS);
+        assertEquals(AudioManager.MODE_IN_CALL, mAudioManager.getMode());
+
+        call.disconnect();
+
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(call, callSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        waitForUnboundService();
+    }
 
     void addConferenceCall(Call call1, Call call2) {
         InCallServiceStateValidator inCallService = mServiceCallBack.getService();

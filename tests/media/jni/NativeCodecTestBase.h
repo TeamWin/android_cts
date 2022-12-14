@@ -28,19 +28,22 @@
 
 #include "NativeMediaCommon.h"
 
-#define CHECK_STATUS(status, str)                  \
-    {                                              \
-        media_status_t val = (status);             \
-        if (AMEDIA_OK != val) {                    \
-            ALOGE("%s with error %d", (str), val); \
-            return false;                          \
-        }                                          \
+#define RETURN_IF_FAIL(status, str)                                          \
+    {                                                                        \
+        media_status_t val = (status);                                       \
+        if (AMEDIA_OK != val) {                                              \
+            std::string msg = StringFormat("%s with error %d \n", str, val); \
+            ALOGE("%s", msg.c_str());                                        \
+            mErrorLogs.append((msg));                                        \
+            return false;                                                    \
+        }                                                                    \
     }
 
-#define CHECK_ERR(val, strA, strB, result) \
-    if ((val)) {                           \
-        (result) = false;                  \
-        ALOGE("%s %s", (strA), (strB));    \
+#define RETURN_IF_TRUE(cond, msg)              \
+    if ((cond)) {                              \
+        ALOGE("%s", (msg).c_str());            \
+        mErrorLogs.append((msg)).append("\n"); \
+        return false;                          \
     }
 
 struct callbackObject {
@@ -65,6 +68,7 @@ class CodecAsyncHandler {
     AMediaFormat* mOutFormat;
     volatile bool mSignalledOutFormatChanged;
     volatile bool mSignalledError;
+    std::string mErrorMsg;
 
   public:
     CodecAsyncHandler();
@@ -79,9 +83,10 @@ class CodecAsyncHandler {
     void setOutputFormat(AMediaFormat* format);
     AMediaFormat* getOutputFormat();
     bool hasOutputFormatChanged();
-    void setError(bool status);
-    bool getError();
+    void setError(bool status, std::string& msg);
+    bool getError() const;
     void resetContext();
+    std::string getErrorMsg();
     media_status_t setCallBack(AMediaCodec* codec, bool isCodecInAsyncMode);
 };
 
@@ -91,6 +96,7 @@ class OutputManager {
     std::vector<int64_t> outPtsArray;
     std::vector<uint8_t> memory;
     uLong crc32value = 0U;
+    std::string mErrorLogs;
 
   public:
     void saveInPTS(int64_t pts) {
@@ -117,9 +123,12 @@ class OutputManager {
         outPtsArray.clear();
         memory.clear();
         crc32value = 0U;
+        mErrorLogs.clear();
     }
-    bool equals(const OutputManager* that);
+    bool equalsInterlaced(OutputManager* that);
+    bool equals(OutputManager* that);
     float getRmsError(uint8_t* refData, int length);
+    std::string getErrorMsg() { return mErrorLogs; }
     int getOutStreamSize() { return memory.size(); }
 };
 
@@ -127,6 +136,7 @@ class CodecTestBase {
   protected:
     const char* mMime;
     bool mIsAudio;
+    bool mIsVideo;
     CodecAsyncHandler mAsyncHandle;
     bool mIsCodecInAsyncMode;
     bool mSawInputEOS;
@@ -146,6 +156,8 @@ class CodecTestBase {
     OutputManager mReconfBuff;
 
     AMediaCodec* mCodec;
+    std::string mTestEnv;
+    std::string mErrorLogs;
 
     CodecTestBase(const char* mime);
     ~CodecTestBase();
@@ -157,14 +169,21 @@ class CodecTestBase {
     virtual void resetContext(bool isAsync, bool signalEOSWithLastFrame);
     virtual bool enqueueInput(size_t bufferIndex) = 0;
     virtual bool dequeueOutput(size_t bufferIndex, AMediaCodecBufferInfo* bufferInfo) = 0;
+    virtual bool isTestStateValid();
     bool enqueueEOS(size_t bufferIndex);
     virtual bool doWork(int frameLimit);
     bool queueEOS();
     bool waitForAllOutputs();
-    int getWidth(AMediaFormat* format);
-    int getHeight(AMediaFormat* format);
-    bool isFormatSimilar(AMediaFormat* inpFormat, AMediaFormat* outFormat);
+    static int getWidth(AMediaFormat* format);
+    static int getHeight(AMediaFormat* format);
+    static bool isFormatSimilar(AMediaFormat* inpFormat, AMediaFormat* outFormat);
     bool hasSeenError() { return mAsyncHandle.getError(); }
+  public:
+    std::string getErrorMsg() {
+        return mTestEnv +
+               "###################       Error Details         #####################\n" +
+               mErrorLogs;
+    }
 };
 
 #endif  // MEDIACTSNATIVE_NATIVE_CODEC_TEST_BASE_H

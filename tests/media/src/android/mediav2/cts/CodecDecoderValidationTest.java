@@ -687,7 +687,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
             Assume.assumeFalse("skip checksum verification due to tone mapping",
                     mSkipChecksumVerification);
             CodecDecoderTest.verify(ref, mRefFile, mRmsError, AudioFormat.ENCODING_PCM_16BIT,
-                    mRefCRC, mTestConfig + mTestEnv);
+                    mRefCRC, mTestConfig.toString() + mTestEnv.toString());
         }
     }
 }

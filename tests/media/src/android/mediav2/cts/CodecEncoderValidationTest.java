@@ -217,7 +217,8 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
                 if (isMediaTypeLossless(mMime)) {
                     if (mUseHBD && mMime.equals(MediaFormat.MIMETYPE_AUDIO_FLAC)) {
                         CodecDecoderTest.verify(cdtb.getOutputManager(), inputFile, 3.446394f,
-                                AudioFormat.ENCODING_PCM_FLOAT, -1L, mTestConfig + mTestEnv);
+                                AudioFormat.ENCODING_PCM_FLOAT, -1L,
+                                mTestConfig.toString() + mTestEnv.toString());
                     } else {
                         assertEquals("Identity test failed for lossless codec \n " + mTestConfig
                                 + mTestEnv, out, ByteBuffer.wrap(mInputData));

@@ -68,8 +68,8 @@ public class CtsVideoEncodingQualityHostTest implements IAbiReceiver, IBuildRece
     // test is not valid before sdk 31, aka Android 12, aka Android S
     static final int MINIMUM_VALID_SDK = 31;
 
-    // test is not valid before media performance class 33, aka pc 13
-    static final int MINIMUM_VALID_MPC = 33;
+    // media performance class 14
+    static final int MEDIA_PERFORMANCE_CLASS_14 = 34;
 
     /** A reference to the build info. */
     private IBuildInfo mBuildInfo;
@@ -119,12 +119,21 @@ public class CtsVideoEncodingQualityHostTest implements IAbiReceiver, IBuildRece
                 "Test requires sdk >= " + MINIMUM_VALID_SDK + " test device has sdk = " + sdk,
                 sdk >= MINIMUM_VALID_SDK);
 
+        String os = System.getProperty("os.name").toLowerCase();
+        LogUtil.CLog.i("Host OS = " + os);
+
         String pcAsString = getProperty("ro.odm.build.media_performance_class");
-        int mpc = Integer.parseInt(pcAsString);
+        int mpc = 0;
+        try {
+            mpc = Integer.parseInt("0" + pcAsString);
+        } catch (Exception e) {
+            LogUtil.CLog.i("Invalid pcAsString: " + pcAsString + ", exception: " + e);
+            mpc = 0;
+        }
 
         // Enable early termination on errors on the devices whose mpc's are not valid.
         // Run the entire test til the end on the devices whose mpc's are valid.
-        boolean earlyTermination = mpc < MINIMUM_VALID_MPC;
+        boolean earlyTermination = mpc < MEDIA_PERFORMANCE_CLASS_14;
         if (mForceToRun) {
             earlyTermination = false;       // Force to run the test til the end.
         }
@@ -153,14 +162,14 @@ public class CtsVideoEncodingQualityHostTest implements IAbiReceiver, IBuildRece
         } catch (SecurityException e) {
             LogUtil.CLog.e("Unable to establish temp directory " + destination.getPath());
         }
-        Assert.assertTrue(destination.isDirectory());
+        Assert.assertTrue("Failed to create test director: " + tmpDir, destination.isDirectory());
 
         // Download the testsuit tar file.
         downloadFile("veqtests.tar.gz", destination);
 
         // Unpack the testsuit tar file.
         int result = runCommand("tar xvzf veqtests.tar.gz", destination);
-        Assert.assertTrue(result == 0);
+        Assert.assertTrue("Failed to untar veqtests.tar.gz", result == 0);
 
         // Execute the script to run the test.
         String testCommand = "./testit.sh --serial " + targetSerial;
@@ -168,7 +177,19 @@ public class CtsVideoEncodingQualityHostTest implements IAbiReceiver, IBuildRece
         if (mDisableB) testCommand += " --enableb NO";
         if (earlyTermination) testCommand += " --exitonerror YES";
         result = runCommand(testCommand, destination);
-        Assert.assertTrue(result == 0);
+
+        if (mpc >= MEDIA_PERFORMANCE_CLASS_14 || mForceToRun) {
+            Assert.assertTrue(
+                    "test device advertises mpc=" + mpc
+                            + ", but failed to pass the video encoding quality test.",
+                    result == 0);
+        } else {
+            Assume.assumeTrue(
+                    "test device advertises mpc=" + mpc
+                            + ", and did not pass the video encoding quality test.",
+                    result == 0);
+        }
+
         LogUtil.CLog.i("Finished executing " + testCommand);
     }
 

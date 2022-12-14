@@ -240,7 +240,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     }
 
     private native boolean nativeTestSimpleEncode(String encoder, String file, String mime,
-            int[] list0, int[] list1, int[] list2, int colorFormat);
+            int[] list0, int[] list1, int[] list2, int colorFormat, StringBuilder retMsg);
 
     /**
      * Test is similar to {@link #testSimpleEncode()} but uses ndk api
@@ -257,8 +257,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 assertTrue("no valid color formats received \n" + mTestConfig + mTestEnv,
                         colorFormat != -1);
             }
-            assertTrue(nativeTestSimpleEncode(mCodecName, mActiveRawRes.mFileName, mMime, mBitrates,
-                    mEncParamList1, mEncParamList2, colorFormat));
+            boolean isPass = nativeTestSimpleEncode(mCodecName, mActiveRawRes.mFileName, mMime,
+                    mBitrates, mEncParamList1, mEncParamList2, colorFormat, mTestConfig);
+            assertTrue(mTestConfig.toString(), isPass);
         }
     }
 
@@ -382,7 +383,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     }
 
     private native boolean nativeTestReconfigure(String encoder, String file, String mime,
-            int[] list0, int[] list1, int[] list2, int colorFormat);
+            int[] list0, int[] list1, int[] list2, int colorFormat, StringBuilder retMsg);
 
     /**
      * Test is similar to {@link #testReconfigure()} but uses ndk api
@@ -398,8 +399,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }
-            assertTrue(nativeTestReconfigure(mCodecName, mActiveRawRes.mFileName, mMime, mBitrates,
-                    mEncParamList1, mEncParamList2, colorFormat));
+            boolean isPass = nativeTestReconfigure(mCodecName, mActiveRawRes.mFileName, mMime,
+                    mBitrates, mEncParamList1, mEncParamList2, colorFormat, mTestConfig);
+            assertTrue(mTestConfig.toString(), isPass);
         }
     }
 
@@ -442,7 +444,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     }
 
     private native boolean nativeTestOnlyEos(String encoder, String mime, int[] list0, int[] list1,
-            int[] list2, int colorFormat);
+            int[] list2, int colorFormat, StringBuilder retMsg);
 
     /**
      * Test is similar to {@link #testOnlyEos()} but uses ndk api
@@ -457,8 +459,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }
-            assertTrue(nativeTestOnlyEos(mCodecName, mMime, mBitrates, mEncParamList1,
-                    mEncParamList2, colorFormat));
+            boolean isPass = nativeTestOnlyEos(mCodecName, mMime, mBitrates, mEncParamList1,
+                    mEncParamList2, colorFormat, mTestConfig);
+            assertTrue(mTestConfig.toString(), isPass);
         }
     }
 
@@ -534,7 +537,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     }
 
     private native boolean nativeTestSetForceSyncFrame(String encoder, String file, String mime,
-            int[] list0, int[] list1, int[] list2, int colorFormat);
+            int[] list0, int[] list1, int[] list2, int colorFormat, StringBuilder retMsg);
 
     /**
      * Test is similar to {@link #testSetForceSyncFrame()} but uses ndk api
@@ -550,8 +553,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }
-            assertTrue(nativeTestSetForceSyncFrame(mCodecName, mActiveRawRes.mFileName, mMime,
-                    mBitrates, mEncParamList1, mEncParamList2, colorFormat));
+            boolean isPass = nativeTestSetForceSyncFrame(mCodecName, mActiveRawRes.mFileName, mMime,
+                    mBitrates, mEncParamList1, mEncParamList2, colorFormat, mTestConfig);
+            assertTrue(mTestConfig.toString(), isPass);
         }
     }
 
@@ -628,7 +632,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     }
 
     private native boolean nativeTestAdaptiveBitRate(String encoder, String file, String mime,
-            int[] list0, int[] list1, int[] list2, int colorFormat);
+            int[] list0, int[] list1, int[] list2, int colorFormat, StringBuilder retMsg);
 
     /**
      * Test is similar to {@link #testAdaptiveBitRate()} but uses ndk api
@@ -645,8 +649,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 colorFormat = findByteBufferColorFormat(mCodecName, mMime);
                 assertTrue("no valid color formats received", colorFormat != -1);
             }
-            assertTrue(nativeTestAdaptiveBitRate(mCodecName, mActiveRawRes.mFileName, mMime,
-                    mBitrates, mEncParamList1, mEncParamList2, colorFormat));
+            boolean isPass = nativeTestAdaptiveBitRate(mCodecName, mActiveRawRes.mFileName, mMime,
+                    mBitrates, mEncParamList1, mEncParamList2, colorFormat, mTestConfig);
+            assertTrue(mTestConfig.toString(), isPass);
         }
     }
 }

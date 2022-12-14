@@ -47,7 +47,7 @@ public class OutputManager {
     private final CRC32 mCrc32UsingBuffer;
     private final ArrayList<Long> mInpPtsList;
     private final ArrayList<Long> mOutPtsList;
-    private String mErrorLogs;
+    private final StringBuilder mErrorLogs;
 
     public OutputManager() {
         mMemory = new byte[1024];
@@ -56,7 +56,8 @@ public class OutputManager {
         mCrc32UsingBuffer = new CRC32();
         mInpPtsList = new ArrayList<>();
         mOutPtsList = new ArrayList<>();
-        mErrorLogs = "###################       Error Details         #####################\n";
+        mErrorLogs = new StringBuilder(
+                "##################       Error Details         ####################\n");
     }
 
     public void saveInPTS(long pts) {
@@ -76,17 +77,15 @@ public class OutputManager {
             if (lastPts < mOutPtsList.get(i)) {
                 lastPts = mOutPtsList.get(i);
             } else {
-                StringBuilder msg = new StringBuilder(1024);
-                msg.append("Frame indices around which timestamp values decreased :- \n");
+                mErrorLogs.append("Timestamp values are not strictly increasing. \n");
+                mErrorLogs.append("Frame indices around which timestamp values decreased :- \n");
                 for (int j = Math.max(0, i - 3); j < Math.min(mOutPtsList.size(), i + 3); j++) {
                     if (j == 0) {
-                        msg.append(String.format("pts of frame idx -1 is %d \n", lastPts));
+                        mErrorLogs.append(String.format("pts of frame idx -1 is %d \n", lastPts));
                     }
-                    msg.append(String.format("pts of frame idx %d is %d \n", j,
+                    mErrorLogs.append(String.format("pts of frame idx %d is %d \n", j,
                             mOutPtsList.get(j)));
                 }
-                mErrorLogs += "Timestamp values are not strictly increasing. \n";
-                mErrorLogs += msg.toString();
                 res = false;
                 break;
             }
@@ -135,15 +134,11 @@ public class OutputManager {
     }
 
     public boolean isOutPtsListIdenticalToInpPtsList(boolean requireSorting) {
-        boolean res;
         Collections.sort(mInpPtsList);
         if (requireSorting) {
             Collections.sort(mOutPtsList);
         }
-        StringBuilder msg = new StringBuilder();
-        res = arePtsListsIdentical(mInpPtsList, mOutPtsList, msg);
-        mErrorLogs += msg.toString();
-        return res;
+        return arePtsListsIdentical(mInpPtsList, mOutPtsList, mErrorLogs);
     }
 
     public int getOutStreamSize() {
@@ -308,7 +303,8 @@ public class OutputManager {
         mCrc32UsingBuffer.reset();
         mInpPtsList.clear();
         mOutPtsList.clear();
-        mErrorLogs = "###################       Error Details         #####################\n";
+        mErrorLogs.setLength(0);
+        mErrorLogs.append("##################       Error Details         ####################\n");
     }
 
     public float getRmsError(Object refObject, int audioFormat) {
@@ -393,10 +389,7 @@ public class OutputManager {
         OutputManager that = (OutputManager) o;
 
         if (!this.equalsInterlaced(o)) return false;
-        StringBuilder msg = new StringBuilder();
-        boolean res = arePtsListsIdentical(mOutPtsList, that.mOutPtsList, msg);
-        that.mErrorLogs += msg.toString();
-        return res;
+        return arePtsListsIdentical(mOutPtsList, that.mOutPtsList, that.mErrorLogs);
     }
 
     // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
@@ -408,21 +401,21 @@ public class OutputManager {
         boolean isEqual = true;
         if (mCrc32UsingImage.getValue() != that.mCrc32UsingImage.getValue()) {
             isEqual = false;
-            that.mErrorLogs += "CRC32 checksums computed for image buffers received from "
-                    + "getOutputImage() do not match between ref and test runs. \n";
-            that.mErrorLogs += String.format("Ref CRC32 checksum value is %d \n",
-                    mCrc32UsingImage.getValue());
-            that.mErrorLogs += String.format("Test CRC32 checksum value is %d \n",
-                    that.mCrc32UsingImage.getValue());
+            that.mErrorLogs.append("CRC32 checksums computed for image buffers received from "
+                    + "getOutputImage() do not match between ref and test runs. \n");
+            that.mErrorLogs.append(String.format("Ref CRC32 checksum value is %d \n",
+                    mCrc32UsingImage.getValue()));
+            that.mErrorLogs.append(String.format("Test CRC32 checksum value is %d \n",
+                    that.mCrc32UsingImage.getValue()));
         }
         if (mCrc32UsingBuffer.getValue() != that.mCrc32UsingBuffer.getValue()) {
             isEqual = false;
-            that.mErrorLogs += "CRC32 checksums computed for byte buffers received from "
-                    + "getOutputBuffer() do not match between ref and test runs. \n";
-            that.mErrorLogs += String.format("Ref CRC32 checksum value is %d \n",
-                    mCrc32UsingBuffer.getValue());
-            that.mErrorLogs += String.format("Test CRC32 checksum value is %d \n",
-                    that.mCrc32UsingBuffer.getValue());
+            that.mErrorLogs.append("CRC32 checksums computed for byte buffers received from "
+                    + "getOutputBuffer() do not match between ref and test runs. \n");
+            that.mErrorLogs.append(String.format("Ref CRC32 checksum value is %d \n",
+                    mCrc32UsingBuffer.getValue()));
+            that.mErrorLogs.append(String.format("Test CRC32 checksum value is %d \n",
+                    that.mCrc32UsingBuffer.getValue()));
             if (mMemIndex == that.mMemIndex) {
                 int count = 0;
                 StringBuilder msg = new StringBuilder();
@@ -438,20 +431,21 @@ public class OutputManager {
                     }
                 }
                 if (count != 0) {
-                    that.mErrorLogs += "Ref and Test outputs are not identical \n";
-                    that.mErrorLogs += msg.toString();
+                    that.mErrorLogs.append("Ref and Test outputs are not identical \n");
+                    that.mErrorLogs.append(msg);
                 }
             } else {
-                that.mErrorLogs += "CRC32 byte buffer checksums are different because ref and test "
-                        + "output sizes are not identical \n";
-                that.mErrorLogs += String.format("Ref output buffer size %d \n", mMemIndex);
-                that.mErrorLogs += String.format("Test output buffer size %d \n", that.mMemIndex);
+                that.mErrorLogs.append("CRC32 byte buffer checksums are different because ref and"
+                        + " test output sizes are not identical \n");
+                that.mErrorLogs.append(String.format("Ref output buffer size %d \n", mMemIndex));
+                that.mErrorLogs.append(String.format("Test output buffer size %d \n",
+                        that.mMemIndex));
             }
         }
         return isEqual;
     }
 
     public String getErrMsg() {
-        return mErrorLogs;
+        return mErrorLogs.toString();
     }
 }

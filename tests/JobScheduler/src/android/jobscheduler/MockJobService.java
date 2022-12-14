@@ -16,7 +16,9 @@
 
 package android.jobscheduler;
 
+import android.annotation.NonNull;
 import android.annotation.TargetApi;
+import android.app.Notification;
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.app.job.JobScheduler;
@@ -81,6 +83,14 @@ public class MockJobService extends JobService {
                 new TestEnvironment.Event(
                         TestEnvironment.Event.EVENT_START_JOB, params.getJobId()));
 
+        final Notification notificationToPost =
+                TestEnvironment.getTestEnvironment().getJobStartNotification();
+        if (notificationToPost != null) {
+            setNotification(params,
+                    TestEnvironment.getTestEnvironment().getJobStartNotificationId(),
+                    notificationToPost,
+                    TestEnvironment.getTestEnvironment().getJobStartNotificationEndPolicy());
+        }
         int permCheckRead = PackageManager.PERMISSION_DENIED;
         int permCheckWrite = PackageManager.PERMISSION_DENIED;
         ClipData clip = params.getClipData();
@@ -385,6 +395,9 @@ public class MockJobService extends JobService {
         private String mExecutedErrorMessage;
         private JobParameters mStopJobParameters;
         private List<Event> mExecutedEvents = new ArrayList<>();
+        private int mJobStartNotificationId;
+        private Notification mJobStartNotification;
+        private int mJobStartNotificationEndPolicy;
 
         public static TestEnvironment getTestEnvironment() {
             if (kTestEnvironment == null) {
@@ -395,6 +408,18 @@ public class MockJobService extends JobService {
 
         public TestWorkItem[] getExpectedWork() {
             return mExpectedWork;
+        }
+
+        private Notification getJobStartNotification() {
+            return mJobStartNotification;
+        }
+
+        private int getJobStartNotificationEndPolicy() {
+            return mJobStartNotificationEndPolicy;
+        }
+
+        private int getJobStartNotificationId() {
+            return mJobStartNotificationId;
         }
 
         public JobParameters getLastStartJobParameters() {
@@ -506,6 +531,7 @@ public class MockJobService extends JobService {
             mExpectedWork = null;
             mContinueAfterStart = false;
             mExecutedEvents.clear();
+            mJobStartNotification = null;
         }
 
         public void setExpectedWaitForStop() {
@@ -519,6 +545,14 @@ public class MockJobService extends JobService {
 
         public void setExpectedStopped() {
             mStoppedLatch = new CountDownLatch(1);
+        }
+
+        public void setNotificationAtStart(int notificationId,
+                @NonNull Notification notification,
+                @JobEndNotificationPolicy int jobEndNotificationPolicy) {
+            mJobStartNotificationId = notificationId;
+            mJobStartNotification = notification;
+            mJobStartNotificationEndPolicy = jobEndNotificationPolicy;
         }
 
         public void readyToWork() {

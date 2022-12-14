@@ -24,15 +24,17 @@ int registerAndroidMediaV2CtsDecoderTest(JNIEnv* env) {
     const JNINativeMethod methodTable[] = {
             {"nativeTestSimpleDecode",
              "(Ljava/lang/String;Landroid/view/Surface;Ljava/lang/String;Ljava/lang/String;Ljava/"
-             "lang/String;IFJ)Z",
+             "lang/String;IFJLjava/lang/StringBuilder;)Z",
              (void*)nativeTestSimpleDecode},
-            {"nativeTestOnlyEos", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)Z",
+            {"nativeTestOnlyEos",
+             "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/StringBuilder;)Z",
              (void*)nativeTestOnlyEos},
             {"nativeTestFlush",
-             "(Ljava/lang/String;Landroid/view/Surface;Ljava/lang/String;Ljava/lang/String;I)Z",
+             "(Ljava/lang/String;Landroid/view/Surface;Ljava/lang/String;Ljava/lang/String;ILjava/"
+             "lang/StringBuilder;)Z",
              (void*)nativeTestFlush},
             {"nativeTestSimpleDecodeQueueCSD",
-             "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)Z",
+             "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/StringBuilder;)Z",
              (void*)nativeTestSimpleDecodeQueueCSD},
     };
     jclass c = env->FindClass("android/mediav2/cts/CodecDecoderTest");

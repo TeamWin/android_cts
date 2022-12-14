@@ -4862,7 +4862,7 @@
     <!-- Allows an application to manage the companion devices.
          @hide -->
     <permission android:name="android.permission.MANAGE_COMPANION_DEVICES"
-                android:protectionLevel="signature|role" />
+                android:protectionLevel="signature|role|module" />
 
     <!-- Allows an application to subscribe to notifications about the presence status change
          of their associated companion device
@@ -6698,6 +6698,11 @@
     <permission android:name="android.permission.RUN_LONG_JOBS"
                 android:protectionLevel="normal|appop"/>
 
+    <!-- Allows an app to list Credential Manager providers.
+         @hide
+    -->
+    <permission android:name="android.permission.LIST_ENABLED_CREDENTIAL_PROVIDERS"
+        android:protectionLevel="signature|privileged"/>
 
     <!-- Attribution for Geofencing service. -->
     <attribution android:tag="GeofencingService" android:label="@string/geofencing_service"/>

@@ -124,14 +124,14 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
 
     /**
      * Set the feature flag value on device
+     * @param namespace namespace of feature flag
      * @param flag name of feature flag
      * @param value to be assigned
      * @throws DeviceNotAvailableException if connection with device is lost and cannot be
      * recovered.
      */
-    protected static void setFeatureFlagValue(String flag, String value)
+    protected static void setFeatureFlagValue(String namespace, String flag, String value)
             throws DeviceNotAvailableException {
-        sDevice.executeShellCommand("settings put global "
-                + flag + " " + value);
+        sDevice.executeShellCommand("device_config put " + namespace + " " + flag + " " + value);
     }
 }

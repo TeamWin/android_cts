@@ -80,7 +80,7 @@ public class InputDeviceKeyLayoutMapTest {
                  "META_LEFT", "META_RIGHT",
                 // KeyEvents not delivered to apps.
                 "APP_SWITCH", "SYSRQ", "ASSIST", "VOICE_ASSIST",
-                "HOME", "POWER", "SLEEP", "SOFT_SLEEP", "WAKEUP",
+                "HOME", "POWER", "SLEEP", "SOFT_SLEEP", "WAKEUP", "RECENT_APPS",
                 "BRIGHTNESS_UP", "BRIGHTNESS_DOWN", "SEARCH",
                 "KEYBOARD_BACKLIGHT_UP", "KEYBOARD_BACKLIGHT_DOWN", "KEYBOARD_BACKLIGHT_TOGGLE",
                 // Keys that cause the test activity to lose focus

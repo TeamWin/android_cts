@@ -62,6 +62,9 @@ public class DeviceConfigStateHelper implements AutoCloseable {
     }
 
     public void set(@NonNull DeviceConfig.Properties properties) {
+        // Some test harnesses will disable DeviceConfig sync, but this needs it enabled
+        // to work properly.
+        SystemUtil.runShellCommand("device_config set_sync_disabled_for_tests none");
         synchronized (mOriginalValues) {
             for (String key : properties.getKeyset()) {
                 maybeCacheOriginalValueLocked(key);

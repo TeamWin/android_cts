@@ -855,6 +855,18 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     }
 
     @Override
+    public void isNullCipherAndIntegrityEnabled(int serial) {
+        Log.d(TAG, "isNullCipherAndIntegrityEnabled");
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioNetworkResponse.isNullCipherAndIntegrityEnabledResponse(rsp, true);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to call isNullCipherAndIntegrityEnabled from AIDL. Exception " + ex);
+        }
+    }
+
+    @Override
     public void isN1ModeEnabled(int serial) {
         Log.d(TAG, "isN1ModeEnabled");
 

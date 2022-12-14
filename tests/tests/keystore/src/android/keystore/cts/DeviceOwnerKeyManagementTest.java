@@ -28,12 +28,15 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.keystore.cts.util.TestUtils;
 import android.os.Build;
+import android.os.SystemProperties;
 import android.security.AttestedKeyPair;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.StrongBoxUnavailableException;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 
 import com.android.bedstead.deviceadminapp.DeviceAdminApp;
 import com.android.bedstead.harrier.DeviceState;
@@ -113,10 +116,15 @@ public class DeviceOwnerKeyManagementTest {
                 signDataWithKey(algoIdentifier, keyPair.getPrivate()));
     }
 
+    int getDeviceFirstSdkLevel() {
+        return SystemProperties.getInt("ro.board.first_api_level", 0);
+    }
+
     private void validateDeviceIdAttestationData(Certificate leaf,
                                                  String expectedSerial,
                                                  String expectedImei,
-                                                 String expectedMeid)
+                                                 String expectedMeid,
+                                                 String expectedSecondImei)
             throws CertificateParsingException {
         Attestation attestationRecord = Attestation.loadFromCertificate((X509Certificate) leaf);
         AuthorizationList teeAttestation = attestationRecord.getTeeEnforced();
@@ -129,6 +137,41 @@ public class DeviceOwnerKeyManagementTest {
         assertThat(teeAttestation.getSerialNumber()).isEqualTo(expectedSerial);
         assertThat(teeAttestation.getImei()).isEqualTo(expectedImei);
         assertThat(teeAttestation.getMeid()).isEqualTo(expectedMeid);
+
+        /**
+         * Test attestation support for 2nd IMEI:
+         * * Attestation of 2nd IMEI (if present on the device) is required for devices shipping
+         *   with VSR-U (device's first SDK level U and above).
+         * * KeyMint v3 implementations on devices that shipped with earlier VSR, MAY support
+         *   attesting to the 2nd IMEI. In that case, if the 2nd IMEI tag is included in the
+         *   attestation record, it must match what the platform provided.
+         * * Other KeyMint implementations must not include anything in this tag.
+         */
+        final boolean isKeyMintV3 = TestUtils.getFeatureVersionKeystore(sContext) >= 300;
+        final boolean emptySecondImei = TextUtils.isEmpty(expectedSecondImei);
+        final boolean deviceShippedWithKeyMint3 =
+                getDeviceFirstSdkLevel() >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
+
+        if (!isKeyMintV3) {
+            // Earlier versions of KeyMint must not attest to second IMEI values as they are not
+            // allowed to emit an attestation extension version that includes it.
+            assertThat(teeAttestation.getSecondImei()).isNull();
+        } else if (emptySecondImei) {
+            // Device doesn't have a second IMEI, so none should be included in the attestation
+            // extension.
+            assertThat(teeAttestation.getSecondImei()).isNull();
+        } else if (deviceShippedWithKeyMint3) {
+            // The device has a second IMEI and should attest to it.
+            assertThat(teeAttestation.getSecondImei()).isEqualTo(expectedSecondImei);
+        } else {
+            // Device has KeyMint 3, but originally shipped with an earlier KeyMint and
+            // may not have provisioned the second IMEI as an attestation ID.
+            // It does not have to support attesting to the second IMEI, but if there is something
+            // in the attestation record, it must match the platform-provided second IMEI.
+            if (!TextUtils.isEmpty(teeAttestation.getSecondImei())) {
+                assertThat(teeAttestation.getSecondImei()).isEqualTo(expectedSecondImei);
+            }
+        }
     }
 
     private void validateAttestationRecord(List<Certificate> attestation, byte[] providedChallenge)
@@ -255,6 +298,7 @@ public class DeviceOwnerKeyManagementTest {
     public void assertAllVariantsOfDeviceIdAttestation(boolean useStrongBox) throws Exception {
         List<Integer> modesToTest = new ArrayList<Integer>();
         String imei = null;
+        String secondImei = null;
         String meid = null;
         // All devices must support at least basic device information attestation as well as serial
         // number attestation. Although attestation of unique device ids are only callable by
@@ -269,6 +313,7 @@ public class DeviceOwnerKeyManagementTest {
                     .that(telephonyService)
                     .isNotNull();
             imei = telephonyService.getImei(0);
+            secondImei = telephonyService.getImei(1);
             meid = telephonyService.getMeid(0);
             assertThat(imei).isNotNull();
             // If the device has a valid IMEI it must support attestation for it.
@@ -322,8 +367,16 @@ public class DeviceOwnerKeyManagementTest {
                         if ((devIdOpt & ID_TYPE_MEID) != 0) {
                             expectedMeid = meid;
                         }
+                        String expectedSecondImei = null;
+                        if ((devIdOpt & ID_TYPE_IMEI) != 0) {
+                            // TODO(b/262255219): Remove this condition when StrongBox supports 2nd
+                            // IMEI attestation.
+                            if (!useStrongBox) {
+                                expectedSecondImei = secondImei;
+                            }
+                        }
                         validateDeviceIdAttestationData(attestation, expectedSerial,
-                                expectedImei, expectedMeid);
+                                expectedImei, expectedMeid, expectedSecondImei);
                     }
                 } catch (UnsupportedOperationException expected) {
                     // Make sure the test only fails if the device is not meant to support Device

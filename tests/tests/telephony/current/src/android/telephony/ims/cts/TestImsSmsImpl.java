@@ -35,12 +35,14 @@ public class TestImsSmsImpl extends ImsSmsImplBase {
     private CountDownLatch mOnReadyLatch = new CountDownLatch(1);
     private CountDownLatch mAckDeliveryLatch = new CountDownLatch(1);
     private CountDownLatch mSmsAckLatch = new CountDownLatch(1);
+    private CountDownLatch mOnMemoryAvailableLatch = new CountDownLatch(1);
     // Expecting only one message at a time
     public byte[] sentPdu;
     private int mToken;
     private int mMessageRef;
     private int mResult;
     public byte[] ackPdu;
+    public  boolean mMemoryEventReceived = false;
 
     @Override
     public void sendSms(int token, int messageRef, String format, String smsc, boolean isRetry,
@@ -98,6 +100,29 @@ public class TestImsSmsImpl extends ImsSmsImplBase {
     public int getMessageRef() {
         return mMessageRef;
     }
+
+    public void onMemoryAvailable(int token) {
+        mToken = token;
+        mMemoryEventReceived = true;
+        mOnMemoryAvailableLatch.countDown();
+    }
+
+    public void receiveSmsWaitForAcknowledgeMemoryFull(int token, String format, byte[] pdu) {
+        onSmsReceived(token, format, pdu);
+        boolean complete = false;
+        try {
+            complete = mSmsAckLatch.await(ImsUtils.TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            // complete == false
+        }
+
+        assertTrue("Timed out waiting for acknowledgeSms.", complete);
+        assertEquals("Token mismatch.", token, mToken);
+        assertTrue("Invalid messageRef", mMessageRef >= 0);
+        assertEquals("Invalid result in acknowledgeSms. Result = " + mResult,
+                                                DELIVER_STATUS_ERROR_NO_MEMORY, mResult);
+    }
+
     public void receiveSmsWaitForAcknowledge(int token, String format, byte[] pdu) {
         onSmsReceived(token, format, pdu);
         boolean complete = false;
@@ -110,7 +135,8 @@ public class TestImsSmsImpl extends ImsSmsImplBase {
         assertTrue("Timed out waiting for acknowledgeSms.", complete);
         assertEquals("Token mismatch.", token, mToken);
         assertTrue("Invalid messageRef", mMessageRef >= 0);
-        assertEquals("Invalid result in acknowledgeSms.", DELIVER_STATUS_OK, mResult);
+        assertEquals("Invalid result in acknowledgeSms. Result = " + mResult,
+                                                              DELIVER_STATUS_OK, mResult);
     }
 
     public void sendReportWaitForAcknowledgeSmsReportR(int token, String format, byte[] pdu) {
@@ -177,6 +203,18 @@ public class TestImsSmsImpl extends ImsSmsImplBase {
         } catch (InterruptedException e) {
             // complete = false
         }
+        return complete;
+    }
+
+    public boolean waitForOnMemoryAvailableLatch() {
+        boolean complete = false;
+        try {
+            complete = mOnMemoryAvailableLatch.await(ImsUtils.TEST_TIMEOUT_MS,
+                                                     TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            // complete = false
+        }
+
         return complete;
     }
 

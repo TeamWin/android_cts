@@ -280,7 +280,7 @@ public class IntentRedirectionTest extends AppCloningBaseHostTest {
      * @throws Exception
      */
     private static void switchOnIntentRedirectionFlag() throws Exception {
-        setFeatureFlagValue("settings_allow_intent_redirection_for_clone_profile", "true");
+        setFeatureFlagValue("app_cloning", "allow_intent_redirection_for_clone_profile", "true");
     }
 
     /**
@@ -288,7 +288,7 @@ public class IntentRedirectionTest extends AppCloningBaseHostTest {
      * @throws Exception
      */
     private static void switchOffIntentRedirectionFlag() throws Exception {
-        setFeatureFlagValue("settings_allow_intent_redirection_for_clone_profile",
+        setFeatureFlagValue("app_cloning", "allow_intent_redirection_for_clone_profile",
                 "false");
     }
 }

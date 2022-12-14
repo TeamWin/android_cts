@@ -129,6 +129,7 @@ android_test_helper_app {
         "general-tests",
         "mts",
     ],
+    resource_dirs: ["AppLocalesBackupApp1/res"],
     platform_apis: true,
     manifest: "AppLocalesBackupApp1/AndroidManifest.xml",
 }
@@ -153,6 +154,7 @@ android_test_helper_app {
         "general-tests",
         "mts",
     ],
+    resource_dirs: ["AppLocalesBackupApp2/res"],
     platform_apis: true,
     manifest: "AppLocalesBackupApp2/AndroidManifest.xml",
 }

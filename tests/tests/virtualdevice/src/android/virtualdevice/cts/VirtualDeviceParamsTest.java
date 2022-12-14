@@ -261,7 +261,7 @@ public class VirtualDeviceParamsTest {
         VirtualDeviceParams params = new VirtualDeviceParams.Builder().build();
 
         assertTrue((params.getDefaultRecentsPolicy()
-                | VirtualDeviceParams.RECENTS_POLICY_ALLOW_IN_HOST_DEVICE_RECENTS) == 0);
+                & VirtualDeviceParams.RECENTS_POLICY_ALLOW_IN_HOST_DEVICE_RECENTS) == 0);
     }
 }
 

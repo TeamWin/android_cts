@@ -87,6 +87,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public int mSigningResultCount;
         public int mErrorCount;
         public int mRecordingStartedCount;
+        public int mRecordingStoppedCount;
 
         public Integer mKeyDownCode;
         public Integer mKeyUpCode;
@@ -123,6 +124,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mSigningResultCount = 0;
             mErrorCount = 0;
             mRecordingStartedCount = 0;
+            mRecordingStoppedCount = 0;
 
             mKeyDownCode = null;
             mKeyUpCode = null;
@@ -421,6 +423,13 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public void onRecordingStarted(String recordingId) {
             super.onRecordingStarted(recordingId);
             mRecordingStartedCount++;
+            mRecordingId = recordingId;
+        }
+
+        @Override
+        public void onRecordingStopped(String recordingId) {
+            super.onRecordingStopped(recordingId);
+            mRecordingStoppedCount++;
             mRecordingId = recordingId;
         }
     }

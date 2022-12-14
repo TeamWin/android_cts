@@ -30,6 +30,8 @@ import android.content.Context;
 import android.content.IntentFilter;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
+import android.system.Os;
+import android.system.StructStat;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -37,6 +39,8 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.nio.file.Paths;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
@@ -86,6 +90,10 @@ public class AppValidationTest {
         InstalledAppInfo installedAppInfo = getInstalledAppInfo();
         assertEquals(isIncfsInstallation,
                 new PathChecker().isIncFsPath(installedAppInfo.installationPath));
+
+        StructStat st =
+                Os.stat(Paths.get(installedAppInfo.installationPath).getParent().toString());
+        assertEquals("App parent directory may not be world-readable", 0771, st.st_mode & 0777);
         assertEquals(versionCode, installedAppInfo.versionCode);
     }
 
