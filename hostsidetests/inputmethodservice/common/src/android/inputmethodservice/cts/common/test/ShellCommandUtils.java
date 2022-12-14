@@ -201,6 +201,12 @@ public final class ShellCommandUtils {
         return "am compat enable " + compatChange + " " + packageName;
     }
 
+    /** Command to wait until all broadcast queues have passed barrier. */
+    public static String waitForBroadcastBarrier() {
+        // Use wait-for-broadcast-idle until wait-for-broadcast-barrier becomes available in U.
+        return "am wait-for-broadcast-idle";
+    }
+
     /**
      * Command to send broadcast {@code Intent}.
      *
