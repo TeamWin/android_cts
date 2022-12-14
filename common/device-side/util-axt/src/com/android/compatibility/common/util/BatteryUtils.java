@@ -47,7 +47,8 @@ public class BatteryUtils {
     public static boolean hasBattery() {
         final Intent batteryInfo = InstrumentationRegistry.getContext()
                 .registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-        return batteryInfo.getBooleanExtra(BatteryManager.EXTRA_PRESENT, true);
+        return batteryInfo != null
+            && batteryInfo.getBooleanExtra(BatteryManager.EXTRA_PRESENT, true);
     }
 
     /** Make the target device think it's off charger. */
