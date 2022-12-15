@@ -107,7 +107,7 @@ public class CodecInitializationLatencyTest {
         mTestFiles.put(MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_1920x1080_6mbps_30fps_avc.mp4");
         mTestFiles.put(MediaFormat.MIMETYPE_VIDEO_H263, "bbb_cif_768kbps_30fps_h263.mp4");
         mTestFiles.put(MediaFormat.MIMETYPE_VIDEO_HEVC, "bbb_1920x1080_4mbps_30fps_hevc.mp4");
-        mTestFiles.put(MediaFormat.MIMETYPE_VIDEO_MPEG2, "bbb_1920x1080_mpeg2_main_high.mp4");
+        mTestFiles.put(MediaFormat.MIMETYPE_VIDEO_MPEG2, "bbb_1920x1080_12mbps_30fps_mpeg2.mp4");
         mTestFiles.put(MediaFormat.MIMETYPE_VIDEO_MPEG4, "bbb_cif_768kbps_30fps_mpeg4.mkv");
         mTestFiles.put(MediaFormat.MIMETYPE_VIDEO_VP8, "bbb_1920x1080_6mbps_30fps_vp8.webm");
         mTestFiles.put(MediaFormat.MIMETYPE_VIDEO_VP9, "bbb_1920x1080_4mbps_30fps_vp9.webm");

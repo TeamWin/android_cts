@@ -79,8 +79,7 @@ public class VirtualDeviceManagerBasicTest {
             CREATE_VIRTUAL_DEVICE);
 
     @Rule
-    public FakeAssociationRule mFakeAssociationRule =
-            new FakeAssociationRule(/* numAssociations= */2);
+    public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
 
     private VirtualDeviceManager mVirtualDeviceManager;
     @Nullable
@@ -119,11 +118,11 @@ public class VirtualDeviceManagerBasicTest {
     public void createVirtualDevice_deviceIdIsUniqueAndIncremented() {
         mVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo(0).getId(),
+                        mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         mAnotherVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo(1).getId(),
+                        mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         assertThat(mAnotherVirtualDevice).isNotNull();
         assertThat(mVirtualDevice.getDeviceId() + 1).isEqualTo(mAnotherVirtualDevice.getDeviceId());
@@ -159,11 +158,11 @@ public class VirtualDeviceManagerBasicTest {
     public void getVirtualDevices_returnsAllVirtualDevices() {
         mVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo(0).getId(),
+                        mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         mAnotherVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo(1).getId(),
+                        mFakeAssociationRule.getAssociationInfo().getId(),
                         NAMED_VIRTUAL_DEVICE_PARAMS);
         assertThat(mAnotherVirtualDevice).isNotNull();
 
@@ -241,11 +240,11 @@ public class VirtualDeviceManagerBasicTest {
     public void createContext_multipleDevices_returnCorrectContexts() {
         mVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo(0).getId(),
+                        mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         mAnotherVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo(1).getId(),
+                        mFakeAssociationRule.getAssociationInfo().getId(),
                         NAMED_VIRTUAL_DEVICE_PARAMS);
         assertThat(mVirtualDevice.createContext().getDeviceId()).isEqualTo(
                 mVirtualDevice.getDeviceId());

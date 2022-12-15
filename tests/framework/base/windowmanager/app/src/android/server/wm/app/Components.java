@@ -72,6 +72,8 @@ public class Components extends ComponentsBase {
             component("LogConfigurationActivity");
     public static final ComponentName MOVE_TASK_TO_BACK_ACTIVITY =
             component("MoveTaskToBackActivity");
+    public static final ComponentName MULTI_WINDOW_FULLSCREEN_ACTIVITY =
+            component("MultiWindowFullscreenActivity");
     public static final ComponentName NIGHT_MODE_ACTIVITY = component("NightModeActivity");
     public static final ComponentName NO_DISPLAY_ACTIVITY = component("NoDisplayActivity");
     public static final ComponentName NO_HISTORY_ACTIVITY = component("NoHistoryActivity");
@@ -649,6 +651,13 @@ public class Components extends ComponentsBase {
         public static final String BROADCAST_EMBED_CONTENT =
                 "android.server.wm.app.RenderService.EMBED_CONTENT";
         public static final String EXTRAS_SURFACE_PACKAGE = "surfacePackage";
+    }
+
+    public static class MultiWindowFullscreenActivity {
+        public static final String ACTION_REQUEST_FULLSCREEN =
+                "android.server.wm.app.MultiWindowFullscreenActivity.action_request_fullscreen";
+        public static final String ACTION_RESTORE_FREEFORM =
+                "android.server.wm.app.MultiWindowFullscreenActivity.action_restore_freeform";
     }
 
     /**

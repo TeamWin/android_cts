@@ -770,7 +770,7 @@ public final class PermissionGrantTest {
         } finally {
             sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
                     sDeviceState.dpc().componentName(), sNotInstalledTestApp.packageName(),
-                    GRANTABLE_PERMISSION, PERMISSION_GRANT_STATE_DEFAULT);
+                    permission, PERMISSION_GRANT_STATE_DEFAULT);
             sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
                     sDeviceState.dpc().componentName(), PERMISSION_POLICY_PROMPT);
         }
@@ -799,7 +799,7 @@ public final class PermissionGrantTest {
         } finally {
             sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
                     sDeviceState.dpc().componentName(), sNotInstalledTestApp.packageName(),
-                    GRANTABLE_PERMISSION, PERMISSION_GRANT_STATE_DEFAULT);
+                    permission, PERMISSION_GRANT_STATE_DEFAULT);
             sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
                     sDeviceState.dpc().componentName(), PERMISSION_POLICY_PROMPT);
         }
@@ -831,8 +831,6 @@ public final class PermissionGrantTest {
             sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
                     sDeviceState.dpc().componentName(), sNotInstalledTestApp.packageName(),
                     ACCESS_FINE_LOCATION, PERMISSION_GRANT_STATE_DEFAULT);
-            sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
-                    sDeviceState.dpc().componentName(), PERMISSION_POLICY_PROMPT);
         }
     }
 

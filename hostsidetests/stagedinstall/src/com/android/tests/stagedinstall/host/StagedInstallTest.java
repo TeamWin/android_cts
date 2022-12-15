@@ -944,6 +944,16 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testCheckInstallConstraints_AppIsForeground");
     }
 
+    @Test
+    public void testCheckInstallConstraints_BoundedService() throws Exception {
+        runPhase("testCheckInstallConstraints_BoundedService");
+    }
+
+    @Test
+    public void testWaitForInstallConstraints_AppIsForeground() throws Exception {
+        runPhase("testWaitForInstallConstraints_AppIsForeground");
+    }
+
     private List<ApexInfo> readApexInfoList() throws Exception {
         File file = getDevice().pullFile("/apex/apex-info-list.xml");
         try (FileInputStream stream = new FileInputStream(file)) {

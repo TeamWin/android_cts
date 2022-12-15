@@ -33,6 +33,8 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
 
+import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
+import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.activities.ProxyDisplayActivity;
 import android.app.Activity;
@@ -57,7 +59,9 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
@@ -94,6 +98,18 @@ public class AccessibilityDisplayProxyTest {
     private int mDisplayId;
     private Activity mActivity;
     private VirtualDisplaySession mVirtualDisplaySession;
+
+    private InstrumentedAccessibilityServiceTestRule<StubProxyConcurrentAccessibilityService>
+            mProxyConcurrentServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
+            StubProxyConcurrentAccessibilityService.class, false);
+
+    private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+            new AccessibilityDumpOnFailureRule();
+
+    @Rule
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mProxyConcurrentServiceRule)
+            .around(mDumpOnFailureRule);
 
     @BeforeClass
     public static void oneTimeSetup() {
@@ -226,12 +242,8 @@ public class AccessibilityDisplayProxyTest {
     public void testTypeViewClickedAccessibilityEvent_proxyReceivesEvent() {
         registerProxyAndWaitForConnection();
         // Create and populate the expected event
-        final AccessibilityEvent expectedEvent = new AccessibilityEvent();
-        expectedEvent.setEventType(AccessibilityEvent.TYPE_VIEW_CLICKED);
-        expectedEvent.setClassName(Button.class.getName());
-        expectedEvent.setDisplayId(mA11yProxy.getDisplayId());
-        expectedEvent.getText().add(mActivity.getString(R.string.button_title));
-        mA11yProxy.setExpectedEvent(expectedEvent);
+        AccessibilityEvent clickEvent = getProxyClickAccessibilityEvent();
+        mA11yProxy.setExpectedEvent(clickEvent);
 
         final Button button = mActivity.findViewById(R.id.button);
         mActivity.runOnUiThread(() -> button.performClick());
@@ -241,12 +253,33 @@ public class AccessibilityDisplayProxyTest {
     }
 
     @Test
+    public void testAccessibilityServiceDoesNotGetProxyEvents() {
+        final StubProxyConcurrentAccessibilityService service =
+                mProxyConcurrentServiceRule.enableService();
+
+        try {
+            registerProxyAndWaitForConnection();
+            // Create and populate the expected event.
+            AccessibilityEvent clickEvent = getProxyClickAccessibilityEvent();
+            service.setUnwantedEvent(clickEvent);
+
+            final Button button = mActivity.findViewById(R.id.button);
+            mActivity.runOnUiThread(() -> button.performClick());
+            assertThrows(AssertionError.class, () ->
+                    waitOn(service.mWaitObject, ()-> service.mReceivedUnwantedEvent.get(),
+                            TIMEOUT_MS,
+                    "Expected event was not received within " + TIMEOUT_MS + " ms"));
+        } finally {
+            service.disableSelfAndRemove();
+        }
+    }
+
+    @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityDisplayProxy#getWindows"})
     public void testGetWindows_proxyReceivesActivityAppOnDisplay() {
         registerProxyAndWaitForConnection();
 
         final List<AccessibilityWindowInfo> windows = mA11yProxy.getWindows();
-
         assertThat(findWindowByTitleWithList(
                 getActivityTitle(sInstrumentation, mActivity), windows)).isNotNull();
     }
@@ -301,6 +334,15 @@ public class AccessibilityDisplayProxyTest {
 
         waitOn(mA11yProxy.mWaitObject, ()-> mA11yProxy.mConnected.get(), TIMEOUT_MS,
                 "Proxy was not connected");
+    }
+
+    AccessibilityEvent getProxyClickAccessibilityEvent() {
+        final AccessibilityEvent clickEvent = new AccessibilityEvent();
+        clickEvent.setEventType(AccessibilityEvent.TYPE_VIEW_CLICKED);
+        clickEvent.setClassName(Button.class.getName());
+        clickEvent.setDisplayId(mA11yProxy.getDisplayId());
+        clickEvent.getText().add(mActivity.getString(R.string.button_title));
+        return clickEvent;
     }
 
     private List<AccessibilityServiceInfo> getTestAccessibilityServiceInfoAsList() {

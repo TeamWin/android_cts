@@ -32,8 +32,10 @@
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="pm uninstall com.android.cts.install.lib.testapp.A" />
         <option name="run-command" value="pm uninstall com.android.cts.install.lib.testapp.B" />
+        <option name="run-command" value="pm uninstall com.android.cts.install.lib.testapp.S" />
         <option name="teardown-command" value="pm uninstall com.android.cts.install.lib.testapp.A" />
         <option name="teardown-command" value="pm uninstall com.android.cts.install.lib.testapp.B" />
+        <option name="teardown-command" value="pm uninstall com.android.cts.install.lib.testapp.S" />
         <option name="run-command" value="input keyevent KEYCODE_WAKEUP" />
         <option name="run-command" value="wm dismiss-keyguard" />
     </target_preparer>

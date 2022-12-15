@@ -341,8 +341,8 @@ open class PackageInstallerTestBase {
     }
 
     fun setSecureFrp(secureFrp: Boolean) {
-        uiDevice.executeShellCommand("settings --user 0 " +
-                "put secure secure_frp_mode ${if (secureFrp) 1 else 0}")
+        uiDevice.executeShellCommand("settings " +
+                "put global secure_frp_mode ${if (secureFrp) 1 else 0}")
     }
 
     @After

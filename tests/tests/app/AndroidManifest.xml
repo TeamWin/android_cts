@@ -28,6 +28,9 @@
                   android:resizeableActivity="false"
                   android:supportsPictureInPicture="true"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
+
+        <activity android:name=".ShareIdentityTest$ShareIdentityTestActivity"
+                  android:exported="true" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

@@ -207,6 +207,10 @@ public class NetworkingHelper {
                 "cmd connectivity airplane-mode " + (on ? "enable" : "disable"));
         airplaneModeBroadcastAsserter.assertCalled("Didn't get airplane mode changed broadcast",
                 15 /* 15 seconds */);
+        if (!on && mHasWifi) {
+            // Try to trigger some network connection.
+            setWifiState(true);
+        }
         waitUntil("Networks didn't change to " + (!on ? " on" : " off"), 60 /* seconds */,
                 () -> {
                     if (on) {

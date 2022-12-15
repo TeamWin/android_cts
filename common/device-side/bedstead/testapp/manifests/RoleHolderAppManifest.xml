@@ -19,6 +19,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.android.bedstead.testapp.RoleHolderTestApp">
     <application android:appComponentFactory="com.android.bedstead.testapp.TestAppAppComponentFactory">
+        <!-- Don't allow this test app to be returned by queries unless filtered by package name -->
+        <meta-data android:name="testapp-package-query-only" android:value="true" />
+
         <!-- Activity that filters the trusted source provisioning intent action  -->
         <activity android:name=".RoleHolderTrustedSourceActivity"
                   android:exported="true"

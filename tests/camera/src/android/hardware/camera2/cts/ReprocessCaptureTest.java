@@ -1113,8 +1113,8 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
                 // Verify output image's and result's JPEG EXIF data.
                 Image image = getReprocessOutputImageReaderListener().getImage(CAPTURE_TIMEOUT_MS);
                 verifyJpegKeys(image, reprocessResults[i], reprocessOutputSize,
-                        testThumbnailSizes[i], EXIF_TEST_DATA[i], mStaticInfo, mCollector,
-                        mDebugFileNameBase, ImageFormat.JPEG);
+                        testThumbnailSizes[i], EXIF_TEST_DATA[i], mStaticInfo, mAllStaticInfo,
+                        mCollector, mDebugFileNameBase, ImageFormat.JPEG);
                 image.close();
 
             }

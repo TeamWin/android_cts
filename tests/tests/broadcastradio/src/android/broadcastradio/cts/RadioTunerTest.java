@@ -22,7 +22,11 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.after;
+import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
@@ -40,6 +44,7 @@ import com.android.compatibility.common.util.ApiTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 /**
  * CTS test for broadcast radio.
@@ -178,6 +183,19 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
     }
 
     @Test
+    @ApiTest(apis = {"android.hardware.radio.RadioTuner#seek",
+            "android.hardware.radio.RadioTuner.Callback#onProgramInfoChanged"})
+    public void seek_onProgramInfoChangedInvoked() {
+        openAmFmTuner();
+
+        int seekResult = mRadioTuner.seek(RadioTuner.DIRECTION_UP, /* skipSubChannel= */ true);
+
+        mExpect.withMessage("Result of seek operation")
+                .that(seekResult).isEqualTo(RadioManager.STATUS_OK);
+        verify(mCallback, timeout(TUNE_CALLBACK_TIMEOUT_MS)).onProgramInfoChanged(any());
+    }
+
+    @Test
     @ApiTest(apis = {
             "android.hardware.radio.RadioTuner#tune(android.hardware.radio.ProgramSelector)",
             "android.hardware.radio.RadioTuner.Callback#onProgramInfoChanged"})
@@ -206,6 +224,8 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
 
         mExpect.withMessage("Result of cancel operation after no operations")
                 .that(cancelResult).isEqualTo(RadioManager.STATUS_OK);
+        verify(mCallback, after(CANCEL_TIMEOUT_MS).never())
+                .onTuneFailed(eq(RadioTuner.TUNER_RESULT_CANCELED), any());
     }
 
     @Test
@@ -222,6 +242,52 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
 
         mExpect.withMessage("Result of cancel operation after step completed")
                 .that(cancelResult).isEqualTo(RadioManager.STATUS_OK);
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.hardware.radio.RadioTuner#tune(android.hardware.radio.ProgramSelector)",
+            "android.hardware.radio.RadioTuner#cancel"})
+    public void cancel_whenTune() {
+        openAmFmTuner();
+        int freq = mFmBandConfig.getLowerLimit() + mFmBandConfig.getSpacing();
+        ProgramSelector sel = ProgramSelector.createAmFmSelector(RadioManager.BAND_FM, freq,
+                /* subChannel= */ 0);
+
+        // There is a possible race condition between tune and cancel commands - the tune may finish
+        // before cancel command is issued. Thus we accept both outcomes in this test.
+        mRadioTuner.tune(sel);
+        int cancelResult = mRadioTuner.cancel();
+
+        mExpect.withMessage("Result of cancel operation after seek")
+                .that(cancelResult).isEqualTo(RadioManager.STATUS_OK);
+        verify(mCallback, after(CANCEL_TIMEOUT_MS).atMost(1))
+                .onTuneFailed(eq(RadioTuner.TUNER_RESULT_CANCELED), eq(sel));
+        verify(mCallback, atMost(1)).onProgramInfoChanged(any());
+
+        Mockito.reset(mCallback);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.hardware.radio.RadioTuner#seek",
+            "android.hardware.radio.RadioTuner#cancel"})
+    public void cancel_whenSeek() {
+        openAmFmTuner();
+
+        // There is a possible race condition between seek and cancel commands - the seek may finish
+        // before cancel command is issued. Thus we accept both outcomes in this test.
+        int seekResult = mRadioTuner.seek(RadioTuner.DIRECTION_DOWN, /* skipSubChannel= */ true);
+        int cancelResult = mRadioTuner.cancel();
+
+        mExpect.withMessage("Result of seek operation")
+                .that(seekResult).isEqualTo(RadioManager.STATUS_OK);
+        mExpect.withMessage("Result of cancel operation after seek")
+                .that(cancelResult).isEqualTo(RadioManager.STATUS_OK);
+        verify(mCallback, after(CANCEL_TIMEOUT_MS).atMost(1))
+                .onTuneFailed(eq(RadioTuner.TUNER_RESULT_CANCELED), any());
+        verify(mCallback, atMost(1)).onProgramInfoChanged(any());
+
+        Mockito.reset(mCallback);
     }
 
     @Test
@@ -269,7 +335,8 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
     @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#setConfigFlag",
             "android.hardware.radio.RadioTuner#setConfigFlag",
-            "android.hardware.radio.RadioTuner#isConfigFlagSet"})
+            "android.hardware.radio.RadioTuner#isConfigFlagSet",
+            "android.hardware.radio.RadioTuner.Callback#onConfigFlagUpdated"})
     public void setConfigFlag_withTrue_succeeds() {
         openAmFmTuner();
         boolean isSupported = mRadioTuner.isConfigFlagSupported(TEST_CONFIG_FLAG);
@@ -279,12 +346,14 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
 
         mExpect.withMessage("Config flag with true value")
                 .that(mRadioTuner.isConfigFlagSet(TEST_CONFIG_FLAG)).isTrue();
+        verify(mCallback, never()).onConfigFlagUpdated(anyInt(), anyBoolean());
     }
 
     @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#setConfigFlag",
             "android.hardware.radio.RadioTuner#setConfigFlag",
-            "android.hardware.radio.RadioTuner#isConfigFlagSet"})
+            "android.hardware.radio.RadioTuner#isConfigFlagSet",
+            "android.hardware.radio.RadioTuner.Callback#onConfigFlagUpdated"})
     public void setConfigFlag_withFalse_succeeds() {
         openAmFmTuner();
         boolean isSupported = mRadioTuner.isConfigFlagSupported(TEST_CONFIG_FLAG);
@@ -294,5 +363,6 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
 
         mExpect.withMessage("Config flag with false value")
                 .that(mRadioTuner.isConfigFlagSet(TEST_CONFIG_FLAG)).isFalse();
+        verify(mCallback, never()).onConfigFlagUpdated(anyInt(), anyBoolean());
     }
 }

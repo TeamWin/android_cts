@@ -54,6 +54,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import junit.framework.Assert;
 
@@ -670,25 +671,42 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
             waitForResultValue(resultListener, CaptureResult.LENS_STATE,
                     CaptureResult.LENS_STATE_STATIONARY, NUM_RESULTS_WAIT_TIMEOUT);
             result = resultListener.getCaptureResult(WAIT_FOR_RESULT_TIMEOUT_MS);
-            mCollector.expectEquals("Focal length in preview result and request should be the same",
-                    previewRequest.get(CaptureRequest.LENS_FOCAL_LENGTH),
-                    result.get(CaptureResult.LENS_FOCAL_LENGTH));
+            Float focalLengthInResult = result.get(CaptureResult.LENS_FOCAL_LENGTH);
+            Set<Float> validFocalLengths = getAvailableFocalLengthsForResult(
+                    result, mStaticInfo, mAllStaticInfo);
+            if (focalLengths.length > 1) {
+                mCollector.expectEquals(
+                        "Focal length in preview result and request should be the same",
+                        previewRequest.get(CaptureRequest.LENS_FOCAL_LENGTH),
+                        focalLengthInResult);
+            } else {
+                mCollector.expectTrue(
+                        "Focal length in preview result should be a supported value",
+                        validFocalLengths.contains(focalLengthInResult));
+            }
 
             stillRequest.set(CaptureRequest.LENS_FOCAL_LENGTH, focalLength);
             CaptureRequest request = stillRequest.build();
             resultListener = new SimpleCaptureCallback();
             mSession.capture(request, resultListener, mHandler);
             result = resultListener.getCaptureResult(WAIT_FOR_RESULT_TIMEOUT_MS);
-            mCollector.expectEquals(
-                    "Focal length in still capture result and request should be the same",
-                    stillRequest.get(CaptureRequest.LENS_FOCAL_LENGTH),
-                    result.get(CaptureResult.LENS_FOCAL_LENGTH));
+            focalLengthInResult = result.get(CaptureResult.LENS_FOCAL_LENGTH);
+            if (focalLengths.length > 1) {
+                mCollector.expectEquals(
+                        "Focal length in still capture result and request should be the same",
+                        stillRequest.get(CaptureRequest.LENS_FOCAL_LENGTH),
+                        result.get(CaptureResult.LENS_FOCAL_LENGTH));
+            } else {
+                mCollector.expectTrue(
+                        "Focal length in still capture result should be a supported value",
+                        validFocalLengths.contains(focalLengthInResult));
+            }
 
             Image image = imageListener.getImage(CAPTURE_IMAGE_TIMEOUT_MS);
 
             validateJpegCapture(image, maxStillSz);
             verifyJpegKeys(image, result, maxStillSz, thumbnailSize, exifTestData,
-                    mStaticInfo, mCollector, mDebugFileNameBase, ImageFormat.JPEG);
+                    mStaticInfo, mAllStaticInfo, mCollector, mDebugFileNameBase, ImageFormat.JPEG);
         }
     }
 
@@ -1327,7 +1345,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
             Image image = imageListener.getImage(CAPTURE_IMAGE_TIMEOUT_MS);
 
             verifyJpegKeys(image, stillResult, stillSize, testThumbnailSizes[i], EXIF_TEST_DATA[i],
-                    mStaticInfo, mCollector, mDebugFileNameBase, format);
+                    mStaticInfo, mAllStaticInfo, mCollector, mDebugFileNameBase, format);
 
             // Free image resources
             image.close();

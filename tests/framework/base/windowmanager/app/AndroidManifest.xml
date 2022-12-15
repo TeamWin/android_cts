@@ -181,6 +181,10 @@
              android:resizeableActivity="true"
              android:taskAffinity="nobody.but.FreeformActivity"
              android:exported="true"/>
+        <activity android:name=".MultiWindowFullscreenActivity"
+                  android:resizeableActivity="true"
+                  android:taskAffinity="nobody.but.MultiWindowFullscreenActivity"
+                  android:exported="true"/>
         <activity android:name=".TopLeftLayoutActivity"
              android:resizeableActivity="true"
              android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"

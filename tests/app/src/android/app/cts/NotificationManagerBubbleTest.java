@@ -124,10 +124,10 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
 
     private boolean isBubblesFeatureSupported() {
         // These do not support bubbles.
-        return (!mActivityManager.isLowRamDevice() || FeatureUtil.isWatch())
+        return (!mActivityManager.isLowRamDevice() && !FeatureUtil.isWatch()
                 && !FeatureUtil.isAutomotive() && !FeatureUtil.isTV()
                 && mContext.getResources().getBoolean(Resources.getSystem().getIdentifier(
-                        "config_supportsBubble", "bool", "android"));
+                        "config_supportsBubble", "bool", "android")));
     }
 
     private void sleep() {

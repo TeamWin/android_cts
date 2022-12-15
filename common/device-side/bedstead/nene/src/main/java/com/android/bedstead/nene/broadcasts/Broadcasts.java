@@ -42,7 +42,7 @@ public final class Broadcasts {
         if (Versions.meetsMinimumSdkVersionRequirement(Versions.U)) {
             ShellCommand.builder("am")
                     .addOperand("wait-for-broadcast-barrier")
-                    .validate(s -> s.contains("Loopers drained!"))
+                    .validate(s -> s.contains("Loopers drained!") || s.contains("barrier passed"))
                     .executeOrThrowNeneException("Error waiting for broadcast barrier");
         } else {
             ShellCommand.builder("am")

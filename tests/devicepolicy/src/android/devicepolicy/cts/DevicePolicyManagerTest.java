@@ -149,11 +149,12 @@ public final class DevicePolicyManagerTest {
     private static final UserManager sUserManager = sContext.getSystemService(UserManager.class);
     private static final SharedPreferences sSharedPreferences =
             sContext.getSharedPreferences("required-apps.txt", Context.MODE_PRIVATE);
-    private static final ManagedProfileProvisioningParams MANAGED_PROFILE_PARAMS =
-            createManagedProfileProvisioningParamsBuilder().build();
 
     private static final ComponentName DEVICE_ADMIN_COMPONENT_NAME =
             DeviceAdminApp.deviceAdminComponentName(sContext);
+
+    private static final ManagedProfileProvisioningParams MANAGED_PROFILE_PARAMS =
+            createManagedProfileProvisioningParamsBuilder().build();
 
     private static final String MANAGE_PROFILE_AND_DEVICE_OWNERS =
             "android.permission.MANAGE_PROFILE_AND_DEVICE_OWNERS";

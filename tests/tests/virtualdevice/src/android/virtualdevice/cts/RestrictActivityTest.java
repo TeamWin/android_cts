@@ -181,6 +181,21 @@ public class RestrictActivityTest {
                                                 == virtualDisplay.getDisplay().getDisplayId()));
     }
 
+    @Test
+    public void restrictedActivity_noGwpc_shouldFail() {
+        VirtualDisplay virtualDisplay =
+                mDisplayManager.createVirtualDisplay(
+                        /* name= */ "name",
+                        /* width= */ 100,
+                        /* height= */ 100,
+                        /* densityDpi= */ 240,
+                        mReader.getSurface(),
+                        DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED);
+        launchRestrictedAutomotiveActivity(virtualDisplay);
+
+        verify(mOnReceiveResultListener, after(3000).never()).onReceiveResult(anyInt(), any());
+    }
+
     private void launchRestrictedAutomotiveActivity(VirtualDisplay display) {
         Intent intent =
                 TestAppHelper.createRestrictActivityIntent(mResultReceiver)

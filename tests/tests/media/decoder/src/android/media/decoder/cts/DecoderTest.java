@@ -54,6 +54,7 @@ import android.media.cts.MediaHeavyPresubmitTest;
 import android.media.cts.MediaTestBase;
 import android.media.cts.NdkMediaCodec;
 import android.media.cts.SdkMediaCodec;
+import android.media.cts.TestUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
@@ -78,6 +79,7 @@ import com.android.compatibility.common.util.ResultUnit;
 import com.google.common.collect.ImmutableList;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -105,6 +107,9 @@ public class DecoderTest extends MediaTestBase {
     private static final String TAG = "DecoderTest";
     private static final String REPORT_LOG_NAME = "CtsMediaDecoderTestCases";
     private static boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
+    private static boolean sIsBeforeS = ApiLevelUtil.isBefore(Build.VERSION_CODES.S);
+    private static boolean sIsAfterT = ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)
+            || ApiLevelUtil.codenameEquals("UpsideDownCake");
 
     private static final int RESET_MODE_NONE = 0;
     private static final int RESET_MODE_RECONFIGURE = 1;
@@ -1479,6 +1484,11 @@ public class DecoderTest extends MediaTestBase {
 
     protected static List<String> codecsFor(String resource, int codecSupportMode)
             throws IOException {
+
+        // CODEC_DEFAULT behaviors started with S
+        if (sIsBeforeS) {
+            codecSupportMode = CODEC_ALL;
+        }
         MediaExtractor ex = new MediaExtractor();
         AssetFileDescriptor fd = getAssetFileDescriptorFor(resource);
         try {
@@ -1498,12 +1508,24 @@ public class DecoderTest extends MediaTestBase {
             try {
                 MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType(mime);
                 if (caps != null) {
+                    // do we test this codec in current mode?
+                    if (!TestUtils.isTestableCodecInCurrentMode(info.getName())) {
+                        Log.i(TAG, "skip codec " + info.getName() + " in current mode");
+                        continue;
+                    }
                     if (codecSupportMode == CODEC_ALL) {
+                        if (sIsAfterT) {
+                            // This is an extractor failure as often as it is a codec failure
+                            assertTrue(info.getName() + " does not declare support for "
+                                    + format.toString(),
+                                    caps.isFormatSupported(format));
+                        }
                         matchingCodecs.add(info.getName());
                     } else if (codecSupportMode == CODEC_DEFAULT) {
                         if (caps.isFormatSupported(format)) {
                             matchingCodecs.add(info.getName());
                         } else if (isDefaultCodec(info.getName(), mime)) {
+                            // This is an extractor failure as often as it is a codec failure
                             fail(info.getName() + " which is a default decoder for mime " + mime
                                    + ", does not declare support for " + format.toString());
                         }
@@ -1515,7 +1537,15 @@ public class DecoderTest extends MediaTestBase {
                 // type is not supported
             }
         }
-        assertTrue("no matching codecs found", matchingCodecs.size() != 0);
+        if (TestUtils.isMtsMode()) {
+            // not fatal in MTS mode
+            Assume.assumeTrue("no MTS-mode codecs found for format " + format.toString(),
+                            matchingCodecs.size() != 0);
+        } else {
+            // but fatal in CTS mode
+            assertTrue("no codecs found for format " + format.toString(),
+                            matchingCodecs.size() != 0);
+        }
         return matchingCodecs;
     }
 
@@ -3652,7 +3682,7 @@ public class DecoderTest extends MediaTestBase {
         // This should happen when the PTS gap is encountered - silence is rendered to fill the
         // PTS gap, but this silence should not cause framePosition to advance.
         {
-            final long ptsGapTimeoutMs = 1000;
+            final long ptsGapTimeoutMs = 3000;
             long startTimeMs = System.currentTimeMillis();
             AudioTimestamp previousTimestamp;
             do {

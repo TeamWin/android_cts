@@ -16,10 +16,6 @@
 
 package android.devicepolicy.cts;
 
-import static android.Manifest.permission.LAUNCH_DEVICE_MANAGER_SETUP;
-import static android.app.admin.DevicePolicyManager.ACTION_ROLE_HOLDER_PROVISION_FINALIZATION;
-import static android.app.admin.DevicePolicyManager.ACTION_ROLE_HOLDER_PROVISION_MANAGED_DEVICE_FROM_TRUSTED_SOURCE;
-import static android.app.admin.DevicePolicyManager.ACTION_ROLE_HOLDER_PROVISION_MANAGED_PROFILE;
 import static android.content.Intent.ACTION_MANAGED_PROFILE_AVAILABLE;
 import static android.content.Intent.ACTION_MANAGED_PROFILE_REMOVED;
 import static android.content.Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE;
@@ -28,8 +24,6 @@ import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_ROLE_HOLDERS;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
-import static com.android.queryable.queries.ActivityQuery.activity;
-import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
 import static com.android.queryable.queries.ServiceQuery.service;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -68,8 +62,6 @@ import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.compatibility.common.util.CddTest;
 import com.android.eventlib.truth.EventLogsSubject;
-import com.android.queryable.info.ActivityInfo;
-import com.android.queryable.queries.Query;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -98,32 +90,6 @@ public class DevicePolicyManagementRoleHolderTest {
 
     private static final DevicePolicyManager sDevicePolicyManager =
             sContext.getSystemService(DevicePolicyManager.class);
-    private static final Query<ActivityInfo> sQueryForRoleHolderTrustedSourceAction =
-            activity()
-                    .where().intentFilters().contains(
-                            intentFilter().where().actions().contains(
-                                    ACTION_ROLE_HOLDER_PROVISION_MANAGED_DEVICE_FROM_TRUSTED_SOURCE)
-                    ).where().permission().isEqualTo(LAUNCH_DEVICE_MANAGER_SETUP);
-    private static final Query<ActivityInfo> sQueryForRoleHolderManagedProfileAction =
-            activity()
-                    .where().intentFilters().contains(
-                            intentFilter().where().actions().contains(
-                                    ACTION_ROLE_HOLDER_PROVISION_MANAGED_PROFILE)
-                    ).where().permission().isEqualTo(LAUNCH_DEVICE_MANAGER_SETUP);
-    private static final Query<ActivityInfo> sQueryForRoleHolderFinalizationAction =
-            activity()
-                    .where().intentFilters().contains(
-                            intentFilter().where().actions().contains(
-                                    ACTION_ROLE_HOLDER_PROVISION_FINALIZATION)
-                    ).where().permission().isEqualTo(LAUNCH_DEVICE_MANAGER_SETUP);
-    private static final TestApp sRoleHolderApp = sDeviceState.testApps()
-            .query()
-            .whereActivities()
-            .contains(
-                    sQueryForRoleHolderTrustedSourceAction,
-                    sQueryForRoleHolderManagedProfileAction,
-                    sQueryForRoleHolderFinalizationAction)
-            .get();
     private static final AccountManager sAccountManager =
             sContext.getSystemService(AccountManager.class);
     private static final TestApp sAccountManagementApp = sDeviceState.testApps()

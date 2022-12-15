@@ -23,6 +23,8 @@ import android.hardware.radio.RadioManager;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -36,6 +38,7 @@ import java.util.List;
 public final class RadioManagerTest extends AbstractRadioTestCase {
 
     @Test
+    @ApiTest(apis = {"android.hardware.radio.RadioManager#listModules"})
     public void listModules_returnsNonEmptyModules() {
         List<RadioManager.ModuleProperties> modules = new ArrayList<>();
 
@@ -47,6 +50,7 @@ public final class RadioManagerTest extends AbstractRadioTestCase {
     }
 
     @Test
+    @ApiTest(apis = {"android.hardware.radio.RadioManager#lopenTuner"})
     public void openTuner_withAmFmBand_succeeds() {
         setAmFmConfig();
         // skip tests for radio manager not supporting AM/FM
@@ -59,6 +63,7 @@ public final class RadioManagerTest extends AbstractRadioTestCase {
     }
 
     @Test
+    @ApiTest(apis = {"android.hardware.radio.RadioManager#lopenTuner"})
     public void openTuner_withAmFmBandAfterCloseTuner_succeeds() throws Throwable {
         setAmFmConfig();
         // skip tests for radio manager not supporting AM/FM

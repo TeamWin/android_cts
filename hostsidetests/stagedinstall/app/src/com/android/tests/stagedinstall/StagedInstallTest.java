@@ -222,7 +222,7 @@ public class StagedInstallTest {
                 Log.e(TAG, "Failed to abandon session " + sessionInfo.getSessionId(), e);
             }
         }
-        Uninstall.packages(TestApp.A, TestApp.B);
+        Uninstall.packages(TestApp.A, TestApp.B, TestApp.S);
         Files.deleteIfExists(mTestStateFile.toPath());
     }
 
@@ -1521,11 +1521,93 @@ public class StagedInstallTest {
         assertThat(f2.join().isAllConstraintsSatisfied()).isTrue();
     }
 
+    @Test
+    public void testCheckInstallConstraints_BoundedService() throws Exception {
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.B1).commit();
+        Install.single(TestApp.S1).commit();
+        // Start an activity which will bind a service
+        // Test app S is considered foreground as A is foreground
+        startActivity(TestApp.A, "com.android.cts.install.lib.testapp.TestServiceActivity");
+
+        var pi = InstallUtils.getPackageInstaller();
+        var f1 = new CompletableFuture<InstallConstraintsResult>();
+        var constraints = new InstallConstraints.Builder().requireAppNotForeground().build();
+        pi.checkInstallConstraints(
+                Arrays.asList(TestApp.S),
+                constraints,
+                r -> r.run(),
+                result -> f1.complete(result));
+        assertThat(f1.join().isAllConstraintsSatisfied()).isFalse();
+
+        // Test app A is no longer foreground. So is test app S.
+        startActivity(TestApp.B);
+        PollingCheck.waitFor(() -> {
+            var importance = getPackageImportance(TestApp.A);
+            return importance > ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
+        });
+        var f2 = new CompletableFuture<InstallConstraintsResult>();
+        pi.checkInstallConstraints(
+                Arrays.asList(TestApp.S),
+                constraints,
+                r -> r.run(),
+                result -> f2.complete(result));
+        assertThat(f2.join().isAllConstraintsSatisfied()).isTrue();
+    }
+
+    @Test
+    public void testWaitForInstallConstraints_AppIsForeground() throws Exception {
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.B1).commit();
+        // We will have a foreground app
+        startActivity(TestApp.A);
+
+        var pi = InstallUtils.getPackageInstaller();
+        var inputConstraints = new InstallConstraints.Builder().requireAppNotInteracting().build();
+
+        // Timeout == 0, constraints not satisfied
+        var sender = new LocalIntentSender();
+        pi.waitForInstallConstraints(Arrays.asList(TestApp.A), inputConstraints,
+                sender.getIntentSender(), 0);
+        var intent = sender.getResult();
+        var packageNames = intent.getStringArrayExtra(Intent.EXTRA_PACKAGES);
+        var receivedConstraints = intent.getParcelableExtra(
+                PackageInstaller.EXTRA_INSTALL_CONSTRAINTS, InstallConstraints.class);
+        var result = intent.getParcelableExtra(
+                PackageInstaller.EXTRA_INSTALL_CONSTRAINTS_RESULT, InstallConstraintsResult.class);
+        assertThat(packageNames).asList().containsExactly(TestApp.A);
+        assertThat(receivedConstraints).isEqualTo(inputConstraints);
+        assertThat(result.isAllConstraintsSatisfied()).isFalse();
+
+        // Timeout == one day, constraints not satisfied
+        sender = new LocalIntentSender();
+        pi.waitForInstallConstraints(Arrays.asList(TestApp.A), inputConstraints,
+                sender.getIntentSender(), TimeUnit.DAYS.toMillis(1));
+        // Wait for a while and check the callback is not invoked yet
+        intent = sender.pollResult(3, TimeUnit.SECONDS);
+        assertThat(intent).isNull();
+
+        // Test app A is no longer foreground. The callback will be invoked soon.
+        startActivity(TestApp.B);
+        intent = sender.getResult();
+        packageNames = intent.getStringArrayExtra(Intent.EXTRA_PACKAGES);
+        receivedConstraints = intent.getParcelableExtra(
+                PackageInstaller.EXTRA_INSTALL_CONSTRAINTS, InstallConstraints.class);
+        result = intent.getParcelableExtra(
+                PackageInstaller.EXTRA_INSTALL_CONSTRAINTS_RESULT, InstallConstraintsResult.class);
+        assertThat(packageNames).asList().containsExactly(TestApp.A);
+        assertThat(receivedConstraints).isEqualTo(inputConstraints);
+        assertThat(result.isAllConstraintsSatisfied()).isTrue();
+    }
+
     private static void startActivity(String packageName) {
+        startActivity(packageName, "com.android.cts.install.lib.testapp.MainActivity");
+    }
+
+    private static void startActivity(String packageName, String className) {
         // The -W option waits for the activity launch to complete
-        SystemUtil.runShellCommand(
-                String.format("am start-activity -W -n %s/%s", packageName,
-                        "com.android.cts.install.lib.testapp.MainActivity"));
+        SystemUtil.runShellCommandOrThrow(
+                String.format("am start-activity -W -n %s/%s", packageName, className));
     }
 
     private int getPackageImportance(String packageName) {

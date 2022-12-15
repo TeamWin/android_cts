@@ -3124,13 +3124,15 @@ public class CameraTestUtils extends Assert {
      * @param expectedThumbnailSize The expected thumbnail size.
      * @param expectedExifData The expected EXIF data
      * @param staticInfo The static metadata for the camera device.
+     * @param allStaticInfo The camera Id to static metadata map for all cameras.
      * @param blobFilename The filename to dump the jpeg/heic to.
      * @param collector The camera error collector to collect errors.
      * @param format JPEG/HEIC format
      */
     public static void verifyJpegKeys(Image image, CaptureResult captureResult, Size expectedSize,
             Size expectedThumbnailSize, ExifTestData expectedExifData, StaticMetadata staticInfo,
-            CameraErrorCollector collector, String debugFileNameBase, int format) throws Exception {
+            HashMap<String, StaticMetadata> allStaticInfo, CameraErrorCollector collector,
+            String debugFileNameBase, int format) throws Exception {
 
         basicValidateBlobImage(image, expectedSize, format);
 
@@ -3184,8 +3186,8 @@ public class CameraTestUtils extends Assert {
 
         // Validate other exif tags for all non-legacy devices
         if (!staticInfo.isHardwareLevelLegacy()) {
-            verifyJpegExifExtraTags(exif, expectedSize, captureResult, staticInfo, collector,
-                    expectedExifData);
+            verifyJpegExifExtraTags(exif, expectedSize, captureResult, staticInfo, allStaticInfo,
+                    collector, expectedExifData);
         }
     }
 
@@ -3211,24 +3213,113 @@ public class CameraTestUtils extends Assert {
     }
 
     /**
+     * Get all of the supported focal lengths for capture result.
+     *
+     * If the camera is a logical camera, return the focal lengths of the logical camera
+     * and its active physical camera.
+     *
+     * If the camera isn't a logical camera, return the focal lengths supported by the
+     * single camera.
+     */
+    public static Set<Float> getAvailableFocalLengthsForResult(CaptureResult result,
+            StaticMetadata staticInfo,
+            HashMap<String, StaticMetadata> allStaticInfo) {
+        Set<Float> focalLengths = new HashSet<Float>();
+        float[] supportedFocalLengths = staticInfo.getAvailableFocalLengthsChecked();
+        for (float focalLength : supportedFocalLengths) {
+            focalLengths.add(focalLength);
+        }
+
+        if (staticInfo.isLogicalMultiCamera()) {
+            boolean activePhysicalCameraIdSupported =
+                    staticInfo.isActivePhysicalCameraIdSupported();
+            Set<String> physicalCameraIds;
+            if (activePhysicalCameraIdSupported) {
+                String activePhysicalCameraId = result.get(
+                        CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID);
+                physicalCameraIds = new HashSet<String>();
+                physicalCameraIds.add(activePhysicalCameraId);
+            } else {
+                physicalCameraIds = staticInfo.getCharacteristics().getPhysicalCameraIds();
+            }
+
+            for (String physicalCameraId : physicalCameraIds) {
+                StaticMetadata physicalStaticInfo = allStaticInfo.get(physicalCameraId);
+                if (physicalStaticInfo != null) {
+                    float[] focalLengthsArray =
+                            physicalStaticInfo.getAvailableFocalLengthsChecked();
+                    for (float focalLength: focalLengthsArray) {
+                        focalLengths.add(focalLength);
+                    }
+                }
+            }
+        }
+
+        return focalLengths;
+    }
+
+    /**
      * Validate and return the focal length.
      *
      * @param result Capture result to get the focal length
+     * @param supportedFocalLengths Valid focal lengths to check the result focal length against
+     * @param collector The camera error collector
      * @return Focal length from capture result or -1 if focal length is not available.
      */
-    private static float validateFocalLength(CaptureResult result, StaticMetadata staticInfo,
-            CameraErrorCollector collector) {
-        float[] focalLengths = staticInfo.getAvailableFocalLengthsChecked();
+    private static float validateFocalLength(CaptureResult result,
+            Set<Float> supportedFocalLengths, CameraErrorCollector collector) {
         Float resultFocalLength = result.get(CaptureResult.LENS_FOCAL_LENGTH);
         if (collector.expectTrue("Focal length is invalid",
                 resultFocalLength != null && resultFocalLength > 0)) {
-            List<Float> focalLengthList =
-                    Arrays.asList(CameraTestUtils.toObject(focalLengths));
             collector.expectTrue("Focal length should be one of the available focal length",
-                    focalLengthList.contains(resultFocalLength));
+                    supportedFocalLengths.contains(resultFocalLength));
             return resultFocalLength;
         }
         return -1;
+    }
+
+    /**
+     * Get all of the supported apertures for capture result.
+     *
+     * If the camera is a logical camera, return the apertures of the logical camera
+     * and its active physical camera.
+     *
+     * If the camera isn't a logical camera, return the apertures supported by the
+     * single camera.
+     */
+    private static Set<Float> getAvailableAperturesForResult(CaptureResult result,
+            StaticMetadata staticInfo, HashMap<String, StaticMetadata> allStaticInfo) {
+        Set<Float> allApertures = new HashSet<Float>();
+        float[] supportedApertures = staticInfo.getAvailableAperturesChecked();
+        for (float aperture : supportedApertures) {
+            allApertures.add(aperture);
+        }
+
+        if (staticInfo.isLogicalMultiCamera()) {
+            boolean activePhysicalCameraIdSupported =
+                    staticInfo.isActivePhysicalCameraIdSupported();
+            Set<String> physicalCameraIds;
+            if (activePhysicalCameraIdSupported) {
+                String activePhysicalCameraId = result.get(
+                        CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID);
+                physicalCameraIds = new HashSet<String>();
+                physicalCameraIds.add(activePhysicalCameraId);
+            } else {
+                physicalCameraIds = staticInfo.getCharacteristics().getPhysicalCameraIds();
+            }
+
+            for (String physicalCameraId : physicalCameraIds) {
+                StaticMetadata physicalStaticInfo = allStaticInfo.get(physicalCameraId);
+                if (physicalStaticInfo != null) {
+                    float[] apertures = physicalStaticInfo.getAvailableAperturesChecked();
+                    for (float aperture: apertures) {
+                        allApertures.add(aperture);
+                    }
+                }
+            }
+        }
+
+        return allApertures;
     }
 
     /**
@@ -3237,36 +3328,33 @@ public class CameraTestUtils extends Assert {
      * @param result Capture result to get the aperture
      * @return Aperture from capture result or -1 if aperture is not available.
      */
-    private static float validateAperture(CaptureResult result, StaticMetadata staticInfo,
-            CameraErrorCollector collector) {
-        float[] apertures = staticInfo.getAvailableAperturesChecked();
+    private static float validateAperture(CaptureResult result,
+            Set<Float> supportedApertures, CameraErrorCollector collector) {
         Float resultAperture = result.get(CaptureResult.LENS_APERTURE);
         if (collector.expectTrue("Capture result aperture is invalid",
                 resultAperture != null && resultAperture > 0)) {
-            List<Float> apertureList =
-                    Arrays.asList(CameraTestUtils.toObject(apertures));
             collector.expectTrue("Aperture should be one of the available apertures",
-                    apertureList.contains(resultAperture));
+                    supportedApertures.contains(resultAperture));
             return resultAperture;
         }
         return -1;
     }
 
     /**
-     * Return the closest value in an array of floats.
+     * Return the closest value in a Set of floats.
      */
-    private static float getClosestValueInArray(float[] values, float target) {
-        int minIdx = 0;
-        float minDistance = Math.abs(values[0] - target);
-        for(int i = 0; i < values.length; i++) {
-            float distance = Math.abs(values[i] - target);
+    private static float getClosestValueInSet(Set<Float> values, float target) {
+        float minDistance = Float.MAX_VALUE;
+        float closestValue = -1.0f;
+        for(float value : values) {
+            float distance = Math.abs(value - target);
             if (minDistance > distance) {
                 minDistance = distance;
-                minIdx = i;
+                closestValue = value;
             }
         }
 
-        return values[minIdx];
+        return closestValue;
     }
 
     /**
@@ -3286,8 +3374,9 @@ public class CameraTestUtils extends Assert {
      * Verify extra tags in JPEG EXIF
      */
     private static void verifyJpegExifExtraTags(ExifInterface exif, Size jpegSize,
-            CaptureResult result, StaticMetadata staticInfo, CameraErrorCollector collector,
-            ExifTestData expectedExifData)
+            CaptureResult result, StaticMetadata staticInfo,
+            HashMap<String, StaticMetadata> allStaticInfo,
+            CameraErrorCollector collector, ExifTestData expectedExifData)
             throws ParseException {
         /**
          * TAG_IMAGE_WIDTH and TAG_IMAGE_LENGTH and TAG_ORIENTATION.
@@ -3370,15 +3459,16 @@ public class CameraTestUtils extends Assert {
         boolean isExternalCamera = staticInfo.isExternalCamera();
         if (!isExternalCamera) {
             // TAG_FOCAL_LENGTH.
-            float[] focalLengths = staticInfo.getAvailableFocalLengthsChecked();
+            Set<Float> focalLengths = getAvailableFocalLengthsForResult(
+                    result, staticInfo, allStaticInfo);
             float exifFocalLength = (float)exif.getAttributeDouble(
                         ExifInterface.TAG_FOCAL_LENGTH, -1);
             collector.expectEquals("Focal length should match",
-                    getClosestValueInArray(focalLengths, exifFocalLength),
+                    getClosestValueInSet(focalLengths, exifFocalLength),
                     exifFocalLength, EXIF_FOCAL_LENGTH_ERROR_MARGIN);
             // More checks for focal length.
             collector.expectEquals("Exif focal length should match capture result",
-                    validateFocalLength(result, staticInfo, collector),
+                    validateFocalLength(result, focalLengths, collector),
                     exifFocalLength, EXIF_FOCAL_LENGTH_ERROR_MARGIN);
 
             // TAG_EXPOSURE_TIME
@@ -3402,15 +3492,16 @@ public class CameraTestUtils extends Assert {
             String exifAperture = exif.getAttribute(ExifInterface.TAG_APERTURE);
             collector.expectNotNull("Exif TAG_APERTURE shouldn't be null", exifAperture);
             if (staticInfo.areKeysAvailable(CameraCharacteristics.LENS_INFO_AVAILABLE_APERTURES)) {
-                float[] apertures = staticInfo.getAvailableAperturesChecked();
+                Set<Float> apertures = getAvailableAperturesForResult(
+                        result, staticInfo, allStaticInfo);
                 if (exifAperture != null) {
                     float apertureValue = Float.parseFloat(exifAperture);
                     collector.expectEquals("Aperture value should match",
-                            getClosestValueInArray(apertures, apertureValue),
+                            getClosestValueInSet(apertures, apertureValue),
                             apertureValue, EXIF_APERTURE_ERROR_MARGIN);
                     // More checks for aperture.
                     collector.expectEquals("Exif aperture length should match capture result",
-                            validateAperture(result, staticInfo, collector),
+                            validateAperture(result, apertures, collector),
                             apertureValue, EXIF_APERTURE_ERROR_MARGIN);
                 }
             }

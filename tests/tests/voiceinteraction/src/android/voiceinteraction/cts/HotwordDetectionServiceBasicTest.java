@@ -228,10 +228,7 @@ public final class HotwordDetectionServiceBasicTest
     @Test
     public void testVoiceInteractionService_disallowCreateAlwaysOnHotwordDetectorTwice()
             throws Throwable {
-        final boolean enableMultipleHotwordDetectors = CompatChanges.isChangeEnabled(
-                MULTIPLE_ACTIVE_HOTWORD_DETECTORS);
-        Log.d(TAG, "enableMultipleHotwordDetectors = " + enableMultipleHotwordDetectors);
-        assumeTrue("Not support multiple hotword detectors", enableMultipleHotwordDetectors);
+        assumeTrue("Not support multiple hotword detectors", isEnableMultipleHotwordDetectors());
 
         Thread.sleep(CLEAR_CHIP_MS);
         // Create first AlwaysOnHotwordDetector and wait the HotwordDetectionService ready.
@@ -263,10 +260,7 @@ public final class HotwordDetectionServiceBasicTest
     @Test
     public void testVoiceInteractionService_disallowCreateSoftwareHotwordDetectorTwice()
             throws Throwable {
-        final boolean enableMultipleHotwordDetectors = CompatChanges.isChangeEnabled(
-                MULTIPLE_ACTIVE_HOTWORD_DETECTORS);
-        Log.d(TAG, "enableMultipleHotwordDetectors = " + enableMultipleHotwordDetectors);
-        assumeTrue("Not support multiple hotword detectors", enableMultipleHotwordDetectors);
+        assumeTrue("Not support multiple hotword detectors", isEnableMultipleHotwordDetectors());
 
         Thread.sleep(CLEAR_CHIP_MS);
         // Create first SoftwareHotwordDetector and wait the HotwordDetectionService ready.
@@ -589,6 +583,58 @@ public final class HotwordDetectionServiceBasicTest
                 Utils.HOTWORD_DETECTION_SERVICE_BASIC);
     }
 
+    @Test
+    @RequiresDevice
+    public void testMultipleDetectors_onDetectFromDspAndMic_success()
+            throws Throwable {
+        assumeTrue("Not support multiple hotword detectors", isEnableMultipleHotwordDetectors());
+
+        Thread.sleep(CLEAR_CHIP_MS);
+        // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
+        testHotwordDetection(mActivityTestRule, mContext,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
+                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
+
+        // Create SoftwareHotwordDetector and wait the HotwordDetectionService ready
+        testHotwordDetection(mActivityTestRule, mContext,
+                Utils.HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST,
+                Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
+                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
+
+        // Test AlwaysOnHotwordDetector to be able to detect well
+        verifyDetectedResult(
+                performAndGetDetectionResult(
+                        mActivityTestRule, mContext,
+                        Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST,
+                        Utils.HOTWORD_DETECTION_SERVICE_BASIC),
+                MainHotwordDetectionService.DETECTED_RESULT);
+
+        // Test SoftwareHotwordDetector to be able to detect well
+        verifyDetectedResult(
+                performAndGetDetectionResult(
+                        mActivityTestRule, mContext,
+                        Utils.HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST,
+                        Utils.HOTWORD_DETECTION_SERVICE_BASIC),
+                MainHotwordDetectionService.DETECTED_RESULT);
+
+        // Destroy the AlwaysOnHotwordDetector
+        testHotwordDetection(mActivityTestRule, mContext,
+                Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
+                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
+
+        // Destroy the SoftwareHotwordDetector
+        testHotwordDetection(mActivityTestRule, mContext,
+                Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_DESTROY_DETECTOR,
+                Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
+                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
+    }
+
     // TODO: Implement HotwordDetectedResult#equals to override the Bundle equality check; then
     // simply check that the HotwordDetectedResults are equal.
     private void verifyDetectedResult(Parcelable result, HotwordDetectedResult expected) {
@@ -636,6 +682,13 @@ public final class HotwordDetectionServiceBasicTest
         final boolean chipFound = sUiDevice.wait(Until.hasObject(
                 By.res(PRIVACY_CHIP_PKG, PRIVACY_CHIP_ID)), CLEAR_CHIP_MS) == true;
         assertEquals("chip display state", shouldBePresent, chipFound);
+    }
+
+    private boolean isEnableMultipleHotwordDetectors() {
+        final boolean enableMultipleHotwordDetectors = CompatChanges.isChangeEnabled(
+                MULTIPLE_ACTIVE_HOTWORD_DETECTORS);
+        Log.d(TAG, "enableMultipleHotwordDetectors = " + enableMultipleHotwordDetectors);
+        return enableMultipleHotwordDetectors;
     }
 
     @Override

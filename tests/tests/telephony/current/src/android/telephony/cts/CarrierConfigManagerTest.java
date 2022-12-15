@@ -54,6 +54,7 @@ import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionManager.OnSubscriptionsChangedListener;
 import android.telephony.TelephonyManager;
+import android.telephony.TelephonyRegistryManager;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
@@ -71,12 +72,21 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 // TODO(b/221323753): replace remain junit asserts with Truth assert
 public class CarrierConfigManagerTest {
+
+    private static final long TIMEOUT_MILLIS = 5000;
+
+    private static final int TEST_SLOT_INDEX = 0;
+    private static final int TEST_SUB_ID = 1;
+    private static final int TEST_CARRIER_ID = 99;
+    private static final int TEST_PRECISE_CARRIER_ID = 100;
 
     private static final String CARRIER_NAME_OVERRIDE = "carrier_a";
     private CarrierConfigManager mConfigManager;
@@ -343,6 +353,21 @@ public class CarrierConfigManagerTest {
     }
 
     @Test
+    public void testGetConfig_keyWithoutDefaultValue() {
+        String keyWithDefaultValue = CarrierConfigManager.KEY_CARRIER_SUPPORTS_TETHERING_BOOL;
+        String keyWithoutDefaultValue = "random_key_for_testing";
+
+        PersistableBundle configSubset = mConfigManager.getConfig(keyWithoutDefaultValue);
+        assertThat(configSubset.isEmpty()).isFalse();
+        assertThat(configSubset.keySet()).doesNotContain(keyWithoutDefaultValue);
+
+        configSubset = mConfigManager.getConfig(keyWithDefaultValue, keyWithoutDefaultValue);
+        assertThat(configSubset.isEmpty()).isFalse();
+        assertThat(configSubset.keySet()).contains(keyWithDefaultValue);
+        assertThat(configSubset.keySet()).doesNotContain(keyWithoutDefaultValue);
+    }
+
+    @Test
     @AsbSecurityTest(cveBugId = 73136824)
     public void testRevokePermission() {
         PersistableBundle config;
@@ -573,6 +598,81 @@ public class CarrierConfigManagerTest {
         if (config != null) {
             assertTrue(config.containsKey(
                     CarrierConfigManager.ImsVoice.KEY_AMRWB_PAYLOAD_DESCRIPTION_BUNDLE));
+        }
+    }
+
+    @Test
+    public void testRegisterCarrierConfigChangeListener_withNullExecutor() throws Exception {
+        // non-null listener
+        CarrierConfigManager.CarrierConfigChangeListener listener = (a, b, c, d) -> {
+        };
+        try {
+            mConfigManager.registerCarrierConfigChangeListener(null, listener);
+            fail("NullPointerException expected when register with null executor");
+        } catch (NullPointerException expected) {
+        }
+    }
+
+    @Test
+    public void testRegisterCarrierConfigChangeListener_withNullListener() throws Exception {
+        // non-null executor
+        Executor executor = Runnable::run;
+        try {
+            mConfigManager.registerCarrierConfigChangeListener(executor, null);
+            fail("NullPointerException expected when register with null listener");
+        } catch (NullPointerException expected) {
+        }
+    }
+
+    @Test
+    public void testUnregisterCarrierConfigChangeListener_withNullListener() throws Exception {
+        try {
+            mConfigManager.unregisterCarrierConfigChangeListener(null);
+            fail("NullPointerException expected when unregister with null listener");
+        } catch (NullPointerException expected) {
+        }
+    }
+
+    @Test
+    public void testCarrierConfigChangeListener() throws Exception {
+        LinkedBlockingQueue<CarrierConfigChangeParams> queue = new LinkedBlockingQueue<>(1);
+
+        CarrierConfigManager.CarrierConfigChangeListener listener =
+                (slotIndex, subId, carrierId, preciseCarrierId) -> queue.offer(
+                        new CarrierConfigChangeParams(slotIndex, subId, carrierId,
+                                preciseCarrierId));
+
+        try {
+            mConfigManager.registerCarrierConfigChangeListener(Runnable::run, listener);
+
+            TelephonyRegistryManager telephonyRegistryManager = getContext().getSystemService(
+                    TelephonyRegistryManager.class);
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(telephonyRegistryManager,
+                    (trm) -> trm.notifyCarrierConfigChanged(TEST_SLOT_INDEX, TEST_SUB_ID,
+                            TEST_CARRIER_ID, TEST_PRECISE_CARRIER_ID));
+            CarrierConfigChangeParams result = queue.poll(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+
+            assertEquals(TEST_SLOT_INDEX, result.mSlotIndex);
+            assertEquals(TEST_SUB_ID, result.mSubId);
+            assertEquals(TEST_CARRIER_ID, result.mCarrierId);
+            assertEquals(TEST_PRECISE_CARRIER_ID, result.mPreciseCarrierId);
+        } finally {
+            mConfigManager.unregisterCarrierConfigChangeListener(listener);
+        }
+    }
+
+    // A data value class to wrap the parameters of carrier config change
+    private class CarrierConfigChangeParams {
+        final int mSlotIndex;
+        final int mSubId;
+        final int mCarrierId;
+        final int mPreciseCarrierId;
+
+        CarrierConfigChangeParams(int slotIndex, int subId, int carrierId, int preciseCarrierId) {
+            mSlotIndex = slotIndex;
+            mSubId = subId;
+            mCarrierId = carrierId;
+            mPreciseCarrierId = preciseCarrierId;
         }
     }
 }

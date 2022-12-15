@@ -32,6 +32,7 @@ import androidx.test.InstrumentationRegistry;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Helper for making IntentSenders whose results are sent back to the test
@@ -68,6 +69,13 @@ public class LocalIntentSender extends BroadcastReceiver {
         Intent intent = mResults.take();
         Log.i(TAG, "Taking intent " + prettyPrint(intent));
         return intent;
+    }
+
+    /**
+     * Similar to {@link #getResult()}, but with a timeout.
+     */
+    public Intent pollResult(long timeout, TimeUnit unit) throws InterruptedException {
+        return mResults.poll(timeout, unit);
     }
 
     private static String prettyPrint(Intent intent) {

@@ -217,6 +217,50 @@ public class AudioFormatTest extends CtsAndroidTestCase {
             2 /* channels */ * 4 /* bytes per sample */, formatPcmFloat.getFrameSizeInBytes());
     }
 
+    // Test case 8: Check setting valid encodings
+    public void testValidEncodings() throws Exception {
+        int[] encodings = {
+            AudioFormat.ENCODING_DEFAULT,
+            AudioFormat.ENCODING_PCM_16BIT,
+            AudioFormat.ENCODING_PCM_8BIT,
+            AudioFormat.ENCODING_PCM_FLOAT,
+            AudioFormat.ENCODING_AC3,
+            AudioFormat.ENCODING_E_AC3,
+            AudioFormat.ENCODING_DTS,
+            AudioFormat.ENCODING_DTS_HD,
+            AudioFormat.ENCODING_MP3,
+            AudioFormat.ENCODING_AAC_LC,
+            AudioFormat.ENCODING_AAC_HE_V1,
+            AudioFormat.ENCODING_AAC_HE_V2,
+            AudioFormat.ENCODING_IEC61937,
+            AudioFormat.ENCODING_DOLBY_TRUEHD,
+            AudioFormat.ENCODING_AAC_ELD,
+            AudioFormat.ENCODING_AAC_XHE,
+            AudioFormat.ENCODING_AC4,
+            AudioFormat.ENCODING_E_AC3_JOC,
+            AudioFormat.ENCODING_DOLBY_MAT,
+            AudioFormat.ENCODING_OPUS,
+            AudioFormat.ENCODING_PCM_24BIT_PACKED,
+            AudioFormat.ENCODING_PCM_32BIT,
+            AudioFormat.ENCODING_MPEGH_BL_L3,
+            AudioFormat.ENCODING_MPEGH_BL_L4,
+            AudioFormat.ENCODING_MPEGH_LC_L3,
+            AudioFormat.ENCODING_MPEGH_LC_L4,
+            AudioFormat.ENCODING_DTS_UHD_P1,
+            AudioFormat.ENCODING_DRA,
+            AudioFormat.ENCODING_DTS_HD_MA,
+            AudioFormat.ENCODING_DTS_UHD_P2,
+            AudioFormat.ENCODING_DSD,
+        };
+        for (int encoding : encodings) {
+            final AudioFormat format = new AudioFormat.Builder()
+                    .setEncoding(encoding)
+                    .setSampleRate(44100)
+                    .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+                    .build();
+        }
+    }
+
     /**
      * Check whether the bits in a are all present in b.
      *

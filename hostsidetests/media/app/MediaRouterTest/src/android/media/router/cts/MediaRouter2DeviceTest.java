@@ -88,7 +88,7 @@ public class MediaRouter2DeviceTest {
         mWakeLock =
                 powerManager.newWakeLock(
                         PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP,
-                        "MediaRouter2DeviceTest");
+                        "MediaRouterCts:MediaRouter2DeviceTest");
         mWakeLock.setReferenceCounted(false);
         mWakeLock.acquire();
     }

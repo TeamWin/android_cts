@@ -248,6 +248,7 @@ public final class PolicyTransparencyTestListActivity extends PassFailButtons.Te
         final Intent intent = new Intent(CommandReceiverActivity.ACTION_EXECUTE_COMMAND);
         intent.putExtra(CommandReceiverActivity.EXTRA_COMMAND,
                 CommandReceiverActivity.COMMAND_CLEAR_POLICIES);
+        intent.putExtra(CommandReceiverActivity.EXTRA_USE_CURRENT_USER_DPM, true);
         intent.putExtra(PolicyTransparencyTestListActivity.EXTRA_MODE, mMode);
         Log.d(TAG, "finish(): starting activity using " + intent);
         startActivity(intent);

@@ -45,6 +45,7 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.exceptions.PollValueFailedException;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.ShellCommand;
@@ -164,7 +165,7 @@ public final class UserReference implements AutoCloseable {
                     .errorOnFail()
                     .timeout(Duration.ofMinutes(1))
                     .await();
-        } catch (AdbException e) {
+        } catch (AdbException | PollValueFailedException e) {
             throw new NeneException("Could not start user " + this, e);
         }
 
@@ -305,9 +306,12 @@ public final class UserReference implements AutoCloseable {
             if (adbUser == null) {
                 return false;
             }
+
             return RUNNING_STATES.contains(adbUser().state());
         }
         try (PermissionContext p = TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
+            Log.d(LOG_TAG, "isUserRunning(" + this + "): "
+                    + mUserManager.isUserRunning(userHandle()));
             return mUserManager.isUserRunning(userHandle());
         }
     }
@@ -322,6 +326,8 @@ public final class UserReference implements AutoCloseable {
             return adbUser.state().equals(AdbUser.UserState.RUNNING_UNLOCKED);
         }
         try (PermissionContext p = TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
+            Log.d(LOG_TAG, "isUserUnlocked(" + this + "): "
+                    + mUserManager.isUserUnlocked(userHandle()));
             return mUserManager.isUserUnlocked(userHandle());
         }
     }

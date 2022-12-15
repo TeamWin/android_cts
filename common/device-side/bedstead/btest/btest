@@ -30,7 +30,7 @@ class CurrentUserState:
     def is_active(self, device_state):
         return True
 
-    def include_annotations(self):
+    def include_annotations(self, args):
         return []
 
     def initialise(self, device_state):
@@ -42,8 +42,8 @@ class CurrentUserState:
     def get_user(self):
         return self.current_user
 
-    def all_supported_annotations(self):
-        return self.include_annotations()
+    def all_supported_annotations(self, args):
+        return self.include_annotations(args)
 
 class SystemUserState:
     def __init__(self, args):
@@ -55,7 +55,10 @@ class SystemUserState:
     def is_active(self, device_state):
         return device_state["current_user"] == 0
 
-    def include_annotations(self):
+    def include_annotations(self, args):
+        if args.headless:
+            # We want to skip all of the RequireRunOnPrimaryUser ones which get assumption failed
+            return ["com.android.bedstead.harrier.annotations.RequireRunOnSystemUser"]
         return []
 
     def initialise(self, device_state):
@@ -68,8 +71,8 @@ class SystemUserState:
     def get_user(self):
         return 0
 
-    def all_supported_annotations(self):
-        return self.include_annotations()
+    def all_supported_annotations(self, args):
+        return self.include_annotations(args)
 
 class SecondaryUserState:
     def __init__(self, args):
@@ -87,7 +90,7 @@ class SecondaryUserState:
         secondary_user_id = get_or_create_secondary_user(self.args)
         return device_state["current_user"] == secondary_user_id
 
-    def include_annotations(self):
+    def include_annotations(self, args):
         return ["com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser"]
 
     def initialise(self, device_state):
@@ -107,8 +110,8 @@ class SecondaryUserState:
     def get_user(self):
         return self.user_id
 
-    def all_supported_annotations(self):
-        return self.include_annotations()
+    def all_supported_annotations(self, args):
+        return self.include_annotations(args)
 
 class AdditionalUserState:
     """ This state is only useful for headless devices. """
@@ -121,7 +124,7 @@ class AdditionalUserState:
     def is_active(self, device_state):
         return is_additional_user(device_state, device_state["users"][device_state["current_user"]])
 
-    def include_annotations(self):
+    def include_annotations(self, args):
         return ["com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser"]
 
     def initialise(self, device_state):
@@ -141,8 +144,8 @@ class AdditionalUserState:
     def get_user(self):
         return self.user_id
 
-    def all_supported_annotations(self):
-        return self.include_annotations() + ["com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser"]
+    def all_supported_annotations(self, args):
+        return self.include_annotations(args) + ["com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser"]
 
 class WorkProfileState:
     def __init__(self, args):
@@ -160,7 +163,7 @@ class WorkProfileState:
                 return False
         return self._has_work_profile(device_state["users"][device_state["current_user"]])
 
-    def include_annotations(self):
+    def include_annotations(self, args):
         return ["com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile"]
 
     def initialise(self, device_state):
@@ -198,8 +201,8 @@ class WorkProfileState:
     def _is_work_profile(self, user):
         return user["type"] == "profile.MANAGED"
 
-    def all_supported_annotations(self):
-        return self.include_annotations()
+    def all_supported_annotations(self, args):
+        return self.include_annotations(args)
 
 RUN_ON_CURRENT_USER = CurrentUserState
 RUN_ON_SYSTEM_USER = SystemUserState
@@ -216,9 +219,11 @@ STATE_CODES = {
 }
 
 SHORT_PACKAGE_PREFIXES = {
-    "a.d.c" : "android.devicepolicy.cts",
-    "a.d.g" : "android.devicepolicy.gts",
-    "a.m.c": "android.multiuser.cts"
+    "a.d.c": "android.devicepolicy.cts",
+    "a.d.g": "android.devicepolicy.gts",
+    "a.m.c": "android.multiuser.cts",
+
+    "nene": "com.android.bedstead.nene"
 }
 
 # We hardcode supported modules so we can optimise for
@@ -807,7 +812,7 @@ def main():
         # We calculate annotations before filtering so we properly exclude all
         all_include_annotations = []
         for state in states:
-            all_include_annotations.extend(state.include_annotations())
+            all_include_annotations.extend(state.include_annotations(args))
 
         states = [m for m in states if m.__class__ in args.states]
 
@@ -833,8 +838,8 @@ def main():
                 debug(args, "[Test] Running tests for " + state.name())
                 if needs_to_enter_state:
                     state.enter()
-                include_annotations = state.include_annotations()
-                exclude_annotations = [x for x in all_include_annotations if not x in state.all_supported_annotations()]
+                include_annotations = state.include_annotations(args)
+                exclude_annotations = [x for x in all_include_annotations if not x in state.all_supported_annotations(args)]
                 test = Test(args, state, btest_run, total_test_count, next_test, include_annotations, exclude_annotations, (i < len(states) - 1))
                 test.run()
                 total_test_count = test.total_test_count
