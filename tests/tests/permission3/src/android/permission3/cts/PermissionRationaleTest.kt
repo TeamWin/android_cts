@@ -17,12 +17,23 @@
 package android.permission3.cts
 
 import android.Manifest
+import android.app.ActivityManager
+import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.provider.DeviceConfig
 import android.support.test.uiautomator.By
+import android.text.Spanned
+import android.text.style.ClickableSpan
+import android.view.View
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
+import com.android.compatibility.common.util.SystemUtil
 import com.android.modules.utils.build.SdkLevel
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Rule
@@ -31,6 +42,8 @@ import org.junit.Test
 /** Permission rationale activity tests. Permission rationale is only available on U+ */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 class PermissionRationaleTest : BaseUsePermissionTest() {
+
+    private var activityManager: ActivityManager? = null
 
     @get:Rule
     val deviceConfigPermissionRationaleEnabled =
@@ -56,9 +69,20 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
         Assume.assumeFalse(isTv)
         Assume.assumeFalse(isWatch)
 
-        installPackage(APP_APK_PATH_31)
+        activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+
+        installPackage(APP_APK_PATH_TEST_STORE_APP)
+
+        // TODO(b/257293222): Update/remove when hooking up PackageManager APIs
+        installPackage(APP_APK_PATH_31, installSource = TEST_STORE_PACKAGE_NAME)
 
         assertAppHasPermission(Manifest.permission.ACCESS_FINE_LOCATION, false)
+    }
+
+    @After
+    fun uninstallApps() {
+        // APP_PACKAGE_NAME in uninstalled in BaseUsePermissionTest which this class extends
+        uninstallPackage(TEST_STORE_PACKAGE_NAME, requireSuccess = false)
     }
 
     @Test
@@ -68,11 +92,40 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
         assertPermissionRationaleActivityTitleIsVisible(true)
     }
 
+    @Test
+    fun linksToInstallSource() {
+        navigateToPermissionRationaleActivity()
+
+        assertPermissionRationaleActivityTitleIsVisible(true)
+
+        clickInstallSourceLink()
+
+        SystemUtil.eventually {
+            assertStoreLinkClickSuccessful(installerPackageName = TEST_STORE_PACKAGE_NAME)
+        }
+    }
+
     private fun navigateToPermissionRationaleActivity() {
         requestAppPermissionsForNoResult(Manifest.permission.ACCESS_FINE_LOCATION) {
             assertPermissionRationaleOnGrantDialogIsVisible(true)
             clickPermissionRationaleViewInGrantDialog()
         }
+    }
+
+    private fun clickInstallSourceLink() {
+        waitForIdle()
+        SystemUtil.eventually {
+            // UiObject2 doesn't expose CharSequence.
+            val node = uiAutomation.rootInActiveWindow.findAccessibilityNodeInfosByViewId(
+                "com.android.permissioncontroller:id/purpose_message"
+            )[0]
+            assertTrue(node.isVisibleToUser)
+            val text = node.text as Spanned
+            val clickableSpan = text.getSpans(0, text.length, ClickableSpan::class.java)[0]
+            // We could pass in null here in Java, but we need an instance in Kotlin.
+            clickableSpan.onClick(View(context))
+        }
+        waitForIdle()
     }
 
     private fun assertPermissionRationaleOnGrantDialogIsVisible(expected: Boolean) {
@@ -81,6 +134,33 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
 
     private fun assertPermissionRationaleActivityTitleIsVisible(expected: Boolean) {
         findView(By.res(PERMISSION_RATIONALE_ACTIVITY_TITLE_VIEW), expected = expected)
+    }
+
+    private fun assertStoreLinkClickSuccessful(
+        installerPackageName: String,
+        packageName: String? = null
+    ) {
+        SystemUtil.runWithShellPermissionIdentity {
+            val runningTasks = activityManager!!.getRunningTasks(1)
+
+            assertFalse("Expected runningTasks to not be empty",
+                runningTasks.isEmpty())
+
+            val taskInfo = runningTasks[0]
+            val observedIntentAction = taskInfo.baseIntent.action
+            val observedPackageName = taskInfo.baseIntent.getStringExtra(Intent.EXTRA_PACKAGE_NAME)
+            val observedInstallerPackageName = taskInfo.topActivity?.packageName
+
+            assertEquals("Unexpected intent action",
+                Intent.ACTION_SHOW_APP_INFO,
+                observedIntentAction)
+            assertEquals("Unexpected installer package name",
+                installerPackageName,
+                observedInstallerPackageName)
+            assertEquals("Unexpected package name",
+                packageName,
+                observedPackageName)
+        }
     }
 
     companion object {

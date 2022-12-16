@@ -17,6 +17,7 @@
 package android.devicepolicy.cts;
 
 import static android.app.admin.DevicePolicyManager.EXEMPT_FROM_APP_STANDBY;
+import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
 
 import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
 import static com.android.bedstead.nene.appops.AppOpsMode.DEFAULT;
@@ -38,6 +39,7 @@ import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.IntTestParameter;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
@@ -55,6 +57,7 @@ import java.util.Map;
 import java.util.Set;
 
 @RunWith(BedsteadJUnit4.class)
+@RequireFeature(FEATURE_DEVICE_ADMIN)
 public class ApplicationExemptionsTest {
 
     @ClassRule @Rule

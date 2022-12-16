@@ -29,6 +29,7 @@ import com.android.os.StatsLog;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -121,9 +122,10 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
             throws DeviceNotAvailableException {
         assertThat(report.getSessionId()).isNotEqualTo(-1);
         assertThat(report.getUid()).isEqualTo(expectedUid);
-        assertThat(report.getUserIdsList()).isEqualTo(expectedUserIds);
+        assertThat(report.getUserIdsList()).containsAtLeastElementsIn(expectedUserIds);
         checkUserTypes(expectedUserIds, report.getUserTypesList());
-        assertThat(report.getOriginalUserIdsList()).isEqualTo(expectedOriginalUserIds);
+        assertThat(report.getOriginalUserIdsList()).containsAtLeastElementsIn(
+                expectedOriginalUserIds);
         assertThat(report.getPublicReturnCode()).isEqualTo(expectedPublicReturnCode);
         assertThat(report.getVersionCode()).isEqualTo(expectedVersionCode);
         assertThat(report.getApksSizeBytes()).isEqualTo(expectedApksSizeBytes);
@@ -157,10 +159,10 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
                 HELPER_CLASS, GET_USER_TYPES_HELPER_METHOD, testArgs);
         assertNotNull(testResult);
         assertEquals(1, testResult.size());
-        String userTypesString = testResult.get(GET_USER_TYPES_HELPER_ARG_USER_TYPES);
-        String reportedUserTypesString = reportedUserTypes.stream().map(Object::toString)
-                .collect(Collectors.joining(","));
-        assertThat(reportedUserTypesString).isEqualTo(userTypesString);
+        String[] userTypesStrings = testResult.get(GET_USER_TYPES_HELPER_ARG_USER_TYPES).split(",");
+        List<Integer> expectedUserTypes = Arrays.stream(userTypesStrings).map(
+                Integer::valueOf).collect(Collectors.toList());
+        assertThat(reportedUserTypes).containsAtLeastElementsIn(expectedUserTypes);
     }
 
     public void testPackageUninstalledReported() throws Exception {

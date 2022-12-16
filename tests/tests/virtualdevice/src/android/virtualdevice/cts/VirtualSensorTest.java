@@ -140,6 +140,17 @@ public class VirtualSensorTest {
     }
 
     @Test
+    public void buildVirtualSensorConfig() {
+        VirtualSensorConfig config =
+                new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME)
+                        .setVendor(VIRTUAL_SENSOR_VENDOR)
+                        .build();
+        assertThat(config.getType()).isEqualTo(TYPE_ACCELEROMETER);
+        assertThat(config.getName()).isEqualTo(VIRTUAL_SENSOR_NAME);
+        assertThat(config.getVendor()).isEqualTo(VIRTUAL_SENSOR_VENDOR);
+    }
+
+    @Test
     public void getSensorList_noVirtualSensors_returnsEmptyList() {
         mVirtualSensor = setUpVirtualSensor(/* sensorConfig= */ null);
         assertThat(mVirtualSensor).isNull();
@@ -268,6 +279,27 @@ public class VirtualSensorTest {
         final VirtualSensorEvent thirdEvent =
                 new VirtualSensorEvent.Builder(new float[] {2.3f, 4.5f, 6.7f}).build();
         mVirtualSensor.sendEvent(thirdEvent);
+
+        mSensorEventListener.assertNoMoreEvents();
+    }
+
+    @Test
+    public void sendEvent_explicitTimestampSpecified() {
+        mVirtualSensor = setUpVirtualSensor(
+                new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME).build());
+        Sensor sensor = mVirtualDeviceSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
+        mVirtualDeviceSensorManager.registerListener(
+                mSensorEventListener, sensor, SensorManager.SENSOR_DELAY_NORMAL);
+
+        VirtualSensorEvent event =
+                new VirtualSensorEvent.Builder(new float[] {0.1f, 2.3f, 4.5f})
+                        .setTimestampNanos(System.nanoTime())
+                        .build();
+        mVirtualSensor.sendEvent(event);
+
+        mSensorEventListener.assertReceivedSensorEvent(sensor, event);
+
+        mVirtualDeviceSensorManager.unregisterListener(mSensorEventListener);
 
         mSensorEventListener.assertNoMoreEvents();
     }

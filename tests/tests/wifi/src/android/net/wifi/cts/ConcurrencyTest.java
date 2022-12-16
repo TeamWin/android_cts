@@ -16,7 +16,10 @@
 
 package android.net.wifi.cts;
 
+import static android.net.wifi.p2p.WifiP2pConfig.GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL;
+
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThrows;
 
 import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
@@ -959,6 +962,26 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED, mMyResponse.discoveryState);
 
         mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, null);
+    }
+
+    public void testP2pConnectThrowsExceptionWhenIPv6LinkLocalIsNotSupported() {
+        if (!setupWifiP2p()) {
+            return;
+        }
+
+        if (mWifiP2pManager.isGroupClientIpv6LinkLocalProvisioningSupported()) {
+            return;
+        }
+
+        resetResponse(mMyResponse);
+        WifiP2pConfig config = new WifiP2pConfig.Builder()
+                .setDeviceAddress(MacAddress.fromString("aa:bb:cc:dd:ee:ff"))
+                .setGroupClientIpProvisioningMode(GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL)
+                .build();
+        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+            assertThrows(UnsupportedOperationException.class, () ->
+                    mWifiP2pManager.connect(mWifiP2pChannel, config, mActionListener));
+        });
     }
 
     public void testP2pSetVendorElements() {

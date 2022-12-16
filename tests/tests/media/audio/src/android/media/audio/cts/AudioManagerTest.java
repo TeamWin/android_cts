@@ -117,10 +117,12 @@ public class AudioManagerTest extends InstrumentationTestCase {
     private static final long TIME_TO_WAIT_CALLBACK_MS = 1000;
     private static final String APPOPS_OP_STR = "android:write_settings";
     private static final Set<Integer> ALL_KNOWN_ENCAPSULATION_TYPES = Set.of(
-            AudioProfile.AUDIO_ENCAPSULATION_TYPE_IEC61937);
+            AudioProfile.AUDIO_ENCAPSULATION_TYPE_IEC61937,
+            AudioProfile.AUDIO_ENCAPSULATION_TYPE_PCM);
     private static final Set<Integer> ALL_ENCAPSULATION_TYPES = Set.of(
             AudioProfile.AUDIO_ENCAPSULATION_TYPE_NONE,
-            AudioProfile.AUDIO_ENCAPSULATION_TYPE_IEC61937);
+            AudioProfile.AUDIO_ENCAPSULATION_TYPE_IEC61937,
+            AudioProfile.AUDIO_ENCAPSULATION_TYPE_PCM);
     private static final Set<Integer> ALL_AUDIO_STANDARDS = Set.of(
             AudioDescriptor.STANDARD_NONE,
             AudioDescriptor.STANDARD_EDID);
@@ -131,6 +133,9 @@ public class AudioManagerTest extends InstrumentationTestCase {
                 AudioManager.DIRECT_PLAYBACK_OFFLOAD_SUPPORTED,
             AudioManager.PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED,
                 AudioManager.DIRECT_PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED);
+    private static final Set<Integer> ALL_MIXER_BEHAVIORS = Set.of(
+            AudioMixerAttributes.MIXER_BEHAVIOR_DEFAULT,
+            AudioMixerAttributes.MIXER_BEHAVIOR_BIT_PERFECT);
 
     private static final int INVALID_DIRECT_PLAYBACK_MODE = -1;
     private AudioManager mAudioManager;
@@ -2143,6 +2148,8 @@ public class AudioManagerTest extends InstrumentationTestCase {
                         attr, device, defaultMixerAttributes));
             } else {
                 for (AudioMixerAttributes mixerAttr : supportedMixerAttributes) {
+                    assertNotNull(mixerAttr.getFormat());
+                    assertTrue(ALL_MIXER_BEHAVIORS.contains(mixerAttr.getMixerBehavior()));
                     listener.reset();
                     assertTrue(mAudioManager.setPreferredMixerAttributes(attr, device, mixerAttr));
                     try {

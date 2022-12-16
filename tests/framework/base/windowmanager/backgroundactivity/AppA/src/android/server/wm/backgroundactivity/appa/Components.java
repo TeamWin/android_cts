@@ -59,6 +59,18 @@ public class Components extends ComponentsBase {
     /** Extra key constants for {@link #APP_A_SEND_PENDING_INTENT_RECEIVER} */
     public static class SendPendingIntentReceiver {
         public static final String IS_BROADCAST_EXTRA = "IS_BROADCAST_EXTRA";
+
+        /**
+         * Create the intent with BAL set to the explicit value.
+         *
+         * <p>This should not have any effect as the ActivityOptions on the Intent are not used when
+         * starting the PendingIntent.
+         */
+        public static final String ALLOW_BAL_EXTRA_ON_PENDING_INTENT =
+                "ALLOW_BAL_EXTRA_ON_PENDING_INTENT";
+
+        /** Specify the package to use for app B. */
+        public static final String APP_B_PACKAGE = "APP_B_PACKAGE";
     }
 
     /** Extra key constants for {@link #APP_A_START_ACTIVITY_RECEIVER} */

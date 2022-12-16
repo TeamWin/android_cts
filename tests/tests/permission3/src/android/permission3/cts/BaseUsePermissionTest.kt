@@ -80,6 +80,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             "$APK_DIRECTORY/CtsDifferentPkgNameApp.apk"
         const val APP_PACKAGE_NAME = "android.permission3.cts.usepermission"
         const val OTHER_APP_PACKAGE_NAME = "android.permission3.cts.usepermissionother"
+        const val APP_APK_PATH_TEST_STORE_APP = "$APK_DIRECTORY/CtsTestAppStoreApp.apk"
+        const val TEST_STORE_PACKAGE_NAME = "android.permission3.cts.testappstoreapp"
 
         const val ALLOW_ALL_PHOTOS_BUTTON =
             "com.android.permissioncontroller:id/permission_allow_all_photos_button"

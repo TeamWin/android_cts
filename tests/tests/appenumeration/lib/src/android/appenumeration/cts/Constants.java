@@ -283,6 +283,8 @@ public class Constants {
             PKG_BASE + "cts.action.TAKE_PERSISTABLE_URI_PERMISSION";
     public static final String ACTION_CAN_PACKAGE_QUERY =
             PKG_BASE + "cts.action.CAN_PACKAGE_QUERY";
+    public static final String ACTION_CAN_PACKAGE_QUERIES =
+            PKG_BASE + "cts.action.CAN_PACKAGE_QUERIES";
     public static final String ACTION_GET_ALL_PACKAGE_INSTALLER_SESSIONS =
             PKG_BASE + "cts.action.GET_ALL_PACKAGE_INSTALLER_SESSIONS";
     public static final String ACTION_AWAIT_LAUNCHER_APPS_SESSION_CALLBACK =

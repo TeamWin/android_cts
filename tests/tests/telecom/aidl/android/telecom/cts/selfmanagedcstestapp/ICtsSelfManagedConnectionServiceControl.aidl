@@ -29,6 +29,7 @@ interface ICtsSelfManagedConnectionServiceControl {
     boolean isConnectionAvailable();
     boolean waitOnHold();
     boolean waitOnUnHold();
+    boolean initiateIncomingCall(in PhoneAccountHandle handle, in String uri);
     boolean placeOutgoingCall(in PhoneAccountHandle handle, in String uri);
     boolean placeIncomingCall(in PhoneAccountHandle handle,
             in String uri, in int videoState);
@@ -37,6 +38,7 @@ interface ICtsSelfManagedConnectionServiceControl {
     boolean getAudioModeIsVoip();
     int getConnectionState();
     int getOnShowIncomingUiInvokeCounter();
+    void setConnectionCapabilityNoHold();
     void setConnectionActive();
     void disconnectConnection();
 }

@@ -83,6 +83,8 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
 
     // the timeout to wait result in milliseconds
     private static final int WAIT_UPDATE_TIMEOUT_MS = 2000;
+    // the timeout to wait for SIM_STATE_READY state
+    private static final int WAIT_SIM_STATE_READY_MS = 5000;
 
     private static MockModemManager sMockModemManager;
     private static boolean sSupportsImsHal = false;
@@ -115,6 +117,8 @@ public class ImsCallingTestOnMockModem extends ImsCallingBase {
 
         int simCardState = tm.getSimCardState();
         assertEquals(TelephonyManager.SIM_STATE_PRESENT, simCardState);
+
+        TimeUnit.MILLISECONDS.sleep(WAIT_SIM_STATE_READY_MS);
 
         // Check SIM state ready
         simCardState = tm.getSimState();

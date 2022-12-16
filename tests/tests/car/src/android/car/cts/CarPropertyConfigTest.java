@@ -17,12 +17,15 @@
 package android.car.cts;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.car.Car;
 import android.car.VehicleAreaType;
+import android.car.VehiclePropertyIds;
 import android.car.VehiclePropertyType;
 import android.car.cts.utils.ShellPermissionUtils;
 import android.car.hardware.CarPropertyConfig;
+import android.car.hardware.property.AreaIdConfig;
 import android.car.hardware.property.CarPropertyManager;
 import android.car.test.ApiCheckerRule.Builder;
 import android.platform.test.annotations.AppModeFull;
@@ -183,12 +186,75 @@ public final class CarPropertyConfigTest extends AbstractCarTestCase {
     }
 
     @Test
-    public void testAreaIds() {
-        for (CarPropertyConfig cfg : mConfigs) {
+    public void testGetAreaIds() {
+        for (CarPropertyConfig<?> cfg : mConfigs) {
             int[] areaIds = cfg.getAreaIds();
             Assert.assertNotNull(areaIds);
-            assertThat(areaIds.length).isAtLeast(1);
+            assertThat(areaIds).isNotEmpty();
             Assert.assertTrue(areaIdCheck(areaIds));
+            assertThat(areaIds.length).isEqualTo(cfg.getAreaIdConfigs().size());
+            for (int areaId : areaIds) {
+                boolean found = false;
+                for (AreaIdConfig<?> areaIdConfig : cfg.getAreaIdConfigs()) {
+                    if (areaIdConfig.getAreaId() == areaId) {
+                        found = true;
+                        break;
+                    }
+                }
+                assertWithMessage("Property ID: " + VehiclePropertyIds.toString(cfg.getPropertyId())
+                        + " area ID: 0x" + Integer.toHexString(areaId)
+                        + " must be found in AreaIdConfigs list").that(found).isTrue();
+            }
+        }
+    }
+
+    @Test
+    public void testGetAreaIdConfigs() {
+        for (CarPropertyConfig<?> cfg : mConfigs) {
+            List<? extends AreaIdConfig<?>> areaIdConfigs = cfg.getAreaIdConfigs();
+            assertThat(areaIdConfigs).isNotNull();
+            assertThat(areaIdConfigs).isNotEmpty();
+            for (AreaIdConfig<?> areaIdConfig : areaIdConfigs) {
+                boolean minMaxCorrectlyDefined =
+                        (areaIdConfig.getMinValue() != null && areaIdConfig.getMaxValue() != null)
+                                || (areaIdConfig.getMinValue() == null
+                                && areaIdConfig.getMaxValue() == null);
+                assertWithMessage("Property ID: " + VehiclePropertyIds.toString(cfg.getPropertyId())
+                        + " area ID: 0x" + Integer.toHexString(areaIdConfig.getAreaId())
+                        + " min/max must be both defined or both null").that(
+                        minMaxCorrectlyDefined).isTrue();
+                if (cfg.getPropertyType().equals(Integer.class)) {
+                    if (areaIdConfig.getMinValue() != null) {
+                        assertThat((Integer) areaIdConfig.getMaxValue()).isAtLeast(
+                                (Integer) areaIdConfig.getMinValue());
+                    }
+                } else if (cfg.getPropertyType().equals(Long.class)) {
+                    if (areaIdConfig.getMinValue() != null) {
+                        assertThat((Long) areaIdConfig.getMaxValue()).isAtLeast(
+                                (Long) areaIdConfig.getMinValue());
+                    }
+                } else if (cfg.getPropertyType().equals(Float.class)) {
+                    if (areaIdConfig.getMinValue() != null) {
+                        assertThat((Float) areaIdConfig.getMaxValue()).isAtLeast(
+                                (Float) areaIdConfig.getMinValue());
+                    }
+                } else {
+                    assertThat(areaIdConfig.getMinValue()).isNull();
+                    assertThat(areaIdConfig.getMaxValue()).isNull();
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testGetAreaIdConfig() {
+        for (CarPropertyConfig<?> cfg : mConfigs) {
+            for (int areaId : cfg.getAreaIds()) {
+                AreaIdConfig<?> areaIdConfig = cfg.getAreaIdConfig(areaId);
+                assertThat(areaIdConfig).isNotNull();
+                assertThat(areaIdConfig.getAreaId()).isEqualTo(areaId);
+                assertThat(areaIdConfig).isIn(cfg.getAreaIdConfigs());
+            }
         }
     }
 

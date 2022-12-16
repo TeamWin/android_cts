@@ -19,6 +19,7 @@ package android.appenumeration.cts;
 import static android.Manifest.permission.SET_PREFERRED_APPLICATIONS;
 import static android.appenumeration.cts.Constants.ACTION_APP_ENUMERATION_PREFERRED_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTION_BIND_SERVICE;
+import static android.appenumeration.cts.Constants.ACTION_CAN_PACKAGE_QUERIES;
 import static android.appenumeration.cts.Constants.ACTION_CAN_PACKAGE_QUERY;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_PACKAGE;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_SIGNATURES;
@@ -144,7 +145,10 @@ import static android.os.Process.INVALID_UID;
 import static android.os.Process.ROOT_UID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
+import static org.hamcrest.Matchers.arrayWithSize;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.equalTo;
@@ -1195,6 +1199,26 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
     }
 
     @Test
+    public void canPackageQueries_queriesPackage_canSeeDeclaredPackages_cannotSeeOthers()
+            throws Exception {
+        assertThat(canPackageQueries(QUERIES_NOTHING_PERM, QUERIES_PACKAGE,
+                        new String[]{
+                                TARGET_NO_API,
+                                TARGET_BROWSER,
+                                TARGET_SHARED_USER,
+                                TARGET_WEB,
+                                TARGET_SYNCADAPTER}),
+                allOf(arrayWithSize(5), arrayContaining(true, false, true, false, true)));
+    }
+
+    @Test
+    public void canPackageQueries_callerHasNoPackageVisibility() {
+        assertThrows(PackageManager.NameNotFoundException.class,
+                () -> canPackageQueries(QUERIES_PACKAGE, TARGET_NO_API,
+                        new String[]{TARGET_SHARED_USER, TARGET_WEB}));
+    }
+
+    @Test
     public void checkPackage_queriesNothing_validateFailed() {
         // Using ROOT_UID here to pass the check in #verifyAndGetBypass, this is intended by design.
         assertThrows(SecurityException.class,
@@ -1608,6 +1632,15 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
         return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
     }
 
+    private Boolean[] canPackageQueries(String callerPackageName, String sourcePackageName,
+            String[] targetPackageNames) throws Exception {
+        final Bundle extraData = new Bundle();
+        extraData.putStringArray(EXTRA_PACKAGES, targetPackageNames);
+        final Bundle response = sendCommandBlocking(callerPackageName, sourcePackageName,
+                extraData, ACTION_CAN_PACKAGE_QUERIES);
+        return toBooleanArray(response.getBooleanArray(Intent.EXTRA_RETURN_RESULT));
+    }
+
     private PendingIntent getPendingIntentActivity(String sourcePackageName) throws Exception  {
         final Bundle bundle = sendCommandBlocking(sourcePackageName, null /* targetPackageName */,
                 null /* intentExtra */, ACTION_PENDING_INTENT_GET_ACTIVITY);
@@ -1640,5 +1673,13 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
 
     private void setSystemProperty(String name, String value) throws Exception {
         assertEquals("", SystemUtil.runShellCommand("setprop " + name + " " + value));
+    }
+
+    private static Boolean[] toBooleanArray(boolean[] from) {
+        final Boolean[] copies = new Boolean[from.length];
+        for (int i = 0; i < from.length; i++) {
+            copies[i] = from[i];
+        }
+        return copies;
     }
 }

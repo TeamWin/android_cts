@@ -16,6 +16,13 @@
 
 package android.telephony.mockmodem;
 
+import static android.hardware.radio.ims.EpsFallbackReason.NO_NETWORK_RESPONSE;
+import static android.hardware.radio.ims.EpsFallbackReason.NO_NETWORK_TRIGGER;
+import static android.telephony.ims.feature.MmTelFeature.EPS_FALLBACK_REASON_INVALID;
+import static android.telephony.ims.feature.MmTelFeature.EPS_FALLBACK_REASON_NO_NETWORK_RESPONSE;
+import static android.telephony.ims.feature.MmTelFeature.EPS_FALLBACK_REASON_NO_NETWORK_TRIGGER;
+
+import android.telephony.ims.feature.MmTelFeature;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -25,12 +32,15 @@ import java.util.concurrent.TimeUnit;
 
 public class MockImsService {
     private static final String TAG = "MockImsService";
+    private static final int INVALID = -1;
 
     public static final int LATCH_WAIT_FOR_SRVCC_CALL_INFO = 0;
-    private static final int LATCH_MAX = 1;
+    public static final int LATCH_WAIT_FOR_TRIGGER_EPS_FALLBACK = 1;
+    private static final int LATCH_MAX = 2;
 
     private final CountDownLatch[] mLatches = new CountDownLatch[LATCH_MAX];
     private final List<MockSrvccCall> mSrvccCalls = new ArrayList<>();
+    private int mEpsFallbackReason = INVALID;
 
     public MockImsService() {
         for (int i = 0; i < LATCH_MAX; i++) {
@@ -56,6 +66,36 @@ public class MockImsService {
     /** @return The list of {@link MockSrvccCall} instances. */
     public List<MockSrvccCall> getSrvccCalls() {
         return mSrvccCalls;
+    }
+
+    /**
+     * Sets the reason that caused EPS fallback.
+     *
+     * @param reason The reason that caused EPS fallback.
+     */
+    public void setEpsFallbackReason(int reason) {
+        mEpsFallbackReason = reason;
+        countDownLatch(LATCH_WAIT_FOR_TRIGGER_EPS_FALLBACK);
+    }
+
+    /**
+     * Returns the reason that caused EPS fallback.
+     *
+     * @return the reason that caused EPS fallback.
+     */
+    public @MmTelFeature.EpsFallbackReason int getEpsFallbackReason() {
+        switch (mEpsFallbackReason) {
+            case NO_NETWORK_TRIGGER: return EPS_FALLBACK_REASON_NO_NETWORK_TRIGGER;
+            case NO_NETWORK_RESPONSE: return EPS_FALLBACK_REASON_NO_NETWORK_RESPONSE;
+            default: return EPS_FALLBACK_REASON_INVALID;
+        }
+    }
+
+    /**
+     * Clears the EPS fallback reason.
+     */
+    public void resetEpsFallbackReason() {
+        mEpsFallbackReason = INVALID;
     }
 
     private void countDownLatch(int latchIndex) {

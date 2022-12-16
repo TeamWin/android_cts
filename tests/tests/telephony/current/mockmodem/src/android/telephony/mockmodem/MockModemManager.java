@@ -23,6 +23,7 @@ import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWE
 import android.content.Context;
 import android.hardware.radio.voice.CdmaSignalInfoRecord;
 import android.hardware.radio.voice.UusInfo;
+import android.telephony.ims.feature.MmTelFeature;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
 import android.util.Log;
 
@@ -432,6 +433,33 @@ public class MockModemManager {
         } catch (Exception e) {
         }
         return result;
+    }
+
+    /**
+     * Returns the reason that caused EPS fallback.
+     *
+     * @param slotId for which slot to get the reason
+     * @return the reason that caused EPS fallback.
+     */
+    public @MmTelFeature.EpsFallbackReason int getEpsFallbackReason(int slotId) {
+        Log.d(TAG, "getEpsFallbackReason[" + slotId + "]");
+
+        IRadioImsImpl radioIms = mMockModemService.getIRadioIms((byte) slotId);
+        if (radioIms == null) return -1;
+        return radioIms.getEpsFallbackReason();
+    }
+
+    /**
+     * Clears the EPS fallback reason.
+     *
+     * @param slotId for which slot to get the reason
+     */
+    public void resetEpsFallbackReason(int slotId) {
+        Log.d(TAG, "resetEpsFallbackReason[" + slotId + "]");
+
+        IRadioImsImpl radioIms = mMockModemService.getIRadioIms((byte) slotId);
+        if (radioIms == null) return;
+        radioIms.resetEpsFallbackReason();
     }
 
     /**

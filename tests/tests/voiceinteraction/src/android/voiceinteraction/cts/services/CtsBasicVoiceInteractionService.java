@@ -16,6 +16,7 @@
 
 package android.voiceinteraction.cts.services;
 
+import static android.Manifest.permission.BIND_HOTWORD_DETECTION_SERVICE;
 import static android.Manifest.permission.MANAGE_HOTWORD_DETECTION;
 import static android.voiceinteraction.cts.testcore.Helper.WAIT_TIMEOUT_IN_MS;
 
@@ -55,6 +56,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      * Create AlwaysOnHotwordDetector.
      */
     public void createAlwaysOnHotwordDetector() {
+        Log.i(TAG, "createAlwaysOnHotwordDetector!!!!");
         mServiceTriggerLatch = new CountDownLatch(1);
         mHandler.post(() -> runWithShellPermissionIdentity(() -> {
             AlwaysOnHotwordDetector.Callback callback = new AlwaysOnHotwordDetector.Callback() {
@@ -111,6 +113,26 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             };
             mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector(callback);
         }, MANAGE_HOTWORD_DETECTION));
+    }
+
+    /**
+     * Create an AlwaysOnHotwordDetector but doesn't hold MANAGE_HOTWORD_DETECTION
+     */
+    public void createAlwaysOnHotwordDetectorWithoutManageHotwordDetectionPermission() {
+        mServiceTriggerLatch = new CountDownLatch(1);
+        mHandler.post(() -> runWithShellPermissionIdentity(
+                () -> callCreateAlwaysOnHotwordDetector(mNoOpHotwordDetectorCallback)));
+    }
+
+    /**
+     * Create an AlwaysOnHotwordDetector but doesn't hold MANAGE_HOTWORD_DETECTION but hold
+     * BIND_HOTWORD_DETECTION_SERVICE.
+     */
+    public void createAlwaysOnHotwordDetectorHoldBindHotwordDetectionPermission() {
+        mServiceTriggerLatch = new CountDownLatch(1);
+        mHandler.post(() -> runWithShellPermissionIdentity(
+                () -> callCreateAlwaysOnHotwordDetector(mNoOpHotwordDetectorCallback),
+                BIND_HOTWORD_DETECTION_SERVICE));
     }
 
     /**

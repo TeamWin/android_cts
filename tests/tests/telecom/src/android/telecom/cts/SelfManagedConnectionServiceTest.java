@@ -1323,6 +1323,67 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
     }
 
     /**
+     * Start a self-managed no hold capable call on different app and accept incoming managed call
+     * should disconnect self-managed call
+     */
+    public void testManagedCallWhileNoHoldCapabilitySelfMaganedCallActive() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        //bind to test app selfmanagedcstestappone
+        TestServiceConnection control = setUpControl(SELF_MANAGED_CS_CONTROL, SELF_MANAGED_CS_1);
+
+        ICtsSelfManagedConnectionServiceControl appServiceController =
+                ICtsSelfManagedConnectionServiceControl.Stub
+                        .asInterface(control.getService());
+
+        appServiceController.init();
+
+        // register a self-managed phone account from self-managed CS test app
+        appServiceController.registerPhoneAccount(
+                TestUtils.TEST_SELF_MANAGED_CS_1_PHONE_ACCOUNT_3);
+
+        // place a self-managed call
+        appServiceController.initiateIncomingCall(
+                TestUtils.TEST_SELF_MANAGED_CS_1_HANDLE_3, TEST_ADDRESS_2.toString());
+
+        assertTrue(appServiceController.waitForBinding());
+
+        appServiceController.setConnectionCapabilityNoHold();
+
+        appServiceController.setConnectionActive();
+
+        assertEquals(Connection.STATE_ACTIVE, appServiceController.getConnectionState());
+
+        // add new managed call
+        addAndVerifyNewIncomingCall(createTestNumber(), null);
+        Connection connection = verifyConnectionForIncomingCall();
+
+        assertConnectionState(connection, Connection.STATE_RINGING);
+        assertEquals(Connection.STATE_ACTIVE, appServiceController.getConnectionState());
+
+        // answer the incoming call
+        MockInCallService inCallService = mInCallCallbacks.getService();
+        Call call = inCallService.getLastCall();
+
+        call.answer(VideoProfile.STATE_AUDIO_ONLY);
+
+        assertConnectionState(connection, Connection.STATE_ACTIVE);
+        assertEquals(Connection.STATE_DISCONNECTED, appServiceController.getConnectionState());
+
+        // unregister a self-managed phone account
+        appServiceController.unregisterPhoneAccount(
+                TestUtils.TEST_SELF_MANAGED_CS_1_HANDLE_3);
+
+        appServiceController.deInit();
+
+        mContext.unbindService(control);
+
+        call.disconnect();
+    }
+
+    /**
      * Sets a connection active, and verifies TelecomManager thinks we're in call but not in a
      * managed call.
      * @param connection The connection.

@@ -217,7 +217,8 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
             "android.window.TaskFragmentOrganizer#applyTransaction",
             "android.window.WindowContainerTransaction#finishActivity"})
     public void testFinishActivity() {
-        final Activity activity = startNewActivity();
+        final Activity activity = startNewActivity(
+                WindowMetricsActivityTests.MetricsActivity.class);
         final WindowContainerTransaction wct = new WindowContainerTransaction()
                 .finishActivity(getActivityToken(activity));
         mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_CLOSE,

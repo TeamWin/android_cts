@@ -138,10 +138,10 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setDataTransfer(true)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setExpedited(true)
+                .setUserInitiated(true)
                 .build();
         assertTrue(ji.isDataTransfer());
-        assertTrue(ji.isExpedited());
+        assertTrue(ji.isUserInitiated());
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
 
@@ -151,10 +151,10 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setDataTransfer(true)
                 .setRequiredNetwork(nr)
-                .setExpedited(true)
+                .setUserInitiated(true)
                 .build();
         assertTrue(ji.isDataTransfer());
-        assertTrue(ji.isExpedited());
+        assertTrue(ji.isUserInitiated());
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
 
@@ -181,6 +181,14 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                         .setDataTransfer(true)
                         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                         .setPrefetch(true));
+
+        // setDataTransfer() with a setExpedited() should throw an exception.
+        assertBuildFails(
+                "Successfully built a data transfer + expedited job",
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setDataTransfer(true)
+                        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                        .setExpedited(true));
 
         // setDataTransfer() without setRequiredNetworkType() should throw an exception.
         assertBuildFails(
@@ -331,6 +339,14 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                         .setExpedited(true)
                         .setRequiresCharging(true));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setExpedited(true)
+                        .setDataTransfer(true));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setExpedited(true)
+                        .setUserInitiated(true));
         final JobInfo.TriggerContentUri tcu = new JobInfo.TriggerContentUri(
                 Uri.parse("content://" + MediaStore.AUTHORITY + "/"),
                 JobInfo.TriggerContentUri.FLAG_NOTIFY_FOR_DESCENDANTS);
@@ -755,6 +771,82 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         assertEquals(tcu2, ji.getTriggerContentUris()[1]);
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
+    }
+
+    public void testUserInitiatedJob() {
+        // Test all allowed constraints.
+        JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setUserInitiated(true)
+                .setPriority(JobInfo.PRIORITY_MAX)
+                .setPersisted(true)
+                .setDataTransfer(true)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setRequiresStorageNotLow(true)
+                .setRequiresBatteryNotLow(true)
+                .setRequiresCharging(true)
+                .build();
+        assertTrue(ji.isUserInitiated());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        // Confirm default priority for UIJs.
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setUserInitiated(true)
+                .build();
+        assertEquals(JobInfo.PRIORITY_MAX, ji.getPriority());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        // Test disallowed constraints.
+        final String failureMessage =
+                "Successfully built a user-initiated JobInfo object with disallowed constraints";
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setUserInitiated(true)
+                        .setMinimumLatency(100));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setUserInitiated(true)
+                        .setOverrideDeadline(200));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setUserInitiated(true)
+                        .setPeriodic(15 * 60_000));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setUserInitiated(true)
+                        .setPriority(JobInfo.PRIORITY_LOW));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setUserInitiated(true)
+                        .setPriority(JobInfo.PRIORITY_HIGH));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setUserInitiated(true)
+                        .setPriority(JobInfo.PRIORITY_DEFAULT));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setUserInitiated(true)
+                        .setImportantWhileForeground(true));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setUserInitiated(true)
+                        .setPrefetch(true));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setUserInitiated(true)
+                        .setRequiresDeviceIdle(true));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setExpedited(true)
+                        .setUserInitiated(true));
+        final JobInfo.TriggerContentUri tcu = new JobInfo.TriggerContentUri(
+                Uri.parse("content://" + MediaStore.AUTHORITY + "/"),
+                JobInfo.TriggerContentUri.FLAG_NOTIFY_FOR_DESCENDANTS);
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setUserInitiated(true)
+                        .addTriggerContentUri(tcu));
     }
 
     private void assertBuildFails(String message, JobInfo.Builder builder) {

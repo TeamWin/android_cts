@@ -25,6 +25,7 @@ import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
 import com.android.modules.utils.build.SdkLevel
+import org.junit.After
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Rule
@@ -62,10 +63,20 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
         Assume.assumeFalse(isWatch)
     }
 
+    @Before
+    fun installTestAppStore() {
+        installPackage(APP_APK_PATH_TEST_STORE_APP)
+    }
+
+    @After
+    fun uninstallTestAppStore() {
+        uninstallPackage(TEST_STORE_PACKAGE_NAME, requireSuccess = false)
+    }
+
     @Test
     fun noPermissionRationaleWhenFlagDisabled() {
         setDeviceConfigPrivacyProperty(PRIVACY_PERMISSION_RATIONALE_ENABLED, false.toString())
-        installPackage(APP_APK_PATH_31)
+        installPackageWithInstallSource()
 
         assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
@@ -80,7 +91,19 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
     fun noPermissionRationaleWhenPlaceholderDataFlagDisabled() {
         setDeviceConfigPrivacyProperty(
             PRIVACY_PLACEHOLDER_SAFETY_LABEL_DATA_ENABLED, false.toString())
-        installPackage(APP_APK_PATH_31)
+        installPackageWithInstallSource()
+
+        assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
+        assertAppHasPermission(ACCESS_FINE_LOCATION, false)
+
+        requestAppPermissionsForNoResult(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION) {
+            assertPermissionRationaleOnGrantDialogIsVisible(false)
+        }
+    }
+
+    @Test
+    fun noPermissionRationaleWhenApkHasNoInstallSource() {
+        installPackageWithoutInstallSource()
 
         assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
@@ -92,7 +115,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
 
     @Test
     fun noPermissionRationaleForNonLocationPermission() {
-        installPackage(APP_APK_PATH_31)
+        installPackageWithInstallSource()
 
         assertAppHasPermission(CAMERA, false)
 
@@ -103,7 +126,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
 
     @Test
     fun hasPermissionRationaleForCoarseLocationPermission() {
-        installPackage(APP_APK_PATH_31)
+        installPackageWithInstallSource()
 
         assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
 
@@ -114,7 +137,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
 
     @Test
     fun hasPermissionRationaleForFineLocationPermission() {
-        installPackage(APP_APK_PATH_31)
+        installPackageWithInstallSource()
 
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
@@ -125,7 +148,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
 
     @Test
     fun startsPermissionRationaleActivity() {
-        installPackage(APP_APK_PATH_31)
+        installPackageWithInstallSource()
 
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
@@ -138,7 +161,7 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
 
     @Test
     fun startsPermissionRationaleActivityAndComesBack() {
-        installPackage(APP_APK_PATH_31)
+        installPackageWithInstallSource()
 
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
@@ -151,6 +174,16 @@ class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
             assertPermissionRationaleActivityTitleIsVisible(false)
             assertPermissionRationaleOnGrantDialogIsVisible(true)
         }
+    }
+
+    private fun installPackageWithInstallSource() {
+        // TODO(b/257293222): Update/remove when hooking up PackageManager APIs
+        installPackage(APP_APK_PATH_31, installSource = TEST_STORE_PACKAGE_NAME)
+    }
+
+    private fun installPackageWithoutInstallSource() {
+        // TODO(b/257293222): Update/remove when hooking up PackageManager APIs
+        installPackage(APP_APK_PATH_31)
     }
 
     private fun assertPermissionRationaleOnGrantDialogIsVisible(expected: Boolean) {

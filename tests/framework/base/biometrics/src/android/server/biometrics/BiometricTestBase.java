@@ -523,6 +523,12 @@ abstract class BiometricTestBase extends ActivityManagerTestBase implements Test
         mInstrumentation.waitForIdleSync();
         Utils.waitForBusySensor(sensorId, this::getSensorStates);
 
+        //Wait for enrollment operation in biometrics sensor to be complete before
+        //retrieving enrollment results. The operation takes a little time especically
+        //on Cutterfish where multiple biometric operations must be completed during
+        //the enrollent
+        //TODO(b/217275524)
+        Thread.sleep(200);
         session.finishEnroll(userId);
         mInstrumentation.waitForIdleSync();
         Utils.waitForIdleService(this::getSensorStates);

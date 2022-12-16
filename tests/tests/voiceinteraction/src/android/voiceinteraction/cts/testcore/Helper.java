@@ -18,8 +18,11 @@ package android.voiceinteraction.cts.testcore;
 
 import android.os.PersistableBundle;
 import android.os.SharedMemory;
+import android.provider.DeviceConfig;
 import android.system.ErrnoException;
 import android.util.Log;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import java.nio.ByteBuffer;
 
@@ -31,9 +34,13 @@ public final class Helper {
     public static final String TAG = "VoiceInteractionCtsHelper";
 
     // The timeout to wait for async result
-    public static final long WAIT_TIMEOUT_IN_MS = 5_000;
+    public static final long WAIT_TIMEOUT_IN_MS = 10_000;
     public static final String CTS_SERVICE_PACKAGE = "android.voiceinteraction.cts";
 
+    // The id that is used to gate compat change
+    public static final long MULTIPLE_ACTIVE_HOTWORD_DETECTORS = 193232191L;
+
+    private static final String INDICATORS_FLAG = "camera_mic_icons_enabled";
     private static final String KEY_FAKE_DATA = "fakeData";
     private static final String VALUE_FAKE_DATA = "fakeData";
     private static final byte[] FAKE_BYTE_ARRAY_DATA = new byte[]{1, 2, 3};
@@ -61,5 +68,28 @@ public final class Helper {
         PersistableBundle persistableBundle = new PersistableBundle();
         persistableBundle.putString(KEY_FAKE_DATA, VALUE_FAKE_DATA);
         return persistableBundle;
+    }
+
+    /**
+     * Returns the camera_mic_icons_enabled value.
+     */
+    public static String getIndicatorEnabledState() {
+        return SystemUtil.runWithShellPermissionIdentity(() -> {
+            String currentlyEnabled = DeviceConfig.getProperty(DeviceConfig.NAMESPACE_PRIVACY,
+                    INDICATORS_FLAG);
+            Log.v(TAG, "getIndicatorEnabledStateIfNeeded()=" + currentlyEnabled);
+            return currentlyEnabled;
+        });
+    }
+
+    /**
+     * Sets the camera_mic_icons_enabled state.
+     */
+    public static void setIndicatorEnabledState(String shouldEnable) {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            Log.v(TAG, "setIndicatorEnabledState()=" + shouldEnable);
+            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY, INDICATORS_FLAG, shouldEnable,
+                    false);
+        });
     }
 }

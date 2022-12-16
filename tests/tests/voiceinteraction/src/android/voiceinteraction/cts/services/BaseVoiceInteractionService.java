@@ -197,8 +197,9 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
      * Wait for onHotwordDetectionServiceInitialized() be called or exception throws when creating
      * AlwaysOnHotwordDetector.
      */
-    public void waitHotwordDetectionServiceInitializedResult() throws InterruptedException {
-        Log.d(mTag, "waitHotwordServiceInitializedCalledOrException(), latch="
+    public void waitHotwordDetectionServiceInitializedCalledOrException()
+            throws InterruptedException {
+        Log.d(mTag, "waitHotwordDetectionServiceInitializedCalledOrException(), latch="
                 + mServiceTriggerLatch);
         if (mServiceTriggerLatch == null
                 || !mServiceTriggerLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS)) {

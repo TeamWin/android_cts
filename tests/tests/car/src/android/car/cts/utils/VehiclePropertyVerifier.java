@@ -243,7 +243,8 @@ public class VehiclePropertyVerifier<T> {
                                 && hvacPowerOnCarPropertyConfig
                                         .getConfigArray()
                                         .contains(mPropertyId)) {
-                            turnOnHvacPower(carPropertyManager, hvacPowerOnCarPropertyConfig);
+                            turnOnHvacPower(carPropertyManager,
+                                    (CarPropertyConfig<Boolean>) hvacPowerOnCarPropertyConfig);
                         }
                     }
 
@@ -261,14 +262,14 @@ public class VehiclePropertyVerifier<T> {
     }
 
     private void turnOnHvacPower(CarPropertyManager carPropertyManager,
-            CarPropertyConfig<?> hvacPowerOnCarPropertyConfig) {
+            CarPropertyConfig<Boolean> hvacPowerOnCarPropertyConfig) {
         for (int areaId : hvacPowerOnCarPropertyConfig.getAreaIds()) {
             if (carPropertyManager.getProperty(VehiclePropertyIds.HVAC_POWER_ON,
                     areaId).getValue().equals(true)) {
                 continue;
             }
-            verifySetProperty((CarPropertyConfig<Boolean>) hvacPowerOnCarPropertyConfig,
-                    carPropertyManager, areaId, Boolean.TRUE);
+            setPropertyAndWaitForChange(carPropertyManager, VehiclePropertyIds.HVAC_POWER_ON,
+                    hvacPowerOnCarPropertyConfig.getPropertyType(), areaId, Boolean.TRUE);
         }
     }
 
@@ -352,25 +353,18 @@ public class VehiclePropertyVerifier<T> {
 
     private <T> void verifySetProperty(CarPropertyConfig<T> carPropertyConfig,
             CarPropertyManager carPropertyManager, int areaId, T valueToSet) {
-        CarPropertyValue<T> currentCarPropertyValue =
-                carPropertyManager.getProperty(mPropertyId, areaId);
+        CarPropertyValue<T> currentCarPropertyValue = carPropertyManager.getProperty(mPropertyId,
+                areaId);
         verifyCarPropertyValue(carPropertyConfig, currentCarPropertyValue, areaId,
                 CAR_PROPERTY_VALUE_SOURCE_GETTER);
         if (valueEquals(valueToSet, currentCarPropertyValue.getValue())) {
             return;
         }
-        SetterCallback setterCallback = new SetterCallback(mPropertyId, mPropertyName, areaId,
+        CarPropertyValue<T> updatedCarPropertyValue = setPropertyAndWaitForChange(
+                carPropertyManager, mPropertyId, carPropertyConfig.getPropertyType(), areaId,
                 valueToSet);
-        assertWithMessage("Failed to register setter callback for " + mPropertyName).that(
-                carPropertyManager.registerCallback(setterCallback, mPropertyId,
-                        CarPropertyManager.SENSOR_RATE_FASTEST)).isTrue();
-        carPropertyManager.setProperty(carPropertyConfig.getPropertyType(), mPropertyId, areaId,
-                valueToSet);
-        CarPropertyValue<?> updatedCarPropertyValue =
-                setterCallback.waitForUpdatedCarPropertyValue();
         verifyCarPropertyValue(carPropertyConfig, updatedCarPropertyValue, areaId,
                 CAR_PROPERTY_VALUE_SOURCE_CALLBACK);
-        carPropertyManager.unregisterCallback(setterCallback, mPropertyId);
     }
 
     private void verifyCarPropertyValueCallback(CarPropertyConfig<?> carPropertyConfig,
@@ -733,8 +727,10 @@ public class VehiclePropertyVerifier<T> {
         T areaIdMinValue = (T) carPropertyConfig.getMinValue(areaId);
         T areaIdMaxValue = (T) carPropertyConfig.getMaxValue(areaId);
         if (areaIdMinValue != null && areaIdMaxValue != null) {
-            assertWithMessage("carPropertyValue must be between the max and min values")
-                    .that(
+            assertWithMessage(
+                    "Property value: " + carPropertyValue.getValue() + " must be between the max: "
+                            + areaIdMaxValue + " and min: " + areaIdMinValue
+                            + " values for area ID: " + Integer.toHexString(areaId)).that(
                             verifyValueInRange(
                                     areaIdMinValue,
                                     areaIdMaxValue,
@@ -1100,9 +1096,9 @@ public class VehiclePropertyVerifier<T> {
         private final long mCreationTimeNanos = SystemClock.elapsedRealtimeNanos();
         private CarPropertyValue<?> mUpdatedCarPropertyValue = null;
 
-        SetterCallback(int propertyId, String propertyName, int areaId, T expectedSetValue) {
+        SetterCallback(int propertyId, int areaId, T expectedSetValue) {
             mPropertyId = propertyId;
-            mPropertyName = propertyName;
+            mPropertyName = VehiclePropertyIds.toString(propertyId);
             mAreaId = areaId;
             mExpectedSetValue = expectedSetValue;
         }
@@ -1226,5 +1222,18 @@ public class VehiclePropertyVerifier<T> {
             verifyCarPropertyValue(carPropertyConfig, carPropertyValue, areaId,
                     CAR_PROPERTY_VALUE_SOURCE_CALLBACK);
         }
+    }
+
+    private static <U> CarPropertyValue<U> setPropertyAndWaitForChange(
+            CarPropertyManager carPropertyManager, int propertyId, Class<U> propertyType,
+            int areaId, U valueToSet) {
+        SetterCallback setterCallback = new SetterCallback(propertyId, areaId, valueToSet);
+        assertWithMessage("Failed to register setter callback for " + VehiclePropertyIds.toString(
+                propertyId)).that(carPropertyManager.registerCallback(setterCallback, propertyId,
+                CarPropertyManager.SENSOR_RATE_FASTEST)).isTrue();
+        carPropertyManager.setProperty(propertyType, propertyId, areaId, valueToSet);
+        CarPropertyValue<U> carPropertyValue = setterCallback.waitForUpdatedCarPropertyValue();
+        carPropertyManager.unregisterCallback(setterCallback, propertyId);
+        return carPropertyValue;
     }
 }

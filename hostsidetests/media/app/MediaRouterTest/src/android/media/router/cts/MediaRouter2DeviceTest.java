@@ -141,19 +141,20 @@ public class MediaRouter2DeviceTest {
     public void setRouteListingPreference_propagatesToManager() {
         List<RouteListingPreference.Item> items =
                 List.of(
-                        new RouteListingPreference.Item(
-                                ROUTE_ID_APP_1_ROUTE_1,
-                                /* flags= */ RouteListingPreference.Item.FLAG_ONGOING_SESSION,
-                                /* disableReason= */ RouteListingPreference.Item
-                                        .DISABLE_REASON_NONE),
-                        new RouteListingPreference.Item(
-                                ROUTE_ID_APP_2_ROUTE_2,
-                                /* flags= */ 0,
-                                RouteListingPreference.Item.DISABLE_REASON_NONE),
-                        new RouteListingPreference.Item(
-                                ROUTE_ID_APP_3_ROUTE_3,
-                                /* flags= */ 0,
-                                RouteListingPreference.Item.DISABLE_REASON_SUBSCRIPTION_REQUIRED));
+                        new RouteListingPreference.Item.Builder(ROUTE_ID_APP_1_ROUTE_1)
+                                .setFlags(RouteListingPreference.Item.FLAG_ONGOING_SESSION)
+                                .setDisableReason(RouteListingPreference.Item.DISABLE_REASON_NONE)
+                                .build(),
+                        new RouteListingPreference.Item.Builder(ROUTE_ID_APP_2_ROUTE_2)
+                                .setFlags(0)
+                                .setDisableReason(RouteListingPreference.Item.DISABLE_REASON_NONE)
+                                .build(),
+                        new RouteListingPreference.Item.Builder(ROUTE_ID_APP_3_ROUTE_3)
+                                .setFlags(0)
+                                .setDisableReason(
+                                        RouteListingPreference.Item
+                                                .DISABLE_REASON_SUBSCRIPTION_REQUIRED)
+                                .build());
         RouteListingPreference routeListingPreference = new RouteListingPreference(items);
         MediaRouter2ManagerCallbackImpl mediaRouter2ManagerCallback =
                 new MediaRouter2ManagerCallbackImpl();

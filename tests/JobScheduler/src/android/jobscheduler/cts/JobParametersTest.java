@@ -97,6 +97,32 @@ public class JobParametersTest extends BaseJobSchedulerTest {
         assertFalse(params.isExpeditedJob());
     }
 
+    public void testUserInitiated() throws Exception {
+        JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setUserInitiated(true)
+                .build();
+
+        kTestEnvironment.setExpectedExecutions(1);
+        mJobScheduler.schedule(ji);
+        runSatisfiedJob(JOB_ID);
+        assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
+
+        JobParameters params = kTestEnvironment.getLastStartJobParameters();
+        assertTrue(params.isUserInitiatedJob());
+
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setUserInitiated(false)
+                .build();
+
+        kTestEnvironment.setExpectedExecutions(1);
+        mJobScheduler.schedule(ji);
+        runSatisfiedJob(JOB_ID);
+        assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
+
+        params = kTestEnvironment.getLastStartJobParameters();
+        assertFalse(params.isUserInitiatedJob());
+    }
+
     public void testJobId() throws Exception {
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .build();

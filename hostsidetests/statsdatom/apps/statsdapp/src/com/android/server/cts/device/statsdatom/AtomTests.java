@@ -65,6 +65,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.PerformanceHintManager;
 import android.os.PowerManager;
 import android.os.Process;
 import android.os.RemoteException;
@@ -1247,5 +1248,19 @@ public class AtomTests {
                         new GameModeConfiguration.Builder()
                                 .setScalingFactor(0.9f)
                                 .setFpsOverride(60).build()));
+    }
+
+    @Test
+    public void testCreateHintSession() throws Exception {
+        final long targetNs = 16666666L;
+        Context context = InstrumentationRegistry.getContext();
+        PerformanceHintManager phm = context.getSystemService(PerformanceHintManager.class);
+
+        assertNotNull(phm);
+
+        PerformanceHintManager.Session session =
+                phm.createHintSession(new int[]{Process.myPid()}, targetNs);
+
+        assertNotNull(session);
     }
 }

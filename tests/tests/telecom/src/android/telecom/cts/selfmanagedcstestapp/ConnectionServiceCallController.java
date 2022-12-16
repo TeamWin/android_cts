@@ -18,6 +18,7 @@ package android.telecom.cts.selfmanagedcstestapp;
 
 import android.net.Uri;
 import android.os.Bundle;
+import android.telecom.Connection;
 import android.telecom.DisconnectCause;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -65,6 +66,22 @@ public class ConnectionServiceCallController {
 
     public boolean waitOnUnHold() {
         return mConnection.waitOnUnHold();
+    }
+
+    public boolean initiateIncomingCall(TelecomManager telecomManager,
+            PhoneAccountHandle handle, String uri) {
+        Bundle extras = new Bundle();
+        Uri address = Uri.parse(uri);
+        extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, address);
+        telecomManager.addNewIncomingCall(handle, extras);
+
+        mConnection = TestUtils.waitForAndGetConnection(address);
+
+        if (mConnection == null) {
+            Log.d(TAG, "Self-Managed Connection should NOT be null.");
+            return false;
+        }
+        return true;
     }
 
     public boolean placeOutgoingCall(TelecomManager telecomManager,
@@ -140,6 +157,12 @@ public class ConnectionServiceCallController {
 
     public int getState() {
         return mConnection.getState();
+    }
+
+    public void setConnectionCapabilityNoHold() {
+        int capabilities = mConnection.getConnectionCapabilities();
+        capabilities &= ~Connection.CAPABILITY_HOLD;
+        mConnection.setConnectionCapabilities(capabilities);
     }
 
     public void setConnectionActive() {

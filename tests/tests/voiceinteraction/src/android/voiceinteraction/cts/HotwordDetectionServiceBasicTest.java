@@ -40,7 +40,6 @@ import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.service.voice.HotwordDetectedResult;
-import android.service.voice.HotwordDetectionService;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
@@ -136,28 +135,6 @@ public final class HotwordDetectionServiceBasicTest
     }
 
     @Test
-    public void testHotwordDetectionService_getMaxCustomInitializationStatus()
-            throws Throwable {
-        assertThat(HotwordDetectionService.getMaxCustomInitializationStatus()).isEqualTo(2);
-    }
-
-    @Test
-    public void testHotwordDetectionService_validHotwordDetectionComponentName_triggerSuccess()
-            throws Throwable {
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
-                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
-
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
-                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
-    }
-
-    @Test
     @RequiresDevice
     public void testHotwordDetectionService_createDetectorTwiceQuickly_triggerSuccess()
             throws Throwable {
@@ -198,58 +175,6 @@ public final class HotwordDetectionServiceBasicTest
                 MainHotwordDetectionService.DETECTED_RESULT);
         verifyMicrophoneChip(true);
 
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
-                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
-    }
-
-    @Test
-    public void testVoiceInteractionService_withoutManageHotwordDetectionPermission_triggerFailure()
-            throws Throwable {
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.VIS_WITHOUT_MANAGE_HOTWORD_DETECTION_PERMISSION_TEST,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SECURITY_EXCEPTION,
-                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
-    }
-
-    @Test
-    public void testVoiceInteractionService_holdBindHotwordDetectionPermission_triggerFailure()
-            throws Throwable {
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.VIS_HOLD_BIND_HOTWORD_DETECTION_PERMISSION_TEST,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SECURITY_EXCEPTION,
-                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
-    }
-
-    @Test
-    public void testVoiceInteractionService_disallowCreateAlwaysOnHotwordDetectorTwice()
-            throws Throwable {
-        assumeTrue("Not support multiple hotword detectors", isEnableMultipleHotwordDetectors());
-
-        Thread.sleep(CLEAR_CHIP_MS);
-        // Create first AlwaysOnHotwordDetector and wait the HotwordDetectionService ready.
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
-                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
-
-        // Create second AlwaysOnHotwordDetector, it will get the IllegalStateException due to
-        // the previous AlwaysOnHotwordDetector is not destroy.
-        final Bundle bundle = new Bundle();
-        bundle.putBoolean(Utils.KEY_KEEP_DETECTOR, false);
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
-                bundle,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION,
-                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
-
-        // Destroy first AlwaysOnHotwordDetector.
         testHotwordDetection(mActivityTestRule, mContext,
                 Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,

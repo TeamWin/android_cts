@@ -124,10 +124,15 @@ public class TestUtils {
             new PhoneAccountHandle(new ComponentName(PACKAGE, SELF_MANAGED_COMPONENT),
                     SELF_MANAGED_ACCOUNT_ID_4);
     public static final String SELF_MANAGED_CS_1_ACCOUNT_ID_1 = "ctstest_SELF_MANAGED_CS_1_ID_1";
+    public static final String SELF_MANAGED_CS_1_ACCOUNT_ID_3 = "ctstest_SELF_MANAGED_CS_1_ID_3";
     public static final PhoneAccountHandle TEST_SELF_MANAGED_CS_1_HANDLE_1 =
             new PhoneAccountHandle(
                     new ComponentName(SELF_MANAGED_PACKAGE, SELF_MANAGED_COMPONENT_1),
                     SELF_MANAGED_CS_1_ACCOUNT_ID_1);
+    public static final PhoneAccountHandle TEST_SELF_MANAGED_CS_1_HANDLE_3 =
+            new PhoneAccountHandle(
+                    new ComponentName(SELF_MANAGED_PACKAGE, SELF_MANAGED_COMPONENT_1),
+                    SELF_MANAGED_CS_1_ACCOUNT_ID_3);
 
     public static final String ACCOUNT_LABEL = "CTSConnectionService";
     public static final String SIM_ACCOUNT_LABEL = "CTSConnectionServiceSim";
@@ -271,6 +276,12 @@ public class TestUtils {
         SELF_MANAGED_CS_1_ACCOUNT_1_EXTRAS.putBoolean(
                 PhoneAccount.EXTRA_ADD_SELF_MANAGED_CALLS_TO_INCALLSERVICE, true);
     }
+    public static final Bundle SELF_MANAGED_CS_1_ACCOUNT_3_EXTRAS;
+    static {
+        SELF_MANAGED_CS_1_ACCOUNT_3_EXTRAS = new Bundle();
+        SELF_MANAGED_CS_1_ACCOUNT_3_EXTRAS.putBoolean(
+                PhoneAccount.EXTRA_ADD_SELF_MANAGED_CALLS_TO_INCALLSERVICE, false);
+    }
 
     public static final PhoneAccount TEST_SELF_MANAGED_PHONE_ACCOUNT_2 = PhoneAccount.builder(
             TEST_SELF_MANAGED_HANDLE_2, SELF_MANAGED_ACCOUNT_LABEL)
@@ -334,6 +345,17 @@ public class TestUtils {
             .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_SIP)
             .setExtras(SELF_MANAGED_CS_1_ACCOUNT_1_EXTRAS)
+            .build();
+    public static final PhoneAccount TEST_SELF_MANAGED_CS_1_PHONE_ACCOUNT_3 = PhoneAccount.builder(
+            TEST_SELF_MANAGED_CS_1_HANDLE_3, SELF_MANAGED_ACCOUNT_LABEL)
+            .setAddress(Uri.parse("sip:test@test.com"))
+            .setSubscriptionAddress(Uri.parse("sip:test@test.com"))
+            .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
+            .setHighlightColor(Color.BLUE)
+            .setShortDescription(SELF_MANAGED_ACCOUNT_LABEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_SIP)
+            .setExtras(SELF_MANAGED_CS_1_ACCOUNT_3_EXTRAS)
             .build();
 
     /**

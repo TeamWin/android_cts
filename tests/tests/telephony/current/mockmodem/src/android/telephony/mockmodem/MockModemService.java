@@ -70,7 +70,7 @@ public class MockModemService extends Service {
     public static final int LATCH_MAX = 2;
 
     private static final int IRADIO_CONFIG_INTERFACE_NUMBER = 1;
-    private static final int IRADIO_INTERFACE_NUMBER = 7;
+    private static final int IRADIO_INTERFACE_NUMBER = 6;
 
     private Context mContext;
     private TelephonyManager mTelephonyManager;
@@ -108,15 +108,20 @@ public class MockModemService extends Service {
                 int radioServiceSupportedNumber = 0;
                 int radioInterfaceNumber = 0;
 
-                for (int j = TelephonyManager.HAL_SERVICE_DATA;
-                        j <= TelephonyManager.HAL_SERVICE_IMS;
-                        j++) {
-                    Pair<Integer, Integer> halVersion = mTelephonyManager.getHalVersion(j);
-                    if (halVersion.first == -2 && halVersion.second == -2) {
-                        Log.d(TAG, "Service: " + j + " unsupported");
-                    } else {
-                        radioServiceSupportedNumber++;
+                try {
+                    for (int j = TelephonyManager.HAL_SERVICE_DATA;
+                            j <= TelephonyManager.HAL_SERVICE_IMS;
+                            j++) {
+                        Pair<Integer, Integer> halVersion = mTelephonyManager.getHalVersion(j);
+                        if (halVersion.first == -2 && halVersion.second == -2) {
+                            Log.d(TAG, "Service: " + j + " unsupported");
+                        } else {
+                            radioServiceSupportedNumber++;
+                        }
                     }
+                } catch (NoSuchMethodError e) {
+                    Log.e(TAG, "Use the default number of interfaces - " + IRADIO_INTERFACE_NUMBER);
+                    radioServiceSupportedNumber = IRADIO_INTERFACE_NUMBER;
                 }
 
                 radioInterfaceNumber =

@@ -27,6 +27,7 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetectionService;
@@ -35,7 +36,6 @@ import android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
@@ -81,6 +81,8 @@ public class AlwaysOnHotwordDetectorTest {
         mService = (CtsBasicVoiceInteractionService) CtsBasicVoiceInteractionService.getService();
         // Check we can get the service, we need service object to call the service provided method
         Objects.requireNonNull(mService);
+        // Wait the original HotwordDetectionService finish clean up to avoid flaky
+        SystemClock.sleep(5_000);
     }
 
     @After
@@ -89,13 +91,12 @@ public class AlwaysOnHotwordDetectorTest {
     }
 
     @Test
-    @FlakyTest(bugId = 261677776)
     public void testAlwaysOnHotwordDetector_startRecognitionWithData() throws Exception {
         // Create alwaysOnHotwordDetector and wait onHotwordDetectionServiceInitialized() callback
         mService.createAlwaysOnHotwordDetector();
 
         // verify callback result
-        mService.waitHotwordDetectionServiceInitializedResult();
+        mService.waitHotwordDetectionServiceInitializedCalledOrException();
         assertThat(mService.getHotwordDetectionServiceInitializedResult()).isEqualTo(
                 HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS);
 

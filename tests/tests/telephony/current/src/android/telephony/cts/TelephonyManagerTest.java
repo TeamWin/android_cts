@@ -67,6 +67,7 @@ import android.telephony.CallAttributes;
 import android.telephony.CallForwardingInfo;
 import android.telephony.CallQuality;
 import android.telephony.CarrierConfigManager;
+import android.telephony.CellBroadcastIdRange;
 import android.telephony.CellIdentity;
 import android.telephony.CellIdentityCdma;
 import android.telephony.CellIdentityGsm;
@@ -90,6 +91,7 @@ import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.SignalStrengthUpdateRequest;
 import android.telephony.SignalThresholdInfo;
+import android.telephony.SmsCbMessage;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyCallback;
@@ -5796,6 +5798,59 @@ public class TelephonyManagerTest {
             turnRadioOff(callback, TelephonyManager.RADIO_POWER_REASON_USER);
             assertRadioOffWithReason(callback, TelephonyManager.RADIO_POWER_REASON_USER);
         }
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.telephony.TelephonyManager#getCellBroadcastIdRanges",
+            "android.telephony.TelephonyManager#setCellBroadcastIdRanges"})
+    public void testSetCellBroadcastIdRanges() throws Exception {
+        final List<CellBroadcastIdRange> ranges = new ArrayList<>();
+        ranges.add(new CellBroadcastIdRange(0, 999, SmsCbMessage.MESSAGE_FORMAT_3GPP, true));
+
+        // Permission check
+        assertThrows(SecurityException.class, () ->
+                mTelephonyManager.getCellBroadcastIdRanges());
+
+        assertThrows(SecurityException.class, () ->
+                mTelephonyManager.setCellBroadcastIdRanges(ranges,
+                        AsyncTask.SERIAL_EXECUTOR, (result) -> {}));
+
+        final List<Integer> resultsExpected = new ArrayList<>();
+        resultsExpected.add(TelephonyManager.CELLBROADCAST_RESULT_UNKNOWN);
+        resultsExpected.add(TelephonyManager.CELLBROADCAST_RESULT_SUCCESS);
+        resultsExpected.add(TelephonyManager.CELLBROADCAST_RESULT_UNSUPPORTED);
+        resultsExpected.add(TelephonyManager.CELLBROADCAST_RESULT_FAIL_CONFIG);
+        resultsExpected.add(TelephonyManager.CELLBROADCAST_RESULT_FAIL_ACTIVATION);
+
+        final List<CellBroadcastIdRange> rangesExpected = ShellIdentityUtils
+                .invokeMethodWithShellPermissions(
+                        mTelephonyManager, (tm) -> tm.getCellBroadcastIdRanges());
+        CountDownLatch latch = new CountDownLatch(1);
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                (tm) -> tm.setCellBroadcastIdRanges(ranges, AsyncTask.SERIAL_EXECUTOR,
+                        (result) -> {
+                            latch.countDown();
+                            // The result must be a valid value
+                            assertTrue("Got " + result + " not in expected set",
+                                    resultsExpected.contains(result));
+                            // The range will be updated when result is success
+                            if (result == TelephonyManager.CELLBROADCAST_RESULT_SUCCESS) {
+                                rangesExpected.clear();
+                                rangesExpected.addAll(ranges);
+                            }
+                        }));
+        assertTrue(latch.await(500, TimeUnit.MILLISECONDS));
+        List<CellBroadcastIdRange> ranges2 = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.getCellBroadcastIdRanges());
+
+        assertEquals(rangesExpected, ranges2);
+
+        ranges.add(new CellBroadcastIdRange(999, 999, SmsCbMessage.MESSAGE_FORMAT_3GPP, false));
+        assertThrows(IllegalArgumentException.class, () ->
+                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                        (tm) -> tm.setCellBroadcastIdRanges(ranges, null, null)));
     }
 
     private void turnRadioOn(ServiceStateRadioStateListener callback, int reason) {

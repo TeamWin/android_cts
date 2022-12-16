@@ -19,29 +19,53 @@ package android.server.wm.backgroundactivity.appa;
 
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_BACKGROUND_ACTIVITY;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_START_ACTIVITY_RECEIVER;
+import static android.server.wm.backgroundactivity.appa.Components.SendPendingIntentReceiver.ALLOW_BAL_EXTRA_ON_PENDING_INTENT;
+import static android.server.wm.backgroundactivity.appa.Components.SendPendingIntentReceiver.APP_B_PACKAGE;
 import static android.server.wm.backgroundactivity.appa.Components.SendPendingIntentReceiver.IS_BROADCAST_EXTRA;
 import static android.server.wm.backgroundactivity.appa.Components.StartBackgroundActivityReceiver.START_ACTIVITY_DELAY_MS_EXTRA;
 import static android.server.wm.backgroundactivity.appb.Components.APP_B_START_PENDING_INTENT_RECEIVER;
+import static android.server.wm.backgroundactivity.appb.Components.StartPendingIntentActivity.ALLOW_BAL_EXTRA;
+import static android.server.wm.backgroundactivity.appb.Components.StartPendingIntentActivity.USE_NULL_BUNDLE;
 import static android.server.wm.backgroundactivity.appb.Components.StartPendingIntentReceiver.PENDING_INTENT_EXTRA;
 import static android.server.wm.backgroundactivity.common.CommonComponents.EVENT_NOTIFIER_EXTRA;
 
+import android.app.ActivityOptions;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.server.wm.backgroundactivity.common.CommonComponents.Event;
+
+import java.util.Optional;
 
 /**
  * Receive broadcast command to create a pendingIntent and send it to AppB.
  */
 public class SendPendingIntentReceiver extends BroadcastReceiver {
 
+    private static Bundle createBundleWithBalEnabled() {
+        ActivityOptions result =
+                ActivityOptions.makeBasic();
+        result.setPendingIntentBackgroundActivityLaunchAllowed(true);
+        return result.toBundle();
+    }
+
     @Override
     public void onReceive(Context context, Intent receivedIntent) {
         boolean isBroadcast = receivedIntent.getBooleanExtra(IS_BROADCAST_EXTRA, false);
         int startActivityDelayMs = receivedIntent.getIntExtra(START_ACTIVITY_DELAY_MS_EXTRA, 0);
+        Optional<Boolean> extraBal =
+                getOptionalBooleanExtra(receivedIntent, ALLOW_BAL_EXTRA, false);
+        Optional<Boolean> extraBalOnIntent =
+                getOptionalBooleanExtra(receivedIntent, ALLOW_BAL_EXTRA_ON_PENDING_INTENT, false);
+        Optional<Boolean> useNullBundle =
+                getOptionalBooleanExtra(receivedIntent, USE_NULL_BUNDLE, false);
+
         ResultReceiver eventNotifier = receivedIntent.getParcelableExtra(EVENT_NOTIFIER_EXTRA);
+
         if (eventNotifier != null) {
             eventNotifier.send(Event.APP_A_SEND_PENDING_INTENT_BROADCAST_RECEIVED, null);
         }
@@ -54,22 +78,52 @@ public class SendPendingIntentReceiver extends BroadcastReceiver {
             newIntent.setComponent(APP_A_START_ACTIVITY_RECEIVER);
             newIntent.putExtra(START_ACTIVITY_DELAY_MS_EXTRA, startActivityDelayMs);
             newIntent.putExtra(EVENT_NOTIFIER_EXTRA, eventNotifier);
-            pendingIntent = PendingIntent.getBroadcast(context, 0,
-                    newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            if (extraBalOnIntent.orElse(false)) {
+                newIntent.putExtras(createBundleWithBalEnabled());
+            }
+            pendingIntent =
+                    PendingIntent.getBroadcast(
+                            context,
+                            0,
+                            newIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         } else {
             // Create a pendingIntent to launch appA's BackgroundActivity
             Intent newIntent = new Intent();
             newIntent.setComponent(APP_A_BACKGROUND_ACTIVITY);
             newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            pendingIntent = PendingIntent.getActivity(context, 0,
-                    newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            if (extraBalOnIntent.orElse(false)) {
+                newIntent.putExtras(createBundleWithBalEnabled());
+            }
+            pendingIntent =
+                    PendingIntent.getActivity(
+                            context,
+                            0,
+                            newIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        }
+
+        ComponentName appBStartPendingIntentReceiver = APP_B_START_PENDING_INTENT_RECEIVER;
+        if (receivedIntent.hasExtra(APP_B_PACKAGE)) {
+            appBStartPendingIntentReceiver = new ComponentName(
+                    receivedIntent.getStringExtra(APP_B_PACKAGE),
+                                                APP_B_START_PENDING_INTENT_RECEIVER.getClassName());
         }
 
         // Send the pendingIntent to appB
         Intent intent = new Intent();
-        intent.setComponent(APP_B_START_PENDING_INTENT_RECEIVER);
+        intent.setComponent(appBStartPendingIntentReceiver);
         intent.putExtra(PENDING_INTENT_EXTRA, pendingIntent);
         intent.putExtra(EVENT_NOTIFIER_EXTRA, eventNotifier);
+        extraBal.ifPresent(v -> intent.putExtra(ALLOW_BAL_EXTRA, v));
+        useNullBundle.ifPresent(v -> intent.putExtra(USE_NULL_BUNDLE, v));
         context.sendBroadcast(intent);
+    }
+
+    private static Optional<Boolean> getOptionalBooleanExtra(
+            Intent receivedIntent, String key, boolean defaultValue) {
+        return receivedIntent.hasExtra(key)
+                ? Optional.of(receivedIntent.getBooleanExtra(key, defaultValue))
+                : Optional.empty();
     }
 }

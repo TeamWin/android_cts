@@ -25,6 +25,10 @@ import static android.telephony.TelephonyManager.SRVCC_STATE_HANDOVER_CANCELED;
 import static android.telephony.TelephonyManager.SRVCC_STATE_HANDOVER_COMPLETED;
 import static android.telephony.TelephonyManager.SRVCC_STATE_HANDOVER_FAILED;
 import static android.telephony.TelephonyManager.SRVCC_STATE_HANDOVER_STARTED;
+import static android.telephony.ims.feature.MmTelFeature.EPS_FALLBACK_REASON_INVALID;
+import static android.telephony.ims.feature.MmTelFeature.EPS_FALLBACK_REASON_NO_NETWORK_RESPONSE;
+import static android.telephony.ims.feature.MmTelFeature.EPS_FALLBACK_REASON_NO_NETWORK_TRIGGER;
+import static android.telephony.mockmodem.MockImsService.LATCH_WAIT_FOR_TRIGGER_EPS_FALLBACK;
 import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_TWN_CHT;
 
 import static junit.framework.Assert.assertFalse;
@@ -51,6 +55,7 @@ import android.telephony.ims.feature.ImsFeature;
 import android.telephony.ims.stub.ImsFeatureConfiguration;
 import android.telephony.mockmodem.MockModemManager;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -61,6 +66,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -82,11 +88,14 @@ public class MmTelFeatureTestOnMockModem {
 
     private static final String ALLOW_MOCK_MODEM_PROPERTY = "persist.radio.allow_mock_modem";
 
-    // the timeout to wait result in milliseconds
+    // the timeout to wait for result in milliseconds
     private static final int WAIT_UPDATE_TIMEOUT_MS = 2000;
 
-    // the timeout to wait sim state changed in seconds
-    private static final int WAIT_SIM_STATE_TIMEOUT_SEC = 3;
+    // the timeout to wait for request in milliseconds
+    private static final int WAIT_REQUEST_TIMEOUT_MS = 1000;
+
+    // the timeout to wait for sim state change in milliseconds
+    private static final int WAIT_SIM_STATE_TIMEOUT_MS = 3000;
 
     private static ImsServiceConnector sServiceConnector;
     private static CarrierConfigReceiver sReceiver;
@@ -94,6 +103,8 @@ public class MmTelFeatureTestOnMockModem {
 
     private static int sTestSlot = 0;
     private static int sTestSub = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
+
+    private static boolean sSupportsImsHal = false;
 
     private abstract static class BaseReceiver extends BroadcastReceiver {
         protected CountDownLatch mLatch = new CountDownLatch(1);
@@ -137,15 +148,21 @@ public class MmTelFeatureTestOnMockModem {
             return;
         }
 
+        TelephonyManager tm = (TelephonyManager) getContext()
+                .getSystemService(Context.TELEPHONY_SERVICE);
+
+        Pair<Integer, Integer> halVersion = tm.getHalVersion(TelephonyManager.HAL_SERVICE_IMS);
+        if (!(halVersion.equals(TelephonyManager.HAL_VERSION_UNKNOWN)
+                || halVersion.equals(TelephonyManager.HAL_VERSION_UNSUPPORTED))) {
+            sSupportsImsHal = true;
+        }
+
         enforceMockModemDeveloperSetting();
         sMockModemManager = new MockModemManager();
         assertNotNull(sMockModemManager);
         assertTrue(sMockModemManager.connectMockModemService(MOCK_SIM_PROFILE_ID_TWN_CHT));
 
-        TelephonyManager tm = (TelephonyManager) getContext()
-                .getSystemService(Context.TELEPHONY_SERVICE);
-
-        TimeUnit.SECONDS.sleep(WAIT_SIM_STATE_TIMEOUT_SEC);
+        TimeUnit.MILLISECONDS.sleep(WAIT_SIM_STATE_TIMEOUT_MS);
 
         int simCardState = tm.getSimCardState();
         assertEquals(TelephonyManager.SIM_STATE_PRESENT, simCardState);
@@ -208,7 +225,7 @@ public class MmTelFeatureTestOnMockModem {
             assertTrue(sMockModemManager.disconnectMockModemService());
             sMockModemManager = null;
 
-            TimeUnit.SECONDS.sleep(WAIT_SIM_STATE_TIMEOUT_SEC);
+            TimeUnit.MILLISECONDS.sleep(WAIT_SIM_STATE_TIMEOUT_MS);
         }
     }
 
@@ -216,6 +233,10 @@ public class MmTelFeatureTestOnMockModem {
     public void beforeTest() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY));
         assumeTrue(ImsUtils.shouldTestImsService());
+
+        if (sMockModemManager != null) {
+            sMockModemManager.resetImsAllLatchCountdown();
+        }
     }
 
     @After
@@ -353,6 +374,42 @@ public class MmTelFeatureTestOnMockModem {
         sServiceConnector.getCarrierService().getMmTelFeature().resetSrvccState();
     }
 
+    @Ignore("Internal use only. Ignore this test until system API is added")
+    @Test
+    public void testTriggerEpsFallback() throws Exception {
+        if (VDBG) Log.d(LOG_TAG, "testTriggerEpsFallback");
+
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_CALLING));
+
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        assumeTrue(sSupportsImsHal);
+
+        // Connect to device ImsService with MmTelFeature
+        triggerFrameworkConnectToCarrierImsService(0);
+
+        sMockModemManager.resetEpsFallbackReason(sTestSlot);
+
+        assertEquals(EPS_FALLBACK_REASON_INVALID,
+                sMockModemManager.getEpsFallbackReason(sTestSlot));
+
+        sServiceConnector.getCarrierService().getMmTelFeature().triggerEpsFallback(
+                EPS_FALLBACK_REASON_NO_NETWORK_TRIGGER);
+        assertTrue(waitForMockImsStateLatchCountdown(LATCH_WAIT_FOR_TRIGGER_EPS_FALLBACK));
+
+        assertEquals(EPS_FALLBACK_REASON_NO_NETWORK_TRIGGER,
+                sMockModemManager.getEpsFallbackReason(sTestSlot));
+
+        sServiceConnector.getCarrierService().getMmTelFeature().triggerEpsFallback(
+                EPS_FALLBACK_REASON_NO_NETWORK_RESPONSE);
+        assertTrue(waitForMockImsStateLatchCountdown(LATCH_WAIT_FOR_TRIGGER_EPS_FALLBACK));
+
+        assertEquals(EPS_FALLBACK_REASON_NO_NETWORK_RESPONSE,
+                sMockModemManager.getEpsFallbackReason(sTestSlot));
+    }
+
     private void triggerFrameworkConnectToCarrierImsService(long capabilities) throws Exception {
         assertTrue(sServiceConnector.connectCarrierImsServiceLocally());
         sServiceConnector.getCarrierService().addCapabilities(capabilities);
@@ -426,5 +483,13 @@ public class MmTelFeatureTestOnMockModem {
 
         assertEquals(state,
                 sServiceConnector.getCarrierService().getMmTelFeature().getSrvccState());
+    }
+
+    public boolean waitForMockImsStateLatchCountdown(int latchIndex) {
+        return waitForMockImsStateLatchCountdown(latchIndex, WAIT_UPDATE_TIMEOUT_MS);
+    }
+
+    public boolean waitForMockImsStateLatchCountdown(int latchIndex, int waitMs) {
+        return sMockModemManager.waitForImsLatchCountdown(latchIndex, waitMs);
     }
 }

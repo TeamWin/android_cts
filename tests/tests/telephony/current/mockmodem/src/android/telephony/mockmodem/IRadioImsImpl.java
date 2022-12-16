@@ -24,6 +24,7 @@ import android.hardware.radio.ims.IRadioImsIndication;
 import android.hardware.radio.ims.IRadioImsResponse;
 import android.hardware.radio.ims.ImsDeregistrationReason;
 import android.os.RemoteException;
+import android.telephony.ims.feature.MmTelFeature;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
 import android.util.Log;
 
@@ -118,7 +119,9 @@ public class IRadioImsImpl extends IRadioIms.Stub {
     public void triggerEpsFallback(int serial, int reason) {
         Log.d(mTag, "triggerEpsFallback");
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        mImsState.setEpsFallbackReason(reason);
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioImsResponse.triggerEpsFallbackResponse(rsp);
         } catch (RemoteException ex) {
@@ -215,6 +218,22 @@ public class IRadioImsImpl extends IRadioIms.Stub {
         } catch (RemoteException ex) {
             Log.e(mTag, "Failed to updateImsCallStatus from AIDL. Exception" + ex);
         }
+    }
+
+    /**
+     * Returns the reason that caused EPS fallback.
+     *
+     * @return the reason that caused EPS fallback.
+     */
+    public @MmTelFeature.EpsFallbackReason int getEpsFallbackReason() {
+        return mImsState.getEpsFallbackReason();
+    }
+
+    /**
+     * Clears the EPS fallback reason.
+     */
+    public void resetEpsFallbackReason() {
+        mImsState.resetEpsFallbackReason();
     }
 
     /**

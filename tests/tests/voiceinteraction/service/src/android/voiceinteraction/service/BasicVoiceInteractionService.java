@@ -25,7 +25,6 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 
 import static java.util.Objects.requireNonNull;
 
-import android.Manifest;
 import android.app.UiAutomation;
 import android.content.Intent;
 import android.hardware.soundtrigger.SoundTrigger;
@@ -115,11 +114,6 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                         callCreateAlwaysOnHotwordDetector();
                     }
                 }, MANAGE_HOTWORD_DETECTION);
-            } else if (testEvent == Utils.VIS_WITHOUT_MANAGE_HOTWORD_DETECTION_PERMISSION_TEST) {
-                runWithShellPermissionIdentity(() -> callCreateAlwaysOnHotwordDetector(),
-                        Manifest.permission.BIND_HOTWORD_DETECTION_SERVICE);
-            } else if (testEvent == Utils.VIS_HOLD_BIND_HOTWORD_DETECTION_PERMISSION_TEST) {
-                runWithShellPermissionIdentity(() -> callCreateAlwaysOnHotwordDetector());
             } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST) {
                 // need to retain the identity until the callback is triggered
                 uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);

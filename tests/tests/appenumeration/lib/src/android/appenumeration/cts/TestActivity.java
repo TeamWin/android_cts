@@ -366,6 +366,11 @@ public class TestActivity extends Activity {
                 final String targetPackageName = intent.getBundleExtra(EXTRA_DATA)
                         .getString(Intent.EXTRA_PACKAGE_NAME);
                 sendCanPackageQuery(remoteCallback, sourcePackageName, targetPackageName);
+            } else if (Constants.ACTION_CAN_PACKAGE_QUERIES.equals(action)) {
+                final String sourcePackageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                final String[] targetPackageNames = intent.getBundleExtra(EXTRA_DATA)
+                        .getStringArray(EXTRA_PACKAGES);
+                sendCanPackageQueries(remoteCallback, sourcePackageName, targetPackageNames);
             } else if (Constants.ACTION_GET_ALL_PACKAGE_INSTALLER_SESSIONS.equals(action)) {
                 final List<SessionInfo> infos = getSystemService(LauncherApps.class)
                         .getAllPackageInstallerSessions();
@@ -983,6 +988,20 @@ public class TestActivity extends Activity {
                     targetPackageName);
             final Bundle result = new Bundle();
             result.putBoolean(EXTRA_RETURN_RESULT, visibility);
+            remoteCallback.sendResult(result);
+            finish();
+        } catch (PackageManager.NameNotFoundException e) {
+            sendError(remoteCallback, e);
+        }
+    }
+
+    private void sendCanPackageQueries(RemoteCallback remoteCallback, String sourcePackageName,
+            String[] targetPackageNames) {
+        try {
+            final boolean[] visibilities = getPackageManager().canPackageQuery(sourcePackageName,
+                    targetPackageNames);
+            final Bundle result = new Bundle();
+            result.putBooleanArray(EXTRA_RETURN_RESULT, visibilities);
             remoteCallback.sendResult(result);
             finish();
         } catch (PackageManager.NameNotFoundException e) {

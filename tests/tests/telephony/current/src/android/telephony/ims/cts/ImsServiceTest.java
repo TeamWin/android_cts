@@ -3614,6 +3614,8 @@ public class ImsServiceTest {
         bundle.putPersistableBundle(
                 CarrierConfigManager.Ims.KEY_MMTEL_REQUIRES_PROVISIONING_BUNDLE,
                 innerBundle);
+        bundle.putBoolean(
+                CarrierConfigManager.KEY_CARRIER_VOLTE_PROVISIONING_REQUIRED_BOOL, false);
         overrideCarrierConfig(bundle);
 
         triggerFrameworkConnectToCarrierImsService();
@@ -3882,7 +3884,8 @@ public class ImsServiceTest {
                 innerBundle);
         bundle.putBoolean(
                 CarrierConfigManager.KEY_CARRIER_RCS_PROVISIONING_REQUIRED_BOOL, false);
-
+        bundle.putBoolean(
+                CarrierConfigManager.KEY_CARRIER_VOLTE_PROVISIONING_REQUIRED_BOOL, false);
         overrideCarrierConfig(bundle);
 
         triggerFrameworkConnectToImsServiceBindMmTelAndRcsFeature();

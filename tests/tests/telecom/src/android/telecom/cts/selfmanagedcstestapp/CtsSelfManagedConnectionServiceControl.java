@@ -89,6 +89,12 @@ public class CtsSelfManagedConnectionServiceControl extends Service {
         }
 
         @Override
+        public boolean initiateIncomingCall(PhoneAccountHandle handle, String uri) {
+            return mConnServiceCallController.initiateIncomingCall(
+                    mTelecomManager, handle, uri);
+        }
+
+        @Override
         public boolean placeOutgoingCall(PhoneAccountHandle handle, String uri) {
             return mConnServiceCallController.placeOutgoingCall(mTelecomManager, handle, uri);
         }
@@ -122,6 +128,11 @@ public class CtsSelfManagedConnectionServiceControl extends Service {
         @Override
         public int getConnectionState() {
             return mConnServiceCallController.getState();
+        }
+
+        @Override
+        public void setConnectionCapabilityNoHold() {
+            mConnServiceCallController.setConnectionCapabilityNoHold();
         }
 
         @Override
