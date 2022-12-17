@@ -683,7 +683,7 @@ public class CodecEncoderSurfaceTest {
             /* TODO(b/149027258) */
             mSaveToMem = false;
             OutputManager ref = new OutputManager();
-            OutputManager test = new OutputManager();
+            OutputManager test = new OutputManager(ref.getSharedErrorLogs());
             int loopCounter = 0;
             boolean[] boolStates = {true, false};
             for (boolean isAsync : boolStates) {

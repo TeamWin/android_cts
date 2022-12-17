@@ -27,6 +27,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.telecom.Call;
@@ -272,9 +273,14 @@ public class ImsCallingBase {
     }
 
     public void bindImsService() throws Exception  {
+        bindImsService(ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
+    }
+
+    public void bindImsService(int radioTech) throws Exception  {
         // Connect to the ImsService with the MmTel feature.
         assertTrue(sServiceConnector.connectCarrierImsService(new ImsFeatureConfiguration.Builder()
                 .addFeature(sTestSlot, ImsFeature.FEATURE_MMTEL)
+                .addFeature(sTestSlot, ImsFeature.FEATURE_EMERGENCY_MMTEL)
                 .build()));
         sIsBound = true;
         // The MmTelFeature is created when the ImsService is bound. If it wasn't created, then the
@@ -291,7 +297,7 @@ public class ImsCallingBase {
                 MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_VOICE);
         // Set Registered and VoLTE capable
         sServiceConnector.getCarrierService().getImsService().getRegistrationForSubscription(
-                sTestSlot, sTestSub).onRegistered(ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
+                sTestSlot, sTestSub).onRegistered(radioTech);
         sServiceConnector.getCarrierService().getMmTelFeature().setCapabilities(capabilities);
         sServiceConnector.getCarrierService().getMmTelFeature()
                 .notifyCapabilitiesStatusChanged(capabilities);
@@ -482,6 +488,16 @@ public class ImsCallingBase {
 
     protected static Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
+    /** Checks whether the system feature is supported. */
+    protected static boolean hasFeature(String feature) {
+        final PackageManager pm = getContext().getPackageManager();
+        if (!pm.hasSystemFeature(feature)) {
+            Log.d(LOG_TAG, "Skipping test that requires " + feature);
+            return false;
+        }
+        return true;
     }
 
     protected static String setDefaultDialer(Instrumentation instrumentation, String packageName)

@@ -32,6 +32,7 @@ android_test_helper_app {
         "cts-biometric-util",
         "cts-biometric-hostside-util",
         "cts-input-lib",
+        "cts-wm-util",
         "ctstestrunner-axt",
         "truth-prebuilt",
     ],

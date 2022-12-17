@@ -16,6 +16,10 @@
 
 package android.view.accessibility.cts;
 
+import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_IN_DIRECTION;
+
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
@@ -269,6 +273,20 @@ public class AccessibilityEventTest {
         AccessibilityEvent event = scrollEventFilter.getLastEvent();
         assertEquals(-7, event.getScrollDeltaX());
         assertEquals(50, event.getScrollDeltaY());
+    }
+
+    @Test
+    public void testEventViewTargetedByScroll() throws Throwable {
+        final AccessibilityEvent awaitedEvent = sUiAutomation.executeAndWaitForEvent(
+                () -> {
+                    AccessibilityEvent event = new AccessibilityEvent(
+                            AccessibilityEvent.TYPE_VIEW_TARGETED_BY_SCROLL);
+                    event.setAction(ACTION_SCROLL_IN_DIRECTION.getId());
+                    mChildView.sendAccessibilityEventUnchecked(event);
+                },
+                event -> event.getEventType() == AccessibilityEvent.TYPE_VIEW_TARGETED_BY_SCROLL,
+                DEFAULT_TIMEOUT_MS);
+        assertThat(awaitedEvent.getAction()).isEqualTo(ACTION_SCROLL_IN_DIRECTION.getId());
     }
 
     @Test

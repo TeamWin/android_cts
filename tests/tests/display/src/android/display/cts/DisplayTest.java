@@ -468,8 +468,8 @@ public class DisplayTest {
     }
 
     private void restoreOriginalHdrSettings() {
-        mDisplayManager.overrideHdrTypes(DEFAULT_DISPLAY, new int[]{});
         if (mDisplayManager != null) {
+            mDisplayManager.overrideHdrTypes(DEFAULT_DISPLAY, new int[]{});
             mDisplayManager.setUserDisabledHdrTypes(
                     mOriginalHdrSettings.userDisabledHdrTypes);
             mDisplayManager.setAreUserDisabledHdrTypesAllowed(

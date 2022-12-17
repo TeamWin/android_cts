@@ -34,9 +34,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * Helper class for running mediacodec in asynchronous mode. All mediacodec callback events are
  * registered in this object so that the client can take appropriate action in time.
  * <p>
- * TODO: Calls to getInput(), getOutput(), getWork() return if there is a valid input or output
- * buffer available for client or when the codec is in error state. Have to add support to return
- * from these calls after a timeout.
+ * TODO(b/262696149): Calls to getInput(), getOutput(), getWork() return if there is a valid input
+ * or output buffer available for client or when the codec is in error state. Have to add support
+ * to return from these calls after a timeout. Currently the wait is indefinite.
  */
 public class CodecAsyncHandler extends MediaCodec.Callback {
     private static final String LOG_TAG = CodecAsyncHandler.class.getSimpleName();

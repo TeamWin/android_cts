@@ -48,8 +48,13 @@ public class OutputManager {
     private final ArrayList<Long> mInpPtsList;
     private final ArrayList<Long> mOutPtsList;
     private final StringBuilder mErrorLogs;
+    private final StringBuilder mSharedErrorLogs;
 
     public OutputManager() {
+        this(new StringBuilder());
+    }
+
+    public OutputManager(StringBuilder sharedErrorLogs) {
         mMemory = new byte[1024];
         mMemIndex = 0;
         mCrc32UsingImage = new CRC32();
@@ -58,6 +63,7 @@ public class OutputManager {
         mOutPtsList = new ArrayList<>();
         mErrorLogs = new StringBuilder(
                 "##################       Error Details         ####################\n");
+        mSharedErrorLogs = sharedErrorLogs;
     }
 
     public void saveInPTS(long pts) {
@@ -297,12 +303,17 @@ public class OutputManager {
         return ByteBuffer.wrap(mMemory);
     }
 
+    public StringBuilder getSharedErrorLogs() {
+        return mSharedErrorLogs;
+    }
+
     public void reset() {
         position(0);
         mCrc32UsingImage.reset();
         mCrc32UsingBuffer.reset();
         mInpPtsList.clear();
         mOutPtsList.clear();
+        mSharedErrorLogs.setLength(0);
         mErrorLogs.setLength(0);
         mErrorLogs.append("##################       Error Details         ####################\n");
     }
@@ -389,7 +400,7 @@ public class OutputManager {
         OutputManager that = (OutputManager) o;
 
         if (!this.equalsInterlaced(o)) return false;
-        return arePtsListsIdentical(mOutPtsList, that.mOutPtsList, that.mErrorLogs);
+        return arePtsListsIdentical(mOutPtsList, that.mOutPtsList, mSharedErrorLogs);
     }
 
     // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
@@ -401,20 +412,20 @@ public class OutputManager {
         boolean isEqual = true;
         if (mCrc32UsingImage.getValue() != that.mCrc32UsingImage.getValue()) {
             isEqual = false;
-            that.mErrorLogs.append("CRC32 checksums computed for image buffers received from "
+            mSharedErrorLogs.append("CRC32 checksums computed for image buffers received from "
                     + "getOutputImage() do not match between ref and test runs. \n");
-            that.mErrorLogs.append(String.format("Ref CRC32 checksum value is %d \n",
+            mSharedErrorLogs.append(String.format("Ref CRC32 checksum value is %d \n",
                     mCrc32UsingImage.getValue()));
-            that.mErrorLogs.append(String.format("Test CRC32 checksum value is %d \n",
+            mSharedErrorLogs.append(String.format("Test CRC32 checksum value is %d \n",
                     that.mCrc32UsingImage.getValue()));
         }
         if (mCrc32UsingBuffer.getValue() != that.mCrc32UsingBuffer.getValue()) {
             isEqual = false;
-            that.mErrorLogs.append("CRC32 checksums computed for byte buffers received from "
+            mSharedErrorLogs.append("CRC32 checksums computed for byte buffers received from "
                     + "getOutputBuffer() do not match between ref and test runs. \n");
-            that.mErrorLogs.append(String.format("Ref CRC32 checksum value is %d \n",
+            mSharedErrorLogs.append(String.format("Ref CRC32 checksum value is %d \n",
                     mCrc32UsingBuffer.getValue()));
-            that.mErrorLogs.append(String.format("Test CRC32 checksum value is %d \n",
+            mSharedErrorLogs.append(String.format("Test CRC32 checksum value is %d \n",
                     that.mCrc32UsingBuffer.getValue()));
             if (mMemIndex == that.mMemIndex) {
                 int count = 0;
@@ -431,14 +442,14 @@ public class OutputManager {
                     }
                 }
                 if (count != 0) {
-                    that.mErrorLogs.append("Ref and Test outputs are not identical \n");
-                    that.mErrorLogs.append(msg);
+                    mSharedErrorLogs.append("Ref and Test outputs are not identical \n");
+                    mSharedErrorLogs.append(msg);
                 }
             } else {
-                that.mErrorLogs.append("CRC32 byte buffer checksums are different because ref and"
+                mSharedErrorLogs.append("CRC32 byte buffer checksums are different because ref and"
                         + " test output sizes are not identical \n");
-                that.mErrorLogs.append(String.format("Ref output buffer size %d \n", mMemIndex));
-                that.mErrorLogs.append(String.format("Test output buffer size %d \n",
+                mSharedErrorLogs.append(String.format("Ref output buffer size %d \n", mMemIndex));
+                mSharedErrorLogs.append(String.format("Test output buffer size %d \n",
                         that.mMemIndex));
             }
         }
@@ -446,6 +457,6 @@ public class OutputManager {
     }
 
     public String getErrMsg() {
-        return mErrorLogs.toString();
+        return (mErrorLogs.toString() + mSharedErrorLogs.toString());
     }
 }

@@ -371,7 +371,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         boolean[] boolStates = {true, false};
         mSaveToMem = true;
         OutputManager ref = new OutputManager();
-        OutputManager test = new OutputManager();
+        OutputManager test = new OutputManager(ref.getSharedErrorLogs());
         {
             mCodec = MediaCodec.createByCodecName(mCodecName);
             assertEquals("codec name act/got: " + mCodec.getName() + '/' + mCodecName,
@@ -464,10 +464,10 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         final long pts = 500000;
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
         boolean[] boolStates = {true, false};
-        OutputManager test = new OutputManager();
         {
             decodeToMemory(mTestFile, mCodecName, pts, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
+            OutputManager test = new OutputManager(ref.getSharedErrorLogs());
             mOutputBuff = test;
             setUpSource(mTestFile);
             mCodec = MediaCodec.createByCodecName(mCodecName);
@@ -611,15 +611,16 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         final long seekTs = 500000;
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
         boolean[] boolStates = {true, false};
-        OutputManager test = new OutputManager();
         {
             decodeToMemory(mTestFile, mCodecName, startTs, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
             decodeToMemory(mReconfigFile, mCodecName, seekTs, mode, Integer.MAX_VALUE);
             OutputManager configRef = mOutputBuff;
-            mOutputBuff = test;
+            OutputManager test = new OutputManager(ref.getSharedErrorLogs());
+            OutputManager configTest = new OutputManager(configRef.getSharedErrorLogs());
             mCodec = MediaCodec.createByCodecName(mCodecName);
             for (boolean isAsync : boolStates) {
+                mOutputBuff = test;
                 setUpSource(mTestFile);
                 mExtractor.seekTo(startTs, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                 configureCodec(format, isAsync, true, false);
@@ -685,6 +686,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 mExtractor.release();
 
                 /* test reconfigure codec for new file */
+                mOutputBuff = configTest;
                 setUpSource(mReconfigFile);
                 reConfigureCodec(newFormat, isAsync, false, false);
                 if (isFormatSimilar(newFormat, defFormat)) {
@@ -694,16 +696,16 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                     validateFormat = false;
                 }
                 mCodec.start();
-                test.reset();
+                configTest.reset();
                 mExtractor.seekTo(seekTs, mode);
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
                 validateMetrics(mCodecName, newFormat);
                 mCodec.stop();
-                if (!configRef.equals(test)) {
+                if (!configRef.equals(configTest)) {
                     fail("Decoder output is not consistent across runs \n" + mTestConfig + mTestEnv
-                            + test.getErrMsg());
+                            + configTest.getErrMsg());
                 }
                 if (validateFormat) {
                     doOutputFormatChecks(defFormat, newFormat);
@@ -727,7 +729,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         MediaFormat format = setUpSource(mTestFile);
         boolean[] boolStates = {true, false};
         OutputManager ref = new OutputManager();
-        OutputManager test = new OutputManager();
+        OutputManager test = new OutputManager(ref.getSharedErrorLogs());
         mSaveToMem = true;
         {
             mCodec = MediaCodec.createByCodecName(mCodecName);
@@ -798,7 +800,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         boolean[] boolStates = {true, false};
         mSaveToMem = true;
         OutputManager ref = new OutputManager();
-        OutputManager test = new OutputManager();
+        OutputManager test = new OutputManager(ref.getSharedErrorLogs());
         {
             mCodec = MediaCodec.createByCodecName(mCodecName);
             int loopCounter = 0;
@@ -881,13 +883,13 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         boolean[] boolStates = {true, false};
         int frameLimit = 10;
         ByteBuffer buffer = ByteBuffer.allocate(4 * 1024 * 1024);
-        OutputManager test = new OutputManager();
         {
             decodeToMemory(mTestFile, mCodecName, 0, MediaExtractor.SEEK_TO_CLOSEST_SYNC,
                     frameLimit);
             mCodec = MediaCodec.createByCodecName(mCodecName);
             OutputManager ref = mOutputBuff;
             mSaveToMem = true;
+            OutputManager test = new OutputManager(ref.getSharedErrorLogs());
             mOutputBuff = test;
             for (boolean isAsync : boolStates) {
                 mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);

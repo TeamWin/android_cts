@@ -511,6 +511,8 @@ public class VehiclePropertyVerifier<T> {
         }
 
         for (int areaId : carPropertyConfig.getAreaIds()) {
+            // TODO(b/261480597): verify AreaIdConfig#getSupportedEnumValues()
+
             T areaIdMinValue = (T) carPropertyConfig.getMinValue(areaId);
             T areaIdMaxValue = (T) carPropertyConfig.getMaxValue(areaId);
             if (mRequireMinMaxValues) {

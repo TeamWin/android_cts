@@ -55,8 +55,8 @@ class CodecEncoderSurfaceTest {
     int mMuxTrackID;
 
     OutputManager* mOutputBuff;
-    OutputManager mRefBuff;
-    OutputManager mTestBuff;
+    OutputManager* mRefBuff;
+    OutputManager* mTestBuff;
     bool mSaveToMem;
 
     std::string mErrorLogs;
@@ -104,6 +104,8 @@ CodecEncoderSurfaceTest::CodecEncoderSurfaceTest(const char* mime, int bitrate, 
     mLatency = mMaxBFrames;
     mReviseLatency = false;
     mMuxTrackID = -1;
+    mRefBuff = new OutputManager();
+    mTestBuff = new OutputManager(mRefBuff->getSharedErrorLogs());
 }
 
 CodecEncoderSurfaceTest::~CodecEncoderSurfaceTest() {
@@ -128,6 +130,8 @@ CodecEncoderSurfaceTest::~CodecEncoderSurfaceTest() {
         AMediaCodec_delete(mEncoder);
         mEncoder = nullptr;
     }
+    delete mRefBuff;
+    delete mTestBuff;
 }
 
 bool CodecEncoderSurfaceTest::setUpExtractor(const char* srcFile, int colorFormat) {
@@ -556,8 +560,8 @@ bool CodecEncoderSurfaceTest::testSimpleEncode(const char* encoder, const char* 
     /* TODO(b/149027258) */
     if (true) mSaveToMem = false;
     else mSaveToMem = true;
-    auto ref = &mRefBuff;
-    auto test = &mTestBuff;
+    auto ref = mRefBuff;
+    auto test = mTestBuff;
     int loopCounter = 0;
     const bool boolStates[]{true, false};
     for (bool isAsync : boolStates) {

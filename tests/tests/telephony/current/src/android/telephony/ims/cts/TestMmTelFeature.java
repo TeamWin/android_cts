@@ -19,6 +19,7 @@ package android.telephony.ims.cts;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.telephony.ims.ImsCallProfile;
+import android.telephony.ims.ImsCallSessionListener;
 import android.telephony.ims.ImsStreamMediaProfile;
 import android.telephony.ims.RtpHeaderExtensionType;
 import android.telephony.ims.SrvccCall;
@@ -30,7 +31,9 @@ import android.util.Log;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
@@ -231,6 +234,37 @@ public class TestMmTelFeature extends MmTelFeature {
         executor.execute(() -> {
             notifyIncomingCall(incomingSession, extras);
         });
+    }
+
+
+    public ImsCallSessionListener onIncomingCallReceivedReturnListener(Bundle extras) {
+        Log.d(TAG, "onIncomingCallReceivedReturnListener");
+
+        ImsStreamMediaProfile mediaProfile = new ImsStreamMediaProfile(
+                ImsStreamMediaProfile.AUDIO_QUALITY_AMR,
+                ImsStreamMediaProfile.DIRECTION_SEND_RECEIVE,
+                ImsStreamMediaProfile.VIDEO_QUALITY_NONE,
+                ImsStreamMediaProfile.DIRECTION_INVALID,
+                ImsStreamMediaProfile.RTT_MODE_DISABLED);
+
+        ImsCallProfile callProfile = new ImsCallProfile(ImsCallProfile.SERVICE_TYPE_NORMAL,
+                ImsCallProfile.CALL_TYPE_VOICE, new Bundle(), mediaProfile);
+
+        TestImsCallSessionImpl incomingSession = new TestImsCallSessionImpl(callProfile);
+        mCallSession = incomingSession;
+        String callId = mCallSession.getCallId();
+
+        CompletableFuture<ImsCallSessionListener> future =
+                CompletableFuture.supplyAsync(()->
+                        notifyIncomingCall(incomingSession, callId, extras),
+                        incomingSession.getExecutor());
+        try {
+            ImsCallSessionListener isl = future.get();
+            return future.get();
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     private void onCallCreate(TestImsCallSessionImpl session) {

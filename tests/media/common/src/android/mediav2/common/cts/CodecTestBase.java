@@ -700,7 +700,7 @@ public abstract class CodecTestBase {
     }
 
     private static ArrayList<String> compileCompleteTestMimeList(boolean isEncoder,
-             boolean needAudio, boolean needVideo) {
+            boolean needAudio, boolean needVideo) {
         ArrayList<String> mimes = new ArrayList<>();
         if (mimeSelKeys == null) {
             ArrayList<String> cddRequiredMimeList =
@@ -974,7 +974,7 @@ public abstract class CodecTestBase {
     }
 
     protected void reConfigureCodec(MediaFormat format, boolean isAsync,
-             boolean signalEOSWithLastFrame, boolean isEncoder) {
+            boolean signalEOSWithLastFrame, boolean isEncoder) {
         /* TODO(b/147348711) */
         if (false) mCodec.stop();
         else mCodec.reset();

@@ -19,6 +19,7 @@ package android.telephony.mockmodem;
 import static android.telephony.mockmodem.MockSimService.EF_ICCID;
 import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_DEFAULT;
 import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_MAX;
+import static android.telephony.mockmodem.MockVoiceService.MockCallInfo.CALL_TYPE_EMERGENCY;
 import static android.telephony.mockmodem.MockVoiceService.MockCallInfo.CALL_TYPE_VOICE;
 
 import android.content.Context;
@@ -35,6 +36,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RegistrantList;
+import android.telephony.Annotation;
 import android.telephony.mockmodem.MockSimService.SimAppData;
 import android.util.Log;
 
@@ -962,6 +964,42 @@ public class MockModemConfigBase implements MockModemConfigInterface {
     }
 
     @Override
+    public boolean dialEccVoiceCall(
+            int logicalSlotId,
+            String address,
+            int categories,
+            String[] urns,
+            int routing,
+            String client) {
+        return dialEccVoiceCall(logicalSlotId, address, categories, urns, routing,
+                mCallControlInfo, client);
+    }
+
+    @Override
+    public boolean dialEccVoiceCall(
+            int logicalSlotId,
+            String address,
+            int categories,
+            String[] urns,
+            int routing,
+            MockCallControlInfo callControlInfo,
+            String client) {
+        Log.d(
+                mTAG,
+                "dialEccVoiceCall["
+                        + logicalSlotId
+                        + "]: address = "
+                        + address
+                        + " categories = "
+                        + categories
+                        + " from: "
+                        + client);
+
+        return mVoiceService[logicalSlotId].dialEccVoiceCall(
+                address, categories, urns, routing, CALL_TYPE_EMERGENCY, callControlInfo);
+    }
+
+    @Override
     public boolean hangupVoiceCall(int logicalSlotId, int index, String client) {
         Log.d(
                 mTAG,
@@ -985,6 +1023,21 @@ public class MockModemConfigBase implements MockModemConfigInterface {
     public LastCallFailCauseInfo getLastCallFailCause(int logicalSlotId, String client) {
         Log.d(mTAG, "getLastCallFailCause[" + logicalSlotId + "] from: " + client);
         return mVoiceService[logicalSlotId].getLastCallEndInfo();
+    }
+
+    @Override
+    public void setLastCallFailCause(int logicalSlotId,
+            @Annotation.DisconnectCauses int cause, String client) {
+        Log.d(mTAG, "setLastCallFailCause[" + logicalSlotId + "]: cause = " + cause
+                + "  from: " + client);
+        mVoiceService[logicalSlotId].setLastCallFailCause(cause);
+    }
+
+    @Override
+    public void clearAllCalls(int logicalSlotId,
+            @Annotation.DisconnectCauses int cause, String client) {
+        Log.d(mTAG, "clearAllCalls[" + logicalSlotId + "]: cause = " + cause + "  from: " + client);
+        mVoiceService[logicalSlotId].clearAllCalls(cause);
     }
 
     @Override

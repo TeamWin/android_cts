@@ -49,9 +49,9 @@ public class HDREncoderTestBase extends CodecEncoderTestBase {
     private int mTrackID = -1;
 
     public HDREncoderTestBase(String encoderName, String mediaType, int bitrate, int width,
-            int height, RawResource rawResoure, String allTestParams) {
+            int height, RawResource rawRes, String allTestParams) {
         super(encoderName, mediaType, new int[]{bitrate}, new int[]{width}, new int[]{height},
-                rawResoure, allTestParams);
+                rawRes, allTestParams);
     }
 
     @After

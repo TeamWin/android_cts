@@ -655,9 +655,16 @@ class AutoRevokeTest {
 
     private fun getAllowlistToggle(): UiObject2 {
         waitForIdle()
+        // Wear: per b/253990371, unused_apps_summary string is not available,
+        // so look for unused_apps_label_v2 string instead.
+        val autoRevokeText = if (hasFeatureWatch()) {
+            "Pause app"
+        } else {
+            "Remove permissions"
+        }
         val parent = waitFindObject(
             By.clickable(true)
-                .hasDescendant(By.textStartsWith("Remove permissions"))
+                .hasDescendant(By.textStartsWith(autoRevokeText))
                 .hasDescendant(By.checkable(true))
         )
         return parent.findObject(By.checkable(true))

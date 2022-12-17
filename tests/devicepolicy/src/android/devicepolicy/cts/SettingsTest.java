@@ -16,6 +16,8 @@
 
 package android.devicepolicy.cts;
 
+import static android.os.Build.VERSION_CODES.Q;
+import static android.os.Build.VERSION_CODES.R;
 import static android.provider.Settings.Global.AIRPLANE_MODE_ON;
 import static android.provider.Settings.Global.AUTO_TIME;
 import static android.provider.Settings.Global.BLUETOOTH_ON;
@@ -30,6 +32,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureNotDemoMode;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireTargetSdkVersion;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
@@ -40,6 +43,7 @@ import com.android.bedstead.harrier.policies.SetSecureSetting;
 import com.android.bedstead.nene.TestApis;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
@@ -54,7 +58,9 @@ public final class SettingsTest {
     private static final String UNSUPPORTED_GLOBAL_SETTING = AIRPLANE_MODE_ON;
     private static final String SUPPORTED_GLOBAL_SETTING = AUTO_TIME;
 
-    private static final String DEVICE_OWNER_ONLY_SECURE_SETTING = LOCATION_MODE;
+    //Deprecated in R
+    private static final String DEPRECATED_DEVICE_OWNER_ONLY_SECURE_SETTING = LOCATION_MODE;
+
     private static final String SECURE_SETTING = SKIP_FIRST_USE_HINTS;
 
     @CanSetPolicyTest(policy = SetGlobalSetting.class)
@@ -136,22 +142,26 @@ public final class SettingsTest {
 
     @CanSetPolicyTest(policy = SetDeviceOwnerSecureSetting.class)
     @Postsubmit(reason = "new test")
+    @RequireTargetSdkVersion(max = Q)
+    @Ignore
+    //TODO(b/200282889) Un-Ignore this once targetSDK checks the dpc's targetSDK is Q or below.
     public void setSecureSetting_deviceOwnerOnly_sets() {
         int originalValue = TestApis.settings().secure()
-                .getInt(DEVICE_OWNER_ONLY_SECURE_SETTING, /* defaultValue= */ 0);
+                .getInt(DEPRECATED_DEVICE_OWNER_ONLY_SECURE_SETTING, /* defaultValue= */ 0);
         int newValue = originalValue + 1;
 
         try {
             sDeviceState.dpc().devicePolicyManager()
                     .setSecureSetting(sDeviceState.dpc().componentName(),
-                            DEVICE_OWNER_ONLY_SECURE_SETTING, String.valueOf(newValue));
+                            DEPRECATED_DEVICE_OWNER_ONLY_SECURE_SETTING, String.valueOf(newValue));
 
-            assertThat(TestApis.settings().secure().getInt(DEVICE_OWNER_ONLY_SECURE_SETTING))
-                    .isEqualTo(newValue);
+            assertThat(TestApis.settings().secure().getInt(
+                    DEPRECATED_DEVICE_OWNER_ONLY_SECURE_SETTING)).isEqualTo(newValue);
         } finally {
             sDeviceState.dpc().devicePolicyManager()
                     .setSecureSetting(sDeviceState.dpc().componentName(),
-                            DEVICE_OWNER_ONLY_SECURE_SETTING, String.valueOf(originalValue));
+                            DEPRECATED_DEVICE_OWNER_ONLY_SECURE_SETTING,
+                            String.valueOf(originalValue));
 
         }
     }
@@ -159,14 +169,29 @@ public final class SettingsTest {
     @CannotSetPolicyTest(
             policy = SetDeviceOwnerSecureSetting.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
-    public void setSecureSetting_deviceOwnerOnly_isNotDeviceOwner_throwsException() {
+    public void setSecureSetting_deviceOwnerOnly_isNotDeviceOwner_throwsSecurityException() {
         int originalValue = TestApis.settings().secure()
-                .getInt(DEVICE_OWNER_ONLY_SECURE_SETTING, /* defaultValue= */ 0);
+                .getInt(DEPRECATED_DEVICE_OWNER_ONLY_SECURE_SETTING, /* defaultValue= */ 0);
         int newValue = originalValue + 1;
 
         assertThrows(SecurityException.class, () -> sDeviceState.dpc().devicePolicyManager()
                 .setSecureSetting(sDeviceState.dpc().componentName(),
-                        DEVICE_OWNER_ONLY_SECURE_SETTING, String.valueOf(newValue)));
+                        DEPRECATED_DEVICE_OWNER_ONLY_SECURE_SETTING, String.valueOf(newValue)));
+    }
+
+    @CanSetPolicyTest(policy = SetDeviceOwnerSecureSetting.class)
+    @Postsubmit(reason = "new test")
+    @RequireTargetSdkVersion(min = R)
+    @Ignore
+    //TODO(b/200282889) Un-Ignore this once targetSDK checks the dpc's targetSDK is R or above.
+    public void setSecureSetting_deviceOwnerOnly_settingIsDeprecated_throwsException() {
+        int originalValue = TestApis.settings().secure()
+                .getInt(DEPRECATED_DEVICE_OWNER_ONLY_SECURE_SETTING, /* defaultValue= */ 0);
+        int newValue = originalValue + 1;
+
+        assertThrows(UnsupportedOperationException.class, () -> sDeviceState.dpc()
+                .devicePolicyManager().setSecureSetting(sDeviceState.dpc().componentName(),
+                        DEPRECATED_DEVICE_OWNER_ONLY_SECURE_SETTING, String.valueOf(newValue)));
     }
 
     @PolicyDoesNotApplyTest(policy = SetSecureSetting.class)

@@ -17,6 +17,7 @@
 package android.telephony.mockmodem;
 
 import android.hardware.radio.voice.CdmaSignalInfoRecord;
+import android.hardware.radio.voice.LastCallFailCause;
 import android.hardware.radio.voice.LastCallFailCauseInfo;
 import android.hardware.radio.voice.UusInfo;
 import android.os.Handler;
@@ -24,6 +25,8 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.GuardedBy;
+import android.telephony.Annotation;
+import android.telephony.DisconnectCause;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -117,6 +120,9 @@ public class MockVoiceService {
         private int mClir;
         private CdmaSignalInfoRecord mCdmaSignalInfoRecord;
         private MockCallControlInfo mCallControlInfo;
+        private int mCategories;
+        private String[] mUrns;
+        private int mRouting;
 
         @GuardedBy("mTimerList")
         private final ArrayList<Timer> mTimerList = new ArrayList<Timer>();
@@ -163,6 +169,31 @@ public class MockVoiceService {
             mUusInfo = uusInfo;
             mCallType = callType;
             mCdmaSignalInfoRecord = null;
+            if (callControlInfo == null) {
+                mCallControlInfo = new MockCallControlInfo();
+                Log.w(mTag, "No call control info. Using default instead.");
+            } else {
+                mCallControlInfo = callControlInfo;
+            }
+        }
+
+        public MockCallInfo(
+                boolean isMT,
+                String address,
+                int categories,
+                String[] urns,
+                int routing,
+                int callType,
+                MockCallControlInfo callControlInfo) {
+            mState = CALL_STATE_INIT;
+            mIndex = generateCallId();
+            mToa = DEFAULT_TOA;
+            mNumber = address;
+            mIsMT = isMT;
+            mCallType = callType;
+            mCategories = categories;
+            mUrns = urns;
+            mRouting = routing;
             if (callControlInfo == null) {
                 mCallControlInfo = new MockCallControlInfo();
                 Log.w(mTag, "No call control info. Using default instead.");
@@ -1035,6 +1066,34 @@ public class MockVoiceService {
         return result;
     }
 
+    public boolean dialEccVoiceCall(
+            String address,
+            int categories,
+            String[] urns,
+            int routing,
+            int callType,
+            MockCallControlInfo callControlInfo) {
+        boolean result = false;
+        MockCallInfo newCall =
+                new MockCallInfo(false, address,
+                        categories, urns, routing, callType, callControlInfo);
+
+        if (newCall != null) {
+            synchronized (mCallList) {
+                mCallList.add(newCall);
+                newCall.dump();
+                newCall.getCallControlInfo().dump();
+            }
+            mCallStateHandler
+                    .obtainMessage(MSG_REQUEST_DIALING_CALL, newCall.getCallId())
+                    .sendToTarget();
+            result = true;
+        } else {
+            Log.e(mTag, "Call info creation failed!");
+        }
+        return result;
+    }
+
     public boolean hangupVoiceCall(int index) {
         boolean result = false;
         MockCallInfo callInfo = null;
@@ -1141,5 +1200,44 @@ public class MockVoiceService {
 
     public LastCallFailCauseInfo getLastCallEndInfo() {
         return mLastCallEndInfo;
+    }
+
+    public void setLastCallFailCause(@Annotation.DisconnectCauses int cause) {
+        mLastCallEndInfo.causeCode = convertToLastCallFailCause(cause);
+    }
+
+    public void clearAllCalls(@Annotation.DisconnectCauses int cause) {
+        setLastCallFailCause(cause);
+        synchronized (mCallList) {
+            if (mCallList != null && mCallList.size() > 0) {
+                clearAllCalls();
+                Message call_state_changed_msg =
+                        mConfigHandler.obtainMessage(
+                                MockModemConfigBase.EVENT_CALL_STATE_CHANGE, mCallList);
+                mConfigHandler.sendMessage(call_state_changed_msg);
+            }
+        }
+    }
+
+    /**
+     * Converts {@link DisconnectCause} to {@link LastCallFailCause}.
+     *
+     * @param cause The disconnect cause code.
+     * @return The converted call fail cause.
+     */
+    private @LastCallFailCause int convertToLastCallFailCause(
+            @Annotation.DisconnectCauses int cause) {
+        switch (cause) {
+            case DisconnectCause.BUSY:
+                return LastCallFailCause.BUSY;
+            case DisconnectCause.CONGESTION:
+                return LastCallFailCause.TEMPORARY_FAILURE;
+            case DisconnectCause.NORMAL:
+                return LastCallFailCause.NORMAL;
+            case DisconnectCause.POWER_OFF:
+                return LastCallFailCause.RADIO_OFF;
+            default:
+                return LastCallFailCause.ERROR_UNSPECIFIED;
+        }
     }
 }

@@ -23,9 +23,12 @@ import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWE
 import android.content.Context;
 import android.hardware.radio.voice.CdmaSignalInfoRecord;
 import android.hardware.radio.voice.UusInfo;
+import android.telephony.Annotation;
+import android.telephony.BarringInfo;
 import android.telephony.ims.feature.MmTelFeature;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
 import android.util.Log;
+import android.util.SparseArray;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -463,6 +466,163 @@ public class MockModemManager {
     }
 
     /**
+     * Updates the emergency registration state.
+     *
+     * @param slotId the Id of logical sim slot.
+     * @param regResult the emergency registration state.
+     */
+    public void setEmergencyRegResult(int slotId, MockEmergencyRegResult regResult) {
+        Log.d(TAG, "setEmergencyRegResult[" + slotId + "]");
+        mMockModemService.getIRadioNetwork((byte) slotId).setEmergencyRegResult(regResult);
+    }
+
+    /**
+     * Notifies the barring information change.
+     *
+     * @param slotId the Id of logical sim slot.
+     * @param barringServiceInfos the barring information.
+     */
+    public boolean unsolBarringInfoChanged(int slotId,
+            SparseArray<BarringInfo.BarringServiceInfo> barringServiceInfos) {
+        Log.d(TAG, "unsolBarringInfoChanged[" + slotId + "]");
+        return mMockModemService.getIRadioNetwork((byte) slotId)
+                .unsolBarringInfoChanged(barringServiceInfos);
+    }
+
+    /**
+     * Triggers RIL_UNSOL_EMERGENCY_NETWORK_SCAN_RESULT unsol message.
+     *
+     * @param slotId the Id of logical sim slot.
+     * @param regResult the registration result.
+     */
+    public boolean unsolEmergencyNetworkScanResult(int slotId, MockEmergencyRegResult regResult) {
+        Log.d(TAG, "unsolEmergencyNetworkScanResult[" + slotId + "]");
+        return mMockModemService.getIRadioNetwork((byte) slotId)
+                .unsolEmergencyNetworkScanResult(regResult);
+    }
+
+    /**
+     * Resets the current emergency mode.
+     *
+     * @param slotId the Id of logical sim slot.
+     */
+    public void resetEmergencyMode(int slotId) {
+        Log.d(TAG, "resetEmergencyMode[" + slotId + "]");
+        mMockModemService.getIRadioNetwork((byte) slotId).resetEmergencyMode();
+    }
+
+    /**
+     * @return the current emergency mode.
+     *
+     * @param slotId the Id of logical sim slot.
+     */
+    public int getEmergencyMode(int slotId) {
+        Log.d(TAG, "getEmergencyMode[" + slotId + "]");
+        return mMockModemService.getIRadioNetwork((byte) slotId).getEmergencyMode();
+    }
+
+    /**
+     * Returns whether emergency network scan is triggered.
+     *
+     * @param slotId the Id of logical sim slot.
+     * @return {@code true} if emergency network scan is triggered.
+     */
+    public boolean isEmergencyNetworkScanTriggered(int slotId) {
+        Log.d(TAG, "isEmergencyNetworkScanTriggered[" + slotId + "]");
+        return mMockModemService.getIRadioNetwork((byte) slotId).isEmergencyNetworkScanTriggered();
+    }
+
+    /**
+     * Returns whether emergency network scan is canceled.
+     *
+     * @param slotId the Id of logical sim slot.
+     * @return {@code true} if emergency network scan is canceled.
+     */
+    public boolean isEmergencyNetworkScanCanceled(int slotId) {
+        Log.d(TAG, "isEmergencyNetworkScanCanceled[" + slotId + "]");
+        return mMockModemService.getIRadioNetwork((byte) slotId).isEmergencyNetworkScanCanceled();
+    }
+
+    /**
+     * Returns the list of preferred network type.
+     *
+     * @param slotId the Id of logical sim slot.
+     * @return the list of preferred network type.
+     */
+    public int[] getEmergencyNetworkScanAccessNetwork(int slotId) {
+        Log.d(TAG, "getEmergencyNetworkScanAccessNetwork[" + slotId + "]");
+        return mMockModemService.getIRadioNetwork((byte) slotId)
+                .getEmergencyNetworkScanAccessNetwork();
+    }
+
+    /**
+     * Returns the preferred scan type.
+     *
+     * @param slotId the Id of logical sim slot.
+     * @return the preferred scan type.
+     */
+    public int getEmergencyNetworkScanType(int slotId) {
+        Log.d(TAG, "getEmergencyNetworkScanType[" + slotId + "]");
+        return mMockModemService.getIRadioNetwork((byte) slotId).getEmergencyNetworkScanType();
+    }
+
+    /**
+     * Resets the emergency network scan attributes.
+     *
+     * @param slotId the Id of logical sim slot.
+     */
+    public void resetEmergencyNetworkScan(int slotId) {
+        Log.d(TAG, "resetEmergencyNetworkScan[" + slotId + "]");
+        mMockModemService.getIRadioNetwork((byte) slotId).resetEmergencyNetworkScan();
+    }
+
+    /**
+     * Waits for the event of network service.
+     *
+     * @param slotId the Id of logical sim slot.
+     * @param latchIndex The index of the event.
+     * @param waitMs The timeout in milliseconds.
+     */
+    public boolean waitForNetworkLatchCountdown(int slotId, int latchIndex, int waitMs) {
+        Log.d(TAG, "waitForNetworkLatchCountdown[" + slotId + "]");
+        return mMockModemService.getIRadioNetwork((byte) slotId)
+                .waitForLatchCountdown(latchIndex, waitMs);
+    }
+
+    /**
+     * Resets the CountDownLatches of network service.
+     *
+     * @param slotId the Id of logical sim slot.
+     */
+    public void resetNetworkAllLatchCountdown(int slotId) {
+        Log.d(TAG, "resetNetworkAllLatchCountdown[" + slotId + "]");
+        mMockModemService.getIRadioNetwork((byte) slotId).resetAllLatchCountdown();
+    }
+
+    /**
+     * Waits for the event of voice service.
+     *
+     * @param slotId the Id of logical sim slot.
+     * @param latchIndex The index of the event.
+     * @param waitMs The timeout in milliseconds.
+     */
+    public boolean waitForVoiceLatchCountdown(int slotId, int latchIndex, int waitMs) {
+        Log.d(TAG, "waitForVoiceLatchCountdown[" + slotId + "]");
+        return mMockModemService.getIRadioVoice((byte) slotId)
+                .waitForLatchCountdown(latchIndex, waitMs);
+    }
+
+    /**
+     * Resets the CountDownLatches of voice service.
+     *
+     * @param slotId the Id of logical sim slot.
+     */
+    public void resetVoiceAllLatchCountdown(int slotId) {
+        Log.d(TAG, "resetVoiceAllLatchCountdown[" + slotId + "]");
+        mMockModemService.getIRadioVoice((byte) slotId).resetAllLatchCountdown();
+    }
+
+    /**
      * Waits for the event of mock IMS state.
      *
      * @param latchIndex The index of the event.
@@ -564,5 +724,37 @@ public class MockModemManager {
     public int getNumberOfOngoingCSCalls(int slotId) {
         Log.d(TAG, "getNumberOfOngoingCSCalls[" + slotId + "]");
         return mMockModemService.getMockModemConfigInterface().getNumberOfCalls(slotId, TAG);
+    }
+
+    /**
+     * Sets the last call fail cause.
+     *
+     * @param slotId the Id of logical sim slot.
+     * @param cause The disconnect cause.
+     */
+    public void setLastCallFailCause(int slotId, int cause) {
+        Log.d(TAG, "setLastCallFailCause[" + slotId + "] cause = " + cause);
+        mMockModemService.getMockModemConfigInterface().setLastCallFailCause(slotId, cause, TAG);
+    }
+
+    /**
+     * Clears all calls with the given cause.
+     *
+     * @param slotId the Id of logical sim slot.
+     * @param cause The disconnect cause.
+     */
+    public void clearAllCalls(int slotId, @Annotation.DisconnectCauses int cause) {
+        Log.d(TAG, "clearAllCalls[" + slotId + "] cause = " + cause);
+        mMockModemService.getMockModemConfigInterface().clearAllCalls(slotId, cause, TAG);
+    }
+
+    /**
+     * Reports the list of emergency numbers.
+     *
+     * @param numbers The list of emergency numbers.
+     */
+    public void notifyEmergencyNumberList(int slotId, String[] numbers) {
+        Log.d(TAG, "notifyEmergencyNumberList[" + slotId + "]");
+        mMockModemService.getIRadioVoice((byte) slotId).notifyEmergencyNumberList(numbers);
     }
 }

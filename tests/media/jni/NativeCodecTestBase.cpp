@@ -57,12 +57,13 @@ static void onAsyncError(AMediaCodec* codec, void* userdata, media_status_t erro
 }
 
 static bool arePtsListsIdentical(const std::vector<int64_t>& refArray,
-                                 const std::vector<int64_t>& testArray, std::string& tmp) {
+                                 const std::vector<int64_t>& testArray,
+                                 const std::shared_ptr<std::string>& logs) {
     bool isEqual = true;
     if (refArray.size() != testArray.size()) {
-        tmp.append("Reference and test timestamps list sizes are not identical \n");
-        tmp.append(StringFormat("reference pts list size is %zu \n", refArray.size()));
-        tmp.append(StringFormat("test pts list size is %zu \n", testArray.size()));
+        logs->append("Reference and test timestamps list sizes are not identical \n");
+        logs->append(StringFormat("reference pts list size is %zu \n", refArray.size()));
+        logs->append(StringFormat("test pts list size is %zu \n", testArray.size()));
         isEqual = false;
     }
     if (!isEqual || refArray != testArray) {
@@ -74,24 +75,24 @@ static bool arePtsListsIdentical(const std::vector<int64_t>& refArray,
         std::set_difference(testArray.begin(), testArray.end(), refArray.begin(), refArray.end(),
                             std::inserter(testArrayDiff, testArrayDiff.begin()));
         if (!refArrayDiff.empty()) {
-            tmp.append("Some of the frame/access-units present in ref list are not present in test "
-                       "list. Possibly due to frame drops \n");
-            tmp.append("List of timestamps that are dropped by the component :- \n");
-            tmp.append("pts :- [[ ");
+            logs->append("Some of the frame/access-units present in ref list are not present in "
+                         "test list. Possibly due to frame drops \n");
+            logs->append("List of timestamps that are dropped by the component :- \n");
+            logs->append("pts :- [[ ");
             for (auto pts : refArrayDiff) {
-                tmp.append(StringFormat("{ %" PRId64 " us }, ", pts));
+                logs->append(StringFormat("{ %" PRId64 " us }, ", pts));
             }
-            tmp.append(" ]]\n");
+            logs->append(" ]]\n");
         }
         if (!testArrayDiff.empty()) {
-            tmp.append("Test list contains frame/access-units that are not present in ref list, "
-                       "Possible due to duplicate transmissions \n");
-            tmp.append("List of timestamps that are additionally present in test list are :- \n");
-            tmp.append("pts :- [[ ");
+            logs->append("Test list contains frame/access-units that are not present in ref list, "
+                         "Possible due to duplicate transmissions \n");
+            logs->append("List of timestamps that are additionally present in test list are :- \n");
+            logs->append("pts :- [[ ");
             for (auto pts : testArrayDiff) {
-                tmp.append(StringFormat("{ %" PRId64 " us }, ", pts));
+                logs->append(StringFormat("{ %" PRId64 " us }, ", pts));
             }
-            tmp.append(" ]]\n");
+            logs->append(" ]]\n");
         }
     }
     return isEqual;
@@ -294,14 +295,14 @@ bool OutputManager::isOutPtsListIdenticalToInpPtsList(bool requireSorting) {
     if (requireSorting) {
         std::sort(outPtsArray.begin(), outPtsArray.end());
     }
-    return arePtsListsIdentical(inpPtsArray, outPtsArray, mErrorLogs);
+    return arePtsListsIdentical(inpPtsArray, outPtsArray, mSharedErrorLogs);
 }
 
 bool OutputManager::equals(OutputManager* that) {
     if (this == that) return true;
     if (that == nullptr) return false;
     if (!equalsInterlaced(that)) return false;
-    if (!arePtsListsIdentical(outPtsArray, that->outPtsArray, that->mErrorLogs)) return false;
+    if (!arePtsListsIdentical(outPtsArray, that->outPtsArray, mSharedErrorLogs)) return false;
     return true;
 }
 
@@ -309,33 +310,33 @@ bool OutputManager::equalsInterlaced(OutputManager* that) {
     if (this == that) return true;
     if (that == nullptr) return false;
     if (crc32value != that->crc32value) {
-        that->mErrorLogs.append("CRC32 checksums computed for byte buffers received from "
-                                "getOutputBuffer() do not match between ref and test runs. \n");
-        that->mErrorLogs.append(StringFormat("Ref CRC32 checksum value is %lu \n", crc32value));
-        that->mErrorLogs.append(
+        mSharedErrorLogs->append("CRC32 checksums computed for byte buffers received from "
+                                 "getOutputBuffer() do not match between ref and test runs. \n");
+        mSharedErrorLogs->append(StringFormat("Ref CRC32 checksum value is %lu \n", crc32value));
+        mSharedErrorLogs->append(
                 StringFormat("Test CRC32 checksum value is %lu \n", that->crc32value));
         if (memory.size() == that->memory.size()) {
             int count = 0;
             for (int i = 0; i < memory.size(); i++) {
                 if (memory[i] != that->memory[i]) {
                     count++;
-                    that->mErrorLogs.append(StringFormat("At offset %d, ref buffer val is %x and "
-                                                         "test buffer val is %x \n",
-                                                         i, memory[i], that->memory[i]));
+                    mSharedErrorLogs->append(StringFormat("At offset %d, ref buffer val is %x and "
+                                                          "test buffer val is %x \n",
+                                                          i, memory[i], that->memory[i]));
                     if (count == 20) {
-                        that->mErrorLogs.append("stopping after 20 mismatches, ...\n");
+                        mSharedErrorLogs->append("stopping after 20 mismatches, ...\n");
                         break;
                     }
                 }
             }
             if (count != 0) {
-                that->mErrorLogs.append("Ref and Test outputs are not identical \n");
+                mSharedErrorLogs->append("Ref and Test outputs are not identical \n");
             }
         } else {
-            that->mErrorLogs.append("CRC32 byte buffer checksums are different because ref and "
-                                    "test output sizes are not identical \n");
-            that->mErrorLogs.append(StringFormat("Ref output buffer size %d \n", memory.size()));
-            that->mErrorLogs.append(
+            mSharedErrorLogs->append("CRC32 byte buffer checksums are different because ref and "
+                                     "test output sizes are not identical \n");
+            mSharedErrorLogs->append(StringFormat("Ref output buffer size %d \n", memory.size()));
+            mSharedErrorLogs->append(
                     StringFormat("Test output buffer size %d \n", that->memory.size()));
         }
         return false;
@@ -377,6 +378,9 @@ CodecTestBase::CodecTestBase(const char* mime) {
     mOutputBuff = nullptr;
     mCodec = nullptr;
     mBytesPerSample = mIsAudio ? 2 : 1;
+    mRefBuff = new OutputManager();
+    mTestBuff = new OutputManager(mRefBuff->getSharedErrorLogs());
+    mReconfBuff = new OutputManager(mRefBuff->getSharedErrorLogs());
 }
 
 CodecTestBase::~CodecTestBase() {
@@ -388,6 +392,9 @@ CodecTestBase::~CodecTestBase() {
         AMediaCodec_delete(mCodec);
         mCodec = nullptr;
     }
+    delete mRefBuff;
+    delete mTestBuff;
+    delete mReconfBuff;
 }
 
 bool CodecTestBase::configureCodec(AMediaFormat* format, bool isAsync, bool signalEOSWithLastFrame,

@@ -18,9 +18,14 @@ package android.server.biometrics.cts;
 
 import android.cts.statsdatom.lib.DeviceUtils;
 
+import com.android.server.biometrics.BiometricServiceStateProto;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.device.CollectingByteOutputReceiver;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+
+import com.google.protobuf.MessageLite;
+import com.google.protobuf.Parser;
 
 /** Base class for hostside biometrics tests that includes common utility methods. */
 abstract class BiometricDeviceTestCase extends DeviceTestCase implements IBuildReceiver {
@@ -48,6 +53,18 @@ abstract class BiometricDeviceTestCase extends DeviceTestCase implements IBuildR
     /** {@see PackageManager.FEATURE_FINGERPRINT}. */
     protected boolean hasFeatureFingerprint() throws Exception {
         return DeviceUtils.hasFeature(getDevice(), FEATURE_FINGERPRINT);
+    }
+
+    /** Get info about all sensors on the device. */
+    public SensorInfo getSensorInfo() throws Exception {
+        return new SensorInfo(getDump(BiometricServiceStateProto.parser(),
+                "dumpsys biometric --proto"));
+    }
+
+    private <T extends MessageLite> T getDump(Parser<T> parser, String command) throws Exception {
+        final CollectingByteOutputReceiver receiver = new CollectingByteOutputReceiver();
+        getDevice().executeShellCommand(command, receiver);
+        return parser.parseFrom(receiver.getOutput());
     }
 
     /** If there is an AIDL fingerprint HAL on the test device. */

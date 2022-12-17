@@ -215,6 +215,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                             0,
                             new byte[]{ (byte) 170, (byte) 187, (byte) 204, (byte) 221 })
             ));
+    private static final int[] TEST_RSSI2_THRESHOLDS = {-81, -79, -73, -60};
+    private static final int[] TEST_RSSI5_THRESHOLDS = {-80, -77, -71, -55};
+    private static final int[] TEST_RSSI6_THRESHOLDS = {-79, -72, -65, -55};
+
 
     private IntentFilter mIntentFilter;
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -1186,32 +1190,132 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
-    public void testSetNetworkSelectionConfig() {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
-        WifiNetworkSelectionConfig nsConfig = new WifiNetworkSelectionConfig.Builder()
+    private WifiNetworkSelectionConfig buildTestNetworkSelectionConfig() {
+        return new WifiNetworkSelectionConfig.Builder()
                 .setAssociatedNetworkSelectionOverride(
                         WifiNetworkSelectionConfig.ASSOCIATED_NETWORK_SELECTION_OVERRIDE_ENABLED)
                 .setSufficiencyCheckEnabledWhenScreenOff(false)
                 .setSufficiencyCheckEnabledWhenScreenOn(false)
                 .setUserConnectChoiceOverrideEnabled(false)
-                .setLastSelectionWeightEnabled(false).build();
-        assertTrue(nsConfig.getAssociatedNetworkSelectionOverride()
-                == WifiNetworkSelectionConfig.ASSOCIATED_NETWORK_SELECTION_OVERRIDE_ENABLED);
-        assertFalse(nsConfig.isSufficiencyCheckEnabledWhenScreenOff());
-        assertFalse(nsConfig.isSufficiencyCheckEnabledWhenScreenOn());
-        assertFalse(nsConfig.isUserConnectChoiceOverrideEnabled());
-        assertFalse(nsConfig.isLastSelectionWeightEnabled());
-        assertThrows(SecurityException.class,
-                () -> mWifiManager.setNetworkSelectionConfig(nsConfig));
+                .setLastSelectionWeightEnabled(false)
+                .setRssiThresholds(ScanResult.WIFI_BAND_24_GHZ, TEST_RSSI2_THRESHOLDS)
+                .setRssiThresholds(ScanResult.WIFI_BAND_5_GHZ, TEST_RSSI5_THRESHOLDS)
+                .setRssiThresholds(ScanResult.WIFI_BAND_6_GHZ, TEST_RSSI6_THRESHOLDS)
+                .build();
+    }
+
+    /**
+     * Verify the invalid and valid usages of {@code WifiManager#setNetworkSelectionConfig}.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    public void testSetNetworkSelectionConfig() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        AtomicReference<WifiNetworkSelectionConfig> config = new AtomicReference<>();
+        Consumer<WifiNetworkSelectionConfig> listener = new Consumer<WifiNetworkSelectionConfig>() {
+            @Override
+            public void accept(WifiNetworkSelectionConfig value) {
+                synchronized (mLock) {
+                    config.set(value);
+                    mLock.notify();
+                }
+            }
+        };
+
+        // cache current WifiNetworkSelectionConfig
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setNetworkSelectionConfig(nsConfig));
+                () -> mWifiManager.getNetworkSelectionConfig(mExecutor, listener));
+        synchronized (mLock) {
+            mLock.wait(TEST_WAIT_DURATION_MS);
+        }
+        WifiNetworkSelectionConfig currentConfig = config.get();
+
+        try {
+            WifiNetworkSelectionConfig nsConfig = buildTestNetworkSelectionConfig();
+            assertTrue(nsConfig.getAssociatedNetworkSelectionOverride()
+                    == WifiNetworkSelectionConfig.ASSOCIATED_NETWORK_SELECTION_OVERRIDE_ENABLED);
+            assertFalse(nsConfig.isSufficiencyCheckEnabledWhenScreenOff());
+            assertFalse(nsConfig.isSufficiencyCheckEnabledWhenScreenOn());
+            assertFalse(nsConfig.isUserConnectChoiceOverrideEnabled());
+            assertFalse(nsConfig.isLastSelectionWeightEnabled());
+            assertArrayEquals(TEST_RSSI2_THRESHOLDS,
+                    nsConfig.getRssiThresholds(ScanResult.WIFI_BAND_24_GHZ));
+            assertArrayEquals(TEST_RSSI5_THRESHOLDS,
+                    nsConfig.getRssiThresholds(ScanResult.WIFI_BAND_5_GHZ));
+            assertArrayEquals(TEST_RSSI6_THRESHOLDS,
+                    nsConfig.getRssiThresholds(ScanResult.WIFI_BAND_6_GHZ));
+            assertThrows(SecurityException.class,
+                    () -> mWifiManager.setNetworkSelectionConfig(nsConfig));
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.setNetworkSelectionConfig(nsConfig));
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.setNetworkSelectionConfig(
+                            new WifiNetworkSelectionConfig.Builder().build()));
+        } finally {
+            // restore WifiNetworkSelectionConfig
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.setNetworkSelectionConfig(currentConfig));
+        }
+    }
+
+    /**
+     * Verify the invalid and valid usages of {@code WifiManager#getNetworkSelectionConfig}.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testGetNetworkSelectionConfig() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        AtomicReference<WifiNetworkSelectionConfig> config = new AtomicReference<>();
+        Consumer<WifiNetworkSelectionConfig> listener = new Consumer<WifiNetworkSelectionConfig>() {
+            @Override
+            public void accept(WifiNetworkSelectionConfig value) {
+                synchronized (mLock) {
+                    config.set(value);
+                    mLock.notify();
+                }
+            }
+        };
+
+        // cache current WifiNetworkSelectionConfig
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setNetworkSelectionConfig(
-                        new WifiNetworkSelectionConfig.Builder().build()));
+                () -> mWifiManager.getNetworkSelectionConfig(mExecutor, listener));
+        synchronized (mLock) {
+            mLock.wait(TEST_WAIT_DURATION_MS);
+        }
+        WifiNetworkSelectionConfig currentConfig = config.get();
+
+        try {
+            // Test invalid inputs trigger IllegalArgumentException
+            assertThrows("null executor should trigger exception", NullPointerException.class,
+                    () -> mWifiManager.getNetworkSelectionConfig(null, listener));
+            assertThrows("null listener should trigger exception", NullPointerException.class,
+                    () -> mWifiManager.getNetworkSelectionConfig(mExecutor, null));
+
+            // Test caller with no permission triggers SecurityException.
+            assertThrows("No permission should trigger SecurityException", SecurityException.class,
+                    () -> mWifiManager.getNetworkSelectionConfig(mExecutor, listener));
+
+            // Test get/set WifiNetworkSelectionConfig
+            WifiNetworkSelectionConfig nsConfig = buildTestNetworkSelectionConfig();
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.setNetworkSelectionConfig(nsConfig));
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.getNetworkSelectionConfig(mExecutor, listener));
+            synchronized (mLock) {
+                mLock.wait(TEST_WAIT_DURATION_MS);
+            }
+            assertTrue(config.get().equals(nsConfig));
+        } finally {
+            // restore WifiNetworkSelectionConfig
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.setNetworkSelectionConfig(currentConfig));
+        }
     }
 
     /**

@@ -202,7 +202,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         boolean[] boolStates = {true, false};
         setUpSource(mActiveRawRes.mFileName);
         OutputManager ref = new OutputManager();
-        OutputManager test = new OutputManager();
+        OutputManager test = new OutputManager(ref.getSharedErrorLogs());
         {
             mCodec = MediaCodec.createByCodecName(mCodecName);
             assertEquals("codec name act/got: " + mCodec.getName() + '/' + mCodecName,
@@ -299,23 +299,25 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         setUpParams(2);
         setUpSource(mActiveRawRes.mFileName);
         boolean[] boolStates = {true, false};
-        OutputManager test = new OutputManager();
         {
             boolean saveToMem = false; /* TODO(b/149027258) */
             OutputManager configRef = null;
+            OutputManager configTest = null;
             if (mFormats.size() > 1) {
                 MediaFormat format = mFormats.get(1);
                 encodeToMemory(mActiveRawRes.mFileName, mCodecName, Integer.MAX_VALUE,
                         format, saveToMem);
                 configRef = mOutputBuff;
+                configTest = new OutputManager(configRef.getSharedErrorLogs());
             }
             MediaFormat format = mFormats.get(0);
             encodeToMemory(mActiveRawRes.mFileName, mCodecName, Integer.MAX_VALUE,
                     format, saveToMem);
             OutputManager ref = mOutputBuff;
-            mOutputBuff = test;
+            OutputManager test = new OutputManager(ref.getSharedErrorLogs());
             mCodec = MediaCodec.createByCodecName(mCodecName);
             for (boolean isAsync : boolStates) {
+                mOutputBuff = test;
                 configureCodec(format, isAsync, true, true);
 
                 /* test reconfigure in stopped state */
@@ -362,18 +364,19 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
 
                 /* test reconfigure codec for new format */
                 if (mFormats.size() > 1) {
+                    mOutputBuff = configTest;
                     reConfigureCodec(mFormats.get(1), isAsync, false, true);
                     mCodec.start();
-                    test.reset();
+                    configTest.reset();
                     doWork(Integer.MAX_VALUE);
                     queueEOS();
                     waitForAllOutputs();
                     /* TODO(b/147348711) */
                     if (false) mCodec.stop();
                     else mCodec.reset();
-                    if (!configRef.equals(test)) {
+                    if (!configRef.equals(configTest)) {
                         fail("Encoder output is not consistent across runs \n" + mTestConfig
-                                + mTestEnv + test.getErrMsg());
+                                + mTestEnv + configTest.getErrMsg());
                     }
                 }
                 mSaveToMem = false;
@@ -417,7 +420,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         setUpParams(1);
         boolean[] boolStates = {true, false};
         OutputManager ref = new OutputManager();
-        OutputManager test = new OutputManager();
+        OutputManager test = new OutputManager(ref.getSharedErrorLogs());
         {
             mCodec = MediaCodec.createByCodecName(mCodecName);
             mSaveToMem = false; /* TODO(b/149027258) */

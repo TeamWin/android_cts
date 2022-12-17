@@ -100,9 +100,10 @@ public class CodecDecoderPauseTest extends CodecDecoderTestBase {
         MediaFormat format = setUpSource(mTestFile);
         {
             mCodec = MediaCodec.createByCodecName(mCodecName);
+            mSaveToMem = true;
             boolean[] boolStates = {false, true};
             OutputManager ref = new OutputManager();
-            OutputManager test = new OutputManager();
+            OutputManager test = new OutputManager(ref.getSharedErrorLogs());
             for (boolean enablePause : boolStates) {
                 mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                 configureCodec(format, isAsync, false, false);

@@ -19,6 +19,7 @@ package android.telephony.mockmodem;
 import android.hardware.radio.RadioError;
 import android.hardware.radio.RadioIndicationType;
 import android.hardware.radio.RadioResponseInfo;
+import android.hardware.radio.voice.EmergencyNumber;
 import android.hardware.radio.voice.IRadioVoice;
 import android.hardware.radio.voice.IRadioVoiceIndication;
 import android.hardware.radio.voice.IRadioVoiceResponse;
@@ -33,9 +34,17 @@ import android.telephony.mockmodem.MockVoiceService.MockCallInfo;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class IRadioVoiceImpl extends IRadioVoice.Stub {
     private static final String TAG = "MRVOICE";
+
+    public static final int LATCH_EMERGENCY_DIAL = 0;
+    public static final int LATCH_GET_LAST_CALL_FAIL_CAUSE = 1;
+    private static final int LATCH_MAX = 2;
+
+    private final CountDownLatch[] mLatches = new CountDownLatch[LATCH_MAX];
 
     private final MockModemService mService;
     private IRadioVoiceResponse mRadioVoiceResponse;
@@ -79,6 +88,10 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
         mMockModemConfigInterface.registerForCallIncoming(
                 mSubId, mHandler, EVENT_CALL_INCOMING, null);
         mMockModemConfigInterface.registerRingbackTone(mSubId, mHandler, EVENT_RINGBACK_TONE, null);
+
+        for (int i = 0; i < LATCH_MAX; i++) {
+            mLatches[i] = new CountDownLatch(1);
+        }
     }
 
     /** Handler class to handle callbacks */
@@ -346,13 +359,31 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
             boolean hasKnownUserIntentEmergency,
             boolean isTesting) {
         Log.d(mTag, "emergencyDial");
+        int responseError = RadioError.NONE;
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        if (mMockModemConfigInterface != null) {
+            boolean ret =
+                    mMockModemConfigInterface.dialEccVoiceCall(
+                            mSubId, dialInfo.address, categories, urns, routing, mTag);
+
+            if (!ret) {
+                Log.e(mTag, "Failed: dial request failed");
+                responseError = RadioError.INTERNAL_ERR;
+            }
+        } else {
+            Log.e(mTag, "Failed: mMockModemConfigInterface == null");
+            responseError = RadioError.INTERNAL_ERR;
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, responseError);
         try {
             mRadioVoiceResponse.emergencyDialResponse(rsp);
         } catch (RemoteException ex) {
             Log.e(mTag, "Failed to emergencyDial from AIDL. Exception" + ex);
         }
+
+        countDownLatch(LATCH_EMERGENCY_DIAL);
+        resetLatch(LATCH_GET_LAST_CALL_FAIL_CAUSE);
     }
 
     @Override
@@ -1078,6 +1109,76 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
             }
         } else {
             Log.e(mTag, "null mRadioVoiceIndication");
+        }
+    }
+
+    public void notifyEmergencyNumberList(String[] numbers) {
+        if (numbers == null || numbers.length == 0) return;
+
+        EmergencyNumber[] emergencyNumberList = new EmergencyNumber[numbers.length];
+
+        for (int i = 0; i < numbers.length; i++) {
+            EmergencyNumber number = new EmergencyNumber();
+            number.number = numbers[i];
+            number.mcc = "310";
+            number.mnc = "";
+            String urn = "sip:" + numbers[i] + "@test.3gpp.com";
+            number.urns = new String[] { urn };
+            number.sources = EmergencyNumber.SOURCE_MODEM_CONFIG;
+            emergencyNumberList[i] = number;
+        }
+
+        currentEmergencyNumberList(emergencyNumberList);
+    }
+
+
+    private void countDownLatch(int latchIndex) {
+        synchronized (mLatches) {
+            mLatches[latchIndex].countDown();
+        }
+    }
+
+    private void resetLatch(int latchIndex) {
+        synchronized (mLatches) {
+            mLatches[latchIndex] = new CountDownLatch(1);
+        }
+    }
+
+    /**
+     * Waits for the event of voice service.
+     *
+     * @param latchIndex The index of the event.
+     * @param waitMs The timeout in milliseconds.
+     * @return {@code true} if the event happens.
+     */
+    public boolean waitForLatchCountdown(int latchIndex, long waitMs) {
+        boolean complete = false;
+        try {
+            CountDownLatch latch;
+            synchronized (mLatches) {
+                latch = mLatches[latchIndex];
+            }
+            long startTime = System.currentTimeMillis();
+            complete = latch.await(waitMs, TimeUnit.MILLISECONDS);
+            Log.i(TAG, "Latch " + latchIndex + " took "
+                    + (System.currentTimeMillis() - startTime) + " ms to count down.");
+        } catch (InterruptedException e) {
+            Log.e(TAG, "Waiting latch " + latchIndex + " interrupted, e=" + e);
+        }
+        synchronized (mLatches) {
+            mLatches[latchIndex] = new CountDownLatch(1);
+        }
+        return complete;
+    }
+
+    /**
+     * Resets the CountDownLatches.
+     */
+    public void resetAllLatchCountdown() {
+        synchronized (mLatches) {
+            for (int i = 0; i < LATCH_MAX; i++) {
+                mLatches[i] = new CountDownLatch(1);
+            }
         }
     }
 

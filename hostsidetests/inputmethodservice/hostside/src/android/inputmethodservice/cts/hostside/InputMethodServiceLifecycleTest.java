@@ -58,7 +58,7 @@ import java.util.concurrent.TimeoutException;
 public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
 
     private static final long WAIT_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
-    private static final long PACKAGE_OP_TIMEOUT = TimeUnit.SECONDS.toMillis(7);
+    private static final long PACKAGE_OP_TIMEOUT = TimeUnit.SECONDS.toMillis(15);
     private static final long POLLING_INTERVAL = 100;
     private static final String COMPAT_CHANGE_DO_NOT_DOWNSCALE_TO_1080P_ON_TV =
             "DO_NOT_DOWNSCALE_TO_1080P_ON_TV";
@@ -179,6 +179,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         sendTestStartEvent(DeviceTestConstants.TEST_SWITCH_IME1_TO_IME2);
         installPossibleInstantPackage(
                 EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
+        shell(ShellCommandUtils.waitForBroadcastBarrier());
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));

@@ -20,6 +20,10 @@ import android.content.Context;
 import android.hardware.radio.RadioError;
 import android.hardware.radio.RadioIndicationType;
 import android.hardware.radio.RadioResponseInfo;
+import android.hardware.radio.network.BarringInfo;
+import android.hardware.radio.network.BarringTypeSpecificInfo;
+import android.hardware.radio.network.CellIdentity;
+import android.hardware.radio.network.EmergencyRegResult;
 import android.hardware.radio.network.IRadioNetwork;
 import android.hardware.radio.network.IRadioNetworkIndication;
 import android.hardware.radio.network.IRadioNetworkResponse;
@@ -32,8 +36,12 @@ import android.os.AsyncResult;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
+import android.telephony.NetworkRegistrationInfo;
 import android.telephony.mockmodem.MockModemConfigBase.SimInfoChangedResult;
 import android.util.Log;
+import android.util.SparseArray;
+
+import java.util.ArrayList;
 
 public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     private static final String TAG = "MRNW";
@@ -258,6 +266,83 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         return true;
     }
 
+    /**
+     * Updates the emergency registration state.
+     * @param regResult the emergency registration state.
+     */
+    public void setEmergencyRegResult(MockEmergencyRegResult regResult) {
+        Log.d(mTag, "setEmergencyRegResult");
+
+        synchronized (mCacheUpdateMutex) {
+            mServiceState.setEmergencyRegResult(convertEmergencyRegResult(regResult));
+        }
+    }
+
+    /**
+     * Resets the current emergency mode.
+     */
+    public void resetEmergencyMode() {
+        synchronized (mCacheUpdateMutex) {
+            mServiceState.setEmergencyMode(0);
+        }
+    }
+
+    /**
+     * Returns the current emergency mode.
+     */
+    public int getEmergencyMode() {
+        Log.d(mTag, "getEmergencyMode");
+
+        synchronized (mCacheUpdateMutex) {
+            return mServiceState.getEmergencyMode();
+        }
+    }
+
+    /**
+     * @return whether emergency network scan is triggered.
+     */
+    public boolean isEmergencyNetworkScanTriggered() {
+        synchronized (mCacheUpdateMutex) {
+            return mServiceState.isEmergencyNetworkScanTriggered();
+        }
+    }
+
+    /**
+     * @return whether emergency network scan is canceled.
+     */
+    public boolean isEmergencyNetworkScanCanceled() {
+        synchronized (mCacheUpdateMutex) {
+            return mServiceState.isEmergencyNetworkScanCanceled();
+        }
+    }
+
+    /**
+     * @return the list of preferred network type.
+     */
+    public int[] getEmergencyNetworkScanAccessNetwork() {
+        synchronized (mCacheUpdateMutex) {
+            return mServiceState.getEmergencyNetworkScanAccessNetwork();
+        }
+    }
+
+    /**
+     * @return the preferred scan type.
+     */
+    public int getEmergencyNetworkScanType() {
+        synchronized (mCacheUpdateMutex) {
+            return mServiceState.getEmergencyNetworkScanType();
+        }
+    }
+
+    /**
+     * Resets the emergency network scan attributes.
+     */
+    public void resetEmergencyNetworkScan() {
+        synchronized (mCacheUpdateMutex) {
+            mServiceState.resetEmergencyNetworkScan();
+        }
+    }
+
     // Implementation of IRadioNetwork functions
     @Override
     public void getAllowedNetworkTypesBitmap(int serial) {
@@ -303,11 +388,14 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     public void getBarringInfo(int serial) {
         Log.d(mTag, "getBarringInfo");
 
-        android.hardware.radio.network.CellIdentity cellIdentity =
-                new android.hardware.radio.network.CellIdentity();
-        android.hardware.radio.network.BarringInfo[] barringInfos =
-                new android.hardware.radio.network.BarringInfo[0];
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        CellIdentity cellIdentity;
+        BarringInfo[] barringInfos;
+        synchronized (mCacheUpdateMutex) {
+            cellIdentity = mServiceState.getPrimaryCellIdentity();
+            barringInfos = mServiceState.getBarringInfo();
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioNetworkResponse.getBarringInfoResponse(rsp, cellIdentity, barringInfos);
         } catch (RemoteException ex) {
@@ -797,9 +885,15 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     public void setEmergencyMode(int serial, int emcModeType) {
         Log.d(TAG, "setEmergencyMode");
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        EmergencyRegResult result;
+        synchronized (mCacheUpdateMutex) {
+            mServiceState.setEmergencyMode(emcModeType);
+            result = mServiceState.getEmergencyRegResult();
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
-            mRadioNetworkResponse.setEmergencyModeResponse(rsp, null);
+            mRadioNetworkResponse.setEmergencyModeResponse(rsp, result);
         } catch (RemoteException ex) {
             Log.e(TAG, "Failed to setEmergencyMode from AIDL. Exception" + ex);
         }
@@ -810,7 +904,12 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
             int serial, android.hardware.radio.network.EmergencyNetworkScanTrigger request) {
         Log.d(TAG, "triggerEmergencyNetworkScan");
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        synchronized (mCacheUpdateMutex) {
+            mServiceState.setEmergencyNetworkScanTriggered(true,
+                    request.accessNetwork, request.scanType);
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioNetworkResponse.triggerEmergencyNetworkScanResponse(rsp);
         } catch (RemoteException ex) {
@@ -822,7 +921,11 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     public void cancelEmergencyNetworkScan(int serial, boolean resetScan) {
         Log.d(TAG, "cancelEmergencyNetworkScan");
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        synchronized (mCacheUpdateMutex) {
+            mServiceState.setEmergencyNetworkScanCanceled(true);
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioNetworkResponse.cancelEmergencyNetworkScanResponse(rsp);
         } catch (RemoteException ex) {
@@ -834,7 +937,11 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     public void exitEmergencyMode(int serial) {
         Log.d(TAG, "exitEmergencyMode");
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        synchronized (mCacheUpdateMutex) {
+            mServiceState.setEmergencyMode(0);
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioNetworkResponse.exitEmergencyModeResponse(rsp);
         } catch (RemoteException ex) {
@@ -991,19 +1098,54 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         }
     }
 
-    public void unsolEmergencyNetworkScanResult() {
-        Log.d(TAG, "unsolEmergencyNetworkScanResult");
+    public boolean unsolBarringInfoChanged(
+            SparseArray<android.telephony.BarringInfo.BarringServiceInfo> barringServiceInfos) {
+        Log.d(mTag, "unsolBarringInfoChanged");
 
         if (mRadioState != MockModemConfigInterface.RADIO_STATE_ON) {
-            return;
+            Log.d(mTag, "unsolBarringInfoChanged radio is off");
+            return false;
         }
 
         if (mRadioNetworkIndication != null) {
-            android.hardware.radio.network.EmergencyRegResult result = null;
+            CellIdentity cellIdentity = new CellIdentity();
+            BarringInfo[] halBarringInfos = convertBarringInfo(barringServiceInfos);
+            synchronized (mCacheUpdateMutex) {
+                cellIdentity = mServiceState.getPrimaryCellIdentity();
+                mServiceState.updateBarringInfos(halBarringInfos);
+            }
+
+            try {
+                mRadioNetworkIndication.barringInfoChanged(RadioIndicationType.UNSOLICITED,
+                        cellIdentity, halBarringInfos);
+                return true;
+            } catch (RemoteException ex) {
+                Log.e(mTag, "Failed to invoke barringInfoChanged change from AIDL. Exception" + ex);
+            }
+        } else {
+            Log.e(mTag, "null mRadioNetworkIndication");
+        }
+        return false;
+    }
+
+    public boolean unsolEmergencyNetworkScanResult(MockEmergencyRegResult regResult) {
+        Log.d(TAG, "unsolEmergencyNetworkScanResult");
+
+        if (mRadioState != MockModemConfigInterface.RADIO_STATE_ON) {
+            return false;
+        }
+
+        if (mRadioNetworkIndication != null) {
+            EmergencyRegResult result = convertEmergencyRegResult(regResult);
+
+            synchronized (mCacheUpdateMutex) {
+                mServiceState.setEmergencyRegResult(result);
+            }
 
             try {
                 mRadioNetworkIndication.emergencyNetworkScanResult(
                         RadioIndicationType.UNSOLICITED, result);
+                return true;
             } catch (RemoteException ex) {
                 Log.e(
                         TAG,
@@ -1013,6 +1155,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         } else {
             Log.e(TAG, "null mRadioNetworkIndication");
         }
+        return false;
     }
 
     public void unsolOnNetworkInitiatedLocationResult() {
@@ -1034,5 +1177,86 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         } else {
             Log.e(TAG, "null mRadioNetworkIndication");
         }
+    }
+
+    private static EmergencyRegResult convertEmergencyRegResult(MockEmergencyRegResult regResult) {
+
+        EmergencyRegResult result = new EmergencyRegResult();
+
+        result.accessNetwork = regResult.getAccessNetwork();
+        result.regState = convertRegState(regResult.getRegState());
+        result.emcDomain = regResult.getDomain();
+        result.isVopsSupported = regResult.isVopsSupported();
+        result.isEmcBearerSupported = regResult.isEmcBearerSupported();
+        result.nwProvidedEmc = (byte) regResult.getNwProvidedEmc();
+        result.nwProvidedEmf = (byte) regResult.getNwProvidedEmf();
+        result.mcc = regResult.getMcc();
+        result.mnc = regResult.getMnc();
+
+        return result;
+    }
+
+    /**
+     * Convert RegistrationState to RegState
+     * @param regState Registration state
+     * @return Converted registration state.
+     */
+    private static int convertRegState(@NetworkRegistrationInfo.RegistrationState int regState) {
+        switch (regState) {
+            case NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_OR_SEARCHING:
+                return RegState.NOT_REG_MT_NOT_SEARCHING_OP_EM;
+            case NetworkRegistrationInfo.REGISTRATION_STATE_HOME:
+                return RegState.REG_HOME;
+            case NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_SEARCHING:
+                return RegState.NOT_REG_MT_SEARCHING_OP_EM;
+            case NetworkRegistrationInfo.REGISTRATION_STATE_DENIED:
+                return RegState.REG_DENIED_EM;
+            case NetworkRegistrationInfo.REGISTRATION_STATE_UNKNOWN:
+                return RegState.UNKNOWN_EM;
+            case NetworkRegistrationInfo.REGISTRATION_STATE_ROAMING:
+                return RegState.REG_ROAMING;
+            default:
+                return RegState.NOT_REG_MT_NOT_SEARCHING_OP_EM;
+        }
+    }
+
+    private BarringInfo[] convertBarringInfo(
+            SparseArray<android.telephony.BarringInfo.BarringServiceInfo> barringServiceInfos) {
+        ArrayList<BarringInfo> halBarringInfo = new ArrayList<>();
+
+        for (int i = BarringInfo.SERVICE_TYPE_CS_SERVICE; i <= BarringInfo.SERVICE_TYPE_SMS; i++) {
+            android.telephony.BarringInfo.BarringServiceInfo serviceInfo =
+                    barringServiceInfos.get(i);
+            if (serviceInfo != null) {
+                BarringInfo barringInfo = new BarringInfo();
+                barringInfo.serviceType = i;
+                barringInfo.barringType = serviceInfo.getBarringType();
+                barringInfo.barringTypeSpecificInfo = new BarringTypeSpecificInfo();
+                barringInfo.barringTypeSpecificInfo.isBarred = serviceInfo.isConditionallyBarred();
+                barringInfo.barringTypeSpecificInfo.factor =
+                        serviceInfo.getConditionalBarringFactor();
+                barringInfo.barringTypeSpecificInfo.timeSeconds =
+                        serviceInfo.getConditionalBarringTimeSeconds();
+                halBarringInfo.add(barringInfo);
+            }
+        }
+        return halBarringInfo.toArray(new BarringInfo[0]);
+    }
+
+    /**
+     * Waits for the event of network service.
+     *
+     * @param latchIndex The index of the event.
+     * @param waitMs The timeout in milliseconds.
+     */
+    public boolean waitForLatchCountdown(int latchIndex, int waitMs) {
+        return mServiceState.waitForLatchCountdown(latchIndex, waitMs);
+    }
+
+    /**
+     * Resets the CountDownLatches
+     */
+    public void resetAllLatchCountdown() {
+        mServiceState.resetAllLatchCountdown();
     }
 }

@@ -709,6 +709,8 @@ public class Components extends ComponentsBase {
         public static final String ACTION = "hide_action";
         public static final String PONG = "pong_action";
         public static final String SHOULD_HIDE = "should_hide";
+        public static final String REPORT_TOUCH = "report_touch";
+        public static final String MOTION_EVENT_EXTRA = "motion_event_extra";
     }
 
     public static class BackgroundActivityTransition {

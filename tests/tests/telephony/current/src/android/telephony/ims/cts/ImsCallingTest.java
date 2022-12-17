@@ -32,6 +32,7 @@ import android.telecom.TelecomManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.InCallServiceStateValidator;
+import android.telephony.ims.ImsCallSessionListener;
 import android.telephony.ims.feature.MmTelFeature;
 import android.util.Log;
 
@@ -47,6 +48,7 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -237,6 +239,37 @@ public class ImsCallingTest extends ImsCallingBase {
 
         Bundle extras = new Bundle();
         sServiceConnector.getCarrierService().getMmTelFeature().onIncomingCallReceived(extras);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+
+        Call call = getCall(mCurrentCallId);
+        if (call.getDetails().getState() == Call.STATE_RINGING) {
+            call.answer(0);
+        }
+
+        TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService().getMmTelFeature()
+                .getImsCallsession();
+
+        isCallActive(call, callSession);
+        callSession.terminateIncomingCall();
+
+        isCallDisconnected(call, callSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        waitForUnboundService();
+    }
+
+    @Test
+    public void testIncomingCallReturnListener() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        bindImsService();
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+
+        Bundle extras = new Bundle();
+        ImsCallSessionListener isl = sServiceConnector.getCarrierService().getMmTelFeature()
+                .onIncomingCallReceivedReturnListener(extras);
+        assertTrue("failed to get ImsCallSessionListener..", Objects.nonNull(isl));
         assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
 
         Call call = getCall(mCurrentCallId);

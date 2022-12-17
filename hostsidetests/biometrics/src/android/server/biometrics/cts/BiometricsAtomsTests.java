@@ -16,7 +16,10 @@
 
 package android.server.biometrics.cts;
 
+import static android.server.biometrics.cts.FingerprintHostsideConstants.FACE_AUTH_ACQUIRED_MESSAGES_AIDL;
 import static android.server.biometrics.cts.FingerprintHostsideConstants.FACE_ENROLL_ACQUIRED_MESSAGES_AIDL;
+import static android.server.biometrics.cts.FingerprintHostsideConstants.FINGERPRINT_AUTH_ACQUIRED_MESSAGES;
+import static android.server.biometrics.cts.FingerprintHostsideConstants.FINGERPRINT_AUTH_ACQUIRED_MESSAGES_AIDL;
 import static android.server.biometrics.cts.FingerprintHostsideConstants.FINGERPRINT_ENROLL_ACQUIRED_MESSAGES;
 import static android.server.biometrics.cts.FingerprintHostsideConstants.FINGERPRINT_ENROLL_ACQUIRED_MESSAGES_AIDL;
 
@@ -28,12 +31,14 @@ import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
 import android.hardware.biometrics.ActionEnum;
 import android.hardware.biometrics.ModalityEnum;
+import android.hardware.biometrics.SessionTypeEnum;
 
 import com.android.os.AtomsProto;
 import com.android.os.StatsLog;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Tests for biometric atom logging.
@@ -66,7 +71,10 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
             return;
         }
 
-        final List<StatsLog.EventMetricData> data = runEnrollmentTestOnDevice();
+        final List<StatsLog.EventMetricData> data = runOnDevice(
+                "testEnroll",
+                new int[]{AtomsProto.Atom.BIOMETRIC_ENROLLED_FIELD_NUMBER,
+                        AtomsProto.Atom.BIOMETRIC_ACQUIRED_FIELD_NUMBER});
 
         if (hasFeatureFingerprint()) {
             final ModalityEnum modality = ModalityEnum.MODALITY_FINGERPRINT;
@@ -93,19 +101,6 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
                     filterAcquiredAtoms(data, modality);
             assertEnrollmentAcquiredAtomsData(acquiredAtoms, modality);
         }
-    }
-
-    private List<StatsLog.EventMetricData> runEnrollmentTestOnDevice() throws Exception {
-        ConfigUtils.uploadConfigForPushedAtoms(getDevice(), TEST_PKG,
-                new int[]{AtomsProto.Atom.BIOMETRIC_ENROLLED_FIELD_NUMBER,
-                        AtomsProto.Atom.BIOMETRIC_ACQUIRED_FIELD_NUMBER});
-        DeviceUtils.runDeviceTests(
-                getDevice(),
-                TEST_PKG,
-                TEST_PKG + TEST_CLASS,
-                "testEnroll");
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
-        return ReportUtils.getEventMetricDataList(getDevice());
     }
 
     private void assertEnrollmentAtomData(AtomsProto.BiometricEnrolled atom) throws Exception {
@@ -140,6 +135,116 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
         }
     }
 
+    public void testAuthenticateAtom() throws Exception {
+        if (!hasBiometrics()) {
+            return;
+        }
+
+        final SensorInfo sensorInfo = getSensorInfo();
+        final List<StatsLog.EventMetricData> data = runOnDevice(
+                "testAuthenticateWithBiometricPrompt",
+                new int[]{AtomsProto.Atom.BIOMETRIC_AUTHENTICATED_FIELD_NUMBER,
+                        AtomsProto.Atom.BIOMETRIC_ACQUIRED_FIELD_NUMBER});
+
+        if (hasFeatureFingerprint()) {
+            final ModalityEnum modality = ModalityEnum.MODALITY_FINGERPRINT;
+
+            final List<AtomsProto.BiometricAuthenticated> authAtoms =
+                    filterAuthenticatedAtoms(data, modality);
+
+            // TODO(b/253318030): No API beyond bp (doesn't allow convenience) - need new test API
+            if (sensorInfo.hasWeakOrGreaterFingerprintSensor()) {
+                assertThat(authAtoms).hasSize(1);
+                assertAuthenticateAtomData(authAtoms.get(0));
+
+                final List<AtomsProto.BiometricAcquired> acquiredAtoms =
+                        filterAcquiredAtoms(data, modality);
+                assertAuthenticateAcquiredAtomsData(
+                        acquiredAtoms, modality, authAtoms.get(0).getSessionId());
+            } else {
+                assertThat(authAtoms).isEmpty();
+            }
+        }
+
+        if (hasFeatureFace()) {
+            final ModalityEnum modality = ModalityEnum.MODALITY_FACE;
+
+            final List<AtomsProto.BiometricAuthenticated> authAtoms =
+                    filterAuthenticatedAtoms(data, modality);
+
+            // TODO(b/253318030): No API beyond bp (doesn't allow convenience) - need new test API
+            if (sensorInfo.hasWeakOrGreaterFaceSensor()) {
+                assertThat(authAtoms).hasSize(1);
+                assertAuthenticateAtomData(authAtoms.get(0));
+
+                final List<AtomsProto.BiometricAcquired> acquiredAtoms =
+                        filterAcquiredAtoms(data, modality);
+                assertAuthenticateAcquiredAtomsData(
+                        acquiredAtoms, modality, authAtoms.get(0).getSessionId());
+            } else {
+                assertThat(authAtoms).isEmpty();
+            }
+        }
+    }
+
+    private void assertAuthenticateAtomData(
+            AtomsProto.BiometricAuthenticated atom) throws Exception {
+        assertThat(atom.getState()).isEqualTo(AtomsProto.BiometricAuthenticated.State.CONFIRMED);
+        assertThat(atom.getUser()).isEqualTo(getDevice().getCurrentUser());
+        assertThat(atom.hasAmbientLightLux()).isTrue();
+        assertThat(atom.hasSessionType()
+                && atom.getSessionType() == SessionTypeEnum.SESSION_TYPE_BIOMETRIC_PROMPT).isTrue();
+        assertThat(atom.getSessionId()).isGreaterThan(0);
+    }
+
+    // check enrollment acquired messages match the fixed values in the test
+    private void assertAuthenticateAcquiredAtomsData(
+            List<AtomsProto.BiometricAcquired> atoms, ModalityEnum modality,
+            int sessionId) throws Exception {
+        assertThat(atoms).isNotEmpty();
+
+        for (AtomsProto.BiometricAcquired atom : atoms) {
+            assertThat(atom.hasModality() && atom.getModality() == modality).isTrue();
+            assertThat(atom.hasAction() && atom.getAction() == ActionEnum.ACTION_AUTHENTICATE)
+                    .isTrue();
+            assertThat(atom.hasUser() && atom.getUser() == getDevice().getCurrentUser()).isTrue();
+            assertThat(atom.hasSessionType()
+                    && atom.getSessionType() == SessionTypeEnum.SESSION_TYPE_BIOMETRIC_PROMPT)
+                    .isTrue();
+            assertThat(atom.getSessionId()).isEqualTo(sessionId);
+        }
+
+        final List<Integer> expectedAcquireCodes;
+        if (modality == ModalityEnum.MODALITY_FINGERPRINT) {
+            expectedAcquireCodes = hasAidlFingerprintSensorId()
+                    ? FINGERPRINT_AUTH_ACQUIRED_MESSAGES_AIDL : FINGERPRINT_AUTH_ACQUIRED_MESSAGES;
+        } else if (modality == ModalityEnum.MODALITY_FACE) {
+            expectedAcquireCodes = FACE_AUTH_ACQUIRED_MESSAGES_AIDL;
+        } else {
+            expectedAcquireCodes = List.of();
+        }
+
+        assertThat(atoms.stream().map(d -> d.getAcquireInfo()).collect(Collectors.toList()))
+                .containsExactlyElementsIn(expectedAcquireCodes).inOrder();
+        assertThat(atoms.stream().map(a -> a.getSessionOrder()).collect(Collectors.toList()))
+                .containsExactlyElementsIn(
+                        IntStream.range(0, expectedAcquireCodes.size())
+                                .boxed()
+                                .collect(Collectors.toList()));
+    }
+
+    private List<StatsLog.EventMetricData> runOnDevice(
+            String methodName, int[] atomsToCollect) throws Exception {
+        ConfigUtils.uploadConfigForPushedAtoms(getDevice(), TEST_PKG, atomsToCollect);
+        DeviceUtils.runDeviceTests(
+                getDevice(),
+                TEST_PKG,
+                TEST_PKG + TEST_CLASS,
+                methodName);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        return ReportUtils.getEventMetricDataList(getDevice());
+    }
+
     private static List<AtomsProto.BiometricEnrolled> filterEnrollmentAtoms(
             List<StatsLog.EventMetricData> data, ModalityEnum modality) {
         return data.stream()
@@ -154,6 +259,15 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
         return data.stream()
                 .filter(d -> d.getAtom().hasBiometricAcquired())
                 .map(d -> d.getAtom().getBiometricAcquired())
+                .filter(d -> d.hasModality() && d.getModality() == modality)
+                .collect(Collectors.toList());
+    }
+
+    private static List<AtomsProto.BiometricAuthenticated> filterAuthenticatedAtoms(
+            List<StatsLog.EventMetricData> data, ModalityEnum modality) {
+        return data.stream()
+                .filter(d -> d.getAtom().hasBiometricAuthenticated())
+                .map(d -> d.getAtom().getBiometricAuthenticated())
                 .filter(d -> d.hasModality() && d.getModality() == modality)
                 .collect(Collectors.toList());
     }

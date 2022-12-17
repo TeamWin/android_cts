@@ -32,6 +32,7 @@ import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBIL
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS;
 import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_HIDE_TOOLTIP;
+import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_IN_DIRECTION;
 import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_TOOLTIP;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -75,6 +76,7 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.graphics.Region;
+import android.os.Parcel;
 import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
@@ -753,6 +755,21 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
         assertEquals("Tooltip text not reported to accessibility",
                 sInstrumentation.getContext().getString(R.string.button_tooltip),
                 buttonNode.getTooltipText());
+    }
+
+    @MediumTest
+    @Test
+    public void testAccessibilityActionRetained() throws Exception {
+        final AccessibilityNodeInfo sentInfo = new AccessibilityNodeInfo(new View(getContext()));
+        sentInfo.addAction(ACTION_SCROLL_IN_DIRECTION);
+        final Parcel parcel = Parcel.obtain();
+        sentInfo.writeToParcelNoRecycle(parcel, 0);
+        parcel.setDataPosition(0);
+        AccessibilityNodeInfo receivedInfo = AccessibilityNodeInfo.CREATOR.createFromParcel(parcel);
+
+        assertThat(receivedInfo.getActionList()).contains(ACTION_SCROLL_IN_DIRECTION);
+
+        parcel.recycle();
     }
 
     @MediumTest

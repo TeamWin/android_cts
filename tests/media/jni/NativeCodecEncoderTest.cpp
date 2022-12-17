@@ -422,8 +422,8 @@ bool CodecEncoderTest::testSimpleEncode(const char* encoder, const char* srcPath
     /* TODO(b/149027258) */
     if (true) mSaveToMem = false;
     else mSaveToMem = true;
-    auto ref = &mRefBuff;
-    auto test = &mTestBuff;
+    auto ref = mRefBuff;
+    auto test = mTestBuff;
     const bool boolStates[]{true, false};
     for (auto format : mFormats) {
         int loopCounter = 0;
@@ -465,7 +465,7 @@ bool CodecEncoderTest::testReconfigure(const char* encoder, const char* srcPath)
     setUpSource(srcPath);
     RETURN_IF_TRUE(!mInputData, StringFormat("unable to open input file %s", srcPath))
     setUpParams(2);
-    auto configRef = &mReconfBuff;
+    auto configRef = mReconfBuff;
     if (mFormats.size() > 1) {
         auto format = mFormats[1];
         RETURN_IF_TRUE(!encodeToMemory(srcPath, encoder, INT32_MAX, format, configRef),
@@ -473,12 +473,12 @@ bool CodecEncoderTest::testReconfigure(const char* encoder, const char* srcPath)
                                     srcPath, encoder, AMediaFormat_toString(format)))
     }
     auto format = mFormats[0];
-    auto ref = &mRefBuff;
+    auto ref = mRefBuff;
     RETURN_IF_TRUE(!encodeToMemory(srcPath, encoder, INT32_MAX, format, ref),
                    StringFormat("encodeToMemory failed for file: %s codec: %s \n format: %s",
                                 srcPath, encoder, AMediaFormat_toString(format)))
 
-    auto test = &mTestBuff;
+    auto test = mTestBuff;
     mOutputBuff = test;
     const bool boolStates[]{true, false};
     for (auto isAsync : boolStates) {
@@ -550,8 +550,8 @@ bool CodecEncoderTest::testOnlyEos(const char* encoder) {
     /* TODO(b/149027258) */
     if (true) mSaveToMem = false;
     else mSaveToMem = true;
-    auto ref = &mRefBuff;
-    auto test = &mTestBuff;
+    auto ref = mRefBuff;
+    auto test = mTestBuff;
     const bool boolStates[]{true, false};
     AMediaFormat* format = mFormats[0];
     int loopCounter = 0;
@@ -591,7 +591,7 @@ bool CodecEncoderTest::testSetForceSyncFrame(const char* encoder, const char* sr
     int kNumKeyFrameRequests = 7;
     AMediaFormat* params = AMediaFormat_new();
     mFormats.push_back(params);
-    mOutputBuff = &mTestBuff;
+    mOutputBuff = mTestBuff;
     const bool boolStates[]{true, false};
     for (auto isAsync : boolStates) {
         mOutputBuff->reset();
@@ -654,7 +654,7 @@ bool CodecEncoderTest::testAdaptiveBitRate(const char* encoder, const char* srcP
     mFormats.push_back(params);
     // Setting in CBR Mode
     AMediaFormat_setInt32(format, TBD_AMEDIAFORMAT_KEY_BIT_RATE_MODE, kBitrateModeConstant);
-    mOutputBuff = &mTestBuff;
+    mOutputBuff = mTestBuff;
     mSaveToMem = true;
     const bool boolStates[]{true, false};
     for (auto isAsync : boolStates) {

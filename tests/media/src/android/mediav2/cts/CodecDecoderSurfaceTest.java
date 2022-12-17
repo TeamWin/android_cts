@@ -227,7 +227,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         {
             decodeAndSavePts(mTestFile, mCodecName, pts, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
-            OutputManager test = new OutputManager();
+            OutputManager test = new OutputManager(ref.getSharedErrorLogs());
             MediaFormat format = setUpSource(mTestFile);
             mCodec = MediaCodec.createByCodecName(mCodecName);
             mOutputBuff = test;
@@ -290,10 +290,10 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         final long pts = 500000;
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
         boolean[] boolStates = {true, false};
-        OutputManager test = new OutputManager();
         {
             decodeAndSavePts(mTestFile, mCodecName, pts, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
+            OutputManager test = new OutputManager(ref.getSharedErrorLogs());
             mOutputBuff = test;
             setUpSource(mTestFile);
             mCodec = MediaCodec.createByCodecName(mCodecName);
@@ -401,16 +401,17 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         final long pts = 500000;
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
         boolean[] boolStates = {true, false};
-        OutputManager test = new OutputManager();
         {
             decodeAndSavePts(mTestFile, mCodecName, pts, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
             decodeAndSavePts(mReconfigFile, mCodecName, pts, mode, Integer.MAX_VALUE);
             OutputManager configRef = mOutputBuff;
-            mOutputBuff = test;
+            OutputManager test = new OutputManager(ref.getSharedErrorLogs());
+            OutputManager configTest = new OutputManager(configRef.getSharedErrorLogs());
             mCodec = MediaCodec.createByCodecName(mCodecName);
             mActivity.setScreenParams(getWidth(format), getHeight(format), false);
             for (boolean isAsync : boolStates) {
+                mOutputBuff = test;
                 setUpSource(mTestFile);
                 mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                 configureCodec(format, isAsync, true, false);
@@ -454,19 +455,21 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                 mExtractor.release();
 
                 /* test reconfigure codec for new file */
+                mOutputBuff = configTest;
                 setUpSource(mReconfigFile);
                 mActivity.setScreenParams(getWidth(newFormat), getHeight(newFormat), true);
                 reConfigureCodec(newFormat, isAsync, false, false);
                 mCodec.start();
-                test.reset();
+                configTest.reset();
                 mExtractor.seekTo(pts, mode);
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
                 mCodec.stop();
-                if (!(mIsInterlaced ? configRef.equalsInterlaced(test) : configRef.equals(test))) {
+                if (!(mIsInterlaced ? configRef.equalsInterlaced(configTest) :
+                        configRef.equals(configTest))) {
                     fail("Decoder output in surface mode does not match with output in bytebuffer "
-                            + "mode \n" + mTestConfig + mTestEnv + test.getErrMsg());
+                            + "mode \n" + mTestConfig + mTestEnv + configTest.getErrMsg());
                 }
                 mExtractor.release();
             }

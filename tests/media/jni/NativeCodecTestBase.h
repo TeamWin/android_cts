@@ -97,8 +97,12 @@ class OutputManager {
     std::vector<uint8_t> memory;
     uLong crc32value = 0U;
     std::string mErrorLogs;
+    std::shared_ptr<std::string> mSharedErrorLogs;
 
   public:
+    OutputManager(std::shared_ptr<std::string> log = std::make_shared<std::string>())
+            : mSharedErrorLogs(log) {}
+
     void saveInPTS(int64_t pts) {
         // Add only Unique timeStamp, discarding any duplicate frame / non-display frame
         if (0 == std::count(inpPtsArray.begin(), inpPtsArray.end(), pts)) {
@@ -124,12 +128,14 @@ class OutputManager {
         memory.clear();
         crc32value = 0U;
         mErrorLogs.clear();
+        mSharedErrorLogs->clear();
     }
     bool equalsInterlaced(OutputManager* that);
     bool equals(OutputManager* that);
     float getRmsError(uint8_t* refData, int length);
-    std::string getErrorMsg() { return mErrorLogs; }
+    std::string getErrorMsg() { return mErrorLogs + *mSharedErrorLogs; }
     int getOutStreamSize() { return memory.size(); }
+    std::shared_ptr<std::string> getSharedErrorLogs()  { return mSharedErrorLogs; }
 };
 
 class CodecTestBase {
@@ -151,9 +157,9 @@ class CodecTestBase {
 
     bool mSaveToMem;
     OutputManager* mOutputBuff;
-    OutputManager mRefBuff;
-    OutputManager mTestBuff;
-    OutputManager mReconfBuff;
+    OutputManager* mRefBuff;
+    OutputManager* mTestBuff;
+    OutputManager* mReconfBuff;
 
     AMediaCodec* mCodec;
     std::string mTestEnv;

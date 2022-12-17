@@ -650,10 +650,13 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
         }
         checkFormatSupport(mCodecName, mMime, false, formats, null, mSupportRequirements);
         {
-            OutputManager ref = null;
+            OutputManager ref = new OutputManager();
+            OutputManager test = new OutputManager(ref.getSharedErrorLogs());
             mSaveToMem = true;
+            int loopCounter = 0;
             for (String file : mSrcFiles) {
-                mOutputBuff = new OutputManager();
+                mOutputBuff = loopCounter == 0 ? ref : test;
+                mOutputBuff.reset();
                 mCodec = MediaCodec.createByCodecName(mCodecName);
                 MediaFormat format = setUpSource(MEDIA_DIR + file);
                 configureCodec(format, false, true, false);
@@ -666,7 +669,6 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                 mCodec.stop();
                 mCodec.release();
                 mExtractor.release();
-                if (ref == null) ref = mOutputBuff;
                 if (!(mIsInterlaced ? ref.equalsInterlaced(mOutputBuff) :
                         ref.equals(mOutputBuff))) {
                     fail("Decoder output received for file " + mSrcFiles[0]
@@ -683,6 +685,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                         + mTestEnv, mWidth, getWidth(mOutFormat));
                 assertEquals("Output height is different from configured height \n" + mTestConfig
                         + mTestEnv, mHeight, getHeight(mOutFormat));
+                loopCounter++;
             }
             Assume.assumeFalse("skip checksum verification due to tone mapping",
                     mSkipChecksumVerification);

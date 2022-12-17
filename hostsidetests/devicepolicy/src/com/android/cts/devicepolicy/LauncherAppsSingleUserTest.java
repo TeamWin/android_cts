@@ -16,6 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.FlakyTest;
@@ -104,9 +105,11 @@ public class LauncherAppsSingleUserTest extends BaseLauncherAppsTest {
         }
         installAppAsUser(SIMPLE_APP_APK, mCurrentUserId);
         startCallbackService(mCurrentUserId);
-        while (!isCallbackServiceReady()) {
+        for (int retry = 0; !isCallbackServiceReady() && retry < 10; retry++) {
             Thread.sleep(100);
         }
+        assertTrue(LAUNCHER_TESTS_SUPPORT_COMPONENT + " would not be ready",
+                isCallbackServiceReady());
         getDevice().uninstallPackage(SIMPLE_APP_PKG);
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS,

@@ -302,7 +302,31 @@ public class ResourcesTest extends AndroidTestCase {
         assertEquals(LocaleList.getDefault(), res.getConfiguration().getLocales());
     }
 
-    public void testUpdateConfiguration_fontScaleIs1DoesNotUseAdaptiveFontScaling() {
+    public void testUpdateConfiguration_fontScaleIs1DoesNotUseAdaptiveFontScalingDeriveDimension() {
+        Resources res = createNewResources();
+        final DisplayMetrics metrics1x = res.getDisplayMetrics();
+
+        assertThat(metrics1x.scaledDensity).isEqualTo(metrics1x.density);
+        // Verify all font sizes are not scaled
+        IntStream.range(5, 20)
+                .asDoubleStream()
+                .forEach(
+                        pxDouble -> {
+                            float px = (float) pxDouble;
+                            // DP and SP should be same at font scale factor 1.0
+                            float dpExpected = pxToDp(px, metrics1x);
+                            float spActual = pxToSp(px, metrics1x);
+                            assertThat(spActual).isWithin(FONT_SCALING_TOLERANCE).of(dpExpected);
+                        });
+        assertThat(pxToSp(30f, metrics1x))
+                .isWithin(FONT_SCALING_TOLERANCE)
+                .of(pxToDp(30f, metrics1x));
+        assertThat(pxToSp(100f, metrics1x))
+                .isWithin(FONT_SCALING_TOLERANCE)
+                .of(pxToDp(100f, metrics1x));
+    }
+
+    public void testUpdateConfiguration_fontScaleIs1DoesNotUseAdaptiveFontScalingApplyDimension() {
         Resources res = createNewResources();
         final DisplayMetrics metrics1x = res.getDisplayMetrics();
 
@@ -1101,5 +1125,13 @@ public class ResourcesTest extends AndroidTestCase {
 
     private static float dpToPx(float dp, DisplayMetrics metrics) {
         return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, metrics);
+    }
+
+    private static float pxToSp(float px, DisplayMetrics metrics) {
+        return TypedValue.deriveDimension(TypedValue.COMPLEX_UNIT_SP, px, metrics);
+    }
+
+    private static float pxToDp(float px, DisplayMetrics metrics) {
+        return TypedValue.deriveDimension(TypedValue.COMPLEX_UNIT_DIP, px, metrics);
     }
 }

@@ -209,6 +209,40 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
     }
 
     /**
+     * Verifies the behavior of
+     * {@link WindowContainerTransaction#deleteTaskFragment(WindowContainerToken)} to remove
+     * the organized TaskFragment with activity embedded.
+     */
+    @Test
+    @ApiTest(apis = {
+            "android.window.WindowContainerTransaction#deleteTaskFragment",
+            "android.window.TaskFragmentOrganizer.#onTransactionReady"})
+    public void testDeleteTaskFragmentWithActivity() {
+        final TaskFragmentInfo taskFragmentInfo = createTaskFragment(mLaunchingActivity);
+        final IBinder taskFragToken = taskFragmentInfo.getFragmentToken();
+        assertNotEmptyTaskFragment(taskFragmentInfo, taskFragmentInfo.getFragmentToken());
+
+        mWmState.computeState(mOwnerActivityName);
+        final int originalTaskFragCount = mWmState.getRootTask(mOwnerTaskId).getTaskFragments()
+                .size();
+
+        WindowContainerTransaction wct = new WindowContainerTransaction()
+                .deleteTaskFragment(taskFragmentInfo.getToken());
+        mTaskFragmentOrganizer.applyTransaction(wct, TASK_FRAGMENT_TRANSIT_CLOSE,
+                false /* shouldApplyIndependently */);
+
+        mTaskFragmentOrganizer.waitForTaskFragmentRemoved();
+
+        assertEmptyTaskFragment(mTaskFragmentOrganizer.getRemovedTaskFragmentInfo(taskFragToken),
+                taskFragToken);
+
+        mWmState.computeState(mOwnerActivityName);
+        final int currTaskFragCount = mWmState.getRootTask(mOwnerTaskId).getTaskFragments().size();
+        assertWithMessage("TaskFragment with token " + taskFragToken + " must be"
+                + " removed.").that(originalTaskFragCount - currTaskFragCount).isEqualTo(1);
+    }
+
+    /**
      * Verifies the behavior of {@link WindowContainerTransaction#finishActivity(IBinder)} to finish
      * an Activity.
      */

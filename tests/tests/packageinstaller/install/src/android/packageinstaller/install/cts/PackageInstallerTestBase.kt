@@ -37,6 +37,7 @@ import android.content.pm.PackageInstaller.Session
 import android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL
 import android.content.pm.PackageManager
 import android.icu.util.ULocale
+import android.os.PersistableBundle
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.Until
@@ -168,6 +169,11 @@ open class PackageInstallerTestBase {
         return startInstallationViaSession(installFlags, TEST_APK_NAME)
     }
 
+    protected fun startInstallationViaSession(appMetadata: PersistableBundle):
+            CompletableFuture<Int> {
+        return startInstallationViaSession(0 /* installFlags */, TEST_APK_NAME, null, appMetadata)
+    }
+
     protected fun startInstallationViaSessionWithPackageSource(packageSource: Int?):
             CompletableFuture<Int> {
         return startInstallationViaSession(0 /* installFlags */, TEST_APK_NAME, packageSource)
@@ -176,7 +182,7 @@ open class PackageInstallerTestBase {
     protected fun createSession(
         installFlags: Int,
         isMultiPackage: Boolean,
-        packageSource: Int?
+        packageSource: Int?,
     ): Pair<Int, Session> {
         // Create session
         val sessionParam = PackageInstaller.SessionParams(MODE_FULL_INSTALL)
@@ -207,7 +213,7 @@ open class PackageInstallerTestBase {
         }
     }
 
-    private fun commitSession(session: Session): CompletableFuture<Int> {
+    protected fun commitSession(session: Session): CompletableFuture<Int> {
         // Commit session
         val dialog = FutureResultActivity.doAndAwaitStart {
             val pendingIntent = PendingIntent.getBroadcast(
@@ -264,6 +270,23 @@ open class PackageInstallerTestBase {
         val (sessionId, session) = createSession(installFlags, false, packageSource)
         writeSession(session, apkName)
         return commitSession(session)
+    }
+
+    protected fun startInstallationViaSession(
+        installFlags: Int,
+        apkName: String,
+        packageSource: Int?,
+        appMetadata: PersistableBundle?
+    ): CompletableFuture<Int> {
+        val (sessionId, session) = createSession(installFlags, false, packageSource)
+        writeSession(session, apkName)
+        try {
+            session.setAppMetadata(appMetadata)
+            return commitSession(session)
+        } catch (e: Exception) {
+            session.abandon()
+            throw e
+        }
     }
 
     protected fun startInstallationViaMultiPackageSession(

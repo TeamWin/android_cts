@@ -20,6 +20,7 @@ import android.hardware.radio.voice.CdmaSignalInfoRecord;
 import android.hardware.radio.voice.LastCallFailCauseInfo;
 import android.hardware.radio.voice.UusInfo;
 import android.os.Handler;
+import android.telephony.Annotation;
 
 public interface MockModemConfigInterface {
 
@@ -184,6 +185,36 @@ public interface MockModemConfigInterface {
             String client);
 
     /**
+     * Request to dial an emergency voice call.
+     *
+     * @param logicalSlotId the Id of logical sim slot.
+     * @param address the phone number to dial.
+     * @param categories the Emergency Service Category(s) of the call.
+     * @param urns the emergency Uniform Resource Names (URN).
+     * @param routing EmergencyCallRouting the emergency call routing information.
+     * @param client for tracking calling client.
+     * @return boolean true if the operation succeeds, otherwise false.
+     */
+    boolean dialEccVoiceCall(int logicalSlotId, String address,
+            int categories, String[] urns, int routing, String client);
+
+    /**
+     * Request to dial an emergency voice call with call control info.
+     *
+     * @param logicalSlotId the Id of logical sim slot.
+     * @param address the phone number to dial.
+     * @param categories the Emergency Service Category(s) of the call.
+     * @param urns the emergency Uniform Resource Names (URN).
+     * @param routing EmergencyCallRouting the emergency call routing information.
+     * @param callControlInfo call control configuration.
+     * @param client for tracking calling client.
+     * @return boolean true if the operation succeeds, otherwise false.
+     */
+    boolean dialEccVoiceCall(int logicalSlotId, String address,
+            int categories, String[] urns, int routing,
+            MockCallControlInfo callControlInfo, String client);
+
+    /**
      * Request to hangup a voice call.
      *
      * @param logicalSlotId the Id of logical sim slot.
@@ -219,6 +250,26 @@ public interface MockModemConfigInterface {
      * @return LastCallFailCauseInfo last cause code and vendor cause info.
      */
     LastCallFailCauseInfo getLastCallFailCause(int logicalSlotId, String client);
+
+    /**
+     * Sets the last call fail cause.
+     *
+     * @param logicalSlotId the Id of logical sim slot.
+     * @param client for tracking calling client.
+     * @param cause the disconnect cause code.
+     */
+    void setLastCallFailCause(int logicalSlotId,
+            @Annotation.DisconnectCauses int cause, String client);
+
+    /**
+     * Clears all calls.
+     *
+     * @param logicalSlotId the Id of logical sim slot.
+     * @param client for tracking calling client.
+     * @param cause the disconnect cause code.
+     */
+    void clearAllCalls(int logicalSlotId,
+            @Annotation.DisconnectCauses int cause, String client);
 
     /**
      * Get voice mute mode.

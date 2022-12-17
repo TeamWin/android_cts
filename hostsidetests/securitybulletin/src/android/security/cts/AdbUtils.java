@@ -68,7 +68,7 @@ public class AdbUtils {
         Map<String, String> envVars;
         String inputFilesDestination;
         ITestDevice device;
-        TombstoneUtils.Config config;
+        TombstoneUtils.Config config = new TombstoneUtils.Config();
         List<String> inputFiles = Collections.emptyList();
 
         pocConfig(String binaryName, ITestDevice device) {

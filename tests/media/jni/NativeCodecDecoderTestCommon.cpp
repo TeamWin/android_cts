@@ -356,8 +356,8 @@ bool CodecDecoderTest::testSimpleDecode(const char* decoder, const char* testFil
                                         uLong checksum) {
     if (!setUpExtractor(testFile, colorFormat)) return false;
     mSaveToMem = (mWindow == nullptr);
-    auto ref = &mRefBuff;
-    auto test = &mTestBuff;
+    auto ref = mRefBuff;
+    auto test = mTestBuff;
     const bool boolStates[]{true, false};
     int loopCounter = 0;
     for (auto eosType : boolStates) {
@@ -430,10 +430,10 @@ bool CodecDecoderTest::testFlush(const char* decoder, const char* testFile, int 
     }
     const int64_t pts = 500000;
     const SeekMode mode = AMEDIAEXTRACTOR_SEEK_CLOSEST_SYNC;
-    auto ref = &mRefBuff;
+    auto ref = mRefBuff;
     RETURN_IF_TRUE(!decodeToMemory(decoder, mInpDecFormat, INT32_MAX, ref, pts, mode),
                    StringFormat("decodeToMemory failed for file: %s codec: %s", testFile, decoder))
-    auto test = &mTestBuff;
+    auto test = mTestBuff;
     mOutputBuff = test;
     const bool boolStates[]{true, false};
     for (auto isAsync : boolStates) {
@@ -516,8 +516,8 @@ bool CodecDecoderTest::testFlush(const char* decoder, const char* testFile, int 
 bool CodecDecoderTest::testOnlyEos(const char* decoder, const char* testFile, int colorFormat) {
     if (!setUpExtractor(testFile, colorFormat)) return false;
     mSaveToMem = (mWindow == nullptr);
-    auto ref = &mRefBuff;
-    auto test = &mTestBuff;
+    auto ref = mRefBuff;
+    auto test = mTestBuff;
     const bool boolStates[]{true, false};
     int loopCounter = 0;
     for (auto isAsync : boolStates) {
@@ -565,8 +565,8 @@ bool CodecDecoderTest::testSimpleDecodeQueueCSD(const char* decoder, const char*
 
     const bool boolStates[]{true, false};
     mSaveToMem = true;
-    auto ref = &mRefBuff;
-    auto test = &mTestBuff;
+    auto ref = mRefBuff;
+    auto test = mTestBuff;
     int loopCounter = 0;
     for (int i = 0; i < formats.size(); i++) {
         auto fmt = formats[i];

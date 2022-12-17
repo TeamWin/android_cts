@@ -810,8 +810,19 @@ public class UiBot {
 
         final String expectedAccessibilityTitle =
                 getString(RESOURCE_STRING_SAVE_SNACKBAR_ACCESSIBILITY_TITLE);
-        assertAccessibilityTitle(snackbar, expectedAccessibilityTitle);
-
+        timeout.run(
+                String.format(
+                        "assertAccessibilityTitle(%s, %s)",
+                        snackbar,
+                        expectedAccessibilityTitle),
+                () -> {
+                    try {
+                        assertAccessibilityTitle(snackbar, expectedAccessibilityTitle);
+                    } catch (RetryableException e) {
+                        return null;
+                    }
+                    return true;
+                });
         return snackbar;
     }
 

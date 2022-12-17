@@ -17,10 +17,12 @@
 package android.telephony.mockmodem;
 
 import android.content.Context;
+import android.hardware.radio.network.BarringInfo;
 import android.hardware.radio.network.CellConnectionStatus;
 import android.hardware.radio.network.CellInfo;
 import android.hardware.radio.network.CellInfoRatSpecificInfo;
 import android.hardware.radio.network.Domain;
+import android.hardware.radio.network.EmergencyRegResult;
 import android.hardware.radio.network.RegState;
 import android.telephony.RadioAccessFamily;
 import android.telephony.ServiceState;
@@ -29,6 +31,8 @@ import android.util.Log;
 import com.android.internal.telephony.RILConstants;
 
 import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class MockNetworkService {
     private static final String TAG = "MockNetworkService";
@@ -61,6 +65,10 @@ public class MockNetworkService {
     // Network status update reason
     static final int NETWORK_UPDATE_PREFERRED_MODE_CHANGE = 1;
 
+    public static final int LATCH_TRIGGER_EMERGENCY_SCAN = 0;
+    public static final int LATCH_CANCEL_EMERGENCY_SCAN = 1;
+    private static final int LATCH_MAX = 2;
+
     private int mCsRegState = RegState.NOT_REG_MT_NOT_SEARCHING_OP;
     private int mPsRegState = RegState.NOT_REG_MT_NOT_SEARCHING_OP;
 
@@ -75,6 +83,16 @@ public class MockNetworkService {
     private int mHighRat;
 
     private ArrayList<MockModemCell> mCellList = new ArrayList<MockModemCell>();
+
+    private BarringInfo[] mBarringInfos = new BarringInfo[0];
+    private EmergencyRegResult mEmergencyRegResult = new EmergencyRegResult();
+    private boolean mEmergencyNetworkScanTriggered = false;
+    private boolean mEmergencyNetworkScanCanceled = false;
+    private int[] mEmergencyNetworkScanAccessNetwork = null;
+    private int mEmergencyNetworkScanType = -1;
+    private int mEmergencyMode = 0;
+
+    private final CountDownLatch[] mLatches = new CountDownLatch[LATCH_MAX];
 
     private class MockModemCell {
         private int mCarrierId;
@@ -228,6 +246,9 @@ public class MockNetworkService {
         mContext = context;
         loadMockModemCell("mock_network_tw_cht.xml");
         loadMockModemCell("mock_network_tw_fet.xml");
+        for (int i = 0; i < LATCH_MAX; i++) {
+            mLatches[i] = new CountDownLatch(1);
+        }
     }
 
     public void loadMockModemCell(String config) {
@@ -625,6 +646,164 @@ public class MockNetworkService {
         }
 
         return null;
+    }
+
+    /**
+     * @return The barring status.
+     */
+    public BarringInfo[] getBarringInfo() {
+        return mBarringInfos;
+    }
+
+    /**
+     * Updates the barring status.
+     * @param barringInfos the barring status.
+     */
+    public void updateBarringInfos(BarringInfo[] barringInfos) {
+        mBarringInfos = barringInfos;
+    }
+
+    /**
+     * Updates the emergency registration state.
+     * @param regResult the emergency registration state.
+     */
+    public void setEmergencyRegResult(EmergencyRegResult regResult) {
+        mEmergencyRegResult = regResult;
+    }
+
+    /**
+     * @return the emergency registration state.
+     */
+    public EmergencyRegResult getEmergencyRegResult() {
+        return mEmergencyRegResult;
+    }
+
+    /**
+     * Updates the current emergency mode.
+     * @param mode the emergency mode
+     */
+    public void setEmergencyMode(int mode) {
+        mEmergencyMode = mode;
+    }
+
+    /**
+     * @return the current emergency mode.
+     */
+    public int getEmergencyMode() {
+        return mEmergencyMode;
+    }
+
+    /**
+     * Updates whether triggerEmergencyNetworkScan is requested and the attributes.
+     *
+     * @param state {@code true} if the scan is trigerred.
+     * @param accessNetwork the list of preferred network type.
+     * @param scanType indicates the preferred scan type.
+     */
+    public void setEmergencyNetworkScanTriggered(boolean state,
+            int[] accessNetwork, int scanType) {
+        mEmergencyNetworkScanTriggered = state;
+        if (state) {
+            mEmergencyNetworkScanAccessNetwork = accessNetwork;
+            mEmergencyNetworkScanType = scanType;
+            countDownLatch(LATCH_TRIGGER_EMERGENCY_SCAN);
+        }
+    }
+
+    /**
+     * Updates whether cancelEmergencyNetworkScan is requested.
+     */
+    public void setEmergencyNetworkScanCanceled(boolean state) {
+        mEmergencyNetworkScanCanceled = state;
+        if (state) {
+            mEmergencyNetworkScanAccessNetwork = null;
+            mEmergencyNetworkScanType = -1;
+            countDownLatch(LATCH_CANCEL_EMERGENCY_SCAN);
+        }
+    }
+
+    /**
+     * @return whether emergency network scan is triggered.
+     */
+    public boolean isEmergencyNetworkScanTriggered() {
+        return mEmergencyNetworkScanTriggered;
+    }
+
+    /**
+     * @return whether emergency network scan is canceled.
+     */
+    public boolean isEmergencyNetworkScanCanceled() {
+        return mEmergencyNetworkScanCanceled;
+    }
+
+    /**
+     * @return the list of preferred network type.
+     */
+    public int[] getEmergencyNetworkScanAccessNetwork() {
+        return mEmergencyNetworkScanAccessNetwork;
+    }
+
+    /**
+     * @return the preferred scan type.
+     */
+    public int getEmergencyNetworkScanType() {
+        return mEmergencyNetworkScanType;
+    }
+
+    /**
+     * Resets the emergency network scan attributes.
+     */
+    public void resetEmergencyNetworkScan() {
+        mEmergencyRegResult = new EmergencyRegResult();
+        mEmergencyNetworkScanTriggered = false;
+        mEmergencyNetworkScanCanceled = false;
+        mEmergencyNetworkScanAccessNetwork = null;
+        mEmergencyNetworkScanType = -1;
+        mEmergencyMode = 0;
+    }
+
+    private void countDownLatch(int latchIndex) {
+        synchronized (mLatches) {
+            mLatches[latchIndex].countDown();
+        }
+    }
+
+    /**
+     * Waits for the event of network service.
+     *
+     * @param latchIndex The index of the event.
+     * @param waitMs The timeout in milliseconds.
+     * @return {@code true} if the event happens.
+     */
+    public boolean waitForLatchCountdown(int latchIndex, long waitMs) {
+        boolean complete = false;
+        try {
+            CountDownLatch latch;
+            synchronized (mLatches) {
+                latch = mLatches[latchIndex];
+            }
+            long startTime = System.currentTimeMillis();
+            complete = latch.await(waitMs, TimeUnit.MILLISECONDS);
+            Log.i(TAG, "Latch " + latchIndex + " took "
+                    + (System.currentTimeMillis() - startTime) + " ms to count down.");
+        } catch (InterruptedException e) {
+            Log.e(TAG, "Waiting latch " + latchIndex + " interrupted, e=" + e);
+        }
+        synchronized (mLatches) {
+            mLatches[latchIndex] = new CountDownLatch(1);
+        }
+        return complete;
+    }
+
+    /**
+     * Resets the CountDownLatches
+     */
+    public void resetAllLatchCountdown() {
+        synchronized (mLatches) {
+            for (int i = 0; i < LATCH_MAX; i++) {
+                mLatches[i] = new CountDownLatch(1);
+            }
+        }
     }
 
     @Override

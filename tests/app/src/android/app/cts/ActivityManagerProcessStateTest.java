@@ -27,6 +27,7 @@ import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREG
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE;
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE;
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.stubs.LocalForegroundService.ACTION_START_FGS_RESULT;
 import static android.app.stubs.LocalForegroundServiceSticky.ACTION_RESTART_FGS_STICKY_RESULT;
 
@@ -37,6 +38,7 @@ import static junit.framework.Assert.fail;
 import android.accessibilityservice.AccessibilityService;
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.ActivityOptions;
 import android.app.AppOpsManager;
 import android.app.Instrumentation;
 import android.app.Service;
@@ -262,8 +264,14 @@ public class ActivityManagerProcessStateTest {
         }
     }
 
+    private void startActivity(Context context, final Intent intent) {
+        ActivityOptions activityOptions = ActivityOptions.makeBasic();
+        activityOptions.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
+        context.startActivity(intent, activityOptions.toBundle());
+    }
+
     private void startAndWaitForHeavyWeightSwitcherActivity(final Intent intent)  {
-        mTargetContext.startActivity(intent);
+        startActivity(mTargetContext, intent);
         // Assume there was another CANT_SAVE_STATE app, so it will redirect to the switch activity.
         new WindowManagerStateHelper().waitAndAssertWindowSurfaceShown(
                 "android/com.android.internal.app.HeavyWeightSwitcherActivity", true);
@@ -972,7 +980,7 @@ public class ActivityManagerProcessStateTest {
             WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
             waiter.prepare(ACTION_SIMPLE_ACTIVITY_START_SERVICE_RESULT);
             activityIntent.putExtra("service", mServiceIntent);
-            mTargetContext.startActivity(activityIntent);
+            startActivity(mTargetContext, activityIntent);
             Intent resultIntent = waiter.doWait(WAIT_TIME * 2);
             int brCode = resultIntent.getIntExtra("result", Activity.RESULT_CANCELED);
             if (brCode != Activity.RESULT_FIRST_USER) {
@@ -1232,7 +1240,7 @@ public class ActivityManagerProcessStateTest {
             waiter.prepare(ACTION_SIMPLE_ACTIVITY_START_FG_SERVICE_RESULT);
 
             activityIntent.setAction(ACTION_SIMPLE_ACTIVITY_START_FG);
-            mTargetContext.startActivity(activityIntent);
+            startActivity(mTargetContext, activityIntent);
             activityStarted = true;
 
             Intent resultIntent = waiter.doWait(WAIT_TIME);
@@ -1326,7 +1334,7 @@ public class ActivityManagerProcessStateTest {
 
         try {
             // Start the heavy-weight app, should launch like a normal app.
-            mTargetContext.startActivity(activityIntent);
+            startActivity(mTargetContext, activityIntent);
             waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();
 
@@ -1364,7 +1372,7 @@ public class ActivityManagerProcessStateTest {
             uidWatcher.expect(WatchUidRunner.CMD_IDLE, null);
 
             // Switch back to heavy-weight app to see if it correctly returns to foreground.
-            mTargetContext.startActivity(activityIntent);
+            startActivity(mTargetContext, activityIntent);
 
             // Wait for process state to reflect running activity.
             uidForegroundListener.waitForValue(
@@ -1462,7 +1470,7 @@ public class ActivityManagerProcessStateTest {
 
         try {
             // Start the first heavy-weight app, should launch like a normal app.
-            mTargetContext.startActivity(activity1Intent);
+            startActivity(mTargetContext, activity1Intent);
             waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();
 

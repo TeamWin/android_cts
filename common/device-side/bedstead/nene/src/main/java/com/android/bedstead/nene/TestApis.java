@@ -42,6 +42,7 @@ import com.android.bedstead.nene.users.Users;
  * Entry point to Nene Test APIs.
  */
 public final class TestApis {
+
     /** Access Test APIs related to Users. */
     public static Users users() {
         return Users.sInstance;

@@ -48,6 +48,7 @@ import static android.content.pm.PackageManager.FEATURE_TELEVISION;
 import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
+import static android.os.UserHandle.USER_ALL;
 import static android.os.UserHandle.USER_SYSTEM;
 import static android.server.wm.ActivityLauncher.KEY_ACTIVITY_TYPE;
 import static android.server.wm.ActivityLauncher.KEY_DISPLAY_ID;
@@ -241,7 +242,7 @@ public abstract class ActivityManagerTestBase {
             "MockIme cannot be used for devices that do not support installable IMEs";
 
     private static final String AM_BROADCAST_CLOSE_SYSTEM_DIALOGS =
-            "am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS";
+            "am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS --user " + USER_ALL;
 
     protected static final String LOCK_CREDENTIAL = "1234";
 

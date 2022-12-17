@@ -19,6 +19,7 @@ package {
 android_test {
     name: "CtsNfcTestCases",
     defaults: ["cts_defaults"],
+    platform_apis: true,
     static_libs: [
         "ctstestrunner-axt",
         "compatibility-device-util-axt",

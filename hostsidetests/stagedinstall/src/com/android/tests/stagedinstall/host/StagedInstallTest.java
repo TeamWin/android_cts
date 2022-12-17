@@ -945,6 +945,16 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testCheckInstallConstraints_DeviceIsIdle() throws Exception {
+        final String propKey = "debug.pm.gentle_update_test.is_idle";
+        try {
+            runPhase("testCheckInstallConstraints_DeviceIsIdle");
+        } finally {
+            getDevice().setProperty(propKey, "0");
+        }
+    }
+
+    @Test
     public void testCheckInstallConstraints_BoundedService() throws Exception {
         runPhase("testCheckInstallConstraints_BoundedService");
     }

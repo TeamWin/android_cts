@@ -1522,6 +1522,35 @@ public class StagedInstallTest {
     }
 
     @Test
+    public void testCheckInstallConstraints_DeviceIsIdle() throws Exception {
+        final String propKey = "debug.pm.gentle_update_test.is_idle";
+
+        Install.single(TestApp.A1).commit();
+
+        // Device is not idle
+        SystemUtil.runShellCommand(" setprop " + propKey + " 0");
+        var pi = InstallUtils.getPackageInstaller();
+        var f1 = new CompletableFuture<InstallConstraintsResult>();
+        var constraints = new InstallConstraints.Builder().requireDeviceIdle().build();
+        pi.checkInstallConstraints(
+                Arrays.asList(TestApp.A),
+                constraints,
+                r -> r.run(),
+                result -> f1.complete(result));
+        assertThat(f1.join().isAllConstraintsSatisfied()).isFalse();
+
+        // Device is idle
+        SystemUtil.runShellCommand(" setprop " + propKey + " 1");
+        var f2 = new CompletableFuture<InstallConstraintsResult>();
+        pi.checkInstallConstraints(
+                Arrays.asList(TestApp.A),
+                constraints,
+                r -> r.run(),
+                result -> f2.complete(result));
+        assertThat(f2.join().isAllConstraintsSatisfied()).isTrue();
+    }
+
+    @Test
     public void testCheckInstallConstraints_BoundedService() throws Exception {
         Install.single(TestApp.A1).commit();
         Install.single(TestApp.B1).commit();

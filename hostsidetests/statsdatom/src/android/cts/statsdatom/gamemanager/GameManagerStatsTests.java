@@ -27,6 +27,10 @@ import android.cts.statsdatom.lib.ReportUtils;
 import com.android.os.AtomsProto;
 import com.android.os.AtomsProto.GameStateChanged.State;
 import com.android.os.StatsLog;
+import com.android.os.agif.GameModeChanged;
+import com.android.os.agif.GameModeConfiguration;
+import com.android.os.agif.GameModeConfigurationChanged;
+import com.android.os.agif.GameModeInfo;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
@@ -94,12 +98,12 @@ public class GameManagerStatsTests extends DeviceTestCase implements IBuildRecei
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         assertThat(data.size()).isAtLeast(2);
-        AtomsProto.GameModeChanged a0 = data.get(0).getAtom().getGameModeChanged();
+        GameModeChanged a0 = data.get(0).getAtom().getGameModeChanged();
         assertThat(a0.getCallerUid()).isEqualTo(mStatsdAtomTestUid);
         assertThat(a0.getGameUid()).isEqualTo(mStatsdAtomTestUid);
         assertThat(a0.getGameModeTo()).isEqualTo(GameMode.GAME_MODE_PERFORMANCE);
 
-        AtomsProto.GameModeChanged a1 = data.get(1).getAtom().getGameModeChanged();
+        GameModeChanged a1 = data.get(1).getAtom().getGameModeChanged();
         assertThat(a1.getCallerUid()).isEqualTo(mStatsdAtomTestUid);
         assertThat(a1.getGameUid()).isEqualTo(mStatsdAtomTestUid);
         assertThat(a1.getGameModeTo()).isEqualTo(GameMode.GAME_MODE_BATTERY);
@@ -114,17 +118,15 @@ public class GameManagerStatsTests extends DeviceTestCase implements IBuildRecei
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         assertThat(data.size()).isAtLeast(2);
-        AtomsProto.GameModeConfigurationChanged a0 = data.get(
+        GameModeConfigurationChanged a0 = data.get(
                 0).getAtom().getGameModeConfigurationChanged();
         assertThat(a0.getGameMode()).isEqualTo(GameMode.GAME_MODE_CUSTOM);
         assertThat(a0.getCallerUid()).isEqualTo(mStatsdAtomTestUid);
         assertThat(a0.getGameUid()).isEqualTo(mStatsdAtomTestUid);
-        assertThat(a0.getScalingFactorFrom()).isEqualTo(-1.0f);
-        assertThat(a0.getFpsOverrideFrom()).isEqualTo(0);
         assertThat(a0.getScalingFactorTo()).isEqualTo(0.5f);
         assertThat(a0.getFpsOverrideTo()).isEqualTo(30);
 
-        AtomsProto.GameModeConfigurationChanged a1 = data.get(
+        GameModeConfigurationChanged a1 = data.get(
                 1).getAtom().getGameModeConfigurationChanged();
         assertThat(a1.getGameMode()).isEqualTo(GameMode.GAME_MODE_CUSTOM);
         assertThat(a1.getCallerUid()).isEqualTo(mStatsdAtomTestUid);
@@ -148,7 +150,7 @@ public class GameManagerStatsTests extends DeviceTestCase implements IBuildRecei
 
         List<AtomsProto.Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
         assertThat(data.size()).isAtLeast(1);
-        AtomsProto.GameModeInfo gameModeInfo = data.get(0).getGameModeInfo();
+        GameModeInfo gameModeInfo = data.get(0).getGameModeInfo();
         assertThat(gameModeInfo.getGameUid()).isEqualTo(mStatsdAtomTestUid);
         Set<GameMode> reportedAvailableModes = Set.copyOf(gameModeInfo.getAvailableGameModesList());
         Set<GameMode> expectedAvailableGameModes = Set.of(GameMode.GAME_MODE_STANDARD,
@@ -177,15 +179,13 @@ public class GameManagerStatsTests extends DeviceTestCase implements IBuildRecei
 
         List<AtomsProto.Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
         assertThat(data.size()).isAtLeast(2);
-        AtomsProto.GameModeConfiguration config1 = data.get(0).getGameModeConfiguration();
-        AtomsProto.GameModeConfiguration config2 = data.get(1).getGameModeConfiguration();
-        AtomsProto.GameModeConfiguration performanceConfig =
+        GameModeConfiguration config1 = data.get(0).getGameModeConfiguration();
+        GameModeConfiguration config2 = data.get(1).getGameModeConfiguration();
+        GameModeConfiguration performanceConfig =
                 config1.getGameMode() == GameMode.GAME_MODE_PERFORMANCE ? config1 : config2;
-        AtomsProto.GameModeConfiguration customConfig =
+        GameModeConfiguration customConfig =
                 performanceConfig == config1 ? config2 : config1;
         assertThat(customConfig.getGameMode()).isEqualTo(GameMode.GAME_MODE_CUSTOM);
-        assertThat(customConfig.getScalingFactor()).isEqualTo(-1f);
-        assertThat(customConfig.getFpsOverride()).isEqualTo(0);
         assertThat(customConfig.getGameUid()).isEqualTo(mStatsdAtomTestUid);
 
         assertThat(performanceConfig.getScalingFactor()).isEqualTo(0.7f);
