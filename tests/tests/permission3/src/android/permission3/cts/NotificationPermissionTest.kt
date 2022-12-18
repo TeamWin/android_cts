@@ -22,6 +22,7 @@ import android.app.ActivityManager
 import android.app.ActivityOptions
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Context.RECEIVER_EXPORTED
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
@@ -85,7 +86,7 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
         }
         countDown = CountDownLatch(1)
         allowedGroups = listOf()
-        context.registerReceiver(receiver, IntentFilter(BROADCAST_ACTION))
+        context.registerReceiver(receiver, IntentFilter(BROADCAST_ACTION), RECEIVER_EXPORTED)
     }
 
     @After

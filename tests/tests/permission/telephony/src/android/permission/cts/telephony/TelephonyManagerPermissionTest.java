@@ -419,4 +419,24 @@ public class TelephonyManagerPermissionTest {
     private static void assertThrowsSecurityException(Runnable r, String message) {
         assertThrows(SecurityException.class, r, message);
     }
+
+    /**
+     * Verify that TelephonyManager.getPrimaryImei requires Permission.
+     * <p>
+     * Requires Permission:
+     * {@link android.Manifest.permission#READ_PRIVILEGED_PHONE_STATE}.
+     */
+    @Test
+    public void testGetPrimaryImei() {
+        if (!mHasTelephony) {
+            return;
+        }
+
+        try {
+            String primaryImei = mTelephonyManager.getPrimaryImei();
+            fail("Received Primary Imei value: " + primaryImei);
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
 }

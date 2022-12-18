@@ -64,6 +64,7 @@ import android.telephony.ims.RcsContactPresenceTuple;
 import android.telephony.ims.RcsContactPresenceTuple.ServiceCapabilities;
 import android.telephony.ims.RcsContactUceCapability;
 import android.telephony.ims.RcsUceAdapter;
+import android.telephony.ims.SipDetails;
 import android.telephony.ims.feature.ImsFeature;
 import android.telephony.ims.stub.CapabilityExchangeEventListener;
 import android.telephony.ims.stub.CapabilityExchangeEventListener.OptionsRequestCallback;
@@ -3140,6 +3141,253 @@ public class RcsUceAdapterTest {
             removeTestContactFromEab();
             removeUceRequestDisallowedStatus();
         }
+
+        overrideCarrierConfig(null);
+    }
+
+    @Test
+    public void testCapabilitiesRequestWithSipDetails() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        RcsUceAdapter uceAdapter = imsManager.getImsRcsManager(sTestSub).getUceAdapter();
+        assertNotNull("UCE adapter should not be null!", uceAdapter);
+
+        // Prepare the test contact and the callback
+        Collection<Uri> numbers = new ArrayList<>(1);
+        numbers.add(sTestNumberUri);
+
+        BlockingQueue<SipDetails> completeQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<SipDetails> errorQueue = new LinkedBlockingQueue<>();
+        RcsUceAdapter.CapabilitiesCallback callback = new RcsUceAdapter.CapabilitiesCallback() {
+            // ignore this calling
+            @Override
+            public void onCapabilitiesReceived(List<RcsContactUceCapability> capabilities) {}
+            // ignore this calling
+            @Override
+            public void onComplete() {}
+            // ignore this calling
+            @Override
+            public void onError(int errorCode, long retryAfterMilliseconds) {}
+            @Override
+            public void onComplete(SipDetails details) {
+                completeQueue.offer(details);
+            }
+            @Override
+            public void onError(int errorCode, long retryAfterMilliseconds, SipDetails details) {
+                errorQueue.offer(details);
+            }
+        };
+        // Connect to the ImsService
+        setupTestImsService(uceAdapter, true, true /* presence cap */, false /* options */);
+
+        TestRcsCapabilityExchangeImpl capabilityExchangeImpl = sServiceConnector
+                .getCarrierService().getRcsFeature().getRcsCapabilityExchangeImpl();
+
+        // Start cap exchange disabled and enable later.
+        PersistableBundle bundle = new PersistableBundle();
+        // Trigger carrier config changed
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL, true);
+        // Override another carrier config KEY_ENABLE_PRESENCE_CAPABILITY_EXCHANGE_BOOL
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_CAPABILITY_EXCHANGE_BOOL,
+                true);
+        overrideCarrierConfig(bundle);
+
+        // Verify the sip information with 200 OK response.
+        capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+            cb.onNetworkResponse(new SipDetails.Builder(SipDetails.METHOD_SUBSCRIBE)
+                    .setCSeq(1).setSipResponseCode(200, "OK").setCallId("TestCallId").build());
+            cb.onTerminated("", 0L);
+        });
+
+        requestCapabilities(uceAdapter, numbers, callback);
+
+        SipDetails receivedInfo = waitForResult(completeQueue);
+        assertNotNull(receivedInfo);
+        assertEquals(SipDetails.METHOD_SUBSCRIBE, receivedInfo.getMethod());
+        assertEquals(1, receivedInfo.getCSeq());
+        assertEquals(200, receivedInfo.getResponseCode());
+        assertEquals("OK", receivedInfo.getResponsePhrase());
+        assertEquals("TestCallId", receivedInfo.getCallId());
+
+        completeQueue.clear();
+        removeTestContactFromEab();
+
+        requestAvailability(uceAdapter, sTestNumberUri, callback);
+
+        receivedInfo = waitForResult(completeQueue);
+        assertNotNull(receivedInfo);
+        assertEquals(SipDetails.METHOD_SUBSCRIBE, receivedInfo.getMethod());
+        assertEquals(1, receivedInfo.getCSeq());
+        assertEquals(200, receivedInfo.getResponseCode());
+        assertEquals("OK", receivedInfo.getResponsePhrase());
+        assertEquals("TestCallId", receivedInfo.getCallId());
+
+        completeQueue.clear();
+        removeTestContactFromEab();
+
+        // Verify the sip information with 404 NOT FOUND response.
+        capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+            cb.onNetworkResponse(new SipDetails.Builder(SipDetails.METHOD_SUBSCRIBE)
+                    .setCSeq(2).setSipResponseCode(404, "NOT FOUND")
+                    .setCallId("TestCallId1").build());
+        });
+
+        requestCapabilities(uceAdapter, numbers, callback);
+
+        receivedInfo = waitForResult(completeQueue);
+        assertNotNull(receivedInfo);
+        assertEquals(SipDetails.METHOD_SUBSCRIBE, receivedInfo.getMethod());
+        assertEquals(2, receivedInfo.getCSeq());
+        assertEquals(404, receivedInfo.getResponseCode());
+        assertEquals("NOT FOUND", receivedInfo.getResponsePhrase());
+        assertEquals("TestCallId1", receivedInfo.getCallId());
+
+        completeQueue.clear();
+        removeTestContactFromEab();
+
+        requestAvailability(uceAdapter, sTestNumberUri, callback);
+
+        receivedInfo = waitForResult(completeQueue);
+        assertNotNull(receivedInfo);
+        assertEquals(SipDetails.METHOD_SUBSCRIBE, receivedInfo.getMethod());
+        assertEquals(2, receivedInfo.getCSeq());
+        assertEquals(404, receivedInfo.getResponseCode());
+        assertEquals("NOT FOUND", receivedInfo.getResponsePhrase());
+        assertEquals("TestCallId1", receivedInfo.getCallId());
+
+        completeQueue.clear();
+        removeTestContactFromEab();
+
+        // Verify the sip information with failure response except 404 NOT FOUND.
+        capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+            cb.onNetworkResponse(new SipDetails.Builder(SipDetails.METHOD_SUBSCRIBE)
+                    .setCSeq(3).setSipResponseCode(500, "Internal Server Error")
+                    .setCallId("TestCallId2").build());
+        });
+
+        requestCapabilities(uceAdapter, numbers, callback);
+
+        receivedInfo = waitForResult(errorQueue);
+        assertNotNull(receivedInfo);
+        assertEquals(SipDetails.METHOD_SUBSCRIBE, receivedInfo.getMethod());
+        assertEquals(3, receivedInfo.getCSeq());
+        assertEquals(500, receivedInfo.getResponseCode());
+        assertEquals("Internal Server Error", receivedInfo.getResponsePhrase());
+        assertEquals("TestCallId2", receivedInfo.getCallId());
+
+        errorQueue.clear();
+        removeUceRequestDisallowedStatus();
+
+        // Verify the sip information when error for a request
+        capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+            cb.onCommandError(COMMAND_CODE_SERVICE_UNKNOWN);
+        });
+
+        requestCapabilities(uceAdapter, numbers, callback);
+
+        receivedInfo = waitForResult(errorQueue);
+        assertNull(receivedInfo);
+
+        errorQueue.clear();
+        overrideCarrierConfig(null);
+    }
+
+    @Test
+    public void testCapabilitiesRequestWithoutSipDetails() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        RcsUceAdapter uceAdapter = imsManager.getImsRcsManager(sTestSub).getUceAdapter();
+        assertNotNull("UCE adapter should not be null!", uceAdapter);
+
+        // Prepare the test contact and the callback
+        Collection<Uri> numbers = new ArrayList<>(1);
+        numbers.add(sTestNumberUri);
+
+        BlockingQueue<SipDetails> completeQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<SipDetails> errorQueue = new LinkedBlockingQueue<>();
+        RcsUceAdapter.CapabilitiesCallback callback = new RcsUceAdapter.CapabilitiesCallback() {
+            @Override
+            public void onCapabilitiesReceived(List<RcsContactUceCapability> capabilities) {}
+            @Override
+            public void onComplete() {}
+            @Override
+            public void onError(int errorCode, long retryAfterMilliseconds) {}
+            @Override
+            public void onComplete(SipDetails details) {
+                completeQueue.offer(details);
+            }
+            @Override
+            public void onError(int errorCode, long retryAfterMilliseconds, SipDetails details) {
+                errorQueue.offer(details);
+            }
+        };
+        // Connect to the ImsService
+        setupTestImsService(uceAdapter, true, true /* presence cap */, false /* options */);
+
+        TestRcsCapabilityExchangeImpl capabilityExchangeImpl = sServiceConnector
+                .getCarrierService().getRcsFeature().getRcsCapabilityExchangeImpl();
+
+        // Start cap exchange disabled and enable later.
+        PersistableBundle bundle = new PersistableBundle();
+        // Trigger carrier config changed
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL, true);
+        // Override another carrier config KEY_ENABLE_PRESENCE_CAPABILITY_EXCHANGE_BOOL
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_CAPABILITY_EXCHANGE_BOOL,
+                true);
+        overrideCarrierConfig(bundle);
+
+        // Verify the sip information with 200 OK response.
+        capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+            cb.onNetworkResponse(200, "OK");
+            cb.onTerminated("", 0L);
+        });
+
+        requestCapabilities(uceAdapter, numbers, callback);
+
+        SipDetails receivedInfo = waitForResult(completeQueue);
+        assertNotNull(receivedInfo);
+        assertEquals(SipDetails.METHOD_SUBSCRIBE, receivedInfo.getMethod());
+        assertEquals(200, receivedInfo.getResponseCode());
+        assertEquals("OK", receivedInfo.getResponsePhrase());
+
+        completeQueue.clear();
+        removeTestContactFromEab();
+
+        capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+            cb.onNetworkResponse(404, "NOT FOUND");
+        });
+        requestAvailability(uceAdapter, sTestNumberUri, callback);
+
+        receivedInfo = waitForResult(completeQueue);
+        assertNotNull(receivedInfo);
+        assertEquals(SipDetails.METHOD_SUBSCRIBE, receivedInfo.getMethod());
+        assertEquals(404, receivedInfo.getResponseCode());
+        assertEquals("NOT FOUND", receivedInfo.getResponsePhrase());
+
+        completeQueue.clear();
+        removeTestContactFromEab();
+
+        // Verify the sip information with failure response except 404 NOT FOUND.
+        capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+            cb.onNetworkResponse(500, "Internal Server Error");
+        });
+
+        requestCapabilities(uceAdapter, numbers, callback);
+
+        receivedInfo = waitForResult(errorQueue);
+        assertNotNull(receivedInfo);
+        assertEquals(SipDetails.METHOD_SUBSCRIBE, receivedInfo.getMethod());
+        assertEquals(500, receivedInfo.getResponseCode());
+        assertEquals("Internal Server Error", receivedInfo.getResponsePhrase());
+
+        errorQueue.clear();
+        removeUceRequestDisallowedStatus();
 
         overrideCarrierConfig(null);
     }

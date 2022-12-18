@@ -16,6 +16,8 @@
 
 package android.content.pm.cts;
 
+import static android.content.Context.RECEIVER_EXPORTED;
+
 import static android.Manifest.permission.GET_INTENT_SENDER_INTENT;
 import static android.Manifest.permission.INSTALL_TEST_ONLY_PACKAGE;
 import static android.content.Intent.FLAG_EXCLUDE_STOPPED_PACKAGES;
@@ -2370,7 +2372,7 @@ public class PackageManagerTest {
                 }
             }
         };
-        mContext.registerReceiver(br, filter);
+        mContext.registerReceiver(br, filter, RECEIVER_EXPORTED);
         try {
             mPackageManager.setComponentEnabledSettings(enabledSettings);
             if (!latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {

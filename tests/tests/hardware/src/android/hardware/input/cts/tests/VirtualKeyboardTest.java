@@ -47,6 +47,8 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
                         .setProductId(PRODUCT_ID)
                         .setInputDeviceName(DEVICE_NAME)
                         .setAssociatedDisplayId(mVirtualDisplay.getDisplay().getDisplayId())
+                        .setLanguageTag(VirtualKeyboardConfig.DEFAULT_LANGUAGE_TAG)
+                        .setLayoutType(VirtualKeyboardConfig.DEFAULT_LAYOUT_TYPE)
                         .build();
         mVirtualKeyboard = mVirtualDevice.createVirtualKeyboard(keyboardConfig);
     }

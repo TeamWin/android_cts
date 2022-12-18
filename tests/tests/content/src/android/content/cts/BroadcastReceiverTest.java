@@ -16,6 +16,7 @@
 
 package android.content.cts;
 
+import static android.content.Context.RECEIVER_EXPORTED;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -186,7 +187,7 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
         MockReceiverInternal internalReceiver = new MockReceiverInternal();
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_BROADCAST_INTERNAL);
-        activity.registerReceiver(internalReceiver, filter);
+        activity.registerReceiver(internalReceiver, filter, RECEIVER_EXPORTED);
 
         assertEquals(0, internalReceiver.getResultCode());
         assertEquals(null, internalReceiver.getResultData());
@@ -383,7 +384,7 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
         MockReceiverInternal internalReceiver = new MockReceiverInternal();
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_BROADCAST_INTERNAL);
-        activity.registerReceiver(internalReceiver, filter);
+        activity.registerReceiver(internalReceiver, filter, RECEIVER_EXPORTED);
 
         activity.sendBroadcast(new Intent(ACTION_BROADCAST_INTERNAL)
                 .addFlags(Intent.FLAG_RECEIVER_FOREGROUND));
@@ -410,7 +411,7 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
         MockReceiverInternal internalReceiver = new MockReceiverInternal();
         IntentFilter filter = new IntentFilter();
         filter.addAction(Camera.ACTION_NEW_PICTURE);
-        activity.registerReceiver(internalReceiver, filter);
+        activity.registerReceiver(internalReceiver, filter, RECEIVER_EXPORTED);
         assertFalse(internalReceiver.waitForReceiverNoException(SEND_BROADCAST_TIMEOUT));
     }
 

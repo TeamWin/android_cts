@@ -25,6 +25,7 @@ import android.hardware.radio.voice.CdmaSignalInfoRecord;
 import android.hardware.radio.voice.UusInfo;
 import android.telephony.Annotation;
 import android.telephony.BarringInfo;
+import android.telephony.ims.feature.ConnectionFailureInfo;
 import android.telephony.ims.feature.MmTelFeature;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
 import android.util.Log;
@@ -620,6 +621,105 @@ public class MockModemManager {
     public void resetVoiceAllLatchCountdown(int slotId) {
         Log.d(TAG, "resetVoiceAllLatchCountdown[" + slotId + "]");
         mMockModemService.getIRadioVoice((byte) slotId).resetAllLatchCountdown();
+    }
+
+    /**
+     * Stops sending default response to startImsTraffic.
+     *
+     * @param slotId which slot would insert.
+     * @param blocked indicates whether sending response is allowed or not.
+     */
+    public void blockStartImsTrafficResponse(int slotId, boolean blocked) {
+        Log.d(TAG, "blockStartImsTrafficResponse[" + slotId + "] blocked(" + blocked + ")");
+
+        mMockModemService.getIRadioIms((byte) slotId).blockStartImsTrafficResponse(blocked);
+    }
+
+    /**
+     * Returns whether the given IMS traffic type is started or not.
+     *
+     * @param slotId which slot would insert.
+     * @param trafficType the IMS traffic type
+     * @return boolean true if the given IMS traffic type is started
+     */
+    public boolean isImsTrafficStarted(int slotId,
+            @MmTelFeature.ImsTrafficType int trafficType) {
+        Log.d(TAG, "isImsTrafficStarted[" + slotId + "] trafficType(" + trafficType + ")");
+
+        return mMockModemService.getIRadioIms((byte) slotId).isImsTrafficStarted(trafficType);
+    }
+
+    /**
+     * Sends the response with the given information.
+     *
+     * @param slotId which slot would insert.
+     * @param trafficType the IMS traffic type
+     * @param reason The reason of failure.
+     * @param causeCode Failure cause code from network or modem specific to the failure.
+     * @param waitTimeMillis Retry wait time provided by network in milliseconds.
+     * @return boolean true if there is no error
+     */
+    public boolean sendStartImsTrafficResponse(int slotId,
+            @MmTelFeature.ImsTrafficType int trafficType,
+            @ConnectionFailureInfo.FailureReason int reason,
+            int causeCode, int waitTimeMillis) {
+        Log.d(TAG, "sendStartImsTrafficResponse[" + slotId
+                + "] trafficType(" + trafficType + ")"
+                + " reason(" + reason + ")"
+                + " cause(" + causeCode + ")"
+                + " wait(" + waitTimeMillis + ")");
+
+        boolean result = false;
+        try {
+            mMockModemService.getIRadioIms((byte) slotId).sendStartImsTrafficResponse(
+                    trafficType, reason, causeCode, waitTimeMillis);
+
+            waitForTelephonyFrameworkDone(1);
+            result = true;
+        } catch (Exception e) {
+            Log.e(TAG, "sendStartImsTrafficResponse e=" + e);
+        }
+        return result;
+    }
+
+    /**
+     * Notifies the connection failure info
+     *
+     * @param slotId which slot would insert.
+     * @param trafficType the IMS traffic type
+     * @param reason The reason of failure.
+     * @param causeCode Failure cause code from network or modem specific to the failure.
+     * @param waitTimeMillis Retry wait time provided by network in milliseconds.
+     * @return boolean true if there is no error
+     */
+    public boolean sendConnectionFailureInfo(int slotId,
+            @MmTelFeature.ImsTrafficType int trafficType,
+            @ConnectionFailureInfo.FailureReason int reason,
+            int causeCode, int waitTimeMillis) {
+        Log.d(TAG, "sendConnectionFailureInfo[" + slotId
+                + "] trafficType(" + trafficType + ")"
+                + " reason(" + reason + ")"
+                + " cause(" + causeCode + ")"
+                + " wait(" + waitTimeMillis + ")");
+
+        boolean result = false;
+        try {
+            mMockModemService.getIRadioIms((byte) slotId).sendConnectionFailureInfo(
+                    trafficType, reason, causeCode, waitTimeMillis);
+
+            waitForTelephonyFrameworkDone(1);
+            result = true;
+        } catch (Exception e) {
+            Log.e(TAG, "sendConnectionFailureInfo e=" + e);
+        }
+        return result;
+    }
+
+    /**
+     * Clears the IMS traffic state.
+     */
+    public void clearImsTrafficState() {
+        mMockModemService.getIRadioIms().clearImsTrafficState();
     }
 
     /**

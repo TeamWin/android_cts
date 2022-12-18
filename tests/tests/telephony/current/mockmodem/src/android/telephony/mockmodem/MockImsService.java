@@ -21,6 +21,7 @@ import static android.hardware.radio.ims.EpsFallbackReason.NO_NETWORK_TRIGGER;
 import static android.telephony.ims.feature.MmTelFeature.EPS_FALLBACK_REASON_INVALID;
 import static android.telephony.ims.feature.MmTelFeature.EPS_FALLBACK_REASON_NO_NETWORK_RESPONSE;
 import static android.telephony.ims.feature.MmTelFeature.EPS_FALLBACK_REASON_NO_NETWORK_TRIGGER;
+import static android.telephony.ims.feature.MmTelFeature.IMS_TRAFFIC_TYPE_UT_XCAP;
 
 import android.telephony.ims.feature.MmTelFeature;
 import android.util.Log;
@@ -36,11 +37,17 @@ public class MockImsService {
 
     public static final int LATCH_WAIT_FOR_SRVCC_CALL_INFO = 0;
     public static final int LATCH_WAIT_FOR_TRIGGER_EPS_FALLBACK = 1;
-    private static final int LATCH_MAX = 2;
+    public static final int LATCH_WAIT_FOR_START_IMS_TRAFFIC = 2;
+    public static final int LATCH_WAIT_FOR_STOP_IMS_TRAFFIC = 3;
+    private static final int LATCH_MAX = 4;
 
     private final CountDownLatch[] mLatches = new CountDownLatch[LATCH_MAX];
     private final List<MockSrvccCall> mSrvccCalls = new ArrayList<>();
     private int mEpsFallbackReason = INVALID;
+
+    private final int[] mStartImsTrafficSerial = new int[IMS_TRAFFIC_TYPE_UT_XCAP + 1];
+    private final boolean[] mImsTrafficState = new boolean[IMS_TRAFFIC_TYPE_UT_XCAP + 1];
+    private final int[] mImsTrafficToken = new int[IMS_TRAFFIC_TYPE_UT_XCAP + 1];
 
     public MockImsService() {
         for (int i = 0; i < LATCH_MAX; i++) {
@@ -96,6 +103,80 @@ public class MockImsService {
      */
     public void resetEpsFallbackReason() {
         mEpsFallbackReason = INVALID;
+    }
+
+    /**
+     * Notifies the type of upcoming IMS traffic.
+     *
+     * @param serial Serial number of request.
+     * @param token A nonce to identify the request.
+     * @param trafficType IMS traffic type like registration, voice, video, SMS, emergency, and etc.
+     */
+    public void startImsTraffic(int serial, int token, int trafficType) {
+        mStartImsTrafficSerial[trafficType] = serial;
+        mImsTrafficState[trafficType] = true;
+        mImsTrafficToken[trafficType] = token;
+        countDownLatch(LATCH_WAIT_FOR_START_IMS_TRAFFIC);
+    }
+
+    /**
+     * Notifies IMS traffic has been stopped.
+     *
+     * @param token The token assigned by startImsTraffic.
+     */
+    public void stopImsTraffic(int token) {
+        for (int i = 0; i < mImsTrafficToken.length; i++) {
+            if (mImsTrafficToken[i] == token) {
+                mImsTrafficState[i] = false;
+                mImsTrafficToken[i] = INVALID;
+                break;
+            }
+        }
+        countDownLatch(LATCH_WAIT_FOR_STOP_IMS_TRAFFIC);
+    }
+
+    /**
+     * Returns whether the given IMS traffic type is started or not.
+     *
+     * @param trafficType The IMS traffic type.
+     * @return boolean true if the given IMS traffic type is started.
+     */
+    public boolean isImsTrafficStarted(@MmTelFeature.ImsTrafficType int trafficType) {
+        if (trafficType < 0 || trafficType >= mImsTrafficState.length) return false;
+        return mImsTrafficState[trafficType];
+    }
+
+    /**
+     * Gets the token of the given IMS traffic type.
+     *
+     * @param trafficType The IMS traffic type.
+     * @return The token associated with given traffic type.
+     */
+    public int getImsTrafficToken(@MmTelFeature.ImsTrafficType int trafficType) {
+        if (trafficType < 0 || trafficType >= mImsTrafficState.length) return 0;
+        return mImsTrafficToken[trafficType];
+    }
+
+    /**
+     * Gets the token of the given IMS traffic type.
+     *
+     * @param trafficType The IMS traffic type.
+     * @return The serial of startImsTraffic request.
+     */
+    public int getImsTrafficSerial(@MmTelFeature.ImsTrafficType int trafficType) {
+        if (trafficType < 0 || trafficType >= mImsTrafficState.length) return 0;
+        return mStartImsTrafficSerial[trafficType];
+    }
+
+    /**
+     * Clears the IMS traffic state.
+     */
+    public void clearImsTrafficState() {
+        for (int i = 0; i < mImsTrafficToken.length; i++) {
+            mStartImsTrafficSerial[i] = 0;
+            mImsTrafficState[i] = false;
+            mImsTrafficToken[i] = INVALID;
+        }
     }
 
     private void countDownLatch(int latchIndex) {

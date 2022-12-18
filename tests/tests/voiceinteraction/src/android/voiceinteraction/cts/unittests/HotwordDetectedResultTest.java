@@ -17,7 +17,7 @@
 package android.voiceinteraction.cts.unittests;
 
 import static android.voiceinteraction.common.AudioStreamHelper.FAKE_AUDIO_FORMAT;
-import static android.voiceinteraction.common.AudioStreamHelper.FAKE_HOTWORD_AUDIO_DATA;
+import static android.voiceinteraction.common.AudioStreamHelper.FAKE_HOTWORD_AUDIO_STREAM_DATA;
 import static android.voiceinteraction.common.AudioStreamHelper.assertAudioStream;
 import static android.voiceinteraction.common.AudioStreamHelper.closeAudioStreamPipe;
 import static android.voiceinteraction.common.AudioStreamHelper.createFakeAudioStreamPipe;
@@ -164,7 +164,7 @@ public class HotwordDetectedResultTest {
     @Test
     public void testHotwordDetectedResultBuilder() throws Exception {
         final ParcelFileDescriptor[] fakeAudioStreamPipe = createFakeAudioStreamPipe(
-                FAKE_HOTWORD_AUDIO_DATA);
+                FAKE_HOTWORD_AUDIO_STREAM_DATA);
         try {
             List<HotwordAudioStream> audioStreams = new ArrayList<>();
             HotwordAudioStream audioStream = new HotwordAudioStream.Builder(FAKE_AUDIO_FORMAT,
@@ -187,7 +187,7 @@ public class HotwordDetectedResultTest {
 
             assertHotwordDetectedResult(hotwordDetectedResult);
             HotwordAudioStream result = hotwordDetectedResult.getAudioStreams().get(0);
-            assertHotwordAudioStream(result, FAKE_AUDIO_FORMAT, FAKE_HOTWORD_AUDIO_DATA);
+            assertHotwordAudioStream(result, FAKE_AUDIO_FORMAT, FAKE_HOTWORD_AUDIO_STREAM_DATA);
 
         } finally {
             closeAudioStreamPipe(fakeAudioStreamPipe);
@@ -197,7 +197,7 @@ public class HotwordDetectedResultTest {
     @Test
     public void testHotwordDetectedResultParcelizeDeparcelize() throws Exception {
         final ParcelFileDescriptor[] fakeAudioStreamPipe = createFakeAudioStreamPipe(
-                FAKE_HOTWORD_AUDIO_DATA);
+                FAKE_HOTWORD_AUDIO_STREAM_DATA);
         try {
             List<HotwordAudioStream> audioStreams = new ArrayList<>();
             HotwordAudioStream audioStream = new HotwordAudioStream.Builder(FAKE_AUDIO_FORMAT,
@@ -229,7 +229,7 @@ public class HotwordDetectedResultTest {
             assertThat(targetHotwordDetectedResult.getAudioStreams().size()).isEqualTo(
                     audioStreams.size());
             HotwordAudioStream result = targetHotwordDetectedResult.getAudioStreams().get(0);
-            assertHotwordAudioStream(result, FAKE_AUDIO_FORMAT, FAKE_HOTWORD_AUDIO_DATA);
+            assertHotwordAudioStream(result, FAKE_AUDIO_FORMAT, FAKE_HOTWORD_AUDIO_STREAM_DATA);
         } finally {
             closeAudioStreamPipe(fakeAudioStreamPipe);
         }

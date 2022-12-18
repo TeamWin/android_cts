@@ -18,6 +18,8 @@ package android.hardware.input.cts.tests;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
+
 import android.hardware.input.VirtualDpadConfig;
 import android.hardware.input.VirtualKeyboardConfig;
 import android.hardware.input.VirtualMouseConfig;
@@ -50,13 +52,20 @@ public class VirtualInputDeviceConfigTest {
                 .build();
     }
 
-    private VirtualKeyboardConfig createVirtualKeyboardConfig() {
+    private VirtualKeyboardConfig createVirtualKeyboardConfigWithLanguageTag(String languageTag) {
         return new VirtualKeyboardConfig.Builder()
                 .setInputDeviceName(DEVICE_NAME)
                 .setVendorId(VENDOR_ID)
                 .setProductId(PRODUCT_ID)
                 .setAssociatedDisplayId(DISPLAY_ID)
+                .setLanguageTag(languageTag)
+                .setLayoutType(VirtualKeyboardConfig.DEFAULT_LAYOUT_TYPE)
                 .build();
+    }
+
+    private VirtualKeyboardConfig createVirtualKeyboardConfig() {
+        return createVirtualKeyboardConfigWithLanguageTag(
+                VirtualKeyboardConfig.DEFAULT_LANGUAGE_TAG);
     }
 
     private VirtualMouseConfig createVirtualMouseConfig() {
@@ -110,6 +119,8 @@ public class VirtualInputDeviceConfigTest {
         assertThat(config.getVendorId()).isEqualTo(VENDOR_ID);
         assertThat(config.getProductId()).isEqualTo(PRODUCT_ID);
         assertThat(config.getAssociatedDisplayId()).isEqualTo(DISPLAY_ID);
+        assertThat(config.getLanguageTag()).isEqualTo(VirtualKeyboardConfig.DEFAULT_LANGUAGE_TAG);
+        assertThat(config.getLayoutType()).isEqualTo(VirtualKeyboardConfig.DEFAULT_LAYOUT_TYPE);
     }
 
     @Test
@@ -126,8 +137,37 @@ public class VirtualInputDeviceConfigTest {
         assertThat(configFromParcel.getProductId()).isEqualTo(config.getProductId());
         assertThat(configFromParcel.getAssociatedDisplayId()).isEqualTo(
                 config.getAssociatedDisplayId());
+        assertThat(configFromParcel.getLanguageTag()).isEqualTo(
+                config.getLanguageTag());
+        assertThat(configFromParcel.getLayoutType()).isEqualTo(
+                config.getLayoutType());
     }
 
+    @Test
+    public void testBuilder_virtualKeyboardConfig_defaultValuedUsed() {
+        //(TODO:b/262924887) Add end-to-end tests for selecting virtual keyboard layout.
+        VirtualKeyboardConfig config = new VirtualKeyboardConfig.Builder()
+                .setInputDeviceName(DEVICE_NAME)
+                .setVendorId(VENDOR_ID)
+                .setProductId(PRODUCT_ID)
+                .setAssociatedDisplayId(DISPLAY_ID)
+                .build();
+        assertThat(config.getLanguageTag()).isEqualTo(VirtualKeyboardConfig.DEFAULT_LANGUAGE_TAG);
+        assertThat(config.getLayoutType()).isEqualTo(VirtualKeyboardConfig.DEFAULT_LAYOUT_TYPE);
+    }
+
+    @Test
+    public void testBuilder_malformedLanguageTag_throwsException() {
+        VirtualKeyboardConfig.Builder builder = new VirtualKeyboardConfig.Builder();
+
+        String malformedTag1 = "foo";
+        assertThrows(IllegalArgumentException.class,
+                () -> builder.setLanguageTag(malformedTag1));
+
+        String malformedTag2 = "foo-bar";
+        assertThrows(IllegalArgumentException.class,
+                () -> builder.setLanguageTag(malformedTag2));
+    }
 
     @Test
     public void testConstructorAndGetters_virtualMouseConfig() {
@@ -162,7 +202,6 @@ public class VirtualInputDeviceConfigTest {
         assertThat(config.getAssociatedDisplayId()).isEqualTo(DISPLAY_ID);
         assertThat(config.getWidthInPixels()).isEqualTo(WIDTH);
         assertThat(config.getHeightInPixels()).isEqualTo(HEIGHT);
-
     }
 
     @Test

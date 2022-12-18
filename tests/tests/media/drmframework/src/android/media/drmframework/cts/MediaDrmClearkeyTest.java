@@ -1643,6 +1643,8 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
             assertTrue("Expected ERROR_SESSION_NOT_OPENED value in info",
                     e.getDiagnosticInfo().contains(
                             String.valueOf(MediaDrm.ErrorCodes.ERROR_SESSION_NOT_OPENED)));
+            assertEquals("No vendor error expected from Clearkey", 0, e.getVendorError());
+            assertEquals("No OEM error expected from Clearkey", 0, e.getOemError());
         }  finally {
             if (drm != null) {
                 drm.close();

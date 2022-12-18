@@ -16,9 +16,11 @@
 
 package android.telephony.mockmodem;
 
+import android.annotation.NonNull;
 import android.hardware.radio.RadioError;
 import android.hardware.radio.RadioIndicationType;
 import android.hardware.radio.RadioResponseInfo;
+import android.hardware.radio.ims.ConnectionFailureInfo;
 import android.hardware.radio.ims.IRadioIms;
 import android.hardware.radio.ims.IRadioImsIndication;
 import android.hardware.radio.ims.IRadioImsResponse;
@@ -41,6 +43,8 @@ public class IRadioImsImpl extends IRadioIms.Stub {
     private final String mTag;
 
     private final MockImsService mImsState = new MockImsService();
+
+    private boolean mBlockStartImsTrafficResponse = false;
 
     public IRadioImsImpl(
             MockModemService service, MockModemConfigInterface configInterface, int instanceId) {
@@ -94,8 +98,12 @@ public class IRadioImsImpl extends IRadioIms.Stub {
             int token, int imsTrafficType, int accessNetworkType, int trafficDirection) {
         Log.d(mTag, "startImsTraffic");
 
-        android.hardware.radio.ims.ConnectionFailureInfo failureInfo = null;
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        mImsState.startImsTraffic(serial, token, imsTrafficType);
+
+        if (mBlockStartImsTrafficResponse) return;
+
+        ConnectionFailureInfo failureInfo = null;
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioImsResponse.startImsTrafficResponse(rsp, failureInfo);
         } catch (RemoteException ex) {
@@ -107,7 +115,9 @@ public class IRadioImsImpl extends IRadioIms.Stub {
     public void stopImsTraffic(int serial, int token) {
         Log.d(mTag, "stopImsTraffic");
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        mImsState.stopImsTraffic(token);
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioImsResponse.stopImsTrafficResponse(rsp);
         } catch (RemoteException ex) {
@@ -141,8 +151,7 @@ public class IRadioImsImpl extends IRadioIms.Stub {
         }
     }
 
-    public void onConnectionSetupFailure(int token,
-            android.hardware.radio.ims.ConnectionFailureInfo failureInfo) {
+    public void onConnectionSetupFailure(int token, @NonNull ConnectionFailureInfo failureInfo) {
         Log.d(mTag, "onConnectionSetupFailure");
 
         if (mRadioImsIndication != null) {
@@ -206,6 +215,84 @@ public class IRadioImsImpl extends IRadioIms.Stub {
     /** @return The list of {@link MockSrvccCall} instances. */
     public List<MockSrvccCall> getSrvccCalls() {
         return mImsState.getSrvccCalls();
+    }
+
+    /**
+     * Stop sending default response to startImsTraffic.
+     *
+     * @param blocked indicates whether sending response is allowed or not.
+     */
+    public void blockStartImsTrafficResponse(boolean blocked) {
+        mBlockStartImsTrafficResponse = blocked;
+    }
+
+    /**
+     * Returns whether the given IMS traffic type is started or not.
+     *
+     * @param trafficType the IMS traffic type
+     * @return boolean true if the given IMS traffic type is started
+     */
+    public boolean isImsTrafficStarted(
+            @android.telephony.ims.feature.MmTelFeature.ImsTrafficType int trafficType) {
+        return mImsState.isImsTrafficStarted(trafficType);
+    }
+
+    /**
+     * Clears the IMS traffic state.
+     */
+    public void clearImsTrafficState() {
+        mBlockStartImsTrafficResponse = false;
+        mImsState.clearImsTrafficState();
+    }
+
+    /**
+     * Sends the response with the given information.
+     *
+     * @param trafficType the IMS traffic type
+     * @param reason The reason of failure.
+     * @param causeCode Failure cause code from network or modem specific to the failure.
+     * @param waitTimeMillis Retry wait time provided by network in milliseconds.
+     */
+    public void sendStartImsTrafficResponse(
+            @android.telephony.ims.feature.MmTelFeature.ImsTrafficType int trafficType,
+            @android.telephony.ims.feature.ConnectionFailureInfo.FailureReason int reason,
+            int causeCode, int waitTimeMillis) {
+
+        ConnectionFailureInfo failureInfo = null;
+        if (reason != 0) {
+            failureInfo = new ConnectionFailureInfo();
+            failureInfo.failureReason = reason;
+            failureInfo.causeCode = causeCode;
+            failureInfo.waitTimeMillis = waitTimeMillis;
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(mImsState.getImsTrafficSerial(trafficType));
+        try {
+            mRadioImsResponse.startImsTrafficResponse(rsp, failureInfo);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to startImsTrafficResponse from AIDL. Exception" + ex);
+        }
+    }
+
+    /**
+     * Notifies the connection failure info
+     *
+     * @param trafficType the IMS traffic type
+     * @param reason The reason of failure.
+     * @param causeCode Failure cause code from network or modem specific to the failure.
+     * @param waitTimeMillis Retry wait time provided by network in milliseconds.
+     */
+    public void sendConnectionFailureInfo(
+            @android.telephony.ims.feature.MmTelFeature.ImsTrafficType int trafficType,
+            @android.telephony.ims.feature.ConnectionFailureInfo.FailureReason int reason,
+            int causeCode, int waitTimeMillis) {
+
+        ConnectionFailureInfo failureInfo = new ConnectionFailureInfo();
+        failureInfo.failureReason = reason;
+        failureInfo.causeCode = causeCode;
+        failureInfo.waitTimeMillis = waitTimeMillis;
+
+        onConnectionSetupFailure(mImsState.getImsTrafficToken(trafficType), failureInfo);
     }
 
     @Override

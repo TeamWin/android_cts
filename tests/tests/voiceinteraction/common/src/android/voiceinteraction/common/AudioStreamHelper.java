@@ -27,8 +27,10 @@ import java.io.OutputStream;
 
 public class AudioStreamHelper {
 
-    public static final byte[] FAKE_HOTWORD_AUDIO_DATA =
+    public static final byte[] FAKE_INITIAL_AUDIO_DATA =
             new byte[]{'h', 'o', 't', 'w', 'o', 'r', 'd', '!'};
+    public static final byte[] FAKE_HOTWORD_AUDIO_STREAM_DATA =
+            new byte[]{'s', 't', 'r', 'e', 'a', 'm', '!'};
     public static final AudioFormat FAKE_AUDIO_FORMAT =
             new AudioFormat.Builder()
                     .setSampleRate(32000)

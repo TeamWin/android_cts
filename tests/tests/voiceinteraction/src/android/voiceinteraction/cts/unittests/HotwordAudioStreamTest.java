@@ -17,7 +17,8 @@
 package android.voiceinteraction.cts.unittests;
 
 import static android.voiceinteraction.common.AudioStreamHelper.FAKE_AUDIO_FORMAT;
-import static android.voiceinteraction.common.AudioStreamHelper.FAKE_HOTWORD_AUDIO_DATA;
+import static android.voiceinteraction.common.AudioStreamHelper.FAKE_HOTWORD_AUDIO_STREAM_DATA;
+import static android.voiceinteraction.common.AudioStreamHelper.FAKE_INITIAL_AUDIO_DATA;
 import static android.voiceinteraction.common.AudioStreamHelper.assertAudioStream;
 import static android.voiceinteraction.common.AudioStreamHelper.closeAudioStreamPipe;
 import static android.voiceinteraction.common.AudioStreamHelper.createFakeAudioStreamPipe;
@@ -43,7 +44,7 @@ public class HotwordAudioStreamTest {
     public void testHotwordAudioStreamDefaultAndUpdateValue() throws Exception {
         final byte[] testAudioData = new byte[]{'w', 'o', 'r', 'd'};
         final ParcelFileDescriptor[] fakeAudioStreamPipe = createFakeAudioStreamPipe(
-                FAKE_HOTWORD_AUDIO_DATA);
+                FAKE_HOTWORD_AUDIO_STREAM_DATA);
         final ParcelFileDescriptor[] testAudioStreamPipe = createFakeAudioStreamPipe(testAudioData);
         try {
             final AudioFormat newAudioFormat = new AudioFormat.Builder()
@@ -60,6 +61,8 @@ public class HotwordAudioStreamTest {
             // Verify default value
             assertThat(audioStream.getTimestamp()).isNull();
             assertThat(audioStream.getMetadata().size()).isEqualTo(0);
+            assertThat(audioStream.getInitialAudio()).isNotNull();
+            assertThat(audioStream.getInitialAudio()).isEmpty();
             // Verify the set value
             assertThat(audioStream.getAudioFormat()).isNotNull();
             assertThat(audioStream.getAudioStreamParcelFileDescriptor()).isNotNull();
@@ -74,7 +77,7 @@ public class HotwordAudioStreamTest {
     @Test
     public void testHotwordAudioStreamParcelizeDeparcelize() throws Exception {
         final ParcelFileDescriptor[] fakeAudioStreamPipe = createFakeAudioStreamPipe(
-                FAKE_HOTWORD_AUDIO_DATA);
+                FAKE_HOTWORD_AUDIO_STREAM_DATA);
         final AudioTimestamp timestamp = new AudioTimestamp();
 
         timestamp.framePosition = 0;
@@ -88,6 +91,7 @@ public class HotwordAudioStreamTest {
                     fakeAudioStreamPipe[0])
                     .setTimestamp(timestamp)
                     .setMetadata(metadata)
+                    .setInitialAudio(FAKE_INITIAL_AUDIO_DATA)
                     .build();
 
             final Parcel p = Parcel.obtain();
@@ -100,8 +104,11 @@ public class HotwordAudioStreamTest {
             assertThat(targetHotwordAudioStream.getAudioFormat()).isNotNull();
             assertThat(targetHotwordAudioStream.getAudioStreamParcelFileDescriptor()).isNotNull();
             assertThat(targetHotwordAudioStream.getAudioFormat()).isEqualTo(FAKE_AUDIO_FORMAT);
+            assertThat(targetHotwordAudioStream.getInitialAudio()).isNotNull();
+            assertThat(targetHotwordAudioStream.getInitialAudio()).isEqualTo(
+                    FAKE_INITIAL_AUDIO_DATA);
             assertAudioStream(targetHotwordAudioStream.getAudioStreamParcelFileDescriptor(),
-                    FAKE_HOTWORD_AUDIO_DATA);
+                    FAKE_HOTWORD_AUDIO_STREAM_DATA);
             assertThat(targetHotwordAudioStream.getTimestamp().framePosition).isEqualTo(
                     timestamp.framePosition);
             assertThat(targetHotwordAudioStream.getTimestamp().nanoTime).isEqualTo(

@@ -290,6 +290,7 @@ public class TelephonyManagerTest {
     private static final int RADIO_HAL_VERSION_1_5 = makeRadioVersion(1, 5);
     private static final int RADIO_HAL_VERSION_1_6 = makeRadioVersion(1, 6);
     private static final int RADIO_HAL_VERSION_2_0 = makeRadioVersion(2, 0);
+    private static final int RADIO_HAL_VERSION_2_1 = makeRadioVersion(2, 1);
 
     static {
         EMERGENCY_NUMBER_SOURCE_SET = new HashSet<Integer>();
@@ -748,6 +749,10 @@ public class TelephonyManagerTest {
                 (tm) -> tm.getDeviceSoftwareVersion(mTelephonyManager.getSlotIndex()));
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.getImei());
+        if (mModemHalVersion >= RADIO_HAL_VERSION_2_1) {
+            ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    (tm) -> tm.getPrimaryImei());
+        }
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.getImei(mTelephonyManager.getSlotIndex()));
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
@@ -809,6 +814,9 @@ public class TelephonyManagerTest {
             setAppOpsPermissionAllowed(true, OPSTR_USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER);
 
             mTelephonyManager.getImei();
+            if (mModemHalVersion >= RADIO_HAL_VERSION_2_1) {
+                mTelephonyManager.getPrimaryImei();
+            }
             mTelephonyManager.getSubscriberId();
             mTelephonyManager.getIccAuthentication(
                     TelephonyManager.APPTYPE_USIM, TelephonyManager.AUTHTYPE_EAP_AKA, "");
@@ -1801,6 +1809,23 @@ public class TelephonyManagerTest {
         if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             if (mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
                 assertImei(imei);
+            }
+        }
+    }
+
+    /**
+     * Tests that the device properly reports either a valid Primary Imei.
+     */
+    @Test
+    public void testGetPrimaryImei() {
+        // make sure the modem supports primaryImei feature
+        assumeTrue(mModemHalVersion >= RADIO_HAL_VERSION_2_1);
+        String primaryImei = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getPrimaryImei());
+
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            if (mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
+                assertImei(primaryImei);
             }
         }
     }

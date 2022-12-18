@@ -57,8 +57,7 @@ public class VirtualInputTest {
 
     private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =
             new VirtualDeviceParams.Builder().build();
-
-    private static final String DEVICE_NAME = "device name";
+    private static final String DEVICE_NAME = "testVirtualKeyboard";
     private static final int DISPLAY_ID = 2;
     private static final int PRODUCT_ID = 10;
     private static final int VENDOR_ID = 5;
@@ -68,6 +67,8 @@ public class VirtualInputTest {
                     .setProductId(PRODUCT_ID)
                     .setInputDeviceName(DEVICE_NAME)
                     .setAssociatedDisplayId(DISPLAY_ID)
+                    .setLanguageTag(VirtualKeyboardConfig.DEFAULT_LANGUAGE_TAG)
+                    .setLayoutType(VirtualKeyboardConfig.DEFAULT_LAYOUT_TYPE)
                     .build();
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
