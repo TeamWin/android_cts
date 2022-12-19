@@ -955,6 +955,16 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testCheckInstallConstraints_DeviceIsInCall() throws Exception {
+        final String propKey = "debug.pm.gentle_update_test.is_in_call";
+        try {
+            runPhase("testCheckInstallConstraints_DeviceIsInCall");
+        } finally {
+            getDevice().setProperty(propKey, "0");
+        }
+    }
+
+    @Test
     public void testCheckInstallConstraints_BoundedService() throws Exception {
         runPhase("testCheckInstallConstraints_BoundedService");
     }

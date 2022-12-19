@@ -1551,6 +1551,35 @@ public class StagedInstallTest {
     }
 
     @Test
+    public void testCheckInstallConstraints_DeviceIsInCall() throws Exception {
+        final String propKey = "debug.pm.gentle_update_test.is_in_call";
+
+        Install.single(TestApp.A1).commit();
+
+        // Device is in call
+        SystemUtil.runShellCommand(" setprop " + propKey + " 1");
+        var pi = InstallUtils.getPackageInstaller();
+        var f1 = new CompletableFuture<InstallConstraintsResult>();
+        var constraints = new InstallConstraints.Builder().requireNotInCall().build();
+        pi.checkInstallConstraints(
+                Arrays.asList(TestApp.A),
+                constraints,
+                r -> r.run(),
+                result -> f1.complete(result));
+        assertThat(f1.join().isAllConstraintsSatisfied()).isFalse();
+
+        // Device is not in call
+        SystemUtil.runShellCommand(" setprop " + propKey + " 0");
+        var f2 = new CompletableFuture<InstallConstraintsResult>();
+        pi.checkInstallConstraints(
+                Arrays.asList(TestApp.A),
+                constraints,
+                r -> r.run(),
+                result -> f2.complete(result));
+        assertThat(f2.join().isAllConstraintsSatisfied()).isTrue();
+    }
+
+    @Test
     public void testCheckInstallConstraints_BoundedService() throws Exception {
         Install.single(TestApp.A1).commit();
         Install.single(TestApp.B1).commit();

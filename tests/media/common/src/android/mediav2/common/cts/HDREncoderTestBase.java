@@ -16,50 +16,34 @@
 
 package android.mediav2.common.cts;
 
-import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
-
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
-import android.media.MediaMuxer;
 
-import org.junit.After;
 import org.junit.Assume;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Wrapper class for testing HDR support in video encoder components
  */
-public class HDREncoderTestBase extends CodecEncoderTestBase {
+public class HDREncoderTestBase extends EncoderTestBase {
     private static final String LOG_TAG = HDREncoderTestBase.class.getSimpleName();
 
     private ByteBuffer mHdrStaticInfo;
     private Map<Integer, String> mHdrDynamicInfo;
 
-    private MediaMuxer mMuxer;
-    private int mTrackID = -1;
-
-    public HDREncoderTestBase(String encoderName, String mediaType, int bitrate, int width,
-            int height, RawResource rawRes, String allTestParams) {
-        super(encoderName, mediaType, new int[]{bitrate}, new int[]{width}, new int[]{height},
-                rawRes, allTestParams);
-    }
-
-    @After
-    public void tearDownHdrEncoderTestBase() {
-        if (mMuxer != null) {
-            mMuxer.release();
-            mMuxer = null;
-        }
+    public HDREncoderTestBase(String encoderName, String mediaType,
+            EncoderConfigParams encCfgParams, String allTestParams) {
+        super(encoderName, mediaType, new EncoderConfigParams[]{encCfgParams}, allTestParams);
     }
 
     protected void enqueueInput(int bufferIndex) {
@@ -69,48 +53,22 @@ public class HDREncoderTestBase extends CodecEncoderTestBase {
         super.enqueueInput(bufferIndex);
     }
 
-    protected void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
-        MediaFormat bufferFormat = mCodec.getOutputFormat(bufferIndex);
-        if (info.size > 0) {
-            ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
-            if (mMuxer != null) {
-                if (mTrackID == -1) {
-                    mTrackID = mMuxer.addTrack(bufferFormat);
-                    mMuxer.start();
-                }
-                mMuxer.writeSampleData(mTrackID, buf, info);
-            }
-        }
-        super.dequeueOutput(bufferIndex, info);
-    }
-
     public void validateHDRInfo(String hdrStaticInfo, Map<Integer, String> hdrDynamicInfo)
             throws IOException, InterruptedException {
         mHdrStaticInfo = hdrStaticInfo != null
                 ? ByteBuffer.wrap(loadByteArrayFromString(hdrStaticInfo)) : null;
         mHdrDynamicInfo = hdrDynamicInfo;
 
-        setUpParams(1);
-
-        MediaFormat format = mFormats.get(0);
-        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUVP010);
-        format.setInteger(MediaFormat.KEY_COLOR_RANGE, MediaFormat.COLOR_RANGE_LIMITED);
-        format.setInteger(MediaFormat.KEY_COLOR_STANDARD, MediaFormat.COLOR_STANDARD_BT2020);
-        format.setInteger(MediaFormat.KEY_COLOR_TRANSFER, MediaFormat.COLOR_TRANSFER_ST2084);
-        int profile = (mHdrDynamicInfo != null)
-                ? Objects.requireNonNull(PROFILE_HDR10_PLUS_MAP.get(mMime),
-                        "mediaType : " + mMime + " has no profile supporting HDR10+")[0] :
-                Objects.requireNonNull(PROFILE_HDR10_MAP.get(mMime),
-                        "mediaType : " + mMime + " has no profile supporting HDR10")[0];
-        format.setInteger(MediaFormat.KEY_PROFILE, profile);
-
+        MediaFormat format = mActiveEncCfg.getFormat();
         if (mHdrStaticInfo != null) {
             format.setByteBuffer(MediaFormat.KEY_HDR_STATIC_INFO, mHdrStaticInfo);
         }
-        Assume.assumeTrue(mCodecName + " does not support HDR10/HDR10+ profile " + profile,
-                areFormatsSupported(mCodecName, mMime, mFormats));
+        ArrayList<MediaFormat> formats = new ArrayList<>();
+        formats.add(format);
+        Assume.assumeTrue(mCodecName + " does not support HDR10/HDR10+ profile "
+                + mActiveEncCfg.mProfile, areFormatsSupported(mCodecName, mMime, formats));
         Assume.assumeTrue(mCodecName + " does not support color format COLOR_FormatYUVP010",
-                hasSupportForColorFormat(mCodecName, mMime, COLOR_FormatYUVP010));
+                hasSupportForColorFormat(mCodecName, mMime, mActiveEncCfg.mColorFormat));
 
         setUpSource(mActiveRawRes.mFileName);
 
@@ -128,30 +86,13 @@ public class HDREncoderTestBase extends CodecEncoderTestBase {
                 + mTestEnv, frameLimit <= maxNumFrames);
 
         mOutputBuff = new OutputManager();
+        mMuxOutput = true;
         mCodec = MediaCodec.createByCodecName(mCodecName);
-        File tmpFile;
-        int muxerFormat;
-        if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP9)) {
-            muxerFormat = MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM;
-            tmpFile = File.createTempFile("tmp10bit", ".webm");
-        } else {
-            muxerFormat = MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4;
-            tmpFile = File.createTempFile("tmp10bit", ".mp4");
-        }
-        mMuxer = new MediaMuxer(tmpFile.getAbsolutePath(), muxerFormat);
         configureCodec(format, true, true, true);
         mCodec.start();
         doWork(frameLimit);
         queueEOS();
         waitForAllOutputs();
-        if (mTrackID != -1) {
-            mMuxer.stop();
-            mTrackID = -1;
-        }
-        if (mMuxer != null) {
-            mMuxer.release();
-            mMuxer = null;
-        }
 
         MediaFormat fmt = mCodec.getOutputFormat();
 
@@ -169,11 +110,11 @@ public class HDREncoderTestBase extends CodecEncoderTestBase {
                 + mTestConfig + mTestEnv, decoder);
 
         HDRDecoderTestBase decoderTest =
-                new HDRDecoderTestBase(decoder, mMime, tmpFile.getAbsolutePath(), mAllTestParams);
+                new HDRDecoderTestBase(decoder, mMime, mMuxedOutputFile, mAllTestParams);
         decoderTest.validateHDRInfo(hdrStaticInfo, hdrStaticInfo, mHdrDynamicInfo, mHdrDynamicInfo);
         if (HDR_INFO_IN_BITSTREAM_CODECS.contains(mMime)) {
             decoderTest.validateHDRInfo(hdrStaticInfo, null, mHdrDynamicInfo, null);
         }
-        tmpFile.delete();
+        new File(mMuxedOutputFile).delete();
     }
 }

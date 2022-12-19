@@ -5517,6 +5517,22 @@ public class TelephonyManagerTest {
                 portInfo.getPortIndex();
             }
         }
+
+        for (UiccSlotInfo slotInfo : slotInfos) {
+            // Make sure portIndex value is less than the number of ports available.
+            int count = slotInfo.getPorts().stream().filter(portInfo
+                    -> portInfo.getPortIndex() >= slotInfo.getPorts().size()).toList().size();
+            if (count > 0) {
+                fail("port index should be less than the total number of ports available");
+            }
+            // Make sure both port indexes are unique.
+            for (int index = 0; index < slotInfo.getPorts().size(); index++) {
+                final int portIndex = index;
+                assertEquals(1, slotInfo.getPorts().stream().filter(
+                        portInfo -> portInfo.getPortIndex() == portIndex).toList().size());
+            }
+        }
+
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
     }
