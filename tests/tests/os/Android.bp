@@ -32,6 +32,7 @@ android_test {
         "truth-prebuilt",
         "guava",
         "junit",
+        "junit-params",
         "Harrier",
         "CtsMockInputMethodLib",
         "hamcrest-library",
