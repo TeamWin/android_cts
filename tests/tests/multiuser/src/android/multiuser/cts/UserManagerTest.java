@@ -80,6 +80,7 @@ import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -822,6 +823,17 @@ public final class UserManagerTest {
         assertThat(mUserManager.getPreviousForegroundUser()).isEqualTo(initialUser.userHandle());
         initialUser.switchTo();
         assertThat(mUserManager.getPreviousForegroundUser()).isEqualTo(additionalUser.userHandle());
+    }
+
+    @Test
+    @CddTest
+    public void headlessCannotSupportTelephony() {
+        boolean isHeadless = UserManager.isHeadlessSystemUserMode();
+        boolean hasTelephony =
+                sContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
+
+        assertWithMessage("Cannot run in headless system user mode if telephony is present")
+                .that(isHeadless && hasTelephony).isFalse();
     }
 
     private Function<Intent, Boolean> userIsEqual(UserHandle userHandle) {

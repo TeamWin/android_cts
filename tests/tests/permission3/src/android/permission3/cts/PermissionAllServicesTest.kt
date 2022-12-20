@@ -29,6 +29,7 @@ import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.AppOpsUtils.setOpMode
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.eventually
+import com.android.modules.utils.build.SdkLevel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNull
@@ -59,7 +60,7 @@ class PermissionAllServicesTest : BasePermissionTest() {
         eventually({
             try {
                 launchAppInfoActivity(LOCATION_PROVIDER_APP_PACKAGE_NAME_2)
-                waitFindObject(By.textContains(ALL_SERVICES_LABEL))
+                waitFindObject(By.textContains(getAllServicesLabel()))
             } catch (e: Exception) {
                 pressBack()
                 throw e
@@ -97,7 +98,7 @@ class PermissionAllServicesTest : BasePermissionTest() {
         eventually({
             try {
                 launchAppInfoActivity(LOCATION_PROVIDER_APP_PACKAGE_NAME_1)
-                assertNull(waitFindObjectOrNull(By.textContains(ALL_SERVICES_LABEL)))
+                assertNull(waitFindObjectOrNull(By.textContains(getAllServicesLabel())))
             } catch (e: Exception) {
                 pressBack()
                 throw e
@@ -114,13 +115,20 @@ class PermissionAllServicesTest : BasePermissionTest() {
         eventually({
             try {
                 launchAppInfoActivity(NON_LOCATION_APP_PACKAGE_NAME)
-                assertNull(waitFindObjectOrNull(By.textContains(ALL_SERVICES_LABEL)))
+                assertNull(waitFindObjectOrNull(By.textContains(getAllServicesLabel())))
             } catch (e: Exception) {
                 pressBack()
                 throw e
             } }, 1000L)
 
         uninstallPackage(NON_LOCATION_APP_APK_PATH, requireSuccess = false)
+    }
+
+    private fun getAllServicesLabel(): String {
+        if (SdkLevel.isAtLeastU()) {
+            return U_PLUS_ALL_SERVICES_LABEL
+        }
+        return T_ALL_SERVICES_LABEL
     }
 
     private fun allowPackagesToMockLocation(packageName: String) {
@@ -170,7 +178,8 @@ class PermissionAllServicesTest : BasePermissionTest() {
         const val LOCATION_PROVIDER_APP_PACKAGE_NAME_2 =
             "android.permission3.cts.applocationproviderwithsummary"
         const val APP_LABEL = "LocationProviderWithSummaryApp"
-        const val ALL_SERVICES_LABEL = "All services"
+        const val U_PLUS_ALL_SERVICES_LABEL = "All services"
+        const val T_ALL_SERVICES_LABEL = "All Services"
         const val SUMMARY = "Services summary."
     }
 }

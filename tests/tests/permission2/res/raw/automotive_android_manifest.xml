@@ -506,4 +506,20 @@
         android:protectionLevel="signature|privileged"
         android:label="@string/car_permission_label_control_remote_access"
         android:description="@string/car_permission_desc_control_remote_access"/>
+    <permission android:name="android.car.permission.READ_ADAS_SETTINGS"
+         android:protectionLevel="signature|privileged"
+         android:label="@string/car_permission_label_read_adas_settings"
+         android:description="@string/car_permission_desc_read_adas_settings"/>
+    <permission android:name="android.car.permission.CONTROL_ADAS_SETTINGS"
+         android:protectionLevel="signature|privileged"
+         android:label="@string/car_permission_label_control_adas_settings"
+         android:description="@string/car_permission_desc_control_adas_settings"/>
+    <permission android:name="android.car.permission.READ_ADAS_STATES"
+         android:protectionLevel="signature|privileged"
+         android:label="@string/car_permission_label_read_adas_states"
+         android:description="@string/car_permission_desc_read_adas_states"/>
+    <permission android:name="android.car.permission.CONTROL_ADAS_STATES"
+         android:protectionLevel="signature|privileged"
+         android:label="@string/car_permission_label_control_adas_states"
+         android:description="@string/car_permission_desc_control_adas_states"/>
 </manifest>

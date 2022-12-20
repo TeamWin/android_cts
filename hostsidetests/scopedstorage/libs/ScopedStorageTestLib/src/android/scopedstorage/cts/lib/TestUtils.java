@@ -96,6 +96,7 @@ public class TestUtils {
     public static final String INTENT_EXTRA_URI = "android.scopedstorage.cts.uri";
     public static final String INTENT_EXTRA_CALLING_PKG = "android.scopedstorage.cts.calling_pkg";
     public static final String INTENT_EXCEPTION = "android.scopedstorage.cts.exception";
+    public static final String FILE_EXISTS_QUERY = "android.scopedstorage.cts.file_exists";
     public static final String CREATE_FILE_QUERY = "android.scopedstorage.cts.createfile";
     public static final String CREATE_IMAGE_ENTRY_QUERY =
             "android.scopedstorage.cts.createimageentry";
@@ -322,6 +323,16 @@ public class TestUtils {
                     e);
             return false;
         }
+    }
+
+    /**
+     * Makes the given {@code testApp} test {@code file} for existence.
+     *
+     * <p>This method drops shell permission identity.
+     */
+    public static boolean fileExistsAs(TestApp testApp, File file)
+            throws Exception {
+        return getResultFromTestApp(testApp, file.getPath(), FILE_EXISTS_QUERY);
     }
 
     /**

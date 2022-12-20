@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
@@ -33,6 +34,8 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
+import android.icu.util.ULocale;
+import android.os.Bundle;
 import android.os.Parcel;
 import android.util.Printer;
 import android.view.inputmethod.InputMethod;
@@ -282,5 +285,30 @@ public class InputMethodInfoTest {
             }
         }
         return null;
+    }
+
+    @Test
+    public void testParsingPhysicalKeyboardAttributes() throws Exception {
+        final ServiceInfo serviceInfo = new ServiceInfo();
+        serviceInfo.applicationInfo = mContext.getApplicationInfo();
+        serviceInfo.packageName = mContext.getPackageName();
+        serviceInfo.name = "TestIme";
+        serviceInfo.metaData = new Bundle();
+        serviceInfo.metaData.putInt(InputMethod.SERVICE_META_DATA, R.xml.ime_meta_subtypes);
+        final ResolveInfo resolveInfo = new ResolveInfo();
+        resolveInfo.serviceInfo = serviceInfo;
+        InputMethodInfo imi = new InputMethodInfo(mContext, resolveInfo);
+
+        assertEquals(2, imi.getSubtypeCount());
+
+        InputMethodSubtype subtype = imi.getSubtypeAt(0);
+        assertEquals("en-US", subtype.getLanguageTag());
+        assertNull(subtype.getPhysicalKeyboardHintLanguageTag());
+        assertEquals("", subtype.getPhysicalKeyboardHintLayoutType());
+
+        subtype = imi.getSubtypeAt(1);
+        assertEquals("zh-CN", subtype.getLanguageTag());
+        assertEquals(new ULocale("en-US"), subtype.getPhysicalKeyboardHintLanguageTag());
+        assertEquals("qwerty", subtype.getPhysicalKeyboardHintLayoutType());
     }
 }

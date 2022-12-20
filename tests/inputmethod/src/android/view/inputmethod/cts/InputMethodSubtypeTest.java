@@ -24,6 +24,7 @@ import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Color;
+import android.icu.util.ULocale;
 import android.os.Parcel;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -213,5 +214,68 @@ public class InputMethodSubtypeTest {
                 context, context.getPackageName(), null).toString();
 
         assertThat(actualSubtypeName).isEqualTo("new_subtype_name");
+    }
+
+    /**
+     * Verifies that
+     * {@link InputMethodSubtypeBuilder#setPhysicalKeyboardHint(String, String)} can save the hint
+     * information into the subtype.
+     */
+    @Test
+    public void testSetPhysicalKeyboardHint() {
+        final ULocale expectedPkLanguageTag = new ULocale("en_US");
+        final String expectedPkLayout = "qwerty";
+        final InputMethodSubtype newSubtype =
+                new InputMethodSubtype.InputMethodSubtypeBuilder()
+                        .setPhysicalKeyboardHint(expectedPkLanguageTag, expectedPkLayout)
+                        .build();
+
+        assertThat(newSubtype.getPhysicalKeyboardHintLanguageTag()).isEqualTo(
+                expectedPkLanguageTag);
+        assertThat(newSubtype.getPhysicalKeyboardHintLayoutType()).isEqualTo(expectedPkLayout);
+    }
+
+    /**
+     * Verifies the subtype with PK hint info can be parcelled and un-parcelled correctly.
+     */
+    @Test
+    public void testPhysicalKeyboardHintParcel() {
+        final ULocale expectedPkLanguageTag = new ULocale("en_US");
+        final String expectedPkLayout = "dvorak";
+        final InputMethodSubtype newSubtype =
+                new InputMethodSubtype.InputMethodSubtypeBuilder()
+                        .setPhysicalKeyboardHint(expectedPkLanguageTag, expectedPkLayout)
+                        .build();
+
+        final Parcel parcel = Parcel.obtain();
+        newSubtype.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        final InputMethodSubtype subtypeFromParcel =
+                InputMethodSubtype.CREATOR.createFromParcel(parcel);
+        parcel.recycle();
+
+        assertThat(subtypeFromParcel.getPhysicalKeyboardHintLanguageTag()).isEqualTo(
+                expectedPkLanguageTag);
+        assertThat(subtypeFromParcel.getPhysicalKeyboardHintLayoutType()).isEqualTo(
+                expectedPkLayout);
+    }
+
+    /**
+     * Verifies that
+     * {@link InputMethodSubtypeBuilder#setPhysicalKeyboardHint(String, String)} can handle null as
+     * the parameters.
+     */
+    @Test
+    public void testSetPhysicalKeyboardHintNull() {
+        final InputMethodSubtype newSubtype =
+                new InputMethodSubtype.InputMethodSubtypeBuilder()
+                        .setPhysicalKeyboardHint(null, "")
+                        .build();
+        assertThat(newSubtype.getPhysicalKeyboardHintLanguageTag()).isNull();
+        assertThat(newSubtype.getPhysicalKeyboardHintLayoutType()).isEqualTo("");
+
+        assertThrows(NullPointerException.class,
+                () -> new InputMethodSubtype.InputMethodSubtypeBuilder()
+                        .setPhysicalKeyboardHint(null, null));
     }
 }

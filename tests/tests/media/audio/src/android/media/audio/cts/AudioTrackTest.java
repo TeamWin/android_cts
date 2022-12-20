@@ -451,6 +451,32 @@ public class AudioTrackTest {
         }
     }
 
+    // Test case 6: build AudioTrack with Context and otherwise default arguments, expect success.
+    @Test
+    public void testBuilderWithContext() {
+        final int expectedDefaultEncoding = AudioFormat.ENCODING_PCM_16BIT;
+        final int expectedDefaultRate =
+                AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_MUSIC);
+        final int expectedDefaultChannels = AudioFormat.CHANNEL_OUT_STEREO;
+
+        final AudioTrack track = new AudioTrack.Builder()
+                .setContext(getContext())
+                .build();
+
+        assertEquals(AudioTrack.STATE_INITIALIZED, track.getState());
+        assertEquals(expectedDefaultEncoding, track.getAudioFormat());
+        assertEquals(expectedDefaultRate, track.getSampleRate());
+        assertEquals(expectedDefaultChannels, track.getChannelConfiguration());
+    }
+
+    // Test case 7: build AudioTrack with Context and otherwise default arguments, expect success.
+    @Test
+    public void testBuilderWithNullContext() {
+        assertThrows(NullPointerException.class, () -> new AudioTrack.Builder()
+                .setContext(/*context=*/null)
+                .build());
+    }
+
     // -----------------------------------------------------------------
     // Playback head position
     // ----------------------------------

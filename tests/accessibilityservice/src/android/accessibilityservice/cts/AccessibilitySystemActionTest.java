@@ -214,7 +214,7 @@ public class AccessibilitySystemActionTest {
     }
 
     private RemoteAction getRemoteAction(String pendingIntent) {
-        Intent i = new Intent(pendingIntent);
+        Intent i = new Intent(pendingIntent).setPackage(mContext.getPackageName());
         PendingIntent p = PendingIntent.getBroadcast(mContext, 0, i, PendingIntent.FLAG_MUTABLE_UNAUDITED);
         return new RemoteAction(Icon.createWithContentUri("content://test"), "test1", "test1", p);
     }

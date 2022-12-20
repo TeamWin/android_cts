@@ -68,7 +68,7 @@ public class GameManagerCtsActivity extends Activity {
 
         IntentFilter intentFilter = new IntentFilter("android.gamemanager.cts.GAME_MODE");
         mGameModeReceiver = new GameModeReceiver();
-        registerReceiver(mGameModeReceiver, intentFilter);
+        registerReceiver(mGameModeReceiver, intentFilter, Context.RECEIVER_EXPORTED);
     }
 
     @Override

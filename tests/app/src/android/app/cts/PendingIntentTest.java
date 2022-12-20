@@ -602,6 +602,8 @@ public class PendingIntentTest extends AndroidTestCase {
 
     public void testIsImmutable() {
         mIntent = new Intent();
+        mIntent.setPackage(mContext.getPackageName()); // explicit intent
+
         mPendingIntent = PendingIntent.getActivity(mContext, 1, mIntent,
                 PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         assertTrue(mPendingIntent.isImmutable());

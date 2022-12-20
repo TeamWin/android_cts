@@ -30,8 +30,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
@@ -272,6 +272,15 @@ public class SubscriptionManagerTest {
     }
 
     @Test
+    public void testGetAllSubscriptionInfoList() throws Exception {
+        List<SubscriptionInfo> allSubInfoList = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mSm, SubscriptionManager::getAllSubscriptionInfoList);
+        SubscriptionInfo subInfo = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getActiveSubscriptionInfo(mSubId));
+        assertThat(allSubInfoList).contains(subInfo);
+    }
+
+    @Test
     public void testIsActiveSubscriptionId() throws Exception {
         assertTrue(mSm.isActiveSubscriptionId(mSubId));
     }
@@ -282,6 +291,12 @@ public class SubscriptionManagerTest {
         int[] subIds = mSm.getSubscriptionIds(slotId);
         assertNotNull(subIds);
         assertTrue(ArrayUtils.contains(subIds, mSubId));
+    }
+
+    @Test
+    public void testGetSubscriptionId() throws Exception {
+        int slotId = SubscriptionManager.getSlotIndex(mSubId);
+        assertThat(SubscriptionManager.getSubscriptionId(slotId)).isEqualTo(mSubId);
     }
 
     @Test

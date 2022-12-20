@@ -23,15 +23,12 @@ import android.provider.Settings;
 import android.speech.SpeechRecognizer;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SettingsStateChangerRule;
 
 import org.junit.Rule;
-import org.junit.runner.RunWith;
 
 /** Recognition service tests for a default speech recognition service. */
-@RunWith(AndroidJUnit4.class)
 public final class DefaultRecognitionServiceTest extends AbstractRecognitionServiceTest {
 
     // same as Settings.Secure.VOICE_RECOGNITION_SERVICE

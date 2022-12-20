@@ -4385,18 +4385,16 @@ public class TelephonyManagerTest {
                                         .setSignalMeasurementType(
                                                 SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSSI)
                                         .setThresholds(new int[]{-113, -103, -97, -51})
-                                        .setHysteresisDb(10) //allowed for system caller only
+                                        .setHysteresisDb(10)
                                         .build()))
                         .setReportingRequestedWhileIdle(true)
                         .build();
-        try {
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    (tm) -> tm.setSignalStrengthUpdateRequest(requestWithHysteresisDbSet));
-            fail("IllegalArgumentException expected when set hysteresisDb in SignalThresholdInfo "
-                    + "to true");
-        } catch (IllegalArgumentException expected) {
-        }
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                (tm) -> tm.setSignalStrengthUpdateRequest(requestWithHysteresisDbSet));
+
     }
+
 
     @Test
     public void testSetSignalStrengthUpdateRequest_hysteresisMsSet() {

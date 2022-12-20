@@ -148,6 +148,9 @@ public class TelephonyManagerTestOnMockModem {
 
         // Rebind all interfaces which is binding to MockModemService to default.
         assertNotNull(sMockModemManager);
+        // Reset the modified error response of RIL_REQUEST_RADIO_POWER to the original behavior
+        // and -1 means to disable the modifed mechanism in mock modem
+        sMockModemManager.forceErrorResponse(0, RIL_REQUEST_RADIO_POWER, -1);
         assertTrue(sMockModemManager.disconnectMockModemService());
         sMockModemManager = null;
     }

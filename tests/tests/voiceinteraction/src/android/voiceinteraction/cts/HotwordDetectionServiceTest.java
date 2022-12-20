@@ -16,26 +16,48 @@
 
 package android.voiceinteraction.cts;
 
+import static android.Manifest.permission.CAPTURE_AUDIO_HOTWORD;
+import static android.Manifest.permission.RECORD_AUDIO;
+import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
 import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.app.compat.CompatChanges;
+import android.content.pm.PackageManager;
+import android.os.ParcelFileDescriptor;
+import android.os.PersistableBundle;
+import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.service.voice.AlwaysOnHotwordDetector;
+import android.service.voice.HotwordDetectedResult;
 import android.service.voice.HotwordDetectionService;
+import android.service.voice.HotwordRejectedResult;
+import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.Until;
 import android.util.Log;
+import android.voiceinteraction.common.Utils;
 import android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService;
 import android.voiceinteraction.cts.testcore.Helper;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.RequiresDevice;
+import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.DisableAnimationRule;
+import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -60,16 +82,27 @@ public class HotwordDetectionServiceTest {
     private static final String SERVICE_COMPONENT =
             "android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService";
     private static final Long CLEAR_CHIP_MS = 10000L;
+    private static final String PRIVACY_CHIP_PKG = "com.android.systemui";
+    private static final String PRIVACY_CHIP_ID = "privacy_chip";
 
     private CtsBasicVoiceInteractionService mService;
 
     private static String sWasIndicatorEnabled;
     private static String sDefaultScreenOffTimeoutValue;
+    private static final Instrumentation sInstrumentation =
+            InstrumentationRegistry.getInstrumentation();
+    private static final PackageManager sPkgMgr = sInstrumentation.getContext().getPackageManager();
 
     @Rule
     public VoiceInteractionServiceConnectedRule mConnectedRule =
             new VoiceInteractionServiceConnectedRule(
                     getInstrumentation().getTargetContext(), getTestVoiceInteractionService());
+
+    @Rule
+    public DisableAnimationRule mDisableAnimationRule = new DisableAnimationRule();
+
+    @Rule
+    public RequiredFeatureRule REQUIRES_MIC_RULE = new RequiredFeatureRule(FEATURE_MICROPHONE);
 
     @BeforeClass
     public static void enableIndicators() {
@@ -175,16 +208,8 @@ public class HotwordDetectionServiceTest {
 
         Thread.sleep(CLEAR_CHIP_MS);
 
-        // Create first AlwaysOnHotwordDetector and wait ready.
-        mService.createAlwaysOnHotwordDetector();
-
-        // verify callback result
-        mService.waitHotwordDetectionServiceInitializedCalledOrException();
-        assertThat(mService.getHotwordDetectionServiceInitializedResult()).isEqualTo(
-                HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS);
-        AlwaysOnHotwordDetector alwaysOnHotwordDetector = mService.getAlwaysOnHotwordDetector();
-        Objects.requireNonNull(alwaysOnHotwordDetector);
-
+        // Create first AlwaysOnHotwordDetector
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
 
         // Create second AlwaysOnHotwordDetector, it will get the IllegalStateException due to
         // the previous AlwaysOnHotwordDetector is not destroy.
@@ -196,5 +221,190 @@ public class HotwordDetectionServiceTest {
         assertThat(mService.isCreateDetectorIllegalStateExceptionThrow()).isTrue();
 
         alwaysOnHotwordDetector.destroy();
+    }
+
+    @Test
+    @RequiresDevice
+    public void testHotwordDetectionService_onDetectFromDsp_success() throws Throwable {
+        Thread.sleep(CLEAR_CHIP_MS);
+        // Create AlwaysOnHotwordDetector
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
+        try {
+            adoptShellPermissionIdentityForHotword();
+
+            mService.initDetectRejectLatch();
+            alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
+                    /* status= */ 0, /* soundModelHandle= */ 100, /* captureAvailable= */ true,
+                    /* captureSession= */ 101, /* captureDelayMs= */ 1000,
+                    /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
+                    Helper.createFakeAudioFormat(), new byte[1024],
+                    Helper.createFakeKeyphraseRecognitionExtraList());
+
+            // wait onDetected() called and verify the result
+            mService.waitOnDetectOrRejectCalled();
+            AlwaysOnHotwordDetector.EventPayload detectResult =
+                    mService.getHotwordServiceOnDetectedResult();
+
+            verifyDetectedResult(detectResult, Helper.DETECTED_RESULT);
+            // Verify microphone indicator
+            verifyMicrophoneChip(/* shouldBePresent= */ true);
+
+            // destroy detector
+            alwaysOnHotwordDetector.destroy();
+        } finally {
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresDevice
+    public void testHotwordDetectionService_onDetectFromDsp_rejection() throws Throwable {
+        Thread.sleep(CLEAR_CHIP_MS);
+        // Create AlwaysOnHotwordDetector
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
+
+        try {
+            adoptShellPermissionIdentityForHotword();
+
+            mService.initDetectRejectLatch();
+            // pass null data parameter
+            alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
+                    /* status= */ 0, /* soundModelHandle= */ 100, /* captureAvailable= */ true,
+                    /* captureSession= */ 101, /* captureDelayMs= */ 1000,
+                    /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
+                    Helper.createFakeAudioFormat(), null,
+                    Helper.createFakeKeyphraseRecognitionExtraList());
+
+            // wait onDetected() called and verify the result
+            mService.waitOnDetectOrRejectCalled();
+            HotwordRejectedResult rejectedResult =
+                    mService.getHotwordServiceOnRejectedResult();
+            assertThat(rejectedResult).isEqualTo(Helper.REJECTED_RESULT);
+
+            // Verify microphone indicator
+            verifyMicrophoneChip(/* shouldBePresent= */ false);
+
+            // destroy detector
+            alwaysOnHotwordDetector.destroy();
+        } finally {
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresDevice
+    public void testHotwordDetectionService_onDetectFromDsp_timeout() throws Throwable {
+        Thread.sleep(CLEAR_CHIP_MS);
+
+        // Create AlwaysOnHotwordDetector
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
+        // Update HotwordDetectionService options to delay detection, to cause a timeout
+        runWithShellPermissionIdentity(() -> {
+            PersistableBundle options = Helper.createFakePersistableBundleData();
+            options.putInt(Utils.KEY_DETECTION_DELAY_MS, 5000);
+            alwaysOnHotwordDetector.updateState(options,
+                    Helper.createFakeSharedMemoryData());
+        });
+
+        try {
+            adoptShellPermissionIdentityForHotword();
+
+            mService.initOnErrorLatch();
+            alwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(
+                    /* status= */ 0, /* soundModelHandle= */ 100, /* captureAvailable= */ true,
+                    /* captureSession= */ 101, /* captureDelayMs= */ 1000,
+                    /* capturePreambleMs= */ 1001, /* triggerInData= */ true,
+                    Helper.createFakeAudioFormat(), new byte[1024],
+                    Helper.createFakeKeyphraseRecognitionExtraList());
+
+            // wait onError() called and verify the result
+            mService.waitOnErrorCalled();
+
+            // Verify microphone indicator
+            verifyMicrophoneChip(/* shouldBePresent= */ false);
+
+            // destroy detector
+            alwaysOnHotwordDetector.destroy();
+        } finally {
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    private AlwaysOnHotwordDetector createAlwaysOnHotwordDetector() throws Throwable {
+        // Create AlwaysOnHotwordDetector and wait ready.
+        mService.createAlwaysOnHotwordDetector();
+
+        mService.waitHotwordDetectionServiceInitializedCalledOrException();
+
+        // verify callback result
+        assertThat(mService.getHotwordDetectionServiceInitializedResult()).isEqualTo(
+                HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS);
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector = mService.getAlwaysOnHotwordDetector();
+        Objects.requireNonNull(alwaysOnHotwordDetector);
+
+        return alwaysOnHotwordDetector;
+    }
+
+    // TODO: Implement HotwordDetectedResult#equals to override the Bundle equality check; then
+    // simply check that the HotwordDetectedResults are equal.
+    private void verifyDetectedResult(AlwaysOnHotwordDetector.EventPayload detectedResult,
+            HotwordDetectedResult expectedDetectedResult) {
+        HotwordDetectedResult hotwordDetectedResult = detectedResult.getHotwordDetectedResult();
+        ParcelFileDescriptor audioStream = detectedResult.getAudioStream();
+        assertThat(hotwordDetectedResult).isNotNull();
+        assertThat(hotwordDetectedResult.getAudioChannel())
+                .isEqualTo(expectedDetectedResult.getAudioChannel());
+        assertThat(hotwordDetectedResult.getConfidenceLevel())
+                .isEqualTo(expectedDetectedResult.getConfidenceLevel());
+        assertThat(hotwordDetectedResult.isHotwordDetectionPersonalized())
+                .isEqualTo(expectedDetectedResult.isHotwordDetectionPersonalized());
+        assertThat(hotwordDetectedResult.getHotwordDurationMillis())
+                .isEqualTo(expectedDetectedResult.getHotwordDurationMillis());
+        assertThat(hotwordDetectedResult.getHotwordOffsetMillis())
+                .isEqualTo(expectedDetectedResult.getHotwordOffsetMillis());
+        assertThat(hotwordDetectedResult.getHotwordPhraseId())
+                .isEqualTo(expectedDetectedResult.getHotwordPhraseId());
+        assertThat(hotwordDetectedResult.getPersonalizedScore())
+                .isEqualTo(expectedDetectedResult.getPersonalizedScore());
+        assertThat(hotwordDetectedResult.getScore()).isEqualTo(expectedDetectedResult.getScore());
+        assertThat(audioStream).isNull();
+    }
+
+    private void adoptShellPermissionIdentityForHotword() {
+        // Drop any identity adopted earlier.
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.dropShellPermissionIdentity();
+        // need to retain the identity until the callback is triggered
+        uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
+    }
+
+    private void verifyMicrophoneChip(boolean shouldBePresent) throws Exception {
+        if (sPkgMgr.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+            // TODO ntmyren: test TV indicator
+        } else if (sPkgMgr.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            // TODO ntmyren: test Auto indicator
+        } else {
+            verifyMicrophoneChipHandheld(shouldBePresent);
+        }
+    }
+
+    private void verifyMicrophoneChipHandheld(boolean shouldBePresent) throws Exception {
+        // If the change Id is not present, then isChangeEnabled will return true. To bypass this,
+        // the change is set to "false" if present.
+        if (SystemUtil.callWithShellPermissionIdentity(() -> CompatChanges.isChangeEnabled(
+                Helper.PERMISSION_INDICATORS_NOT_PRESENT, Process.SYSTEM_UID))) {
+            return;
+        }
+        // Ensure the privacy chip is present (or not)
+        UiDevice device = UiDevice.getInstance(sInstrumentation);
+        final boolean chipFound = device.wait(Until.hasObject(
+                By.res(PRIVACY_CHIP_PKG, PRIVACY_CHIP_ID)), CLEAR_CHIP_MS);
+        assertEquals("chip display state", shouldBePresent, chipFound);
     }
 }

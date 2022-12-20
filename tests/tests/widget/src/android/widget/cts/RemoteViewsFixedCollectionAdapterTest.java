@@ -484,7 +484,7 @@ public class RemoteViewsFixedCollectionAdapterTest {
     public void testSetRemoteAdapter_checkedChangeListener() throws Throwable {
         String action = "my-action";
         MockBroadcastReceiver receiver = new MockBroadcastReceiver();
-        mActivity.registerReceiver(receiver, new IntentFilter(action));
+        mActivity.registerReceiver(receiver, new IntentFilter(action), Context.RECEIVER_EXPORTED);
 
         Intent intent = new Intent(action).setPackage(mActivity.getPackageName());
         PendingIntent pendingIntent =
@@ -553,7 +553,7 @@ public class RemoteViewsFixedCollectionAdapterTest {
     public void testSetRemoteAdapter_clickFillListener() throws Throwable {
         String action = "my-action";
         MockBroadcastReceiver receiver = new MockBroadcastReceiver();
-        mActivity.registerReceiver(receiver, new IntentFilter(action));
+        mActivity.registerReceiver(receiver, new IntentFilter(action), Context.RECEIVER_EXPORTED);
 
         Intent intent = new Intent(action).setPackage(mActivity.getPackageName());
         PendingIntent pendingIntent =

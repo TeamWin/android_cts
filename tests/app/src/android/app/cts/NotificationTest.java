@@ -149,12 +149,13 @@ public class NotificationTest extends AndroidTestCase {
                 .build();
         mNotification.icon = 0;
         mNotification.number = 1;
-        final Intent intent = new Intent();
-        final PendingIntent pendingIntent = PendingIntent.getBroadcast(mContext, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        final Intent intent = new Intent().setPackage(mContext.getPackageName());
+        final PendingIntent pendingIntent = PendingIntent.getBroadcast(mContext, 0, intent,
+                PendingIntent.FLAG_MUTABLE);
         mNotification.contentIntent = pendingIntent;
-        final Intent deleteIntent = new Intent();
+        final Intent deleteIntent = new Intent().setPackage(mContext.getPackageName());
         final PendingIntent delPendingIntent = PendingIntent.getBroadcast(
-                mContext, 0, deleteIntent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
+                mContext, 0, deleteIntent, PendingIntent.FLAG_MUTABLE);
         mNotification.deleteIntent = delPendingIntent;
         mNotification.tickerText = TICKER_TEXT;
 
@@ -305,8 +306,9 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     public void testActionBuilder() {
-        final Intent intent = new Intent();
-        final PendingIntent actionIntent = PendingIntent.getBroadcast(mContext, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        final Intent intent = new Intent().setPackage(mContext.getPackageName());
+        final PendingIntent actionIntent = PendingIntent.getBroadcast(mContext, 0, intent,
+                PendingIntent.FLAG_MUTABLE);
         mAction = null;
         mAction = new Notification.Action.Builder(0, ACTION_TITLE, actionIntent)
                 .setAuthenticationRequired(true)
@@ -565,7 +567,9 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     public void testAction_builder_contextualAction_nullIcon() {
-        PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0,
+                new Intent().setPackage(mContext.getPackageName()),
+                PendingIntent.FLAG_MUTABLE);
         Notification.Action.Builder builder =
                 new Notification.Action.Builder(null /* icon */, "title", pendingIntent)
                 .setContextual(true);
@@ -642,7 +646,8 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     public void testBubbleMetadataBuilder() {
-        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0,
+                new Intent().setPackage(mContext.getPackageName()),
                 PendingIntent.FLAG_MUTABLE);
         PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
                 PendingIntent.FLAG_IMMUTABLE);
@@ -664,7 +669,8 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     public void testBubbleMetadata_parcel() {
-        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0,
+                new Intent().setPackage(mContext.getPackageName()),
                 PendingIntent.FLAG_MUTABLE);
         PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
                 PendingIntent.FLAG_IMMUTABLE);
@@ -766,7 +772,8 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     public void testBubbleMetadataBuilder_shortcutBuilder_throwsForSetIntent() {
-        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0,
+                new Intent().setPackage(mContext.getPackageName()),
                 PendingIntent.FLAG_MUTABLE);
         try {
             Notification.BubbleMetadata.Builder metadataBuilder =
@@ -831,7 +838,8 @@ public class NotificationTest extends AndroidTestCase {
         new Canvas(b).drawColor(0xffff0000);
         Icon icon = Icon.createWithAdaptiveBitmap(b);
 
-        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0,
+                new Intent().setPackage(mContext.getPackageName()),
                 PendingIntent.FLAG_MUTABLE);
         Notification.BubbleMetadata.Builder metadataBuilder =
                 new Notification.BubbleMetadata.Builder(bubbleIntent, icon);
@@ -843,7 +851,8 @@ public class NotificationTest extends AndroidTestCase {
     public void testBubbleMetadataBuilder_noThrowForNonBitmapIcon() {
         Icon icon = Icon.createWithResource(mContext, R.drawable.ic_android);
 
-        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0,
+                new Intent().setPackage(mContext.getPackageName()),
                 PendingIntent.FLAG_MUTABLE);
         Notification.BubbleMetadata.Builder metadataBuilder =
                 new Notification.BubbleMetadata.Builder(bubbleIntent, icon);
@@ -853,7 +862,8 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     public void testBubbleMetadataBuilder_replaceHeightRes() {
-        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0,
+                new Intent().setPackage(mContext.getPackageName()),
                 PendingIntent.FLAG_MUTABLE);
         PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
                 PendingIntent.FLAG_IMMUTABLE);
@@ -872,7 +882,8 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     public void testBubbleMetadataBuilder_replaceHeightDp() {
-        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0,
+                new Intent().setPackage(mContext.getPackageName()),
                 PendingIntent.FLAG_MUTABLE);
         PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
                 PendingIntent.FLAG_IMMUTABLE);
@@ -985,7 +996,7 @@ public class NotificationTest extends AndroidTestCase {
     public void testCallStyle_setsChronometerExtra() {
         Person person = new Person.Builder().setName("Test name").build();
         PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0,
-                new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
+                new Intent().setPackage(mContext.getPackageName()), PendingIntent.FLAG_MUTABLE);
         CallStyle cs = CallStyle.forIncomingCall(person, pendingIntent, pendingIntent);
         Notification.Builder builder = new Notification.Builder(mContext, CHANNEL.getId())
                 .setStyle(cs)
@@ -999,7 +1010,7 @@ public class NotificationTest extends AndroidTestCase {
     public void testCallStyle_setsCallTypeExtra() {
         Person person = new Person.Builder().setName("Test name").build();
         PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0,
-                new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
+                new Intent().setPackage(mContext.getPackageName()), PendingIntent.FLAG_MUTABLE);
         CallStyle cs = CallStyle.forIncomingCall(person, pendingIntent, pendingIntent);
         Notification.Builder builder = new Notification.Builder(mContext, CHANNEL.getId())
                 .setStyle(cs);
@@ -1087,7 +1098,8 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     private Notification.BubbleMetadata makeBubbleMetadata() {
-        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0,
+                new Intent().setPackage(mContext.getPackageName()), PendingIntent.FLAG_MUTABLE);
 
         return new Notification.BubbleMetadata.Builder(bubbleIntent,
                 Icon.createWithResource(mContext, 1))

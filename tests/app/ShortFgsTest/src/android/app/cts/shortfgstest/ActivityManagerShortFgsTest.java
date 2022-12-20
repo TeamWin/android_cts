@@ -47,6 +47,8 @@ import android.platform.test.annotations.Presubmit;
 import android.provider.DeviceConfig;
 import android.util.Log;
 
+import androidx.test.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.ShellUtils;
 import com.android.server.am.nano.ServiceRecordProto;
@@ -896,5 +898,41 @@ public class ActivityManagerShortFgsTest {
 //        // Wait until the grace period finishes. Now, the oom-adjustment should be lower.
 //        Thread.sleep(TOP_TO_FGS_GRACE_PERIOD);
 //        assertHelperPackageProcState(PROCESS_STATE_IMPORTANT_FOREGROUND, 220 + 1);
+    }
+
+    /**
+     * Make sure, if a short service doesn't stop, the app gets ANRed.
+     */
+    @Test
+    public void testAnr() throws Exception {
+        final int anrExtraTimeout = 10_000;
+
+        updateDeviceConfig("short_fgs_proc_state_extra_wait_duration", 0, /* verify= */ false);
+        updateDeviceConfig("short_fgs_anr_extra_wait_duration",
+                anrExtraTimeout, /* verify= */ true);
+
+        try (AnrMonitor monitor = AnrMonitor.start(InstrumentationRegistry.getInstrumentation(),
+                HELPER_PACKAGE)) {
+            final long startTime = SystemClock.uptimeMillis();
+
+            // Start FGS0.
+            startForegroundService(FGS0, FOREGROUND_SERVICE_TYPE_SHORT_SERVICE);
+
+            // Wait for the method name message.
+            waitForMethodCall(FGS0, "onStartCommand");
+
+            assertServiceRunning(FGS0);
+
+            // Wait for the timeout + extra duration
+            Thread.sleep(SHORTENED_TIMEOUT + anrExtraTimeout + 2000);
+
+            // Wait for the ANR.
+            final long anrTime = monitor.waitForAnrAndReturnUptime(10_000);
+
+            // The ANR time should be after the timeout + the ANR grace period.
+            assertThat(anrTime).isAtLeast(startTime + SHORTENED_TIMEOUT + anrExtraTimeout);
+
+            // Should trigger an ANR.
+        }
     }
 }

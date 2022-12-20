@@ -1629,7 +1629,7 @@ public class CameraTestUtils extends Assert {
         // Same goes for DEPTH_POINT_CLOUD, RAW_PRIVATE, DEPTH_JPEG, and HEIC
         if (format == ImageFormat.JPEG || format == ImageFormat.DEPTH_POINT_CLOUD ||
                 format == ImageFormat.RAW_PRIVATE || format == ImageFormat.DEPTH_JPEG ||
-                format == ImageFormat.HEIC) {
+                format == ImageFormat.HEIC || format == ImageFormat.JPEG_R) {
             buffer = planes[0].getBuffer();
             assertNotNull("Fail to get jpeg/depth/heic ByteBuffer", buffer);
             data = new byte[buffer.remaining()];
@@ -1748,6 +1748,7 @@ public class CameraTestUtils extends Assert {
             case ImageFormat.DEPTH_JPEG:
             case ImageFormat.Y8:
             case ImageFormat.HEIC:
+            case ImageFormat.JPEG_R:
                 assertEquals("JPEG/RAW/depth/Y8 Images should have one plane", 1, planes.length);
                 break;
             default:
@@ -2396,6 +2397,7 @@ public class CameraTestUtils extends Assert {
             // regular jpeg.
             case ImageFormat.DEPTH_JPEG:
             case ImageFormat.JPEG:
+            case ImageFormat.JPEG_R:
                 validateJpegData(data, width, height, filePath, colorSpace);
                 break;
             case ImageFormat.YCBCR_P010:

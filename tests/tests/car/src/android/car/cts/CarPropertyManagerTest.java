@@ -251,6 +251,22 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             VehiclePropertyIds.STEERING_WHEEL_LOCKED,
                             VehiclePropertyIds.STEERING_WHEEL_EASY_ACCESS_ENABLED)
                     .build();
+    private static final ImmutableList<Integer> PERMISSION_READ_ADAS_SETTINGS_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add()
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_ADAS_SETTINGS_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add()
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_READ_ADAS_STATES_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add()
+                    .build();
+    private static final ImmutableList<Integer> PERMISSION_CONTROL_ADAS_STATES_PROPERTIES =
+            ImmutableList.<Integer>builder()
+                    .add()
+                    .build();
 
     /** contains property Ids for the properties required by CDD */
     private final ArraySet<Integer> mPropertyIds = new ArraySet<>();
@@ -4696,6 +4712,74 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     }
                 },
                 Car.PERMISSION_CONTROL_STEERING_WHEEL);
+    }
+
+    @Test
+    public void testPermissionReadAdasSettingsGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                        "%s",
+                                        VehiclePropertyIds.toString(
+                                                carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_READ_ADAS_SETTINGS_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_READ_ADAS_SETTINGS);
+    }
+
+    @Test
+    public void testPermissionControlAdasSettingsGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                        "%s",
+                                        VehiclePropertyIds.toString(
+                                                carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CONTROL_ADAS_SETTINGS_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CONTROL_ADAS_SETTINGS);
+    }
+
+    @Test
+    public void testPermissionReadAdasStatesGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                        "%s",
+                                        VehiclePropertyIds.toString(
+                                                carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_READ_ADAS_STATES_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_READ_ADAS_STATES);
+    }
+
+    @Test
+    public void testPermissionControlAdasStatesGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    for (CarPropertyConfig<?> carPropertyConfig :
+                            mCarPropertyManager.getPropertyList()) {
+                        assertWithMessage(
+                                        "%s",
+                                        VehiclePropertyIds.toString(
+                                                carPropertyConfig.getPropertyId()))
+                                .that(carPropertyConfig.getPropertyId())
+                                .isIn(PERMISSION_CONTROL_ADAS_STATES_PROPERTIES);
+                    }
+                },
+                Car.PERMISSION_CONTROL_ADAS_STATES);
     }
 
     private int getCounterBySampleRate(float maxSampleRateHz) {

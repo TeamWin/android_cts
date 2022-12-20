@@ -25,6 +25,7 @@ import static android.scopedstorage.cts.lib.TestUtils.CREATE_FILE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.CREATE_IMAGE_ENTRY_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.DELETE_FILE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.DELETE_RECURSIVE_QUERY;
+import static android.scopedstorage.cts.lib.TestUtils.FILE_EXISTS_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXCEPTION;
 import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXTRA_CALLING_PKG;
 import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXTRA_PATH;
@@ -99,6 +100,7 @@ public class ScopedStorageTestHelper extends Activity {
                 case READDIR_QUERY:
                     returnIntent = sendDirectoryEntries(queryType);
                     break;
+                case FILE_EXISTS_QUERY:
                 case CAN_READ_WRITE_QUERY:
                 case CREATE_FILE_QUERY:
                 case DELETE_FILE_QUERY:
@@ -312,6 +314,9 @@ public class ScopedStorageTestHelper extends Activity {
             final File file = new File(filePath);
             final Intent intent = new Intent(queryType);
             switch (queryType) {
+                case FILE_EXISTS_QUERY:
+                    intent.putExtra(queryType, file.exists());
+                    return intent;
                 case CAN_READ_WRITE_QUERY:
                     intent.putExtra(queryType, file.exists() && file.canRead() && file.canWrite());
                     return intent;

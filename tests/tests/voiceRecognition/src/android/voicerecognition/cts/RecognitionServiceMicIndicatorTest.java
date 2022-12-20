@@ -101,7 +101,7 @@ public final class RecognitionServiceMicIndicatorTest {
         prepareDevice();
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mActivity = mActivityTestRule.getActivity();
-        mActivity.init(false, null);
+        mActivity.initDefault(false, null);
 
         final PackageManager pm = mContext.getPackageManager();
         try {
@@ -189,7 +189,7 @@ public final class RecognitionServiceMicIndicatorTest {
     private void testVoiceRecognitionServiceBlameCallingApp(boolean trustVoiceService)
             throws Throwable {
         // Start SpeechRecognition
-        mActivity.startListening();
+        mActivity.startListeningDefault();
 
         if (isTv()) {
             assertTvIndicatorsShown(trustVoiceService);

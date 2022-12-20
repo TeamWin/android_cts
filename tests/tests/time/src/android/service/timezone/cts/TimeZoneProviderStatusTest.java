@@ -18,8 +18,11 @@ package android.service.timezone.cts;
 
 import static android.app.time.cts.ParcelableTestSupport.assertRoundTripParcelable;
 import static android.service.timezone.TimeZoneProviderStatus.DEPENDENCY_STATUS_BLOCKED_BY_ENVIRONMENT;
+import static android.service.timezone.TimeZoneProviderStatus.DEPENDENCY_STATUS_BLOCKED_BY_SETTINGS;
+import static android.service.timezone.TimeZoneProviderStatus.DEPENDENCY_STATUS_NOT_APPLICABLE;
 import static android.service.timezone.TimeZoneProviderStatus.DEPENDENCY_STATUS_OK;
 import static android.service.timezone.TimeZoneProviderStatus.OPERATION_STATUS_FAILED;
+import static android.service.timezone.TimeZoneProviderStatus.OPERATION_STATUS_OK;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -99,10 +102,26 @@ public class TimeZoneProviderStatusTest {
         assertRoundTripParcelable(status);
     }
 
+    @Test
+    public void testAccessors() {
+        TimeZoneProviderStatus status = new TimeZoneProviderStatus.Builder()
+                .setLocationDetectionDependencyStatus(DEPENDENCY_STATUS_BLOCKED_BY_SETTINGS)
+                .setConnectivityDependencyStatus(DEPENDENCY_STATUS_NOT_APPLICABLE)
+                .setTimeZoneResolutionOperationStatus(OPERATION_STATUS_OK)
+                .build();
+
+        assertEquals(DEPENDENCY_STATUS_BLOCKED_BY_SETTINGS,
+                status.getLocationDetectionDependencyStatus());
+        assertEquals(DEPENDENCY_STATUS_NOT_APPLICABLE,
+                status.getConnectivityDependencyStatus());
+        assertEquals(OPERATION_STATUS_OK,
+                status.getTimeZoneResolutionOperationStatus());
+    }
+
     private static TimeZoneProviderStatus.Builder validStatusBuilder() {
         return new TimeZoneProviderStatus.Builder()
                 .setLocationDetectionDependencyStatus(DEPENDENCY_STATUS_OK)
                 .setConnectivityDependencyStatus(DEPENDENCY_STATUS_OK)
-                .setTimeZoneResolutionOperationStatus(DEPENDENCY_STATUS_OK);
+                .setTimeZoneResolutionOperationStatus(OPERATION_STATUS_OK);
     }
 }

@@ -80,7 +80,7 @@ public class TestMmTelFeature extends MmTelFeature {
         mReadyListener = readyListener;
         mRemovedListener = removedListener;
         mCapSetListener = setListener;
-        mSmsImpl = new TestImsSmsImpl();
+        mSmsImpl = new TestImsSmsImpl(executor);
         // Must set the state to READY in the constructor - onFeatureReady depends on the state
         // being ready.
         setFeatureState(STATE_READY);

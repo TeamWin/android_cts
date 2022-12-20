@@ -16,15 +16,25 @@
 
 package android.voiceinteraction.cts.testcore;
 
+import static android.media.AudioFormat.CHANNEL_IN_FRONT;
+
+import android.hardware.soundtrigger.SoundTrigger;
+import android.hardware.soundtrigger.SoundTrigger.KeyphraseRecognitionExtra;
+import android.media.AudioFormat;
 import android.os.PersistableBundle;
 import android.os.SharedMemory;
 import android.provider.DeviceConfig;
+import android.service.voice.HotwordDetectedResult;
+import android.service.voice.HotwordRejectedResult;
 import android.system.ErrnoException;
 import android.util.Log;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import com.google.common.collect.ImmutableList;
+
 import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * Helper for common functionalities.
@@ -39,11 +49,29 @@ public final class Helper {
 
     // The id that is used to gate compat change
     public static final long MULTIPLE_ACTIVE_HOTWORD_DETECTORS = 193232191L;
+    public static final Long PERMISSION_INDICATORS_NOT_PRESENT = 162547999L;
 
     private static final String INDICATORS_FLAG = "camera_mic_icons_enabled";
     private static final String KEY_FAKE_DATA = "fakeData";
     private static final String VALUE_FAKE_DATA = "fakeData";
     private static final byte[] FAKE_BYTE_ARRAY_DATA = new byte[]{1, 2, 3};
+    public static final int DEFAULT_PHRASE_ID = 5;
+
+    public static final HotwordDetectedResult DETECTED_RESULT =
+            new HotwordDetectedResult.Builder()
+                    .setAudioChannel(CHANNEL_IN_FRONT)
+                    .setConfidenceLevel(HotwordDetectedResult.CONFIDENCE_LEVEL_HIGH)
+                    .setHotwordDetectionPersonalized(true)
+                    .setHotwordDurationMillis(1000)
+                    .setHotwordOffsetMillis(500)
+                    .setHotwordPhraseId(DEFAULT_PHRASE_ID)
+                    .setPersonalizedScore(10)
+                    .setScore(15)
+                    .build();
+    public static final HotwordRejectedResult REJECTED_RESULT =
+            new HotwordRejectedResult.Builder()
+                    .setConfidenceLevel(HotwordRejectedResult.CONFIDENCE_LEVEL_MEDIUM)
+                    .build();
 
     /**
      * Returns the SharedMemory data that is used for testing.
@@ -71,7 +99,26 @@ public final class Helper {
     }
 
     /**
-     * Returns the camera_mic_icons_enabled value.
+     * Returns the AudioFormat data that is used for testing.
+     */
+    public static AudioFormat createFakeAudioFormat() {
+        return new AudioFormat.Builder()
+                .setSampleRate(32000)
+                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                .setChannelMask(AudioFormat.CHANNEL_IN_MONO).build();
+    }
+
+    /**
+     * Returns a list of KeyphraseRecognitionExtra that is used for testing.
+     */
+    public static List<KeyphraseRecognitionExtra> createFakeKeyphraseRecognitionExtraList() {
+        return ImmutableList.of(new KeyphraseRecognitionExtra(DEFAULT_PHRASE_ID,
+                SoundTrigger.RECOGNITION_MODE_VOICE_TRIGGER, 100));
+    }
+
+    /**
+     * Checks if the privacy indicators are enabled on this device. Sets the state to the parameter,
+     * And returns the original enable state (to allow this state to be reset after the test)
      */
     public static String getIndicatorEnabledState() {
         return SystemUtil.runWithShellPermissionIdentity(() -> {

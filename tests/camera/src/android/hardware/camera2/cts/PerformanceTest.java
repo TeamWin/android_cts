@@ -295,6 +295,9 @@ public class PerformanceTest {
         int[] JPEG_FORMAT = {ImageFormat.JPEG};
         testSingleCaptureForFormat(JPEG_FORMAT, "jpeg", /*addPreviewDelay*/ true);
         if (!mTestRule.isPerfMeasure()) {
+            int[] JPEG_R_FORMAT = {ImageFormat.JPEG_R};
+            testSingleCaptureForFormat(JPEG_R_FORMAT, "jpeg_r", /*addPreviewDelay*/ true,
+                    /*enablePostview*/ false);
             int[] YUV_FORMAT = {ImageFormat.YUV_420_888};
             testSingleCaptureForFormat(YUV_FORMAT, null, /*addPreviewDelay*/ true);
             int[] PRIVATE_FORMAT = {ImageFormat.PRIVATE};
@@ -321,6 +324,12 @@ public class PerformanceTest {
 
     private void testSingleCaptureForFormat(int[] formats, String formatDescription,
             boolean addPreviewDelay) throws Exception {
+       testSingleCaptureForFormat(formats, formatDescription, addPreviewDelay,
+               /*enablePostview*/ true);
+    }
+
+    private void testSingleCaptureForFormat(int[] formats, String formatDescription,
+            boolean addPreviewDelay, boolean enablePostview) throws Exception {
         double[] avgResultTimes = new double[mTestRule.getCameraIdsUnderTest().length];
         double[] avgCaptureTimes = new double[mTestRule.getCameraIdsUnderTest().length];
 
@@ -389,8 +398,7 @@ public class PerformanceTest {
 
                     readers = prepareStillCaptureAndStartPreview(id, previewBuilder, captureBuilder,
                             mTestRule.getOrderedPreviewSizes().get(0), imageSizes, formats,
-                            previewResultListener, NUM_MAX_IMAGES, imageListeners,
-                            false /*isHeic*/);
+                            previewResultListener, NUM_MAX_IMAGES, imageListeners, enablePostview);
 
                     if (addPreviewDelay) {
                         Thread.sleep(500);
@@ -1386,13 +1394,13 @@ public class PerformanceTest {
      * @param resultListener Capture result listener
      * @param maxNumImages The max number of images set to the image reader
      * @param imageListeners The single capture capture image listeners
-     * @param isHeic Capture HEIC image if true, JPEG image if false
+     * @param enablePostView Enable post view as part of the still capture request
      */
     private ImageReader[] prepareStillCaptureAndStartPreview(String id,
             CaptureRequest.Builder previewBuilder, CaptureRequest.Builder stillBuilder,
             Size previewSz, Size[] captureSizes, int[] formats, CaptureCallback resultListener,
             int maxNumImages, ImageReader.OnImageAvailableListener[] imageListeners,
-            boolean isHeic)
+            boolean enablePostView)
             throws Exception {
 
         if ((captureSizes == null) || (formats == null) || (imageListeners == null) &&
@@ -1420,7 +1428,8 @@ public class PerformanceTest {
 
         // Configure the requests.
         previewBuilder.addTarget(mPreviewSurface);
-        stillBuilder.addTarget(mPreviewSurface);
+        if (enablePostView)
+            stillBuilder.addTarget(mPreviewSurface);
         for (int i = 0; i < readers.length; i++) {
             stillBuilder.addTarget(readers[i].getSurface());
         }

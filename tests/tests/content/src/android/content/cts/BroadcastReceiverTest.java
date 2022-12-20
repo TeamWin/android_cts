@@ -420,7 +420,7 @@ public class BroadcastReceiverTest extends ActivityInstrumentationTestCase2<Mock
         MockReceiverInternal internalReceiver = new MockReceiverInternal();
         IntentFilter filter = new IntentFilter();
         filter.addAction(Camera.ACTION_NEW_VIDEO);
-        activity.registerReceiver(internalReceiver, filter);
+        activity.registerReceiver(internalReceiver, filter, RECEIVER_EXPORTED);
         assertFalse(internalReceiver.waitForReceiverNoException(SEND_BROADCAST_TIMEOUT));
     }
 

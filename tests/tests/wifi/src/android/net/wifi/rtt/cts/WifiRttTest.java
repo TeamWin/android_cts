@@ -236,6 +236,8 @@ public class WifiRttTest extends TestBase {
         int[] rssis = new int[NUM_OF_RTT_ITERATIONS];
         int[] numAttempted = new int[NUM_OF_RTT_ITERATIONS];
         int[] numSuccessful = new int[NUM_OF_RTT_ITERATIONS];
+        int[] frequencies = new int[NUM_OF_RTT_ITERATIONS];
+        int[] packetBws = new int[NUM_OF_RTT_ITERATIONS];
         long[] timestampsMs = new long[NUM_OF_RTT_ITERATIONS];
         byte[] lastLci = null;
         byte[] lastLcr = null;
@@ -288,6 +290,8 @@ public class WifiRttTest extends TestBase {
                 numAttempted[i - numFailures] = result.getNumAttemptedMeasurements();
                 numSuccessful[i - numFailures] = result.getNumSuccessfulMeasurements();
                 timestampsMs[i - numFailures] = result.getRangingTimestampMillis();
+                frequencies[i - numFailures] = result.getMeasurementChannelFrequencyMHz();
+                packetBws[i - numFailures] = result.getMeasurementBandwidth();
 
                 byte[] currentLci = result.getLci();
                 byte[] currentLcr = result.getLcr();
@@ -323,6 +327,10 @@ public class WifiRttTest extends TestBase {
         reportLog.addValues("num_successful", Arrays.copyOf(numSuccessful, numGoodResults),
                 ResultType.NEUTRAL, ResultUnit.NONE);
         reportLog.addValues("timestamps", Arrays.copyOf(timestampsMs, numGoodResults),
+                ResultType.NEUTRAL, ResultUnit.NONE);
+        reportLog.addValues("frequencies", Arrays.copyOf(frequencies, numGoodResults),
+                ResultType.NEUTRAL, ResultUnit.NONE);
+        reportLog.addValues("packetBws", Arrays.copyOf(packetBws, numGoodResults),
                 ResultType.NEUTRAL, ResultUnit.NONE);
         reportLog.submit();
 

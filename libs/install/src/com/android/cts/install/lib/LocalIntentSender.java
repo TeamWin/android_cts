@@ -57,7 +57,7 @@ public class LocalIntentSender extends BroadcastReceiver {
         String action = LocalIntentSender.class.getName() + SystemClock.elapsedRealtime();
         context.registerReceiver(this, new IntentFilter(action),
                 Context.RECEIVER_EXPORTED_UNAUDITED);
-        Intent intent = new Intent(action);
+        Intent intent = new Intent(action).setPackage(context.getPackageName());
         PendingIntent pending = PendingIntent.getBroadcast(context, 0, intent, FLAG_MUTABLE);
         return pending.getIntentSender();
     }

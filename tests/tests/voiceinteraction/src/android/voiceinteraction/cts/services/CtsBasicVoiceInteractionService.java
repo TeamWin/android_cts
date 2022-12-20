@@ -45,6 +45,13 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
 
     // The CountDownLatch waits for a service Availability change result
     private CountDownLatch mAvailabilityChangeLatch;
+    // The CountDownLatch waits for a service detect or reject result
+    private CountDownLatch mOnDetectRejectLatch;
+    // The CountDownLatch waits for a service onError called
+    private CountDownLatch mOnErrorLatch;
+
+    private AlwaysOnHotwordDetector.EventPayload mDetectedResult;
+    private HotwordRejectedResult mRejectedResult;
 
     public CtsBasicVoiceInteractionService() {
         HandlerThread handlerThread = new HandlerThread("CtsBasicVoiceInteractionService");
@@ -72,16 +79,27 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                 @Override
                 public void onDetected(AlwaysOnHotwordDetector.EventPayload eventPayload) {
                     Log.i(TAG, "onDetected");
+                    mDetectedResult = eventPayload;
+                    if (mOnDetectRejectLatch != null) {
+                        mOnDetectRejectLatch.countDown();
+                    }
                 }
 
                 @Override
                 public void onRejected(@NonNull HotwordRejectedResult result) {
                     Log.i(TAG, "onRejected");
+                    mRejectedResult = result;
+                    if (mOnDetectRejectLatch != null) {
+                        mOnDetectRejectLatch.countDown();
+                    }
                 }
 
                 @Override
                 public void onError() {
                     Log.i(TAG, "onError");
+                    if (mOnErrorLatch != null) {
+                        mOnErrorLatch.countDown();
+                    }
                 }
 
                 @Override
@@ -136,10 +154,38 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     }
 
     /**
-     * Create a CountDownLatch that is used to wait availability change
+     * Create a CountDownLatch that is used to wait for availability change
      */
     public void initAvailabilityChangeLatch() {
         mAvailabilityChangeLatch = new CountDownLatch(1);
+    }
+
+    /**
+     * Create a CountDownLatch that is used to wait for onDetected() or onRejected() result
+     */
+    public void initDetectRejectLatch() {
+        mOnDetectRejectLatch = new CountDownLatch(1);
+    }
+
+    /**
+     * Create a CountDownLatch that is used to wait for onError()
+     */
+    public void initOnErrorLatch() {
+        mOnErrorLatch = new CountDownLatch(1);
+    }
+
+    /**
+     * Returns the onDetected() result.
+     */
+    public AlwaysOnHotwordDetector.EventPayload getHotwordServiceOnDetectedResult() {
+        return mDetectedResult;
+    }
+
+    /**
+     * Returns the OnRejected() result.
+     */
+    public HotwordRejectedResult getHotwordServiceOnRejectedResult() {
+        return mRejectedResult;
     }
 
     /**
@@ -160,5 +206,31 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      */
     public int getHotwordDetectionServiceAvailabilityResult() {
         return mAvailabilityStatus;
+    }
+
+    /**
+     * Wait for onDetected() or OnRejected() callback called.
+     */
+    public void waitOnDetectOrRejectCalled() throws InterruptedException {
+        Log.d(TAG, "waitOnDetectOrRejectCalled(), latch=" + mOnDetectRejectLatch);
+        if (mOnDetectRejectLatch == null
+                || !mOnDetectRejectLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS)) {
+            mOnDetectRejectLatch = null;
+            throw new AssertionError("onDetected or OnRejected() fail.");
+        }
+        mOnDetectRejectLatch = null;
+    }
+
+    /**
+     * Wait for onError() callback called.
+     */
+    public void waitOnErrorCalled() throws InterruptedException {
+        Log.d(TAG, "waitOnErrorCalled(), latch=" + mOnErrorLatch);
+        if (mOnErrorLatch == null
+                || !mOnErrorLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS)) {
+            mOnErrorLatch = null;
+            throw new AssertionError("OnError() fail.");
+        }
+        mOnErrorLatch = null;
     }
 }

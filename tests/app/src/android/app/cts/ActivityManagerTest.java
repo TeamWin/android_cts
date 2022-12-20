@@ -799,7 +799,8 @@ public class ActivityManagerTest {
         // Prepare the time receiver action.
         Context context = mInstrumentation.getTargetContext();
         ActivityOptions options = ActivityOptions.makeBasic();
-        Intent receiveIntent = new Intent(ACTIVITY_TIME_TRACK_INFO);
+        Intent receiveIntent = new Intent(ACTIVITY_TIME_TRACK_INFO)
+                .setPackage(context.getPackageName());
         options.requestUsageTimeReport(PendingIntent.getBroadcast(context, 0, receiveIntent,
                 PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE));
 
@@ -888,7 +889,8 @@ public class ActivityManagerTest {
         // Prepare the time receiver action.
         Context context = mInstrumentation.getTargetContext();
         ActivityOptions options = ActivityOptions.makeBasic();
-        Intent receiveIntent = new Intent(ACTIVITY_TIME_TRACK_INFO);
+        Intent receiveIntent = new Intent(ACTIVITY_TIME_TRACK_INFO)
+                .setPackage(context.getPackageName());
         options.requestUsageTimeReport(PendingIntent.getBroadcast(context, 0, receiveIntent,
                     PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE));
 
@@ -938,7 +940,8 @@ public class ActivityManagerTest {
         // Prepare the time receiver action.
         Context context = mInstrumentation.getTargetContext();
         ActivityOptions options = ActivityOptions.makeBasic();
-        Intent receiveIntent = new Intent(ACTIVITY_TIME_TRACK_INFO);
+        Intent receiveIntent = new Intent(ACTIVITY_TIME_TRACK_INFO)
+                .setPackage(context.getPackageName());
         options.requestUsageTimeReport(PendingIntent.getBroadcast(context, 0, receiveIntent,
                     PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE));
 

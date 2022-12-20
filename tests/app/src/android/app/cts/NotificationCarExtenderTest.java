@@ -108,7 +108,8 @@ public class NotificationCarExtenderTest extends AndroidTestCase {
         final long testTime = System.currentTimeMillis();
         final String testMessage = "testMessage";
         final String testParticipant = "testParticipant";
-        final Intent testIntent = new Intent("testIntent");
+        final Intent testIntent = new Intent("testIntent")
+                .setPackage(mContext.getPackageName());
         final PendingIntent testPendingIntent =
             PendingIntent.getBroadcast(mContext, 0, testIntent,
             PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE_UNAUDITED);

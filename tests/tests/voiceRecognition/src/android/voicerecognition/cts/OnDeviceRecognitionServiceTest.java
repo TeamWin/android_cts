@@ -22,18 +22,17 @@ import android.content.ComponentName;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
 
-import androidx.test.runner.AndroidJUnit4;
-
 import org.junit.After;
 import org.junit.Before;
-import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /** Recognition service tests for a default speech recognition service. */
-@RunWith(AndroidJUnit4.class)
 public final class OnDeviceRecognitionServiceTest extends AbstractRecognitionServiceTest {
     private static final String TAG = OnDeviceRecognitionServiceTest.class.getSimpleName();
 
-    private SpeechRecognizer mRecognizer;
+    private final List<SpeechRecognizer> mRecognizers = new ArrayList<>();
 
     @Before
     public void setUp() {
@@ -43,9 +42,13 @@ public final class OnDeviceRecognitionServiceTest extends AbstractRecognitionSer
 
     @After
     public void tearDown() {
-        if (mRecognizer != null) {
-            mRecognizer.setTemporaryOnDeviceRecognizer(null);
-            mRecognizer = null;
+        if (mRecognizers != null) {
+            for (SpeechRecognizer recognizer : mRecognizers) {
+                if (recognizer != null) {
+                    recognizer.setTemporaryOnDeviceRecognizer(null);
+                }
+            }
+            mRecognizers.clear();
         }
 
         getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
@@ -54,8 +57,8 @@ public final class OnDeviceRecognitionServiceTest extends AbstractRecognitionSer
     @Override
     protected void setCurrentRecognizer(SpeechRecognizer recognizer, String component) {
         Log.i(TAG, "Setting recognizer to " + component);
-        mRecognizer = recognizer;
         recognizer.setTemporaryOnDeviceRecognizer(ComponentName.unflattenFromString(component));
+        mRecognizers.add(recognizer);
     }
 
     @Override

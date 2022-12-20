@@ -343,6 +343,7 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
                 | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.setAction(Intent.ACTION_MAIN);
+        intent.setPackage(mContext.getPackageName());
 
         final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent,
                 PendingIntent.FLAG_MUTABLE);

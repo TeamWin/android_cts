@@ -49,6 +49,7 @@ import static android.scopedstorage.cts.lib.TestUtils.deleteWithMediaProvider;
 import static android.scopedstorage.cts.lib.TestUtils.deleteWithMediaProviderNoThrow;
 import static android.scopedstorage.cts.lib.TestUtils.denyAppOpsToUid;
 import static android.scopedstorage.cts.lib.TestUtils.executeShellCommand;
+import static android.scopedstorage.cts.lib.TestUtils.fileExistsAs;
 import static android.scopedstorage.cts.lib.TestUtils.getAlarmsDir;
 import static android.scopedstorage.cts.lib.TestUtils.getAndroidDataDir;
 import static android.scopedstorage.cts.lib.TestUtils.getAndroidMediaDir;
@@ -59,6 +60,7 @@ import static android.scopedstorage.cts.lib.TestUtils.getDocumentsDir;
 import static android.scopedstorage.cts.lib.TestUtils.getDownloadDir;
 import static android.scopedstorage.cts.lib.TestUtils.getExternalFilesDir;
 import static android.scopedstorage.cts.lib.TestUtils.getExternalMediaDir;
+import static android.scopedstorage.cts.lib.TestUtils.getExternalObbDir;
 import static android.scopedstorage.cts.lib.TestUtils.getExternalStorageDir;
 import static android.scopedstorage.cts.lib.TestUtils.getFileMimeTypeFromDatabase;
 import static android.scopedstorage.cts.lib.TestUtils.getFileOwnerPackageFromDatabase;
@@ -3125,6 +3127,28 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     public void testExternalStorageProviderAndDownloadsProvider() throws Exception {
         assertWritableMountModeForProvider(DocumentsContract.EXTERNAL_STORAGE_PROVIDER_AUTHORITY);
         assertWritableMountModeForProvider(DocumentsContract.DOWNLOADS_PROVIDER_AUTHORITY);
+    }
+
+    /**
+     * Test that normal apps cannot access Android/data and Android/obb dirs of other apps
+     */
+    @Test
+    public void testCantProbeOtherAppsExternalDirs() throws Exception {
+        if (isFuseBpfEnabled()) {
+            String message = "Expected not to see other app's private dirs";
+
+            assertWithMessage(message)
+                    .that(fileExistsAs(APP_B_NO_PERMS, new File(getExternalFilesDir().getParent())))
+                    .isFalse();
+
+            assertWithMessage(message)
+                    .that(fileExistsAs(APP_B_NO_PERMS, getExternalObbDir()))
+                    .isFalse();
+        }
+    }
+
+    private boolean isFuseBpfEnabled() throws Exception {
+        return executeShellCommand("getprop ro.fuse.bpf.is_running").trim().equals("true");
     }
 
     private void assertWritableMountModeForProvider(String auth) {

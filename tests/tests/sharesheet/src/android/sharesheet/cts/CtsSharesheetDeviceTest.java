@@ -536,8 +536,9 @@ public class CtsSharesheetDeviceTest {
         PendingIntent pi = PendingIntent.getBroadcast(
                 mContext,
                 9384 /* number not relevant */ ,
-                new Intent(ACTION_INTENT_SENDER_FIRED_ON_CLICK),
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE_UNAUDITED);
+                new Intent(ACTION_INTENT_SENDER_FIRED_ON_CLICK)
+                        .setPackage(mContext.getPackageName()),
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
 
         Intent shareIntent = Intent.createChooser(intent, null, pi.getIntentSender());
 

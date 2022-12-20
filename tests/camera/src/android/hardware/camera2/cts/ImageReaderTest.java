@@ -552,6 +552,54 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     }
 
     @Test
+    public void testJpegR() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                Log.v(TAG, "Testing Jpeg/R capture for Camera " + id);
+                if (!mAllStaticInfo.get(id).isCapabilitySupported(CameraCharacteristics
+                        .REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT)) {
+                    continue;
+                }
+                openDevice(id);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.JPEG_R, /*repeating*/false);
+                bufferFormatTestByCamera(params);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    @Test
+    public void testJpegRDisplayP3() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                if (!mAllStaticInfo.get(id).isCapabilitySupported(CameraCharacteristics
+                        .REQUEST_AVAILABLE_CAPABILITIES_COLOR_SPACE_PROFILES)) {
+                    continue;
+                }
+                Set<ColorSpace.Named> availableColorSpaces =
+                        mAllStaticInfo.get(id).getAvailableColorSpacesChecked(
+                                ImageFormat.JPEG_R);
+
+                if (!availableColorSpaces.contains(ColorSpace.Named.DISPLAY_P3)) {
+                    continue;
+                }
+                openDevice(id);
+                Log.v(TAG, "Testing Display P3 Jpeg/R capture for Camera " + id);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.JPEG_R, /*repeating*/false);
+                params.mColorSpace = ColorSpace.Named.DISPLAY_P3;
+                params.mUseColorSpace = true;
+                params.mDynamicRangeProfile = DynamicRangeProfiles.HLG10;
+                bufferFormatTestByCamera(params);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    @Test
     public void testHeic() throws Exception {
         for (String id : mCameraIdsUnderTest) {
             try {
@@ -806,6 +854,30 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
+    public void testImageReaderBuilderWithBLOBAndJpegR() throws Exception {
+        long usage = HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE | HardwareBuffer.USAGE_GPU_COLOR_OUTPUT;
+        try (
+                ImageReader reader = new ImageReader
+                        .Builder(20, 45)
+                        .setMaxImages(2)
+                        .setDefaultHardwareBufferFormat(HardwareBuffer.BLOB)
+                        .setDefaultDataSpace(DataSpace.DATASPACE_JPEG_R)
+                        .setUsage(usage)
+                        .build();
+                ImageWriter writer = new ImageWriter.Builder(reader.getSurface()).build();
+        ) {
+            assertEquals(2, reader.getMaxImages());
+            assertEquals(usage, reader.getUsage());
+            assertEquals(HardwareBuffer.BLOB, reader.getHardwareBufferFormat());
+            assertEquals(DataSpace.DATASPACE_JPEG_R, reader.getDataSpace());
+            // writer should have same dataspace/hardwarebuffer format as reader.
+            assertEquals(HardwareBuffer.BLOB, writer.getHardwareBufferFormat());
+            assertEquals(DataSpace.DATASPACE_JPEG_R, writer.getDataSpace());
+            // Jpeg/R is the combination of HardwareBuffer.BLOB and Dataspace.DATASPACE_JPEG_R
+            assertEquals(ImageFormat.JPEG_R, writer.getFormat());
+        }
+    }
 
     @Test
     public void testImageReaderBuilderWithBLOBAndJFIF() throws Exception {

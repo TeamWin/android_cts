@@ -32,6 +32,8 @@ import android.provider.DeviceConfig.Properties;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.modules.utils.build.SdkLevel;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -102,6 +104,7 @@ public final class DeviceConfigApiTests {
      */
     @BeforeClass
     public static void setUp() throws Exception {
+        assumeTrue(SdkLevel.isAtLeastU());
         if (CONTEXT.getUserId() != UserHandle.USER_SYSTEM
                 && CONTEXT.getPackageManager().isInstantApp()) {
             sUnsupportedReason = "cannot run test as instant app on secondary user "

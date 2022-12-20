@@ -19,15 +19,14 @@ package android.input.cts
 import android.app.Instrumentation
 import android.content.Context
 import android.graphics.Point
-import android.graphics.PointF
 import android.hardware.input.InputManager
 import android.view.Display
 import android.view.InputDevice
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.cts.input.UinputDevice
+import java.io.Closeable
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.Closeable
 
 class UinputTouchScreen(instrumentation: Instrumentation, display: Display) : Closeable {
     private val uinputDevice: UinputDevice
@@ -49,15 +48,15 @@ class UinputTouchScreen(instrumentation: Instrumentation, display: Display) : Cl
         injectEvent(intArrayOf(EV_KEY, BTN_TOUCH, if (isDown) 1 else 0))
     }
 
-    fun sendDown(id: Int, location: PointF) {
+    fun sendDown(id: Int, location: Point) {
         injectEvent(intArrayOf(EV_ABS, ABS_MT_SLOT, id))
         injectEvent(intArrayOf(EV_ABS, ABS_MT_TRACKING_ID, id))
-        injectEvent(intArrayOf(EV_ABS, ABS_MT_POSITION_X, location.x.toInt()))
-        injectEvent(intArrayOf(EV_ABS, ABS_MT_POSITION_Y, location.y.toInt()))
+        injectEvent(intArrayOf(EV_ABS, ABS_MT_POSITION_X, location.x))
+        injectEvent(intArrayOf(EV_ABS, ABS_MT_POSITION_Y, location.y))
         injectEvent(intArrayOf(EV_SYN, SYN_REPORT, 0))
     }
 
-    fun sendMove(id: Int, location: PointF) {
+    fun sendMove(id: Int, location: Point) {
         // Use same events of down.
         sendDown(id, location)
     }
@@ -74,7 +73,7 @@ class UinputTouchScreen(instrumentation: Instrumentation, display: Display) : Cl
         injectEvent(intArrayOf(EV_SYN, SYN_REPORT, 0))
     }
 
-    private fun readRawResource(context: Context): String? {
+    private fun readRawResource(context: Context): String {
         return context.resources
                 .openRawResource(R.raw.test_touchscreen_register)
                 .bufferedReader().use { it.readText() }
@@ -91,9 +90,9 @@ class UinputTouchScreen(instrumentation: Instrumentation, display: Display) : Cl
         val displaySize = Point()
         display.getRealSize(displaySize)
 
-        val abs_info: JSONArray = json.getJSONArray("abs_info")
-        for (i in 0 until abs_info.length()) {
-            val item = abs_info.getJSONObject(i)
+        val absInfo: JSONArray = json.getJSONArray("abs_info")
+        for (i in 0 until absInfo.length()) {
+            val item = absInfo.getJSONObject(i)
             if (item.get("code") == ABS_MT_POSITION_X) {
                 item.getJSONObject("info").put("maximum", displaySize.x - 1)
             }

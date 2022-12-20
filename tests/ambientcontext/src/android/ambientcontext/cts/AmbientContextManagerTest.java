@@ -149,7 +149,7 @@ public class AmbientContextManagerTest {
         AmbientContextEventRequest request = new AmbientContextEventRequest.Builder()
                 .addEventType(AmbientContextEvent.EVENT_COUGH)
                 .build();
-        Intent intent = new Intent();
+        Intent intent = new Intent().setPackage(mContext.getPackageName());
         PendingIntent pendingIntent =
                 PendingIntent.getBroadcast(mContext, 0, intent, PendingIntent.FLAG_MUTABLE);
         try {
