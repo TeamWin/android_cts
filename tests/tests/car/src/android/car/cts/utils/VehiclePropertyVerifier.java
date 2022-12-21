@@ -504,7 +504,8 @@ public class VehiclePropertyVerifier<T> {
         mConfigArrayVerifier.ifPresent(configArrayVerifier -> configArrayVerifier.verify(
                 carPropertyConfig.getConfigArray()));
 
-        if (mPossibleConfigArrayValues.isEmpty() && !mConfigArrayVerifier.isPresent()) {
+        if (mPossibleConfigArrayValues.isEmpty() && !mConfigArrayVerifier.isPresent()
+                && !mCarPropertyConfigVerifier.isPresent()) {
             assertWithMessage(mPropertyName + " configArray is undefined, so it must be empty")
                     .that(carPropertyConfig.getConfigArray().size())
                     .isEqualTo(0);

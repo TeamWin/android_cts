@@ -40,5 +40,10 @@
             android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 
+    <!-- TODO(b/262605364): Remove when support is added for app visibility. -->
+    <queries>
+        <package android:name="android.app.cts.testshareidentity" />
+    </queries>
+
 </manifest>
 

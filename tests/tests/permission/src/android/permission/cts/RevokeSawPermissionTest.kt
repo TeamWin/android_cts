@@ -41,7 +41,7 @@ class RevokeSawPermissionTest {
         SystemUtil.runShellCommand("pm uninstall $APP_PKG_NAME")
     }
 
-    @AsbSecurityTest(cveBugId = [247512334L])
+    @AsbSecurityTest(cveBugId = [221040577L])
     @Test
     fun testPre23AppsWithSystemAlertWindowGetDeniedOnUpgrade() {
         installApp(APK_22)

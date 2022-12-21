@@ -27,6 +27,7 @@ import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
@@ -60,6 +61,7 @@ import android.telephony.ims.ImsRcsManager;
 import android.telephony.ims.ImsReasonInfo;
 import android.telephony.ims.ImsRegistrationAttributes;
 import android.telephony.ims.ImsStateCallback;
+import android.telephony.ims.MediaThreshold;
 import android.telephony.ims.ProvisioningManager;
 import android.telephony.ims.PublishAttributes;
 import android.telephony.ims.RcsClientConfiguration;
@@ -4991,6 +4993,43 @@ public class ImsServiceTest {
                     .getMmTelFeature().getOfferedRtpHeaderExtensionTypes();
 
             assertTrue(extensions.size() > 0);
+        } finally {
+            sServiceConnector.setDeviceToDeviceCommunicationEnabled(false);
+            overrideCarrierConfig(null);
+        }
+    }
+
+    @Test
+    public void testSetMediaThreshold() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        sServiceConnector.setDeviceToDeviceCommunicationEnabled(true);
+        try {
+            PersistableBundle bundle = new PersistableBundle();
+            bundle.putInt(
+                    CarrierConfigManager.ImsVoice.KEY_VOICE_RTP_PACKET_LOSS_RATE_THRESHOLD_INT,
+                    10);
+            bundle.putLong(
+                    CarrierConfigManager
+                            .ImsVoice
+                            .KEY_VOICE_RTP_INACTIVITY_TIME_THRESHOLD_MILLIS_LONG, 5000);
+            bundle.putInt(
+                    CarrierConfigManager
+                            .ImsVoice.KEY_VOICE_RTP_JITTER_THRESHOLD_MILLIS_INT, 70);
+            overrideCarrierConfig(bundle);
+
+            triggerFrameworkConnectToCarrierImsService();
+
+            sServiceConnector.getCarrierService().getMmTelFeature()
+                    .getSetMediaThresholdLatch().await(5000, TimeUnit.MILLISECONDS);
+            MediaThreshold threshold =
+                    sServiceConnector.getCarrierService().getMmTelFeature().getSetMediaThreshold();
+
+            assertNotNull(threshold);
+            assertArrayEquals(new int[]{10}, threshold.getThresholdsRtpPacketLossRate());
+            assertArrayEquals(new int[]{70}, threshold.getThresholdsRtpJitterMillis());
+            assertArrayEquals(new long[]{5000}, threshold.getThresholdsRtpInactivityTimeMillis());
         } finally {
             sServiceConnector.setDeviceToDeviceCommunicationEnabled(false);
             overrideCarrierConfig(null);

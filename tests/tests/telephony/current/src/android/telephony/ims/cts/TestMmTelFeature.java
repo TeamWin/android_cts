@@ -17,10 +17,13 @@
 package android.telephony.ims.cts;
 
 import android.os.Bundle;
+import android.telephony.AccessNetworkConstants;
 import android.telephony.TelephonyManager;
 import android.telephony.ims.ImsCallProfile;
 import android.telephony.ims.ImsCallSessionListener;
 import android.telephony.ims.ImsStreamMediaProfile;
+import android.telephony.ims.MediaQualityStatus;
+import android.telephony.ims.MediaThreshold;
 import android.telephony.ims.RtpHeaderExtensionType;
 import android.telephony.ims.SrvccCall;
 import android.telephony.ims.feature.CapabilityChangeRequest;
@@ -51,6 +54,8 @@ public class TestMmTelFeature extends MmTelFeature {
     private TestImsSmsImpl mSmsImpl;
     private Set<RtpHeaderExtensionType> mOfferedRtpHeaderExtensionTypes;
     private CountDownLatch mOfferedRtpHeaderExtensionLatch = new CountDownLatch(1);
+    private MediaThreshold mSetMediaThreshold;
+    private CountDownLatch mSetMediaThresholdLatch = new CountDownLatch(1);
     private TestImsCallSessionImpl mCallSession;
     private CountDownLatch mTerminalBasedCallWaitingLatch = new CountDownLatch(1);
     private boolean mIsTerminalBasedCallWaitingNotified = false;
@@ -139,6 +144,13 @@ public class TestMmTelFeature extends MmTelFeature {
     }
 
     @Override
+    public void setMediaThreshold(int sessionType, MediaThreshold threshold) {
+        Log.d(TAG, "setMediaThreshold" + threshold);
+        mSetMediaThreshold = threshold;
+        mSetMediaThresholdLatch.countDown();
+    }
+
+    @Override
     public ImsCallProfile createCallProfile(int serviceType, int callType) {
         ImsStreamMediaProfile mediaProfile = new ImsStreamMediaProfile(
                 ImsStreamMediaProfile.AUDIO_QUALITY_AMR,
@@ -190,6 +202,21 @@ public class TestMmTelFeature extends MmTelFeature {
         mSrvccStartedCallback = null;
     }
 
+    @Override
+    public MediaQualityStatus queryMediaQualityStatus(int sessionType) {
+        if (!mCallSession.isInCall()) {
+            Log.d(TAG, "queryMediaQualityStatus: no call.");
+            return null;
+        }
+        MediaQualityStatus status = new MediaQualityStatus.Builder(mCallSession.getCallId(),
+                    MediaQualityStatus.MEDIA_SESSION_TYPE_AUDIO,
+                    AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
+                .setRtpPacketLossRate(0).setRtpJitterMillis(0).setRtpInactivityMillis(0).build();
+
+        Log.d(TAG, "queryMediaQualityStatus: current status " + status);
+        return status;
+    }
+
     public void setCapabilities(MmTelCapabilities capabilities) {
         mCapabilities = capabilities;
     }
@@ -204,6 +231,15 @@ public class TestMmTelFeature extends MmTelFeature {
 
     public CountDownLatch getOfferedRtpHeaderExtensionLatch() {
         return mOfferedRtpHeaderExtensionLatch;
+    }
+
+    public MediaThreshold getSetMediaThreshold() {
+        Log.d(TAG, "getSetMediaThreshold: " + mSetMediaThreshold);
+        return mSetMediaThreshold;
+    }
+
+    public CountDownLatch getSetMediaThresholdLatch() {
+        return mSetMediaThresholdLatch;
     }
 
     public TestImsCallSessionImpl getImsCallsession() {

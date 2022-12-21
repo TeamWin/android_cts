@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
+import android.telecom.CallEndpoint;
 import android.telecom.InCallService;
 import android.util.ArrayMap;
 import android.util.Log;
@@ -47,6 +48,7 @@ public class MockInCallService extends InCallService {
     private static boolean mIsServiceBound = false;
     private static CountDownLatch sBindLatch = new CountDownLatch(1);
     private static CountDownLatch sUnbindLatch = new CountDownLatch(1);
+    private boolean mEndpointIsMute = false;
 
     public static abstract class InCallServiceCallbacks {
         private MockInCallService mService;
@@ -73,6 +75,9 @@ public class MockInCallService extends InCallService {
         public void onRttInitiationFailure(Call call, int reason) {}
         public void onHandoverComplete(Call call) {}
         public void onHandoverFailed(Call call, int failureReason) {}
+        public void onCallEndpointChanged(CallEndpoint callEndpoint) {}
+        public void onAvailableCallEndpointsChanged(List<CallEndpoint> availableEndpoints) {}
+        public void onMuteStateChanged(boolean isMuted) {}
 
         final public MockInCallService getService() {
             return mService;
@@ -316,6 +321,31 @@ public class MockInCallService extends InCallService {
     }
 
     @Override
+    public void onCallEndpointChanged(CallEndpoint callEndpoint) {
+        super.onCallEndpointChanged(callEndpoint);
+        if (getCallbacks() != null) {
+            getCallbacks().onCallEndpointChanged(callEndpoint);
+        }
+    }
+
+    @Override
+    public void onAvailableCallEndpointsChanged(List<CallEndpoint> availableEndpoints) {
+        super.onAvailableCallEndpointsChanged(availableEndpoints);
+        if (getCallbacks() != null) {
+            getCallbacks().onAvailableCallEndpointsChanged(availableEndpoints);
+        }
+    }
+
+    @Override
+    public void onMuteStateChanged(boolean isMuted) {
+        super.onMuteStateChanged(isMuted);
+        mEndpointIsMute = isMuted;
+        if (getCallbacks() != null) {
+            getCallbacks().onMuteStateChanged(isMuted);
+        }
+    }
+
+    @Override
     public void onSilenceRinger(){
         super.onSilenceRinger();
         if(getCallbacks() != null) {
@@ -400,6 +430,10 @@ public class MockInCallService extends InCallService {
             }
             return sCallbacks;
         }
+    }
+
+    public boolean getEndpointMuteState() {
+        return mEndpointIsMute;
     }
 
     /**

@@ -17,7 +17,6 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
-import static android.server.wm.ActivityManagerTestBase.isTablet;
 import static android.view.WindowInsets.Type.displayCutout;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
@@ -30,6 +29,7 @@ import android.content.Context;
 import android.graphics.Insets;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowInsets;
@@ -94,17 +94,16 @@ public class WindowMetricsTestHelper {
                 && context.getResources().getConfiguration().windowConfiguration
                 .getWindowingMode() == WINDOWING_MODE_FREEFORM;
         final WindowManager windowManager = context.getSystemService(WindowManager.class);
-        // Freeform activity doesn't inset the navigation bar and cutout area.
-        final Rect currentBounds =
-                isFreeForm ? windowManager.getCurrentWindowMetrics().getBounds() :
-                        getBoundsExcludingNavigationBarAndCutout(
-                                windowManager.getCurrentWindowMetrics());
-        final Rect maxBounds = windowManager.getMaximumWindowMetrics().getBounds();
+        final WindowMetrics currentMetrics = windowManager.getCurrentWindowMetrics();
+        final WindowMetrics maxMetrics = windowManager.getMaximumWindowMetrics();
+        final Rect maxBounds = maxMetrics.getBounds();
         final Display display = context.getDisplay();
-        assertBoundsMatchDisplay(maxBounds, currentBounds, display);
+        assertMetricsMatchDisplay(maxMetrics, currentMetrics, display, isFreeForm);
 
         // Max window bounds should match either DisplayArea bounds, or current window bounds.
         if (maxWindowBoundsSandboxed(displayAreaBounds, maxBounds)) {
+            final Rect currentBounds = isFreeForm ? currentMetrics.getBounds()
+                    : getBoundsExcludingNavigationBarAndCutout(currentMetrics);
             // Max window bounds are sandboxed, so max window bounds and real display size
             // should match current window bounds.
             assertEquals("Max window size matches current window size, due to sandboxing",
@@ -118,38 +117,45 @@ public class WindowMetricsTestHelper {
     }
 
     /**
-     * Verifies for the provided bounds and display:
+     * Verifies for the provided {@link WindowMetrics} and {@link Display}:
      * <ul>
-     *     <li>{@link WindowManager#getCurrentWindowMetrics()} matches
-     *     {@link Display#getSize(Point)}</li>
-     *     <li>{@link WindowManager#getMaximumWindowMetrics()} matches
-     *     {@link Display#getRealSize(Point)}
+     *     <li>Bounds and density from {@link WindowManager#getCurrentWindowMetrics()} matches
+     *     {@link Display#getMetrics(DisplayMetrics)}</li>
+     *     <li>Bounds and density from {@link WindowManager#getMaximumWindowMetrics()} matches
+     *     {@link Display#getRealMetrics(DisplayMetrics)}
+     *
      * </ul>
-     * @param maxBounds the bounds from {@link WindowManager#getMaximumWindowMetrics()}
-     * @param currentBounds the bounds from {@link WindowManager#getCurrentWindowMetrics()}
+     * @param maxMetrics the {@link WindowMetrics} from
+     *                  {@link WindowManager#getMaximumWindowMetrics()}
+     * @param currentMetrics the {@link WindowMetrics} from
+     *                      {@link WindowManager#getCurrentWindowMetrics()}
      * @param display the display to compare bounds against
+     * @param shouldBoundsIncludeInsets whether the bounds to be verified should include insets
      */
-    static void assertBoundsMatchDisplay(Rect maxBounds, Rect currentBounds, Display display) {
-        // TODO(b/224404595): remove the logic after we can revert ag/17076728 back.
-        if (isTablet()) {
-            return;
-        }
-
+    static void assertMetricsMatchDisplay(WindowMetrics maxMetrics, WindowMetrics currentMetrics,
+            Display display, boolean shouldBoundsIncludeInsets) {
         // Check window bounds
-        final Point displaySize = new Point();
-        display.getSize(displaySize);
+        final DisplayMetrics displayMetrics = new DisplayMetrics();
+        display.getMetrics(displayMetrics);
+        final Rect currentBounds = shouldBoundsIncludeInsets ? currentMetrics.getBounds()
+                : getBoundsExcludingNavigationBarAndCutout(currentMetrics);
         assertEquals("Reported display width must match window width",
-                displaySize.x, currentBounds.width());
+                displayMetrics.widthPixels, currentBounds.width());
         assertEquals("Reported display height must match window height",
-                displaySize.y, currentBounds.height());
+                displayMetrics.heightPixels, currentBounds.height());
+        assertEquals("Reported display density must match density from window metrics",
+                displayMetrics.density, currentMetrics.getDensity(), 0.0f);
 
         // Max window bounds should match real display size.
-        final Point realDisplaySize = new Point();
-        display.getRealSize(realDisplaySize);
+        final DisplayMetrics realDisplayMetrics = new DisplayMetrics();
+        display.getRealMetrics(realDisplayMetrics);
+        final Rect maxBounds = maxMetrics.getBounds();
         assertEquals("Reported real display width must match max window width",
-                realDisplaySize.x, maxBounds.width());
+                realDisplayMetrics.widthPixels, maxBounds.width());
         assertEquals("Reported real display height must match max window height",
-                realDisplaySize.y, maxBounds.height());
+                realDisplayMetrics.heightPixels, maxBounds.height());
+        assertEquals("Reported real display density must match density from window metrics",
+                realDisplayMetrics.density, currentMetrics.getDensity(), 0.0f);
     }
 
     public static Rect getBoundsExcludingNavigationBarAndCutout(WindowMetrics windowMetrics) {

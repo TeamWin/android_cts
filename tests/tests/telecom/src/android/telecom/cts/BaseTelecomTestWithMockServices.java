@@ -45,6 +45,7 @@ import android.os.UserHandle;
 import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
+import android.telecom.CallEndpoint;
 import android.telecom.Conference;
 import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
@@ -118,6 +119,9 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     TestUtils.InvokeCounter mOnHandoverCompleteCounter;
     TestUtils.InvokeCounter mOnHandoverFailedCounter;
     TestUtils.InvokeCounter mOnPhoneAccountChangedCounter;
+    TestUtils.InvokeCounter mOnCallEndpointChangedCounter;
+    TestUtils.InvokeCounter mOnAvailableEndpointsChangedCounter;
+    TestUtils.InvokeCounter mOnMuteStateChangedCounter;
     Bundle mPreviousExtras;
     int mPreviousProperties = -1;
     PhoneAccountHandle mPreviousPhoneAccountHandle = null;
@@ -553,6 +557,24 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             public void onHandoverFailed(Call call, int reason) {
                 mOnHandoverFailedCounter.invoke(call, reason);
             }
+
+            @Override
+            public void onCallEndpointChanged(CallEndpoint callEndpoint) {
+                Log.i(TAG, "onCallEndpointChanged, callEndpoint: " + callEndpoint);
+                mOnCallEndpointChangedCounter.invoke(callEndpoint);
+            }
+
+            @Override
+            public void onAvailableCallEndpointsChanged(List<CallEndpoint> availableEndpoints) {
+                Log.i(TAG, "onAvailableCallEndpointsChanged");
+                mOnAvailableEndpointsChangedCounter.invoke(availableEndpoints);
+            }
+
+            @Override
+            public void onMuteStateChanged(boolean isMuted) {
+                Log.i(TAG, "onMuteStateChanged, isMuted: " + isMuted);
+                mOnMuteStateChangedCounter.invoke(isMuted);
+            }
         };
 
         MockInCallService.setCallbacks(mInCallCallbacks);
@@ -576,6 +598,10 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         mOnHandoverFailedCounter = new TestUtils.InvokeCounter("mOnHandoverFailedCounter");
         mOnPhoneAccountChangedCounter = new TestUtils.InvokeCounter(
                 "mOnPhoneAccountChangedCounter");
+        mOnCallEndpointChangedCounter = new TestUtils.InvokeCounter("OnCallEndpointChanged");
+        mOnAvailableEndpointsChangedCounter = new TestUtils.InvokeCounter(
+                "OnAvailableEndpointsChanged");
+        mOnMuteStateChangedCounter = new TestUtils.InvokeCounter("OnMuteStateChanged");
     }
 
     void addAndVerifyNewFailedIncomingCall(Uri incomingHandle, Bundle extras) {
@@ -2054,6 +2080,80 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                 },
                 TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
                 "Expected ui mode " + uiMode
+        );
+    }
+    void assertEndpointType(final InCallService incallService, final int type) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return type;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        final CallEndpoint endpoint = incallService.getCurrentCallEndpoint();
+                        return endpoint == null ? null : endpoint.getEndpointType();
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Phone's call endpoint type should be: " + type
+        );
+    }
+
+    void assertEndpointType(final MockConnection connection, final int type) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return type;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        final CallEndpoint endpoint =
+                                ((Connection) connection).getCurrentCallEndpoint();
+                        return endpoint == null ? null : endpoint.getEndpointType();
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Connection's call endpoint type should be: " + type
+        );
+    }
+
+    void assertMuteEndpoint(final MockInCallService incallService, final boolean isMuted) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return isMuted;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return incallService.getEndpointMuteState();
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Phone's mute state should be: " + isMuted
+        );
+    }
+
+    void assertMuteEndpoint(final MockConnection connection, final boolean isMuted) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return isMuted;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return connection.getEndpointMuteState();
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Connection's mute state should be: " + isMuted
         );
     }
 

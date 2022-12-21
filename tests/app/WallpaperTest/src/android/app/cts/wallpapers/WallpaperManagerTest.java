@@ -68,6 +68,7 @@ import com.android.compatibility.common.util.CtsTouchUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -918,6 +919,7 @@ public class WallpaperManagerTest {
     }
 
     @Test
+    @Ignore("b/263126531")
     public void getDrawable_homeScreen_succeeds() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
@@ -936,6 +938,7 @@ public class WallpaperManagerTest {
     }
 
     @Test
+    @Ignore("b/263126531")
     public void getDrawable_lockScreenSet_succeeds() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_LOCK);
@@ -947,6 +950,7 @@ public class WallpaperManagerTest {
     }
 
     @Test
+    @Ignore("b/263126531")
     public void getDrawable_default_sameAsHome() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
@@ -958,6 +962,7 @@ public class WallpaperManagerTest {
     }
 
     @Test
+    @Ignore("b/263126531")
     public void getFastDrawable_homeScreen_succeeds() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
@@ -976,6 +981,7 @@ public class WallpaperManagerTest {
     }
 
     @Test
+    @Ignore("b/263126531")
     public void getFastDrawable_lockScreenSet_succeeds() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_LOCK);
@@ -987,6 +993,7 @@ public class WallpaperManagerTest {
     }
 
     @Test
+    @Ignore("b/263126531")
     public void getFastDrawable_default_sameAsHome() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
@@ -998,6 +1005,7 @@ public class WallpaperManagerTest {
     }
 
     @Test
+    @Ignore("b/263126531")
     public void peekDrawable_homeScreen_succeeds() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
@@ -1016,6 +1024,7 @@ public class WallpaperManagerTest {
     }
 
     @Test
+    @Ignore("b/263126531")
     public void peekDrawable_lockScreenSet_succeeds() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_LOCK);
@@ -1027,6 +1036,7 @@ public class WallpaperManagerTest {
     }
 
     @Test
+    @Ignore("b/263126531")
     public void peekDrawable_default_sameAsHome() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
@@ -1038,6 +1048,7 @@ public class WallpaperManagerTest {
     }
 
     @Test
+    @Ignore("b/263126531")
     public void peekFastDrawable_homeScreen_succeeds() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);
@@ -1056,6 +1067,7 @@ public class WallpaperManagerTest {
     }
 
     @Test
+    @Ignore("b/263126531")
     public void peekFastDrawable_lockScreenSet_succeeds() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_LOCK);
@@ -1067,6 +1079,7 @@ public class WallpaperManagerTest {
     }
 
     @Test
+    @Ignore("b/263126531")
     public void peekFastDrawable_default_sameAsHome() throws IOException {
         Drawable expected = mContext.getDrawable(R.drawable.robot);
         mWallpaperManager.setResource(R.drawable.robot, FLAG_SYSTEM);

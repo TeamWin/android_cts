@@ -20,20 +20,18 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.externalservice.common.RunningServiceInfo;
+import android.externalservice.common.ServiceMessages;
 import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
-import android.os.Parcel;
 import android.os.Process;
 import android.os.RemoteException;
 import android.test.AndroidTestCase;
 import android.util.Log;
-
-import android.externalservice.common.RunningServiceInfo;
-import android.externalservice.common.ServiceMessages;
 
 public class ExternalServiceTest extends AndroidTestCase {
     private static final String TAG = "ExternalServiceTest";
@@ -408,43 +406,12 @@ public class ExternalServiceTest extends AndroidTestCase {
     /** Given a Messenger, this will message the service to retrieve its UID, PID, and package name.
      * On success, returns a RunningServiceInfo. On failure, returns null. */
     private RunningServiceInfo identifyService(Messenger service) {
-        class IdentifyHandler extends Handler {
-            IdentifyHandler() {
-                super(Looper.getMainLooper());
-            }
-
-            RunningServiceInfo mInfo;
-
-            @Override
-            public void handleMessage(Message msg) {
-                Log.d(TAG, "Received message: " + msg);
-                switch (msg.what) {
-                    case ServiceMessages.MSG_IDENTIFY_RESPONSE:
-                        msg.getData().setClassLoader(RunningServiceInfo.class.getClassLoader());
-                        mInfo = msg.getData().getParcelable(ServiceMessages.IDENTIFY_INFO);
-                        mCondition.open();
-                        break;
-                }
-                super.handleMessage(msg);
-            }
-        };
-
-        IdentifyHandler handler = new IdentifyHandler();
-        Messenger local = new Messenger(handler);
-
-        Message msg = Message.obtain(null, ServiceMessages.MSG_IDENTIFY);
-        msg.replyTo = local;
         try {
-            mCondition.close();
-            service.send(msg);
+            return RunningServiceInfo.identifyService(service, TAG, mCondition);
         } catch (RemoteException e) {
             fail("Unexpected remote exception: " + e);
             return null;
         }
-
-        if (!mCondition.block(CONDITION_TIMEOUT))
-            return null;
-        return handler.mInfo;
     }
 
     private class Connection implements ServiceConnection {

@@ -215,59 +215,6 @@ public final class HotwordDetectionServiceBasicTest
     }
 
     @Test
-    public void testHotwordDetectionService_onDetectFromExternalSource_success()
-            throws Throwable {
-        Thread.sleep(CLEAR_CHIP_MS);
-        // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
-                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
-
-        verifyDetectedResult(
-                performAndGetDetectionResult(
-                        mActivityTestRule, mContext,
-                        Utils.HOTWORD_DETECTION_SERVICE_EXTERNAL_SOURCE_ONDETECT_TEST,
-                        Utils.HOTWORD_DETECTION_SERVICE_BASIC),
-                MainHotwordDetectionService.DETECTED_RESULT);
-        verifyMicrophoneChip(true);
-
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
-                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
-    }
-
-    @Test
-    @RequiresDevice
-    public void testHotwordDetectionService_onDetectFromMic_success()
-            throws Throwable {
-        Thread.sleep(CLEAR_CHIP_MS);
-        // Create SoftwareHotwordDetector and wait the HotwordDetectionService ready
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST,
-                Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
-                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
-
-        verifyDetectedResult(
-                performAndGetDetectionResult(
-                        mActivityTestRule, mContext,
-                        Utils.HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST,
-                        Utils.HOTWORD_DETECTION_SERVICE_BASIC),
-                MainHotwordDetectionService.DETECTED_RESULT);
-        verifyMicrophoneChip(true);
-
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_DESTROY_DETECTOR,
-                Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
-                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
-    }
-
-    @Test
     @RequiresDevice
     public void testHotwordDetectionService_onStopDetection()
             throws Throwable {
@@ -376,29 +323,6 @@ public final class HotwordDetectionServiceBasicTest
                 Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
-                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
-    }
-
-    @Test
-    public void testHotwordDetectionService_destroyDspDetector_activeDetectorRemoved() {
-        // Create AlwaysOnHotwordDetector
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
-                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
-
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS,
-                Utils.HOTWORD_DETECTION_SERVICE_BASIC);
-
-        // Can no longer use the detector because it is in an invalid state
-        testHotwordDetection(mActivityTestRule, mContext,
-                Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION,
                 Utils.HOTWORD_DETECTION_SERVICE_BASIC);
     }
 

@@ -304,7 +304,8 @@ public class ActivityManagerTest {
             mActivityToFilter = activityToFilter;
             IntentFilter filter = new IntentFilter();
             filter.addAction(mActivityToFilter);
-            mInstrumentation.getTargetContext().registerReceiver(this, filter);
+            mInstrumentation.getTargetContext().registerReceiver(this, filter,
+                    Context.RECEIVER_EXPORTED);
         }
 
         // Turn off the filter.

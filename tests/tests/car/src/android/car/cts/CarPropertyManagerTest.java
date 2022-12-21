@@ -3749,11 +3749,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                 CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                                 Float.class)
                         .setPossiblyDependentOnHvacPowerOn()
-                        .setConfigArrayVerifier(
-                                configArray -> {
+                        .setCarPropertyConfigVerifier(
+                                carPropertyConfig -> {
+                                    List<Integer> configArray = carPropertyConfig.getConfigArray();
                                     assertWithMessage(
-                                                    "HVAC_TEMPERATURE_SET config array must be size"
-                                                        + " 6")
+                                                    "HVAC_TEMPERATURE_SET config "
+                                                            + "array must be size 6")
                                             .that(configArray.size())
                                             .isEqualTo(6);
 
@@ -3764,15 +3765,15 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                             .that(configArray.get(0))
                                             .isLessThan(configArray.get(1));
                                     assertWithMessage(
-                                                    "HVAC_TEMPERATURE_SET increment in Celsius must"
-                                                        + " be greater than 0")
+                                                    "HVAC_TEMPERATURE_SET increment in Celsius"
+                                                            + " must be greater than 0")
                                             .that(configArray.get(2))
                                             .isGreaterThan(0);
                                     assertWithMessage(
                                                     "HVAC_TEMPERATURE_SET increment in Celsius must"
                                                         + " be less than the difference between the"
-                                                        + " upper and lower bound supported "
-                                                        + "temperatures")
+                                                        + " upper and lower bound supported"
+                                                        + " temperatures")
                                             .that(configArray.get(2))
                                             .isLessThan(configArray.get(1) - configArray.get(0));
                                     assertWithMessage(
@@ -3792,7 +3793,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                             .isLessThan(configArray.get(4));
                                     assertWithMessage(
                                                     "HVAC_TEMPERATURE_SET increment in Fahrenheit"
-                                                        + " must be greater than 0")
+                                                            + " must be greater than 0")
                                             .that(configArray.get(5))
                                             .isGreaterThan(0);
                                     assertWithMessage(
@@ -3810,6 +3811,45 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                                     (configArray.get(4) - configArray.get(3))
                                                             % configArray.get(5))
                                             .isEqualTo(0);
+
+                                    int[] supportedAreaIds = carPropertyConfig.getAreaIds();
+                                    int configMinValue = configArray.get(0);
+                                    int configMaxValue = configArray.get(1);
+                                    for (int i = 0; i < supportedAreaIds.length; i++) {
+                                        int areaId = supportedAreaIds[i];
+                                        Float minValueFloat =
+                                                (Float) carPropertyConfig.getMinValue(areaId);
+                                        if (minValueFloat != null) {
+                                            Integer minValueInt = (int) (minValueFloat * 10);
+                                            assertWithMessage(
+                                                    "HVAC_TEMPERATURE_SET minimum value: "
+                                                            + minValueInt
+                                                            + " at areaId: "
+                                                            + areaId
+                                                            + " should be equal to minimum"
+                                                            + " value specified in config"
+                                                            + " array: "
+                                                            + configMinValue)
+                                                    .that(minValueInt)
+                                                    .isEqualTo(configMinValue);
+                                        }
+                                        Float maxValueFloat =
+                                                (Float) carPropertyConfig.getMaxValue(areaId);
+                                        if (maxValueFloat != null) {
+                                            Integer maxValueInt = (int) (maxValueFloat * 10);
+                                            assertWithMessage(
+                                                    "HVAC_TEMPERATURE_SET maximum value: "
+                                                            + maxValueInt
+                                                            + " at areaId: "
+                                                            + areaId
+                                                            + " should be equal to maximum"
+                                                            + " value specified in config"
+                                                            + " array: "
+                                                            + configMaxValue)
+                                                    .that(maxValueInt)
+                                                    .isEqualTo(configMaxValue);
+                                        }
+                                    }
                                 });
 
         CarPropertyConfig<?> hvacTempSetConfig =

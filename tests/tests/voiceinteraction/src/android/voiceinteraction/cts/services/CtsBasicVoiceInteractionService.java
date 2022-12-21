@@ -26,6 +26,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetectionService;
+import android.service.voice.HotwordDetector;
 import android.service.voice.HotwordRejectedResult;
 import android.service.voice.VoiceInteractionService;
 import android.util.Log;
@@ -151,6 +152,64 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         mHandler.post(() -> runWithShellPermissionIdentity(
                 () -> callCreateAlwaysOnHotwordDetector(mNoOpHotwordDetectorCallback),
                 BIND_HOTWORD_DETECTION_SERVICE));
+    }
+
+    public void createSoftwareHotwordDetector() {
+        mServiceTriggerLatch = new CountDownLatch(1);
+        mHandler.post(() -> runWithShellPermissionIdentity(() -> {
+            HotwordDetector.Callback callback = new HotwordDetector.Callback() {
+                @Override
+                public void onDetected(AlwaysOnHotwordDetector.EventPayload eventPayload) {
+                    Log.i(TAG, "onDetected");
+                    mDetectedResult = eventPayload;
+                    if (mOnDetectRejectLatch != null) {
+                        mOnDetectRejectLatch.countDown();
+                    }
+                }
+
+                @Override
+                public void onError() {
+                    Log.i(TAG, "onError");
+                }
+
+                @Override
+                public void onRecognitionPaused() {
+                    Log.i(TAG, "onRecognitionPaused");
+                }
+
+                @Override
+                public void onRecognitionResumed() {
+                    Log.i(TAG, "onRecognitionResumed");
+                }
+
+                @Override
+                public void onRejected(HotwordRejectedResult result) {
+                    Log.i(TAG, "onRejected");
+                    mRejectedResult = result;
+                    if (mOnDetectRejectLatch != null) {
+                        mOnDetectRejectLatch.countDown();
+                    }
+                }
+
+                @Override
+                public void onHotwordDetectionServiceInitialized(int status) {
+                    Log.i(TAG, "onHotwordDetectionServiceInitialized status = " + status);
+                    if (status != HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS) {
+                        return;
+                    }
+                    mInitializedStatus = status;
+                    if (mServiceTriggerLatch != null) {
+                        mServiceTriggerLatch.countDown();
+                    }
+                }
+
+                @Override
+                public void onHotwordDetectionServiceRestarted() {
+                    Log.i(TAG, "onHotwordDetectionServiceRestarted");
+                }
+            };
+            mSoftwareHotwordDetector = callCreateSoftwareHotwordDetector(callback);
+        }, MANAGE_HOTWORD_DETECTION));
     }
 
     /**

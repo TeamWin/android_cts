@@ -44,7 +44,9 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
@@ -79,6 +81,8 @@ public final class DeviceConfigApiTests {
     private static final int RESET_MODE_PACKAGE_DEFAULTS = 1;
     private static final int SYNC_DISABLED_MODE_NONE = 0;
 
+    private static final long OPERATION_TIMEOUT_MS = 5000;
+
     private static final Context CONTEXT = InstrumentationRegistry.getContext();
 
     private static final Executor EXECUTOR = CONTEXT.getMainExecutor();
@@ -93,6 +97,9 @@ public final class DeviceConfigApiTests {
 
     private static final String READ_DEVICE_CONFIG_PERMISSION =
             "android.permission.READ_DEVICE_CONFIG";
+
+    private static final String MONITOR_DEVICE_CONFIG_ACCESS =
+            "android.permission.MONITOR_DEVICE_CONFIG_ACCESS";
 
     // String used to skip tests if not support.
     // TODO: ideally it would be simpler to just use assumeTrue() in the @BeforeClass method, but
@@ -113,7 +120,8 @@ public final class DeviceConfigApiTests {
         }
 
         InstrumentationRegistry.getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
-                WRITE_DEVICE_CONFIG_PERMISSION, READ_DEVICE_CONFIG_PERMISSION);
+                WRITE_DEVICE_CONFIG_PERMISSION, READ_DEVICE_CONFIG_PERMISSION,
+                MONITOR_DEVICE_CONFIG_ACCESS);
     }
 
     @Before
@@ -1143,6 +1151,89 @@ public final class DeviceConfigApiTests {
                 "device_policy_manager", "content_capture");
 
         assertTrue(DeviceConfig.getPublicNamespaces().containsAll(publicNameSpaces));
+    }
+
+    /**
+     * Test set monitor callback.
+     */
+    @Test
+    public void testSetMonitorCallback() {
+        final CountDownLatch latch = new CountDownLatch(2);
+        final TestMonitorCallback callback = new TestMonitorCallback(latch);
+
+        DeviceConfig.setMonitorCallback(CONTEXT.getContentResolver(),
+                Executors.newSingleThreadExecutor(), callback);
+        // Reading properties triggers the monitor callback function.
+        DeviceConfig.getString(NAMESPACE1, KEY1, null);
+        try {
+            DeviceConfig.setProperties(new Properties.Builder(NAMESPACE1)
+                    .setString(KEY1, VALUE1).setString(KEY2, VALUE2).build());
+        } catch (DeviceConfig.BadConfigException e) {
+            fail("Callback set strings" + e.toString());
+        }
+
+        try {
+            if (!latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                fail("Callback function was not called");
+            }
+        } catch (InterruptedException e) {
+            // this part is executed when an exception (in this example InterruptedException) occurs
+            fail("Callback function was not called due to interruption" + e.toString());
+        }
+        assertEquals(callback.onNamespaceUpdateCalls, 1);
+        assertEquals(callback.onDeviceConfigAccessCalls, 1);
+    }
+
+    /**
+     * Test clear monitor callback.
+     */
+    @Test
+    public void testClearMonitorCallback() {
+        final CountDownLatch latch = new CountDownLatch(2);
+        final TestMonitorCallback callback = new TestMonitorCallback(latch);
+
+        DeviceConfig.setMonitorCallback(CONTEXT.getContentResolver(),
+                Executors.newSingleThreadExecutor(), callback);
+        DeviceConfig.clearMonitorCallback(CONTEXT.getContentResolver());
+        // Reading properties triggers the monitor callback function.
+        DeviceConfig.getString(NAMESPACE1, KEY1, null);
+        try {
+            DeviceConfig.setProperties(new Properties.Builder(NAMESPACE1)
+                    .setString(KEY1, VALUE1).setString(KEY2, VALUE2).build());
+        } catch (DeviceConfig.BadConfigException e) {
+            fail("Callback set strings" + e.toString());
+        }
+
+        try {
+            if (latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                fail("Callback function was called while it has been cleared");
+            }
+        } catch (InterruptedException e) {
+            // this part is executed when an exception (in this example InterruptedException) occurs
+            fail("un expected interruption occur" + e.toString());
+        }
+        assertEquals(callback.onNamespaceUpdateCalls, 0);
+        assertEquals(callback.onDeviceConfigAccessCalls, 0);
+    }
+
+    private class TestMonitorCallback implements DeviceConfig.MonitorCallback {
+        public int onNamespaceUpdateCalls = 0;
+        public int onDeviceConfigAccessCalls = 0;
+        public CountDownLatch latch;
+
+        TestMonitorCallback(CountDownLatch latch) {
+            this.latch = latch;
+        }
+
+        public void onNamespaceUpdate(String updatedNamespace) {
+            onNamespaceUpdateCalls++;
+            latch.countDown();
+        }
+
+        public void onDeviceConfigAccess(String callingPackage, String namespace) {
+            onDeviceConfigAccessCalls++;
+            latch.countDown();
+        }
     }
 
     private OnPropertiesChangedListener createOnPropertiesChangedListener(

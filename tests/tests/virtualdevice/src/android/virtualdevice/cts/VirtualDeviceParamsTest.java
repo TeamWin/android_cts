@@ -21,6 +21,7 @@ import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAUL
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_AUDIO;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_SENSORS;
 import static android.hardware.Sensor.TYPE_ACCELEROMETER;
+import static android.media.AudioManager.AUDIO_SESSION_ID_GENERATE;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -246,6 +247,69 @@ public class VirtualDeviceParamsTest {
             assertThat(virtualSensorConfigs.get(i).getType()).isEqualTo(TYPE_ACCELEROMETER);
         }
     }
+
+    @Test
+    public void audioSessionIds_placeholder_succeeds() {
+        VirtualDeviceParams params = new VirtualDeviceParams.Builder()
+                .setAudioPlaybackSessionId(AUDIO_SESSION_ID_GENERATE)
+                .setAudioRecordingSessionId(AUDIO_SESSION_ID_GENERATE).build();
+
+        assertThat(params.getAudioPlaybackSessionId()).isEqualTo(AUDIO_SESSION_ID_GENERATE);
+        assertThat(params.getAudioRecordingSessionId()).isEqualTo(AUDIO_SESSION_ID_GENERATE);
+    }
+
+    @Test
+    public void audioSessionIds_validIds_succeeds() {
+        int playbackSessionId = 42;
+        int recordingSessionId = 77;
+        VirtualDeviceParams params = new VirtualDeviceParams.Builder()
+                .setDevicePolicy(POLICY_TYPE_AUDIO, DEVICE_POLICY_CUSTOM)
+                .setAudioPlaybackSessionId(playbackSessionId)
+                .setAudioRecordingSessionId(recordingSessionId).build();
+
+        assertThat(params.getAudioPlaybackSessionId()).isEqualTo(playbackSessionId);
+        assertThat(params.getAudioRecordingSessionId()).isEqualTo(recordingSessionId);
+    }
+
+    @Test
+    public void audioPlaybackSessionId_invalidId_throwsException() {
+        int playbackSessionId = -42;
+        int recordingSessionId = 77;
+
+        assertThrows(IllegalArgumentException.class, () -> new VirtualDeviceParams.Builder()
+                .setDevicePolicy(POLICY_TYPE_AUDIO, DEVICE_POLICY_CUSTOM)
+                .setAudioPlaybackSessionId(playbackSessionId)
+                .setAudioRecordingSessionId(recordingSessionId).build());
+    }
+
+    @Test
+    public void audioRecordingSessionId_invalidId_throwsException() {
+        int playbackSessionId = 42;
+        int recordingSessionId = -77;
+
+        assertThrows(IllegalArgumentException.class, () -> new VirtualDeviceParams.Builder()
+                .setDevicePolicy(POLICY_TYPE_AUDIO, DEVICE_POLICY_CUSTOM)
+                .setAudioPlaybackSessionId(playbackSessionId)
+                .setAudioRecordingSessionId(recordingSessionId).build());
+    }
+
+    @Test
+    public void audioPlaybackSessionId_withoutCustomPolicy_throwsException() {
+        int playbackSessionId = 42;
+
+        assertThrows(IllegalArgumentException.class, () -> new VirtualDeviceParams.Builder()
+                .setAudioPlaybackSessionId(playbackSessionId).build());
+    }
+
+    @Test
+    public void audioRecordingSessionId_withoutCustomPolicy_throwsException() {
+        int recordingSessionId = 77;
+
+        assertThrows(IllegalArgumentException.class, () -> new VirtualDeviceParams.Builder()
+                .setAudioRecordingSessionId(recordingSessionId).build());
+    }
+
+
 
     @ApiTest(apis = {"android.companion.virtual.VirtualDeviceParams#setDefaultRecentsPolicy",
             "android.companion.virtual.VirtualDeviceParams#getDefaultRecentsPolicy"})

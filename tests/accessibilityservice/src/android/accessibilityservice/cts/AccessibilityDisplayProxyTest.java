@@ -42,6 +42,7 @@ import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.platform.test.annotations.Presubmit;
+import android.util.SparseArray;
 import android.view.Display;
 import android.view.accessibility.AccessibilityDisplayProxy;
 import android.view.accessibility.AccessibilityEvent;
@@ -282,6 +283,20 @@ public class AccessibilityDisplayProxyTest {
         final List<AccessibilityWindowInfo> windows = mA11yProxy.getWindows();
         assertThat(findWindowByTitleWithList(
                 getActivityTitle(sInstrumentation, mActivity), windows)).isNotNull();
+    }
+
+    @Test
+    public void testAccessibilityServiceDoesNotGetProxyWindows() {
+        final StubProxyConcurrentAccessibilityService service =
+                mProxyConcurrentServiceRule.enableService();
+        try {
+            registerProxyAndWaitForConnection();
+            SparseArray<List<AccessibilityWindowInfo>> windowsOnAllDisplays =
+                    service.getWindowsOnAllDisplays();
+            assertThat(windowsOnAllDisplays.contains(mDisplayId)).isFalse();
+        } finally {
+            service.disableSelfAndRemove();
+        }
     }
 
     @Test

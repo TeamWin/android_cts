@@ -317,7 +317,7 @@ public final class ActivityManagerForegroundServiceTypeTest {
                 new IntentFilter(LocalForegroundServiceBase.ACTION_START_FGS_RESULT);
 
         try {
-            mTargetContext.registerReceiver(receiver, filter);
+            mTargetContext.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
             mTargetContext.startForegroundService(intent);
             latch.await(WAITFOR_MSEC, TimeUnit.MILLISECONDS);
             return result[0];

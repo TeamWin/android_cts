@@ -261,12 +261,18 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
         int groupCount = mCarAudioManager.getVolumeGroupCount(PRIMARY_AUDIO_ZONE);
 
         for (int index = 0; index < groupCount; index++) {
+            int minIndex = mCarAudioManager.getGroupMinVolume(PRIMARY_AUDIO_ZONE, index);
+            int maxIndex = mCarAudioManager.getGroupMaxVolume(PRIMARY_AUDIO_ZONE, index);
             CarVolumeGroupInfo info =
                     mCarAudioManager.getVolumeGroupInfo(PRIMARY_AUDIO_ZONE, index);
             expectWithMessage("Car volume group id for info %s and group %s", info, index)
                     .that(info.getId()).isEqualTo(index);
             expectWithMessage("Car volume group info zone for info %s and group %s",
                     info, index).that(info.getZoneId()).isEqualTo(PRIMARY_AUDIO_ZONE);
+            expectWithMessage("Car volume group info max index for info %s and group %s",
+                    info, index).that(info.getMaxVolumeGainIndex()).isEqualTo(maxIndex);
+            expectWithMessage("Car volume group info min index for info %s and group %s",
+                    info, index).that(info.getMinVolumeGainIndex()).isEqualTo(minIndex);
         }
     }
 
@@ -307,6 +313,40 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
                 () -> mCarAudioManager.getVolumeGroupInfosForZone(PRIMARY_AUDIO_ZONE));
 
         assertWithMessage("Car volume groups info without permission exception")
+                .that(exception).hasMessageThat().contains(PERMISSION_CAR_CONTROL_AUDIO_VOLUME);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager"
+            + "#getAudioAttributesForVolumeGroup(CarVolumeGroupInfo)"})
+    public void getAudioAttributesForVolumeGroup() {
+        assumeDynamicRoutingIsEnabled();
+        CarVolumeGroupInfo info =
+                mCarAudioManager.getVolumeGroupInfo(PRIMARY_AUDIO_ZONE, /* groupId= */ 0);
+
+        expectWithMessage("Car volume audio attributes")
+                .that(mCarAudioManager.getAudioAttributesForVolumeGroup(info))
+                .isNotEmpty();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.media.CarAudioManager"
+            + "#getAudioAttributesForVolumeGroup(CarVolumeGroupInfo)"})
+    public void getAudioAttributesForVolumeGroup_withoutPermission() {
+        CarVolumeGroupInfo info;
+
+        UI_AUTOMATION.adoptShellPermissionIdentity(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME);
+        try {
+            info =  mCarAudioManager.getVolumeGroupInfo(PRIMARY_AUDIO_ZONE, /* groupId= */ 0);
+        } finally {
+            UI_AUTOMATION.dropShellPermissionIdentity();
+        }
+
+        Exception exception = assertThrows(SecurityException.class,
+                () -> mCarAudioManager.getAudioAttributesForVolumeGroup(info));
+
+        assertWithMessage("Car volume group audio attributes without permission exception")
                 .that(exception).hasMessageThat().contains(PERMISSION_CAR_CONTROL_AUDIO_VOLUME);
     }
 

@@ -1,3 +1,0 @@
-# Bug component: 31808
-set noparent
-include platform/packages/modules/Connectivity:/tests/cts/OWNERS

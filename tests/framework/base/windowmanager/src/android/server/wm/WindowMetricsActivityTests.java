@@ -22,8 +22,7 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.wm.WindowManagerState.STATE_PAUSED;
-import static android.server.wm.WindowMetricsTestHelper.assertBoundsMatchDisplay;
-import static android.server.wm.WindowMetricsTestHelper.getBoundsExcludingNavigationBarAndCutout;
+import static android.server.wm.WindowMetricsTestHelper.assertMetricsMatchDisplay;
 import static android.server.wm.WindowMetricsTestHelper.maxWindowBoundsSandboxed;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 
@@ -46,6 +45,8 @@ import android.view.WindowMetrics;
 
 import androidx.test.filters.FlakyTest;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.Test;
 
 import java.util.function.Supplier;
@@ -57,6 +58,9 @@ import java.util.function.Supplier;
  *     atest CtsWindowManagerDeviceTestCases:WindowMetricsActivityTests
  */
 @Presubmit
+@ApiTest(apis = {"android.view.WindowManager#getCurrentWindowMetrics",
+        "android.view.WindowManager#getMaximumWindowMetrics",
+        "android.app.Activity"})
 public class WindowMetricsActivityTests extends WindowManagerTestBase {
     private static final Rect WINDOW_BOUNDS = new Rect(100, 100, 400, 400);
     private static final Rect RESIZED_WINDOW_BOUNDS = new Rect(100, 100, 900, 900);
@@ -320,18 +324,18 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
         ComponentName activityName = activity.getComponentName();
         mWmState.computeState(activityName);
         WindowManagerState.Activity activityContainer = mWmState.getActivity(activityName);
-        final boolean boundsShouldIncludeInsets =
+        final boolean shouldBoundsIncludeInsets =
                 activity.getResources().getConfiguration().windowConfiguration
                         .getWindowingMode() == WINDOWING_MODE_FREEFORM
                         || activityContainer.inSizeCompatMode();
         final WindowManager windowManager = activity.getWindowManager();
         final WindowMetrics currentMetrics = windowManager.getCurrentWindowMetrics();
-        final Rect currentBounds = boundsShouldIncludeInsets ? currentMetrics.getBounds()
-                : getBoundsExcludingNavigationBarAndCutout(currentMetrics);
+        final WindowMetrics maxMetrics = windowManager.getMaximumWindowMetrics();
+
         final Rect maxBounds = windowManager.getMaximumWindowMetrics().getBounds();
         final Display display = activity.getDisplay();
 
-        assertBoundsMatchDisplay(maxBounds, currentBounds, display);
+        assertMetricsMatchDisplay(maxMetrics, currentMetrics, display, shouldBoundsIncludeInsets);
 
         // Max window bounds should match either DisplayArea bounds, or activity bounds if it is
         // sandboxed.

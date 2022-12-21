@@ -94,7 +94,7 @@ open class PackageSchemeTestBase {
 
         fun makeIntentSender(sessionId: Int) = PendingIntent.getBroadcast(
             mContext, sessionId,
-            Intent(RECEIVER_ACTION),
+            Intent(RECEIVER_ACTION).setPackage(mContext.packageName),
             PendingIntent.FLAG_UPDATE_CURRENT
                 or PendingIntent.FLAG_MUTABLE_UNAUDITED
         ).intentSender
@@ -107,7 +107,7 @@ open class PackageSchemeTestBase {
     @Before
     fun setup() {
         receiver.clear()
-        mContext.registerReceiver(receiver, IntentFilter(RECEIVER_ACTION))
+        mContext.registerReceiver(receiver, IntentFilter(RECEIVER_ACTION), Context.RECEIVER_EXPORTED);
     }
 
     @Before

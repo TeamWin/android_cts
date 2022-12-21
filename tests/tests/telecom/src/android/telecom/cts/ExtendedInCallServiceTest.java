@@ -27,8 +27,11 @@ import android.content.res.Configuration;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.OutcomeReceiver;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
+import android.telecom.CallEndpoint;
+import android.telecom.CallEndpointException;
 import android.telecom.CallScreeningService;
 import android.telecom.Connection;
 import android.telecom.ConnectionService;
@@ -38,6 +41,7 @@ import android.telecom.VideoProfile;
 import android.telephony.TelephonyManager;
 
 import java.util.List;
+import java.util.concurrent.Executor;
 
 /**
  * Extended suite of tests that use {@link CtsConnectionService} and {@link MockInCallService} to
@@ -88,10 +92,14 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
 
         assertMuteState(connection, true);
         assertMuteState(inCallService, true);
+        assertMuteEndpoint(connection, true);
+        assertMuteEndpoint(inCallService, true);
 
         inCallService.setMuted(false);
         assertMuteState(connection, false);
         assertMuteState(inCallService, false);
+        assertMuteEndpoint(connection, false);
+        assertMuteEndpoint(inCallService, false);
     }
 
     public void testSwitchAudioRoutes() {
@@ -459,6 +467,64 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
         } finally {
             MockCallScreeningService.disableService(mContext);
             TestUtils.clearSystemDialerOverride(getInstrumentation());
+        }
+    }
+
+    public void testSwitchCallEndpoint() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        placeAndVerifyCall();
+        final MockConnection connection = verifyConnectionForOutgoingCall();
+
+        final MockInCallService inCallService = mInCallCallbacks.getService();
+
+        final Call call = inCallService.getLastCall();
+        assertCallState(call, Call.STATE_DIALING);
+
+        final int currentInvokeCount = mOnCallEndpointChangedCounter.getInvokeCount();
+        mOnCallEndpointChangedCounter.waitForCount(WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+        CallEndpoint currentEndpoint = (CallEndpoint) mOnCallEndpointChangedCounter.getArgs(0)[0];
+        int currentEndpointType = currentEndpoint.getEndpointType();
+
+        mOnAvailableEndpointsChangedCounter.waitForCount(WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+        List<CallEndpoint> availableEndpoints =
+                (List<CallEndpoint>) mOnAvailableEndpointsChangedCounter.getArgs(0)[0];
+        CallEndpoint anotherEndpoint = null;
+        for (CallEndpoint endpoint : availableEndpoints) {
+            if (endpoint.getEndpointType() != currentEndpointType) {
+                anotherEndpoint = endpoint;
+                break;
+            }
+        }
+
+        if (anotherEndpoint != null) {
+            Executor executor = mContext.getMainExecutor();
+            final int anotherEndpointType = anotherEndpoint.getEndpointType();
+            ((InCallService) inCallService).requestCallEndpointChange(anotherEndpoint, executor,
+                    new OutcomeReceiver<>() {
+                        @Override
+                        public void onResult(Void result) {}
+                        @Override
+                        public void onError(CallEndpointException exception) {}
+                    });
+            mOnCallEndpointChangedCounter.waitForCount(currentInvokeCount + 1,
+                    WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+            assertEndpointType(connection, anotherEndpointType);
+            assertEndpointType(inCallService, anotherEndpointType);
+
+            inCallService.requestCallEndpointChange(currentEndpoint, executor,
+                    new OutcomeReceiver<>() {
+                        @Override
+                        public void onResult(Void result) {}
+                        @Override
+                        public void onError(CallEndpointException exception) {}
+                    });
+            mOnCallEndpointChangedCounter.waitForCount(currentInvokeCount + 1,
+                    WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+            assertEndpointType(connection, currentEndpointType);
+            assertEndpointType(inCallService, currentEndpointType);
         }
     }
 

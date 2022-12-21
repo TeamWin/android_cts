@@ -32,7 +32,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import android.annotation.Nullable;
@@ -64,6 +63,9 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import java.util.concurrent.Executors;
+
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
@@ -157,7 +159,7 @@ public class ActivityInterceptionTest {
 
         IntentFilter intentFilter = new IntentFilter(ACTION_INTERCEPTED_RECEIVER);
 
-        mVirtualDevice.registerIntentInterceptor(mContext.getMainExecutor(), intentFilter,
+        mVirtualDevice.registerIntentInterceptor(Executors.newSingleThreadExecutor(), intentFilter,
                 mInterceptor);
 
         // Starting test on EmptyActivity
@@ -175,7 +177,7 @@ public class ActivityInterceptionTest {
 
 
         ArgumentCaptor<Intent> captor = ArgumentCaptor.forClass(Intent.class);
-        verify(mInterceptor, times(1)).onIntentIntercepted(captor.capture());
+        verify(mInterceptor, timeout(3000).times(1)).onIntentIntercepted(captor.capture());
         Intent capturedIntent = captor.getValue();
 
         assertThat(capturedIntent).isNotNull();
@@ -202,9 +204,9 @@ public class ActivityInterceptionTest {
 
         IntentFilter intentFilter = new IntentFilter(ACTION_INTERCEPTED_RECEIVER);
 
-        mVirtualDevice.registerIntentInterceptor(mContext.getMainExecutor(), intentFilter,
+        mVirtualDevice.registerIntentInterceptor(Executors.newSingleThreadExecutor(), intentFilter,
                 mInterceptor);
-        mVirtualDevice.registerIntentInterceptor(mContext.getMainExecutor(), intentFilter,
+        mVirtualDevice.registerIntentInterceptor(Executors.newSingleThreadExecutor(), intentFilter,
                 interceptorOther);
 
         // Starting test on EmptyActivity
@@ -221,8 +223,8 @@ public class ActivityInterceptionTest {
         emptyActivity.startActivity(interceptedIntent,
                 createActivityOptions(mVirtualDisplay));
 
-        verify(mInterceptor, times(1)).onIntentIntercepted(any());
-        verify(interceptorOther, times(1)).onIntentIntercepted(any());
+        verify(mInterceptor, timeout(3000).times(1)).onIntentIntercepted(any());
+        verify(interceptorOther, timeout(3000).times(1)).onIntentIntercepted(any());
 
         // Unregister first interceptor and verify intent is intercepted by other
         reset(mInterceptor);
@@ -236,7 +238,7 @@ public class ActivityInterceptionTest {
         verify(mInterceptor, never()).onIntentIntercepted(any());
 
         ArgumentCaptor<Intent> captor = ArgumentCaptor.forClass(Intent.class);
-        verify(interceptorOther, times(1)).onIntentIntercepted(captor.capture());
+        verify(interceptorOther, timeout(3000).times(1)).onIntentIntercepted(captor.capture());
         Intent capturedIntent = captor.getValue();
 
         assertThat(capturedIntent).isNotNull();
@@ -252,7 +254,7 @@ public class ActivityInterceptionTest {
         mInterceptor = mock(IntentInterceptorCallback.class);
 
         IntentFilter intentFilter = new IntentFilter("ACTION_OTHER");
-        mVirtualDevice.registerIntentInterceptor(mContext.getMainExecutor(), intentFilter,
+        mVirtualDevice.registerIntentInterceptor(Executors.newSingleThreadExecutor(), intentFilter,
                 mInterceptor);
 
         // Starting test on EmptyActivity
@@ -286,15 +288,15 @@ public class ActivityInterceptionTest {
         // setup expected intent interceptor
         mInterceptor = mock(IntentInterceptorCallback.class);
         IntentFilter intentFilter = new IntentFilter(ACTION_INTERCEPTED_RECEIVER);
-        mVirtualDevice.registerIntentInterceptor(mContext.getMainExecutor(), intentFilter,
+        mVirtualDevice.registerIntentInterceptor(Executors.newSingleThreadExecutor(), intentFilter,
                 mInterceptor);
 
         // setup other intent interceptor
         IntentInterceptorCallback interceptorOther = mock(
                 IntentInterceptorCallback.class);
         IntentFilter intentFilterOther = new IntentFilter("ACTION_OTHER");
-        mVirtualDevice.registerIntentInterceptor(mContext.getMainExecutor(), intentFilterOther,
-                interceptorOther);
+        mVirtualDevice.registerIntentInterceptor(Executors.newSingleThreadExecutor(),
+                intentFilterOther, interceptorOther);
 
         // Starting test on EmptyActivity
         Intent startIntent = new Intent(mContext, EmptyActivity.class)
@@ -312,7 +314,7 @@ public class ActivityInterceptionTest {
         emptyActivity.finish();
 
         ArgumentCaptor<Intent> captor = ArgumentCaptor.forClass(Intent.class);
-        verify(mInterceptor, times(1)).onIntentIntercepted(captor.capture());
+        verify(mInterceptor, timeout(3000).times(1)).onIntentIntercepted(captor.capture());
         Intent capturedIntent = captor.getValue();
 
         assertThat(capturedIntent).isNotNull();

@@ -243,6 +243,7 @@ public final class CarPropertyConfigTest extends AbstractCarTestCase {
                     assertThat(areaIdConfig.getMaxValue()).isNull();
                 }
                 assertThat(areaIdConfig.getSupportedEnumValues()).isNotNull();
+                assertThat(areaIdConfig.getSupportedEnumValues()).containsNoDuplicates();
             }
         }
     }

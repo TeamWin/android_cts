@@ -314,6 +314,8 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
     private static int scaledPixelsToPixels(float sp, float fontScale, int densityDpi) {
         final int DEFAULT_DENSITY = 160;
         float f = densityDpi * (1.0f / DEFAULT_DENSITY) * fontScale * sp;
+        // Use the next up adjacent number to prevent precision loss of the float number.
+        f = Math.nextUp(f);
         return (int) ((f >= 0) ? (f + 0.5f) : (f - 0.5f));
     }
 

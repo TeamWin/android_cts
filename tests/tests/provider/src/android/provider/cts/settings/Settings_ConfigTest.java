@@ -32,6 +32,7 @@ import android.content.Context;
 import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.UserHandle;
+import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -55,6 +56,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 public class Settings_ConfigTest {
@@ -78,6 +82,7 @@ public class Settings_ConfigTest {
 
     private static final String TEST_PACKAGE_NAME = "android.content.cts";
 
+    private static final long OPERATION_TIMEOUT_MS = 5000;
 
     private static final Context CONTEXT = InstrumentationRegistry.getContext();
 
@@ -92,6 +97,9 @@ public class Settings_ConfigTest {
     private static final String READ_DEVICE_CONFIG_PERMISSION =
             "android.permission.READ_DEVICE_CONFIG";
 
+    private static final String MONITOR_DEVICE_CONFIG_ACCESS =
+            "android.permission.MONITOR_DEVICE_CONFIG_ACCESS";
+
     private static ContentResolver sContentResolver;
     private static Context sContext;
 
@@ -101,7 +109,8 @@ public class Settings_ConfigTest {
     @Before
     public void setUpContext() throws Exception {
         InstrumentationRegistry.getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
-                WRITE_DEVICE_CONFIG_PERMISSION, READ_DEVICE_CONFIG_PERMISSION);
+                WRITE_DEVICE_CONFIG_PERMISSION, READ_DEVICE_CONFIG_PERMISSION,
+                MONITOR_DEVICE_CONFIG_ACCESS);
         sContext = InstrumentationRegistry.getContext();
         sContentResolver = sContext.getContentResolver();
     }
@@ -406,6 +415,94 @@ public class Settings_ConfigTest {
             fail("did not throw NullPointerException when unregister null content observer.");
         } catch (NullPointerException e) {
             //expected.
+        }
+    }
+
+    /**
+     * Test set monitor callback.
+     */
+    @Test
+    public void testSetMonitorCallback() {
+        final CountDownLatch latch = new CountDownLatch(2);
+        final TestMonitorCallback callback = new TestMonitorCallback(latch);
+
+        Settings.Config.setMonitorCallback(sContentResolver,
+                Executors.newSingleThreadExecutor(), callback);
+        // Reading properties triggers the monitor callback function.
+        Settings.Config.getStrings(NAMESPACE1, Arrays.asList(KEY1));
+        try {
+            Settings.Config.setStrings(NAMESPACE1, new HashMap<String, String>() {{
+                    put(KEY1, VALUE1);
+                    put(KEY2, VALUE2);
+                }});
+        } catch (DeviceConfig.BadConfigException e) {
+            fail("Callback set strings" + e.toString());
+        }
+
+        try {
+            if (!latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                fail("Callback function was not called");
+            }
+        } catch (InterruptedException e) {
+            // this part is executed when an exception (in this example InterruptedException) occurs
+            fail("Callback function was not called due to interruption" + e.toString());
+        }
+        assertEquals(callback.onNamespaceUpdateCalls, 1);
+        assertEquals(callback.onDeviceConfigAccessCalls, 1);
+    }
+
+    /**
+     * Test clear monitor callback.
+     */
+    @Test
+    public void testClearMonitorCallback() {
+        final CountDownLatch latch = new CountDownLatch(2);
+        final TestMonitorCallback callback = new TestMonitorCallback(latch);
+
+        Settings.Config.setMonitorCallback(sContentResolver,
+                Executors.newSingleThreadExecutor(), callback);
+        Settings.Config.clearMonitorCallback(sContentResolver);
+        // Reading properties triggers the monitor callback function.
+        Settings.Config.getStrings(NAMESPACE1, Arrays.asList(KEY1));
+        try {
+            Settings.Config.setStrings(NAMESPACE1, new HashMap<String, String>() {{
+                    put(KEY1, VALUE1);
+                    put(KEY2, VALUE2);
+                }});
+        } catch (DeviceConfig.BadConfigException e) {
+            fail("Callback set strings" + e.toString());
+        }
+
+        try {
+            if (latch.await(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                fail("Callback function was called while it has been cleared");
+            }
+        } catch (InterruptedException e) {
+            // this part is executed when an exception (in this example InterruptedException) occurs
+            fail("un expected interruption occur" + e.toString());
+        }
+        assertEquals(callback.onNamespaceUpdateCalls, 0);
+        assertEquals(callback.onDeviceConfigAccessCalls, 0);
+    }
+
+    private class TestMonitorCallback implements DeviceConfig.MonitorCallback {
+        public int onNamespaceUpdateCalls = 0;
+        public int onDeviceConfigAccessCalls = 0;
+        public CountDownLatch latch;
+
+        TestMonitorCallback(CountDownLatch latch) {
+            this.latch = latch;
+        }
+
+        public void onNamespaceUpdate(@NonNull String updatedNamespace) {
+            onNamespaceUpdateCalls++;
+            latch.countDown();
+        }
+
+        public void onDeviceConfigAccess(@NonNull String callingPackage,
+                @NonNull String namespace) {
+            onDeviceConfigAccessCalls++;
+            latch.countDown();
         }
     }
 

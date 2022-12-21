@@ -147,7 +147,10 @@ public class AttestKeyTest {
     @Test
     @CddTest(requirements = {"9.11/C-1-6"})
     public void testStrongBoxCannotAttestToTeeKey() throws Exception {
-        assumeStrongBoxKeyMintV1();
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        assumeTrue("Can only test with strongbox keymint",
+                TestUtils.getFeatureVersionKeystoreStrongBox(context)
+                        >= Attestation.KM_VERSION_KEYMINT_1);
 
         final String strongBoxAttestKeyAlias = "nonAttestKey";
         final String attestedKeyAlias = "attestedKey";
@@ -201,17 +204,9 @@ public class AttestKeyTest {
                 packageManager.hasSystemFeature(PackageManager.FEATURE_KEYSTORE_APP_ATTEST_KEY));
     }
 
-    private void assumeStrongBoxKeyMintV1() {
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assumeTrue("Can only test with strongbox keymint",
-                TestUtils.getFeatureVersionKeystoreStrongBox(context)
-                        >= Attestation.KM_VERSION_KEYMINT_1);
-    }
-
     private void testEcAttestKey(boolean useStrongBox) throws Exception {
         if (useStrongBox) {
             TestUtils.assumeStrongBox();
-            assumeStrongBoxKeyMintV1();
         }
 
         final String attestKeyAlias = "attestKey";
@@ -229,7 +224,6 @@ public class AttestKeyTest {
     private void testRsaAttestKey(boolean useStrongBox) throws Exception {
         if (useStrongBox) {
             TestUtils.assumeStrongBox();
-            assumeStrongBoxKeyMintV1();
         }
 
         final String attestKeyAlias = "attestKey";

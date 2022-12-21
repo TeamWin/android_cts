@@ -79,4 +79,7 @@ public final class LocaleConstants {
 
     public static final String EXTRA_SET_LOCALES = "set_locales";
 
+    public static final String EXTRA_SET_LOCALECONFIG = "set_localeconfig";
+
+    public static final String EXTRA_QUERY_LOCALECONFIG = "query_localeconfig";
 }

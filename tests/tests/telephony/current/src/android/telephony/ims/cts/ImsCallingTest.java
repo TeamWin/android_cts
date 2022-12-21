@@ -16,12 +16,14 @@
 
 package android.telephony.ims.cts;
 
-import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import android.annotation.NonNull;
+import android.app.UiAutomation;
 import android.content.Context;
 import android.media.AudioManager;
 import android.net.Uri;
@@ -29,10 +31,13 @@ import android.os.Bundle;
 import android.telecom.Call;
 import android.telecom.PhoneAccount;
 import android.telecom.TelecomManager;
+import android.telephony.AccessNetworkConstants;
 import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.InCallServiceStateValidator;
 import android.telephony.ims.ImsCallSessionListener;
+import android.telephony.ims.MediaQualityStatus;
 import android.telephony.ims.feature.MmTelFeature;
 import android.util.Log;
 
@@ -50,6 +55,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -1103,6 +1109,105 @@ public class ImsCallingTest extends ImsCallingBase {
         isCallDisconnected(call, callSession);
         assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
         waitForUnboundService();
+    }
+
+    @Test
+    public void testNotifyMediaCallStatusChanged() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        bindImsService();
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+
+        TelecomManager telecomManager = (TelecomManager) InstrumentationRegistry
+                .getInstrumentation().getContext().getSystemService(Context.TELECOM_SERVICE);
+
+        final Uri imsUri = Uri.fromParts(PhoneAccount.SCHEME_TEL, String.valueOf(++sCounter), null);
+        Bundle extras = new Bundle();
+
+        // Place outgoing call
+        telecomManager.placeCall(imsUri, extras);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+
+        Call call = getCall(mCurrentCallId);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
+
+        TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService().getMmTelFeature()
+                .getImsCallsession();
+
+        isCallActive(call, callSession);
+        String callSessionId = callSession.getCallId();
+
+        LinkedBlockingQueue<MediaQualityStatus> queue = new LinkedBlockingQueue<>();
+        ImsCallingTest.TestTelephonyCallback testCb =
+                new ImsCallingTest.TestTelephonyCallback(queue);
+        TelephonyManager telephonyManager = getContext().getSystemService(TelephonyManager.class);
+
+        //test registration without permission
+        try {
+            telephonyManager.registerTelephonyCallback(getContext().getMainExecutor(), testCb);
+            fail("registerTelephonyCallback requires READ_PRECISE_PHONE_STATE permission.");
+        } catch (SecurityException e) {
+            //expected
+        }
+
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            automan.adoptShellPermissionIdentity();
+            telephonyManager.registerTelephonyCallback(getContext().getMainExecutor(), testCb);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        //Expect to receive cached media quality status retrieved by #queryMediaQualityStatus.
+        MediaQualityStatus status = queue.poll(ImsUtils.TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        assertNotNull(status);
+        assertEquals(callSessionId, status.getCallSessionId());
+        assertEquals(MediaQualityStatus.MEDIA_SESSION_TYPE_AUDIO, status.getMediaSessionType());
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN, status.getTransportType());
+        assertEquals(0, status.getRtpPacketLossRate());
+        assertEquals(0, status.getRtpJitterMillis());
+        assertEquals(0, status.getRtpInactivityMillis());
+
+        //Notify a new media quality status.
+        sServiceConnector.getCarrierService().getMmTelFeature()
+                .notifyMediaQualityStatusChanged(new MediaQualityStatus
+                        .Builder(callSessionId,
+                        MediaQualityStatus.MEDIA_SESSION_TYPE_AUDIO,
+                        AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
+                        .setRtpPacketLossRate(TEST_RTP_THRESHOLD_PACKET_LOSS_RATE)
+                        .setRtpJitterMillis(TEST_RTP_THRESHOLD_JITTER_MILLIS)
+                        .setRtpInactivityMillis(TEST_RTP_THRESHOLD_INACTIVITY_TIME_MILLIS).build());
+
+        status = queue.poll(ImsUtils.TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        assertNotNull(status);
+        assertEquals(callSessionId, status.getCallSessionId());
+        assertEquals(MediaQualityStatus.MEDIA_SESSION_TYPE_AUDIO, status.getMediaSessionType());
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN, status.getTransportType());
+        assertEquals(TEST_RTP_THRESHOLD_PACKET_LOSS_RATE, status.getRtpPacketLossRate());
+        assertEquals(TEST_RTP_THRESHOLD_JITTER_MILLIS, status.getRtpJitterMillis());
+        assertEquals(TEST_RTP_THRESHOLD_INACTIVITY_TIME_MILLIS, status.getRtpInactivityMillis());
+
+        call.disconnect();
+
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(call, callSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        waitForUnboundService();
+    }
+
+    private class TestTelephonyCallback extends TelephonyCallback
+            implements TelephonyCallback.MediaQualityStatusChangedListener {
+        LinkedBlockingQueue<MediaQualityStatus> mTestMediaQualityStatusQueue;
+        TestTelephonyCallback(LinkedBlockingQueue<MediaQualityStatus> queue) {
+            mTestMediaQualityStatusQueue = queue;
+        }
+        @Override
+        public void onMediaQualityStatusChanged(@NonNull MediaQualityStatus status) {
+            mTestMediaQualityStatusQueue.offer(status);
+        }
     }
 
     void addConferenceCall(Call call1, Call call2) {

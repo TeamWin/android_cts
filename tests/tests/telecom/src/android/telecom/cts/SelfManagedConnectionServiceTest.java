@@ -35,9 +35,12 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.OutcomeReceiver;
 import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
+import android.telecom.CallEndpoint;
+import android.telecom.CallEndpointException;
 import android.telecom.Connection;
 import android.telecom.ConnectionService;
 import android.telecom.DisconnectCause;
@@ -55,6 +58,7 @@ import com.android.compatibility.common.util.ApiTest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
@@ -1381,6 +1385,79 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         mContext.unbindService(control);
 
         call.disconnect();
+    }
+
+    /**
+     * Tests ability to change the call endpoint via the
+     * {@link android.telecom.Connection#requestCallEndpointChange} API.
+     */
+    public void testCallEndpoint() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        TestUtils.placeOutgoingCall(getInstrumentation(), mTelecomManager,
+                TestUtils.TEST_SELF_MANAGED_HANDLE_1, TEST_ADDRESS_1);
+        SelfManagedConnection connection = TestUtils.waitForAndGetConnection(TEST_ADDRESS_1);
+        setActiveAndVerify(connection);
+
+        // Setup content observer to notify us when we call log entry is added.
+        CountDownLatch callLogEntryLatch = getCallLogEntryLatch();
+
+        TestUtils.InvokeCounter currentEndpointCounter =
+                connection.getCallEndpointChangedInvokeCounter();
+        currentEndpointCounter.waitForCount(WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+        CallEndpoint currentEndpoint = (CallEndpoint) currentEndpointCounter.getArgs(0)[0];
+        int currentEndpointType = currentEndpoint.getEndpointType();
+
+        TestUtils.InvokeCounter availableEndpointsCounter =
+                connection.getAvailableEndpointsChangedInvokeCounter();
+        availableEndpointsCounter.waitForCount(WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+        List<CallEndpoint> availableEndpoints =
+                (List<CallEndpoint>) availableEndpointsCounter.getArgs(0)[0];
+
+        CallEndpoint anotherEndpoint = null;
+        for (CallEndpoint endpoint : availableEndpoints) {
+            if (endpoint.getEndpointType() != currentEndpointType) {
+                anotherEndpoint = endpoint;
+                break;
+            }
+        }
+        if (anotherEndpoint != null) {
+            Executor executor = mContext.getMainExecutor();
+            final int anotherEndpointType = anotherEndpoint.getEndpointType();
+            currentEndpointCounter.clearArgs();
+            connection.requestCallEndpointChange(anotherEndpoint, executor,
+                    new OutcomeReceiver<>() {
+                        @Override
+                        public void onResult(Void result) {}
+                        @Override
+                        public void onError(CallEndpointException exception) {}
+                    });
+            currentEndpointCounter.waitForPredicate(new Predicate<CallEndpoint>() {
+                @Override
+                public boolean test(CallEndpoint cep) {
+                    return cep.getEndpointType() == anotherEndpointType;
+                }
+            }, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+
+            currentEndpointCounter.clearArgs();
+            connection.requestCallEndpointChange(currentEndpoint, executor,
+                    new OutcomeReceiver<>() {
+                        @Override
+                        public void onResult(Void result) {}
+                        @Override
+                        public void onError(CallEndpointException exception) {}
+                    });
+            currentEndpointCounter.waitForPredicate(new Predicate<CallEndpoint>() {
+                @Override
+                public boolean test(CallEndpoint cep) {
+                    return cep.getEndpointType() == currentEndpointType;
+                }
+            }, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+
+        }
+        setDisconnectedAndVerify(connection, isLoggedCall(TestUtils.TEST_SELF_MANAGED_HANDLE_1),
+                callLogEntryLatch);
     }
 
     /**

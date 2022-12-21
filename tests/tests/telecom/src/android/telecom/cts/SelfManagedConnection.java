@@ -18,10 +18,12 @@ package android.telecom.cts;
 
 import android.os.Bundle;
 import android.telecom.CallAudioState;
+import android.telecom.CallEndpoint;
 import android.telecom.Connection;
 import android.telecom.DisconnectCause;
 import android.telecom.cts.TestUtils.InvokeCounter;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -35,6 +37,9 @@ public class SelfManagedConnection extends Connection {
     InvokeCounter mCallEventCounter = new InvokeCounter("onCallEvent");
     InvokeCounter mHandoverCompleteCounter = new InvokeCounter("handoverCompleteCounter");
     CountDownLatch mOnAnswerLatch = new CountDownLatch(1);
+    InvokeCounter mCallEndpointInvokeCounter = new InvokeCounter("onCallEndpointChanged");
+    InvokeCounter mAvailableEndpointsInvokeCounter =
+            new InvokeCounter("onAvailableCallEndpointsChanged");
     CountDownLatch mOnHoldLatch = new CountDownLatch(1);
     CountDownLatch mOnUnHoldLatch = new CountDownLatch(1);
     CountDownLatch mInCallServiceTrackingLatch = new CountDownLatch(1);
@@ -125,6 +130,16 @@ public class SelfManagedConnection extends Connection {
         mHandoverCompleteCounter.invoke();
     }
 
+    @Override
+    public void onCallEndpointChanged(CallEndpoint endpoint) {
+        mCallEndpointInvokeCounter.invoke(endpoint);
+    }
+
+    @Override
+    public void onAvailableCallEndpointsChanged(List<CallEndpoint> availableEndpoints) {
+        mAvailableEndpointsInvokeCounter.invoke(availableEndpoints);
+    }
+
     public InvokeCounter getCallAudioStateChangedInvokeCounter() {
         return mCallAudioRouteInvokeCounter;
     }
@@ -168,5 +183,13 @@ public class SelfManagedConnection extends Connection {
 
     public boolean isAlternativeUiShowing() {
         return mIsAlternativeUiShowing;
+    }
+
+    public InvokeCounter getCallEndpointChangedInvokeCounter() {
+        return mCallEndpointInvokeCounter;
+    }
+
+    public InvokeCounter getAvailableEndpointsChangedInvokeCounter() {
+        return mAvailableEndpointsInvokeCounter;
     }
 }

@@ -16,17 +16,25 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
+
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.cts.activities.AccessibilityWindowQueryActivity;
 import android.accessibilityservice.cts.utils.ActivityLaunchUtils;
 import android.accessibilityservice.cts.utils.AsyncUtils;
 import android.accessibilityservice.cts.utils.DisplayUtils;
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.graphics.Region;
 import android.hardware.display.DisplayManager;
 import android.os.Binder;
 import android.platform.test.annotations.FlakyTest;
@@ -62,6 +70,7 @@ import java.util.List;
 @Presubmit
 public class AccessibilityOverlayTest {
 
+    private static Instrumentation sInstrumentation;
     private static UiAutomation sUiAutomation;
     InstrumentedAccessibilityService mService;
 
@@ -79,7 +88,8 @@ public class AccessibilityOverlayTest {
 
     @BeforeClass
     public static void oneTimeSetUp() {
-        sUiAutomation = InstrumentationRegistry.getInstrumentation()
+        sInstrumentation = InstrumentationRegistry.getInstrumentation();
+        sUiAutomation = sInstrumentation
                 .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
         AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
         info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
@@ -136,7 +146,7 @@ public class AccessibilityOverlayTest {
     }
 
     @Test
-    public void testA11yServiceShowsOverlayUsingSurfaceControl_shouldAppearAndDisappear()
+    public void testA11yServiceShowsDisplayOverlayUsingSurfaceControl_shouldAppearAndDisappear()
             throws Exception {
         final String overlayTitle = "Overlay title";
         final Button button = new Button(mService);
@@ -184,6 +194,100 @@ public class AccessibilityOverlayTest {
                 (event) ->
                         ActivityLaunchUtils.findWindowByTitle(sUiAutomation, overlayTitle) == null,
                 AsyncUtils.DEFAULT_TIMEOUT_MS);
+    }
+
+    @Test
+    public void testA11yServiceShowsWindowOverlayUsingSurfaceControl_shouldAppearAndDisappear()
+            throws Exception {
+        // Show an activity on screen and get its accessibility window id
+        final Activity activity =
+                launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(
+                        sInstrumentation,
+                        sUiAutomation,
+                        AccessibilityWindowQueryActivity.class,
+                        Display.DEFAULT_DISPLAY);
+        try {
+            final AccessibilityWindowInfo activityWindowInfo =
+                    ActivityLaunchUtils.findWindowByTitle(sUiAutomation, activity.getTitle());
+            assertThat(activityWindowInfo).isNotNull();
+            Region activityRegion = new Region();
+            activityWindowInfo.getRegionInScreen(activityRegion);
+
+            // Set up the view that will be an accessibility overlay.
+            final String overlayTitle = "App Overlay title";
+            final Button button = new Button(mService);
+            button.setText("Button");
+            final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+            params.width = 1;
+            params.height = 1;
+            params.flags =
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                            | WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR;
+            params.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
+            params.setTitle(overlayTitle);
+            params.accessibilityTitle = overlayTitle;
+            Display display =
+                    mService.getSystemService(DisplayManager.class)
+                            .getDisplay(Display.DEFAULT_DISPLAY);
+            Context context = mService.createDisplayContext(display);
+            final SurfaceControl sc;
+            final SurfaceControlViewHost viewHost =
+                    mService.getOnService(
+                            () -> {
+                                return new SurfaceControlViewHost(context, display, new Binder());
+                            });
+            sc = viewHost.getSurfacePackage().getSurfaceControl();
+            SurfaceControl.Transaction t = new SurfaceControl.Transaction();
+            t.setVisibility(sc, true)
+                    .setLayer(sc, Integer.MAX_VALUE)
+                    .setPosition(
+                            sc,
+                            activityRegion.getBounds().centerX(),
+                            activityRegion.getBounds().centerY())
+                    .apply();
+            // Place the view inside a SurfaceControlViewHost
+            // and attach that object as an accessibility overlay to the activity window.
+            sUiAutomation.executeAndWaitForEvent(
+                    () ->
+                            mService.runOnServiceSync(
+                                    () -> {
+                                        viewHost.setView(button, params);
+                                        mService.attachAccessibilityOverlayToWindow(
+                                                activityWindowInfo.getId(), sc);
+                                    }),
+                    (event) -> {
+                        AccessibilityWindowInfo window =
+                                ActivityLaunchUtils.findWindowByTitle(sUiAutomation, overlayTitle);
+                        if (window == null) {
+                            return false;
+                        }
+                        if (window.getType()
+                                == AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY) {
+                            return true;
+                        }
+                        return false;
+                    },
+                    AsyncUtils.DEFAULT_TIMEOUT_MS);
+
+            // Remove the overlay.
+            sUiAutomation.executeAndWaitForEvent(
+                    () ->
+                            mService.runOnServiceSync(
+                                    () -> {
+                                        t.reparent(sc, null).apply();
+                                        t.close();
+                                        sc.release();
+                                    }),
+                    (event) ->
+                            // There should be no windows with this window title.
+                            ActivityLaunchUtils.findWindowByTitle(sUiAutomation, overlayTitle)
+                                    == null,
+                    AsyncUtils.DEFAULT_TIMEOUT_MS);
+        } finally {
+            if (activity != null) {
+                activity.finish();
+            }
+        }
     }
 
     private void addOverlayWindow(Context context, String overlayTitle) {

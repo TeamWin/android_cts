@@ -195,8 +195,6 @@ public class MockDataService {
     }
 
     SetupDataCallResult setupDataCall(int apnType) {
-        Log.d(TAG, "getNetwork: apnType= " + apnType);
-
         checkExistDataCall(apnType);
 
         SetupDataCallResult dc = new SetupDataCallResult();
@@ -299,10 +297,11 @@ public class MockDataService {
 
     void checkExistDataCall(int apnType) {
         synchronized (mDataCallListLock) {
+            int cid = (apnType == APN_TYPE_IMS) ? mImsCid : mInternetCid;
             Iterator<SetupDataCallResult> it = sDataCallLists.iterator();
             while (it.hasNext()) {
                 SetupDataCallResult dc = it.next();
-                if (dc.cid == apnType) {
+                if (dc.cid == cid) {
                     it.remove();
                 }
             }

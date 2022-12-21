@@ -49,7 +49,7 @@ public class FabricatedOverlayTest {
 
     @Test
     public void newBuilder_withGoodOverlayName_shouldSucceed() {
-        new FabricatedOverlay.Builder("I_am_good_name", mContext.getPackageName());
+        new FabricatedOverlay("I_am_good_name", mContext.getPackageName());
     }
 
     @Test
@@ -57,7 +57,7 @@ public class FabricatedOverlayTest {
         assertThrows(
                 "The build can't accept bad name",
                 IllegalArgumentException.class,
-                () -> new FabricatedOverlay.Builder(null /* name */, mContext.getPackageName()));
+                () -> new FabricatedOverlay(null /* overlayName */, mContext.getPackageName()));
     }
 
     @Test
@@ -65,7 +65,7 @@ public class FabricatedOverlayTest {
         assertThrows(
                 "The build can't accept bad name",
                 IllegalArgumentException.class,
-                () -> new FabricatedOverlay.Builder("" /* name */, mContext.getPackageName()));
+                () -> new FabricatedOverlay("" /* overlayName */, mContext.getPackageName()));
     }
 
     @Test
@@ -74,175 +74,196 @@ public class FabricatedOverlayTest {
                 "The build can't accept bad name",
                 IllegalArgumentException.class,
                 () ->
-                        new FabricatedOverlay.Builder(
+                        new FabricatedOverlay(
                                 "../../etc/password", mContext.getPackageName()));
-    }
-
-    private FabricatedOverlay.Builder createBuilder() {
-        return new FabricatedOverlay.Builder(mTestName.getMethodName(), mContext.getPackageName());
     }
 
     @Test
     public void setResourceValue_forResourceName_withoutSlash_shouldBeInvalid() {
-        final FabricatedOverlay.Builder builder = createBuilder();
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
 
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
-                        builder.setResourceValue(
-                                "demo", TypedValue.TYPE_INT_COLOR_ARGB8, Color.WHITE));
+                        overlay.setResourceValue("demo", TypedValue.TYPE_INT_COLOR_ARGB8,
+                                Color.WHITE, null /* configuration */));
     }
 
     @Test
     public void setResourceValue_forResourceName_colonAfterSlash_shouldBeInvalid() {
-        final FabricatedOverlay.Builder builder = createBuilder();
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
 
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
-                        builder.setResourceValue(
+                        overlay.setResourceValue(
                                 "color/" + mContext.getPackageName() + " :demo",
                                 TypedValue.TYPE_INT_COLOR_ARGB8,
-                                Color.WHITE));
+                                Color.WHITE, null /* configuration */));
     }
 
     @Test
     public void setResourceValue_forResourceName_invalidResourceType_shouldFail() {
-        final FabricatedOverlay.Builder builder = createBuilder();
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
 
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
-                        builder.setResourceValue(
-                                "s/demo", TypedValue.TYPE_INT_COLOR_ARGB8, Color.WHITE));
+                        overlay.setResourceValue("s/demo", TypedValue.TYPE_INT_COLOR_ARGB8,
+                                Color.WHITE, null /* configuration */));
     }
 
     @Test
     public void setResourceValue_forResourceName_colonBeforeSlash_shouldBeValid() {
-        final FabricatedOverlay.Builder builder = createBuilder();
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
 
-        assertThat(
-                        builder.setResourceValue(
-                                mContext.getPackageName() + ":color/demo",
-                                TypedValue.TYPE_INT_COLOR_ARGB8,
-                                Color.WHITE))
-                .isNotNull();
+        overlay.setResourceValue(mContext.getPackageName() + ":color/demo",
+                TypedValue.TYPE_INT_COLOR_ARGB8, Color.WHITE, null /* configuration */);
     }
 
     @Test
     public void setResourceValue_forIntType_colorAsStringType_shouldFail() {
-        final FabricatedOverlay.Builder builder = createBuilder();
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
 
         assertThrows(
                 IllegalArgumentException.class,
-                () -> builder.setResourceValue("color/demo", TypedValue.TYPE_STRING, Color.WHITE));
+                () -> overlay.setResourceValue("color/demo", TypedValue.TYPE_STRING, Color.WHITE,
+                        null /* configuration */));
     }
 
     @Test
     public void setResourceValue_forIntType_forColorType_shouldBeValid() {
-        final FabricatedOverlay.Builder builder = createBuilder();
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
 
-        builder.setResourceValue("color/demo", TypedValue.TYPE_INT_COLOR_ARGB4, Color.WHITE);
-
-        assertThat(builder.build()).isNotNull();
+        overlay.setResourceValue("color/demo", TypedValue.TYPE_INT_COLOR_ARGB4, Color.WHITE,
+                null /* configuration */);
     }
 
     @Test
     public void setResourceValue_forIntType_withConfigurations_shouldBeValid() {
-        final FabricatedOverlay.Builder builder = createBuilder();
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
 
-        builder.setResourceValue(
+        overlay.setResourceValue(
                 "color/demo", TypedValue.TYPE_INT_COLOR_ARGB8, Color.WHITE, "port");
-        builder.setResourceValue(
+        overlay.setResourceValue(
                 "color/demo", TypedValue.TYPE_INT_COLOR_ARGB8, Color.WHITE, "land");
-
-        assertThat(builder.build()).isNotNull();
     }
 
     @Test
     public void setResourceValue_forIntType_forNotExistColor_shouldBeValid() {
-        final FabricatedOverlay.Builder builder = createBuilder();
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
 
-        builder.setResourceValue(
-                "color/want ../../etc/password", TypedValue.TYPE_INT_COLOR_ARGB8, Color.WHITE);
-
-        assertThat(builder.build()).isNotNull();
+        overlay.setResourceValue("color/want ../../etc/password", TypedValue.TYPE_INT_COLOR_ARGB8,
+                Color.WHITE, null /* configuration */);
     }
 
     @Test
     public void setResourceValue_forStringType_forNotExistString_shouldBeValid() {
-        final FabricatedOverlay.Builder builder = createBuilder();
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
 
-        builder.setResourceValue(
+        overlay.setResourceValue(
                 "string/want ../../etc/password",
                 TypedValue.TYPE_STRING,
-                "Try to replace non-exist string");
-
-        assertThat(builder.build()).isNotNull();
+                "Try to replace non-exist string",
+                null /* configuration */);
     }
 
     @Test
     public void setResourceValue_forStringType_withConfigurations_shouldBeValid() {
-        final FabricatedOverlay.Builder builder = createBuilder();
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
 
-        builder.setResourceValue(
+        overlay.setResourceValue(
                 "string/demo", TypedValue.TYPE_STRING, "I am string for port", "port");
-        builder.setResourceValue(
+        overlay.setResourceValue(
                 "string/demo", TypedValue.TYPE_STRING, "I am string for land", "land");
-
-        assertThat(builder.build()).isNotNull();
     }
 
     @Test
     public void setResourceValue_forStringType_nullString_shouldFail() {
-        final FabricatedOverlay.Builder builder = createBuilder();
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
 
         assertThrows(
                 NullPointerException.class,
-                () -> builder.setResourceValue("string/demo", TypedValue.TYPE_STRING, null));
+                () -> overlay.setResourceValue("string/demo", TypedValue.TYPE_STRING, null,
+                        null /* configuration */));
     }
 
     @Test
     public void setResourceValue_forStringType_stringAsColorType_shouldFail() {
-        final FabricatedOverlay.Builder builder = createBuilder();
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
 
         assertThrows(
                 IllegalArgumentException.class,
                 () ->
-                        builder.setResourceValue(
-                                "string/demo", TypedValue.TYPE_INT_COLOR_ARGB8, "Hello"));
+                        overlay.setResourceValue("string/demo", TypedValue.TYPE_INT_COLOR_ARGB8,
+                                "Hello", null /* configuration */));
     }
 
     @Test
     public void setResourceValue_forParcelFileDescriptor_withNull_shouldFail() {
-        final FabricatedOverlay.Builder builder = createBuilder();
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
 
         assertThrows(
                 NullPointerException.class,
                 () ->
-                        builder.setResourceValue(
+                        overlay.setResourceValue(
                                 "layout/demo", null /* value */, null /* configuration */));
     }
 
     @Test
-    public void build_noEntry_shouldSucceed() {
-        final FabricatedOverlay.Builder builder = createBuilder();
-
-        assertThat(builder.build()).isNotNull();
-    }
-
-    @Test
-    public void build_multipleEntries_shouldSucceed() {
-        final FabricatedOverlay.Builder builder = createBuilder();
+    public void setResourceValue_multipleEntries_shouldSucceed() {
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
         final ParcelFileDescriptor parcelFileDescriptor =
                 mContext.getResources().openRawResourceFd(R.raw.text).getParcelFileDescriptor();
 
-        builder.setResourceValue("color/demo1", TypedValue.TYPE_INT_COLOR_ARGB4, Color.WHITE);
-        builder.setResourceValue("color/demo2", TypedValue.TYPE_INT_COLOR_ARGB8, Color.WHITE);
-        builder.setResourceValue("string/demo1", TypedValue.TYPE_STRING, "white");
-        builder.setResourceValue("string/demo2", TypedValue.TYPE_STRING, "black");
-        builder.setResourceValue("raw/demo", parcelFileDescriptor, null);
+        overlay.setResourceValue("color/demo1", TypedValue.TYPE_INT_COLOR_ARGB4, Color.WHITE,
+                null /* configuration */);
+        overlay.setResourceValue("color/demo2", TypedValue.TYPE_INT_COLOR_ARGB8, Color.WHITE,
+                null /* configuration */);
+        overlay.setResourceValue("string/demo1", TypedValue.TYPE_STRING, "white",
+                null /* configuration */);
+        overlay.setResourceValue("string/demo2", TypedValue.TYPE_STRING, "black",
+                null /* configuration */);
+        overlay.setResourceValue("raw/demo", parcelFileDescriptor, null /* configuration */);
+    }
 
-        assertThat(builder.build()).isNotNull();
+    @Test
+    public void getTargetOverlayable_defaultIsNull() {
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
+
+        assertThat(overlay.getTargetOverlayable()).isEmpty();
+    }
+
+    @Test
+    public void getTargetOverlayable_setTargetOverlayable_shouldBeTheSame() {
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
+
+        overlay.setTargetOverlayable("Hello");
+
+        assertThat(overlay.getTargetOverlayable()).isEqualTo("Hello");
+    }
+
+    @Test
+    public void getOverlayIdentifier_defaultIsNotNull() {
+        final FabricatedOverlay overlay =
+                new FabricatedOverlay(mTestName.getMethodName(), mContext.getPackageName());
+
+        assertThat(overlay.getIdentifier()).isNotNull();
     }
 }

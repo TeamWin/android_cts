@@ -17,6 +17,12 @@
 package android.telephony.cts;
 
 import static android.app.AppOpsManager.OPSTR_USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER;
+import static android.telephony.DataSpecificRegistrationInfo.LTE_ATTACH_EXTRA_INFO_CSFB_NOT_PREFERRED;
+import static android.telephony.DataSpecificRegistrationInfo.LTE_ATTACH_EXTRA_INFO_NONE;
+import static android.telephony.DataSpecificRegistrationInfo.LTE_ATTACH_EXTRA_INFO_SMS_ONLY;
+import static android.telephony.DataSpecificRegistrationInfo.LTE_ATTACH_TYPE_COMBINED;
+import static android.telephony.DataSpecificRegistrationInfo.LTE_ATTACH_TYPE_EPS_ONLY;
+import static android.telephony.DataSpecificRegistrationInfo.LTE_ATTACH_TYPE_UNKNOWN;
 import static android.telephony.PhoneCapability.DEVICE_NR_CAPABILITY_NSA;
 import static android.telephony.PhoneCapability.DEVICE_NR_CAPABILITY_SA;
 
@@ -77,6 +83,7 @@ import android.telephony.CellIdentityTdscdma;
 import android.telephony.CellIdentityWcdma;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
+import android.telephony.DataSpecificRegistrationInfo;
 import android.telephony.DataThrottlingRequest;
 import android.telephony.ImsiEncryptionInfo;
 import android.telephony.ModemActivityInfo;
@@ -1613,6 +1620,25 @@ public class TelephonyManagerTest {
                 mTelephonyManager.getServiceState(TelephonyManager.INCLUDE_LOCATION_DATA_COARSE));
         assertEquals(mServiceState, mTelephonyManager.getServiceState(
                 TelephonyManager.INCLUDE_LOCATION_DATA_FINE));
+
+        NetworkRegistrationInfo regInfo = mServiceState.getNetworkRegistrationInfo(
+                NetworkRegistrationInfo.DOMAIN_PS, AccessNetworkConstants.TRANSPORT_TYPE_WWAN);
+        if (regInfo != null) {
+            DataSpecificRegistrationInfo dsri = regInfo.getDataSpecificInfo();
+            if (dsri != null) {
+                int lteAttachType = dsri.getLteAttachResultType();
+                assertTrue(lteAttachType == LTE_ATTACH_TYPE_UNKNOWN
+                        || lteAttachType == LTE_ATTACH_TYPE_EPS_ONLY
+                        || lteAttachType == LTE_ATTACH_TYPE_COMBINED);
+
+                int lteAttachExtraInfo = dsri.getLteAttachExtraInfo();
+                assertTrue(lteAttachExtraInfo == LTE_ATTACH_EXTRA_INFO_NONE
+                        || lteAttachExtraInfo == LTE_ATTACH_EXTRA_INFO_SMS_ONLY
+                        || lteAttachExtraInfo == LTE_ATTACH_EXTRA_INFO_CSFB_NOT_PREFERRED
+                        || lteAttachExtraInfo == (LTE_ATTACH_EXTRA_INFO_SMS_ONLY
+                                                 | LTE_ATTACH_EXTRA_INFO_CSFB_NOT_PREFERRED));
+            }
+        }
     }
 
     private void assertServiceStateSanitization(ServiceState expectedServiceState,

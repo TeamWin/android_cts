@@ -87,6 +87,9 @@ public class ImsCallingBase {
     public static final int LATCH_IS_ON_CALL_REMOTELY_HELD = 11;
     public static final int LATCH_IS_ON_CALL_REMOTELY_UNHELD = 12;
     public static final int LATCH_MAX = 13;
+    public static final int TEST_RTP_THRESHOLD_PACKET_LOSS_RATE = 47;
+    public static final int TEST_RTP_THRESHOLD_JITTER_MILLIS = 150;
+    public static final long TEST_RTP_THRESHOLD_INACTIVITY_TIME_MILLIS = 3000;
 
     protected static boolean sIsBound = false;
     protected static int sCounter = 5553639;

@@ -42,9 +42,11 @@ import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.DisplayMetricsSession;
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
 import android.server.wm.jetpack.utils.TestValueCountConsumer;
@@ -139,41 +141,62 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
     @ApiTest(apis = {
             "androidx.window.extensions.layout.WindowLayoutComponent#addWindowLayoutInfoListener"})
     public void testWindowLayoutComponent_onWindowLayoutChangeListener() throws Exception {
-        TestActivity activity = (TestActivity) startFullScreenActivityNewTask(TestActivity.class,
-                null /* activityId */);
-        // Set activity to portrait
-        setActivityOrientationActivityDoesNotHandleOrientationChanges(activity,
-                ORIENTATION_PORTRAIT);
+        TestActivity testActivity = startFullScreenActivityNewTask(
+                TestActivity.class, null /* activityId */);
+        changeActivityOrientationThenVerifyWindowLayout(testActivity, testActivity);
+    }
 
-        // Create the callback, onWindowLayoutChanged should only be called twice in this
-        // test, not the third time when the orientation will change because the listener will be
-        // removed.
-        TestValueCountConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
-                new TestValueCountConsumer<>();
-        windowLayoutInfoConsumer.setCount(1);
+    /**
+     * Test adding and removing a window layout change listener with a wrapped activity context.
+     */
+    @Test
+    @ApiTest(apis = {
+            "androidx.window.extensions.layout.WindowLayoutComponent#addWindowLayoutInfoListener"})
+    public void testWindowLayoutComponent_onWindowLayoutChangeListener_wrappedContext()
+            throws Exception {
+        TestActivity testActivity = startFullScreenActivityNewTask(
+                TestActivity.class, null /* activityId */);
+        Context wrappedContext = new ContextWrapper(testActivity);
+        WindowLayoutInfo windowLayoutInfoFromContext = getExtensionWindowLayoutInfo(testActivity);
+        WindowLayoutInfo windowLayoutInfoFromWrappedContext =
+                getExtensionWindowLayoutInfo(wrappedContext);
+        assertEquals(windowLayoutInfoFromContext, windowLayoutInfoFromWrappedContext);
 
-        // Add window layout listener for mWindowToken - onWindowLayoutChanged should be called
-        mWindowLayoutComponent.addWindowLayoutInfoListener(activity, windowLayoutInfoConsumer);
-        // Initial registration invokes a consumer callback synchronously, clear the queue to
-        // make sure there's no residual value or from the first orientation change.
-        windowLayoutInfoConsumer.clearQueue();
+        changeActivityOrientationThenVerifyWindowLayout(testActivity, wrappedContext);
+    }
 
-        // Change the activity orientation - onWindowLayoutChanged should be called
-        setActivityOrientationActivityDoesNotHandleOrientationChanges(activity,
-                ORIENTATION_LANDSCAPE);
+    /**
+     * Test adding and removing a window layout change listener with a window context.
+     */
+    @Test
+    @ApiTest(apis = {
+            "androidx.window.extensions.layout.WindowLayoutComponent#addWindowLayoutInfoListener"})
+    public void testWindowLayoutComponent_onWindowLayoutChangeListener_windowContext()
+            throws Exception {
+        try (DisplayMetricsSession displaySession = new DisplayMetricsSession(DEFAULT_DISPLAY)) {
+            Context context = createContextWithNonActivityWindow();
+            changeDisplayMetricThenVerifyWindowLayout(context, displaySession);
+        }
+    }
 
-        // Check we have received exactly one layout update.
-        assertNotNull(windowLayoutInfoConsumer.waitAndGet());
+    /**
+     * Test adding and removing a window layout change listener with a wrapped window context.
+     */
+    @Test
+    @ApiTest(apis = {
+            "androidx.window.extensions.layout.WindowLayoutComponent#addWindowLayoutInfoListener"})
+    public void testWindowLayoutComponent_onWindowLayoutChangeListener_wrappedWindowContext()
+            throws Exception {
+        try (DisplayMetricsSession displaySession = new DisplayMetricsSession(DEFAULT_DISPLAY)) {
+            Context context = createContextWithNonActivityWindow();
+            Context wrappedContext = new ContextWrapper(context);
+            WindowLayoutInfo windowLayoutInfoFromContext = getExtensionWindowLayoutInfo(context);
+            WindowLayoutInfo windowLayoutInfoFromWrappedContext =
+                    getExtensionWindowLayoutInfo(wrappedContext);
+            assertEquals(windowLayoutInfoFromContext, windowLayoutInfoFromWrappedContext);
 
-        // Remove the listener
-        mWindowLayoutComponent.removeWindowLayoutInfoListener(windowLayoutInfoConsumer);
-        windowLayoutInfoConsumer.clearQueue();
-
-        // Change the activity orientation - onWindowLayoutChanged should NOT be called
-        setActivityOrientationActivityDoesNotHandleOrientationChanges(activity,
-                ORIENTATION_PORTRAIT);
-        WindowLayoutInfo lastValue = windowLayoutInfoConsumer.waitAndGet();
-        assertNull(lastValue);
+            changeDisplayMetricThenVerifyWindowLayout(wrappedContext, displaySession);
+        }
     }
 
     @Test
@@ -568,5 +591,99 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
         assertEquals(returnType, classMethod.getReturnType());
         // This should not fail if getMethod did not fail.
         assertTrue(Modifier.isPublic(classMethod.getModifiers()));
+    }
+
+    private void changeActivityOrientationThenVerifyWindowLayout(
+            TestActivity testActivity, Context listenerContext)
+            throws Exception {
+        // Set activity to portrait
+        setActivityOrientationActivityDoesNotHandleOrientationChanges(testActivity,
+                ORIENTATION_PORTRAIT);
+
+        // Create the callback, onWindowLayoutChanged should only be called twice in this
+        // test, not the third time when the orientation will change because the listener will be
+        // removed.
+        TestValueCountConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
+                new TestValueCountConsumer<>();
+        windowLayoutInfoConsumer.setCount(1);
+
+        // Add window layout listener for mWindowToken - onWindowLayoutChanged should be called
+        mWindowLayoutComponent.addWindowLayoutInfoListener(
+                listenerContext, windowLayoutInfoConsumer);
+        // Initial registration invokes a consumer callback synchronously, clear the queue to
+        // make sure there's no residual value or from the first orientation change.
+        windowLayoutInfoConsumer.clearQueue();
+
+        // Change the activity orientation - onWindowLayoutChanged should be called
+        setActivityOrientationActivityDoesNotHandleOrientationChanges(testActivity,
+                ORIENTATION_LANDSCAPE);
+
+        // Check we have received exactly one layout update.
+        assertNotNull(windowLayoutInfoConsumer.waitAndGet());
+
+
+        // Remove the listener
+        mWindowLayoutComponent.removeWindowLayoutInfoListener(windowLayoutInfoConsumer);
+        windowLayoutInfoConsumer.clearQueue();
+
+        // Change the activity orientation - onWindowLayoutChanged should NOT be called
+        setActivityOrientationActivityDoesNotHandleOrientationChanges(testActivity,
+                ORIENTATION_PORTRAIT);
+        WindowLayoutInfo lastValue = windowLayoutInfoConsumer.waitAndGet();
+        assertNull(lastValue);
+    }
+
+    private void changeDisplayMetricThenVerifyWindowLayout(
+            Context context, DisplayMetricsSession displaySession) throws Exception {
+        // Create the callback, onWindowLayoutChanged should only be called twice in this
+        // test, not the third time when the orientation will change because the listener will be
+        // removed.
+        TestValueCountConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
+                new TestValueCountConsumer<>();
+        windowLayoutInfoConsumer.setCount(1);
+
+        // Add window layout listener for mWindowToken - onWindowLayoutChanged should be called
+        mWindowLayoutComponent.addWindowLayoutInfoListener(context, windowLayoutInfoConsumer);
+        // Initial registration invokes a consumer callback synchronously, clear the queue to
+        // make sure there's no residual value or from the first orientation change.
+        WindowLayoutInfo windowLayoutInit = windowLayoutInfoConsumer.waitAndGet();
+        assertNotNull(windowLayoutInit);
+        windowLayoutInfoConsumer.clearQueue();
+
+        // Change the display size - onWindowLayoutChanged should be called
+        final double displayResizeRatio = 0.8;
+        displaySession.changeDisplayMetrics(
+                displayResizeRatio,
+                1.0 /* densityRatio */);
+        WindowLayoutInfo windowLayoutUpdated = windowLayoutInfoConsumer.waitAndGet();
+
+        // Check we have received exactly one layout update.
+        assertNotNull(windowLayoutUpdated);
+        assertEquals(
+                windowLayoutInit.getDisplayFeatures().size(),
+                windowLayoutUpdated.getDisplayFeatures().size());
+
+        Rect windowLayoutSizeInitBounds =
+                windowLayoutInit.getDisplayFeatures().get(0).getBounds();
+        Rect windowLayoutSizeUpdatedBounds =
+                windowLayoutUpdated.getDisplayFeatures().get(0).getBounds();
+
+        // Expect the hinge dimension to shrink in exactly one direction, the actual
+        // dimension depends on device implementation.
+        assertTrue(
+                windowLayoutSizeInitBounds.width() * displayResizeRatio
+                        == windowLayoutSizeUpdatedBounds.width()
+                        || windowLayoutSizeInitBounds.height() * displayResizeRatio
+                        == windowLayoutSizeUpdatedBounds.height()
+        );
+
+        // Remove the listener
+        mWindowLayoutComponent.removeWindowLayoutInfoListener(windowLayoutInfoConsumer);
+        windowLayoutInfoConsumer.clearQueue();
+
+        // Restore Display to original size - onWindowLayoutChanged should NOT be called
+        displaySession.restoreDisplayMetrics();
+        WindowLayoutInfo lastValue = windowLayoutInfoConsumer.waitAndGet();
+        assertNull(lastValue);
     }
 }

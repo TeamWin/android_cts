@@ -21,6 +21,7 @@ import static android.media.AudioFormat.CHANNEL_IN_FRONT;
 import android.hardware.soundtrigger.SoundTrigger;
 import android.hardware.soundtrigger.SoundTrigger.KeyphraseRecognitionExtra;
 import android.media.AudioFormat;
+import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
 import android.os.SharedMemory;
 import android.provider.DeviceConfig;
@@ -33,6 +34,8 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import com.google.common.collect.ImmutableList;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -56,6 +59,8 @@ public final class Helper {
     private static final String VALUE_FAKE_DATA = "fakeData";
     private static final byte[] FAKE_BYTE_ARRAY_DATA = new byte[]{1, 2, 3};
     public static final int DEFAULT_PHRASE_ID = 5;
+    public static byte[] FAKE_HOTWORD_AUDIO_DATA =
+            new byte[]{'h', 'o', 't', 'w', 'o', 'r', 'd', '!'};
 
     public static final HotwordDetectedResult DETECTED_RESULT =
             new HotwordDetectedResult.Builder()
@@ -114,6 +119,28 @@ public final class Helper {
     public static List<KeyphraseRecognitionExtra> createFakeKeyphraseRecognitionExtraList() {
         return ImmutableList.of(new KeyphraseRecognitionExtra(DEFAULT_PHRASE_ID,
                 SoundTrigger.RECOGNITION_MODE_VOICE_TRIGGER, 100));
+    }
+
+    /**
+     * Returns the ParcelFileDescriptor data that is used for testing.
+     */
+    public static ParcelFileDescriptor createFakeAudioStream() {
+        ParcelFileDescriptor[] tempParcelFileDescriptors = null;
+        try {
+            tempParcelFileDescriptors = ParcelFileDescriptor.createPipe();
+            try (OutputStream fos =
+                         new ParcelFileDescriptor.AutoCloseOutputStream(
+                                 tempParcelFileDescriptors[1])) {
+                fos.write(FAKE_HOTWORD_AUDIO_DATA, 0, 8);
+            } catch (IOException e) {
+                Log.w(TAG, "Failed to pipe audio data : ", e);
+                throw new IllegalStateException();
+            }
+            return tempParcelFileDescriptors[0];
+        } catch (IOException e) {
+            Log.w(TAG, "Failed to create a pipe : " + e);
+        }
+        throw new IllegalStateException();
     }
 
     /**

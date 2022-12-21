@@ -21,7 +21,6 @@ import static android.content.om.cts.FabricatedOverlayFacilitator.OVERLAYABLE_NA
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -143,17 +142,6 @@ public class OverlayManagerTest {
     }
 
     @Test
-    public void beginTransaction_shouldReturnTransactionBuilder() {
-        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        final OverlayManager overlayManager = context.getSystemService(OverlayManager.class);
-
-        final Object transactionBuilder = overlayManager.beginTransaction();
-
-        expect.that(transactionBuilder).isNotNull();
-        expect.that(transactionBuilder).isInstanceOf(OverlayManagerTransaction.Builder.class);
-    }
-
-    @Test
     public void getOverlayInfosForTarget_byDefault_returnEmptyList() {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         final OverlayManager overlayManager = context.getSystemService(OverlayManager.class);
@@ -170,11 +158,12 @@ public class OverlayManagerTest {
             throws PackageManager.NameNotFoundException, IOException {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         final OverlayManager overlayManager = context.getSystemService(OverlayManager.class);
-        overlayManager.beginTransaction()
-                .registerFabricatedOverlay(mFacilitator.prepare("hello_overlay1", OVERLAYABLE_NAME))
-                .registerFabricatedOverlay(mFacilitator.prepare("hello_overlay2", OVERLAYABLE_NAME))
-                .build()
-                .commit();
+        final OverlayManagerTransaction transaction = new OverlayManagerTransaction(overlayManager);
+        transaction.registerFabricatedOverlay(
+                mFacilitator.prepare("hello_overlay1", OVERLAYABLE_NAME));
+        transaction.registerFabricatedOverlay(
+                mFacilitator.prepare("hello_overlay2", OVERLAYABLE_NAME));
+        transaction.commit();
 
         final List<OverlayInfo> overlayInfoList =
                 overlayManager.getOverlayInfosForTarget(context.getPackageName());
@@ -203,9 +192,8 @@ public class OverlayManagerTest {
         final FabricatedOverlay fabricatedOverlay =
                 mFacilitator.prepare(mOverlayName, OVERLAYABLE_NAME, true /* isSelfTarget */);
         final OverlayManager overlayManager = mContext.getSystemService(OverlayManager.class);
-        final OverlayManagerTransaction transaction =
-                overlayManager.beginTransaction().registerFabricatedOverlay(fabricatedOverlay)
-                        .build();
+        final OverlayManagerTransaction transaction = new OverlayManagerTransaction(overlayManager);
+        transaction.registerFabricatedOverlay(fabricatedOverlay);
 
         overlayManager.commit(transaction);
 
@@ -218,9 +206,8 @@ public class OverlayManagerTest {
         final FabricatedOverlay fabricatedOverlay =
                 mFacilitator.prepare(mOverlayName, OVERLAYABLE_NAME, false /* isSelfTarget */);
         final OverlayManager overlayManager = mContext.getSystemService(OverlayManager.class);
-        final OverlayManagerTransaction transaction =
-                overlayManager.beginTransaction().registerFabricatedOverlay(fabricatedOverlay)
-                        .build();
+        final OverlayManagerTransaction transaction = new OverlayManagerTransaction(overlayManager);
+        transaction.registerFabricatedOverlay(fabricatedOverlay);
 
         overlayManager.commit(transaction);
 

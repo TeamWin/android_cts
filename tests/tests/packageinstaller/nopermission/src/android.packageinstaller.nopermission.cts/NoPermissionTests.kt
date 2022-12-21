@@ -91,7 +91,7 @@ class NoPermissionTests {
     @Before
     fun registerInstallResultReceiver() {
         context.registerReceiver(receiver, IntentFilter(ACTION),
-                Context.RECEIVER_EXPORTED_UNAUDITED)
+                Context.RECEIVER_EXPORTED)
     }
 
     @Before
@@ -122,7 +122,8 @@ class NoPermissionTests {
         }
 
         // Commit session
-        val pendingIntent = PendingIntent.getBroadcast(context, 0, Intent(ACTION),
+        val pendingIntent = PendingIntent.getBroadcast(context, 0,
+                Intent(ACTION).setPackage(context.packageName),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
         session.commit(pendingIntent.intentSender)
     }

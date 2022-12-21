@@ -22,7 +22,6 @@ import android.content.om.OverlayInfo;
 import android.content.om.OverlayManager;
 import android.content.om.OverlayManagerTransaction;
 import android.graphics.Color;
-import android.os.ParcelFileDescriptor;
 import android.util.TypedValue;
 
 import java.util.List;
@@ -34,26 +33,20 @@ public class FabricatedOverlayFacilitator {
     public static final String OVERLAYABLE_NAME = "SelfTargetingOverlayable";
 
     private final Context mContext;
-    private FabricatedOverlay.Builder mBuilder;
 
     public FabricatedOverlayFacilitator(Context context) {
         mContext = context;
-        final String packageName = mContext.getPackageName();
-        mBuilder =
-                new FabricatedOverlay.Builder(packageName, "FabricatedOverlayHelper", packageName)
-                        .setTargetOverlayable(OVERLAYABLE_NAME);
     }
 
     public void removeAllOverlays() throws Exception {
         final OverlayManager overlayManager = mContext.getSystemService(OverlayManager.class);
-        final OverlayManagerTransaction.Builder transactionBuilder =
-                overlayManager.beginTransaction();
+        final OverlayManagerTransaction transaction = new OverlayManagerTransaction(overlayManager);
         final List<OverlayInfo> overlayInfoList =
                 overlayManager.getOverlayInfosForTarget(mContext.getPackageName());
         for (OverlayInfo overlayInfo : overlayInfoList) {
-            transactionBuilder.unregisterFabricatedOverlay(overlayInfo.getOverlayIdentifier());
+            transaction.unregisterFabricatedOverlay(overlayInfo.getOverlayIdentifier());
         }
-        transactionBuilder.build().commit();
+        transaction.commit();
     }
 
     public FabricatedOverlay prepare(String overlayName, String overlayableName) {
@@ -63,37 +56,14 @@ public class FabricatedOverlayFacilitator {
     public FabricatedOverlay prepare(String overlayName, String overlayableName,
             boolean isSelfTarget) {
         final String packageName = mContext.getPackageName();
-        mBuilder = isSelfTarget
-                ? new FabricatedOverlay.Builder(overlayName, packageName)
-                : new FabricatedOverlay.Builder(packageName, overlayName, packageName);
-        setOverlayable(overlayableName);
-        set(TARGET_COLOR_RES, Color.WHITE);
-        set(TARGET_STRING_RES, "HELLO");
-        return get();
-    }
-
-    public FabricatedOverlayFacilitator setOverlayable(String overlayableName) {
-        mBuilder.setTargetOverlayable(overlayableName);
-        return this;
-    }
-
-    public FabricatedOverlayFacilitator set(String resourceName, int value) {
-        mBuilder.setResourceValue(resourceName, TypedValue.TYPE_INT_COLOR_ARGB8, value);
-        return this;
-    }
-
-    public FabricatedOverlayFacilitator set(String resourceName, String value) {
-        mBuilder.setResourceValue(resourceName, TypedValue.TYPE_STRING, value);
-        return this;
-    }
-
-    public FabricatedOverlayFacilitator set(String resourceName,
-            ParcelFileDescriptor parcelFileDescriptor) {
-        mBuilder.setResourceValue(resourceName, parcelFileDescriptor, null /* configuration */);
-        return this;
-    }
-
-    public FabricatedOverlay get() {
-        return mBuilder.build();
+        final FabricatedOverlay overlay =  isSelfTarget
+                ? new FabricatedOverlay(overlayName, packageName)
+                : new FabricatedOverlay.Builder(packageName, overlayName, packageName).build();
+        overlay.setTargetOverlayable(overlayableName);
+        overlay.setResourceValue(TARGET_COLOR_RES, TypedValue.TYPE_INT_COLOR_ARGB8, Color.WHITE,
+                null /* configuration */);
+        overlay.setResourceValue(TARGET_STRING_RES, TypedValue.TYPE_STRING, "HELLO",
+                null /* configuration */);
+        return overlay;
     }
 }

@@ -23,8 +23,10 @@ import static android.companion.virtual.VirtualDeviceManager.DEVICE_ID_DEFAULT;
 import static android.companion.virtual.VirtualDeviceManager.DEVICE_ID_INVALID;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAULT;
+import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_AUDIO;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_SENSORS;
 import static android.hardware.Sensor.TYPE_ACCELEROMETER;
+import static android.media.AudioManager.AUDIO_SESSION_ID_GENERATE;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
@@ -326,6 +328,34 @@ public class VirtualDeviceManagerBasicTest {
         assertThat(sensor).isNotNull();
         assertThat(sensor.getType()).isEqualTo(TYPE_ACCELEROMETER);
         assertThat(sensor.getName()).isEqualTo(SENSOR_NAME);
+    }
+
+    @Test
+    public void getAudioSessionIds_noIdsSpecified_shouldReturnPlaceholderValue() {
+        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
+                mFakeAssociationRule.getAssociationInfo().getId(),
+                new VirtualDeviceParams.Builder().build());
+
+        assertThat(mVirtualDeviceManager.getAudioPlaybackSessionId(
+                mVirtualDevice.getDeviceId())).isEqualTo(AUDIO_SESSION_ID_GENERATE);
+        assertThat(mVirtualDeviceManager.getAudioRecordingSessionId(
+                mVirtualDevice.getDeviceId())).isEqualTo(AUDIO_SESSION_ID_GENERATE);
+    }
+
+    @Test
+    public void getAudioSessionIds_withIdsSpecified_shouldReturnPlaceholderValue() {
+        int playbackSessionId = 42;
+        int recordingSessionId = 77;
+        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
+                mFakeAssociationRule.getAssociationInfo().getId(),
+                new VirtualDeviceParams.Builder().setDevicePolicy(POLICY_TYPE_AUDIO,
+                        DEVICE_POLICY_CUSTOM).setAudioPlaybackSessionId(
+                        playbackSessionId).setAudioRecordingSessionId(recordingSessionId).build());
+
+        assertThat(mVirtualDeviceManager.getAudioPlaybackSessionId(
+                mVirtualDevice.getDeviceId())).isEqualTo(playbackSessionId);
+        assertThat(mVirtualDeviceManager.getAudioRecordingSessionId(
+                mVirtualDevice.getDeviceId())).isEqualTo(recordingSessionId);
     }
 }
 

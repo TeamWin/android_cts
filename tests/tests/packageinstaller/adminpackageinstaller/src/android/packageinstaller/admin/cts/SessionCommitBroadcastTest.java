@@ -201,7 +201,8 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
 
         SessionCommitReceiver() {
             mContext.registerReceiver(this,
-                    new IntentFilter(PackageInstaller.ACTION_SESSION_COMMITTED));
+                    new IntentFilter(PackageInstaller.ACTION_SESSION_COMMITTED),
+                    Context.RECEIVER_EXPORTED);
         }
 
         @Override

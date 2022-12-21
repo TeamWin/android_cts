@@ -16,15 +16,21 @@
 
 package android.jobscheduler.cts;
 
+import static android.app.AppOpsManager.MODE_ALLOWED;
+import static android.app.AppOpsManager.MODE_DEFAULT;
+import static android.app.AppOpsManager.MODE_ERRORED;
+import static android.app.AppOpsManager.MODE_IGNORED;
 import static android.text.format.DateUtils.HOUR_IN_MILLIS;
 
 import android.annotation.TargetApi;
+import android.app.AppOpsManager;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.jobscheduler.MockJobService.TestEnvironment;
 import android.jobscheduler.MockJobService.TestEnvironment.Event;
 import android.provider.DeviceConfig;
 
+import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -48,6 +54,21 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
 
         // The super method should be called at the end.
         super.tearDown();
+    }
+
+    public void testCanRunLongJobs() throws Exception {
+        // Default is allowed.
+        AppOpsUtils.setOpMode(MY_PACKAGE, AppOpsManager.OPSTR_RUN_LONG_JOBS, MODE_DEFAULT);
+        assertTrue(mJobScheduler.canRunLongJobs());
+
+        AppOpsUtils.setOpMode(MY_PACKAGE, AppOpsManager.OPSTR_RUN_LONG_JOBS, MODE_ERRORED);
+        assertFalse(mJobScheduler.canRunLongJobs());
+
+        AppOpsUtils.setOpMode(MY_PACKAGE, AppOpsManager.OPSTR_RUN_LONG_JOBS, MODE_ALLOWED);
+        assertTrue(mJobScheduler.canRunLongJobs());
+
+        AppOpsUtils.setOpMode(MY_PACKAGE, AppOpsManager.OPSTR_RUN_LONG_JOBS, MODE_IGNORED);
+        assertFalse(mJobScheduler.canRunLongJobs());
     }
 
     /**

@@ -93,7 +93,7 @@ android_library {
     srcs: ["src_res_hardening_lib/**/*.java"],
     resource_dirs: [],
     manifest: "AndroidManifestResHardeningLib.xml",
-    min_sdk_version: "24",
+    min_sdk_version: "26",
     platform_apis: true,
 }
 
@@ -112,6 +112,7 @@ android_test {
         "cts",
         "general-tests",
     ],
+    min_sdk_version: "26",
     v4_signature: true,
     platform_apis: true,
 }

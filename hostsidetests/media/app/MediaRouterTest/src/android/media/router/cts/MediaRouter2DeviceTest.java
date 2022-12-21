@@ -155,7 +155,8 @@ public class MediaRouter2DeviceTest {
                                         RouteListingPreference.Item
                                                 .DISABLE_REASON_SUBSCRIPTION_REQUIRED)
                                 .build());
-        RouteListingPreference routeListingPreference = new RouteListingPreference(items);
+        RouteListingPreference routeListingPreference =
+                new RouteListingPreference(items, /* useSystemOrdering= */ true);
         MediaRouter2ManagerCallbackImpl mediaRouter2ManagerCallback =
                 new MediaRouter2ManagerCallbackImpl();
         mRouter2Manager.registerCallback(Runnable::run, mediaRouter2ManagerCallback);
@@ -169,6 +170,7 @@ public class MediaRouter2DeviceTest {
         Truth.assertThat(receivedRouteListingPreference)
                 .isSameInstanceAs(
                         mRouter2Manager.getRouteListingPreference(mContext.getPackageName()));
+        Truth.assertThat(receivedRouteListingPreference.getUseSystemOrdering()).isTrue();
         Truth.assertThat(receivedRouteListingPreference.getItems().get(0).getFlags())
                 .isEqualTo(RouteListingPreference.Item.FLAG_ONGOING_SESSION);
         Truth.assertThat(receivedRouteListingPreference.getItems().get(1).getDisableReason())
