@@ -18,6 +18,7 @@ package android.app.appsearch.cts.app;
 
 import static android.app.appsearch.testutil.AppSearchTestUtils.checkIsBatchResultSuccess;
 import static android.app.appsearch.testutil.AppSearchTestUtils.convertSearchResultsToDocuments;
+import static android.app.appsearch.testutil.AppSearchTestUtils.retrieveAllSearchResults;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -55,6 +56,7 @@ import android.content.Context;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -2074,5 +2076,55 @@ public abstract class GlobalSearchSessionCtsTestBase {
                         new SchemaChangeInfo(
                                 mContext.getPackageName(), DB_NAME_1, ImmutableSet.of("Type1")));
         assertThat(observer.getDocumentChanges()).isEmpty();
+    }
+
+    @Test
+    public void testGlobalQuery_propertyWeights() throws Exception {
+        assumeTrue(mDb1.getFeatures().isFeatureSupported(Features.SEARCH_SPEC_PROPERTY_WEIGHTS));
+
+        // Schema registration
+        mDb1.setSchemaAsync(
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                .get();
+        mDb2.setSchemaAsync(
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                .get();
+
+        // Put two documents in separate databases.
+        AppSearchEmail emailDb1 =
+                new AppSearchEmail.Builder("namespace", "id1")
+                        .setCreationTimestampMillis(1000)
+                        .setSubject("foo")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.putAsync(
+                        new PutDocumentsRequest.Builder().addGenericDocuments(emailDb1).build()));
+        AppSearchEmail emailDb2 =
+                new AppSearchEmail.Builder("namespace", "id2")
+                        .setCreationTimestampMillis(1000)
+                        .setBody("foo")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb2.putAsync(
+                        new PutDocumentsRequest.Builder().addGenericDocuments(emailDb2).build()));
+
+        // Issue global query for "foo".
+        SearchResultsShim searchResults =
+                mGlobalSearchSession.search(
+                        "foo",
+                        new SearchSpec.Builder()
+                                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                .setRankingStrategy(SearchSpec.RANKING_STRATEGY_RELEVANCE_SCORE)
+                                .setOrder(SearchSpec.ORDER_DESCENDING)
+                                .setPropertyWeights(
+                                        AppSearchEmail.SCHEMA_TYPE,
+                                        ImmutableMap.of("subject", 2.0, "body", 0.5))
+                                .build());
+        List<SearchResult> globalResults = retrieveAllSearchResults(searchResults);
+
+        // We expect to two emails, one from each of the databases.
+        assertThat(globalResults).hasSize(2);
+        assertThat(globalResults.get(0).getGenericDocument()).isEqualTo(emailDb1);
+        assertThat(globalResults.get(1).getGenericDocument()).isEqualTo(emailDb2);
     }
 }

@@ -2060,6 +2060,20 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         return (mInCallCallbacks == null) ? null : mInCallCallbacks.getService();
     }
 
+    public void waitOnInCallService() {
+        waitUntilConditionIsTrueOrTimeout(new Condition() {
+            @Override
+            public Object expected() {
+                return true;
+            }
+
+            @Override
+            public Object actual() {
+                return mInCallCallbacks.getService() != null;
+            }
+        }, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, "MockInCallService failed to get Call");
+    }
+
     /**
      * Asserts that the {@link UiModeManager} mode matches the specified mode.
      *

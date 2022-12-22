@@ -64,6 +64,7 @@
     <string name="test_category_logcat">Read Logs</string>
     <string name="test_category_display_cutout">DisplayCutout</string>
     <string name="test_category_other">Other</string>
+    <string name="test_category_device_controls">Device controls</string>
     <string name="clear">Clear</string>
     <string name="test_results_clear_title">Remove all test results?</string>
     <string name="test_results_clear_yes">Yes</string>
@@ -5455,6 +5456,30 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="audio_general_reportlogtest">[Can\'t Write ReportLog]</string>
 
+    <!-- Audio Data Paths Test-->
+    <string name="audio_datapaths_test">Audio Data Paths Test</string>
+    <string name="audio_datapaths_info">This test verifies basic functionality over a set of audio routes
+        \nTest Setup:
+        \n - It may be necessary to go to the \"Sound &amp; vibration\" settings panel to set the volume level for each output device.
+        \n 1. With no audio peripherals connected, adjust the \"Media volume\" to max.
+        \n 2. (If applicable) insert the analog loopback adapter into the 3.5mm headset jack and adjust the \"Media volume\" to max.
+        \n 3. (If applicable) connect a USB audio interface and adjust the \"Media volume\" to max.
+        \n - If the device has a 3.5mm headset jack, insert a loopback adapter in the jack. (See the \"Audio Loopback Latency Test\" for a description).
+        \n - If the device supports audio over USB, connect a USB audio interface with loopback cables. (See the \"Audio Loopback Latency Test\" for a description).
+        \n   The test will display valid data paths with an asterix appended to the data path name.
+        \nTest Execution:
+        \n - Place the device on a flat surface in a quiet room.
+        \n - Select the \"Native API\" button.
+        \n - Press the \"Start\" button. The test will step through the list of valid data paths playing a tone and recording it\'s presence or absence.
+        Be aware that the test will play tones through the internal speaker even if an analog loopback plug and/or USB loopback device is connected.
+        \n - Select the \"Java API\" button.
+        \n - Press the \"Start\" button to repeat each data path test for the Java API.
+        \nTest Completion:
+        \n - Once each of the data paths and APIs have been measured, the test can be marked successful.
+    </string>
+
+    <string name="audio_datapaths_results">%1$s\n%2$s -> %3$s</string>
+
     <!-- Audio Loopback Latency Test -->
     <string name="audio_loopback_latency_test">Audio Loopback Latency Test</string>
     <string name="audio_loopback_info">This test verifies that the DUT can achieve the required or
@@ -6714,4 +6739,30 @@ Follow the instructions on the screen to measure the frequency response for the 
         \nAdd or enable a camera and re-run this test.
     </string>
 
+    <!-- Strings for ControlsPanelVerifierActivity -->
+    <string name="controls_panel_test">Controls Panel tests</string>
+    <string name="controls_panel_basic_test">1. Controls Panel visible test</string>
+    <string name="controls_panel_basic_test_info">This test verifies that an app that uses the
+    correct metadata will be able to show a panel (custom activity) in the device controls space.</string>
+    <string name="controls_panel_general_test_instructions">Open the Device controls space in this device.
+        This is the space that allows you to control individual home automation devices for many apps.\n\n
+        Once there, you should see a header with the name \"Cts controls\" and the icon [ICON]. If you don\'t see it, there may be a drop down
+        to select that app. Once the app is selected, you should see a container with the title \"Cts controls\"
+        and content that starts with \"This is a panel belonging to Cts controls\".\n\n</string>
+    <string name="controls_panel_basic_test_instructions">
+    If you can observe this panel, pass this test. Otherwise fail this test.
+    </string>
+    <string name="controls_panel_setting_test_false">2a. Controls Panel setting in extra test false value</string>
+    <string name="controls_panel_setting_test_true">2b. Controls Panel setting in extra test true value</string>
+    <string name="controls_panel_setting_test_info">This test verifies that an app that shows a
+    panel in the device controls space will receive the correct value of the setting for controlling
+    devices on the lock screen as part of their intent extras.\n\n
+    For this test, you will need to have set up a screen lock.</string>
+    <string name="controls_panel_settings_test_open_lockscreen_settings">Open Settings</string>
+    <string name="controls_panel_setting_test_instructions">Using the button below, open Settings.
+        Find the setting that allows you to control external devices from the lockscreen
+        (you might need to enable other settings for it to be available). Set that setting to %1$s.
+        \n Then, open the device controls space (instructions below the button) and verify that the
+        text inside the panel indicates that the setting is %1$s
+    </string>
 </resources>

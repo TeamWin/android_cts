@@ -25,6 +25,9 @@ public abstract class AudioSource {
      */
     public void init(int numFrames, int numChans) {}
 
+    // This may be relevant to concrete classes which produce a sound with a notion of pitch
+    public void setSampleRate(int sampleRate) {}
+
     public void start() {}
     public void stop() {}
 

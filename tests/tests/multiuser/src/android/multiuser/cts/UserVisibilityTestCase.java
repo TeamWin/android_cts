@@ -80,8 +80,8 @@ public abstract class UserVisibilityTestCase {
     protected void runTestOnSecondaryDisplay(BackgroundUserOnSecondaryDisplayTester test) {
         Log.d(TAG, "Creating bg user");
         try (UserReference user = TestApis.users().createUser().name("childless_user").create()) {
-            int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
-            startBackgroundUserOnSecondaryDisplay(user, displayId);
+            int displayId = getDisplayIdForStartingVisibleBackgroundUser();
+            startVisibleBackgroundUser(user, displayId);
             try {
                 TestApp testApp = sDeviceState.testApps().any();
                 try (TestAppInstance instance = testApp.install(user)) {
@@ -112,8 +112,8 @@ public abstract class UserVisibilityTestCase {
                     .create()) {
                 Log.d(TAG, "profile: id=" + profile.id());
 
-                int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
-                startBackgroundUserOnSecondaryDisplay(user, displayId);
+                int displayId = getDisplayIdForStartingVisibleBackgroundUser();
+                startVisibleBackgroundUser(user, displayId);
                 try {
                     // Make sure profile is stopped, as it could have been automatically started
                     // with parent user
@@ -141,34 +141,34 @@ public abstract class UserVisibilityTestCase {
     // TODO(b/240736142): methods below are a temporary workaround until proper annotation or test
     // API are available
 
-    protected int getDisplayForBackgroundUserOnSecondaryDisplay() {
+    protected int getDisplayIdForStartingVisibleBackgroundUser() {
         int[] displayIds = null;
         try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation,
                 INTERACT_ACROSS_USERS)) {
             displayIds = sContext.getSystemService(ActivityManager.class)
-                    .getSecondaryDisplayIdsForStartingBackgroundUsers();
+                    .getDisplayIdsForStartingVisibleBackgroundUsers();
         }
-        Log.d(TAG, "getSecondaryDisplayIdsForStartingBackgroundUsers(): displays returned by AM:"
+        Log.d(TAG, "getDisplayForBackgroundUserOnDisplay(): displays returned by AM:"
                 + Arrays.toString(displayIds));
         if (displayIds != null && displayIds.length > 0) {
             int displayId = displayIds[0];
-            Log.d(TAG, "getSecondaryDisplayIdsForStartingBackgroundUsers(): returning first display"
-                    + " from the list (" + displayId + ")");
+            Log.d(TAG, "getDisplayForBackgroundUserOnDisplay(): returning first display from the "
+                    + "list (" + displayId + ")");
             return displayId;
         }
 
         DisplayManager displayManager = sContext.getSystemService(DisplayManager.class);
         Display[] allDisplays = displayManager.getDisplays();
-        throw new IllegalStateException("Device supports backgroundUserOnSecondaryDisplay(), but "
-                + "doesn't have any secondary display. Current displays: "
+        throw new IllegalStateException("Device supports background users visible on displays, but "
+                + "doesn't have any display available to start a user. Current displays: "
                 + Arrays.toString(allDisplays));
     }
 
-    protected void startBackgroundUserOnSecondaryDisplay(UserReference user, int displayId) {
+    protected void startVisibleBackgroundUser(UserReference user, int displayId) {
         int userId = user.id();
-        boolean started = tryToStartBackgroundUserOnSecondaryDisplay(userId, displayId);
-        assertWithMessage("started user %s on display %s", userId, displayId).that(started)
-                .isTrue();
+        boolean started = tryToStartVisibleBackgroundUser(userId, displayId);
+        assertWithMessage("started visible background user %s on display %s", userId, displayId)
+                .that(started).isTrue();
         Poll.forValue("User running unlocked", () -> user.isRunning() && user.isUnlocked())
                 .toBeEqualTo(true)
                 .errorOnFail()
@@ -176,13 +176,12 @@ public abstract class UserVisibilityTestCase {
                 .await();
     }
 
-    protected boolean tryToStartBackgroundUserOnSecondaryDisplay(int userId, int displayId) {
-        Log.d(TAG, "tryToStartBackgroundUserOnSecondaryDisplay(): user=" + userId + ", display="
-                + displayId);
+    protected boolean tryToStartVisibleBackgroundUser(int userId, int displayId) {
+        Log.d(TAG, "tryToStartVisibleBackgroundUser(): user=" + userId + ", display=" + displayId);
         try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation,
                 INTERACT_ACROSS_USERS)) {
             boolean started = sContext.getSystemService(ActivityManager.class)
-                    .startUserInBackgroundOnSecondaryDisplay(userId, displayId);
+                    .startUserInBackgroundVisibleOnDisplay(userId, displayId);
             Log.d(TAG, "Returning started=" + started);
             return started;
         }

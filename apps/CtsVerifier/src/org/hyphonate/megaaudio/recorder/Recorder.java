@@ -27,7 +27,19 @@ public abstract class Recorder extends StreamBase {
     // will be made.
     // Constants can be found here:
     // https://developer.android.com/reference/android/media/MediaRecorder.AudioSource
+    // or preferentially in oboe/Definitions.h
     public static final int INPUT_PRESET_NONE = -1;
+    public static final int INPUT_PRESET_DEFAULT = 0;
+    public static final int INPUT_PRESET_GENERIC = 1;
+    public static final int INPUT_PRESET_VOICE_UPLINK = 2;
+    public static final int INPUT_PRESET_VOICE_DOWNLINK = 3;
+    public static final int INPUT_PRESET_VOICE_CALL = 4;
+    public static final int INPUT_PRESET_CAMCORDER = 5;
+    public static final int INPUT_PRESET_VOICERECOGNITION = 6;
+    public static final int INPUT_PRESET_VOICECOMMUNICATION = 7;
+    public static final int INPUT_PRESET_REMOTE_SUBMIX = 8;
+    public static final int INPUT_PRESET_UNPROCESSED = 9;
+    public static final int INPUT_PRESET_VOICEPERFORMANCE = 10;
 
     public Recorder(AudioSinkProvider sinkProvider) {
         mSinkProvider = sinkProvider;

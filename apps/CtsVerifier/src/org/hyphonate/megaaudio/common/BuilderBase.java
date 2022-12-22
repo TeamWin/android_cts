@@ -31,4 +31,28 @@ public class BuilderBase {
     public static final int SUB_TYPE_OBOE_OPENSL_ES = 0x0002;
 
     protected int mType = TYPE_UNDEFINED;
+
+    protected int mSampleRate = 48000;
+
+    protected int mChannelCount = 2;
+
+    /**
+     * Specifies the sample rate for a stream
+     * @param sampleRate The sample rate for this stream
+     * @return this BuilderBase
+     */
+    public BuilderBase setSampleRate(int sampleRate) {
+        mSampleRate = sampleRate;
+        return this;
+    }
+
+    /**
+     * Specifies a channel count for a stream
+     * @param channelCount The number of channels for this stream.
+     * @return this BuilderBase
+     */
+    public BuilderBase setChannelCount(int channelCount) {
+        mChannelCount = channelCount;
+        return this;
+    }
 }

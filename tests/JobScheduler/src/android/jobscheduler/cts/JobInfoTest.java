@@ -31,7 +31,7 @@ import android.provider.ContactsContract;
 import android.provider.MediaStore;
 
 /**
- * Tests related to created and reading JobInfo objects.
+ * Tests related to creating and reading JobInfo objects.
  */
 public class JobInfoTest extends BaseJobSchedulerTest {
     private static final int JOB_ID = JobInfoTest.class.hashCode();

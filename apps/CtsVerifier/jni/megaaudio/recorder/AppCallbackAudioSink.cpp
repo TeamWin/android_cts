@@ -77,7 +77,7 @@ void AppCallbackAudioSink::push(float* audioData, int numFrames, int numChannels
     }
 
     // put the float* into a jfloatarray
-    env->SetFloatArrayRegion(mAudioDataArray, 0, mAudioDataArrayLength, audioData);
+    env->SetFloatArrayRegion(mAudioDataArray, 0, numFrames * numChannels, audioData);
     env->CallVoidMethod(mCallbackObj, mMIDonDataReady, mAudioDataArray, numFrames);
 
     if (getEnvStat == JNI_EDETACHED) {

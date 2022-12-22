@@ -28,6 +28,7 @@ import static org.junit.Assume.assumeTrue;
 import android.content.Context;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
+import android.net.wifi.WifiScanner;
 import android.net.wifi.cts.WifiFeature;
 import android.net.wifi.nl80211.WifiNl80211Manager;
 import android.os.Binder;
@@ -140,6 +141,16 @@ public class WifiNl80211ManagerTest {
         try {
             WifiNl80211Manager manager = mContext.getSystemService(WifiNl80211Manager.class);
             manager.getMaxSsidsPerScan("wlan0");
+        } catch (Exception ignore) { }
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @Test
+    public void testStartScan2() {
+        try {
+            WifiNl80211Manager manager = mContext.getSystemService(WifiNl80211Manager.class);
+            manager.startScan2("wlan0", WifiScanner.SCAN_TYPE_HIGH_ACCURACY,
+                    null, null, null);
         } catch (Exception ignore) { }
     }
 

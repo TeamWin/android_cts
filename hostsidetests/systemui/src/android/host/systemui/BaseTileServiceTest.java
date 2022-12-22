@@ -121,7 +121,7 @@ public class BaseTileServiceTest extends DeviceTestCase {
         return logs.contains(str);
     }
 
-    private void clearLogcat() throws DeviceNotAvailableException {
+    protected final void clearLogcat() throws DeviceNotAvailableException {
         getDevice().executeAdbCommand("logcat", "-c");
     }
 
@@ -131,7 +131,7 @@ public class BaseTileServiceTest extends DeviceTestCase {
 
     private boolean supportedSoftware() throws DeviceNotAvailableException {
         String supported = getDevice().executeShellCommand(REQUEST_SUPPORTED);
-        return Boolean.parseBoolean(supported);
+        return Boolean.parseBoolean(supported.trim());
     }
 
     private boolean supportedHardware() throws DeviceNotAvailableException {

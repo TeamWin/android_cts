@@ -23,6 +23,10 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
+import static android.hardware.usb.UsbPortStatus.DATA_STATUS_DISABLED_DOCK;
+import static android.hardware.usb.UsbPortStatus.DATA_STATUS_DISABLED_DOCK_DEVICE_MODE;
+import static android.hardware.usb.UsbPortStatus.DATA_STATUS_DISABLED_DOCK_HOST_MODE;
+
 import android.app.UiAutomation;
 import android.content.pm.PackageManager;
 import android.content.Context;
@@ -113,5 +117,41 @@ public class UsbPortStatusApiTest {
 
         // Drop MANAGE_USB permission.
         mUiAutomation.dropShellPermissionIdentity();
+    }
+
+    /**
+     * Verify that DATA_STATUS_DISABLED_DOCK is set when DATA_STATUS_DISABLED_DOCK_HOST_MODE is set.
+     */
+    @Test
+    public void test_UsbApiDataStatusHostModeCheck() throws Exception {
+        UsbPortStatus portStatus = new UsbPortStatus(0, 0, 0, 0, 0, 0,
+            DATA_STATUS_DISABLED_DOCK_HOST_MODE, false, 0);
+        Assert.assertTrue((portStatus.getUsbDataStatus() & DATA_STATUS_DISABLED_DOCK)
+                 == DATA_STATUS_DISABLED_DOCK);
+    }
+
+    /**
+     * Verify that DATA_STATUS_DISABLED_DOCK is set when  DATA_STATUS_DISABLED_DOCK_DEVICE_MODE
+     * is set.
+     */
+    @Test
+    public void test_UsbApiDataStatusGadgetModeCheck() throws Exception {
+        UsbPortStatus portStatus = new UsbPortStatus(0, 0, 0, 0, 0, 0,
+            DATA_STATUS_DISABLED_DOCK_DEVICE_MODE, false, 0);
+        Assert.assertTrue((portStatus.getUsbDataStatus() & DATA_STATUS_DISABLED_DOCK)
+                 == DATA_STATUS_DISABLED_DOCK);
+    }
+
+    /**
+     * Verify that DATA_STATUS_DISABLED_DOCK is not true when neither subflags
+     * (viz., DATA_STATUS_DISABLED_DOCK_DEVICE_MODE,
+     * DATA_STATUS_DISABLED_DOCK_HOST_MODE) is true.
+     */
+    @Test
+    public void test_UsbApiDataStatusDisabledDockCheck() throws Exception {
+        UsbPortStatus portStatus = new UsbPortStatus(0, 0, 0, 0, 0, 0,
+            DATA_STATUS_DISABLED_DOCK, false, 0);
+        Assert.assertTrue((portStatus.getUsbDataStatus() & DATA_STATUS_DISABLED_DOCK)
+                 != DATA_STATUS_DISABLED_DOCK);
     }
 }

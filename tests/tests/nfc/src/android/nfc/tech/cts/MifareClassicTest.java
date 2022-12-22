@@ -24,6 +24,7 @@ import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertThrows;
 
 import android.nfc.ErrorCodes;
 import android.nfc.INfcTag;
@@ -247,8 +248,8 @@ public class MifareClassicTest {
     public void testSectorToBlock() {
         MifareClassic classic = createMifareClassic1K();
 
-        assertEquals(1, classic.blockToSector(4));
-        assertEquals(33, classic.blockToSector(144));
+        assertEquals(4, classic.sectorToBlock(1));
+        assertEquals(144, classic.sectorToBlock(33));
     }
 
     @Test
@@ -284,6 +285,28 @@ public class MifareClassicTest {
     }
 
     @Test
+    public void testAuthenticateSectorWithKeyB_nullTransceive()
+            throws RemoteException, IOException {
+        MifareClassic classic = createConnectedMifareClassic();
+
+        byte[] key = new byte[]{0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
+        when(mNfcTagMock.transceive(anyInt(), any(), anyBoolean())).thenReturn(
+                new TransceiveResult(TransceiveResult.RESULT_SUCCESS, null));
+
+        assertEquals(false, classic.authenticateSectorWithKeyB(0, key));
+    }
+
+    @Test
+    public void testAuthenticateSectorWithKeyB_ioException() throws RemoteException, IOException {
+        MifareClassic classic = createConnectedMifareClassic();
+
+        byte[] key = new byte[]{0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
+        when(mNfcTagMock.transceive(anyInt(), any(), anyBoolean())).thenReturn(null);
+
+        assertEquals(false, classic.authenticateSectorWithKeyB(0, key));
+    }
+
+    @Test
     public void testReadBlock() throws RemoteException, IOException {
         MifareClassic classic = createConnectedMifareClassic();
 
@@ -299,16 +322,27 @@ public class MifareClassicTest {
 
     @Test
     public void testWriteBlock() throws RemoteException, IOException {
+        byte[] block = new byte[]{0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA,
+                0xB, 0xC, 0xD};
         MifareClassic classic = createConnectedMifareClassic();
-
         when(mNfcTagMock.transceive(anyInt(), any(), anyBoolean())).thenReturn(
-                new TransceiveResult(TransceiveResult.RESULT_SUCCESS, new byte[]{0xA}));
-        byte[] result = classic.readBlock(0);
+                new TransceiveResult(TransceiveResult.RESULT_SUCCESS, new byte[]{}));
+
+        classic.writeBlock(0, block);
 
         verify(mNfcTagMock, times(1)).transceive(anyInt(), mTransceiveDataCaptor.capture(),
                 anyBoolean());
-        assertArrayEquals(new byte[]{0xA}, classic.readBlock(0));
-        assertArrayEquals(new byte[]{0x30, 0x00}, mTransceiveDataCaptor.getValue());
+        assertArrayEquals(
+                new byte[]{(byte) 0xA0, 0x0, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC, 0xD, 0xA, 0xB, 0xC,
+                        0xD, 0xA, 0xB, 0xC, 0xD}, mTransceiveDataCaptor.getValue());
+    }
+
+    @Test
+    public void testWriteBlock_incorrectSize() throws RemoteException, IOException {
+        byte[] block = new byte[]{0xA, 0xB, 0xC, 0xD};
+        MifareClassic classic = createConnectedMifareClassic();
+
+        assertThrows(() -> classic.writeBlock(0, block));
     }
 
     @Test
@@ -403,12 +437,108 @@ public class MifareClassicTest {
     }
 
     @Test
-    public void testGetTimeout() throws RemoteException, IOException {
+    public void testSetTimeout_invalidTimeout() throws RemoteException, IOException {
         MifareClassic classic = createMifareClassic1K();
 
         when(mNfcTagMock.isTagUpToDate(anyLong())).thenReturn(true);
+        when(mNfcTagMock.setTimeout(anyInt(), anyInt())).thenReturn(ErrorCodes.ERROR_INVALID_PARAM);
+        assertThrows(() -> classic.setTimeout(250));
+    }
+
+    @Test
+    public void testGetTimeout() throws RemoteException, IOException {
+        MifareClassic classic = createConnectedMifareClassic();
+
         when(mNfcTagMock.getTimeout(anyInt())).thenReturn(250);
         assertEquals(250, classic.getTimeout());
+    }
+
+    @Test
+    public void testGetTimeout_serviceDead() throws RemoteException, IOException {
+        MifareClassic classic = createConnectedMifareClassic();
+
+        when(mNfcTagMock.getTimeout(anyInt())).thenThrow(new RemoteException());
+        assertEquals(0, classic.getTimeout());
+    }
+
+    @Test
+    public void testGetTag() {
+        Bundle extras = new Bundle();
+        extras.putShort("sak", (short) 0x01);
+        extras.putByteArray("atqa", new byte[]{0x02});
+        Tag tag = new Tag(new byte[]{0x01, 0x02, 0x03, 0x04},
+                new int[]{TagTechnology.MIFARE_CLASSIC, TagTechnology.NFC_A},
+                new Bundle[]{null, extras}, 0, 0L, mNfcTagMock);
+        MifareClassic classic = MifareClassic.get(tag);
+
+        assertEquals(tag, classic.getTag());
+    }
+
+    @Test
+    public void testIsConnected_isConnected() throws RemoteException, IOException {
+        MifareClassic classic = createConnectedMifareClassic();
+        when(mNfcTagMock.isPresent(anyInt())).thenReturn(true);
+
+        assertEquals(true, classic.isConnected());
+    }
+
+    @Test
+    public void testIsConnected_notConnected() throws RemoteException, IOException {
+        MifareClassic classic = createMifareClassic1K();
+        when(mNfcTagMock.isPresent(anyInt())).thenReturn(false);
+
+        assertEquals(false, classic.isConnected());
+    }
+
+
+    @Test
+    public void testIsConnected_serviceDead() throws RemoteException, IOException {
+        MifareClassic classic = createConnectedMifareClassic();
+        when(mNfcTagMock.isPresent(anyInt())).thenThrow(new RemoteException());
+
+        assertEquals(false, classic.isConnected());
+    }
+
+    @Test
+    public void testReconnect() throws RemoteException, IOException {
+        MifareClassic classic = createConnectedMifareClassic();
+        when(mNfcTagMock.reconnect(anyInt())).thenReturn(ErrorCodes.SUCCESS);
+
+        classic.reconnect();
+        verify(mNfcTagMock, times(1)).reconnect(anyInt());
+    }
+
+    @Test
+    public void testReconnect_notConnected() throws RemoteException, IOException {
+        MifareClassic classic = createMifareClassic1K();
+
+        assertThrows(() -> classic.reconnect());
+    }
+
+    @Test
+    public void testReconnect_failReconnect() throws RemoteException, IOException {
+        MifareClassic classic = createConnectedMifareClassic();
+        when(mNfcTagMock.reconnect(anyInt())).thenReturn(ErrorCodes.ERROR_CONNECT);
+
+        assertThrows(() -> classic.reconnect());
+    }
+
+    @Test
+    public void testReconnect_remoteException() throws RemoteException, IOException {
+        MifareClassic classic = createConnectedMifareClassic();
+        when(mNfcTagMock.reconnect(anyInt())).thenThrow(new RemoteException());
+
+        assertThrows(() -> classic.reconnect());
+    }
+
+    @Test
+    public void testClose() throws RemoteException, IOException {
+        MifareClassic classic = createConnectedMifareClassic();
+        when(mNfcTagMock.reconnect(anyInt())).thenReturn(ErrorCodes.SUCCESS);
+        when(mNfcTagMock.isPresent(anyInt())).thenReturn(true);
+        classic.close();
+
+        assertEquals(false, classic.isConnected());
     }
 
     private MifareClassic createConnectedMifareClassic() throws RemoteException, IOException {

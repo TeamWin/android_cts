@@ -197,6 +197,6 @@ public final class UserVisibilityTest extends UserVisibilityTestCase {
     public void testStartUserInBackgroundOnSecondaryDisplay() {
         // ids doen't really matter, as it should throw right away
         assertThrows(UnsupportedOperationException.class,
-                () -> tryToStartBackgroundUserOnSecondaryDisplay(42, 108));
+                () -> tryToStartVisibleBackgroundUser(42, 108));
     }
 }

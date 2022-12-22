@@ -725,8 +725,8 @@ public class CodecTest {
         public void onCompletion(MediaPlayer mp) {
             synchronized (mOnCompletion) {
                 Log.v(TAG, "notify the completion callback");
-                mOnCompletion.notify();
                 mOnCompleteSuccess = true;
+                mOnCompletion.notify();
             }
         }
     };
@@ -738,8 +738,8 @@ public class CodecTest {
             mp.reset();
             synchronized (mOnCompletion) {
                 Log.v(TAG, "notify the completion callback");
-                mOnCompletion.notify();
                 mOnCompleteSuccess = false;
+                mOnCompletion.notify();
             }
             return true;
         }

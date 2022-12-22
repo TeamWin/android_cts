@@ -129,7 +129,7 @@ public final class UserVisibilityMultipleDisplaysTest extends UserVisibilityTest
     public void testStartUserInBackgroundOnSecondaryDisplay() {
         runTestOnSecondaryDisplay((user, displayId, instance) -> {
             // Should fail when it's already started
-            boolean startedAgain = tryToStartBackgroundUserOnSecondaryDisplay(user.id(), displayId);
+            boolean startedAgain = tryToStartVisibleBackgroundUser(user.id(), displayId);
             assertWithMessage("started user %s on id %s again", user.id(), displayId)
                     .that(startedAgain).isFalse();
         });
@@ -152,13 +152,13 @@ public final class UserVisibilityMultipleDisplaysTest extends UserVisibilityTest
                     .create()) {
                 Log.d(TAG, "profile: id=" + profile.id());
 
-                int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
-                startBackgroundUserOnSecondaryDisplay(parent, displayId);
+                int displayId = getDisplayIdForStartingVisibleBackgroundUser();
+                startVisibleBackgroundUser(parent, displayId);
                 try {
                     // Make sure profile is stopped, just in case it was automatically started with
                     // parent user
                     Log.d(TAG, "Stopping profile " + profile.id()); profile.stop();
-                    boolean started = tryToStartBackgroundUserOnSecondaryDisplay(profile.id(),
+                    boolean started = tryToStartVisibleBackgroundUser(profile.id(),
                             displayId);
                     // MUMD doesn't support profiles on secondary users
                     assertWithMessage("profile user (id=%s) started on display %s", profile.id(),
@@ -187,8 +187,8 @@ public final class UserVisibilityMultipleDisplaysTest extends UserVisibilityTest
                     .create()) {
                 Log.d(TAG, "profile: id=" + profile.id());
 
-                int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
-                startBackgroundUserOnSecondaryDisplay(parent, displayId);
+                int displayId = getDisplayIdForStartingVisibleBackgroundUser();
+                startVisibleBackgroundUser(parent, displayId);
                 try {
                     // Make sure profile is stopped, just in case it was automatically started with
                     // parent user
@@ -230,8 +230,8 @@ public final class UserVisibilityMultipleDisplaysTest extends UserVisibilityTest
                         + ")");
                 profile.stop();
 
-                int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
-                boolean started = tryToStartBackgroundUserOnSecondaryDisplay(profile.id(),
+                int displayId = getDisplayIdForStartingVisibleBackgroundUser();
+                boolean started = tryToStartVisibleBackgroundUser(profile.id(),
                         displayId);
 
                 assertWithMessage("started profile %s on display %s", profile.id(), displayId)
@@ -245,8 +245,8 @@ public final class UserVisibilityMultipleDisplaysTest extends UserVisibilityTest
         Log.d(TAG, "Stopping profile " + profile + " (called from " + sContext.getUser() + ")");
         profile.stop();
 
-        int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
-        boolean started = tryToStartBackgroundUserOnSecondaryDisplay(profile.id(), displayId);
+        int displayId = getDisplayIdForStartingVisibleBackgroundUser();
+        boolean started = tryToStartVisibleBackgroundUser(profile.id(), displayId);
 
         assertWithMessage("started profile %s on display %s", profile.id(), displayId)
                 .that(started).isFalse();
@@ -278,8 +278,8 @@ public final class UserVisibilityMultipleDisplaysTest extends UserVisibilityTest
                         + ")");
                 profile.stop();
 
-                int displayId = getDisplayForBackgroundUserOnSecondaryDisplay();
-                boolean started = tryToStartBackgroundUserOnSecondaryDisplay(profile.id(),
+                int displayId = getDisplayIdForStartingVisibleBackgroundUser();
+                boolean started = tryToStartVisibleBackgroundUser(profile.id(),
                         displayId);
 
                 assertWithMessage("started profile %s on display %s", profile.id(), displayId)
@@ -298,7 +298,7 @@ public final class UserVisibilityMultipleDisplaysTest extends UserVisibilityTest
                 int otherUserId = otherUser.id();
                 Log.d(TAG, "otherUser: id=" + otherUserId);
 
-                boolean started = tryToStartBackgroundUserOnSecondaryDisplay(otherUserId,
+                boolean started = tryToStartVisibleBackgroundUser(otherUserId,
                         displayId);
                 assertWithMessage("started user %s on display %s", otherUserId, displayId)
                         .that(started)
@@ -316,6 +316,6 @@ public final class UserVisibilityMultipleDisplaysTest extends UserVisibilityTest
                 .findUserOfType(TestApis.users().supportedType(UserType.SECONDARY_USER_TYPE_NAME));
 
         assertThrows(IllegalArgumentException.class,
-                () -> startBackgroundUserOnSecondaryDisplay(user, Display.DEFAULT_DISPLAY));
+                () -> startVisibleBackgroundUser(user, Display.DEFAULT_DISPLAY));
     }
 }

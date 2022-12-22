@@ -201,20 +201,20 @@ public final class UserManagerHelperLiteTest extends AbstractCarBuiltinTestCase 
 
     @Test
     @ApiTest(apis = {"android.car.builtin.os.UserManagerHelper#"
-            + "isUsersOnSecondaryDisplaysSupported(UserManager)"})
+            + "isVisibleBackgroundUsersSupported(UserManager)"})
     @RequireMultipleUsersOnMultipleDisplays(reason = "Because test is testing exactly that")
-    public void test_isUsersOnSecondaryDisplaysSupported() {
+    public void testIsVisibleBackgroundUsersSupported() {
         expectWithMessage("Users on secondary displays supported").that(
-                UserManagerHelper.isUsersOnSecondaryDisplaysSupported(mUserManager)).isTrue();
+                UserManagerHelper.isVisibleBackgroundUsersSupported(mUserManager)).isTrue();
     }
 
     @Test
     @ApiTest(apis = {"android.car.builtin.os.UserManagerHelper#"
-            + "isUsersOnSecondaryDisplaysSupported(UserManager)"})
+            + "isVisibleBackgroundUsersSupported(UserManager)"})
     @RequireNotMultipleUsersOnMultipleDisplays(reason = "Because test is testing exactly that")
-    public void test_isUsersOnSecondaryDisplaysSupported_not() {
+    public void testIsVisibleBackgroundUsersSupported_not() {
         expectWithMessage("Users on secondary displays supported").that(
-                UserManagerHelper.isUsersOnSecondaryDisplaysSupported(mUserManager)).isFalse();
+                UserManagerHelper.isVisibleBackgroundUsersSupported(mUserManager)).isFalse();
     }
 
     private void expectGetUserHandlesHasUser(UserHandle user) {

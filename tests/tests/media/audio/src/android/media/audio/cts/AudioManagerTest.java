@@ -44,6 +44,7 @@ import static android.provider.Settings.Global.APPLY_RAMPING_RINGER;
 import static android.provider.Settings.System.SOUND_EFFECTS_ENABLED;
 
 import static org.junit.Assert.assertNotEquals;
+import static org.testng.Assert.assertThrows;
 
 import android.Manifest;
 import android.app.NotificationChannel;
@@ -125,7 +126,9 @@ public class AudioManagerTest extends InstrumentationTestCase {
             AudioProfile.AUDIO_ENCAPSULATION_TYPE_PCM);
     private static final Set<Integer> ALL_AUDIO_STANDARDS = Set.of(
             AudioDescriptor.STANDARD_NONE,
-            AudioDescriptor.STANDARD_EDID);
+            AudioDescriptor.STANDARD_EDID,
+            AudioDescriptor.STANDARD_SADB,
+            AudioDescriptor.STANDARD_VSADB);
     private static final Map<Integer, Integer> DIRECT_OFFLOAD_MAP = Map.of(
             AudioManager.PLAYBACK_OFFLOAD_NOT_SUPPORTED,
                 AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED,
@@ -2112,6 +2115,30 @@ public class AudioManagerTest extends InstrumentationTestCase {
             fail("getActiveAssistantServicesUids must fail due to no permission");
         } catch (SecurityException e) {
         }
+    }
+
+    @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_ROUTING")
+    public void testBluetoothVariableLatency() throws Exception {
+        assertThrows(SecurityException.class,
+                () -> mAudioManager.supportsBluetoothVariableLatency());
+        assertThrows(SecurityException.class,
+                () -> mAudioManager.setBluetoothVariableLatencyEnabled(false));
+        assertThrows(SecurityException.class,
+                () -> mAudioManager.setBluetoothVariableLatencyEnabled(true));
+        assertThrows(SecurityException.class,
+                () -> mAudioManager.isBluetoothVariableLatencyEnabled());
+
+        getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.MODIFY_AUDIO_ROUTING);
+        if (mAudioManager.supportsBluetoothVariableLatency()) {
+            boolean savedEnabled = mAudioManager.isBluetoothVariableLatencyEnabled();
+            mAudioManager.setBluetoothVariableLatencyEnabled(false);
+            assertFalse(mAudioManager.isBluetoothVariableLatencyEnabled());
+            mAudioManager.setBluetoothVariableLatencyEnabled(true);
+            assertTrue(mAudioManager.isBluetoothVariableLatencyEnabled());
+            mAudioManager.setBluetoothVariableLatencyEnabled(savedEnabled);
+        }
+        getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 
     public void testGetHalVersion() {

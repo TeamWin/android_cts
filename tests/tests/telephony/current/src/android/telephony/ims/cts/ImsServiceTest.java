@@ -996,7 +996,12 @@ public class ImsServiceTest {
                 .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
         try {
             setupImsServiceForSms();
-
+            Resources mResource = Resources.getSystem();
+            boolean sendSmmaViaIms = mResource.getBoolean(
+                    com.android.internal.R.bool.config_smma_notification_supported_over_ims);
+            if (!sendSmmaViaIms) {
+                return;
+            }
             SmsManager.getSmsManagerForSubscriptionId(sTestSub)
                         .setStorageMonitorMemoryStatusOverride(false);
 

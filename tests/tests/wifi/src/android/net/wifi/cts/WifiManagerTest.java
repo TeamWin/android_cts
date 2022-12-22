@@ -31,6 +31,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 
 import android.annotation.NonNull;
@@ -325,6 +326,25 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     {
         mHandlerThread.start();
         mExecutor = new HandlerExecutor(new Handler(mHandlerThread.getLooper()));
+    }
+
+    /**
+     * Class which can be used to fetch an object out of a lambda. Fetching an object
+     * out of a local scope with HIDL is a common operation (although usually it can
+     * and should be avoided).
+     *
+     * @param <E> Inner object type.
+     */
+    public static final class Mutable<E> {
+        public E value;
+
+        public Mutable() {
+            value = null;
+        }
+
+        public Mutable(E value) {
+            this.value = value;
+        }
     }
 
     @Override
@@ -2831,6 +2851,59 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             }
         }
         return testBandsAndChannels;
+    }
+
+    public void testLastConfiguredPassphraseIsKeepInSoftApConfigurationWhenChangingToNone()
+            throws Exception {
+        final SoftApConfiguration currentConfig = ShellIdentityUtils.invokeWithShellPermissions(
+                mWifiManager::getSoftApConfiguration);
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            Mutable<String> lastPassphrase = new Mutable<>();
+            final String testPassphrase = "testPassphrase";
+            mWifiManager.setSoftApConfiguration(
+                    new SoftApConfiguration.Builder(currentConfig)
+                            .setPassphrase(testPassphrase,
+                                    SoftApConfiguration.SECURITY_TYPE_WPA2_PSK).build());
+            mWifiManager.queryLastConfiguredTetheredApPassphraseSinceBoot(mExecutor,
+                    new Consumer<String>() {
+                    @Override
+                    public void accept(String value) {
+                        synchronized (mLock) {
+                            lastPassphrase.value = value;
+                            mLock.notify();
+                        }
+                    }
+                });
+            synchronized (mLock) {
+                mLock.wait(TEST_WAIT_DURATION_MS);
+            }
+            assertEquals(lastPassphrase.value, testPassphrase);
+
+            mWifiManager.setSoftApConfiguration(
+                    new SoftApConfiguration.Builder(currentConfig)
+                            .setPassphrase(null,
+                                    SoftApConfiguration.SECURITY_TYPE_OPEN).build());
+            mWifiManager.queryLastConfiguredTetheredApPassphraseSinceBoot(mExecutor,
+                    new Consumer<String>() {
+                    @Override
+                    public void accept(String value) {
+                        synchronized (mLock) {
+                            lastPassphrase.value = value;
+                            mLock.notify();
+                        }
+                    }
+                });
+            synchronized (mLock) {
+                mLock.wait(TEST_WAIT_DURATION_MS);
+            }
+            assertEquals(lastPassphrase.value, testPassphrase);
+        } finally {
+            // Restore SoftApConfiguration
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.setSoftApConfiguration(currentConfig));
+        }
     }
 
     /**

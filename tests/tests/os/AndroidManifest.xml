@@ -93,6 +93,28 @@
         <activity android:name="android.os.cts.IntentLaunchActivity"
              android:exported="false" />
 
+        <receiver android:name="android.os.cts.StrictModeTest$InternalImplicitIntentLaunchNonExportedReceiver"
+                  android:exported="false">
+            <intent-filter>
+                <action android:name="android.os.cts.INTERNAL_IMPLICIT_INTENT_LAUNCH_NON_EXPORTED_RECEIVER" />
+            </intent-filter>
+        </receiver>
+
+        <activity android:name="android.os.cts.InternalImplicitIntentLaunchExportedActivity"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.os.cts.INTERNAL_IMPLICIT_INTENT_LAUNCH_EXPORTED_ACTIVITY" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <receiver android:name="android.os.cts.StrictModeTest$InternalImplicitIntentLaunchExportedReceiver"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.os.cts.INTERNAL_IMPLICIT_INTENT_LAUNCH_EXPORTED_RECEIVER" />
+            </intent-filter>
+        </receiver>
+
         <service android:name="android.os.cts.ParcelFileDescriptorPeer$Red"
              android:process=":red"
              android:exported="true"/>

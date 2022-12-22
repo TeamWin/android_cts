@@ -26,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.GameManager;
+import android.app.GameModeConfiguration;
 import android.app.GameModeInfo;
 import android.app.GameState;
 import android.app.Instrumentation;
@@ -45,6 +46,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -337,6 +339,14 @@ public class GameManagerTest {
                         "android.permission.MANAGE_GAME_MODE");
         assertEquals("GameManager#getGameModeInfo returned incorrect available game modes.",
                 4, gameModeInfo.getAvailableGameModes().length);
+        assertTrue("GameManager#getGameModeInfo returned incorrect overridden game modes.",
+                Arrays.asList(GameManager.GAME_MODE_PERFORMANCE,
+                        GameManager.GAME_MODE_BATTERY).containsAll(Arrays.stream(
+                        gameModeInfo.getOverriddenGameModes()).boxed().toList()));
+        assertTrue("GameManager#getGameModeInfo returned incorrect downscaling opt-in value.",
+                gameModeInfo.isDownscalingAllowed());
+        assertTrue("GameManager#getGameModeInfo returned incorrect FPS override opt-in value.",
+                gameModeInfo.isFpsOverrideAllowed());
         assertEquals("GameManager#getGameModeInfo returned incorrect active game mode.",
                 GameManager.GAME_MODE_STANDARD, gameModeInfo.getActiveGameMode());
 
@@ -457,5 +467,24 @@ public class GameManagerTest {
         assertEquals(GameManager.GAME_MODE_STANDARD,
                 mActivity.getLastReceivedGameMode(GAME_TEST_APP_WITH_TIRAMISU_TARGET_PACKAGE_NAME,
                         10000 /* timeoutMillis */));
+    }
+
+    @Test
+    public void testUpdateCustomGameModeConfiguration() throws Exception {
+        final String packageName = GAME_TEST_APP_PACKAGE_NAME;
+        TestUtil.installPackage(GAME_TEST_APP_APK_PATH);
+        final GameModeConfiguration gameModeConfiguration = new GameModeConfiguration.Builder()
+                .setFpsOverride(60)
+                .setScalingFactor(0.8f).build();
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
+                (gameManager) -> gameManager.updateCustomGameModeConfiguration(packageName,
+                        gameModeConfiguration),
+                "android.permission.MANAGE_GAME_MODE");
+        final GameModeInfo gameModeInfo = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mGameManager,
+                (gameManager) -> gameManager.getGameModeInfo(packageName),
+                "android.permission.MANAGE_GAME_MODE");
+        assertEquals(gameModeConfiguration,
+                gameModeInfo.getGameModeConfiguration(GameManager.GAME_MODE_CUSTOM));
     }
 }

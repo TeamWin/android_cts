@@ -690,6 +690,7 @@ public final class CameraDeviceInfo extends DeviceInfo {
         charsKeyNames.add(CameraCharacteristics.SENSOR_ORIENTATION.getName());
         charsKeyNames.add(CameraCharacteristics.SENSOR_AVAILABLE_TEST_PATTERN_MODES.getName());
         charsKeyNames.add(CameraCharacteristics.SENSOR_OPTICAL_BLACK_REGIONS.getName());
+        charsKeyNames.add(CameraCharacteristics.SENSOR_READOUT_TIMESTAMP.getName());
         charsKeyNames.add(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE.getName());
         charsKeyNames.add(CameraCharacteristics.SENSOR_INFO_SENSITIVITY_RANGE.getName());
         charsKeyNames.add(CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT.getName());

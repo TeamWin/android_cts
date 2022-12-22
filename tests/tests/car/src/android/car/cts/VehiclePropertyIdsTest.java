@@ -96,6 +96,8 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("ENGINE_OIL_TEMP");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.ENGINE_RPM))
                 .isEqualTo("ENGINE_RPM");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.ENGINE_IDLE_AUTO_STOP_ENABLED))
+                .isEqualTo("ENGINE_IDLE_AUTO_STOP_ENABLED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.WHEEL_TICK))
                 .isEqualTo("WHEEL_TICK");
         assertThat(VehiclePropertyIds.toString(
@@ -310,6 +312,8 @@ public class VehiclePropertyIdsTest extends AbstractCarLessTestCase {
                 .isEqualTo("SEAT_LUMBAR_VERTICAL_POS");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_LUMBAR_VERTICAL_MOVE))
                 .isEqualTo("SEAT_LUMBAR_VERTICAL_MOVE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.SEAT_WALK_IN_POS))
+                .isEqualTo("SEAT_WALK_IN_POS");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.WINDOW_LOCK))
                 .isEqualTo("WINDOW_LOCK");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.WINDOW_MOVE))

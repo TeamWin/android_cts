@@ -95,4 +95,17 @@ public class MockWifiModemManager {
 
         return result;
     }
+
+    /**
+     * Configures the return result for signalPoll API for the target iface name.
+     *
+     */
+    public boolean configureSignalPoll(String ifaceName, int currentRssiDbm, int txBitrateMbps,
+            int rxBitrateMbps, int associationFrequencyMHz) {
+        if (mMockWifiModemService == null) {
+            return false;
+        }
+        return mMockWifiModemService.configureSignalPoll(ifaceName, currentRssiDbm, txBitrateMbps,
+                rxBitrateMbps, associationFrequencyMHz);
+    }
 }

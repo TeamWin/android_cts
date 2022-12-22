@@ -38,7 +38,6 @@ public class TileServiceTest extends BaseTileServiceTest {
         // Verify that the service starts up and gets a onTileAdded callback.
         assertTrue(waitFor("onCreate"));
         assertTrue(waitFor("onTileAdded"));
-        assertTrue(waitFor("onDestroy"));
     }
 
     public void testRemoveTile() throws Exception {
@@ -47,7 +46,6 @@ public class TileServiceTest extends BaseTileServiceTest {
         // Verify that the service starts up and gets a onTileAdded callback.
         assertTrue(waitFor("onCreate"));
         assertTrue(waitFor("onTileAdded"));
-        assertTrue(waitFor("onDestroy"));
 
         remTile();
         assertTrue(waitFor("onTileRemoved"));
@@ -56,7 +54,6 @@ public class TileServiceTest extends BaseTileServiceTest {
     public void testListeningNotifications() throws Exception {
         if (!supported()) return;
         addTile();
-        assertTrue(waitFor("onDestroy"));
 
         // Open the notification shade and make sure the tile gets a chance to listen.
         openNotifications();
@@ -69,7 +66,6 @@ public class TileServiceTest extends BaseTileServiceTest {
     public void testListeningSettings() throws Exception {
         if (!supported()) return;
         addTile();
-        assertTrue(waitFor("onDestroy"));
 
         // Open the quick settings and make sure the tile gets a chance to listen.
         openSettings();
@@ -82,7 +78,6 @@ public class TileServiceTest extends BaseTileServiceTest {
     public void testCantAddDialog() throws Exception {
         if (!supported()) return;
         addTile();
-        assertTrue(waitFor("onDestroy"));
 
         // Wait for the tile to be added.
         assertTrue(waitFor("onTileAdded"));
@@ -122,7 +117,6 @@ public class TileServiceTest extends BaseTileServiceTest {
     public void testClickAndShowDialog() throws Exception {
         if (!supported()) return;
         addTile();
-        assertTrue(waitFor("onDestroy"));
 
         // Open the quick settings and make sure the tile gets a chance to listen.
         openSettings();

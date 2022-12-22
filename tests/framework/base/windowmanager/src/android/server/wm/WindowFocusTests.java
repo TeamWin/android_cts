@@ -19,6 +19,7 @@ package android.server.wm;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_FOCUS;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
+import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_STEAL_TOP_FOCUS_DISABLED;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
@@ -34,6 +35,7 @@ import static android.view.KeyEvent.KEYCODE_5;
 import static android.view.KeyEvent.KEYCODE_6;
 import static android.view.KeyEvent.KEYCODE_7;
 import static android.view.KeyEvent.KEYCODE_8;
+import static android.view.KeyEvent.KEYCODE_9;
 import static android.view.KeyEvent.keyCodeToString;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -183,7 +185,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
     }
 
     @Test
-    public void testKeyReceiving_displayWithOwnFocus() {
+    public void testKeyReceivingWithDisplayWithOwnFocus() {
         assumeTrue(supportsMultiDisplay());
 
         final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
@@ -192,40 +194,69 @@ public class WindowFocusTests extends WindowManagerTestBase {
         final VirtualDisplayWithOwnFocusSession session =
                 createManagedVirtualDisplayWithOwnFocusSession();
         final int secondaryDisplayId = session.getDisplayId();
-        final SecondaryActivity secondaryActivity = session.startActivityAndFocus();
+        final SecondaryActivity secondaryActivity = session.startActivityAndFocus(
+                SecondaryActivity.class);
 
-        // The secondary display and activity gained focus; the default display lost focus.
+        // The secondary display and activity gained focus; the window on default display
+        // has no longer focus because the secondary display is also the top display.
         primaryActivity.waitAndAssertWindowFocusState(/* hasFocus= */ false);
+        secondaryActivity.waitAndAssertWindowFocusState(/* hasFocus= */ true);
 
-        sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_2, INVALID_DISPLAY);
-        sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_3, secondaryDisplayId);
+        sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_0, INVALID_DISPLAY);
+        sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_1, secondaryDisplayId);
 
-        // Press display-unspecified keys and a display-specified key but not release them.
-        sendKey(ACTION_DOWN, KEYCODE_5, INVALID_DISPLAY);
-        sendKey(ACTION_DOWN, KEYCODE_6, secondaryDisplayId);
-        sendKey(ACTION_DOWN, KEYCODE_7, INVALID_DISPLAY);
-        secondaryActivity.assertAndConsumeKeyEvent(ACTION_DOWN, KEYCODE_5, 0 /* flags */);
-        secondaryActivity.assertAndConsumeKeyEvent(ACTION_DOWN, KEYCODE_6, 0 /* flags */);
-        secondaryActivity.assertAndConsumeKeyEvent(ACTION_DOWN, KEYCODE_7, 0 /* flags */);
-
-        // Give focus to the primary activity on the default display; the secondary ones did not
-        // lose focus.
-        tapOn(primaryActivity);
+        // Send a key event to the primary activity on the default display to make it the top
+        // focused display.; the secondary ones did not lose window focus.
+        sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_6, DEFAULT_DISPLAY);
         primaryActivity.waitAndAssertWindowFocusState(/* hasFocus= */ true);
-        secondaryActivity.assertWindowFocusState(/* hasFocus= */ true);
+        secondaryActivity.waitAndAssertWindowFocusState(/* hasFocus= */ true);
 
-        // Assert only display-unspecified key would be cancelled after secondary activity is
-        // not top focused if per-display focus is enabled.
-        secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_5, FLAG_CANCELED);
-        secondaryActivity.waitAssertAndConsumeKeyEvent(ACTION_UP, KEYCODE_7, FLAG_CANCELED);
+        // Assert primary activity become top focused after sending targeted key to default display
+        sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_8, INVALID_DISPLAY);
+        // And targeted keys to the secondary display should still arrive at the secondary
+        sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_9, secondaryDisplayId);
 
         assertEquals(secondaryActivity.getLogTag() + " must only receive expected events",
                 0 /* expected event count */, secondaryActivity.getKeyEventCount());
+    }
 
-        // Assert primary activity become top focused after tapping on default display.
-        sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_8, INVALID_DISPLAY);
+    /**
+     * Test the {@link Display#FLAG_OWN_FOCUS} behavior.
+     * The flag is similar to {@link #perDisplayFocusEnabled()} but instead of affecting all
+     * displays it only affects the displays that have the flag set.
+     */
+    @Test
+    public void testOwnFocus() {
+        assumeTrue(supportsMultiDisplay());
 
-        secondaryActivity.assertWindowFocusState(/* hasFocus= */ true);
+        final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
+                DEFAULT_DISPLAY);
+
+        // Create two VirtualDisplays with its own focus and launch an activity on them
+        final VirtualDisplayWithOwnFocusSession secondarySession =
+                createManagedVirtualDisplayWithOwnFocusSession();
+        final SecondaryActivity secondaryActivity = secondarySession.startActivityAndFocus(
+                SecondaryActivity.class);
+        final VirtualDisplayWithOwnFocusSession tertiarySession =
+                createManagedVirtualDisplayWithOwnFocusSession();
+        final TertiaryActivity tertiaryActivity = tertiarySession.startActivityAndFocus(
+                TertiaryActivity.class);
+
+        // The primary activity will not have window focus. It does not manage its own focus and by
+        // launching activities on the second and third display the primary display is not the
+        // top focused display anymore, therefore also not having window focus anymore.
+        primaryActivity.waitAndAssertWindowFocusState(false);
+
+        // Both activities running on displays with their own focus should have window focus.
+        secondaryActivity.waitAndAssertWindowFocusState(true);
+        tertiaryActivity.waitAndAssertWindowFocusState(true);
+
+        // Making the primary activity the top focus (by tapping it) will make
+        // it focused. The other two displays still have a focused window
+        tapOn(primaryActivity);
+        primaryActivity.waitAndAssertWindowFocusState(true);
+        secondaryActivity.waitAndAssertWindowFocusState(true);
+        tertiaryActivity.waitAndAssertWindowFocusState(true);
     }
 
     /**
@@ -247,6 +278,58 @@ public class WindowFocusTests extends WindowManagerTestBase {
 
         sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_2, secondaryDisplayId);
         sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_3, INVALID_DISPLAY);
+    }
+
+    /**
+     * The display flag FLAG_STEAL_TOP_FOCUS_DISABLED prevents a display from stealing the top
+     * focus from another display. Sending targeted key events to a display usually raises that
+     * display to be the top focused display if it is not yet. If the FLAG_STEAL_TOP_FOCUS_DISABLED
+     * is set then that should not happen and the previous display stays the top focused display.
+     */
+    @Test
+    public void testStealingTopFocusDisabledDoesNotMoveDisplayToTop() {
+        assumeTrue(supportsMultiDisplay());
+
+        final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
+                DEFAULT_DISPLAY);
+        // Primary should have window focus for sure after launching
+        primaryActivity.waitAndAssertWindowFocusState(/* hasFocus */ true);
+        // Confirm this display has the top focus and receives untargeted events
+        sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_0, INVALID_DISPLAY);
+        // Confirm this display has the top focus and receives targeted events
+        sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_1, DEFAULT_DISPLAY);
+
+        // Create a VirtualDisplay with top focus disabled and launch an activity on it
+        final VirtualDisplayWithOwnFocusSession session =
+                createManagedVirtualDisplayWithOwnFocusSession(
+                        VIRTUAL_DISPLAY_FLAG_STEAL_TOP_FOCUS_DISABLED);
+        final int secondaryDisplayId = session.getDisplayId();
+        // Launching the activity on the secondary display will give it window focus.
+        final SecondaryActivity secondaryActivity = session.startActivityAndFocus(
+                SecondaryActivity.class);
+
+        // Primary should have window focus because it still is top focused display
+        // Secondary should have window focus because it manages its own focus
+        primaryActivity.waitAndAssertWindowFocusState(/* hasFocus */ true);
+        secondaryActivity.waitAndAssertWindowFocusState(/* hasFocus */ true);
+
+        // Confirm the default display still has top display focus
+        sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_2, INVALID_DISPLAY);
+
+        // Send a targeted key event to the secondary display.
+        // The secondary display should not get top focus because of FLAG_STEAL_TOP_FOCUS_DISABLED
+        sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_3, secondaryDisplayId);
+        sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_4, INVALID_DISPLAY);
+
+        // Now also check a tap does also not raise the top focus to the secondary display
+        tapOn(secondaryActivity);
+        sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_5, INVALID_DISPLAY);
+
+        // Tap the default display and check that the secondary display still has a window focus
+        tapOn(primaryActivity);
+        secondaryActivity.waitAndAssertWindowFocusState(/*hasFocus*/ true);
+        sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_6, INVALID_DISPLAY);
+        sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_7, secondaryDisplayId);
     }
 
     /**
@@ -516,6 +599,8 @@ public class WindowFocusTests extends WindowManagerTestBase {
 
     public static class SecondaryActivity extends InputTargetActivity { }
 
+    public static class TertiaryActivity extends InputTargetActivity { }
+
     public static class LosingFocusActivity extends InputTargetActivity {
         private boolean mChildWindowHasDrawn = false;
 
@@ -588,7 +673,8 @@ public class WindowFocusTests extends WindowManagerTestBase {
         }
 
         SecondaryActivity startActivityAndFocus() {
-            return WindowFocusTests.startActivityAndFocus(getDisplayId(), false /* hasFocus */);
+            return WindowFocusTests.startActivityAndFocus(getDisplayId(), false /* hasFocus */,
+                    SecondaryActivity.class);
         }
 
         @Override
@@ -603,8 +689,14 @@ public class WindowFocusTests extends WindowManagerTestBase {
     }
 
     private VirtualDisplayWithOwnFocusSession createManagedVirtualDisplayWithOwnFocusSession() {
+        return createManagedVirtualDisplayWithOwnFocusSession(/* additionalFlags= */ 0);
+    }
+
+    private VirtualDisplayWithOwnFocusSession createManagedVirtualDisplayWithOwnFocusSession(
+            int additionalFlags) {
         return mObjectTracker.manage(
-                new VirtualDisplayWithOwnFocusSession(getInstrumentation().getTargetContext()));
+                new VirtualDisplayWithOwnFocusSession(getInstrumentation().getTargetContext(),
+                        additionalFlags));
     }
 
     /** A trusted virtual display that has its own focus and touch mode states. */
@@ -617,17 +709,27 @@ public class WindowFocusTests extends WindowManagerTestBase {
         private final ImageReader mReader;
         private final Display mDisplay;
 
-        VirtualDisplayWithOwnFocusSession(Context context) {
+        /**
+         * @param context         The context, used to get the DisplayManager.
+         * @param additionalFlags Additional VirtualDisplayFlag to add. See
+         *                        {@link #getVirtualDisplayFlags()} for the default flags that are
+         *                        set.
+         */
+        VirtualDisplayWithOwnFocusSession(Context context, int additionalFlags) {
             mReader = ImageReader.newInstance(WIDTH, HEIGHT, PixelFormat.RGBA_8888,
                     /* maxImages= */ 2);
             SystemUtil.runWithShellPermissionIdentity(() -> {
                 mVirtualDisplay = context.getSystemService(DisplayManager.class)
                         .createVirtualDisplay(WindowFocusTests.class.getSimpleName(), WIDTH, HEIGHT,
-                                DENSITY, mReader.getSurface(), getVirtualDisplayFlags());
+                                DENSITY, mReader.getSurface(),
+                                getVirtualDisplayFlags() | additionalFlags);
             });
             mDisplay = mVirtualDisplay.getDisplay();
         }
 
+        /**
+         * @return Get the default VirtualDisplayFlags to set for the creation of the VirtualDisplay
+         */
         int getVirtualDisplayFlags() {
             return VIRTUAL_DISPLAY_FLAG_PUBLIC
                     | VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY
@@ -639,8 +741,9 @@ public class WindowFocusTests extends WindowManagerTestBase {
             return mDisplay.getDisplayId();
         }
 
-        SecondaryActivity startActivityAndFocus() {
-            return WindowFocusTests.startActivityAndFocus(getDisplayId(), /* hasFocus= */ true);
+        <T extends InputTargetActivity> T startActivityAndFocus(Class<T> cls) {
+            return WindowFocusTests.startActivityAndFocus(getDisplayId(), /* hasFocus= */ true,
+                    cls);
         }
 
         @Override
@@ -672,7 +775,8 @@ public class WindowFocusTests extends WindowManagerTestBase {
         }
 
         SecondaryActivity startActivityAndFocus() {
-            return WindowFocusTests.startActivityAndFocus(getDisplayId(), true /* hasFocus */);
+            return WindowFocusTests.startActivityAndFocus(getDisplayId(), true /* hasFocus */,
+                    SecondaryActivity.class);
         }
 
         @Override
@@ -681,10 +785,11 @@ public class WindowFocusTests extends WindowManagerTestBase {
         }
     }
 
-    private static SecondaryActivity startActivityAndFocus(int displayId, boolean hasFocus) {
+    private static <T extends InputTargetActivity> T startActivityAndFocus(int displayId,
+            boolean hasFocus, Class<T> cls) {
         // An untrusted virtual display won't have focus until the display is touched.
-        final SecondaryActivity activity = WindowManagerTestBase.startActivity(
-                SecondaryActivity.class, displayId, hasFocus);
+        final T activity = WindowManagerTestBase.startActivity(
+                cls, displayId, hasFocus);
         tapOn(activity);
         activity.waitAndAssertWindowFocusState(true);
         return activity;

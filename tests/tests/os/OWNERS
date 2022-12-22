@@ -1,5 +1,10 @@
+# Bug component: 24950
+
 per-file *Companion* = file:platform/frameworks/base:/core/java/android/permission/OWNERS
 per-file *Vibrat* = file:platform/frameworks/base:/services/core/java/com/android/server/vibrator/OWNERS
 per-file *AndroidManifest.xml = file:platform/frameworks/base:/core/java/android/permission/OWNERS
 per-file *CtsOsTestCases.xml = file:platform/frameworks/base:/core/java/android/permission/OWNERS
 per-file *Sntp* = file:platform/frameworks/base:/services/core/java/com/android/server/timezonedetector/OWNERS
+
+# Bug component: 826709 = per-file PerformanceHintManagerTest.java
+per-file PerformanceHintManagerTest.java = file:platform/hardware/interfaces:/power/OWNERS

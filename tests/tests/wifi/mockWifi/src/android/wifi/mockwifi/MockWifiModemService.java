@@ -119,4 +119,14 @@ public class MockWifiModemService extends Service {
         }
         return complete;
     }
+
+    public boolean configureSignalPoll(String ifaceName, int currentRssiDbm, int txBitrateMbps,
+            int rxBitrateMbps, int associationFrequencyMHz) {
+        if (sWifiNL80211ManagerImp == null) {
+            return false;
+        }
+        if (sWifiNL80211ManagerImp == null) return false;
+        return sWifiNL80211ManagerImp.configureSignalPoll(ifaceName, currentRssiDbm, txBitrateMbps,
+                rxBitrateMbps, associationFrequencyMHz);
+    }
 }

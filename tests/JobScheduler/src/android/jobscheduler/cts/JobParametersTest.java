@@ -18,6 +18,7 @@ package android.jobscheduler.cts;
 
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
+import android.app.job.JobScheduler;
 import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -134,6 +135,36 @@ public class JobParametersTest extends BaseJobSchedulerTest {
 
         JobParameters params = kTestEnvironment.getLastStartJobParameters();
         assertEquals(JOB_ID, params.getJobId());
+    }
+
+    public void testNamespaceJobParameters() throws Exception {
+        JobScheduler jsA = mJobScheduler.forNamespace("A");
+        JobScheduler jsB = mJobScheduler.forNamespace("B");
+        JobInfo jobA = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setExpedited(true)
+                .build();
+        JobInfo jobB = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setRequiresStorageNotLow(true)
+                .build();
+
+        setStorageStateLow(true);
+        assertEquals(JobScheduler.RESULT_SUCCESS, jsA.schedule(jobA));
+        assertEquals(JobScheduler.RESULT_SUCCESS, jsB.schedule(jobB));
+
+        kTestEnvironment.setExpectedExecutions(1);
+        runSatisfiedJob(JOB_ID, "A");
+        runSatisfiedJob(JOB_ID, "B");
+        assertTrue("Job A didn't fire", kTestEnvironment.awaitExecution());
+        JobParameters params = kTestEnvironment.getLastStartJobParameters();
+        assertEquals("A", params.getJobNamespace());
+
+        kTestEnvironment.setExpectedExecutions(1);
+        setStorageStateLow(false);
+        runSatisfiedJob(JOB_ID, "A");
+        runSatisfiedJob(JOB_ID, "B");
+        assertTrue("Job B didn't fire", kTestEnvironment.awaitExecution());
+        params = kTestEnvironment.getLastStartJobParameters();
+        assertEquals("B", params.getJobNamespace());
     }
 
     // JobParameters.getNetwork() tested in ConnectivityConstraintTest.

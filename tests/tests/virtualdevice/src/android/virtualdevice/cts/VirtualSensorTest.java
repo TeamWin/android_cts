@@ -212,6 +212,7 @@ public class VirtualSensorTest {
         mVirtualSensor = setUpVirtualSensor(
                 new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME).build());
         mVirtualDevice.close();
+        mVirtualDevice = null;
 
         // The virtual device ID is no longer valid, SensorManager falls back to default device.
         Sensor sensor = mVirtualDeviceSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
@@ -371,7 +372,7 @@ public class VirtualSensorTest {
 
         private SensorEvent waitForEvent() {
             try {
-                return mEvents.poll(1, TimeUnit.SECONDS);
+                return mEvents.poll(5, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 fail("Interrupted while waiting for SensorEvent");
                 return null;

@@ -31,6 +31,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Telephony;
+import android.telephony.SubscriptionManager;
 import android.telephony.cts.util.DefaultSmsAppHelper;
 
 import androidx.test.filters.SmallTest;
@@ -240,7 +241,8 @@ public class SmsTest {
             cursor.getInt(cursor.getColumnIndex(Telephony.Sms.LOCKED))).isEqualTo(0);
 
         assertThat(
-            cursor.getInt(cursor.getColumnIndex(Telephony.Sms.SUBSCRIPTION_ID))).isEqualTo(-1);
+            cursor.getInt(cursor.getColumnIndex(Telephony.Sms.SUBSCRIPTION_ID))).isEqualTo(
+                SubscriptionManager.getDefaultSmsSubscriptionId());
 
         assertThat(
             cursor.getInt(cursor.getColumnIndex(Telephony.Sms.ERROR_CODE))).isEqualTo(-1);

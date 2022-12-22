@@ -22,6 +22,8 @@ import static android.app.AppOpsManager.MODE_ERRORED;
 import static android.app.AppOpsManager.MODE_IGNORED;
 import static android.text.format.DateUtils.HOUR_IN_MILLIS;
 
+import static org.junit.Assert.assertNotEquals;
+
 import android.annotation.TargetApi;
 import android.app.AppOpsManager;
 import android.app.job.JobInfo;
@@ -35,6 +37,7 @@ import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Tests related to scheduling jobs.
@@ -51,6 +54,7 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
         mJobScheduler.cancel(JOB_ID);
         SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler reset-schedule-quota");
         BatteryUtils.runDumpsysBatteryReset();
+        AppOpsUtils.setOpMode(MY_PACKAGE, AppOpsManager.OPSTR_RUN_LONG_JOBS, MODE_DEFAULT);
 
         // The super method should be called at the end.
         super.tearDown();
@@ -198,6 +202,150 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
                         + executedEvents, higherExecutedFirst);
     }
 
+    public void testNamespaceSetting() {
+        JobScheduler js = getContext().getSystemService(JobScheduler.class);
+        assertNull(js.getNamespace());
+
+        js = js.forNamespace("A");
+        assertEquals("A", js.getNamespace());
+        js = js.forNamespace("B");
+        assertEquals("B", js.getNamespace());
+        js = js.forNamespace("AB");
+        assertEquals("AB", js.getNamespace());
+        js = js.forNamespace("A");
+        assertEquals("A", js.getNamespace());
+
+        js = getContext().getSystemService(JobScheduler.class);
+        assertNull(js.getNamespace());
+    }
+
+    public void testNamespace_schedule() {
+        JobScheduler jsA = getContext().getSystemService(JobScheduler.class).forNamespace("A");
+        JobScheduler jsB = getContext().getSystemService(JobScheduler.class).forNamespace("B");
+        JobInfo jobA = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setMinimumLatency(60_000)
+                .setPriority(JobInfo.PRIORITY_HIGH)
+                .setPersisted(true)
+                .build();
+        JobInfo jobB = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setMinimumLatency(60_001)
+                .setPriority(JobInfo.PRIORITY_LOW)
+                .setPersisted(true)
+                .build();
+
+        assertNotEquals(jobA, jobB);
+        assertEquals(JobScheduler.RESULT_SUCCESS, jsA.schedule(jobA));
+        assertEquals(JobScheduler.RESULT_SUCCESS, jsB.schedule(jobB));
+
+        assertNull(mJobScheduler.getPendingJob(JOB_ID));
+        assertEquals(jobA, jsA.getPendingJob(JOB_ID));
+        assertEquals(jobB, jsB.getPendingJob(JOB_ID));
+
+        // App global
+        Map<String, List<JobInfo>> allJobs = mJobScheduler.getPendingJobsInAllNamespaces();
+        Map<String, List<JobInfo>> allJobsA = jsA.getPendingJobsInAllNamespaces();
+        Map<String, List<JobInfo>> allJobsB = jsB.getPendingJobsInAllNamespaces();
+        assertEquals(allJobs, allJobsA);
+        assertEquals(allJobsA, allJobsB);
+        assertEquals(2, allJobsA.size());
+        assertEquals(1, allJobsA.get("A").size());
+        assertEquals(1, allJobsA.get("B").size());
+        assertTrue(allJobsA.get("A").contains(jobA));
+        assertTrue(allJobsA.get("B").contains(jobB));
+
+        // In namespace
+        List<JobInfo> namespaceJobs = mJobScheduler.getAllPendingJobs();
+        List<JobInfo> namespaceJobsA = jsA.getAllPendingJobs();
+        List<JobInfo> namespaceJobsB = jsB.getAllPendingJobs();
+        assertNotEquals(namespaceJobsA, namespaceJobsB);
+        assertEquals(0, namespaceJobs.size());
+        assertEquals(1, namespaceJobsA.size());
+        assertEquals(1, namespaceJobsB.size());
+        assertTrue(namespaceJobsA.contains(jobA));
+        assertTrue(namespaceJobsB.contains(jobB));
+    }
+
+    public void testNamespace_cancel() {
+        JobScheduler jsA = getContext().getSystemService(JobScheduler.class).forNamespace("A");
+        JobScheduler jsB = getContext().getSystemService(JobScheduler.class).forNamespace("B");
+        JobInfo jobA = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setMinimumLatency(60_000)
+                .setPriority(JobInfo.PRIORITY_HIGH)
+                .setPersisted(true)
+                .build();
+        JobInfo jobB = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setMinimumLatency(60_001)
+                .setPriority(JobInfo.PRIORITY_LOW)
+                .setPersisted(true)
+                .build();
+
+        assertNotEquals(jobA, jobB);
+        assertEquals(JobScheduler.RESULT_SUCCESS, jsA.schedule(jobA));
+        assertEquals(JobScheduler.RESULT_SUCCESS, jsB.schedule(jobB));
+
+        jsA.cancel(JOB_ID);
+        assertNull(jsA.getPendingJob(JOB_ID));
+        assertEquals(jobB, jsB.getPendingJob(JOB_ID));
+
+        jsB.cancel(JOB_ID);
+        assertNull(jsA.getPendingJob(JOB_ID));
+        assertNull(jsB.getPendingJob(JOB_ID));
+    }
+
+    public void testNamespace_cancelInAllNamespaces() {
+        JobScheduler jsA = getContext().getSystemService(JobScheduler.class).forNamespace("A");
+        JobScheduler jsB = getContext().getSystemService(JobScheduler.class).forNamespace("B");
+        JobInfo jobA = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setMinimumLatency(60_000)
+                .setPriority(JobInfo.PRIORITY_HIGH)
+                .setPersisted(true)
+                .build();
+        JobInfo jobB = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setMinimumLatency(60_001)
+                .setPriority(JobInfo.PRIORITY_LOW)
+                .setPersisted(true)
+                .build();
+
+        assertNotEquals(jobA, jobB);
+        assertEquals(JobScheduler.RESULT_SUCCESS, jsA.schedule(jobA));
+        assertEquals(JobScheduler.RESULT_SUCCESS, jsB.schedule(jobB));
+
+        mJobScheduler.cancelInAllNamespaces();
+        assertNull(jsA.getPendingJob(JOB_ID));
+        assertNull(jsB.getPendingJob(JOB_ID));
+    }
+
+    public void testNamespace_cancelAllInNamespace() {
+        JobScheduler jsA = getContext().getSystemService(JobScheduler.class).forNamespace("A");
+        JobScheduler jsB = getContext().getSystemService(JobScheduler.class).forNamespace("B");
+        JobInfo jobA = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setMinimumLatency(60_000)
+                .setPriority(JobInfo.PRIORITY_HIGH)
+                .setPersisted(true)
+                .build();
+        JobInfo jobB = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setMinimumLatency(60_001)
+                .setPriority(JobInfo.PRIORITY_LOW)
+                .setPersisted(true)
+                .build();
+
+        assertNotEquals(jobA, jobB);
+        assertEquals(JobScheduler.RESULT_SUCCESS, jsA.schedule(jobA));
+        assertEquals(JobScheduler.RESULT_SUCCESS, jsB.schedule(jobB));
+
+        mJobScheduler.cancelAll();
+        assertEquals(jobA, jsA.getPendingJob(JOB_ID));
+        assertEquals(jobB, jsB.getPendingJob(JOB_ID));
+
+        jsA.cancelAll();
+        assertNull(jsA.getPendingJob(JOB_ID));
+        assertEquals(jobB, jsB.getPendingJob(JOB_ID));
+
+        jsB.cancelAll();
+        assertNull(jsA.getPendingJob(JOB_ID));
+        assertNull(jsB.getPendingJob(JOB_ID));
+    }
+
     public void testPendingJobReason_noJob() {
         assertEquals(JobScheduler.PENDING_JOB_REASON_INVALID_JOB_ID,
                 mJobScheduler.getPendingJobReason(JOB_ID));
@@ -342,5 +490,29 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
 
         assertEquals(JobScheduler.PENDING_JOB_REASON_CONSTRAINT_STORAGE_NOT_LOW,
                 mJobScheduler.getPendingJobReason(JOB_ID));
+    }
+
+    public void testRunLongJobPermissionRequirement() throws Exception {
+        JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setUserInitiated(true)
+                .build();
+        // Default is allowed.
+        AppOpsUtils.setOpMode(MY_PACKAGE, AppOpsManager.OPSTR_RUN_LONG_JOBS, MODE_DEFAULT);
+        assertEquals(JobScheduler.RESULT_SUCCESS, mJobScheduler.schedule(ji));
+
+        AppOpsUtils.setOpMode(MY_PACKAGE, AppOpsManager.OPSTR_RUN_LONG_JOBS, MODE_ERRORED);
+        try {
+            mJobScheduler.schedule(ji);
+            fail("Successfully scheduled user-initiated job without permission");
+        } catch (Exception expected) {
+            // Success
+        }
+
+        AppOpsUtils.setOpMode(MY_PACKAGE, AppOpsManager.OPSTR_RUN_LONG_JOBS, MODE_ALLOWED);
+        assertEquals(JobScheduler.RESULT_SUCCESS, mJobScheduler.schedule(ji));
+
+        AppOpsUtils.setOpMode(MY_PACKAGE, AppOpsManager.OPSTR_RUN_LONG_JOBS, MODE_IGNORED);
+        // TODO(263159631): uncomment to enable testing this scenario
+        // assertEquals(JobScheduler.RESULT_FAILURE, mJobScheduler.schedule(ji));
     }
 }

@@ -120,7 +120,8 @@ class AppOpsLoggingTest {
             }, IntentFilter(installAction))
 
             // Commit session (should trigger installAction receiver)
-            session.commit(PendingIntent.getBroadcast(context, 0, Intent(installAction),
+            session.commit(PendingIntent.getBroadcast(context, 0,
+                    Intent(installAction).setPackage(context.packageName),
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE).intentSender)
 
             eventually {

@@ -97,6 +97,8 @@ StreamBase::Result OboePlayer::setupStream(int32_t channelCount, int32_t sampleR
             break;
         }
 
+        __android_log_print(ANDROID_LOG_INFO, TAG, "mRouteDeviceId:%d", mRouteDeviceId);
+
         if (mRouteDeviceId != ROUTING_DEVICE_NONE) {
             builder.setDeviceId(mRouteDeviceId);
         }

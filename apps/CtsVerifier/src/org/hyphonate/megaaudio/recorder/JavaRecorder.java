@@ -31,7 +31,7 @@ import org.hyphonate.megaaudio.recorder.sinks.NopAudioSinkProvider;
  */
 public class JavaRecorder extends Recorder {
     @SuppressWarnings("unused") private static final String TAG = JavaRecorder.class.getSimpleName();
-    @SuppressWarnings("unused") private static final boolean LOG = true;
+    @SuppressWarnings("unused") private static final boolean LOG = false;
 
     /** The buffer to receive the recorder samples */
     private float[] mRecorderBuffer;
@@ -80,7 +80,9 @@ public class JavaRecorder extends Recorder {
     public AudioRecord getAudioRecord() { return mAudioRecord; }
 
     @Override
-    public void setInputPreset(int preset) { mInputPreset = preset; }
+    public void setInputPreset(int preset) {
+        mInputPreset = preset;
+    }
 
     /*
      * State

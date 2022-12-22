@@ -964,24 +964,19 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, null);
     }
 
+    @SdkSuppress(maxSdkVersion = Build.VERSION_CODES.S_V2)
     public void testP2pConnectThrowsExceptionWhenIPv6LinkLocalIsNotSupported() {
         if (!setupWifiP2p()) {
             return;
         }
 
-        if (mWifiP2pManager.isGroupClientIpv6LinkLocalProvisioningSupported()) {
-            return;
-        }
-
         resetResponse(mMyResponse);
-        WifiP2pConfig config = new WifiP2pConfig.Builder()
-                .setDeviceAddress(MacAddress.fromString("aa:bb:cc:dd:ee:ff"))
-                .setGroupClientIpProvisioningMode(GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL)
-                .build();
-        ShellIdentityUtils.invokeWithShellPermissions(() -> {
-            assertThrows(UnsupportedOperationException.class, () ->
-                    mWifiP2pManager.connect(mWifiP2pChannel, config, mActionListener));
-        });
+        assertThrows(UnsupportedOperationException.class, () ->
+                new WifiP2pConfig.Builder()
+                        .setDeviceAddress(MacAddress.fromString("aa:bb:cc:dd:ee:ff"))
+                        .setGroupClientIpProvisioningMode(
+                                GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL)
+                        .build());
     }
 
     public void testP2pSetVendorElements() {

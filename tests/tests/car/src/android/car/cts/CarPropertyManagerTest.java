@@ -2175,6 +2175,20 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void testEngineIdleAutoStopEnabledIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.ENGINE_IDLE_AUTO_STOP_ENABLED,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Boolean.class)
+                .addReadPermission(Car.PERMISSION_CAR_ENGINE_DETAILED)
+                .addWritePermission(Car.PERMISSION_CAR_ENGINE_DETAILED)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
     public void testPerfOdometerIfSupported() {
         VehiclePropertyVerifier.newBuilder(
                         VehiclePropertyIds.PERF_ODOMETER,
@@ -3345,6 +3359,22 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Integer.class)
                 .requireMinMaxValues()
                 .requireZeroToBeContainedInMinMaxRanges()
+                .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
+                .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
+                .build()
+                .verify(mCarPropertyManager);
+    }
+
+    @Test
+    public void testSeatWalkInPosIfSupported() {
+        VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.SEAT_WALK_IN_POS,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_SEAT,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class)
+                .requireMinMaxValues()
+                .requireMinValuesToBeZero()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_SEATS)
                 .build()

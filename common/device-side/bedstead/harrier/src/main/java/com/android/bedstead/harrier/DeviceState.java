@@ -2969,7 +2969,7 @@ public final class DeviceState extends HarrierRule {
 
     private void requireMumd(String reason, FailureMode failureMode) {
         if (!TestApis.context().instrumentedContext()
-                .getSystemService(UserManager.class).isUsersOnSecondaryDisplaysSupported()) {
+                .getSystemService(UserManager.class).isVisibleBackgroundUsersSupported()) {
             String message = "Device supports does not support multiple users on multiple display, "
                     + "but test requires it. Reason: " + reason;
             failOrSkip(message, failureMode);
@@ -2978,7 +2978,7 @@ public final class DeviceState extends HarrierRule {
 
     private void requireNotMumd(String reason, FailureMode failureMode) {
         if (TestApis.context().instrumentedContext()
-                .getSystemService(UserManager.class).isUsersOnSecondaryDisplaysSupported()) {
+                .getSystemService(UserManager.class).isVisibleBackgroundUsersSupported()) {
             String message = "Device supports multiple users on multiple display, but test requires"
                     + " that it doesn't. Reason: " + reason;
             failOrSkip(message, failureMode);

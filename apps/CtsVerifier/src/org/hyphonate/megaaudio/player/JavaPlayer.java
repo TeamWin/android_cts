@@ -228,10 +228,7 @@ public class JavaPlayer extends Player {
                 int numSamplesWritten = mAudioTrack.write(
                         mAudioBuffer,0, numBufferSamples, AudioTrack.WRITE_BLOCKING);
                 if (numSamplesWritten < 0) {
-                    // error
-                    if (LOG) {
-                        Log.i(TAG, "AudioTrack write error: " + numSamplesWritten);
-                    }
+                    Log.e(TAG, "AudioTrack write error: " + numSamplesWritten);
                     stopStream();
                 } else if (numSamplesWritten < numBufferSamples) {
                     // end of stream

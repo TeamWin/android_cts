@@ -52,8 +52,6 @@ public class StatsdNotificationAtomTest extends DeviceTestCase implements IBuild
         assertThat(mCtsBuild).isNotNull();
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
-        DeviceUtils.installTestApp(getDevice(), NOTIFICATION_TEST_APK, NOTIFICATION_TEST_PKG,
-                mCtsBuild);
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
     }
 
@@ -61,7 +59,6 @@ public class StatsdNotificationAtomTest extends DeviceTestCase implements IBuild
     protected void tearDown() throws Exception {
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
-        DeviceUtils.uninstallTestApp(getDevice(), NOTIFICATION_TEST_PKG);
         super.tearDown();
     }
 

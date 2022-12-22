@@ -236,6 +236,9 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         } catch (Exception e) {
             fail("Exception thrown during reflection on config privileged fields"+ e);
         }
+        assertEquals("spatialized field isn't protected", false, config.isSpatialized());
+        assertEquals("sample rate field isn't protected", 0, config.getSampleRate());
+        assertEquals("channel mask field isn't protected", 0, config.getChannelMask());
     }
 
     public void testCallbackMediaPlayer() throws Exception {

@@ -266,9 +266,14 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
 
     /** Asks (not forces) JobScheduler to run the job if constraints are met. */
     void runSatisfiedJob(int jobId) throws Exception {
+        runSatisfiedJob(jobId, null);
+    }
+
+    void runSatisfiedJob(int jobId, String namespace) throws Exception {
         SystemUtil.runShellCommand(getInstrumentation(),
                 "cmd jobscheduler run -s"
                 + " -u " + UserHandle.myUserId()
+                + (namespace == null ? "" : " -n " + namespace)
                 + " " + kJobServiceComponent.getPackageName()
                 + " " + jobId);
     }
