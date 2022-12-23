@@ -50,6 +50,16 @@
                   android:turnScreenOn="true"
                   android:exported="true">
         </activity>
+
+        <receiver android:name="android.input.cts.KeyboardLayoutTest.CtsKeyboardLayoutProvider"
+                  android:label="CTS keyboard layout provider"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.hardware.input.action.QUERY_KEYBOARD_LAYOUTS" />
+            </intent-filter>
+            <meta-data android:name="android.hardware.input.metadata.KEYBOARD_LAYOUTS"
+                       android:resource="@xml/keyboard_layouts" />
+        </receiver>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

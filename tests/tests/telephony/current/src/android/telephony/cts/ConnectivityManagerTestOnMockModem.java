@@ -75,7 +75,7 @@ public class ConnectivityManagerTestOnMockModem {
         Log.d(TAG, "ConnectivityManagerTestOnMockModem#beforeAllTests()");
 
         if (!hasTelephonyFeature()) {
-            fail("This test requires the FEATURE_TELEPHONY.");
+            return;
         }
 
         enforceMockModemDeveloperSetting();

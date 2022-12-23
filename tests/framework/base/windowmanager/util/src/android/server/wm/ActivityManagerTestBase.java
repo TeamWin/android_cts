@@ -2268,7 +2268,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     /** Assert the activity is either relaunched or received configuration changed. */
-    static void assertActivityLifecycle(ComponentName activityName, boolean relaunched) {
+    protected static void assertActivityLifecycle(ComponentName activityName, boolean relaunched) {
         Condition.<String>waitForResult(
                 activityName + (relaunched ? " relaunched" : " config changed"),
                 condition -> condition

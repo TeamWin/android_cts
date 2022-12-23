@@ -1996,21 +1996,12 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
-                            Integer evChargeState = (Integer) carPropertyValue.getValue();
-                            assertWithMessage(
-                                            "EV_CHARGE_STATE must be a defined charge state: "
-                                                    + evChargeState)
-                                    .that(evChargeState)
-                                    .isIn(
-                                            ImmutableSet.of(
+                .setPossibleCarPropertyValues(ImmutableSet.of(
                                                     EvChargeState.STATE_UNKNOWN,
                                                     EvChargeState.STATE_CHARGING,
                                                     EvChargeState.STATE_FULLY_CHARGED,
                                                     EvChargeState.STATE_NOT_CHARGING,
-                                                    EvChargeState.STATE_ERROR));
-                        })
+                                                    EvChargeState.STATE_ERROR))
                 .addReadPermission(Car.PERMISSION_ENERGY)
                 .build()
                 .verify(mCarPropertyManager);
@@ -2059,24 +2050,14 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) -> {
-                            Integer evRegenerativeBrakingState =
-                                    (Integer) carPropertyValue.getValue();
-                            assertWithMessage(
-                                            "EV_REGENERATIVE_BRAKING_STATE must be a defined state:"
-                                                + " "
-                                                    + evRegenerativeBrakingState)
-                                    .that(evRegenerativeBrakingState)
-                                    .isIn(
+                .setPossibleCarPropertyValues(
                                             ImmutableSet.of(
                                                     EvRegenerativeBrakingState.STATE_UNKNOWN,
                                                     EvRegenerativeBrakingState.STATE_DISABLED,
                                                     EvRegenerativeBrakingState
                                                             .STATE_PARTIALLY_ENABLED,
                                                     EvRegenerativeBrakingState
-                                                            .STATE_FULLY_ENABLED));
-                        })
+                                                            .STATE_FULLY_ENABLED))
                 .addReadPermission(Car.PERMISSION_ENERGY)
                 .build()
                 .verify(mCarPropertyManager);
@@ -2129,13 +2110,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Integer.class)
-                .setCarPropertyValueVerifier(
-                        (carPropertyConfig, carPropertyValue) ->
-                                assertWithMessage(
-                                                "ENGINE_OIL_LEVEL Integer value must be greater"
-                                                    + " than or equal 0")
-                                        .that((Integer) carPropertyValue.getValue())
-                                        .isAtLeast(0))
+                .setPossibleCarPropertyValues(
+                        ImmutableSet.of(
+                                /*VehicleOilLevel.CRITICALLY_LOW=*/ 0,
+                                /*VehicleOilLevel.LOW=*/ 1,
+                                /*VehicleOilLevel.NORMAL=*/ 2,
+                                /*VehicleOilLevel.HIGH=*/ 3,
+                                /*VehicleOilLevel.ERROR=*/ 4))
                 .addReadPermission(Car.PERMISSION_CAR_ENGINE_DETAILED)
                 .build()
                 .verify(mCarPropertyManager);
@@ -3882,18 +3863,26 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                     }
                                 });
 
-        CarPropertyConfig<?> hvacTempSetConfig =
-                mCarPropertyManager.getCarPropertyConfig(VehiclePropertyIds.HVAC_TEMPERATURE_SET);
-        if (hvacTempSetConfig != null) {
-            ImmutableSet.Builder<Float> possibleHvacTempSetValuesBuilder = ImmutableSet.builder();
-            for (int possibleHvacTempSetValue = hvacTempSetConfig.getConfigArray().get(0);
-                    possibleHvacTempSetValue <= hvacTempSetConfig.getConfigArray().get(1);
-                    possibleHvacTempSetValue += hvacTempSetConfig.getConfigArray().get(2)) {
-                possibleHvacTempSetValuesBuilder.add((float) possibleHvacTempSetValue / 10.0f);
-            }
-            hvacTempSetVerifierBuilder.setPossibleCarPropertyValues(
-                    possibleHvacTempSetValuesBuilder.build());
-        }
+        runWithShellPermissionIdentity(
+                () -> {
+                    CarPropertyConfig<?> hvacTempSetConfig =
+                            mCarPropertyManager.getCarPropertyConfig(
+                                    VehiclePropertyIds.HVAC_TEMPERATURE_SET);
+                    if (hvacTempSetConfig != null) {
+                        List<Integer> hvacTempSetConfigArray = hvacTempSetConfig.getConfigArray();
+                        ImmutableSet.Builder<Float> possibleHvacTempSetValuesBuilder =
+                                ImmutableSet.builder();
+                        for (int possibleHvacTempSetValue = hvacTempSetConfigArray.get(0);
+                                possibleHvacTempSetValue <= hvacTempSetConfigArray.get(1);
+                                possibleHvacTempSetValue += hvacTempSetConfigArray.get(2)) {
+                            possibleHvacTempSetValuesBuilder.add(
+                                    (float) possibleHvacTempSetValue / 10.0f);
+                        }
+                        hvacTempSetVerifierBuilder.setPossibleCarPropertyValues(
+                                possibleHvacTempSetValuesBuilder.build());
+                    }
+                },
+                Car.PERMISSION_CONTROL_CAR_CLIMATE);
 
         hvacTempSetVerifierBuilder
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)

@@ -25,8 +25,10 @@ import android.os.Message;
  * subclasses need to implement the <code>handleMessage(Message)</code> method.
  */
 public class JavaSinkHandler extends Handler {
-    @SuppressWarnings("unused") private static final String TAG = JavaSinkHandler.class.getSimpleName();
-    @SuppressWarnings("unused") private static final boolean LOG = false;
+    @SuppressWarnings("unused")
+    private static final String TAG = JavaSinkHandler.class.getSimpleName();
+    @SuppressWarnings("unused")
+    private static final boolean LOG = false;
 
     protected JavaRecorder mRecorder;
 

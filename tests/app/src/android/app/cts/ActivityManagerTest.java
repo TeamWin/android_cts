@@ -15,6 +15,7 @@
  */
 package android.app.cts;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_BACKGROUND;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL;
@@ -340,31 +341,36 @@ public class ActivityManagerTest {
     }
 
     private final <T extends Activity> void startSubActivity(Class<T> activityClass) {
+        startSubActivity(activityClass, null);
+    }
+
+    private <T extends Activity> void startSubActivity(
+            Class<T> activityClass,
+            ActivityOptions activityOptions) {
         final Instrumentation.ActivityResult result = new ActivityResult(0, new Intent());
         final ActivityMonitor monitor = new ActivityMonitor(activityClass.getName(), result, false);
         mInstrumentation.addMonitor(monitor);
-        launchActivity(STUB_PACKAGE_NAME, activityClass, null);
+        launchActivity(STUB_PACKAGE_NAME, activityClass, activityOptions);
         mStartedActivityList.add(monitor.waitForActivity());
     }
 
     private <T extends Activity> T launchActivity(
             String pkg,
             Class<T> activityCls,
-            Bundle extras) {
+            ActivityOptions activityOptions) {
         Intent intent = new Intent(Intent.ACTION_MAIN);
-        if (extras != null) {
-            intent.putExtras(extras);
-        }
-        return launchActivityWithIntent(pkg, activityCls, intent);
+        return launchActivityWithIntent(pkg, activityCls, intent, activityOptions);
     }
 
     private <T extends Activity> T launchActivityWithIntent(
             String pkg,
             Class<T> activityCls,
-            Intent intent) {
+            Intent intent,
+            ActivityOptions activityOptions) {
         intent.setClassName(pkg, activityCls.getName());
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        T activity = (T) mInstrumentation.startActivitySync(intent);
+        T activity = (T) mInstrumentation.startActivitySync(
+                intent, activityOptions == null ? null : activityOptions.toBundle());
         mInstrumentation.waitForIdleSync();
         return activity;
     }
@@ -408,8 +414,10 @@ public class ActivityManagerTest {
         assertTrue(indexRecentOne != -1 && indexRecentTwo == -1);
         assertTrue(runningTaskList.get(indexRecentOne).isVisible());
 
-        // start recent2_activity.
-        startSubActivity(ActivityManagerRecentTwoActivity.class);
+        // start recent2_activity in fullscreen to hide the recent1_activity.
+        final ActivityOptions options = ActivityOptions.makeBasic();
+        options.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
+        startSubActivity(ActivityManagerRecentTwoActivity.class, options);
 
         /*
          * assert both recent1_activity and recent2_activity exist in the
@@ -846,6 +854,8 @@ public class ActivityManagerTest {
 
     @Test
     public void testHomeVisibilityListener() throws Exception {
+        assumeFalse("With platforms that have no home screen, no need to test", noHomeScreen());
+
         LinkedBlockingQueue<Boolean> currentHomeScreenVisibility = new LinkedBlockingQueue<>(2);
         HomeVisibilityListener homeVisibilityListener = new HomeVisibilityListener() {
             @Override

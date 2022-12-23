@@ -15,11 +15,17 @@
  */
 package org.hyphonate.megaaudio.common;
 
-import android.media.AudioDeviceCallback;
+import android.content.Context;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.util.Log;
 
 public abstract class StreamBase {
+    @SuppressWarnings("unused")
+    private static final String TAG = StreamBase.class.getSimpleName();
+    @SuppressWarnings("unused")
+    private static final boolean LOG = false;
     //
     // Error Codes
     // These values must be kept in sync with the equivalent symbols in
@@ -31,6 +37,12 @@ public abstract class StreamBase {
     public static final int ERROR_INVALID_STATE = -3;
 
     //
+    // System Attributes
+    //
+    //
+    private static int sSystemBurstFrames = -1;
+    private static int sSystemSampleRate = 48000;
+
     // Stream attributes
     //
     protected int mChannelCount;
@@ -48,7 +60,45 @@ public abstract class StreamBase {
     public int getChannelCount() { return mChannelCount; }
     public int getSampleRate() { return mSampleRate; }
 
-    public abstract int getNumBufferFrames();
+    /**
+     * Gets the system-specified burst-size in frames. This should be called by the
+     * app in initialization before calling getSystemBurstFrames() (below).
+     * @return the system-specified burst size in frames.
+     */
+    public static int calcNumBurstFrames(Context context) {
+        AudioManager audioManager = context.getSystemService(AudioManager.class);
+        String text = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER);
+        sSystemBurstFrames = Integer.parseInt(text);
+        if (LOG) {
+            Log.i(TAG, "sSystemBurstFrames:" + sSystemBurstFrames);
+        }
+        return sSystemBurstFrames;
+    }
+
+    /**
+     * @return the system-specified burst size in frames.
+     */
+    public static int getSystemBurstFrames() {
+        return sSystemBurstFrames;
+    }
+
+    /**
+     * Gets the system-speficied preferred sample rate for audio. This should be called by the
+     *      * app in initialization before calling getSystemSampleRate() (below).
+     * @return the system preferred sample rate
+     */
+    public static int calcSystemSampleRate(Context context) {
+        AudioManager audioManager = context.getSystemService(AudioManager.class);
+        String text = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
+        return sSystemSampleRate = Integer.parseInt(text);
+    }
+
+    /**
+     * @return the system preferred sample rate
+     */
+    public static int getSystemSampleRate() {
+        return sSystemSampleRate;
+    }
 
     // Routing
     public void setRouteDevice(AudioDeviceInfo routeDevice) {
@@ -78,18 +128,9 @@ public abstract class StreamBase {
         }
     }
 
-    /**
-     * @param numChannels   The number of channels in a FRAME of audio data.
-     * @return  The size in BYTES of a FRAME of audio data encoded as specified.
-     */
-    public static int calcFrameSizeInBytes(int numChannels) {
-        return sampleSizeInBytes(AudioFormat.ENCODING_PCM_FLOAT) * numChannels;
-    }
-
     //
     // State
     //
-
     /**
      * @param channelCount  The number of channels of audio data to be streamed.
      * @param sampleRate    The stream sample rate
@@ -138,9 +179,27 @@ public abstract class StreamBase {
      * @param chanCount The number of channels for which to generate an index mask.
      * @return  A channel index mask corresponding to the supplied channel count.
      *
-     * @note The generated index mask has active channels from 0 to chanCount - 1
+     * note: The generated index mask has active channels from 0 to chanCount - 1
      */
     public static int channelCountToIndexMask(int chanCount) {
         return  (1 << chanCount) - 1;
+    }
+
+    private static int[] sOutMasks =
+            {   -1,
+                AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.CHANNEL_OUT_STEREO,
+                AudioFormat.CHANNEL_OUT_STEREO | AudioFormat.CHANNEL_OUT_FRONT_CENTER,
+                AudioFormat.CHANNEL_OUT_QUAD
+            };
+
+    /**
+     *
+     * @param chanCount The number of channels for which to generate a postional mask.
+     * @return the corresponding channel position mask
+     * note: This mapping is not well defined, but may be needed to get a fast path in the Java API
+     */
+    public static int channelCountToOutPositionMask(int chanCount) {
+        return chanCount <= 4 ? sOutMasks[chanCount] : AudioFormat.CHANNEL_OUT_STEREO;
     }
 }

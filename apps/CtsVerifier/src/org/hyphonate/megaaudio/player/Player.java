@@ -28,6 +28,11 @@ import java.util.ArrayList;
  * player (concrete) sub-classes.
  */
 public abstract class Player extends StreamBase {
+    @SuppressWarnings("unused")
+    private static final String TAG = Player.class.getSimpleName();
+    @SuppressWarnings("unused")
+    private static final boolean LOG = false;
+
     private ArrayList<BufferCallback> mCallbacks = new ArrayList<BufferCallback>();
 
     public Player(AudioSourceProvider sourceProvider) {
@@ -38,19 +43,6 @@ public abstract class Player extends StreamBase {
      * Audio Source
      */
     protected AudioSourceProvider mSourceProvider;
-
-    //
-    // Attributes
-    //
-    // This needs to be static because it is called before creating the Recorder subclass
-    public static int calcMinBufferFrames(int channelCount, int sampleRate) {
-        int channelMask = Player.channelCountToChannelMask(channelCount);
-        int bufferSizeInBytes =
-                AudioTrack.getMinBufferSize (sampleRate,
-                        channelMask,
-                        AudioFormat.ENCODING_PCM_FLOAT);
-        return bufferSizeInBytes / sampleSizeInBytes(AudioFormat.ENCODING_PCM_FLOAT);
-    }
 
     /**
      * @return The AudioSouce object associated with this player

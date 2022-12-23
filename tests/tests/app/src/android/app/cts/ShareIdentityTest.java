@@ -16,6 +16,7 @@
 package android.app.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -23,6 +24,8 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Process;
 import android.util.Log;
 
@@ -31,6 +34,8 @@ import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
+
+import libcore.util.HexEncoding;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -65,6 +70,18 @@ public class ShareIdentityTest {
      */
     private static final ComponentName TEST_COMPONENT = new ComponentName(
             TEST_PACKAGE, TEST_PACKAGE + ".TestShareIdentityActivity");
+    /**
+     * The SHA-256 digest of the DER encoding of the rotated signing certificate for the test
+     * package.
+     */
+    private static final String TEST_PACKAGE_ROTATED_SIGNER_DIGEST =
+            "d78405f761ff6236cc9b570347a570aba0c62a129a3ac30c831c64d09ad95469";
+    /**
+     * The SHA-256 digest of the DER encoding of the original signing certificate for the test
+     * package.
+     */
+    private static final String TEST_PACKAGE_ORIGINAL_SIGNER_DIGEST =
+            "6a8b96e278e58f62cfe3584022cec1d0527fcb85a9e5d2e1694eb0405be5b599";
 
     /**
      * Key used to pass the int test case as an extra in the {@code Intent} to the {@link
@@ -119,6 +136,13 @@ public class ShareIdentityTest {
     @CddTest(requirement = "4/C-0-2")
     public void testShareIdentity_explicitIdentityShared_identityAvailableToActivity()
             throws Exception {
+        // The APIs to share a launching app's identity were introduced to allow a launched
+        // app to perform authorization checks; these typically involve an allow-list of known
+        // packages and their expected signing identities. When an app opts-in to sharing its
+        // identity with the launched activity, that should implicitly grant visibility to the
+        // launching app, including its signing identity. This test verifies the launching app's
+        // details are available via PackageManager queries when the app has opted-in to sharing
+        // its identity and that the expected signing identity of the app can be verified.
         TestData testData = new TestData(new CountDownLatch(1));
         int testId = TEST_ID.getAndIncrement();
         sTestIdToData.put(testId, testData);
@@ -128,15 +152,34 @@ public class ShareIdentityTest {
 
         assertTrue("Activity was not invoked by the timeout",
                 testData.countDownLatch.await(10, TimeUnit.SECONDS));
+        PackageManager packageManager = mContext.getPackageManager();
+        PackageInfo packageInfo = packageManager.getPackageInfo(TEST_PACKAGE,
+                PackageManager.PackageInfoFlags.of(PackageManager.GET_SIGNING_CERTIFICATES));
         assertEquals(
                 "Expected launchedFromUid not obtained after launching app opted-in to sharing "
                         + "identity",
-                mContext.getPackageManager().getApplicationInfo(TEST_PACKAGE, 0).uid,
+                packageInfo.applicationInfo.uid,
                 testData.launchedFromUid);
         assertEquals(
                 "Expected launchedFromPackage not obtained after launching app opted-in to sharing "
                         + "identity",
                 TEST_PACKAGE, testData.launchedFromPackage);
+        assertNotNull(
+                "Expected SigningInfo not available after launching app opted-in to sharing "
+                        + "identity",
+                packageInfo.signingInfo);
+        assertTrue(
+                "Expected rotated signer not reported after launching app opted-in to sharing "
+                        + "identity",
+                packageManager.hasSigningCertificate(testData.launchedFromUid,
+                        HexEncoding.decode(TEST_PACKAGE_ROTATED_SIGNER_DIGEST),
+                        PackageManager.CERT_INPUT_SHA256));
+        assertTrue(
+                "Expected original signer not reported after launching app opted-in to sharing "
+                        + "identity",
+                packageManager.hasSigningCertificate(testData.launchedFromPackage,
+                        HexEncoding.decode(TEST_PACKAGE_ORIGINAL_SIGNER_DIGEST),
+                        PackageManager.CERT_INPUT_SHA256));
     }
 
     @Test

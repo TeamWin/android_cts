@@ -16,8 +16,14 @@
 package org.hyphonate.megaaudio.player;
 
 import android.media.AudioTimestamp;
+import android.util.Log;
 
 public class OboePlayer extends Player {
+    @SuppressWarnings("unused")
+    private static final String TAG = OboePlayer.class.getSimpleName();
+    @SuppressWarnings("unused")
+    private static final boolean LOG = false;
+
     boolean mPlaying;
 
     private int mPlayerSubtype;
@@ -40,7 +46,6 @@ public class OboePlayer extends Player {
         }
     }
 
-    @Override
     public int getNumBufferFrames() {
         return getBufferFrameCountN(mNativePlayer);
     }
@@ -59,7 +64,12 @@ public class OboePlayer extends Player {
     public boolean isPlaying() { return mPlaying; }
 
     @Override
-    public int setupStream(int channelCount, int sampleRate, int numBurstFrames) {
+    public int setupStream(int channelCount, int sampleRate, int numBufferFrames) {
+        if (LOG) {
+            Log.i(TAG, "setupStream(chans:" + channelCount + ", rate:" + sampleRate
+                    + ", frames:" + numBufferFrames + ")");
+        }
+
         mChannelCount = channelCount;
         mSampleRate = sampleRate;
         return setupStreamN(

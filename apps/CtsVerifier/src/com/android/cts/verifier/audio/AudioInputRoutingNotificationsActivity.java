@@ -32,9 +32,9 @@ import android.widget.TextView;
 
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
-import com.android.cts.verifier.audio.audiolib.AudioDeviceUtils;
 import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.audio.audiolib.AudioDeviceUtils;
 
 import org.hyphonate.megaaudio.recorder.JavaRecorder;
 import org.hyphonate.megaaudio.recorder.Recorder;
@@ -186,7 +186,7 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
         mContext = this;
 
         // Setup Recorder
-        mNumFrames = Recorder.calcMinBufferFrames(NUM_CHANNELS, SAMPLE_RATE);
+        mNumFrames = Recorder.calcMinBufferFramesStatic(NUM_CHANNELS, SAMPLE_RATE);
 
         RecorderBuilder builder = new RecorderBuilder();
         try {

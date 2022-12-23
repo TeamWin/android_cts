@@ -45,6 +45,7 @@ import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.USE_CAS
 import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.USE_CASE_STILL_CAPTURE;
 import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.USE_CASE_VIDEO_CALL;
 import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.USE_CASE_VIDEO_RECORD;
+import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.USE_CASE_CROPPED_RAW;
 import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.VGA;
 import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.YUV;
 
@@ -364,12 +365,14 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             openDevice(id);
 
             try {
+                Rect preCorrectionActiveArrayRect = info.getPreCorrectedActiveArraySizeChecked();
                 for (MandatoryStreamCombination combination : combinations) {
                     Log.i(TAG, "Testing fixed mandatory output combination with stream use case: " +
                             combination.getDescription() + " on camera: " + id);
                     CaptureRequest.Builder requestBuilder =
                             mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-                    testMandatoryOutputCombinationWithPresetKeys(id, combination, requestBuilder);
+                    testMandatoryOutputCombinationWithPresetKeys(id, combination, requestBuilder,
+                            preCorrectionActiveArrayRect);
                 }
             } finally {
                 closeDevice(id);
@@ -409,7 +412,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                             mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
                     requestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
                             CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION);
-                    testMandatoryOutputCombinationWithPresetKeys(id, combination, requestBuilder);
+                    testMandatoryOutputCombinationWithPresetKeys(id, combination, requestBuilder,
+                            /*preCorrectionActiveArrayRect*/null);
                 }
             } finally {
                 closeDevice(id);
@@ -431,7 +435,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     }
 
     private void testMandatoryOutputCombinationWithPresetKeys(String cameraId,
-            MandatoryStreamCombination combination, CaptureRequest.Builder requestBuilderWithKeys) {
+            MandatoryStreamCombination combination, CaptureRequest.Builder requestBuilderWithKeys,
+            Rect preCorrectionActiveArrayRect) {
         final int TIMEOUT_FOR_RESULT_MS = 1000;
         final int MIN_RESULT_COUNT = 3;
 
@@ -461,22 +466,34 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             for (Surface s : outputSurfaces) {
                 requestBuilderWithKeys.addTarget(s);
             }
-            CameraCaptureSession.CaptureCallback mockCaptureCallback =
-                    mock(CameraCaptureSession.CaptureCallback.class);
-            CaptureRequest request = requestBuilderWithKeys.build();
+            boolean croppedRawUseCase = false;
+            for (OutputConfiguration c : outputConfigs) {
+                if (c.getStreamUseCase() ==
+                        CameraMetadata.SCALER_AVAILABLE_STREAM_USE_CASES_CROPPED_RAW) {
+                    croppedRawUseCase = true;
+                    break;
+                }
+            }
 
-            mCameraSession.setRepeatingRequest(request, mockCaptureCallback, mHandler);
-            verify(mockCaptureCallback,
-                    timeout(TIMEOUT_FOR_RESULT_MS * MIN_RESULT_COUNT).atLeast(MIN_RESULT_COUNT))
-                    .onCaptureCompleted(
-                        eq(mCameraSession),
-                        eq(request),
-                        isA(TotalCaptureResult.class));
-            verify(mockCaptureCallback, never()).
-                    onCaptureFailed(
-                        eq(mCameraSession),
-                        eq(request),
-                        isA(CaptureFailure.class));
+            CaptureRequest request = requestBuilderWithKeys.build();
+            CameraTestUtils.SimpleCaptureCallback captureCallback =
+                    new CameraTestUtils.SimpleCaptureCallback();
+
+
+            mCameraSession.setRepeatingRequest(request, captureCallback, mHandler);
+
+            for (int i = 0; i < MIN_RESULT_COUNT; i++) {
+                // Makes sure that we received an onCaptureCompleted and not an onCaptureFailed.
+                TotalCaptureResult result =
+                        captureCallback.getTotalCaptureResultForRequest(request,
+                                /*numResultsWait*/ 0);
+                validateResultMandatoryConditions(result, croppedRawUseCase,
+                    preCorrectionActiveArrayRect);
+            }
+            if (captureCallback.hasMoreFailures()) {
+                mCollector.addMessage("No capture failures expected, but there was a failure");
+            }
+
         } catch (Throwable e) {
             mCollector.addMessage(
                     String.format("Closing down for combination: %s failed due to: %s",
@@ -496,6 +513,24 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         }
 
         targets.close();
+    }
+
+    private void validateResultMandatoryConditions(TotalCaptureResult result,
+            boolean croppedRawUseCase, Rect preCorrectionActiveArrayRect) {
+        // validate more conditions here
+        if (croppedRawUseCase) {
+            Rect rawCropRegion = result.get(CaptureResult.SCALER_RAW_CROP_REGION);
+            if (rawCropRegion == null) {
+                mCollector.addMessage("SCALER_RAW_CROP_REGION should not be null " +
+                        "when CROPPED_RAW stream use case is used.");
+            }
+            if (!preCorrectionActiveArrayRect.contains(rawCropRegion)) {
+                mCollector.addMessage("RAW_CROP_REGION should be within pre correction active " +
+                        "array region, RAW_CROP_REGION is " + rawCropRegion.flattenToString() +
+                        " pre correction active array is " +
+                        preCorrectionActiveArrayRect.flattenToString());
+            }
+        }
     }
 
     private void testMandatoryStreamCombination(String cameraId, StaticMetadata staticInfo,
@@ -2463,6 +2498,38 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     USE_CASE_STILL_CAPTURE},
         };
 
+        final int[][] streamUseCaseCroppedRawCombinations = {
+            // Cropped RAW still image capture without preview
+            {RAW, MAXIMUM, USE_CASE_CROPPED_RAW},
+
+            // Preview / In-app processing with cropped RAW still image capture
+            {PRIV, PREVIEW, USE_CASE_PREVIEW, RAW, MAXIMUM, USE_CASE_CROPPED_RAW},
+            {YUV, PREVIEW, USE_CASE_PREVIEW, RAW, MAXIMUM, USE_CASE_CROPPED_RAW},
+
+            // Preview / In-app processing with YUV and cropped RAW still image capture
+            {PRIV, PREVIEW, USE_CASE_PREVIEW, YUV, MAXIMUM, USE_CASE_STILL_CAPTURE, RAW, MAXIMUM,
+              USE_CASE_CROPPED_RAW},
+            {YUV, PREVIEW, USE_CASE_PREVIEW, YUV, MAXIMUM, USE_CASE_STILL_CAPTURE, RAW, MAXIMUM,
+              USE_CASE_CROPPED_RAW},
+
+            // Preview / In-app processing with JPEG and cropped RAW still image capture
+            {PRIV, PREVIEW, USE_CASE_PREVIEW, JPEG, MAXIMUM, USE_CASE_STILL_CAPTURE, RAW, MAXIMUM,
+              USE_CASE_CROPPED_RAW},
+            {YUV, PREVIEW, USE_CASE_PREVIEW, JPEG, MAXIMUM, USE_CASE_STILL_CAPTURE, RAW, MAXIMUM,
+              USE_CASE_CROPPED_RAW},
+
+            // Preview with in-app processing / video recording and cropped RAW snapshot
+            {PRIV, PREVIEW, USE_CASE_PREVIEW, PRIV, PREVIEW, USE_CASE_VIDEO_RECORD, RAW, MAXIMUM,
+              USE_CASE_CROPPED_RAW},
+            {PRIV, PREVIEW, USE_CASE_PREVIEW, YUV, PREVIEW, USE_CASE_PREVIEW, RAW, MAXIMUM,
+              USE_CASE_CROPPED_RAW},
+
+            // Two input in-app processing with RAW
+            {YUV, PREVIEW, USE_CASE_PREVIEW, YUV, PREVIEW, USE_CASE_PREVIEW, RAW, MAXIMUM,
+              USE_CASE_CROPPED_RAW},
+        };
+
+
         final int[][] previewStabilizationCombinations = {
             // Stabilized preview, GPU video processing, or no-preview stabilized video recording.
             {PRIV, S1440P},
@@ -2485,7 +2552,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                  ultraHighResolutionsCombinations, tenBitOutputCombinations,
                  previewStabilizationCombinations};
 
-        final int[][][] useCaseTables = {streamUseCaseCombinations};
+        final int[][][] useCaseTables = {streamUseCaseCombinations,
+                streamUseCaseCroppedRawCombinations};
 
         validityCheckConfigurationTables(tables);
         validityCheckConfigurationTables(useCaseTables, /*useCaseSpecified*/ true);
@@ -2636,6 +2704,18 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                                 isMandatoryCombinationAvailable(c, maxSizes,
                                         /*isInput*/ false,  mandatoryStreamUseCaseCombinations,
                                         /*useCaseSpecified*/ true));
+                    }
+
+                    if (mStaticInfo.isCroppedRawStreamUseCaseSupported()) {
+                        for (int[] c : streamUseCaseCroppedRawCombinations) {
+                            assertTrue(String.format("Expected static stream combination: %s not "
+                                        + "found among the available mandatory cropped RAW stream"
+                                        + " use case combinations",
+                                        maxSizes.combinationToString(c, /*useCaseSpecified*/ true)),
+                                    isMandatoryCombinationAvailable(c, maxSizes,
+                                            /*isInput*/ false,  mandatoryStreamUseCaseCombinations,
+                                            /*useCaseSpecified*/ true));
+                        }
                     }
                 }
 
@@ -2969,7 +3049,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                                         || useCase == USE_CASE_PREVIEW_VIDEO_STILL
                                         || useCase == USE_CASE_STILL_CAPTURE
                                         || useCase == USE_CASE_VIDEO_CALL
-                                        || useCase == USE_CASE_VIDEO_RECORD);
+                                        || useCase == USE_CASE_VIDEO_RECORD
+                                        || useCase == USE_CASE_CROPPED_RAW);
                         i += 3;
                     } else {
                         i += 2;
@@ -3022,6 +3103,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 CameraMetadata.SCALER_AVAILABLE_STREAM_USE_CASES_PREVIEW_VIDEO_STILL;
         static final int USE_CASE_VIDEO_CALL =
                 CameraMetadata.SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL;
+        static final int USE_CASE_CROPPED_RAW =
+                CameraMetadata.SCALER_AVAILABLE_STREAM_USE_CASES_CROPPED_RAW;
 
         private final Size[] mMaxPrivSizes = new Size[RESOLUTION_COUNT];
         private final Size[] mMaxJpegSizes = new Size[RESOLUTION_COUNT];
@@ -3432,6 +3515,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     break;
                 case USE_CASE_VIDEO_RECORD:
                     b.append("USE_CASE_VIDEO_RECORD");
+                    break;
+                case USE_CASE_CROPPED_RAW:
+                    b.append("USE_CASE_CROPPED_RAW");
                     break;
                 default:
                     b.append("UNK STREAM_USE_CASE");

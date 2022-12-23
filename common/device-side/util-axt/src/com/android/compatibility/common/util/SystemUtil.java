@@ -98,7 +98,7 @@ public class SystemUtil {
      * @param cmd        the command to run
      * @return the standard output of the command as a byte array
      */
-    static byte[] runShellCommandByteOutput(UiAutomation automation, String cmd)
+    public static byte[] runShellCommandByteOutput(UiAutomation automation, String cmd)
             throws IOException {
         checkCommandBeforeRunning(cmd);
         ParcelFileDescriptor pfd = automation.executeShellCommand(cmd);

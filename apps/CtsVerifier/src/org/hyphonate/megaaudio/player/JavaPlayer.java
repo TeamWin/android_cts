@@ -28,8 +28,10 @@ import org.hyphonate.megaaudio.common.StreamBase;
  * API, i.e. AudioTrack.
  */
 public class JavaPlayer extends Player {
-    @SuppressWarnings("unused") private static String TAG = JavaPlayer.class.getSimpleName();
-    @SuppressWarnings("unused") private static final boolean LOG = false;
+    @SuppressWarnings("unused")
+    private static final String TAG = JavaPlayer.class.getSimpleName();
+    @SuppressWarnings("unused")
+    private static final boolean LOG = true;
 
     /*
      * Player infrastructure
@@ -77,6 +79,9 @@ public class JavaPlayer extends Player {
      * Allocates the array for the burst buffer.
      */
     private void allocBurstBuffer() {
+        if (LOG) {
+            Log.i(TAG, "allocBurstBuffer() mNumBufferFrames:" + mNumBufferFrames);
+        }
         // pad it by 1 frame. This allows some sources to not have to worry about
         // handling the end-of-buffer edge case. i.e. a "Guard Point" for interpolation.
         mAudioBuffer = new float[(mNumBufferFrames + 1) * mChannelCount];
@@ -85,10 +90,6 @@ public class JavaPlayer extends Player {
     //
     // Attributes
     //
-    /**
-     * @return The number of frames of audio data contained in the internal buffer.
-     */
-    @Override
     public int getNumBufferFrames() {
         return mNumBufferFrames;
     }
@@ -110,7 +111,7 @@ public class JavaPlayer extends Player {
     public int setupStream(int channelCount, int sampleRate, int numBufferFrames) {
         if (LOG) {
             Log.i(TAG, "setupStream(chans:" + channelCount + ", rate:" + sampleRate +
-                    ", frames:" + numBufferFrames);
+                    ", frames:" + numBufferFrames + ")");
         }
 
         mChannelCount = channelCount;
@@ -124,21 +125,23 @@ public class JavaPlayer extends Player {
             int bufferSizeInBytes = mNumBufferFrames * mChannelCount
                     * sampleSizeInBytes(AudioFormat.ENCODING_PCM_FLOAT);
             mAudioTrack = new AudioTrack.Builder()
-                    .setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY)
                     .setAudioFormat(new AudioFormat.Builder()
                             .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
                             .setSampleRate(mSampleRate)
-                            .setChannelIndexMask(StreamBase.channelCountToIndexMask(mChannelCount))
-                            // .setChannelMask(channelMask)
+                            // setChannelIndexMask() won't give us a FAST_PATH
+                            // .setChannelIndexMask(
+                            // StreamBase.channelCountToIndexMask(mChannelCount))
+                            .setChannelMask(StreamBase.channelCountToOutPositionMask(mChannelCount))
                             .build())
                     .setBufferSizeInBytes(bufferSizeInBytes)
+                    .setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY)
                     .build();
 
             allocBurstBuffer();
             mAudioTrack.setPreferredDevice(mRouteDevice);
         }  catch (UnsupportedOperationException ex) {
             if (LOG) {
-                Log.i(TAG, "Couldn't open AudioTrack: " + ex);
+                Log.e(TAG, "Couldn't open AudioTrack: " + ex);
             }
             mAudioTrack = null;
             return ERROR_UNSUPPORTED;
@@ -228,6 +231,7 @@ public class JavaPlayer extends Player {
                 int numSamplesWritten = mAudioTrack.write(
                         mAudioBuffer,0, numBufferSamples, AudioTrack.WRITE_BLOCKING);
                 if (numSamplesWritten < 0) {
+                    // error
                     Log.e(TAG, "AudioTrack write error: " + numSamplesWritten);
                     stopStream();
                 } else if (numSamplesWritten < numBufferSamples) {

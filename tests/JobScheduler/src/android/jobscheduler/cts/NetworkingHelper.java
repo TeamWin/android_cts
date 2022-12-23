@@ -79,6 +79,8 @@ public class NetworkingHelper {
     private final boolean mHasWifi;
     /** Whether the device running these tests supports ethernet. */
     private final boolean mHasEthernet;
+    /** Whether the device running these tests supports telephony. */
+    private final boolean mHasTelephony;
 
     private final boolean mInitialAirplaneModeState;
     private final boolean mInitialDataSaverState;
@@ -98,6 +100,7 @@ public class NetworkingHelper {
         PackageManager packageManager = mContext.getPackageManager();
         mHasWifi = packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI);
         mHasEthernet = packageManager.hasSystemFeature(PackageManager.FEATURE_ETHERNET);
+        mHasTelephony = packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
 
         mInitialAirplaneModeState = isAirplaneModeOn();
         mInitialDataSaverState = isDataSaverEnabled();
@@ -197,6 +200,18 @@ public class NetworkingHelper {
         return mWifiManager.isWifiEnabled();
     }
 
+    /**
+     * Tries to set all network statuses to {@code enabled}.
+     * However, this does not support ethernet connections.
+     * Confirm that {@link #hasEthernetConnection()} returns false before relying on this.
+     */
+    void setAllNetworksEnabled(boolean enabled) throws Exception {
+        if (mHasWifi) {
+            setWifiState(enabled);
+        }
+        setAirplaneMode(!enabled);
+    }
+
     void setAirplaneMode(boolean on) throws Exception {
         if (isAirplaneModeOn() == on) {
             return;
@@ -211,11 +226,22 @@ public class NetworkingHelper {
             // Try to trigger some network connection.
             setWifiState(true);
         }
-        waitUntil("Networks didn't change to " + (!on ? " on" : " off"), 60 /* seconds */,
+        waitUntil("Airplane mode didn't change to " + (on ? " on" : " off"), 60 /* seconds */,
                 () -> {
+                    // Airplane mode only affects the cellular network. If the device doesn't
+                    // support cellular, then we can only check that the airplane mode toggle is on.
+                    if (!mHasTelephony) {
+                        return on == isAirplaneModeOn();
+                    }
                     if (on) {
-                        return mConnectivityManager.getActiveNetwork() == null
-                                && (!mHasWifi || !isWiFiConnected());
+                        Network[] networks = mConnectivityManager.getAllNetworks();
+                        for (Network network : networks) {
+                            if (mConnectivityManager.getNetworkCapabilities(network)
+                                    .hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                                return false;
+                            }
+                        }
+                        return true;
                     } else {
                         return mConnectivityManager.getActiveNetwork() != null;
                     }

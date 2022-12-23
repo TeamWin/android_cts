@@ -5456,6 +5456,9 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="audio_general_reportlogtest">[Can\'t Write ReportLog]</string>
 
+    <string name="audio_general_play_colon"> play:</string>
+    <string name="audio_general_record_colon"> record:</string>
+
     <!-- Audio Data Paths Test-->
     <string name="audio_datapaths_test">Audio Data Paths Test</string>
     <string name="audio_datapaths_info">This test verifies basic functionality over a set of audio routes
@@ -5761,7 +5764,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="audio_tap2tone_too_few">Not enough edges. Use fingernail.</string>
     <string name="audio_tap2tone_too_many">Too many edges. Use fingernail. Ensure there is
     no background noise.</string>
-
+    <string name="audio_tap2tone_buffer_frames">Buffer Frames:</string>
     <!-- Strings for 6DoF test -->
     <string name="six_dof_test">6DoF Test</string>
     <string name="action_settings">Settings</string>

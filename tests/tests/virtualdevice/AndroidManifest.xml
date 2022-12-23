@@ -34,6 +34,7 @@
                 <action android:name="android.virtualdevice.util.INTERCEPTED_RECEIVER"/>
             </intent-filter>
         </activity>
+        <service android:name="android.virtualdevice.cts.util.TestService"/>
     </application>
 
     <uses-feature android:name="android.software.companion_device_setup" />

@@ -43,7 +43,7 @@ public class DataTransferTest extends BaseJobSchedulerTest {
     }
 
     public void testUpdateEstimatedNetworkBytes() throws Exception {
-        mNetworkingHelper.setAirplaneMode(false);
+        mNetworkingHelper.setAllNetworksEnabled(true);
 
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setDataTransfer(true)
@@ -67,7 +67,7 @@ public class DataTransferTest extends BaseJobSchedulerTest {
     }
 
     public void testUpdateTransferredNetworkBytes() throws Exception {
-        mNetworkingHelper.setAirplaneMode(false);
+        mNetworkingHelper.setAllNetworksEnabled(true);
 
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setDataTransfer(true)

@@ -400,7 +400,7 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
         }
 
         try {
-            networkingHelper.setAirplaneMode(true);
+            networkingHelper.setAllNetworksEnabled(false);
             JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                     .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                     .build();

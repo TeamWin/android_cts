@@ -87,7 +87,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         mInitialRestrictedBucketEnabled = Settings.Global.getString(mContext.getContentResolver(),
                 Settings.Global.ENABLE_RESTRICTED_BUCKET);
         setDataSaverEnabled(false);
-        setAirplaneMode(false);
+        mNetworkingHelper.setAllNetworksEnabled(true);
         // Force the test app out of the never bucket.
         SystemUtil.runShellCommand("am set-standby-bucket "
                 + TestAppInterface.TEST_APP_PACKAGE + " rare");
@@ -515,7 +515,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
     }
 
     public void testJobParametersNetwork() throws Exception {
-        setAirplaneMode(false);
+        mNetworkingHelper.setAllNetworksEnabled(true);
 
         // Everything good.
         final NetworkRequest nr = new NetworkRequest.Builder()
@@ -538,7 +538,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
         if (!hasEthernetConnection()) {
             // Deadline passed with no network satisfied.
-            setAirplaneMode(true);
+            mNetworkingHelper.setAllNetworksEnabled(false);
             ji = mBuilder
                     .setRequiredNetwork(nr)
                     .setOverrideDeadline(0)
@@ -554,7 +554,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         }
 
         // No network requested
-        setAirplaneMode(false);
+        mNetworkingHelper.setAllNetworksEnabled(true);
         ji = mBuilder.setRequiredNetwork(null).build();
         kTestEnvironment.setExpectedExecutions(1);
         mJobScheduler.schedule(ji);
@@ -835,7 +835,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      * @see #checkDeviceSupportsMobileData()
      */
     private void disconnectWifiToConnectToMobile() throws Exception {
-        setAirplaneMode(false);
+        mNetworkingHelper.setAllNetworksEnabled(true);
         if (mHasWifi && mWifiManager.isWifiEnabled()) {
             NetworkRequest nr = new NetworkRequest.Builder().clearCapabilities().build();
             NetworkCapabilities nc = new NetworkCapabilities.Builder()
@@ -860,9 +860,5 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      */
     private void setDataSaverEnabled(boolean enabled) throws Exception {
         mNetworkingHelper.setDataSaverEnabled(enabled);
-    }
-
-    private void setAirplaneMode(boolean on) throws Exception {
-        mNetworkingHelper.setAirplaneMode(on);
     }
 }

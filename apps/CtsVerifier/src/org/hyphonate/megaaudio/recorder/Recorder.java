@@ -21,6 +21,7 @@ import android.media.AudioRecord;
 import org.hyphonate.megaaudio.common.StreamBase;
 
 public abstract class Recorder extends StreamBase {
+    private static final String TAG = Recorder.class.getSimpleName();
     protected AudioSinkProvider mSinkProvider;
 
     // This value is to indicate that no explicit call to set an input preset in the builder
@@ -62,8 +63,13 @@ public abstract class Recorder extends StreamBase {
     //
     // Attributes
     //
-    // This needs to be static because it is called before creating the Recorder subclass
-    public static int calcMinBufferFrames(int channelCount, int sampleRate) {
+    /**
+     * Calculate the optimal buffer size for the specified channel count and sample rate
+     * @param channelCount number of channels of audio data in record buffers
+     * @param sampleRate sample rate of recorded data
+     * @return The minimal buffer size to avoid overruns in the recording stream.
+     */
+    public static int calcMinBufferFramesStatic(int channelCount, int sampleRate) {
         int channelMask = Recorder.channelCountToChannelMask(channelCount);
         int bufferSizeInBytes =
                 AudioRecord.getMinBufferSize (sampleRate,

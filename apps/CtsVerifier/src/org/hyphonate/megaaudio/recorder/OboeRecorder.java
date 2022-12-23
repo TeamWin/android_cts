@@ -15,7 +15,14 @@
  */
 package org.hyphonate.megaaudio.recorder;
 
+import android.util.Log;
+
 public class OboeRecorder extends Recorder {
+    @SuppressWarnings("unused")
+    private static final String TAG = OboeRecorder.class.getSimpleName();
+    @SuppressWarnings("unused")
+    private static final boolean LOG = false;
+
     private int mRecorderSubtype;
     private long mNativeRecorder;
 
@@ -29,7 +36,6 @@ public class OboeRecorder extends Recorder {
     //
     // Attributes
     //
-    @Override
     public int getNumBufferFrames() {
         return getNumBufferFramesN(mNativeRecorder);
     }
@@ -51,7 +57,11 @@ public class OboeRecorder extends Recorder {
     }
 
     @Override
-    public int setupStream(int channelCount, int sampleRate, int numBurstFrames) {
+    public int setupStream(int channelCount, int sampleRate, int numBufferFrames) {
+        if (LOG) {
+            Log.i(TAG, "setupStream(chans:" + channelCount + ", rate:" + sampleRate
+                    + ", frames:" + numBufferFrames + ")");
+        }
         mChannelCount = channelCount;
         mSampleRate = sampleRate;
         return setupStreamN(mNativeRecorder, channelCount, sampleRate,
@@ -94,4 +104,5 @@ public class OboeRecorder extends Recorder {
     private native int stopN(long nativeRecorder);
 
     private native int getNumBufferFramesN(long nativeRecorder);
+    private native int calcMinBufferFramesN(long nativeRecorder);
 }

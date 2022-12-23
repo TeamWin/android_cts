@@ -138,4 +138,11 @@ public class CallTest extends AndroidTestCase {
         assertEquals(CallEndpoint.TYPE_BLUETOOTH, cep.getEndpointType());
         assertEquals(identifier, cep.getIdentifier());
     }
+
+    public void testStreamingAudioState() {
+        CallAudioState cas = new CallAudioState(false, CallAudioState.ROUTE_STREAMING,
+                CallAudioState.ROUTE_BLUETOOTH + CallAudioState.ROUTE_SPEAKER
+                        + CallAudioState.ROUTE_EARPIECE);
+        assertEquals(CallAudioState.ROUTE_STREAMING, cas.getSupportedRouteMask());
+    }
 }

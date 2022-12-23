@@ -964,9 +964,31 @@ public class CameraTestUtils extends Assert {
          */
         public TotalCaptureResult getTotalCaptureResultForRequest(CaptureRequest myRequest,
                 int numResultsWait) {
+            return getTotalCaptureResultForRequest(myRequest, numResultsWait,
+                    CAPTURE_RESULT_TIMEOUT_MS);
+        }
+
+        /**
+         * Get the {@link #TotalCaptureResult total capture result} for a given
+         * {@link #CaptureRequest capture request}.
+         *
+         * @param myRequest The {@link #CaptureRequest capture request} whose
+         *            corresponding {@link #TotalCaptureResult capture result} was
+         *            being waited for
+         * @param numResultsWait Number of frames to wait for the capture result
+         *            before timeout.
+         * @param timeoutForResult Timeout to wait for each capture result.
+         * @throws TimeoutRuntimeException If more than numResultsWait results are
+         *            seen before the result matching myRequest arrives, or each
+         *            individual wait for result times out after
+         *            timeoutForResult ms.
+         */
+        public TotalCaptureResult getTotalCaptureResultForRequest(CaptureRequest myRequest,
+                int numResultsWait, int timeoutForResult) {
             ArrayList<CaptureRequest> captureRequests = new ArrayList<>(1);
             captureRequests.add(myRequest);
-            return getTotalCaptureResultsForRequests(captureRequests, numResultsWait)[0];
+            return getTotalCaptureResultsForRequests(
+                    captureRequests, numResultsWait, timeoutForResult)[0];
         }
 
         /**
@@ -984,6 +1006,26 @@ public class CameraTestUtils extends Assert {
          */
         public TotalCaptureResult[] getTotalCaptureResultsForRequests(
                 List<CaptureRequest> captureRequests, int numResultsWait) {
+            return getTotalCaptureResultsForRequests(captureRequests, numResultsWait,
+                    CAPTURE_RESULT_TIMEOUT_MS);
+        }
+
+        /**
+         * Get an array of {@link #TotalCaptureResult total capture results} for a given list of
+         * {@link #CaptureRequest capture requests}. This can be used when the order of results
+         * may not the same as the order of requests.
+         *
+         * @param captureRequests The list of {@link #CaptureRequest capture requests} whose
+         *            corresponding {@link #TotalCaptureResult capture results} are
+         *            being waited for.
+         * @param numResultsWait Number of frames to wait for the capture results
+         *            before timeout.
+         * @param timeoutForResult Timeout to wait for each capture result.
+         * @throws TimeoutRuntimeException If more than numResultsWait results are
+         *            seen before all the results matching captureRequests arrives.
+         */
+        public TotalCaptureResult[] getTotalCaptureResultsForRequests(
+                List<CaptureRequest> captureRequests, int numResultsWait, int timeoutForResult) {
             if (numResultsWait < 0) {
                 throw new IllegalArgumentException("numResultsWait must be no less than 0");
             }
@@ -1006,7 +1048,7 @@ public class CameraTestUtils extends Assert {
             TotalCaptureResult[] results = new TotalCaptureResult[captureRequests.size()];
             int i = 0;
             do {
-                TotalCaptureResult result = getTotalCaptureResult(CAPTURE_RESULT_TIMEOUT_MS);
+                TotalCaptureResult result = getTotalCaptureResult(timeoutForResult);
                 CaptureRequest request = result.getRequest();
                 ArrayList<Integer> indices = remainingResultIndicesMap.get(request);
                 if (indices != null) {
@@ -2141,6 +2183,14 @@ public class CameraTestUtils extends Assert {
      * @return {@code true} if the given element is contained
      */
     public static boolean contains(int[] array, int elem) {
+        if (array == null) return false;
+        for (int i = 0; i < array.length; i++) {
+            if (elem == array[i]) return true;
+        }
+        return false;
+    }
+
+    public static boolean contains(long[] array, long elem) {
         if (array == null) return false;
         for (int i = 0; i < array.length; i++) {
             if (elem == array[i]) return true;

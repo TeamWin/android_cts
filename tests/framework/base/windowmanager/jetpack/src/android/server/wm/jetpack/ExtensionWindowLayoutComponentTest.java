@@ -203,7 +203,7 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
     @ApiTest(apis = {
             "androidx.window.extensions.layout.WindowLayoutComponent#addWindowLayoutInfoListener"})
     public void testWindowLayoutComponent_windowLayoutInfoListener() {
-        TestActivity activity = (TestActivity) startFullScreenActivityNewTask(TestActivity.class,
+        TestActivity activity = startFullScreenActivityNewTask(TestActivity.class,
                 null /* activityId */);
         TestValueCountConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
                 new TestValueCountConsumer<>();
@@ -216,7 +216,7 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
     @Test
     public void testWindowLayoutComponent_providesWindowLayoutFromActivity()
             throws ExecutionException, InterruptedException, TimeoutException {
-        TestActivity activity = (TestActivity) startActivityNewTask(TestActivity.class);
+        TestActivity activity = startActivityNewTask(TestActivity.class);
         mWindowLayoutInfo = getExtensionWindowLayoutInfo(activity);
         assumeHasDisplayFeatures(mWindowLayoutInfo);
         for (DisplayFeature displayFeature : mWindowLayoutInfo.getDisplayFeatures()) {
@@ -663,19 +663,22 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
                 windowLayoutInit.getDisplayFeatures().size(),
                 windowLayoutUpdated.getDisplayFeatures().size());
 
-        Rect windowLayoutSizeInitBounds =
-                windowLayoutInit.getDisplayFeatures().get(0).getBounds();
-        Rect windowLayoutSizeUpdatedBounds =
-                windowLayoutUpdated.getDisplayFeatures().get(0).getBounds();
+        // TODO(b/263419021) split action from verification
+        if (windowLayoutInit.getDisplayFeatures().size() > 0) {
+            Rect windowLayoutSizeInitBounds =
+                    windowLayoutInit.getDisplayFeatures().get(0).getBounds();
+            Rect windowLayoutSizeUpdatedBounds =
+                    windowLayoutUpdated.getDisplayFeatures().get(0).getBounds();
 
-        // Expect the hinge dimension to shrink in exactly one direction, the actual
-        // dimension depends on device implementation.
-        assertTrue(
-                windowLayoutSizeInitBounds.width() * displayResizeRatio
-                        == windowLayoutSizeUpdatedBounds.width()
-                        || windowLayoutSizeInitBounds.height() * displayResizeRatio
-                        == windowLayoutSizeUpdatedBounds.height()
-        );
+            // Expect the hinge dimension to shrink in exactly one direction, the actual
+            // dimension depends on device implementation.
+            assertTrue(
+                    windowLayoutSizeInitBounds.width() * displayResizeRatio
+                            == windowLayoutSizeUpdatedBounds.width()
+                            || windowLayoutSizeInitBounds.height() * displayResizeRatio
+                            == windowLayoutSizeUpdatedBounds.height()
+            );
+        }
 
         // Remove the listener
         mWindowLayoutComponent.removeWindowLayoutInfoListener(windowLayoutInfoConsumer);

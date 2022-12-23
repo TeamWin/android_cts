@@ -120,13 +120,16 @@ public class FlexibilityConstraintTest extends BaseJobSchedulerTest {
         if (!deviceSupportsFlexConstraints()) {
             return;
         }
-        mDeviceConfigStateHelper.set("fc_percents_to_drop_num_flexible_constraints", "1,2,3,25");
+        mDeviceConfigStateHelper.set("fc_percents_to_drop_num_flexible_constraints", "5,6,7,25");
         Thread.sleep(1_000);
         scheduleJobToExecute();
 
         // Wait for all constraints to drop.
         assertFalse("Job fired before flexible constraints dropped",
                 kTestEnvironment.awaitExecution(3000));
+
+        // Remaining time before all constraints should have dropped.
+        Thread.sleep(4000);
         runJob();
 
         assertTrue("Job with flexible constraint did not fire when no constraints were required",

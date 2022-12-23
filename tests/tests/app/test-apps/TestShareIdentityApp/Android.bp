@@ -20,6 +20,9 @@ package {
 
 android_test_helper_app {
     name: "CtsTestShareIdentityApp",
+    certificate: ":ec-p256_2",
+    additional_certificates: [":ec-p256"],
+    lineage: ":ec-p256-por_1_2-default-caps",
     defaults: ["cts_defaults"],
 
     sdk_version: "test_current",

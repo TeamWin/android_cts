@@ -70,6 +70,12 @@ static void fillRegion(void* data, int32_t left, int32_t top, int32_t right,
 
     ptr += stride * top;
 
+    uint32_t alpha = (color >> 24);
+    uint32_t red = (color >> 16) & 0xff;
+    uint32_t green = (color >> 8) & 0xff;
+    uint32_t blue = color & 0xff;
+    color = (alpha << 24) | (blue << 16) | (green << 8) | red;
+
     for (uint32_t y = top; y < bottom; y++) {
         for (uint32_t x = left; x < right; x++) {
             ptr[x] = color;

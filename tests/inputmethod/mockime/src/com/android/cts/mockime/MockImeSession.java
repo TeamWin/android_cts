@@ -370,6 +370,18 @@ public class MockImeSession implements AutoCloseable {
     }
 
     /**
+     * Checks whether there are any pending IME visibility requests.
+     *
+     * @see InputMethodManager#hasPendingImeVisibilityRequests()
+     *
+     * @return {@code true} iff there are pending IME visibility requests.
+     */
+    public boolean hasPendingImeVisibilityRequests() {
+        final var imm = mContext.getSystemService(InputMethodManager.class);
+        return runWithShellPermissionIdentity(imm::hasPendingImeVisibilityRequests);
+    }
+
+    /**
      * @return {@link ImeEventStream} object that stores events sent from {@link MockIme} since the
      *         session is created.
      */

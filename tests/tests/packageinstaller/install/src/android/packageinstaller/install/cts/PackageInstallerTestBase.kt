@@ -350,7 +350,8 @@ open class PackageInstallerTestBase {
         val startTime = System.currentTimeMillis()
         while (startTime + TIMEOUT > System.currentTimeMillis()) {
             try {
-                uiDevice.wait(Until.findObject(By.res(SYSTEM_PACKAGE_NAME, resId)), 1000).click()
+                uiDevice.wait(Until.findObject(By.res(PACKAGE_INSTALLER_PACKAGE_NAME, resId)), 1000)
+                        .click()
                 return
             } catch (ignore: Throwable) {
             }

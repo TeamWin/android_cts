@@ -1174,7 +1174,7 @@ public class SurfaceControlTest {
 
     @Test
     public void testSurfaceTransaction_setDataSpace_srgb() {
-        final int darkRed = 0xFF00006F;
+        final int darkRed = 0xFF6F0000;
         verifyTest(
                 new BasicSurfaceHolderCallback() {
                     @Override
@@ -1194,13 +1194,11 @@ public class SurfaceControlTest {
 
     @Test
     public void testSurfaceTransaction_setDataSpace_display_p3() {
-        final int darkRed = 0xFF00006F;
+        final int darkRed = 0xFF6F0000;
         long converted = Color.convert(0x6F / 255.f, 0f, 0f, 1f,
                 ColorSpace.get(ColorSpace.Named.DISPLAY_P3), ColorSpace.get(ColorSpace.Named.SRGB));
         assertTrue(Color.isSrgb(converted));
         int argb = Color.toArgb(converted);
-        // PixelChecker uses a ABGR for some reason (endian mismatch with native?), swizzle to match
-        int asABGR = 0xFF000000 | Color.red(argb);
         verifyTest(
                 new BasicSurfaceHolderCallback() {
                     @Override
@@ -1210,7 +1208,7 @@ public class SurfaceControlTest {
                                 darkRed, DataSpace.DATASPACE_DISPLAY_P3);
                     }
                 },
-                new PixelChecker(asABGR) { //10000
+                new PixelChecker(argb) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;

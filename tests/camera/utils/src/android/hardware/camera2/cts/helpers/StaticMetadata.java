@@ -1875,6 +1875,22 @@ public class StaticMetadata {
         return modes;
     }
 
+    /**
+     * Get availableStreamUseCases.
+     *
+     * @return available stream use cases, empty array if it is unavailable.
+     */
+    public long[] getAvailableStreamUseCases() {
+        Key<long[]> key =
+                CameraCharacteristics.SCALER_AVAILABLE_STREAM_USE_CASES;
+        long[] useCases = getValueFromKeyNonNull(key);
+
+        if (useCases == null) {
+            return new long[0];
+        }
+        return useCases;
+    }
+
     public Integer getChosenVideoStabilizationMode() {
         Integer[] videoStabilizationModes =
                 CameraTestUtils.toObject(getAvailableVideoStabilizationModesChecked());
@@ -2813,6 +2829,17 @@ public class StaticMetadata {
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_STREAM_USE_CASE));
     }
 
+    /**
+     * Check if CROPPED_RAW stream use case is supported
+     */
+    public boolean isCroppedRawStreamUseCaseSupported() {
+        if (!isStreamUseCaseSupported()) {
+            return false;
+        }
+        long[] streamUseCasesSupported = getAvailableStreamUseCases();
+        return CameraTestUtils.contains(streamUseCasesSupported,
+                CameraMetadata.SCALER_AVAILABLE_STREAM_USE_CASES_CROPPED_RAW);
+    }
     /**
      * Check if settings override is supported
      */
